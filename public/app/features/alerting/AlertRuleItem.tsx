@@ -14,7 +14,7 @@ export interface Props {
 const AlertRuleItem = ({ rule, search, onTogglePause }: Props) => {
   const ruleUrl = `${rule.url}?editPanel=${rule.panelId}&tab=alert`;
   const renderText = useCallback(
-    (text) => (
+    (text: string) => (
       <Highlighter
         key={text}
         highlightClassName="highlight-search-match"

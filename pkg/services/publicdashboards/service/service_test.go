@@ -62,11 +62,10 @@ func TestGetAnnotations(t *testing.T) {
 		dash := models.NewDashboard("testDashboard")
 
 		items, _ := service.GetAnnotations(context.Background(), reqDTO, "abc123")
-		anonUser, err := service.BuildAnonymousUser(context.Background(), dash)
+		anonUser := service.BuildAnonymousUser(context.Background(), dash)
 
 		assert.Equal(t, "dashboards:*", anonUser.Permissions[0]["dashboards:read"][0])
 		assert.Len(t, items, 0)
-		require.NoError(t, err)
 	})
 
 	t.Run("Test events from tag queries overwrite built-in annotation queries and duplicate events are not returned", func(t *testing.T) {
@@ -410,7 +409,7 @@ func TestSavePublicDashboard(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 
 		service := &PublicDashboardServiceImpl{
 			log:   log.New("test.logger"),
@@ -454,7 +453,7 @@ func TestSavePublicDashboard(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 
 		service := &PublicDashboardServiceImpl{
 			log:   log.New("test.logger"),
@@ -485,7 +484,7 @@ func TestSavePublicDashboard(t *testing.T) {
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		templateVars := make([]map[string]interface{}, 1)
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, templateVars)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, templateVars, nil)
 
 		service := &PublicDashboardServiceImpl{
 			log:   log.New("test.logger"),
@@ -545,7 +544,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 
 		service := &PublicDashboardServiceImpl{
 			log:   log.New("test.logger"),
@@ -606,7 +605,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 
 		service := &PublicDashboardServiceImpl{
 			log:   log.New("test.logger"),
@@ -655,7 +654,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 func TestBuildAnonymousUser(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
-	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
+	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 	publicdashboardStore := database.ProvideStore(sqlStore)
 	service := &PublicDashboardServiceImpl{
 		log:   log.New("test.logger"),
@@ -663,9 +662,8 @@ func TestBuildAnonymousUser(t *testing.T) {
 	}
 
 	t.Run("will add datasource read and query permissions to user for each datasource in dashboard", func(t *testing.T) {
-		user, err := service.BuildAnonymousUser(context.Background(), dashboard)
+		user := service.BuildAnonymousUser(context.Background(), dashboard)
 
-		require.NoError(t, err)
 		require.Equal(t, dashboard.OrgId, user.OrgID)
 		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgID]["datasources:query"][0])
 		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgID]["datasources:query"][1])
@@ -673,9 +671,8 @@ func TestBuildAnonymousUser(t *testing.T) {
 		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgID]["datasources:read"][1])
 	})
 	t.Run("will add dashboard and annotation permissions needed for getting annotations", func(t *testing.T) {
-		user, err := service.BuildAnonymousUser(context.Background(), dashboard)
+		user := service.BuildAnonymousUser(context.Background(), dashboard)
 
-		require.NoError(t, err)
 		require.Equal(t, dashboard.OrgId, user.OrgID)
 		require.Equal(t, "annotations:type:dashboard", user.Permissions[user.OrgID]["annotations:read"][0])
 		require.Equal(t, "dashboards:*", user.Permissions[user.OrgID]["dashboards:read"][0])
@@ -686,7 +683,7 @@ func TestGetMetricRequest(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 	publicdashboardStore := database.ProvideStore(sqlStore)
-	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
+	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 	publicDashboard := &PublicDashboard{
 		Uid:          "1",
 		DashboardUid: dashboard.Uid,
@@ -725,13 +722,67 @@ func TestGetMetricRequest(t *testing.T) {
 	})
 }
 
+func TestGetQueryDataResponse(t *testing.T) {
+	sqlStore := sqlstore.InitTestDB(t)
+	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+	publicdashboardStore := database.ProvideStore(sqlStore)
+
+	service := &PublicDashboardServiceImpl{
+		log:                log.New("test.logger"),
+		store:              publicdashboardStore,
+		intervalCalculator: intervalv2.NewCalculator(),
+	}
+
+	publicDashboardQueryDTO := PublicDashboardQueryDTO{
+		IntervalMs:    int64(1),
+		MaxDataPoints: int64(1),
+	}
+
+	t.Run("Returns nil when query is hidden", func(t *testing.T) {
+		hiddenQuery := map[string]interface{}{
+			"datasource": map[string]interface{}{
+				"type": "mysql",
+				"uid":  "ds1",
+			},
+			"hide":  true,
+			"refId": "A",
+		}
+		customPanels := []interface{}{
+			map[string]interface{}{
+				"id": 1,
+				"datasource": map[string]interface{}{
+					"uid": "ds1",
+				},
+				"targets": []interface{}{hiddenQuery},
+			}}
+
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, true, []map[string]interface{}{}, customPanels)
+		dto := &SavePublicDashboardConfigDTO{
+			DashboardUid: dashboard.Uid,
+			OrgId:        dashboard.OrgId,
+			UserId:       7,
+			PublicDashboard: &PublicDashboard{
+				IsEnabled:    true,
+				DashboardUid: "NOTTHESAME",
+				OrgId:        9999999,
+				TimeSettings: timeSettings,
+			},
+		}
+		pubdashDto, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		require.NoError(t, err)
+
+		resp, _ := service.GetQueryDataResponse(context.Background(), true, publicDashboardQueryDTO, 1, pubdashDto.AccessToken)
+		require.Nil(t, resp)
+	})
+}
+
 func TestBuildMetricRequest(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 	publicdashboardStore := database.ProvideStore(sqlStore)
 
-	publicDashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
-	nonPublicDashboard := insertTestDashboard(t, dashboardStore, "testNonPublicDashie", 1, 0, true, []map[string]interface{}{})
+	publicDashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
+	nonPublicDashboard := insertTestDashboard(t, dashboardStore, "testNonPublicDashie", 1, 0, true, []map[string]interface{}{}, nil)
 	from, to := internal.GetTimeRangeFromDashboard(t, publicDashboard.Data)
 
 	service := &PublicDashboardServiceImpl{
@@ -833,58 +884,167 @@ func TestBuildMetricRequest(t *testing.T) {
 
 		require.ErrorContains(t, err, ErrPublicDashboardPanelNotFound.Reason)
 	})
+
+	t.Run("metric request built without hidden query", func(t *testing.T) {
+		hiddenQuery := map[string]interface{}{
+			"datasource": map[string]interface{}{
+				"type": "mysql",
+				"uid":  "ds1",
+			},
+			"hide":  true,
+			"refId": "A",
+		}
+		nonHiddenQuery := map[string]interface{}{
+			"datasource": map[string]interface{}{
+				"type": "prometheus",
+				"uid":  "ds2",
+			},
+			"refId": "B",
+		}
+
+		customPanels := []interface{}{
+			map[string]interface{}{
+				"id": 1,
+				"datasource": map[string]interface{}{
+					"uid": "ds1",
+				},
+				"targets": []interface{}{hiddenQuery, nonHiddenQuery},
+			}}
+
+		publicDashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, true, []map[string]interface{}{}, customPanels)
+
+		reqDTO, err := service.buildMetricRequest(
+			context.Background(),
+			publicDashboard,
+			publicDashboardPD,
+			1,
+			publicDashboardQueryDTO,
+		)
+		require.NoError(t, err)
+
+		require.Equal(t, from, reqDTO.From)
+		require.Equal(t, to, reqDTO.To)
+
+		for i := range reqDTO.Queries {
+			require.Equal(t, publicDashboardQueryDTO.IntervalMs, reqDTO.Queries[i].Get("intervalMs").MustInt64())
+			require.Equal(t, publicDashboardQueryDTO.MaxDataPoints, reqDTO.Queries[i].Get("maxDataPoints").MustInt64())
+		}
+
+		require.Len(t, reqDTO.Queries, 1)
+
+		require.NotEqual(
+			t,
+			simplejson.NewFromAny(hiddenQuery),
+			reqDTO.Queries[0],
+		)
+
+		require.Equal(
+			t,
+			simplejson.NewFromAny(nonHiddenQuery),
+			reqDTO.Queries[0],
+		)
+	})
+
+	t.Run("metric request built with 0 queries len when all queries are hidden", func(t *testing.T) {
+		customPanels := []interface{}{
+			map[string]interface{}{
+				"id": 1,
+				"datasource": map[string]interface{}{
+					"uid": "ds1",
+				},
+				"targets": []interface{}{map[string]interface{}{
+					"datasource": map[string]interface{}{
+						"type": "mysql",
+						"uid":  "ds1",
+					},
+					"hide":  true,
+					"refId": "A",
+				}, map[string]interface{}{
+					"datasource": map[string]interface{}{
+						"type": "prometheus",
+						"uid":  "ds2",
+					},
+					"hide":  true,
+					"refId": "B",
+				}},
+			}}
+
+		publicDashboard := insertTestDashboard(t, dashboardStore, "testDashWithAllQueriesHidden", 1, 0, true, []map[string]interface{}{}, customPanels)
+
+		reqDTO, err := service.buildMetricRequest(
+			context.Background(),
+			publicDashboard,
+			publicDashboardPD,
+			1,
+			publicDashboardQueryDTO,
+		)
+		require.NoError(t, err)
+
+		require.Equal(t, from, reqDTO.From)
+		require.Equal(t, to, reqDTO.To)
+
+		require.Len(t, reqDTO.Queries, 0)
+	})
 }
 
 func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,
-	folderId int64, isFolder bool, templateVars []map[string]interface{}, tags ...interface{}) *models.Dashboard {
+	folderId int64, isFolder bool, templateVars []map[string]interface{}, customPanels []interface{}, tags ...interface{}) *models.Dashboard {
 	t.Helper()
+
+	var dashboardPanels []interface{}
+	if customPanels != nil {
+		dashboardPanels = customPanels
+	} else {
+		dashboardPanels = []interface{}{
+			map[string]interface{}{
+				"id": 1,
+				"datasource": map[string]interface{}{
+					"uid": "ds1",
+				},
+				"targets": []interface{}{
+					map[string]interface{}{
+						"datasource": map[string]interface{}{
+							"type": "mysql",
+							"uid":  "ds1",
+						},
+						"refId": "A",
+					},
+					map[string]interface{}{
+						"datasource": map[string]interface{}{
+							"type": "prometheus",
+							"uid":  "ds2",
+						},
+						"refId": "B",
+					},
+				},
+			},
+			map[string]interface{}{
+				"id": 2,
+				"datasource": map[string]interface{}{
+					"uid": "ds3",
+				},
+				"targets": []interface{}{
+					map[string]interface{}{
+						"datasource": map[string]interface{}{
+							"type": "mysql",
+							"uid":  "ds3",
+						},
+						"refId": "C",
+					},
+				},
+			},
+		}
+	}
+
 	cmd := models.SaveDashboardCommand{
 		OrgId:    orgId,
 		FolderId: folderId,
 		IsFolder: isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
-			"id":    nil,
-			"title": title,
-			"tags":  tags,
-			"panels": []interface{}{
-				map[string]interface{}{
-					"id": 1,
-					"datasource": map[string]interface{}{
-						"uid": "ds1",
-					},
-					"targets": []interface{}{
-						map[string]interface{}{
-							"datasource": map[string]interface{}{
-								"type": "mysql",
-								"uid":  "ds1",
-							},
-							"refId": "A",
-						},
-						map[string]interface{}{
-							"datasource": map[string]interface{}{
-								"type": "prometheus",
-								"uid":  "ds2",
-							},
-							"refId": "B",
-						},
-					},
-				},
-				map[string]interface{}{
-					"id": 2,
-					"datasource": map[string]interface{}{
-						"uid": "ds3",
-					},
-					"targets": []interface{}{
-						map[string]interface{}{
-							"datasource": map[string]interface{}{
-								"type": "mysql",
-								"uid":  "ds3",
-							},
-							"refId": "C",
-						},
-					},
-				},
-			},
+			"id":     nil,
+			"title":  title,
+			"tags":   tags,
+			"panels": dashboardPanels,
 			"templating": map[string]interface{}{
 				"list": templateVars,
 			},
