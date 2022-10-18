@@ -71,3 +71,5 @@ var newListMetricsService = func(pluginCtx backend.PluginContext, clientFactory 
 
 	return services.NewListMetricsService(clients.MetricsClientProvider), nil
 }
+
+// TODO: not sure why there used to be both clientFactory and this newLIstMetricsService, for example
