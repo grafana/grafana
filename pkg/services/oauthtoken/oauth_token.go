@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -28,6 +29,7 @@ var (
 )
 
 type Service struct {
+	Cfg               *setting.Cfg
 	SocialService     social.Service
 	AuthInfoService   login.AuthInfoService
 	singleFlightGroup *singleflight.Group
@@ -41,8 +43,9 @@ type OAuthTokenService interface {
 	InvalidateOAuthTokens(context.Context, *models.UserAuth) error
 }
 
-func ProvideService(socialService social.Service, authInfoService login.AuthInfoService) *Service {
+func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg) *Service {
 	return &Service{
+		Cfg:               cfg,
 		SocialService:     socialService,
 		AuthInfoService:   authInfoService,
 		singleFlightGroup: new(singleflight.Group),
@@ -116,6 +119,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) err
 		}
 
 		if usr.OAuthRefreshToken == "" {
+			logger.Debug("no refresh token available", "authmodule", usr.AuthModule, "userid", usr.UserId)
 			return nil, ErrNoRefreshTokenFound
 		}
 
@@ -179,12 +183,24 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *models.Us
 			AuthId:     usr.AuthId,
 			OAuthToken: token,
 		}
+
+		if o.Cfg.Env == setting.Dev {
+			logger.Debug("oauth got token",
+				"user", usr.UserId,
+				"auth_module", usr.AuthModule,
+				"expiry", fmt.Sprintf("%v", token.Expiry),
+				"access_token", fmt.Sprintf("%v", token.AccessToken),
+				"refresh_token", fmt.Sprintf("%v", token.RefreshToken),
+			)
+		}
+
 		if err := o.AuthInfoService.UpdateAuthInfo(ctx, updateAuthCommand); err != nil {
 			logger.Error("failed to update auth info during token refresh", "userId", usr.UserId, "error", err)
 			return nil, err
 		}
 		logger.Debug("updated oauth info for user", "userId", usr.UserId)
 	}
+
 	return token, nil
 }
 
