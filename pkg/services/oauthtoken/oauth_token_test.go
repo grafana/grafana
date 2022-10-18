@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/oauth2"
@@ -55,14 +56,12 @@ func TestService_HasOAuthEntry(t *testing.T) {
 			getAuthInfoErr: user.ErrUserNotFound,
 		},
 		{
-			name:      "returns false without an error in case the auth entry is not oauth",
-			user:      &user.SignedInUser{},
-			want:      nil,
-			wantExist: false,
-			wantErr:   false,
-			getAuthInfoUser: models.UserAuth{
-				AuthModule: "auth_saml",
-			},
+			name:            "returns false without an error in case the auth entry is not oauth",
+			user:            &user.SignedInUser{},
+			want:            nil,
+			wantExist:       false,
+			wantErr:         false,
+			getAuthInfoUser: models.UserAuth{AuthModule: "auth_saml"},
 		},
 		{
 			name:            "returns true when the auth entry is found",
@@ -233,6 +232,7 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *MockSo
 	authInfoStore := &FakeAuthInfoStore{}
 	authInfoService := authinfoservice.ProvideAuthInfoService(nil, authInfoStore, &usagestats.UsageStatsMock{})
 	return &Service{
+		Cfg:               setting.NewCfg(),
 		SocialService:     socialService,
 		AuthInfoService:   authInfoService,
 		singleFlightGroup: &singleflight.Group{},
