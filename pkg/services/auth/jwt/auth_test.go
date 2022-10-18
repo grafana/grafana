@@ -19,6 +19,7 @@ import (
 	"gopkg.in/square/go-jose.v2/jwt"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -98,6 +99,69 @@ func TestVerifyUsingJWKSetFile(t *testing.T) {
 		_, err := sc.authJWTSvc.Verify(sc.ctx, token)
 		require.Error(t, err)
 	}, configure)
+}
+
+func TestJWTGeneration(t *testing.T) {
+	enableJWKSFile := func(t *testing.T, cfg *setting.Cfg) {
+		t.Helper()
+
+		file, err := os.CreateTemp(os.TempDir(), "jwk-*.json")
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			if err := os.Remove(file.Name()); err != nil {
+				panic(err)
+			}
+		})
+
+		require.NoError(t, json.NewEncoder(file).Encode(jwksPublic))
+		require.NoError(t, file.Close())
+
+		cfg.JWTAuthJWKSetFile = file.Name()
+	}
+
+	enableFeature := func(t *testing.T, cfg *setting.Cfg) {
+		t.Helper()
+		features = featuremgmt.WithFeatures(featuremgmt.FlagTemporaryJWTAuth)
+		t.Cleanup(func() {
+			features = featuremgmt.WithFeatures()
+		})
+	}
+
+	scenario(t, "verifies a generated token when feature is enabled, but other key sets are not configured", func(t *testing.T, sc scenarioContext) {
+		token, err := sc.authJWTSvc.Generate(subject, "grafana-example-datasource")
+		require.NoError(t, err)
+		require.NotEmpty(t, token)
+		_, err = sc.authJWTSvc.Verify(sc.ctx, token)
+		require.NoError(t, err)
+	}, enableFeature)
+
+	scenario(t, "verifies a generated token when feature is enabled and second key set is configured", func(t *testing.T, sc scenarioContext) {
+		token, err := sc.authJWTSvc.Generate(subject, "grafana-example-datasource")
+		require.NoError(t, err)
+		require.NotEmpty(t, token)
+		verifiedClaims, err := sc.authJWTSvc.Verify(sc.ctx, token)
+		require.NoError(t, err)
+		assert.Equal(t, verifiedClaims["sub"], subject)
+
+		secondToken := sign(t, &jwKeys[0], jwt.Claims{Subject: subject})
+		verifiedClaims, err = sc.authJWTSvc.Verify(sc.ctx, secondToken)
+		require.NoError(t, err)
+		assert.Equal(t, verifiedClaims["sub"], subject)
+	}, enableJWKSFile, enableFeature)
+
+	scenario(t, "rejects a token signed by another keyset", func(t *testing.T, sc scenarioContext) {
+		token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject})
+		_, err := sc.authJWTSvc.Verify(sc.ctx, token)
+		require.Error(t, err)
+	}, enableFeature)
+
+	scenario(t, "rejects a generated token when feature is disabled", func(t *testing.T, sc scenarioContext) {
+		token, err := sc.authJWTSvc.Generate(subject, "grafana-example-datasource")
+		require.Error(t, err)
+		require.Empty(t, token)
+		_, err = sc.authJWTSvc.Verify(sc.ctx, token)
+		require.Error(t, err)
+	}, enableJWKSFile)
 }
 
 func TestVerifyUsingJWKSetURL(t *testing.T) {
@@ -302,7 +366,7 @@ func jwkHTTPScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...configur
 			cfg.JWTAuthJWKSetURL = ts.URL
 		}
 		runner := scenarioRunner(func(t *testing.T, sc scenarioContext) {
-			keySet := sc.authJWTSvc.keySet.(*keySetHTTP)
+			keySet := sc.authJWTSvc.keySets[0].(*keySetHTTP)
 			keySet.client = ts.Client()
 			fn(t, sc)
 		}, append([]configureFunc{configure}, cbs...)...)
@@ -335,7 +399,7 @@ func jwkCachingScenario(t *testing.T, desc string, fn cachingScenarioFunc, cbs .
 			cfg.JWTAuthCacheTTL = time.Hour
 		}
 		runner := scenarioRunner(func(t *testing.T, sc scenarioContext) {
-			keySet := sc.authJWTSvc.keySet.(*keySetHTTP)
+			keySet := sc.authJWTSvc.keySets[0].(*keySetHTTP)
 			keySet.client = ts.Client()
 			fn(t, cachingScenarioContext{scenarioContext: sc, reqCount: &reqCount})
 		}, append([]configureFunc{configure}, cbs...)...)
@@ -369,6 +433,8 @@ func scenario(t *testing.T, desc string, fn scenarioFunc, cbs ...configureFunc) 
 	t.Run(desc, scenarioRunner(fn, cbs...))
 }
 
+var features = featuremgmt.WithFeatures()
+
 func initAuthService(t *testing.T, cbs ...configureFunc) (*AuthService, error) {
 	t.Helper()
 
@@ -380,7 +446,7 @@ func initAuthService(t *testing.T, cbs ...configureFunc) (*AuthService, error) {
 		cb(t, cfg)
 	}
 
-	service := newService(cfg, remotecache.NewFakeStore(t))
+	service := newService(cfg, remotecache.NewFakeStore(t), features)
 	err := service.init()
 	return service, err
 }

@@ -3,7 +3,11 @@ package jwt
 import (
 	"bytes"
 	"context"
+	"crypto"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
@@ -16,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	jose "gopkg.in/square/go-jose.v2"
 )
 
@@ -53,12 +58,17 @@ func (s *AuthService) checkKeySetConfiguration() error {
 		count++
 	}
 
-	if count == 0 {
-		return ErrKeySetIsNotConfigured
-	}
-
+	// this only applies to key sets configured by the user
 	if count > 1 {
 		return ErrKeySetConfigurationAmbiguous
+	}
+
+	if s.Features.IsEnabled(featuremgmt.FlagTemporaryJWTAuth) {
+		count++
+	}
+
+	if count == 0 {
+		return ErrKeySetIsNotConfigured
 	}
 
 	return nil
@@ -117,11 +127,11 @@ func (s *AuthService) initKeySet() error {
 			return fmt.Errorf("unknown pem block type %q", block.Type)
 		}
 
-		s.keySet = keySetJWKS{
+		s.keySets = append(s.keySets, keySetJWKS{
 			jose.JSONWebKeySet{
 				Keys: []jose.JSONWebKey{{Key: key}},
 			},
-		}
+		})
 	} else if keyFilePath := s.Cfg.JWTAuthJWKSetFile; keyFilePath != "" {
 		// nolint:gosec
 		// We can ignore the gosec G304 warning on this one because `fileName` comes from grafana configuration file
@@ -140,7 +150,7 @@ func (s *AuthService) initKeySet() error {
 			return err
 		}
 
-		s.keySet = keySetJWKS{jwks}
+		s.keySets = append(s.keySets, keySetJWKS{jwks})
 	} else if urlStr := s.Cfg.JWTAuthJWKSetURL; urlStr != "" {
 		urlParsed, err := url.Parse(urlStr)
 		if err != nil {
@@ -149,14 +159,31 @@ func (s *AuthService) initKeySet() error {
 		if urlParsed.Scheme != "https" {
 			return ErrJWTSetURLMustHaveHTTPSScheme
 		}
-		s.keySet = &keySetHTTP{
+		s.keySets = append(s.keySets, &keySetHTTP{
 			url:             urlStr,
 			log:             s.log,
 			client:          &http.Client{},
 			cacheKey:        fmt.Sprintf("auth-jwt:jwk-%s", urlStr),
 			cacheExpiration: s.Cfg.JWTAuthCacheTTL,
 			cache:           s.RemoteCache,
+		})
+	}
+
+	if s.Features.IsEnabled(featuremgmt.FlagTemporaryJWTAuth) {
+		set := jose.JSONWebKeySet{}
+		privKey, pubKey, err := generateJWK()
+		if err != nil {
+			return err
 		}
+		set.Keys = append(set.Keys, *pubKey)
+		s.keySets = append(s.keySets, keySetJWKS{
+			JSONWebKeySet: set,
+		})
+		signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.SignatureAlgorithm(privKey.Algorithm), Key: privKey}, (&jose.SignerOptions{}).WithType("JWT"))
+		if err != nil {
+			return err
+		}
+		s.signer = signer
 	}
 
 	return nil
@@ -210,4 +237,19 @@ func (ks keySetHTTP) Key(ctx context.Context, kid string) ([]jose.JSONWebKey, er
 		return nil, err
 	}
 	return jwks.Key(ctx, kid)
+}
+
+func generateJWK() (privKey *jose.JSONWebKey, pubKey *jose.JSONWebKey, err error) {
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, nil, err
+	}
+	privKey = &jose.JSONWebKey{Key: key, KeyID: "", Algorithm: string(jose.RS512), Use: "sig"}
+	thumb, err := privKey.Thumbprint(crypto.SHA256)
+	if err != nil {
+		return nil, nil, err
+	}
+	privKey.KeyID = base64.RawURLEncoding.EncodeToString(thumb)
+	pubKey = &jose.JSONWebKey{Key: key.Public(), KeyID: privKey.KeyID, Algorithm: privKey.Algorithm, Use: privKey.Use}
+	return privKey, pubKey, nil
 }
