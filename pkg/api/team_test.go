@@ -11,13 +11,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
@@ -30,7 +30,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 	t.Run("Given two teams", func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.Cfg.EditorsCanAdmin = true
-		store := sqlstore.InitTestDB(t)
+		store := db.InitTestDB(t)
 		store.Cfg = hs.Cfg
 		hs.teamService = teamimpl.ProvideService(store, hs.Cfg)
 		hs.SQLStore = store
@@ -262,7 +262,7 @@ func TestTeamAPIEndpoint_SearchTeams_RBAC(t *testing.T) {
 
 func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true)
-	sc.db = sqlstore.InitTestDB(t)
+	sc.db = db.InitTestDB(t)
 
 	_, err := sc.teamService.CreateTeam("team1", "team1@example.org", 1)
 	require.NoError(t, err)
@@ -292,7 +292,7 @@ func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
 // else return 403
 func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true)
-	sc.db = sqlstore.InitTestDB(t)
+	sc.db = db.InitTestDB(t)
 	_, err := sc.teamService.CreateTeam("team1", "", 1)
 
 	require.NoError(t, err)
@@ -341,7 +341,7 @@ func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 // else return 403
 func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true)
-	sc.db = sqlstore.InitTestDB(t)
+	sc.db = db.InitTestDB(t)
 	_, err := sc.teamService.CreateTeam("team1", "", 1)
 	require.NoError(t, err)
 
@@ -373,7 +373,7 @@ func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
 // else return 403
 func TestTeamAPIEndpoint_GetTeamPreferences_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true)
-	sc.db = sqlstore.InitTestDB(t)
+	sc.db = db.InitTestDB(t)
 	_, err := sc.teamService.CreateTeam("team1", "", 1)
 
 	sqlstore := mockstore.NewSQLStoreMock()
@@ -406,7 +406,7 @@ func TestTeamAPIEndpoint_GetTeamPreferences_RBAC(t *testing.T) {
 // else return 403
 func TestTeamAPIEndpoint_UpdateTeamPreferences_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true)
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	sc.db = sqlStore
 
 	prefService := preftest.NewPreferenceServiceFake()

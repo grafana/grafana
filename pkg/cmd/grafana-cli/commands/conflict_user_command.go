@@ -11,18 +11,19 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/urfave/cli/v2"
 )
 
 func initConflictCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
@@ -283,7 +284,7 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
 
 		// creating a session for each block of users
 		// we want to rollback incase something happens during update / delete
-		if err := r.Store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if err := r.Store.WithDbSession(ctx, func(sess *db.Session) error {
 			err := sess.Begin()
 			if err != nil {
 				return fmt.Errorf("could not open a db session: %w", err)
@@ -607,7 +608,7 @@ func (c *ConflictingUser) Marshal(filerow string) error {
 
 func GetUsersWithConflictingEmailsOrLogins(ctx *cli.Context, s *sqlstore.SQLStore) (ConflictingUsers, error) {
 	queryUsers := make([]ConflictingUser, 0)
-	outerErr := s.WithDbSession(ctx.Context, func(dbSession *sqlstore.DBSession) error {
+	outerErr := s.WithDbSession(ctx.Context, func(dbSession *db.Session) error {
 		rawSQL := conflictingUserEntriesSQL(s)
 		err := dbSession.SQL(rawSQL).Find(&queryUsers)
 		return err

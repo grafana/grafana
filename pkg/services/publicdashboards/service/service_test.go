@@ -2,17 +2,11 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
-
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
-	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -20,13 +14,25 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	dashboard2 "github.com/grafana/grafana/pkg/coremodel/dashboard"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsDB "github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
@@ -37,6 +43,289 @@ var SignedInUser = &user.SignedInUser{UserID: 1234, Login: "user@login.com"}
 
 func TestLogPrefix(t *testing.T) {
 	assert.Equal(t, LogPrefix, "publicdashboards.service")
+}
+
+func TestGetAnnotations(t *testing.T) {
+	t.Run("will build anonymous user with correct permissions to get annotations", func(t *testing.T) {
+		sqlStore := sqlstore.InitTestDB(t)
+		config := setting.NewCfg()
+		tagService := tagimpl.ProvideService(sqlStore, sqlStore.Cfg)
+		annotationsRepo := annotationsimpl.ProvideService(sqlStore, config, tagService)
+		fakeStore := FakePublicDashboardStore{}
+		service := &PublicDashboardServiceImpl{
+			log:             log.New("test.logger"),
+			store:           &fakeStore,
+			AnnotationsRepo: annotationsRepo,
+		}
+		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
+			Return(&PublicDashboard{Uid: "uid1", IsEnabled: true}, models.NewDashboard("dash1"), nil)
+		reqDTO := AnnotationsQueryDTO{
+			From: 1,
+			To:   2,
+		}
+		dash := models.NewDashboard("testDashboard")
+
+		items, _ := service.GetAnnotations(context.Background(), reqDTO, "abc123")
+		anonUser := service.BuildAnonymousUser(context.Background(), dash)
+
+		assert.Equal(t, "dashboards:*", anonUser.Permissions[0]["dashboards:read"][0])
+		assert.Len(t, items, 0)
+	})
+
+	t.Run("Test events from tag queries overwrite built-in annotation queries and duplicate events are not returned", func(t *testing.T) {
+		dash := models.NewDashboard("test")
+		color := "red"
+		name := "annoName"
+		grafanaAnnotation := DashAnnotation{
+			Datasource: CreateDatasource("grafana", "grafana"),
+			Enable:     true,
+			Name:       &name,
+			IconColor:  &color,
+			Target: &dashboard2.AnnotationTarget{
+				Limit:    100,
+				MatchAny: false,
+				Tags:     nil,
+				Type:     "dashboard",
+			},
+			Type: "dashboard",
+		}
+		grafanaTagAnnotation := DashAnnotation{
+			Datasource: CreateDatasource("grafana", "grafana"),
+			Enable:     true,
+			Name:       &name,
+			IconColor:  &color,
+			Target: &dashboard2.AnnotationTarget{
+				Limit:    100,
+				MatchAny: false,
+				Tags:     []string{"tag1"},
+				Type:     "tags",
+			},
+		}
+		annos := []DashAnnotation{grafanaAnnotation, grafanaTagAnnotation}
+		dashboard := AddAnnotationsToDashboard(t, dash, annos)
+
+		annotationsRepo := annotations.FakeAnnotationsRepo{}
+		fakeStore := FakePublicDashboardStore{}
+		service := &PublicDashboardServiceImpl{
+			log:             log.New("test.logger"),
+			store:           &fakeStore,
+			AnnotationsRepo: &annotationsRepo,
+		}
+		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
+		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
+			{
+				Id:          1,
+				DashboardId: 1,
+				PanelId:     1,
+				Tags:        []string{"tag1"},
+				TimeEnd:     2,
+				Time:        2,
+				Text:        "text",
+			},
+		}, nil).Maybe()
+
+		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+
+		expected := AnnotationEvent{
+			Id:          1,
+			DashboardId: 1,
+			PanelId:     0,
+			Tags:        []string{"tag1"},
+			IsRegion:    false,
+			Text:        "text",
+			Color:       color,
+			Time:        2,
+			TimeEnd:     2,
+			Source:      grafanaTagAnnotation,
+		}
+		require.NoError(t, err)
+		assert.Len(t, items, 1)
+		assert.Equal(t, expected, items[0])
+	})
+
+	t.Run("Test panelId set to zero when annotation event is for a tags query", func(t *testing.T) {
+		dash := models.NewDashboard("test")
+		color := "red"
+		name := "annoName"
+		grafanaAnnotation := DashAnnotation{
+			Datasource: CreateDatasource("grafana", "grafana"),
+			Enable:     true,
+			Name:       &name,
+			IconColor:  &color,
+			Target: &dashboard2.AnnotationTarget{
+				Limit:    100,
+				MatchAny: false,
+				Tags:     []string{"tag1"},
+				Type:     "tags",
+			},
+		}
+		annos := []DashAnnotation{grafanaAnnotation}
+		dashboard := AddAnnotationsToDashboard(t, dash, annos)
+
+		annotationsRepo := annotations.FakeAnnotationsRepo{}
+		fakeStore := FakePublicDashboardStore{}
+		service := &PublicDashboardServiceImpl{
+			log:             log.New("test.logger"),
+			store:           &fakeStore,
+			AnnotationsRepo: &annotationsRepo,
+		}
+		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
+		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
+			{
+				Id:          1,
+				DashboardId: 1,
+				PanelId:     1,
+				Tags:        []string{},
+				TimeEnd:     1,
+				Time:        2,
+				Text:        "text",
+			},
+		}, nil).Maybe()
+
+		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+
+		expected := AnnotationEvent{
+			Id:          1,
+			DashboardId: 1,
+			PanelId:     0,
+			Tags:        []string{},
+			IsRegion:    true,
+			Text:        "text",
+			Color:       color,
+			Time:        2,
+			TimeEnd:     1,
+			Source:      grafanaAnnotation,
+		}
+		require.NoError(t, err)
+		assert.Len(t, items, 1)
+		assert.Equal(t, expected, items[0])
+	})
+
+	t.Run("Test can get grafana annotations and will skip annotation queries and disabled annotations", func(t *testing.T) {
+		dash := models.NewDashboard("test")
+		color := "red"
+		name := "annoName"
+		disabledGrafanaAnnotation := DashAnnotation{
+			Datasource: CreateDatasource("grafana", "grafana"),
+			Enable:     false,
+			Name:       &name,
+			IconColor:  &color,
+		}
+		grafanaAnnotation := DashAnnotation{
+			Datasource: CreateDatasource("grafana", "grafana"),
+			Enable:     true,
+			Name:       &name,
+			IconColor:  &color,
+			Target: &dashboard2.AnnotationTarget{
+				Limit:    100,
+				MatchAny: true,
+				Tags:     nil,
+				Type:     "dashboard",
+			},
+			Type: "dashboard",
+		}
+		queryAnnotation := DashAnnotation{
+			Datasource: CreateDatasource("prometheus", "abc123"),
+			Enable:     true,
+			Name:       &name,
+		}
+		annos := []DashAnnotation{grafanaAnnotation, queryAnnotation, disabledGrafanaAnnotation}
+		dashboard := AddAnnotationsToDashboard(t, dash, annos)
+
+		annotationsRepo := annotations.FakeAnnotationsRepo{}
+		fakeStore := FakePublicDashboardStore{}
+		service := &PublicDashboardServiceImpl{
+			log:             log.New("test.logger"),
+			store:           &fakeStore,
+			AnnotationsRepo: &annotationsRepo,
+		}
+		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
+		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
+			{
+				Id:          1,
+				DashboardId: 1,
+				PanelId:     1,
+				Tags:        []string{},
+				TimeEnd:     1,
+				Time:        2,
+				Text:        "text",
+			},
+		}, nil).Maybe()
+
+		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+
+		expected := AnnotationEvent{
+			Id:          1,
+			DashboardId: 1,
+			PanelId:     1,
+			Tags:        []string{},
+			IsRegion:    true,
+			Text:        "text",
+			Color:       color,
+			Time:        2,
+			TimeEnd:     1,
+			Source:      grafanaAnnotation,
+		}
+		require.NoError(t, err)
+		assert.Len(t, items, 1)
+		assert.Equal(t, expected, items[0])
+	})
+
+	t.Run("test will return nothing when dashboard has no annotations", func(t *testing.T) {
+		annotationsRepo := annotations.FakeAnnotationsRepo{}
+		fakeStore := FakePublicDashboardStore{}
+		service := &PublicDashboardServiceImpl{
+			log:             log.New("test.logger"),
+			store:           &fakeStore,
+			AnnotationsRepo: &annotationsRepo,
+		}
+		dashboard := models.NewDashboard("dashWithNoAnnotations")
+		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
+		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+
+		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+
+		require.NoError(t, err)
+		assert.Empty(t, items)
+	})
+
+	t.Run("test will error when annotations repo returns an error", func(t *testing.T) {
+		annotationsRepo := annotations.FakeAnnotationsRepo{}
+		fakeStore := FakePublicDashboardStore{}
+		service := &PublicDashboardServiceImpl{
+			log:             log.New("test.logger"),
+			store:           &fakeStore,
+			AnnotationsRepo: &annotationsRepo,
+		}
+		dash := models.NewDashboard("test")
+		color := "red"
+		name := "annoName"
+		grafanaAnnotation := DashAnnotation{
+			Datasource: CreateDatasource("grafana", "grafana"),
+			Enable:     true,
+			Name:       &name,
+			IconColor:  &color,
+			Target: &dashboard2.AnnotationTarget{
+				Limit:    100,
+				MatchAny: false,
+				Tags:     []string{"tag1"},
+				Type:     "tags",
+			},
+		}
+		annos := []DashAnnotation{grafanaAnnotation}
+		dash = AddAnnotationsToDashboard(t, dash, annos)
+		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dash.Uid}
+		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dash, nil)
+		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return(nil, errors.New("failed")).Maybe()
+
+		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+
+		require.Error(t, err)
+		require.Nil(t, items)
+	})
 }
 
 func TestGetPublicDashboard(t *testing.T) {
@@ -121,7 +410,7 @@ func TestGetPublicDashboard(t *testing.T) {
 
 func TestSavePublicDashboard(t *testing.T) {
 	t.Run("Saving public dashboard", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
@@ -165,7 +454,7 @@ func TestSavePublicDashboard(t *testing.T) {
 	})
 
 	t.Run("Validate pubdash has default time setting value", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
@@ -195,7 +484,7 @@ func TestSavePublicDashboard(t *testing.T) {
 	})
 
 	t.Run("Validate pubdash whose dashboard has template variables returns error", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		templateVars := make([]map[string]interface{}, 1)
@@ -256,7 +545,7 @@ func TestSavePublicDashboard(t *testing.T) {
 
 func TestUpdatePublicDashboard(t *testing.T) {
 	t.Run("Updating public dashboard", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
@@ -317,7 +606,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 	})
 
 	t.Run("Updating set empty time settings", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
@@ -367,7 +656,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 }
 
 func TestBuildAnonymousUser(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 	publicdashboardStore := database.ProvideStore(sqlStore)
@@ -378,16 +667,24 @@ func TestBuildAnonymousUser(t *testing.T) {
 
 	t.Run("will add datasource read and query permissions to user for each datasource in dashboard", func(t *testing.T) {
 		user := service.BuildAnonymousUser(context.Background(), dashboard)
+
 		require.Equal(t, dashboard.OrgId, user.OrgID)
 		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgID]["datasources:query"][0])
 		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgID]["datasources:query"][1])
 		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgID]["datasources:read"][0])
 		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgID]["datasources:read"][1])
 	})
+	t.Run("will add dashboard and annotation permissions needed for getting annotations", func(t *testing.T) {
+		user := service.BuildAnonymousUser(context.Background(), dashboard)
+
+		require.Equal(t, dashboard.OrgId, user.OrgID)
+		require.Equal(t, "annotations:type:dashboard", user.Permissions[user.OrgID]["annotations:read"][0])
+		require.Equal(t, "dashboards:*", user.Permissions[user.OrgID]["dashboards:read"][0])
+	})
 }
 
 func TestGetMetricRequest(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 	publicdashboardStore := database.ProvideStore(sqlStore)
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
@@ -484,7 +781,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 }
 
 func TestBuildMetricRequest(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 	publicdashboardStore := database.ProvideStore(sqlStore)
 
@@ -866,6 +1163,36 @@ func TestDashboardEnabledChanged(t *testing.T) {
 	t.Run("updated isEnabled changed", func(t *testing.T) {
 		assert.True(t, publicDashboardIsEnabledChanged(&PublicDashboard{IsEnabled: false}, &PublicDashboard{IsEnabled: true}))
 	})
+}
+
+func CreateDatasource(dsType string, uid string) struct {
+	Type *string `json:"type,omitempty"`
+	Uid  *string `json:"uid,omitempty"`
+} {
+	return struct {
+		Type *string `json:"type,omitempty"`
+		Uid  *string `json:"uid,omitempty"`
+	}{
+		Type: &dsType,
+		Uid:  &uid,
+	}
+}
+
+func AddAnnotationsToDashboard(t *testing.T, dash *models.Dashboard, annotations []DashAnnotation) *models.Dashboard {
+	type annotationsDto struct {
+		List []DashAnnotation `json:"list"`
+	}
+	annos := annotationsDto{}
+	annos.List = annotations
+	annoJSON, err := json.Marshal(annos)
+	require.NoError(t, err)
+
+	dashAnnos, err := simplejson.NewJson(annoJSON)
+	require.NoError(t, err)
+
+	dash.Data.Set("annotations", dashAnnos)
+
+	return dash
 }
 
 func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {

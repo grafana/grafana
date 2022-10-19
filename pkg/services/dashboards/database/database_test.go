@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -29,14 +30,15 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	var sqlStore *sqlstore.SQLStore
+	var cfg *setting.Cfg
 	var savedFolder, savedDash, savedDash2 *models.Dashboard
 	var dashboardStore *DashboardStore
 	var starService star.Service
 
 	setup := func() {
-		sqlStore = sqlstore.InitTestDB(t)
-		starService = starimpl.ProvideService(sqlStore, sqlStore.Cfg)
-		dashboardStore = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+		sqlStore, cfg = db.InitTestDBwithCfg(t)
+		starService = starimpl.ProvideService(sqlStore, cfg)
+		dashboardStore = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg))
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.Id, false, "prod")
@@ -249,7 +251,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, len(res), 0)
 
-		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			var existingRuleID int64
 			exists, err := sess.Table("alert_rule").Where("namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)", savedFolder.Id).Cols("id").Get(&existingRuleID)
 			require.NoError(t, err)
@@ -486,7 +488,7 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 	dashboardStore := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg))
@@ -510,7 +512,7 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 	dashboardStore := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg))
@@ -561,7 +563,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 	dashboardStore := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg))
@@ -603,8 +605,8 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	assert.Equal(t, dashB.Id, results[0].ID)
 }
 
-func insertTestRule(t *testing.T, sqlStore *sqlstore.SQLStore, foderOrgID int64, folderUID string) {
-	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func insertTestRule(t *testing.T, sqlStore sqlstore.Store, foderOrgID int64, folderUID string) {
+	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		type alertQuery struct {
 			RefID         string
 			DatasourceUID string
@@ -683,6 +685,7 @@ func CreateUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role str
 	sqlStore.Cfg.AutoAssignOrgRole = role
 	currentUserCmd := user.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
 	currentUser, err := sqlStore.CreateUser(context.Background(), currentUserCmd)
+
 	require.NoError(t, err)
 	q1 := models.GetUserOrgListQuery{UserId: currentUser.ID}
 	err = sqlStore.GetUserOrgList(context.Background(), &q1)
