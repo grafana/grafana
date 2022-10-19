@@ -19,6 +19,30 @@ export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
   };
 }
 
+export function fullCurrency(symbol: string, asSuffix?: boolean): ValueFormatter {
+  return (size: number, decimals?: DecimalCount) => {
+    if (size === null) {
+      return { text: '' };
+    }
+
+    const locale = Intl.NumberFormat().resolvedOptions().locale;
+    const number = Intl.NumberFormat(locale, { minimumFractionDigits: 0, maximumFractionDigits: 1 }).format(size);
+
+    const text = decimals
+      ? Intl.NumberFormat(locale, {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals,
+        }).format(size)
+      : number;
+
+    return {
+      prefix: asSuffix ? '' : symbol,
+      suffix: asSuffix ? symbol : '',
+      text,
+    };
+  };
+}
+
 const SI_PREFIXES = ['f', 'p', 'n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
 const SI_BASE_INDEX = SI_PREFIXES.indexOf('');
 

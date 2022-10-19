@@ -5,7 +5,7 @@ import { DecimalCount } from '../types/displayValue';
 
 import { getCategories } from './categories';
 import { toDateTimeValueFormatter } from './dateTimeFormatters';
-import { getOffsetFromSIPrefix, SIPrefix, currency } from './symbolFormatters';
+import { getOffsetFromSIPrefix, SIPrefix, currency, fullCurrency } from './symbolFormatters';
 
 export interface FormattedValue {
   text: string;
@@ -241,7 +241,13 @@ export function getValueFormat(id?: string | null): ValueFormatter {
       }
 
       if (key === 'currency') {
-        return currency(sub);
+        const keySplit = sub.split(':');
+
+        if (keySplit[0] === 'financial' && keySplit.length === 2) {
+          return fullCurrency(keySplit[1]);
+        } else {
+          return currency(sub);
+        }
       }
 
       if (key === 'bool') {
