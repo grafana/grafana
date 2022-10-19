@@ -159,7 +159,7 @@ export class ContextSrv {
     if (this.accessControlEnabled()) {
       return this.hasPermission(AccessControlAction.DataSourcesExplore) && config.exploreEnabled;
     }
-    return (this.isEditor || config.viewersCanEdit) && !(config.exploreEnabled === false);
+    return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
   }
 
   hasAccess(action: string, fallBack: boolean): boolean {
