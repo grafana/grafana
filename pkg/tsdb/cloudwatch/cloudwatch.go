@@ -132,7 +132,7 @@ func (cwe *cloudWatchExecutor) getClients(pluginCtx backend.PluginContext, regio
 		return models.Clients{}, err
 	}
 	return models.Clients{
-		MetricsClientProvider: clients.NewMetricsClient(cloudwatch.New(sess), cwe.cfg),
+		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), cwe.cfg),
 	}, nil
 }
 
@@ -460,6 +460,13 @@ func (e *cloudWatchExecutor) getDSInfo(pluginCtx backend.PluginContext) (*dataso
 
 func isTerminated(queryStatus string) bool {
 	return queryStatus == "Complete" || queryStatus == "Cancelled" || queryStatus == "Failed" || queryStatus == "Timeout"
+}
+
+// NewMetricsAPI is a CloudWatch metrics api factory.
+//
+// Stubbable by tests.
+var NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider {
+	return cloudwatch.New(sess)
 }
 
 // NewCWClient is a CloudWatch client factory.
