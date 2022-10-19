@@ -61,6 +61,22 @@ func RequiresExistingAccessToken(publicDashboardService publicdashboards.Service
 	}
 }
 
+// RequiredCorrectAccessToken Middleware to validate that the AccessToken has the correct format before continuing
+func RequiredCorrectAccessToken() func(c *models.ReqContext) {
+	return func(c *models.ReqContext) {
+		accessToken, ok := web.Params(c.Req)[":accessToken"]
+
+		if !ok {
+			c.JsonApiErr(http.StatusBadRequest, "No access token provided", nil)
+			return
+		}
+
+		if !tokens.IsValidAccessToken(accessToken) {
+			c.JsonApiErr(http.StatusBadRequest, "Invalid access token", nil)
+		}
+	}
+}
+
 func CountPublicDashboardRequest() func(c *models.ReqContext) {
 	return func(c *models.ReqContext) {
 		metrics.MPublicDashboardRequestCount.Inc()

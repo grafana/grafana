@@ -61,9 +61,9 @@ func (api *Api) RegisterAPIEndpoints() {
 	// circular dependency
 
 	// public endpoints
-	api.RouteRegister.Get("/api/public/dashboards/:accessToken", routing.Wrap(api.GetPublicDashboard))
-	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
-	api.RouteRegister.Get("/api/public/dashboards/:accessToken/annotations", routing.Wrap(api.GetAnnotations))
+	api.RouteRegister.Get("/api/public/dashboards/:accessToken", RequiredCorrectAccessToken(), routing.Wrap(api.GetPublicDashboard))
+	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", RequiredCorrectAccessToken(), routing.Wrap(api.QueryPublicDashboard))
+	api.RouteRegister.Get("/api/public/dashboards/:accessToken/annotations", RequiredCorrectAccessToken(), routing.Wrap(api.GetAnnotations))
 
 	// List Public Dashboards
 	api.RouteRegister.Get("/api/dashboards/public", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
@@ -135,7 +135,7 @@ func (api *Api) GetPublicDashboardConfig(c *models.ReqContext) response.Response
 	return response.JSON(http.StatusOK, pdc)
 }
 
-// Sets public dashboard configuration for dashboard
+// SavePublicDashboardConfig Sets public dashboard configuration for dashboard
 // POST /api/dashboards/uid/:uid/public-config
 func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
