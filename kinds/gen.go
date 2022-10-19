@@ -20,10 +20,10 @@ import (
 // that derives from raw and structured core kinds.
 
 // All the single-kind generators to be run for core kinds.
-var singles = []codegen.KindGenerator{}
+var singles = []codegen.KindGenStep{}
 
 // All the aggregate generators to be run for core kinds.
-var multis = []codegen.AggregateKindGenerator{}
+var multis = []codegen.AggregateKindGenStep{}
 
 const sep = string(filepath.Separator)
 
@@ -46,10 +46,10 @@ func main() {
 	var all []*codegen.DeclForGen
 
 	// structured kinds first
-	f := os.DirFS(filepath.Join(groot, "kind", "structured"))
+	f := os.DirFS(filepath.Join(groot, "kinds", "structured"))
 	ents := elsedie(fs.ReadDir(f, "."))("error reading structured fs root directory")
 	for _, ent := range ents {
-		rel := filepath.Join("kind", "structured", ent.Name())
+		rel := filepath.Join("kinds", "structured", ent.Name())
 		sub := elsedie(fs.Sub(f, ent.Name()))(fmt.Sprintf("error creating subfs for path %s", rel))
 		decl, err := kind.LoadCoreKindFS[kind.CoreStructuredMeta](sub, rel, rt.Context())
 		if err != nil {
@@ -63,10 +63,10 @@ func main() {
 	}
 
 	// now raw kinds
-	f = os.DirFS(filepath.Join(groot, "kind", "raw"))
+	f = os.DirFS(filepath.Join(groot, "kinds", "raw"))
 	ents = elsedie(fs.ReadDir(f, "."))("error reading raw fs root directory")
 	for _, ent := range ents {
-		rel := filepath.Join("kind", "raw", ent.Name())
+		rel := filepath.Join("kinds", "raw", ent.Name())
 		sub := elsedie(fs.Sub(f, ent.Name()))(fmt.Sprintf("error creating subfs for path %s", rel))
 		pk, err := kind.LoadCoreKindFS[kind.RawMeta](sub, rel, rt.Context())
 		if err != nil {
@@ -136,7 +136,7 @@ func nameFor(m kind.SomeKindMeta) string {
 func elsedie[T any](t T, err error) func(msg string) T {
 	if err != nil {
 		return func(msg string) T {
-			fmt.Fprintf(os.Stderr, "%s: %s", msg, err)
+			fmt.Fprintf(os.Stderr, "%s: %s\n", msg, err)
 			os.Exit(1)
 			return t
 		}
@@ -147,6 +147,6 @@ func elsedie[T any](t T, err error) func(msg string) T {
 }
 
 func die(err error) {
-	fmt.Fprint(os.Stderr, err)
+	fmt.Fprint(os.Stderr, err, "\n")
 	os.Exit(1)
 }
