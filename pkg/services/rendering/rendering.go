@@ -91,7 +91,7 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 		perRequestRenderKeyProvider: &perRequestRenderKeyProvider{
 			cache:     remoteCache,
 			log:       logger,
-			keyExpiry: 5 * time.Minute,
+			keyExpiry: cfg.RendererRenderKeyLifeTime,
 		},
 		capabilities: []Capability{
 			{
