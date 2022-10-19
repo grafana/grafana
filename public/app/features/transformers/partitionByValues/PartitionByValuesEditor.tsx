@@ -7,25 +7,25 @@ import {
   TransformerUIProps,
   SelectableValue,
 } from '@grafana/data';
-import { FilterFieldsByNameTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByName';
-import { InlineField, InlineFieldRow, ValuePicker, Button, HorizontalGroup } from '@grafana/ui';
+import { InlineField, InlineFieldRow, ValuePicker, Button, HorizontalGroup, FieldValidationMessage } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
 
-import { partitionByValuesTransformer } from './partitionByValues';
+import { partitionByValuesTransformer, PartitionByValuesTransformerOptions } from './partitionByValues';
 
 export function PartitionByValuesEditor({
   input,
   options,
   onChange,
-}: TransformerUIProps<FilterFieldsByNameTransformerOptions>) {
+}: TransformerUIProps<PartitionByValuesTransformerOptions>) {
   const names = useFieldDisplayNames(input);
   const allSelectOptions = useSelectOptions(names);
   const selectOptions = useMemo(() => {
-    const include = new Set(options.include?.names);
-    if (include.size < 1) {
+    const fieldNames = new Set(options.fields.names);
+
+    if (fieldNames.size < 1) {
       return allSelectOptions;
     }
-    return allSelectOptions.filter((v) => !include.has(v.value!));
+    return allSelectOptions.filter((v) => !fieldNames.has(v.value!));
   }, [allSelectOptions, options]);
 
   const addField = useCallback(
@@ -33,11 +33,14 @@ export function PartitionByValuesEditor({
       if (!v.value) {
         return;
       }
-      const include = new Set(options.include?.names);
-      include.add(v.value);
+
+      const fieldNames = new Set(options.fields.names);
+
+      fieldNames.add(v.value);
+
       onChange({
         ...options,
-        include: { names: Array.from(include) },
+        fields: { names: Array.from(fieldNames) },
       });
     },
     [onChange, options]
@@ -48,17 +51,25 @@ export function PartitionByValuesEditor({
       if (!v) {
         return;
       }
-      const include = new Set(options.include?.names);
-      include.delete(v);
+
+      const fieldNames = new Set(options.fields.names);
+
+      fieldNames.delete(v);
+
       onChange({
         ...options,
-        include: { names: Array.from(include) },
+        fields: { names: Array.from(fieldNames) },
       });
     },
     [onChange, options]
   );
 
-  const include = Array.from(new Set(options.include?.names));
+  if (input.length > 1) {
+    return <FieldValidationMessage>Partition by values only works with a single frame.</FieldValidationMessage>;
+  }
+
+  const include = Array.from(new Set(options.fields.names));
+
   return (
     <div>
       <InlineFieldRow>
@@ -86,7 +97,7 @@ export function PartitionByValuesEditor({
   );
 }
 
-export const partitionByValuesTransformRegistryItem: TransformerRegistryItem<FilterFieldsByNameTransformerOptions> = {
+export const partitionByValuesTransformRegistryItem: TransformerRegistryItem<PartitionByValuesTransformerOptions> = {
   id: DataTransformerID.partitionByValues,
   editor: PartitionByValuesEditor,
   transformation: partitionByValuesTransformer,

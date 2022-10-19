@@ -2,8 +2,8 @@ type Idxs = number[];
 type KeyMap = Map<unknown, KeyMap | Idxs>;
 type Accum = Idxs[];
 
-/** The tottaly type aware flavor is much slower, so we prefer to disable the lint rule in this case */
-/* eslint-disable */
+/** The totally type-aware flavor is much slower, so we prefer to disable the lint rule in this case */
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 const digArrs = (map: KeyMap | Idxs, depth: number, acc: Accum = []) => {
   // the leaf nodes are always Idxs
   if (depth === 0) {
@@ -49,4 +49,4 @@ export function partition(keys: unknown[][]) {
   return digArrs(rootMap, klen);
 }
 
-/* eslint-enable */
+/* eslint-enable @typescript-eslint/consistent-type-assertions */
