@@ -1,5 +1,8 @@
 version: 2.1
 
+# this allows to use CircleCI's dynamic configuration feature
+setup: true
+
 orbs:
   gcp-gcr: circleci/gcp-gcr@0.13.0
 
