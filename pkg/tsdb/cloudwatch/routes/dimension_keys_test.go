@@ -13,18 +13,10 @@ import (
 )
 
 func Test_DimensionKeys_Route(t *testing.T) {
-	origNewListMetricsService := newListMetricsService
-	t.Cleanup(func() {
-		newListMetricsService = origNewListMetricsService
-	})
-	var clientFactoryMock = func(pluginCtx backend.PluginContext, region string) (clients models.Clients, err error) {
-		return nil, nil
-	}
-
 	t.Run("rejects POST method", func(t *testing.T) {
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("POST", "/dimension-keys?region=us-east-1", nil)
-		handler := http.HandlerFunc(RouteInjector(DimensionKeysHandler, clientFactoryMock))
+		handler := http.HandlerFunc(RouteInjector(DimensionKeysHandler, nil))
 		handler.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusMethodNotAllowed, rr.Code)
 	})
@@ -32,7 +24,7 @@ func Test_DimensionKeys_Route(t *testing.T) {
 	t.Run("requires region query value", func(t *testing.T) {
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/dimension-keys", nil)
-		handler := http.HandlerFunc(RouteInjector(DimensionKeysHandler, clientFactoryMock))
+		handler := http.HandlerFunc(RouteInjector(DimensionKeysHandler, nil))
 		handler.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusBadRequest, rr.Code)
 	})
@@ -65,7 +57,7 @@ func Test_DimensionKeys_Route(t *testing.T) {
 			}
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", tc.url, nil)
-			handler := http.HandlerFunc(RouteInjector(DimensionKeysHandler, clientFactoryMock))
+			handler := http.HandlerFunc(RouteInjector(DimensionKeysHandler, nil))
 			handler.ServeHTTP(rr, req)
 			mockListMetricsService.AssertNumberOfCalls(t, tc.methodName, 1)
 		})
@@ -80,7 +72,7 @@ func Test_DimensionKeys_Route(t *testing.T) {
 			}
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", tc.url, nil)
-			handler := http.HandlerFunc(RouteInjector(DimensionKeysHandler, clientFactoryMock))
+			handler := http.HandlerFunc(RouteInjector(DimensionKeysHandler, nil))
 			handler.ServeHTTP(rr, req)
 			assert.Equal(t, http.StatusInternalServerError, rr.Code)
 			assert.Equal(t, `{"Message":"error in DimensionKeyHandler: some error","Error":"some error","StatusCode":500}`, rr.Body.String())
