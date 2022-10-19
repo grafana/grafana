@@ -13,6 +13,8 @@ import { noopTransformer } from '@grafana/data/src/transformations/transformers/
 import { partition } from './partition';
 
 export interface FrameNamingOptions {
+  /** whether to append to existing frame name, false -> replace */
+  append?: boolean; // false
   /** whether to include discriminator field names, e.g. true -> Region=Europe Profession=Chef, false -> 'Europe Chef'  */
   withFields?: boolean; // false
   /** name/value separator, e.g. '=' in 'Region=Europe' */
@@ -22,6 +24,7 @@ export interface FrameNamingOptions {
 }
 
 const defaultFrameNameOptions: FrameNamingOptions = {
+  append: false,
   withFields: false,
   separator1: '=',
   separator2: ' ',
@@ -74,15 +77,19 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Partit
       };
 
       return partition(keyFieldsVals).map((idxs: number[]) => {
-        const name = buildFrameName(
+        let name = buildFrameName(
           frameNameOpts,
           names,
           keyFields.map((f, i) => keyFieldsVals[i][idxs[0]])
         );
 
+        if (options.naming?.append && frame.name) {
+          name = `${frame.name} ${name}`;
+        }
+
         return {
           ...frame,
-          name: frame.name == null ? name : `${frame.name} ${name}`,
+          name,
           length: idxs.length,
           fields: frame.fields.map((f) => {
             const vals = f.values.toArray();
