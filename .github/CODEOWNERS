@@ -175,7 +175,7 @@ lerna.json @grafana/frontend-ops
 .betterer.results @joshhunt
 
 # @grafana/ui component documentation
-*.mdx @jessover9000 @grafana/plugins-platform-frontend
+*.mdx @grafana/plugins-platform-frontend
 
 # Core datasources
 /public/app/plugins/datasource/cloudwatch @grafana/aws-plugins
