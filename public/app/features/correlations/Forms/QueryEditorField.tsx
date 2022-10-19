@@ -1,10 +1,10 @@
-import { noop } from 'lodash';
-import React from 'react';
+import { css } from '@emotion/css';
+import React, { useMemo, useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Field, LoadingPlaceholder, Alert, Button, HorizontalGroup, Icon } from '@grafana/ui';
+import { Field, LoadingPlaceholder, Alert, Button, HorizontalGroup, Icon, useTheme2 } from '@grafana/ui';
 
 interface Props {
   dsUid?: string;
@@ -14,6 +14,20 @@ interface Props {
 }
 
 export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
+  const [isValidQuery, setIsValidQuery] = useState(false);
+  const theme = useTheme2();
+
+  const styles = useMemo(() => {
+    return {
+      error: css`
+        color: ${theme.colors.error.text};
+      `,
+      valid: css`
+        color: ${theme.colors.success.text};
+      `,
+    };
+  }, [theme]);
+
   const {
     value: datasource,
     loading: dsLoading,
@@ -25,16 +39,12 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
     return getDataSourceSrv().get(dsUid);
   }, [dsUid]);
   const QueryEditor = datasource?.components?.QueryEditor;
-  console.log('QueryEditor', datasource);
-
-  // TODO: Get status of query from state
-  // initialise isValidQuery state locally
-  const isValidQuery = false;
 
   const handleValidation = () => {
     // trigger query
-    // filter result as we only need whether it was successful or not
+    // filter result as we only need to know whether it was successful or not
     // if it was successful change state for isValidQuery to true
+    setIsValidQuery(true);
   };
 
   return (
@@ -65,19 +75,26 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
             return <Alert title="Data source does not export a query editor."></Alert>;
           }
 
-          // TODO: not sure about noop yet
           return (
             <>
-              <QueryEditor onRunQuery={noop} onChange={onChange} datasource={datasource} query={value} />
+              <QueryEditor
+                onRunQuery={datasource.type === 'loki' || 'prometheus' ? handleValidation : () => {}}
+                onChange={onChange}
+                datasource={datasource}
+                query={value}
+              />
               <HorizontalGroup justify="flex-end">
-                {isValidQuery && (
-                  <div className="styles.valid">
-                    <Icon name="check" /> This query will process <strong>some text depending on the result</strong>{' '}
-                    when run.
+                {isValidQuery ? (
+                  <div className={styles.valid}>
+                    <Icon name="check" /> This query is valid.
+                  </div>
+                ) : (
+                  <div className={styles.error}>
+                    <Icon name="exclamation-triangle" /> This query is not valid.
                   </div>
                 )}
                 <Button variant="primary" icon={'check'} type="button" onClick={handleValidation}>
-                  {isValidQuery ? 'Query is valid' : 'Validate query'}
+                  Validate query
                 </Button>
               </HorizontalGroup>
             </>
