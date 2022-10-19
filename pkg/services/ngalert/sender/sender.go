@@ -86,7 +86,7 @@ func (s *ExternalAlertmanager) Run() {
 
 	go func() {
 		if err := s.sdManager.Run(); err != nil {
-			s.logger.Error("failed to start the sender service discovery manager", "err", err)
+			s.logger.Error("failed to start the sender service discovery manager", "error", err)
 		}
 		s.wg.Done()
 	}()
@@ -197,14 +197,14 @@ func (s *ExternalAlertmanager) sanitizeLabelSet(lbls models.LabelSet) labels.Lab
 	for _, k := range sortedKeys(lbls) {
 		sanitizedLabelName, err := s.sanitizeLabelName(k)
 		if err != nil {
-			s.logger.Error("alert sending to external Alertmanager(s) contains an invalid label/annotation name that failed to sanitize, skipping", "name", k, "err", err)
+			s.logger.Error("alert sending to external Alertmanager(s) contains an invalid label/annotation name that failed to sanitize, skipping", "name", k, "error", err)
 			continue
 		}
 
 		// There can be label name collisions after we sanitize. We check for this and attempt to make the name unique again using a short hash of the original name.
 		if _, ok := set[sanitizedLabelName]; ok {
 			sanitizedLabelName = sanitizedLabelName + fmt.Sprintf("_%.3x", md5.Sum([]byte(k)))
-			s.logger.Warn("alert contains duplicate label/annotation name after sanitization, appending unique suffix", "name", k, "new_name", sanitizedLabelName, "err", err)
+			s.logger.Warn("alert contains duplicate label/annotation name after sanitization, appending unique suffix", "name", k, "new_name", sanitizedLabelName, "error", err)
 		}
 
 		set[sanitizedLabelName] = struct{}{}

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
@@ -42,7 +42,7 @@ func TestHandleRequest(t *testing.T) {
 			actualReq = req
 			return backend.NewQueryDataResponse(), nil
 		}
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		datasourcePermissions := acmock.NewMockedPermissionsService()

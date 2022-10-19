@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/coremodel/dashboard"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
@@ -77,6 +78,28 @@ type PublicDashboard struct {
 	UpdatedAt time.Time `json:"updatedAt" xorm:"updated_at"`
 }
 
+// Alias the generated type
+type DashAnnotation = dashboard.AnnotationQuery
+
+type AnnotationsDto struct {
+	Annotations struct {
+		List []DashAnnotation `json:"list"`
+	}
+}
+
+type AnnotationEvent struct {
+	Id          int64                     `json:"id"`
+	DashboardId int64                     `json:"dashboardId"`
+	PanelId     int64                     `json:"panelId"`
+	Tags        []string                  `json:"tags"`
+	IsRegion    bool                      `json:"isRegion"`
+	Text        string                    `json:"text"`
+	Color       string                    `json:"color"`
+	Time        int64                     `json:"time"`
+	TimeEnd     int64                     `json:"timeEnd"`
+	Source      dashboard.AnnotationQuery `json:"source"`
+}
+
 func (pd PublicDashboard) TableName() string {
 	return "dashboard_public"
 }
@@ -133,6 +156,11 @@ type SavePublicDashboardConfigDTO struct {
 type PublicDashboardQueryDTO struct {
 	IntervalMs    int64
 	MaxDataPoints int64
+}
+
+type AnnotationsQueryDTO struct {
+	From int64
+	To   int64
 }
 
 //

@@ -505,6 +505,11 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	return store
 }
 
+func InitTestDBWithCfg(t ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
+	store := InitTestDB(t, opts...)
+	return store, store.Cfg
+}
+
 func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()

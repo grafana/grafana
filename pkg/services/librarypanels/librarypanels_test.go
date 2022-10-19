@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -24,9 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -1288,7 +1287,7 @@ type scenarioContext struct {
 	user           *user.SignedInUser
 	folder         *models.Folder
 	initialResult  libraryPanelResult
-	sqlStore       *sqlstore.SQLStore
+	sqlStore       db.DB
 }
 
 type folderACLItem struct {
@@ -1445,7 +1444,7 @@ func updateFolderACL(t *testing.T, dashboardStore *database.DashboardStore, fold
 }
 
 func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
-	store := mockstore.NewSQLStoreMock()
+	store := dbtest.NewFakeDB()
 	guardian.InitLegacyGuardian(store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
 	t.Helper()
 
@@ -1499,8 +1498,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		cfg.RBACEnabled = false
 		orgID := int64(1)
 		role := org.RoleAdmin
-		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+		sqlStore, cfg := db.InitTestDBwithCfg(t)
+		dashboardStore := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 
 		features := featuremgmt.WithFeatures()
 		ac := acmock.New()
