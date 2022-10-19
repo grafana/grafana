@@ -107,7 +107,7 @@ export function findField(frame?: DataFrame, name?: string): Field | undefined {
   return undefined;
 }
 
-export function findFieldIndex(frame?: DataFrame, name?: string, frames?: DataFrame[]): number | undefined {
+export function findFieldIndex(frame?: DataFrame, name?: string): number | undefined {
   if (!frame || !name?.length) {
     return undefined;
   }
@@ -117,7 +117,7 @@ export function findFieldIndex(frame?: DataFrame, name?: string, frames?: DataFr
     if (name === field.name) {
       return i;
     }
-    const disp = getFieldDisplayName(field, frame, frames);
+    const disp = getFieldDisplayName(field, frame);
     if (name === disp) {
       return i;
     }
