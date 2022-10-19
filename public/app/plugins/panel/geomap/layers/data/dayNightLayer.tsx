@@ -17,7 +17,6 @@ import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 
 import DayNight from 'ol-ext/source/DayNight';
-import Photo from 'ol-ext/style/Photo'
 import { fromLonLat } from 'ol/proj';
 import { Subscription } from 'rxjs';
 import { MultiLineString } from 'ol/geom';
@@ -114,15 +113,9 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
         features: [sunFeature],
       }),
       style: new Style({
-        image: new Photo({
-          src: 'http://www2.culture.gouv.fr/Wave/image/memoire/1597/sap40_d0000861_v.jpg',
-          radius: 20,
-          crop: true,
-          kind: 'square',
-          stroke: new Stroke({
-            width: 2,
-            color: '#000'
-          })
+        image: new Circle({
+          radius: 13,
+          fill: new Fill({color: 'rgb(253,184,19)'}),
         })
       }),
     });

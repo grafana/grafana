@@ -72,7 +72,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     const style = await getStyleConfigState(config.style);
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
-    console.log(source)
     const vectorLayer = new VectorLayer({
       source,
     });
@@ -86,13 +85,10 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     if (!style.fields) {
       // Set a global style
       vectorLayer.setStyle(style.maker(style.base));
-      console.log('global')
     } else {
-      console.log('else')
       vectorLayer.setStyle((feature: FeatureLike) => {
         const idx = feature.get('rowIndex') as number;
         const dims = style.dims;
-        console.log(idx)
         if (!dims || !isNumber(idx)) {
           return style.maker(style.base);
         }
