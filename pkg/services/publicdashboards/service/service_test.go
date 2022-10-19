@@ -936,7 +936,7 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "should return only the dashboard with permissions",
+			name: "should return only dashboards with permissions",
 			args: args{
 				ctx: context.Background(),
 				u: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -956,7 +956,7 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "should return also dashboards that does not exist but were associated to a public dashboard",
+			name: "should return orphaned public dashboards",
 			args: args{
 				ctx: context.Background(),
 				u: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -1000,7 +1000,7 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "different errors should be returned",
+			name: "errors different than not data found should be returned",
 			args: args{
 				ctx: context.Background(),
 				u: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{

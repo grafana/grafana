@@ -363,18 +363,21 @@ func (pd *PublicDashboardServiceImpl) logIsEnabledChanged(existingPubdash *Publi
 
 // Filter out dashboards that user does not have read access to
 func (pd *PublicDashboardServiceImpl) filterDashboardsByPermissions(ctx context.Context, u *user.SignedInUser, publicDashboards []PublicDashboardListResponse) ([]PublicDashboardListResponse, error) {
-	for i := len(publicDashboards) - 1; i >= 0; i-- {
+	result := make([]PublicDashboardListResponse, 0)
+
+	for i := range publicDashboards {
 		hasAccess, err := pd.ac.Evaluate(ctx, u, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(publicDashboards[i].DashboardUid)))
 		// If original dashboard does not exist, the public dashboard is an orphan. We want to list it anyway
 		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 			return nil, err
 		}
 
-		if !hasAccess && err == nil {
-			publicDashboards = append(publicDashboards[:i], publicDashboards[i+1:]...)
+		// If user has access to the original dashboard or the dashboard does not exist, add the pubdash to the result
+		if hasAccess || errors.Is(err, dashboards.ErrDashboardNotFound) {
+			result = append(result, publicDashboards[i])
 		}
 	}
-	return publicDashboards, nil
+	return result, nil
 }
 
 // Checks to see if PublicDashboard.IsEnabled is true on create or changed on update
