@@ -14,7 +14,6 @@ export type CompletionType =
   | 'PATTERN'
   | 'PARSER'
   | 'LINE_FILTER'
-  | 'LINE_FORMAT'
   | 'PIPE_OPERATION';
 
 type Completion = {
