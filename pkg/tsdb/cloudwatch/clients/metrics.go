@@ -3,18 +3,18 @@ package clients
 import (
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
 type metricsClient struct {
-	cloudwatchiface.CloudWatchAPI
+	models.CloudWatchMetricsAPIProvider
 	config *setting.Cfg
 }
 
-func NewMetricsClient(api cloudwatchiface.CloudWatchAPI, config *setting.Cfg) *metricsClient {
-	return &metricsClient{CloudWatchAPI: api, config: config}
+func NewMetricsClient(api models.CloudWatchMetricsAPIProvider, config *setting.Cfg) *metricsClient {
+	return &metricsClient{CloudWatchMetricsAPIProvider: api, config: config}
 }
 
 func (l *metricsClient) ListMetricsWithPageLimit(params *cloudwatch.ListMetricsInput) ([]*cloudwatch.Metric, error) {

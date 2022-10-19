@@ -13,3 +13,7 @@ type ListMetricsProvider interface {
 type MetricsClientProvider interface {
 	ListMetricsWithPageLimit(params *cloudwatch.ListMetricsInput) ([]*cloudwatch.Metric, error)
 }
+
+type CloudWatchMetricsAPIProvider interface {
+	ListMetricsPages(*cloudwatch.ListMetricsInput, func(*cloudwatch.ListMetricsOutput, bool) bool) error
+}

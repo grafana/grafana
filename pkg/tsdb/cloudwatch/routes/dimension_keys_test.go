@@ -17,7 +17,7 @@ func Test_DimensionKeys_Route(t *testing.T) {
 	t.Cleanup(func() {
 		newListMetricsService = origNewListMetricsService
 	})
-	var clientFactoryMock = func(pluginCtx backend.PluginContext, region string) (clients models.ClientsProvider, err error) {
+	var clientFactoryMock = func(pluginCtx backend.PluginContext, region string) (clients models.Clients, err error) {
 		return nil, nil
 	}
 

@@ -62,5 +62,5 @@ var newListMetricsService = func(pluginCtx backend.PluginContext, clientFactory 
 		return nil, err
 	}
 
-	return services.NewListMetricsService(metricClient), nil
+	return services.NewListMetricsService(metricClient.MetricsClientProvider), nil
 }

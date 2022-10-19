@@ -113,29 +113,27 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions Ses
 		features: features,
 	}
 
-	cwe.getClients = func(pluginCtx backend.PluginContext, region string) (models.ClientsProvider, error) {
-		r := region
-		if region == defaultRegion {
-			dsInfo, err := cwe.getDSInfo(pluginCtx)
-			if err != nil {
-				return nil, err
-			}
-			r = dsInfo.region
-		}
-
-		sess, err := cwe.newSession(pluginCtx, r)
-		if err != nil {
-			return nil, err
-		}
-		return struct {
-			models.MetricsClientProvider
-		}{
-			MetricsClientProvider: clients.NewMetricsClient(cloudwatch.New(sess), cfg),
-		}, nil
-	}
-
 	cwe.resourceHandler = httpadapter.New(cwe.newResourceMux())
 	return cwe
+}
+
+func (cwe *cloudWatchExecutor) GetClients(pluginCtx backend.PluginContext, region string) (models.Clients, error) {
+	r := region
+	if region == defaultRegion {
+		dsInfo, err := cwe.getDSInfo(pluginCtx)
+		if err != nil {
+			return models.Clients{}, err
+		}
+		r = dsInfo.region
+	}
+
+	sess, err := cwe.newSession(pluginCtx, r)
+	if err != nil {
+		return models.Clients{}, err
+	}
+	return models.Clients{
+		MetricsClientProvider: clients.NewMetricsClient(cloudwatch.New(sess), cwe.cfg),
+	}, nil
 }
 
 func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
