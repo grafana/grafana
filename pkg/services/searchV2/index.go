@@ -847,7 +847,7 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 			dashboardQuerySpan.SetAttributes("lastID", lastID, attribute.Key("lastID").Int64(lastID))
 
 			rows := make([]*dashboardQueryResult, 0)
-			err := l.sql.WithDbSession(dashboardQueryCtx, func(sess *sqlstore.DBSession) error {
+			err := l.sql.WithDbSession(dashboardQueryCtx, func(sess *db.Session) error {
 				sess.Table("dashboard").
 					Where("org_id = ?", orgID)
 
