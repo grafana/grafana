@@ -11,14 +11,18 @@ import { useIsDesktop } from 'app/features/dashboard/utils/screen';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 export const Configuration = ({
+  annotationsEnabled,
   disabled,
   isPubDashEnabled,
   onToggleEnabled,
+  onAnnotationsToggled,
   dashboard,
 }: {
+  annotationsEnabled: boolean;
   disabled: boolean;
   isPubDashEnabled?: boolean;
   onToggleEnabled: () => void;
+  onAnnotationsToggled: () => void;
   dashboard: DashboardModel;
 }) => {
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
@@ -35,6 +39,19 @@ export const Configuration = ({
           <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
             <Label description="The public dashboard uses the default time settings of the dashboard">Time range</Label>
             <TimeRangeInput value={timeRange} disabled onChange={() => {}} />
+          </Layout>
+          <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
+            <Label description="Show annotations on public dashboard">Show Annotations</Label>
+            <Switch
+              data-testid={selectors.EnableSwitch}
+              value={annotationsEnabled}
+              onChange={() => {
+                reportInteraction('grafana_dashboards_annotations_toggled', {
+                  action: annotationsEnabled ? 'disable' : 'enable',
+                });
+                onAnnotationsToggled();
+              }}
+            />
           </Layout>
           <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
             <Label description="Configures whether current dashboard can be available publicly">Enabled</Label>

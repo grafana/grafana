@@ -44,6 +44,7 @@ export const SharePublicDashboard = (props: Props) => {
     isEnabled: false,
     wasTouched: false,
   });
+  const [annotationsEnabled, setAnnotationsEnabled] = useState(false);
 
   useEffect(() => {
     reportInteraction('grafana_dashboards_public_share_viewed');
@@ -56,6 +57,7 @@ export const SharePublicDashboard = (props: Props) => {
         datasources: true,
         usage: true,
       });
+      setAnnotationsEnabled(publicDashboard!.enableAnnotations);
     }
 
     setEnabledSwitch((prevState) => ({ ...prevState, isEnabled: !!publicDashboard?.isEnabled }));
@@ -80,7 +82,7 @@ export const SharePublicDashboard = (props: Props) => {
 
     saveConfig({
       dashboard: props.dashboard,
-      payload: { ...publicDashboard!, isEnabled: enabledSwitch.isEnabled },
+      payload: { ...publicDashboard!, isEnabled: enabledSwitch.isEnabled, enableAnnotations: annotationsEnabled },
     });
   };
 
@@ -124,12 +126,14 @@ export const SharePublicDashboard = (props: Props) => {
             </div>
             <hr />
             <Configuration
+              annotationsEnabled={annotationsEnabled}
               dashboard={props.dashboard}
               disabled={!hasWritePermissions || isLoading || isFetchingError}
               isPubDashEnabled={enabledSwitch.isEnabled}
               onToggleEnabled={() =>
                 setEnabledSwitch((prevState) => ({ isEnabled: !prevState.isEnabled, wasTouched: true }))
               }
+              onAnnotationsToggled={() => setAnnotationsEnabled(!annotationsEnabled)}
             />
             {publicDashboardPersisted(publicDashboard) && enabledSwitch.isEnabled && (
               <Field label="Link URL" className={styles.publicUrl}>
