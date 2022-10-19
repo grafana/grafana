@@ -113,7 +113,6 @@ export const testDataSource = (
           grafana_version: config.buildInfo.version,
           plugin_id: dsApi.type,
           datasource_uid: dsApi.uid,
-          plugin_version: dsApi.meta.info.version,
           success: true,
         });
       } catch (err) {
@@ -134,7 +133,6 @@ export const testDataSource = (
           grafana_version: config.buildInfo.version,
           plugin_id: dsApi.type,
           datasource_uid: dsApi.uid,
-          plugin_version: dsApi.meta.info.version,
           success: false,
         });
       }
@@ -217,7 +215,7 @@ export function addDataSource(plugin: DataSourcePluginMeta, editLink = DATASOURC
       grafana_version: config.buildInfo.version,
       plugin_id: plugin.id,
       datasource_uid: result.datasource.uid,
-      plugin_version: result.meta?.info.version,
+      plugin_version: result.meta?.info?.version,
     });
 
     locationService.push(editLink.replace(/:uid/gi, result.datasource.uid));

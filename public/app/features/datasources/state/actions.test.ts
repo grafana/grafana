@@ -237,7 +237,7 @@ describe('testDataSource', () => {
 
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceSucceeded(state.testingStatus)]);
       expect(trackDataSourceTested).toHaveBeenCalledWith({
-        datasource: 'cloudwatch',
+        plugin_id: 'cloudwatch',
         datasource_uid: 'CW1234',
         grafana_version: '1.0',
         success: true,
@@ -273,7 +273,7 @@ describe('testDataSource', () => {
 
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);
       expect(trackDataSourceTested).toHaveBeenCalledWith({
-        datasource: 'azure-monitor',
+        plugin_id: 'azure-monitor',
         datasource_uid: 'azM0nit0R',
         grafana_version: '1.0',
         success: false,
@@ -336,7 +336,7 @@ describe('addDataSource', () => {
       id: 'azure-monitor',
       module: '',
       baseUrl: 'xxx',
-      info: {} as PluginMetaInfo,
+      info: { version: '1.2.3' } as PluginMetaInfo,
       type: PluginType.datasource,
       name: 'test DS',
     };
@@ -345,7 +345,7 @@ describe('addDataSource', () => {
         dataSources: [],
       },
     };
-    const dataSourceMock = { datasource: { uid: 'azure23' } };
+    const dataSourceMock = { datasource: { uid: 'azure23' }, meta };
     (api.createDataSource as jest.Mock).mockResolvedValueOnce(dataSourceMock);
     (api.getDataSources as jest.Mock).mockResolvedValueOnce([]);
 
@@ -353,7 +353,8 @@ describe('addDataSource', () => {
 
     expect(dispatchedActions).toEqual([dataSourcesLoaded([])]);
     expect(trackDataSourceCreated).toHaveBeenCalledWith({
-      datasource: 'azure-monitor',
+      plugin_id: 'azure-monitor',
+      plugin_version: '1.2.3',
       datasource_uid: 'azure23',
       grafana_version: '1.0',
     });
