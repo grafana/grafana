@@ -75,8 +75,8 @@ Grafana displays a list of possible series. Click one to select it, and Grafana 
 
 Create a simple Flux query.
 
-1. [Add a panel](../panels/add-a-panel.md).
-1. In the query editor, select your InfluxDB-Flux data source. For more information, refer to [Queries](../panels/queries.md).
+1. [Add a panel]({{< relref "../dashboards/build-dashboards/create-dashboard/" >}}).
+1. In the query editor, select your InfluxDB-Flux data source. For more information, refer to [Queries]({{< relref "../panels-visualizations/query-transform-data/" >}}).
 1. Select the **Table** visualization.
 1. In the query editor text field, enter `buckets()` and then click outside of the query editor.
 
