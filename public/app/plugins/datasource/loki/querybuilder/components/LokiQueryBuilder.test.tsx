@@ -1,6 +1,7 @@
 import { render, screen, getAllByRole, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { getSelectParent } from 'test/helpers/selectOptionInTest';
 
 import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 
@@ -46,7 +47,7 @@ describe('LokiQueryBuilder', () => {
     render(<LokiQueryBuilder {...props} query={defaultQuery} />);
     await userEvent.click(screen.getByLabelText('Add'));
     const labels = screen.getByText(/Label filters/);
-    const selects = getAllByRole(labels.parentElement!.parentElement!.parentElement!, 'combobox');
+    const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[3]);
     await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
   });
@@ -61,7 +62,7 @@ describe('LokiQueryBuilder', () => {
     render(<LokiQueryBuilder {...props} query={defaultQuery} />);
     await userEvent.click(screen.getByLabelText('Add'));
     const labels = screen.getByText(/Label filters/);
-    const selects = getAllByRole(labels.parentElement!.parentElement!.parentElement!, 'combobox');
+    const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[3]);
     await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('instance')).toBeInTheDocument());
