@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -33,7 +34,6 @@ import (
 	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -626,7 +626,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 }
 
 func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T) {
-	db := sqlstore.InitTestDB(t)
+	db := db.InitTestDB(t)
 
 	cacheService := datasourcesService.ProvideCacheService(localcache.ProvideService(), db)
 	qds := buildQueryDataService(t, cacheService, nil, db)

@@ -3,8 +3,8 @@ package kvstore
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 const (
@@ -12,7 +12,7 @@ const (
 	AllOrganizations = -1
 )
 
-func ProvideService(sqlStore sqlstore.Store) KVStore {
+func ProvideService(sqlStore db.DB) KVStore {
 	return &kvStoreSQL{
 		sqlStore: sqlStore,
 		log:      log.New("infra.kvstore.sql"),
