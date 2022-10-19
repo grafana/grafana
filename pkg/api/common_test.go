@@ -493,15 +493,22 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 
 	hs := &HTTPServer{
 		RouteRegister:      routing.NewRouteRegister(),
-		Cfg:                cfg,
 		License:            &licensing.OSSLicensingService{},
-		AccessControl:      acimpl.ProvideAccessControl(cfg),
 		Features:           featuremgmt.WithFeatures(),
 		searchUsersService: &searchusers.OSSService{},
 	}
 
 	for _, opt := range opts {
 		opt(hs)
+	}
+
+	if hs.Cfg == nil {
+		hs.Cfg = setting.NewCfg()
+		hs.Cfg.RBACEnabled = false
+	}
+
+	if hs.AccessControl == nil {
+		hs.AccessControl = acimpl.ProvideAccessControl(hs.Cfg)
 	}
 
 	hs.registerRoutes()
