@@ -99,6 +99,18 @@ func main() {
 		}
 		wd[filepath.Join(groot, gf.RelativePath)] = gf.Data
 	}
+
+	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
+		err = wd.Verify()
+		if err != nil {
+			die(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate\n\n", err))
+		}
+	} else {
+		err = wd.Write()
+		if err != nil {
+			die(fmt.Errorf("error while writing generated code to disk:\n%s\n", err))
+		}
+	}
 }
 
 func elsedie[T any](t T, err error) func(msg string) T {
