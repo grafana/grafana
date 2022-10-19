@@ -6,19 +6,20 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
-type getStore func(*sqlstore.SQLStore) store
+type getStore func(db.DB) store
 
 func testIntegrationPreferencesDataAccess(t *testing.T, fn getStore) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	ss := sqlstore.InitTestDB(t)
+	ss := db.InitTestDB(t)
 	prefStore := fn(ss)
 	orgNavbarPreferences := pref.NavbarPreference{
 		SavedItems: []pref.NavLink{{
@@ -116,7 +117,7 @@ func testIntegrationPreferencesDataAccess(t *testing.T, fn getStore) {
 	})
 
 	t.Run("Update for a user should only modify a single value", func(t *testing.T) {
-		ss := sqlstore.InitTestDB(t)
+		ss := db.InitTestDB(t)
 		prefStore := fn(ss)
 		id, err := prefStore.Insert(context.Background(), &pref.Preference{
 			UserID:          user.SignedInUser{}.UserID,

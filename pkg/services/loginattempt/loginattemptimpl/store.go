@@ -5,9 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 type xormStore struct {
@@ -22,7 +21,7 @@ type store interface {
 }
 
 func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
-	return xs.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		loginAttempt := models.LoginAttempt{
 			Username:  cmd.Username,
 			IpAddress: cmd.IpAddress,
@@ -40,7 +39,7 @@ func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd *models.CreateL
 }
 
 func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error {
-	return xs.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var maxId int64
 		sql := "SELECT max(id) as id FROM login_attempt WHERE created < ?"
 		result, err := sess.Query(sql, cmd.OlderThan.Unix())
@@ -71,7 +70,7 @@ func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd *models.Del
 }
 
 func (xs *xormStore) GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error {
-	return xs.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	return xs.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		loginAttempt := new(models.LoginAttempt)
 		total, err := dbSession.
 			Where("username = ?", query.Username).
