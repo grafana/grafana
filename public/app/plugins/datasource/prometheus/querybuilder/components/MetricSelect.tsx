@@ -78,6 +78,7 @@ export function MetricSelect({ datasource, query, onChange, onGetMetrics, labels
     query: string,
     labelsFilters?: QueryBuilderLabelFilter[]
   ): string => {
+    // There aren't any spaces in the metric names, so let's introduce a wildcard into the regex for each space to better facilitate a fuzzy search
     const queryArray = query.split(' ');
     const queryString = queryArray.map((query) => `${query}.*`).join('');
     if (!labelsFilters) {
