@@ -4,6 +4,7 @@ aliases:
   - /docs/grafana/latest/panels/reference-standard-field-definitions/
   - /docs/grafana/latest/panels/standard-field-definitions/
   - /docs/grafana/latest/panels/configure-standard-options/
+  - /docs/grafana/latest/panels/apply-color-to-series/
   - /docs/grafana/latest/panels-visualizations/configure-standard-options/
 title: Configure standard options
 menuTitle: Configure standard options
