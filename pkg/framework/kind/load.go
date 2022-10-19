@@ -69,29 +69,32 @@ func CUEFramework(ctx *cue.Context) cue.Value {
 	return v
 }
 
-// BindSomeKind takes a cue.Value expected to represent one of Grafana's kind
-// variants, and attempts to extract its metadata into the relevant typed struct.
-func BindSomeKind(v cue.Value) (SomeKindMeta, error) {
+// ToSomeKindMeta takes a cue.Value expected to represent any one of the kind
+// categories, and attempts to extract its metadata into the relevant typed
+// struct.
+func ToSomeKindMeta(v cue.Value) (SomeKindMeta, error) {
 	if !v.Exists() {
 		return nil, ErrValueNotExist
 	}
 
-	if meta, err := BindKind[RawMeta](v); err == nil {
+	if meta, err := ToKindMeta[RawMeta](v); err == nil {
 		return meta, nil
-		// return metaToSome(meta), nil
 	}
-	if meta, err := BindKind[CoreStructuredMeta](v); err == nil {
+	if meta, err := ToKindMeta[CoreStructuredMeta](v); err == nil {
 		return meta, nil
-		// return metaToSome(meta), nil
 	}
-	if meta, err := BindKind[CustomStructuredMeta](v); err == nil {
+	if meta, err := ToKindMeta[CustomStructuredMeta](v); err == nil {
 		return meta, nil
-		// return metaToSome(meta), nil
+	}
+	if meta, err := ToKindMeta[SlotImplMeta](v); err == nil {
+		return meta, nil
 	}
 	return nil, ErrValueNotAKind
 }
 
-func BindKind[T KindMetas](v cue.Value) (T, error) {
+// ToKindMeta takes a cue.Value expected to represent a kind of the category
+// specified by the type parameter and populates the Go type from the cue.Value.
+func ToKindMeta[T KindMetas](v cue.Value) (T, error) {
 	meta := new(T)
 	if !v.Exists() {
 		return *meta, ErrValueNotExist
@@ -127,43 +130,73 @@ func BindKind[T KindMetas](v cue.Value) (T, error) {
 	return *meta, nil
 }
 
-// Parsed is the result of a successful call to ParseAnyKindFS. It
-// represents a kind definition in partially-processed form, amenable for
-// further processing into a proper kind.
-type Parsed struct {
+// SomeDecl represents a single kind declaration, having been loaded
+// and validated by a func such as [LoadCoreKindFS].
+//
+// The underlying type of the Meta field indicates the category of
+// kind.
+type SomeDecl struct {
 	// V is the cue.Value containing the entire Kind declaration.
 	V cue.Value
 	// Meta contains the kind's metadata settings.
 	Meta SomeKindMeta
 }
 
-type Parsed2[T RawMeta | CoreStructuredMeta | CustomStructuredMeta] struct {
+// BindKindLineage binds the lineage for the kind declaration. nil, nil is returned
+// for raw kinds.
+//
+// For kinds with a corresponding Go type, it is left to the caller to associate
+// that Go type with the lineage returned from this function by a call to [thema.BindType].
+func (decl *SomeDecl) BindKindLineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
+	switch decl.Meta.(type) {
+	case RawMeta:
+		return nil, nil
+	case CoreStructuredMeta, CustomStructuredMeta, SlotImplMeta:
+		return thema.BindLineage(decl.V.LookupPath(cue.MakePath(cue.Str("lineage"))), rt, opts...)
+	default:
+		panic("unreachable")
+	}
+}
+
+// IsRaw indicates whether the represented kind is a raw kind.
+func (decl *SomeDecl) IsRaw() bool {
+	_, is := decl.Meta.(RawMeta)
+	return is
+}
+
+// IsCoreStructured indicates whether the represented kind is a core structured kind.
+func (decl *SomeDecl) IsCoreStructured() bool {
+	_, is := decl.Meta.(CoreStructuredMeta)
+	return is
+}
+
+// IsCustomStructured indicates whether the represented kind is a custom structured kind.
+func (decl *SomeDecl) IsCustomStructured() bool {
+	_, is := decl.Meta.(CustomStructuredMeta)
+	return is
+}
+
+// IsSlotImpl indicates whether the represented kind is a slot implementation kind.
+func (decl *SomeDecl) IsSlotImpl() bool {
+	_, is := decl.Meta.(SlotImplMeta)
+	return is
+}
+
+// Decl represents a single kind declaration, having been loaded
+// and validated by a func such as [LoadCoreKindFS].
+//
+// Its type parameter indicates the category of kind.
+type Decl[T KindMetas] struct {
 	// V is the cue.Value containing the entire Kind declaration.
 	V cue.Value
 	// Meta contains the kind's metadata settings.
 	Meta T
 }
 
-// BindKindLineage binds the lineage for the parsed kind. nil, nil is returned
-// for raw kinds.
-//
-// For kinds with a corresponding Go type, it is left to the caller to associate
-// that Go type with the lineage returned from this function by a call to [thema.BindType].
-func (pk *Parsed) BindKindLineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
-	switch pk.Meta.(type) {
-	case RawMeta:
-		return nil, nil
-	case CoreStructuredMeta, CustomStructuredMeta:
-		return thema.BindLineage(pk.V.LookupPath(cue.MakePath(cue.Str("lineage"))), rt, opts...)
-	default:
-		panic("unreachable")
-	}
-}
-
-// ParseAnyKindFS takes an fs.FS and validates that it contains a valid kind
+// LoadAnyKindFS takes an fs.FS and validates that it contains a valid kind
 // definition from any of the kind categories. On success, it returns a
 // representation of the entire kind definition contained in the provided kfs.
-func ParseAnyKindFS(kfs fs.FS, path string, ctx *cue.Context) (*Parsed, error) {
+func LoadAnyKindFS(kfs fs.FS, path string, ctx *cue.Context) (*SomeDecl, error) {
 	// TODO use a more genericized loader
 	inst, err := tload.InstancesWithThema(kfs, path)
 	if err != nil {
@@ -174,37 +207,38 @@ func ParseAnyKindFS(kfs fs.FS, path string, ctx *cue.Context) (*Parsed, error) {
 	if err = vk.Validate(cue.Concrete(false), cue.All()); err != nil {
 		return nil, err
 	}
-	pkd := &Parsed{
+	pkd := &SomeDecl{
 		V: vk,
 	}
-	pkd.Meta, err = BindSomeKind(vk)
+	pkd.Meta, err = ToSomeKindMeta(vk)
 	if err != nil {
 		return nil, err
 	}
 	return pkd, nil
 }
 
-func (tpk *Parsed2[T]) ToParsed() *Parsed {
-	return &Parsed{
-		V:    tpk.V,
-		Meta: any(tpk.Meta).(SomeKindMeta),
+// Some converts the typed Decl to the equivalent typeless SomeDecl.
+func (decl *Decl[T]) Some() *SomeDecl {
+	return &SomeDecl{
+		V:    decl.V,
+		Meta: any(decl.Meta).(SomeKindMeta),
 	}
 }
 
-// ParseCoreKindFS takes an fs.FS and validates that it contains a valid kind
-// definition from the kind category indicated by the type parameter.
+// LoadCoreKindFS takes an fs.FS and validates that it contains a valid kind
+// definition of the kind category indicated by the type parameter.
 //
 // On success, it returns a representation of the entire kind definition
 // contained in the provided kfs.
-func ParseCoreKindFS[T RawMeta | CoreStructuredMeta](kfs fs.FS, relpath string, ctx *cue.Context) (*Parsed2[T], error) {
+func LoadCoreKindFS[T RawMeta | CoreStructuredMeta](kfs fs.FS, relpath string, ctx *cue.Context) (*Decl[T], error) {
 	vk, err := cuectx.BuildGrafanaInstance(relpath, "kind", ctx, kfs)
 	if err != nil {
 		return nil, err
 	}
-	pkd := &Parsed2[T]{
+	pkd := &Decl[T]{
 		V: vk,
 	}
-	pkd.Meta, err = BindKind[T](vk)
+	pkd.Meta, err = ToKindMeta[T](vk)
 	if err != nil {
 		return nil, err
 	}

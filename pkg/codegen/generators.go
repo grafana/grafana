@@ -8,36 +8,36 @@ import "github.com/grafana/grafana/pkg/framework/kind"
 // No-op for raw kinds.
 type GenGoTypes struct{}
 
-var _ SingleKindGenerator = &GenGoTypes{}
+var _ KindGenerator = &GenGoTypes{}
 
 // TODO docs
 type GenThemaBindings struct{}
 
-var _ SingleKindGenerator = &GenThemaBindings{}
+var _ KindGenerator = &GenThemaBindings{}
 
 // TODO docs
 type GenBaseRegistry struct{}
 
-var _ MultiKindGenerator = &GenBaseRegistry{}
+var _ AggregateKindGenerator = &GenBaseRegistry{}
 
 // TODO docs
 type GenTSTypes struct{}
 
-var _ SingleKindGenerator = &GenTSTypes{}
+var _ KindGenerator = &GenTSTypes{}
 
 // TODO docs
 type GenTSSchemaIndex struct{}
 
-var _ MultiKindGenerator = &GenTSSchemaIndex{}
+var _ AggregateKindGenerator = &GenTSSchemaIndex{}
 
 // GenGoServiceRefs generates a file within the service directory for a
 // structured kind with predictably-named type aliases to the kind's generated
 // Go types.
 type GenGoServiceRefs struct{}
 
-var _ SingleKindGenerator = &GenGoServiceRefs{}
+var _ KindGenerator = &GenGoServiceRefs{}
 
-func NewGenGoTypes() SingleKindGenerator {
+func NewGenGoTypes() KindGenerator {
 	return &GenGoTypes{}
 }
 
@@ -45,6 +45,6 @@ func (gen *GenGoTypes) Name() string {
 	return "GenGoTypes"
 }
 
-func (gen *GenGoTypes) Generate(pk *kind.Parsed) (*GeneratedFile, error) {
+func (gen *GenGoTypes) Generate(pk *kind.SomeDecl) (*GeneratedFile, error) {
 	panic("TODO")
 }

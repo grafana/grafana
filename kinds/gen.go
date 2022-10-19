@@ -19,10 +19,10 @@ import (
 // that derives from raw and structured core kinds.
 
 // All the single-kind generators to be run for core kinds.
-var singles = []codegen.SingleKindGenerator{}
+var singles = []codegen.KindGenerator{}
 
 // All the aggregate generators to be run for core kinds.
-var multis = []codegen.MultiKindGenerator{}
+var multis = []codegen.AggregateKindGenerator{}
 
 const sep = string(filepath.Separator)
 
@@ -42,16 +42,16 @@ func main() {
 
 	wd := codegen.NewWriteDiffer()
 	rt := cuectx.GrafanaThemaRuntime()
-	var all []*kind.Parsed
+	var all []*kind.SomeDecl
 
 	// structured kinds first
-	var skinds []*kind.Parsed2[kind.CoreStructuredMeta]
+	var skinds []*kind.Decl[kind.CoreStructuredMeta]
 	f := os.DirFS(filepath.Join(groot, "kind", "structured"))
 	ents := elsedie(fs.ReadDir(f, "."))("error reading structured fs root directory")
 	for _, ent := range ents {
 		rel := filepath.Join("kind", "structured", ent.Name())
 		sub := elsedie(fs.Sub(f, ent.Name()))(fmt.Sprintf("error creating subfs for path %s", rel))
-		pk, err := kind.ParseCoreKindFS[kind.CoreStructuredMeta](sub, rel, rt.Context())
+		pk, err := kind.LoadCoreKindFS[kind.CoreStructuredMeta](sub, rel, rt.Context())
 		if err != nil {
 			die(fmt.Errorf("core structured kind at %s is invalid: %w", rel, err))
 		}
@@ -59,17 +59,17 @@ func main() {
 			die(fmt.Errorf("%s: kind name (%s) must equal parent dir name (%s)", rel, pk.Meta.Name, ent.Name()))
 		}
 		skinds = append(skinds, pk)
-		all = append(all, pk.ToParsed())
+		all = append(all, pk.Some())
 	}
 
 	// now raw kinds
-	var rkinds []*kind.Parsed2[kind.RawMeta]
+	var rkinds []*kind.Decl[kind.RawMeta]
 	f = os.DirFS(filepath.Join(groot, "kind", "raw"))
 	ents = elsedie(fs.ReadDir(f, "."))("error reading raw fs root directory")
 	for _, ent := range ents {
 		rel := filepath.Join("kind", "raw", ent.Name())
 		sub := elsedie(fs.Sub(f, ent.Name()))(fmt.Sprintf("error creating subfs for path %s", rel))
-		pk, err := kind.ParseCoreKindFS[kind.RawMeta](sub, rel, rt.Context())
+		pk, err := kind.LoadCoreKindFS[kind.RawMeta](sub, rel, rt.Context())
 		if err != nil {
 			die(fmt.Errorf("raw kind at %s is invalid: %w", rel, err))
 		}
@@ -77,7 +77,7 @@ func main() {
 			die(fmt.Errorf("%s: kind name (%s) must equal parent dir name (%s)", rel, pk.Meta.Name, ent.Name()))
 		}
 		rkinds = append(rkinds, pk)
-		all = append(all, pk.ToParsed())
+		all = append(all, pk.Some())
 	}
 
 	// Run all single generators
