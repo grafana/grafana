@@ -1,7 +1,6 @@
 package kind
 
 import (
-	"embed"
 	"fmt"
 	"io/fs"
 	"path/filepath"
@@ -13,11 +12,6 @@ import (
 	"github.com/grafana/thema"
 	tload "github.com/grafana/thema/load"
 )
-
-// Embed for all framework-related CUE files in this directory
-//
-//go:embed *.cue
-var cueFS embed.FS
 
 var defaultFramework cue.Value
 
@@ -114,6 +108,8 @@ func BindKind[T KindMetas](v cue.Value) (T, error) {
 		kdef = fw.LookupPath(cue.MakePath(cue.Def("CoreStructured")))
 	case CustomStructuredMeta:
 		kdef = fw.LookupPath(cue.MakePath(cue.Def("CustomStructured")))
+	case SlotImplMeta:
+		kdef = fw.LookupPath(cue.MakePath(cue.Def("Slot")))
 	default:
 		// unreachable so long as all the possibilities in KindMetas have switch branches
 		panic("unreachable")
@@ -131,14 +127,21 @@ func BindKind[T KindMetas](v cue.Value) (T, error) {
 	return *meta, nil
 }
 
-// ParsedKindDefinition is the result of a successful call to ParseKindFS. It
+// Parsed is the result of a successful call to ParseAnyKindFS. It
 // represents a kind definition in partially-processed form, amenable for
 // further processing into a proper kind.
-type ParsedKindDefinition struct {
+type Parsed struct {
 	// V is the cue.Value containing the entire Kind declaration.
 	V cue.Value
 	// Meta contains the kind's metadata settings.
 	Meta SomeKindMeta
+}
+
+type Parsed2[T RawMeta | CoreStructuredMeta | CustomStructuredMeta] struct {
+	// V is the cue.Value containing the entire Kind declaration.
+	V cue.Value
+	// Meta contains the kind's metadata settings.
+	Meta T
 }
 
 // BindKindLineage binds the lineage for the parsed kind. nil, nil is returned
@@ -146,7 +149,7 @@ type ParsedKindDefinition struct {
 //
 // For kinds with a corresponding Go type, it is left to the caller to associate
 // that Go type with the lineage returned from this function by a call to [thema.BindType].
-func (pk *ParsedKindDefinition) BindKindLineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
+func (pk *Parsed) BindKindLineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
 	switch pk.Meta.(type) {
 	case RawMeta:
 		return nil, nil
@@ -157,10 +160,10 @@ func (pk *ParsedKindDefinition) BindKindLineage(rt *thema.Runtime, opts ...thema
 	}
 }
 
-// ParseKindFS takes an fs.FS and validates that it contains a valid kind
+// ParseAnyKindFS takes an fs.FS and validates that it contains a valid kind
 // definition from any of the kind categories. On success, it returns a
 // representation of the entire kind definition contained in the provided kfs.
-func ParseKindFS(kfs fs.FS, path string, ctx *cue.Context) (*ParsedKindDefinition, error) {
+func ParseAnyKindFS(kfs fs.FS, path string, ctx *cue.Context) (*Parsed, error) {
 	// TODO use a more genericized loader
 	inst, err := tload.InstancesWithThema(kfs, path)
 	if err != nil {
@@ -171,10 +174,37 @@ func ParseKindFS(kfs fs.FS, path string, ctx *cue.Context) (*ParsedKindDefinitio
 	if err = vk.Validate(cue.Concrete(false), cue.All()); err != nil {
 		return nil, err
 	}
-	pkd := &ParsedKindDefinition{
+	pkd := &Parsed{
 		V: vk,
 	}
 	pkd.Meta, err = BindSomeKind(vk)
+	if err != nil {
+		return nil, err
+	}
+	return pkd, nil
+}
+
+func (tpk *Parsed2[T]) ToParsed() *Parsed {
+	return &Parsed{
+		V:    tpk.V,
+		Meta: any(tpk.Meta).(SomeKindMeta),
+	}
+}
+
+// ParseCoreKindFS takes an fs.FS and validates that it contains a valid kind
+// definition from the kind category indicated by the type parameter.
+//
+// On success, it returns a representation of the entire kind definition
+// contained in the provided kfs.
+func ParseCoreKindFS[T RawMeta | CoreStructuredMeta](kfs fs.FS, relpath string, ctx *cue.Context) (*Parsed2[T], error) {
+	vk, err := cuectx.BuildGrafanaInstance(relpath, "kind", ctx, kfs)
+	if err != nil {
+		return nil, err
+	}
+	pkd := &Parsed2[T]{
+		V: vk,
+	}
+	pkd.Meta, err = BindKind[T](vk)
 	if err != nil {
 		return nil, err
 	}
