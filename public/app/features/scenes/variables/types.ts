@@ -12,7 +12,8 @@ export interface SceneVariableState extends SceneObjectStatePlain {
   state?: LoadingState;
   error?: any | null;
   description?: string | null;
-  current: { value: string; text?: string };
+  text: string | string[]; // old current.text
+  value: string | string[]; // old current.value
 }
 
 export interface SceneVariable extends SceneObject<SceneVariableState> {

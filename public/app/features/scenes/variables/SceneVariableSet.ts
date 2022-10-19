@@ -25,7 +25,7 @@ export function sceneTemplateInterpolator(target: string, sceneObject: SceneObje
       return match;
     }
 
-    return variable.state.current.value;
+    return variable.state.value;
   });
 }
 
