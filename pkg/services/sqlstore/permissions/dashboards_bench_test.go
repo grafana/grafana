@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
@@ -38,7 +38,7 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards in
 }
 
 func setupBenchMark(b *testing.B, numUsers, numDashboards int) db.DB {
-	store := sqlstore.InitTestDB(b)
+	store := db.InitTestDB(b)
 	now := time.Now()
 	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		dashes := make([]models.Dashboard, 0, numDashboards)
