@@ -26,7 +26,13 @@ export function ConnectData() {
   const { isLoading, error, plugins } = useGetAllWithFilters({ query: searchTerm, filterBy: '' });
 
   const cardGridItems = useMemo(
-    () => plugins.map((plugin) => ({ id: plugin.id, name: plugin.name, logo: plugin.info.logos.small })),
+    () =>
+      plugins.map((plugin) => ({
+        id: plugin.id,
+        name: plugin.name,
+        logo: plugin.info.logos.small,
+        url: `plugins/${plugin.id}`,
+      })),
     [plugins]
   );
   const showNoResults = useMemo(() => !isLoading && !error && plugins.length < 1, [isLoading, error, plugins]);

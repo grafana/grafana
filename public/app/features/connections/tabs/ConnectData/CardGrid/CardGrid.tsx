@@ -40,7 +40,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export interface CardGridProps {
-  items: Array<{ id: string; name: string; logo?: string }>;
+  items: Array<{ id: string; name: string; url: string; logo?: string }>;
 }
 
 export const CardGrid: FC<CardGridProps> = ({ items }) => {
@@ -49,7 +49,7 @@ export const CardGrid: FC<CardGridProps> = ({ items }) => {
   return (
     <ul className={styles.sourcesList}>
       {items.map((item) => (
-        <Card key={item.id} className={styles.card} href={`plugins/${item.id}`}>
+        <Card key={item.id} className={styles.card} href={item.url}>
           <Card.Heading>
             <div className={styles.cardContent}>
               {item.logo && (
