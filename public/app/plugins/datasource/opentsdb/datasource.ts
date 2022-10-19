@@ -30,7 +30,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 
 import { AnnotationEditor } from './components/AnnotationEditor';
 import { prepareAnnotation } from './migrations';
-import { OpenTsdbOptions, OpenTsdbQuery } from './types';
+import { OpenTsdbFilter, OpenTsdbOptions, OpenTsdbQuery } from './types';
 
 export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenTsdbOptions> {
   type: any;
@@ -489,7 +489,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     return label;
   }
 
-  convertTargetToQuery(target: any, options: any, tsdbVersion: number) {
+  convertTargetToQuery(target: OpenTsdbQuery, options: DataQueryRequest<OpenTsdbQuery>, tsdbVersion: number) {
     if (!target.metric || target.hide) {
       return null;
     }
@@ -560,21 +560,14 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     return query;
   }
 
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  interpolateVariablesInFilters(query: any, options: any) {
-    for (const filterKey in query.filters) {
-      query.filters[filterKey].tagk = this.templateSrv.replace(
-        query.filters[filterKey].tagk,
-        options.scopedVars,
-        'pipe'
-      );
+  interpolateVariablesInFilters(query: OpenTsdbQuery, options: DataQueryRequest<OpenTsdbQuery>) {
+    query.filters = query.filters?.map((filter: OpenTsdbFilter): OpenTsdbFilter => {
+      filter.tagk = this.templateSrv.replace(filter.tagk, options.scopedVars, 'pipe');
 
-      query.filters[filterKey].filter = this.templateSrv.replace(
-        query.filters[filterKey].filter,
-        options.scopedVars,
-        'pipe'
-      );
-    }
+      filter.filter = this.templateSrv.replace(filter.filter, options.scopedVars, 'pipe');
+
+      return filter;
+    });
   }
 
   mapMetricsToTargets(metrics: any, options: any, tsdbVersion: number) {

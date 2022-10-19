@@ -1,5 +1,6 @@
 import { of } from 'rxjs';
 
+import { DataQueryRequest, dateTime } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import { createFetchResponse } from '../../../../../test/helpers/createFetchResponse';
@@ -169,10 +170,50 @@ describe('opentsdb', () => {
         ],
       };
 
-      ds.interpolateVariablesInFilters(logQuery, {});
+      const scopedVars = {
+        __interval: {
+          text: '20s',
+          value: '20s',
+        },
+        __interval_ms: {
+          text: '20000',
+          value: 20000,
+        },
+      };
 
-      expect(templateSrv.replace).toHaveBeenCalledWith('$someTagk', undefined, 'pipe');
-      expect(templateSrv.replace).toHaveBeenCalledWith('$someTagv', undefined, 'pipe');
+      const dataQR: DataQueryRequest<OpenTsdbQuery> = {
+        app: 'dashboard',
+        requestId: 'Q103',
+        timezone: 'browser',
+        panelId: 2,
+        dashboardId: 189,
+        dashboardUID: 'tyzmfPIVz',
+        publicDashboardAccessToken: '',
+        range: {
+          from: dateTime('2022-10-19T08:55:18.430Z'),
+          to: dateTime('2022-10-19T14:55:18.431Z'),
+          raw: {
+            from: 'now-6h',
+            to: 'now',
+          },
+        },
+        timeInfo: '',
+        interval: '20s',
+        intervalMs: 20000,
+        targets: [logQuery],
+        maxDataPoints: 909,
+        scopedVars: scopedVars,
+        startTime: 1666191318431,
+        rangeRaw: {
+          from: 'now-6h',
+          to: 'now',
+        },
+      };
+
+      ds.interpolateVariablesInFilters(logQuery, dataQR);
+
+      expect(templateSrv.replace).toHaveBeenCalledWith('$someTagk', scopedVars, 'pipe');
+      expect(templateSrv.replace).toHaveBeenCalledWith('$someTagv', scopedVars, 'pipe');
 
       expect(templateSrv.replace).toHaveBeenCalledTimes(2);
     });
