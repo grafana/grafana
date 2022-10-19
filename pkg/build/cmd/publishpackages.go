@@ -70,7 +70,6 @@ func PublishPackages(c *cli.Context) error {
 	// so should be safe.
 	if cfg.ReleaseMode.Mode == config.TagMode {
 		workDir, err := fsutil.CreateTempDir("")
-		fmt.Println("workDir: ", workDir)
 		if err != nil {
 			return err
 		}
@@ -79,7 +78,7 @@ func PublishPackages(c *cli.Context) error {
 				log.Printf("Failed to remove temporary directory %q: %s\n", workDir, err.Error())
 			}
 		}()
-		if err := updatePkgRepos(cfg, fmt.Sprintf("%s/", workDir)); err != nil {
+		if err := updatePkgRepos(cfg, workDir); err != nil {
 			return err
 		}
 	}
