@@ -83,7 +83,7 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 			return err
 		}
 		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
-			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "err", err)
+			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "error", err)
 		}
 		if err := callback(); err != nil {
 			return err
@@ -125,7 +125,7 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 			return ErrVersionLockedObjectNotFound
 		}
 		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
-			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "err", err)
+			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "error", err)
 		}
 		return err
 	})
