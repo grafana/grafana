@@ -123,13 +123,14 @@ func (s *Service) GetPermissions(ctx context.Context, user *user.SignedInUser, r
 	}
 
 	return s.store.GetResourcePermissions(ctx, user.OrgID, GetResourcePermissionsQuery{
-		User:              user,
-		Actions:           s.actions,
-		Resource:          s.options.Resource,
-		ResourceID:        resourceID,
-		ResourceAttribute: s.options.ResourceAttribute,
-		InheritedScopes:   inheritedScopes,
-		OnlyManaged:       s.options.OnlyManaged,
+		User:                 user,
+		Actions:              s.actions,
+		Resource:             s.options.Resource,
+		ResourceID:           resourceID,
+		ResourceAttribute:    s.options.ResourceAttribute,
+		InheritedScopes:      inheritedScopes,
+		OnlyManaged:          s.options.OnlyManaged,
+		EnforceAccessControl: s.license.FeatureEnabled("accesscontrol.enforcement"),
 	})
 }
 
