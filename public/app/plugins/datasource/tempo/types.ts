@@ -89,8 +89,8 @@ export type Span = {
   name?: string;
   kind?: SpanKind;
   startTimeUnixNano: number;
-  endTimeUnixNano: number;
-  attributes?: KeyValue[];
+  endTimeUnixNano?: number;
+  attributes?: Array<{ key: string; value: { stringValue: string } }>;
   dropped_attributes_count?: number;
 };
 
