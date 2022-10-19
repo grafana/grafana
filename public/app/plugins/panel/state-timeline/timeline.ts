@@ -320,17 +320,18 @@ export function getConfig(opts: TimelineCoreOptions) {
               for (let ix = 0; ix < dataY.length; ix++) {
                 if (dataY[ix] != null) {
                   const boxRect = boxRectsBySeries[sidx - 1][ix];
-                  let txt = formatValue(sidx, dataY[ix]);
-                  let maxChars = Math.floor(boxRect?.w / pxPerChar);
-                  txt = txt.slice(0, maxChars);
 
-                  if (!boxRect || (showValue === VisibilityMode.Auto && txt.length < 3)) {
+                  if (!boxRect || boxRect.x >= xDim) {
                     continue;
                   }
 
-                  if (boxRect.x >= xDim) {
-                    continue; // out of view
+                  let maxChars = Math.floor(boxRect?.w / pxPerChar);
+
+                  if (showValue === VisibilityMode.Auto && maxChars < 2) {
+                    continue;
                   }
+
+                  let txt = formatValue(sidx, dataY[ix]);
 
                   // center-aligned
                   let x = round(boxRect.x + xOff + boxRect.w / 2);
@@ -344,7 +345,7 @@ export function getConfig(opts: TimelineCoreOptions) {
 
                   // TODO: cache by fillColor to avoid setting ctx for label
                   u.ctx.fillStyle = theme.colors.getContrastText(boxRect.fillColor, 3);
-                  u.ctx.fillText(txt, x, y, boxRect.w);
+                  u.ctx.fillText(txt.slice(0, maxChars), x, y);
                 }
               }
             }
@@ -362,6 +363,10 @@ export function getConfig(opts: TimelineCoreOptions) {
       chars += String.fromCharCode(i);
     }
     pxPerChar = Math.ceil((u.ctx.measureText(chars).width / chars.length) * pxRatio);
+
+    // be a bit more conservtive to prevent overlap
+    pxPerChar += 2.5;
+
     over.style.overflow = 'hidden';
     hoverMarks.forEach((m) => {
       over.appendChild(m);
