@@ -89,19 +89,19 @@ func setupBenchMark(b *testing.B, numUsers, numDashboards int) db.DB {
 			}
 		}
 
-		err = batch(len(roles), 10000, func(start, end int) error {
+		err = batch(len(roles), 5000, func(start, end int) error {
 			_, err := sess.InsertMulti(roles[start:end])
 			return err
 		})
 		require.NoError(b, err)
 
-		err = batch(len(assignments), 10000, func(start, end int) error {
+		err = batch(len(assignments), 5000, func(start, end int) error {
 			_, err := sess.InsertMulti(assignments[start:end])
 			return err
 		})
 		require.NoError(b, err)
 
-		err = batch(len(permissions), 10000, func(start, end int) error {
+		err = batch(len(permissions), 5000, func(start, end int) error {
 			_, err := sess.InsertMulti(permissions[start:end])
 			return err
 		})
