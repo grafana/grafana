@@ -44,7 +44,7 @@ func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, org
 			Join("LEFT", "dashboard", "dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id").
 			Cols("dashboard_public.uid", "dashboard_public.access_token", "dashboard_public.dashboard_uid", "dashboard_public.is_enabled", "dashboard.title").
 			Where("dashboard_public.org_id = ?", orgId).
-			OrderBy("is_enabled DESC, dashboard.title ASC")
+			OrderBy(" is_enabled DESC, dashboard.title IS NULL, dashboard.title ASC")
 
 		err := sess.Find(&resp)
 		return err
