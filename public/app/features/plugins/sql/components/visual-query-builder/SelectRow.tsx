@@ -6,11 +6,12 @@ import { SelectableValue, toOption } from '@grafana/data';
 import { Button, EditorField, Select, Stack, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorExpressionType, QueryEditorFunctionExpression } from '../../expressions';
-import { SQLExpression } from '../../types';
+import { SQLExpression, QueryFormat } from '../../types';
 import { createFunctionField } from '../../utils/sql.utils';
 
 interface SelectRowProps {
   sql: SQLExpression;
+  format: QueryFormat | undefined;
   onSqlChange: (sql: SQLExpression) => void;
   columns?: Array<SelectableValue<string>>;
   functions?: Array<SelectableValue<string>>;
@@ -18,14 +19,17 @@ interface SelectRowProps {
 
 const asteriskValue = { label: '*', value: '*' };
 
-export function SelectRow({ sql, columns, onSqlChange, functions }: SelectRowProps) {
+export function SelectRow({ sql, format, columns, onSqlChange, functions }: SelectRowProps) {
   const styles = useStyles2(getStyles);
   const columnsWithAsterisk = [asteriskValue, ...(columns || [])];
   const timeSeriesAliasOpts: Array<SelectableValue<string>> = [];
 
-  // TODO: how do we handle quoting in different DBs?
-  timeSeriesAliasOpts.push({ label: 'time', value: '"time"' });
-  timeSeriesAliasOpts.push({ label: 'value', value: '"value"' });
+  // Add necessary alias options for time series format
+  // when that format has been selected
+  if (format === QueryFormat.Timeseries) {
+    timeSeriesAliasOpts.push({ label: 'time', value: '"time"' });
+    timeSeriesAliasOpts.push({ label: 'value', value: '"value"' });
+  }
 
   const onColumnChange = useCallback(
     (item: QueryEditorFunctionExpression, index: number) => (column: SelectableValue<string>) => {

@@ -24,5 +24,13 @@ export function SQLSelectRow({ fields, query, onQueryChange, db }: SQLSelectRowP
     return functions.map((f) => toOption(f.name));
   }, [db]);
 
-  return <SelectRow columns={fields} sql={query.sql!} functions={state.value} onSqlChange={onSqlChange} />;
+  return (
+    <SelectRow
+      columns={fields}
+      sql={query.sql!}
+      format={query.format}
+      functions={state.value}
+      onSqlChange={onSqlChange}
+    />
+  );
 }
