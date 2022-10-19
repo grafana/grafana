@@ -12,7 +12,12 @@ import {
   FieldType,
 } from '@grafana/data';
 
-import { getGeoFieldFromGazetteer, pointFieldFromGeohash, pointFieldFromLonLat } from '../format/utils';
+import {
+  getGeoFieldFromGazetteer,
+  imageFieldFromLonLat,
+  pointFieldFromGeohash,
+  pointFieldFromLonLat,
+} from '../format/utils';
 import { getGazetteer, Gazetteer } from '../gazetteer/gazetteer';
 
 export type FieldFinder = (frame: DataFrame) => Field | undefined;
@@ -180,10 +185,18 @@ export function getGeometryField(frame: DataFrame, location: LocationFieldMatche
       };
 
     case FrameGeometrySourceMode.Coords:
-      if (fields.latitude && fields.longitude && fields.photo) {
+      // TODO reconcile how to pass photo field along
+      if (fields.latitude && fields.longitude) {
+        if (fields.photo) {
+          return {
+            // TODO this function returns a Field<feature> when a Field<Point> is expected
+            // however, image styling cannot be applied to a point
+            field: imageFieldFromLonLat(fields.longitude, fields.latitude, fields.photo),
+            derived: true,
+          };
+        }
         return {
           field: pointFieldFromLonLat(fields.longitude, fields.latitude),
-          //field: imageFieldFromLonLat(fields.longitude, fields.latitude, fields.photo),
           derived: true,
         };
       }

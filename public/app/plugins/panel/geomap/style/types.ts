@@ -83,6 +83,7 @@ export const defaultStyleConfig = Object.freeze({
   },
 });
 
+//TODO remove hardcoded image style
 export const defaultImageStyleConfig = Object.freeze({
   image: new Photo({
     src: 'http://www2.culture.gouv.fr/Wave/image/memoire/1597/sap40_d0000861_v.jpg',

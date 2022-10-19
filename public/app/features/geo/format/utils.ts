@@ -50,6 +50,7 @@ export function pointFieldFromLonLat(lon: Field, lat: Field): Field<Point> {
   };
 }
 
+//TODO return type Field<Geometry | undefined>;
 export function imageFieldFromLonLat(lon: Field, lat: Field, src: Field): Field<Feature> {
   const buffer = new Array<Feature>(lon.values.length);
   for (let i = 0; i < lon.values.length; i++) {
