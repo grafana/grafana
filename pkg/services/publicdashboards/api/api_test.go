@@ -86,7 +86,7 @@ func TestAPIGetAnnotations(t *testing.T) {
 			ExpectedHttpResponse:  http.StatusBadRequest,
 			Annotations:           nil,
 			ServiceError:          errors.New("an error happened"),
-			AccessToken:           "InvalidAccessToken",
+			AccessToken:           "TooShortAccessToken",
 			From:                  "123",
 			To:                    "123",
 			ExpectedServiceCalled: false,
@@ -601,21 +601,28 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 	t.Run("Status code is 400 when the panel ID is invalid", func(t *testing.T) {
 		server, _ := setup(true)
-		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/"+validAccessToken+"/panels/notanumber/query", strings.NewReader("{}"), t)
+		path := fmt.Sprintf("/api/public/dashboards/%s/panels/notanumber/query", validAccessToken)
+		resp := callAPI(server, http.MethodPost, path, strings.NewReader("{}"), t)
+		require.Equal(t, http.StatusBadRequest, resp.Code)
+	})
+
+	t.Run("Status code is 400 when the access token is invalid", func(t *testing.T) {
+		server, _ := setup(true)
+		resp := callAPI(server, http.MethodPost, getValidQueryPath("invalidToken"), strings.NewReader("{}"), t)
 		require.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
 	t.Run("Status code is 400 when the intervalMS is lesser than 0", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
 		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, ErrPublicDashboardBadRequest)
-		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/"+validAccessToken+"/panels/2/query", strings.NewReader(`{"intervalMs":-100,"maxDataPoints":1000}`), t)
+		resp := callAPI(server, http.MethodPost, getValidQueryPath(validAccessToken), strings.NewReader(`{"intervalMs":-100,"maxDataPoints":1000}`), t)
 		require.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
 	t.Run("Status code is 400 when the maxDataPoints is lesser than 0", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
 		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, ErrPublicDashboardBadRequest)
-		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/"+validAccessToken+"/panels/2/query", strings.NewReader(`{"intervalMs":100,"maxDataPoints":-1000}`), t)
+		resp := callAPI(server, http.MethodPost, getValidQueryPath(validAccessToken), strings.NewReader(`{"intervalMs":100,"maxDataPoints":-1000}`), t)
 		require.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
@@ -623,7 +630,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		server, fakeDashboardService := setup(true)
 		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(mockedResponse, nil)
 
-		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/"+validAccessToken+"/panels/2/query", strings.NewReader("{}"), t)
+		resp := callAPI(server, http.MethodPost, getValidQueryPath(validAccessToken), strings.NewReader("{}"), t)
 
 		require.JSONEq(
 			t,
@@ -637,9 +644,13 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		server, fakeDashboardService := setup(true)
 		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, fmt.Errorf("error"))
 
-		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/"+validAccessToken+"/panels/2/query", strings.NewReader("{}"), t)
+		resp := callAPI(server, http.MethodPost, getValidQueryPath(validAccessToken), strings.NewReader("{}"), t)
 		require.Equal(t, http.StatusInternalServerError, resp.Code)
 	})
+}
+
+func getValidQueryPath(accessToken string) string {
+	return fmt.Sprintf("/api/public/dashboards/%s/panels/2/query", accessToken)
 }
 
 func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T) {
