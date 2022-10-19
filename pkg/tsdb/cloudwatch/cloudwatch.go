@@ -117,7 +117,7 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions Ses
 	return cwe
 }
 
-func (cwe *cloudWatchExecutor) GetClients(pluginCtx backend.PluginContext, region string) (models.Clients, error) {
+func (cwe *cloudWatchExecutor) getClients(pluginCtx backend.PluginContext, region string) (models.Clients, error) {
 	r := region
 	if region == defaultRegion {
 		dsInfo, err := cwe.getDSInfo(pluginCtx)
@@ -201,11 +201,10 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 // cloudWatchExecutor executes CloudWatch requests.
 type cloudWatchExecutor struct {
-	im         instancemgmt.InstanceManager
-	cfg        *setting.Cfg
-	sessions   SessionCache
-	features   featuremgmt.FeatureToggles
-	getClients models.ClientsFactoryFunc
+	im       instancemgmt.InstanceManager
+	cfg      *setting.Cfg
+	sessions SessionCache
+	features featuremgmt.FeatureToggles
 
 	resourceHandler backend.CallResourceHandler
 }
