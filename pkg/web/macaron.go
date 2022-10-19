@@ -144,7 +144,7 @@ func mwFromHandler(handler Handler) Middleware {
 }
 
 func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Context {
-	// NOTE: we have to explicitely copy the middleware chain here to avoid
+	// NOTE: we have to explicitly copy the middleware chain here to avoid
 	// passing a shared slice to the *Context, which leads to racy behavior in
 	// case of later appends
 	mws := make([]Middleware, len(m.mws))
