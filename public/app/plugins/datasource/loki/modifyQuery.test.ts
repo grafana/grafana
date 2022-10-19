@@ -10,10 +10,8 @@ describe('addLabelToQuery()', () => {
   it.each`
     query                                                                                                                             | description                                                            | label    | operator | value    | expectedResult
     ${'{x="y"}'}                                                                                                                      | ${'no label and value'}                                                | ${''}    | ${'='}   | ${''}    | ${''}
-    ${'{}'}                                                                                                                           | ${'simple query'}                                                      | ${'bar'} | ${'='}   | ${'baz'} | ${'{bar="baz"}'}
     ${'{x="yy"}'}                                                                                                                     | ${'simple query'}                                                      | ${'bar'} | ${'='}   | ${'baz'} | ${'{x="yy", bar="baz"}'}
     ${'{x="yy"}'}                                                                                                                     | ${'simple query'}                                                      | ${'bar'} | ${'='}   | ${'baz'} | ${'{x="yy", bar="baz"}'}
-    ${'{}'}                                                                                                                           | ${'custom operator'}                                                   | ${'bar'} | ${'!='}  | ${'baz'} | ${'{bar!="baz"}'}
     ${'{x="yy"}'}                                                                                                                     | ${'custom operator'}                                                   | ${'bar'} | ${'!='}  | ${'baz'} | ${'{x="yy", bar!="baz"}'}
     ${'rate({}[1m])'}                                                                                                                 | ${'do not modify ranges'}                                              | ${'bar'} | ${'='}   | ${'baz'} | ${'rate({bar="baz"}[1m])'}
     ${'sum by (host) (rate({} [1m]))'}                                                                                                | ${'detect in-order function use'}                                      | ${'bar'} | ${'='}   | ${'baz'} | ${'sum by (host) (rate({bar="baz"}[1m]))'}
@@ -40,8 +38,12 @@ describe('addLabelToQuery()', () => {
     ${'sum by(host) (rate({foo="bar"} | logfmt | x="y" | line_format "{{.status}}" [5m]))'}                                           | ${'metrics query with parser'}                                         | ${'bar'} | ${'='}   | ${'baz'} | ${'sum by(host) (rate({foo="bar"} | logfmt | x="y" | bar=`baz` | line_format "{{.status}}" [5m]))'}
     ${'{foo="bar"} | logfmt | line_format "{{.status}}"'}                                                                             | ${'do not add filter to line_format expressions in query with parser'} | ${'bar'} | ${'='}   | ${'baz'} | ${'{foo="bar"} | logfmt | bar=`baz` | line_format "{{.status}}"'}
     ${'{foo="bar"} | logfmt | line_format "{{status}}"'}                                                                              | ${'do not add filter to line_format expressions in query with parser'} | ${'bar'} | ${'='}   | ${'baz'} | ${'{foo="bar"} | logfmt | bar=`baz` | line_format "{{status}}"'}
+    ${'{}'}                                                                                                                           | ${'query without stream selector'}                                     | ${'bar'} | ${'='}   | ${'baz'} | ${'{bar="baz"}'}
+    ${'{} | logfmt'}                                                                                                                  | ${'query without stream selector and with parser'}                     | ${'bar'} | ${'='}   | ${'baz'} | ${'{bar="baz"}| logfmt'}
+    ${'{} | x="y"'}                                                                                                                   | ${'query without stream selector and with label filter'}               | ${'bar'} | ${'='}   | ${'baz'} | ${'{bar="baz"}| x="y"'}
+    ${'{} | logfmt | x="y"'}                                                                                                          | ${'query without stream selector and with parser and label filter'}    | ${'bar'} | ${'='}   | ${'baz'} | ${'{bar="baz"}| logfmt | x="y"'}
   `(
-    'should add label to query:  {$query}, description: {$description} ',
+    'should add label to query:  $query, description: $description',
     ({ query, description, label, operator, value, expectedResult }) => {
       if (description === 'no label and value') {
         expect(() => {
