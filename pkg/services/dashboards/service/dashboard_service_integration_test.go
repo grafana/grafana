@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -826,8 +827,8 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 		service := ProvideDashboardService(
 			cfg, dashboardStore, &dummyDashAlertExtractor{},
 			featuremgmt.WithFeatures(),
-			accesscontrolmock.NewMockedPermissionsService(),
-			accesscontrolmock.NewMockedPermissionsService(),
+			actest.NewFakePermissionsService(),
+			actest.NewFakePermissionsService(),
 			accesscontrolmock.New(),
 		)
 		guardian.InitLegacyGuardian(sqlStore, service, &teamtest.FakeService{})
@@ -883,8 +884,8 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
-		accesscontrolmock.NewMockedPermissionsService(),
-		accesscontrolmock.NewMockedPermissionsService(),
+		actest.NewFakePermissionsService(),
+		actest.NewFakePermissionsService(),
 		accesscontrolmock.New(),
 	)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
@@ -902,8 +903,8 @@ func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore db.DB) error {
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
-		accesscontrolmock.NewMockedPermissionsService(),
-		accesscontrolmock.NewMockedPermissionsService(),
+		actest.NewFakePermissionsService(),
+		actest.NewFakePermissionsService(),
 		accesscontrolmock.New(),
 	)
 	_, err := service.SaveDashboard(context.Background(), &dto, false)
@@ -939,8 +940,8 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
-		accesscontrolmock.NewMockedPermissionsService(),
-		accesscontrolmock.NewMockedPermissionsService(),
+		actest.NewFakePermissionsService(),
+		actest.NewFakePermissionsService(),
 		accesscontrolmock.New(),
 	)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
@@ -977,8 +978,8 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *mo
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
-		accesscontrolmock.NewMockedPermissionsService(),
-		accesscontrolmock.NewMockedPermissionsService(),
+		actest.NewFakePermissionsService(),
+		actest.NewFakePermissionsService(),
 		accesscontrolmock.New(),
 	)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)

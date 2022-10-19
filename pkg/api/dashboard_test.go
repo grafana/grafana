@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
@@ -999,8 +1000,8 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	libraryElementsService := mockLibraryElementService{}
 	cfg := setting.NewCfg()
 	ac := accesscontrolmock.New()
-	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
-	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
+	folderPermissions := actest.NewFakePermissionsService()
+	dashboardPermissions := actest.NewFakePermissionsService()
 	features := featuremgmt.WithFeatures()
 
 	if dashboardService == nil {

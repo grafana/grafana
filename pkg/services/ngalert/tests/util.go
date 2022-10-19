@@ -8,15 +8,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -79,9 +78,8 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures()
-	folderPermissions := acmock.NewMockedPermissionsService()
-	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
-	dashboardPermissions := acmock.NewMockedPermissionsService()
+	folderPermissions := actest.NewFakePermissionsService()
+	dashboardPermissions := actest.NewFakePermissionsService()
 
 	dashboardService := dashboardservice.ProvideDashboardService(
 		cfg, dashboardStore, nil,

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
@@ -366,7 +367,7 @@ func setup(t *testing.T) *testContext {
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	ss := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	ssvc := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-	ds := dsSvc.ProvideService(nil, ssvc, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+	ds := dsSvc.ProvideService(nil, ssvc, ss, nil, featuremgmt.WithFeatures(), acmock.New(), actest.NewFakePermissionsService())
 	fakeDatasourceService := &fakeDatasources.FakeDataSourceService{
 		DataSources:           nil,
 		SimulatePluginFailure: false,

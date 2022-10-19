@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -200,7 +201,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), actest.NewFakePermissionsService())
 
 		rt1, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
 		require.NoError(t, err)
@@ -235,7 +236,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), actest.NewFakePermissionsService())
 
 		ds := datasources.DataSource{
 			Id:             1,
@@ -284,7 +285,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), actest.NewFakePermissionsService())
 
 		ds := datasources.DataSource{
 			Id:       1,
@@ -330,7 +331,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), actest.NewFakePermissionsService())
 
 		ds := datasources.DataSource{
 			Id:       1,
@@ -373,7 +374,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), actest.NewFakePermissionsService())
 
 		ds := datasources.DataSource{
 			Id:       1,
@@ -406,7 +407,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), actest.NewFakePermissionsService())
 
 		ds := datasources.DataSource{
 			Id:       1,
@@ -473,7 +474,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), actest.NewFakePermissionsService())
 		ds := datasources.DataSource{
 			Id:       1,
 			Url:      "http://k8s:8001",
@@ -507,7 +508,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), actest.NewFakePermissionsService())
 
 		ds := datasources.DataSource{
 			Type:     datasources.DS_ES,
@@ -544,7 +545,7 @@ func TestService_getTimeout(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-	dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+	dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), actest.NewFakePermissionsService())
 
 	for _, tc := range testCases {
 		ds := &datasources.DataSource{
@@ -565,7 +566,7 @@ func TestService_GetDecryptedValues(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		dsService := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+		dsService := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), actest.NewFakePermissionsService())
 
 		jsonData := map[string]string{
 			"password": "securePassword",
@@ -591,7 +592,7 @@ func TestService_GetDecryptedValues(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		dsService := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+		dsService := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), actest.NewFakePermissionsService())
 
 		jsonData := map[string]string{
 			"password": "securePassword",

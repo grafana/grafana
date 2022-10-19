@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
@@ -417,7 +418,7 @@ func setupHTTPServerWithCfgDb(
 		searchUsersService:     searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
 		DashboardService: dashboardservice.ProvideDashboardService(
 			cfg, dashboardsStore, nil, features,
-			accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(), ac,
+			actest.NewFakePermissionsService(), actest.NewFakePermissionsService(), ac,
 		),
 		preferenceService: preftest.NewPreferenceServiceFake(),
 		userService:       userSvc,

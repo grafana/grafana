@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	service "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -34,8 +35,8 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 	ac := accesscontrolmock.New()
-	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
-	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
+	folderPermissions := actest.NewFakePermissionsService()
+	dashboardPermissions := actest.NewFakePermissionsService()
 
 	hs := &HTTPServer{
 		Cfg:                         settings,
