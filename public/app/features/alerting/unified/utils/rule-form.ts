@@ -441,7 +441,6 @@ export function fixBothInstantAndRangeQuery(query: AlertQuery) {
     return query;
   }
 
-  // I'm very sorry but I don't know how to start refactoring this to use Generics
   const isBothInstantAndRange = model.instant && model.range;
   if (isBothInstantAndRange) {
     return { ...query, model: { ...model, range: true, instant: false } };
