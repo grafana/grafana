@@ -10,6 +10,7 @@ import {
   LogsSortOrder,
   toDataFrame,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 
 export interface RowContextOptions {
   direction?: 'BACKWARD' | 'FORWARD';
@@ -210,7 +211,16 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
       after: result ? result.errors[1] : undefined,
     },
     hasMoreContextRows,
-    updateLimit: () => setLimit(limit + 10),
+    updateLimit: () => {
+      setLimit(limit + 10);
+
+      const { datasourceType, uid: logRowUid } = row;
+      reportInteraction('grafana_explore_logs_log_context_load_more_clicked', {
+        datasourceType,
+        logRowUid,
+        newLimit: limit + 10,
+      });
+    },
     limit,
     logsSortOrder,
   });

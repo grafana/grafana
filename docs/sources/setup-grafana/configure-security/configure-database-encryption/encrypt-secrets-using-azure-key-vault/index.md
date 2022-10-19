@@ -14,7 +14,7 @@ You can use an encryption key from Azure Key Vault to encrypt secrets in the Gra
 **Prerequisites:**
 
 - An Azure account with permission to view and create Key Vault keys and programmatic credentials to access those keys
-- Access to the Grafana [configuration]({{< relref "../../configure-grafana/#config-file-locations" >}}) file
+- Access to the Grafana [configuration]({{< relref "../../../configure-grafana/#config-file-locations" >}}) file
 
 1. [Create a vault](https://docs.microsoft.com/en-us/azure/key-vault/general/quick-create-portal#create-a-vault).
 

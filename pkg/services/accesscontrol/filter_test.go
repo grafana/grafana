@@ -8,11 +8,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsService "github.com/grafana/grafana/pkg/services/datasources/service"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -166,9 +166,9 @@ func TestFilter_Datasources(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store := sqlstore.InitTestDB(t)
+			store := db.InitTestDB(t)
 
-			err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
 				// seed 10 data sources
 				for i := 1; i <= 10; i++ {
 					dsStore := dsService.CreateStore(store, log.New("accesscontrol.test"))
