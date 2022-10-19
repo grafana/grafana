@@ -10,27 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 )
 
-type CloudWatchQuery struct {
-	RefId             string
-	Region            string
-	Id                string
-	Namespace         string
-	MetricName        string
-	Statistic         string
-	Expression        string
-	SqlExpression     string
-	ReturnData        bool
-	Dimensions        map[string][]string
-	Period            int
-	Alias             string
-	Label             string
-	MatchExact        bool
-	UsedExpression    string
-	TimezoneUTCOffset string
-	MetricQueryType   MetricQueryType
-	MetricEditorMode  MetricEditorMode
-}
-
 type (
 	MetricQueryType  uint32
 	MetricEditorMode uint32
@@ -53,6 +32,27 @@ const (
 	GMDApiModeMathExpression
 	GMDApiModeSQLExpression
 )
+
+type CloudWatchQuery struct {
+	RefId             string
+	Region            string
+	Id                string
+	Namespace         string
+	MetricName        string
+	Statistic         string
+	Expression        string
+	SqlExpression     string
+	ReturnData        bool
+	Dimensions        map[string][]string
+	Period            int
+	Alias             string
+	Label             string
+	MatchExact        bool
+	UsedExpression    string
+	TimezoneUTCOffset string
+	MetricQueryType   MetricQueryType
+	MetricEditorMode  MetricEditorMode
+}
 
 func (q *CloudWatchQuery) GetGMDAPIMode() GMDApiMode {
 	if q.MetricQueryType == MetricQueryTypeSearch && q.MetricEditorMode == MetricEditorModeBuilder {
@@ -125,27 +125,6 @@ func (q *CloudWatchQuery) IsMultiValuedDimensionExpression() bool {
 	}
 
 	return false
-}
-
-type cloudWatchLink struct {
-	View    string        `json:"view"`
-	Stacked bool          `json:"stacked"`
-	Title   string        `json:"title"`
-	Start   string        `json:"start"`
-	End     string        `json:"end"`
-	Region  string        `json:"region"`
-	Metrics []interface{} `json:"metrics"`
-}
-
-type metricExpression struct {
-	Expression string `json:"expression"`
-	Label      string `json:"label,omitempty"`
-}
-
-type metricStatMeta struct {
-	Stat   string `json:"stat"`
-	Period int    `json:"period"`
-	Label  string `json:"label,omitempty"`
 }
 
 func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time, dynamicLabelEnabled bool) (string, error) {
