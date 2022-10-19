@@ -152,20 +152,20 @@ type StandardExport struct {
 	dataDir string
 
 	// Services
+	db                        db.DB
 	dashboardsnapshotsService dashboardsnapshots.Service
 	playlistService           playlist.Service
 	orgService                org.Service
 	datasourceService         datasources.DataSourceService
 	store                     object.ObjectStoreServer
-	db                        db.DB
 
 	// updated with mutex
 	exportJob Job
 }
 
-func ProvideService(features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg,
+func ProvideService(db db.DB, features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg,
 	dashboardsnapshotsService dashboardsnapshots.Service, playlistService playlist.Service, orgService org.Service,
-	datasourceService datasources.DataSourceService, store object.ObjectStoreServer, db db.DB) ExportService {
+	datasourceService datasources.DataSourceService, store object.ObjectStoreServer) ExportService {
 	if !features.IsEnabled(featuremgmt.FlagExport) {
 		return &StubExport{}
 	}
