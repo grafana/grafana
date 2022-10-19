@@ -172,11 +172,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
                 </Tooltip>
               )}
               <Tooltip placement="top" content={'Copy'}>
-                <IconButton
-                  size="md"
-                  name="copy"
-                  onClick={() => navigator.clipboard.writeText(JSON.stringify(restructuredEntry))}
-                />
+                <IconButton size="md" name="copy" onClick={() => navigator.clipboard.writeText(restructuredEntry)} />
               </Tooltip>
             </span>
           )}
