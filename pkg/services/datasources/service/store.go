@@ -36,7 +36,7 @@ type SqlStore struct {
 	logger log.Logger
 }
 
-func CreateStore(db sqlstore.Store, logger log.Logger) *SqlStore {
+func CreateStore(db db.DB, logger log.Logger) *SqlStore {
 	return &SqlStore{db: db, logger: logger}
 }
 

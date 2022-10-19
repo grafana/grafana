@@ -303,6 +303,80 @@ const (
   ],
   "schemaVersion": 21
 }`
+
+	dashboardWithOneHiddenQuery = `
+{
+  "panels": [
+    {
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "_yxMP8Ynk"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A",
+          "hide": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "promds2"
+          },
+          "exemplar": true,
+          "expr": "query2",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 35
+}`
+	dashboardWithAllHiddenQueries = `
+{
+  "panels": [
+    {
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "_yxMP8Ynk"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A",
+          "hide": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "promds2"
+          },
+          "exemplar": true,
+          "expr": "query2",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B",
+		  "hide": true
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 35
+}`
 )
 
 func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
@@ -361,7 +435,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		queries := GroupQueriesByPanelId(json)
 
 		panelId := int64(2)
-		queriesByDatasource := GroupQueriesByDataSource(queries[panelId])
+		queriesByDatasource := groupQueriesByDataSource(t, queries[panelId])
 		require.Len(t, queriesByDatasource[0], 1)
 	})
 	t.Run("will delete exemplar property from target if exists", func(t *testing.T) {
@@ -370,7 +444,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		queries := GroupQueriesByPanelId(json)
 
 		panelId := int64(2)
-		queriesByDatasource := GroupQueriesByDataSource(queries[panelId])
+		queriesByDatasource := groupQueriesByDataSource(t, queries[panelId])
 		for _, query := range queriesByDatasource[0] {
 			_, ok := query.CheckGet("exemplar")
 			require.False(t, ok)
@@ -382,7 +456,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		queries := GroupQueriesByPanelId(json)
 
 		panelId := int64(2)
-		queriesByDatasource := GroupQueriesByDataSource(queries[panelId])
+		queriesByDatasource := groupQueriesByDataSource(t, queries[panelId])
 		require.Len(t, queriesByDatasource[0], 2)
 	})
 	t.Run("can extract no queries from empty dashboard", func(t *testing.T) {
@@ -458,6 +532,27 @@ func TestGroupQueriesByPanelId(t *testing.T) {
             "refId": "A"
 		}`, string(query))
 	})
+
+	t.Run("hidden query filtered", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(dashboardWithOneHiddenQuery))
+		require.NoError(t, err)
+		queries := GroupQueriesByPanelId(json)[2]
+
+		require.Len(t, queries, 1)
+		for _, query := range queries {
+			if hideAttr, exists := query.CheckGet("hide"); exists && hideAttr.MustBool() {
+				require.Fail(t, "hidden queries should have been filtered")
+			}
+		}
+	})
+
+	t.Run("hidden query filtered, so empty queries returned", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(dashboardWithAllHiddenQueries))
+		require.NoError(t, err)
+		queries := GroupQueriesByPanelId(json)[2]
+
+		require.Len(t, queries, 0)
+	})
 }
 
 func TestGroupQueriesByDataSource(t *testing.T) {
@@ -487,7 +582,7 @@ func TestGroupQueriesByDataSource(t *testing.T) {
 			}`)),
 		}
 
-		queriesByDatasource := GroupQueriesByDataSource(queries)
+		queriesByDatasource := groupQueriesByDataSource(t, queries)
 		require.Len(t, queriesByDatasource, 2)
 		require.Contains(t, queriesByDatasource, []*simplejson.Json{simplejson.MustJson([]byte(`{
             "datasource": {
@@ -564,4 +659,20 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 			}
 		}
 	})
+}
+
+func groupQueriesByDataSource(t *testing.T, queries []*simplejson.Json) (result [][]*simplejson.Json) {
+	t.Helper()
+	byDataSource := make(map[string][]*simplejson.Json)
+
+	for _, query := range queries {
+		uid := GetDataSourceUidFromJson(query)
+		byDataSource[uid] = append(byDataSource[uid], query)
+	}
+
+	for _, queries := range byDataSource {
+		result = append(result, queries)
+	}
+
+	return
 }

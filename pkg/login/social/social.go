@@ -167,8 +167,9 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// AzureAD.
 		if name == "azuread" {
 			ss.socialMap["azuread"] = &SocialAzureAD{
-				SocialBase:    newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
-				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+				SocialBase:       newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
+				allowedGroups:    util.SplitString(sec.Key("allowed_groups").String()),
+				forceUseGraphAPI: sec.Key("force_use_graph_api").MustBool(false),
 			}
 		}
 

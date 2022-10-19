@@ -1,4 +1,4 @@
-import { getDefaultRelativeTimeRange } from '@grafana/data';
+import { getDefaultRelativeTimeRange, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime/src/services/__mocks__/dataSourceSrv';
 import {
   dataSource as expressionDatasource,
@@ -19,6 +19,7 @@ import {
   setDataQueries,
   updateExpression,
   updateExpressionRefId,
+  updateExpressionTimeRange,
   updateExpressionType,
 } from './reducer';
 
@@ -145,6 +146,153 @@ describe('Query and expressions reducer', () => {
 
     const newState = queriesAndExpressionsReducer(initialState, updateExpression(newExpression));
     expect(newState).toMatchSnapshot();
+  });
+  it('should use time range from data source when updating an expression', () => {
+    const expressionQuery: AlertQuery = {
+      refId: 'B',
+      queryType: 'expression',
+      datasourceUid: '-100',
+      relativeTimeRange: { from: 900, to: 1000 },
+      model: {
+        queryType: 'query',
+        datasource: '__expr__',
+        refId: 'B',
+        expression: 'C',
+        type: ExpressionQueryType.classic,
+        window: '10s',
+      } as ExpressionQuery,
+    };
+
+    const expressionQuery2: AlertQuery = {
+      refId: 'C',
+      queryType: 'expression',
+      datasourceUid: '-100',
+      relativeTimeRange: { from: 1, to: 3 },
+      model: {
+        queryType: 'query',
+        datasource: '__expr__',
+        refId: 'C',
+        expression: 'A',
+        type: ExpressionQueryType.classic,
+        window: '10s',
+      } as ExpressionQuery,
+    };
+
+    const queryA: AlertQuery = {
+      refId: 'A',
+      relativeTimeRange: { from: 900, to: 1000 },
+      datasourceUid: 'dsuid',
+      model: { refId: 'A' },
+      queryType: 'query',
+    };
+    const newExpression: ExpressionQuery = {
+      ...expressionQuery2.model,
+      type: ExpressionQueryType.resample,
+    };
+
+    const initialState: QueriesAndExpressionsState = {
+      queries: [queryA, expressionQuery, expressionQuery2],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, updateExpression(newExpression));
+    expect(newState).toStrictEqual({
+      queries: [
+        {
+          refId: 'A',
+          relativeTimeRange: { from: 900, to: 1000 },
+          datasourceUid: 'dsuid',
+          model: { refId: 'A' },
+          queryType: 'query',
+        },
+        {
+          datasourceUid: '-100',
+          relativeTimeRange: { from: 900, to: 1000 },
+          model: {
+            datasource: '__expr__',
+            expression: 'C',
+            queryType: 'query',
+            refId: 'B',
+            type: 'classic_conditions',
+            window: '10s',
+          },
+          queryType: 'expression',
+          refId: 'B',
+        },
+        {
+          datasourceUid: '-100',
+          relativeTimeRange: { from: 900, to: 1000 },
+          model: {
+            datasource: '__expr__',
+            expression: 'A',
+            queryType: 'query',
+            refId: 'C',
+            type: 'resample',
+            window: '10s',
+          },
+          queryType: 'expression',
+          refId: 'C',
+        },
+      ],
+    });
+  });
+
+  it('Should update time range for all expressions that have this data source when dispatching updateExpressionTimeRange', () => {
+    const expressionQuery: AlertQuery = {
+      refId: 'B',
+      queryType: 'expression',
+      datasourceUid: '-100',
+      model: {
+        queryType: 'query',
+        datasource: '__expr__',
+        refId: 'B',
+        expression: 'A',
+        type: ExpressionQueryType.classic,
+        window: '10s',
+      } as ExpressionQuery,
+    };
+    const customTimeRange: RelativeTimeRange = { from: 900, to: 1000 };
+
+    const queryA: AlertQuery = {
+      refId: 'A',
+      relativeTimeRange: customTimeRange,
+      datasourceUid: 'dsuid',
+      model: { refId: 'A' },
+      queryType: 'query',
+    };
+
+    const initialState: QueriesAndExpressionsState = {
+      queries: [queryA, expressionQuery],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, updateExpressionTimeRange());
+    expect(newState).toStrictEqual({
+      queries: [
+        {
+          refId: 'A',
+          relativeTimeRange: customTimeRange,
+          datasourceUid: 'dsuid',
+          model: { refId: 'A' },
+          queryType: 'query',
+        },
+        {
+          datasourceUid: '-100',
+          model: {
+            datasource: '__expr__',
+            expression: 'A',
+            queryType: 'query',
+            refId: 'B',
+            type: ExpressionQueryType.classic,
+            window: '10s',
+          },
+          queryType: 'expression',
+          refId: 'B',
+          relativeTimeRange: {
+            from: 900,
+            to: 1000,
+          },
+        },
+      ],
+    });
   });
 
   it('should update an expression refId and rewire expressions', () => {

@@ -350,8 +350,7 @@ func TestRequestParser(t *testing.T) {
 
 	t.Run("parseRequestQuery sets label when label is present in json query", func(t *testing.T) {
 		query := getBaseJsonQuery()
-		alias := "some alias"
-		query.Alias = &alias
+		query.Alias = "some alias"
 
 		label := "some label"
 		query.Label = &label
@@ -401,7 +400,7 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 				Region:     "us-east-1",
 				Namespace:  "ec2",
 				MetricName: "CPUUtilization",
-				Alias:      &tc.inputAlias,
+				Alias:      tc.inputAlias,
 				Dimensions: map[string]interface{}{
 					"InstanceId": []interface{}{"test"},
 				},
@@ -413,7 +412,7 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 			migrateAliasToDynamicLabel(&queryToMigrate)
 
 			expected := QueryJson{
-				Alias: &tc.inputAlias,
+				Alias: tc.inputAlias,
 				Dimensions: map[string]interface{}{
 					"InstanceId": []interface{}{"test"},
 				},

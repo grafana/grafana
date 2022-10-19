@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import { program } from 'commander';
 
-import { closeMilestoneTask } from './tasks/closeMilestone';
 import { componentCreateTask } from './tasks/component.create';
 import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
 import { buildPackageTask } from './tasks/package.build';
@@ -63,23 +62,6 @@ export const run = (includeInternalScripts = false) => {
       .description('Setup test data for search')
       .action(async (cmd) => {
         await execTask(searchTestDataSetupTask)({ count: cmd.count });
-      });
-
-    program
-      .command('close-milestone')
-      .option('-m, --milestone <milestone>', 'Specify milestone')
-      .option('--dryRun', 'Only simulate actions')
-      .description('Helps ends a milestone by removing the cherry-pick label and closing it')
-      .action(async (cmd) => {
-        if (!cmd.milestone) {
-          console.log('Please specify milestone, example: -m <milestone id from github milestone URL>');
-          return;
-        }
-
-        await execTask(closeMilestoneTask)({
-          milestone: cmd.milestone,
-          dryRun: !!cmd.dryRun,
-        });
       });
 
     // React generator

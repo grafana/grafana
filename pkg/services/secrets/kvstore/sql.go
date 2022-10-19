@@ -9,12 +9,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 // SecretsKVStoreSQL provides a key/value store backed by the Grafana database
 type SecretsKVStoreSQL struct {
 	log             log.Logger
-	sqlStore        sqlstore.Store
+	sqlStore        db.DB
 	secretsService  secrets.Service
 	decryptionCache decryptionCache
 }
@@ -31,7 +32,7 @@ type cachedDecrypted struct {
 
 var b64 = base64.RawStdEncoding
 
-func NewSQLSecretsKVStore(sqlStore sqlstore.Store, secretsService secrets.Service, logger log.Logger) *SecretsKVStoreSQL {
+func NewSQLSecretsKVStore(sqlStore db.DB, secretsService secrets.Service, logger log.Logger) *SecretsKVStoreSQL {
 	return &SecretsKVStoreSQL{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,

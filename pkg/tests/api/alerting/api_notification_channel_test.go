@@ -776,7 +776,7 @@ func TestNotificationChannels(t *testing.T) {
 		resp = getRequest(t, receiversURL, http.StatusOK) // nolint
 		b = getBody(t, resp.Body)
 
-		var receivers apimodels.Receivers
+		var receivers []apimodels.Receiver
 		err := json.Unmarshal([]byte(b), &receivers)
 		require.NoError(t, err)
 		for _, rcv := range receivers {
@@ -824,7 +824,7 @@ func TestNotificationChannels(t *testing.T) {
 	resp := getRequest(t, receiversURL, http.StatusOK) // nolint
 	b := getBody(t, resp.Body)
 
-	var receivers apimodels.Receivers
+	var receivers []apimodels.Receiver
 	err := json.Unmarshal([]byte(b), &receivers)
 	require.NoError(t, err)
 	for _, rcv := range receivers {
@@ -857,8 +857,8 @@ func TestNotificationChannels(t *testing.T) {
 
 					// If the receiver is not active, no attempts to send notifications should be registered.
 					if expActive {
+						// Prometheus' durations get rounded down, so we might end up with "0s" if we have values smaller than 1ms.
 						require.NotZero(t, integration.LastNotifyAttempt)
-						require.NotEqual(t, "0s", integration.LastNotifyAttemptDuration)
 					} else {
 						require.Zero(t, integration.LastNotifyAttempt)
 						require.Equal(t, "0s", integration.LastNotifyAttemptDuration)
