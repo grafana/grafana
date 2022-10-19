@@ -18,12 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 func TestTeamAPIEndpoint(t *testing.T) {
@@ -163,23 +165,27 @@ const (
 )
 
 func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
-	sc := setupHTTPServerWithCfg(t, true, cfg)
-	setInitCtxSignedInOrgAdmin(sc.initCtx)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.teamService = teamtest.NewFakeService()
+		hs.QuotaService = quotatest.NewQuotaServiceFake()
+	})
 
 	input := strings.NewReader(fmt.Sprintf(teamCmd, 1))
 	t.Run("Organisation admin can create a team", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodPost, createTeamURL, input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+		req := server.NewPostRequest(createTeamURL, input)
+		req = webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: org.RoleAdmin})
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
 	})
 
-	setInitCtxSignedInEditor(sc.initCtx)
-	sc.initCtx.IsGrafanaAdmin = true
 	input = strings.NewReader(fmt.Sprintf(teamCmd, 2))
 	t.Run("Org editor and server admin cannot create a team", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodPost, createTeamURL, strings.NewReader(teamCmd), t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+		req := server.NewPostRequest(createTeamURL, input)
+		req = webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: org.RoleEditor, IsGrafanaAdmin: true})
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
 	})
 }
 
