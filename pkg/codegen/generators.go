@@ -43,6 +43,6 @@ func (gen *GenGoTypes) Name() string {
 	return "GenGoTypes"
 }
 
-func (gen *GenGoTypes) Generate(decl *SomeDeclWithLineage) (*GeneratedFile, error) {
-	panic("TODO")
+func (gen *GenGoTypes) Generate(decl *DeclForGen) (*GeneratedFile, error) {
+	lin := decl.Lineage()
 }

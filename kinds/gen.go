@@ -43,7 +43,7 @@ func main() {
 
 	wd := codegen.NewWriteDiffer()
 	rt := cuectx.GrafanaThemaRuntime()
-	var all []*codegen.SomeDeclWithLineage
+	var all []*codegen.DeclForGen
 
 	// structured kinds first
 	f := os.DirFS(filepath.Join(groot, "kind", "structured"))
@@ -59,9 +59,7 @@ func main() {
 			die(fmt.Errorf("%s: kind name (%s) must equal parent dir name (%s)", rel, decl.Meta.Name, ent.Name()))
 		}
 
-		lindecl := codegen.WithLineage(decl.Some())
-		elsedie(lindecl.Lineage())(rel)
-		all = append(all, lindecl)
+		all = append(all, elsedie(codegen.ForGen(rt, decl.Some()))(rel))
 	}
 
 	// now raw kinds
@@ -77,10 +75,11 @@ func main() {
 		if pk.Meta.Name != ent.Name() {
 			die(fmt.Errorf("%s: kind name (%s) must equal parent dir name (%s)", rel, pk.Meta.Name, ent.Name()))
 		}
-		all = append(all, codegen.WithLineage(pk.Some()))
+		dfg, _ := codegen.ForGen(nil, pk.Some())
+		all = append(all, dfg)
 	}
 
-	// Sort em
+	// Sort em real good
 	sort.Slice(all, func(i, j int) bool {
 		return nameFor(all[i].Meta) < nameFor(all[j].Meta)
 	})

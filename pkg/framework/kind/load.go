@@ -148,6 +148,9 @@ type SomeDecl struct {
 // For kinds with a corresponding Go type, it is left to the caller to associate
 // that Go type with the lineage returned from this function by a call to [thema.BindType].
 func (decl *SomeDecl) BindKindLineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
+	if rt == nil {
+		rt = cuectx.GrafanaThemaRuntime()
+	}
 	switch decl.Meta.(type) {
 	case RawMeta:
 		return nil, nil
