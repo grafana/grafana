@@ -51,7 +51,7 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 	clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration,
 	datasourceService datasources.DataSourceService, secretService secrets.Service) *AlertsRouter {
 	d := &AlertsRouter{
-		logger:           log.New("alerts-router"),
+		logger:           log.New("ngalert.sender.router"),
 		clock:            clk,
 		adminConfigStore: store,
 
