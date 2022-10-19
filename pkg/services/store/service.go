@@ -39,12 +39,12 @@ const RootContent = "content"
 const RootDevenv = "devenv"
 const RootSystem = "system"
 
-const brandingStorage = "branding"
-const SystemBrandingStorage = "system/" + brandingStorage
+const reportsStorage = "reports"
+const SystemReportsStorage = "system/" + reportsStorage
 
 var (
-	SystemBrandingReader = &user.SignedInUser{OrgID: ac.GlobalOrgID}
-	SystemBrandingAdmin  = &user.SignedInUser{OrgID: ac.GlobalOrgID}
+	SystemReportsReader = &user.SignedInUser{OrgID: ac.GlobalOrgID}
+	SystemReportsAdmin  = &user.SignedInUser{OrgID: ac.GlobalOrgID}
 )
 
 const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
@@ -202,20 +202,20 @@ func ProvideService(
 		}
 
 		if storageName == RootSystem {
-			if user == SystemBrandingReader {
+			if user == SystemReportsReader {
 				return map[string]filestorage.PathFilter{
-					ActionFilesRead:   createSystemBrandingPathFilter(),
+					ActionFilesRead:   createSystemReportsPathFilter(),
 					ActionFilesWrite:  denyAllPathFilter,
 					ActionFilesDelete: denyAllPathFilter,
 				}
 			}
 
-			if user == SystemBrandingAdmin {
-				systemBrandingFilter := createSystemBrandingPathFilter()
+			if user == SystemReportsAdmin {
+				systemReportsFilter := createSystemReportsPathFilter()
 				return map[string]filestorage.PathFilter{
-					ActionFilesRead:   systemBrandingFilter,
-					ActionFilesWrite:  systemBrandingFilter,
-					ActionFilesDelete: systemBrandingFilter,
+					ActionFilesRead:   systemReportsFilter,
+					ActionFilesWrite:  systemReportsFilter,
+					ActionFilesDelete: systemReportsFilter,
 				}
 			}
 		}
@@ -262,10 +262,10 @@ func ProvideService(
 	return s
 }
 
-func createSystemBrandingPathFilter() filestorage.PathFilter {
+func createSystemReportsPathFilter() filestorage.PathFilter {
 	return filestorage.NewPathFilter(
-		[]string{filestorage.Delimiter + brandingStorage + filestorage.Delimiter}, // access to all folders and files inside `/branding/`
-		[]string{filestorage.Delimiter + brandingStorage},                         // access to the `/branding` folder itself, but not to any other sibling folder
+		[]string{filestorage.Delimiter + reportsStorage + filestorage.Delimiter}, // access to all folders and files inside `/branding/`
+		[]string{filestorage.Delimiter + reportsStorage},                         // access to the `/branding` folder itself, but not to any other sibling folder
 		nil,
 		nil)
 }
