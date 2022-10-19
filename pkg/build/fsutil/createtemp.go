@@ -38,13 +38,6 @@ func CreateTempDir(sfx string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer func(path string) {
-		err := os.RemoveAll(path)
-		if err != nil {
-			fmt.Printf("failed to remove %s dir", dir)
-			return
-		}
-	}(dir)
 
 	return dir, nil
 }
