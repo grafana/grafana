@@ -53,6 +53,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Home,
+      roles: () => contextSrv.evaluatePermission(() => ['Viewer'], []),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
       ),
