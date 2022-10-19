@@ -12,17 +12,17 @@ import { noopTransformer } from '@grafana/data/src/transformations/transformers/
 
 import { partition } from './partition';
 
-export interface FrameNameOptions {
-  /** if false, will only include values without key field names, e.g. 'Europe Chef' */
-  names?: boolean; // false
+export interface FrameNamingOptions {
+  /** whether to include discriminator field names, e.g. true -> Region=Europe Profession=Chef, false -> 'Europe Chef'  */
+  withFields?: boolean; // false
   /** name/value separator, e.g. '=' in 'Region=Europe' */
   separator1?: string;
   /** name/value pair separator, e.g. ' ' in 'Region=Europe Profession=Chef' */
   separator2?: string;
 }
 
-const defaultFrameNameOptions: FrameNameOptions = {
-  names: false,
+const defaultFrameNameOptions: FrameNamingOptions = {
+  withFields: false,
   separator1: '=',
   separator2: ' ',
 };
@@ -30,14 +30,13 @@ const defaultFrameNameOptions: FrameNameOptions = {
 export interface PartitionByValuesTransformerOptions {
   /** field names whose values should be used as discriminator keys (typically enum fields) */
   fields: string[];
-
-  /** how the split frames should be named (ends up as field prefixes) */
-  frameName?: FrameNameOptions;
+  /** how the split frames' names should be suffixed (ends up as field prefixes) */
+  naming?: FrameNamingOptions;
 }
 
-function buildFrameName(opts: FrameNameOptions, names: string[], values: unknown[]): string {
+function buildFrameName(opts: FrameNamingOptions, names: string[], values: unknown[]): string {
   return names
-    .map((name, i) => (opts.names ? `${name}${opts.separator1}${values[i]}` : values[i]))
+    .map((name, i) => (opts.withFields ? `${name}${opts.separator1}${values[i]}` : values[i]))
     .join(opts.separator2);
 }
 
@@ -71,7 +70,7 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Partit
 
       const frameNameOpts = {
         ...defaultFrameNameOptions,
-        ...options.frameName,
+        ...options.naming,
       };
 
       return partition(keyFieldsVals).map((idxs: number[]) => {
@@ -83,7 +82,7 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Partit
 
         return {
           ...frame,
-          name,
+          name: frame.name == null ? name : `${frame.name} ${name}`,
           length: idxs.length,
           fields: frame.fields.map((f) => {
             const vals = f.values.toArray();
