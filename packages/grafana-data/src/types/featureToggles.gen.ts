@@ -77,4 +77,5 @@ export interface FeatureToggles {
   queryLibrary?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
+  accessControlOnCall?: boolean;
 }

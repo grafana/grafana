@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -201,7 +202,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 		cfg = setting.NewCfg()
 	}
 
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	remoteCacheSvc := &remotecache.RemoteCache{}
 	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
 		Name: "database",
@@ -249,7 +250,7 @@ func (s *fakeRenderService) Init() error {
 func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
 	cfg.Quota.Enabled = false
 
-	store := sqlstore.InitTestDB(t)
+	store := db.InitTestDB(t)
 	hs := &HTTPServer{
 		Cfg:                cfg,
 		Live:               newTestLive(t, store),
@@ -357,7 +358,7 @@ func setupHTTPServer(t *testing.T, useFakeAccessControl bool, options ...APITest
 }
 
 func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl bool, cfg *setting.Cfg, options ...APITestServerOption) accessControlScenarioContext {
-	db := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
+	db := db.InitTestDB(t, db.InitTestDBOpt{})
 	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, cfg, db, db, featuremgmt.WithFeatures(), options...)
 }
 
