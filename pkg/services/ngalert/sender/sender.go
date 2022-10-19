@@ -43,7 +43,7 @@ type ExternalAlertmanager struct {
 }
 
 func NewExternalAlertmanagerSender() (*ExternalAlertmanager, error) {
-	l := log.New("sender")
+	l := log.New("ngalert.sender.external-alertmanager")
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &ExternalAlertmanager{
 		logger:   l,

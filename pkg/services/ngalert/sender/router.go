@@ -253,7 +253,7 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 }
 
 func (d *AlertsRouter) Send(key models.AlertRuleKey, alerts definitions.PostableAlerts) {
-	logger := d.logger.New("rule_uid", key.UID, "org", key.OrgID)
+	logger := d.logger.New(key.LogContext()...)
 	if len(alerts.PostableAlerts) == 0 {
 		logger.Info("No alerts to notify about")
 		return
