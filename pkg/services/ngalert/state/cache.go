@@ -96,7 +96,7 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 	il := ngModels.InstanceLabels(lbs)
 	id, err := il.StringKey()
 	if err != nil {
-		log.Error("error getting cacheId for entry", "err", err.Error())
+		log.Error("error getting cacheId for entry", "error", err.Error())
 	}
 
 	if state, ok := rs.states[id]; ok {
@@ -145,7 +145,7 @@ func (rs *ruleStates) expandRuleLabelsAndAnnotations(ctx context.Context, log lo
 			ev, err := expandTemplate(ctx, alertRule.Title, v, templateLabels, alertInstance, externalURL)
 			expanded[k] = ev
 			if err != nil {
-				log.Error("error in expanding template", "name", k, "value", v, "err", err.Error())
+				log.Error("error in expanding template", "name", k, "value", v, "error", err.Error())
 				// Store the original template on error.
 				expanded[k] = v
 			}
