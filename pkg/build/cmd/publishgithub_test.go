@@ -114,7 +114,7 @@ func TestPublishGitHub(t *testing.T) {
 			}
 			args := []string{"run"}
 			args = append(args, test.args...)
-			out, err := testCaptureStdout(t, func() error {
+			out, err := captureStdout(t, func() error {
 				return testApp.Run(args)
 			})
 			if test.expectedOutput != "" {
@@ -171,7 +171,7 @@ func setupPublishGithubTests(t *testing.T) (*cli.App, string) {
 	return testApp, testPath
 }
 
-func testCaptureStdout(t *testing.T, fn func() error) (string, error) {
+func captureStdout(t *testing.T, fn func() error) (string, error) {
 	t.Helper()
 	rescueStdout := os.Stdout
 	r, w, _ := os.Pipe()
