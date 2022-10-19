@@ -3,8 +3,8 @@ package tempuserimpl
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 )
 

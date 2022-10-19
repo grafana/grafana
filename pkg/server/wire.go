@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/expr"
 	cmreg "github.com/grafana/grafana/pkg/framework/coremodel/registry"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -121,7 +122,6 @@ import (
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -129,7 +129,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	//	objectdummyserver "github.com/grafana/grafana/pkg/services/store/object/dummy"
-	objectsqlserver "github.com/grafana/grafana/pkg/services/store/object/sqlstash"
+	"github.com/grafana/grafana/pkg/services/store/object/sqlstash"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -358,10 +358,10 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideReflectionService,
 	interceptors.ProvideAuthenticator,
 	//	objectdummyserver.ProvideDummyObjectServer,
-	objectsqlserver.ProvideSQLObjectServer,
+	sqlstash.ProvideSQLObjectServer,
 	kind.ProvideService, // The registry known kinds
-	object.ProvideHTTPObjectStore,
 	resolver.ProvideObjectReferenceResolver,
+	object.ProvideHTTPObjectStore,
 	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,
 	loginattemptimpl.ProvideService,

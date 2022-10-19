@@ -62,6 +62,29 @@ func (_m *FakePublicDashboardService) BuildAnonymousUser(ctx context.Context, da
 	return r0
 }
 
+// GetAnnotations provides a mock function with given fields: ctx, reqDTO, accessToken
+func (_m *FakePublicDashboardService) GetAnnotations(ctx context.Context, reqDTO publicdashboardsmodels.AnnotationsQueryDTO, accessToken string) ([]publicdashboardsmodels.AnnotationEvent, error) {
+	ret := _m.Called(ctx, reqDTO, accessToken)
+
+	var r0 []publicdashboardsmodels.AnnotationEvent
+	if rf, ok := ret.Get(0).(func(context.Context, publicdashboardsmodels.AnnotationsQueryDTO, string) []publicdashboardsmodels.AnnotationEvent); ok {
+		r0 = rf(ctx, reqDTO, accessToken)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]publicdashboardsmodels.AnnotationEvent)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, publicdashboardsmodels.AnnotationsQueryDTO, string) error); ok {
+		r1 = rf(ctx, reqDTO, accessToken)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetDashboard provides a mock function with given fields: ctx, dashboardUid
 func (_m *FakePublicDashboardService) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
 	ret := _m.Called(ctx, dashboardUid)

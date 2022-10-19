@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/setting"
@@ -153,7 +152,6 @@ type StandardExport struct {
 	dataDir string
 
 	// Services
-	sql                       *sqlstore.SQLStore
 	dashboardsnapshotsService dashboardsnapshots.Service
 	playlistService           playlist.Service
 	orgService                org.Service
@@ -165,7 +163,7 @@ type StandardExport struct {
 	exportJob Job
 }
 
-func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg,
+func ProvideService(features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg,
 	dashboardsnapshotsService dashboardsnapshots.Service, playlistService playlist.Service, orgService org.Service,
 	datasourceService datasources.DataSourceService, store object.ObjectStoreServer, db db.DB) ExportService {
 	if !features.IsEnabled(featuremgmt.FlagExport) {
@@ -173,7 +171,6 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	}
 
 	return &StandardExport{
-		sql:                       sql,
 		glive:                     gl,
 		logger:                    log.New("export_service"),
 		dashboardsnapshotsService: dashboardsnapshotsService,
@@ -240,7 +237,7 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 			return response.Error(http.StatusBadRequest, "Error creating export folder", nil)
 		}
-		job, err = startGitExportJob(cfg, ex.sql, ex.dashboardsnapshotsService, dir, c.OrgID, broadcast, ex.playlistService, ex.orgService, ex.datasourceService)
+		job, err = startGitExportJob(cfg, ex.db, ex.dashboardsnapshotsService, dir, c.OrgID, broadcast, ex.playlistService, ex.orgService, ex.datasourceService)
 	default:
 		return response.Error(http.StatusBadRequest, "Unsupported job format", nil)
 	}
