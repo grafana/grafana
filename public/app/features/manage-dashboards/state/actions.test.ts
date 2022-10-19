@@ -2,6 +2,8 @@ import { thunkTester } from 'test/core/thunk/thunkTester';
 
 import { setBackendSrv } from '@grafana/runtime';
 
+import { validateDashboardJson } from '../utils/validation';
+
 import { importDashboard } from './actions';
 import { DataSourceInput, ImportDashboardDTO, initialImportDashboardState, InputType } from './reducers';
 
@@ -73,5 +75,34 @@ describe('importDashboard', () => {
       ],
       overwrite: true,
     });
+  });
+});
+
+describe('validateDashboardJson', () => {
+  it('Should return true if correct json', async () => {
+    const jsonImportCorrectFormat = '{"title": "Correct Format", "tags": ["tag1", "tag2"], "schemaVersion": 36}';
+    const validateDashboardJsonCorrectFormat = await validateDashboardJson(jsonImportCorrectFormat);
+    expect(validateDashboardJsonCorrectFormat).toBe(true);
+  });
+  it('Should not return true if nested tags', async () => {
+    const jsonImportNestedTags =
+      '{"title": "Nested tags","tags": ["tag1", "tag2", ["nestedTag1", "nestedTag2"]],"schemaVersion": 36}';
+    const validateDashboardJsonNestedTags = await validateDashboardJson(jsonImportNestedTags);
+    expect(validateDashboardJsonNestedTags).toBe('tags expected array of strings');
+  });
+  it('Should not return true if not an array', async () => {
+    const jsonImportNotArray = '{"title": "Not Array","tags": "tag1","schemaVersion":36}';
+    const validateDashboardJsonNotArray = await validateDashboardJson(jsonImportNotArray);
+    expect(validateDashboardJsonNotArray).toBe('tags expected array');
+  });
+  it('Should not return true if not an array and is blank string', async () => {
+    const jsonImportEmptyTags = '{"schemaVersion": 36,"tags": "", "title": "Empty Tags"}';
+    const validateDashboardJsonEmptyTags = await validateDashboardJson(jsonImportEmptyTags);
+    expect(validateDashboardJsonEmptyTags).toBe('tags expected array');
+  });
+  it('Should not return true if not valid JSON', async () => {
+    const jsonImportInvalidJson = '{"schemaVersion": 36,"tags": {"tag", "nested tag"}, "title": "Nested lists"}';
+    const validateDashboardJsonNotValid = await validateDashboardJson(jsonImportInvalidJson);
+    expect(validateDashboardJsonNotValid).toBe('Not valid JSON');
   });
 });
