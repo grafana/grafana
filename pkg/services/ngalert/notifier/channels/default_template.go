@@ -66,6 +66,34 @@ Annotations:
 
 {{ end }}{{ end }}{{ if gt (len .Alerts.Resolved) 0 }}**Resolved**
 {{ template "__teams_text_alert_list" .Alerts.Resolved }}{{ end }}{{ end }}
+
+{{ define "slack.default.title" -}}
+    {{ template "slack.alert_emoji" . }} {{ if eq .CommonLabels.alertname "DatasourceError" -}}
+        {{ .CommonLabels.rulename }} [query {{ .CommonLabels.ref_id}}]
+    {{- else if eq .CommonLabels.alertname "DatasourceNoData" -}}
+		{{ .CommonLabels.rulename }} [No Data]
+    {{- else -}}
+        {{.CommonLabels.alertname}}
+    {{- end -}}
+{{- end -}}
+
+{{ define "slack.alert_emoji" -}}
+    {{ if eq .Status "resolved" }}:white_check_mark:
+    {{- else if eq .CommonLabels.alertname "DatasourceError" }}:question:
+    {{- else if eq .CommonLabels.alertname "DatasourceNoData" }}:grey_question:
+    {{- else }}:rotating_light:
+    {{- end -}}
+{{ end -}}
+
+{{ define "slack.default.text" -}}
+    {{ if eq .Status "firing" -}}
+        {{ if eq .CommonLabels.alertname "DatasourceError" -}}
+            {{ .CommonAnnotations.Error -}}
+        {{ else -}}
+            {{ .CommonAnnotations.summary }}{{ .CommonAnnotations.message -}}
+        {{ end -}}
+    {{ end -}}
+{{ end }}
 `
 
 // TemplateForTestsString is the template used for unit tests and integration tests.

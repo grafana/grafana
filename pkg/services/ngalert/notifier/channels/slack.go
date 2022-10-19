@@ -51,6 +51,7 @@ type slackSettings struct {
 	MentionChannel string                `json:"mentionChannel,omitempty" yaml:"mentionChannel,omitempty"`
 	MentionUsers   CommaSeparatedStrings `json:"mentionUsers,omitempty" yaml:"mentionUsers,omitempty"`
 	MentionGroups  CommaSeparatedStrings `json:"mentionGroups,omitempty" yaml:"mentionGroups,omitempty"`
+	IncludeFields  bool                  `json:"includeFields,omitempty" yaml:"includeFields,omitempty"`
 }
 
 // SlackFactory creates a new NotificationChannel that sends notifications to Slack.
@@ -101,10 +102,10 @@ func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
 		settings.Username = "Grafana"
 	}
 	if settings.Text == "" {
-		settings.Text = DefaultMessageEmbed
+		settings.Text = config.DefaultSlackConfig.Text
 	}
 	if settings.Title == "" {
-		settings.Title = DefaultMessageTitleEmbed
+		settings.Title = config.DefaultSlackConfig.Title
 	}
 
 	return &SlackNotifier{
@@ -255,9 +256,36 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) (retErr er
 func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.Alert) (*slackMessage, error) {
 	alerts := types.Alerts(alrts...)
 	var tmplErr error
-	tmpl, _ := TmplText(ctx, sn.tmpl, alrts, sn.log, &tmplErr)
+	tmpl, data := TmplText(ctx, sn.tmpl, alrts, sn.log, &tmplErr)
 
 	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
+	// Link title to panel or alert rule if either is available.
+	if len(data.Alerts) > 0 {
+		if data.Alerts[0].PanelURL != "" {
+			ruleURL = data.Alerts[0].PanelURL
+		} else if data.Alerts[0].GeneratorURL != "" {
+			ruleURL = data.Alerts[0].GeneratorURL
+		}
+	}
+
+	fields := make([]config.SlackField, 0)
+	// Append firing-alert Values as fields.
+	if sn.settings.IncludeFields {
+		short := true
+		for _, alert := range data.Alerts.Firing() {
+			for name, value := range alert.Values {
+				valString := fmt.Sprintf("%.3f", value)
+				if value == float64(int64(value)) {
+					valString = fmt.Sprintf("%d", int64(value))
+				}
+				fields = append(fields, config.SlackField{
+					Title: name,
+					Value: valString,
+					Short: &short,
+				})
+			}
+		}
+	}
 
 	req := &slackMessage{
 		Channel:   tmpl(sn.settings.Recipient),
@@ -277,7 +305,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.A
 				Ts:         time.Now().Unix(),
 				TitleLink:  ruleURL,
 				Text:       tmpl(sn.settings.Text),
-				Fields:     nil, // TODO. Should be a config.
+				Fields:     fields,
 			},
 		},
 	}

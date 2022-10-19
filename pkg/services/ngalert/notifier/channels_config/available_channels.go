@@ -2,6 +2,7 @@ package channels_config
 
 import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/prometheus/alertmanager/config"
 )
 
 // GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
@@ -534,14 +535,20 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Description:  "Templated title of the slack message",
 					PropertyName: "title",
-					Placeholder:  `{{ template "slack.default.title" . }}`,
+					Placeholder:  config.DefaultSlackConfig.Title,
 				},
 				{ // New in 8.0.
 					Label:        "Text Body",
 					Element:      ElementTypeTextArea,
 					Description:  "Body of the slack message",
 					PropertyName: "text",
-					Placeholder:  `{{ template "slack.default.text" . }}`,
+					Placeholder:  config.DefaultSlackConfig.Text,
+				},
+				{ // New in 9.3.
+					Label:        "Include Fields",
+					Element:      ElementTypeCheckbox,
+					Description:  "Include Field elements for firing alert values (up to 10)",
+					PropertyName: "includeFields",
 				},
 			},
 		},
