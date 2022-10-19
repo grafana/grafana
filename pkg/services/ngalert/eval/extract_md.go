@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -21,19 +22,17 @@ func extractEvalString(frame *data.Frame) (s string) {
 		sb := strings.Builder{}
 
 		for i, m := range evalMatches {
-			sb.WriteString("[ ")
-			sb.WriteString(fmt.Sprintf("var='%s%v' ", frame.RefID, i))
-			sb.WriteString(fmt.Sprintf("metric='%s' ", m.Metric))
-			sb.WriteString(fmt.Sprintf("labels={%s} ", m.Labels))
-
 			valString := "null"
 			if m.Value != nil {
-				valString = fmt.Sprintf("%v", *m.Value)
+				if *m.Value == float64(int64(*m.Value)) {
+					valString = fmt.Sprintf("%d", int64(*m.Value))
+				} else {
+					valString = fmt.Sprintf("%.3f", *m.Value)
+				}
 			}
+			metric := formatMetric(m.Metric, m.Labels)
+			sb.WriteString(fmt.Sprintf("%s=%s", metric, valString))
 
-			sb.WriteString(fmt.Sprintf("value=%v ", valString))
-
-			sb.WriteString("]")
 			if i < len(evalMatches)-1 {
 				sb.WriteString(", ")
 			}
@@ -43,23 +42,18 @@ func extractEvalString(frame *data.Frame) (s string) {
 
 	if caps, ok := frame.Meta.Custom.([]NumberValueCapture); ok {
 		sb := strings.Builder{}
-
-		for i, c := range caps {
-			sb.WriteString("[ ")
-			sb.WriteString(fmt.Sprintf("var='%s' ", c.Var))
-			sb.WriteString(fmt.Sprintf("metric='%s' ", c.Metric))
-			sb.WriteString(fmt.Sprintf("labels={%s} ", c.Labels))
-
-			valString := "null"
-			if c.Value != nil {
-				valString = fmt.Sprintf("%v", *c.Value)
-			}
-
-			sb.WriteString(fmt.Sprintf("value=%v ", valString))
-
-			sb.WriteString("]")
-			if i < len(caps)-1 {
-				sb.WriteString(", ")
+		for _, c := range caps {
+			if c.Var == frame.RefID {
+				valString := "null"
+				if c.Value != nil {
+					if *c.Value == float64(int64(*c.Value)) {
+						valString = fmt.Sprintf("%d", int64(*c.Value))
+					} else {
+						valString = fmt.Sprintf("%.3f", *c.Value)
+					}
+				}
+				metric := formatMetric(c.Metric, c.Labels)
+				sb.WriteString(fmt.Sprintf("%s=%s", metric, valString))
 			}
 		}
 		return sb.String()
@@ -68,9 +62,8 @@ func extractEvalString(frame *data.Frame) (s string) {
 	return ""
 }
 
-// extractValues returns the RefID and value for all classic conditions, reduce, and math expressions in the frame.
-// For classic conditions the same refID can have multiple values due to multiple conditions, for them we use the index of
-// the condition in addition to the refID to distinguish between different values.
+// extractValues returns the metric name and value for the result expression in the frame.
+// For classic conditions the same metric name can have multiple values due to multiple conditions.
 // It returns nil if there are no results in the frame.
 func extractValues(frame *data.Frame) map[string]NumberValueCapture {
 	if frame == nil {
@@ -81,14 +74,18 @@ func extractValues(frame *data.Frame) map[string]NumberValueCapture {
 	}
 
 	if matches, ok := frame.Meta.Custom.([]classic.EvalMatch); ok {
-		// Classic evaluations only have a single match but it can contain multiple conditions.
-		// Conditions have a strict ordering which we can rely on to distinguish between values.
+		// Classic evaluations only have a single match but can contain multiple conditions.
+		// Conditions have a strict ordering which we can rely on to distinguish between values,
+		// in the case of duplicate names.
 		v := make(map[string]NumberValueCapture, len(matches))
 		for i, match := range matches {
-			// In classic conditions we use refID and the condition position as a way to distinguish between values.
+			// In classic conditions we can use the condition position as a suffix to distinguish between duplicate names.
 			// We can guarantee determinism as conditions are ordered and this order is preserved when marshaling.
-			refID := fmt.Sprintf("%s%d", frame.RefID, i)
-			v[refID] = NumberValueCapture{
+			metric := formatMetric(match.Metric, match.Labels)
+			if _, ok := v[metric]; ok {
+				metric += fmt.Sprintf(" [%d]", i)
+			}
+			v[metric] = NumberValueCapture{
 				Var:    frame.RefID,
 				Labels: match.Labels,
 				Value:  match.Value,
@@ -101,9 +98,39 @@ func extractValues(frame *data.Frame) map[string]NumberValueCapture {
 	if caps, ok := frame.Meta.Custom.([]NumberValueCapture); ok {
 		v := make(map[string]NumberValueCapture, len(caps))
 		for _, c := range caps {
-			v[c.Var] = c
+			if c.Var == frame.RefID {
+				metric := formatMetric(c.Metric, c.Labels)
+				v[metric] = c
+			}
 		}
 		return v
 	}
 	return nil
+}
+
+// When a metric is "" or "Value", replace it with formatted labels.
+// Approximates the frontend auto-naming logic in getFrameDisplayName.
+func formatMetric(metric string, labels data.Labels) string {
+	if metric == "" || metric == data.TimeSeriesValueFieldName {
+		if len(labels) == 1 {
+			for _, label := range labels {
+				metric = label
+			}
+		} else if len(labels) > 1 {
+			keys := make([]string, len(labels))
+			i := 0
+			for k := range labels {
+				keys[i] = k
+				i++
+			}
+			sort.Strings(keys)
+
+			var labelStrings []string
+			for _, k := range keys {
+				labelStrings = append(labelStrings, fmt.Sprintf("%s=%s", k, labels[k]))
+			}
+			metric = fmt.Sprintf("{%s}", strings.Join(labelStrings, ", "))
+		}
+	}
+	return metric
 }

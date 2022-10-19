@@ -190,12 +190,14 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
+
 	currentState.Results = append(currentState.Results, Evaluation{
 		EvaluationTime:  result.EvaluatedAt,
 		EvaluationState: result.State,
 		Values:          NewEvaluationValues(result.Values),
 		Condition:       alertRule.Condition,
 	})
+
 	currentState.LastEvaluationString = result.EvaluationString
 	currentState.TrimResults(alertRule)
 	oldState := currentState.State

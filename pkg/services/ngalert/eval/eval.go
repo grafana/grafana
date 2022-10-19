@@ -155,9 +155,7 @@ type Result struct {
 	// Results contains the results of all queries, reduce and math expressions
 	Results map[string]data.Frames
 
-	// Values contains the RefID and value of reduce and math expressions.
-	// It does not contain values for classic conditions as the values
-	// in classic conditions do not have a RefID.
+	// Values contains the metric and value of the condition's reduce or math expression.
 	Values map[string]NumberValueCapture
 
 	EvaluatedAt        time.Time

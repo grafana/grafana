@@ -84,7 +84,7 @@ type Evaluation struct {
 	Condition string
 }
 
-// NewEvaluationValues returns the labels and values for each RefID in the capture.
+// NewEvaluationValues returns the labels and values for each metric in the capture.
 func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float64 {
 	result := make(map[string]*float64, len(m))
 	for k, v := range m {

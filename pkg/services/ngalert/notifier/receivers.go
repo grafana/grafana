@@ -241,7 +241,8 @@ func newTestAlert(c apimodels.TestReceiversConfigBodyParams, startsAt, updatedAt
 	var (
 		defaultAnnotations = model.LabelSet{
 			"summary":          "Notification test",
-			"__value_string__": "[ metric='foo' labels={instance=bar} value=10 ]",
+			"__value_string__": "'foo'=10",
+			"__values__":       "{\"foo\": 10}",
 		}
 		defaultLabels = model.LabelSet{
 			"alertname": "TestAlert",
