@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/setting"
 )
