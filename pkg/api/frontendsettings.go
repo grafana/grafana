@@ -215,21 +215,23 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 
 func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
 	orgDataSources := make([]*datasources.DataSource, 0)
-
 	if c.OrgID != 0 {
 		query := datasources.GetDataSourcesQuery{OrgId: c.OrgID, DataSourceLimit: hs.Cfg.DataSourceLimit}
 		err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
-
 		if err != nil {
 			return nil, err
 		}
 
-		filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, query.Result)
-		if err != nil {
-			return nil, err
+		if c.IsPublicDashboardView {
+			// If RBAC is enabled, it will filter out all datasources for a public user, so we need to skip it
+			orgDataSources = query.Result
+		} else {
+			filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, query.Result)
+			if err != nil {
+				return nil, err
+			}
+			orgDataSources = filtered
 		}
-
-		orgDataSources = filtered
 	}
 
 	dataSources := make(map[string]plugins.DataSourceDTO)

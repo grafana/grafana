@@ -13,8 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	busmock "github.com/grafana/grafana/pkg/bus/mock"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
@@ -87,7 +88,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 		features, folderPermissions, dashboardPermissions, ac,
 	)
 
-	bus := busmock.New()
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
 	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardService, dashboardStore, features, folderPermissions, nil)
 
 	ng, err := ngalert.ProvideService(
