@@ -10,6 +10,9 @@ executors:
   base-cimg-executor:
     docker:
       - image: cimg/base:2022.07
+  python-cimg-executor:
+    docker:
+      - image: cimg/python:3.10.4
 
 commands:
   asdf_install:
@@ -61,23 +64,32 @@ commands:
           paths:
             - ~/.asdf
   opsninja_install:
+    parameters:
+      branch:
+        type: string
+        default: main
+        description: opsninja branch to install from
+      fingerprint:
+        type: string
+        default: 8d:43:0f:09:ed:86:44:23:4f:43:88:29:71:bf:92:e7  # fluxninja/cloud R/O
+        description: What SSH identity to use for accessing opsninja repository
     steps:
       - add_ssh_keys:
           fingerprints:
-            - "8d:43:0f:09:ed:86:44:23:4f:43:88:29:71:bf:92:e7" # fluxninja/cloud R/O
+            - << parameters.fingerprint >>
       - run:
           name: Install opsninja and its dependencies
           command: |
             # We need R/O access to cloud repository to be able to fetch opsninja library
             # FIXME: make "releases" of opsninja library somehow, even as a separate repository
             # to limit exposure.
-            export CLOUD_RO_KEY_FINGERPRINT="8d:43:0f:09:ed:86:44:23:4f:43:88:29:71:bf:92:e7"
+            export CLOUD_RO_KEY_FINGERPRINT="<< parameters.fingerprint >>"
             export GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa_$(echo "${CLOUD_RO_KEY_FINGERPRINT}" | tr -d ':')"
             export SSH_AUTH_SOCK=""
             # Bust asdf cache as our opsninja version is always 0.0.0
             pip uninstall -y opsninja
-            pip install 'git+ssh://git@github.com/fluxninja/cloud@main#egg=opsninja&subdirectory=ops/apps/opsninja/'
-            asdf reshim
+            pip install 'git+ssh://git@github.com/fluxninja/cloud@<< parameters.branch >>#egg=opsninja&subdirectory=ops/apps/opsninja/'
+            which asdf > /dev/null 2>&1 && asdf reshim
 
 jobs:
   release-components:
@@ -183,6 +195,54 @@ jobs:
                 image: <<parameters.image>>
                 source-tag: <<parameters.tag>>
                 target-tag: <<parameters.target-tag>>
+  update-environment:
+    parameters:
+      job-root:
+        type: string
+        default: "/home/circleci"
+        description: The root folder of the job where all repositories will be cloned to
+      manifests-repo:
+        type: string
+        default: git@github.com:fluxninja/argo-manifests.git
+        description: ArgoCD manifests repository to update
+      manifests-branch:
+        type: string
+        default: tests
+        description: Branch to use when pushing deployment changes
+      environment-path:
+        type: string
+        description: Path to the environment to update
+      component:
+        type: string
+        default: ""
+        description: Application component to update image and deployment code for
+      update:
+        type: string
+        default: everything
+        description: Whether to update 'images', 'deployment-code' or 'everything'
+    executor: python-cimg-executor
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "7b:4a:f0:04:90:75:93:7a:63:05:3b:18:a0:80:16:0d"  # argo-manifests R/W
+      - checkout
+      - asdf_install:
+          cache_name: release
+          tools: |-
+            python
+            gcloud
+      - gcp-gcr/gcr-auth
+      - opsninja_install
+      - run:
+          name: Update application in the deployment
+          environment:
+            JOB_ROOT: << parameters.job-root >>
+            UPDATE: << parameters.update >>
+            MANIFESTS_BRANCH: << parameters.manifests-branch >>
+            MANIFESTS_REPO: << parameters.manifests-repo >>
+            COMPONENT: << parameters.component >>
+            ENVIRONMENT_PATH: << parameters.environment-path >>
+          command: .circleci/scripts/update_environment.sh
 
 workflows:
   version: 2
@@ -191,6 +251,17 @@ workflows:
       - build-push-add-tag:
           name: image-build-grafana-alpine
           image: cf-fn/grafana
+      - update-environment:
+          filters:
+            branches:
+              only:
+                - fluxninja_micro_frontends
+          requires:
+            - image-build-grafana-alpine
+          environment-path: environments/demo/
+          component: grafana
+          update: images
+
   release-components:
     when:
       matches: { value: << pipeline.git.tag >>, pattern: "^releases/.+$" }
