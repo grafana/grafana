@@ -1,9 +1,6 @@
-import {
-  type DataSourcePluginContextType,
-  isDataSourcePluginContext,
-  type PluginContextType,
-  usePluginContext,
-} from '@grafana/data';
+import { useMemo } from 'react';
+
+import { isDataSourcePluginContext, usePluginContext } from '@grafana/data';
 
 import { reportInteraction } from '../utils';
 
@@ -12,27 +9,13 @@ import { createDataSourcePluginEventProperties, createPluginEventProperties } fr
 export function usePluginInteractionReporter(): typeof reportInteraction {
   const context = usePluginContext();
 
-  if (isDataSourcePluginContext(context)) {
-    return createDataSourceReporter(context);
-  }
+  return useMemo(() => {
+    const info = isDataSourcePluginContext(context)
+      ? createDataSourcePluginEventProperties(context.meta, context.dataSource)
+      : createPluginEventProperties(context.meta);
 
-  return createPluginReporter(context);
-}
-
-function createDataSourceReporter(context: DataSourcePluginContextType): typeof reportInteraction {
-  const { meta, dataSource } = context;
-  const info = createDataSourcePluginEventProperties(meta, dataSource);
-
-  return (interactionName: string, properties?: Record<string, unknown>) => {
-    return reportInteraction(interactionName, { ...properties, ...info });
-  };
-}
-
-function createPluginReporter(context: PluginContextType): typeof reportInteraction {
-  const { meta } = context;
-  const info = createPluginEventProperties(meta);
-
-  return (interactionName: string, properties?: Record<string, unknown>) => {
-    return reportInteraction(interactionName, { ...properties, ...info });
-  };
+    return (interactionName: string, properties?: Record<string, unknown>) => {
+      return reportInteraction(interactionName, { ...properties, ...info });
+    };
+  }, [context]);
 }
