@@ -175,6 +175,7 @@ func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl(t *testing.T) {
 		res, err := server.SendJSON(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	input = strings.NewReader(fmt.Sprintf(teamCmd, 2))
@@ -184,6 +185,7 @@ func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl(t *testing.T) {
 		res, err := server.SendJSON(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
@@ -203,6 +205,7 @@ func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl_EditorsCanAdmin(t *testi
 		res, err := server.SendJSON(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
@@ -219,6 +222,7 @@ func TestTeamAPIEndpoint_CreateTeam_RBAC(t *testing.T) {
 		res, err := server.SendJSON(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	input = strings.NewReader(fmt.Sprintf(teamCmd, 2))
@@ -228,6 +232,7 @@ func TestTeamAPIEndpoint_CreateTeam_RBAC(t *testing.T) {
 		res, err := server.SendJSON(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
@@ -243,6 +248,7 @@ func TestTeamAPIEndpoint_SearchTeams_RBAC(t *testing.T) {
 		res, err := server.Send(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("Access control allows searching for teams with the correct permissions", func(t *testing.T) {
@@ -253,6 +259,7 @@ func TestTeamAPIEndpoint_SearchTeams_RBAC(t *testing.T) {
 		res, err := server.Send(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
@@ -270,6 +277,7 @@ func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
 		res, err := server.Send(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("Access control allows getting a team with the correct permissions", func(t *testing.T) {
@@ -280,6 +288,7 @@ func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
 		res, err := server.Send(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("Access control allows getting a team with wildcard scope", func(t *testing.T) {
@@ -290,6 +299,7 @@ func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
 		res, err := server.Send(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
@@ -314,6 +324,7 @@ func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 		}))
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("Access control allows updating teams with the wildcard scope", func(t *testing.T) {
@@ -322,6 +333,7 @@ func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 		}))
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("Access control prevent updating a team with wrong scope", func(t *testing.T) {
@@ -330,6 +342,7 @@ func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 		}))
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
@@ -345,7 +358,7 @@ func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
 	request := func(teamID int64, user *user.SignedInUser) (*http.Response, error) {
 		req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, teamID), http.NoBody)
 		req = webtest.RequestWithSignedInUser(req, user)
-		return server.SendJSON(req)
+		return server.Send(req)
 	}
 
 	t.Run("Access control prevents deleting teams with the incorrect permissions", func(t *testing.T) {
@@ -354,6 +367,7 @@ func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
 		}))
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("Access control allows deleting teams with the correct permissions", func(t *testing.T) {
@@ -362,6 +376,7 @@ func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
 		}))
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
@@ -377,7 +392,7 @@ func TestTeamAPIEndpoint_GetTeamPreferences_RBAC(t *testing.T) {
 	request := func(teamID int64, user *user.SignedInUser) (*http.Response, error) {
 		req := server.NewGetRequest(fmt.Sprintf(detailTeamPreferenceURL, teamID))
 		req = webtest.RequestWithSignedInUser(req, user)
-		return server.SendJSON(req)
+		return server.Send(req)
 	}
 
 	t.Run("Access control allows getting team preferences with the correct permissions", func(t *testing.T) {
@@ -386,6 +401,7 @@ func TestTeamAPIEndpoint_GetTeamPreferences_RBAC(t *testing.T) {
 		}))
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("Access control prevents getting team preferences with the incorrect permissions", func(t *testing.T) {
@@ -394,6 +410,7 @@ func TestTeamAPIEndpoint_GetTeamPreferences_RBAC(t *testing.T) {
 		}))
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
@@ -418,6 +435,7 @@ func TestTeamAPIEndpoint_UpdateTeamPreferences_RBAC(t *testing.T) {
 		}))
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("Access control prevents updating team preferences with the incorrect permissions", func(t *testing.T) {
@@ -426,5 +444,6 @@ func TestTeamAPIEndpoint_UpdateTeamPreferences_RBAC(t *testing.T) {
 		}))
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
