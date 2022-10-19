@@ -415,7 +415,7 @@ function findLastPosition(positions: Position[]): Position {
 }
 
 function getAllPositionsInNodeByType(query: string, node: SyntaxNode, type: number): Position[] {
-  if (node.type.id === Matcher) {
+  if (node.type.id === type) {
     return [{ from: node.from, to: node.to }];
   }
 
