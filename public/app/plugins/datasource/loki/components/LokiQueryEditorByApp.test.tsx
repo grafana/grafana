@@ -55,9 +55,9 @@ describe('LokiQueryEditorByApp', () => {
   });
 
   it('should render regular query editor for dashboard', async () => {
-    const { getByTestId, queryByTestId } = setup(CoreApp.Dashboard);
+    const { findByTestId, queryByTestId } = setup(CoreApp.Dashboard);
 
-    expect(await screen.findByTestId(regularTestIds.editor)).toBeInTheDocument();
+    expect(await findByTestId(regularTestIds.editor)).toBeInTheDocument();
     expect(queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 });
