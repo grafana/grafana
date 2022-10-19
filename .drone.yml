@@ -4625,13 +4625,15 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise  /tmp/grafana-enterprise
+  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
   depends_on:
   - clone-enterprise
-  environment: {}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/build-container:1.6.3
   name: init-enterprise
 - commands:
@@ -4954,13 +4956,15 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise  /tmp/grafana-enterprise
+  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
   depends_on:
   - clone-enterprise
-  environment: {}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/build-container:1.6.3
   name: init-enterprise
 - commands:
@@ -5040,13 +5044,15 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise  /tmp/grafana-enterprise
+  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
   depends_on:
   - clone-enterprise
-  environment: {}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/build-container:1.6.3
   name: init-enterprise
 - commands:
@@ -5133,13 +5139,15 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise  /tmp/grafana-enterprise
+  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
   depends_on:
   - clone-enterprise
-  environment: {}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/build-container:1.6.3
   name: init-enterprise
 - commands:
@@ -5256,13 +5264,15 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise  /tmp/grafana-enterprise
+  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
   depends_on:
   - clone-enterprise
-  environment: {}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/build-container:1.6.3
   name: init-enterprise
 - commands:
@@ -5612,6 +5622,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 32fd3238c41c567091d1a3a654de77a138e66a28bf47799c982629960e53d806
+hmac: 170743e634118a20238e3c360d87177b98bb391bb3eb9ff409b3adb78e4686df
 
 ...
