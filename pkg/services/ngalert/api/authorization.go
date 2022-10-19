@@ -68,6 +68,11 @@ func (api *API) authorize(method, path string) web.Handler {
 		fallback = middleware.ReqSignedIn
 		// additional authorization is done in the request handler
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
+	// Grafana Rules Testing Paths
+	case http.MethodPost + "/api/v1/rule/backtest":
+		fallback = middleware.ReqSignedIn
+		// additional authorization is done in the request handler
+		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 	case http.MethodPost + "/api/v1/eval":
 		fallback = middleware.ReqSignedIn
 		// additional authorization is done in the request handler
