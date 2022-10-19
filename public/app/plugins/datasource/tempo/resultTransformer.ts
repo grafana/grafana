@@ -737,7 +737,7 @@ interface TraceTableData {
 }
 
 function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
-  const traceStartTime = span.startTimeUnixNano / 1000000;
+  const traceStartTime = parseInt(span.startTimeUnixNano, 10) / 1000000;
 
   let startTime = dateTimeFormat(traceStartTime);
 
