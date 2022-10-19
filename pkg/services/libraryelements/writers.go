@@ -5,9 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 type Pair struct {
@@ -25,27 +24,27 @@ func selectLibraryElementByParam(params []Pair) (string, []interface{}) {
 	return ` WHERE ` + strings.Join(conditions, " AND "), values
 }
 
-func writeParamSelectorSQL(builder *sqlstore.SQLBuilder, params ...Pair) {
+func writeParamSelectorSQL(builder *db.SQLBuilder, params ...Pair) {
 	if len(params) > 0 {
 		conditionString, paramValues := selectLibraryElementByParam(params)
 		builder.Write(conditionString, paramValues...)
 	}
 }
 
-func writePerPageSQL(query searchLibraryElementsQuery, sqlStore db.DB, builder *sqlstore.SQLBuilder) {
+func writePerPageSQL(query searchLibraryElementsQuery, sqlStore db.DB, builder *db.SQLBuilder) {
 	if query.perPage != 0 {
 		offset := query.perPage * (query.page - 1)
 		builder.Write(sqlStore.GetDialect().LimitOffset(int64(query.perPage), int64(offset)))
 	}
 }
 
-func writeKindSQL(query searchLibraryElementsQuery, builder *sqlstore.SQLBuilder) {
+func writeKindSQL(query searchLibraryElementsQuery, builder *db.SQLBuilder) {
 	if models.LibraryElementKind(query.kind) == models.PanelElement || models.LibraryElementKind(query.kind) == models.VariableElement {
 		builder.Write(" AND le.kind = ?", query.kind)
 	}
 }
 
-func writeTypeFilterSQL(typeFilter []string, builder *sqlstore.SQLBuilder) {
+func writeTypeFilterSQL(typeFilter []string, builder *db.SQLBuilder) {
 	if len(typeFilter) > 0 {
 		var sql bytes.Buffer
 		params := make([]interface{}, 0)
@@ -57,14 +56,14 @@ func writeTypeFilterSQL(typeFilter []string, builder *sqlstore.SQLBuilder) {
 	}
 }
 
-func writeSearchStringSQL(query searchLibraryElementsQuery, sqlStore db.DB, builder *sqlstore.SQLBuilder) {
+func writeSearchStringSQL(query searchLibraryElementsQuery, sqlStore db.DB, builder *db.SQLBuilder) {
 	if len(strings.TrimSpace(query.searchString)) > 0 {
 		builder.Write(" AND (le.name "+sqlStore.GetDialect().LikeStr()+" ?", "%"+query.searchString+"%")
 		builder.Write(" OR le.description "+sqlStore.GetDialect().LikeStr()+" ?)", "%"+query.searchString+"%")
 	}
 }
 
-func writeExcludeSQL(query searchLibraryElementsQuery, builder *sqlstore.SQLBuilder) {
+func writeExcludeSQL(query searchLibraryElementsQuery, builder *db.SQLBuilder) {
 	if len(strings.TrimSpace(query.excludeUID)) > 0 {
 		builder.Write(" AND le.uid <> ?", query.excludeUID)
 	}
@@ -110,7 +109,7 @@ func parseFolderFilter(query searchLibraryElementsQuery) FolderFilter {
 	}
 }
 
-func (f *FolderFilter) writeFolderFilterSQL(includeGeneral bool, builder *sqlstore.SQLBuilder) error {
+func (f *FolderFilter) writeFolderFilterSQL(includeGeneral bool, builder *db.SQLBuilder) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 	for _, filter := range f.folderIDs {

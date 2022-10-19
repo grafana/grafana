@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 )
 
@@ -200,7 +200,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 	})
 
 	t.Run("Alert notifications are in DB", func(t *testing.T) {
-		sqlStore := sqlStore{db: sqlstore.InitTestDB(t)}
+		sqlStore := sqlStore{db: db.InitTestDB(t)}
 
 		firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
 		err = sqlStore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
