@@ -372,7 +372,6 @@ func setupHTTPServerWithCfgDb(
 	store sqlstore.Store, features *featuremgmt.FeatureManager, options ...APITestServerOption,
 ) accessControlScenarioContext {
 	t.Helper()
-
 	license := &licensing.OSSLicensingService{}
 	routeRegister := routing.NewRouteRegister()
 	teamService := teamimpl.ProvideService(db, cfg)
@@ -415,7 +414,7 @@ func setupHTTPServerWithCfgDb(
 		Live:                   newTestLive(t, db),
 		QuotaService:           &quotaimpl.Service{Cfg: cfg},
 		RouteRegister:          routeRegister,
-		SQLStore:               db,
+		SQLStore:               store,
 		License:                &licensing.OSSLicensingService{},
 		AccessControl:          ac,
 		accesscontrolService:   acService,
