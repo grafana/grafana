@@ -19,7 +19,7 @@ var _ kind.Raw = &Kind{}
 
 // TODO standard generated docs
 func NewKind() (*Kind, error) {
-	kdef, err := kind.ParseKindFS(cueFS, nil)
+	kdef, err := kind.LoadAnyKindFS(cueFS, nil)
 	if err != nil {
 		return nil, err
 	}

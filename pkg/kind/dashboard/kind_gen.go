@@ -5,7 +5,6 @@ package dashboard
 import (
 	"embed"
 
-	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/framework/kind"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/vmux"
@@ -22,9 +21,9 @@ const rootrel string = "pkg/kind/dashboard"
 // TODO standard generated docs
 type Kind struct {
 	lin    thema.ConvergentLineage[*Entity]
-	meta   kind.CoreStructuredMeta
 	jendec vmux.Endec
 	valmux vmux.ValueMux[*Entity]
+	decl   kind.Decl[kind.CoreStructuredMeta]
 }
 
 // type guard
@@ -32,26 +31,22 @@ var _ kind.Structured = &Kind{}
 
 // TODO standard generated docs
 func NewKind(rt *thema.Runtime, opts ...thema.BindOption) (*Kind, error) {
-	kfs, err := cuectx.PrefixWithGrafanaCUE(rootrel, cueFS)
+	decl, err := kind.LoadCoreKindFS[kind.CoreStructuredMeta](cueFS, rootrel, rt.Context())
 	if err != nil {
 		return nil, err
 	}
-	kdef, err := kind.ParseKindFS(kfs, rootrel, rt.Context())
-	if err != nil {
-		return nil, err
-	}
-	lin, err := kdef.BindKindLineage(rt, opts...)
-	if err != nil {
-		return nil, err
+	k := &Kind{
+		decl: *decl,
 	}
 
-	k := &Kind{
-		meta: kdef.Meta.(kind.CoreStructuredMeta),
+	lin, err := decl.Some().BindKindLineage(rt, opts...)
+	if err != nil {
+		return nil, err
 	}
 
 	// Get the thema.Schema that the meta says is in the current version (which
 	// codegen ensures is always the latest)
-	cursch := thema.SchemaP(lin, k.meta.CurrentVersion)
+	cursch := thema.SchemaP(lin, k.decl.Meta.CurrentVersion)
 	tsch, err := thema.BindType[*Entity](cursch, &Entity{})
 	if err != nil {
 		// Should be unreachable, modulo bugs in the Thema->Go code generator
@@ -92,10 +87,10 @@ func (k *Kind) JSONValueMux(b []byte) (*Entity, thema.TranslationLacunas, error)
 
 // TODO standard generated docs
 func (k *Kind) Maturity() kind.Maturity {
-	return k.meta.Maturity
+	return k.decl.Meta.Maturity
 }
 
 // TODO standard generated docs
 func (k *Kind) Meta() kind.CoreStructuredMeta {
-	return k.meta
+	return k.decl.Meta
 }
