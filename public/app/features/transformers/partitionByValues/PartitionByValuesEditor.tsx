@@ -20,7 +20,7 @@ export function PartitionByValuesEditor({
   const names = useFieldDisplayNames(input);
   const allSelectOptions = useSelectOptions(names);
   const selectOptions = useMemo(() => {
-    const fieldNames = new Set(options.fields.names);
+    const fieldNames = new Set(options.fields);
 
     if (fieldNames.size < 1) {
       return allSelectOptions;
@@ -34,13 +34,13 @@ export function PartitionByValuesEditor({
         return;
       }
 
-      const fieldNames = new Set(options.fields.names);
+      const fieldNames = new Set(options.fields);
 
       fieldNames.add(v.value);
 
       onChange({
         ...options,
-        fields: { names: Array.from(fieldNames) },
+        fields: [...fieldNames],
       });
     },
     [onChange, options]
@@ -52,13 +52,13 @@ export function PartitionByValuesEditor({
         return;
       }
 
-      const fieldNames = new Set(options.fields.names);
+      const fieldNames = new Set(options.fields);
 
       fieldNames.delete(v);
 
       onChange({
         ...options,
-        fields: { names: Array.from(fieldNames) },
+        fields: [...fieldNames],
       });
     },
     [onChange, options]
@@ -68,16 +68,16 @@ export function PartitionByValuesEditor({
     return <FieldValidationMessage>Partition by values only works with a single frame.</FieldValidationMessage>;
   }
 
-  const include = Array.from(new Set(options.fields.names));
+  const fieldNames = [...new Set(options.fields)];
 
   return (
     <div>
       <InlineFieldRow>
         <InlineField label="Field" labelWidth={10} grow={true}>
           <HorizontalGroup>
-            {include.map((v) => (
-              <Button key={v} icon="times" variant="secondary" size="md" onClick={() => removeField(v)}>
-                {v}
+            {fieldNames.map((name) => (
+              <Button key={name} icon="times" variant="secondary" size="md" onClick={() => removeField(name)}>
+                {name}
               </Button>
             ))}
             {selectOptions.length && (

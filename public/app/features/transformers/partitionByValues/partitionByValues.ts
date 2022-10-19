@@ -6,7 +6,6 @@ import {
   DataTransformerID,
   SynchronousDataTransformerInfo,
   getFieldMatcher,
-  RegexpOrNamesMatcherOptions,
 } from '@grafana/data';
 import { getMatcherConfig } from '@grafana/data/src/transformations/transformers/filterByName';
 import { noopTransformer } from '@grafana/data/src/transformations/transformers/noop';
@@ -30,7 +29,7 @@ const defaultFrameNameOptions: FrameNameOptions = {
 
 export interface PartitionByValuesTransformerOptions {
   /** field names whose values should be used as discriminator keys (typically enum fields) */
-  fields: RegexpOrNamesMatcherOptions;
+  fields: string[];
 
   /** how the split frames should be named (ends up as field prefixes) */
   frameName?: FrameNameOptions;
@@ -45,14 +44,14 @@ function buildFrameName(opts: FrameNameOptions, names: string[], values: unknown
 export const partitionByValuesTransformer: SynchronousDataTransformerInfo<PartitionByValuesTransformerOptions> = {
   id: DataTransformerID.partitionByValues,
   name: 'Partition by values',
-  description: `Splits a combined dataset into multiple series discriminated by unique values in one or more chosen fields.`,
+  description: `Splits a one-frame dataset into multiple series discriminated by unique/enum values in one or more fields.`,
   defaultOptions: {},
 
   operator: (options) => (source) =>
     source.pipe(map((data) => partitionByValuesTransformer.transformer(options)(data))),
 
   transformer: (options: PartitionByValuesTransformerOptions) => {
-    const matcherConfig = getMatcherConfig(options.fields);
+    const matcherConfig = getMatcherConfig({ names: options.fields });
 
     if (!matcherConfig) {
       return noopTransformer.transformer({});
