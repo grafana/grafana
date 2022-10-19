@@ -102,7 +102,6 @@ func (s *ExternalAlertmanager) Run() {
 // SendAlerts sends a set of alerts to the configured Alertmanager(s).
 func (s *ExternalAlertmanager) SendAlerts(alerts apimodels.PostableAlerts) {
 	if len(alerts.PostableAlerts) == 0 {
-		s.logger.Info("No alerts to send to external Alertmanager(s)")
 		return
 	}
 	as := make([]*notifier.Alert, 0, len(alerts.PostableAlerts))
@@ -111,7 +110,6 @@ func (s *ExternalAlertmanager) SendAlerts(alerts apimodels.PostableAlerts) {
 		as = append(as, na)
 	}
 
-	s.logger.Info("Sending alerts to the external Alertmanager(s)", "amCount", len(s.manager.Alertmanagers()), "alertCount", len(as))
 	s.manager.Send(as...)
 }
 
