@@ -39,22 +39,3 @@ func (f FakeService) RegisterFixedRoles(ctx context.Context) error {
 func (f FakeService) IsDisabled() bool {
 	return f.ExpectedDisabled
 }
-
-var _ accesscontrol.AccessControl = new(FakeAccessControl)
-
-type FakeAccessControl struct {
-	ExpectedErr      error
-	ExpectedDisabled bool
-	ExpectedEvaluate bool
-}
-
-func (f FakeAccessControl) Evaluate(ctx context.Context, user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
-	return f.ExpectedEvaluate, f.ExpectedErr
-}
-
-func (f FakeAccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
-}
-
-func (f FakeAccessControl) IsDisabled() bool {
-	return f.ExpectedDisabled
-}
