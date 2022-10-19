@@ -50,7 +50,7 @@
       },
       "id": 10,
       "options": {
-        "content": "<a style=\"color: inherit;\" href=\"https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/overview\" target=\"_blank\">\n  <div>\n    <h3 style=\"color: #a16feb\"> ${res} </h1>\n    <h5 style=\"margin-bottom: 0px;\"> Application Insights  </h5>\n  </div>\n</a>",
+        "content": "<a style=\"color: inherit;\" href=\"https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/overview\" target=\"_blank\">\n  <div>\n    <h3 style=\"color: #a16feb\"> ${res} </h1>\n    <h5 style=\"margin-bottom: 0px;\"> Application Insights  </h5>\n  </div>\n</a>",
         "mode": "html"
       },
       "pluginVersion": "8.2.7",
@@ -93,7 +93,7 @@
                   {
                     "targetBlank": true,
                     "title": "",
-                    "url": "https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/availability"
+                    "url": "https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/availability"
                   }
                 ]
               }
@@ -198,7 +198,7 @@
       "id": 46,
       "links": [],
       "options": {
-        "content": "<a style=\"color: inherit;\" href=\"https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/quickPulse\" target=\"_blank\">\n<div style=\"padding-top: 20px\">\n  <center><p style=\"color: #2272b9; font-size:18px;\">Live Metrics</p></center>\n  <center><p style=\"margin-top:0px;\">${res}</p></center>\n</div>\n</a>\n           \n           ",
+        "content": "<a style=\"color: inherit;\" href=\"https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/quickPulse\" target=\"_blank\">\n<div style=\"padding-top: 20px\">\n  <center><p style=\"color: #2272b9; font-size:18px;\">Live Metrics</p></center>\n  <center><p style=\"margin-top:0px;\">${res}</p></center>\n</div>\n</a>\n           \n           ",
         "mode": "html"
       },
       "pluginVersion": "8.2.7",
@@ -220,7 +220,7 @@
       },
       "id": 42,
       "options": {
-        "content": "<a style=\"color: inherit;\" href=\"https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/applicationMap\" target=\"_blank\">\n<div style=\"padding-top: 20px;\">\n  <center><p style=\"position:center; color: #ff8c00; font-size:18px\">App map</p></center>\n  <center><p style=\"margin-top:0px;\">${res}</p></center>\n</div>\n</a>\n           ",
+        "content": "<a style=\"color: inherit;\" href=\"https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/applicationMap\" target=\"_blank\">\n<div style=\"padding-top: 20px;\">\n  <center><p style=\"position:center; color: #ff8c00; font-size:18px\">App map</p></center>\n  <center><p style=\"margin-top:0px;\">${res}</p></center>\n</div>\n</a>\n           ",
         "mode": "html"
       },
       "pluginVersion": "8.2.7",
@@ -304,7 +304,7 @@
                   {
                     "targetBlank": true,
                     "title": "${res}  | Users",
-                    "url": "https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/segmentationUsers"
+                    "url": "https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/segmentationUsers"
                   }
                 ]
               },
@@ -444,7 +444,7 @@
       "id": 36,
       "links": [],
       "options": {
-        "content": "<a href=\"https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/failures\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px; margin-top:0px;\"> Failures </p>\n  <p style=\"margin-top: 0px;\">${res}</p>\n</div>\n</a>\n",
+        "content": "<a href=\"https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/failures\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px; margin-top:0px;\"> Failures </p>\n  <p style=\"margin-top: 0px;\">${res}</p>\n</div>\n</a>\n",
         "mode": "html"
       },
       "pluginVersion": "8.2.7",
@@ -519,7 +519,7 @@
       "id": 38,
       "links": [],
       "options": {
-        "content": "<a href=\"https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/performance\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px;margin-top:0px;\"> Performance </p>\n  <p style=\"margin-top:0px;\">${res}</p>\n</div>\n</a>\n",
+        "content": "<a href=\"https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/performance\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px;margin-top:0px;\"> Performance </p>\n  <p style=\"margin-top:0px;\">${res}</p>\n</div>\n</a>\n",
         "mode": "html"
       },
       "pluginVersion": "8.2.7",
@@ -706,7 +706,7 @@
         {
           "targetBlank": true,
           "title": "${res} | Users",
-          "url": "https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/segmentationUsers"
+          "url": "https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/segmentationUsers"
         }
       ],
       "maxDataPoints": 150,
@@ -843,7 +843,7 @@
         {
           "targetBlank": true,
           "title": "${res} | Failures",
-          "url": "https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/failures"
+          "url": "https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/failures"
         }
       ],
       "maxDataPoints": 150,
@@ -968,7 +968,7 @@
         {
           "targetBlank": true,
           "title": "${res} | Performance",
-          "url": "https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/performance"
+          "url": "https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/performance"
         }
       ],
       "maxDataPoints": 150,
@@ -1233,7 +1233,7 @@
         {
           "targetBlank": true,
           "title": "${res} | Availability",
-          "url": "https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/availability"
+          "url": "https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/availability"
         }
       ],
       "maxDataPoints": 150,
