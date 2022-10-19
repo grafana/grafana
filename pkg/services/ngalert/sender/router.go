@@ -149,7 +149,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 				continue
 			}
 
-			d.logger.Info("Applying new configuration to sender", "org", cfg.OrgID, "alertmanagers", redactedAMs)
+			d.logger.Info("Applying new configuration to sender", "org", cfg.OrgID, "alertmanagers", redactedAMs, "cfg", cfg.ID)
 			err := existing.ApplyConfig(cfg)
 			if err != nil {
 				d.logger.Error("Failed to apply configuration", "error", err, "org", cfg.OrgID)
