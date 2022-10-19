@@ -348,7 +348,7 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 		Cfg:             cfg,
 		Features:        features,
 		License:         &licensing.OSSLicensingService{},
-		AccessControl:   accesscontrolmock.New().WithDisabled(),
+		AccessControl:   acimpl.ProvideAccessControl(cfg),
 		annotationsRepo: annotationstest.NewFakeAnnotationsRepo(),
 	}
 }
@@ -488,12 +488,14 @@ type APITestServerOption func(hs *HTTPServer)
 // option(s).
 func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Server {
 	t.Helper()
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 
 	hs := &HTTPServer{
 		RouteRegister:      routing.NewRouteRegister(),
-		Cfg:                setting.NewCfg(),
+		Cfg:                cfg,
 		License:            &licensing.OSSLicensingService{},
-		AccessControl:      accesscontrolmock.New().WithDisabled(),
+		AccessControl:      acimpl.ProvideAccessControl(cfg),
 		Features:           featuremgmt.WithFeatures(),
 		searchUsersService: &searchusers.OSSService{},
 	}
