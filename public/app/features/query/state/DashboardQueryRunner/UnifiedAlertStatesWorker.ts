@@ -23,6 +23,11 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
       return false;
     }
 
+    // Cannot fetch rules while on a public dashboard since it's unauthenticated
+    if (dashboard.meta.publicDashboardAccessToken) {
+      return false;
+    }
+
     if (range.raw.to !== 'now') {
       return false;
     }

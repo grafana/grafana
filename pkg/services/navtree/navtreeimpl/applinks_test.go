@@ -32,14 +32,14 @@ func TestAddAppLinks(t *testing.T) {
 			Type: plugins.App,
 			Includes: []*plugins.Includes{
 				{
-					Name:       "Hello",
+					Name:       "Catalog",
 					Path:       "/a/test-app1/catalog",
 					Type:       "page",
 					AddToNav:   true,
 					DefaultNav: true,
 				},
 				{
-					Name:     "Hello",
+					Name:     "Page2",
 					Path:     "/a/test-app1/page2",
 					Type:     "page",
 					AddToNav: true,
@@ -97,6 +97,16 @@ func TestAddAppLinks(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "Apps", treeRoot.Children[0].Text)
 		require.Equal(t, "Test app1 name", treeRoot.Children[0].Children[0].Text)
+	})
+
+	t.Run("Should remove add default nav child when topnav is enabled", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		require.Equal(t, "Apps", treeRoot.Children[0].Text)
+		require.Equal(t, "Test app1 name", treeRoot.Children[0].Children[0].Text)
+		require.Equal(t, "Page2", treeRoot.Children[0].Children[0].Children[0].Text)
 	})
 
 	t.Run("Should move apps that have specific nav id configured to correct section", func(t *testing.T) {
@@ -170,7 +180,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 			cfg: setting.NewCfg(),
 		}
 
-		_, _ = service.cfg.Raw.NewSection("navigation.apps")
+		_, _ = service.cfg.Raw.NewSection("navigation.app_sections")
 		service.readNavigationSettings()
 
 		require.Equal(t, "monitoring", service.navigationAppConfig["grafana-k8s-app"].SectionID)
@@ -181,9 +191,11 @@ func TestReadingNavigationSettings(t *testing.T) {
 			cfg: setting.NewCfg(),
 		}
 
-		sec, _ := service.cfg.Raw.NewSection("navigation.apps")
-		_, _ = sec.NewKey("grafana-k8s-app", "dashboards")
-		_, _ = sec.NewKey("other-app", "admin 12")
+		appSections, _ := service.cfg.Raw.NewSection("navigation.app_sections")
+		appStandalonePages, _ := service.cfg.Raw.NewSection("navigation.app_standalone_pages")
+		_, _ = appSections.NewKey("grafana-k8s-app", "dashboards")
+		_, _ = appSections.NewKey("other-app", "admin 12")
+		_, _ = appStandalonePages.NewKey("/a/grafana-k8s-app/foo", "admin 30")
 
 		service.readNavigationSettings()
 
@@ -192,5 +204,8 @@ func TestReadingNavigationSettings(t *testing.T) {
 
 		require.Equal(t, int64(0), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
 		require.Equal(t, int64(12), service.navigationAppConfig["other-app"].SortWeight)
+
+		require.Equal(t, "admin", service.navigationAppPathConfig["/a/grafana-k8s-app/foo"].SectionID)
+		require.Equal(t, int64(30), service.navigationAppPathConfig["/a/grafana-k8s-app/foo"].SortWeight)
 	})
 }

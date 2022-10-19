@@ -50,7 +50,7 @@ type CoremodelDeclaration struct {
 // This loading approach is intended primarily for use with code generators, or
 // other use cases external to grafana-server backend. For code within
 // grafana-server, prefer lineage loaders provided in e.g. pkg/coremodel/*.
-func ExtractLineage(path string, lib thema.Library) (*CoremodelDeclaration, error) {
+func ExtractLineage(path string, rt *thema.Runtime) (*CoremodelDeclaration, error) {
 	if !filepath.IsAbs(path) {
 		return nil, fmt.Errorf("must provide an absolute path, got %q", path)
 	}
@@ -99,7 +99,7 @@ func ExtractLineage(path string, lib thema.Library) (*CoremodelDeclaration, erro
 		panic(err)
 	}
 	ec.RelativePath = filepath.ToSlash(ec.RelativePath)
-	ec.Lineage, err = cuectx.LoadGrafanaInstancesWithThema(filepath.Dir(ec.RelativePath), fs, lib)
+	ec.Lineage, err = cuectx.LoadGrafanaInstancesWithThema(filepath.Dir(ec.RelativePath), fs, rt)
 	if err != nil {
 		return ec, err
 	}
@@ -156,7 +156,7 @@ func (cd *CoremodelDeclaration) PathVersion() string {
 // The provided path must be a directory. Generated code files will be written
 // to that path. The final element of the path must match the Lineage.Name().
 func (cd *CoremodelDeclaration) GenerateGoCoremodel(path string) (WriteDiffer, error) {
-	lin, lib := cd.Lineage, cd.Lineage.Library()
+	lin, rt := cd.Lineage, cd.Lineage.Runtime()
 	_, name := filepath.Split(path)
 	if name != lin.Name() {
 		return nil, fmt.Errorf("lineage name %q must match final element of path, got %q", lin.Name(), path)
@@ -168,7 +168,7 @@ func (cd *CoremodelDeclaration) GenerateGoCoremodel(path string) (WriteDiffer, e
 		return nil, fmt.Errorf("thema openapi generation failed: %w", err)
 	}
 
-	str, err := yaml.Marshal(lib.Context().BuildFile(f))
+	str, err := yaml.Marshal(rt.Context().BuildFile(f))
 	if err != nil {
 		return nil, fmt.Errorf("cue-yaml marshaling failed: %w", err)
 	}

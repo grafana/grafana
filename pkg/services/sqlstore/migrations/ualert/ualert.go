@@ -260,8 +260,8 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	// cache for the general folders
 	generalFolderCache := make(map[int64]*dashboard)
 
-	// Store of newly created rules to later create routes
-	rulesPerOrg := make(map[int64]map[string]dashAlert)
+	// Per org map of newly created rules to which notification channels it should send to.
+	rulesPerOrg := make(map[int64]map[*alertRule][]uidOrID)
 
 	for _, da := range dashAlerts {
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
@@ -365,40 +365,15 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 
 		if _, ok := rulesPerOrg[rule.OrgID]; !ok {
-			rulesPerOrg[rule.OrgID] = make(map[string]dashAlert)
+			rulesPerOrg[rule.OrgID] = make(map[*alertRule][]uidOrID)
 		}
-		if _, ok := rulesPerOrg[rule.OrgID][rule.UID]; !ok {
-			rulesPerOrg[rule.OrgID][rule.UID] = da
+		if _, ok := rulesPerOrg[rule.OrgID][rule]; !ok {
+			rulesPerOrg[rule.OrgID][rule] = extractChannelIDs(da)
 		} else {
 			return MigrationError{
 				Err:     fmt.Errorf("duplicate generated rule UID"),
 				AlertId: da.Id,
 			}
-		}
-
-		if strings.HasPrefix(mg.Dialect.DriverName(), migrator.Postgres) {
-			err = mg.InTransaction(func(sess *xorm.Session) error {
-				_, err = sess.Insert(rule)
-				return err
-			})
-		} else {
-			_, err = m.sess.Insert(rule)
-		}
-		if err != nil {
-			// TODO better error handling, if constraint
-			rule.Title += fmt.Sprintf(" %v", rule.UID)
-			rule.RuleGroup += fmt.Sprintf(" %v", rule.UID)
-
-			_, err = m.sess.Insert(rule)
-			if err != nil {
-				return err
-			}
-		}
-
-		// create entry in alert_rule_version
-		_, err = m.sess.Insert(rule.makeVersion())
-		if err != nil {
-			return err
 		}
 	}
 
@@ -412,12 +387,51 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	if err != nil {
 		return err
 	}
+
+	err = m.insertRules(mg, rulesPerOrg)
+	if err != nil {
+		return err
+	}
+
 	for orgID, amConfig := range amConfigPerOrg {
 		if err := m.writeAlertmanagerConfig(orgID, amConfig); err != nil {
 			return err
 		}
 	}
 
+	return nil
+}
+
+func (m *migration) insertRules(mg *migrator.Migrator, rulesPerOrg map[int64]map[*alertRule][]uidOrID) error {
+	for _, rules := range rulesPerOrg {
+		for rule := range rules {
+			var err error
+			if strings.HasPrefix(mg.Dialect.DriverName(), migrator.Postgres) {
+				err = mg.InTransaction(func(sess *xorm.Session) error {
+					_, err := sess.Insert(rule)
+					return err
+				})
+			} else {
+				_, err = m.sess.Insert(rule)
+			}
+			if err != nil {
+				// TODO better error handling, if constraint
+				rule.Title += fmt.Sprintf(" %v", rule.UID)
+				rule.RuleGroup += fmt.Sprintf(" %v", rule.UID)
+
+				_, err = m.sess.Insert(rule)
+				if err != nil {
+					return err
+				}
+			}
+
+			// create entry in alert_rule_version
+			_, err = m.sess.Insert(rule.makeVersion())
+			if err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -839,7 +853,7 @@ func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Mig
 	}
 
 	updated := time.Now()
-	versions := make([]*alertRuleVersion, 0, len(toUpdate))
+	versions := make([]interface{}, 0, len(toUpdate))
 
 	for _, rule := range toUpdate {
 		rule.Updated = updated
@@ -855,8 +869,7 @@ func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Mig
 		migrator.Logger.Debug("updated group index for alert rule", "rule_uid", rule.UID)
 		versions = append(versions, version)
 	}
-
-	_, err := sess.Insert(&versions)
+	_, err := sess.Insert(versions...)
 	if err != nil {
 		migrator.Logger.Error("failed to insert changes to alert_rule_version", "err", err)
 		return fmt.Errorf("unable to update alert rules with group index: %w", err)

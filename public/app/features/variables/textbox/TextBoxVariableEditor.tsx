@@ -1,9 +1,8 @@
 import React, { FormEvent, ReactElement, useCallback } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { VerticalGroup } from '@grafana/ui';
 
-import { VariableSectionHeader } from '../editor/VariableSectionHeader';
+import { VariableLegend } from '../editor/VariableLegend';
 import { VariableTextField } from '../editor/VariableTextField';
 import { VariableEditorProps } from '../editor/types';
 import { TextBoxVariableModel } from '../types';
@@ -24,18 +23,17 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Pro
   const onBlur = useCallback((e: FormEvent<HTMLInputElement>) => updateVariable(e, true), [updateVariable]);
 
   return (
-    <VerticalGroup spacing="xs">
-      <VariableSectionHeader name="Text options" />
+    <>
+      <VariableLegend>Text options</VariableLegend>
       <VariableTextField
         value={query}
         name="Default value"
         placeholder="default value, if any"
         onChange={onChange}
         onBlur={onBlur}
-        labelWidth={20}
-        grow
+        width={30}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInputV2}
       />
-    </VerticalGroup>
+    </>
   );
 }

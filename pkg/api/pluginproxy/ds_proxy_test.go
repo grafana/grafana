@@ -1065,3 +1065,15 @@ func (m *mockOAuthTokenService) GetCurrentOAuthToken(ctx context.Context, user *
 func (m *mockOAuthTokenService) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
 	return m.oAuthEnabled
 }
+
+func (m *mockOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*models.UserAuth, bool, error) {
+	return nil, false, nil
+}
+
+func (m *mockOAuthTokenService) TryTokenRefresh(context.Context, *models.UserAuth) error {
+	return nil
+}
+
+func (m *mockOAuthTokenService) InvalidateOAuthTokens(context.Context, *models.UserAuth) error {
+	return nil
+}
