@@ -15,7 +15,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) (*backend.DataResponse, error) {
+func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) (backend.DataResponse, error) {
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			s.log.Error("Failed to close response body", "err", err)
@@ -38,7 +38,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	}
 
 	r = processExemplars(q, r)
-	return &r, nil
+	return r, nil
 }
 
 func addMetadataToMultiFrame(q *models.Query, frame *data.Frame) {
