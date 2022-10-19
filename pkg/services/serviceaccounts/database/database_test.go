@@ -8,12 +8,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -112,9 +115,13 @@ func TestStore_DeleteServiceAccount(t *testing.T) {
 func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreImpl) {
 	t.Helper()
 	db := db.InitTestDB(t)
-	apiKeyService := apikeyimpl.ProvideService(db, db.Cfg)
+	b := bus.ProvideBus(tracing.InitializeTracerForTest())
+	quotaService := quotatest.NewQuotaServiceFake(false, nil)
+	apiKeyService, err := apikeyimpl.ProvideService(db, db.Cfg, b, quotaService)
+	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(db)
-	orgService := orgimpl.ProvideService(db, setting.NewCfg())
+	orgService, err := orgimpl.ProvideService(db, setting.NewCfg(), b, quotaService)
+	require.NoError(t, err)
 	return db, ProvideServiceAccountsStore(db, apiKeyService, kvStore, orgService)
 }
 

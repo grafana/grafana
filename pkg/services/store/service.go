@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -58,6 +60,11 @@ type CreateFolderCmd struct {
 	Path string `json:"path"`
 }
 
+const (
+	QuotaTargetSrv quota.TargetSrv = "file_store"
+	QuotaTarget    quota.Target    = "file"
+)
+
 type StorageService interface {
 	registry.BackgroundService
 
@@ -97,7 +104,8 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	quotaService quota.Service,
-) StorageService {
+	bus bus.Bus,
+) (StorageService, error) {
 	settings, err := LoadStorageConfig(cfg, features)
 	if err != nil {
 		grafanaStorageLogger.Warn("error loading storage config", "error", err)
@@ -259,7 +267,37 @@ func ProvideService(
 	s := newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg)
 	s.quotaService = quotaService
 	s.cfg = settings
-	return s
+
+	defaultLimits, err := readQuotaConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := bus.Publish(context.TODO(), &events.NewQuotaReporter{
+		TargetSrv:     QuotaTargetSrv,
+		DefaultLimits: defaultLimits,
+		Reporter:      s.Usage,
+	}); err != nil {
+		return nil, err
+	}
+
+	return s, nil
+}
+
+func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+	if !cfg.Raw.HasSection("quota") {
+		return nil, nil
+	}
+
+	quotaSection := cfg.Raw.Section("quota")
+	globalQuotaTag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+	if err != nil {
+		return nil, err
+	}
+
+	limits := &quota.Map{}
+	limits.Set(globalQuotaTag, quotaSection.Key("global_file").MustInt64(-1))
+	return limits, nil
 }
 
 func createSystemBrandingPathFilter() filestorage.PathFilter {
@@ -327,6 +365,29 @@ func (s *standardStorageService) Read(ctx context.Context, user *user.SignedInUs
 		return nil, ErrAccessDenied
 	}
 	return s.tree.GetFile(ctx, getOrgId(user), path)
+}
+
+func (s *standardStorageService) Usage(ctx context.Context, ScopeParameters *quota.ScopeParameters) (*quota.Map, error) {
+	u := &quota.Map{}
+
+	/*
+		// fetch tree for all organisations
+		root, storagePath := s.tree.getRoot(ac.GlobalOrgID, "/")
+		if root == nil {
+			return u, ErrStorageNotFound
+		}
+
+		if resp, err := root.Store().List(ctx, storagePath, nil, &filestorage.ListOptions{WithFiles: true}); err != nil {
+			return u, err
+		} else {
+			tag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+			if err != nil {
+				return u, err
+			}
+			u.Set(tag, int64(len(resp.Files)))
+		}
+	*/
+	return u, nil
 }
 
 type UploadRequest struct {

@@ -59,7 +59,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled,
 			}
 			hs.pluginInstaller = inst
-			hs.QuotaService = quotatest.NewQuotaServiceFake()
+			hs.QuotaService = quotatest.NewQuotaServiceFake(false, nil)
 		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {

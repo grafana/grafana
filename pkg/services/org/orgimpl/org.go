@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -18,9 +21,16 @@ type Service struct {
 	log   log.Logger
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg) org.Service {
+func ProvideService(
+	db db.DB,
+	cfg *setting.Cfg,
+	bus bus.Bus,
+	// add quota.Service as dependency to make sure that
+	// the listener has been added before publishing the reporter
+	_ quota.Service,
+) (org.Service, error) {
 	log := log.New("org service")
-	return &Service{
+	s := &Service{
 		store: &sqlStore{
 			db:      db,
 			dialect: db.GetDialect(),
@@ -30,6 +40,24 @@ func ProvideService(db db.DB, cfg *setting.Cfg) org.Service {
 		cfg: cfg,
 		log: log,
 	}
+
+	defaultLimits, err := readQuotaConfig(cfg)
+	if err != nil {
+		return s, err
+	}
+
+	if err := bus.Publish(context.TODO(), &events.NewQuotaReporter{
+		TargetSrv:     quota.TargetSrv("org"),
+		DefaultLimits: defaultLimits,
+		Reporter:      s.Usage,
+	}); err != nil {
+		return s, nil
+	}
+	return s, nil
+}
+
+func (s *Service) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
+	return s.store.Count(ctx, scopeParams)
 }
 
 func (s *Service) GetIDForNewUser(ctx context.Context, cmd org.GetOrgIDForNewUserCommand) (int64, error) {
@@ -177,4 +205,33 @@ func (s *Service) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) 
 // TODO: refactor service to call store CRUD method
 func (s *Service) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
 	return s.store.SearchOrgUsers(ctx, query)
+}
+
+func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+	if cfg.Raw == nil || !cfg.Raw.HasSection("quota") {
+		return &quota.Map{}, nil
+	}
+
+	quotaSection := cfg.Raw.Section("quota")
+
+	globalQuotaTag, err := quota.NewTag(quota.TargetSrv(org.QuotaTargetSrv), quota.Target(org.OrgQuotaTarget), quota.GlobalScope)
+	if err != nil {
+		return &quota.Map{}, err
+	}
+	orgQuotaTag, err := quota.NewTag(quota.TargetSrv(org.QuotaTargetSrv), quota.Target(org.OrgUserQuotaTarget), quota.OrgScope)
+	if err != nil {
+		return &quota.Map{}, err
+	}
+	userTag, err := quota.NewTag(quota.TargetSrv(org.QuotaTargetSrv), quota.Target(org.OrgUserQuotaTarget), quota.UserScope)
+	if err != nil {
+		return &quota.Map{}, err
+	}
+
+	limits := &quota.Map{}
+	limits.Set(globalQuotaTag, quotaSection.Key("global_org").MustInt64(-1))
+	// users per org
+	limits.Set(orgQuotaTag, quotaSection.Key("org_user").MustInt64(10))
+	// orgs per user
+	limits.Set(userTag, quotaSection.Key("user_org").MustInt64(10))
+	return limits, nil
 }

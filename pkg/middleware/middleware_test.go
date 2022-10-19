@@ -782,6 +782,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.userAuthTokenService = ctxHdlr.AuthTokenService.(*auth.FakeUserAuthTokenService)
 		sc.jwtAuthService = ctxHdlr.JWTAuthService.(*models.FakeJWTService)
 		sc.remoteCacheService = ctxHdlr.RemoteCache
+		//sc.quotaService = quotatest.NewQuotaServiceFake(false, nil)
 
 		sc.defaultHandler = func(c *models.ReqContext) {
 			require.NotNil(t, c)

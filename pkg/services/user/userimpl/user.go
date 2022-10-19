@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,15 +34,47 @@ func ProvideService(
 	cfg *setting.Cfg,
 	teamService team.Service,
 	cacheService *localcache.CacheService,
-) user.Service {
+	bus bus.Bus,
+	// add quota.Service as dependency to make sure that
+	// the listener has been added before publishing the reporter
+	_ quota.Service,
+) (user.Service, error) {
 	store := ProvideStore(db, cfg)
-	return &Service{
+	s := &Service{
 		store:        &store,
 		orgService:   orgService,
 		cfg:          cfg,
 		teamService:  teamService,
 		cacheService: cacheService,
 	}
+
+	defaultLimits, err := readQuotaConfig(cfg)
+	if err != nil {
+		return s, err
+	}
+
+	if err := bus.Publish(context.TODO(), &events.NewQuotaReporter{
+		TargetSrv:     quota.TargetSrv(user.QuotaTargetSrv),
+		DefaultLimits: defaultLimits,
+		Reporter:      s.Usage,
+	}); err != nil {
+		return s, err
+	}
+	return s, nil
+}
+
+func (s *Service) Usage(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
+	u := &quota.Map{}
+	if used, err := s.store.Count(ctx); err != nil {
+		return u, err
+	} else {
+		tag, err := quota.NewTag(quota.TargetSrv(user.QuotaTargetSrv), quota.Target(user.QuotaTarget), quota.GlobalScope)
+		if err != nil {
+			return u, err
+		}
+		u.Set(tag, used)
+	}
+	return u, nil
 }
 
 func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
@@ -277,4 +312,20 @@ func (s *Service) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlag
 func (s *Service) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
 	result, err := s.store.GetProfile(ctx, query)
 	return result, err
+}
+
+func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+	if cfg.Raw == nil || !cfg.Raw.HasSection("quota") {
+		return &quota.Map{}, nil
+	}
+
+	quotaSection := cfg.Raw.Section("quota")
+	globalQuotaTag, err := quota.NewTag(quota.TargetSrv(user.QuotaTargetSrv), quota.Target(user.QuotaTarget), quota.GlobalScope)
+	if err != nil {
+		return &quota.Map{}, err
+	}
+
+	limits := &quota.Map{}
+	limits.Set(globalQuotaTag, quotaSection.Key("global_user").MustInt64(-1))
+	return limits, nil
 }

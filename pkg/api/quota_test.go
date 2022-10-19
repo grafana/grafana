@@ -32,11 +32,6 @@ var testOrgQuota = setting.OrgQuota{
 func setupDBAndSettingsForAccessControlQuotaTests(t *testing.T, sc accessControlScenarioContext) {
 	t.Helper()
 
-	sc.hs.Cfg.Quota.Enabled = true
-	sc.hs.Cfg.Quota.Org = &testOrgQuota
-	// Required while sqlstore quota.go relies on setting global variables
-	setting.Quota = sc.hs.Cfg.Quota
-
 	// Create two orgs with the context user
 	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)
 }

@@ -237,6 +237,19 @@ func (ng *AlertNG) init() error {
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
+	defaultLimits, err := readQuotaConfig(ng.Cfg)
+	if err != nil {
+		return err
+	}
+
+	if err := ng.bus.Publish(context.TODO(), &events.NewQuotaReporter{
+		TargetSrv:     models.QuotaTargetSrv,
+		DefaultLimits: defaultLimits,
+		Reporter:      api.Usage,
+	}); err != nil {
+		return err
+	}
+
 	return DeclareFixedRoles(ng.accesscontrolService)
 }
 
@@ -293,4 +306,33 @@ func (ng *AlertNG) IsDisabled() bool {
 		return true
 	}
 	return !ng.Cfg.UnifiedAlerting.IsEnabled()
+}
+
+func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+	if cfg.Raw == nil || !cfg.Raw.HasSection("quota") {
+		return &quota.Map{}, nil
+	}
+
+	var alertOrgQuota int64
+	var alertGlobalQuota int64
+	quotaSection := cfg.Raw.Section("quota")
+
+	if cfg.UnifiedAlerting.IsEnabled() {
+		alertOrgQuota = quotaSection.Key("org_alert_rule").MustInt64(100)
+		alertGlobalQuota = quotaSection.Key("global_alert_rule").MustInt64(-1)
+	}
+
+	globalQuotaTag, err := quota.NewTag(datasources.QuotaTargetSrv, datasources.QuotaTarget, quota.GlobalScope)
+	if err != nil {
+		return &quota.Map{}, err
+	}
+	orgQuotaTag, err := quota.NewTag(datasources.QuotaTargetSrv, datasources.QuotaTarget, quota.OrgScope)
+	if err != nil {
+		return &quota.Map{}, err
+	}
+
+	limits := &quota.Map{}
+	limits.Set(globalQuotaTag, alertGlobalQuota)
+	limits.Set(orgQuotaTag, alertOrgQuota)
+	return limits, nil
 }

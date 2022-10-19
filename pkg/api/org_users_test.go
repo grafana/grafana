@@ -13,15 +13,18 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -389,11 +392,14 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = tc.enableAccessControl
+			var err error
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
-				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(),
-				)
-				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
+				b := bus.ProvideBus(tracing.InitializeTracerForTest())
+				hs.userService, err = userimpl.ProvideService(
+					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(), b, quotatest.NewQuotaServiceFake(false, nil))
+				require.NoError(t, err)
+				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, cfg, b, quotatest.NewQuotaServiceFake(false, nil))
+				require.NoError(t, err)
 			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
@@ -403,7 +409,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 			require.Equal(t, tc.expectedCode, response.Code)
 
 			var userList []*models.OrgUserDTO
-			err := json.NewDecoder(response.Body).Decode(&userList)
+			err = json.NewDecoder(response.Body).Decode(&userList)
 			require.NoError(t, err)
 
 			if tc.expectedMetadata != nil {
@@ -493,11 +499,15 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = tc.enableAccessControl
+			var err error
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
-				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(),
-				)
-				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
+				b := bus.ProvideBus(tracing.InitializeTracerForTest())
+				quotaService := quotatest.NewQuotaServiceFake(false, nil)
+				hs.userService, err = userimpl.ProvideService(
+					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(), b, quotaService)
+				require.NoError(t, err)
+				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, cfg, b, quotaService)
+				require.NoError(t, err)
 			})
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
@@ -598,10 +608,12 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = tc.enableAccessControl
+			var err error
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
-				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(),
-				)
+				b := bus.ProvideBus(tracing.InitializeTracerForTest())
+				hs.userService, err = userimpl.ProvideService(
+					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(), b, quotatest.NewQuotaServiceFake(false, nil))
+				require.NoError(t, err)
 			})
 
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
@@ -716,11 +728,13 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			var err error
 			sc := setupHTTPServer(t, true, func(hs *HTTPServer) {
 				hs.tempUserService = tempuserimpl.ProvideService(hs.SQLStore)
-				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, setting.NewCfg(), teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), setting.NewCfg()), localcache.ProvideService(),
-				)
+				b := bus.ProvideBus(tracing.InitializeTracerForTest())
+				hs.userService, err = userimpl.ProvideService(
+					hs.SQLStore, nil, setting.NewCfg(), teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), setting.NewCfg()), localcache.ProvideService(), b, quotatest.NewQuotaServiceFake(false, nil))
+				require.NoError(t, err)
 			})
 			setInitCtxSignedInViewer(sc.initCtx)
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
@@ -835,11 +849,15 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = tc.enableAccessControl
+			var err error
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
-				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(),
-				)
-				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
+				b := bus.ProvideBus(tracing.InitializeTracerForTest())
+				quotaService := quotatest.NewQuotaServiceFake(false, nil)
+				hs.userService, err = userimpl.ProvideService(
+					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(), b, quotaService)
+				require.NoError(t, err)
+				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, cfg, b, quotaService)
+				require.NoError(t, err)
 			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
@@ -962,11 +980,15 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = tc.enableAccessControl
+			var err error
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
-				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(),
-				)
-				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
+				b := bus.ProvideBus(tracing.InitializeTracerForTest())
+				quotaService := quotatest.NewQuotaServiceFake(false, nil)
+				hs.userService, err = userimpl.ProvideService(
+					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(), b, quotaService)
+				require.NoError(t, err)
+				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, cfg, b, quotaService)
+				require.NoError(t, err)
 			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)

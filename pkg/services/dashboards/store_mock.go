@@ -6,6 +6,7 @@ import (
 	context "context"
 
 	models "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/quota"
 	mock "github.com/stretchr/testify/mock"
 
 	testing "testing"
@@ -438,6 +439,10 @@ func (_m *FakeDashboardStore) ValidateDashboardBeforeSave(ctx context.Context, d
 
 func (_m *FakeDashboardStore) DeleteACLByUser(ctx context.Context, userID int64) error {
 	return _m.ExpectedError
+}
+
+func (_m *FakeDashboardStore)	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error) {
+	return nil, nil
 }
 
 // NewFakeDashboardStore creates a new instance of FakeDashboardStore. It also registers the testing.TB interface on the mock and a cleanup function to assert the mocks expectations.
