@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// generates a uuid formatted without dashes to use as access token
+//GenerateAccessToken generates an uuid formatted without dashes to use as access token
 func GenerateAccessToken() (string, error) {
 	token, err := uuid.NewRandom()
 	if err != nil {
@@ -16,7 +16,7 @@ func GenerateAccessToken() (string, error) {
 	return fmt.Sprintf("%x", token[:]), nil
 }
 
-// asserts that an accessToken is a valid uuid
+//IsValidAccessToken asserts that an accessToken is a valid uuid
 func IsValidAccessToken(token string) bool {
 	_, err := uuid.Parse(token)
 	return err == nil

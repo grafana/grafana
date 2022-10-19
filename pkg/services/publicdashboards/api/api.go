@@ -52,7 +52,7 @@ func ProvideApi(
 	return api
 }
 
-// Registers Endpoints on Grafana Router
+// RegisterAPIEndpoints Registers Endpoints on Grafana Router
 func (api *Api) RegisterAPIEndpoints() {
 	auth := accesscontrol.Middleware(api.AccessControl)
 
@@ -79,7 +79,7 @@ func (api *Api) RegisterAPIEndpoints() {
 		routing.Wrap(api.SavePublicDashboardConfig))
 }
 
-// Gets public dashboard
+// GetPublicDashboard Gets public dashboard
 // GET /api/public/dashboards/:accessToken
 func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
@@ -115,7 +115,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, dto)
 }
 
-// Gets list of public dashboards for an org
+// ListPublicDashboards Gets list of public dashboards for an org
 // GET /api/dashboards/public
 func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
 	resp, err := api.PublicDashboardService.ListPublicDashboards(c.Req.Context(), c.SignedInUser, c.OrgID)
@@ -125,7 +125,7 @@ func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, resp)
 }
 
-// Gets public dashboard configuration for dashboard
+// GetPublicDashboardConfig Gets public dashboard configuration for dashboard
 // GET /api/dashboards/uid/:uid/public-config
 func (api *Api) GetPublicDashboardConfig(c *models.ReqContext) response.Response {
 	pdc, err := api.PublicDashboardService.GetPublicDashboardConfig(c.Req.Context(), c.OrgID, web.Params(c.Req)[":uid"])
