@@ -261,7 +261,7 @@ func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dash
 }
 
 func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO AnnotationsQueryDTO, accessToken string) ([]AnnotationEvent, error) {
-	_, dash, err := pd.GetPublicDashboard(ctx, accessToken)
+	pub, dash, err := pd.GetPublicDashboard(ctx, accessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -269,6 +269,10 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 	annoDto, err := UnmarshalDashboardAnnotations(dash.Data)
 	if err != nil {
 		return nil, err
+	}
+
+	if !pub.EnableAnnotations {
+		return []AnnotationEvent{}, nil
 	}
 
 	anonymousUser := pd.BuildAnonymousUser(ctx, dash)
