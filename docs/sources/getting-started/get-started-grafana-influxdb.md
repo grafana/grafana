@@ -96,7 +96,7 @@ You can also create Flux queries in the InfluxDB Explore view.
 
    ![InfluxDB Explore Script Editor](/static/img/docs/influxdb/explore-query-text-7-5.png)
 
-1. In Grafana, [add a panel]({{< relref "../dashboards/build-dashboards/create-dashboard/" >}}) and then paste your Flux code into the query editor.
+1. In Grafana, [add a panel]({{< relref "../dashboards/build-dashboards/add-organize-panels/" >}}) and then paste your Flux code into the query editor.
 1. Click **Apply**. Your new panel should be visible with data from your Flux query.
 
 #### Check InfluxDB metrics in Grafana Explore
