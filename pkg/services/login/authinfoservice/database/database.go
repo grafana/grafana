@@ -204,13 +204,8 @@ func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAu
 		authUser.OAuthExpiry = cmd.OAuthToken.Expiry
 	}
 
-	cond := &models.UserAuth{
-		UserId:     cmd.UserId,
-		AuthModule: cmd.AuthModule,
-	}
-
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		upd, err := sess.Update(authUser, cond)
+		upd, err := sess.MustCols("o_auth_expiry").Where("user_id = ? AND auth_module = ?", cmd.UserId, cmd.AuthModule).Update(authUser)
 		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_module", cmd.AuthModule, "rows", upd)
 		return err
 	})
