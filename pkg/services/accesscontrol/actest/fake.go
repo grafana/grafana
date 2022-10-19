@@ -58,3 +58,40 @@ func (f FakeAccessControl) RegisterScopeAttributeResolver(prefix string, resolve
 func (f FakeAccessControl) IsDisabled() bool {
 	return f.ExpectedDisabled
 }
+
+var _ accesscontrol.PermissionsService = new(FakePermissionService)
+
+func NewFakePermissionsService() *FakePermissionService {
+	return &FakePermissionService{}
+}
+
+type FakePermissionService struct {
+	ExpectedErr         error
+	ExpectedMapResult   string
+	ExpectedPermission  *accesscontrol.ResourcePermission
+	ExpectedPermissions []accesscontrol.ResourcePermission
+}
+
+func (f FakePermissionService) GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+	return f.ExpectedPermissions, f.ExpectedErr
+}
+
+func (f FakePermissionService) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+	return f.ExpectedPermission, f.ExpectedErr
+}
+
+func (f FakePermissionService) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+	return f.ExpectedPermission, f.ExpectedErr
+}
+
+func (f FakePermissionService) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, permission string) (*accesscontrol.ResourcePermission, error) {
+	return f.ExpectedPermission, f.ExpectedErr
+}
+
+func (f FakePermissionService) SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error) {
+	return f.ExpectedPermissions, f.ExpectedErr
+}
+
+func (f FakePermissionService) MapActions(permission accesscontrol.ResourcePermission) string {
+	return f.ExpectedMapResult
+}
