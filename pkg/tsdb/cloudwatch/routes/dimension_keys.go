@@ -3,27 +3,22 @@ package routes
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 )
 
-func DimensionKeysHandler(rw http.ResponseWriter, req *http.Request, clientFactory models.ClientsFactoryFunc, pluginCtx backend.PluginContext) {
-	if req.Method != "GET" {
-		respondWithError(rw, http.StatusMethodNotAllowed, "Invalid method", nil)
-		return
-	}
-	dimensionKeysQuery, err := models.GetDimensionKeysQuery(req.URL.Query())
+func DimensionKeysHandler(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
+	dimensionKeysQuery, err := models.GetDimensionKeysQuery(parameters)
 	if err != nil {
-		respondWithError(rw, http.StatusBadRequest, err.Error(), err)
-		return
+		return nil, models.NewHttpError("error in DimensionKeyHandler", http.StatusBadRequest, err)
 	}
 
 	service, err := newListMetricsService(pluginCtx, clientFactory, dimensionKeysQuery.Region)
 	if err != nil {
-		respondWithError(rw, http.StatusInternalServerError, "error in DimensionKeysHandler", err)
-		return
+		return nil, models.NewHttpError("error in DimensionKeyHandler", http.StatusInternalServerError, err)
 	}
 
 	dimensionKeys := []string{}
@@ -36,21 +31,15 @@ func DimensionKeysHandler(rw http.ResponseWriter, req *http.Request, clientFacto
 		dimensionKeys, err = service.GetDimensionKeysByNamespace(dimensionKeysQuery.Namespace)
 	}
 	if err != nil {
-		respondWithError(rw, http.StatusInternalServerError, "error in DimensionKeyHandler", err)
-		return
+		return nil, models.NewHttpError("error in DimensionKeyHandler", http.StatusInternalServerError, err)
 	}
 
 	dimensionKeysResponse, err := json.Marshal(dimensionKeys)
 	if err != nil {
-		respondWithError(rw, http.StatusInternalServerError, "error in DimensionKeyHandler", err)
-		return
+		return nil, models.NewHttpError("error in DimensionKeyHandler", http.StatusInternalServerError, err)
 	}
 
-	rw.Header().Set("Content-Type", "application/json")
-	_, err = rw.Write(dimensionKeysResponse)
-	if err != nil {
-		respondWithError(rw, http.StatusInternalServerError, "error writing response in DimensionKeyHandler", err)
-	}
+	return dimensionKeysResponse, nil
 }
 
 // newListMetricsService is an list metrics service factory.
