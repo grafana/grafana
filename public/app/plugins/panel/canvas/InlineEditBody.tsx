@@ -32,7 +32,7 @@ export function InlineEditBody() {
       const selection = state.selected;
       if (selection?.length === 1) {
         const element = selection[0];
-        if (!(element instanceof FrameState)) {
+        if (element && !(element instanceof FrameState)) {
           builder.addNestedOptions(
             getElementEditor({
               category: [`Selected element (${element.options.name})`],

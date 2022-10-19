@@ -2,6 +2,8 @@ import { screen, render, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 
+import { LogRowModel } from '@grafana/data';
+
 import { LogDetailsRow } from './LogDetailsRow';
 
 type Props = ComponentProps<typeof LogDetailsRow>;
@@ -18,6 +20,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     onClickShowDetectedField: () => {},
     onClickHideDetectedField: () => {},
     showDetectedFields: [],
+    row: {} as LogRowModel,
   };
 
   Object.assign(props, propOverrides);
@@ -30,6 +33,11 @@ const setup = (propOverrides?: Partial<Props>) => {
     </table>
   );
 };
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 describe('LogDetailsRow', () => {
   it('should render parsed key', () => {

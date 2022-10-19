@@ -40,7 +40,12 @@ export interface AnnotationQuery {
    */
   rawQuery?: string;
   showIn: number;
-  target?: Record<string, unknown>;
+  target?: {
+    limit: number;
+    matchAny: boolean;
+    tags: Array<string>;
+    type: string;
+  };
   type: string;
 }
 

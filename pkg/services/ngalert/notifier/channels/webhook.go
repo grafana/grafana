@@ -123,8 +123,8 @@ func buildWebhookNotifier(factoryConfig FactoryConfig) (*WebhookNotifier, error)
 	}, nil
 }
 
-// webhookMessage defines the JSON object send to webhook endpoints.
-type webhookMessage struct {
+// WebhookMessage defines the JSON object send to webhook endpoints.
+type WebhookMessage struct {
 	*ExtendedData
 
 	// The protocol version.
@@ -161,7 +161,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		},
 		as...)
 
-	msg := &webhookMessage{
+	msg := &WebhookMessage{
 		Version:         "1",
 		ExtendedData:    data,
 		GroupKey:        groupKey.String(),

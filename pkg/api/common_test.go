@@ -213,7 +213,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginservice.LoginServiceMock{}, &usertest.FakeUserService{}, sqlStore)
 	loginService := &logintest.LoginServiceFake{}
 	authenticator := &logintest.AuthenticatorFake{}
-	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator, usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake())
+	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator, usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(), nil)
 
 	return ctxHdlr
 }
@@ -367,12 +367,11 @@ func setupHTTPServerWithCfgDb(
 ) accessControlScenarioContext {
 	t.Helper()
 
-	db.Cfg.RBACEnabled = cfg.RBACEnabled
-
 	license := &licensing.OSSLicensingService{}
 	routeRegister := routing.NewRouteRegister()
 	teamService := teamimpl.ProvideService(db, cfg)
-	dashboardsStore := dashboardsstore.ProvideDashboardStore(db, featuremgmt.WithFeatures(), tagimpl.ProvideService(db, db.Cfg))
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	dashboardsStore := dashboardsstore.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db, cfg))
 
 	var acmock *accesscontrolmock.Mock
 	var ac accesscontrol.AccessControl

@@ -343,18 +343,21 @@ type AnnotationQuery struct {
 	Name *string `json:"name,omitempty"`
 
 	// Query for annotation data.
-	RawQuery *string `json:"rawQuery,omitempty"`
-	ShowIn   int     `json:"showIn"`
+	RawQuery *string           `json:"rawQuery,omitempty"`
+	ShowIn   int               `json:"showIn"`
+	Target   *AnnotationTarget `json:"target,omitempty"`
+	Type     string            `json:"type"`
+}
 
-	// Schema for panel targets is specified by datasource
-	// plugins. We use a placeholder definition, which the Go
-	// schema loader either left open/as-is with the Base
-	// variant of the Model and Panel families, or filled
-	// with types derived from plugins in the Instance variant.
-	// When working directly from CUE, importers can extend this
-	// type directly to achieve the same effect.
-	Target *Target `json:"target,omitempty"`
-	Type   string  `json:"type"`
+// AnnotationTarget is the Go representation of a dashboard.AnnotationTarget.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type AnnotationTarget struct {
+	Limit    int64    `json:"limit"`
+	MatchAny bool     `json:"matchAny"`
+	Tags     []string `json:"tags"`
+	Type     string   `json:"type"`
 }
 
 // 0 for no shared crosshair or tooltip (default).
@@ -1018,8 +1021,8 @@ var currentVersion = thema.SV(0, 0)
 // The lineage is the canonical specification of the current dashboard schema,
 // all prior schema versions, and the mappings that allow migration between
 // schema versions.
-func Lineage(lib thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
-	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("pkg", "coremodel", "dashboard"), cueFS, lib, opts...)
+func Lineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
+	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("pkg", "coremodel", "dashboard"), cueFS, rt, opts...)
 }
 
 var _ thema.LineageFactory = Lineage
@@ -1052,8 +1055,8 @@ func (c *Coremodel) GoType() interface{} {
 // Note that this function does not cache, and initially loading a Thema lineage
 // can be expensive. As such, the Grafana backend should prefer to access this
 // coremodel through a registry (pkg/framework/coremodel/registry), which does cache.
-func New(lib thema.Library) (*Coremodel, error) {
-	lin, err := Lineage(lib)
+func New(rt *thema.Runtime) (*Coremodel, error) {
+	lin, err := Lineage(rt)
 	if err != nil {
 		return nil, err
 	}

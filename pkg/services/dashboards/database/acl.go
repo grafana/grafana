@@ -16,7 +16,7 @@ import (
 func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *models.GetDashboardACLInfoListQuery) error {
 	outerErr := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		query.Result = make([]*models.DashboardACLInfoDTO, 0)
-		falseStr := d.dialect.BooleanStr(false)
+		falseStr := d.sqlStore.GetDialect().BooleanStr(false)
 
 		if query.DashboardID == 0 {
 			sql := `SELECT
@@ -62,7 +62,7 @@ func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *mod
 				d.slug,
 				d.uid,
 				d.is_folder,
-				CASE WHEN (da.dashboard_id = -1 AND d.folder_id > 0) OR da.dashboard_id = d.folder_id THEN ` + d.dialect.BooleanStr(true) + ` ELSE ` + falseStr + ` END AS inherited
+				CASE WHEN (da.dashboard_id = -1 AND d.folder_id > 0) OR da.dashboard_id = d.folder_id THEN ` + d.sqlStore.GetDialect().BooleanStr(true) + ` ELSE ` + falseStr + ` END AS inherited
 			FROM dashboard as d
 				LEFT JOIN dashboard folder on folder.id = d.folder_id
 				LEFT JOIN dashboard_acl AS da ON
@@ -75,7 +75,7 @@ func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *mod
 					  (folder.id IS NULL AND d.has_acl = ` + falseStr + `)
 					)
 				)
-				LEFT JOIN ` + d.dialect.Quote("user") + ` AS u ON u.id = da.user_id
+				LEFT JOIN ` + d.sqlStore.GetDialect().Quote("user") + ` AS u ON u.id = da.user_id
 				LEFT JOIN team ug on ug.id = da.team_id
 			WHERE d.org_id = ? AND d.id = ? AND da.id IS NOT NULL
 			ORDER BY da.id ASC
@@ -103,9 +103,9 @@ func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *
 			return nil
 		}
 
-		builder := sqlstore.NewSqlBuilder(d.sqlStore.Cfg)
+		builder := sqlstore.NewSqlBuilder(d.cfg)
 		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?",
-			query.SignedInUser.OrgID, d.dialect.BooleanStr(true))
+			query.SignedInUser.OrgID, d.sqlStore.GetDialect().BooleanStr(true))
 		builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_EDIT)
 
 		type folderCount struct {
@@ -131,7 +131,7 @@ func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Con
 			return nil
 		}
 
-		builder := sqlstore.NewSqlBuilder(d.sqlStore.Cfg)
+		builder := sqlstore.NewSqlBuilder(d.cfg)
 		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ?", query.SignedInUser.OrgID)
 		builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_ADMIN)
 
