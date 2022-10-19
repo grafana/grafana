@@ -81,15 +81,15 @@ export enum SpanKind {
 }
 
 export type Span = {
-  durationMs: number;
+  durationMs?: number;
   traceId?: string;
   spanID: string;
   traceState?: string;
   parentSpanId?: string;
   name?: string;
   kind?: SpanKind;
-  startTimeUnixNano: number;
-  endTimeUnixNano?: number;
+  startTimeUnixNano: string;
+  endTimeUnixNano?: string;
   attributes?: Array<{ key: string; value: { stringValue: string } }>;
   dropped_attributes_count?: number;
 };
