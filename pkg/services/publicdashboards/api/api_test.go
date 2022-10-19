@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -47,6 +48,56 @@ var anonymousUser *user.SignedInUser
 
 type JsonErrResponse struct {
 	Error string `json:"error"`
+}
+
+func TestAPIGetAnnotations(t *testing.T) {
+	testCases := []struct {
+		Name                 string
+		ExpectedHttpResponse int
+		Annotations          []AnnotationEvent
+		ServiceError         error
+		From                 string
+		To                   string
+	}{
+		{
+			Name:                 "will return success when there is no error and to and from are provided",
+			ExpectedHttpResponse: http.StatusOK,
+			Annotations:          []AnnotationEvent{{Id: 1}},
+			ServiceError:         nil,
+			From:                 "123",
+			To:                   "123",
+		},
+		{
+			Name:                 "will return 500 when service returns an error",
+			ExpectedHttpResponse: http.StatusInternalServerError,
+			Annotations:          nil,
+			ServiceError:         errors.New("an error happened"),
+			From:                 "123",
+			To:                   "123",
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.Name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.RBACEnabled = false
+			service := publicdashboards.NewFakePublicDashboardService(t)
+			service.On("GetAnnotations", mock.Anything, mock.Anything, mock.AnythingOfType("string")).
+				Return(test.Annotations, test.ServiceError).Once()
+			testServer := setupTestServer(t, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards), service, nil, anonymousUser)
+
+			path := fmt.Sprintf("/api/public/dashboards/abc123/annotations?from=%s&to=%s", test.From, test.To)
+			response := callAPI(testServer, http.MethodGet, path, nil, t)
+
+			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
+
+			if test.ExpectedHttpResponse == http.StatusOK {
+				var items []AnnotationEvent
+				err := json.Unmarshal(response.Body.Bytes(), &items)
+				assert.NoError(t, err)
+				assert.Equal(t, items, test.Annotations)
+			}
+		})
+	}
 }
 
 func TestAPIFeatureFlag(t *testing.T) {
@@ -630,11 +681,13 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 		},
 	}
 
+	annotationsService := annotationstest.NewFakeAnnotationsRepo()
+
 	// create public dashboard
 	store := publicdashboardsStore.ProvideStore(db)
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
-	service := publicdashboardsService.ProvideService(cfg, store, qds)
+	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService)
 	pubdash, err := service.SavePublicDashboardConfig(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 
