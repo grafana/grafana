@@ -14,6 +14,16 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+type githubPublishTestCases struct {
+	name           string
+	args           []string
+	token          string
+	expectedError  error
+	errorContains  string
+	expectedOutput string
+	mockedService  *mockGitHubRepositoryServiceImpl
+}
+
 var mockGitHubRepositoryService = &mockGitHubRepositoryServiceImpl{}
 
 func mockGithubRepositoryClient(context.Context, string) githubRepositoryService {
@@ -25,23 +35,10 @@ func TestPublishGitHub(t *testing.T) {
 	testApp, testPath := setupPublishGithubTests(t)
 	mockErrUnauthorized := errors.New("401")
 
-	testCases := []struct {
-		name           string
-		args           []string
-		token          string
-		expectedError  error
-		errorContains  string
-		expectedOutput string
-		mockedService  *mockGitHubRepositoryServiceImpl
-	}{
+	testCases := []githubPublishTestCases{
 		{
 			name:          "try to publish without required flags",
 			errorContains: `Required flags "path, repo" not set`,
-		},
-		{
-			name:          "try to publish without tag",
-			args:          []string{"--path", testPath, "--repo", "test/test"},
-			expectedError: errTagIsEmpty,
 		},
 		{
 			name:          "try to publish without token",
@@ -100,6 +97,17 @@ func TestPublishGitHub(t *testing.T) {
 			args:           []string{"--dry-run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"},
 			expectedOutput: "Would upload asset",
 		},
+	}
+
+	if os.Getenv("DRONE_COMMIT") == "" {
+		// this test only works locally due to Drone environment
+		testCases = append(testCases,
+			githubPublishTestCases{
+				name:          "try to publish without tag",
+				args:          []string{"--path", testPath, "--repo", "test/test"},
+				expectedError: errTagIsEmpty,
+			},
+		)
 	}
 
 	for _, test := range testCases {
