@@ -18,6 +18,12 @@ import (
 // Core kinds code generator. Produces all generated code in grafana/grafana
 // that derives from raw and structured core kinds.
 
+// All the single-kind generators to be run for core kinds.
+var singles = []codegen.SingleKindGenerator{}
+
+// All the aggregate generators to be run for core kinds.
+var multis = []codegen.MultiKindGenerator{}
+
 const sep = string(filepath.Separator)
 
 func main() {
@@ -36,9 +42,10 @@ func main() {
 
 	wd := codegen.NewWriteDiffer()
 	rt := cuectx.GrafanaThemaRuntime()
+	var all []*kind.Parsed
 
 	// structured kinds first
-	var skinds []*codegen.ParsedCoreStructuredKind
+	var skinds []*kind.Parsed2[kind.CoreStructuredMeta]
 	f := os.DirFS(filepath.Join(groot, "kind", "structured"))
 	ents := elsedie(fs.ReadDir(f, "."))("error reading structured fs root directory")
 	for _, ent := range ents {
@@ -51,11 +58,12 @@ func main() {
 		if pk.Meta.Name != ent.Name() {
 			die(fmt.Errorf("%s: kind name (%s) must equal parent dir name (%s)", rel, pk.Meta.Name, ent.Name()))
 		}
-		skinds = append(skinds, (*codegen.ParsedCoreStructuredKind)(pk))
+		skinds = append(skinds, pk)
+		all = append(all, pk.ToParsed())
 	}
 
 	// now raw kinds
-	var rkinds []*codegen.ParsedRawKind
+	var rkinds []*kind.Parsed2[kind.RawMeta]
 	f = os.DirFS(filepath.Join(groot, "kind", "raw"))
 	ents = elsedie(fs.ReadDir(f, "."))("error reading raw fs root directory")
 	for _, ent := range ents {
@@ -68,7 +76,28 @@ func main() {
 		if pk.Meta.Name != ent.Name() {
 			die(fmt.Errorf("%s: kind name (%s) must equal parent dir name (%s)", rel, pk.Meta.Name, ent.Name()))
 		}
-		rkinds = append(rkinds, (*codegen.ParsedRawKind)(pk))
+		rkinds = append(rkinds, pk)
+		all = append(all, pk.ToParsed())
+	}
+
+	// Run all single generators
+	for _, gen := range singles {
+		for _, pk := range all {
+			gf, err := gen.Generate(pk)
+			if err != nil {
+				die(fmt.Errorf("%s: %w"), err)
+			}
+			wd[filepath.Join(groot, gf.RelativePath)] = gf.Data
+		}
+	}
+
+	// Run all multi generators
+	for _, gen := range multi {
+		gf, err := gen.Generate(all)
+		if err != nil {
+			die(fmt.Errorf("%s: %w"), err)
+		}
+		wd[filepath.Join(groot, gf.RelativePath)] = gf.Data
 	}
 }
 
