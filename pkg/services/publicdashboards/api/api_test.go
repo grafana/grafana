@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
@@ -53,28 +52,44 @@ type JsonErrResponse struct {
 
 func TestAPIGetAnnotations(t *testing.T) {
 	testCases := []struct {
-		Name                 string
-		ExpectedHttpResponse int
-		Annotations          []AnnotationEvent
-		ServiceError         error
-		From                 string
-		To                   string
+		Name                  string
+		ExpectedHttpResponse  int
+		Annotations           []AnnotationEvent
+		ServiceError          error
+		AccessToken           string
+		From                  string
+		To                    string
+		ExpectedServiceCalled bool
 	}{
 		{
-			Name:                 "will return success when there is no error and to and from are provided",
-			ExpectedHttpResponse: http.StatusOK,
-			Annotations:          []AnnotationEvent{{Id: 1}},
-			ServiceError:         nil,
-			From:                 "123",
-			To:                   "123",
+			Name:                  "will return success when there is no error and to and from are provided",
+			ExpectedHttpResponse:  http.StatusOK,
+			Annotations:           []AnnotationEvent{{Id: 1}},
+			ServiceError:          nil,
+			AccessToken:           validAccessToken,
+			From:                  "123",
+			To:                    "123",
+			ExpectedServiceCalled: true,
 		},
 		{
-			Name:                 "will return 500 when service returns an error",
-			ExpectedHttpResponse: http.StatusInternalServerError,
-			Annotations:          nil,
-			ServiceError:         errors.New("an error happened"),
-			From:                 "123",
-			To:                   "123",
+			Name:                  "will return 500 when service returns an error",
+			ExpectedHttpResponse:  http.StatusInternalServerError,
+			Annotations:           nil,
+			ServiceError:          errors.New("an error happened"),
+			AccessToken:           validAccessToken,
+			From:                  "123",
+			To:                    "123",
+			ExpectedServiceCalled: true,
+		},
+		{
+			Name:                  "will return 400 when has an incorrect Access Token",
+			ExpectedHttpResponse:  http.StatusBadRequest,
+			Annotations:           nil,
+			ServiceError:          errors.New("an error happened"),
+			AccessToken:           "InvalidAccessToken",
+			From:                  "123",
+			To:                    "123",
+			ExpectedServiceCalled: false,
 		},
 	}
 	for _, test := range testCases {
@@ -82,11 +97,15 @@ func TestAPIGetAnnotations(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = false
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			service.On("GetAnnotations", mock.Anything, mock.Anything, mock.AnythingOfType("string")).
-				Return(test.Annotations, test.ServiceError).Once()
+
+			if test.ExpectedServiceCalled {
+				service.On("GetAnnotations", mock.Anything, mock.Anything, mock.AnythingOfType("string")).
+					Return(test.Annotations, test.ServiceError).Once()
+			}
+
 			testServer := setupTestServer(t, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards), service, nil, anonymousUser)
 
-			path := fmt.Sprintf("/api/public/dashboards/abc123/annotations?from=%s&to=%s", test.From, test.To)
+			path := fmt.Sprintf("/api/public/dashboards/%s/annotations?from=%s&to=%s", test.AccessToken, test.From, test.To)
 			response := callAPI(testServer, http.MethodGet, path, nil, t)
 
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
@@ -221,9 +240,6 @@ func TestAPIListPublicDashboard(t *testing.T) {
 
 func TestAPIGetPublicDashboard(t *testing.T) {
 	DashboardUid := "dashboard-abcd1234"
-	token, err := uuid.NewRandom()
-	require.NoError(t, err)
-	accessToken := fmt.Sprintf("%x", token)
 
 	testCases := []struct {
 		Name                 string
@@ -234,7 +250,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 	}{
 		{
 			Name:                 "It gets a public dashboard",
-			AccessToken:          accessToken,
+			AccessToken:          validAccessToken,
 			ExpectedHttpResponse: http.StatusOK,
 			DashboardResult: &models.Dashboard{
 				Data: simplejson.NewFromAny(map[string]interface{}{
@@ -245,7 +261,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 		},
 		{
 			Name:                 "It should return 404 if no public dashboard",
-			AccessToken:          accessToken,
+			AccessToken:          validAccessToken,
 			ExpectedHttpResponse: http.StatusNotFound,
 			DashboardResult:      nil,
 			Err:                  ErrPublicDashboardNotFound,
@@ -605,9 +621,9 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 	t.Run("Returns query data when feature toggle is enabled", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
-		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), "abc123").Return(mockedResponse, nil)
+		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(mockedResponse, nil)
 
-		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/abc123/panels/2/query", strings.NewReader("{}"), t)
+		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/"+validAccessToken+"/panels/2/query", strings.NewReader("{}"), t)
 
 		require.JSONEq(
 			t,
@@ -619,9 +635,9 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 	t.Run("Status code is 500 when the query fails", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
-		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), "abc123").Return(&backend.QueryDataResponse{}, fmt.Errorf("error"))
+		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, fmt.Errorf("error"))
 
-		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/abc123/panels/2/query", strings.NewReader("{}"), t)
+		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/"+validAccessToken+"/panels/2/query", strings.NewReader("{}"), t)
 		require.Equal(t, http.StatusInternalServerError, resp.Code)
 	})
 }
