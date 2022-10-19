@@ -13,86 +13,93 @@ import (
 	"golang.org/x/oauth2"
 )
 
-type repo struct {
+type githubRepositoryService interface {
+	GetReleaseByTag(ctx context.Context, owner string, repo string, tag string) (*github.RepositoryRelease, *github.Response, error)
+	CreateRelease(ctx context.Context, owner string, repo string, release *github.RepositoryRelease) (*github.RepositoryRelease, *github.Response, error)
+	UploadReleaseAsset(ctx context.Context, owner string, repo string, id int64, opt *github.UploadOptions, file *os.File) (*github.ReleaseAsset, *github.Response, error)
+}
+
+type githubRepo struct {
 	owner string
 	name  string
 }
 
-type flags struct {
+type publishGithubFlags struct {
 	create       bool
 	dryRun       bool
 	tag          string
-	repo         *repo
+	repo         *githubRepo
 	artifactPath string
 }
 
 var (
+	newGithubClient    = githubRepositoryClient
 	errTokenIsEmpty    = errors.New("the environment variable GH_TOKEN must be set")
 	errTagIsEmpty      = errors.New(`failed to retrieve release tag from metadata, use "--tag" to set it manually`)
 	errReleaseNotFound = errors.New(`release not found, use "--create" to create the release`)
 )
 
 func PublishGitHub(ctx *cli.Context) error {
-	gitCtx := context.Background()
 	token := os.Getenv("GH_TOKEN")
 	f, err := getFlags(ctx)
 	if err != nil {
-		return cli.NewExitError(err, 1)
+		return err
 	}
 
 	if f.tag == "" {
-		return cli.NewExitError(errTagIsEmpty, 1)
+		return errTagIsEmpty
 	}
 
 	if token == "" {
-		return cli.NewExitError(errTokenIsEmpty, 1)
+		return errTokenIsEmpty
 	}
 
 	if f.dryRun {
-		return runDryRun(f, token, gitCtx)
+		return runDryRun(f, token, ctx)
 	}
 
-	client := newClient(gitCtx, token)
-	release, res, err := client.Repositories.GetReleaseByTag(gitCtx, f.repo.owner, f.repo.name, f.tag)
+	client := newGithubClient(ctx.Context, token)
+	release, res, err := client.GetReleaseByTag(ctx.Context, f.repo.owner, f.repo.name, f.tag)
 	if err != nil && res.StatusCode != 404 {
-		return cli.NewExitError(err, 1)
+		return err
 	}
 
 	if release == nil {
 		if f.create {
-			release, _, err = client.Repositories.CreateRelease(gitCtx, f.repo.owner, f.repo.name, &github.RepositoryRelease{TagName: &f.tag})
+			release, _, err = client.CreateRelease(ctx.Context, f.repo.owner, f.repo.name, &github.RepositoryRelease{TagName: &f.tag})
 			if err != nil {
-				return cli.NewExitError(err, 1)
+				return err
 			}
 		} else {
-			return cli.NewExitError(errReleaseNotFound, 1)
+			return errReleaseNotFound
 		}
 	}
 
 	artifactName := path.Base(f.artifactPath)
 	file, err := os.Open(f.artifactPath)
 	if err != nil {
-		return cli.NewExitError(err, 1)
+		return err
 	}
 
-	asset, _, err := client.Repositories.UploadReleaseAsset(gitCtx, f.repo.owner, f.repo.name, *release.ID, &github.UploadOptions{Name: artifactName}, file)
+	asset, _, err := client.UploadReleaseAsset(ctx.Context, f.repo.owner, f.repo.name, *release.ID, &github.UploadOptions{Name: artifactName}, file)
 	if err != nil {
-		return cli.NewExitError(err, 1)
+		return err
 	}
 	fmt.Printf("Asset '%s' uploaded to release '%s' on repository '%s/%s'\nDownload: %s\n", *asset.Name, f.tag, f.repo.owner, f.repo.name, *asset.BrowserDownloadURL)
 	return nil
 }
 
-func newClient(ctx context.Context, token string) *github.Client {
+func githubRepositoryClient(ctx context.Context, token string) githubRepositoryService {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
 	tc := oauth2.NewClient(ctx, ts)
 
-	return github.NewClient(tc)
+	client := github.NewClient(tc)
+	return client.Repositories
 }
 
-func getFlags(ctx *cli.Context) (*flags, error) {
+func getFlags(ctx *cli.Context) (*publishGithubFlags, error) {
 	metadata, err := GenerateMetadata(ctx)
 	if err != nil {
 		return nil, err
@@ -107,22 +114,22 @@ func getFlags(ctx *cli.Context) (*flags, error) {
 	name := strings.Split(fullRepo, "/")[1]
 	create := ctx.Value("create").(bool)
 	artifactPath := ctx.Value("path").(string)
-	return &flags{
+	return &publishGithubFlags{
 		artifactPath: artifactPath,
 		create:       create,
 		dryRun:       dryRun,
 		tag:          tag,
-		repo: &repo{
+		repo: &githubRepo{
 			owner: owner,
 			name:  name,
 		},
 	}, nil
 }
 
-func runDryRun(f *flags, token string, gitCtx context.Context) error {
-	client := newClient(gitCtx, token)
+func runDryRun(f *publishGithubFlags, token string, ctx *cli.Context) error {
+	client := newGithubClient(ctx.Context, token)
 	fmt.Println("Dry-Run: Retrieving release on repository by tag")
-	release, res, err := client.Repositories.GetReleaseByTag(gitCtx, f.repo.owner, f.repo.name, f.tag)
+	release, res, err := client.GetReleaseByTag(ctx.Context, f.repo.owner, f.repo.name, f.tag)
 	if err != nil && res.StatusCode != 404 {
 		fmt.Println("Dry-Run: GitHub communication error:\n", err)
 		return nil
