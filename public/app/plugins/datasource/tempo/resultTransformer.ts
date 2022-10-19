@@ -609,7 +609,7 @@ function transformToTraceData(data: TraceSearchMetadata) {
 
   const traceStartTime = parseInt(data.startTimeUnixNano!, 10) / 1000000;
 
-  let startTime = dateTimeFormat(traceStartTime);
+  let startTime = !isNaN(traceStartTime) ? dateTimeFormat(traceStartTime) : '';
 
   if (Math.abs(differenceInHours(new Date(traceStartTime), Date.now())) <= 1) {
     startTime = formatDistance(new Date(traceStartTime), Date.now(), {
@@ -620,7 +620,7 @@ function transformToTraceData(data: TraceSearchMetadata) {
 
   return {
     traceID: data.traceID,
-    //startTime: startTime,
+    startTime: startTime,
     duration: data.durationMs,
     traceName,
   };
