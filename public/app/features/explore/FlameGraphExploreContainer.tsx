@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, CoreApp } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import FlameGraphContainer from '../../plugins/panel/flamegraph/components/FlameGraphContainer';
@@ -15,7 +15,7 @@ export const FlameGraphExploreContainer = (props: Props) => {
 
   return (
     <div className={styles.container}>
-      <FlameGraphContainer data={props.dataFrames[0]} />
+      <FlameGraphContainer data={props.dataFrames[0]} app={CoreApp.Explore} />
     </div>
   );
 };

@@ -203,11 +203,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     & > :nth-child(3) {
       text-align: right;
     }
-
-    // needed to keep header row height fixed so header row does not resize with browser
-    & > :nth-child(3) {
-      position: relative !important;
-    }
   `,
   headerCell: css`
     background-color: ${theme.colors.background.secondary};
