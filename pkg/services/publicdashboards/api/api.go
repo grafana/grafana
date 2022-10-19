@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -62,10 +63,13 @@ func (api *Api) RegisterAPIEndpoints() {
 	// public endpoints
 	api.RouteRegister.Get("/api/public/dashboards/:accessToken", routing.Wrap(api.GetPublicDashboard))
 	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
+	api.RouteRegister.Get("/api/public/dashboards/:accessToken/annotations", routing.Wrap(api.GetAnnotations))
+
+	// List Public Dashboards
+	api.RouteRegister.Get("/api/dashboards/public", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
 
 	// Create/Update Public Dashboard
 	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
-
 	api.RouteRegister.Get("/api/dashboards/uid/:uid/public-config",
 		auth(middleware.ReqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, uidScope)),
 		routing.Wrap(api.GetPublicDashboardConfig))
@@ -86,7 +90,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 	)
 
 	if err != nil {
-		return api.handleError(http.StatusInternalServerError, "failed to get public dashboard", err)
+		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "GetPublicDashboard: failed to get public dashboard", err)
 	}
 
 	meta := dtos.DashboardMeta{
@@ -111,12 +115,22 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, dto)
 }
 
+// Gets list of public dashboards for an org
+// GET /api/dashboards/public
+func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
+	resp, err := api.PublicDashboardService.ListPublicDashboards(c.Req.Context(), c.OrgID)
+	if err != nil {
+		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "ListPublicDashboards: failed to list public dashboards", err)
+	}
+	return response.JSON(http.StatusOK, resp)
+}
+
 // Gets public dashboard configuration for dashboard
 // GET /api/dashboards/uid/:uid/public-config
 func (api *Api) GetPublicDashboardConfig(c *models.ReqContext) response.Response {
 	pdc, err := api.PublicDashboardService.GetPublicDashboardConfig(c.Req.Context(), c.OrgID, web.Params(c.Req)[":uid"])
 	if err != nil {
-		return api.handleError(http.StatusInternalServerError, "failed to get public dashboard config", err)
+		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "GetPublicDashboardConfig: failed to get public dashboard config", err)
 	}
 	return response.JSON(http.StatusOK, pdc)
 }
@@ -127,12 +141,12 @@ func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Respons
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":uid"]
 	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
-		api.handleError(http.StatusBadRequest, "no dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
+		api.handleError(c.Req.Context(), http.StatusBadRequest, "SavePublicDashboardConfig: no dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
 	}
 
 	pubdash := &PublicDashboard{}
 	if err := web.Bind(c.Req, pubdash); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, "SavePublicDashboardConfig: bad request data", err)
 	}
 
 	// Always set the orgID and userID from the session
@@ -147,7 +161,7 @@ func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Respons
 	// Save the public dashboard
 	pubdash, err := api.PublicDashboardService.SavePublicDashboardConfig(c.Req.Context(), c.SignedInUser, &dto)
 	if err != nil {
-		return api.handleError(http.StatusInternalServerError, "failed to save public dashboard configuration", err)
+		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "SavePublicDashboardConfig: failed to save public dashboard configuration", err)
 	}
 
 	return response.JSON(http.StatusOK, pubdash)
@@ -158,29 +172,44 @@ func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Respons
 func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 	panelId, err := strconv.ParseInt(web.Params(c.Req)[":panelId"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "invalid panel ID", err)
+		return response.Error(http.StatusBadRequest, "QueryPublicDashboard: invalid panel ID", err)
 	}
 
 	reqDTO := PublicDashboardQueryDTO{}
 	if err = web.Bind(c.Req, &reqDTO); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, "QueryPublicDashboard: bad request data", err)
 	}
 
 	resp, err := api.PublicDashboardService.GetQueryDataResponse(c.Req.Context(), c.SkipCache, reqDTO, panelId, web.Params(c.Req)[":accessToken"])
 	if err != nil {
-		return api.handleError(http.StatusInternalServerError, "error running public dashboard panel queries", err)
+		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "QueryPublicDashboard: error running public dashboard panel queries", err)
 	}
 
 	return toJsonStreamingResponse(api.Features, resp)
 }
 
+func (api *Api) GetAnnotations(c *models.ReqContext) response.Response {
+	reqDTO := AnnotationsQueryDTO{
+		From: c.QueryInt64("from"),
+		To:   c.QueryInt64("to"),
+	}
+
+	annotations, err := api.PublicDashboardService.GetAnnotations(c.Req.Context(), reqDTO, web.Params(c.Req)[":accessToken"])
+
+	if err != nil {
+		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "error getting public dashboard annotations", err)
+	}
+
+	return response.JSON(http.StatusOK, annotations)
+}
+
 // util to help us unpack dashboard and publicdashboard errors or use default http code and message
 // we should look to do some future refactoring of these errors as publicdashboard err is the same as a dashboarderr, just defined in a
 // different package.
-func (api *Api) handleError(code int, message string, err error) response.Response {
+func (api *Api) handleError(ctx context.Context, code int, message string, err error) response.Response {
 	var publicDashboardErr PublicDashboardErr
-
-	api.Log.Error(message, "error", err.Error())
+	ctxLogger := api.Log.FromContext(ctx)
+	ctxLogger.Error(message, "error", err.Error())
 
 	// handle public dashboard error
 	if ok := errors.As(err, &publicDashboardErr); ok {

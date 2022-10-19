@@ -5,8 +5,6 @@ import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { reportInteraction } from '@grafana/runtime/src';
 import { Alert, Button, ClipboardButton, Field, HorizontalGroup, Input, useStyles2, Spinner } from '@grafana/ui/src';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useGetConfigQuery, useSaveConfigMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { AcknowledgeCheckboxes } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/AcknowledgeCheckboxes';
@@ -20,7 +18,6 @@ import {
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { ShareModalTabProps } from 'app/features/dashboard/components/ShareModal/types';
 import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
-import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 
 interface Props extends ShareModalTabProps {}
@@ -81,13 +78,6 @@ export const SharePublicDashboard = (props: Props) => {
   const onSavePublicConfig = () => {
     reportInteraction('grafana_dashboards_public_create_clicked');
 
-    if (dashboardHasTemplateVariables(dashboardVariables)) {
-      dispatch(
-        notifyApp(createErrorNotification('This dashboard cannot be made public because it has template variables'))
-      );
-      return;
-    }
-
     saveConfig({
       dashboard: props.dashboard,
       payload: { ...publicDashboard!, isEnabled: enabledSwitch.isEnabled },
@@ -111,7 +101,7 @@ export const SharePublicDashboard = (props: Props) => {
         {isFetchingLoading && <Spinner />}
       </HorizontalGroup>
       <div className={styles.content}>
-        {dashboardHasTemplateVariables(dashboardVariables) ? (
+        {dashboardHasTemplateVariables(dashboardVariables) && !publicDashboardPersisted(publicDashboard) ? (
           <Alert
             severity="warning"
             title="dashboard cannot be public"
@@ -140,7 +130,6 @@ export const SharePublicDashboard = (props: Props) => {
               onToggleEnabled={() =>
                 setEnabledSwitch((prevState) => ({ isEnabled: !prevState.isEnabled, wasTouched: true }))
               }
-              hasTemplateVariables={dashboardHasTemplateVariables(dashboardVariables)}
             />
             {publicDashboardPersisted(publicDashboard) && enabledSwitch.isEnabled && (
               <Field label="Link URL" className={styles.publicUrl}>
@@ -163,11 +152,18 @@ export const SharePublicDashboard = (props: Props) => {
               </Field>
             )}
             {hasWritePermissions ? (
-              props.dashboard.hasUnsavedChanges() && (
+              props.dashboard.hasUnsavedChanges() ? (
                 <Alert
                   title="Please save your dashboard changes before updating the public configuration"
                   severity="warning"
                 />
+              ) : (
+                dashboardHasTemplateVariables(dashboardVariables) && (
+                  <Alert
+                    title="This public dashboard may not work since it uses template variables"
+                    severity="warning"
+                  />
+                )
               )
             ) : (
               <Alert title="You don't have permissions to create or update a public dashboard" severity="warning" />

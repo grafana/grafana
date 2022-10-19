@@ -9,32 +9,32 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
-
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -46,30 +46,179 @@ var userViewer = &user.SignedInUser{UserID: 3, OrgID: 1, OrgRole: org.RoleViewer
 var userViewerRBAC = &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleViewer, Login: "testViewerUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll}}}}
 var anonymousUser *user.SignedInUser
 
+type JsonErrResponse struct {
+	Error string `json:"error"`
+}
+
+func TestAPIGetAnnotations(t *testing.T) {
+	testCases := []struct {
+		Name                 string
+		ExpectedHttpResponse int
+		Annotations          []AnnotationEvent
+		ServiceError         error
+		From                 string
+		To                   string
+	}{
+		{
+			Name:                 "will return success when there is no error and to and from are provided",
+			ExpectedHttpResponse: http.StatusOK,
+			Annotations:          []AnnotationEvent{{Id: 1}},
+			ServiceError:         nil,
+			From:                 "123",
+			To:                   "123",
+		},
+		{
+			Name:                 "will return 500 when service returns an error",
+			ExpectedHttpResponse: http.StatusInternalServerError,
+			Annotations:          nil,
+			ServiceError:         errors.New("an error happened"),
+			From:                 "123",
+			To:                   "123",
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.Name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.RBACEnabled = false
+			service := publicdashboards.NewFakePublicDashboardService(t)
+			service.On("GetAnnotations", mock.Anything, mock.Anything, mock.AnythingOfType("string")).
+				Return(test.Annotations, test.ServiceError).Once()
+			testServer := setupTestServer(t, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards), service, nil, anonymousUser)
+
+			path := fmt.Sprintf("/api/public/dashboards/abc123/annotations?from=%s&to=%s", test.From, test.To)
+			response := callAPI(testServer, http.MethodGet, path, nil, t)
+
+			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
+
+			if test.ExpectedHttpResponse == http.StatusOK {
+				var items []AnnotationEvent
+				err := json.Unmarshal(response.Body.Bytes(), &items)
+				assert.NoError(t, err)
+				assert.Equal(t, items, test.Annotations)
+			}
+		})
+	}
+}
+
+func TestAPIFeatureFlag(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Method string
+		Path   string
+	}{
+		{
+			Name:   "API: Load Dashboard",
+			Method: http.MethodGet,
+			Path:   "/api/public/dashboards/acbc123",
+		},
+		{
+			Name:   "API: Query Dashboard",
+			Method: http.MethodGet,
+			Path:   "/api/public/dashboards/abc123/panels/2/query",
+		},
+		{
+			Name:   "API: List Dashboards",
+			Method: http.MethodGet,
+			Path:   "/api/dashboards/public",
+		},
+		{
+			Name:   "API: Get Public Dashboard Config",
+			Method: http.MethodPost,
+			Path:   "/api/dashboards/uid/abc123/public-config",
+		},
+		{
+			Name:   "API: Upate Public Dashboard",
+			Method: http.MethodPost,
+			Path:   "/api/dashboards/uid/abc123/public-config",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.Name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.RBACEnabled = false
+			service := publicdashboards.NewFakePublicDashboardService(t)
+			features := featuremgmt.WithFeatures()
+			testServer := setupTestServer(t, cfg, features, service, nil, userAdmin)
+			response := callAPI(testServer, test.Method, test.Path, nil, t)
+			assert.Equal(t, http.StatusNotFound, response.Code)
+		})
+	}
+}
+
+func TestAPIListPublicDashboard(t *testing.T) {
+	successResp := []PublicDashboardListResponse{
+		{
+			Uid:          "1234asdfasdf",
+			AccessToken:  "asdfasdf",
+			DashboardUid: "abc1234",
+			IsEnabled:    true,
+		},
+	}
+
+	testCases := []struct {
+		Name                 string
+		User                 *user.SignedInUser
+		Response             []PublicDashboardListResponse
+		ResponseErr          error
+		ExpectedHttpResponse int
+	}{
+		{
+			Name:                 "Anonymous user cannot list dashboards",
+			User:                 anonymousUser,
+			Response:             successResp,
+			ResponseErr:          nil,
+			ExpectedHttpResponse: http.StatusUnauthorized,
+		},
+		{
+			Name:                 "User viewer can see public dashboards",
+			User:                 userViewer,
+			Response:             successResp,
+			ResponseErr:          nil,
+			ExpectedHttpResponse: http.StatusOK,
+		},
+		{
+			Name:                 "Handles Service error",
+			User:                 userViewer,
+			Response:             nil,
+			ResponseErr:          errors.New("error, service broken"),
+			ExpectedHttpResponse: http.StatusInternalServerError,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.Name, func(t *testing.T) {
+			service := publicdashboards.NewFakePublicDashboardService(t)
+			service.On("ListPublicDashboards", mock.Anything, mock.Anything).
+				Return(test.Response, test.ResponseErr).Maybe()
+
+			cfg := setting.NewCfg()
+			cfg.RBACEnabled = false
+			features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
+			testServer := setupTestServer(t, cfg, features, service, nil, test.User)
+
+			response := callAPI(testServer, http.MethodGet, "/api/dashboards/public", nil, t)
+			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
+
+			if test.ExpectedHttpResponse == http.StatusOK {
+				var jsonResp []PublicDashboardListResponse
+				err := json.Unmarshal(response.Body.Bytes(), &jsonResp)
+				require.NoError(t, err)
+				assert.Equal(t, jsonResp[0].Uid, "1234asdfasdf")
+			}
+
+			if test.ResponseErr != nil {
+				var errResp JsonErrResponse
+				err := json.Unmarshal(response.Body.Bytes(), &errResp)
+				require.NoError(t, err)
+				assert.Equal(t, "error, service broken", errResp.Error)
+				service.AssertNotCalled(t, "ListPublicDashboards")
+			}
+		})
+	}
+}
+
 func TestAPIGetPublicDashboard(t *testing.T) {
-	t.Run("It should 404 if featureflag is not enabled", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		cfg.RBACEnabled = false
-		service := publicdashboards.NewFakePublicDashboardService(t)
-		service.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
-			Return(&PublicDashboard{}, &models.Dashboard{}, nil).Maybe()
-		service.On("GetPublicDashboardConfig", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
-			Return(&PublicDashboard{}, nil).Maybe()
-
-		testServer := setupTestServer(t, cfg, featuremgmt.WithFeatures(), service, nil, anonymousUser)
-
-		response := callAPI(testServer, http.MethodGet, "/api/public/dashboards", nil, t)
-		assert.Equal(t, http.StatusNotFound, response.Code)
-
-		response = callAPI(testServer, http.MethodGet, "/api/public/dashboards/asdf", nil, t)
-		assert.Equal(t, http.StatusNotFound, response.Code)
-
-		// control set. make sure routes are mounted
-		testServer = setupTestServer(t, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards), service, nil, userAdmin)
-		response = callAPI(testServer, http.MethodGet, "/api/public/dashboards/asdf", nil, t)
-		assert.NotEqual(t, http.StatusNotFound, response.Code)
-	})
-
 	DashboardUid := "dashboard-abcd1234"
 	token, err := uuid.NewRandom()
 	require.NoError(t, err)
@@ -138,9 +287,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 				assert.Equal(t, false, dashResp.Meta.CanDelete)
 				assert.Equal(t, false, dashResp.Meta.CanSave)
 			} else {
-				var errResp struct {
-					Error string `json:"error"`
-				}
+				var errResp JsonErrResponse
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
 				assert.Equal(t, test.Err.Error(), errResp.Error)
@@ -435,12 +582,6 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		return testServer, service
 	}
 
-	t.Run("Status code is 404 when feature toggle is disabled", func(t *testing.T) {
-		server, _ := setup(false)
-		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/abc123/panels/2/query", strings.NewReader("{}"), t)
-		require.Equal(t, http.StatusNotFound, resp.Code)
-	})
-
 	t.Run("Status code is 400 when the panel ID is invalid", func(t *testing.T) {
 		server, _ := setup(true)
 		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/abc123/panels/notanumber/query", strings.NewReader("{}"), t)
@@ -485,7 +626,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 }
 
 func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T) {
-	db := sqlstore.InitTestDB(t)
+	db := db.InitTestDB(t)
 
 	cacheService := datasourcesService.ProvideCacheService(localcache.ProvideService(), db)
 	qds := buildQueryDataService(t, cacheService, nil, db)
@@ -527,7 +668,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	}
 
 	// create dashboard
-	dashboardStoreService := dashboardStore.ProvideDashboardStore(db, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
+	dashboardStoreService := dashboardStore.ProvideDashboardStore(db, db.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db, db.Cfg))
 	dashboard, err := dashboardStoreService.SaveDashboard(context.Background(), saveDashboardCmd)
 	require.NoError(t, err)
 
@@ -540,11 +681,13 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 		},
 	}
 
+	annotationsService := annotationstest.NewFakeAnnotationsRepo()
+
 	// create public dashboard
 	store := publicdashboardsStore.ProvideStore(db)
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
-	service := publicdashboardsService.ProvideService(cfg, store, qds)
+	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService)
 	pubdash, err := service.SavePublicDashboardConfig(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 

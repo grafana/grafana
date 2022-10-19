@@ -13,14 +13,12 @@ import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 export const Configuration = ({
   disabled,
   isPubDashEnabled,
-  hasTemplateVariables,
   onToggleEnabled,
   dashboard,
 }: {
   disabled: boolean;
   isPubDashEnabled?: boolean;
   onToggleEnabled: () => void;
-  hasTemplateVariables: boolean;
   dashboard: DashboardModel;
 }) => {
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
@@ -41,7 +39,6 @@ export const Configuration = ({
           <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
             <Label description="Configures whether current dashboard can be available publicly">Enabled</Label>
             <Switch
-              disabled={hasTemplateVariables}
               data-testid={selectors.EnableSwitch}
               value={isPubDashEnabled}
               onChange={() => {

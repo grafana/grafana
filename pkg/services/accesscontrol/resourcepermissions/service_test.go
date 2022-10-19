@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -49,7 +51,7 @@ func TestService_SetUserPermission(t *testing.T) {
 
 			var hookCalled bool
 			if tt.callHook {
-				service.options.OnSetUser = func(session *sqlstore.DBSession, orgID int64, user accesscontrol.User, resourceID, permission string) error {
+				service.options.OnSetUser = func(session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error {
 					hookCalled = true
 					return nil
 				}
@@ -93,7 +95,7 @@ func TestService_SetTeamPermission(t *testing.T) {
 
 			var hookCalled bool
 			if tt.callHook {
-				service.options.OnSetTeam = func(session *sqlstore.DBSession, orgID, teamID int64, resourceID, permission string) error {
+				service.options.OnSetTeam = func(session *db.Session, orgID, teamID int64, resourceID, permission string) error {
 					hookCalled = true
 					return nil
 				}
@@ -133,7 +135,7 @@ func TestService_SetBuiltInRolePermission(t *testing.T) {
 
 			var hookCalled bool
 			if tt.callHook {
-				service.options.OnSetBuiltInRole = func(session *sqlstore.DBSession, orgID int64, builtInRole, resourceID, permission string) error {
+				service.options.OnSetBuiltInRole = func(session *db.Session, orgID int64, builtInRole, resourceID, permission string) error {
 					hookCalled = true
 					return nil
 				}
@@ -220,15 +222,16 @@ func TestService_SetPermissions(t *testing.T) {
 func setupTestEnvironment(t *testing.T, permissions []accesscontrol.Permission, ops Options) (*Service, *sqlstore.SQLStore, team.Service) {
 	t.Helper()
 
-	sql := sqlstore.InitTestDB(t)
+	sql := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	teamSvc := teamimpl.ProvideService(sql, cfg)
+	userSvc := userimpl.ProvideService(sql, nil, cfg, teamimpl.ProvideService(sql, cfg), nil)
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	mock := accesscontrolmock.New().WithPermissions(permissions)
 	service, err := New(
 		ops, cfg, routing.NewRouteRegister(), license,
-		accesscontrolmock.New().WithPermissions(permissions), mock, sql, teamSvc,
+		accesscontrolmock.New().WithPermissions(permissions), mock, sql, teamSvc, userSvc,
 	)
 	require.NoError(t, err)
 

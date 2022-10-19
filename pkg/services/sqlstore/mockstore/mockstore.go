@@ -3,6 +3,9 @@ package mockstore
 import (
 	"context"
 
+	"xorm.io/core"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -76,6 +79,10 @@ func (m *SQLStoreMock) GetDialect() migrator.Dialect {
 	return nil
 }
 
+func (m *SQLStoreMock) GetDBType() core.DbType {
+	return ""
+}
+
 func (m *SQLStoreMock) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
 	return m.ExpectedError
 }
@@ -90,13 +97,6 @@ func (m *SQLStoreMock) GetOrgByName(name string) (*models.Org, error) {
 
 func (m *SQLStoreMock) GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error {
 	query.Result = m.ExpectedOrg
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) CreateOrgWithMember(name string, userID int64) (models.Org, error) {
-	return *m.ExpectedOrg, nil
-}
-func (m *SQLStoreMock) CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error {
 	return m.ExpectedError
 }
 
@@ -130,16 +130,7 @@ func (m *SQLStoreMock) CreateUser(ctx context.Context, cmd user.CreateUserComman
 	return nil, m.ExpectedError
 }
 
-func (m *SQLStoreMock) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
-	return m.ExpectedSetUsingOrgError
-}
-
 func (m *SQLStoreMock) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error {
-	query.Result = m.ExpectedUserOrgList
 	return m.ExpectedError
 }
 
@@ -209,11 +200,15 @@ func (m SQLStoreMock) GetTeamMembers(ctx context.Context, query *models.GetTeamM
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) NewSession(ctx context.Context) *sqlstore.DBSession {
+func (m *SQLStoreMock) NewSession(ctx context.Context) *db.Session {
 	return nil
 }
 
 func (m *SQLStoreMock) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) WithNewDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
 	return m.ExpectedError
 }
 
@@ -255,30 +250,6 @@ func (m *SQLStoreMock) InTransaction(ctx context.Context, fn func(ctx context.Co
 
 func (m SQLStoreMock) GetDashboardACLInfoList(ctx context.Context, query *models.GetDashboardACLInfoListQuery) error {
 	query.Result = m.ExpectedDashboardACLInfoList
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlaylistCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetPlaylist(ctx context.Context, query *models.GetPlaylistByUidQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) DeletePlaylist(ctx context.Context, cmd *models.DeletePlaylistCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) SearchPlaylists(ctx context.Context, query *models.GetPlaylistsQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetPlaylistItem(ctx context.Context, query *models.GetPlaylistItemsByUidQuery) error {
 	return m.ExpectedError
 }
 
@@ -326,12 +297,6 @@ func (m *SQLStoreMock) GetOrgUsers(ctx context.Context, query *models.GetOrgUser
 
 func (m *SQLStoreMock) SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error {
 	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
-	testData := m.ExpectedOrgListResponse[0]
-	m.ExpectedOrgListResponse = m.ExpectedOrgListResponse[1:]
-	return testData.Response
 }
 
 func (m *SQLStoreMock) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {

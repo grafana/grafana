@@ -76,12 +76,16 @@ func (e *invalidEvalResultFormatError) Unwrap() error {
 // ExecutionResults contains the unevaluated results from executing
 // a condition.
 type ExecutionResults struct {
-	Error error
+	// Condition contains the results of the condition
+	Condition data.Frames
+
+	// Results contains the results of all queries, reduce and math expressions
+	Results map[string]data.Frames
 
 	// NoData contains the DatasourceUID for RefIDs that returned no data.
 	NoData map[string]string
 
-	Results data.Frames
+	Error error
 }
 
 // Results is a slice of evaluated alert instances states.
@@ -101,20 +105,24 @@ func (evalResults Results) HasErrors() bool {
 type Result struct {
 	Instance data.Labels
 	State    State // Enum
-	// Error message for Error state. should be nil if State != Error.
-	Error              error
-	EvaluatedAt        time.Time
-	EvaluationDuration time.Duration
 
-	// EvaluationString is a string representation of evaluation data such
-	// as EvalMatches (from "classic condition"), and in the future from operations
-	// like SSE "math".
-	EvaluationString string
+	// Error message for Error state. should be nil if State != Error.
+	Error error
+
+	// Results contains the results of all queries, reduce and math expressions
+	Results map[string]data.Frames
 
 	// Values contains the RefID and value of reduce and math expressions.
 	// It does not contain values for classic conditions as the values
 	// in classic conditions do not have a RefID.
 	Values map[string]NumberValueCapture
+
+	EvaluatedAt        time.Time
+	EvaluationDuration time.Duration
+	// EvaluationString is a string representation of evaluation data such
+	// as EvalMatches (from "classic condition"), and in the future from operations
+	// like SSE "math".
+	EvaluationString string
 }
 
 // State is an enum of the evaluation State for an alert instance.
@@ -243,7 +251,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 	// datasourceExprUID is a special DatasourceUID for expressions
 	datasourceExprUID := strconv.FormatInt(expr.DatasourceID, 10)
 
-	var result ExecutionResults
+	result := ExecutionResults{Results: make(map[string]data.Frames)}
 	for refID, res := range execResp.Responses {
 		if len(res.Frames) == 0 {
 			// to ensure that NoData is consistent with Results we do not initialize NoData
@@ -270,12 +278,13 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 		}
 
 		if refID == c.Condition {
-			result.Results = res.Frames
+			result.Condition = res.Frames
 		}
+		result.Results[refID] = res.Frames
 	}
 
 	// add capture values as data frame metadata to each result (frame) that has matching labels.
-	for _, frame := range result.Results {
+	for _, frame := range result.Condition {
 		// classic conditions already have metadata set and only have one value, there's no need to add anything in this case.
 		if frame.Meta != nil && frame.Meta.Custom != nil {
 			if _, ok := frame.Meta.Custom.([]classic.EvalMatch); ok {
@@ -422,12 +431,12 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 		return evalResults
 	}
 
-	if len(execResults.Results) == 0 {
+	if len(execResults.Condition) == 0 {
 		appendNoData(nil)
 		return evalResults
 	}
 
-	for _, f := range execResults.Results {
+	for _, f := range execResults.Condition {
 		rowLen, err := f.RowLen()
 		if err != nil {
 			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: "unable to get frame row length", err: err})

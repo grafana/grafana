@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -151,7 +151,7 @@ type StandardExport struct {
 	dataDir string
 
 	// Services
-	sql                       *sqlstore.SQLStore
+	sql                       db.DB
 	dashboardsnapshotsService dashboardsnapshots.Service
 	playlistService           playlist.Service
 	orgService                org.Service
@@ -161,7 +161,7 @@ type StandardExport struct {
 	exportJob Job
 }
 
-func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg,
+func ProvideService(sql db.DB, features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg,
 	dashboardsnapshotsService dashboardsnapshots.Service, playlistService playlist.Service, orgService org.Service,
 	datasourceService datasources.DataSourceService) ExportService {
 	if !features.IsEnabled(featuremgmt.FlagExport) {

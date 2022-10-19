@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -28,7 +29,7 @@ import (
 
 func TestAnnotationsAPIEndpoint(t *testing.T) {
 	hs := setupSimpleHTTPServer(nil)
-	store := sqlstore.InitTestDB(t)
+	store := db.InitTestDB(t)
 	store.Cfg = hs.Cfg
 	hs.SQLStore = store
 
@@ -309,7 +310,7 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 	cmd dtos.UpdateAnnotationsCmd, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
-		store := sqlstore.InitTestDB(t)
+		store := db.InitTestDB(t)
 		store.Cfg = hs.Cfg
 		hs.SQLStore = store
 
@@ -334,7 +335,7 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role org.RoleType, cmd dtos.PatchAnnotationsCmd, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
-		store := sqlstore.InitTestDB(t)
+		store := db.InitTestDB(t)
 		store.Cfg = hs.Cfg
 		hs.SQLStore = store
 

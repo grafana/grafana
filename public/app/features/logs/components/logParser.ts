@@ -1,6 +1,8 @@
 import memoizeOne from 'memoize-one';
 
-import { Field, FieldType, getParser, LinkModel, LogRowModel } from '@grafana/data';
+import { Field, FieldType, LinkModel, LogRowModel } from '@grafana/data';
+
+import { getParser } from '../utils';
 
 import { MAX_CHARACTERS } from './LogRowMessage';
 

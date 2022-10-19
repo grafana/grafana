@@ -4,18 +4,20 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/tag"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestIntegrationSavingTags(t *testing.T) {
+type getStore func(db.DB) store
+
+func testIntegrationSavingTags(t *testing.T, fn getStore) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	ss := sqlstore.InitTestDB(t)
-	store := sqlStore{db: ss}
+	ss := db.InitTestDB(t)
+	store := fn(ss)
 	tagPairs := []*tag.Tag{
 		{Key: "outage"},
 		{Key: "type", Value: "outage"},

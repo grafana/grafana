@@ -61,7 +61,7 @@ func TestMiddlewareQuota(t *testing.T) {
 		const quotaUsed = 4
 		setUp := func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
-			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{UserID: 12}
+			sc.userService.ExpectedSignedInUser = &user.SignedInUser{UserID: 12}
 			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 				return &models.UserToken{
 					UserId:        12,

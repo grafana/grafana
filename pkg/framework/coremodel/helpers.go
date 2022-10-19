@@ -9,7 +9,6 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
-	"github.com/grafana/thema/kernel"
 	tload "github.com/grafana/thema/load"
 
 	"github.com/grafana/grafana/pkg/cuectx"
@@ -24,7 +23,7 @@ var defaultFramework cue.Value
 
 func init() {
 	var err error
-	defaultFramework, err = doLoadFrameworkCUE(cuectx.ProvideCUEContext())
+	defaultFramework, err = doLoadFrameworkCUE(cuectx.GrafanaCUEContext())
 	if err != nil {
 		panic(err)
 	}
@@ -105,82 +104,4 @@ func CUEFrameworkWithContext(ctx *cue.Context) cue.Value {
 	// Error guaranteed to be nil here because erroring would have caused init() to panic
 	v, _ := doLoadFrameworkCUE(ctx) // nolint:errcheck
 	return v
-}
-
-// Mux takes a coremodel and returns a Thema version muxer that, given a byte
-// slice containing any version of schema for that coremodel, will translate it
-// to the Interface.CurrentSchema() version, and optionally decode it onto the
-// Interface.GoType().
-//
-// By default, JSON decoding will be used, and the filename given to any input
-// bytes (shown in errors, which may be user-facing) will be
-// "<name>.<encoding>", e.g. dashboard.json.
-func Mux(cm Interface, opts ...MuxOption) kernel.InputKernel {
-	c := &muxConfig{}
-	for _, opt := range opts {
-		opt(c)
-	}
-
-	cfg := kernel.InputKernelConfig{
-		Typ:     cm.GoType(),
-		Lineage: cm.Lineage(),
-		To:      cm.CurrentSchema().Version(),
-	}
-
-	switch c.decodetyp {
-	case "", "json": // json by default
-		if c.filename == "" {
-			c.filename = fmt.Sprintf("%s.json", cm.Lineage().Name())
-		}
-		cfg.Loader = kernel.NewJSONDecoder(c.filename)
-	case "yaml":
-		if c.filename == "" {
-			c.filename = fmt.Sprintf("%s.yaml", cm.Lineage().Name())
-		}
-		cfg.Loader = kernel.NewYAMLDecoder(c.filename)
-	default:
-		panic("")
-	}
-
-	mux, err := kernel.NewInputKernel(cfg)
-	if err != nil {
-		// Barring a fundamental bug in Thema's schema->Go type assignability checker or
-		// a direct attempt by a Grafana dev to get around the invariants of coremodel codegen,
-		// this should be unreachable. (And even the latter case should be caught elsewhere
-		// by tests).
-		panic(err)
-	}
-	return mux
-}
-
-// A MuxOption defines options that may be specified only at initial
-// construction of a Lineage via BindLineage.
-type MuxOption muxOption
-
-// Internal representation of MuxOption.
-type muxOption func(c *muxConfig)
-
-type muxConfig struct {
-	filename  string
-	decodetyp string
-}
-
-// YAML indicates that the resulting Mux should look for YAML in input bytes,
-// rather than the default JSON.
-func YAML() MuxOption {
-	return func(c *muxConfig) {
-		c.decodetyp = "yaml"
-	}
-}
-
-// Filename specifies the filename that is given to input bytes passing through
-// the mux.
-//
-// The filename has no impact on mux behavior, but is used in user-facing error
-// output, such as schema validation failures. Thus, it is recommended to pick a
-// name that will make sense in the context a user is expected to see the error.
-func Filename(name string) MuxOption {
-	return func(c *muxConfig) {
-		c.filename = name
-	}
 }
