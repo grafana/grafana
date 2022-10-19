@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	iofs "io/fs"
 	"net/url"
 	"os"
 	"path"
@@ -26,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
@@ -69,6 +72,24 @@ func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoa
 		errs:               make(map[string]*plugins.SignatureError),
 		log:                log.New("plugin.loader"),
 	}
+}
+
+func (l *Loader) LoadFS(ctx context.Context, class plugins.Class, fs *pfs.Tree) error {
+	jsonData, err := l.readPluginJSONFromFS(fs.FS())
+	if err != nil {
+		return err
+	}
+
+	plugin := createPluginBase(jsonData, class, "")
+	if err = l.pluginInitializer.Initialize(ctx, plugin); err != nil {
+		return err
+	}
+
+	if err = l.load(ctx, plugin); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
@@ -259,6 +280,17 @@ func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
 	return nil
 }
 
+func (l *Loader) readPluginJSONFromFS(pfs iofs.FS) (plugins.JSONData, error) {
+	l.log.Debug("Loading plugin from plugin FS")
+
+	reader, err := pfs.Open("plugin.json")
+	if err != nil {
+		return plugins.JSONData{}, err
+	}
+
+	return l.jsonToModel(reader)
+}
+
 func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
 	l.log.Debug("Loading plugin", "path", pluginJSONPath)
 
@@ -274,16 +306,20 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 		return plugins.JSONData{}, err
 	}
 
+	return l.jsonToModel(reader)
+}
+
+func (l *Loader) jsonToModel(rc io.ReadCloser) (plugins.JSONData, error) {
 	plugin := plugins.JSONData{}
-	if err = json.NewDecoder(reader).Decode(&plugin); err != nil {
+	if err := json.NewDecoder(rc).Decode(&plugin); err != nil {
 		return plugins.JSONData{}, err
 	}
 
-	if err = reader.Close(); err != nil {
-		l.log.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
+	if err := rc.Close(); err != nil {
+		l.log.Warn("Failed to close plugin JSON file", "err", err)
 	}
 
-	if err = validatePluginJSON(plugin); err != nil {
+	if err := validatePluginJSON(plugin); err != nil {
 		return plugins.JSONData{}, err
 	}
 
