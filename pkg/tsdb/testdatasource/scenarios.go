@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -391,11 +392,8 @@ func (s *Service) handleDataResponseErrorStatusScenario(_ context.Context, req *
 	}
 
 	for _, q := range req.Queries {
-		respD := resp.Responses[q.RefID]
-		errStatus := []backend.Status{backend.StatusTimeout, backend.StatusTooManyRequests, backend.StatusValidationFailed}[rand.Intn(3)]
-		respD.Status = errStatus
-		respD.Error = fmt.Errorf("error %s occurred", errStatus)
-		resp.Responses[q.RefID] = respD
+		errStatus := []backend.Status{backend.StatusTimeout, backend.StatusTooManyRequests, backend.StatusValidationFailed, http.StatusExpectationFailed}[rand.Intn(4)]
+		resp.Responses[q.RefID] = backend.ErrDataResponse(errStatus, fmt.Sprintf("error %s occurred", errStatus))
 	}
 
 	return resp, nil
