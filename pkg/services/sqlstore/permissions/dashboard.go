@@ -153,7 +153,7 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 			builder.WriteString(" OR ")
 		}
 
-		actionsToCheck := make([]interface{}, 0, len(f.dashboardActions))
+		actionsToCheck := make([]interface{}, 0, len(f.folderActions))
 		for _, action := range f.folderActions {
 			var hasWildcard bool
 			for _, scope := range f.user.Permissions[f.user.OrgID][action] {
