@@ -28,6 +28,8 @@ export { PanelRenderer, type PanelRendererProps } from './components/PanelRender
 export { PanelDataErrorView, type PanelDataErrorViewProps } from './components/PanelDataErrorView';
 export { toDataQueryError } from './utils/toDataQueryError';
 export { setQueryRunnerFactory, createQueryRunner, type QueryRunnerFactory } from './services/QueryRunner';
+export { PluginPage } from './components/PluginPage';
+export type { PluginPageType, PluginPageProps } from './components/PluginPage';
 export {
   DataSourcePicker,
   type DataSourcePickerProps,

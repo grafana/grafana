@@ -5,5 +5,5 @@
 # root_url = %(protocol)s://%(domain)s:10080/grafana/
 
   nginxproxy:
-    build: docker/blocks/nginx_proxy
+    build: docker/blocks/auth/nginx_proxy
     network_mode: host

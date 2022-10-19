@@ -1,6 +1,7 @@
-import { ComponentMeta } from '@storybook/react';
+import { action } from '@storybook/addon-actions';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import { merge } from 'lodash';
-import React, { CSSProperties, useState } from 'react';
+import React, { CSSProperties, useState, ReactNode } from 'react';
 import { useInterval } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -14,9 +15,22 @@ const meta: ComponentMeta<typeof PanelChrome> = {
   component: PanelChrome,
   decorators: [withCenteredStory],
   parameters: {
+    controls: {
+      exclude: ['children'],
+    },
     docs: {},
   },
 };
+
+function getContentStyle(theme: GrafanaTheme2): CSSProperties {
+  return {
+    background: theme.colors.background.secondary,
+    color: theme.colors.text.primary,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+}
 
 function renderPanel(name: string, overrides: Partial<PanelChromeProps>, theme: GrafanaTheme2) {
   const props: PanelChromeProps = {
@@ -28,12 +42,7 @@ function renderPanel(name: string, overrides: Partial<PanelChromeProps>, theme: 
 
   merge(props, overrides);
 
-  const contentStyle: CSSProperties = {
-    background: theme.colors.background.secondary,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  };
+  const contentStyle = getContentStyle(theme);
 
   return (
     <PanelChrome {...props}>
@@ -103,6 +112,52 @@ export const Examples = () => {
       </HorizontalGroup>
     </div>
   );
+};
+
+export const Basic: ComponentStory<typeof PanelChrome> = (args: PanelChromeProps) => {
+  const theme = useTheme2();
+  const contentStyle = getContentStyle(theme);
+
+  return (
+    <PanelChrome {...args}>
+      {(width: number, height: number) => <div style={{ height, width, ...contentStyle }}>Description text</div>}
+    </PanelChrome>
+  );
+};
+
+const Default: ReactNode = [];
+const LoadingIcon = [
+  <PanelChrome.LoadingIndicator key="loadingIndicator" loading onCancel={action('LoadingIndicator: onCancel fired')} />,
+];
+const ErrorIcon = [
+  <PanelChrome.ErrorIndicator
+    key="errorIndicator"
+    error="Error text"
+    onClick={action('ErrorIndicator: onClick fired')}
+  />,
+];
+
+const leftItems = { LoadingIcon, ErrorIcon, Default };
+
+Basic.argTypes = {
+  leftItems: {
+    options: Object.keys(leftItems),
+    mapping: leftItems,
+    control: {
+      type: 'select',
+      labels: {
+        LoadingIcon: 'With loading icon',
+        ErrorIcon: 'With error icon',
+        Default: 'Default (no elements)',
+      },
+    },
+  },
+};
+
+Basic.args = {
+  width: 400,
+  height: 200,
+  title: 'Title text',
 };
 
 export default meta;

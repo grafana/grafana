@@ -13,7 +13,7 @@ export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '
 
 export interface Props {
   intervals?: string[];
-  onRefresh?: () => any;
+  onRefresh?: () => void;
   onIntervalChanged: (interval: string) => void;
   value?: string;
   tooltip?: string;
@@ -23,6 +23,7 @@ export interface Props {
   noIntervalPicker?: boolean;
   width?: string;
   primary?: boolean;
+  isOnCanvas?: boolean;
   // These props are used to translate the component
   offOptionLabelMsg?: string;
   offOptionAriaLabelMsg?: string;
@@ -49,8 +50,7 @@ export class RefreshPicker extends PureComponent<Props> {
 
   onChangeSelect = (item: SelectableValue<string>) => {
     const { onIntervalChanged } = this.props;
-    if (onIntervalChanged) {
-      // @ts-ignore
+    if (onIntervalChanged && item.value != null) {
       onIntervalChanged(item.value);
     }
   };
@@ -59,13 +59,16 @@ export class RefreshPicker extends PureComponent<Props> {
     if (this.props.isLive) {
       return 'primary';
     }
+
     if (this.props.isLoading) {
       return 'destructive';
     }
+
     if (this.props.primary) {
       return 'primary';
     }
-    return 'default';
+
+    return this.props.isOnCanvas ? 'canvas' : 'default';
   }
 
   render() {
@@ -123,8 +126,9 @@ export class RefreshPicker extends PureComponent<Props> {
           <ButtonSelect
             value={selectedValue}
             options={options}
-            onChange={this.onChangeSelect as any}
+            onChange={this.onChangeSelect}
             variant={variant}
+            title="Set auto refresh interval"
             data-testid={selectors.components.RefreshPicker.intervalButtonV2}
             aria-label={ariaLabel}
           />

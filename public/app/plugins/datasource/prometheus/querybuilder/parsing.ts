@@ -29,7 +29,7 @@ import {
 
 import { binaryScalarOperatorToOperatorName } from './binaryScalarOperations';
 import {
-  ErrorName,
+  ErrorId,
   getAllByType,
   getLeftMostChild,
   getString,
@@ -95,9 +95,6 @@ interface Context {
   errors: ParsingError[];
 }
 
-// Although 0 isn't explicitly provided in the lezer-promql library as the error node ID, it does appear to be the ID of error nodes within lezer.
-const ErrorId = 0;
-
 /**
  * Handler for default state. It will traverse the tree and call the appropriate handler for each node. The node
  * handled here does not necessarily need to be of type == Expr.
@@ -118,7 +115,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     case LabelMatcher: {
       // Same as MetricIdentifier should be just one per query.
       visQuery.labels.push(getLabel(expr, node));
-      const err = node.getChild(ErrorName);
+      const err = node.getChild(ErrorId);
       if (err) {
         context.errors.push(makeError(expr, err));
       }

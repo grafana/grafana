@@ -25,7 +25,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   topSpacing?: number;
 }
 
-export function getIconFromSeverity(severity: AlertVariant): string {
+export function getIconFromSeverity(severity: AlertVariant): IconName {
   switch (severity) {
     case 'error':
     case 'warning':
@@ -34,8 +34,6 @@ export function getIconFromSeverity(severity: AlertVariant): string {
       return 'info-circle';
     case 'success':
       return 'check';
-    default:
-      return '';
   }
 }
 
@@ -69,20 +67,23 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
         {...restProps}
       >
         <div className={styles.icon}>
-          <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
+          <Icon size="xl" name={getIconFromSeverity(severity)} />
         </div>
+
         <div className={styles.body}>
           <div id={titleId} className={styles.title}>
             {title}
           </div>
           {children && <div className={styles.content}>{children}</div>}
         </div>
+
         {/* If onRemove is specified, giving preference to onRemove */}
         {onRemove && !buttonContent && (
           <div className={styles.close}>
             <IconButton aria-label="Close alert" name="times" onClick={onRemove} size="lg" type="button" />
           </div>
         )}
+
         {onRemove && buttonContent && (
           <div className={styles.buttonWrapper}>
             <Button aria-label="Close alert" variant="secondary" onClick={onRemove} type="button">

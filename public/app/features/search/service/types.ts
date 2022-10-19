@@ -15,7 +15,6 @@ export interface SearchQuery {
   kind?: string[];
   panel_type?: string;
   uid?: string[];
-  id?: number[];
   facet?: FacetField[];
   explain?: boolean;
   withAllowedActions?: boolean;
@@ -72,4 +71,8 @@ export interface GrafanaSearcher {
   starred: (query: SearchQuery) => Promise<QueryResponse>;
   tags: (query: SearchQuery) => Promise<TermCount[]>;
   getSortOptions: () => Promise<SelectableValue[]>;
+  sortPlaceholder?: string;
+
+  /** Gets the default sort used for the Folder view */
+  getFolderViewSort: () => string;
 }

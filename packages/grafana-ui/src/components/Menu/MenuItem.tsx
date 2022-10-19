@@ -30,7 +30,7 @@ export interface MenuItemProps<T = any> {
   /** Url of the menu item */
   url?: string;
   /** Handler for the click behaviour */
-  onClick?: (event?: React.SyntheticEvent<HTMLElement>, payload?: T) => void;
+  onClick?: (event?: React.MouseEvent<HTMLElement>, payload?: T) => void;
   /** Custom MenuItem styles*/
   className?: string;
   /** Active */
@@ -115,17 +115,7 @@ export const MenuItem = React.memo(
         className={itemStyle}
         rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         href={url}
-        onClick={
-          onClick
-            ? (event) => {
-                if (!(event.ctrlKey || event.metaKey || event.shiftKey) && onClick) {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onClick(event);
-                }
-              }
-            : undefined
-        }
+        onClick={onClick}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onKeyDown={handleKeys}
@@ -136,8 +126,11 @@ export const MenuItem = React.memo(
         aria-checked={ariaChecked}
         tabIndex={tabIndex}
       >
-        {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
-        {label}
+        <>
+          {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
+          {label}
+        </>
+
         {hasSubMenu && (
           <SubMenu
             items={childItems}

@@ -12,6 +12,11 @@ import { UserState } from '../profile/state/reducers';
 import { QueryRows } from './QueryRows';
 import { makeExplorePaneState } from './state/utils';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: () => null,
+}));
+
 function setup(queries: DataQuery[]) {
   const defaultDs = {
     name: 'newDs',
@@ -52,6 +57,7 @@ function setup(queries: DataQuery[]) {
       queries,
     },
     syncedTimes: false,
+    correlations: [],
     right: undefined,
     richHistoryStorageFull: false,
     richHistoryLimitExceededWarningShown: false,

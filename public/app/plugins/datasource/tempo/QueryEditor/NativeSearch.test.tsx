@@ -2,7 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { TempoDatasource, TempoQuery } from '../datasource';
+import { TempoDatasource } from '../datasource';
+import { TempoQuery } from '../types';
 
 import NativeSearch from './NativeSearch';
 

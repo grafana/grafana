@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 	"time"
 
@@ -26,9 +27,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 )
 
 type datasourceInfo struct {
@@ -80,12 +81,10 @@ const (
 	timeSeriesQuery = "timeSeriesQuery"
 )
 
-var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
-var baseLimit = int64(1)
 
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, features featuremgmt.FeatureToggles) *CloudWatchService {
-	plog.Debug("initing")
+	cwlog.Debug("initing")
 
 	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache(), features)
 
@@ -160,9 +159,9 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			at = awsds.AuthTypeEC2IAMRole
 		case "arn":
 			at = awsds.AuthTypeDefault
-			plog.Warn("Authentication type \"arn\" is deprecated, falling back to default")
+			cwlog.Warn("Authentication type \"arn\" is deprecated, falling back to default")
 		default:
-			plog.Warn("Unrecognized AWS authentication type", "type", jsonData.AuthType)
+			cwlog.Warn("Unrecognized AWS authentication type", "type", jsonData.AuthType)
 		}
 
 		model.authType = at
@@ -203,17 +202,12 @@ func (e *cloudWatchExecutor) checkHealthMetrics(pluginCtx backend.PluginContext)
 	return err
 }
 
-func (e *cloudWatchExecutor) checkHealthLogs(ctx context.Context, pluginCtx backend.PluginContext) error {
-	logsClient, err := e.getCWLogsClient(pluginCtx, defaultRegion)
-	if err != nil {
-		return err
+func (e *cloudWatchExecutor) checkHealthLogs(pluginCtx backend.PluginContext) error {
+	parameters := url.Values{
+		"limit": []string{"1"},
 	}
 
-	parameters := LogQueryJson{
-		Limit: &baseLimit,
-	}
-
-	_, err = e.handleDescribeLogGroups(ctx, logsClient, parameters)
+	_, err := e.handleGetLogGroups(pluginCtx, parameters)
 	return err
 }
 
@@ -228,7 +222,7 @@ func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.Check
 		metricsTest = fmt.Sprintf("CloudWatch metrics query failed: %s", err.Error())
 	}
 
-	err = e.checkHealthLogs(ctx, req.PluginContext)
+	err = e.checkHealthLogs(req.PluginContext)
 	if err != nil {
 		status = backend.HealthStatusError
 		logsTest = fmt.Sprintf("CloudWatch logs query failed: %s", err.Error())

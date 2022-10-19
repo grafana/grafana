@@ -6,16 +6,16 @@ export interface Props {
   label: string;
   removeIcon: boolean;
   count: number;
-  onClick?: any;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
 }
 
-export class TagBadge extends React.Component<Props, any> {
+export class TagBadge extends React.Component<Props> {
   constructor(props: Props) {
     super(props);
   }
 
   render() {
-    const { label, removeIcon, count } = this.props;
+    const { label, removeIcon, count, onClick } = this.props;
     const { color } = getTagColorsFromName(label);
 
     const tagStyle = {
@@ -26,7 +26,7 @@ export class TagBadge extends React.Component<Props, any> {
 
     return (
       <span className={`label label-tag`} style={tagStyle}>
-        {removeIcon && <Icon name="times" />}
+        {removeIcon && <Icon onClick={onClick} name="times" />}
         {label} {countLabel}
       </span>
     );

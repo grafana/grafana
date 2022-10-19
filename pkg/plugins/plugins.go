@@ -81,6 +81,10 @@ func (p PluginDTO) IsCorePlugin() bool {
 	return p.Class == Core
 }
 
+func (p PluginDTO) IsExternalPlugin() bool {
+	return p.Class == External
+}
+
 func (p PluginDTO) IsSecretsManager() bool {
 	return p.JSONData.Type == SecretsManager
 }
@@ -206,7 +210,6 @@ func (p *Plugin) Start(ctx context.Context) error {
 	if p.client == nil {
 		return fmt.Errorf("could not start plugin %s as no plugin client exists", p.ID)
 	}
-
 	return p.client.Start(ctx)
 }
 

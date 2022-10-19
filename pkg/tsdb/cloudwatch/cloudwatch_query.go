@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 )
 
 type cloudWatchQuery struct {
@@ -41,7 +43,7 @@ func (q *cloudWatchQuery) getGMDAPIMode() gmdApiMode {
 		return GMDApiModeSQLExpression
 	}
 
-	plog.Warn("Could not resolve CloudWatch metric query type. Falling back to metric stat.", "query", q)
+	cwlog.Warn("Could not resolve CloudWatch metric query type. Falling back to metric stat.", "query", q)
 	return GMDApiModeMetricStat
 }
 

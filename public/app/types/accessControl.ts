@@ -76,6 +76,7 @@ export enum AccessControlAction {
   DashboardsCreate = 'dashboards:create',
   DashboardsPermissionsRead = 'dashboards.permissions:read',
   DashboardsPermissionsWrite = 'dashboards.permissions:write',
+  DashboardsPublicWrite = 'dashboards.public:write',
 
   FoldersRead = 'folders:read',
   FoldersWrite = 'folders:write',
@@ -114,6 +115,9 @@ export enum AccessControlAction {
   ActionAPIKeysRead = 'apikeys:read',
   ActionAPIKeysCreate = 'apikeys:create',
   ActionAPIKeysDelete = 'apikeys:delete',
+
+  PluginsInstall = 'plugins:install',
+  PluginsWrite = 'plugins:write',
 }
 
 export interface Role {

@@ -38,7 +38,7 @@ func TestMigrate(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		migService := SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore, false)
-		ds := dsservice.CreateStore(sqlStore)
+		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger())
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
 		err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
@@ -102,7 +102,7 @@ func TestMigrate(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		migService := SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore, true)
-		ds := dsservice.CreateStore(sqlStore)
+		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger())
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
 
@@ -169,7 +169,7 @@ func TestMigrate(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		migService := SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore, false)
-		ds := dsservice.CreateStore(sqlStore)
+		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger())
 
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
@@ -260,7 +260,7 @@ func TestMigrate(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		migService := SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore, true)
-		ds := dsservice.CreateStore(sqlStore)
+		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger())
 
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)

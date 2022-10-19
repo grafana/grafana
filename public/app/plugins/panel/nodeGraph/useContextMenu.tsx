@@ -27,7 +27,7 @@ export function useContextMenu(
   const [menu, setMenu] = useState<JSX.Element | undefined>(undefined);
 
   const onNodeOpen = useCallback(
-    (event, node) => {
+    (event: MouseEvent<SVGElement>, node: NodeDatum) => {
       const extraNodeItem = config.gridLayout
         ? [
             {
@@ -57,7 +57,7 @@ export function useContextMenu(
   );
 
   const onEdgeOpen = useCallback(
-    (event, edge) => {
+    (event: MouseEvent<SVGElement>, edge: EdgeDatum) => {
       const renderer = getItemsRenderer(getLinks(edges, edge.dataFrameRowIndex), edge);
 
       if (renderer) {
@@ -109,7 +109,17 @@ function mapMenuItem<T extends NodeDatum | EdgeDatum>(item: T) {
         url={link.url}
         label={link.label}
         ariaLabel={link.ariaLabel}
-        onClick={link.onClick ? () => link.onClick?.(item) : undefined}
+        onClick={
+          link.onClick
+            ? (event) => {
+                if (!(event?.ctrlKey || event?.metaKey || event?.shiftKey)) {
+                  event?.preventDefault();
+                  event?.stopPropagation();
+                  link.onClick?.(item);
+                }
+              }
+            : undefined
+        }
         target={'_self'}
       />
     );

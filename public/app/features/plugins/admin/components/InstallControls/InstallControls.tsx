@@ -4,6 +4,8 @@ import React from 'react';
 import { GrafanaTheme2, PluginType } from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
 import { HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
 
 import { getExternalManageLink, isInstallControlsEnabled } from '../../helpers';
 import { isGrafanaAdmin } from '../../permissions';
@@ -21,7 +23,7 @@ interface Props {
 export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
   const styles = useStyles2(getStyles);
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
-  const hasPermission = isGrafanaAdmin();
+  const hasPermission = contextSrv.hasAccess(AccessControlAction.PluginsInstall, isGrafanaAdmin());
   const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
   const isCompatible = Boolean(latestCompatibleVersion);
   const isInstallControlsDisabled = plugin.isCore || plugin.isDisabled || !isInstallControlsEnabled();

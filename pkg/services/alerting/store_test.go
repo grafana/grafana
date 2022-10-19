@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -46,12 +47,15 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 	var items []*models.Alert
 
 	setup := func(t *testing.T) {
+		ss := sqlstore.InitTestDB(t)
+		tagService := tagimpl.ProvideService(ss, ss.Cfg)
 		cfg := setting.NewCfg()
 		cfg.RBACEnabled = false
 		store = &sqlStore{
-			db:  sqlstore.InitTestDB(t),
-			log: log.New(),
-			cfg: cfg,
+			db:         ss,
+			log:        log.New(),
+			cfg:        cfg,
+			tagService: tagService,
 		}
 
 		testDash = insertTestDashboard(t, store.db, "dashboard with alerts", 1, 0, false, "alert")
@@ -285,7 +289,8 @@ func TestIntegrationPausingAlerts(t *testing.T) {
 	defer resetTimeNow()
 
 	t.Run("Given an alert", func(t *testing.T) {
-		sqlStore := sqlStore{db: sqlstore.InitTestDB(t), log: log.New()}
+		ss := sqlstore.InitTestDB(t)
+		sqlStore := sqlStore{db: ss, log: log.New(), tagService: tagimpl.ProvideService(ss, ss.Cfg)}
 
 		testDash := insertTestDashboard(t, sqlStore.db, "dashboard with alerts", 1, 0, false, "alert")
 		alert, err := insertTestAlert("Alerting title", "Alerting message", testDash.OrgId, testDash.Id, simplejson.New(), sqlStore)

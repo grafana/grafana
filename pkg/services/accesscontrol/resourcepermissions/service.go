@@ -9,7 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -49,7 +50,8 @@ type Store interface {
 
 func New(
 	options Options, cfg *setting.Cfg, router routing.RouteRegister, license models.Licensing,
-	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore *sqlstore.SQLStore,
+	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
+	teamService team.Service, userService user.Service,
 ) (*Service, error) {
 	var permissions []string
 	actionSet := make(map[string]struct{})
@@ -80,6 +82,8 @@ func New(
 		actions:     actions,
 		sqlStore:    sqlStore,
 		service:     service,
+		teamService: teamService,
+		userService: userService,
 	}
 
 	s.api = newApi(ac, router, s)
@@ -105,7 +109,9 @@ type Service struct {
 	options     Options
 	permissions []string
 	actions     []string
-	sqlStore    *sqlstore.SQLStore
+	sqlStore    db.DB
+	teamService team.Service
+	userService user.Service
 }
 
 func (s *Service) GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
@@ -282,10 +288,8 @@ func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
 		return ErrInvalidAssignment
 	}
 
-	if err := s.sqlStore.GetSignedInUser(ctx, &models.GetSignedInUserQuery{OrgId: orgID, UserId: userID}); err != nil {
-		return err
-	}
-	return nil
+	_, err := s.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{OrgID: orgID, UserID: userID})
+	return err
 }
 
 func (s *Service) validateTeam(ctx context.Context, orgID, teamID int64) error {
@@ -293,7 +297,7 @@ func (s *Service) validateTeam(ctx context.Context, orgID, teamID int64) error {
 		return ErrInvalidAssignment
 	}
 
-	if err := s.sqlStore.GetTeamById(ctx, &models.GetTeamByIdQuery{OrgId: orgID, Id: teamID}); err != nil {
+	if err := s.teamService.GetTeamById(ctx, &models.GetTeamByIdQuery{OrgId: orgID, Id: teamID}); err != nil {
 		return err
 	}
 	return nil

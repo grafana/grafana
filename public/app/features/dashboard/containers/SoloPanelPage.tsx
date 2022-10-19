@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
+import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { StoreState } from 'app/types';
@@ -34,6 +35,9 @@ export interface State {
 }
 
 export class SoloPanelPage extends Component<Props, State> {
+  declare context: GrafanaContextType;
+  static contextType = GrafanaContext;
+
   state: State = {
     panel: null,
     notFound: false,
@@ -48,6 +52,7 @@ export class SoloPanelPage extends Component<Props, State> {
       urlType: match.params.type,
       routeName: route.routeName,
       fixUrl: false,
+      keybindingSrv: this.context.keybindings,
     });
   }
 

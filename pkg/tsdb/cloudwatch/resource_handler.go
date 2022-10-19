@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 )
 
 func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
@@ -21,6 +22,8 @@ func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/ebs-volume-ids", handleResourceReq(e.handleGetEbsVolumeIds))
 	mux.HandleFunc("/ec2-instance-attribute", handleResourceReq(e.handleGetEc2InstanceAttribute))
 	mux.HandleFunc("/resource-arns", handleResourceReq(e.handleGetResourceArns))
+	mux.HandleFunc("/log-groups", handleResourceReq(e.handleGetLogGroups))
+	mux.HandleFunc("/all-log-groups", handleResourceReq(e.handleGetAllLogGroups))
 	return mux
 }
 
@@ -45,7 +48,7 @@ func handleResourceReq(handleFunc handleFn) func(rw http.ResponseWriter, req *ht
 		rw.WriteHeader(http.StatusOK)
 		_, err = rw.Write(body)
 		if err != nil {
-			plog.Error("Unable to write HTTP response", "error", err)
+			cwlog.Error("Unable to write HTTP response", "error", err)
 		}
 	}
 }
@@ -54,6 +57,6 @@ func writeResponse(rw http.ResponseWriter, code int, msg string) {
 	rw.WriteHeader(code)
 	_, err := rw.Write([]byte(msg))
 	if err != nil {
-		plog.Error("Unable to write HTTP response", "error", err)
+		cwlog.Error("Unable to write HTTP response", "error", err)
 	}
 }

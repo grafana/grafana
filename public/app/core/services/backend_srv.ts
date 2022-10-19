@@ -18,6 +18,7 @@ import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, Fe
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { loadUrlToken } from 'app/core/utils/urlToken';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { getGrafanaStorage } from 'app/features/storage/storage';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
@@ -407,24 +408,29 @@ export class BackendSrv implements BackendService {
     return this.inspectorStream;
   }
 
-  async get<T = any>(url: string, params?: any, requestId?: string): Promise<T> {
-    return await this.request({ method: 'GET', url, params, requestId });
+  async get<T = any>(
+    url: string,
+    params?: BackendSrvRequest['params'],
+    requestId?: BackendSrvRequest['requestId'],
+    options?: Partial<BackendSrvRequest>
+  ) {
+    return this.request<T>({ ...options, method: 'GET', url, params, requestId });
   }
 
-  async delete<T = any>(url: string, data?: any): Promise<T> {
-    return await this.request({ method: 'DELETE', url, data });
+  async delete<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'DELETE', url, data });
   }
 
-  async post<T = any>(url: string, data?: any): Promise<T> {
-    return await this.request({ method: 'POST', url, data });
+  async post<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'POST', url, data });
   }
 
-  async patch<T = any>(url: string, data: any): Promise<T> {
-    return await this.request({ method: 'PATCH', url, data });
+  async patch<T = any>(url: string, data: any, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'PATCH', url, data });
   }
 
-  async put<T = any>(url: string, data: any): Promise<T> {
-    return await this.request({ method: 'PUT', url, data });
+  async put<T = any>(url: string, data: any, options?: Partial<BackendSrvRequest>): Promise<T> {
+    return this.request<T>({ ...options, method: 'PUT', url, data });
   }
 
   withNoBackendCache(callback: any) {
@@ -450,6 +456,19 @@ export class BackendSrv implements BackendService {
     return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
   }
 
+  validateDashboard(dashboard: DashboardModel) {
+    // We want to send the dashboard as a JSON string (in the JSON body payload) so we can get accurate error line numbers back
+    const dashboardJson = JSON.stringify(dashboard, replaceJsonNulls, 2);
+
+    return this.request<ValidateDashboardResponse>({
+      method: 'POST',
+      url: `/api/dashboards/validate`,
+      data: { dashboard: dashboardJson },
+      showSuccessAlert: false,
+      showErrorAlert: false,
+    });
+  }
+
   getPublicDashboardByUid(uid: string) {
     return this.get<DashboardDTO>(`/api/public/dashboards/${uid}`);
   }
@@ -467,3 +486,15 @@ export class BackendSrv implements BackendService {
 // Used for testing and things that really need BackendSrv
 export const backendSrv = new BackendSrv();
 export const getBackendSrv = (): BackendSrv => backendSrv;
+
+interface ValidateDashboardResponse {
+  isValid: boolean;
+  message?: string;
+}
+
+function replaceJsonNulls<T extends unknown>(key: string, value: T): T | undefined {
+  if (typeof value === 'number' && !Number.isFinite(value)) {
+    return undefined;
+  }
+  return value;
+}

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -33,20 +34,22 @@ type AlertStore interface {
 }
 
 type sqlStore struct {
-	db    db.DB
-	cache *localcache.CacheService
-	log   *log.ConcreteLogger
-	cfg   *setting.Cfg
+	db         db.DB
+	cache      *localcache.CacheService
+	log        *log.ConcreteLogger
+	cfg        *setting.Cfg
+	tagService tag.Service
 }
 
 func ProvideAlertStore(
 	db db.DB,
-	cacheService *localcache.CacheService, cfg *setting.Cfg) AlertStore {
+	cacheService *localcache.CacheService, cfg *setting.Cfg, tagService tag.Service) AlertStore {
 	return &sqlStore{
-		db:    db,
-		cache: cacheService,
-		log:   log.New("alerting.store"),
-		cfg:   cfg,
+		db:         db,
+		cache:      cacheService,
+		log:        log.New("alerting.store"),
+		cfg:        cfg,
+		tagService: tagService,
 	}
 }
 
@@ -188,7 +191,7 @@ func (ss *sqlStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*mode
 			return err
 		}
 
-		if err := updateAlerts(existingAlerts, alerts, sess, ss.log); err != nil {
+		if err := ss.UpdateAlerts(ctx, existingAlerts, alerts, sess, ss.log); err != nil {
 			return err
 		}
 
@@ -200,7 +203,7 @@ func (ss *sqlStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*mode
 	})
 }
 
-func updateAlerts(existingAlerts []*models.Alert, alerts []*models.Alert, sess *sqlstore.DBSession, log *log.ConcreteLogger) error {
+func (ss *sqlStore) UpdateAlerts(ctx context.Context, existingAlerts []*models.Alert, alerts []*models.Alert, sess *sqlstore.DBSession, log *log.ConcreteLogger) error {
 	for _, alert := range alerts {
 		update := false
 		var alertToUpdate *models.Alert
@@ -245,7 +248,7 @@ func updateAlerts(existingAlerts []*models.Alert, alerts []*models.Alert, sess *
 			return err
 		}
 		if tags != nil {
-			tags, err := sqlstore.EnsureTagsExist(sess, tags)
+			tags, err := ss.tagService.EnsureTagsExist(ctx, tags)
 			if err != nil {
 				return err
 			}

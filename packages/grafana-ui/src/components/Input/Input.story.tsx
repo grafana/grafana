@@ -2,12 +2,13 @@ import { Story, Meta } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { KeyValue } from '@grafana/data';
-import { Field, Icon, Button, Input } from '@grafana/ui';
+import { Field, Button, Input } from '@grafana/ui';
 
-import { getAvailableIcons, IconName } from '../../types';
+import { getAvailableIcons } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Input.mdx';
+import { parseAccessory } from './storyUtils';
 
 const prefixSuffixOpts = {
   None: null,
@@ -67,24 +68,16 @@ const meta: Meta = {
 export const Simple: Story = (args) => {
   const addonAfter = <Button variant="secondary">Load</Button>;
   const addonBefore = <div style={{ display: 'flex', alignItems: 'center', padding: '5px' }}>Input</div>;
-  const prefix = args.prefixVisible;
-  const suffix = args.suffixVisible;
-  let prefixEl = prefix;
-  if (prefix && prefix.match(/icon-/g)) {
-    prefixEl = <Icon name={prefix.replace(/icon-/g, '') as IconName} />;
-  }
-  let suffixEl = suffix;
-  if (suffix && suffix.match(/icon-/g)) {
-    suffixEl = <Icon name={suffix.replace(/icon-/g, '') as IconName} />;
-  }
+  const prefix = parseAccessory(args.prefixVisible);
+  const suffix = parseAccessory(args.suffixVisible);
 
   return (
     <Input
       disabled={args.disabled}
       width={args.width}
-      prefix={prefixEl}
+      prefix={prefix}
       invalid={args.invalid}
-      suffix={suffixEl}
+      suffix={suffix}
       loading={args.loading}
       addonBefore={args.before && addonBefore}
       addonAfter={args.after && addonAfter}

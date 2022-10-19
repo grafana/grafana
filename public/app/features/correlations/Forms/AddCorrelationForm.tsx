@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
-import { Controller } from 'react-hook-form';
+import React, { useEffect } from 'react';
+import { Controller, FormProvider, useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
@@ -12,7 +12,6 @@ import { useCorrelations } from '../useCorrelations';
 
 import { CorrelationDetailsFormPart } from './CorrelationDetailsFormPart';
 import { FormDTO } from './types';
-import { useCorrelationForm } from './useCorrelationForm';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   panelContainer: css`
@@ -47,77 +46,85 @@ const withDsUID = (fn: Function) => (ds: DataSourceInstanceSettings) => fn(ds.ui
 export const AddCorrelationForm = ({ onClose, onCreated }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const { create } = useCorrelations();
+  const {
+    create: { execute, loading, error, value },
+  } = useCorrelations();
 
-  const onSubmit = useCallback(
-    async (correlation) => {
-      await create.execute(correlation);
+  useEffect(() => {
+    if (!error && !loading && value) {
       onCreated();
-    },
-    [create, onCreated]
-  );
+    }
+  }, [error, loading, value, onCreated]);
 
-  const { control, handleSubmit, register, errors } = useCorrelationForm<FormDTO>({ onSubmit });
+  const methods = useForm<FormDTO>({ defaultValues: { config: { type: 'query', target: {} } } });
 
   return (
     <PanelContainer className={styles.panelContainer}>
       <CloseButton onClick={onClose} />
-      <form onSubmit={handleSubmit}>
-        <div className={styles.horizontalGroup}>
-          <Controller
-            control={control}
-            name="sourceUID"
-            rules={{
-              required: { value: true, message: 'This field is required.' },
-              validate: {
-                writable: (uid: string) =>
-                  !getDatasourceSrv().getInstanceSettings(uid)?.readOnly || "Source can't be a read-only data source.",
-              },
-            }}
-            render={({ field: { onChange, value } }) => (
-              <Field label="Source" htmlFor="source" invalid={!!errors.sourceUID} error={errors.sourceUID?.message}>
-                <DataSourcePicker
-                  onChange={withDsUID(onChange)}
-                  noDefault
-                  current={value}
-                  inputId="source"
-                  width={32}
-                />
-              </Field>
-            )}
-          />
-          <div className={styles.linksToContainer}>Links to</div>
-          <Controller
-            control={control}
-            name="targetUID"
-            rules={{ required: { value: true, message: 'This field is required.' } }}
-            render={({ field: { onChange, value } }) => (
-              <Field label="Target" htmlFor="target" invalid={!!errors.targetUID} error={errors.targetUID?.message}>
-                <DataSourcePicker
-                  onChange={withDsUID(onChange)}
-                  noDefault
-                  current={value}
-                  inputId="target"
-                  width={32}
-                />
-              </Field>
-            )}
-          />
-        </div>
+      <FormProvider {...methods}>
+        <form onSubmit={methods.handleSubmit(execute)}>
+          <div className={styles.horizontalGroup}>
+            <Controller
+              control={methods.control}
+              name="sourceUID"
+              rules={{
+                required: { value: true, message: 'This field is required.' },
+                validate: {
+                  writable: (uid: string) =>
+                    !getDatasourceSrv().getInstanceSettings(uid)?.readOnly ||
+                    "Source can't be a read-only data source.",
+                },
+              }}
+              render={({ field: { onChange, value } }) => (
+                <Field
+                  label="Source"
+                  htmlFor="source"
+                  invalid={!!methods.formState.errors.sourceUID}
+                  error={methods.formState.errors.sourceUID?.message}
+                >
+                  <DataSourcePicker
+                    onChange={withDsUID(onChange)}
+                    noDefault
+                    current={value}
+                    inputId="source"
+                    width={32}
+                  />
+                </Field>
+              )}
+            />
+            <div className={styles.linksToContainer}>Links to</div>
+            <Controller
+              control={methods.control}
+              name="targetUID"
+              rules={{ required: { value: true, message: 'This field is required.' } }}
+              render={({ field: { onChange, value } }) => (
+                <Field
+                  label="Target"
+                  htmlFor="target"
+                  invalid={!!methods.formState.errors.targetUID}
+                  error={methods.formState.errors.targetUID?.message}
+                >
+                  <DataSourcePicker
+                    onChange={withDsUID(onChange)}
+                    noDefault
+                    current={value}
+                    inputId="target"
+                    width={32}
+                  />
+                </Field>
+              )}
+            />
+          </div>
 
-        <CorrelationDetailsFormPart register={register} />
+          <CorrelationDetailsFormPart />
 
-        <HorizontalGroup justify="flex-end">
-          <Button
-            variant="primary"
-            icon={create.loading ? 'fa fa-spinner' : 'plus'}
-            type="submit"
-            disabled={create.loading}
-          >
-            Add
-          </Button>
-        </HorizontalGroup>
-      </form>
+          <HorizontalGroup justify="flex-end">
+            <Button variant="primary" icon={loading ? 'fa fa-spinner' : 'plus'} type="submit" disabled={loading}>
+              Add
+            </Button>
+          </HorizontalGroup>
+        </form>
+      </FormProvider>
     </PanelContainer>
   );
 };

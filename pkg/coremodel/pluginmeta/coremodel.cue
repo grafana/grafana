@@ -142,7 +142,7 @@ seqs: [
 
 					// Required Grafana version for this plugin. Validated using
 					// https://github.com/npm/node-semver.
-					grafanaDependency: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*])?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]))?$"
+					grafanaDependency: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
 
 					// An array of required plugins on which this plugin depends.
 					plugins?: [...#Dependency]
@@ -220,7 +220,7 @@ seqs: [
 					updated?: =~"^(\\d{4}-\\d{2}-\\d{2}|\\%TODAY\\%)$"
 
 					// Project version of this commit, e.g. `6.7.x`.
-					version?: =~"^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*$|\\%VERSION\\%)"
+					version?: =~"^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)|(\\%VERSION\\%)$"
 				}
 
 				#BuildInfo: {
