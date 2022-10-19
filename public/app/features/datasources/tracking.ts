@@ -20,10 +20,10 @@ type DataSourceCreatedProps = {
   grafana_version?: string;
   /** The unique id of the newly created data source */
   datasource_uid: string;
-  /** The datasource type (e.g. Cloudwatch, Loki, Prometheus) */
-  datasource: string;
-  /** The datasource version (especially interesting in external plugins - core plugins are aligned with grafana version) */
-  datasource_version?: string;
+  /** The datasource id (e.g. Cloudwatch, Loki, Prometheus) */
+  plugin_id: string;
+  /** The plugin version (especially interesting in external plugins - core plugins are aligned with grafana version) */
+  plugin_version?: string;
 };
 
 /**
@@ -45,10 +45,10 @@ type DataSourceTestedProps = {
   grafana_version?: string;
   /** The unique id of the newly created data source */
   datasource_uid: string;
-  /** The datasource type (e.g. Cloudwatch, Loki, Prometheus) */
-  datasource: string;
-  /** The datasource version (especially interesting in external plugins - core plugins are aligned with grafana version) */
-  datasource_version?: string;
+  /** The datasource id (e.g. Cloudwatch, Loki, Prometheus) */
+  plugin_id: string;
+  /** The plugin version (especially interesting in external plugins - core plugins are aligned with grafana version) */
+  plugin_version?: string;
   /** Whether or not the datasource test succeeded = the datasource was successfully configured */
   success: boolean;
 };
