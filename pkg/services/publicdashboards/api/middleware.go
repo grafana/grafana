@@ -61,8 +61,8 @@ func RequiresExistingAccessToken(publicDashboardService publicdashboards.Service
 	}
 }
 
-// RequiredCorrectAccessToken Middleware to validate that the AccessToken has the correct format before continuing
-func RequiredCorrectAccessToken() func(c *models.ReqContext) {
+// RequiresCorrectAccessToken Middleware to validate that the AccessToken has the correct format before continuing
+func RequiresCorrectAccessToken() func(c *models.ReqContext) {
 	return func(c *models.ReqContext) {
 		accessToken, ok := web.Params(c.Req)[":accessToken"]
 

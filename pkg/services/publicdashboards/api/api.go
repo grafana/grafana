@@ -61,9 +61,9 @@ func (api *Api) RegisterAPIEndpoints() {
 	// circular dependency
 
 	// public endpoints
-	api.RouteRegister.Get("/api/public/dashboards/:accessToken", RequiredCorrectAccessToken(), routing.Wrap(api.GetPublicDashboard))
-	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", RequiredCorrectAccessToken(), routing.Wrap(api.QueryPublicDashboard))
-	api.RouteRegister.Get("/api/public/dashboards/:accessToken/annotations", RequiredCorrectAccessToken(), routing.Wrap(api.GetAnnotations))
+	api.RouteRegister.Get("/api/public/dashboards/:accessToken", RequiresCorrectAccessToken(), routing.Wrap(api.GetPublicDashboard))
+	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", RequiresCorrectAccessToken(), routing.Wrap(api.QueryPublicDashboard))
+	api.RouteRegister.Get("/api/public/dashboards/:accessToken/annotations", RequiresCorrectAccessToken(), routing.Wrap(api.GetAnnotations))
 
 	// List Public Dashboards
 	api.RouteRegister.Get("/api/dashboards/public", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
