@@ -2204,6 +2204,147 @@ export const tempoSearchResponse = {
   },
 };
 
+export const traceQlResponse = {
+  traces: [
+    {
+      traceID: '85ce043347f7b',
+      rootServiceName: 'lb',
+      rootTraceName: 'HTTP Client',
+      spanSet: {
+        spans: [
+          {
+            spanID: '789ad094677152a0',
+            startTimeUnixNano: '1666177842744472000',
+            attributes: [
+              {
+                key: 'http.method',
+                value: {
+                  stringValue: 'GET',
+                },
+              },
+              {
+                key: 'service.name',
+                value: {
+                  stringValue: 'db',
+                },
+              },
+            ],
+          },
+          {
+            spanID: '690a048831a78ded',
+            startTimeUnixNano: '1666177842741716000',
+            durationMs: 6,
+            attributes: [
+              {
+                key: 'http.method',
+                value: {
+                  stringValue: 'GET',
+                },
+              },
+              {
+                key: 'service.name',
+                value: {
+                  stringValue: 'app',
+                },
+              },
+            ],
+          },
+          {
+            spanID: '54ec0bf0b68a12c7',
+            startTimeUnixNano: '1666177842742138000',
+            durationMs: 5,
+            attributes: [
+              {
+                key: 'http.method',
+                value: {
+                  stringValue: 'GET',
+                },
+              },
+              {
+                key: 'service.name',
+                value: {
+                  stringValue: 'app',
+                },
+              },
+            ],
+          },
+        ],
+        matched: 4,
+      },
+    },
+    {
+      traceID: '63fef0f3acf70',
+      rootServiceName: 'lb',
+      rootTraceName: 'HTTP Client',
+      spanSet: {
+        spans: [
+          {
+            spanID: '4847d2ce4cf5fb75',
+            startTimeUnixNano: '1666176502778395000',
+            attributes: [
+              {
+                key: 'http.method',
+                value: {
+                  stringValue: 'GET',
+                },
+              },
+              {
+                key: 'service.name',
+                value: {
+                  stringValue: 'db',
+                },
+              },
+            ],
+          },
+          {
+            spanID: '28eaf7a7c4773d5d',
+            startTimeUnixNano: '1666176502776327000',
+            durationMs: 4,
+            attributes: [
+              {
+                key: 'http.method',
+                value: {
+                  stringValue: 'GET',
+                },
+              },
+              {
+                key: 'service.name',
+                value: {
+                  stringValue: 'app',
+                },
+              },
+            ],
+          },
+          {
+            spanID: '1862f64db7894c3d',
+            startTimeUnixNano: '1666176502776627000',
+            durationMs: 3,
+            attributes: [
+              {
+                key: 'http.method',
+                value: {
+                  stringValue: 'GET',
+                },
+              },
+              {
+                key: 'service.name',
+                value: {
+                  stringValue: 'app',
+                },
+              },
+            ],
+          },
+        ],
+        matched: 4,
+      },
+    },
+  ],
+  metrics: {
+    inspectedBlocks: 3,
+    totalBlockBytes: '33343091',
+  },
+};
+
 export const badOTLPResponse = {
   batches: [
     {
