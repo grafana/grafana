@@ -2528,6 +2528,39 @@
         "skipUrlSync": false,
         "sort": 0,
         "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
+        "definition": "resources\n| project tenantId",
+        "hide": 2,
+        "includeAll": false,
+        "label": "tenantId",
+        "multi": false,
+        "name": "tenant",
+        "options": [],
+        "query": {
+          "azureLogAnalytics": {
+            "query": "",
+            "resource": ""
+          },
+          "azureResourceGraph": {
+            "query": "Resources\r\n|project tenantId"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscriptions": [
+            "$sub"
+          ]
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 5,
+        "type": "query"
       }
     ]
   },
