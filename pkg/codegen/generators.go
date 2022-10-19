@@ -1,7 +1,5 @@
 package codegen
 
-import "github.com/grafana/grafana/pkg/framework/kind"
-
 // GenGoTypes generates Go types from the latest Thema schema in a
 // structured kind.
 //
@@ -45,6 +43,6 @@ func (gen *GenGoTypes) Name() string {
 	return "GenGoTypes"
 }
 
-func (gen *GenGoTypes) Generate(pk *kind.SomeDecl) (*GeneratedFile, error) {
+func (gen *GenGoTypes) Generate(decl *SomeDeclWithLineage) (*GeneratedFile, error) {
 	panic("TODO")
 }

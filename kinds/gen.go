@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/codegen"
@@ -42,28 +43,28 @@ func main() {
 
 	wd := codegen.NewWriteDiffer()
 	rt := cuectx.GrafanaThemaRuntime()
-	var all []*kind.SomeDecl
+	var all []*codegen.SomeDeclWithLineage
 
 	// structured kinds first
-	var skinds []*kind.Decl[kind.CoreStructuredMeta]
 	f := os.DirFS(filepath.Join(groot, "kind", "structured"))
 	ents := elsedie(fs.ReadDir(f, "."))("error reading structured fs root directory")
 	for _, ent := range ents {
 		rel := filepath.Join("kind", "structured", ent.Name())
 		sub := elsedie(fs.Sub(f, ent.Name()))(fmt.Sprintf("error creating subfs for path %s", rel))
-		pk, err := kind.LoadCoreKindFS[kind.CoreStructuredMeta](sub, rel, rt.Context())
+		decl, err := kind.LoadCoreKindFS[kind.CoreStructuredMeta](sub, rel, rt.Context())
 		if err != nil {
 			die(fmt.Errorf("core structured kind at %s is invalid: %w", rel, err))
 		}
-		if pk.Meta.Name != ent.Name() {
-			die(fmt.Errorf("%s: kind name (%s) must equal parent dir name (%s)", rel, pk.Meta.Name, ent.Name()))
+		if decl.Meta.Name != ent.Name() {
+			die(fmt.Errorf("%s: kind name (%s) must equal parent dir name (%s)", rel, decl.Meta.Name, ent.Name()))
 		}
-		skinds = append(skinds, pk)
-		all = append(all, pk.Some())
+
+		lindecl := codegen.WithLineage(decl.Some())
+		elsedie(lindecl.Lineage())(rel)
+		all = append(all, lindecl)
 	}
 
 	// now raw kinds
-	var rkinds []*kind.Decl[kind.RawMeta]
 	f = os.DirFS(filepath.Join(groot, "kind", "raw"))
 	ents = elsedie(fs.ReadDir(f, "."))("error reading raw fs root directory")
 	for _, ent := range ents {
@@ -76,26 +77,30 @@ func main() {
 		if pk.Meta.Name != ent.Name() {
 			die(fmt.Errorf("%s: kind name (%s) must equal parent dir name (%s)", rel, pk.Meta.Name, ent.Name()))
 		}
-		rkinds = append(rkinds, pk)
-		all = append(all, pk.Some())
+		all = append(all, codegen.WithLineage(pk.Some()))
 	}
+
+	// Sort em
+	sort.Slice(all, func(i, j int) bool {
+		return nameFor(all[i].Meta) < nameFor(all[j].Meta)
+	})
 
 	// Run all single generators
 	for _, gen := range singles {
-		for _, pk := range all {
-			gf, err := gen.Generate(pk)
+		for _, decl := range all {
+			gf, err := gen.Generate(decl)
 			if err != nil {
-				die(fmt.Errorf("%s: %w"), err)
+				die(fmt.Errorf("%s: %w", err))
 			}
 			wd[filepath.Join(groot, gf.RelativePath)] = gf.Data
 		}
 	}
 
 	// Run all multi generators
-	for _, gen := range multi {
+	for _, gen := range multis {
 		gf, err := gen.Generate(all)
 		if err != nil {
-			die(fmt.Errorf("%s: %w"), err)
+			die(fmt.Errorf("%s: %w", err))
 		}
 		wd[filepath.Join(groot, gf.RelativePath)] = gf.Data
 	}
@@ -110,6 +115,22 @@ func main() {
 		if err != nil {
 			die(fmt.Errorf("error while writing generated code to disk:\n%s\n", err))
 		}
+	}
+}
+
+func nameFor(m kind.SomeKindMeta) string {
+	switch x := m.(type) {
+	case kind.RawMeta:
+		return x.Name
+	case kind.CoreStructuredMeta:
+		return x.Name
+	case kind.CustomStructuredMeta:
+		return x.Name
+	case kind.SlotImplMeta:
+		return x.Name
+	default:
+		// unreachable so long as all the possibilities in KindMetas have switch branches
+		panic("unreachable")
 	}
 }
 
