@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -92,7 +91,6 @@ func (s *AuthService) Verify(ctx context.Context, strToken string) (models.JWTCl
 		return nil, err
 	}
 
-	fmt.Println("token", token.Headers)
 	keys, err := s.getKeys(ctx, token.Headers[0].KeyID)
 	if err != nil {
 		return nil, err

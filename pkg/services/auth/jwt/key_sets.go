@@ -233,7 +233,6 @@ func (s *AuthService) initKeySetForGeneration(ctx context.Context) error {
 		return err
 	}
 	pubKey := privKey.Public()
-	fmt.Println("pubKey", pubKey.KeyID, "privKey", privKey.KeyID)
 	pubKey.KeyID = privKey.KeyID
 	set.Keys = append(set.Keys, pubKey)
 	s.keySets = append(s.keySets, keySetJWKS{
