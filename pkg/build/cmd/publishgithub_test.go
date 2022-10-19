@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -22,7 +22,121 @@ func mockGithubRepositoryClient(context.Context, string) githubRepositoryService
 
 func TestPublishGitHub(t *testing.T) {
 	t.Setenv("DRONE_BUILD_EVENT", "promote")
+	testApp, testPath := setupPublishGithubTests(t)
+	mockErrUnauthorized := errors.New("401")
 
+	testCases := []struct {
+		name           string
+		args           []string
+		token          string
+		expectedError  error
+		errorContains  string
+		expectedOutput string
+		mockedService  *mockGitHubRepositoryServiceImpl
+	}{
+		{
+			name:          "try to publish without required flags",
+			errorContains: `Required flags "path, repo" not set`,
+		},
+		{
+			name:          "try to publish without tag",
+			args:          []string{"--path", testPath, "--repo", "test/test"},
+			expectedError: errTagIsEmpty,
+		},
+		{
+			name:          "try to publish without token",
+			args:          []string{"--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"},
+			expectedError: errTokenIsEmpty,
+		},
+		{
+			name:          "try to publish with invalid token",
+			token:         "invalid",
+			args:          []string{"--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"},
+			mockedService: &mockGitHubRepositoryServiceImpl{tagErr: mockErrUnauthorized},
+			expectedError: mockErrUnauthorized,
+		},
+		{
+			name:          "try to publish with valid token and nonexisting tag with create disabled",
+			token:         "valid",
+			args:          []string{"--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"},
+			mockedService: &mockGitHubRepositoryServiceImpl{tagErr: errReleaseNotFound},
+			expectedError: errReleaseNotFound,
+		},
+		{
+			name:          "try to publish with valid token and nonexisting tag with create enabled",
+			token:         "valid",
+			args:          []string{"--path", testPath, "--repo", "test/test", "--tag", "v1.0.0", "--create"},
+			mockedService: &mockGitHubRepositoryServiceImpl{tagErr: errReleaseNotFound},
+		},
+		{
+			name:  "try to publish with valid token and existing tag",
+			token: "valid",
+			args:  []string{"--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"},
+		},
+		{
+			name:           "dry run with invalid token",
+			token:          "invalid",
+			args:           []string{"--dry-run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"},
+			mockedService:  &mockGitHubRepositoryServiceImpl{tagErr: mockErrUnauthorized},
+			expectedOutput: "GitHub communication error",
+		},
+		{
+			name:           "dry run with valid token and nonexisting tag with create disabled",
+			token:          "valid",
+			args:           []string{"--dry-run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"},
+			mockedService:  &mockGitHubRepositoryServiceImpl{tagErr: errReleaseNotFound},
+			expectedOutput: "Release doesn't exist",
+		},
+		{
+			name:           "dry run with valid token and nonexisting tag with create enabled",
+			token:          "valid",
+			args:           []string{"--dry-run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0", "--create"},
+			mockedService:  &mockGitHubRepositoryServiceImpl{tagErr: errReleaseNotFound},
+			expectedOutput: "Would upload asset",
+		},
+		{
+			name:           "dry run with valid token and existing tag",
+			token:          "valid",
+			args:           []string{"--dry-run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"},
+			expectedOutput: "Would upload asset",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			if test.token != "" {
+				t.Setenv("GH_TOKEN", test.token)
+			}
+			if test.mockedService != nil {
+				mockGitHubRepositoryService = test.mockedService
+			} else {
+				mockGitHubRepositoryService = &mockGitHubRepositoryServiceImpl{}
+			}
+			args := []string{"run"}
+			args = append(args, test.args...)
+			out, err := testCaptureStdout(t, func() error {
+				return testApp.Run(args)
+			})
+			if test.expectedOutput != "" {
+				assert.Contains(t, out, test.expectedOutput)
+			}
+			if test.expectedError != nil || test.errorContains != "" {
+				assert.Error(t, err)
+				if test.expectedError != nil {
+					assert.ErrorIs(t, err, test.expectedError)
+				}
+				if test.errorContains != "" {
+					assert.ErrorContains(t, err, test.errorContains)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func setupPublishGithubTests(t *testing.T) (*cli.App, string) {
+	t.Helper()
 	ex, err := os.Executable()
 	if err != nil {
 		panic(err)
@@ -54,116 +168,22 @@ func TestPublishGitHub(t *testing.T) {
 			Usage: "Create release if it doesn't exist",
 		},
 	}
-
-	t.Run("try to publish without required flags", func(t *testing.T) {
-		args := []string{"run"}
-		err := testApp.Run(args)
-		assert.Error(t, err)
-		assert.Equal(t, `Required flags "path, repo" not set`, err.Error())
-	})
-
-	t.Run("try to publish without tag", func(t *testing.T) {
-		args := []string{"run", "--path", testPath, "--repo", "test/test"}
-		err := testApp.Run(args)
-		assert.ErrorIs(t, err, errTagIsEmpty)
-	})
-
-	t.Run("try to publish without token", func(t *testing.T) {
-		args := []string{"run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"}
-		err := testApp.Run(args)
-		assert.ErrorIs(t, err, errTokenIsEmpty)
-	})
-
-	t.Run("try to publish with invalid token", func(t *testing.T) {
-		t.Setenv("GH_TOKEN", "invalid")
-		errUnauthorized := errors.New("401")
-		mockGitHubRepositoryService = &mockGitHubRepositoryServiceImpl{tagErr: errUnauthorized}
-		args := []string{"run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"}
-		err := testApp.Run(args)
-		assert.Error(t, err)
-		assert.ErrorIs(t, err, errUnauthorized)
-	})
-
-	t.Run("try to publish with valid token and nonexisting tag with create disabled", func(t *testing.T) {
-		t.Setenv("GH_TOKEN", "valid")
-		mockGitHubRepositoryService = &mockGitHubRepositoryServiceImpl{tagErr: errReleaseNotFound}
-		args := []string{"run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"}
-		err := testApp.Run(args)
-		assert.Error(t, err)
-		assert.ErrorIs(t, err, errReleaseNotFound)
-	})
-
-	t.Run("try to publish with valid token and nonexisting tag with create enabled", func(t *testing.T) {
-		t.Setenv("GH_TOKEN", "valid")
-		mockGitHubRepositoryService = &mockGitHubRepositoryServiceImpl{tagErr: errReleaseNotFound}
-		args := []string{"run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0", "--create"}
-		err := testApp.Run(args)
-		assert.NoError(t, err)
-	})
-
-	t.Run("try to publish with valid token and existing tag", func(t *testing.T) {
-		t.Setenv("GH_TOKEN", "valid")
-		mockGitHubRepositoryService = &mockGitHubRepositoryServiceImpl{}
-		args := []string{"run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"}
-		err := testApp.Run(args)
-		assert.NoError(t, err)
-	})
-
-	t.Run("dry run with invalid token", func(t *testing.T) {
-		t.Setenv("GH_TOKEN", "invalid")
-		errUnauthorized := errors.New("401")
-		mockGitHubRepositoryService = &mockGitHubRepositoryServiceImpl{tagErr: errUnauthorized}
-		args := []string{"run", "--dry-run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"}
-		out := testCaptureStdout(func() {
-			err := testApp.Run(args)
-			assert.NoError(t, err)
-		})
-		assert.Contains(t, out, "GitHub communication error")
-	})
-
-	t.Run("dry run with valid token and nonexisting tag with create disabled", func(t *testing.T) {
-		t.Setenv("GH_TOKEN", "valid")
-		mockGitHubRepositoryService = &mockGitHubRepositoryServiceImpl{tagErr: errReleaseNotFound}
-		args := []string{"run", "--dry-run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"}
-		out := testCaptureStdout(func() {
-			err := testApp.Run(args)
-			assert.NoError(t, err)
-		})
-		assert.Contains(t, out, "Release doesn't exist")
-	})
-
-	t.Run("dry run with valid token and nonexisting tag with create enabled", func(t *testing.T) {
-		t.Setenv("GH_TOKEN", "valid")
-		mockGitHubRepositoryService = &mockGitHubRepositoryServiceImpl{tagErr: errReleaseNotFound}
-		args := []string{"run", "--dry-run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0", "--create"}
-		out := testCaptureStdout(func() {
-			err := testApp.Run(args)
-			assert.NoError(t, err)
-		})
-		assert.Contains(t, out, "Would upload asset")
-	})
-
-	t.Run("dry run with valid token and existing tag", func(t *testing.T) {
-		t.Setenv("GH_TOKEN", "valid")
-		mockGitHubRepositoryService = &mockGitHubRepositoryServiceImpl{}
-		args := []string{"run", "--dry-run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"}
-		out := testCaptureStdout(func() {
-			err := testApp.Run(args)
-			assert.NoError(t, err)
-		})
-		assert.Contains(t, out, "Would upload asset")
-	})
+	return testApp, testPath
 }
 
-func testCaptureStdout(fn func()) string {
+func testCaptureStdout(t *testing.T, fn func() error) (string, error) {
+	t.Helper()
 	rescueStdout := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
-	fn()
-	w.Close()
-	out, _ := ioutil.ReadAll(r)
+	err := fn()
+	werr := w.Close()
+	if werr != nil {
+		return "", err
+	}
+	out, _ := io.ReadAll(r)
 	os.Stdout = rescueStdout
-	return string(out)
+	return string(out), err
 }
 
 type mockGitHubRepositoryServiceImpl struct {
