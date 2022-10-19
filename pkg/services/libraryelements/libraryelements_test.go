@@ -13,8 +13,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	busmock "github.com/grafana/grafana/pkg/bus/mock"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -25,9 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -310,7 +310,7 @@ func createFolderWithACL(t *testing.T, sqlStore db.DB, title string, user user.S
 		cfg, dashboardStore, nil,
 		features, folderPermissions, dashboardPermissions, ac,
 	)
-	s := folderimpl.ProvideService(ac, busmock.New(), cfg, d, dashboardStore, features, folderPermissions, nil)
+	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, d, dashboardStore, features, folderPermissions, nil)
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), &user, user.OrgID, title, title)
 	require.NoError(t, err)
@@ -378,7 +378,7 @@ func validateAndUnMarshalArrayResponse(t *testing.T, resp response.Response) lib
 
 func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	t.Helper()
-	store := mockstore.NewSQLStoreMock()
+	store := dbtest.NewFakeDB()
 	guardian.InitLegacyGuardian(store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
@@ -404,7 +404,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		}}
 		orgID := int64(1)
 		role := org.RoleAdmin
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		dashboardStore := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		features := featuremgmt.WithFeatures()
 		ac := acmock.New().WithDisabled()
@@ -420,7 +420,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		service := LibraryElementService{
 			Cfg:           sqlStore.Cfg,
 			SQLStore:      sqlStore,
-			folderService: folderimpl.ProvideService(ac, busmock.New(), sqlStore.Cfg, dashboardService, dashboardStore, features, folderPermissions, nil),
+			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardService, dashboardStore, features, folderPermissions, nil),
 		}
 
 		usr := user.SignedInUser{

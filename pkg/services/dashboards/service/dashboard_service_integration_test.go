@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -16,8 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -95,7 +94,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 			permissionScenario(t, "When creating a new dashboard in the General folder", canSave,
 				func(t *testing.T, sc *permissionScenarioContext) {
-					sqlStore := sqlstore.InitTestDB(t)
+					sqlStore := db.InitTestDB(t)
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -821,7 +820,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 		cfg := setting.NewCfg()
 		cfg.RBACEnabled = false
 		cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		dashboardStore := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg))
 		service := ProvideDashboardService(
 			cfg, dashboardStore, &dummyDashAlertExtractor{},

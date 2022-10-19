@@ -3132,9 +3132,6 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/rule-editor/RuleInspector.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/alerting/unified/components/rule-editor/SelectWIthAdd.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/features/alerting/unified/components/rules/RuleDetailsDataSources.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],

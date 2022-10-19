@@ -84,6 +84,13 @@ seqs: [
 				///////////////////////////////////////
 				// Definitions (referenced above) are declared below
 
+				#AnnotationTarget: {
+					limit: int64
+					matchAny: bool
+					tags: [...string]
+					type: string
+				}
+
 				// TODO docs
 				// FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 				#AnnotationQuery: {
@@ -106,7 +113,7 @@ seqs: [
 					// Query for annotation data.
 					rawQuery?: string     @grafanamaturity(NeedsExpertReview)
 					showIn:    uint8 | *0 @grafanamaturity(NeedsExpertReview)
-					target?:   #Target    @grafanamaturity(NeedsExpertReview) // TODO currently a generic in AnnotationQuery
+					target?:   #AnnotationTarget    @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface")
 
 				// FROM: packages/grafana-data/src/types/templateVars.ts

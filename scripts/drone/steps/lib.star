@@ -111,8 +111,10 @@ def init_enterprise_step(ver_mode):
         }
         token = "--github-token $${GITHUB_TOKEN}"
     elif ver_mode == 'release-branch':
-        environment = {}
-        token = ""
+        environment = {
+            'GITHUB_TOKEN': from_secret(github_token),
+        }
+        token = "--github-token $${GITHUB_TOKEN}"
     else:
         environment = {}
         token = ""
@@ -529,7 +531,6 @@ def betterer_frontend_step(edition="oss"):
         'commands': [
             'yarn betterer ci',
         ],
-        'failure': 'ignore',
     }
 
 
@@ -1044,9 +1045,9 @@ def publish_grafanacom_step(edition, ver_mode):
         ],
     }
 
-def publish_linux_packages_step(edition):
+def publish_linux_packages_step(edition, package_manager='deb'):
     return {
-        'name': 'publish-linux-packages',
+        'name': 'publish-linux-packages-{}'.format(package_manager),
         # See https://github.com/grafana/deployment_tools/blob/master/docker/package-publish/README.md for docs on that image
         'image': 'us.gcr.io/kubernetes-dev/package-publish:latest',
         'depends_on': [
@@ -1063,7 +1064,7 @@ def publish_linux_packages_step(edition):
             'gpg_passphrase': from_secret('packages_gpg_passphrase'),
             'gpg_public_key': from_secret('packages_gpg_public_key'),
             'gpg_private_key': from_secret('packages_gpg_private_key'),
-            'package_path': 'gs://grafana-prerelease/artifacts/downloads/*${{DRONE_TAG}}/{}/**.deb'.format(edition)
+            'package_path': 'gs://grafana-prerelease/artifacts/downloads/*${{DRONE_TAG}}/{}/**.{}'.format(edition, package_manager)
         }
     }
 

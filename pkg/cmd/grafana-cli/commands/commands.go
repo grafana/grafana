@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/secretsmigrations"
@@ -12,11 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/urfave/cli/v2"
 )
 
 func runRunnerCommand(command func(commandLine utils.CommandLine, runner runner.Runner) error) func(context *cli.Context) error {
@@ -42,7 +43,7 @@ func runRunnerCommand(command func(commandLine utils.CommandLine, runner runner.
 	}
 }
 
-func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SQLStore) error) func(context *cli.Context) error {
+func runDbCommand(command func(commandLine utils.CommandLine, sqlStore db.DB) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
 
@@ -58,7 +59,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 
 		bus := bus.ProvideBus(tracer)
 
-		sqlStore, err := sqlstore.ProvideService(cfg, nil, &migrations.OSSMigrations{}, bus, tracer)
+		sqlStore, err := db.ProvideService(cfg, nil, &migrations.OSSMigrations{}, bus, tracer)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to initialize SQL store", err)
 		}

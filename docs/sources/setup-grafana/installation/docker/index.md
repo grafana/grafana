@@ -151,7 +151,7 @@ Replace `Dockerfile` in above example with `ubuntu.Dockerfile` to build a custom
 
 > Only available in Grafana v6.5 and later. This is experimental.
 
-The [Grafana Image Renderer plugin]({{< relref "../image-rendering/#grafana-image-renderer-plugin" >}}) does not currently work if it is installed in a Grafana Docker image. You can build a custom Docker image by using the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument. This installs additional dependencies needed for the Grafana Image Renderer plugin to run.
+The [Grafana Image Renderer plugin]({{< relref "../../image-rendering/#grafana-image-renderer-plugin" >}}) does not currently work if it is installed in a Grafana Docker image. You can build a custom Docker image by using the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument. This installs additional dependencies needed for the Grafana Image Renderer plugin to run.
 
 Example of how to build and run:
 
@@ -251,12 +251,12 @@ chown -R grafana:grafana /usr/share/grafana
 
 ## Next steps
 
-Refer to the [Getting Started]({{< relref "../../getting-started/build-first-dashboard/" >}}) guide for information about logging in, setting up data sources, and so on.
+Refer to the [Getting Started]({{< relref "../../../getting-started/build-first-dashboard/" >}}) guide for information about logging in, setting up data sources, and so on.
 
 ## Configure Docker image
 
-Refer to [Configure a Grafana Docker image]({{< relref "../configure-docker/" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to [Configure a Grafana Docker image]({{< relref "../../configure-docker/" >}}) page for details on options for customizing your environment, logging, database, and so on.
 
 ## Configure Grafana
 
-Refer to the [Configuration]({{< relref "../configure-grafana/" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to the [Configuration]({{< relref "../../configure-grafana/" >}}) page for details on options for customizing your environment, logging, database, and so on.
