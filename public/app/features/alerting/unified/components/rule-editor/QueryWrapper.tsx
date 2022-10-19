@@ -150,7 +150,7 @@ export const QueryWrapper: FC<Props> = ({
   );
 };
 
-export const EmptyQueryWrapper: FC<{}> = ({ children }) => {
+export const EmptyQueryWrapper = ({ children }: React.PropsWithChildren<{}>) => {
   const styles = useStyles2(getStyles);
   return <div className={styles.wrapper}>{children}</div>;
 };

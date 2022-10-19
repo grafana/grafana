@@ -22,7 +22,7 @@ func TestDevenvDashboardValidity(t *testing.T) {
 
 	m, err := themaTestableDashboards(os.DirFS(path))
 	require.NoError(t, err)
-	cm, err := dashboard.New(cuectx.ProvideThemaLibrary())
+	cm, err := dashboard.New(cuectx.GrafanaThemaRuntime())
 	require.NoError(t, err)
 
 	for path, b := range m {

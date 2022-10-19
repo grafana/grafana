@@ -47,7 +47,7 @@ func (_m *FakePublicDashboardService) AccessTokenExists(ctx context.Context, acc
 }
 
 // BuildAnonymousUser provides a mock function with given fields: ctx, dashboard
-func (_m *FakePublicDashboardService) BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*user.SignedInUser, error) {
+func (_m *FakePublicDashboardService) BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) *user.SignedInUser {
 	ret := _m.Called(ctx, dashboard)
 
 	var r0 *user.SignedInUser
@@ -59,9 +59,25 @@ func (_m *FakePublicDashboardService) BuildAnonymousUser(ctx context.Context, da
 		}
 	}
 
+	return r0
+}
+
+// GetAnnotations provides a mock function with given fields: ctx, reqDTO, accessToken
+func (_m *FakePublicDashboardService) GetAnnotations(ctx context.Context, reqDTO publicdashboardsmodels.AnnotationsQueryDTO, accessToken string) ([]publicdashboardsmodels.AnnotationEvent, error) {
+	ret := _m.Called(ctx, reqDTO, accessToken)
+
+	var r0 []publicdashboardsmodels.AnnotationEvent
+	if rf, ok := ret.Get(0).(func(context.Context, publicdashboardsmodels.AnnotationsQueryDTO, string) []publicdashboardsmodels.AnnotationEvent); ok {
+		r0 = rf(ctx, reqDTO, accessToken)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]publicdashboardsmodels.AnnotationEvent)
+		}
+	}
+
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *models.Dashboard) error); ok {
-		r1 = rf(ctx, dashboard)
+	if rf, ok := ret.Get(1).(func(context.Context, publicdashboardsmodels.AnnotationsQueryDTO, string) error); ok {
+		r1 = rf(ctx, reqDTO, accessToken)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -205,6 +221,29 @@ func (_m *FakePublicDashboardService) GetQueryDataResponse(ctx context.Context, 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, bool, publicdashboardsmodels.PublicDashboardQueryDTO, int64, string) error); ok {
 		r1 = rf(ctx, skipCache, reqDTO, panelId, accessToken)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListPublicDashboards provides a mock function with given fields: ctx, orgId
+func (_m *FakePublicDashboardService) ListPublicDashboards(ctx context.Context, orgId int64) ([]publicdashboardsmodels.PublicDashboardListResponse, error) {
+	ret := _m.Called(ctx, orgId)
+
+	var r0 []publicdashboardsmodels.PublicDashboardListResponse
+	if rf, ok := ret.Get(0).(func(context.Context, int64) []publicdashboardsmodels.PublicDashboardListResponse); ok {
+		r0 = rf(ctx, orgId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]publicdashboardsmodels.PublicDashboardListResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, orgId)
 	} else {
 		r1 = ret.Error(1)
 	}

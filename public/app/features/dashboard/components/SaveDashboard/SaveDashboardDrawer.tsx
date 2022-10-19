@@ -7,6 +7,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 
 import { jsonDiff } from '../VersionHistory/utils';
 
+import DashboardValidation from './DashboardValidation';
 import { SaveDashboardDiff } from './SaveDashboardDiff';
 import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
@@ -68,7 +69,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       }
     : onDismiss;
 
-  const renderBody = () => {
+  const renderSaveBody = () => {
     if (showDiff) {
       return <SaveDashboardDiff diff={data.diff} oldValue={previous.value} newValue={data.clone} />;
     }
@@ -161,7 +162,9 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       expandable
       scrollableContent
     >
-      {renderBody()}
+      {renderSaveBody()}
+
+      {config.featureToggles.showDashboardValidationWarnings && <DashboardValidation dashboard={dashboard} />}
     </Drawer>
   );
 };

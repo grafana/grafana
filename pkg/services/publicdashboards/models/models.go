@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/coremodel/dashboard"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
@@ -34,8 +35,8 @@ var (
 		Reason:     "failed to generate unique public dashboard id",
 		StatusCode: 500,
 	}
-	ErrPublicDashboardFailedGenerateAccesstoken = PublicDashboardErr{
-		Reason:     "failed to public dashboard access token",
+	ErrPublicDashboardFailedGenerateAccessToken = PublicDashboardErr{
+		Reason:     "failed to create public dashboard",
 		StatusCode: 500,
 	}
 	ErrPublicDashboardNotFound = PublicDashboardErr{
@@ -77,8 +78,38 @@ type PublicDashboard struct {
 	UpdatedAt time.Time `json:"updatedAt" xorm:"updated_at"`
 }
 
+// Alias the generated type
+type DashAnnotation = dashboard.AnnotationQuery
+
+type AnnotationsDto struct {
+	Annotations struct {
+		List []DashAnnotation `json:"list"`
+	}
+}
+
+type AnnotationEvent struct {
+	Id          int64                     `json:"id"`
+	DashboardId int64                     `json:"dashboardId"`
+	PanelId     int64                     `json:"panelId"`
+	Tags        []string                  `json:"tags"`
+	IsRegion    bool                      `json:"isRegion"`
+	Text        string                    `json:"text"`
+	Color       string                    `json:"color"`
+	Time        int64                     `json:"time"`
+	TimeEnd     int64                     `json:"timeEnd"`
+	Source      dashboard.AnnotationQuery `json:"source"`
+}
+
 func (pd PublicDashboard) TableName() string {
 	return "dashboard_public"
+}
+
+type PublicDashboardListResponse struct {
+	Uid          string `json:"uid" xorm:"uid"`
+	AccessToken  string `json:"accessToken" xorm:"access_token"`
+	Title        string `json:"title" xorm:"title"`
+	DashboardUid string `json:"dashboardUid" xorm:"dashboard_uid"`
+	IsEnabled    bool   `json:"isEnabled" xorm:"is_enabled"`
 }
 
 type TimeSettings struct {
@@ -125,6 +156,11 @@ type SavePublicDashboardConfigDTO struct {
 type PublicDashboardQueryDTO struct {
 	IntervalMs    int64
 	MaxDataPoints int64
+}
+
+type AnnotationsQueryDTO struct {
+	From int64
+	To   int64
 }
 
 //
