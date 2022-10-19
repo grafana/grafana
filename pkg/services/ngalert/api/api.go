@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/backtesting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -81,6 +82,8 @@ type API struct {
 	AlertRules           *provisioning.AlertRuleService
 	AlertsRouter         *sender.AlertsRouter
 	EvaluatorFactory     eval.EvaluatorFactory
+
+	AppUrl *url.URL
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -126,6 +129,8 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			log:             logger,
 			accessControl:   api.AccessControl,
 			evaluator:       api.EvaluatorFactory,
+			cfg:             &api.Cfg.UnifiedAlerting,
+			backtesting:     backtesting.NewEngine(api.AppUrl, api.EvaluatorFactory),
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewConfiguration(
 		&ConfigSrv{
