@@ -117,7 +117,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
         </ToolbarButton>
       </Tooltip>
       {isOpen && (
-        <FocusScope contain autoFocus>
+        <FocusScope contain autoFocus restoreFocus>
           <section ref={ref} {...overlayProps} {...dialogProps}>
             <TimePickerContent
               timeZone={timeZone}
