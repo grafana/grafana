@@ -117,18 +117,7 @@ export function getStackingGroups(frame: DataFrame) {
     let vals = values.toArray();
     let transform = custom.transform;
     let firstValue = vals.find((v) => v != null);
-    let stackDir =
-      transform === GraphTransform.Constant
-        ? firstValue >= 0
-          ? StackDirection.Pos
-          : StackDirection.Neg
-        : transform === GraphTransform.NegativeY
-        ? firstValue >= 0
-          ? StackDirection.Neg
-          : StackDirection.Pos
-        : firstValue >= 0
-        ? StackDirection.Pos
-        : StackDirection.Neg;
+    let stackDir = getStackDirection(transform, firstValue);
 
     let drawStyle = custom.drawStyle as GraphDrawStyle;
     let drawStyle2 =
@@ -350,6 +339,19 @@ export function findMidPointYPosition(u: uPlot, idx: number) {
   }
 
   return y;
+}
+
+function getStackDirection(transform: GraphTransform, firstValue: number) {
+  if (transform === GraphTransform.Constant) {
+    return firstValue >= 0 ? StackDirection.Pos : StackDirection.Neg;
+  }
+
+  if (transform === GraphTransform.NegativeY) {
+    return firstValue >= 0 ? StackDirection.Neg : StackDirection.Pos;
+  }
+
+  // Check if first value is negative zero. This can happen with a binary operation transform.
+  return !Object.is(firstValue, -0) && firstValue >= 0 ? StackDirection.Pos : StackDirection.Neg;
 }
 
 // Dev helpers
