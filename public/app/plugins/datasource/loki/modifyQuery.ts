@@ -50,9 +50,7 @@ export function addLabelToQuery(query: string, key: string, operator: string, va
   }
 
   const filter = toLabelFilter(key, value, operator);
-  // If we have non-empty stream selector we want to:
-  // 1. If we have label filters we want to add new label filter after the last one
-  // 2. If we have parser we check if we have any labels in selector. If yes, want to add new label filter after the last one.
+  // If we have non-empty stream selector and parser/label filter, we want to add a new label filter after the last one.
   if (hasStreamSelectorMatchers && (labelFilterPositions.length || parserPositions.length)) {
     const positionToAdd = findLastPosition([...labelFilterPositions, ...parserPositions]);
     return addFilterAsLabelFilter(query, [positionToAdd], filter);
