@@ -577,7 +577,7 @@ export function createTableFrameFromSearch(data: TraceSearchMetadata[], instance
       },
       { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' } },
       { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
-      { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
+      { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ns' } },
     ],
     meta: {
       preferredVisualisationType: 'table',
@@ -621,7 +621,7 @@ function transformToTraceData(data: TraceSearchMetadata) {
   return {
     traceID: data.traceID,
     startTime: startTime,
-    duration: data.durationMs,
+    duration: data.durationMs?.toString(),
     traceName,
   };
 }
@@ -685,7 +685,7 @@ export function createTableFrameFromTraceQlQuery(
       { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' } },
       // { name: 'attributes', type: FieldType.string, config: { displayNameFromDS: 'Attributes' } },
       { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
-      { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
+      { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ns' } },
     ],
     meta: {
       preferredVisualisationType: 'table',
@@ -733,7 +733,7 @@ interface TraceTableData {
   spanID?: string;
   //attributes?: string;
   startTime?: string;
-  duration?: number;
+  duration?: string;
 }
 
 function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
@@ -752,7 +752,7 @@ function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
     traceIdHidden: traceID,
     spanID: span.spanID,
     startTime,
-    duration: span.durationMs,
+    duration: span.durationNanos,
   };
 
   span.attributes?.forEach((attr) => {

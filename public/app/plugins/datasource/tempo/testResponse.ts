@@ -2207,14 +2207,15 @@ export const tempoSearchResponse = {
 export const traceQlResponse = {
   traces: [
     {
-      traceID: '85ce043347f7b',
+      traceID: 'b1586c3c8c34d',
       rootServiceName: 'lb',
       rootTraceName: 'HTTP Client',
       spanSet: {
         spans: [
           {
-            spanID: '789ad094677152a0',
-            startTimeUnixNano: '1666177842744472000',
+            spanID: '162a4adae63b61f1',
+            startTimeUnixNano: '1666188214303201000',
+            durationNanos: '545000',
             attributes: [
               {
                 key: 'http.method',
@@ -2231,9 +2232,9 @@ export const traceQlResponse = {
             ],
           },
           {
-            spanID: '690a048831a78ded',
-            startTimeUnixNano: '1666177842741716000',
-            durationMs: 6,
+            spanID: '15991be3a92136e6',
+            startTimeUnixNano: '1666188214300239000',
+            durationNanos: '6686000',
             attributes: [
               {
                 key: 'http.method',
@@ -2250,9 +2251,9 @@ export const traceQlResponse = {
             ],
           },
           {
-            spanID: '54ec0bf0b68a12c7',
-            startTimeUnixNano: '1666177842742138000',
-            durationMs: 5,
+            spanID: '5e91b69dc224c240',
+            startTimeUnixNano: '1666188214300647000',
+            durationNanos: '6043000',
             attributes: [
               {
                 key: 'http.method',
@@ -2264,6 +2265,25 @@ export const traceQlResponse = {
                 key: 'service.name',
                 value: {
                   stringValue: 'app',
+                },
+              },
+            ],
+          },
+          {
+            spanID: '29f218a50b00c306',
+            startTimeUnixNano: '1666188214297891000',
+            durationNanos: '8365000',
+            attributes: [
+              {
+                key: 'http.method',
+                value: {
+                  stringValue: 'GET',
+                },
+              },
+              {
+                key: 'service.name',
+                value: {
+                  stringValue: 'lb',
                 },
               },
             ],
@@ -2273,14 +2293,15 @@ export const traceQlResponse = {
       },
     },
     {
-      traceID: '63fef0f3acf70',
+      traceID: '9161e77388f3e',
       rootServiceName: 'lb',
       rootTraceName: 'HTTP Client',
       spanSet: {
         spans: [
           {
-            spanID: '4847d2ce4cf5fb75',
-            startTimeUnixNano: '1666176502778395000',
+            spanID: '3b9a5c222d3ddd8f',
+            startTimeUnixNano: '1666187875397721000',
+            durationNanos: '877000',
             attributes: [
               {
                 key: 'http.method',
@@ -2297,9 +2318,9 @@ export const traceQlResponse = {
             ],
           },
           {
-            spanID: '28eaf7a7c4773d5d',
-            startTimeUnixNano: '1666176502776327000',
-            durationMs: 4,
+            spanID: '894d90db6b5807f',
+            startTimeUnixNano: '1666187875393293000',
+            durationNanos: '11073000',
             attributes: [
               {
                 key: 'http.method',
@@ -2316,9 +2337,76 @@ export const traceQlResponse = {
             ],
           },
           {
-            spanID: '1862f64db7894c3d',
-            startTimeUnixNano: '1666176502776627000',
-            durationMs: 3,
+            spanID: 'd3284e9c5081aab',
+            startTimeUnixNano: '1666187875393897000',
+            durationNanos: '10133000',
+            attributes: [
+              {
+                key: 'service.name',
+                value: {
+                  stringValue: 'app',
+                },
+              },
+              {
+                key: 'http.method',
+                value: {
+                  stringValue: 'GET',
+                },
+              },
+            ],
+          },
+          {
+            spanID: '454785498fc8b1aa',
+            startTimeUnixNano: '1666187875389957000',
+            durationNanos: '13953000',
+            attributes: [
+              {
+                key: 'http.method',
+                value: {
+                  stringValue: 'GET',
+                },
+              },
+              {
+                key: 'service.name',
+                value: {
+                  stringValue: 'lb',
+                },
+              },
+            ],
+          },
+        ],
+        matched: 4,
+      },
+    },
+    {
+      traceID: '480691f7c6f20',
+      rootServiceName: 'lb',
+      rootTraceName: 'HTTP Client',
+      spanSet: {
+        spans: [
+          {
+            spanID: '2ab970c9db57d100',
+            startTimeUnixNano: '1666186467658853000',
+            durationNanos: '436000',
+            attributes: [
+              {
+                key: 'http.method',
+                value: {
+                  stringValue: 'GET',
+                },
+              },
+              {
+                key: 'service.name',
+                value: {
+                  stringValue: 'db',
+                },
+              },
+            ],
+          },
+          {
+            spanID: '3a4070e418857cbd',
+            startTimeUnixNano: '1666186467657066000',
+            durationNanos: '5503000',
             attributes: [
               {
                 key: 'http.method',
@@ -2330,6 +2418,44 @@ export const traceQlResponse = {
                 key: 'service.name',
                 value: {
                   stringValue: 'app',
+                },
+              },
+            ],
+          },
+          {
+            spanID: '7ddf87d7a3f864c8',
+            startTimeUnixNano: '1666186467657336000',
+            durationNanos: '5005000',
+            attributes: [
+              {
+                key: 'http.method',
+                value: {
+                  stringValue: 'GET',
+                },
+              },
+              {
+                key: 'service.name',
+                value: {
+                  stringValue: 'app',
+                },
+              },
+            ],
+          },
+          {
+            spanID: '241e9f31609056c5',
+            startTimeUnixNano: '1666186467655299000',
+            durationNanos: '6413000',
+            attributes: [
+              {
+                key: 'http.method',
+                value: {
+                  stringValue: 'GET',
+                },
+              },
+              {
+                key: 'service.name',
+                value: {
+                  stringValue: 'lb',
                 },
               },
             ],
@@ -2340,8 +2466,8 @@ export const traceQlResponse = {
     },
   ],
   metrics: {
-    inspectedBlocks: 3,
-    totalBlockBytes: '33343091',
+    inspectedBlocks: 5,
+    totalBlockBytes: '9092129',
   },
 };
 

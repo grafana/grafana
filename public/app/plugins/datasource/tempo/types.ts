@@ -81,7 +81,7 @@ export enum SpanKind {
 }
 
 export type Span = {
-  durationMs?: number;
+  durationNanos: string;
   traceId?: string;
   spanID: string;
   traceState?: string;
