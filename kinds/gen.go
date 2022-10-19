@@ -99,7 +99,9 @@ func main() {
 			if err != nil {
 				die(fmt.Errorf("%s: %w", err))
 			}
-			wd[filepath.Join(groot, gf.RelativePath)] = gf.Data
+			if gf != nil {
+				wd[filepath.Join(groot, gf.RelativePath)] = gf.Data
+			}
 		}
 	}
 
