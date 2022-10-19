@@ -96,11 +96,13 @@ _sharedKind: {
 // reduced set of capabilities, due to the constraints imposed by them being run
 // in separate processes, and the risks arising from executing code from
 // potentially untrusted third parties.
-#Structured: {
+#Structured: S={
 	_sharedKind
 	form: "structured"
 
-	lineage: thema.#Lineage
+	// lineage is the Thema lineage containing all the schemas that have existed for this kind.
+	// It is required that lineage.name is the same as the kind's name.
+	lineage: thema.#Lineage & { name: S.name }
 
 	currentVersion: thema.#SyntacticVersion & (thema.#LatestVersion & {lin: lineage}).out
 }

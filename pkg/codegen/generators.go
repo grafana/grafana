@@ -114,7 +114,7 @@ func (gen *genGoTypes) Generate(decl *DeclForGen) (*GeneratedFile, error) {
 		return nil, err
 	}
 	return &GeneratedFile{
-		RelativePath: filepath.Join(gen.relroot, pdir),
+		RelativePath: filepath.Join(gen.relroot, pdir, lin.Name()+"_types_gen.go"),
 		Data:         b,
 	}, nil
 }

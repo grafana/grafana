@@ -1,8 +1,10 @@
-package dashboard
+package kind
 
+import "strings"
+
+name: "dashboard"
 maturity: "committed"
 
-lineage: name: "dashboard"
 lineage: seqs: [
 	{
 		schemas: [

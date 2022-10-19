@@ -238,12 +238,12 @@ func LoadCoreKindFS[T RawMeta | CoreStructuredMeta](kfs fs.FS, relpath string, c
 	if err != nil {
 		return nil, err
 	}
-	pkd := &Decl[T]{
+	decl := &Decl[T]{
 		V: vk,
 	}
-	pkd.Meta, err = ToKindMeta[T](vk)
+	decl.Meta, err = ToKindMeta[T](vk)
 	if err != nil {
 		return nil, err
 	}
-	return pkd, nil
+	return decl, nil
 }

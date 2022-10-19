@@ -20,7 +20,9 @@ import (
 // that derives from raw and structured core kinds.
 
 // All the single-kind generators to be run for core kinds.
-var singles = []codegen.KindGenStep{}
+var singles = []codegen.KindGenStep{
+	codegen.GoTypesGenerator(filepath.Join("pkg", "kind"), nil),
+}
 
 // All the aggregate generators to be run for core kinds.
 var multis = []codegen.AggregateKindGenStep{}
@@ -49,11 +51,14 @@ func main() {
 	f := os.DirFS(filepath.Join(groot, "kinds", "structured"))
 	ents := elsedie(fs.ReadDir(f, "."))("error reading structured fs root directory")
 	for _, ent := range ents {
+		if !ent.IsDir() {
+			continue
+		}
 		rel := filepath.Join("kinds", "structured", ent.Name())
 		sub := elsedie(fs.Sub(f, ent.Name()))(fmt.Sprintf("error creating subfs for path %s", rel))
 		decl, err := kind.LoadCoreKindFS[kind.CoreStructuredMeta](sub, rel, rt.Context())
 		if err != nil {
-			die(fmt.Errorf("core structured kind at %s is invalid: %w", rel, err))
+			die(fmt.Errorf("kind at %s is invalid: %w", rel, err))
 		}
 		if decl.Meta.Name != ent.Name() {
 			die(fmt.Errorf("%s: kind name (%s) must equal parent dir name (%s)", rel, decl.Meta.Name, ent.Name()))
@@ -66,16 +71,19 @@ func main() {
 	f = os.DirFS(filepath.Join(groot, "kinds", "raw"))
 	ents = elsedie(fs.ReadDir(f, "."))("error reading raw fs root directory")
 	for _, ent := range ents {
+		if !ent.IsDir() {
+			continue
+		}
 		rel := filepath.Join("kinds", "raw", ent.Name())
 		sub := elsedie(fs.Sub(f, ent.Name()))(fmt.Sprintf("error creating subfs for path %s", rel))
-		pk, err := kind.LoadCoreKindFS[kind.RawMeta](sub, rel, rt.Context())
+		decl, err := kind.LoadCoreKindFS[kind.RawMeta](sub, rel, rt.Context())
 		if err != nil {
 			die(fmt.Errorf("raw kind at %s is invalid: %w", rel, err))
 		}
-		if pk.Meta.Name != ent.Name() {
-			die(fmt.Errorf("%s: kind name (%s) must equal parent dir name (%s)", rel, pk.Meta.Name, ent.Name()))
+		if decl.Meta.Name != ent.Name() {
+			die(fmt.Errorf("%s: kind name (%s) must equal parent dir name (%s)", rel, decl.Meta.Name, ent.Name()))
 		}
-		dfg, _ := codegen.ForGen(nil, pk.Some())
+		dfg, _ := codegen.ForGen(nil, decl.Some())
 		all = append(all, dfg)
 	}
 

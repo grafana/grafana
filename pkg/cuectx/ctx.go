@@ -175,7 +175,10 @@ func BuildGrafanaInstance(relpath string, pkg string, ctx *cue.Context, overlay 
 	}
 
 	v = ctx.BuildInstance(bi)
-	return v, fmt.Errorf("%s not a valid CUE instance: %w", relpath, v.Err())
+	if v.Err() != nil {
+		return v, fmt.Errorf("%s not a valid CUE instance: %w", relpath, v.Err())
+	}
+	return v, nil
 }
 
 // TODO docs
