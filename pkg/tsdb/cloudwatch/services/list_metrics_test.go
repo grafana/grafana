@@ -3,12 +3,43 @@ package services
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
+
+var metricResponse = []*cloudwatch.Metric{
+	{
+		MetricName: aws.String("CPUUtilization"),
+		Namespace:  aws.String("AWS/EC2"),
+		Dimensions: []*cloudwatch.Dimension{
+			{Name: aws.String("InstanceId"), Value: aws.String("i-1234567890abcdef0")},
+			{Name: aws.String("InstanceType"), Value: aws.String("t2.micro")},
+		},
+	},
+	{
+		MetricName: aws.String("CPUUtilization"),
+		Namespace:  aws.String("AWS/EC2"),
+		Dimensions: []*cloudwatch.Dimension{
+			{Name: aws.String("InstanceId"), Value: aws.String("i-5234567890abcdef0")},
+			{Name: aws.String("InstanceType"), Value: aws.String("t2.micro")},
+			{Name: aws.String("AutoScalingGroupName"), Value: aws.String("my-asg")},
+		},
+	},
+	{
+		MetricName: aws.String("CPUUtilization"),
+		Namespace:  aws.String("AWS/EC2"),
+		Dimensions: []*cloudwatch.Dimension{
+			{Name: aws.String("InstanceId"), Value: aws.String("i-64234567890abcdef0")},
+			{Name: aws.String("InstanceType"), Value: aws.String("t3.micro")},
+			{Name: aws.String("AutoScalingGroupName"), Value: aws.String("my-asg2")},
+		},
+	},
+}
 
 func TestListMetricsService_GetHardCodedDimensionKeysByNamespace(t *testing.T) {
 	t.Run("Should return an error in case namespace doesnt exist in map", func(t *testing.T) {
@@ -30,7 +61,7 @@ func TestListMetricsService_GetHardCodedDimensionKeysByNamespace(t *testing.T) {
 func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 	t.Run("Should filter out duplicates and keys matching dimension filter keys", func(t *testing.T) {
 		fakeMetricsClient := &mocks.FakeMetricsClient{}
-		fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(mocks.MetricResponse, nil)
+		fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(metricResponse, nil)
 		listMetricsService := NewListMetricsService(fakeMetricsClient)
 
 		resp, err := listMetricsService.GetDimensionKeysByDimensionFilter(&models.DimensionKeysQuery{
@@ -50,7 +81,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 func TestListMetricsService_GetDimensionKeysByNamespace(t *testing.T) {
 	t.Run("Should filter out duplicates and keys matching dimension filter keys", func(t *testing.T) {
 		fakeMetricsClient := &mocks.FakeMetricsClient{}
-		fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(mocks.MetricResponse, nil)
+		fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(metricResponse, nil)
 		listMetricsService := NewListMetricsService(fakeMetricsClient)
 
 		resp, err := listMetricsService.GetDimensionKeysByNamespace("AWS/EC2")

@@ -51,7 +51,7 @@ func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(q *models.Dimensi
 
 	var dimensionKeys []string
 	// remove duplicates
-	dupCheck := make(map[string]bool)
+	dupCheck := make(map[string]struct{})
 	for _, metric := range metrics {
 		for _, dim := range metric.Dimensions {
 			if _, exists := dupCheck[*dim.Name]; exists {
@@ -71,7 +71,7 @@ func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(q *models.Dimensi
 				continue
 			}
 
-			dupCheck[*dim.Name] = true
+			dupCheck[*dim.Name] = struct{}{}
 			dimensionKeys = append(dimensionKeys, *dim.Name)
 		}
 	}
@@ -86,14 +86,14 @@ func (l *ListMetricsService) GetDimensionKeysByNamespace(namespace string) ([]st
 	}
 
 	var dimensionKeys []string
-	dupCheck := make(map[string]bool)
+	dupCheck := make(map[string]struct{})
 	for _, metric := range metrics {
 		for _, dim := range metric.Dimensions {
 			if _, exists := dupCheck[*dim.Name]; exists {
 				continue
 			}
 
-			dupCheck[*dim.Name] = true
+			dupCheck[*dim.Name] = struct{}{}
 			dimensionKeys = append(dimensionKeys, *dim.Name)
 		}
 	}

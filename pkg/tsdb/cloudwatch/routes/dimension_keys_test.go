@@ -42,9 +42,18 @@ func Test_DimensionKeys_Route(t *testing.T) {
 		methodName string
 		queryType  string
 	}{
-		{url: "/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization", methodName: "GetHardCodedDimensionKeysByNamespace", queryType: "StandardDimensionKeysQuery"},
-		{url: `/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization&dimensionFilters={"NodeID":["Shared"],"stage":["QueryCommit"]}`, methodName: "GetDimensionKeysByDimensionFilter", queryType: "FilterDimensionKeysQuery"},
-		{url: `/dimension-keys?region=us-east-2&namespace=customNamespace&metricName=CPUUtilization`, methodName: "GetDimensionKeysByNamespace", queryType: "CustomMetricDimensionKeysQuery"},
+		{
+			url:        "/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization",
+			methodName: "GetHardCodedDimensionKeysByNamespace",
+			queryType:  "StandardDimensionKeysQuery"},
+		{
+			url:        `/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization&dimensionFilters={"NodeID":["Shared"],"stage":["QueryCommit"]}`,
+			methodName: "GetDimensionKeysByDimensionFilter",
+			queryType:  "FilterDimensionKeysQuery"},
+		{
+			url:        `/dimension-keys?region=us-east-2&namespace=customNamespace&metricName=CPUUtilization`,
+			methodName: "GetDimensionKeysByNamespace",
+			queryType:  "CustomMetricDimensionKeysQuery"},
 	}
 
 	for _, tc := range tests {
