@@ -57,11 +57,11 @@ export interface QueryEditorGroupByExpression {
 export interface QueryEditorFunctionExpression {
   type: QueryEditorExpressionType.Function;
   name?: string;
-  alias?: string;
   parameters?: QueryEditorFunctionParameterExpression[];
 }
 
 export interface QueryEditorFunctionParameterExpression {
   type: QueryEditorExpressionType.FunctionParameter;
   name?: string;
+  alias?: string;
 }

@@ -23,15 +23,8 @@ export function SelectRow({ sql, columns, onSqlChange, functions }: SelectRowPro
   const columnsWithAsterisk = [asteriskValue, ...(columns || [])];
   const timeSeriesAliasOpts: Array<SelectableValue<string>> = [];
 
-  timeSeriesAliasOpts.push({
-    label: 'Time',
-    value: 'time',
-  });
-
-  timeSeriesAliasOpts.push({
-    label: 'Value',
-    value: 'value',
-  });
+  timeSeriesAliasOpts.push({ label: 'time', value: 'time' });
+  timeSeriesAliasOpts.push({ label: 'value', value: 'value' });
 
   const onColumnChange = useCallback(
     (item: QueryEditorFunctionExpression, index: number) => (column: SelectableValue<string>) => {
@@ -72,14 +65,23 @@ export function SelectRow({ sql, columns, onSqlChange, functions }: SelectRowPro
 
   const onAliasChange = useCallback(
     (item: QueryEditorFunctionExpression, index: number) => (alias: SelectableValue<string>) => {
-      const newItem = {
-        ...item,
-        alias: alias?.value,
-      };
+      let modifiedItem = { ...item };
+
+      if (!item.parameters?.length && alias !== null) {
+        modifiedItem.parameters = [{ type: QueryEditorExpressionType.FunctionParameter, alias: alias.value } as const];
+      } else if (alias === null) {
+        modifiedItem.parameters = item.parameters?.map((p) =>
+          p.type === QueryEditorExpressionType.FunctionParameter ? { ...p, alias } : p
+        );
+      } else {
+        modifiedItem.parameters = item.parameters?.map((p) =>
+          p.type === QueryEditorExpressionType.FunctionParameter ? { ...p, alias: alias.value } : p
+        );
+      }
 
       const newSql: SQLExpression = {
         ...sql,
-        columns: sql.columns?.map((c, i) => (i === index ? newItem : c)),
+        columns: sql.columns?.map((c, i) => (i === index ? modifiedItem : c)),
       };
 
       onSqlChange(newSql);
@@ -134,7 +136,7 @@ export function SelectRow({ sql, columns, onSqlChange, functions }: SelectRowPro
             </EditorField>
             <EditorField label="Alias" optional width={15}>
               <Select
-                value={item.alias ? toOption(item.alias) : null}
+                value={getColumnAlias(item)}
                 options={timeSeriesAliasOpts}
                 onChange={onAliasChange(item, index)}
                 isClearable
@@ -175,5 +177,14 @@ function getColumnValue({ parameters }: QueryEditorFunctionExpression): Selectab
   if (column?.name) {
     return toOption(column.name);
   }
+  return null;
+}
+
+function getColumnAlias({ parameters }: QueryEditorFunctionExpression): SelectableValue<string> | null {
+  const column = parameters?.find((p) => p.type === QueryEditorExpressionType.FunctionParameter);
+  if (column?.alias) {
+    return toOption(column.alias);
+  }
+
   return null;
 }
