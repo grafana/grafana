@@ -256,17 +256,17 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			},
 		}
 		err := publicDashboardStore.SavePublicDashboardConfig(context.Background(), cmd)
-		pubdashConfig, _, err := publicDashboardStore.GetPublicDashboard(context.Background(), "an-access-token")
-		require.NotNil(t, pubdashConfig)
 		require.NoError(t, err)
+		pubdashConfig, _, _ := publicDashboardStore.GetPublicDashboard(context.Background(), "an-access-token")
+		require.NotNil(t, pubdashConfig)
 
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedDash.Id, OrgId: savedDash.OrgId}
 		err = dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.NoError(t, err)
 
 		query := models.GetDashboardQuery{Uid: savedDash.Uid, OrgId: savedDash.OrgId}
-		dash, err := dashboardStore.GetDashboard(context.Background(), &query)
-		require.Equal(t, err, dashboards.ErrDashboardNotFound)
+		dash, getErr := dashboardStore.GetDashboard(context.Background(), &query)
+		require.Equal(t, getErr, dashboards.ErrDashboardNotFound)
 		assert.Nil(t, dash)
 
 		pubdashConfig, _, err = publicDashboardStore.GetPublicDashboard(context.Background(), "an-access-token")
@@ -291,9 +291,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			},
 		}
 		err := publicDashboardStore.SavePublicDashboardConfig(context.Background(), cmd)
-		pubdashConfig, _, err := publicDashboardStore.GetPublicDashboard(context.Background(), "an-access-token")
-		require.NotNil(t, pubdashConfig)
 		require.NoError(t, err)
+		pubdashConfig, _, _ := publicDashboardStore.GetPublicDashboard(context.Background(), "an-access-token")
+		require.NotNil(t, pubdashConfig)
 
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: true}
 		err = dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
