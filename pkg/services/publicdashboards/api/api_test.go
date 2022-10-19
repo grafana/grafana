@@ -601,21 +601,21 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 	t.Run("Status code is 400 when the panel ID is invalid", func(t *testing.T) {
 		server, _ := setup(true)
-		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/abc123/panels/notanumber/query", strings.NewReader("{}"), t)
+		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/"+validAccessToken+"/panels/notanumber/query", strings.NewReader("{}"), t)
 		require.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
 	t.Run("Status code is 400 when the intervalMS is lesser than 0", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
-		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), "abc123").Return(&backend.QueryDataResponse{}, ErrPublicDashboardBadRequest)
-		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/abc123/panels/2/query", strings.NewReader(`{"intervalMs":-100,"maxDataPoints":1000}`), t)
+		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, ErrPublicDashboardBadRequest)
+		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/"+validAccessToken+"/panels/2/query", strings.NewReader(`{"intervalMs":-100,"maxDataPoints":1000}`), t)
 		require.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
 	t.Run("Status code is 400 when the maxDataPoints is lesser than 0", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
-		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), "abc123").Return(&backend.QueryDataResponse{}, ErrPublicDashboardBadRequest)
-		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/abc123/panels/2/query", strings.NewReader(`{"intervalMs":100,"maxDataPoints":-1000}`), t)
+		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, ErrPublicDashboardBadRequest)
+		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/"+validAccessToken+"/panels/2/query", strings.NewReader(`{"intervalMs":100,"maxDataPoints":-1000}`), t)
 		require.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
