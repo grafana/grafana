@@ -13,9 +13,9 @@
   "backend": true,
 
   "info": {
-    "description": "",
+    "description": "Horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation system",
     "author": {
-      "name": "Cyril Tovena",
+      "name": "Grafana Labs",
       "url": "https://www.grafana.com"
     },
     "keywords": ["grafana", "datasource", "phlare", "flamegraph"],
@@ -25,12 +25,8 @@
     },
     "links": [
       {
-        "name": "Website",
-        "url": "https://github.com/grafana/grafana-starter-datasource-backend"
-      },
-      {
-        "name": "License",
-        "url": "https://github.com/grafana/grafana-starter-datasource-backend/blob/master/LICENSE"
+        "name": "GitHub Project",
+        "url": "https://github.com/grafana/phlare"
       }
     ]
   }

@@ -6,24 +6,20 @@
   "metrics": true,
   "backend": true,
   "info": {
-    "description": "",
+    "description": "Continuous profiling for analysis of CPU and memory usage, down to the line number and throughout time. Saving infrastructure cost, improving performance, and increasing reliability.",
     "author": {
-      "name": "Andrej Ocenas",
+      "name": "Grafana Labs",
       "url": "https://www.grafana.com"
     },
     "keywords": ["grafana", "datasource", "parca", "profiling"],
     "logos": {
-      "small": "img/logo.svg",
-      "large": "img/logo.svg"
+      "small": "img/logo-small.svg",
+      "large": "img/logo-small.svg"
     },
     "links": [
       {
-        "name": "Website",
-        "url": "https://github.com/grafana/grafana-starter-datasource-backend"
-      },
-      {
-        "name": "License",
-        "url": "https://github.com/grafana/grafana-starter-datasource-backend/blob/master/LICENSE"
+        "name": "GitHub Project",
+        "url": "https://github.com/parca-dev/parca"
       }
     ]
   }
