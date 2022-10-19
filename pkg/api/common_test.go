@@ -492,8 +492,6 @@ type APITestServerOption func(hs *HTTPServer)
 // option(s).
 func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Server {
 	t.Helper()
-	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
 
 	hs := &HTTPServer{
 		RouteRegister:      routing.NewRouteRegister(),
