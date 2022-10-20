@@ -18,6 +18,8 @@ import {
   ArrayVector,
 } from '@grafana/data';
 
+import { Icon } from '../Icon/Icon';
+
 import { BarGaugeCell } from './BarGaugeCell';
 import { DefaultCell } from './DefaultCell';
 import { getFooterValue } from './FooterRow';
@@ -32,6 +34,8 @@ import {
   GrafanaTableColumn,
   TableFooterCalc,
 } from './types';
+
+const EXPANDER_WIDTH = 20;
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
@@ -83,13 +87,20 @@ export function getColumns(
             // We can use the getToggleRowExpandedProps prop-getter
             // to build the expander.
             return (
-              <span {...props} onClick={() => setExpandedIndex(row.index === expandedIndex ? undefined : row.index)}>
-                {row.index === expandedIndex ? '👇' : '👉'}
+              <span
+                style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}
+                onClick={() => setExpandedIndex(row.index === expandedIndex ? undefined : row.index)}
+              >
+                <Icon
+                  aria-label={row.index === expandedIndex ? 'Close trace' : 'Open trace'}
+                  name={row.index === expandedIndex ? 'angle-down' : 'angle-right'}
+                  size="xl"
+                />
               </span>
             );
           },
-          width: 20,
-          minWidth: 20,
+          width: EXPANDER_WIDTH,
+          minWidth: EXPANDER_WIDTH,
           filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => {
             return [];
           },
@@ -112,6 +123,10 @@ export function getColumns(
       availableWidth -= fieldTableOptions.width;
     } else {
       fieldCountWithoutWidth++;
+    }
+
+    if (expander) {
+      availableWidth -= EXPANDER_WIDTH;
     }
 
     const selectSortType = (type: FieldType) => {

@@ -661,7 +661,7 @@ export function createTableFrameFromTraceQlQuery(
       {
         name: 'traceIdHidden',
         config: {
-          custom: { hidden: true },
+          custom: { hidden: true, subcol: true },
         },
       },
       {
@@ -687,10 +687,16 @@ export function createTableFrameFromTraceQlQuery(
           ],
         },
       },
-      { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' } },
-      // { name: 'attributes', type: FieldType.string, config: { displayNameFromDS: 'Attributes' } },
-      { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
-      { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ns' } },
+      {
+        name: 'spanStartTime',
+        type: FieldType.string,
+        config: { custom: { subcol: true }, displayNameFromDS: 'Start time' },
+      },
+      {
+        name: 'spanDuration',
+        type: FieldType.number,
+        config: { custom: { subcol: true }, displayNameFromDS: 'Duration', unit: 'ns' },
+      },
     ],
     meta: {
       preferredVisualisationType: 'table',
@@ -706,7 +712,11 @@ export function createTableFrameFromTraceQlQuery(
     trace.spanSet?.spans.forEach((span) => {
       span.attributes?.forEach((attr) => {
         if (!attributesAdded.includes(attr.key)) {
-          frame.addField({ name: attr.key, type: FieldType.string, config: { displayNameFromDS: attr.key } });
+          frame.addField({
+            name: attr.key,
+            type: FieldType.string,
+            config: { displayNameFromDS: attr.key, custom: { subcol: true } },
+          });
           attributesAdded.push(attr.key);
         }
       });
@@ -736,7 +746,6 @@ interface TraceTableData {
   [key: string]: string | number | undefined; // dynamic attribute name
   traceID?: string;
   spanID?: string;
-  //attributes?: string;
   startTime?: string;
   duration?: string;
 }
@@ -755,8 +764,8 @@ function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
   const data: TraceTableData = {
     traceIdHidden: traceID,
     spanID: span.spanID,
-    startTime: spanStartTime,
-    duration: span.durationNanos,
+    spanStartTime: spanStartTime,
+    spanDuration: span.durationNanos,
   };
 
   span.attributes?.forEach((attr) => {

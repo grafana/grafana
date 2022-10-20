@@ -299,20 +299,15 @@ export const Table = memo((props: Props) => {
         rowProps.style = {
           ...rowProps.style,
           height: tableStyles.rowHeight * indexesToKeepBlank.length,
-          paddingTop: tableStyles.rowHeight / 2,
-          paddingBottom: tableStyles.rowHeight / 2,
-          paddingLeft: 10,
+          background: theme.colors.emphasize(theme.colors.background.primary, 0.015),
+          paddingLeft: 50,
         };
         return (
           <div {...rowProps}>
-            <Table data={subData!} width={width} height={tableStyles.rowHeight * indexesToKeepBlank.length} />
+            <Table data={subData!} width={width - 80} height={tableStyles.rowHeight * indexesToKeepBlank.length} />
           </div>
         );
       }
-
-      // if (indexesToKeepBlank.includes(rowIndex)) {
-      //   return <div {...row.getRowProps({ style })} />;
-      // }
 
       if (indexesToKeepBlank.includes(rowIndex)) {
         return null;
@@ -344,6 +339,7 @@ export const Table = memo((props: Props) => {
       indexesToKeepBlank,
       width,
       subData,
+      theme,
     ]
   );
 
@@ -483,12 +479,7 @@ function useMainData(
         indexesToKeepBlank.push(newMainValues[0].length);
 
         if (isFirstExpandedSubRow) {
-          // We add 2 empty rows to account for subtable header and some padding
-          for (let columnIndex = 0; columnIndex < mainCols.length; columnIndex++) {
-            newMainValues[columnIndex].add(null);
-          }
-          indexesToKeepBlank.push(newMainValues[0].length);
-
+          // We add an empty row to account for subtable header
           for (let columnIndex = 0; columnIndex < mainCols.length; columnIndex++) {
             newMainValues[columnIndex].add(null);
           }
