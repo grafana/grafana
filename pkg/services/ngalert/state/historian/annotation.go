@@ -31,7 +31,8 @@ func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashb
 }
 
 func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmodels.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData state.InstanceStateAndReason) {
-	h.log.Debug("Alert state changed creating annotation", "rule", rule.UID, "newState", currentData.String(), "oldState", previousData.String())
+	logger := h.log.New(rule.GetKey().LogContext()...)
+	logger.Debug("Alert state changed creating annotation", "newState", currentData.String(), "oldState", previousData.String())
 
 	labels = removePrivateLabels(labels)
 	annotationText := fmt.Sprintf("%s {%s} - %s", rule.Title, labels.String(), currentData.String())
@@ -51,13 +52,13 @@ func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmode
 
 		panelId, err := strconv.ParseInt(panelUid, 10, 64)
 		if err != nil {
-			h.log.Error("Error parsing panelUID for alert annotation", "panelUID", panelUid, "rule", rule.UID, "error", err)
+			logger.Error("Error parsing panelUID for alert annotation", "panelUID", panelUid, "error", err)
 			return
 		}
 
 		dashID, err := h.dashboards.getID(ctx, rule.OrgID, dashUid)
 		if err != nil {
-			h.log.Error("Error getting dashboard for alert annotation", "dashboardUID", dashUid, "rule", rule.UID, "error", err)
+			logger.Error("Error getting dashboard for alert annotation", "dashboardUID", dashUid, "error", err)
 			return
 		}
 
@@ -66,7 +67,7 @@ func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmode
 	}
 
 	if err := h.annotations.Save(ctx, item); err != nil {
-		h.log.Error("Error saving alert annotation", "rule", rule.UID, "error", err)
+		logger.Error("Error saving alert annotation", "error", err)
 		return
 	}
 }
