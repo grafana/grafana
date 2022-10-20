@@ -275,13 +275,13 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderTablePanel(width: number) {
-    const { exploreId, datasourceInstance, timeZone } = this.props;
+    const { exploreId, timeZone } = this.props;
     return (
       <TableContainer
         ariaLabel={selectors.pages.Explore.General.table}
         width={width}
         exploreId={exploreId}
-        onCellFilterAdded={datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined}
+        onCellFilterAdded={this.onCellFilterAdded}
         timeZone={timeZone}
       />
     );
