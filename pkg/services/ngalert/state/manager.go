@@ -188,12 +188,12 @@ func (st *Manager) maybeTakeScreenshot(
 	alertRule *ngModels.AlertRule,
 	state *State,
 	oldState eval.State,
-) error {
+) (*ngModels.Image, error) {
 	shouldScreenshot := state.Resolved ||
 		state.State == eval.Alerting && oldState != eval.Alerting ||
 		state.State == eval.Alerting && state.Image == nil
 	if !shouldScreenshot {
-		return nil
+		return nil, nil
 	}
 
 	img, err := st.imageService.NewImage(ctx, alertRule)
@@ -202,12 +202,11 @@ func (st *Manager) maybeTakeScreenshot(
 		errors.Is(err, image.ErrNoDashboard) ||
 		errors.Is(err, image.ErrNoPanel) {
 		// It's not an error if screenshots are disabled, or our rule isn't allowed to generate screenshots.
-		return nil
+		return nil, nil
 	} else if err != nil {
-		return err
+		return nil, err
 	}
-	state.Image = img
-	return nil
+	return img, nil
 }
 
 // Set the current state based on evaluation results
@@ -253,13 +252,16 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	// to Alertmanager.
 	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
 
-	err := st.maybeTakeScreenshot(ctx, alertRule, currentState, oldState)
+	img, err := st.maybeTakeScreenshot(ctx, alertRule, currentState, oldState)
 	if err != nil {
 		st.log.Warn("failed to generate a screenshot for an alert instance",
 			"alert_rule", alertRule.UID,
 			"dashboard", alertRule.DashboardUID,
 			"panel", alertRule.PanelID,
 			"error", err)
+	}
+	if img != nil {
+		currentState.Image = img
 	}
 
 	st.cache.set(currentState)

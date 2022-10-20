@@ -94,13 +94,13 @@ func Test_maybeNewImage(t *testing.T) {
 			mgr := NewManager(log.NewNopLogger(), &metrics.State{}, nil,
 				&FakeRuleReader{}, &FakeInstanceStore{},
 				imageService, clock.NewMock(), &FakeHistorian{})
-			err := mgr.maybeTakeScreenshot(context.Background(), &ngmodels.AlertRule{}, test.state, test.oldState)
+			img, err := mgr.maybeTakeScreenshot(context.Background(), &ngmodels.AlertRule{}, test.state, test.oldState)
 			require.NoError(t, err)
 			if !test.shouldScreenshot {
 				require.Equal(t, 0, imageService.Called)
 			} else {
 				require.Equal(t, 1, imageService.Called)
-				require.NotNil(t, test.state.Image)
+				require.NotNil(t, img)
 			}
 		})
 	}
