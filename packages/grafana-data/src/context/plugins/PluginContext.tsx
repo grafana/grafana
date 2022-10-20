@@ -3,9 +3,9 @@ import { createContext } from 'react';
 import { DataSourceInstanceSettings } from '../../types/datasource';
 import { PluginMeta } from '../../types/plugin';
 
-export type PluginContextType = BasePluginContextType | DataSourcePluginContextType;
+export type PluginContextType = BasicPluginContextType | DataSourcePluginContextType;
 
-export interface BasePluginContextType {
+export interface BasicPluginContextType {
   meta: PluginMeta;
 }
 
