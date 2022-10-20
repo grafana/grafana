@@ -4,7 +4,7 @@ import React from 'react';
 import { select } from 'react-select-event';
 
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
-import { Dimensions, GetDimensionKeysRequest, VariableQueryType } from '../../types';
+import { GetDimensionKeysRequest, VariableQueryType } from '../../types';
 
 import { VariableQueryEditor, Props } from './VariableQueryEditor';
 
