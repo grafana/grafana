@@ -1,4 +1,3 @@
-import React, { ReactNode } from 'react';
 import {
   MapLayerRegistryItem,
   MapLayerOptions,
@@ -7,37 +6,36 @@ import {
   FrameGeometrySourceMode,
   EventBus,
   PluginState,
+  DataFrame,
+  FieldType,
 } from '@grafana/data';
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
-import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
-import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
-import { ReplaySubject } from 'rxjs';
-import { defaultImageStyleConfig, StyleConfig } from '../../style/types';
-import { getStyleConfigState } from '../../style/utils';
 import VectorLayer from 'ol/layer/Vector';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
-import { getStyleDimension} from '../../utils/utils';
 import { Stroke, Style } from 'ol/style';
 import Photo from 'ol-ext/style/Photo';
-import { StyleEditor } from '../../editor/StyleEditor';
 
 // Configuration options for Circle overlays
-export interface MarkersConfig {
-  style: StyleConfig;
-  showLegend?: boolean;
+export interface PhotoConfig {
+  kind: 'square' | 'circle' | 'anchored' | 'folio';
+  border?: number; //
+  shadow?: boolean;
+  crop?: boolean;
 }
 
-const defaultOptions: MarkersConfig = {
-  style: defaultImageStyleConfig,
-  showLegend: true,
+const defaultOptions: PhotoConfig = {
+  kind: 'square',
+  border: 2,
+  shadow: true,
+  crop: true,
 };
 
 export const PHOTOS_LAYER_ID = 'photos';
 
 // Used by default when nothing is configured
-export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
+export const defaultPhotosConfig: MapLayerOptions<PhotoConfig> = {
   type: PHOTOS_LAYER_ID,
   name: '', // will get replaced
   config: defaultOptions,
@@ -47,10 +45,13 @@ export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
   tooltip: true,
 };
 
+// TODO, should be a question mark or missing or something?
+const unknownImage = 'http://www2.culture.gouv.fr/Wave/image/memoire/1597/sap40_d0000861_v.jpg';
+
 /**
  * Map layer configuration for circle overlay
  */
-export const photosLayer: MapLayerRegistryItem<MarkersConfig> = {
+export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
   id: PHOTOS_LAYER_ID,
   name: 'Photos',
   description: 'Render photos at each data point',
@@ -65,54 +66,45 @@ export const photosLayer: MapLayerRegistryItem<MarkersConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: Map, options: MapLayerOptions<MarkersConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: Map, options: MapLayerOptions<PhotoConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     // Assert default values
     const config = {
       ...defaultOptions,
       ...options?.config,
     };
 
-    const style = await getStyleConfigState(config.style);
     const location = await getLocationMatchers(options.location);
-    console.log(style)  
     const source = new FrameVectorSource(location);
-    console.log(source)
     const vectorLayer = new VectorLayer({
       source,
     });
 
-    const legendProps = new ReplaySubject<MarkersLegendProps>(1);
-    let legend: ReactNode = null;
-    if (config.showLegend) {
-      legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
-    }
+    let images: string[] = [];
 
     vectorLayer.setStyle((feature: FeatureLike) => {
-      const idx = feature.get('rowIndex') as number;
-      console.log(feature.get('location'))
-      console.log(idx)
-      const dims = style.dims;
-      console.log(dims)
+      let src = unknownImage;
+      if (images.length > 0) {
+        const idx = feature.get('rowIndex') as number;
+        src = images[idx] ?? unknownImage;
+      }
 
-      const vectorStyle = new Style({
+      return new Style({
         image: new Photo({
-          src: 'http://www2.culture.gouv.fr/Wave/image/memoire/1597/sap40_d0000861_v.jpg',
+          src,
           radius: 20,
-          crop: true,
-          kind: 'square',
+          crop: config.crop,
+          kind: config.kind,
+          shadow: config.shadow,
           stroke: new Stroke({
-            width: 2,
-            color: '#000'
+            width: config.border ?? 0,
+            color: '#000' // ????
           })
         })
       });
-
-      return vectorStyle
     });
 
     return {
       init: () => vectorLayer,
-      legend: legend,
       update: (data: PanelData) => {
         if (!data.series?.length) {
           source.clear();
@@ -120,43 +112,58 @@ export const photosLayer: MapLayerRegistryItem<MarkersConfig> = {
         }
 
         for (const frame of data.series) {
-          style.dims = getStyleDimension(frame, style, theme);
-          console.log(style)
-
-          // Post updates to the legend component
-          if (legend) {
-            legendProps.next({
-              styleConfig: style,
-              size: style.dims?.size,
-              layerName: options.name,
-              layer: vectorLayer,
-            });
-          }
-          console.log(frame)
           source.update(frame);
+
+          // TODO... pick from config? first string?
+          for (let i = 0; i < frame.fields.length; i++) {
+            const field = frame.fields[i];
+            if (field.type === FieldType.string) {
+              images = field.values.toArray();
+              break;
+            }
+          }
           break; // Only the first frame for now!
         }
+
       },
 
       // Marker overlay options
       registerOptionsUI: (builder) => {
         builder
-          .addCustomEditor({
-            id: 'config.style',
-            path: 'config.style',
-            name: 'Styles',
-            editor: StyleEditor,
+          .addRadio({
+            path: 'config.kind',
+            name: 'Kind',
             settings: {
-              displayRotation: true,
+              options: [
+                { label: 'Square', value: 'square' },
+                { label: 'Circle', value: 'circle' },
+                { label: 'Anchored', value: 'anchored' },
+                { label: 'Folio', value: 'folio' }
+              ]
             },
-            defaultValue: defaultOptions.style,
+            defaultValue: defaultOptions.kind,
           })
           .addBooleanSwitch({
-            path: 'config.showLegend',
-            name: 'Show legend',
-            description: 'Show map legend',
-            defaultValue: defaultOptions.showLegend,
-          });
+            path: 'config.crop',
+            name: 'Crop',
+            settings: {},
+            defaultValue: defaultOptions.crop,
+          })
+          .addBooleanSwitch({
+            path: 'config.shadow',
+            name: 'Shadow',
+            settings: {},
+            defaultValue: defaultOptions.shadow,
+          })
+          .addSliderInput({
+            path: 'config.border',
+            name: 'Border',
+            settings: {
+              min: 0,
+              max: 10,
+            },
+            defaultValue: defaultOptions.border,
+          })
       },
     };
   },

@@ -1,8 +1,5 @@
-import Photo from 'ol-ext/style/Photo';
-import Feature from 'ol/Feature';
 import { Geometry, GeometryCollection, LineString, Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
-import { Stroke, Style } from 'ol/style';
 
 import { ArrayVector, Field, FieldConfig, FieldType } from '@grafana/data';
 import { getCenterPoint } from 'app/features/transformers/spatial/utils';
@@ -39,48 +36,8 @@ export function pointFieldFromLonLat(lon: Field, lat: Field): Field<Point> {
     if (longitude === null || latitude === null) {
       continue;
     }
+
     buffer[i] = new Point(fromLonLat([longitude, latitude]));
-  }
-
-  return {
-    name: 'Point',
-    type: FieldType.geo,
-    values: new ArrayVector(buffer),
-    config: hiddenTooltipField,
-  };
-}
-
-//TODO return type Field<Geometry | undefined>;
-export function imageFieldFromLonLat(lon: Field, lat: Field, src: Field): Field<Feature> {
-  const buffer = new Array<Feature>(lon.values.length);
-  for (let i = 0; i < lon.values.length; i++) {
-    const longitude = lon.values.get(i);
-    const latitude = lat.values.get(i);
-    const imageSource = src.values.get(i);
-
-    // TODO: Add unit tests to thoroughly test out edge cases
-    // If longitude or latitude are null, don't add them to buffer
-    if (longitude === null || latitude === null) {
-      continue;
-    }
-
-    const imageStyle = new Style({
-      image: new Photo({
-        src: imageSource,
-        radius: 20,
-        crop: true,
-        kind: 'square',
-        stroke: new Stroke({
-          width: 2,
-          color: '#000',
-        }),
-      }),
-    });
-    const imagePoint = new Feature({
-      geometry: new Point(fromLonLat([longitude, latitude])),
-      style: imageStyle,
-    });
-    buffer[i] = imagePoint;
   }
 
   return {

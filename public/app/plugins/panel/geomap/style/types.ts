@@ -1,5 +1,4 @@
-import Photo from 'ol-ext/style/Photo';
-import { Stroke, Style } from 'ol/style';
+import { Style } from 'ol/style';
 
 import {
   ColorDimensionConfig,
@@ -37,8 +36,6 @@ export interface StyleConfig {
 
   // Allow for rotation of markers
   rotation?: ScalarDimensionConfig;
-
-  image?: Photo;
 }
 
 export const DEFAULT_SIZE = 5;
@@ -83,20 +80,6 @@ export const defaultStyleConfig = Object.freeze({
   },
 });
 
-//TODO remove hardcoded image style
-export const defaultImageStyleConfig = Object.freeze({
-  image: new Photo({
-    src: 'http://www2.culture.gouv.fr/Wave/image/memoire/1597/sap40_d0000861_v.jpg',
-    radius: 20,
-    crop: true,
-    kind: 'square',
-    stroke: new Stroke({
-      width: 2,
-      color: '#000',
-    }),
-  }),
-});
-
 /**
  * Static options for text display.  See:
  * https://openlayers.org/en/latest/apidoc/module-ol_style_Text.html
@@ -118,7 +101,6 @@ export interface StyleConfigValues {
   symbol?: string; // the point symbol
   rotation?: number;
   text?: string;
-  image?: Photo;
 
   // Pass though (not value dependant)
   textConfig?: TextStyleConfig;
