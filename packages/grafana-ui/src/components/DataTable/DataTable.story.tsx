@@ -10,7 +10,7 @@ import mdx from './DataTable.mdx';
 const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId'];
 
 const meta: ComponentMeta<typeof DataTable> = {
-  title: 'Layout/DataTable',
+  title: 'Experimental/DataTable',
   component: DataTable,
   decorators: [withCenteredStory],
   parameters: {
