@@ -1,11 +1,16 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
+import { useWindowSize } from 'react-use';
 import useAsync from 'react-use/lib/useAsync';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Link, ButtonGroup, LinkButton, Icon, Tag, useStyles2 } from '@grafana/ui';
+import { Link, ButtonGroup, LinkButton, Icon, Tag, useStyles2, Tooltip, useTheme2 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
+
+import { contextSrv } from '../../../core/services/context_srv';
+import { AccessControlAction } from '../../../types';
+import { isOrgAdmin } from '../../plugins/admin/permissions';
 
 export interface ListPublicDashboardResponse {
   uid: string;
@@ -25,8 +30,14 @@ export const viewPublicDashboardUrl = (accessToken: string): string => {
 };
 
 export const ListPublicDashboardTable = () => {
-  const styles = useStyles2(getStyles);
+  const { width } = useWindowSize();
+  const isMobile = width <= 480;
+  const theme = useTheme2();
+  const styles = useStyles2(() => getStyles(theme, isMobile));
   const [publicDashboards, setPublicDashboards] = useState<ListPublicDashboardResponse[]>([]);
+
+  const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
+  const responsiveSize = isMobile ? 'sm' : 'md';
 
   useAsync(async () => {
     const publicDashboards = await getPublicDashboards();
@@ -38,46 +49,54 @@ export const ListPublicDashboardTable = () => {
       <table className="filter-table">
         <thead>
           <tr>
-            <th>Name</th>
+            <th className={styles.nameTh}>Name</th>
             <th>Status</th>
-            <th>Public URL</th>
-            <th>Configuration</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           {publicDashboards.map((pd) => (
             <tr key={pd.uid}>
-              <td>
-                <Link className={styles.link} href={`/d/${pd.dashboardUid}`}>
-                  {pd.title}
-                </Link>
+              <td className={styles.titleTd}>
+                <Tooltip content={pd.title} placement="top">
+                  <Link className={styles.link} href={`/d/${pd.dashboardUid}`}>
+                    {pd.title}
+                  </Link>
+                </Tooltip>
               </td>
               <td>
                 <Tag name={pd.isEnabled ? 'enabled' : 'disabled'} colorIndex={pd.isEnabled ? 20 : 15} />
               </td>
               <td>
-                <ButtonGroup>
+                <ButtonGroup className={styles.buttonGroup}>
                   <LinkButton
                     href={viewPublicDashboardUrl(pd.accessToken)}
                     fill="text"
+                    size={responsiveSize}
                     title={pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled'}
                     target="_blank"
                     disabled={!pd.isEnabled}
                   >
-                    <Icon name="external-link-alt" />
+                    <Icon size={responsiveSize} name="external-link-alt" />
                   </LinkButton>
-                </ButtonGroup>
-              </td>
-              <td>
-                <ButtonGroup>
                   <LinkButton
                     fill="text"
+                    size={responsiveSize}
                     href={`/d/${pd.dashboardUid}?shareView=share`}
                     title="Configure public dashboard"
                   >
-                    <Icon name="cog" />
+                    <Icon size={responsiveSize} name="cog" />
                   </LinkButton>
+                  {hasWritePermissions && (
+                    <LinkButton
+                      fill="text"
+                      size={responsiveSize}
+                      href={`/d/${pd.dashboardUid}?shareView=share`}
+                      title="Configure public dashboard"
+                    >
+                      <Icon size={responsiveSize} name="trash-alt" />
+                    </LinkButton>
+                  )}
                 </ButtonGroup>
               </td>
             </tr>
@@ -88,12 +107,24 @@ export const ListPublicDashboardTable = () => {
   );
 };
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, isMobile: boolean) {
   return {
     link: css`
       color: ${theme.colors.primary.text};
       text-decoration: underline;
       margin-right: ${theme.spacing()};
+    `,
+    nameTh: css`
+      width: 20%;
+    `,
+    titleTd: css`
+      max-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    `,
+    buttonGroup: css`
+      justify-content: ${isMobile ? 'space-between' : 'end'};
     `,
   };
 }

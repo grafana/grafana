@@ -55,6 +55,7 @@ func ProvideApi(
 // Registers Endpoints on Grafana Router
 func (api *Api) RegisterAPIEndpoints() {
 	auth := accesscontrol.Middleware(api.AccessControl)
+	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
 
 	// Anonymous access to public dashboard route is configured in pkg/api/api.go
 	// because it is deeply dependent on the HTTPServer.Index() method and would result in a
@@ -67,9 +68,12 @@ func (api *Api) RegisterAPIEndpoints() {
 
 	// List Public Dashboards
 	api.RouteRegister.Get("/api/dashboards/public", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
+	// Delete Public dashboard
+	api.RouteRegister.Delete("/api/dashboards/public/uid/:uid",
+		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
+		routing.Wrap(api.DeletePublicDashboard))
 
 	// Create/Update Public Dashboard
-	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
 	api.RouteRegister.Get("/api/dashboards/uid/:uid/public-config",
 		auth(middleware.ReqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, uidScope)),
 		routing.Wrap(api.GetPublicDashboardConfig))
@@ -123,6 +127,16 @@ func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "ListPublicDashboards: failed to list public dashboards", err)
 	}
 	return response.JSON(http.StatusOK, resp)
+}
+
+// Delete a public dashboard
+// DELETE /api/dashboards/public/uid/:uid
+func (api *Api) DeletePublicDashboard(c *models.ReqContext) response.Response {
+	//resp, err := api.PublicDashboardService.DeletePublicDashboard(c.Req.Context(), c.SignedInUser, c.OrgID)
+	//if err != nil {
+	//	return api.handleError(c.Req.Context(), http.StatusInternalServerError, "DeletePublicDashboard: failed to delete public dashboard", err)
+	//}
+	return response.JSON(http.StatusOK, nil)
 }
 
 // Gets public dashboard configuration for dashboard
