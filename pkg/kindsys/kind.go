@@ -22,6 +22,9 @@ type Interface interface {
 	Name() string
 
 	// TODO docs
+	MachineName() string
+
+	// TODO docs
 	Maturity() Maturity // TODO unclear if we want maturity for raw kinds
 }
 

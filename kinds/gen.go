@@ -23,6 +23,7 @@ import (
 var singles = []codegen.KindGenStep{
 	codegen.GoTypesGenerator(kindsys.GoCoreKindParentPath, nil),
 	codegen.CoreStructuredKindGenerator(kindsys.GoCoreKindParentPath, nil),
+	codegen.RawKindGenerator(kindsys.GoCoreKindParentPath, nil),
 }
 
 // All the aggregate generators to be run for core kinds.

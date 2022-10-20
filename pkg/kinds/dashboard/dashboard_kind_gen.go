@@ -59,6 +59,11 @@ func (k *Kind) Name() string {
 }
 
 // TODO standard generated docs
+func (k *Kind) MachineName() string {
+	return "dashboard"
+}
+
+// TODO standard generated docs
 func (k *Kind) Lineage() thema.Lineage {
 	return k.lin
 }
