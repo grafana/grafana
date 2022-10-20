@@ -333,6 +333,13 @@ describe('Format value', () => {
     expect(disp.suffix).toEqual(' Mil');
   });
 
+  it('with value 15000000 and unit locale', () => {
+    const value = 1500000;
+    const instance = getDisplayProcessorFromConfig({ decimals: null, unit: 'locale' });
+    const disp = instance(value);
+    expect(disp.text).toEqual('1,500,000');
+  });
+
   it('with value 128000000 and unit bytes', () => {
     const value = 1280000125;
     const instance = getDisplayProcessorFromConfig({ decimals: null, unit: 'bytes' });

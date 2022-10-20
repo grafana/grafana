@@ -74,7 +74,9 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
   const hasBoolUnit = unit === 'bool';
   const isNumType = field.type === FieldType.number;
-  const shouldTrimTrailingDecimalZeros = !hasDateUnit && !hasBoolUnit && isNumType && config.decimals == null;
+  const isLocaleFormat = unit === 'locale';
+  const shouldTrimTrailingDecimalZeros =
+    !hasDateUnit && !hasBoolUnit && !isLocaleFormat && isNumType && config.decimals == null;
 
   const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field, options.theme);
