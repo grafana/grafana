@@ -57,7 +57,7 @@ export const SharePublicDashboard = (props: Props) => {
         datasources: true,
         usage: true,
       });
-      setAnnotationsEnabled(publicDashboard!.enableAnnotations);
+      setAnnotationsEnabled(!!publicDashboard?.annotationsEnabled);
     }
 
     setEnabledSwitch((prevState) => ({ ...prevState, isEnabled: !!publicDashboard?.isEnabled }));
@@ -82,7 +82,7 @@ export const SharePublicDashboard = (props: Props) => {
 
     saveConfig({
       dashboard: props.dashboard,
-      payload: { ...publicDashboard!, isEnabled: enabledSwitch.isEnabled, enableAnnotations: annotationsEnabled },
+      payload: { ...publicDashboard!, isEnabled: enabledSwitch.isEnabled, annotationsEnabled },
     });
   };
 
@@ -126,14 +126,14 @@ export const SharePublicDashboard = (props: Props) => {
             </div>
             <hr />
             <Configuration
-              annotationsEnabled={annotationsEnabled}
+              isAnnotationsEnabled={annotationsEnabled}
               dashboard={props.dashboard}
               disabled={!hasWritePermissions || isLoading || isFetchingError}
               isPubDashEnabled={enabledSwitch.isEnabled}
               onToggleEnabled={() =>
                 setEnabledSwitch((prevState) => ({ isEnabled: !prevState.isEnabled, wasTouched: true }))
               }
-              onAnnotationsToggled={() => setAnnotationsEnabled(!annotationsEnabled)}
+              onToggleAnnotations={() => setAnnotationsEnabled((prevState) => !prevState)}
             />
             {publicDashboardPersisted(publicDashboard) && enabledSwitch.isEnabled && (
               <Field label="Link URL" className={styles.publicUrl}>
