@@ -173,6 +173,8 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: pr-test-backend
+node:
+  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -995,6 +997,8 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: main-test-backend
+node:
+  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -2225,6 +2229,8 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-oss-test-backend
+node:
+  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -2892,6 +2898,8 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-enterprise-test-backend
+node:
+  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -2989,6 +2997,8 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-enterprise2-test-backend
+node:
+  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -4275,6 +4285,8 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-branch-oss-test-backend
+node:
+  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -4919,6 +4931,8 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-branch-enterprise-test-backend
+node:
+  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -5012,6 +5026,8 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-branch-enterprise2-test-backend
+node:
+  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -5548,6 +5564,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: f7f4d8346976a28a74add8c7a6881de079111eaf767534b16603e6c4f2b783e9
+hmac: dd2b6fb51f9f5db036fbb02d284f42b1414b5a04b95a8758ac6478bdb323c6a5
 
 ...
