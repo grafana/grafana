@@ -74,6 +74,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
   const hasBoolUnit = unit === 'bool';
   const isNumType = field.type === FieldType.number;
+  const shouldTrimTrailingDecimalZeros = !hasDateUnit && !hasBoolUnit && isNumType && config.decimals == null;
 
   const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field, options.theme);
@@ -120,7 +121,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         // this is needed because we may have determined the minimum required `decimals` for y tick increments based on
         // e.g. 'seconds' field unit (0.15s, 0.20s, 0.25s), but then formatFunc decided to return milli or nanos (150, 200, 250)
         // so we end up with excess precision: 150.00, 200.00, 250.00
-        if (!hasDateUnit && !hasBoolUnit && isNumType && config.decimals == null) {
+        if (shouldTrimTrailingDecimalZeros) {
           v.text = +v.text + '';
         }
 
