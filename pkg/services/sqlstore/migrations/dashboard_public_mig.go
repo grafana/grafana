@@ -68,8 +68,8 @@ func addPublicDashboardMigration(mg *Migrator) {
 	// some migrations (like AddColumn) need the table object to be passed in. So we need to make sure its updated.
 	dashboardPublicCfgV2.Name = "dashboard_public"
 
-	mg.AddMigration("add enable_annotations column", NewAddColumnMigration(dashboardPublicCfgV2, &Column{
-		Name:     "enable_annotations",
+	mg.AddMigration("add annotations_enabled column", NewAddColumnMigration(dashboardPublicCfgV2, &Column{
+		Name:     "annotations_enabled",
 		Type:     DB_Bool,
 		Nullable: false,
 		Default:  "0",

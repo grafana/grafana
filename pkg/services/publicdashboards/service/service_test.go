@@ -112,7 +112,7 @@ func TestGetAnnotations(t *testing.T) {
 			store:           &fakeStore,
 			AnnotationsRepo: &annotationsRepo,
 		}
-		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, EnableAnnotations: true}
+		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: true}
 		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
@@ -169,7 +169,7 @@ func TestGetAnnotations(t *testing.T) {
 			store:           &fakeStore,
 			AnnotationsRepo: &annotationsRepo,
 		}
-		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, EnableAnnotations: true}
+		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: true}
 		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
@@ -238,7 +238,7 @@ func TestGetAnnotations(t *testing.T) {
 			store:           &fakeStore,
 			AnnotationsRepo: &annotationsRepo,
 		}
-		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, EnableAnnotations: true}
+		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: true}
 		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
@@ -313,7 +313,7 @@ func TestGetAnnotations(t *testing.T) {
 		}
 		annos := []DashAnnotation{grafanaAnnotation}
 		dashboard := AddAnnotationsToDashboard(t, dash, annos)
-		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, EnableAnnotations: false}
+		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: false}
 		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
 
 		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
@@ -345,7 +345,7 @@ func TestGetAnnotations(t *testing.T) {
 		}
 		annos := []DashAnnotation{grafanaAnnotation}
 		dash = AddAnnotationsToDashboard(t, dash, annos)
-		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dash.Uid, EnableAnnotations: true}
+		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dash.Uid, AnnotationsEnabled: true}
 		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dash, nil)
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return(nil, errors.New("failed")).Maybe()
 
@@ -453,11 +453,11 @@ func TestSavePublicDashboard(t *testing.T) {
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
 			PublicDashboard: &PublicDashboard{
-				IsEnabled:         true,
-				EnableAnnotations: false,
-				DashboardUid:      "NOTTHESAME",
-				OrgId:             9999999,
-				TimeSettings:      timeSettings,
+				IsEnabled:          true,
+				AnnotationsEnabled: false,
+				DashboardUid:       "NOTTHESAME",
+				OrgId:              9999999,
+				TimeSettings:       timeSettings,
 			},
 		}
 
@@ -471,7 +471,7 @@ func TestSavePublicDashboard(t *testing.T) {
 		assert.Equal(t, dashboard.Uid, pubdash.DashboardUid)
 		assert.Equal(t, dashboard.OrgId, pubdash.OrgId)
 		assert.Equal(t, dto.UserId, pubdash.CreatedBy)
-		assert.Equal(t, dto.PublicDashboard.EnableAnnotations, pubdash.EnableAnnotations)
+		assert.Equal(t, dto.PublicDashboard.AnnotationsEnabled, pubdash.AnnotationsEnabled)
 		// IsEnabled set by parameters
 		assert.Equal(t, dto.PublicDashboard.IsEnabled, pubdash.IsEnabled)
 		// CreatedAt set to non-zero time
@@ -590,9 +590,9 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
 			PublicDashboard: &PublicDashboard{
-				EnableAnnotations: false,
-				IsEnabled:         true,
-				TimeSettings:      timeSettings,
+				AnnotationsEnabled: false,
+				IsEnabled:          true,
+				TimeSettings:       timeSettings,
 			},
 		}
 
@@ -611,10 +611,10 @@ func TestUpdatePublicDashboard(t *testing.T) {
 				CreatedBy:    9,
 				CreatedAt:    time.Time{},
 
-				IsEnabled:         true,
-				EnableAnnotations: true,
-				TimeSettings:      timeSettings,
-				AccessToken:       "NOTAREALUUID",
+				IsEnabled:          true,
+				AnnotationsEnabled: true,
+				TimeSettings:       timeSettings,
+				AccessToken:        "NOTAREALUUID",
 			},
 		}
 
@@ -632,7 +632,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 		// gets updated
 		assert.Equal(t, dto.PublicDashboard.IsEnabled, updatedPubdash.IsEnabled)
-		assert.Equal(t, dto.PublicDashboard.EnableAnnotations, updatedPubdash.EnableAnnotations)
+		assert.Equal(t, dto.PublicDashboard.AnnotationsEnabled, updatedPubdash.AnnotationsEnabled)
 		assert.Equal(t, dto.PublicDashboard.TimeSettings, updatedPubdash.TimeSettings)
 		assert.Equal(t, dto.UserId, updatedPubdash.UpdatedBy)
 		assert.NotEqual(t, &time.Time{}, updatedPubdash.UpdatedAt)

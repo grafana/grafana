@@ -172,15 +172,15 @@ func (pd *PublicDashboardServiceImpl) savePublicDashboardConfig(ctx context.Cont
 
 	cmd := SavePublicDashboardConfigCommand{
 		PublicDashboard: PublicDashboard{
-			Uid:               uid,
-			DashboardUid:      dto.DashboardUid,
-			OrgId:             dto.OrgId,
-			IsEnabled:         dto.PublicDashboard.IsEnabled,
-			EnableAnnotations: dto.PublicDashboard.EnableAnnotations,
-			TimeSettings:      dto.PublicDashboard.TimeSettings,
-			CreatedBy:         dto.UserId,
-			CreatedAt:         time.Now(),
-			AccessToken:       accessToken,
+			Uid:                uid,
+			DashboardUid:       dto.DashboardUid,
+			OrgId:              dto.OrgId,
+			IsEnabled:          dto.PublicDashboard.IsEnabled,
+			AnnotationsEnabled: dto.PublicDashboard.AnnotationsEnabled,
+			TimeSettings:       dto.PublicDashboard.TimeSettings,
+			CreatedBy:          dto.UserId,
+			CreatedAt:          time.Now(),
+			AccessToken:        accessToken,
 		},
 	}
 
@@ -197,12 +197,12 @@ func (pd *PublicDashboardServiceImpl) savePublicDashboardConfig(ctx context.Cont
 func (pd *PublicDashboardServiceImpl) updatePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (string, error) {
 	cmd := SavePublicDashboardConfigCommand{
 		PublicDashboard: PublicDashboard{
-			Uid:               dto.PublicDashboard.Uid,
-			IsEnabled:         dto.PublicDashboard.IsEnabled,
-			EnableAnnotations: dto.PublicDashboard.EnableAnnotations,
-			TimeSettings:      dto.PublicDashboard.TimeSettings,
-			UpdatedBy:         dto.UserId,
-			UpdatedAt:         time.Now(),
+			Uid:                dto.PublicDashboard.Uid,
+			IsEnabled:          dto.PublicDashboard.IsEnabled,
+			AnnotationsEnabled: dto.PublicDashboard.AnnotationsEnabled,
+			TimeSettings:       dto.PublicDashboard.TimeSettings,
+			UpdatedBy:          dto.UserId,
+			UpdatedAt:          time.Now(),
 		},
 	}
 
@@ -270,7 +270,7 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 		return nil, err
 	}
 
-	if !pub.EnableAnnotations {
+	if !pub.AnnotationsEnabled {
 		return []AnnotationEvent{}, nil
 	}
 

@@ -11,18 +11,18 @@ import { useIsDesktop } from 'app/features/dashboard/utils/screen';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 export const Configuration = ({
-  annotationsEnabled,
+  isAnnotationsEnabled,
   disabled,
   isPubDashEnabled,
   onToggleEnabled,
-  onAnnotationsToggled,
+  onToggleAnnotations,
   dashboard,
 }: {
-  annotationsEnabled: boolean;
+  isAnnotationsEnabled: boolean;
   disabled: boolean;
   isPubDashEnabled?: boolean;
   onToggleEnabled: () => void;
-  onAnnotationsToggled: () => void;
+  onToggleAnnotations: () => void;
   dashboard: DashboardModel;
 }) => {
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
@@ -44,12 +44,12 @@ export const Configuration = ({
             <Label description="Show annotations on public dashboard">Show Annotations</Label>
             <Switch
               data-testid={selectors.EnableAnnotationsSwitch}
-              value={annotationsEnabled}
+              value={isAnnotationsEnabled}
               onChange={() => {
                 reportInteraction('grafana_dashboards_annotations_toggled', {
-                  action: annotationsEnabled ? 'disable' : 'enable',
+                  action: isAnnotationsEnabled ? 'disable' : 'enable',
                 });
-                onAnnotationsToggled();
+                onToggleAnnotations();
               }}
             />
           </Layout>
