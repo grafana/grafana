@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -1217,7 +1219,8 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
-		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage())
+		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
+		actest.FakeService{}, featuremgmt.WithFeatures())
 
 	for _, cb := range cbs {
 		cb(l)

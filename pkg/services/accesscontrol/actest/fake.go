@@ -32,6 +32,10 @@ func (f FakeService) DeclareFixedRoles(registrations ...accesscontrol.RoleRegist
 	return f.ExpectedErr
 }
 
+func (f FakeService) DeclarePluginRoles(pluginID string, registrations ...accesscontrol.RoleRegistration) error {
+	return f.ExpectedErr
+}
+
 func (f FakeService) RegisterFixedRoles(ctx context.Context) error {
 	return f.ExpectedErr
 }

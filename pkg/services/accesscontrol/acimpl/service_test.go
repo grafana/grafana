@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -28,6 +29,7 @@ func setupTestEnv(t testing.TB) *Service {
 		registrations: accesscontrol.RegistrationList{},
 		store:         database.ProvideService(db.InitTestDB(t)),
 		roles:         accesscontrol.BuildBasicRoleDefinitions(),
+		features:      featuremgmt.WithFeatures(),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
 	return ac
@@ -61,6 +63,7 @@ func TestUsageMetrics(t *testing.T) {
 				db.InitTestDB(t),
 				routing.NewRouteRegister(),
 				localcache.ProvideService(),
+				featuremgmt.WithFeatures(),
 			)
 			require.NoError(t, errInitAc)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])

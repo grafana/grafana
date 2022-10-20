@@ -32,6 +32,9 @@ type Service interface {
 	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(registrations ...RoleRegistration) error
+	// DeclarePluginRoles allows the caller to declare, to the service, plugins roles and their
+	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
+	DeclarePluginRoles(pluginID string, registrations ...RoleRegistration) error
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
 }

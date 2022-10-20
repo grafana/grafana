@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
@@ -25,9 +24,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/searchV2"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
@@ -95,14 +96,15 @@ func TestIntegrationPluginManager(t *testing.T) {
 	pg := postgres.ProvideService(cfg)
 	my := mysql.ProvideService(cfg, hcp)
 	ms := mssql.ProvideService(cfg)
-	sv2 := searchV2.ProvideService(cfg, db.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil)
+	sv2 := searchV2.ProvideService(cfg, sqlstore.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil)
 	graf := grafanads.ProvideService(sv2, nil)
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
 
 	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
 	reg := registry.ProvideService()
-	l := loader.ProvideService(pCfg, &licensing.OSSLicensingService{Cfg: cfg}, signature.NewUnsignedAuthorizer(pCfg), reg, provider.ProvideService(coreRegistry))
+	l := loader.ProvideService(pCfg, &licensing.OSSLicensingService{Cfg: cfg}, signature.NewUnsignedAuthorizer(pCfg),
+		reg, provider.ProvideService(coreRegistry), actest.FakeService{}, featuremgmt.WithFeatures())
 	ps, err := store.ProvideService(cfg, pCfg, reg, l)
 	require.NoError(t, err)
 

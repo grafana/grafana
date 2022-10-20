@@ -27,6 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/storage"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -46,19 +48,23 @@ type Loader struct {
 	signatureValidator signature.Validator
 	pluginStorage      storage.Manager
 	log                log.Logger
+	acService          ac.Service
+	features           *featuremgmt.FeatureManager
 
 	errs map[string]*plugins.SignatureError
 }
 
 func ProvideService(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider) *Loader {
+	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, acService ac.Service,
+	features *featuremgmt.FeatureManager) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath))
+		storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath), acService, features)
 }
 
 func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
-	processManager process.Service, pluginStorage storage.Manager) *Loader {
+	processManager process.Service, pluginStorage storage.Manager, acService ac.Service,
+	features *featuremgmt.FeatureManager) *Loader {
 	return &Loader{
 		pluginFinder:       finder.New(),
 		pluginRegistry:     pluginRegistry,
@@ -68,6 +74,8 @@ func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoa
 		pluginStorage:      pluginStorage,
 		errs:               make(map[string]*plugins.SignatureError),
 		log:                log.New("plugin.loader"),
+		acService:          acService,
+		features:           features,
 	}
 }
 
@@ -195,6 +203,16 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 			return nil, err
 		}
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
+
+		if l.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) && len(p.JSONData.Roles) > 0 {
+			if errDeclareRoles := l.acService.DeclarePluginRoles(p.ID, p.JSONData.Roles...); errDeclareRoles != nil {
+				l.log.Warn("Declare plugin roles failed",
+					"pluginID", p.ID,
+					"warning", "Make sure the role declaration is correct.",
+					"path", p.PluginDir+"/plugin.json",
+					"error", errDeclareRoles)
+			}
+		}
 	}
 
 	for _, p := range verifiedPlugins {
