@@ -21,7 +21,7 @@ export class VideoPanel extends PureComponent<Props, State> {
   player?: videojs.Player;
   subscription = new Subscription();
   eventBus: EventBus;
-  hoverPayload: VideoPlayPayload = { point: {} as any };
+  hoverPayload: VideoPlayPayload = { point: {} } as unknown as VideoPlayPayload;
   hoverEvent = new DataHoverEvent(this.hoverPayload);
 
   constructor(props: Props) {
@@ -120,40 +120,32 @@ export class VideoPanel extends PureComponent<Props, State> {
     this.player = player;
     console.log('ready', player);
 
-    player.on('waiting', (v: any) => {
-      console.log('waiting', v);
+    player.on('waiting', (evt: Event) => {
+      console.log('waiting', evt);
     });
 
-    player.on('progress', (v: any) => {
-      console.log('progress', v);
+    player.on('progress', (evt: ProgressEvent) => {
+      console.log('progress', evt);
     });
 
-    // player.on('seeking', (v: any) => {
-    //   console.log('seeking', v);
-    // });
-
-    // player.on('seeked', (v: any) => {
-    //   console.log('seeked', v);
-    // });
-
-    player.on('ended', (v: any) => {
-      console.log('ended', v);
+    player.on('ended', (evt: Event) => {
+      console.log('ended', evt);
     });
 
-    player.on('stageclick', (v: any) => {
-      console.log('stageclick', v);
+    player.on('stageclick', (evt: Event) => {
+      console.log('stageclick', evt);
     });
 
-    player.on('loadedmetadata', (v: any) => {
-      console.log('loadedmetadata', v);
+    player.on('loadedmetadata', (evt: Event) => {
+      console.log('loadedmetadata', evt);
     });
 
-    player.on('durationchange', (v: any) => {
-      console.log('durationchange', v);
+    player.on('durationchange', (evt: Event) => {
+      console.log('durationchange', evt);
       this.setState({ duration: player.duration() });
     });
 
-    player.on('timeupdate', (v: any) => {
+    player.on('timeupdate', (e: Event) => {
       const evt = this.hoverPayload;
       const start = this.props.data.timeRange.from.valueOf();
       const offset = player.currentTime();
