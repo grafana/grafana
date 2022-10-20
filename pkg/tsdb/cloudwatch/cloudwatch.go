@@ -29,7 +29,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
 type datasourceInfo struct {
@@ -104,14 +106,34 @@ type SessionCache interface {
 }
 
 func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache, features featuremgmt.FeatureToggles) *cloudWatchExecutor {
-	cwe := &cloudWatchExecutor{
+	e := &cloudWatchExecutor{
 		im:       im,
 		cfg:      cfg,
 		sessions: sessions,
 		features: features,
 	}
-	cwe.resourceHandler = httpadapter.New(cwe.newResourceMux())
-	return cwe
+
+	e.resourceHandler = httpadapter.New(e.newResourceMux())
+	return e
+}
+
+func (e *cloudWatchExecutor) getClients(pluginCtx backend.PluginContext, region string) (models.Clients, error) {
+	r := region
+	if region == defaultRegion {
+		dsInfo, err := e.getDSInfo(pluginCtx)
+		if err != nil {
+			return models.Clients{}, err
+		}
+		r = dsInfo.region
+	}
+
+	sess, err := e.newSession(pluginCtx, r)
+	if err != nil {
+		return models.Clients{}, err
+	}
+	return models.Clients{
+		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), e.cfg),
+	}, nil
 }
 
 func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -438,6 +460,13 @@ func (e *cloudWatchExecutor) getDSInfo(pluginCtx backend.PluginContext) (*dataso
 
 func isTerminated(queryStatus string) bool {
 	return queryStatus == "Complete" || queryStatus == "Cancelled" || queryStatus == "Failed" || queryStatus == "Timeout"
+}
+
+// NewMetricsAPI is a CloudWatch metrics api factory.
+//
+// Stubbable by tests.
+var NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider {
+	return cloudwatch.New(sess)
 }
 
 // NewCWClient is a CloudWatch client factory.

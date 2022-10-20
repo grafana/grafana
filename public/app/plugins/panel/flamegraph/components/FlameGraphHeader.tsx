@@ -1,13 +1,15 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { Button, Input, useStyles, RadioButtonGroup } from '@grafana/ui';
+import { GrafanaTheme2, CoreApp } from '@grafana/data';
+import { Button, Input, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 
 import { SelectedView } from './types';
 
 type Props = {
+  app: CoreApp;
   search: string;
   setTopLevelIndex: (level: number) => void;
   setRangeMin: (range: number) => void;
@@ -19,6 +21,7 @@ type Props = {
 };
 
 const FlameGraphHeader = ({
+  app,
   search,
   setTopLevelIndex,
   setRangeMin,
@@ -28,7 +31,7 @@ const FlameGraphHeader = ({
   setSelectedView,
   containerWidth,
 }: Props) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2((theme) => getStyles(theme, app));
 
   let viewOptions: Array<{ value: string; label: string; description: string }> = [
     { value: SelectedView.TopTable, label: 'Top Table', description: 'Only show top table' },
@@ -83,11 +86,15 @@ const FlameGraphHeader = ({
   );
 };
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2, app: CoreApp) => ({
   header: css`
     display: flow-root;
-    padding: 0 0 20px 0;
     width: 100%;
+    background: ${theme.colors.background.primary};
+    top: 0;
+    height: 50px;
+    z-index: ${theme.zIndex.navbarFixed};
+    ${app === CoreApp.Explore ? 'position: sticky; margin-bottom: 8px; padding-top: 9px' : ''};
   `,
   inputContainer: css`
     float: left;
