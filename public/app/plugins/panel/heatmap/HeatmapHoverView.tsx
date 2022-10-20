@@ -48,16 +48,29 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
 
   // labeled buckets
   const meta = readHeatmapRowsCustomMeta(data.heatmap);
-  const yDispSrc = meta.yOrdinalDisplay ?? yVals;
   const yDisp = yField?.display ? (v: any) => formattedValueToString(yField.display!(v)) : (v: any) => `${v}`;
 
   const yValueIdx = index % data.yBucketCount! ?? 0;
 
-  const yMinIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx - 1 : yValueIdx;
-  const yMaxIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx : yValueIdx + 1;
+  let yBucketMin: string;
+  let yBucketMax: string;
 
-  const yBucketMin = yDispSrc?.[yMinIdx];
-  const yBucketMax = yDispSrc?.[yMaxIdx];
+  if (meta.yOrdinalDisplay) {
+    const yMinIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx - 1 : yValueIdx;
+    const yMaxIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx : yValueIdx + 1;
+    yBucketMin = `${meta.yOrdinalDisplay[yMinIdx]}`;
+    yBucketMax = `${meta.yOrdinalDisplay[yMaxIdx]}`;
+  } else {
+    if (data.yLayout === HeatmapCellLayout.le) {
+      const value = yVals?.[yValueIdx];
+      yBucketMax = `${value}`;
+      yBucketMin = `${value - data.yBucketSize!}`;
+    } else {
+      const value = yVals?.[yValueIdx];
+      yBucketMin = `${value}`;
+      yBucketMax = `${value + data.yBucketSize!}`;
+    }
+  }
 
   let xBucketMin: number;
   let xBucketMax: number;
