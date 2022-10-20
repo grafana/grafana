@@ -1,4 +1,4 @@
-package cloudwatch
+package models
 
 import (
 	"testing"
@@ -13,7 +13,7 @@ func TestCloudWatchQuery(t *testing.T) {
 		t.Run("is not generated for MetricQueryTypeQuery", func(t *testing.T) {
 			startTime := time.Now()
 			endTime := startTime.Add(2 * time.Hour)
-			query := &cloudWatchQuery{
+			query := &CloudWatchQuery{
 				RefId:      "A",
 				Region:     "us-east-1",
 				Expression: "",
@@ -28,7 +28,7 @@ func TestCloudWatchQuery(t *testing.T) {
 				MetricEditorMode: MetricEditorModeBuilder,
 			}
 
-			deepLink, err := query.buildDeepLink(startTime, endTime, false)
+			deepLink, err := query.BuildDeepLink(startTime, endTime, false)
 			require.NoError(t, err)
 			assert.Empty(t, deepLink)
 		})
@@ -36,7 +36,7 @@ func TestCloudWatchQuery(t *testing.T) {
 		t.Run("does not include label in case dynamic label is diabled", func(t *testing.T) {
 			startTime := time.Now()
 			endTime := startTime.Add(2 * time.Hour)
-			query := &cloudWatchQuery{
+			query := &CloudWatchQuery{
 				RefId:      "A",
 				Region:     "us-east-1",
 				Expression: "",
@@ -52,7 +52,7 @@ func TestCloudWatchQuery(t *testing.T) {
 				MetricEditorMode: MetricEditorModeBuilder,
 			}
 
-			deepLink, err := query.buildDeepLink(startTime, endTime, false)
+			deepLink, err := query.BuildDeepLink(startTime, endTime, false)
 			require.NoError(t, err)
 			assert.NotContains(t, deepLink, "label")
 		})
@@ -60,7 +60,7 @@ func TestCloudWatchQuery(t *testing.T) {
 		t.Run("includes label in case dynamic label is enabled and it's a metric stat query", func(t *testing.T) {
 			startTime := time.Now()
 			endTime := startTime.Add(2 * time.Hour)
-			query := &cloudWatchQuery{
+			query := &CloudWatchQuery{
 				RefId:      "A",
 				Region:     "us-east-1",
 				Expression: "",
@@ -76,7 +76,7 @@ func TestCloudWatchQuery(t *testing.T) {
 				MetricEditorMode: MetricEditorModeBuilder,
 			}
 
-			deepLink, err := query.buildDeepLink(startTime, endTime, false)
+			deepLink, err := query.BuildDeepLink(startTime, endTime, false)
 			require.NoError(t, err)
 			assert.NotContains(t, deepLink, "label")
 		})
@@ -84,7 +84,7 @@ func TestCloudWatchQuery(t *testing.T) {
 		t.Run("includes label in case dynamic label is enabled and it's a math expression query", func(t *testing.T) {
 			startTime := time.Now()
 			endTime := startTime.Add(2 * time.Hour)
-			query := &cloudWatchQuery{
+			query := &CloudWatchQuery{
 				RefId:            "A",
 				Region:           "us-east-1",
 				Statistic:        "Average",
@@ -97,14 +97,14 @@ func TestCloudWatchQuery(t *testing.T) {
 				MetricEditorMode: MetricEditorModeRaw,
 			}
 
-			deepLink, err := query.buildDeepLink(startTime, endTime, false)
+			deepLink, err := query.BuildDeepLink(startTime, endTime, false)
 			require.NoError(t, err)
 			assert.NotContains(t, deepLink, "label")
 		})
 	})
 
 	t.Run("SEARCH(someexpression) was specified in the query editor", func(t *testing.T) {
-		query := &cloudWatchQuery{
+		query := &CloudWatchQuery{
 			RefId:      "A",
 			Region:     "us-east-1",
 			Expression: "SEARCH(someexpression)",
@@ -114,11 +114,11 @@ func TestCloudWatchQuery(t *testing.T) {
 		}
 
 		assert.True(t, query.isSearchExpression(), "Expected a search expression")
-		assert.False(t, query.isMathExpression(), "Expected not math expression")
+		assert.False(t, query.IsMathExpression(), "Expected not math expression")
 	})
 
 	t.Run("No expression, no multi dimension key values and no * was used", func(t *testing.T) {
-		query := &cloudWatchQuery{
+		query := &CloudWatchQuery{
 			RefId:      "A",
 			Region:     "us-east-1",
 			Expression: "",
@@ -132,11 +132,11 @@ func TestCloudWatchQuery(t *testing.T) {
 		}
 
 		assert.False(t, query.isSearchExpression(), "Expected not a search expression")
-		assert.False(t, query.isMathExpression(), "Expected not math expressions")
+		assert.False(t, query.IsMathExpression(), "Expected not math expressions")
 	})
 
 	t.Run("No expression but multi dimension key values exist", func(t *testing.T) {
-		query := &cloudWatchQuery{
+		query := &CloudWatchQuery{
 			RefId:      "A",
 			Region:     "us-east-1",
 			Expression: "",
@@ -149,11 +149,11 @@ func TestCloudWatchQuery(t *testing.T) {
 		}
 
 		assert.True(t, query.isSearchExpression(), "Expected a search expression")
-		assert.False(t, query.isMathExpression(), "Expected not math expressions")
+		assert.False(t, query.IsMathExpression(), "Expected not math expressions")
 	})
 
 	t.Run("No expression but dimension values has *", func(t *testing.T) {
-		query := &cloudWatchQuery{
+		query := &CloudWatchQuery{
 			RefId:      "A",
 			Region:     "us-east-1",
 			Expression: "",
@@ -167,11 +167,11 @@ func TestCloudWatchQuery(t *testing.T) {
 		}
 
 		assert.True(t, query.isSearchExpression(), "Expected a search expression")
-		assert.False(t, query.isMathExpression(), "Expected not math expression")
+		assert.False(t, query.IsMathExpression(), "Expected not math expression")
 	})
 
 	t.Run("Query has a multi-valued dimension", func(t *testing.T) {
-		query := &cloudWatchQuery{
+		query := &CloudWatchQuery{
 			RefId:      "A",
 			Region:     "us-east-1",
 			Expression: "",
@@ -185,11 +185,11 @@ func TestCloudWatchQuery(t *testing.T) {
 		}
 
 		assert.True(t, query.isSearchExpression(), "Expected a search expression")
-		assert.True(t, query.isMultiValuedDimensionExpression(), "Expected a multi-valued dimension expression")
+		assert.True(t, query.IsMultiValuedDimensionExpression(), "Expected a multi-valued dimension expression")
 	})
 
 	t.Run("No dimensions were added", func(t *testing.T) {
-		query := &cloudWatchQuery{
+		query := &CloudWatchQuery{
 			RefId:      "A",
 			Region:     "us-east-1",
 			Expression: "",
@@ -202,18 +202,18 @@ func TestCloudWatchQuery(t *testing.T) {
 		t.Run("Match exact is false", func(t *testing.T) {
 			query.MatchExact = false
 			assert.True(t, query.isSearchExpression(), "Expected a search expression")
-			assert.False(t, query.isMathExpression(), "Expected not math expression")
+			assert.False(t, query.IsMathExpression(), "Expected not math expression")
 		})
 
 		t.Run("Match exact is true", func(t *testing.T) {
 			query.MatchExact = true
 			assert.False(t, query.isSearchExpression(), "Exxpected not search expression")
-			assert.False(t, query.isMathExpression(), "Expected not math expression")
+			assert.False(t, query.IsMathExpression(), "Expected not math expression")
 		})
 	})
 
 	t.Run("Match exact is", func(t *testing.T) {
-		query := &cloudWatchQuery{
+		query := &CloudWatchQuery{
 			RefId:      "A",
 			Region:     "us-east-1",
 			Expression: "",
@@ -227,6 +227,6 @@ func TestCloudWatchQuery(t *testing.T) {
 		}
 
 		assert.True(t, query.isSearchExpression(), "Expected search expression")
-		assert.False(t, query.isMathExpression(), "Expected not math expression")
+		assert.False(t, query.IsMathExpression(), "Expected not math expression")
 	})
 }
