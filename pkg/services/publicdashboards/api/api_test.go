@@ -247,6 +247,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 		ExpectedHttpResponse int
 		DashboardResult      *models.Dashboard
 		Err                  error
+		FixedErrorResponse   string
 	}{
 		{
 			Name:                 "It gets a public dashboard",
@@ -257,7 +258,8 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 					"Uid": DashboardUid,
 				}),
 			},
-			Err: nil,
+			Err:                nil,
+			FixedErrorResponse: "",
 		},
 		{
 			Name:                 "It should return 404 if no public dashboard",
@@ -265,6 +267,15 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			ExpectedHttpResponse: http.StatusNotFound,
 			DashboardResult:      nil,
 			Err:                  ErrPublicDashboardNotFound,
+			FixedErrorResponse:   "",
+		},
+		{
+			Name:                 "It should return 400 if it is an invalid access token",
+			AccessToken:          "SomeInvalidAccessToken",
+			ExpectedHttpResponse: http.StatusBadRequest,
+			DashboardResult:      nil,
+			Err:                  nil,
+			FixedErrorResponse:   "{\"message\":\"Invalid Access Token\"}",
 		},
 	}
 
@@ -294,7 +305,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
-			if test.Err == nil {
+			if test.Err == nil && test.FixedErrorResponse == "" {
 				var dashResp dtos.DashboardFullWithMeta
 				err := json.Unmarshal(response.Body.Bytes(), &dashResp)
 				require.NoError(t, err)
@@ -303,6 +314,9 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 				assert.Equal(t, false, dashResp.Meta.CanEdit)
 				assert.Equal(t, false, dashResp.Meta.CanDelete)
 				assert.Equal(t, false, dashResp.Meta.CanSave)
+			} else if test.FixedErrorResponse != "" {
+				require.Equal(t, test.ExpectedHttpResponse, response.Code)
+				require.JSONEq(t, "{\"message\":\"Invalid Access Token\"}", response.Body.String())
 			} else {
 				var errResp JsonErrResponse
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
@@ -608,8 +622,9 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 	t.Run("Status code is 400 when the access token is invalid", func(t *testing.T) {
 		server, _ := setup(true)
-		resp := callAPI(server, http.MethodPost, getValidQueryPath("invalidToken"), strings.NewReader("{}"), t)
+		resp := callAPI(server, http.MethodPost, getValidQueryPath("SomeInvalidAccessToken"), strings.NewReader("{}"), t)
 		require.Equal(t, http.StatusBadRequest, resp.Code)
+		require.JSONEq(t, "{\"message\":\"Invalid Access Token\"}", resp.Body.String())
 	})
 
 	t.Run("Status code is 400 when the intervalMS is lesser than 0", func(t *testing.T) {

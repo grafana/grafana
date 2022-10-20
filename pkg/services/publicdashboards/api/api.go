@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	"net/http"
 	"strconv"
 
@@ -61,9 +62,9 @@ func (api *Api) RegisterAPIEndpoints() {
 	// circular dependency
 
 	// public endpoints
-	api.RouteRegister.Get("/api/public/dashboards/:accessToken", RequiresCorrectAccessToken(), routing.Wrap(api.GetPublicDashboard))
-	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", RequiresCorrectAccessToken(), routing.Wrap(api.QueryPublicDashboard))
-	api.RouteRegister.Get("/api/public/dashboards/:accessToken/annotations", RequiresCorrectAccessToken(), routing.Wrap(api.GetAnnotations))
+	api.RouteRegister.Get("/api/public/dashboards/:accessToken", routing.Wrap(api.GetPublicDashboard))
+	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
+	api.RouteRegister.Get("/api/public/dashboards/:accessToken/annotations", routing.Wrap(api.GetAnnotations))
 
 	// List Public Dashboards
 	api.RouteRegister.Get("/api/dashboards/public", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
@@ -83,6 +84,10 @@ func (api *Api) RegisterAPIEndpoints() {
 // GET /api/public/dashboards/:accessToken
 func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
+
+	if !tokens.IsValidAccessToken(accessToken) {
+		return response.Error(http.StatusBadRequest, "Invalid Access Token", nil)
+	}
 
 	pubdash, dash, err := api.PublicDashboardService.GetPublicDashboard(
 		c.Req.Context(),
@@ -170,6 +175,11 @@ func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Respons
 // QueryPublicDashboard returns all results for a given panel on a public dashboard
 // POST /api/public/dashboard/:accessToken/panels/:panelId/query
 func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
+	accessToken := web.Params(c.Req)[":accessToken"]
+	if !tokens.IsValidAccessToken(accessToken) {
+		return response.Error(http.StatusBadRequest, "Invalid Access Token", nil)
+	}
+
 	panelId, err := strconv.ParseInt(web.Params(c.Req)[":panelId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "QueryPublicDashboard: invalid panel ID", err)
@@ -180,7 +190,7 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "QueryPublicDashboard: bad request data", err)
 	}
 
-	resp, err := api.PublicDashboardService.GetQueryDataResponse(c.Req.Context(), c.SkipCache, reqDTO, panelId, web.Params(c.Req)[":accessToken"])
+	resp, err := api.PublicDashboardService.GetQueryDataResponse(c.Req.Context(), c.SkipCache, reqDTO, panelId, accessToken)
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "QueryPublicDashboard: error running public dashboard panel queries", err)
 	}
@@ -188,13 +198,20 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 	return toJsonStreamingResponse(api.Features, resp)
 }
 
+// GetAnnotations returns annotations for a public dashboard
+// GET /api/public/dashboards/:accessToken/annotations
 func (api *Api) GetAnnotations(c *models.ReqContext) response.Response {
+	accessToken := web.Params(c.Req)[":accessToken"]
+	if !tokens.IsValidAccessToken(accessToken) {
+		return response.Error(http.StatusBadRequest, "Invalid Access Token", nil)
+	}
+
 	reqDTO := AnnotationsQueryDTO{
 		From: c.QueryInt64("from"),
 		To:   c.QueryInt64("to"),
 	}
 
-	annotations, err := api.PublicDashboardService.GetAnnotations(c.Req.Context(), reqDTO, web.Params(c.Req)[":accessToken"])
+	annotations, err := api.PublicDashboardService.GetAnnotations(c.Req.Context(), reqDTO, accessToken)
 
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "error getting public dashboard annotations", err)
