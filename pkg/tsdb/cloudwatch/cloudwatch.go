@@ -106,33 +106,33 @@ type SessionCache interface {
 }
 
 func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache, features featuremgmt.FeatureToggles) *cloudWatchExecutor {
-	cwe := &cloudWatchExecutor{
+	e := &cloudWatchExecutor{
 		im:       im,
 		cfg:      cfg,
 		sessions: sessions,
 		features: features,
 	}
 
-	cwe.resourceHandler = httpadapter.New(cwe.newResourceMux())
-	return cwe
+	e.resourceHandler = httpadapter.New(e.newResourceMux())
+	return e
 }
 
-func (cwe *cloudWatchExecutor) getClients(pluginCtx backend.PluginContext, region string) (models.Clients, error) {
+func (e *cloudWatchExecutor) getClients(pluginCtx backend.PluginContext, region string) (models.Clients, error) {
 	r := region
 	if region == defaultRegion {
-		dsInfo, err := cwe.getDSInfo(pluginCtx)
+		dsInfo, err := e.getDSInfo(pluginCtx)
 		if err != nil {
 			return models.Clients{}, err
 		}
 		r = dsInfo.region
 	}
 
-	sess, err := cwe.newSession(pluginCtx, r)
+	sess, err := e.newSession(pluginCtx, r)
 	if err != nil {
 		return models.Clients{}, err
 	}
 	return models.Clients{
-		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), cwe.cfg),
+		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), e.cfg),
 	}, nil
 }
 
