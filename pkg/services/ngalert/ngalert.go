@@ -190,7 +190,7 @@ func (ng *AlertNG) init() error {
 	}
 
 	historian := historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService)
-	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.imageService, clk, historian)
+	stateManager := state.NewManager(ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.imageService, clk, historian)
 	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title

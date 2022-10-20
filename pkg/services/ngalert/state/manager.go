@@ -43,13 +43,13 @@ type Manager struct {
 	externalURL   *url.URL
 }
 
-func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
+func NewManager(metrics *metrics.State, externalURL *url.URL,
 	ruleStore RuleReader, instanceStore InstanceStore, imageService image.ImageService, clock clock.Clock, historian Historian) *Manager {
 	manager := &Manager{
 		cache:         newCache(),
 		quit:          make(chan struct{}),
 		ResendDelay:   ResendDelay, // TODO: make this configurable
-		log:           logger,
+		log:           log.New("ngalert.state"),
 		metrics:       metrics,
 		ruleStore:     ruleStore,
 		instanceStore: instanceStore,
