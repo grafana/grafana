@@ -1,23 +1,28 @@
-<!-- Images -->
-<mj-section padding="0" text-align="left">
-  <mj-column>
-    <!-- Embedded Image -->
-    <mj-raw>
-      {{ if .EmbeddedImage }}
-      <img src="cid:{{ .EmbeddedImage }}" alt="Alerting Chart Attached Below" />
-      {{ end }}
-    </mj-raw>
-
-    <!-- Image from screenshot service -->
-    <mj-raw>
-      {{ if .ImageURL }}
-    </mj-raw>
-    <mj-image src="{{ .ImageURL }}" padding="0" alt="Alerting Panel" />
-    <mj-raw>
-      {{ end }}
-    </mj-raw>
+<!-- Image from external service -->
+<mj-raw>
+  {{ if .ImageURL }}
+</mj-raw>
+<mj-section padding="0">
+  <mj-column border-bottom="1px solid #2f3037">
+    <mj-image href="{{ .ImageURL }}" src="{{ .ImageURL }}" padding="0" />
   </mj-column>
 </mj-section>
+<mj-raw>
+  {{ end }}
+</mj-raw>
+
+<!-- Embedded Image -->
+<mj-raw>
+  {{ if .EmbeddedImage }}
+</mj-raw>
+<mj-section padding="0">
+  <mj-column border-bottom="1px solid #2f3037">
+    <mj-image src="cid:{{ .EmbeddedImage }}" padding="0" />
+  </mj-column>
+</mj-section>
+<mj-raw>
+  {{ end }}
+</mj-raw>
 
 <mj-section padding="0" text-align="left">
   <mj-column>
