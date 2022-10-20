@@ -22,11 +22,11 @@ type AnnotationStateHistorian struct {
 	log         log.Logger
 }
 
-func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashboards.DashboardService, log log.Logger) *AnnotationStateHistorian {
+func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashboards.DashboardService) *AnnotationStateHistorian {
 	return &AnnotationStateHistorian{
 		annotations: annotations,
 		dashboards:  newDashboardResolver(dashboards, defaultDashboardCacheExpiry),
-		log:         log,
+		log:         log.New("ngalert.state.historian"),
 	}
 }
 
