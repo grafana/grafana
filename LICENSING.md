@@ -19,8 +19,8 @@ packages/jaeger-ui-components/
 packaging/
 kinds/
 pkg/kinds/
-pkg/framework/kind
-pkg/registry/corekind
+pkg/kindsys/
+pkg/registry/corekind/
 grafana-mixin/
 public/app/plugins/datasource/tempo
 public/img/icons/solid/

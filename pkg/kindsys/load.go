@@ -1,4 +1,4 @@
-package kind
+package kindsys
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ func init() {
 	}
 }
 
-var prefix = filepath.Join("/pkg", "framework", "kind")
+var prefix = filepath.Join("/pkg", "kindsys")
 
 func doLoadFrameworkCUE(ctx *cue.Context) (cue.Value, error) {
 	var v cue.Value

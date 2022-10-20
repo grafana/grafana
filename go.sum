@@ -1379,10 +1379,6 @@ github.com/grafana/prometheus-alertmanager v0.24.1-0.20221006171631-7f1ce00421dc
 github.com/grafana/prometheus-alertmanager v0.24.1-0.20221006171631-7f1ce00421dc/go.mod h1:HVHqK+BVPa/tmL8EMhLCCrPt2a1GdJpEyxr5hgur2UI=
 github.com/grafana/saml v0.4.9-0.20220727151557-61cd9c9353fc h1:1PY8n+rXuBNr3r1JQhoytWDCpc+pq+BibxV0SZv+Cr4=
 github.com/grafana/saml v0.4.9-0.20220727151557-61cd9c9353fc/go.mod h1:9Zh6dWPtB3MSzTRt8fIFH60Z351QQ+s7hCU3J/tTlA4=
-github.com/grafana/thema v0.0.0-20221018124607-479e3af30ae8 h1:BW5daw1sAEhMUIRqdu6w/OtJaXUVdlf2VEfapq3RBQs=
-github.com/grafana/thema v0.0.0-20221018124607-479e3af30ae8/go.mod h1:/npgTzdtaL9SBvBUTlPImyth7q1NGn7mSzrj4CpkZxM=
-github.com/grafana/thema v0.0.0-20221019170454-a942487dc37c h1:XAJUgiKyOghBfNceiqaJAgwcEc40tBQi96tmUruv9Jw=
-github.com/grafana/thema v0.0.0-20221019170454-a942487dc37c/go.mod h1:/npgTzdtaL9SBvBUTlPImyth7q1NGn7mSzrj4CpkZxM=
 github.com/grafana/thema v0.0.0-20221019174755-33088a06e0ad h1:1sblHgeh7WRkaU8IJcusKK6iqSWTFcIAlVl4b51JNfU=
 github.com/grafana/thema v0.0.0-20221019174755-33088a06e0ad/go.mod h1:/npgTzdtaL9SBvBUTlPImyth7q1NGn7mSzrj4CpkZxM=
 github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6 h1:I9dh1MXGX0wGyxdV/Sl7+ugnki4Dfsy8lv2s5Yf887o=

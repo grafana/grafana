@@ -5,21 +5,21 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/grafana/grafana/pkg/framework/kind"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/tgo"
 	"golang.org/x/tools/go/ast/astutil"
 )
 
-func nameFor(m kind.SomeKindMeta) string {
+func nameFor(m kindsys.SomeKindMeta) string {
 	switch x := m.(type) {
-	case kind.RawMeta:
+	case kindsys.RawMeta:
 		return x.Name
-	case kind.CoreStructuredMeta:
+	case kindsys.CoreStructuredMeta:
 		return x.Name
-	case kind.CustomStructuredMeta:
+	case kindsys.CustomStructuredMeta:
 		return x.Name
-	case kind.SlotImplMeta:
+	case kindsys.SlotImplMeta:
 		return x.Name
 	default:
 		// unreachable so long as all the possibilities in KindMetas have switch branches
@@ -124,7 +124,7 @@ type genBaseRegistry struct {
 var _ AggregateKindGenStep = &genBaseRegistry{}
 
 // BaseCoreRegistryGenerator generates a static registry for core kinds that
-// is only initializes their [kind.Interface]. No slot kinds are composed.
+// is only initializes their [kindsys.Interface]. No slot kinds are composed.
 //
 // Path should be the relative path to the directory that will contain the
 // generated registry. kindrelroot should be the repo-root-relative path to the

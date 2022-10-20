@@ -3,34 +3,34 @@ package codegen
 import (
 	"strings"
 
-	"github.com/grafana/grafana/pkg/framework/kind"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
 )
 
 // A KindGenStep generates a single output file from a single
-// [kind.SomeDecl].
+// [kindsys.SomeDecl].
 //
 // Examples of SingleKindGenerators:
 //   - [TSTypesGenerator]: Generate TS types for a single kind
-//   - [KindInterfaceGenerator]: Generate [kind.Interface] implementation and Thema bindings for a single kind
+//   - [KindInterfaceGenerator]: Generate [kindsys.Interface] implementation and Thema bindings for a single kind
 type KindGenStep interface {
 	// Name returns the name of the generator. For use in error output.
 	Name() string
-	// Generate takes a kind.SomeDecl and generates a single file. A nil, nil
+	// Generate takes a kindsys.SomeDecl and generates a single file. A nil, nil
 	// return indicates the generator has nothing to do for the provided kind.
 	Generate(*DeclForGen) (*GeneratedFile, error)
 }
 
 // A AggregateKindGenStep generates a single output file from a set of
-// [kind.SomeDecl].
+// [kindsys.SomeDecl].
 //
 // Examples of MultiKindGenerators:
-//   - [BaseCoreRegistryGenerator]: Generate a static registry of [kind.Interface] implementations.
+//   - [BaseCoreRegistryGenerator]: Generate a static registry of [kindsys.Interface] implementations.
 //   - [TSSchemaIndexGenerator]: Generate a TypeScript module index that re-exports all generated types.
 type AggregateKindGenStep interface {
 	// Name returns the name of the generator. For use in error output.
 	Name() string
-	// Generate takes a set of kind.SomeDecl and generates a single file. A nil, nil
+	// Generate takes a set of kindsys.SomeDecl and generates a single file. A nil, nil
 	// return indicates the generator has nothing to do for the provided kind.
 	Generate([]*DeclForGen) (*GeneratedFile, error)
 }
@@ -47,7 +47,7 @@ type GeneratedFile struct {
 
 // TODO docs
 // TODO maybe this should take a thema.Runtime and bind opts? not really supposed to be that reusable though
-func ForGen(rt *thema.Runtime, decl *kind.SomeDecl) (*DeclForGen, error) {
+func ForGen(rt *thema.Runtime, decl *kindsys.SomeDecl) (*DeclForGen, error) {
 	lin, err := decl.BindKindLineage(rt)
 	if err != nil {
 		return nil, err
@@ -59,10 +59,10 @@ func ForGen(rt *thema.Runtime, decl *kind.SomeDecl) (*DeclForGen, error) {
 	}, nil
 }
 
-// DeclForGen wraps [kind.SomeDecl] to provide trivial caching of
+// DeclForGen wraps [kindsys.SomeDecl] to provide trivial caching of
 // the lineage declared by the kind (nil for raw kinds).
 type DeclForGen struct {
-	*kind.SomeDecl
+	*kindsys.SomeDecl
 	lin thema.Lineage
 }
 

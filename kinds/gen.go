@@ -13,7 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/framework/kind"
+	"github.com/grafana/grafana/pkg/kindsys"
 )
 
 // Core kinds code generator. Produces all generated code in grafana/grafana
@@ -58,7 +58,7 @@ func main() {
 		}
 		rel := filepath.Join("kinds", "structured", ent.Name())
 		sub := elsedie(fs.Sub(f, ent.Name()))(fmt.Sprintf("error creating subfs for path %s", rel))
-		decl, err := kind.LoadCoreKindFS[kind.CoreStructuredMeta](sub, rel, rt.Context())
+		decl, err := kindsys.LoadCoreKindFS[kindsys.CoreStructuredMeta](sub, rel, rt.Context())
 		if err != nil {
 			die(fmt.Errorf("kind at %s is invalid: %w", rel, err))
 		}
@@ -78,7 +78,7 @@ func main() {
 		}
 		rel := filepath.Join("kinds", "raw", ent.Name())
 		sub := elsedie(fs.Sub(f, ent.Name()))(fmt.Sprintf("error creating subfs for path %s", rel))
-		decl, err := kind.LoadCoreKindFS[kind.RawMeta](sub, rel, rt.Context())
+		decl, err := kindsys.LoadCoreKindFS[kindsys.RawMeta](sub, rel, rt.Context())
 		if err != nil {
 			die(fmt.Errorf("raw kind at %s is invalid: %w", rel, err))
 		}
@@ -116,6 +116,10 @@ func main() {
 		wd[filepath.Join(groot, gf.RelativePath)] = gf.Data
 	}
 
+	for path := range wd {
+		fmt.Println("WRITING", path)
+	}
+
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
 		err = wd.Verify()
 		if err != nil {
@@ -129,15 +133,15 @@ func main() {
 	}
 }
 
-func nameFor(m kind.SomeKindMeta) string {
+func nameFor(m kindsys.SomeKindMeta) string {
 	switch x := m.(type) {
-	case kind.RawMeta:
+	case kindsys.RawMeta:
 		return x.Name
-	case kind.CoreStructuredMeta:
+	case kindsys.CoreStructuredMeta:
 		return x.Name
-	case kind.CustomStructuredMeta:
+	case kindsys.CustomStructuredMeta:
 		return x.Name
-	case kind.SlotImplMeta:
+	case kindsys.SlotImplMeta:
 		return x.Name
 	default:
 		// unreachable so long as all the possibilities in KindMetas have switch branches

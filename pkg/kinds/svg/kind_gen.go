@@ -5,27 +5,27 @@ package svg
 import (
 	"embed"
 
-	"github.com/grafana/grafana/pkg/framework/kind"
+	"github.com/grafana/grafana/pkg/kindsys"
 )
 
 //go:embed kind.cue
 var cueFS embed.FS
 
 type Kind struct {
-	meta kind.RawMeta
+	meta kindsys.RawMeta
 }
 
-var _ kind.Raw = &Kind{}
+var _ kindsys.Raw = &Kind{}
 
 // TODO standard generated docs
 func NewKind() (*Kind, error) {
-	kdef, err := kind.LoadAnyKindFS(cueFS, nil)
+	kdef, err := kindsys.LoadAnyKindFS(cueFS, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	k := &Kind{
-		meta: kdef.Meta.(kind.RawMeta),
+		meta: kdef.Meta.(kindsys.RawMeta),
 	}
 	return k, nil
 }
@@ -36,11 +36,11 @@ func (k *Kind) Name() string {
 }
 
 // TODO standard generated docs
-func (k *Kind) Maturity() kind.Maturity {
+func (k *Kind) Maturity() kindsys.Maturity {
 	return k.meta.Maturity
 }
 
 // TODO standard generated docs
-func (k *Kind) Meta() kind.RawMeta {
+func (k *Kind) Meta() kindsys.RawMeta {
 	return k.meta
 }

@@ -1,8 +1,8 @@
 package kind
 
-import "github.com/grafana/grafana/pkg/framework/kind"
+import "github.com/grafana/grafana/pkg/kindsys"
 
 // In each child directory, the set of .cue files with 'package kind'
-// must be an instance of kind.#CoreStructured - a declaration of a
+// must be an instance of kindsys.#CoreStructured - a declaration of a
 // structured kind.
-kind.#CoreStructured
+kindsys.#CoreStructured

@@ -3,13 +3,13 @@ package corekind
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/framework/kind"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kinds/svg"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
 )
 
-// Base is a registry of kind.Interface. It provides two modes for accessing
+// Base is a registry of kindsys.Interface. It provides two modes for accessing
 // kinds: individually via literal named methods, or as a slice returned from
 // an All*() method.
 //
@@ -20,7 +20,7 @@ import (
 // Prefer All*() methods when performing operations generically across all kinds.
 // For example, a validation HTTP middleware for any kind-schematized object type.
 type Base struct {
-	all                   []kind.Interface
+	all                   []kindsys.Interface
 	numRaw, numStructured int
 	dashboard             *dashboard.Kind
 	svg                   *svg.Kind
@@ -28,16 +28,16 @@ type Base struct {
 
 // type guards
 var (
-	_ kind.Structured = &dashboard.Kind{}
-	_ kind.Raw        = &svg.Kind{}
+	_ kindsys.Structured = &dashboard.Kind{}
+	_ kindsys.Raw        = &svg.Kind{}
 )
 
-// Dashboard returns the [kind.Interface] implementation for the dashboard kind.
+// Dashboard returns the [kindsys.Interface] implementation for the dashboard kind.
 func (b *Base) Dashboard() *dashboard.Kind {
 	return b.dashboard
 }
 
-// Svg returns the [kind.Interface] implementation for the svg kind.
+// Svg returns the [kindsys.Interface] implementation for the svg kind.
 func (b *Base) Svg() *svg.Kind {
 	return b.svg
 }

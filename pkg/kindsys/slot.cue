@@ -1,4 +1,4 @@
-package kind
+package kindsys
 
 // Slot is a structured kind category that provides schema elements for
 // composition into CoreStructured and CustomStructured kinds. Grafana plugins

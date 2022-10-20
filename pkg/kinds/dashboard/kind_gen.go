@@ -5,7 +5,7 @@ package dashboard
 import (
 	"embed"
 
-	"github.com/grafana/grafana/pkg/framework/kind"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/vmux"
 )
@@ -23,15 +23,15 @@ type Kind struct {
 	lin    thema.ConvergentLineage[*Entity]
 	jendec vmux.Endec
 	valmux vmux.ValueMux[*Entity]
-	decl   kind.Decl[kind.CoreStructuredMeta]
+	decl   kindsys.Decl[kindsys.CoreStructuredMeta]
 }
 
 // type guard
-var _ kind.Structured = &Kind{}
+var _ kindsys.Structured = &Kind{}
 
 // TODO standard generated docs
 func NewKind(rt *thema.Runtime, opts ...thema.BindOption) (*Kind, error) {
-	decl, err := kind.LoadCoreKindFS[kind.CoreStructuredMeta](cueFS, rootrel, rt.Context())
+	decl, err := kindsys.LoadCoreKindFS[kindsys.CoreStructuredMeta](cueFS, rootrel, rt.Context())
 	if err != nil {
 		return nil, err
 	}
@@ -86,11 +86,11 @@ func (k *Kind) JSONValueMux(b []byte) (*Entity, thema.TranslationLacunas, error)
 }
 
 // TODO standard generated docs
-func (k *Kind) Maturity() kind.Maturity {
+func (k *Kind) Maturity() kindsys.Maturity {
 	return k.decl.Meta.Maturity
 }
 
 // TODO standard generated docs
-func (k *Kind) Meta() kind.CoreStructuredMeta {
+func (k *Kind) Meta() kindsys.CoreStructuredMeta {
 	return k.decl.Meta
 }

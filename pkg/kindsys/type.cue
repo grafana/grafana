@@ -1,4 +1,4 @@
-package kind
+package kindsys
 
 import (
 	"github.com/grafana/thema"
