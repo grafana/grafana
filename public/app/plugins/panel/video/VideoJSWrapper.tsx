@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 
@@ -12,7 +12,7 @@ export const VideoJSWrapper = (props: VideoPlayerProps) => {
   const playerRef = React.useRef<videojs.Player>();
   const { options, onReady } = props;
 
-  React.useEffect(() => {
+  useEffect(() => {
     // make sure Video.js player is only initialized once
     if (!playerRef.current) {
       const videoElement = videoRef.current;
@@ -33,7 +33,7 @@ export const VideoJSWrapper = (props: VideoPlayerProps) => {
   }, [options, videoRef, onReady]);
 
   // Dispose the Video.js player when the functional component unmounts
-  React.useEffect(() => {
+  useEffect(() => {
     const player = playerRef.current;
 
     return () => {
