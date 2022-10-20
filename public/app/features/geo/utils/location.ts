@@ -12,12 +12,7 @@ import {
   FieldType,
 } from '@grafana/data';
 
-import {
-  getGeoFieldFromGazetteer,
-  imageFieldFromLonLat,
-  pointFieldFromGeohash,
-  pointFieldFromLonLat,
-} from '../format/utils';
+import { getGeoFieldFromGazetteer, pointFieldFromGeohash, pointFieldFromLonLat } from '../format/utils';
 import { getGazetteer, Gazetteer } from '../gazetteer/gazetteer';
 
 export type FieldFinder = (frame: DataFrame) => Field | undefined;
@@ -59,7 +54,6 @@ export interface LocationFieldMatchers {
   wkt: FieldFinder;
   lookup: FieldFinder;
   geo: FieldFinder;
-  photo: FieldFinder;
   gazetteer?: Gazetteer;
 }
 
@@ -72,7 +66,6 @@ const defaultMatchers: LocationFieldMatchers = {
   wkt: matchLowerNames(new Set(['wkt'])),
   lookup: matchLowerNames(new Set(['lookup'])),
   geo: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.geo),
-  photo: matchLowerNames(new Set(['src'])),
 };
 
 export async function getLocationMatchers(src?: FrameGeometrySource): Promise<LocationFieldMatchers> {
@@ -114,7 +107,6 @@ export interface LocationFields {
   wkt?: Field;
   lookup?: Field;
   geo?: Field<Geometry>;
-  photo?: Field;
 }
 
 export function getLocationFields(frame: DataFrame, location: LocationFieldMatchers): LocationFields {
@@ -131,7 +123,6 @@ export function getLocationFields(frame: DataFrame, location: LocationFieldMatch
 
     fields.latitude = location.latitude(frame);
     fields.longitude = location.longitude(frame);
-    fields.photo = location.photo(frame);
     if (fields.latitude && fields.longitude) {
       fields.mode = FrameGeometrySourceMode.Coords;
       return fields;
@@ -172,7 +163,6 @@ export interface FrameGeometryField {
 
 export function getGeometryField(frame: DataFrame, location: LocationFieldMatchers): FrameGeometryField {
   const fields = getLocationFields(frame, location);
-  console.log(fields);
   switch (fields.mode) {
     case FrameGeometrySourceMode.Auto:
       if (fields.geo) {
@@ -185,16 +175,7 @@ export function getGeometryField(frame: DataFrame, location: LocationFieldMatche
       };
 
     case FrameGeometrySourceMode.Coords:
-      // TODO reconcile how to pass photo field along
       if (fields.latitude && fields.longitude) {
-        if (fields.photo) {
-          return {
-            // TODO this function returns a Field<feature> when a Field<Point> is expected
-            // however, image styling cannot be applied to a point
-            field: imageFieldFromLonLat(fields.longitude, fields.latitude, fields.photo),
-            derived: true,
-          };
-        }
         return {
           field: pointFieldFromLonLat(fields.longitude, fields.latitude),
           derived: true,
