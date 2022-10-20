@@ -737,12 +737,12 @@ interface TraceTableData {
 }
 
 function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
-  // Use millisecond precision as the unix time in nanoseconds is larger than Number.MAX_SAFE_INTEGER in JS.
-  let spanStartTime = span.startTimeUnixNano.slice(0, -6);
-  spanStartTime = dateTimeFormat(parseInt(spanStartTime, 10));
+  const traceStartTime = parseInt(span.startTimeUnixNano, 10) / 1000000;
 
-  if (Math.abs(differenceInHours(new Date(spanStartTime), Date.now())) <= 1) {
-    spanStartTime = formatDistance(new Date(spanStartTime), Date.now(), {
+  let startTime = dateTimeFormat(traceStartTime);
+
+  if (Math.abs(differenceInHours(new Date(traceStartTime), Date.now())) <= 1) {
+    startTime = formatDistance(new Date(traceStartTime), Date.now(), {
       addSuffix: true,
       includeSeconds: true,
     });
@@ -751,7 +751,7 @@ function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
   const data: TraceTableData = {
     traceIdHidden: traceID,
     spanID: span.spanID,
-    startTime: spanStartTime,
+    startTime,
     duration: span.durationNanos,
   };
 
