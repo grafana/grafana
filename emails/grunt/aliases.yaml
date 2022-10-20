@@ -2,3 +2,4 @@ default:
   - 'clean'
   - 'assemble'
   - 'replace'
+  - 'copy'

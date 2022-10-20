@@ -2,8 +2,6 @@ module.exports = function () {
   'use strict';
   return {
     options: {
-      partials: ['templates/partials/*.hbs'],
-      helpers: ['templates/helpers/**/*.js'],
       data: [],
       flatten: true,
     },
