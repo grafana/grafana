@@ -37,8 +37,8 @@ func (b *Base) Dashboard() *dashboard.Kind {
 	return b.dashboard
 }
 
-// Svg returns the [kindsys.Interface] implementation for the svg kind.
-func (b *Base) Svg() *svg.Kind {
+// SVG returns the [kindsys.Interface] implementation for the svg kind.
+func (b *Base) SVG() *svg.Kind {
 	return b.svg
 }
 

@@ -62,8 +62,8 @@ func main() {
 		if err != nil {
 			die(fmt.Errorf("kind at %s is invalid: %w", rel, err))
 		}
-		if decl.Meta.Name != ent.Name() {
-			die(fmt.Errorf("%s: kind name (%s) must equal parent dir name (%s)", rel, decl.Meta.Name, ent.Name()))
+		if decl.Meta.MachineName != ent.Name() {
+			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, decl.Meta.Name, ent.Name()))
 		}
 
 		all = append(all, elsedie(codegen.ForGen(rt, decl.Some()))(rel))
@@ -81,8 +81,8 @@ func main() {
 		if err != nil {
 			die(fmt.Errorf("raw kind at %s is invalid: %w", rel, err))
 		}
-		if decl.Meta.Name != ent.Name() {
-			die(fmt.Errorf("%s: kind name (%s) must equal parent dir name (%s)", rel, decl.Meta.Name, ent.Name()))
+		if decl.Meta.MachineName != ent.Name() {
+			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, decl.Meta.Name, ent.Name()))
 		}
 		dfg, _ := codegen.ForGen(nil, decl.Some())
 		all = append(all, dfg)

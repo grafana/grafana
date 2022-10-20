@@ -1,8 +1,6 @@
 package codegen
 
 import (
-	"strings"
-
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
 )
@@ -70,11 +68,11 @@ func (decl *DeclForGen) Lineage() thema.Lineage {
 	return decl.lin
 }
 
-func (decl *DeclForGen) Name() string {
-	return nameFor(decl.Meta)
-}
-
-func (decl *DeclForGen) TitleName() string {
-	// TODO get this from _actual_ meta once we have it in the kind DSL
-	return strings.Title(nameFor(decl.Meta))
-}
+// func (decl *DeclForGen) Name() string {
+// 	return machineNameFor(decl.Meta)
+// }
+//
+// func (decl *DeclForGen) MachineName() string {
+// 	// TODO get this from _actual_ meta once we have it in the kind DSL
+// 	return strings.Title(machineNameFor(decl.Meta))
+// }

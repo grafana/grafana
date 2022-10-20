@@ -11,6 +11,22 @@ import (
 	"golang.org/x/tools/go/ast/astutil"
 )
 
+func machineNameFor(m kindsys.SomeKindMeta) string {
+	switch x := m.(type) {
+	case kindsys.RawMeta:
+		return x.MachineName
+	case kindsys.CoreStructuredMeta:
+		return x.MachineName
+	case kindsys.CustomStructuredMeta:
+		return x.MachineName
+	case kindsys.SlotImplMeta:
+		return x.MachineName
+	default:
+		// unreachable so long as all the possibilities in KindMetas have switch branches
+		panic("unreachable")
+	}
+}
+
 func nameFor(m kindsys.SomeKindMeta) string {
 	switch x := m.(type) {
 	case kindsys.RawMeta:
@@ -76,7 +92,7 @@ func GoTypesGenerator(gokindsdir string, cfg *GoTypesGeneratorConfig) KindGenSte
 	}
 	if cfg.GenDirName == nil {
 		cfg.GenDirName = func(decl *DeclForGen) string {
-			return decl.Name()
+			return machineNameFor(decl.Meta)
 		}
 	}
 
@@ -98,6 +114,7 @@ func (gen *genGoTypes) Generate(decl *DeclForGen) (*GeneratedFile, error) {
 	lin := decl.Lineage()
 	sch := thema.SchemaP(lin, thema.LatestVersion(lin))
 	pdir := gen.cfg.GenDirName(decl)
+	// TODO allow using name instead of machine name in thema generator
 	b, err := tgo.GenerateTypesOpenAPI(sch, &tgo.TypeConfigOpenAPI{
 		PackageName: filepath.Base(pdir),
 		Apply:       gen.cfg.Apply,
@@ -137,7 +154,7 @@ func CoreStructuredKindGenerator(gokindsdir string, cfg *CoreStructuredKindGener
 	}
 	if cfg.GenDirName == nil {
 		cfg.GenDirName = func(decl *DeclForGen) string {
-			return decl.Name()
+			return machineNameFor(decl.Meta)
 		}
 	}
 
@@ -156,7 +173,7 @@ func (gen *genCoreStructuredKind) Generate(decl *DeclForGen) (*GeneratedFile, er
 		return nil, nil
 	}
 
-	path := filepath.Join(gen.gokindsdir, gen.cfg.GenDirName(decl), decl.Name()+"_kind_gen.go")
+	path := filepath.Join(gen.gokindsdir, gen.cfg.GenDirName(decl), machineNameFor(decl.Meta)+"_kind_gen.go")
 	buf := new(bytes.Buffer)
 	if err := tmpls.Lookup("kind_corestructured.tmpl").Execute(buf, decl); err != nil {
 		return nil, fmt.Errorf("failed executing kind_corestructured template for %s: %w", path, err)

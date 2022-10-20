@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	{{range .Kinds }}
-	"{{ $.KindPackagePrefix }}/{{ .Name }}"{{end}}
+	"{{ $.KindPackagePrefix }}/{{ .Meta.MachineName }}"{{end}}
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
@@ -25,19 +25,19 @@ type Base struct {
 	all []kindsys.Interface
 	numRaw, numStructured int
 	{{- range .Kinds }}
-	{{ .Name }} *{{ .Name }}.Kind{{end}}
+	{{ .Meta.MachineName }} *{{ .Meta.MachineName }}.Kind{{end}}
 }
 
 // type guards
 var (
 {{- range .Kinds }}
-	_ kindsys.{{ if .IsRaw }}Raw{{ else }}Structured{{ end }} = &{{ .Name }}.Kind{}{{end}}
+	_ kindsys.{{ if .IsRaw }}Raw{{ else }}Structured{{ end }} = &{{ .Meta.MachineName }}.Kind{}{{end}}
 )
 
 {{range .Kinds }}
-// {{ .TitleName }} returns the [kindsys.Interface] implementation for the {{ .Name }} kind.
-func (b *Base) {{ .TitleName }}() *{{ .Name }}.Kind {
-	return b.{{ .Name }}
+// {{ .Meta.Name }} returns the [kindsys.Interface] implementation for the {{ .Meta.MachineName }} kind.
+func (b *Base) {{ .Meta.Name }}() *{{ .Meta.MachineName }}.Kind {
+	return b.{{ .Meta.MachineName }}
 }
 {{end}}
 
@@ -49,11 +49,11 @@ func doNewBase(rt *thema.Runtime) *Base {
 	}
 
 {{range .Kinds }}
-	reg.{{ .Name }}, err = {{ .Name }}.NewKind({{ if .IsCoreStructured }}rt{{ end }})
+	reg.{{ .Meta.MachineName }}, err = {{ .Meta.MachineName }}.NewKind({{ if .IsCoreStructured }}rt{{ end }})
 	if err != nil {
-		panic(fmt.Sprintf("error while initializing the {{ .Name }} Kind: %s", err))
+		panic(fmt.Sprintf("error while initializing the {{ .Meta.MachineName }} Kind: %s", err))
 	}
-  reg.all = append(reg.all, reg.{{ .Name }})
+  reg.all = append(reg.all, reg.{{ .Meta.MachineName }})
 {{end}}
 
 	return reg

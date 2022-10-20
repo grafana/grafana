@@ -2,7 +2,7 @@ package kind
 
 import "strings"
 
-name: "dashboard"
+name: "Dashboard"
 maturity: "committed"
 
 lineage: seqs: [

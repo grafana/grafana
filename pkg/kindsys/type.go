@@ -4,36 +4,48 @@ import "github.com/grafana/thema"
 
 // TODO generate from type.cue
 type RawMeta struct {
-	Name       string   `json:"name"`
-	Extensions []string `json:"extensions"`
-	Maturity   Maturity `json:"maturity"`
+	Name              string   `json:"name"`
+	PluralName        string   `json:"pluralName"`
+	MachineName       string   `json:"machineName"`
+	PluralMachineName string   `json:"pluralMachineName"`
+	Extensions        []string `json:"extensions"`
+	Maturity          Maturity `json:"maturity"`
 }
 
 func (m RawMeta) _private() {}
 
 // TODO
 type CoreStructuredMeta struct {
-	Name           string                 `json:"name"`
-	CurrentVersion thema.SyntacticVersion `json:"currentVersion"`
-	Maturity       Maturity               `json:"maturity"`
+	Name              string                 `json:"name"`
+	PluralName        string                 `json:"pluralName"`
+	MachineName       string                 `json:"machineName"`
+	PluralMachineName string                 `json:"pluralMachineName"`
+	CurrentVersion    thema.SyntacticVersion `json:"currentVersion"`
+	Maturity          Maturity               `json:"maturity"`
 }
 
 func (m CoreStructuredMeta) _private() {}
 
 // TODO
 type CustomStructuredMeta struct {
-	Name           string                 `json:"name"`
-	CurrentVersion thema.SyntacticVersion `json:"currentVersion"`
-	Maturity       Maturity               `json:"maturity"`
+	Name              string                 `json:"name"`
+	PluralName        string                 `json:"pluralName"`
+	MachineName       string                 `json:"machineName"`
+	PluralMachineName string                 `json:"pluralMachineName"`
+	CurrentVersion    thema.SyntacticVersion `json:"currentVersion"`
+	Maturity          Maturity               `json:"maturity"`
 }
 
 func (m CustomStructuredMeta) _private() {}
 
 // TODO
 type SlotImplMeta struct {
-	Name           string                 `json:"name"`
-	CurrentVersion thema.SyntacticVersion `json:"currentVersion"`
-	Maturity       Maturity               `json:"maturity"`
+	Name              string                 `json:"name"`
+	PluralName        string                 `json:"pluralName"`
+	MachineName       string                 `json:"machineName"`
+	PluralMachineName string                 `json:"pluralMachineName"`
+	CurrentVersion    thema.SyntacticVersion `json:"currentVersion"`
+	Maturity          Maturity               `json:"maturity"`
 }
 
 func (m SlotImplMeta) _private() {}

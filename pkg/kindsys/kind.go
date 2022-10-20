@@ -12,6 +12,7 @@ type Maturity string
 const (
 	MaturityCommitted    Maturity = "committed"
 	MaturitySynchronized Maturity = "synchronized"
+	MaturityStable       Maturity = "stable"
 	MaturityMature       Maturity = "mature"
 )
 

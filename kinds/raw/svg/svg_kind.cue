@@ -1,4 +1,4 @@
 package kind
 
-name: "svg"
+name: "SVG"
 extensions: ["svg"]
