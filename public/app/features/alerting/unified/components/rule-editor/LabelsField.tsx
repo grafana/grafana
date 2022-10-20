@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React, { FC } from 'react';
-import { useFieldArray, useFormContext } from 'react-hook-form';
+import React, { FC, useMemo } from 'react';
+import { FieldArrayWithId, useFieldArray, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Field, Input, InlineLabel, Label, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
+import AlertLabelDropdown, { AlertLabelDropdownProps } from '../AlertLabelDropdown';
 
 interface Props {
   className?: string;
@@ -18,10 +19,27 @@ const LabelsField: FC<Props> = ({ className }) => {
     control,
     watch,
     formState: { errors },
+    setValue,
   } = useFormContext<RuleFormValues>();
-  const labels = watch('labels');
 
+  const labels = watch('labels');
   const { fields, append, remove } = useFieldArray({ control, name: 'labels' });
+
+  const getDistinctDropdownOptions = (
+    fields: Array<FieldArrayWithId<RuleFormValues, 'labels', 'id'>>,
+    type: AlertLabelDropdownProps['type']
+  ) =>
+    [...new Set(fields.map((field) => field[type]))]
+      .filter((field) => Boolean(field))
+      .map((field) => ({ label: field, value: field }));
+
+  const keys = useMemo(() => {
+    return getDistinctDropdownOptions(fields, 'key');
+  }, [fields]);
+
+  const values = useMemo(() => {
+    return getDistinctDropdownOptions(fields, 'value');
+  }, [fields]);
 
   return (
     <div className={cx(className, styles.wrapper)}>
@@ -36,37 +54,43 @@ const LabelsField: FC<Props> = ({ className }) => {
                   <div className={cx(styles.flexRow, styles.centerAlignRow)}>
                     <Field
                       className={styles.labelInput}
-                      invalid={!!errors.labels?.[index]?.key?.message}
+                      invalid={Boolean(errors.labels?.[index]?.key?.message)}
                       error={errors.labels?.[index]?.key?.message}
+                      data-testid={`label-key-${index}`}
                     >
-                      <Input
+                      <AlertLabelDropdown
                         {...register(`labels.${index}.key`, {
-                          required: { value: !!labels[index]?.value, message: 'Required.' },
+                          required: { value: Boolean(labels[index]?.value), message: 'Required.' },
                         })}
-                        placeholder="key"
-                        data-testid={`label-key-${index}`}
-                        defaultValue={field.key}
+                        defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
+                        options={keys}
+                        onChange={(newValue: SelectableValue) => setValue(`labels.${index}.key`, newValue.value)}
+                        type="key"
                       />
                     </Field>
                     <InlineLabel className={styles.equalSign}>=</InlineLabel>
                     <Field
                       className={styles.labelInput}
-                      invalid={!!errors.labels?.[index]?.value?.message}
+                      invalid={Boolean(errors.labels?.[index]?.value?.message)}
                       error={errors.labels?.[index]?.value?.message}
+                      data-testid={`label-value-${index}`}
                     >
-                      <Input
+                      <AlertLabelDropdown
                         {...register(`labels.${index}.value`, {
-                          required: { value: !!labels[index]?.key, message: 'Required.' },
+                          required: { value: Boolean(labels[index]?.key), message: 'Required.' },
                         })}
-                        placeholder="value"
-                        data-testid={`label-value-${index}`}
-                        defaultValue={field.value}
+                        defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
+                        options={values}
+                        onChange={(newValue: SelectableValue) => setValue(`labels.${index}.value`, newValue.value)}
+                        type="value"
                       />
                     </Field>
+
                     <Button
                       className={styles.deleteLabelButton}
                       aria-label="delete label"
                       icon="trash-alt"
+                      data-testid={`delete-label-${index}`}
                       variant="secondary"
                       onClick={() => {
                         remove(index);
