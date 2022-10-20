@@ -7,6 +7,7 @@ import {
   AnnotationQuery,
   DataQuery,
   DataSourceApi,
+  DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
   LoadingState,
 } from '@grafana/data';
@@ -23,6 +24,7 @@ import { AnnotationFieldMapper } from './AnnotationResultMapper';
 
 interface Props {
   datasource: DataSourceApi;
+  datasourceInstanceSettings: DataSourceInstanceSettings;
   annotation: AnnotationQuery<DataQuery>;
   onChange: (annotation: AnnotationQuery<DataQuery>) => void;
 }
@@ -175,7 +177,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   };
 
   render() {
-    const { datasource, annotation } = this.props;
+    const { datasource, annotation, datasourceInstanceSettings } = this.props;
     const { response } = this.state;
 
     // Find the annotation runner
@@ -187,7 +189,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     const query = annotation.target ?? { refId: 'Anno' };
     return (
       <>
-        <DataSourcePluginContextProvider meta={datasource.meta} dataSource={datasource}>
+        <DataSourcePluginContextProvider instanceSettings={datasourceInstanceSettings}>
           <QueryEditor
             key={datasource?.name}
             query={query}

@@ -11,7 +11,7 @@ export function usePluginInteractionReporter(): typeof reportInteraction {
 
   return useMemo(() => {
     const info = isDataSourcePluginContext(context)
-      ? createDataSourcePluginEventProperties(context.meta, context.dataSource)
+      ? createDataSourcePluginEventProperties(context.instanceSettings)
       : createPluginEventProperties(context.meta);
 
     return (interactionName: string, properties?: Record<string, unknown>) => {

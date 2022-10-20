@@ -49,7 +49,9 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
     return null;
   }
 
-  if (error || !dataSource || !dataSource?.components?.QueryEditor) {
+  const dsi = getDataSourceSrv().getInstanceSettings(dataSourceName);
+
+  if (error || !dataSource || !dataSource?.components?.QueryEditor || !dsi) {
     const errorMessage = error?.message || 'Data source plugin does not export any Query Editor component';
     return <div>Could not load query editor due to: {errorMessage}</div>;
   }
@@ -65,7 +67,7 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
 
   return (
     <>
-      <DataSourcePluginContextProvider meta={dataSource.meta} dataSource={dataSource}>
+      <DataSourcePluginContextProvider instanceSettings={dsi}>
         <QueryEditor
           query={dataQuery}
           queries={[dataQuery]}

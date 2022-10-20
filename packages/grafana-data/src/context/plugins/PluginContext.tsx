@@ -1,14 +1,16 @@
 import { createContext } from 'react';
 
-import { DataSourceApi } from '../../types/datasource';
+import { DataSourceInstanceSettings } from '../../types/datasource';
 import { PluginMeta } from '../../types/plugin';
 
-export interface PluginContextType {
+export type PluginContextType = BasePluginContextType | DataSourcePluginContextType;
+
+export interface BasePluginContextType {
   meta: PluginMeta;
 }
 
-export interface DataSourcePluginContextType extends PluginContextType {
-  dataSource: DataSourceApi;
+export interface DataSourcePluginContextType {
+  instanceSettings: DataSourceInstanceSettings;
 }
 
-export const Context = createContext<PluginContextType | DataSourcePluginContextType | undefined>(undefined);
+export const Context = createContext<PluginContextType | undefined>(undefined);

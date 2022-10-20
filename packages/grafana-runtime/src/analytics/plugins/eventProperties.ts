@@ -1,4 +1,4 @@
-import { DataSourceApi, PluginMeta, PluginType } from '@grafana/data';
+import { DataSourceInstanceSettings, PluginMeta, PluginType } from '@grafana/data';
 
 import { config } from '../../config';
 
@@ -25,11 +25,10 @@ export type DataSourcePluginEventProperties = PluginEventProperties & {
 };
 
 export function createDataSourcePluginEventProperties(
-  meta: PluginMeta,
-  dataSource: DataSourceApi
+  instanceSettings: DataSourceInstanceSettings
 ): DataSourcePluginEventProperties {
   return {
-    ...createPluginEventProperties(meta),
-    datasource_uid: dataSource.uid,
+    ...createPluginEventProperties(instanceSettings.meta),
+    datasource_uid: instanceSettings.uid,
   };
 }

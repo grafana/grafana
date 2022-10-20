@@ -1,18 +1,20 @@
-import React, { PropsWithChildren, ReactElement } from 'react';
+import React, { PropsWithChildren, ReactElement, useMemo } from 'react';
 
-import { DataQuery, DataSourceApi } from '../../types';
-import { PluginMeta } from '../../types/plugin';
+import { DataSourceInstanceSettings } from '../../types';
 
-import { Context } from './PluginContext';
+import { Context, DataSourcePluginContextType } from './PluginContext';
 
-export type DataSourcePluginContextProviderProps<TQuery extends DataQuery = DataQuery> = {
-  meta: PluginMeta;
-  dataSource: DataSourceApi<TQuery>;
+export type DataSourcePluginContextProviderProps = {
+  instanceSettings: DataSourceInstanceSettings;
 };
 
-export function DataSourcePluginContextProvider<TQuery extends DataQuery = DataQuery>(
-  props: PropsWithChildren<DataSourcePluginContextProviderProps<TQuery>>
+export function DataSourcePluginContextProvider(
+  props: PropsWithChildren<DataSourcePluginContextProviderProps>
 ): ReactElement {
-  const { children, ...rest } = props;
-  return <Context.Provider value={rest}>{children}</Context.Provider>;
+  const { children, instanceSettings } = props;
+  const value: DataSourcePluginContextType = useMemo(() => {
+    return { instanceSettings };
+  }, [instanceSettings]);
+
+  return <Context.Provider value={value}>{children}</Context.Provider>;
 }
