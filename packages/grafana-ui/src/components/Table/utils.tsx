@@ -1,5 +1,5 @@
 import { Property } from 'csstype';
-import { clone } from 'lodash';
+import { clone, max } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React from 'react';
 import { Row } from 'react-table';
@@ -69,6 +69,7 @@ export function getColumns(
   expandedIndex: number | undefined,
   setExpandedIndex: (index: number | undefined) => void,
   expander: boolean,
+  blankIndexes: number[],
   footerValues?: FooterItem[]
 ): GrafanaTableColumn[] {
   const columns: GrafanaTableColumn[] = expander
@@ -89,7 +90,14 @@ export function getColumns(
             return (
               <span
                 style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}
-                onClick={() => setExpandedIndex(row.index === expandedIndex ? undefined : row.index)}
+                onClick={() => {
+                  // To prevent expanding the wrong row, due to indexes changing when expanding/collapsing rows,
+                  // we must subtract the amount of blank (hidden) rows from the row index when expanding a row under a previously expanded row
+                  const maxBlankIndex = max(blankIndexes);
+                  const newSelectedIndex =
+                    maxBlankIndex && row.index > maxBlankIndex ? row.index - blankIndexes.length : row.index;
+                  setExpandedIndex(row.index === expandedIndex ? undefined : newSelectedIndex);
+                }}
               >
                 <Icon
                   aria-label={row.index === expandedIndex ? 'Close trace' : 'Open trace'}

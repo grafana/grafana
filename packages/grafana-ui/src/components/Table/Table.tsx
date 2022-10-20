@@ -180,8 +180,18 @@ export const Table = memo((props: Props) => {
 
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () => getColumns(mainData, width, columnMinWidth, expandedIndex, setExpandedIndex, expandable, footerItems),
-    [mainData, width, columnMinWidth, footerItems, expandedIndex, expandable]
+    () =>
+      getColumns(
+        mainData,
+        width,
+        columnMinWidth,
+        expandedIndex,
+        setExpandedIndex,
+        expandable,
+        indexesToKeepBlank,
+        footerItems
+      ),
+    [mainData, width, columnMinWidth, footerItems, expandedIndex, expandable, indexesToKeepBlank]
   );
 
   // Internal react table state reducer
