@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { useSelector } from 'react-redux';
 import { Route, Switch, useLocation } from 'react-router-dom';
 import { createSelector } from 'reselect';
 
@@ -8,7 +7,8 @@ import { Page } from 'app/core/components/Page/Page';
 import { DataSourcesList } from 'app/features/datasources/components/DataSourcesList';
 import { NewDataSource } from 'app/features/datasources/components/NewDataSource';
 import { DataSourcesRoutesContext } from 'app/features/datasources/state';
-import { StoreState } from 'app/types';
+import { AppPluginLoader } from 'app/features/plugins/components/AppPluginLoader';
+import { StoreState, useSelector } from 'app/types';
 
 import { ROUTES } from './constants';
 import { ConnectData } from './tabs/ConnectData';
@@ -31,6 +31,8 @@ const selectNavId = createSelector(
 export default function ConnectionsPage() {
   const { pathname } = useLocation();
   const navId = useSelector((state: StoreState) => selectNavId(state, pathname));
+  const navIndex = useSelector((state: StoreState) => state.navIndex);
+  const isCloud = Boolean(navIndex['standalone-plugin-page-/connections/agent']);
 
   return (
     <DataSourcesRoutesContext.Provider
@@ -48,6 +50,8 @@ export default function ConnectionsPage() {
             <Route path={ROUTES.DataSourcesEdit} component={DataSourcesEdit} />
             <Route path={ROUTES.DataSources} component={DataSourcesList} />
             <Route path={ROUTES.ConnectData} component={ConnectData} />
+
+            {isCloud && <AppPluginLoader id="grafana-easystart-app" basePath="/connections" />}
 
             {/* Default page */}
             <Route component={DataSourcesList} />
