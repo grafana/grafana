@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 
 import { CoreApp } from '@grafana/data';
 
-import { LokiQueryEditorSelector } from './LokiQueryEditor';
+import { LokiQueryEditor } from './LokiQueryEditor';
 import { LokiQueryEditorForAlerting } from './LokiQueryEditorForAlerting';
 import { LokiQueryEditorProps } from './types';
 
@@ -13,7 +13,7 @@ export function LokiQueryEditorByApp(props: LokiQueryEditorProps) {
     case CoreApp.CloudAlerting:
       return <LokiQueryEditorForAlerting {...props} />;
     default:
-      return <LokiQueryEditorSelector {...props} />;
+      return <LokiQueryEditor {...props} />;
   }
 }
 

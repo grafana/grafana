@@ -10,7 +10,7 @@ import { LokiDatasource } from '../datasource';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from '../querybuilder/components/LokiQueryBuilderExplained';
 import { LokiQuery, LokiQueryType } from '../types';
 
-import { LokiQueryEditorSelector } from './LokiQueryEditor';
+import { LokiQueryEditor } from './LokiQueryEditor';
 
 jest.mock('@grafana/runtime', () => {
   return {
@@ -65,13 +65,13 @@ const defaultProps = {
 describe('LokiQueryEditorSelector', () => {
   it('shows code editor if expr and nothing else', async () => {
     // We opt for showing code editor for queries created before this feature was added
-    render(<LokiQueryEditorSelector {...defaultProps} />);
+    render(<LokiQueryEditor {...defaultProps} />);
     expectCodeEditor();
   });
 
   it('shows builder if new query', async () => {
     render(
-      <LokiQueryEditorSelector
+      <LokiQueryEditor
         {...defaultProps}
         query={{
           refId: 'A',
@@ -146,7 +146,7 @@ describe('LokiQueryEditorSelector', () => {
     });
     await switchToMode(QueryEditorMode.Builder);
     rerender(
-      <LokiQueryEditorSelector
+      <LokiQueryEditor
         {...defaultProps}
         query={{
           refId: 'A',
@@ -170,7 +170,7 @@ function renderWithProps(overrides?: Partial<LokiQuery>) {
   const query = defaultsDeep(overrides ?? {}, cloneDeep(defaultQuery));
   const onChange = jest.fn();
 
-  const stuff = render(<LokiQueryEditorSelector {...defaultProps} query={query} onChange={onChange} />);
+  const stuff = render(<LokiQueryEditor {...defaultProps} query={query} onChange={onChange} />);
   return { onChange, ...stuff };
 }
 

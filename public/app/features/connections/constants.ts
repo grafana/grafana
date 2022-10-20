@@ -9,6 +9,5 @@ export const ROUTES = {
   DataSourcesNew: `/${ROUTE_BASE_ID}/datasources/new`,
   DataSourcesEdit: `/${ROUTE_BASE_ID}/datasources/edit/:uid`,
   DataSourcesDashboards: `/${ROUTE_BASE_ID}/datasources/edit/:uid/dashboards`,
-  Plugins: `/${ROUTE_BASE_ID}/plugins`,
-  CloudIntegrations: `/${ROUTE_BASE_ID}/cloud-integrations`,
+  ConnectData: `/${ROUTE_BASE_ID}/connect-data`,
 } as const;

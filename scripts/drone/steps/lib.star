@@ -306,13 +306,14 @@ def store_storybook_step(edition, ver_mode, trigger=None):
 def e2e_tests_artifacts(edition):
     return {
         'name': 'e2e-tests-artifacts-upload' + enterprise2_suffix(edition),
-        'image': 'google/cloud-sdk:367.0.0',
+        'image': 'google/cloud-sdk:406.0.0',
         'depends_on': [
             'end-to-end-tests-dashboards-suite',
             'end-to-end-tests-panels-suite',
             'end-to-end-tests-smoke-tests-suite',
             'end-to-end-tests-various-suite',
         ],
+        'failure': 'ignore',
         'when': {
             'status': [
                 'success',
@@ -327,8 +328,6 @@ def e2e_tests_artifacts(edition):
         'commands': [
             'apt-get update',
             'apt-get install -yq zip',
-            'ls -lah ./e2e',
-            'find ./e2e -type f -name "*.mp4"',
             'printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json',
             'gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json',
             # we want to only include files in e2e folder that end with .spec.ts.mp4
