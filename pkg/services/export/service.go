@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -151,25 +152,25 @@ type StandardExport struct {
 	dataDir string
 
 	// Services
-	sql                       db.DB
+	db                        db.DB
 	dashboardsnapshotsService dashboardsnapshots.Service
 	playlistService           playlist.Service
 	orgService                org.Service
 	datasourceService         datasources.DataSourceService
+	store                     object.ObjectStoreServer
 
 	// updated with mutex
 	exportJob Job
 }
 
-func ProvideService(sql db.DB, features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg,
+func ProvideService(db db.DB, features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg,
 	dashboardsnapshotsService dashboardsnapshots.Service, playlistService playlist.Service, orgService org.Service,
-	datasourceService datasources.DataSourceService) ExportService {
+	datasourceService datasources.DataSourceService, store object.ObjectStoreServer) ExportService {
 	if !features.IsEnabled(featuremgmt.FlagExport) {
 		return &StubExport{}
 	}
 
 	return &StandardExport{
-		sql:                       sql,
 		glive:                     gl,
 		logger:                    log.New("export_service"),
 		dashboardsnapshotsService: dashboardsnapshotsService,
@@ -178,6 +179,8 @@ func ProvideService(sql db.DB, features featuremgmt.FeatureToggles, gl *live.Gra
 		datasourceService:         datasourceService,
 		exportJob:                 &stoppedJob{},
 		dataDir:                   cfg.DataPath,
+		store:                     store,
+		db:                        db,
 	}
 }
 
@@ -227,12 +230,14 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 	switch cfg.Format {
 	case "dummy":
 		job, err = startDummyExportJob(cfg, broadcast)
+	case "objectStore":
+		job, err = startObjectStoreJob(cfg, broadcast, ex.db, ex.playlistService, ex.store)
 	case "git":
 		dir := filepath.Join(ex.dataDir, "export_git", fmt.Sprintf("git_%d", time.Now().Unix()))
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 			return response.Error(http.StatusBadRequest, "Error creating export folder", nil)
 		}
-		job, err = startGitExportJob(cfg, ex.sql, ex.dashboardsnapshotsService, dir, c.OrgID, broadcast, ex.playlistService, ex.orgService, ex.datasourceService)
+		job, err = startGitExportJob(cfg, ex.db, ex.dashboardsnapshotsService, dir, c.OrgID, broadcast, ex.playlistService, ex.orgService, ex.datasourceService)
 	default:
 		return response.Error(http.StatusBadRequest, "Unsupported job format", nil)
 	}
