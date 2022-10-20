@@ -6,7 +6,6 @@ import {
   FrameGeometrySourceMode,
   EventBus,
   PluginState,
-  DataFrame,
   FieldType,
 } from '@grafana/data';
 import Map from 'ol/Map';
