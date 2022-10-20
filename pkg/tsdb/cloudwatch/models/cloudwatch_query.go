@@ -11,8 +11,8 @@ import (
 )
 
 type (
-	MetricQueryType  uint32
 	MetricEditorMode uint32
+	MetricQueryType  uint32
 	GMDApiMode       uint32
 )
 
