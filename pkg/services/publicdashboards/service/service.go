@@ -265,13 +265,13 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 		return nil, err
 	}
 
+	if !pub.AnnotationsEnabled {
+		return []AnnotationEvent{}, nil
+	}
+
 	annoDto, err := UnmarshalDashboardAnnotations(dash.Data)
 	if err != nil {
 		return nil, err
-	}
-
-	if !pub.AnnotationsEnabled {
-		return []AnnotationEvent{}, nil
 	}
 
 	anonymousUser := pd.BuildAnonymousUser(ctx, dash)
