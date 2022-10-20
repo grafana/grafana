@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 
 	"github.com/stretchr/testify/assert"
@@ -29,15 +30,14 @@ func TestTimeSeriesQuery(t *testing.T) {
 	t.Cleanup(func() {
 		NewCWClient = origNewCWClient
 	})
-
-	var cwClient fakeCWClient
+	var api mocks.FakeMetricsAPI
 
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
-		return &cwClient
+		return &api
 	}
 
 	t.Run("Custom metrics", func(t *testing.T) {
-		cwClient = fakeCWClient{
+		api = mocks.FakeMetricsAPI{
 			CloudWatchAPI: nil,
 			GetMetricDataOutput: cloudwatch.GetMetricDataOutput{
 				NextToken: nil,
@@ -209,9 +209,11 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 	t.Cleanup(func() {
 		NewCWClient = origNewCWClient
 	})
-	var cwClient fakeCWClient
+
+	var api mocks.FakeMetricsAPI
+
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
-		return &cwClient
+		return &api
 	}
 
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
@@ -219,7 +221,7 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 	})
 
 	t.Run("passes query label as GetMetricData label when dynamic labels feature toggle is enabled", func(t *testing.T) {
-		cwClient = fakeCWClient{}
+		api = mocks.FakeMetricsAPI{}
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchDynamicLabels))
 		query := newTestQuery(t, queryParameters{
 			Label: aws.String("${PROP('Period')} some words ${PROP('Dim.InstanceId')}"),
@@ -240,11 +242,11 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		require.Len(t, cwClient.callsGetMetricDataWithContext, 1)
-		require.Len(t, cwClient.callsGetMetricDataWithContext[0].MetricDataQueries, 1)
-		require.NotNil(t, cwClient.callsGetMetricDataWithContext[0].MetricDataQueries[0].Label)
+		require.Len(t, api.CallsGetMetricDataWithContext, 1)
+		require.Len(t, api.CallsGetMetricDataWithContext[0].MetricDataQueries, 1)
+		require.NotNil(t, api.CallsGetMetricDataWithContext[0].MetricDataQueries[0].Label)
 
-		assert.Equal(t, "${PROP('Period')} some words ${PROP('Dim.InstanceId')}", *cwClient.callsGetMetricDataWithContext[0].MetricDataQueries[0].Label)
+		assert.Equal(t, "${PROP('Period')} some words ${PROP('Dim.InstanceId')}", *api.CallsGetMetricDataWithContext[0].MetricDataQueries[0].Label)
 	})
 
 	testCases := map[string]struct {
@@ -266,7 +268,7 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			cwClient = fakeCWClient{}
+			api = mocks.FakeMetricsAPI{}
 			executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, tc.feature)
 
 			_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
@@ -284,10 +286,10 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 			})
 
 			assert.NoError(t, err)
-			require.Len(t, cwClient.callsGetMetricDataWithContext, 1)
-			require.Len(t, cwClient.callsGetMetricDataWithContext[0].MetricDataQueries, 1)
+			require.Len(t, api.CallsGetMetricDataWithContext, 1)
+			require.Len(t, api.CallsGetMetricDataWithContext[0].MetricDataQueries, 1)
 
-			assert.Nil(t, cwClient.callsGetMetricDataWithContext[0].MetricDataQueries[0].Label)
+			assert.Nil(t, api.CallsGetMetricDataWithContext[0].MetricDataQueries[0].Label)
 		})
 	}
 }
@@ -297,12 +299,14 @@ func Test_QueryData_response_data_frame_names(t *testing.T) {
 	t.Cleanup(func() {
 		NewCWClient = origNewCWClient
 	})
-	var cwClient fakeCWClient
+	var api mocks.FakeMetricsAPI
+
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
-		return &cwClient
+		return &api
 	}
+
 	labelFromGetMetricData := "some label"
-	cwClient = fakeCWClient{
+	api = mocks.FakeMetricsAPI{
 		GetMetricDataOutput: cloudwatch.GetMetricDataOutput{
 			MetricDataResults: []*cloudwatch.MetricDataResult{
 				{StatusCode: aws.String("Complete"), Id: aws.String(queryId), Label: aws.String(labelFromGetMetricData),

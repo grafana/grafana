@@ -21,6 +21,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -460,6 +463,105 @@ func TestQuery_ResourceRequest_DescribeLogGroups(t *testing.T) {
 				Limit: aws.Int64(100),
 			},
 		}, cli.calls.describeLogGroups)
+	})
+}
+
+func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
+	sender := &mockedCallResourceResponseSenderForOauth{}
+	origNewMetricsAPI := NewMetricsAPI
+	t.Cleanup(func() {
+		NewMetricsAPI = origNewMetricsAPI
+	})
+	var api mocks.FakeMetricsAPI
+	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider {
+		return &api
+	}
+	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return datasourceInfo{}, nil
+	})
+
+	t.Run("Should handle dimension key filter query and return keys from the api", func(t *testing.T) {
+		pageLimit := 3
+		api = mocks.FakeMetricsAPI{Metrics: []*cloudwatch.Metric{
+			{MetricName: aws.String("Test_MetricName1"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}, {Name: aws.String("Test_DimensionName2")}}},
+			{MetricName: aws.String("Test_MetricName2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
+			{MetricName: aws.String("Test_MetricName3"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName2")}}},
+			{MetricName: aws.String("Test_MetricName10"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4")}, {Name: aws.String("Test_DimensionName5")}}},
+			{MetricName: aws.String("Test_MetricName4"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName2")}}},
+			{MetricName: aws.String("Test_MetricName5"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
+			{MetricName: aws.String("Test_MetricName6"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
+			{MetricName: aws.String("Test_MetricName7"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4")}}},
+			{MetricName: aws.String("Test_MetricName8"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4")}}},
+			{MetricName: aws.String("Test_MetricName9"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
+		}, MetricsPerPage: 2}
+		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: pageLimit}, &fakeSessionCache{}, featuremgmt.WithFeatures())
+
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   `/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization&dimensionFilters={"NodeID":["Shared"],"stage":["QueryCommit"]}`,
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
+				PluginID:                   "cloudwatch",
+			},
+		}
+		err := executor.CallResource(context.Background(), req, sender)
+
+		require.NoError(t, err)
+		sent := sender.Response
+		require.NotNil(t, sent)
+		require.Equal(t, http.StatusOK, sent.Status)
+		res := []string{}
+		err = json.Unmarshal(sent.Body, &res)
+		require.Nil(t, err)
+		assert.Equal(t, []string{"Test_DimensionName1", "Test_DimensionName2", "Test_DimensionName4", "Test_DimensionName5"}, res)
+	})
+
+	t.Run("Should handle standard dimension key query and return hard coded keys", func(t *testing.T) {
+		api = mocks.FakeMetricsAPI{}
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   `/dimension-keys?region=us-east-2&namespace=AWS/CloudSearch&metricName=CPUUtilization`,
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
+				PluginID:                   "cloudwatch",
+			},
+		}
+		err := executor.CallResource(context.Background(), req, sender)
+
+		require.NoError(t, err)
+		sent := sender.Response
+		require.NotNil(t, sent)
+		require.Equal(t, http.StatusOK, sent.Status)
+		res := []string{}
+		err = json.Unmarshal(sent.Body, &res)
+		require.Nil(t, err)
+		assert.Equal(t, []string{"ClientId", "DomainName"}, res)
+	})
+
+	t.Run("Should handle custom namespace dimension key query and return hard coded keys", func(t *testing.T) {
+		api = mocks.FakeMetricsAPI{}
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   `/dimension-keys?region=us-east-2&namespace=AWS/CloudSearch&metricName=CPUUtilization`,
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
+				PluginID:                   "cloudwatch",
+			},
+		}
+		err := executor.CallResource(context.Background(), req, sender)
+
+		require.NoError(t, err)
+		sent := sender.Response
+		require.NotNil(t, sent)
+		require.Equal(t, http.StatusOK, sent.Status)
+		res := []string{}
+		err = json.Unmarshal(sent.Body, &res)
+		require.Nil(t, err)
+		assert.Equal(t, []string{"ClientId", "DomainName"}, res)
 	})
 }
 

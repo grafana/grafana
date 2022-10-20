@@ -1,5 +1,19 @@
 package models
 
+import (
+	"net/url"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+)
+
+type Clients struct {
+	MetricsClientProvider MetricsClientProvider
+}
+
+type ClientsFactoryFunc func(pluginCtx backend.PluginContext, region string) (clients Clients, err error)
+
+type RouteHandlerFunc func(pluginCtx backend.PluginContext, clientFactory ClientsFactoryFunc, parameters url.Values) ([]byte, *HttpError)
+
 type cloudWatchLink struct {
 	View    string        `json:"view"`
 	Stacked bool          `json:"stacked"`
