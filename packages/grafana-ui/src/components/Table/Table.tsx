@@ -11,7 +11,15 @@ import {
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
 
-import { DataFrame, getFieldDisplayName, Field, MutableDataFrame, ArrayVector } from '@grafana/data';
+import {
+  DataFrame,
+  getFieldDisplayName,
+  Field,
+  MutableDataFrame,
+  ArrayVector,
+  ValueLinkConfig,
+  LinkModel,
+} from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
@@ -51,6 +59,7 @@ export interface Props {
   footerOptions?: TableFooterCalc;
   footerValues?: FooterItem[];
   enablePagination?: boolean;
+  getLinks?: (field: Field, data: DataFrame) => (config: ValueLinkConfig) => Array<LinkModel<Field>>;
 }
 
 function useTableStateReducer({ onColumnResize, onSortByChange, data }: Props) {
@@ -132,6 +141,7 @@ export const Table = memo((props: Props) => {
     showTypeIcons,
     footerValues,
     enablePagination,
+    getLinks,
   } = props;
 
   const listRef = useRef<FixedSizeList>(null);
@@ -314,7 +324,12 @@ export const Table = memo((props: Props) => {
         };
         return (
           <div {...rowProps}>
-            <Table data={subData!} width={width - 80} height={tableStyles.rowHeight * indexesToKeepBlank.length} />
+            <Table
+              data={subData!}
+              width={width - 80}
+              height={tableStyles.rowHeight * indexesToKeepBlank.length}
+              getLinks={getLinks}
+            />
           </div>
         );
       }
@@ -350,6 +365,7 @@ export const Table = memo((props: Props) => {
       width,
       subData,
       theme,
+      getLinks,
     ]
   );
 
@@ -396,6 +412,11 @@ export const Table = memo((props: Props) => {
       listRef.current.scrollTo(scrollTop);
     }
   };
+
+  // Interpolate and add links to cells
+  for (const field of mainData.fields) {
+    field.getLinks = getLinks?.(field, mainData);
+  }
 
   return (
     <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table" ref={tableDivRef}>

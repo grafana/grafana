@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { ValueLinkConfig, applyFieldOverrides, TimeZone } from '@grafana/data';
+import { applyFieldOverrides, DataFrame, Field, TimeZone, ValueLinkConfig } from '@grafana/data';
 import { Collapse, Table } from '@grafana/ui';
 import { FilterItem } from '@grafana/ui/src/components/Table/types';
 import { config } from 'app/core/config';
@@ -57,6 +57,18 @@ export class TableContainer extends PureComponent<Props> {
 
     let dataFrame = tableResult;
 
+    const getLinks = (field: Field, data: DataFrame) => {
+      return (config: ValueLinkConfig) => {
+        return getFieldLinksForExplore({
+          field,
+          rowIndex: config.valueRowIndex!,
+          splitOpenFn: splitOpen,
+          range,
+          dataFrame: data,
+        });
+      };
+    };
+
     if (dataFrame?.length) {
       dataFrame = applyFieldOverrides({
         data: [dataFrame],
@@ -68,20 +80,6 @@ export class TableContainer extends PureComponent<Props> {
           overrides: [],
         },
       })[0];
-      // Bit of code smell here. We need to add links here to the frame modifying the frame on every render.
-      // Should work fine in essence but still not the ideal way to pass props. In logs container we do this
-      // differently and sidestep this getLinks API on a dataframe
-      for (const field of dataFrame.fields) {
-        field.getLinks = (config: ValueLinkConfig) => {
-          return getFieldLinksForExplore({
-            field,
-            rowIndex: config.valueRowIndex!,
-            splitOpenFn: splitOpen,
-            range,
-            dataFrame: dataFrame!,
-          });
-        };
-      }
     }
 
     return (
@@ -92,6 +90,7 @@ export class TableContainer extends PureComponent<Props> {
             data={dataFrame}
             width={tableWidth}
             height={height}
+            getLinks={getLinks}
             onCellFilterAdded={onCellFilterAdded}
           />
         ) : (
