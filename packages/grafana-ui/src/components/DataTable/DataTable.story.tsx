@@ -56,7 +56,14 @@ export const Basic: ComponentStory<typeof DataTable> = (args) => {
     []
   );
 
-  return <DataTable columns={columns} data={data} getRowId={(r) => r.header1} renderExpandedRow={() => null} />;
+  return (
+    <DataTable
+      columns={columns}
+      data={data}
+      getRowId={(r) => r.header1}
+      renderExpandedRow={() => <>Expanded content</>}
+    />
+  );
 };
 
 interface WithRowExpansionData {
