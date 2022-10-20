@@ -24,13 +24,12 @@
         <mj-text>
         </mj-text>
         <mj-text>
-          You can also copy and paste this link into your browser directly:<br>
+          You can also copy and paste this link into your browser directly:
         </mj-text>
         <mj-text>
           <a href="{{ .LinkUrl }}">{{ .LinkUrl }}</a>
         </mj-text>
       </mj-column>
-
     </mj-section>
     <mj-section>
       <mj-include path="./partials/layout/footer.mjml" />
