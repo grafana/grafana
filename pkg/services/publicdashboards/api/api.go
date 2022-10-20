@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	"net/http"
 	"strconv"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
