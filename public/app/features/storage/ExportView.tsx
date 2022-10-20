@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
 
 import { isLiveChannelMessageEvent, isLiveChannelStatusEvent, LiveChannelScope, SelectableValue } from '@grafana/data';
-import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
+import { getBackendSrv, getGrafanaLiveSrv, config } from '@grafana/runtime';
 import {
   Button,
   CodeEditor,
@@ -16,6 +16,7 @@ import {
   LinkButton,
   Select,
   Switch,
+  Alert,
 } from '@grafana/ui';
 
 import { StorageView } from './types';
@@ -60,6 +61,7 @@ interface ExporterInfo {
 
 const formats: Array<SelectableValue<string>> = [
   { label: 'GIT', value: 'git', description: 'Exports a fresh git repository' },
+  { label: 'Object store', value: 'objectStore', description: 'Export to the SQL based object store' },
 ];
 
 interface Props {
@@ -171,36 +173,48 @@ export const ExportView = ({ onPathChange }: Props) => {
               onChange={(v) => setBody({ ...body!, format: v.value! })}
             />
           </Field>
-          <Field label="Keep history">
-            <Switch value={body?.history} onChange={(v) => setBody({ ...body!, history: v.currentTarget.checked })} />
-          </Field>
-
-          <Field label="Include">
+          {body?.format === 'objectStore' && !config.featureToggles.objectStore && (
+            <div>
+              <Alert title="Missing feature flag">Enable the `objectStore` feature flag</Alert>
+            </div>
+          )}
+          {body?.format === 'git' && (
             <>
-              <InlineFieldRow>
-                <InlineField label="Toggle all" labelWidth={labelWith}>
-                  <InlineSwitch
-                    value={Object.keys(body?.exclude ?? {}).length === 0}
-                    onChange={(v) => setInclude('*', v.currentTarget.checked)}
-                  />
-                </InlineField>
-              </InlineFieldRow>
-              {serverOptions.value && (
-                <div>
-                  {serverOptions.value.exporters.map((ex) => (
-                    <InlineFieldRow key={ex.key}>
-                      <InlineField label={ex.name} labelWidth={labelWith} tooltip={ex.description}>
-                        <InlineSwitch
-                          value={body?.exclude?.[ex.key] !== true}
-                          onChange={(v) => setInclude(ex.key, v.currentTarget.checked)}
-                        />
-                      </InlineField>
-                    </InlineFieldRow>
-                  ))}
-                </div>
-              )}
+              <Field label="Keep history">
+                <Switch
+                  value={body?.history}
+                  onChange={(v) => setBody({ ...body!, history: v.currentTarget.checked })}
+                />
+              </Field>
+
+              <Field label="Include">
+                <>
+                  <InlineFieldRow>
+                    <InlineField label="Toggle all" labelWidth={labelWith}>
+                      <InlineSwitch
+                        value={Object.keys(body?.exclude ?? {}).length === 0}
+                        onChange={(v) => setInclude('*', v.currentTarget.checked)}
+                      />
+                    </InlineField>
+                  </InlineFieldRow>
+                  {serverOptions.value && (
+                    <div>
+                      {serverOptions.value.exporters.map((ex) => (
+                        <InlineFieldRow key={ex.key}>
+                          <InlineField label={ex.name} labelWidth={labelWith} tooltip={ex.description}>
+                            <InlineSwitch
+                              value={body?.exclude?.[ex.key] !== true}
+                              onChange={(v) => setInclude(ex.key, v.currentTarget.checked)}
+                            />
+                          </InlineField>
+                        </InlineFieldRow>
+                      ))}
+                    </div>
+                  )}
+                </>
+              </Field>
             </>
-          </Field>
+          )}
 
           <Field label="General folder" description="Set the folder name for items without a real folder">
             <Input

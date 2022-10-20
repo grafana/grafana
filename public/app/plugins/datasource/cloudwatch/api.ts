@@ -1,11 +1,11 @@
 import { memoize } from 'lodash';
 
-import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
+import { DataSourceInstanceSettings, SelectableValue, toOption } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudWatchRequest } from './query-runner/CloudWatchRequest';
-import { CloudWatchJsonData, DescribeLogGroupsRequest, Dimensions, MultiFilters } from './types';
+import { CloudWatchJsonData, DescribeLogGroupsRequest, GetDimensionKeysRequest, MultiFilters } from './types';
 
 export interface SelectableResourceValue extends SelectableValue<string> {
   text: string;
@@ -69,22 +69,18 @@ export class CloudWatchAPI extends CloudWatchRequest {
     return values.map((v) => ({ metricName: v.value, namespace: v.text }));
   }
 
-  async getDimensionKeys(
-    namespace: string | undefined,
-    region: string,
-    dimensionFilters: Dimensions = {},
-    metricName = ''
-  ) {
-    if (!namespace) {
-      return [];
-    }
-
-    return this.memoizedGetRequest<SelectableResourceValue[]>('dimension-keys', {
+  async getDimensionKeys({
+    region,
+    namespace = '',
+    dimensionFilters = {},
+    metricName = '',
+  }: GetDimensionKeysRequest): Promise<Array<SelectableValue<string>>> {
+    return this.memoizedGetRequest<string[]>('dimension-keys', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
       dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
       metricName,
-    });
+    }).then((dimensionKeys) => dimensionKeys.map(toOption));
   }
 
   async getDimensionValues(
