@@ -136,6 +136,30 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
     [timeZone, frames, shouldDisplayCloseButton]
   );
 
+  const renderTooltip = (alignedFrame: DataFrame) => {
+    if (options.tooltip.mode === TooltipDisplayMode.None) {
+      return null;
+    }
+
+    if (focusedPointIdx === null || (!isActive && sync && sync() === DashboardCursorSync.Crosshair)) {
+      return null;
+    }
+
+    return (
+      <Portal>
+        {hover && coords && focusedSeriesIdx && (
+          <VizTooltipContainer
+            position={{ x: coords.viewport.x, y: coords.viewport.y }}
+            offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+            allowPointerEvents={isToolTipOpen.current}
+          >
+            {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx)}
+          </VizTooltipContainer>
+        )}
+      </Portal>
+    );
+  };
+
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
 
   if (!frames || warn) {
@@ -187,28 +211,10 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
           });
         }
 
-        if (options.tooltip.mode === TooltipDisplayMode.None) {
-          return null;
-        }
-
-        if (focusedPointIdx === null || (!isActive && sync && sync() === DashboardCursorSync.Crosshair)) {
-          return null;
-        }
-
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
-            <Portal>
-              {hover && coords && focusedSeriesIdx && (
-                <VizTooltipContainer
-                  position={{ x: coords.viewport.x, y: coords.viewport.y }}
-                  offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
-                  allowPointerEvents={isToolTipOpen.current}
-                >
-                  {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx)}
-                </VizTooltipContainer>
-              )}
-            </Portal>
+            {renderTooltip(alignedFrame)}
             <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
