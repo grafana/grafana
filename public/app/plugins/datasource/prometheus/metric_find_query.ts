@@ -72,7 +72,7 @@ export default class PrometheusMetricFindQuery {
     const end = this.datasource.getPrometheusTime(this.range.to, true);
     const params = { ...(metric && { 'match[]': metric }), start: start.toString(), end: end.toString() };
 
-    if (!metric || this.datasource.doesDatasourceSupportLabelsMatchAPI()) {
+    if (!metric || this.datasource.hasLabelsMatchAPISupport()) {
       const url = `/api/v1/label/${label}/values`;
 
       return this.datasource.metadataRequest(url, params).then((result: any) => {

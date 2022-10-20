@@ -147,7 +147,7 @@ export class PrometheusDatasource
     return query.expr;
   }
 
-  doesDatasourceSupportLabelsMatchAPI(): boolean {
+  hasLabelsMatchAPISupport(): boolean {
     return (
       // https://github.com/prometheus/prometheus/releases/tag/v2.24.0
       this._isDatasourceVersionGreaterOrEqualTo('2.24.0', PromApplication.Prometheus) ||
