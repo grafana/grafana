@@ -26,6 +26,8 @@ type SearchAPIResponse = {
   frames: DataFrameJSON[];
 };
 
+const folderViewSort = 'name_sort';
+
 export class BlugeSearcher implements GrafanaSearcher {
   constructor(private fallbackSearcher: GrafanaSearcher) {}
 
@@ -77,7 +79,7 @@ export class BlugeSearcher implements GrafanaSearcher {
   // This should eventually be filled by an API call, but hardcoded is a good start
   getSortOptions(): Promise<SelectableValue[]> {
     const opts: SelectableValue[] = [
-      { value: 'name_sort', label: 'Alphabetically (A-Z)' },
+      { value: folderViewSort, label: 'Alphabetically (A-Z)' },
       { value: '-name_sort', label: 'Alphabetically (Z-A)' },
     ];
 
@@ -218,6 +220,10 @@ export class BlugeSearcher implements GrafanaSearcher {
         return index < view.dataFrame.length;
       },
     };
+  }
+
+  getFolderViewSort(): string {
+    return 'name_sort';
   }
 }
 

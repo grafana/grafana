@@ -45,6 +45,7 @@ interface State extends OverlayProps {
 }
 
 export class GeomapPanel extends Component<Props, State> {
+  declare context: React.ContextType<typeof PanelContextRoot>;
   static contextType = PanelContextRoot;
   panelContext: PanelContext | undefined = undefined;
   private subs = new Subscription();

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -36,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -46,7 +47,7 @@ func ProvideService(
 	dataSourceCache datasources.CacheService,
 	dataSourceService datasources.DataSourceService,
 	routeRegister routing.RouteRegister,
-	sqlStore *sqlstore.SQLStore,
+	sqlStore db.DB,
 	kvStore kvstore.KVStore,
 	expressionService *expr.Service,
 	dataProxy *datasourceproxy.DataSourceProxyService,
@@ -54,7 +55,7 @@ func ProvideService(
 	secretsService secrets.Service,
 	notificationService notifications.Service,
 	m *metrics.NGAlert,
-	folderService dashboards.FolderService,
+	folderService folder.Service,
 	ac accesscontrol.AccessControl,
 	dashboardService dashboards.DashboardService,
 	renderService rendering.Service,
@@ -104,7 +105,7 @@ type AlertNG struct {
 	DataSourceCache     datasources.CacheService
 	DataSourceService   datasources.DataSourceService
 	RouteRegister       routing.RouteRegister
-	SQLStore            *sqlstore.SQLStore
+	SQLStore            db.DB
 	KVStore             kvstore.KVStore
 	ExpressionService   *expr.Service
 	DataProxy           *datasourceproxy.DataSourceProxyService
@@ -117,7 +118,7 @@ type AlertNG struct {
 	imageService        image.ImageService
 	schedule            schedule.ScheduleService
 	stateManager        *state.Manager
-	folderService       dashboards.FolderService
+	folderService       folder.Service
 	dashboardService    dashboards.DashboardService
 
 	// Alerting notification services
@@ -163,7 +164,7 @@ func (ng *AlertNG) init() error {
 
 	appUrl, err := url.Parse(ng.Cfg.AppURL)
 	if err != nil {
-		ng.Log.Error("Failed to parse application URL. Continue without it.", "err", err)
+		ng.Log.Error("Failed to parse application URL. Continue without it.", "error", err)
 		appUrl = nil
 	}
 
@@ -248,7 +249,7 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 			logger.Debug("Got folder title updated event. updating rules in the folder", "folder_uid", evt.UID)
 			updated, err := dbStore.IncreaseVersionForAllRulesInNamespace(context.Background(), evt.OrgID, evt.UID)
 			if err != nil {
-				logger.Error("Failed to update alert rules in the folder after its title was changed", "err", err, "folder_uid", evt.UID, "folder", evt.Title)
+				logger.Error("Failed to update alert rules in the folder after its title was changed", "error", err, "folder_uid", evt.UID, "folder", evt.Title)
 				return
 			}
 			if len(updated) > 0 {

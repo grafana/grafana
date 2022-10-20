@@ -1,3 +1,4 @@
+import { escapeLabelValueInExactSelector } from '../../../languageUtils';
 import { AGGREGATION_OPERATORS, RANGE_VEC_FUNCTIONS } from '../../../syntax';
 
 import { CompletionDataProvider } from './CompletionDataProvider';
@@ -13,7 +14,7 @@ export type CompletionType =
   | 'PATTERN'
   | 'PARSER'
   | 'LINE_FILTER'
-  | 'LINE_FORMAT';
+  | 'PIPE_OPERATION';
 
 type Completion = {
   type: CompletionType;
@@ -63,12 +64,38 @@ const DURATION_COMPLETIONS: Completion[] = ['$__interval', '$__range', '1m', '5m
   })
 );
 
-const LINE_FILTER_COMPLETIONS: Completion[] = ['|=', '!=', '|~', '!~'].map((item) => ({
-  type: 'LINE_FILTER',
-  label: `${item} ""`,
-  insertText: `${item} "$0"`,
-  isSnippet: true,
-}));
+const LINE_FILTER_COMPLETIONS = [
+  {
+    operator: '|=',
+    documentation: 'Log line contains string',
+    afterPipe: true,
+  },
+  {
+    operator: '!=',
+    documentation: 'Log line does not contain string',
+  },
+  {
+    operator: '|~',
+    documentation: 'Log line contains a match to the regular expression',
+    afterPipe: true,
+  },
+  {
+    operator: '!~',
+    documentation: 'Log line does not contain a match to the regular expression',
+  },
+];
+
+function getLineFilterCompletions(afterPipe: boolean): Completion[] {
+  return LINE_FILTER_COMPLETIONS.filter((completion) => !afterPipe || completion.afterPipe).map(
+    ({ operator, documentation }) => ({
+      type: 'LINE_FILTER',
+      label: `${operator} ""`,
+      insertText: `${afterPipe ? operator.replace('|', '') : operator} "$0"`,
+      isSnippet: true,
+      documentation,
+    })
+  );
+}
 
 async function getAllHistoryCompletions(dataProvider: CompletionDataProvider): Promise<Completion[]> {
   const history = await dataProvider.getHistory();
@@ -124,33 +151,38 @@ async function getInGroupingCompletions(
   return getLabelNamesForCompletions('', false, true, otherLabels, dataProvider);
 }
 
+const PARSERS = ['json', 'logfmt', 'pattern', 'regexp', 'unpack'];
+const PARSER_DOCUMENTATION = 'Parse and extract labels from the log content.';
+
 async function getAfterSelectorCompletions(
   labels: Label[],
   afterPipe: boolean,
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
   const { extractedLabelKeys, hasJSON, hasLogfmt } = await dataProvider.getParserAndLabelKeys(labels);
-  const allParsers = new Set(['json', 'logfmt', 'pattern', 'regexp', 'unpack']);
+  const allParsers = new Set(PARSERS);
   const completions: Completion[] = [];
-  const prefix = afterPipe ? '' : '| ';
+  const prefix = afterPipe ? ' ' : '| ';
   const hasLevelInExtractedLabels = extractedLabelKeys.some((key) => key === 'level');
   if (hasJSON) {
     allParsers.delete('json');
-    const explanation = hasLevelInExtractedLabels ? 'use to get log-levels in the histogram' : 'detected';
+    const extra = hasLevelInExtractedLabels ? '' : ' (detected)';
     completions.push({
       type: 'PARSER',
-      label: `json (${explanation})`,
+      label: `json${extra}`,
       insertText: `${prefix}json`,
+      documentation: hasLevelInExtractedLabels ? 'Use it to get log-levels in the histogram' : PARSER_DOCUMENTATION,
     });
   }
 
   if (hasLogfmt) {
     allParsers.delete('logfmt');
-    const explanation = hasLevelInExtractedLabels ? 'get detected levels in the histogram' : 'detected';
+    const extra = hasLevelInExtractedLabels ? '' : ' (detected)';
     completions.push({
       type: 'DURATION',
-      label: `logfmt (${explanation})`,
+      label: `logfmt${extra}`,
       insertText: `${prefix}logfmt`,
+      documentation: hasLevelInExtractedLabels ? 'Get detected levels in the histogram' : PARSER_DOCUMENTATION,
     });
   }
 
@@ -160,6 +192,7 @@ async function getAfterSelectorCompletions(
       type: 'PARSER',
       label: parser,
       insertText: `${prefix}${parser}`,
+      documentation: PARSER_DOCUMENTATION,
     });
   });
 
@@ -172,19 +205,26 @@ async function getAfterSelectorCompletions(
   });
 
   completions.push({
-    type: 'LINE_FILTER',
+    type: 'PIPE_OPERATION',
     label: 'unwrap',
     insertText: `${prefix}unwrap`,
   });
 
   completions.push({
-    type: 'LINE_FORMAT',
+    type: 'PIPE_OPERATION',
     label: 'line_format',
     insertText: `${prefix}line_format "{{.$0}}"`,
     isSnippet: true,
   });
 
-  return [...LINE_FILTER_COMPLETIONS, ...completions];
+  completions.push({
+    type: 'PIPE_OPERATION',
+    label: 'label_format',
+    insertText: `${prefix}label_format`,
+    isSnippet: true,
+  });
+
+  return [...getLineFilterCompletions(afterPipe), ...completions];
 }
 
 async function getLabelValuesForMetricCompletions(
@@ -197,7 +237,7 @@ async function getLabelValuesForMetricCompletions(
   return values.map((text) => ({
     type: 'LABEL_VALUE',
     label: text,
-    insertText: betweenQuotes ? text : `"${text}"`,
+    insertText: betweenQuotes ? escapeLabelValueInExactSelector(text) : `"${escapeLabelValueInExactSelector(text)}"`,
   }));
 }
 

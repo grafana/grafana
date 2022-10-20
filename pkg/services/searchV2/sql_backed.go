@@ -6,14 +6,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search"
-	"github.com/grafana/grafana/pkg/services/store/object"
 )
 
 type sqlBackedSearcher struct {
 	sql     *search.SearchService
-	folders dashboards.FolderService
+	folders folder.Service
 }
 
 func (s *sqlBackedSearcher) doSQLQuery(c *models.ReqContext, query *DashboardQuery) *backend.DataResponse {
@@ -26,7 +25,7 @@ func (s *sqlBackedSearcher) doSQLQuery(c *models.ReqContext, query *DashboardQue
 	}
 
 	// Limit to only folders
-	if len(query.Kind) == 1 && query.Kind[0] == object.StandardKindFolder {
+	if len(query.Kind) == 1 && query.Kind[0] == models.StandardKindFolder {
 		q.Type = string(models.DashHitFolder)
 	}
 
@@ -108,9 +107,9 @@ func hitListToFrame(hits models.HitList) *data.Frame {
 		fName.SetConcrete(i, hit.Title)
 		fURL.SetConcrete(i, hit.URL)
 		if hit.Type == models.DashHitFolder {
-			fKind.SetConcrete(i, object.StandardKindFolder)
+			fKind.SetConcrete(i, models.StandardKindFolder)
 		} else {
-			fKind.SetConcrete(i, object.StandardKindDashboard)
+			fKind.SetConcrete(i, models.StandardKindDashboard)
 		}
 
 		if len(hit.Tags) > 0 {
@@ -123,14 +122,14 @@ func hitListToFrame(hits models.HitList) *data.Frame {
 		if fuid == "" {
 			fuid = GeneralFolderUID
 			header.Locations[fuid] = locationItem{
-				Kind: object.StandardKindFolder,
+				Kind: models.StandardKindFolder,
 				Name: "General",
 				URL:  "/dashboards",
 			}
 		}
 		if header.Locations[fuid].Kind == "" { // missing
 			header.Locations[fuid] = locationItem{
-				Kind: object.StandardKindFolder,
+				Kind: models.StandardKindFolder,
 				Name: hit.FolderTitle,
 				URL:  hit.FolderURL,
 			}

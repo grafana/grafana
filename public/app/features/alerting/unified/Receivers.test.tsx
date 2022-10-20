@@ -17,7 +17,8 @@ import { AccessControlAction, ContactPointsState } from 'app/types';
 import Receivers from './Receivers';
 import { updateAlertManagerConfig, fetchAlertManagerConfig, fetchStatus, testReceivers } from './api/alertmanager';
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
-import { fetchNotifiers, fetchContactPointsState } from './api/grafana';
+import { fetchNotifiers } from './api/grafana';
+import * as receiversApi from './api/receiversApi';
 import {
   mockDataSource,
   MockDataSourceSrv,
@@ -29,7 +30,6 @@ import { grafanaNotifiersMock } from './mocks/grafana-notifiers';
 import { getAllDataSources } from './utils/config';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-
 jest.mock('./api/alertmanager');
 jest.mock('./api/grafana');
 jest.mock('./utils/config');
@@ -46,7 +46,9 @@ const mocks = {
     fetchNotifiers: jest.mocked(fetchNotifiers),
     testReceivers: jest.mocked(testReceivers),
     discoverAlertmanagerFeatures: jest.mocked(discoverAlertmanagerFeatures),
-    fetchReceivers: jest.mocked(fetchContactPointsState),
+  },
+  hooks: {
+    useGetContactPointsState: jest.spyOn(receiversApi, 'useGetContactPointsState'),
   },
   contextSrv: jest.mocked(contextSrv),
 };
@@ -130,6 +132,7 @@ const clickSelectOption = async (selectElement: HTMLElement, optionText: string)
 };
 
 document.addEventListener('click', interceptLinkClicks);
+const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
 
 describe('Receivers', () => {
   beforeEach(() => {
@@ -137,8 +140,7 @@ describe('Receivers', () => {
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.fetchNotifiers.mockResolvedValue(grafanaNotifiersMock);
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
-    const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
-    mocks.api.fetchReceivers.mockResolvedValue(emptyContactPointsState);
+    mocks.hooks.useGetContactPointsState.mockReturnValue(emptyContactPointsState);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.contextSrv.isEditor = true;
     store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
@@ -327,6 +329,7 @@ describe('Receivers', () => {
         (a) => a === action
       )
     );
+    mocks.hooks.useGetContactPointsState.mockReturnValue(emptyContactPointsState);
     renderReceivers();
 
     expect(ui.newContactPointButton.query()).not.toBeInTheDocument();
@@ -543,7 +546,7 @@ describe('Receivers', () => {
         errorCount: 1,
       };
 
-      mocks.api.fetchReceivers.mockResolvedValue(receiversMock);
+      mocks.hooks.useGetContactPointsState.mockReturnValue(receiversMock);
       await renderReceivers();
 
       //
@@ -569,12 +572,87 @@ describe('Receivers', () => {
       expect(byText('1 error').query(criticalDetailTable)).toBeNull();
       expect(byText('OK').getAll(criticalDetailTable)).toHaveLength(2);
     });
-
-    it('Should not render error notifications when fetchContactPointsState raises 404 error ', async () => {
+    it('Should render no attempt message when there are some points state with null lastNotifyAttempt, and "-" in null values', async () => {
       mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
       mocks.api.updateConfig.mockResolvedValue();
 
-      mocks.api.fetchReceivers.mockRejectedValue({ status: 404 });
+      const receiversMock: ContactPointsState = {
+        receivers: {
+          default: {
+            active: true,
+            notifiers: {
+              email: [
+                {
+                  lastNotifyAttemptError:
+                    'establish connection to server: dial tcp: lookup smtp.example.org on 8.8.8.8:53: no such host',
+                  lastNotifyAttempt: '2022-09-19T15:34:40.696Z',
+                  lastNotifyAttemptDuration: '117.2455ms',
+                  name: 'email[0]',
+                },
+              ],
+            },
+            errorCount: 1,
+          },
+          critical: {
+            active: true,
+            notifiers: {
+              slack: [
+                {
+                  lastNotifyAttempt: '0001-01-01T00:00:00.000Z',
+                  lastNotifyAttemptDuration: '0s',
+                  name: 'slack[0]',
+                },
+              ],
+              pagerduty: [
+                {
+                  lastNotifyAttempt: '2022-09-19T15:34:40.696Z',
+                  lastNotifyAttemptDuration: '117.2455ms',
+                  name: 'pagerduty',
+                },
+              ],
+            },
+            errorCount: 0,
+          },
+        },
+        errorCount: 1,
+      };
+
+      mocks.hooks.useGetContactPointsState.mockReturnValue(receiversMock);
+      await renderReceivers();
+
+      //
+      await ui.receiversTable.find();
+      //should render notification error
+      expect(ui.notificationError.query()).toBeInTheDocument();
+      expect(ui.notificationError.get()).toHaveTextContent('1 error with contact points');
+
+      const receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
+      expect(receiverRows[0]).toHaveTextContent('1 error');
+      expect(receiverRows[1]).not.toHaveTextContent('error');
+      expect(receiverRows[1]).toHaveTextContent('No attempts');
+
+      //should show error in contact points when expanding
+      // expand contact point detail for default 2 emails - 2 errors
+      await userEvent.click(ui.contactPointsCollapseToggle.get(receiverRows[0]));
+      const defaultDetailTable = screen.getAllByTestId('dynamic-table')[1];
+      expect(byText('1 error').getAll(defaultDetailTable)).toHaveLength(1);
+
+      // expand contact point detail for slack and pagerduty - 0 errors
+      await userEvent.click(ui.contactPointsCollapseToggle.get(receiverRows[1]));
+      const criticalDetailTableRows = within(screen.getAllByTestId('dynamic-table')[2]).getAllByTestId('row');
+      // should render slack item with no attempt
+      expect(criticalDetailTableRows[0]).toHaveTextContent('No attempt');
+      expect(criticalDetailTableRows[0]).toHaveTextContent('--');
+      //should render pagerduty with no attempt
+      expect(criticalDetailTableRows[1]).toHaveTextContent('OK');
+      expect(criticalDetailTableRows[1]).toHaveTextContent('117.2455ms');
+    });
+
+    it('Should not render error notifications when fetching contact points state raises 404 error ', async () => {
+      mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
+      mocks.api.updateConfig.mockResolvedValue();
+
+      mocks.hooks.useGetContactPointsState.mockReturnValue(emptyContactPointsState);
       await renderReceivers();
 
       await ui.receiversTable.find();

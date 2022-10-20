@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -26,7 +26,7 @@ type searchHTTPService struct {
 	useSQL    bool
 }
 
-func ProvideSearchHTTPService(search SearchService, sql *search.SearchService, folders dashboards.FolderService) SearchHTTPService {
+func ProvideSearchHTTPService(search SearchService, sql *search.SearchService, folders folder.Service) SearchHTTPService {
 	return &searchHTTPService{
 		search: search,
 		useSQL: search.IsDisabled(),

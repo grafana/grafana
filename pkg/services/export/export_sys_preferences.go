@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 func exportSystemPreferences(helper *commitHelper, job *gitExportJob) error {
@@ -32,7 +32,7 @@ func exportSystemPreferences(helper *commitHelper, job *gitExportJob) error {
 		users[user.ID] = user
 	}
 
-	return job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+	return job.sql.WithDbSession(helper.ctx, func(sess *db.Session) error {
 		rows := make([]*preferences, 0)
 
 		sess.Table("preferences").

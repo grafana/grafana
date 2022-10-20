@@ -38,7 +38,7 @@ describe('enrichConfigItems', () => {
     contextSrv.user.isSignedIn = false;
     setContextSrv(contextSrv);
     const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
-    const signInNode = enrichedConfigItems.find((item) => item.id === 'signin');
+    const signInNode = enrichedConfigItems.find((item) => item.id === 'sign-in');
     expect(signInNode).toBeDefined();
   });
 
@@ -47,7 +47,7 @@ describe('enrichConfigItems', () => {
     contextSrv.user.isSignedIn = true;
     setContextSrv(contextSrv);
     const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
-    const signInNode = enrichedConfigItems.find((item) => item.id === 'signin');
+    const signInNode = enrichedConfigItems.find((item) => item.id === 'sign-in');
     expect(signInNode).toBeDefined();
   });
 

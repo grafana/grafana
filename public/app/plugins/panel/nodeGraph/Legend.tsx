@@ -38,7 +38,7 @@ export const Legend = function Legend(props: Props) {
   const colorItems = getColorLegendItems(nodes, theme);
 
   const onClick = useCallback(
-    (item) => {
+    (item: VizLegendItem<ItemData>) => {
       onSort({
         field: item.data!.field,
         ascending: item.data!.field === sort?.field ? !sort?.ascending : false,
