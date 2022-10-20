@@ -18,11 +18,36 @@ jest.mock('../utils', () => ({ reportInteraction: jest.fn() }));
 const reportInteractionMock = jest.mocked(reportInteraction);
 
 describe('usePluginInteractionReporter', () => {
-  it('should report interaction with plugin context information', async () => {
-    const report = renderPluginReporterHook();
-    report('grafana_plugin_select_query_type');
+  beforeEach(() => jest.resetAllMocks());
 
-    expect(reportInteractionMock.mock.calls.length).toBe(1);
+  describe('within a panel plugin', () => {
+    it('should report interaction with plugin context information', () => {
+      const report = renderPluginReporterHook({});
+
+      report('grafana_plugin_select_query_type');
+      expect(reportInteractionMock.mock.calls.length).toBe(1);
+    });
+  });
+
+  describe('within a data source plugin', () => {
+    it('should report interaction with plugin context information', () => {
+      const report = renderDataSourcePluginReporterHook();
+      report('grafana_plugin_select_query_type');
+
+      expect(reportInteractionMock.mock.calls.length).toBe(1);
+    });
+  });
+
+  describe('ensure interaction name follows convention', () => {
+    it('should throw name does not start with "grafana_plugin_"', () => {
+      const report = renderDataSourcePluginReporterHook();
+      expect(() => report('select_query_type')).toThrow();
+    });
+
+    it('should throw if name is exactly "grafana_plugin_"', () => {
+      const report = renderPluginReporterHook();
+      expect(() => report('grafana_plugin_')).toThrow();
+    });
   });
 });
 
