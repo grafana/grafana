@@ -17,10 +17,7 @@
     "grunt-assemble": "0.6.3",
     "grunt-contrib-clean": "2.0.0",
     "grunt-contrib-watch": "1.1.0",
-    "grunt-premailer": "1.1.0",
-    "grunt-processhtml": "^0.4.2",
     "grunt-text-replace": "0.4.0",
-    "grunt-uncss": "0.9.0",
     "load-grunt-config": "3.0.1",
     "mjml": "^4.13.0"
   }

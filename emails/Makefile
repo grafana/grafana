@@ -10,6 +10,6 @@ build-html:
 		--output ../public/emails/
 
 build-txt:
-	grunt
+	npx grunt
 
 .PHONY: build build-html build-txt
