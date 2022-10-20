@@ -564,12 +564,12 @@ describe('Receivers', () => {
       // expand contact point detail for default 2 emails - 2 errors
       await userEvent.click(ui.contactPointsCollapseToggle.get(receiverRows[0]));
       const defaultDetailTable = screen.getAllByTestId('dynamic-table')[1];
-      expect(byText('1 error').getAll(defaultDetailTable)).toHaveLength(1);
+      expect(byText('Error').getAll(defaultDetailTable)).toHaveLength(1);
 
       // expand contact point detail for slack and pagerduty - 0 errors
       await userEvent.click(ui.contactPointsCollapseToggle.get(receiverRows[1]));
       const criticalDetailTable = screen.getAllByTestId('dynamic-table')[2];
-      expect(byText('1 error').query(criticalDetailTable)).toBeNull();
+      expect(byText('Error').query(criticalDetailTable)).toBeNull();
       expect(byText('OK').getAll(criticalDetailTable)).toHaveLength(2);
     });
     it('Should render no attempt message when there are some points state with null lastNotifyAttempt, and "-" in null values', async () => {
@@ -635,7 +635,7 @@ describe('Receivers', () => {
       // expand contact point detail for default 2 emails - 2 errors
       await userEvent.click(ui.contactPointsCollapseToggle.get(receiverRows[0]));
       const defaultDetailTable = screen.getAllByTestId('dynamic-table')[1];
-      expect(byText('1 error').getAll(defaultDetailTable)).toHaveLength(1);
+      expect(byText('Error').getAll(defaultDetailTable)).toHaveLength(1);
 
       // expand contact point detail for slack and pagerduty - 0 errors
       await userEvent.click(ui.contactPointsCollapseToggle.get(receiverRows[1]));
