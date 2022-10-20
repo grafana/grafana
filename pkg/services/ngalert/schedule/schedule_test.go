@@ -107,7 +107,6 @@ func TestWarmStateCache(t *testing.T) {
 		Labels:            labels,
 	}
 	_ = dbstore.SaveAlertInstances(ctx, instance2)
-	
 	st := state.NewManager(log.New("test"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{})
 	st.Warm(ctx)
 
