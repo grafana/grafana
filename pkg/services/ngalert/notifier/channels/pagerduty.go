@@ -209,7 +209,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	}
 
 	if tmplErr != nil {
-		pn.log.Warn("failed to template PagerDuty message", "err", tmplErr.Error())
+		pn.log.Warn("failed to template PagerDuty message", "error", tmplErr.Error())
 	}
 
 	return msg, eventType, nil

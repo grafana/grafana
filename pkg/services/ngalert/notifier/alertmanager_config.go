@@ -116,7 +116,7 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 	}
 
 	if err := am.SaveAndApplyConfig(ctx, &config); err != nil {
-		moa.logger.Error("unable to save and apply alertmanager configuration", "err", err)
+		moa.logger.Error("unable to save and apply alertmanager configuration", "error", err)
 		return AlertmanagerConfigRejectedError{err}
 	}
 
