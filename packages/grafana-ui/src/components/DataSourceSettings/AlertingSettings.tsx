@@ -5,10 +5,10 @@ import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana
 import { InlineSwitch } from '../../components/Switch/Switch';
 import { InlineField } from '../Forms/InlineField';
 
-interface Props<T extends DataSourceJsonData>
+export interface Props<T extends DataSourceJsonData>
   extends Pick<DataSourcePluginOptionsEditorProps<T>, 'options' | 'onOptionsChange'> {}
 
-interface AlertingConfig extends DataSourceJsonData {
+export interface AlertingConfig extends DataSourceJsonData {
   manageAlerts?: boolean;
 }
 
