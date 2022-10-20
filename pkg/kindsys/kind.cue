@@ -54,9 +54,7 @@ _sharedKind: {
 	// applies to [name].
 	pluralMachineName: strings.ToLower(strings.Replace(pluralName, "-", "_", -1))
 
-	// maturity indicates the how far a given kind declaration is in its initial
-	// journey towards what might otherwise be referred to as 1.0.
-	maturity: "committed" | "experimental" | "stable" | "mature"
+	maturity: #Maturity
 
 	// The kind system itself is not mature enough yet for any single
 	// kind to be called "mature."
@@ -65,6 +63,10 @@ _sharedKind: {
 
 	form: "structured" | "raw"
 }
+
+// Maturity indicates the how far a given kind declaration is in its initial
+// journey. Mature kinds still evolve, but with guarantees about compatibility.
+#Maturity: "committed" | "experimental" | "stable" | "mature"
 
 // Raw is a category of Kind that specifies handling for a raw file,
 // like an image, or an svg or parquet file. Grafana mostly acts as asset storage for raw
