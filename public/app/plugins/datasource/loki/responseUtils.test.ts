@@ -100,7 +100,7 @@ describe('extractLabelKeysFromDataFrame', () => {
     input.fields[1].values = new ArrayVector([]);
     expect(extractLabelKeysFromDataFrame(input)).toEqual([]);
   });
-  it('returns empty by default', () => {
+  it('extracts label keys', () => {
     const input = cloneDeep(frame);
     expect(extractLabelKeysFromDataFrame(input)).toEqual(['level']);
   });
