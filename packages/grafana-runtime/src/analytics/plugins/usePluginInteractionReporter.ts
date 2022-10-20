@@ -26,5 +26,5 @@ export function usePluginInteractionReporter(): typeof reportInteraction {
 }
 
 function validInteractionName(interactionName: string): boolean {
-  return interactionName.startsWith(namePrefix);
+  return interactionName.startsWith(namePrefix) && interactionName.length > namePrefix.length;
 }
