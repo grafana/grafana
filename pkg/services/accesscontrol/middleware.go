@@ -84,6 +84,7 @@ func deny(c *models.ReqContext, evaluator Evaluator, err error) {
 
 	if !c.IsApiRequest() {
 		// TODO(emil): I'd like to show a message after this redirect, not sure how that can be done?
+		writeRedirectCookie(c)
 		c.Redirect(setting.AppSubUrl + "/")
 		return
 	}
