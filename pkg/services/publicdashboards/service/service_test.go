@@ -288,6 +288,41 @@ func TestGetAnnotations(t *testing.T) {
 		assert.Empty(t, items)
 	})
 
+	t.Run("test will return nothing when pubdash annotations are disabled", func(t *testing.T) {
+		annotationsRepo := annotations.FakeAnnotationsRepo{}
+		fakeStore := FakePublicDashboardStore{}
+		service := &PublicDashboardServiceImpl{
+			log:             log.New("test.logger"),
+			store:           &fakeStore,
+			AnnotationsRepo: &annotationsRepo,
+		}
+		dash := models.NewDashboard("test")
+		color := "red"
+		name := "annoName"
+		grafanaAnnotation := DashAnnotation{
+			Datasource: CreateDatasource("grafana", "grafana"),
+			Enable:     true,
+			Name:       &name,
+			IconColor:  &color,
+			Target: &dashboard2.AnnotationTarget{
+				Limit:    100,
+				MatchAny: false,
+				Tags:     nil,
+				Type:     "dashboard",
+			},
+			Type: "dashboard",
+		}
+		annos := []DashAnnotation{grafanaAnnotation}
+		dashboard := AddAnnotationsToDashboard(t, dash, annos)
+		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, EnableAnnotations: false}
+		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+
+		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+
+		require.NoError(t, err)
+		assert.Empty(t, items)
+	})
+
 	t.Run("test will error when annotations repo returns an error", func(t *testing.T) {
 		annotationsRepo := annotations.FakeAnnotationsRepo{}
 		fakeStore := FakePublicDashboardStore{}
