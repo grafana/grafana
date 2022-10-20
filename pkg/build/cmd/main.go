@@ -200,8 +200,9 @@ func main() {
 					Flags: []cli.Flag{
 						&dryRunFlag,
 						&cli.StringFlag{
-							Name:  "path",
-							Usage: "Path to the asset to be published",
+							Name:     "path",
+							Required: true,
+							Usage:    "Path to the asset to be published",
 						},
 						&cli.StringFlag{
 							Name:     "repo",
