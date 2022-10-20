@@ -23,7 +23,7 @@ const allOption: SelectableValue<string> = {
 export function Account({ query, onChange, api }: Props) {
   const fetchAccounts = () =>
     api
-      .getAccounts(query.region)
+      .getAccounts({ region: query.region })
       .then((accounts) => {
         const options = accounts.map((a) => ({
           label: `${a.label}${a.isMonitoringAccount ? ' (Monitoring account)' : ''}`,

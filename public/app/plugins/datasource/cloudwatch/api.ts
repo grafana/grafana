@@ -14,6 +14,7 @@ import {
   MetricResponse,
   MultiFilters,
   Account,
+  ResourceRequest,
 } from './types';
 
 export interface SelectableResourceValue extends SelectableValue<string> {
@@ -34,14 +35,14 @@ export class CloudWatchAPI extends CloudWatchRequest {
     return getBackendSrv().get(`/api/datasources/${this.instanceSettings.id}/resources/${subtype}`, parameters);
   }
 
-  getAccounts(region: string): Promise<Account[]> {
-    return getBackendSrv().get(`/api/datasources/${this.instanceSettings.id}/resources/accounts`, {
+  getAccounts({ region }: ResourceRequest): Promise<Account[]> {
+    return this.memoizedGetRequest<Account[]>('accounts', {
       region: this.templateSrv.replace(region),
     });
   }
 
   isMonitoringAccount(region: string): Promise<boolean> {
-    return this.getAccounts(region)
+    return this.getAccounts({ region })
       .then((accounts) => accounts.some((account) => account.isMonitoringAccount))
       .catch(() => false);
   }

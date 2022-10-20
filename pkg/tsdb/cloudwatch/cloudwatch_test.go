@@ -586,6 +586,14 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		assert.Equal(t, []string{"Value1", "Value2", "Value7"}, res)
 	})
 
+	origNewOAMAPI := NewOAMAPI
+	t.Cleanup(func() {
+		NewOAMAPI = origNewOAMAPI
+	})
+	NewOAMAPI = func(sess *session.Session) models.OAMClientProvider {
+		return nil
+	}
+
 	t.Run("Should handle dimension key filter query and return keys from the api", func(t *testing.T) {
 		pageLimit := 3
 		api = mocks.FakeMetricsAPI{Metrics: []*cloudwatch.Metric{

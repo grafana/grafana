@@ -3,29 +3,24 @@ package routes
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 )
 
-func AccountsHandler(rw http.ResponseWriter, req *http.Request, clientFactory models.ClientsFactoryFunc, pluginCtx backend.PluginContext) {
-	if req.Method != "GET" {
-		respondWithError(rw, http.StatusMethodNotAllowed, "Invalid method", nil)
-		return
-	}
-
-	region := req.URL.Query().Get("region")
+func AccountsHandler(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
+	region := parameters.Get("region")
 	if region == "" {
-		respondWithError(rw, http.StatusBadRequest, "region missing", nil)
-		return
+		return nil, models.NewHttpError("error in AccountsHandler", http.StatusBadRequest, fmt.Errorf("region is required"))
 	}
 
-	service, err := newAccountsService(pluginCtx, clientFactory, region)
+	service, err := newAccountsService(pluginCtx, reqCtxFactory, region)
 	if err != nil {
-		respondWithError(rw, http.StatusInternalServerError, "error in AccountsHandler", err)
-		return
+		return nil, models.NewHttpError("error in AccountsHandler", http.StatusInternalServerError, err)
 	}
 
 	accounts, err := service.GetAccountsForCurrentUserOrRole()
@@ -33,23 +28,18 @@ func AccountsHandler(rw http.ResponseWriter, req *http.Request, clientFactory mo
 		msg := "error getting accounts for current user or role"
 		switch {
 		case errors.Is(err, services.ErrAccessDeniedException):
-			respondWithError(rw, http.StatusForbidden, msg, err)
+			return nil, models.NewHttpError(msg, http.StatusForbidden, err)
 		default:
-			respondWithError(rw, http.StatusInternalServerError, msg, err)
+			return nil, models.NewHttpError(msg, http.StatusInternalServerError, err)
 		}
-		return
 	}
 
 	accountsResponse, err := json.Marshal(accounts)
 	if err != nil {
-		respondWithError(rw, http.StatusInternalServerError, "error in AccountsHandler", err)
+		return nil, models.NewHttpError("error in AccountsHandler", http.StatusInternalServerError, err)
 	}
 
-	rw.Header().Set("Content-Type", "application/json")
-	_, err = rw.Write(accountsResponse)
-	if err != nil {
-		respondWithError(rw, http.StatusInternalServerError, "error writing response in AccountsHandler", err)
-	}
+	return accountsResponse, nil
 }
 
 // newAccountService is an account service factory.
@@ -61,5 +51,5 @@ var newAccountsService = func(pluginCtx backend.PluginContext, clientFactory mod
 		return nil, err
 	}
 
-	return services.NewAccountsService(oamClient), nil
+	return services.NewAccountsService(oamClient.OAMClientProvider), nil
 }

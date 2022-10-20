@@ -123,7 +123,7 @@ func (e *cloudWatchExecutor) getRequestContext(pluginCtx backend.PluginContext, 
 		return models.RequestContext{}, err
 	}
 	return models.RequestContext{
-		OAMClientProvider:     oam.New(sess),
+		OAMClientProvider:     NewOAMAPI(sess),
 		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), e.cfg),
 		Settings:              instance.Settings,
 	}, nil
@@ -423,6 +423,13 @@ func isTerminated(queryStatus string) bool {
 // Stubbable by tests.
 var NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider {
 	return cloudwatch.New(sess)
+}
+
+// NewOAMAPI is a CloudWatch OAM api factory.
+//
+// Stubbable by tests.
+var NewOAMAPI = func(sess *session.Session) models.OAMClientProvider {
+	return oam.New(sess)
 }
 
 // NewCWClient is a CloudWatch client factory.
