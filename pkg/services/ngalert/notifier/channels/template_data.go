@@ -76,7 +76,7 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 	}
 	u, err := url.Parse(externalURL)
 	if err != nil {
-		logger.Debug("failed to parse external URL while extending template data", "url", externalURL, "err", err.Error())
+		logger.Debug("failed to parse external URL while extending template data", "url", externalURL, "error", err.Error())
 		return extended
 	}
 	externalPath := u.Path
@@ -94,7 +94,7 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 	if alert.Annotations != nil {
 		if s, ok := alert.Annotations[ngmodels.ValuesAnnotation]; ok {
 			if err := json.Unmarshal([]byte(s), &extended.Values); err != nil {
-				logger.Warn("failed to unmarshal values annotation", "err", err)
+				logger.Warn("failed to unmarshal values annotation", "error", err)
 			}
 		}
 		// TODO: Remove in Grafana 10

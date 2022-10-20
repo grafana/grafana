@@ -3,13 +3,15 @@ package mockstore
 import (
 	"context"
 
+	"xorm.io/core"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/user"
-	"xorm.io/core"
 )
 
 type OrgListResponse []struct {
@@ -198,7 +200,7 @@ func (m SQLStoreMock) GetTeamMembers(ctx context.Context, query *models.GetTeamM
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) NewSession(ctx context.Context) *sqlstore.DBSession {
+func (m *SQLStoreMock) NewSession(ctx context.Context) *db.Session {
 	return nil
 }
 

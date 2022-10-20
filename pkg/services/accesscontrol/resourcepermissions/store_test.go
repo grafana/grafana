@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -420,7 +421,7 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			store, sql := setupTestEnv(t)
 
-			err := sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			err := sql.WithDbSession(context.Background(), func(sess *db.Session) error {
 				role := &accesscontrol.Role{
 					OrgID:   tt.user.OrgID,
 					UID:     "seeded",
@@ -492,6 +493,6 @@ func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore,
 }
 
 func setupTestEnv(t testing.TB) (*store, *sqlstore.SQLStore) {
-	sql := sqlstore.InitTestDB(t)
+	sql := db.InitTestDB(t)
 	return NewStore(sql), sql
 }

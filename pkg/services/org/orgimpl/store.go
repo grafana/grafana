@@ -9,12 +9,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -55,7 +54,7 @@ type sqlStore struct {
 
 func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
 	var orga org.Org
-	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.Where("id=?", orgID).Get(&orga)
 		if err != nil {
 			return err
@@ -74,7 +73,7 @@ func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
 func (ss *sqlStore) Insert(ctx context.Context, org *org.Org) (int64, error) {
 	var orgID int64
 	var err error
-	err = ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if orgID, err = sess.InsertOne(org); err != nil {
 			return err
 		}
@@ -100,7 +99,7 @@ func (ss *sqlStore) Insert(ctx context.Context, org *org.Org) (int64, error) {
 func (ss *sqlStore) InsertOrgUser(ctx context.Context, cmd *org.OrgUser) (int64, error) {
 	var orgID int64
 	var err error
-	err = ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if orgID, err = sess.Insert(cmd); err != nil {
 			return err
 		}
@@ -113,7 +112,7 @@ func (ss *sqlStore) InsertOrgUser(ctx context.Context, cmd *org.OrgUser) (int64,
 }
 
 func (ss *sqlStore) DeleteUserFromAll(ctx context.Context, userID int64) error {
-	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if _, err := sess.Exec("DELETE FROM org_user WHERE user_id = ?", userID); err != nil {
 			return err
 		}
@@ -122,7 +121,7 @@ func (ss *sqlStore) DeleteUserFromAll(ctx context.Context, userID int64) error {
 }
 
 func (ss *sqlStore) Update(ctx context.Context, cmd *org.UpdateOrgCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if isNameTaken, err := isOrgNameTaken(cmd.Name, cmd.OrgId, sess); err != nil {
 			return err
 		} else if isNameTaken {
@@ -154,7 +153,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *org.UpdateOrgCommand) error
 	})
 }
 
-func isOrgNameTaken(name string, existingId int64, sess *sqlstore.DBSession) (bool, error) {
+func isOrgNameTaken(name string, existingId int64, sess *db.Session) (bool, error) {
 	// check if org name is taken
 	var org org.Org
 	exists, err := sess.Where("name=?", name).Get(&org)
@@ -172,7 +171,7 @@ func isOrgNameTaken(name string, existingId int64, sess *sqlstore.DBSession) (bo
 
 // TODO: refactor move logic to service method
 func (ss *sqlStore) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddressCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		org := org.Org{
 			Address1: cmd.Address1,
 			Address2: cmd.Address2,
@@ -200,7 +199,7 @@ func (ss *sqlStore) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddress
 
 // TODO: refactor move logic to service method
 func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.ID); err != nil {
 			return err
 		} else if len(res) != 1 {
@@ -243,7 +242,7 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 // TODO: refactor move logic to service method
 func (ss *sqlStore) GetUserOrgList(ctx context.Context, query *org.GetUserOrgListQuery) ([]*org.UserOrgDTO, error) {
 	result := make([]*org.UserOrgDTO, 0)
-	err := ss.db.WithDbSession(ctx, func(dbSess *sqlstore.DBSession) error {
+	err := ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
 		sess := dbSess.Table("org_user")
 		sess.Join("INNER", "org", "org_user.org_id=org.id")
 		sess.Join("INNER", ss.dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.dialect.Quote("user")))
@@ -269,7 +268,7 @@ func (ss *sqlStore) notServiceAccountFilter() string {
 
 func (ss *sqlStore) Search(ctx context.Context, query *org.SearchOrgsQuery) ([]*org.OrgDTO, error) {
 	result := make([]*org.OrgDTO, 0)
-	err := ss.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sess := dbSession.Table("org")
 		if query.Query != "" {
 			sess.Where("name LIKE ?", query.Query+"%")
@@ -303,7 +302,7 @@ func (ss *sqlStore) CreateWithMember(ctx context.Context, cmd *org.CreateOrgComm
 		Created: time.Now(),
 		Updated: time.Now(),
 	}
-	if err := ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	if err := ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if isNameTaken, err := isOrgNameTaken(cmd.Name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
@@ -338,7 +337,7 @@ func (ss *sqlStore) CreateWithMember(ctx context.Context, cmd *org.CreateOrgComm
 }
 
 func (ss *sqlStore) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		// check if user exists
 		var usr user.User
 		session := sess.ID(cmd.UserID)
@@ -396,7 +395,7 @@ func (ss *sqlStore) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) 
 	})
 }
 
-func setUsingOrgInTransaction(sess *sqlstore.DBSession, userID int64, orgID int64) error {
+func setUsingOrgInTransaction(sess *db.Session, userID int64, orgID int64) error {
 	user := user.User{
 		ID:    userID,
 		OrgID: orgID,
@@ -407,7 +406,7 @@ func setUsingOrgInTransaction(sess *sqlstore.DBSession, userID int64, orgID int6
 }
 
 func (ss *sqlStore) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var orgUser org.OrgUser
 		exists, err := sess.Where("org_id=? AND user_id=?", cmd.OrgID, cmd.UserID).Get(&orgUser)
 		if err != nil {
@@ -430,7 +429,7 @@ func (ss *sqlStore) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserCom
 }
 
 // validate that there is an org admin user left
-func validateOneAdminLeftInOrg(orgID int64, sess *sqlstore.DBSession) error {
+func validateOneAdminLeftInOrg(orgID int64, sess *db.Session) error {
 	res, err := sess.Query("SELECT 1 from org_user WHERE org_id=? and role='Admin'", orgID)
 	if err != nil {
 		return err
@@ -445,7 +444,7 @@ func validateOneAdminLeftInOrg(orgID int64, sess *sqlstore.DBSession) error {
 
 func (ss *sqlStore) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
 	result := make([]*org.OrgUserDTO, 0)
-	err := ss.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sess := dbSession.Table("org_user")
 		sess.Join("INNER", ss.dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.dialect.Quote("user")))
 
@@ -522,7 +521,7 @@ func (ss *sqlStore) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery
 
 func (ss *sqlStore) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) (*org.Org, error) {
 	var orga org.Org
-	err := ss.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		exists, err := dbSession.ID(query.ID).Get(&orga)
 		if err != nil {
 			return err
@@ -543,7 +542,7 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 	result := org.SearchOrgUsersQueryResult{
 		OrgUsers: make([]*org.OrgUserDTO, 0),
 	}
-	err := ss.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sess := dbSession.Table("org_user")
 		sess.Join("INNER", ss.dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.dialect.Quote("user")))
 
@@ -623,7 +622,7 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 
 func (ss *sqlStore) GetByName(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
 	var orga org.Org
-	err := ss.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		exists, err := dbSession.Where("name=?", query.Name).Get(&orga)
 		if err != nil {
 			return err
@@ -641,7 +640,7 @@ func (ss *sqlStore) GetByName(ctx context.Context, query *org.GetOrgByNameQuery)
 }
 
 func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		// check if user exists
 		var usr user.User
 		if exists, err := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter()).Get(&usr); err != nil {
@@ -715,7 +714,7 @@ func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCom
 	})
 }
 
-func (ss *sqlStore) deleteUserInTransaction(sess *sqlstore.DBSession, cmd *models.DeleteUserCommand) error {
+func (ss *sqlStore) deleteUserInTransaction(sess *db.Session, cmd *models.DeleteUserCommand) error {
 	// Check if user exists
 	usr := user.User{ID: cmd.UserId}
 	has, err := sess.Where(ss.notServiceAccountFilter()).Get(&usr)
@@ -735,7 +734,7 @@ func (ss *sqlStore) deleteUserInTransaction(sess *sqlstore.DBSession, cmd *model
 	return deleteUserAccessControl(sess, cmd.UserId)
 }
 
-func deleteUserAccessControl(sess *sqlstore.DBSession, userID int64) error {
+func deleteUserAccessControl(sess *db.Session, userID int64) error {
 	// Delete user role assignments
 	if _, err := sess.Exec("DELETE FROM user_role WHERE user_id = ?", userID); err != nil {
 		return err
@@ -790,7 +789,7 @@ func (ss *sqlStore) userDeletions() []string {
 	return deletes
 }
 
-func removeUserOrg(sess *sqlstore.DBSession, userID int64) error {
+func removeUserOrg(sess *db.Session, userID int64) error {
 	user := user.User{
 		ID:    userID,
 		OrgID: 0,

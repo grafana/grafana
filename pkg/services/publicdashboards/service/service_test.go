@@ -4,17 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
-
-	dashboard2 "github.com/grafana/grafana/pkg/coremodel/dashboard"
-	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -22,13 +14,25 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	dashboard2 "github.com/grafana/grafana/pkg/coremodel/dashboard"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsDB "github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
@@ -406,7 +410,7 @@ func TestGetPublicDashboard(t *testing.T) {
 
 func TestSavePublicDashboard(t *testing.T) {
 	t.Run("Saving public dashboard", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
@@ -450,7 +454,7 @@ func TestSavePublicDashboard(t *testing.T) {
 	})
 
 	t.Run("Validate pubdash has default time setting value", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
@@ -480,7 +484,7 @@ func TestSavePublicDashboard(t *testing.T) {
 	})
 
 	t.Run("Validate pubdash whose dashboard has template variables returns error", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		templateVars := make([]map[string]interface{}, 1)
@@ -541,7 +545,7 @@ func TestSavePublicDashboard(t *testing.T) {
 
 func TestUpdatePublicDashboard(t *testing.T) {
 	t.Run("Updating public dashboard", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
@@ -602,7 +606,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 	})
 
 	t.Run("Updating set empty time settings", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
@@ -652,7 +656,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 }
 
 func TestBuildAnonymousUser(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 	publicdashboardStore := database.ProvideStore(sqlStore)
@@ -680,7 +684,7 @@ func TestBuildAnonymousUser(t *testing.T) {
 }
 
 func TestGetMetricRequest(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 	publicdashboardStore := database.ProvideStore(sqlStore)
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
@@ -777,7 +781,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 }
 
 func TestBuildMetricRequest(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 	publicdashboardStore := database.ProvideStore(sqlStore)
 
@@ -1189,4 +1193,213 @@ func AddAnnotationsToDashboard(t *testing.T, dash *models.Dashboard, annotations
 	dash.Data.Set("annotations", dashAnnos)
 
 	return dash
+}
+
+func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		u     *user.SignedInUser
+		orgId int64
+	}
+
+	testCases := []struct {
+		name         string
+		args         args
+		evaluateFunc func(c context.Context, u *user.SignedInUser, e accesscontrol.Evaluator) (bool, error)
+		want         []PublicDashboardListResponse
+		wantErr      assert.ErrorAssertionFunc
+	}{
+		{
+			name: "should return empty list when user does not have permissions to read any dashboard",
+			args: args{
+				ctx:   context.Background(),
+				u:     &user.SignedInUser{OrgID: 1},
+				orgId: 1,
+			},
+			want:    []PublicDashboardListResponse{},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "should return all dashboards when has permissions",
+			args: args{
+				ctx: context.Background(),
+				u: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+					1: {"dashboards:read": {
+						"dashboards:uid:0S6TmO67z", "dashboards:uid:1S6TmO67z", "dashboards:uid:2S6TmO67z", "dashboards:uid:9S6TmO67z",
+					}}},
+				},
+				orgId: 1,
+			},
+			want: []PublicDashboardListResponse{
+				{
+					Uid:          "0GwW7mgVk",
+					AccessToken:  "0b458cb7fe7f42c68712078bcacee6e3",
+					DashboardUid: "0S6TmO67z",
+					Title:        "my zero dashboard",
+					IsEnabled:    true,
+				},
+				{
+					Uid:          "1GwW7mgVk",
+					AccessToken:  "1b458cb7fe7f42c68712078bcacee6e3",
+					DashboardUid: "1S6TmO67z",
+					Title:        "my first dashboard",
+					IsEnabled:    true,
+				},
+				{
+					Uid:          "2GwW7mgVk",
+					AccessToken:  "2b458cb7fe7f42c68712078bcacee6e3",
+					DashboardUid: "2S6TmO67z",
+					Title:        "my second dashboard",
+					IsEnabled:    false,
+				},
+				{
+					Uid:          "9GwW7mgVk",
+					AccessToken:  "deletedashboardaccesstoken",
+					DashboardUid: "9S6TmO67z",
+					Title:        "",
+					IsEnabled:    true,
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "should return only dashboards with permissions",
+			args: args{
+				ctx: context.Background(),
+				u: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+					1: {"dashboards:read": {"dashboards:uid:0S6TmO67z"}}},
+				},
+				orgId: 1,
+			},
+			want: []PublicDashboardListResponse{
+				{
+					Uid:          "0GwW7mgVk",
+					AccessToken:  "0b458cb7fe7f42c68712078bcacee6e3",
+					DashboardUid: "0S6TmO67z",
+					Title:        "my zero dashboard",
+					IsEnabled:    true,
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "should return orphaned public dashboards",
+			args: args{
+				ctx: context.Background(),
+				u: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+					1: {"dashboards:read": {"dashboards:uid:0S6TmO67z"}}},
+				},
+				orgId: 1,
+			},
+			evaluateFunc: func(c context.Context, u *user.SignedInUser, e accesscontrol.Evaluator) (bool, error) {
+				return false, dashboards.ErrDashboardNotFound
+			},
+			want: []PublicDashboardListResponse{
+				{
+					Uid:          "0GwW7mgVk",
+					AccessToken:  "0b458cb7fe7f42c68712078bcacee6e3",
+					DashboardUid: "0S6TmO67z",
+					Title:        "my zero dashboard",
+					IsEnabled:    true,
+				},
+				{
+					Uid:          "1GwW7mgVk",
+					AccessToken:  "1b458cb7fe7f42c68712078bcacee6e3",
+					DashboardUid: "1S6TmO67z",
+					Title:        "my first dashboard",
+					IsEnabled:    true,
+				},
+				{
+					Uid:          "2GwW7mgVk",
+					AccessToken:  "2b458cb7fe7f42c68712078bcacee6e3",
+					DashboardUid: "2S6TmO67z",
+					Title:        "my second dashboard",
+					IsEnabled:    false,
+				},
+				{
+					Uid:          "9GwW7mgVk",
+					AccessToken:  "deletedashboardaccesstoken",
+					DashboardUid: "9S6TmO67z",
+					Title:        "",
+					IsEnabled:    true,
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "errors different than not data found should be returned",
+			args: args{
+				ctx: context.Background(),
+				u: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+					1: {"dashboards:read": {"dashboards:uid:0S6TmO67z"}}},
+				},
+				orgId: 1,
+			},
+			evaluateFunc: func(c context.Context, u *user.SignedInUser, e accesscontrol.Evaluator) (bool, error) {
+				return false, dashboards.ErrDashboardCorrupt
+			},
+			want:    nil,
+			wantErr: assert.Error,
+		},
+	}
+
+	mockedDashboards := []PublicDashboardListResponse{
+		{
+			Uid:          "0GwW7mgVk",
+			AccessToken:  "0b458cb7fe7f42c68712078bcacee6e3",
+			DashboardUid: "0S6TmO67z",
+			Title:        "my zero dashboard",
+			IsEnabled:    true,
+		},
+		{
+			Uid:          "1GwW7mgVk",
+			AccessToken:  "1b458cb7fe7f42c68712078bcacee6e3",
+			DashboardUid: "1S6TmO67z",
+			Title:        "my first dashboard",
+			IsEnabled:    true,
+		},
+		{
+			Uid:          "2GwW7mgVk",
+			AccessToken:  "2b458cb7fe7f42c68712078bcacee6e3",
+			DashboardUid: "2S6TmO67z",
+			Title:        "my second dashboard",
+			IsEnabled:    false,
+		},
+		{
+			Uid:          "9GwW7mgVk",
+			AccessToken:  "deletedashboardaccesstoken",
+			DashboardUid: "9S6TmO67z",
+			Title:        "",
+			IsEnabled:    true,
+		},
+	}
+
+	store := NewFakePublicDashboardStore(t)
+	store.On("ListPublicDashboards", mock.Anything, mock.Anything).
+		Return(mockedDashboards, nil)
+
+	ac := tests.SetupMockAccesscontrol(t,
+		func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+			return []accesscontrol.Permission{}, nil
+		},
+		false,
+	)
+
+	pd := &PublicDashboardServiceImpl{
+		log:   log.New("test.logger"),
+		store: store,
+		ac:    ac,
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			ac.EvaluateFunc = tt.evaluateFunc
+
+			got, err := pd.ListPublicDashboards(tt.args.ctx, tt.args.u, tt.args.orgId)
+			if !tt.wantErr(t, err, fmt.Sprintf("ListPublicDashboards(%v, %v, %v)", tt.args.ctx, tt.args.u, tt.args.orgId)) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "ListPublicDashboards(%v, %v, %v)", tt.args.ctx, tt.args.u, tt.args.orgId)
+		})
+	}
 }
