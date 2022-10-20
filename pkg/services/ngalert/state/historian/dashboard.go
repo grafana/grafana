@@ -48,7 +48,7 @@ func (r *dashboardResolver) getID(ctx context.Context, orgID int64, uid string) 
 	}
 
 	id, err, _ := r.singleflight.Do(key, func() (interface{}, error) {
-		r.log.Debug("dashboard cache miss, querying dashboards", "dashboardUID", uid)
+		r.log.Debug("Dashboard cache miss, querying dashboards", "dashboardUID", uid)
 
 		var result interface{}
 		query := &models.GetDashboardQuery{
