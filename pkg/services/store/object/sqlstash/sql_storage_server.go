@@ -454,9 +454,7 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 		limit = int(r.Limit)
 	}
 	args := []interface{}{}
-	where := "" // TODO!
-	if len(r.Kind
-
+	where := "" //getWhereClause(ctx, e)
 
 	// request one more than the limit (and show next token if it exists)
 	args = append(args, limit+1)
