@@ -9,7 +9,7 @@ import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
-import { CanvasElementItem, CanvasElementProps, defaultTextColor } from '../element';
+import { CanvasElementItem, CanvasElementProps, defaultThemeTextColor } from '../element';
 import { ElementState } from '../runtime/element';
 import { Align, TextConfig, TextData, VAlign } from '../types';
 
@@ -136,7 +136,7 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
       align: Align.Center,
       valign: VAlign.Middle,
       color: {
-        fixed: defaultTextColor,
+        fixed: defaultThemeTextColor,
       },
       size: 16,
     },
