@@ -252,7 +252,7 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 				return
 			}
 			if len(updated) > 0 {
-				logger.Debug("Rules that belong to the folder have been updated successfully. clearing their status", "updatedRules", len(updated))
+				logger.Info("Rules that belong to the folder have been updated successfully. Clearing their status", "folderUID", evt.UID, "updatedRules", len(updated))
 				for _, key := range updated {
 					scheduler.UpdateAlertRule(key.AlertRuleKey, key.Version)
 				}

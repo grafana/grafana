@@ -161,12 +161,12 @@ func (sch *schedule) DeleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 		// Ruler API has called DeleteAlertRule. This can happen as requests to
 		// the Ruler API do not hold an exclusive lock over all scheduler operations.
 		if _, ok := sch.schedulableAlertRules.del(key); !ok {
-			sch.log.Info("Alert rule cannot be removed from the scheduler as it is not scheduled", "uid", key.UID, "org_id", key.OrgID)
+			sch.log.Info("Alert rule cannot be removed from the scheduler as it is not scheduled", key.LogContext()...)
 		}
 		// Delete the rule routine
 		ruleInfo, ok := sch.registry.del(key)
 		if !ok {
-			sch.log.Info("Alert rule cannot be stopped as it is not running", "uid", key.UID, "org_id", key.OrgID)
+			sch.log.Info("Alert rule cannot be stopped as it is not running", key.LogContext()...)
 			continue
 		}
 		// stop rule evaluation
