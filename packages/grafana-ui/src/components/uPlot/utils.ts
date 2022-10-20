@@ -342,16 +342,12 @@ export function findMidPointYPosition(u: uPlot, idx: number) {
 }
 
 function getStackDirection(transform: GraphTransform, firstValue: number) {
-  if (transform === GraphTransform.Constant) {
-    return firstValue >= 0 ? StackDirection.Pos : StackDirection.Neg;
-  }
-
-  if (transform === GraphTransform.NegativeY) {
-    return firstValue >= 0 ? StackDirection.Neg : StackDirection.Pos;
-  }
-
   // Check if first value is negative zero. This can happen with a binary operation transform.
-  return !Object.is(firstValue, -0) && firstValue >= 0 ? StackDirection.Pos : StackDirection.Neg;
+  const isNegativeZero = Object.is(firstValue, -0);
+  if (transform === GraphTransform.NegativeY) {
+    return !isNegativeZero && firstValue >= 0 ? StackDirection.Neg : StackDirection.Pos;
+  }
+  return !isNegativeZero && firstValue >= 0 ? StackDirection.Pos : StackDirection.Neg;
 }
 
 // Dev helpers
