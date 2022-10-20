@@ -30,7 +30,7 @@ interface TableData {
   header2?: number;
 }
 
-export const Global: ComponentStory<typeof DataTable> = (args) => {
+export const Basic: ComponentStory<typeof DataTable> = (args) => {
   const columns = useMemo<Array<Column<TableData>>>(
     () => [
       { id: 'header1', header: 'Header 1', sortType: 'alphanumeric' },
@@ -56,10 +56,45 @@ export const Global: ComponentStory<typeof DataTable> = (args) => {
     []
   );
 
+  return <DataTable columns={columns} data={data} getRowId={(r) => r.header1} renderExpandedRow={() => null} />;
+};
+
+interface WithRowExpansionData {
+  datasource: string;
+  repo: string;
+  description: string;
+}
+
+export const WithRowExpansion: ComponentStory<typeof DataTable> = (args) => {
+  const tableData: WithRowExpansionData[] = [
+    {
+      datasource: 'Prometheus',
+      repo: 'https://github.com/prometheus/prometheus',
+      description: 'Open source time series database & alerting.',
+    },
+    {
+      datasource: 'Loki',
+      repo: 'https://github.com/grafana/loki',
+      description: 'Like Prometheus but for logs. OSS logging solution from Grafana Labs.',
+    },
+    {
+      datasource: 'Tempo',
+      repo: 'https://github.com/grafana/tempo',
+      description: 'High volume, minimal dependency trace storage. OSS tracing solution from Grafana Labs.',
+    },
+  ];
+
+  const columns: Array<Column<WithRowExpansionData>> = [
+    { id: 'datasource', header: 'Data Source' },
+    { id: 'repo', header: 'Repo' },
+  ];
+
+  const ExpandedCell = ({ description }: WithRowExpansionData) => {
+    return <p>{description}</p>;
+  };
+
   return (
-    <>
-      <DataTable columns={columns} data={data} getRowId={(r) => r.header1} renderExpandedRow={() => null} />
-    </>
+    <DataTable columns={columns} data={tableData} getRowId={(r) => r.datasource} renderExpandedRow={ExpandedCell} />
   );
 };
 

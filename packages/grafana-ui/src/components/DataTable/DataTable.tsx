@@ -77,6 +77,7 @@ export function DataTable<TableData extends object>({
       data,
       autoResetExpanded: false,
       autoResetSortBy: false,
+      isMultiSortEvent: () => true,
       getRowId,
       initialState: {
         hiddenColumns: [
