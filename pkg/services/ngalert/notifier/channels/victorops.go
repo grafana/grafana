@@ -127,7 +127,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 
 	if tmplErr != nil {
 		vn.log.Warn("failed to expand message template. "+
-			"", "err", tmplErr.Error())
+			"", "error", tmplErr.Error())
 		tmplErr = nil
 	}
 
@@ -145,7 +145,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 
 	u := tmpl(vn.settings.URL)
 	if tmplErr != nil {
-		vn.log.Info("failed to expand URL template", "err", tmplErr.Error(), "fallback", vn.settings.URL)
+		vn.log.Info("failed to expand URL template", "error", tmplErr.Error(), "fallback", vn.settings.URL)
 		u = vn.settings.URL
 	}
 
@@ -159,7 +159,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	}
 
 	if err := vn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		vn.log.Error("failed to send notification", "err", err, "webhook", vn.Name)
+		vn.log.Error("failed to send notification", "error", err, "webhook", vn.Name)
 		return false, err
 	}
 

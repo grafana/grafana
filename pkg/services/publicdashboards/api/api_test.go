@@ -19,9 +19,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -33,7 +35,6 @@ import (
 	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -189,7 +190,7 @@ func TestAPIListPublicDashboard(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			service.On("ListPublicDashboards", mock.Anything, mock.Anything).
+			service.On("ListPublicDashboards", mock.Anything, mock.Anything, mock.Anything).
 				Return(test.Response, test.ResponseErr).Maybe()
 
 			cfg := setting.NewCfg()
@@ -626,7 +627,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 }
 
 func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T) {
-	db := sqlstore.InitTestDB(t)
+	db := db.InitTestDB(t)
 
 	cacheService := datasourcesService.ProvideCacheService(localcache.ProvideService(), db)
 	qds := buildQueryDataService(t, cacheService, nil, db)
@@ -686,8 +687,9 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	// create public dashboard
 	store := publicdashboardsStore.ProvideStore(db)
 	cfg := setting.NewCfg()
+	ac := acmock.New()
 	cfg.RBACEnabled = false
-	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService)
+	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac)
 	pubdash, err := service.SavePublicDashboardConfig(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 
