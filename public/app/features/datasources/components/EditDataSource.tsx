@@ -161,7 +161,7 @@ export function EditDataSourceView({
         alertingSupported={alertingSupported}
       />
 
-      {plugin && dsi && (
+      {plugin && (
         <DataSourcePluginContextProvider instanceSettings={dsi}>
           <DataSourcePluginSettings
             plugin={plugin}
