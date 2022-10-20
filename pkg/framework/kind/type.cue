@@ -1,24 +1,5 @@
 package kind
 
-// THIS FILE IS AN EXPERIMENTAL THOUGHT EXERCISE. NAMES AND RULES ARE SUBJECT TO CHANGE.
-// AND DISCUSSION IS ENCOURAGED. IT IS NOT USED AND DOES NOT IMPACT ANY GRAFANA BEHAVIOR.
-//
-// The only things we _really_ know for sure are:
-// - the name "coremodel" is terrible and needs to go away
-// - grafana is moving to schema-centric development
-// - schema-centric development entails things like a consistent API,
-//   storage, and docs framework and/or codegen
-// - if grafana is to have a consistent framework for types that it accepts and
-//   stores via an API, it must also support non-schematized types (raw files)
-// - THESE THINGS NEED PRECISE NAMES OR WE WILL ALL LOSE OUR DAMN MINDS
-// - all of this will only be successful if we work out an iterative transitional
-//   path - no big bang!
-//
-// This file is committed because:
-// - the functional role it will eventually play is defined in a design doc https://bit.ly/3McWhvB
-// - committing a skeleton like this is an iterative step towards actually implementing ^
-// - @sdboyer keeps recreating this ad hoc in 1:1s to illustrate the concept
-
 import (
 	"github.com/grafana/thema"
 )
