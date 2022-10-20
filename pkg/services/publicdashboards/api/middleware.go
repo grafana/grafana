@@ -34,7 +34,8 @@ func SetPublicDashboardFlag(c *models.ReqContext) {
 }
 
 // RequiresExistingAccessToken Middleware to enforce that a public dashboards exists before continuing to handler. This
-// method will query the database to ensure that
+// method will query the database to ensure that it exists.
+// Use when we want to enforce a public dashboard is valid on an endpoint we do not maintain
 func RequiresExistingAccessToken(publicDashboardService publicdashboards.Service) func(c *models.ReqContext) {
 	return func(c *models.ReqContext) {
 		accessToken, ok := web.Params(c.Req)[":accessToken"]
