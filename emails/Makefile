@@ -1,5 +1,15 @@
-build:
-	npx mjml --config.keepComments=false --config.validationLevel=strict -r templates/ng_alert_notification.mjml > ../public/emails/ng_alert_notification.html
+build: build-html build-txt
 
-.PHONY:
-	build
+build-html:
+	npx mjml \
+		--config.beautify true \
+		--config.minify false \
+		--config.keepComments=false \
+		--config.validationLevel=strict \
+		--input templates/*.mjml \
+		--output ../public/emails/
+
+build-txt:
+	grunt
+
+.PHONY: build build-html build-txt
