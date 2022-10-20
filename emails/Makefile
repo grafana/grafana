@@ -4,10 +4,9 @@ build-html:
 	npx mjml \
 		--config.beautify true \
 		--config.minify false \
-		--config.keepComments=false \
 		--config.validationLevel=strict \
-		--input templates/*.mjml \
-		--output ../public/emails/
+		--config.keepComments=false \
+		./templates/*.mjml --output ../public/emails/
 
 build-txt:
 	npx grunt
