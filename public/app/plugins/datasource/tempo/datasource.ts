@@ -176,10 +176,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           this._request('/api/search', {
             q: targets.traceql[0].query,
             limit: options.targets[0].limit,
-            start: 0,
-            end: 2147483647,
-            // start: options.range.from.unix(),
-            // end: options.range.to.unix(),
+            start: 0, // Currently the API doesn't return traces when using the 'From' time selected in Explore
+            end: options.range.to.unix(),
           }).pipe(
             map((response) => {
               return {
