@@ -1,4 +1,4 @@
-package cloudwatch
+package models
 
 import (
 	"encoding/json"
@@ -15,7 +15,7 @@ func TestQueryJSON(t *testing.T) {
 	jsonString := []byte(`{
 		"type": "timeSeriesQuery"
 	}`)
-	var res QueryJson
+	var res metricsDataQuery
 	err := json.Unmarshal(jsonString, &res)
 	require.NoError(t, err)
 	assert.Equal(t, "timeSeriesQuery", res.QueryType)
@@ -49,7 +49,7 @@ func TestRequestParser(t *testing.T) {
 
 			migratedQuery := migratedQueries[0]
 			assert.Equal(t, "A", migratedQuery.RefID)
-			var model QueryJson
+			var model metricsDataQuery
 			err = json.Unmarshal(migratedQuery.JSON, &model)
 			require.NoError(t, err)
 			assert.Equal(t, "Average", *model.Statistic)
@@ -57,7 +57,7 @@ func TestRequestParser(t *testing.T) {
 	})
 
 	t.Run("New dimensions structure", func(t *testing.T) {
-		query := QueryJson{
+		query := metricsDataQuery{
 			RefId:      "ref1",
 			Region:     "us-east-1",
 			Namespace:  "ec2",
@@ -91,7 +91,7 @@ func TestRequestParser(t *testing.T) {
 	})
 
 	t.Run("Old dimensions structure (backwards compatibility)", func(t *testing.T) {
-		query := QueryJson{
+		query := metricsDataQuery{
 			RefId:      "ref1",
 			Region:     "us-east-1",
 			Namespace:  "ec2",
@@ -125,7 +125,7 @@ func TestRequestParser(t *testing.T) {
 	})
 
 	t.Run("Period defined in the editor by the user is being used when time range is short", func(t *testing.T) {
-		query := QueryJson{
+		query := metricsDataQuery{
 			RefId:      "ref1",
 			Region:     "us-east-1",
 			Namespace:  "ec2",
@@ -147,7 +147,7 @@ func TestRequestParser(t *testing.T) {
 	})
 
 	t.Run("Period is parsed correctly if not defined by user", func(t *testing.T) {
-		query := QueryJson{
+		query := metricsDataQuery{
 			RefId:      "ref1",
 			Region:     "us-east-1",
 			Namespace:  "ec2",
@@ -278,7 +278,7 @@ func TestRequestParser(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, MetricQueryTypeSearch, res.MetricQueryType)
 				assert.Equal(t, MetricEditorModeBuilder, res.MetricEditorMode)
-				assert.Equal(t, GMDApiModeMetricStat, res.getGMDAPIMode())
+				assert.Equal(t, GMDApiModeMetricStat, res.GetGMDAPIMode())
 			})
 
 			t.Run("and an expression is specified it should be metric search builder", func(t *testing.T) {
@@ -288,7 +288,7 @@ func TestRequestParser(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, MetricQueryTypeSearch, res.MetricQueryType)
 				assert.Equal(t, MetricEditorModeRaw, res.MetricEditorMode)
-				assert.Equal(t, GMDApiModeMathExpression, res.getGMDAPIMode())
+				assert.Equal(t, GMDApiModeMathExpression, res.GetGMDAPIMode())
 			})
 		})
 
@@ -299,7 +299,7 @@ func TestRequestParser(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, MetricQueryTypeSearch, res.MetricQueryType)
 			assert.Equal(t, MetricEditorModeRaw, res.MetricEditorMode)
-			assert.Equal(t, GMDApiModeMathExpression, res.getGMDAPIMode())
+			assert.Equal(t, GMDApiModeMathExpression, res.GetGMDAPIMode())
 		})
 	})
 
@@ -363,9 +363,9 @@ func TestRequestParser(t *testing.T) {
 	})
 }
 
-func getBaseJsonQuery() QueryJson {
+func getBaseJsonQuery() metricsDataQuery {
 	average := "Average"
-	return QueryJson{
+	return metricsDataQuery{
 		RefId:      "ref1",
 		Region:     "us-east-1",
 		Namespace:  "ec2",
@@ -396,7 +396,7 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 			average := "Average"
 			false := false
 
-			queryToMigrate := QueryJson{
+			queryToMigrate := metricsDataQuery{
 				Region:     "us-east-1",
 				Namespace:  "ec2",
 				MetricName: "CPUUtilization",
@@ -411,7 +411,7 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 
 			migrateAliasToDynamicLabel(&queryToMigrate)
 
-			expected := QueryJson{
+			expected := metricsDataQuery{
 				Alias: tc.inputAlias,
 				Dimensions: map[string]interface{}{
 					"InstanceId": []interface{}{"test"},

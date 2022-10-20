@@ -53,11 +53,12 @@ func (q *queryLibraryAPIClient) update(ctx context.Context, query *querylibrary.
 	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{}
 	resp, err := client.Do(req)
-	defer func() {
-		_ = resp.Body.Close()
-	}()
+	if err != nil {
+		return err
+	}
 
-	return err
+	_ = resp.Body.Close()
+	return nil
 }
 
 func (q *queryLibraryAPIClient) delete(ctx context.Context, uid string) error {
