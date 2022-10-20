@@ -15,7 +15,7 @@
         <mj-text align="center">
           <h2>Complete the signup</h2>
         </mj-text>
-        <mj-text line-height="1.5">
+        <mj-text align="center" line-height="1.5">
           Copy and paste the email verification code in the sign up form <strong>or</strong> use the link below.
         </mj-text>
         <mj-button background-color="transparent" border="1px solid #44474f" color="#ccccdd" font-size="22px" font-weight="bold">
