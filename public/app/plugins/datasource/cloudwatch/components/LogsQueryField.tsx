@@ -1,5 +1,4 @@
-import { css } from '@emotion/css';
-import classNames from 'classnames';
+import { css, cx } from '@emotion/css';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
 import { Node, Plugin } from 'slate';
@@ -185,7 +184,7 @@ class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogsQueryFi
               {hint.message}
               <button
                 type="button"
-                className={classNames('text-link', 'muted', clearButtonStyles(theme), addPaddingToButton)}
+                className={cx(clearButtonStyles(theme), 'text-link', 'muted', addPaddingToButton)}
                 onClick={hint.fix.action}
               >
                 {hint.fix.label}
