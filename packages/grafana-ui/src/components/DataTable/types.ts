@@ -8,11 +8,26 @@ export interface Column<TableData extends object> {
    * This must be unique among all other columns.
    */
   id?: IdType<TableData>;
+  /**
+   * Custom render function for te cell
+   */
   cell?: (props: CellProps<TableData>) => ReactNode;
+  /**
+   * Header name. if `undefined` the header will be empty. Useful for action columns.
+   */
   header?: string;
+  /**
+   * Column sort type. If `undefined` the column will not be sortable.
+   * */
   sortType?: DefaultSortTypes | SortByFn<TableData>;
+  /**
+   * If `true` the column will shrink to its minimum width.
+   */
   shrink?: boolean;
-  visible?: (col: TableData[]) => boolean;
+  /**
+   * If the provided function returns `false` the column will be hidden.
+   */
+  visible?: (data: TableData[]) => boolean;
 }
 
 type Truthy<T> = T extends false | '' | 0 | null | undefined ? never : T;
