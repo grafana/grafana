@@ -737,8 +737,8 @@ interface TraceTableData {
 }
 
 function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
-  const spanStartTimeMs = parseInt(span.startTimeUnixNano, 10) / 1000000;
-  let spanStartTime = dateTimeFormat(spanStartTimeMs);
+  const spanStartTimeUnixMs = parseInt(span.startTimeUnixNano, 10) / 1000000;
+  let spanStartTime = dateTimeFormat(spanStartTimeUnixMs);
 
   if (Math.abs(differenceInHours(new Date(spanStartTime), Date.now())) <= 1) {
     spanStartTime = formatDistance(new Date(spanStartTime), Date.now(), {
