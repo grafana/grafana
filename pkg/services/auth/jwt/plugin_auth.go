@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 	jose "gopkg.in/square/go-jose.v2"
@@ -25,13 +26,14 @@ const (
 	JWT_PLUGIN_KV_STORE_TYPE      = "private-jwk"
 )
 
-func ProvidePluginAuthService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, secretsKvStore kvstore.SecretsKVStore, verificationService *VerificationService) (*PluginAuthService, error) {
-	s := newPluginAuthService(cfg, features, secretsKvStore, verificationService)
-	if err := s.init(); err != nil {
+func ProvidePluginAuthService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, secretsKvStore kvstore.SecretsKVStore, verificationService *VerificationService, grpcServerProvider grpcserver.Provider) (*PluginAuthService, error) {
+	service := newPluginAuthService(cfg, features, secretsKvStore, verificationService)
+	if err := service.init(); err != nil {
 		return nil, err
 	}
-
-	return s, nil
+	server := PluginAuthServer{PluginAuthService: service}
+	RegisterJWTServer(grpcServerProvider.GetServer(), &server)
+	return service, nil
 }
 
 func newPluginAuthService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, secretsKvStore kvstore.SecretsKVStore, verificationService *VerificationService) *PluginAuthService {
@@ -154,4 +156,20 @@ func generateJWK() (privKey *jose.JSONWebKey, err error) {
 	}
 	privKey.KeyID = base64.RawURLEncoding.EncodeToString(thumb)
 	return privKey, nil
+}
+
+type PluginAuthServer struct {
+	JWTServer
+	PluginAuthService *PluginAuthService
+}
+
+func (s *PluginAuthServer) Verify(ctx context.Context, req *VerifyRequest) (*VerifyResponse, error) {
+	_, err := s.PluginAuthService.Verify(ctx, req.Token)
+	if err != nil {
+		return nil, err
+	}
+
+	return &VerifyResponse{
+		OK: true,
+	}, nil
 }
