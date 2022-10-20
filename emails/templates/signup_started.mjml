@@ -2,7 +2,7 @@
   <mj-head>
     <!-- ⬇ Don't forget to specifify an email subject below! ⬇ -->
     <mj-title>
-      {{ Subject .Subject "Reset your Grafana password - {{.Name}}" }}
+      {{ Subject .Subject "Welcome to Grafana, please complete your sign up!" }}
     </mj-title>
     <mj-include path="./partials/layout/head.mjml" />
   </mj-head>
@@ -12,20 +12,23 @@
     </mj-section>
     <mj-section background-color="#22252b" border="1px solid #2f3037">
       <mj-column>
-        <mj-text>
-          <h2>Hi {{ .Name }},</h2>
+        <mj-text align="center">
+          <h2>Complete the signup</h2>
         </mj-text>
         <mj-text line-height="1.5">
-          Please click the following link to reset your password within <strong>{{ .EmailCodeValidHours }} hours</strong>.
+          Copy and paste the email verification code in the sign up form <strong>or</strong> use the link below.
         </mj-text>
-        <mj-button href="{{ .AppUrl }}user/password/reset?code={{ .Code }}" background-color="#3D71D9">
-          Reset Password
+        <mj-button background-color="transparent" border="1px solid #44474f" color="#ccccdd" font-size="22px" font-weight="bold">
+          {{ .Code }}
         </mj-button>
-        <mj-text>
+        <mj-button background-color="#3D71D9" href="{{ .SignUpUrl }}">
+          Complete Sign Up
+        </mj-button>
+        <mj-text align="center">
           You can also copy and paste this link into your browser directly:
         </mj-text>
-        <mj-text line-height="1.5">
-          <a href="{{ .AppUrl }}user/password/reset?code={{ .Code }}">{{ .AppUrl }}user/password/reset?code={{ .Code }}</a>
+        <mj-text align="center" line-height="1.5">
+          <a href="{{ .LinkUrl }}">{{ .SignUpUrl }}</a>
         </mj-text>
       </mj-column>
     </mj-section>
