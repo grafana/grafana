@@ -27,7 +27,7 @@ export const testIds = {
   editor: 'loki-editor',
 };
 
-export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) => {
+export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   const { onChange, onRunQuery, onAddQuery, data, app, queries } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
@@ -162,4 +162,4 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
   );
 });
 
-LokiQueryEditorSelector.displayName = 'LokiQueryEditorSelector';
+LokiQueryEditor.displayName = 'LokiQueryEditor';
