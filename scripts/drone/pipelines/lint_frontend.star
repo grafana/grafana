@@ -21,5 +21,5 @@ def lint_frontend_pipeline(trigger, ver_mode):
         lint_frontend_step(),
     ]
     return pipeline(
-        name='{}-lint-frontend'.format(ver_mode), edition="oss", trigger=trigger, services=[], steps=init_steps + test_steps,
+        name='{}-lint-frontend'.format(ver_mode), edition="oss", trigger=trigger, services=[], steps=init_steps + test_steps, node='node-parallel'
     )

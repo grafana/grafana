@@ -10,8 +10,7 @@ failure_template = 'Build {{build.number}} failed for commit: <https://github.co
 drone_change_template = '`.drone.yml` and `starlark` files have been changed on the OSS repo, by: {{build.author}}. \nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nCommit hash: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>'
 
 def pipeline(
-    name, edition, trigger, steps, services=[], platform='linux', depends_on=[], environment=None, volumes=[],
-    ):
+    name, edition, trigger, steps, services=[], platform='linux', depends_on=[], environment=None, volumes=[], node=''):
     if platform != 'windows':
         platform_conf = {
             'platform': {
@@ -20,10 +19,13 @@ def pipeline(
             },
             # A shared cache is used on the host
             # To avoid issues with parallel builds, we run this repo on single build agents
-            'node': {
-                'type': 'no-parallel'
-            }
         }
+        if node != '':
+            platform_conf.update({
+                'node': {
+                    'type': 'no-parallel'
+                },
+            })
     else:
         platform_conf = {
             'platform': {

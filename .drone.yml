@@ -6,8 +6,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: pr-verify-drone
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -175,8 +173,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: pr-test-backend
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -249,8 +245,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: pr-lint-backend
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -591,8 +585,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: pr-integration-tests
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -716,8 +708,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: pr-docs
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -786,8 +776,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: pr-shellcheck
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -829,8 +817,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: main-docs
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -1009,8 +995,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: main-test-backend
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -1076,8 +1060,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: main-lint-backend
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -1518,8 +1500,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: main-integration-tests
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -1741,8 +1721,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: main-publish
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -1808,8 +1786,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: main-trigger-downstream
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -1888,8 +1864,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-oss-build-e2e-publish
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -2251,8 +2225,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-oss-test-backend
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -2317,8 +2289,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-oss-integration-tests
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -2492,8 +2462,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-enterprise-build-e2e-publish
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -2924,8 +2892,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-enterprise-test-backend
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -3023,8 +2989,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-enterprise2-test-backend
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -3122,8 +3086,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-enterprise-integration-tests
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -3365,8 +3327,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: publish-docker-oss-public
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -3453,8 +3413,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: publish-docker-enterprise-public
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -3524,8 +3482,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: publish-docker-enterprise-security
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -3596,8 +3552,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: publish-artifacts-security
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -3638,8 +3592,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: publish-artifacts-public
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -3680,8 +3632,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: publish-npm-packages-public
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -3741,8 +3691,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: publish-packages-oss
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -3852,8 +3800,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: publish-packages-enterprise
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -3960,8 +3906,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: publish-artifacts-page
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -4001,8 +3945,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-branch-oss-build-e2e-publish
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -4333,8 +4275,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-branch-oss-test-backend
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -4396,8 +4336,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-branch-oss-integration-tests
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -4561,8 +4499,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-branch-enterprise-build-e2e-publish
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -4983,8 +4919,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-branch-enterprise-test-backend
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -5078,8 +5012,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-branch-enterprise2-test-backend
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -5173,8 +5105,6 @@ image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
 name: release-branch-enterprise-integration-tests
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -5618,6 +5548,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 015389b7bbd46fbb8042817bd41a320c71744023710a1bdfb815b9cb28ddd7e3
+hmac: f7f4d8346976a28a74add8c7a6881de079111eaf767534b16603e6c4f2b783e9
 
 ...
