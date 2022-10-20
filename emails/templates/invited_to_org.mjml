@@ -11,7 +11,21 @@
       <mj-include path="./partials/layout/header.mjml" />
     </mj-section>
     <mj-section background-color="#22252b" border="1px solid #2f3037">
-      <mj-include path="./partials/invited_to_org.mjml" />
+      <mj-column>
+        <mj-text>
+          <h2>You have been added to {{ .OrgName }}</h2>
+          <strong>{{ .InvitedBy }}</strong> has added you to the <strong>{{ .OrgName }}</strong> organization in Grafana.
+        </mj-text>
+        <mj-text>
+          Once logged in, <strong>{{ .OrgName }}</strong> will be available in the left side menu, in the dropdown below your username.
+        </mj-text>
+        <mj-text>
+          Log in now by clicking the link below:
+        </mj-text>
+        <mj-text>
+          {{ .AppUrl }}
+        </mj-text>
+      </mj-column>
     </mj-section>
     <mj-section>
       <mj-include path="./partials/layout/footer.mjml" />
