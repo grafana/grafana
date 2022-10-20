@@ -43,7 +43,7 @@ export const Configuration = ({
           <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
             <Label description="Show annotations on public dashboard">Show Annotations</Label>
             <Switch
-              data-testid={selectors.EnableSwitch}
+              data-testid={selectors.EnableAnnotationsSwitch}
               value={annotationsEnabled}
               onChange={() => {
                 reportInteraction('grafana_dashboards_annotations_toggled', {
