@@ -105,15 +105,16 @@ const setPrometheusVersion = (
       getBackendSrv()
         .get(`/api/datasources/${updatedOptions.id}/resources/version-detect`)
         .then((rawResponse: PromBuildInfoResponse) => {
-          if (rawResponse.data?.version && semver.valid(rawResponse.data?.version)) {
-            const versionString = getVersionString(rawResponse.data?.version, updatedOptions.jsonData.prometheusType);
+          const rawVersionStringFromApi = rawResponse.data?.version ?? '';
+          if (rawVersionStringFromApi && semver.valid(rawVersionStringFromApi)) {
+            const parsedVersion = getVersionString(rawVersionStringFromApi, updatedOptions.jsonData.prometheusType);
             // If we got a successful response, let's update the backend with the version right away if it's new
-            if (versionString) {
+            if (parsedVersion) {
               onUpdate({
                 ...updatedOptions,
                 jsonData: {
                   ...updatedOptions.jsonData,
-                  prometheusVersion: versionString,
+                  prometheusVersion: parsedVersion,
                 },
               }).then((updatedUpdatedOptions) => {
                 onOptionsChange(updatedUpdatedOptions);
