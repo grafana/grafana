@@ -8,12 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
 )
 
-type DimensionKeysQueryType uint32
+type DimensionKeysRequestType uint32
 
 const (
-	StandardDimensionKeysQuery DimensionKeysQueryType = iota
-	FilterDimensionKeysQuery
-	CustomMetricDimensionKeysQuery
+	StandardDimensionKeysRequest DimensionKeysRequestType = iota
+	FilterDimensionKeysRequest
+	CustomMetricDimensionKeysRequest
 )
 
 type Dimension struct {
@@ -21,34 +21,34 @@ type Dimension struct {
 	Value string
 }
 
-type DimensionKeysQuery struct {
+type DimensionKeysRequest struct {
 	Region          string `json:"region"`
 	Namespace       string `json:"namespace"`
 	MetricName      string `json:"metricName"`
 	DimensionFilter []*Dimension
 }
 
-func (q *DimensionKeysQuery) Type() DimensionKeysQueryType {
+func (q *DimensionKeysRequest) Type() DimensionKeysRequestType {
 	if _, exist := constants.NamespaceMetricsMap[q.Namespace]; !exist {
-		return CustomMetricDimensionKeysQuery
+		return CustomMetricDimensionKeysRequest
 	}
 
 	if len(q.DimensionFilter) > 0 {
-		return FilterDimensionKeysQuery
+		return FilterDimensionKeysRequest
 	}
 
-	return StandardDimensionKeysQuery
+	return StandardDimensionKeysRequest
 }
 
-func GetDimensionKeysQuery(parameters url.Values) (*DimensionKeysQuery, error) {
-	query := &DimensionKeysQuery{
+func GetDimensionKeysRequest(parameters url.Values) (*DimensionKeysRequest, error) {
+	req := &DimensionKeysRequest{
 		Region:          parameters.Get("region"),
 		Namespace:       parameters.Get("namespace"),
 		MetricName:      parameters.Get("metricName"),
 		DimensionFilter: []*Dimension{},
 	}
 
-	if query.Region == "" {
+	if req.Region == "" {
 		return nil, fmt.Errorf("region is required")
 	}
 
@@ -68,7 +68,7 @@ func GetDimensionKeysQuery(parameters url.Values) (*DimensionKeysQuery, error) {
 		if value != "" && value != "*" {
 			d.Value = value
 		}
-		query.DimensionFilter = append(query.DimensionFilter, d)
+		req.DimensionFilter = append(req.DimensionFilter, d)
 	}
 
 	for k, v := range dimensionFilters {
@@ -84,5 +84,5 @@ func GetDimensionKeysQuery(parameters url.Values) (*DimensionKeysQuery, error) {
 		}
 	}
 
-	return query, nil
+	return req, nil
 }

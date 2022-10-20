@@ -26,15 +26,15 @@ func (*ListMetricsService) GetHardCodedDimensionKeysByNamespace(namespace string
 	return dimensionKeys, nil
 }
 
-func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(q *models.DimensionKeysQuery) ([]string, error) {
+func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(r *models.DimensionKeysRequest) ([]string, error) {
 	input := &cloudwatch.ListMetricsInput{}
-	if q.Namespace != "" {
-		input.Namespace = aws.String(q.Namespace)
+	if r.Namespace != "" {
+		input.Namespace = aws.String(r.Namespace)
 	}
-	if q.MetricName != "" {
-		input.MetricName = aws.String(q.MetricName)
+	if r.MetricName != "" {
+		input.MetricName = aws.String(r.MetricName)
 	}
-	for _, dimension := range q.DimensionFilter {
+	for _, dimension := range r.DimensionFilter {
 		df := &cloudwatch.DimensionFilter{
 			Name: aws.String(dimension.Name),
 		}
@@ -60,7 +60,7 @@ func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(q *models.Dimensi
 
 			// keys in the dimension filter should not be included
 			dimensionFilterExist := false
-			for _, d := range q.DimensionFilter {
+			for _, d := range r.DimensionFilter {
 				if d.Name == *dim.Name {
 					dimensionFilterExist = true
 					break

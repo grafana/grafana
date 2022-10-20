@@ -30,26 +30,26 @@ func Test_DimensionKeys_Route(t *testing.T) {
 	})
 
 	tests := []struct {
-		url        string
-		methodName string
-		queryType  string
+		url         string
+		methodName  string
+		requestType string
 	}{
 		{
-			url:        "/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization",
-			methodName: "GetHardCodedDimensionKeysByNamespace",
-			queryType:  "StandardDimensionKeysQuery"},
+			url:         "/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization",
+			methodName:  "GetHardCodedDimensionKeysByNamespace",
+			requestType: "StandardDimensionKeysRequest"},
 		{
-			url:        `/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization&dimensionFilters={"NodeID":["Shared"],"stage":["QueryCommit"]}`,
-			methodName: "GetDimensionKeysByDimensionFilter",
-			queryType:  "FilterDimensionKeysQuery"},
+			url:         `/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization&dimensionFilters={"NodeID":["Shared"],"stage":["QueryCommit"]}`,
+			methodName:  "GetDimensionKeysByDimensionFilter",
+			requestType: "FilterDimensionKeysRequest"},
 		{
-			url:        `/dimension-keys?region=us-east-2&namespace=customNamespace&metricName=CPUUtilization`,
-			methodName: "GetDimensionKeysByNamespace",
-			queryType:  "CustomMetricDimensionKeysQuery"},
+			url:         `/dimension-keys?region=us-east-2&namespace=customNamespace&metricName=CPUUtilization`,
+			methodName:  "GetDimensionKeysByNamespace",
+			requestType: "CustomMetricDimensionKeysRequest"},
 	}
 
 	for _, tc := range tests {
-		t.Run(fmt.Sprintf("calls %s when a StandardDimensionKeysQuery is passed", tc.queryType), func(t *testing.T) {
+		t.Run(fmt.Sprintf("calls %s when a StandardDimensionKeysRequest is passed", tc.requestType), func(t *testing.T) {
 			mockListMetricsService := mocks.ListMetricsServiceMock{}
 			mockListMetricsService.On(tc.methodName).Return([]string{}, nil)
 			newListMetricsService = func(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, region string) (models.ListMetricsProvider, error) {
@@ -64,7 +64,7 @@ func Test_DimensionKeys_Route(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(fmt.Sprintf("return 500 if %s returns an error", tc.queryType), func(t *testing.T) {
+		t.Run(fmt.Sprintf("return 500 if %s returns an error", tc.requestType), func(t *testing.T) {
 			mockListMetricsService := mocks.ListMetricsServiceMock{}
 			mockListMetricsService.On(tc.methodName).Return([]string{}, fmt.Errorf("some error"))
 			newListMetricsService = func(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, region string) (models.ListMetricsProvider, error) {

@@ -5,7 +5,7 @@ import (
 )
 
 type ListMetricsProvider interface {
-	GetDimensionKeysByDimensionFilter(*DimensionKeysQuery) ([]string, error)
+	GetDimensionKeysByDimensionFilter(*DimensionKeysRequest) ([]string, error)
 	GetHardCodedDimensionKeysByNamespace(string) ([]string, error)
 	GetDimensionKeysByNamespace(string) ([]string, error)
 }

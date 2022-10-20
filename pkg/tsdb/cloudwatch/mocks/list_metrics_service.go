@@ -9,7 +9,7 @@ type ListMetricsServiceMock struct {
 	mock.Mock
 }
 
-func (a *ListMetricsServiceMock) GetDimensionKeysByDimensionFilter(*models.DimensionKeysQuery) ([]string, error) {
+func (a *ListMetricsServiceMock) GetDimensionKeysByDimensionFilter(*models.DimensionKeysRequest) ([]string, error) {
 	args := a.Called()
 
 	return args.Get(0).([]string), args.Error(1)

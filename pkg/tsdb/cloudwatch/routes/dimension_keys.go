@@ -11,24 +11,24 @@ import (
 )
 
 func DimensionKeysHandler(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
-	dimensionKeysQuery, err := models.GetDimensionKeysQuery(parameters)
+	dimensionKeysRequest, err := models.GetDimensionKeysRequest(parameters)
 	if err != nil {
 		return nil, models.NewHttpError("error in DimensionKeyHandler", http.StatusBadRequest, err)
 	}
 
-	service, err := newListMetricsService(pluginCtx, clientFactory, dimensionKeysQuery.Region)
+	service, err := newListMetricsService(pluginCtx, clientFactory, dimensionKeysRequest.Region)
 	if err != nil {
 		return nil, models.NewHttpError("error in DimensionKeyHandler", http.StatusInternalServerError, err)
 	}
 
 	dimensionKeys := []string{}
-	switch dimensionKeysQuery.Type() {
-	case models.StandardDimensionKeysQuery:
-		dimensionKeys, err = service.GetHardCodedDimensionKeysByNamespace(dimensionKeysQuery.Namespace)
-	case models.FilterDimensionKeysQuery:
-		dimensionKeys, err = service.GetDimensionKeysByDimensionFilter(dimensionKeysQuery)
-	case models.CustomMetricDimensionKeysQuery:
-		dimensionKeys, err = service.GetDimensionKeysByNamespace(dimensionKeysQuery.Namespace)
+	switch dimensionKeysRequest.Type() {
+	case models.StandardDimensionKeysRequest:
+		dimensionKeys, err = service.GetHardCodedDimensionKeysByNamespace(dimensionKeysRequest.Namespace)
+	case models.FilterDimensionKeysRequest:
+		dimensionKeys, err = service.GetDimensionKeysByDimensionFilter(dimensionKeysRequest)
+	case models.CustomMetricDimensionKeysRequest:
+		dimensionKeys, err = service.GetDimensionKeysByNamespace(dimensionKeysRequest.Namespace)
 	}
 	if err != nil {
 		return nil, models.NewHttpError("error in DimensionKeyHandler", http.StatusInternalServerError, err)

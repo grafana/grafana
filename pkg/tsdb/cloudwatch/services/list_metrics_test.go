@@ -64,7 +64,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 		fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(metricResponse, nil)
 		listMetricsService := NewListMetricsService(fakeMetricsClient)
 
-		resp, err := listMetricsService.GetDimensionKeysByDimensionFilter(&models.DimensionKeysQuery{
+		resp, err := listMetricsService.GetDimensionKeysByDimensionFilter(&models.DimensionKeysRequest{
 			Region:     "us-east-1",
 			Namespace:  "AWS/EC2",
 			MetricName: "CPUUtilization",
