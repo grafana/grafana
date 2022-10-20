@@ -4,9 +4,17 @@ import React from 'react';
 import { QueryEditorProps } from '@grafana/data';
 
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
+import {
+  validLogsQuery,
+  validMetricQueryBuilderQuery,
+  validMetricQueryCodeQuery,
+  validMetricSearchBuilderQuery,
+  validMetricSearchCodeQuery,
+} from '../__mocks__/queries';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchQuery, CloudWatchJsonData, MetricEditorMode, MetricQueryType } from '../types';
 
+import { accounts } from './Account.test';
 import { PanelQueryEditor } from './PanelQueryEditor';
 
 // the following three fields are added to legacy queries in the dashboard migrator
@@ -128,6 +136,45 @@ describe('PanelQueryEditor should render right editor', () => {
         render(<PanelQueryEditor {...props} query={query} />);
       });
       expect(screen.getByText('Metric name')).toBeInTheDocument();
+    });
+  });
+
+  interface MonitoringBadgeScenario {
+    name: string;
+    query: CloudWatchQuery;
+  }
+
+  describe('monitoring badge should be displayed when a monitoring account is returned and', () => {
+    const cases: MonitoringBadgeScenario[] = [
+      { name: 'it is logs query', query: validLogsQuery },
+      { name: 'it is metric search builder query', query: validMetricSearchBuilderQuery },
+      { name: 'it is metric search code query', query: validMetricSearchCodeQuery },
+    ];
+    test.each(cases)('$name', async ({ query }) => {
+      const datasourceMock = setupMockedDataSource();
+      datasourceMock.datasource.api.isMonitoringAccount = jest.fn().mockResolvedValue(accounts);
+      datasourceMock.datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
+      datasourceMock.datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
+      await act(async () => {
+        render(<PanelQueryEditor {...props} datasource={datasourceMock.datasource} query={query} />);
+      });
+      expect(await screen.getByText('Monitoring account')).toBeInTheDocument();
+    });
+  });
+
+  describe('should not be displayed when a monitoring account is returned and', () => {
+    const cases: MonitoringBadgeScenario[] = [
+      { name: 'it is metric query builder query', query: validMetricQueryBuilderQuery },
+      { name: 'it is metric query code query', query: validMetricQueryCodeQuery },
+    ];
+    test.each(cases)('$name', async ({ query }) => {
+      const datasourceMock = setupMockedDataSource();
+      datasourceMock.datasource.api.isMonitoringAccount = jest.fn().mockResolvedValue(accounts);
+      datasourceMock.datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
+      await act(async () => {
+        render(<PanelQueryEditor {...props} datasource={datasourceMock.datasource} query={query} />);
+      });
+      expect(await screen.queryByText('Monitoring account')).toBeNull();
     });
   });
 });

@@ -3,6 +3,7 @@ import { useDeepCompareEffect } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
 
+import { CloudWatchAPI } from './api';
 import { CloudWatchDatasource } from './datasource';
 import { GetDimensionKeysRequest } from './types';
 import { appendTemplateVariables } from './utils/utils';
@@ -66,4 +67,13 @@ export const useDimensionKeys = (
   }, [datasource, region, namespace, metricName, dimensionFilters]);
 
   return dimensionKeys;
+};
+
+export const useIsMonitoringAccount = (api: CloudWatchAPI, region: string) => {
+  const [isMonitoringAccount, setIsMonitoringAccount] = useState(false);
+  useEffect(() => {
+    api.isMonitoringAccount(region).then(setIsMonitoringAccount);
+  }, [region, api]);
+
+  return isMonitoringAccount;
 };

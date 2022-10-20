@@ -10,7 +10,7 @@ import {
   regionVariable,
 } from './__mocks__/CloudWatchDataSource';
 import { setupForLogs } from './__mocks__/logsTestContext';
-import { validLogsQuery, validMetricsQuery } from './__mocks__/queries';
+import { validLogsQuery, validMetricSearchBuilderQuery } from './__mocks__/queries';
 import { timeRange } from './__mocks__/timeRange';
 import { CloudWatchLogsQuery, CloudWatchMetricsQuery, CloudWatchQuery } from './types';
 
@@ -62,9 +62,9 @@ describe('datasource', () => {
     const testTable: Array<{ query: CloudWatchQuery; valid: boolean }> = [
       { query: { ...validLogsQuery, hide: true }, valid: false },
       { query: { ...validLogsQuery, hide: false }, valid: true },
-      { query: { ...validMetricsQuery, hide: true }, valid: false },
-      { query: { ...validMetricsQuery, hide: true, id: 'queryA' }, valid: true },
-      { query: { ...validMetricsQuery, hide: false }, valid: true },
+      { query: { ...validMetricSearchBuilderQuery, hide: true }, valid: false },
+      { query: { ...validMetricSearchBuilderQuery, hide: true, id: 'queryA' }, valid: true },
+      { query: { ...validMetricSearchBuilderQuery, hide: false }, valid: true },
     ];
 
     test.each(testTable)('should filter out hidden queries unless id is provided', ({ query, valid }) => {

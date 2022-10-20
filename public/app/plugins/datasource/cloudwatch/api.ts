@@ -40,6 +40,12 @@ export class CloudWatchAPI extends CloudWatchRequest {
     });
   }
 
+  isMonitoringAccount(region: string): Promise<boolean> {
+    return this.getAccounts(region)
+      .then((accounts) => accounts.some((account) => account.isMonitoringAccount))
+      .catch(() => false);
+  }
+
   getRegions() {
     return this.memoizedGetRequest<SelectableResourceValue[]>('regions').then((regions) => [
       { label: 'default', value: 'default', text: 'default' },

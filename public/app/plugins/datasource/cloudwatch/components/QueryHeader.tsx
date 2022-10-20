@@ -2,10 +2,11 @@ import { pick } from 'lodash';
 import React from 'react';
 
 import { SelectableValue, ExploreMode } from '@grafana/data';
-import { EditorHeader, InlineSelect } from '@grafana/experimental';
+import { EditorHeader, InlineSelect, FlexItem } from '@grafana/experimental';
+import { Badge } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../datasource';
-import { useRegions } from '../hooks';
+import { useIsMonitoringAccount, useRegions } from '../hooks';
 import { CloudWatchQuery, CloudWatchQueryMode } from '../types';
 
 import MetricsQueryHeader from './MetricsQueryEditor/MetricsQueryHeader';
@@ -26,6 +27,7 @@ const apiModes: Array<SelectableValue<CloudWatchQueryMode>> = [
 
 const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, datasource, onChange, onRunQuery }) => {
   const { queryMode, region } = query;
+  const isMonitoringAccount = useIsMonitoringAccount(datasource.api, query.region);
 
   const [regions, regionIsLoading] = useRegions(datasource);
 
@@ -38,12 +40,12 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, 
       } as CloudWatchQuery);
     }
   };
-
   const onRegion = async ({ value }: SelectableValue<string>) => {
-    onChange({
-      ...query,
-      region: value,
-    } as CloudWatchQuery);
+    value &&
+      onChange({
+        ...query,
+        region: value,
+      });
   };
 
   return (
@@ -60,12 +62,20 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, 
 
       <InlineSelect aria-label="Query mode" value={queryMode} options={apiModes} onChange={onQueryModeChange} />
 
+      {queryMode === 'Logs' && isMonitoringAccount && (
+        <>
+          <FlexItem grow={1} />
+          <Badge text="Monitoring account" color="blue"></Badge>
+        </>
+      )}
+
       {queryMode === ExploreMode.Metrics && (
         <MetricsQueryHeader
           query={query}
           datasource={datasource}
           onChange={onChange}
           onRunQuery={onRunQuery}
+          isMonitoringAccount={isMonitoringAccount}
           sqlCodeEditorIsDirty={sqlCodeEditorIsDirty}
         />
       )}

@@ -8,7 +8,7 @@ import { MetricStat } from '../types';
 
 import { Account } from './Account';
 
-const accounts = [
+export const accounts = [
   {
     arn: 'arn:aws:iam::123456789012:root',
     accountId: '123456789012',
