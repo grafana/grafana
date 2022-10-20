@@ -7,8 +7,7 @@ type Folder struct {
 	UID         string
 	Title       string
 	Description string
-	Url         string
-	Version     int
+	URL         string
 
 	Created time.Time
 	Updated time.Time

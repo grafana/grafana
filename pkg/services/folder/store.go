@@ -1,22 +1,6 @@
 package folder
 
-import (
-	"context"
-
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/user"
-)
-
-type Service interface {
-	GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error)
-	GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error)
-	GetFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*models.Folder, error)
-	GetFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*models.Folder, error)
-	CreateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, title, uid string) (*models.Folder, error)
-	UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error
-	DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error)
-	MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error
-}
+import "context"
 
 // Store is the interface which a folder store must implement.
 type Store interface {
@@ -39,7 +23,10 @@ type Store interface {
 	// GetParent returns the parent folder of the given folder.
 	GetParent(ctx context.Context, uid string, orgID int64) (*Folder, error)
 
-	// GetParent returns a list of immediate children folders (depth=1) of the
+	// GetParents returns an ordered list of parent folder of the given folder.
+	GetParents(ctx context.Context, uid string, orgID int64) ([]*Folder, error)
+
+	// GetChildren returns the set of immediate children folders (depth=1) of the
 	// given folder. Use GetDescendents to get all descendents of a given parent
 	// folder.
 	GetChildren(ctx context.Context, uid string, orgID, limit, page int64) ([]*Folder, error)

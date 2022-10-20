@@ -12,6 +12,8 @@ type FakeStore struct {
 	ExpectedError   error
 }
 
+var _ folder.Store = (*FakeStore)(nil)
+
 func (f *FakeStore) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	return f.ExpectedFolder, f.ExpectedError
 }
@@ -34,6 +36,10 @@ func (f *FakeStore) Get(ctx context.Context, uid string, orgID int64) (*folder.F
 
 func (f *FakeStore) GetParent(ctx context.Context, uid string, orgID int64) (*folder.Folder, error) {
 	return f.ExpectedFolder, f.ExpectedError
+}
+
+func (f *FakeStore) GetParents(ctx context.Context, uid string, orgID int64) ([]*folder.Folder, error) {
+	return f.ExpectedFolders, f.ExpectedError
 }
 
 func (f *FakeStore) GetChildren(ctx context.Context, uid string, orgID, limit, page int64) ([]*folder.Folder, error) {

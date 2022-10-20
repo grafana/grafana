@@ -13,6 +13,7 @@ type store struct {
 	log log.Logger
 }
 
+// store implements the folder.Store interface.
 var _ folder.Store = (*store)(nil)
 
 func ProvideStore(db db.DB) *store {
@@ -45,6 +46,11 @@ func (s *store) Get(ctx context.Context, uid string, orgID int64) (*folder.Folde
 }
 
 func (s *store) GetParent(ctx context.Context, uid string, orgID int64) (*folder.Folder, error) {
+	panic("not implemented")
+	return nil, nil
+}
+
+func (s *store) GetParents(ctx context.Context, uid string, orgID int64) ([]*folder.Folder, error) {
 	panic("not implemented")
 	return nil, nil
 }
