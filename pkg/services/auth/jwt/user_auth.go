@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	jose "gopkg.in/square/go-jose.v2"
+	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 const ServiceName = "UserAuthService"
@@ -44,11 +45,13 @@ func (s *UserAuthService) init() error {
 		return nil
 	}
 
-	if err := s.initKeySet(); err != nil {
+	if err := s.initClaimExpectations(); err != nil {
 		return err
 	}
 
-	s.verificationService.KeySet(s.keySet)
+	if err := s.initKeySet(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -59,12 +62,58 @@ type UserAuthService struct {
 	keySet keySet
 	log    log.Logger
 
+	additionalClaims map[string]interface{}
+	expectedClaims   jwt.Expected
+
 	remoteCache         *remotecache.RemoteCache
 	verificationService VerificationService
 }
 
 func (s *UserAuthService) Verify(ctx context.Context, token string) (models.JWTClaims, error) {
-	return s.verificationService.Verify(ctx, token)
+	return s.verificationService.Verify(ctx, s.keySet, s.expectedClaims, s.additionalClaims, token)
+}
+
+func (s *UserAuthService) initClaimExpectations() error {
+	if err := json.Unmarshal([]byte(s.Cfg.JWTAuthExpectClaims), &s.additionalClaims); err != nil {
+		return err
+	}
+
+	for key, value := range s.additionalClaims {
+		switch key {
+		case "iss":
+			if stringValue, ok := value.(string); ok {
+				s.expectedClaims.Issuer = stringValue
+			} else {
+				return fmt.Errorf("%q expectation has invalid type %T, string expected", key, value)
+			}
+			delete(s.additionalClaims, key)
+		case "sub":
+			if stringValue, ok := value.(string); ok {
+				s.expectedClaims.Subject = stringValue
+			} else {
+				return fmt.Errorf("%q expectation has invalid type %T, string expected", key, value)
+			}
+			delete(s.additionalClaims, key)
+		case "aud":
+			switch value := value.(type) {
+			case []interface{}:
+				for _, val := range value {
+					if v, ok := val.(string); ok {
+						s.expectedClaims.Audience = append(s.expectedClaims.Audience, v)
+					} else {
+						return fmt.Errorf("%q expectation contains value with invalid type %T, string expected", key, val)
+					}
+				}
+			case string:
+				s.expectedClaims.Audience = []string{value}
+			default:
+				return fmt.Errorf("%q expectation has invalid type %T, array or string expected", key, value)
+			}
+			delete(s.additionalClaims, key)
+		}
+	}
+
+	return nil
 }
 
 func (s *UserAuthService) checkKeySetConfiguration() error {

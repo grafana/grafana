@@ -3,7 +3,6 @@ package jwt
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -19,10 +18,6 @@ import (
 
 func ProvideVerificationService(cfg *setting.Cfg) (*VerificationService, error) {
 	s := newVerificationService(cfg)
-	if err := s.init(); err != nil {
-		return nil, err
-	}
-
 	return s, nil
 }
 
@@ -33,39 +28,12 @@ func newVerificationService(cfg *setting.Cfg) *VerificationService {
 	}
 }
 
-func (s *VerificationService) init() error {
-	if err := s.initClaimExpectations(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 type VerificationService struct {
 	Cfg *setting.Cfg
-
-	keySet           keySet
-	log              log.Logger
-	expect           map[string]interface{}
-	expectRegistered jwt.Expected
+	log log.Logger
 }
 
-// Sanitize JWT base64 strings to remove paddings everywhere
-func sanitizeJWT(jwtToken string) string {
-	// JWT can be compact, JSON flatened or JSON general
-	// In every cases, parts are base64 strings without padding
-	// The padding char (=) should never interfer with data
-	return strings.ReplaceAll(jwtToken, string(base64.StdPadding), "")
-}
-
-func (s *VerificationService) KeySet(ks ...keySet) keySet {
-	if len(ks) == 1 {
-		s.keySet = ks[0]
-	}
-	return s.keySet
-}
-
-func (s *VerificationService) Verify(ctx context.Context, strToken string) (models.JWTClaims, error) {
+func (s *VerificationService) Verify(ctx context.Context, keySet keySet, expectedClaims jwt.Expected, additionalClaims map[string]interface{}, strToken string) (models.JWTClaims, error) {
 	s.log.Debug("Parsing JSON Web Token")
 
 	strToken = sanitizeJWT(strToken)
@@ -74,7 +42,7 @@ func (s *VerificationService) Verify(ctx context.Context, strToken string) (mode
 		return nil, err
 	}
 
-	keys, err := s.keySet.Key(ctx, token.Headers[0].KeyID)
+	keys, err := keySet.Key(ctx, token.Headers[0].KeyID)
 	if err != nil {
 		return nil, err
 	}
@@ -95,57 +63,18 @@ func (s *VerificationService) Verify(ctx context.Context, strToken string) (mode
 
 	s.log.Debug("Validating JSON Web Token claims")
 
-	if err = s.validateClaims(claims); err != nil {
+	if err = s.validateExpectedClaims(expectedClaims, claims); err != nil {
+		return nil, err
+	}
+
+	if err = s.validateAdditionalClaims(additionalClaims, claims); err != nil {
 		return nil, err
 	}
 
 	return claims, nil
 }
 
-func (s *VerificationService) initClaimExpectations() error {
-	if err := json.Unmarshal([]byte(s.Cfg.JWTAuthExpectClaims), &s.expect); err != nil {
-		return err
-	}
-
-	for key, value := range s.expect {
-		switch key {
-		case "iss":
-			if stringValue, ok := value.(string); ok {
-				s.expectRegistered.Issuer = stringValue
-			} else {
-				return fmt.Errorf("%q expectation has invalid type %T, string expected", key, value)
-			}
-			delete(s.expect, key)
-		case "sub":
-			if stringValue, ok := value.(string); ok {
-				s.expectRegistered.Subject = stringValue
-			} else {
-				return fmt.Errorf("%q expectation has invalid type %T, string expected", key, value)
-			}
-			delete(s.expect, key)
-		case "aud":
-			switch value := value.(type) {
-			case []interface{}:
-				for _, val := range value {
-					if v, ok := val.(string); ok {
-						s.expectRegistered.Audience = append(s.expectRegistered.Audience, v)
-					} else {
-						return fmt.Errorf("%q expectation contains value with invalid type %T, string expected", key, val)
-					}
-				}
-			case string:
-				s.expectRegistered.Audience = []string{value}
-			default:
-				return fmt.Errorf("%q expectation has invalid type %T, array or string expected", key, value)
-			}
-			delete(s.expect, key)
-		}
-	}
-
-	return nil
-}
-
-func (s *VerificationService) validateClaims(claims models.JWTClaims) error {
+func (s *VerificationService) validateExpectedClaims(expectRegistered jwt.Expected, claims models.JWTClaims) error {
 	var registeredClaims jwt.Claims
 	for key, value := range claims {
 		switch key {
@@ -209,13 +138,16 @@ func (s *VerificationService) validateClaims(claims models.JWTClaims) error {
 		}
 	}
 
-	expectRegistered := s.expectRegistered
 	expectRegistered.Time = time.Now()
 	if err := registeredClaims.Validate(expectRegistered); err != nil {
 		return err
 	}
 
-	for key, expected := range s.expect {
+	return nil
+}
+
+func (s *VerificationService) validateAdditionalClaims(expected map[string]interface{}, claims models.JWTClaims) error {
+	for key, expected := range expected {
 		value, ok := claims[key]
 		if !ok {
 			return fmt.Errorf("%q claim is missing", key)
@@ -226,4 +158,12 @@ func (s *VerificationService) validateClaims(claims models.JWTClaims) error {
 	}
 
 	return nil
+}
+
+// Sanitize JWT base64 strings to remove paddings everywhere
+func sanitizeJWT(jwtToken string) string {
+	// JWT can be compact, JSON flatened or JSON general
+	// In every cases, parts are base64 strings without padding
+	// The padding char (=) should never interfer with data
+	return strings.ReplaceAll(jwtToken, string(base64.StdPadding), "")
 }

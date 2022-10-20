@@ -55,8 +55,9 @@ type PluginAuthService struct {
 	log    log.Logger
 	keySet keySet
 
-	signer              jose.Signer
-	jwtExpiration       time.Duration
+	signer        jose.Signer
+	jwtExpiration time.Duration
+
 	secretsKVStore      *kvstore.FixedKVStore
 	verificationService *VerificationService
 }
@@ -66,7 +67,14 @@ func (s *PluginAuthService) Verify(ctx context.Context, token string) (models.JW
 		return make(models.JWTClaims), errors.New("JWT token generation is disabled")
 	}
 
-	return s.verificationService.Verify(ctx, token)
+	expectedClaims := jwt.Expected{
+		Issuer: s.Cfg.AppURL,
+		Time:   time.Now(),
+	}
+
+	additionalClaims := make(models.JWTClaims)
+
+	return s.verificationService.Verify(ctx, s.keySet, expectedClaims, additionalClaims, token)
 }
 
 func (s *PluginAuthService) Generate(subject, audience string) (string, error) {
@@ -96,12 +104,6 @@ func (s *PluginAuthService) init() error {
 	pubKey.KeyID = privKey.KeyID
 	set.Keys = append(set.Keys, pubKey)
 	s.keySet = keySetJWKS{set}
-
-	s.verificationService.KeySet(s.keySet)
-	s.verificationService.expectRegistered = jwt.Expected{
-		Issuer: s.Cfg.AppURL,
-		Time:   time.Now(),
-	}
 
 	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.SignatureAlgorithm(privKey.Algorithm), Key: privKey}, (&jose.SignerOptions{}).WithType("JWT"))
 	if err != nil {
