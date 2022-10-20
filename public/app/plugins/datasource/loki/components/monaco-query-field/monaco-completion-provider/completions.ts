@@ -203,6 +203,14 @@ async function getAfterSelectorCompletions(
 
   extractedLabelKeys.forEach((key) => {
     completions.push({
+      type: 'LABEL_NAME',
+      label: `${key} (detected)`,
+      insertText: `${prefix}${key}`,
+    });
+  });
+
+  extractedLabelKeys.forEach((key) => {
+    completions.push({
       type: 'LINE_FILTER',
       label: `unwrap ${key} (detected)`,
       insertText: `${prefix}unwrap ${key}`,

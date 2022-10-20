@@ -97,6 +97,16 @@ const afterSelectorCompletions = [
     type: 'PARSER',
   },
   {
+    insertText: '| extracted',
+    label: 'extracted (detected)',
+    type: 'LABEL_NAME',
+  },
+  {
+    insertText: '| label',
+    label: 'label (detected)',
+    type: 'LABEL_NAME',
+  },
+  {
     insertText: '| unwrap extracted',
     label: 'unwrap extracted (detected)',
     type: 'LINE_FILTER',
