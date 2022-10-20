@@ -40,8 +40,10 @@ export enum InventoryType {
   vmAgent = 'vm_agent',
 }
 
+export type InventoryNode = {};
+
 export type InventoryList = {
-  [key in InventoryType]: Node[];
+  [key in InventoryType]: InventoryNode[];
 };
 
 export type ServicesList = InventoryList;

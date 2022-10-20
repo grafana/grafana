@@ -1,7 +1,9 @@
-import { IconButton, useStyles2 } from '@grafana/ui';
 import React from 'react';
-import { ExpandableButtonProps } from './ExpandableRowButton.type';
+
+import { IconButton, useStyles2 } from '@grafana/ui';
+
 import { getStyles } from './ExpandableRowButton.styles';
+import { ExpandableButtonProps } from './ExpandableRowButton.type';
 
 export const ExpandableRowButton = ({ row }: ExpandableButtonProps) => {
   const expandedRowProps = row.getToggleRowExpandedProps ? row.getToggleRowExpandedProps() : {};

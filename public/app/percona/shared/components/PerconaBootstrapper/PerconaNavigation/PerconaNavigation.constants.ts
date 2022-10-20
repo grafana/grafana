@@ -1,5 +1,6 @@
 import { NavModelItem, NavSection } from '@grafana/data';
 import config from 'app/core/config';
+import { ServiceType } from 'app/percona/shared/services/services/Services.types';
 
 export const PMM_STT_PAGE: NavModelItem = {
   id: 'database-checks',
@@ -252,3 +253,14 @@ export const NAV_FOLDER_MAP: Record<string, string> = {
   mongo: 'MongoDB',
   postgre: 'PostgreSQL',
 };
+
+export const NAV_ID_TO_SERVICE: Record<string, ServiceType> = {
+  mysql: ServiceType.mysql,
+  mongo: ServiceType.mongodb,
+  postgre: ServiceType.posgresql,
+  proxysql: ServiceType.proxysql,
+  haproxy: ServiceType.haproxy,
+};
+
+// 5 mins
+export const ACTIVE_SERVICE_TYPES_CHECK_INTERVAL_MS = 300000;

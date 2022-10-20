@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions,@typescript-eslint/no-explicit-any */
 import { CheckboxField, logger, Table } from '@percona/platform-core';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Form } from 'react-final-form';
 import { Row } from 'react-table';
 
@@ -12,14 +12,20 @@ import { SelectedTableRows } from 'app/percona/shared/components/Elements/Table'
 import { FormElement } from 'app/percona/shared/components/Form';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
+import {
+  fetchServicesAction,
+  removeServicesAction,
+  RemoveServiceParams,
+  fetchActiveServiceTypesAction,
+} from 'app/percona/shared/core/reducers/services';
+import { getServices } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
-import { filterFulfilled, processPromiseResults } from 'app/percona/shared/helpers/promises';
+import { useAppDispatch } from 'app/store/store';
+import { useSelector } from 'app/types';
 
 import { appEvents } from '../../../core/app_events';
 import { GET_SERVICES_CANCEL_TOKEN, SERVICES_COLUMNS } from '../Inventory.constants';
-import { InventoryService } from '../Inventory.service';
-import { InventoryDataService, Model } from '../Inventory.tools';
-import { ServicesList } from '../Inventory.types';
+import { InventoryDataService } from '../Inventory.tools';
 
 import { styles } from './Tabs.styles';
 
@@ -33,26 +39,24 @@ interface Service {
 }
 
 export const Services = () => {
-  const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [data, setData] = useState<Model[]>([]);
   const [selected, setSelectedRows] = useState<any[]>([]);
   const navModel = usePerconaNavModel('inventory-services');
   const [generateToken] = useCancelToken();
+  const dispatch = useAppDispatch();
+  const { isLoading, services } = useSelector(getServices);
+  const data = useMemo(() => InventoryDataService.getServiceModel(services), [services]);
 
   const loadData = useCallback(async () => {
-    setLoading(true);
     try {
-      const result: ServicesList = await InventoryService.getServices(generateToken(GET_SERVICES_CANCEL_TOKEN));
-
-      setData(InventoryDataService.getServiceModel(result));
+      await dispatch(fetchServicesAction({ token: generateToken(GET_SERVICES_CANCEL_TOKEN) }));
+      await dispatch(fetchActiveServiceTypesAction());
     } catch (e) {
       if (isApiCancelError(e)) {
         return;
       }
       logger.error(e);
     }
-    setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -64,13 +68,11 @@ export const Services = () => {
   const removeServices = useCallback(
     async (services: Array<SelectedTableRows<Service>>, forceMode) => {
       try {
-        setLoading(true);
-        // eslint-disable-next-line max-len
-        const requests = services.map((service) =>
-          InventoryService.removeService({ service_id: service.original.service_id, force: forceMode })
-        );
-        const results = await processPromiseResults(requests);
-        const successfullyDeleted = results.filter(filterFulfilled).length;
+        const params = services.map<RemoveServiceParams>((s) => ({
+          serviceId: s.original.service_id,
+          force: forceMode,
+        }));
+        const successfullyDeleted = await dispatch(removeServicesAction({ services: params })).unwrap();
 
         appEvents.emit(AppEvents.alertSuccess, [
           `${successfullyDeleted} of ${services.length} services successfully deleted`,
@@ -84,7 +86,7 @@ export const Services = () => {
       setSelectedRows([]);
       loadData();
     },
-    [loadData]
+    [dispatch, loadData]
   );
 
   const handleSelectionChange = useCallback((rows: Array<Row<{}>>) => {
@@ -167,7 +169,7 @@ export const Services = () => {
                 pageSize={25}
                 emptyMessage="No services Available"
                 emptyMessageClassName={styles.emptyMessage}
-                pendingRequest={loading}
+                pendingRequest={isLoading}
                 overlayClassName={styles.overlay}
               />
             </div>

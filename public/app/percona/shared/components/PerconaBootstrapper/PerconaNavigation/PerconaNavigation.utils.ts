@@ -1,8 +1,14 @@
 import { NavModelItem } from '@grafana/data';
 import { config } from 'app/core/config';
+import { ServiceType } from 'app/percona/shared/services/services/Services.types';
 import { FolderDTO } from 'app/types';
 
-import { NAV_FOLDER_MAP, PMM_ADD_INSTANCE_PAGE, PMM_ALERTING_PERCONA_ALERTS } from './PerconaNavigation.constants';
+import {
+  NAV_FOLDER_MAP,
+  NAV_ID_TO_SERVICE,
+  PMM_ADD_INSTANCE_PAGE,
+  PMM_ALERTING_PERCONA_ALERTS,
+} from './PerconaNavigation.constants';
 
 const DIVIDER = {
   id: 'divider',
@@ -118,4 +124,17 @@ export const addFolderLinks = (navTree: NavModelItem[], folders: FolderDTO[]) =>
       });
     }
   }
+};
+
+export const filterByServices = (navTree: NavModelItem[], activeServices: ServiceType[]): NavModelItem[] => {
+  const showNavLink = (node: NavModelItem) => {
+    if (node.id) {
+      const serviceType = NAV_ID_TO_SERVICE[node.id];
+      return !serviceType || activeServices.some((s) => s === serviceType);
+    }
+
+    return true;
+  };
+
+  return navTree.filter(showNavLink);
 };

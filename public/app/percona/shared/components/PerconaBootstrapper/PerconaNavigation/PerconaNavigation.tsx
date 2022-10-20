@@ -5,12 +5,14 @@ import { contextSrv } from 'app/core/core';
 import { initialState, updateNavTree } from 'app/core/reducers/navBarTree';
 import { updateNavIndex } from 'app/core/reducers/navModel';
 import { fetchFolders } from 'app/features/manage-dashboards/state/actions';
+import { fetchActiveServiceTypesAction } from 'app/percona/shared/core/reducers/services';
 import { useAppDispatch } from 'app/store/store';
 import { FolderDTO, useSelector } from 'app/types';
 
-import { getPerconaSettings, getPerconaUser } from '../../../core/selectors';
+import { getPerconaSettings, getPerconaUser, getServices } from '../../../core/selectors';
 
 import {
+  ACTIVE_SERVICE_TYPES_CHECK_INTERVAL_MS,
   getPmmSettingsPage,
   PMM_ADD_INSTANCE_PAGE,
   PMM_BACKUP_PAGE,
@@ -25,6 +27,7 @@ import {
   addFolderLinks,
   buildIntegratedAlertingMenuItem,
   buildInventoryAndSettings,
+  filterByServices,
   removeAlertingMenuItem,
 } from './PerconaNavigation.utils';
 
@@ -35,6 +38,7 @@ const PerconaNavigation: React.FC = () => {
   const { isPlatformUser, isAuthorized } = useSelector(getPerconaUser);
   const isLoggedIn = !!contextSrv.user.isSignedIn;
   const dispatch = useAppDispatch();
+  const { activeTypes } = useSelector(getServices);
 
   dispatch(updateNavIndex(getPmmSettingsPage(alertingEnabled)));
   dispatch(updateNavIndex(PMM_STT_PAGE));
@@ -47,10 +51,19 @@ const PerconaNavigation: React.FC = () => {
   dispatch(updateNavIndex(PMM_ENVIRONMENT_OVERVIEW_PAGE));
 
   useEffect(() => {
+    let interval: NodeJS.Timer;
+
     if (isLoggedIn) {
       fetchFolders().then(setFolders);
+      dispatch(fetchActiveServiceTypesAction());
+
+      interval = setInterval(() => {
+        dispatch(fetchActiveServiceTypesAction());
+      }, ACTIVE_SERVICE_TYPES_CHECK_INTERVAL_MS);
     }
-  }, [isLoggedIn]);
+
+    return () => clearInterval(interval);
+  }, [dispatch, isLoggedIn]);
 
   useEffect(() => {
     const updatedNavTree = cloneDeep(initialState);
@@ -87,9 +100,9 @@ const PerconaNavigation: React.FC = () => {
 
     addFolderLinks(updatedNavTree, folders);
 
-    dispatch(updateNavTree({ items: updatedNavTree }));
+    dispatch(updateNavTree({ items: filterByServices(updatedNavTree, activeTypes) }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result, folders, isAuthorized, isPlatformUser]);
+  }, [result, folders, activeTypes, isAuthorized, isPlatformUser]);
 
   return null;
 };

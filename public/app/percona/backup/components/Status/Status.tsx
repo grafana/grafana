@@ -1,7 +1,8 @@
-import React, { FC, useMemo } from 'react';
-import { Tooltip, useTheme, Icon, IconName } from '@grafana/ui';
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 import { cx } from '@emotion/css';
+import React, { FC, useMemo } from 'react';
 
+import { Tooltip, useTheme, Icon, IconName } from '@grafana/ui';
 import { Ellipsis } from 'app/percona/shared/components/Elements/Icons';
 
 import { BackupStatus, RestoreStatus } from '../../Backup.types';

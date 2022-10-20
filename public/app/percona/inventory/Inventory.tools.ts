@@ -26,8 +26,8 @@ const getParams = (params: any, type: string): Model => {
   };
 };
 
-const getModel = (item: ServicesList) => {
-  const addType = Object.keys(item).map((type) => ({ type, params: item[type as InventoryType] }));
+const getModel = (item: Partial<ServicesList>) => {
+  const addType = Object.keys(item).map((type) => ({ type, params: item[type as InventoryType] || [] }));
 
   return addType.map((agent) =>
     agent.params.map((arrItem: any): Model => {
@@ -40,7 +40,7 @@ const getModel = (item: ServicesList) => {
   );
 };
 
-const getServiceModel = (item: InventoryList) => {
+const getServiceModel = (item: Partial<ServicesList>) => {
   const createParams = getModel(item);
 
   return orderBy(

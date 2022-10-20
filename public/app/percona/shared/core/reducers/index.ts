@@ -30,6 +30,7 @@ import { SETTINGS_TIMEOUT } from '../constants';
 import { ServerInfo } from '../types';
 
 import perconaBackupLocations from './backupLocations';
+import servicesReducer from './services';
 import perconaUserReducers from './user';
 export * from './user';
 
@@ -381,6 +382,7 @@ export default {
     dbClusters: dbClustersReducer,
     server: perconaServerReducers,
     templates: templatesReducer,
+    services: servicesReducer,
     backupLocations: perconaBackupLocations,
   }),
 };

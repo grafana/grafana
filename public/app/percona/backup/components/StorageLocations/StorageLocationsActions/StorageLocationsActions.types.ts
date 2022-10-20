@@ -1,4 +1,5 @@
 import { Row } from 'react-table';
+
 import { StorageLocation } from '../StorageLocations.types';
 
 export interface StorageLocatationsActionProps {
