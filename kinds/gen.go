@@ -21,12 +21,12 @@ import (
 
 // All the single-kind generators to be run for core kinds.
 var singles = []codegen.KindGenStep{
-	codegen.GoTypesGenerator(filepath.Join("pkg", "kind"), nil),
+	codegen.GoTypesGenerator(filepath.Join("pkg", "kinds"), nil),
 }
 
 // All the aggregate generators to be run for core kinds.
 var multis = []codegen.AggregateKindGenStep{
-	codegen.BaseCoreRegistryGenerator(filepath.Join("pkg", "registry", "kindreg"), "pkg/kind"),
+	codegen.BaseCoreRegistryGenerator(filepath.Join("pkg", "registry", "corekind"), "pkg/kinds"),
 }
 
 const sep = string(filepath.Separator)

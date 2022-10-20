@@ -1,4 +1,4 @@
-package kindreg
+package corekind
 
 import (
 	"sync"

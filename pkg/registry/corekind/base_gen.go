@@ -1,11 +1,11 @@
-package kindreg
+package corekind
 
 import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/framework/kind"
-	"github.com/grafana/grafana/pkg/kind/dashboard"
-	"github.com/grafana/grafana/pkg/kind/svg"
+	"github.com/grafana/grafana/pkg/kinds/dashboard"
+	"github.com/grafana/grafana/pkg/kinds/svg"
 	"github.com/grafana/thema"
 )
 
