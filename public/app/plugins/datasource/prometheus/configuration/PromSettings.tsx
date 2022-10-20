@@ -51,9 +51,6 @@ type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | '
  *
  * This function will return the closest version from PromFlavorVersions that is equal or lower to the version argument,
  * unless the versions are a major release apart.
- *
- * @param version
- * @param flavor
  */
 const getVersionString = (version: string, flavor?: string): string | undefined => {
   if (!flavor || !PromFlavorVersions[flavor]) {
