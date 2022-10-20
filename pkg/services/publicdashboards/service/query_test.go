@@ -3,15 +3,14 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	dashboard2 "github.com/grafana/grafana/pkg/coremodel/dashboard"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	grafanamodels "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
@@ -20,7 +19,6 @@ import (
 	. "github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -92,53 +90,6 @@ const (
           "interval": "",
           "legendFormat": "",
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "promds2"
-          },
-          "exemplar": true,
-          "expr": "query2",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "B"
-        }
-      ],
-      "title": "Panel Title",
-      "type": "timeseries"
-    }
-  ],
-  "schemaVersion": 35
-}`
-
-	dashboardWithQueriesAndExpression = `
-{
-  "panels": [
-    {
-      "id": 2,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "_yxMP8Ynk"
-          },
-          "exemplar": true,
-          "expr": "go_goroutines{job=\"$job\"}",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
-        },
-		{
-          "datasource": {
-            "name": "Expression",
-            "type": "__expr__",
-            "uid": "__expr__"
-          },
-          "expression": "$A + 1",
-          "hide": false,
-          "refId": "EXPRESSION",
-          "type": "math"
         },
         {
           "datasource": {
@@ -413,7 +364,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 		intervalCalculator: intervalv2.NewCalculator(),
 	}
 
-	publicDashboardQueryDTO := models.PublicDashboardQueryDTO{
+	publicDashboardQueryDTO := PublicDashboardQueryDTO{
 		IntervalMs:    int64(1),
 		MaxDataPoints: int64(1),
 	}
@@ -437,11 +388,11 @@ func TestGetQueryDataResponse(t *testing.T) {
 			}}
 
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, true, []map[string]interface{}{}, customPanels)
-		dto := &models.SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardConfigDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
-			PublicDashboard: &models.PublicDashboard{
+			PublicDashboard: &PublicDashboard{
 				IsEnabled:    true,
 				DashboardUid: "NOTTHESAME",
 				OrgId:        9999999,
@@ -1298,15 +1249,4 @@ func groupQueriesByDataSource(t *testing.T, queries []*simplejson.Json) (result 
 	}
 
 	return
-}
-
-func hasExpressionQuery(queries []*simplejson.Json) bool {
-	for _, query := range queries {
-		uid := getDataSourceUidFromJson(query)
-		if expr.IsDataSource(uid) {
-			return true
-		}
-	}
-
-	return false
 }
