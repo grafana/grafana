@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/mock"
 )
 
 type fakeCWLogsClient struct {
@@ -188,6 +189,15 @@ func (c fakeCheckHealthClient) DescribeLogGroups(input *cloudwatchlogs.DescribeL
 
 func newTestConfig() *setting.Cfg {
 	return &setting.Cfg{AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true, AWSListMetricsPageLimit: 1000}
+}
+
+type mockSessionCache struct {
+	mock.Mock
+}
+
+func (c *mockSessionCache) GetSession(config awsds.SessionConfig) (*session.Session, error) {
+	args := c.Called(config)
+	return args.Get(0).(*session.Session), args.Error(1)
 }
 
 type fakeSessionCache struct {

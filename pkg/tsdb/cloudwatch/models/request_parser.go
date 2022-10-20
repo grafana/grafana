@@ -25,29 +25,30 @@ type metricsDataQuery struct {
 	Datasource        map[string]string      `json:"datasource,omitempty"`
 	Dimensions        map[string]interface{} `json:"dimensions,omitempty"`
 	Expression        string                 `json:"expression,omitempty"`
-	Id                string                 `json:"id,omitempty"`
-	Label             *string                `json:"label,omitempty"`
-	MatchExact        *bool                  `json:"matchExact,omitempty"`
-	MaxDataPoints     int                    `json:"maxDataPoints,omitempty"`
-	MetricEditorMode  *int                   `json:"metricEditorMode,omitempty"`
-	MetricName        string                 `json:"metricName,omitempty"`
-	MetricQueryType   MetricQueryType        `json:"metricQueryType,omitempty"`
-	Namespace         string                 `json:"namespace,omitempty"`
-	Period            string                 `json:"period,omitempty"`
-	RefId             string                 `json:"refId,omitempty"`
-	Region            string                 `json:"region,omitempty"`
-	SqlExpression     string                 `json:"sqlExpression,omitempty"`
-	Statistic         *string                `json:"statistic,omitempty"`
-	Statistics        []*string              `json:"statistics,omitempty"`
-	TimezoneUTCOffset string                 `json:"timezoneUTCOffset,omitempty"`
-	QueryType         string                 `json:"type,omitempty"`
-	Hide              *bool                  `json:"hide,omitempty"`
-	Alias             string                 `json:"alias,omitempty"`
+	Id                string          `json:"id,omitempty"`
+	Label             *string         `json:"label,omitempty"`
+	MatchExact        *bool           `json:"matchExact,omitempty"`
+	MaxDataPoints     int             `json:"maxDataPoints,omitempty"`
+	MetricEditorMode  *int            `json:"metricEditorMode,omitempty"`
+	MetricName        string          `json:"metricName,omitempty"`
+	MetricQueryType   MetricQueryType `json:"metricQueryType,omitempty"`
+	Namespace         string          `json:"namespace,omitempty"`
+	Period            string          `json:"period,omitempty"`
+	RefId             string          `json:"refId,omitempty"`
+	Region            string          `json:"region,omitempty"`
+	SqlExpression     string          `json:"sqlExpression,omitempty"`
+	Statistic         *string         `json:"statistic,omitempty"`
+	Statistics        []*string       `json:"statistics,omitempty"`
+	TimezoneUTCOffset string          `json:"timezoneUTCOffset,omitempty"`
+	QueryType         string          `json:"type,omitempty"`
+	Hide              *bool           `json:"hide,omitempty"`
+	Alias             string          `json:"alias,omitempty"`
 }
 
-// ParseQueries parses the json queries and returns a map of cloudWatchQueries by region. The cloudWatchQuery has a 1 to 1 mapping to a query editor row
-func ParseQueries(queries []backend.DataQuery, startTime time.Time, endTime time.Time, dynamicLabelsEnabled bool) (map[string][]*CloudWatchQuery, error) {
-	result := make(map[string][]*CloudWatchQuery)
+// ParseQueries decodes the metric data queries json, validates, sets default values and returns an array of CloudWatchQueries.
+// The CloudWatchQuery has a 1 to 1 mapping to a query editor row
+func ParseQueries(queries []backend.DataQuery, startTime time.Time, endTime time.Time, dynamicLabelsEnabled bool) ([]*CloudWatchQuery, error) {
+	var result []*CloudWatchQuery
 	migratedQueries, err := migrateLegacyQuery(queries, dynamicLabelsEnabled)
 	if err != nil {
 		return nil, err
@@ -70,16 +71,12 @@ func ParseQueries(queries []backend.DataQuery, startTime time.Time, endTime time
 			metricsDataQuery.MatchExact = &trueBooleanValue
 		}
 
-		refID := query.RefID
-		query, err := parseRequestQuery(metricsDataQuery, refID, startTime, endTime)
+		refID := metricsDataQuery.RefId
+		cwQuery, err := parseRequestQuery(metricsDataQuery, refID, startTime, endTime)
 		if err != nil {
 			return nil, &QueryError{Err: err, RefID: refID}
 		}
-
-		if _, exist := result[query.Region]; !exist {
-			result[query.Region] = []*CloudWatchQuery{}
-		}
-		result[query.Region] = append(result[query.Region], query)
+		result = append(result, cwQuery)
 	}
 
 	return result, nil
