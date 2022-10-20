@@ -146,6 +146,8 @@ export function FilterSection({
               className="gf-form-input"
               value={curFilterKey ? toOption(curFilterKey) : undefined}
               placeholder="key"
+              allowCustomValue
+              filterOption={customFilterOption}
               onOpenMenu={async () => {
                 updKeyIsLoading(true);
                 const tKs = await suggestTagKeys(query);
