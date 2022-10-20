@@ -49,7 +49,7 @@ func NewManager(metrics *metrics.State, externalURL *url.URL,
 		cache:         newCache(),
 		quit:          make(chan struct{}),
 		ResendDelay:   ResendDelay, // TODO: make this configurable
-		log:           log.New("ngalert.state"),
+		log:           log.New("ngalert.state.manager"),
 		metrics:       metrics,
 		ruleStore:     ruleStore,
 		instanceStore: instanceStore,
@@ -167,11 +167,11 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
 	for _, result := range results {
-		s := st.setNextState(ctx, alertRule, result, extraLabels)
+		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
 		states = append(states, s)
 		processedResults[s.CacheID] = s
 	}
-	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
+	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults, logger)
 	if len(states) > 0 {
 		logger.Debug("Saving new states to the database", "count", len(states))
 		_, _ = st.saveAlertStates(ctx, states...)
@@ -211,8 +211,7 @@ func (st *Manager) maybeTakeScreenshot(
 }
 
 // Set the current state based on evaluation results
-func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
-	logger := st.log.New(alertRule.GetKey().LogContext()...)
+func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, logger log.Logger) *State {
 	currentState := st.cache.getOrCreate(ctx, st.log, alertRule, result, extraLabels, st.externalURL)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
@@ -377,8 +376,7 @@ func (i InstanceStateAndReason) String() string {
 	return s
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State) []*State {
-	logger := st.log.New(alertRule.GetKey().LogContext()...)
+func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State, logger log.Logger) []*State {
 	var resolvedStates []*State
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
 	toDelete := make([]ngModels.AlertInstanceKey, 0)
