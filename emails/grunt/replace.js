@@ -1,6 +1,6 @@
 module.exports = {
   dist: {
-    overwrite: true,
+    overwrite: false,
     src: ['dist/*.txt'],
     replacements: [
       {
@@ -12,5 +12,6 @@ module.exports = {
         to: '}}',
       },
     ],
+    dest: '../public/emails/',
   },
 };
