@@ -21,12 +21,13 @@ import (
 
 // All the single-kind generators to be run for core kinds.
 var singles = []codegen.KindGenStep{
-	codegen.GoTypesGenerator(filepath.Join("pkg", "kinds"), nil),
+	codegen.GoTypesGenerator(kindsys.GoCoreKindParentPath, nil),
+	codegen.CoreStructuredKindGenerator(kindsys.GoCoreKindParentPath, nil),
 }
 
 // All the aggregate generators to be run for core kinds.
 var multis = []codegen.AggregateKindGenStep{
-	codegen.BaseCoreRegistryGenerator(filepath.Join("pkg", "registry", "corekind"), "pkg/kinds"),
+	codegen.BaseCoreRegistryGenerator(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
 }
 
 const sep = string(filepath.Separator)
@@ -50,15 +51,14 @@ func main() {
 	var all []*codegen.DeclForGen
 
 	// structured kinds first
-	f := os.DirFS(filepath.Join(groot, "kinds", "structured"))
+	f := os.DirFS(filepath.Join(groot, kindsys.CoreStructuredDeclParentPath))
 	ents := elsedie(fs.ReadDir(f, "."))("error reading structured fs root directory")
 	for _, ent := range ents {
 		if !ent.IsDir() {
 			continue
 		}
-		rel := filepath.Join("kinds", "structured", ent.Name())
-		sub := elsedie(fs.Sub(f, ent.Name()))(fmt.Sprintf("error creating subfs for path %s", rel))
-		decl, err := kindsys.LoadCoreKindFS[kindsys.CoreStructuredMeta](sub, rel, rt.Context())
+		rel := filepath.Join(kindsys.CoreStructuredDeclParentPath, ent.Name())
+		decl, err := kindsys.LoadCoreKind[kindsys.CoreStructuredMeta](rel, rt.Context(), nil)
 		if err != nil {
 			die(fmt.Errorf("kind at %s is invalid: %w", rel, err))
 		}
@@ -70,15 +70,14 @@ func main() {
 	}
 
 	// now raw kinds
-	f = os.DirFS(filepath.Join(groot, "kinds", "raw"))
+	f = os.DirFS(filepath.Join(groot, kindsys.RawDeclParentPath))
 	ents = elsedie(fs.ReadDir(f, "."))("error reading raw fs root directory")
 	for _, ent := range ents {
 		if !ent.IsDir() {
 			continue
 		}
-		rel := filepath.Join("kinds", "raw", ent.Name())
-		sub := elsedie(fs.Sub(f, ent.Name()))(fmt.Sprintf("error creating subfs for path %s", rel))
-		decl, err := kindsys.LoadCoreKindFS[kindsys.RawMeta](sub, rel, rt.Context())
+		rel := filepath.Join(kindsys.RawDeclParentPath, ent.Name())
+		decl, err := kindsys.LoadCoreKind[kindsys.RawMeta](rel, rt.Context(), nil)
 		if err != nil {
 			die(fmt.Errorf("raw kind at %s is invalid: %w", rel, err))
 		}

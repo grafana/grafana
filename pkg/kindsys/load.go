@@ -131,7 +131,7 @@ func ToKindMeta[T KindMetas](v cue.Value) (T, error) {
 }
 
 // SomeDecl represents a single kind declaration, having been loaded
-// and validated by a func such as [LoadCoreKindFS].
+// and validated by a func such as [LoadCoreKind].
 //
 // The underlying type of the Meta field indicates the category of
 // kind.
@@ -186,7 +186,7 @@ func (decl *SomeDecl) IsSlotImpl() bool {
 }
 
 // Decl represents a single kind declaration, having been loaded
-// and validated by a func such as [LoadCoreKindFS].
+// and validated by a func such as [LoadCoreKind].
 //
 // Its type parameter indicates the category of kind.
 type Decl[T KindMetas] struct {
@@ -228,13 +228,25 @@ func (decl *Decl[T]) Some() *SomeDecl {
 	}
 }
 
-// LoadCoreKindFS takes an fs.FS and validates that it contains a valid kind
-// definition of the kind category indicated by the type parameter.
+// LoadCoreKind loads and validates a core kind declaration of the kind category
+// indicated by the type parameter. On success, it returns a [Decl] which
+// contains the entire contents of the kind declaration.
 //
-// On success, it returns a representation of the entire kind definition
-// contained in the provided kfs.
-func LoadCoreKindFS[T RawMeta | CoreStructuredMeta](kfs fs.FS, relpath string, ctx *cue.Context) (*Decl[T], error) {
-	vk, err := cuectx.BuildGrafanaInstance(relpath, "kind", ctx, kfs)
+// declpath is the path to the directory containing the core kind declaration,
+// relative to the grafana/grafana root. For example, dashboards are in
+// "kinds/structured/dashboard".
+//
+// The bytes containing the .cue file declarations will be retrieved from the
+// central embedded FS, [grafana.CueSchemaFS]. If desired (e.g. for testing), an
+// optional fs.FS may be provided via the overlay parameter, which will be
+// merged over [grafana.CueSchemaFS]. But in all typical circumstances, overlay
+// can and should be nil.
+//
+// This is a low-level function, primarily intended for use in code generation.
+// For representations of core kinds that are useful in Go programs at runtime,
+// see ["github.com/grafana/grafana/pkg/registry/corekind"].
+func LoadCoreKind[T RawMeta | CoreStructuredMeta](declpath string, ctx *cue.Context, overlay fs.FS) (*Decl[T], error) {
+	vk, err := cuectx.BuildGrafanaInstance(declpath, "kind", ctx, overlay)
 	if err != nil {
 		return nil, err
 	}

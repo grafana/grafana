@@ -1,6 +1,10 @@
 package kindsys
 
-import "github.com/grafana/thema"
+import (
+	"path/filepath"
+
+	"github.com/grafana/thema"
+)
 
 // TODO docs
 type Maturity string
@@ -37,6 +41,19 @@ type Structured interface {
 	// TODO docs
 	Meta() CoreStructuredMeta // TODO figure out how to reconcile this interface with CustomStructuredMeta
 }
+
+// CoreStructuredDeclParentPath is the path, relative to the repository root, where
+// each child directory is expected to contain .cue files declaring one
+// CoreStructured kind.
+var CoreStructuredDeclParentPath = filepath.Join("kinds", "structured")
+
+// RawDeclParentPath is the path, relative to the repository root, where each child
+// directory is expected to contain .cue files declaring one Raw kind.
+var RawDeclParentPath = filepath.Join("kinds", "raw")
+
+// GoCoreKindParentPath is the path, relative to the repository root, to the directory
+// containing one directory per kind, full of generated Go kind output: types and bindings.
+var GoCoreKindParentPath = filepath.Join("pkg", "kinds")
 
 // type SlotImplementation interface {
 // 	Interface

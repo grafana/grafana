@@ -28,16 +28,11 @@ func nameFor(m kindsys.SomeKindMeta) string {
 }
 
 type genGoTypes struct {
-	relroot string
-	cfg     *GenGoTypesConfig
+	gokindsdir string
+	cfg        *GoTypesGeneratorConfig
 }
 
 var _ KindGenStep = &genGoTypes{}
-
-// TODO docs
-type genThemaBindings struct{}
-
-// var _ KindGenStep = &genThemaBindings{}
 
 // TODO docs
 type genTSTypes struct{}
@@ -56,7 +51,7 @@ type genGoServiceRefs struct{}
 
 // var _ KindGenStep = &genGoServiceRefs{}
 
-type GenGoTypesConfig struct {
+type GoTypesGeneratorConfig struct {
 	// Apply is an optional AST manipulation func that, if provided, will be run
 	// against the generated Go file prior to running it through goimports.
 	Apply astutil.ApplyFunc
@@ -69,15 +64,15 @@ type GenGoTypesConfig struct {
 // GoTypesGenerator creates a [KindGenStep] that produces Go types for the latest
 // Thema schema in a structured kind's lineage.
 //
-// At minimum, a relroot must be provided. This should be the path to the parent
+// At minimum, a gokindsdir must be provided. This should be the path to the parent
 // directory of the directory in which the types should be generated, relative
 // to the project root. For example, if the types for a kind named "foo"
 // should live at pkg/kind/foo/foo_gen.go, relpath should be "pkg/kind".
 //
 // This generator is a no-op for raw kinds.
-func GoTypesGenerator(relroot string, cfg *GenGoTypesConfig) KindGenStep {
+func GoTypesGenerator(gokindsdir string, cfg *GoTypesGeneratorConfig) KindGenStep {
 	if cfg == nil {
-		cfg = new(GenGoTypesConfig)
+		cfg = new(GoTypesGeneratorConfig)
 	}
 	if cfg.GenDirName == nil {
 		cfg.GenDirName = func(decl *DeclForGen) string {
@@ -86,8 +81,8 @@ func GoTypesGenerator(relroot string, cfg *GenGoTypesConfig) KindGenStep {
 	}
 
 	return &genGoTypes{
-		relroot: relroot,
-		cfg:     cfg,
+		gokindsdir: gokindsdir,
+		cfg:        cfg,
 	}
 }
 
@@ -111,7 +106,71 @@ func (gen *genGoTypes) Generate(decl *DeclForGen) (*GeneratedFile, error) {
 		return nil, err
 	}
 	return &GeneratedFile{
-		RelativePath: filepath.Join(gen.relroot, pdir, lin.Name()+"_types_gen.go"),
+		RelativePath: filepath.Join(gen.gokindsdir, pdir, lin.Name()+"_types_gen.go"),
+		Data:         b,
+	}, nil
+}
+
+type genCoreStructuredKind struct {
+	gokindsdir string
+	cfg        *CoreStructuredKindGeneratorConfig
+}
+
+var _ KindGenStep = &genCoreStructuredKind{}
+
+type CoreStructuredKindGeneratorConfig struct {
+	// GenDirName returns the name of the directory in which the file should be
+	// generated. Defaults to DeclForGen.Lineage().Name() if nil.
+	GenDirName func(*DeclForGen) string
+}
+
+// CoreStructuredKindGenerator generates the implementation of
+// [kindsys.Structured] for the provided kind declaration.
+//
+// gokindsdir should be the relative path to the parent directory that contains
+// all generated kinds.
+//
+// This generator only has output for core structured kinds.
+func CoreStructuredKindGenerator(gokindsdir string, cfg *CoreStructuredKindGeneratorConfig) KindGenStep {
+	if cfg == nil {
+		cfg = new(CoreStructuredKindGeneratorConfig)
+	}
+	if cfg.GenDirName == nil {
+		cfg.GenDirName = func(decl *DeclForGen) string {
+			return decl.Name()
+		}
+	}
+
+	return &genCoreStructuredKind{
+		gokindsdir: gokindsdir,
+		cfg:        cfg,
+	}
+}
+
+func (gen *genCoreStructuredKind) Name() string {
+	return "CoreStructuredKindGenerator"
+}
+
+func (gen *genCoreStructuredKind) Generate(decl *DeclForGen) (*GeneratedFile, error) {
+	if !decl.IsCoreStructured() {
+		return nil, nil
+	}
+
+	path := filepath.Join(gen.gokindsdir, gen.cfg.GenDirName(decl), decl.Name()+"_kind_gen.go")
+	buf := new(bytes.Buffer)
+	if err := tmpls.Lookup("kind_corestructured.tmpl").Execute(buf, decl); err != nil {
+		return nil, fmt.Errorf("failed executing kind_corestructured template for %s: %w", path, err)
+	}
+	b, err := postprocessGoFile(genGoFile{
+		path: path,
+		in:   buf.Bytes(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &GeneratedFile{
+		RelativePath: path,
 		Data:         b,
 	}, nil
 }
