@@ -36,7 +36,7 @@ type kafkaSettings struct {
 }
 
 func KafkaFactory(fc FactoryConfig) (NotificationChannel, error) {
-	ch, err := newKafkaNotifier(fc, fc.ImageStore, fc.NotificationService, fc.Template)
+	ch, err := newKafkaNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
@@ -47,7 +47,7 @@ func KafkaFactory(fc FactoryConfig) (NotificationChannel, error) {
 }
 
 // newKafkaNotifier is the constructor function for the Kafka notifier.
-func newKafkaNotifier(fc FactoryConfig, images ImageStore, ns notifications.WebhookSender, t *template.Template) (*KafkaNotifier, error) {
+func newKafkaNotifier(fc FactoryConfig) (*KafkaNotifier, error) {
 	endpoint := fc.Config.Settings.Get("kafkaRestProxy").MustString()
 	if endpoint == "" {
 		return nil, errors.New("could not find kafka rest proxy endpoint property in settings")
@@ -68,9 +68,9 @@ func newKafkaNotifier(fc FactoryConfig, images ImageStore, ns notifications.Webh
 			Settings:              fc.Config.Settings,
 		}),
 		log:      log.New("alerting.notifier.kafka"),
-		images:   images,
-		ns:       ns,
-		tmpl:     t,
+		images:   fc.ImageStore,
+		ns:       fc.NotificationService,
+		tmpl:     fc.Template,
 		settings: kafkaSettings{Endpoint: endpoint, Topic: topic, Description: description, Details: details},
 	}, nil
 }
@@ -157,13 +157,6 @@ func buildState(as ...*types.Alert) models.AlertStateType {
 		return models.AlertStateOK
 	}
 	return models.AlertStateAlerting
-}
-
-func buildStringWithDefault(text string, defaultText string) string {
-	if text == "" {
-		return defaultText
-	}
-	return text
 }
 
 func buildContextImages(ctx context.Context, l log.Logger, imageStore ImageStore, as ...*types.Alert) []interface{} {
