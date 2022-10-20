@@ -13,7 +13,7 @@ export function DataSourcePluginContextProvider(
 ): ReactElement {
   const { children, instanceSettings } = props;
   const value: DataSourcePluginContextType = useMemo(() => {
-    return { instanceSettings };
+    return { instanceSettings, meta: instanceSettings.meta };
   }, [instanceSettings]);
 
   return <Context.Provider value={value}>{children}</Context.Provider>;
