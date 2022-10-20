@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -299,11 +301,23 @@ func (s *httpObjectStore) doListFolder(c *models.ReqContext) response.Response {
 }
 
 func (s *httpObjectStore) doSearch(c *models.ReqContext) response.Response {
+	vals := c.Req.URL.Query()
+
 	req := &ObjectSearchRequest{
-		WithBody:   true,
-		WithLabels: true,
-		WithFields: true,
-		// TODO!!!
+		WithBody:   asBoolean("body", vals, false),
+		WithLabels: asBoolean("labels", vals, true),
+		WithFields: asBoolean("fields", vals, true),
+		Kind:       vals["kind"],
+		Query:      vals.Get("query"),
+		Folder:     vals.Get("folder"),
+		Sort:       vals["sort"],
+	}
+	if vals.Has("limit") {
+		limit, err := strconv.ParseInt(vals.Get("limit"), 10, 64)
+		if err != nil {
+			return response.Error(400, "bad limit", err)
+		}
+		req.Limit = limit
 	}
 
 	rsp, err := s.store.Search(c.Req.Context(), req)
@@ -311,6 +325,21 @@ func (s *httpObjectStore) doSearch(c *models.ReqContext) response.Response {
 		return response.Error(500, "?", err)
 	}
 	return response.JSON(200, rsp)
+}
+
+func asBoolean(key string, vals url.Values, defaultValue bool) bool {
+	v, ok := vals[key]
+	if !ok {
+		return defaultValue
+	}
+	if len(v) == 0 {
+		return true // single boolean parameter
+	}
+	b, err := strconv.ParseBool(v[0])
+	if err != nil {
+		return defaultValue
+	}
+	return b
 }
 
 func getMultipartFormValue(req *http.Request, key string) string {

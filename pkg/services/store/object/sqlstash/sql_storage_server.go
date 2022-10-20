@@ -449,8 +449,18 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 	}
 	query := "SELECT " + strings.Join(fields, ",") + " FROM object" // no where clause
 
+	limit := 20
+	if r.Limit > 0 {
+		limit = int(r.Limit)
+	}
 	args := []interface{}{}
-	rows, err := s.sess.Query(ctx, query, args...)
+	where := "" // TODO!
+	if len(r.Kind
+
+
+	// request one more than the limit (and show next token if it exists)
+	args = append(args, limit+1)
+	rows, err := s.sess.Query(ctx, fmt.Sprintf("%s %s LIMIT ?", query, where), args...)
 	if err != nil {
 		return nil, err
 	}
@@ -485,6 +495,13 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 
 		result.UID = "TODO!" + key
 
+		// found one more than requested
+		if len(rsp.Results) >= limit {
+			// TODO? should this encode start+offset?
+			rsp.NextPageToken = result.UID
+			break
+		}
+
 		if summaryjson.description != nil {
 			result.Description = *summaryjson.description
 		}
@@ -508,4 +525,9 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 		rsp.Results = append(rsp.Results, result)
 	}
 	return rsp, err
+}
+
+func getWhereClause(ctx context.Context, r *object.ObjectSearchRequest) string {
+
+	return ""
 }
