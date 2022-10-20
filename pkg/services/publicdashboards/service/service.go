@@ -25,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
-// Define the Service Implementation. We're generating mock implementation
+// PublicDashboardServiceImpl Define the Service Implementation. We're generating mock implementation
 // automatically
 type PublicDashboardServiceImpl struct {
 	log                log.Logger
@@ -43,7 +43,7 @@ var LogPrefix = "publicdashboards.service"
 // the interface
 var _ publicdashboards.Service = (*PublicDashboardServiceImpl)(nil)
 
-// Factory for method used by wire to inject dependencies.
+// ProvideService Factory for method used by wire to inject dependencies.
 // builds the service, and api, and configures routes
 func ProvideService(
 	cfg *setting.Cfg,
@@ -63,7 +63,7 @@ func ProvideService(
 	}
 }
 
-// Gets a dashboard by Uid
+// GetDashboard Gets a dashboard by Uid
 func (pd *PublicDashboardServiceImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
 	dashboard, err := pd.store.GetDashboard(ctx, dashboardUid)
 
@@ -74,7 +74,7 @@ func (pd *PublicDashboardServiceImpl) GetDashboard(ctx context.Context, dashboar
 	return dashboard, err
 }
 
-// Gets public dashboard via access token
+// GetPublicDashboard Gets public dashboard via access token
 func (pd *PublicDashboardServiceImpl) GetPublicDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
 	pubdash, dash, err := pd.store.GetPublicDashboard(ctx, accessToken)
 	ctxLogger := pd.log.FromContext(ctx)

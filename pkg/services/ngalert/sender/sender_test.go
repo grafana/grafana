@@ -48,7 +48,7 @@ func TestSanitizeLabelName(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		am, _ := NewExternalAlertmanagerSender()
+		am := NewExternalAlertmanagerSender()
 		t.Run(tc.desc, func(t *testing.T) {
 			res, err := am.sanitizeLabelName(tc.labelName)
 
@@ -95,7 +95,7 @@ func TestSanitizeLabelSet(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		am, _ := NewExternalAlertmanagerSender()
+		am := NewExternalAlertmanagerSender()
 		t.Run(tc.desc, func(t *testing.T) {
 			require.Equal(t, tc.expectedResult, am.sanitizeLabelSet(tc.labelset))
 		})
