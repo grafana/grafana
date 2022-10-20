@@ -14,15 +14,17 @@
       "kind": "panel",
       "name": "Data from 0 - 10K (unit short)",
       "URL": "/d/graph_y_axis.json/panel-tests-graph-y-axis-ticks?viewPanel=7",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     },
@@ -31,15 +33,17 @@
       "kind": "panel",
       "name": "Data from 0 - 10K (unit bytes metric)",
       "URL": "/d/graph_y_axis.json/panel-tests-graph-y-axis-ticks?viewPanel=5",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     },
@@ -48,15 +52,17 @@
       "kind": "panel",
       "name": "Data from 0 - 10K (unit bytes IEC)",
       "URL": "/d/graph_y_axis.json/panel-tests-graph-y-axis-ticks?viewPanel=4",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     },
@@ -65,15 +71,17 @@
       "kind": "panel",
       "name": "Data from 0 - 10K (unit short)",
       "URL": "/d/graph_y_axis.json/panel-tests-graph-y-axis-ticks?viewPanel=2",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     },
@@ -82,15 +90,17 @@
       "kind": "panel",
       "name": "Data from 0.0002 - 0.001 (unit short)",
       "URL": "/d/graph_y_axis.json/panel-tests-graph-y-axis-ticks?viewPanel=3",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     },
@@ -99,15 +109,17 @@
       "kind": "panel",
       "name": "Data from 12000 - 30000 (unit ms)",
       "URL": "/d/graph_y_axis.json/panel-tests-graph-y-axis-ticks?viewPanel=6",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     },
@@ -116,15 +128,17 @@
       "kind": "panel",
       "name": "Data from 0 - 1B (unit short)",
       "URL": "/d/graph_y_axis.json/panel-tests-graph-y-axis-ticks?viewPanel=9",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     },
@@ -133,15 +147,17 @@
       "kind": "panel",
       "name": "Data from 0 - 1B (unit bytes)",
       "URL": "/d/graph_y_axis.json/panel-tests-graph-y-axis-ticks?viewPanel=10",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     },
@@ -150,28 +166,29 @@
       "kind": "panel",
       "name": "Data from 12000 - 30000 (unit ms)",
       "URL": "/d/graph_y_axis.json/panel-tests-graph-y-axis-ticks?viewPanel=8",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     }
   ],
   "references": [
     {
-      "kind": "ds",
-      "type": "default.type",
-      "UID": "default.uid"
+      "kind": "ds"
     },
     {
-      "kind": "panel",
-      "type": "graph"
+      "kind": "plugin",
+      "type": "panel",
+      "UID": "graph"
     }
   ]
 }

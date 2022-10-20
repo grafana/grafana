@@ -527,7 +527,7 @@ func (rp *responseParser) trimDatapoints(queryResult backend.DataResponse, targe
 		return
 	}
 
-	trimEdges, err := histogram.Settings.Get("trimEdges").Int()
+	trimEdges, err := castToInt(histogram.Settings.Get("trimEdges"))
 	if err != nil {
 		return
 	}
@@ -537,10 +537,14 @@ func (rp *responseParser) trimDatapoints(queryResult backend.DataResponse, targe
 	for _, frame := range frames {
 		for _, field := range frame.Fields {
 			if field.Len() > trimEdges*2 {
-				for i := 0; i < field.Len(); i++ {
-					if i < trimEdges || i > field.Len()-trimEdges {
-						field.Delete(i)
-					}
+				// first we delete the first "trim" items
+				for i := 0; i < trimEdges; i++ {
+					field.Delete(0)
+				}
+
+				// then we delete the last "trim" items
+				for i := 0; i < trimEdges; i++ {
+					field.Delete(field.Len() - 1)
 				}
 			}
 		}
@@ -672,6 +676,25 @@ func (rp *responseParser) getMetricName(metric string) string {
 	}
 
 	return metric
+}
+
+func castToInt(j *simplejson.Json) (int, error) {
+	i, err := j.Int()
+	if err == nil {
+		return i, nil
+	}
+
+	s, err := j.String()
+	if err != nil {
+		return 0, err
+	}
+
+	v, err := strconv.Atoi(s)
+	if err != nil {
+		return 0, err
+	}
+
+	return v, nil
 }
 
 func castToFloat(j *simplejson.Json) *float64 {

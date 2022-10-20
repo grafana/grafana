@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -104,7 +105,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 		u.RawQuery = "alertState=firing&view=state"
 		alertPageURL = u.String()
 	} else {
-		en.log.Debug("failed to parse external URL", "url", en.tmpl.ExternalURL.String(), "err", err.Error())
+		en.log.Debug("failed to parse external URL", "url", en.tmpl.ExternalURL.String(), "error", err.Error())
 	}
 
 	// Extend alerts data with images, if available.
@@ -116,10 +117,10 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 			} else if len(image.Path) != 0 {
 				_, err := os.Stat(image.Path)
 				if err == nil {
-					data.Alerts[index].EmbeddedImage = path.Base(image.Path)
+					data.Alerts[index].EmbeddedImage = filepath.Base(image.Path)
 					embeddedFiles = append(embeddedFiles, image.Path)
 				} else {
-					en.log.Warn("failed to get image file for email attachment", "file", image.Path, "err", err)
+					en.log.Warn("failed to get image file for email attachment", "file", image.Path, "error", err)
 				}
 			}
 			return nil
@@ -148,7 +149,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 	}
 
 	if tmplErr != nil {
-		en.log.Warn("failed to template email message", "err", tmplErr.Error())
+		en.log.Warn("failed to template email message", "error", tmplErr.Error())
 	}
 
 	if err := en.ns.SendEmailCommandHandlerSync(ctx, cmd); err != nil {

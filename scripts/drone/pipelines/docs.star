@@ -8,9 +8,7 @@ load(
     'codespell_step',
     'test_frontend_step',
     'build_storybook_step',
-    'build_frontend_package_step',
     'build_docs_website_step',
-    'compile_build_cmd',
 )
 
 load(
@@ -40,9 +38,7 @@ def docs_pipelines(edition, ver_mode, trigger):
         yarn_install_step(),
         codespell_step(),
         lint_docs(),
-        build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_docs_website_step(),
-        compile_build_cmd(),
     ]
 
     return pipeline(

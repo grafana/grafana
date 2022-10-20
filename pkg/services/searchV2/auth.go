@@ -3,9 +3,9 @@ package searchV2
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -22,7 +22,7 @@ type FutureAuthService interface {
 var _ FutureAuthService = (*simpleSQLAuthService)(nil)
 
 type simpleSQLAuthService struct {
-	sql *sqlstore.SQLStore
+	sql db.DB
 	ac  accesscontrol.Service
 }
 
@@ -35,7 +35,7 @@ func (a *simpleSQLAuthService) getDashboardTableAuthFilter(user *user.SignedInUs
 		return permissions.DashboardPermissionFilter{
 			OrgRole:         user.OrgRole,
 			OrgId:           user.OrgID,
-			Dialect:         a.sql.Dialect,
+			Dialect:         a.sql.GetDialect(),
 			UserId:          user.UserID,
 			PermissionLevel: models.PERMISSION_VIEW,
 		}
@@ -48,7 +48,7 @@ func (a *simpleSQLAuthService) GetDashboardReadFilter(user *user.SignedInUser) (
 	filter := a.getDashboardTableAuthFilter(user)
 	rows := make([]*dashIdQueryResult, 0)
 
-	err := a.sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := a.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
 		sql, params := filter.Where()
 		sess.Table("dashboard").
 			Where(sql, params...).

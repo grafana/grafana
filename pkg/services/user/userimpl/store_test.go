@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -23,7 +24,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss := sqlstore.InitTestDB(t)
+	ss := db.InitTestDB(t)
 	userStore := ProvideStore(ss, setting.NewCfg())
 	usr := &user.SignedInUser{
 		OrgID:       1,
@@ -66,7 +67,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing DB - creates and loads user", func(t *testing.T) {
-		ss := sqlstore.InitTestDB(t)
+		ss := db.InitTestDB(t)
 		cmd := user.CreateUserCommand{
 			Email: "usertest@test.com",
 			Name:  "user name",
@@ -253,7 +254,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing DB - grafana admin users", func(t *testing.T) {
-		ss = sqlstore.InitTestDB(t)
+		ss = db.InitTestDB(t)
 
 		createUserCmd := user.CreateUserCommand{
 			Email:   fmt.Sprint("admin", "@test.com"),
@@ -318,7 +319,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing DB - return list users based on their is_disabled flag", func(t *testing.T) {
-		ss = sqlstore.InitTestDB(t)
+		ss = db.InitTestDB(t)
 		createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
@@ -350,7 +351,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.True(t, third)
 
 		// Re-init DB
-		ss = sqlstore.InitTestDB(t)
+		ss = db.InitTestDB(t)
 		users := createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
@@ -390,7 +391,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		// A user is an org member and has been assigned permissions
 		// Re-init DB
-		ss = sqlstore.InitTestDB(t)
+		ss = db.InitTestDB(t)
 		users = createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
@@ -463,7 +464,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
-		ss := sqlstore.InitTestDB(t)
+		ss := db.InitTestDB(t)
 		createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
 				Email: fmt.Sprint("user", i, "@test.com"),
@@ -482,7 +483,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		assert.Len(t, queryResult.Users, 2)
 	})
 
-	ss = sqlstore.InitTestDB(t)
+	ss = db.InitTestDB(t)
 
 	t.Run("Testing DB - enable all users", func(t *testing.T) {
 		users := createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
@@ -511,7 +512,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Can search users", func(t *testing.T) {
-		ss = sqlstore.InitTestDB(t)
+		ss = db.InitTestDB(t)
 		userStore.cfg.AutoAssignOrg = false
 
 		ac1cmd := user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
@@ -538,7 +539,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Equal(t, queryResult.Users[1].Email, "ac2@test.com")
 	})
 
-	ss = sqlstore.InitTestDB(t)
+	ss = db.InitTestDB(t)
 
 	t.Run("Testing DB - disable only specific users", func(t *testing.T) {
 		users := createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
@@ -585,7 +586,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		}
 	})
 
-	ss = sqlstore.InitTestDB(t)
+	ss = db.InitTestDB(t)
 
 	t.Run("Testing DB - search users", func(t *testing.T) {
 		// Since previous tests were destructive
@@ -611,7 +612,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing DB - multiple users", func(t *testing.T) {
-		ss = sqlstore.InitTestDB(t)
+		ss = db.InitTestDB(t)
 
 		createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
@@ -690,7 +691,7 @@ func TestIntegrationUserUpdate(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss := sqlstore.InitTestDB(t)
+	ss := db.InitTestDB(t)
 	userStore := ProvideStore(ss, setting.NewCfg())
 
 	users := createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
@@ -769,10 +770,10 @@ func createFiveTestUsers(t *testing.T, sqlStore *sqlstore.SQLStore, fn func(i in
 }
 
 // TODO: Use FakeDashboardStore when org has its own service
-func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID int64, items ...*models.DashboardACL) error {
+func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items ...*models.DashboardACL) error {
 	t.Helper()
 
-	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", dashboardID)
 		if err != nil {
 			return fmt.Errorf("deleting from dashboard_acl failed: %w", err)
@@ -805,7 +806,7 @@ func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID i
 
 func (ss *sqlStore) getOrgUsersForTest(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
 	result := make([]*org.OrgUserDTO, 0)
-	err := ss.db.WithDbSession(ctx, func(dbSess *sqlstore.DBSession) error {
+	err := ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
 		sess := dbSess.Table("org_user")
 		sess.Join("LEFT ", ss.dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.dialect.Quote("user")))
 		sess.Where("org_user.org_id=?", query.OrgID)
@@ -821,7 +822,7 @@ func (ss *sqlStore) getOrgUsersForTest(ctx context.Context, query *org.GetOrgUse
 // import cycles. When this org-related code is refactored into a service the
 // tests can the real GetDashboardACLInfoList functions
 func (ss *sqlStore) getDashboardACLInfoList(query *models.GetDashboardACLInfoListQuery) error {
-	outerErr := ss.db.WithDbSession(context.Background(), func(dbSession *sqlstore.DBSession) error {
+	outerErr := ss.db.WithDbSession(context.Background(), func(dbSession *db.Session) error {
 		query.Result = make([]*models.DashboardACLInfoDTO, 0)
 		falseStr := ss.dialect.BooleanStr(false)
 

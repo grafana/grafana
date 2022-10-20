@@ -35,6 +35,7 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       eventName: MetaAnalyticsEventName.DataRequest,
       datasourceName: datasource.name,
       datasourceId: datasource.id,
+      datasourceUid: datasource.uid,
       datasourceType: datasource.type,
       panelId: data.request.panelId,
       dashboardId: data.request.dashboardId,

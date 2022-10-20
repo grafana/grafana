@@ -1,5 +1,3 @@
-import Units from 'ol/proj/Units';
-
 import { FieldMatcherID, fieldMatchers, FieldType, MutableDataFrame } from '@grafana/data';
 import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
 
@@ -1218,12 +1216,12 @@ describe('auto stacking groups', () => {
         {
           name: 'a',
           values: [1, 2, 3],
-          config: { custom: { stacking: { mode: StackingMode.Normal } }, unit: Units.FEET },
+          config: { custom: { stacking: { mode: StackingMode.Normal } }, unit: 'ft' },
         },
         {
           name: 'b',
           values: [1, 2, 3],
-          config: { custom: { stacking: { mode: StackingMode.Normal } }, unit: Units.DEGREES },
+          config: { custom: { stacking: { mode: StackingMode.Normal } }, unit: 'degrees' },
         },
       ],
     });

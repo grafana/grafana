@@ -11,9 +11,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -22,11 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -52,7 +53,7 @@ func createTokenforSA(t *testing.T, store serviceaccounts.Store, keyName string,
 }
 
 func TestServiceAccountsAPI_CreateToken(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
+	store := db.InitTestDB(t)
 	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
 	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
@@ -169,7 +170,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 }
 
 func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
+	store := db.InitTestDB(t)
 	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
 	svcMock := &tests.ServiceAccountMock{}
@@ -267,7 +268,7 @@ func (s *saStoreMockTokens) ListTokens(ctx context.Context, query *serviceaccoun
 }
 
 func TestServiceAccountsAPI_ListTokens(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
+	store := db.InitTestDB(t)
 	svcmock := tests.ServiceAccountMock{}
 	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
 

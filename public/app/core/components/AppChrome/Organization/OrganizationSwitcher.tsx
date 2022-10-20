@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
+import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getUserOrganizations, setUserOrganization } from 'app/features/org/state/actions';
 import { useDispatch, useSelector, UserOrg } from 'app/types';
 
@@ -13,9 +15,6 @@ export function OrganizationSwitcher() {
   const theme = useTheme2();
   const dispatch = useDispatch();
   const orgs = useSelector((state) => state.organization.userOrgs);
-  const [isSmallScreen, setIsSmallScreen] = useState(
-    window.matchMedia(`(max-width: ${theme.breakpoints.values.sm}px)`).matches
-  );
   const onSelectChange = (option: SelectableValue<UserOrg>) => {
     if (option.value) {
       setUserOrganization(option.value.orgId);
@@ -25,15 +24,21 @@ export function OrganizationSwitcher() {
     }
   };
   useEffect(() => {
-    dispatch(getUserOrganizations());
+    if (contextSrv.isSignedIn) {
+      dispatch(getUserOrganizations());
+    }
   }, [dispatch]);
 
-  useEffect(() => {
-    const mediaQuery = window.matchMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
-    const onMediaQueryChange = (e: MediaQueryListEvent) => setIsSmallScreen(e.matches);
-    mediaQuery.addEventListener('change', onMediaQueryChange);
-    return () => mediaQuery.removeEventListener('change', onMediaQueryChange);
-  }, [isSmallScreen, theme.breakpoints.values.sm]);
+  const breakpoint = theme.breakpoints.values.sm;
+
+  const [isSmallScreen, setIsSmallScreen] = useState(window.matchMedia(`(max-width: ${breakpoint}px)`).matches);
+
+  useMediaQueryChange({
+    breakpoint,
+    onChange: (e) => {
+      setIsSmallScreen(e.matches);
+    },
+  });
 
   if (orgs?.length <= 1) {
     return null;
