@@ -50,10 +50,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 interface Props<TableData extends object> {
+  /**
+   * Table's columns definition. Must be memoized.
+   */
   columns: Array<Column<TableData>>;
+  /**
+   * The data to display in the table. Must be memoized.
+   */
   data: TableData[];
+  /**
+   * Render function for the expanded row. if not provided, the tables rows will not be expandable.
+   */
   renderExpandedRow?: (row: TableData) => ReactNode;
   className?: string;
+  /**
+   * Must return a unique id for each row
+   */
   getRowId: TableOptions<TableData>['getRowId'];
 }
 
