@@ -540,12 +540,12 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 		Id:       "connections-your-connections",
 		Text:     "Your connections",
 		SubTitle: "Manage your existing connections",
-		Url:      s.cfg.AppSubURL + "/connections/your-connections",
+		Url:      baseUrl + "/your-connections",
 		Children: []*navtree.NavLink{{
 			Id:       "connections-your-connections-datasources",
 			Text:     "Datasources",
 			SubTitle: "Manage your existing datasource connections",
-			Url:      s.cfg.AppSubURL + "/connections/your-connections/datasources",
+			Url:      baseUrl + "/your-connections/datasources",
 		}},
 	})
 
