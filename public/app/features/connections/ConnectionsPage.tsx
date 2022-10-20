@@ -52,7 +52,7 @@ export default function ConnectionsPage() {
             <Route path={ROUTES.DataSourcesEdit} component={DataSourcesEdit} />
             <Route path={ROUTES.ConnectData} component={ConnectData} />
 
-            {/* {!isCloud && <Route path={ROUTES.ConnectData} component={ConnectData} />} */}
+            {!isCloud && <Route path={ROUTES.ConnectData} component={ConnectData} />}
             {isCloud && <AppPluginLoader id="grafana-easystart-app" />}
 
             {/* Default page */}
