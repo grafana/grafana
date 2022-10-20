@@ -25,7 +25,9 @@ var singles = []codegen.KindGenStep{
 }
 
 // All the aggregate generators to be run for core kinds.
-var multis = []codegen.AggregateKindGenStep{}
+var multis = []codegen.AggregateKindGenStep{
+	codegen.BaseCoreRegistryGenerator(filepath.Join("pkg", "registry", "kindreg"), "pkg/kind"),
+}
 
 const sep = string(filepath.Separator)
 

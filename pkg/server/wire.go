@@ -330,6 +330,7 @@ var wireBasicSet = wire.NewSet(
 	authproxy.ProvideAuthProxy,
 	statscollector.ProvideService,
 	cmreg.CoremodelSet,
+	kindreg.KindSet,
 	cuectx.GrafanaCUEContext,
 	cuectx.GrafanaThemaRuntime,
 	csrf.ProvideCSRFFilter,

@@ -1,6 +1,8 @@
 package codegen
 
 import (
+	"bytes"
+	"fmt"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/framework/kind"
@@ -36,11 +38,6 @@ var _ KindGenStep = &genGoTypes{}
 type genThemaBindings struct{}
 
 // var _ KindGenStep = &genThemaBindings{}
-
-// TODO docs
-type genBaseRegistry struct{}
-
-// var _ AggregateKindGenStep = &genBaseRegistry{}
 
 // TODO docs
 type genTSTypes struct{}
@@ -84,7 +81,7 @@ func GoTypesGenerator(relroot string, cfg *GenGoTypesConfig) KindGenStep {
 	}
 	if cfg.GenDirName == nil {
 		cfg.GenDirName = func(decl *DeclForGen) string {
-			return nameFor(decl.Meta)
+			return decl.Name()
 		}
 	}
 
@@ -115,6 +112,64 @@ func (gen *genGoTypes) Generate(decl *DeclForGen) (*GeneratedFile, error) {
 	}
 	return &GeneratedFile{
 		RelativePath: filepath.Join(gen.relroot, pdir, lin.Name()+"_types_gen.go"),
+		Data:         b,
+	}, nil
+}
+
+type genBaseRegistry struct {
+	path        string
+	kindrelroot string
+}
+
+var _ AggregateKindGenStep = &genBaseRegistry{}
+
+// BaseCoreRegistryGenerator generates a static registry for core kinds that
+// is only initializes their [kind.Interface]. No slot kinds are composed.
+//
+// Path should be the relative path to the directory that will contain the
+// generated registry. kindrelroot should be the repo-root-relative path to the
+// parent directory to all directories that contain generated kind bindings
+// (e.g. pkg/kind).
+func BaseCoreRegistryGenerator(path, kindrelroot string) AggregateKindGenStep {
+	return &genBaseRegistry{
+		path:        path,
+		kindrelroot: kindrelroot,
+	}
+}
+
+func (gen *genBaseRegistry) Name() string {
+	return "BaseCoreRegistryGenerator"
+}
+
+func (gen *genBaseRegistry) Generate(decls []*DeclForGen) (*GeneratedFile, error) {
+	var numRaw int
+	for _, k := range decls {
+		if k.IsRaw() {
+			numRaw++
+		}
+	}
+
+	buf := new(bytes.Buffer)
+	if err := tmpls.Lookup("kind_registry.tmpl").Execute(buf, tvars_kind_registry{
+		NumRaw:            numRaw,
+		NumStructured:     len(decls) - numRaw,
+		PackageName:       filepath.Base(gen.path),
+		KindPackagePrefix: filepath.ToSlash(filepath.Join("github.com/grafana/grafana", gen.kindrelroot)),
+		Kinds:             decls,
+	}); err != nil {
+		return nil, fmt.Errorf("failed executing kind registry template: %w", err)
+	}
+
+	b, err := postprocessGoFile(genGoFile{
+		path: gen.path,
+		in:   buf.Bytes(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &GeneratedFile{
+		RelativePath: filepath.Join(gen.path, "base_gen.go"),
 		Data:         b,
 	}, nil
 }

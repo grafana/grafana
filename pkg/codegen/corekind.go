@@ -1,6 +1,8 @@
 package codegen
 
 import (
+	"strings"
+
 	"github.com/grafana/grafana/pkg/framework/kind"
 	"github.com/grafana/thema"
 )
@@ -23,7 +25,7 @@ type KindGenStep interface {
 // [kind.SomeDecl].
 //
 // Examples of MultiKindGenerators:
-//   - [BaseRegistryGenerator]: Generate a static registry of [kind.Interface] implementations.
+//   - [BaseCoreRegistryGenerator]: Generate a static registry of [kind.Interface] implementations.
 //   - [TSSchemaIndexGenerator]: Generate a TypeScript module index that re-exports all generated types.
 type AggregateKindGenStep interface {
 	// Name returns the name of the generator. For use in error output.
@@ -66,4 +68,13 @@ type DeclForGen struct {
 
 func (decl *DeclForGen) Lineage() thema.Lineage {
 	return decl.lin
+}
+
+func (decl *DeclForGen) Name() string {
+	return nameFor(decl.Meta)
+}
+
+func (decl *DeclForGen) TitleName() string {
+	// TODO get this from _actual_ meta once we have it in the kind DSL
+	return strings.Title(nameFor(decl.Meta))
 }
