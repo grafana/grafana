@@ -42,7 +42,7 @@ type ExternalAlertmanager struct {
 	sdManager *discovery.Manager
 }
 
-func NewExternalAlertmanagerSender() (*ExternalAlertmanager, error) {
+func NewExternalAlertmanagerSender() *ExternalAlertmanager {
 	l := log.New("ngalert.sender.external-alertmanager")
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &ExternalAlertmanager{
@@ -50,7 +50,6 @@ func NewExternalAlertmanagerSender() (*ExternalAlertmanager, error) {
 		sdCancel: sdCancel,
 	}
 
-	s.logger.Info("Initiating communication with a group of external Alertmanagers")
 	s.manager = notifier.NewManager(
 		// Injecting a new registry here means these metrics are not exported.
 		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
@@ -60,7 +59,7 @@ func NewExternalAlertmanagerSender() (*ExternalAlertmanager, error) {
 
 	s.sdManager = discovery.NewManager(sdCtx, s.logger)
 
-	return s, nil
+	return s
 }
 
 // ApplyConfig syncs a configuration with the sender.
@@ -69,6 +68,8 @@ func (s *ExternalAlertmanager) ApplyConfig(cfg *ngmodels.AdminConfiguration) err
 	if err != nil {
 		return err
 	}
+
+	s.logger = s.logger.New("org", cfg.OrgID, "cfg", cfg.ID)
 
 	s.logger.Info("Synchronizing config with external Alertmanager group")
 	if err := s.manager.ApplyConfig(notifierCfg); err != nil {
@@ -87,6 +88,8 @@ func (s *ExternalAlertmanager) Run() {
 	s.wg.Add(2)
 
 	go func() {
+		s.logger.Info("Initiating communication with a group of external Alertmanagers")
+
 		if err := s.sdManager.Run(); err != nil {
 			s.logger.Error("Failed to start the sender service discovery manager", "error", err)
 		}
