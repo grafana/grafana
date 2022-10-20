@@ -91,12 +91,10 @@ const getStyles = (theme: GrafanaTheme2, app: CoreApp) => ({
     display: flow-root;
     width: 100%;
     background: ${theme.colors.background.primary};
-    position: sticky;
     top: 0;
     height: 50px;
-    z-index: 1000;
-    ${app === CoreApp.Explore ? 'margin-bottom: 8px' : ''};
-    ${app === CoreApp.Explore ? 'padding-top: 9px' : ''};
+    z-index: ${theme.zIndex.navbarFixed};
+    ${app === CoreApp.Explore ? 'position: sticky; margin-bottom: 8px; padding-top: 9px' : ''};
   `,
   inputContainer: css`
     float: left;

@@ -24,7 +24,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
     background: ${theme.colors.background.primary};
     display: flow-root;
-    padding: ${theme.spacing(1)};
+    padding: 0 ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)};
     border: 1px solid ${theme.components.panel.borderColor};
     border-radius: ${theme.shape.borderRadius(1)};
   `,
