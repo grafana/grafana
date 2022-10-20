@@ -1,12 +1,8 @@
 import React, { memo } from 'react';
 
 import { CoreApp } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
-import { LokiQueryEditorSelector } from '../querybuilder/components/LokiQueryEditorSelector';
-
-import { LokiExploreQueryEditor } from './LokiExploreQueryEditor';
-import { LokiQueryEditor } from './LokiQueryEditor';
+import { LokiQueryEditorSelector } from './LokiQueryEditor';
 import { LokiQueryEditorForAlerting } from './LokiQueryEditorForAlerting';
 import { LokiQueryEditorProps } from './types';
 
@@ -16,17 +12,13 @@ export function LokiQueryEditorByApp(props: LokiQueryEditorProps) {
   switch (app) {
     case CoreApp.CloudAlerting:
       return <LokiQueryEditorForAlerting {...props} />;
-    case CoreApp.Explore:
-      if (config.featureToggles.lokiQueryBuilder) {
-        return <LokiQueryEditorSelector {...props} />;
-      }
-      return <LokiExploreQueryEditor {...props} />;
     default:
-      if (config.featureToggles.lokiQueryBuilder) {
-        return <LokiQueryEditorSelector {...props} />;
-      }
-      return <LokiQueryEditor {...props} />;
+      return <LokiQueryEditorSelector {...props} />;
   }
 }
 
 export default memo(LokiQueryEditorByApp);
+
+export const testIds = {
+  editor: 'loki-editor',
+};
