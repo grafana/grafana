@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -33,6 +34,7 @@ type PublicDashboardServiceImpl struct {
 	intervalCalculator intervalv2.Calculator
 	QueryDataService   *query.Service
 	AnnotationsRepo    annotations.Repository
+	ac                 accesscontrol.AccessControl
 }
 
 var LogPrefix = "publicdashboards.service"
@@ -48,6 +50,7 @@ func ProvideService(
 	store publicdashboards.Store,
 	qds *query.Service,
 	anno annotations.Repository,
+	ac accesscontrol.AccessControl,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
 		log:                log.New(LogPrefix),
@@ -56,12 +59,8 @@ func ProvideService(
 		intervalCalculator: intervalv2.NewCalculator(),
 		QueryDataService:   qds,
 		AnnotationsRepo:    anno,
+		ac:                 ac,
 	}
-}
-
-// Gets a list of public dashboards by orgId
-func (pd *PublicDashboardServiceImpl) ListPublicDashboards(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
-	return pd.store.ListPublicDashboards(ctx, orgId)
 }
 
 // Gets a dashboard by Uid
@@ -392,6 +391,16 @@ func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, da
 	return anonymousUser
 }
 
+// Gets a list of public dashboards by orgId
+func (pd *PublicDashboardServiceImpl) ListPublicDashboards(ctx context.Context, u *user.SignedInUser, orgId int64) ([]PublicDashboardListResponse, error) {
+	publicDashboards, err := pd.store.ListPublicDashboards(ctx, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	return pd.filterDashboardsByPermissions(ctx, u, publicDashboards)
+}
+
 func (pd *PublicDashboardServiceImpl) PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error) {
 	return pd.store.PublicDashboardEnabled(ctx, dashboardUid)
 }
@@ -444,7 +453,26 @@ func (pd *PublicDashboardServiceImpl) logIsEnabledChanged(existingPubdash *Publi
 	}
 }
 
-// Checks to see if PublicDashboard.Isenabled is true on create or changed on update
+// Filter out dashboards that user does not have read access to
+func (pd *PublicDashboardServiceImpl) filterDashboardsByPermissions(ctx context.Context, u *user.SignedInUser, publicDashboards []PublicDashboardListResponse) ([]PublicDashboardListResponse, error) {
+	result := make([]PublicDashboardListResponse, 0)
+
+	for i := range publicDashboards {
+		hasAccess, err := pd.ac.Evaluate(ctx, u, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(publicDashboards[i].DashboardUid)))
+		// If original dashboard does not exist, the public dashboard is an orphan. We want to list it anyway
+		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return nil, err
+		}
+
+		// If user has access to the original dashboard or the dashboard does not exist, add the pubdash to the result
+		if hasAccess || errors.Is(err, dashboards.ErrDashboardNotFound) {
+			result = append(result, publicDashboards[i])
+		}
+	}
+	return result, nil
+}
+
+// Checks to see if PublicDashboard.IsEnabled is true on create or changed on update
 func publicDashboardIsEnabledChanged(existingPubdash *PublicDashboard, newPubdash *PublicDashboard) bool {
 	// creating dashboard, enabled true
 	newDashCreated := existingPubdash == nil && newPubdash.IsEnabled

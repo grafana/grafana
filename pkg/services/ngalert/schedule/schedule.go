@@ -140,7 +140,7 @@ func (sch *schedule) Run(ctx context.Context) error {
 	defer t.Stop()
 
 	if err := sch.schedulePeriodic(ctx, t); err != nil {
-		sch.log.Error("Failure while running the rule evaluation loop", "err", err)
+		sch.log.Error("Failure while running the rule evaluation loop", "error", err)
 	}
 	return nil
 }
@@ -193,7 +193,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
 
 			if err := sch.updateSchedulableAlertRules(ctx); err != nil {
-				sch.log.Error("Failed to update alert rules", "err", err)
+				sch.log.Error("Failed to update alert rules", "error", err)
 			}
 			alertRules, folderTitles := sch.schedulableAlertRules.all()
 
@@ -339,8 +339,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				},
 			},
 		}
+		evalCtx := eval.Context(ctx, schedulerUser).When(e.scheduledAt).WithRule(e.rule)
 
-		results := sch.evaluator.ConditionEval(ctx, schedulerUser, e.rule.GetEvalCondition(), e.scheduledAt)
+		results := sch.evaluator.ConditionEval(evalCtx, e.rule.GetEvalCondition())
 		dur := sch.clock.Now().Sub(start)
 		evalTotal.Inc()
 		evalDuration.Observe(dur.Seconds())
@@ -422,7 +423,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					return nil
 				})
 				if err != nil {
-					logger.Error("Evaluation failed after all retries", "err", err)
+					logger.Error("Evaluation failed after all retries", "error", err)
 				}
 			}()
 		case <-grafanaCtx.Done():

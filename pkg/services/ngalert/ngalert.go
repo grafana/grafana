@@ -164,7 +164,7 @@ func (ng *AlertNG) init() error {
 
 	appUrl, err := url.Parse(ng.Cfg.AppURL)
 	if err != nil {
-		ng.Log.Error("Failed to parse application URL. Continue without it.", "err", err)
+		ng.Log.Error("Failed to parse application URL. Continue without it.", "error", err)
 		appUrl = nil
 	}
 
@@ -248,7 +248,7 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 			logger.Info("Got folder title updated event. updating rules in the folder", "folderUID", evt.UID)
 			updated, err := dbStore.IncreaseVersionForAllRulesInNamespace(context.Background(), evt.OrgID, evt.UID)
 			if err != nil {
-				logger.Error("Failed to update alert rules in the folder after its title was changed", "err", err, "folderUID", evt.UID, "folder", evt.Title)
+				logger.Error("Failed to update alert rules in the folder after its title was changed", "error", err, "folderUID", evt.UID, "folder", evt.Title)
 				return
 			}
 			if len(updated) > 0 {

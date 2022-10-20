@@ -1,17 +1,18 @@
-package cloudwatch
+package models
 
 import (
-	"fmt"
+	"net/url"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-type queryError struct {
-	err   error
-	RefID string
+type Clients struct {
+	MetricsClientProvider MetricsClientProvider
 }
 
-func (e *queryError) Error() string {
-	return fmt.Sprintf("error parsing query %q, %s", e.RefID, e.err)
-}
+type ClientsFactoryFunc func(pluginCtx backend.PluginContext, region string) (clients Clients, err error)
+
+type RouteHandlerFunc func(pluginCtx backend.PluginContext, clientFactory ClientsFactoryFunc, parameters url.Values) ([]byte, *HttpError)
 
 type cloudWatchLink struct {
 	View    string        `json:"view"`
@@ -33,26 +34,3 @@ type metricStatMeta struct {
 	Period int    `json:"period"`
 	Label  string `json:"label,omitempty"`
 }
-
-type metricQueryType uint32
-
-const (
-	MetricQueryTypeSearch metricQueryType = iota
-	MetricQueryTypeQuery
-)
-
-type metricEditorMode uint32
-
-const (
-	MetricEditorModeBuilder metricEditorMode = iota
-	MetricEditorModeRaw
-)
-
-type gmdApiMode uint32
-
-const (
-	GMDApiModeMetricStat gmdApiMode = iota
-	GMDApiModeInferredSearchExpression
-	GMDApiModeMathExpression
-	GMDApiModeSQLExpression
-)
