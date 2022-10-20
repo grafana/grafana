@@ -25,7 +25,7 @@ type AnnotationStateHistorian struct {
 func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashboards.DashboardService, log log.Logger) *AnnotationStateHistorian {
 	return &AnnotationStateHistorian{
 		annotations: annotations,
-		dashboards:  newDashboardResolver(dashboards, log, defaultDashboardCacheExpiry),
+		dashboards:  newDashboardResolver(dashboards, defaultDashboardCacheExpiry),
 		log:         log,
 	}
 }

@@ -27,12 +27,12 @@ type dashboardResolver struct {
 	log          log.Logger
 }
 
-func newDashboardResolver(dbs dashboards.DashboardService, log log.Logger, expiry time.Duration) *dashboardResolver {
+func newDashboardResolver(dbs dashboards.DashboardService, expiry time.Duration) *dashboardResolver {
 	return &dashboardResolver{
 		dashboards:   dbs,
 		cache:        cache.New(expiry, maxDuration(2*expiry, minCleanupInterval)),
 		singleflight: singleflight.Group{},
-		log:          log,
+		log:          log.New("ngalert.dashboard-resolver"),
 	}
 }
 
