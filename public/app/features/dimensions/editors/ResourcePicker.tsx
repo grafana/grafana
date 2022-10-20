@@ -17,7 +17,7 @@ import {
 import { closePopover } from '@grafana/ui/src/utils/closePopover';
 
 import { getPublicOrAbsoluteUrl } from '../resource';
-import { MediaType, ResourceFolderName, ResourcePickerSize } from '../types';
+import { MediaType, PickerTabType, ResourceFolderName, ResourcePickerSize } from '../types';
 
 import { ResourcePickerPopover } from './ResourcePickerPopover';
 
@@ -32,17 +32,24 @@ interface Props {
   name?: string;
   placeholder?: string;
   color?: string;
+  defaultTab?: PickerTabType;
 }
 
 export const ResourcePicker = (props: Props) => {
-  const { value, src, name, placeholder, onChange, onClear, mediaType, folderName, size, color } = props;
+  const { value, src, name, placeholder, onChange, onClear, mediaType, folderName, size, color, defaultTab } = props;
 
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
   const pickerTriggerRef = createRef<any>();
   const popoverElement = (
-    <ResourcePickerPopover onChange={onChange} value={value} mediaType={mediaType} folderName={folderName} />
+    <ResourcePickerPopover
+      onChange={onChange}
+      value={value}
+      mediaType={mediaType}
+      folderName={folderName}
+      defaultTab={defaultTab}
+    />
   );
 
   let sanitizedSrc = src;

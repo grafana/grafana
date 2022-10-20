@@ -26,7 +26,7 @@ const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerCon
 } as any;
 
 export const ResourceDimensionEditor: FC<
-  StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, any>
+  StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, unknown>
 > = (props) => {
   const { value, context, onChange, item } = props;
   const labelWidth = 9;
@@ -111,6 +111,7 @@ export const ResourceDimensionEditor: FC<
           mediaType={mediaType}
           folderName={folderName}
           size={ResourcePickerSize.NORMAL}
+          defaultTab={item.settings?.defaultTab}
         />
       )}
       {mode === ResourceDimensionMode.Mapping && (
