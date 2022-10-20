@@ -6,14 +6,14 @@ import (
 	"github.com/grafana/thema"
 )
 
-// A Kind is the definition of a first-class type in Grafana's entity system.
+// A Kind specifies a type of Grafana resource.
 //
-// An entity is a sequence of bytes - for example, a JSON file or HTTP request
-// body - that conforms to the constraints defined in a Kind, and
-// enforced by Grafana's entity system.
+// An instance of a Kind is called an entity. An entity is a sequence of bytes -
+// for example, a JSON file or HTTP request body - that conforms to the
+// constraints defined in a Kind, and enforced by Grafana's entity system.
 //
-// Once Grafana's entity system has determined a given byte sequence to be an
-// instance of a known Kind, type-specific behaviors can be applied,
+// Once Grafana has determined a given byte sequence to be an
+// instance of a known Kind, kind-specific behaviors can be applied,
 // requests can be routed, events can be triggered, etc.
 //
 // Classes and objects in most programming languages are analogous:
@@ -68,7 +68,7 @@ _sharedKind: {
 
 // Raw is a category of Kind that specifies handling for a raw file,
 // like an image, or an svg or parquet file. Grafana mostly acts as asset storage for raw
-// types: the byte sequence is a black box to Grafana, and type is determined
+// kinds: the byte sequence is a black box to Grafana, and type is determined
 // through metadata such as file extension.
 #Raw: {
 	_sharedKind
@@ -87,8 +87,8 @@ _sharedKind: {
 // the conventional types and functional resources in Grafana, such as
 // dashboards and datasources.
 //
-// Structured types may be defined either by Grafana itself (#CoreStructured),
-// or by plugins (#CustomStructured). Plugin-defined types have a slightly
+// Structured kinds may be defined either by Grafana itself (#CoreStructured),
+// or by plugins (#CustomStructured). Plugin-defined kinds have a slightly
 // reduced set of capabilities, due to the constraints imposed by them being run
 // in separate processes, and the risks arising from executing code from
 // potentially untrusted third parties.
