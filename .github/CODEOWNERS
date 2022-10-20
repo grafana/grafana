@@ -121,7 +121,7 @@ go.sum @grafana/backend-platform
 /packages/grafana-e2e @grafana/user-essentials
 /packages/grafana-toolkit @grafana/plugins-platform-frontend
 /packages/grafana-ui/.storybook @grafana/plugins-platform-frontend
-/packages/grafana-ui/src/components/DateTimePickers @grafana/grafana-bi-squad
+/packages/grafana-ui/src/components/DateTimePickers @grafana/user-essentials
 /packages/grafana-ui/src/components/GraphNG @grafana/grafana-bi-squad
 /packages/grafana-ui/src/components/Logs @grafana/observability-logs
 /packages/grafana-ui/src/components/Table @grafana/grafana-bi-squad
