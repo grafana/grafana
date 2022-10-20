@@ -682,6 +682,11 @@ export function createTableFrameFromTraceQlQuery(
                   query: '${__data.fields.traceIdHidden}',
                   queryType: 'traceId',
                 },
+                panelsState: {
+                  trace: {
+                    spanId: '${__value.raw}',
+                  },
+                },
               },
             },
           ],
