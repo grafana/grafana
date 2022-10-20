@@ -51,13 +51,13 @@ func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmode
 
 		panelId, err := strconv.ParseInt(panelUid, 10, 64)
 		if err != nil {
-			h.log.Error("error parsing panelUID for alert annotation", "panelUID", panelUid, "alertRuleUID", rule.UID, "err", err.Error())
+			h.log.Error("error parsing panelUID for alert annotation", "panelUID", panelUid, "alertRuleUID", rule.UID, "error", err.Error())
 			return
 		}
 
 		dashID, err := h.dashboards.getID(ctx, rule.OrgID, dashUid)
 		if err != nil {
-			h.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", rule.UID, "err", err.Error())
+			h.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", rule.UID, "error", err.Error())
 			return
 		}
 
@@ -66,7 +66,7 @@ func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmode
 	}
 
 	if err := h.annotations.Save(ctx, item); err != nil {
-		h.log.Error("error saving alert annotation", "alertRuleUID", rule.UID, "err", err.Error())
+		h.log.Error("error saving alert annotation", "alertRuleUID", rule.UID, "error", err.Error())
 		return
 	}
 }

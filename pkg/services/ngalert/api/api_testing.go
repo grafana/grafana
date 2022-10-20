@@ -42,17 +42,18 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 		Condition: body.GrafanaManagedCondition.Condition,
 		Data:      body.GrafanaManagedCondition.Data,
 	}
+	ctx := eval.Context(c.Req.Context(), c.SignedInUser)
 
-	if err := srv.evaluator.Validate(c.Req.Context(), c.SignedInUser, evalCond); err != nil {
+	if err := srv.evaluator.Validate(ctx, evalCond); err != nil {
 		return ErrResp(http.StatusBadRequest, err, "invalid condition")
 	}
 
-	now := body.GrafanaManagedCondition.Now
-	if now.IsZero() {
-		now = timeNow()
+	ctx = ctx.When(body.GrafanaManagedCondition.Now)
+	if ctx.At.IsZero() {
+		ctx = ctx.When(timeNow())
 	}
 
-	evalResults := srv.evaluator.ConditionEval(c.Req.Context(), c.SignedInUser, evalCond, now)
+	evalResults := srv.evaluator.ConditionEval(ctx, evalCond)
 
 	frame := evalResults.AsDataFrame()
 	return response.JSONStreaming(http.StatusOK, util.DynMap{
@@ -99,18 +100,18 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodel
 }
 
 func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.EvalQueriesPayload) response.Response {
-	now := cmd.Now
-	if now.IsZero() {
-		now = timeNow()
-	}
-
 	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: cmd.Data}, func(evaluator accesscontrol.Evaluator) bool {
 		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
 	}) {
 		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization), "")
 	}
 
-	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.Req.Context(), c.SignedInUser, cmd.Data, now)
+	ctx := eval.Context(c.Req.Context(), c.SignedInUser).When(cmd.Now)
+	if ctx.At.IsZero() {
+		ctx = ctx.When(timeNow())
+	}
+
+	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(ctx, cmd.Data)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate queries and expressions")
 	}

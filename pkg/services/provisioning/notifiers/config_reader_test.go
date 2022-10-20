@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -44,7 +45,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 	t.Run("Testing notification as configuration", func(t *testing.T) {
 		setup := func() {
-			sqlStore = sqlstore.InitTestDB(t)
+			sqlStore = db.InitTestDB(t)
 			orgFake = orgtest.NewOrgServiceFake()
 			nm := &notifications.NotificationService{}
 			ns = alerting.ProvideService(sqlStore, encryptionService, nm)
