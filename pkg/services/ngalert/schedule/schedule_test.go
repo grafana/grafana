@@ -107,20 +107,7 @@ func TestWarmStateCache(t *testing.T) {
 		Labels:            labels,
 	}
 	_ = dbstore.SaveAlertInstances(ctx, instance2)
-
-	cfg := setting.UnifiedAlertingSettings{
-		BaseInterval:            time.Second,
-		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
-	}
-
-	schedCfg := schedule.SchedulerCfg{
-		Cfg:       cfg,
-		C:         clock.NewMock(),
-		Logger:    log.New("ngalert cache warming test"),
-		RuleStore: dbstore,
-		Metrics:   testMetrics.GetSchedulerMetrics(),
-	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{})
+	st := state.NewManager(log.New("test"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{})
 	st.Warm(ctx)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
@@ -168,11 +155,10 @@ func TestAlertingTicker(t *testing.T) {
 			stopAppliedCh <- alertDefKey
 		},
 		RuleStore:   dbstore,
-		Logger:      log.New("ngalert schedule test"),
 		Metrics:     testMetrics.GetSchedulerMetrics(),
 		AlertSender: notifier,
 	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{})
+	st := state.NewManager(log.New("test"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{})
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",
