@@ -428,7 +428,8 @@ func (s sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryReq
 }
 
 func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
-	if r.NextPageToken != "" || r.Folder != "" || len(r.Sort) > 0 {
+	user := store.UserFromContext(ctx)
+	if r.NextPageToken != "" || len(r.Sort) > 0 || len(r.Labels) > 0 {
 		return nil, fmt.Errorf("not yet supported")
 	}
 
@@ -447,18 +448,34 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 	if r.WithFields {
 		fields = append(fields, `"fields"`)
 	}
-	query := "SELECT " + strings.Join(fields, ",") + " FROM object" // no where clause
 
-	limit := 20
-	if r.Limit > 0 {
-		limit = int(r.Limit)
+	selectQuery := selectQuery{
+		fields:   fields,
+		from:     "object", // the table
+		args:     []interface{}{},
+		limit:    int(r.Limit),
+		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
-	args := []interface{}{}
-	where := "" //getWhereClause(ctx, e)
 
-	// request one more than the limit (and show next token if it exists)
-	args = append(args, limit+1)
-	rows, err := s.sess.Query(ctx, fmt.Sprintf("%s %s LIMIT ?", query, where), args...)
+	if len(r.Kind) > 0 {
+		selectQuery.addWhereIn("kind", r.Kind)
+	}
+
+	// Basic org constraint
+	keyPrefix := fmt.Sprintf("%d/", user.OrgID)
+	if r.Folder != "" {
+		keyPrefix = fmt.Sprintf("%d/%s", user.OrgID, r.Folder)
+	}
+	selectQuery.addWherePrefix("key", keyPrefix)
+
+	query, args := selectQuery.toQuery()
+
+	fmt.Printf("\n\n-------------\n")
+	fmt.Printf("%s\n", query)
+	fmt.Printf("%v\n", args)
+	fmt.Printf("\n-------------\n\n")
+
+	rows, err := s.sess.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -494,7 +511,7 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 		result.UID = "TODO!" + key
 
 		// found one more than requested
-		if len(rsp.Results) >= limit {
+		if len(rsp.Results) >= selectQuery.limit {
 			// TODO? should this encode start+offset?
 			rsp.NextPageToken = result.UID
 			break
@@ -523,9 +540,4 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 		rsp.Results = append(rsp.Results, result)
 	}
 	return rsp, err
-}
-
-func getWhereClause(ctx context.Context, r *object.ObjectSearchRequest) string {
-
-	return ""
 }

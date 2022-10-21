@@ -110,6 +110,25 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 		},
 	}
 
+	// Define access based on prefix rules (eg... .htaccess (- ‿◦ ))
+	objectAccessTable := migrator.Table{
+		Name: "object_access",
+		Columns: []*migrator.Column{
+			{Name: "who", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},    // user + roles?
+			{Name: "action", Type: migrator.DB_NVarchar, Length: 255, Nullable: false}, // read, write, admin, none
+			{Name: "kind", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "prefix", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
+
+			// Basic audit logging
+			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "updated_by", Type: migrator.DB_Int, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"prefix"}, Type: migrator.IndexType},
+			{Cols: []string{"who", "action", "kind", "prefix"}, Type: migrator.UniqueIndex},
+		},
+	}
+
 	// Keep track of renames (404 handler)
 	objectAliasTable := migrator.Table{
 		Name: "object_alias",
@@ -126,7 +145,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	}
 
 	// Initialize all tables
-	tables := []migrator.Table{objectTable, objectLabelsTable, objectReferenceTable, objectHistoryTable, objectAliasTable}
+	tables := []migrator.Table{objectTable, objectLabelsTable, objectReferenceTable, objectHistoryTable, objectAliasTable, objectAccessTable}
 	for t := range tables {
 		mg.AddMigration("ObjectStore init: table "+tables[t].Name, migrator.NewAddTableMigration(tables[t]))
 		for i := range tables[t].Indices {
