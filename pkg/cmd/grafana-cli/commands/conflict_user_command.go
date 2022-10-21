@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -64,7 +65,7 @@ func getSqlStore(cfg *setting.Cfg) (*sqlstore.SQLStore, error) {
 		return nil, fmt.Errorf("%v: %w", "failed to initialize tracer service", err)
 	}
 	bus := bus.ProvideBus(tracer)
-	return sqlstore.ProvideService(cfg, nil, &migrations.OSSMigrations{}, bus, tracer)
+	return sqlstore.ProvideService(cfg, nil, &migrations.OSSMigrations{}, bus, tracer, prometheus.NewRegistry())
 }
 
 func runListConflictUsers() func(context *cli.Context) error {

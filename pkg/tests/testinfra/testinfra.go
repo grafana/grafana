@@ -18,7 +18,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/extensions"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -74,21 +73,6 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	t.Logf("Grafana is listening on %s", addr)
 
 	return addr, env
-}
-
-// SetUpDatabase sets up the Grafana database.
-func SetUpDatabase(t *testing.T, grafDir string) *sqlstore.SQLStore {
-	t.Helper()
-
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{
-		EnsureDefaultOrgAndUser: true,
-	})
-
-	// Make sure changes are synced with other goroutines
-	err := sqlStore.Sync()
-	require.NoError(t, err)
-
-	return sqlStore
 }
 
 // CreateGrafDir creates the Grafana directory.

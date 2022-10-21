@@ -590,6 +590,14 @@ func SetBuildInformation(version, revision, branch string) {
 	grafanaBuildVersion.WithLabelValues(version, revision, branch, runtime.Version(), edition).Set(1)
 }
 
+func ProvideRegisterer() prometheus.Registerer {
+	return prometheus.DefaultRegisterer
+}
+
+func ProvideRegistererForTest() prometheus.Registerer {
+	return prometheus.NewRegistry()
+}
+
 // SetEnvironmentInformation exposes environment values provided by the operators as an `_info` metric.
 // If there are no environment metrics labels configured, this metric will not be exposed.
 func SetEnvironmentInformation(labels map[string]string) error {

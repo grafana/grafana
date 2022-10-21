@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -36,13 +35,7 @@ func TestDashboardQuota(t *testing.T) {
 		DashboardOrgQuota: &dashboardQuota,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	// Create user
-	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafana(t, dir, path)
 
 	t.Run("when quota limit doesn't exceed, importing a dashboard should succeed", func(t *testing.T) {
 		// Import dashboard
@@ -129,13 +122,7 @@ providers:
 	provDashboardFile := filepath.Join(provDashboardsDir, "home.json")
 	err = os.WriteFile(provDashboardFile, input, 0644)
 	require.NoError(t, err)
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	// Create user
-	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafana(t, dir, path)
 
 	type errorResponseBody struct {
 		Message string `json:"message"`

@@ -28,12 +28,6 @@ func TestIntegrationPrometheusBuffered(t *testing.T) {
 	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
 	ctx := context.Background()
 
-	createUser(t, testEnv.SQLStore, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
-
 	var outgoingRequest *http.Request
 	outgoingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		outgoingRequest = r

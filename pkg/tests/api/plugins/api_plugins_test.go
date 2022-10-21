@@ -43,7 +43,6 @@ func TestPlugins(t *testing.T) {
 
 	t.Run("Install", func(t *testing.T) {
 		createUser(t, store, user.CreateUserCommand{Login: usernameNonAdmin, Password: defaultPassword, IsAdmin: false})
-		createUser(t, store, user.CreateUserCommand{Login: usernameAdmin, Password: defaultPassword, IsAdmin: true})
 
 		t.Run("Request is forbidden if not from an admin", func(t *testing.T) {
 			status, body := makePostRequest(t, grafanaAPIURL(usernameNonAdmin, grafanaListedAddr, "plugins/grafana-plugin/install"))

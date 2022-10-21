@@ -60,7 +60,7 @@ type SQLStore struct {
 	tracer                      tracing.Tracer
 }
 
-func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
+func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer, registerer prometheus.Registerer) (*SQLStore, error) {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
@@ -83,9 +83,9 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 	db := s.engine.DB().DB
 
 	// register the go_sql_stats_connections_* metrics
-	prometheus.MustRegister(sqlstats.NewStatsCollector("grafana", db))
+	registerer.MustRegister(sqlstats.NewStatsCollector("grafana", db))
 	// TODO: deprecate/remove these metrics
-	prometheus.MustRegister(newSQLStoreMetrics(db))
+	registerer.MustRegister(newSQLStoreMetrics(db))
 
 	return s, nil
 }

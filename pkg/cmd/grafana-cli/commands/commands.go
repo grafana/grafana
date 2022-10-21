@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -59,7 +60,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore db.DB) er
 
 		bus := bus.ProvideBus(tracer)
 
-		sqlStore, err := db.ProvideService(cfg, nil, &migrations.OSSMigrations{}, bus, tracer)
+		sqlStore, err := db.ProvideService(cfg, nil, &migrations.OSSMigrations{}, bus, tracer, prometheus.NewRegistry())
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to initialize SQL store", err)
 		}
