@@ -128,6 +128,8 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 		Queries: []expr.Query{},
 	}
 
+	timeRanges := expr.TimeRanges{}
+
 	for _, pq := range parsedReq.getFlattenedQueries() {
 		if pq.datasource == nil {
 			return nil, ErrMissingDataSourceInfo.Build(errutil.TemplateData{
@@ -135,6 +137,10 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 					"RefId": pq.query.RefID,
 				},
 			})
+		}
+		timeRanges[pq.query.RefID] = expr.TimeRange{
+			From: pq.query.TimeRange.From,
+			To:   pq.query.TimeRange.To,
 		}
 
 		exprReq.Queries = append(exprReq.Queries, expr.Query{
@@ -144,14 +150,10 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 			MaxDataPoints: pq.query.MaxDataPoints,
 			QueryType:     pq.query.QueryType,
 			DataSource:    pq.datasource,
-			TimeRange: expr.TimeRange{
-				From: pq.query.TimeRange.From,
-				To:   pq.query.TimeRange.To,
-			},
 		})
 	}
 
-	qdr, err := s.expressionService.TransformData(ctx, &exprReq)
+	qdr, err := s.expressionService.TransformData(ctx, timeRanges, &exprReq)
 	if err != nil {
 		return nil, fmt.Errorf("expression request error: %w", err)
 	}

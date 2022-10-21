@@ -13,6 +13,7 @@ import (
 	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -80,7 +81,6 @@ func Test_UnmarshalReduceCommand_Settings(t *testing.T) {
 				RefID:      "A",
 				Query:      qmap,
 				QueryType:  "",
-				TimeRange:  TimeRange{},
 				DataSource: nil,
 			})
 
@@ -114,7 +114,7 @@ func TestReduceExecute(t *testing.T) {
 			},
 		}
 
-		execute, err := cmd.Execute(context.Background(), vars)
+		execute, err := cmd.Execute(context.Background(), vars, models.TimeRange{})
 		require.NoError(t, err)
 
 		require.Len(t, execute.Values, len(numbers))
@@ -149,7 +149,7 @@ func TestReduceExecute(t *testing.T) {
 			},
 		}
 
-		results, err := cmd.Execute(context.Background(), vars)
+		results, err := cmd.Execute(context.Background(), vars, models.TimeRange{})
 		require.NoError(t, err)
 
 		require.Len(t, results.Values, 1)

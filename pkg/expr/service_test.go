@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/setting"
@@ -51,12 +52,19 @@ func TestService(t *testing.T) {
 		},
 	}
 
+	timeRanges := models.TimeRanges{
+		"A": models.TimeRange{
+			From: time.Now(),
+			To:   time.Now().Add(2 * time.Second),
+		},
+	}
+
 	req := &Request{Queries: queries}
 
 	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)
 
-	res, err := s.ExecutePipeline(context.Background(), pl)
+	res, err := s.ExecutePipeline(context.Background(), timeRanges, pl)
 	require.NoError(t, err)
 
 	bDF := data.NewFrame("",

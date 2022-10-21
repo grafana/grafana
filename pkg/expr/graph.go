@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/models"
 
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
@@ -37,7 +38,7 @@ type Node interface {
 	ID() int64 // ID() allows the gonum graph node interface to be fulfilled
 	NodeType() NodeType
 	RefID() string
-	Execute(c context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error)
+	Execute(c context.Context, timeRange models.TimeRange, vars mathexp.Vars, s *Service) (mathexp.Results, error)
 	String() string
 }
 
@@ -46,10 +47,11 @@ type DataPipeline []Node
 
 // execute runs all the command/datasource requests in the pipeline return a
 // map of the refId of the of each command
-func (dp *DataPipeline) execute(c context.Context, s *Service) (mathexp.Vars, error) {
+func (dp *DataPipeline) execute(c context.Context, timeRanges models.TimeRanges, s *Service) (mathexp.Vars, error) {
 	vars := make(mathexp.Vars)
 	for _, node := range *dp {
-		res, err := node.Execute(c, vars, s)
+		timeRange := timeRanges[node.RefID()]
+		res, err := node.Execute(c, timeRange, vars, s)
 		if err != nil {
 			return nil, err
 		}
@@ -145,7 +147,6 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		rn := &rawNode{
 			Query:      rawQueryProp,
 			RefID:      query.RefID,
-			TimeRange:  query.TimeRange,
 			QueryType:  query.QueryType,
 			DataSource: query.DataSource,
 		}

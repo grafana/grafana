@@ -10,6 +10,7 @@ import (
 	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/models"
 )
 
 func TestUnmarshalConditionCMD(t *testing.T) {
@@ -405,7 +406,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := tt.conditionsCmd.Execute(context.Background(), tt.vars)
+			res, err := tt.conditionsCmd.Execute(context.Background(), tt.vars, models.TimeRange{})
 			require.NoError(t, err)
 
 			require.Equal(t, 1, len(res.Values))

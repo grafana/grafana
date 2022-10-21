@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/expr/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -41,7 +42,6 @@ type Request struct {
 // for the data source. Also interval is a time.Duration.
 type Query struct {
 	RefID         string
-	TimeRange     TimeRange
 	DataSource    *datasources.DataSource `json:"datasource"`
 	JSON          json.RawMessage
 	Interval      time.Duration
@@ -49,15 +49,9 @@ type Query struct {
 	MaxDataPoints int64
 }
 
-// TimeRange is a time.Time based TimeRange.
-type TimeRange struct {
-	From time.Time
-	To   time.Time
-}
-
 // TransformData takes Queries which are either expressions nodes
 // or are datasource requests.
-func (s *Service) TransformData(ctx context.Context, req *Request) (r *backend.QueryDataResponse, err error) {
+func (s *Service) TransformData(ctx context.Context, timeRange models.TimeRanges, req *Request) (r *backend.QueryDataResponse, err error) {
 	if s.isDisabled() {
 		return nil, fmt.Errorf("server side expressions are disabled")
 	}
@@ -83,7 +77,7 @@ func (s *Service) TransformData(ctx context.Context, req *Request) (r *backend.Q
 	}
 
 	// Execute the pipeline
-	responses, err := s.ExecutePipeline(ctx, pipeline)
+	responses, err := s.ExecutePipeline(ctx, timeRange, pipeline)
 	if err != nil {
 		return nil, err
 	}

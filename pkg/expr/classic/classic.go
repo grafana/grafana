@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/models"
 )
 
 // ConditionsCmd is a command that supports the reduction and comparison of conditions.
@@ -67,7 +68,7 @@ func (cmd *ConditionsCmd) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (cmd *ConditionsCmd) Execute(_ context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (cmd *ConditionsCmd) Execute(c context.Context, vars mathexp.Vars, _ models.TimeRange) (mathexp.Results, error) {
 	firing := true
 	newRes := mathexp.Results{}
 	noDataFound := true

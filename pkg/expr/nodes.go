@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/models"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -45,7 +46,6 @@ type rawNode struct {
 	RefID      string `json:"refId"`
 	Query      map[string]interface{}
 	QueryType  string
-	TimeRange  TimeRange
 	DataSource *datasources.DataSource
 }
 
@@ -92,8 +92,8 @@ func (gn *CMDNode) NodeType() NodeType {
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
-func (gn *CMDNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
-	return gn.Command.Execute(ctx, vars)
+func (gn *CMDNode) Execute(ctx context.Context, timeRange models.TimeRange, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
+	return gn.Command.Execute(ctx, vars, timeRange)
 }
 
 func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
@@ -144,7 +144,6 @@ type DSNode struct {
 
 	orgID      int64
 	queryType  string
-	timeRange  TimeRange
 	intervalMS int64
 	maxDP      int64
 	request    Request
@@ -171,7 +170,6 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 		queryType:  rn.QueryType,
 		intervalMS: defaultIntervalMS,
 		maxDP:      defaultMaxDP,
-		timeRange:  rn.TimeRange,
 		request:    *req,
 		datasource: rn.DataSource,
 	}
@@ -198,7 +196,10 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
-func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
+func (dn *DSNode) Execute(ctx context.Context, timeRange models.TimeRange, _ mathexp.Vars, s *Service) (mathexp.Results, error) {
+	if timeRange.From.IsZero() && timeRange.To.IsZero() {
+		return mathexp.Results{}, fmt.Errorf("zero time range is not supported")
+	}
 	dsInstanceSettings, err := adapters.ModelToInstanceSettings(dn.datasource, s.decryptSecureJsonDataFn(ctx))
 	if err != nil {
 		return mathexp.Results{}, fmt.Errorf("%v: %w", "failed to convert datasource instance settings", err)
@@ -216,8 +217,8 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 			Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
 			JSON:          dn.query,
 			TimeRange: backend.TimeRange{
-				From: dn.timeRange.From,
-				To:   dn.timeRange.To,
+				From: timeRange.From,
+				To:   timeRange.To,
 			},
 			QueryType: dn.queryType,
 		},

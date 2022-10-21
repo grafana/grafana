@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
@@ -62,9 +63,9 @@ func (s *Service) BuildPipeline(req *Request) (DataPipeline, error) {
 }
 
 // ExecutePipeline executes an expression pipeline and returns all the results.
-func (s *Service) ExecutePipeline(ctx context.Context, pipeline DataPipeline) (*backend.QueryDataResponse, error) {
+func (s *Service) ExecutePipeline(ctx context.Context, timeRanges models.TimeRanges, pipeline DataPipeline) (*backend.QueryDataResponse, error) {
 	res := backend.NewQueryDataResponse()
-	vars, err := pipeline.execute(ctx, s)
+	vars, err := pipeline.execute(ctx, timeRanges, s)
 	if err != nil {
 		return nil, err
 	}

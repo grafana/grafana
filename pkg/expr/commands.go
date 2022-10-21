@@ -11,12 +11,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/models"
 )
 
 // Command is an interface for all expression commands.
 type Command interface {
 	NeedsVars() []string
-	Execute(c context.Context, vars mathexp.Vars) (mathexp.Results, error)
+	Execute(c context.Context, vars mathexp.Vars, timeRange models.TimeRange) (mathexp.Results, error)
 }
 
 // MathCommand is a command for a math expression such as "1 + $GA / 2"
@@ -66,7 +67,7 @@ func (gm *MathCommand) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (gm *MathCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (gm *MathCommand) Execute(_ context.Context, vars mathexp.Vars, _ models.TimeRange) (mathexp.Results, error) {
 	return gm.Expression.Execute(gm.refID, vars)
 }
 
@@ -154,7 +155,7 @@ func (gr *ReduceCommand) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (gr *ReduceCommand) Execute(_ context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (gr *ReduceCommand) Execute(_ context.Context, vars mathexp.Vars, _ models.TimeRange) (mathexp.Results, error) {
 	newRes := mathexp.Results{}
 	for _, val := range vars[gr.VarToReduce].Values {
 		switch v := val.(type) {
@@ -187,12 +188,11 @@ type ResampleCommand struct {
 	VarToResample string
 	Downsampler   string
 	Upsampler     string
-	TimeRange     TimeRange
 	refID         string
 }
 
 // NewResampleCommand creates a new ResampleCMD.
-func NewResampleCommand(refID, rawWindow, varToResample string, downsampler string, upsampler string, tr TimeRange) (*ResampleCommand, error) {
+func NewResampleCommand(refID, rawWindow, varToResample string, downsampler string, upsampler string) (*ResampleCommand, error) {
 	// TODO: validate reducer here, before execution
 	window, err := gtime.ParseDuration(rawWindow)
 	if err != nil {
@@ -203,7 +203,6 @@ func NewResampleCommand(refID, rawWindow, varToResample string, downsampler stri
 		VarToResample: varToResample,
 		Downsampler:   downsampler,
 		Upsampler:     upsampler,
-		TimeRange:     tr,
 		refID:         refID,
 	}, nil
 }
@@ -248,7 +247,7 @@ func UnmarshalResampleCommand(rn *rawNode) (*ResampleCommand, error) {
 		return nil, fmt.Errorf("expected resample downsampler to be a string, got type %T", upsampler)
 	}
 
-	return NewResampleCommand(rn.RefID, window, varToResample, downsampler, upsampler, rn.TimeRange)
+	return NewResampleCommand(rn.RefID, window, varToResample, downsampler, upsampler)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -259,14 +258,14 @@ func (gr *ResampleCommand) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (gr *ResampleCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (gr *ResampleCommand) Execute(_ context.Context, vars mathexp.Vars, timeRange models.TimeRange) (mathexp.Results, error) {
 	newRes := mathexp.Results{}
 	for _, val := range vars[gr.VarToResample].Values {
 		series, ok := val.(mathexp.Series)
 		if !ok {
 			return newRes, fmt.Errorf("can only resample type series, got type %v", val.Type())
 		}
-		num, err := series.Resample(gr.refID, gr.Window, gr.Downsampler, gr.Upsampler, gr.TimeRange.From, gr.TimeRange.To)
+		num, err := series.Resample(gr.refID, gr.Window, gr.Downsampler, gr.Upsampler, timeRange.From, timeRange.To)
 		if err != nil {
 			return newRes, err
 		}
