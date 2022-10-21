@@ -24,7 +24,7 @@ type FakePublicDashboardService struct {
 }
 
 // AccessTokenExists provides a mock function with given fields: ctx, accessToken
-func (_m *FakePublicDashboardService) EnabledPublicDashboardExistsByAccessToken(ctx context.Context, accessToken string) (bool, error) {
+func (_m *FakePublicDashboardService) PublicDashboardEnabledExistsByAccessToken(ctx context.Context, accessToken string) (bool, error) {
 	ret := _m.Called(ctx, accessToken)
 
 	var r0 bool

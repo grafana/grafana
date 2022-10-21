@@ -214,11 +214,11 @@ func (pd *PublicDashboardServiceImpl) ListPublicDashboards(ctx context.Context, 
 }
 
 func (pd *PublicDashboardServiceImpl) PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error) {
-	return pd.store.EnabledPublicDashboardExistsByDashboardUid(ctx, dashboardUid)
+	return pd.store.PublicDashboardEnabledExistsByDashboardUid(ctx, dashboardUid)
 }
 
-func (pd *PublicDashboardServiceImpl) EnabledPublicDashboardExistsByAccessToken(ctx context.Context, accessToken string) (bool, error) {
-	return pd.store.EnabledPublicDashboardExistsByAccessToken(ctx, accessToken)
+func (pd *PublicDashboardServiceImpl) PublicDashboardEnabledExistsByAccessToken(ctx context.Context, accessToken string) (bool, error) {
+	return pd.store.PublicDashboardEnabledExistsByAccessToken(ctx, accessToken)
 }
 
 func (pd *PublicDashboardServiceImpl) GetPublicDashboardOrgId(ctx context.Context, accessToken string) (int64, error) {

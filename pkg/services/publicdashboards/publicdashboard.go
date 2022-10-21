@@ -14,7 +14,7 @@ import (
 
 //go:generate mockery --name Service --structname FakePublicDashboardService --inpackage --filename public_dashboard_service_mock.go
 type Service interface {
-	EnabledPublicDashboardExistsByAccessToken(ctx context.Context, accessToken string) (bool, error)
+	PublicDashboardEnabledExistsByAccessToken(ctx context.Context, accessToken string) (bool, error)
 	GetAnnotations(ctx context.Context, reqDTO AnnotationsQueryDTO, accessToken string) ([]AnnotationEvent, error)
 	GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error)
 	GetMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO PublicDashboardQueryDTO) (dtos.MetricRequest, error)
@@ -29,8 +29,8 @@ type Service interface {
 
 //go:generate mockery --name Store --structname FakePublicDashboardStore --inpackage --filename public_dashboard_store_mock.go
 type Store interface {
-	EnabledPublicDashboardExistsByAccessToken(ctx context.Context, accessToken string) (bool, error)
-	EnabledPublicDashboardExistsByDashboardUid(ctx context.Context, dashboardUid string) (bool, error)
+	PublicDashboardEnabledExistsByAccessToken(ctx context.Context, accessToken string) (bool, error)
+	PublicDashboardEnabledExistsByDashboardUid(ctx context.Context, dashboardUid string) (bool, error)
 	GenerateNewPublicDashboardUid(ctx context.Context) (string, error)
 	GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error)
 	GenerateNewPublicDashboardAccessToken(ctx context.Context) (string, error)
