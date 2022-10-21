@@ -180,10 +180,11 @@ func (ng *AlertNG) init() error {
 
 	ng.AlertsRouter = alertsRouter
 
+	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
 	schedCfg := schedule.SchedulerCfg{
 		Cfg:         ng.Cfg.UnifiedAlerting,
 		C:           clk,
-		Evaluator:   eval.NewEvaluator(ng.Cfg, ng.DataSourceCache, ng.ExpressionService),
+		Evaluator:   evalFactory,
 		RuleStore:   store,
 		Metrics:     ng.Metrics.GetSchedulerMetrics(),
 		AlertSender: alertsRouter,
@@ -215,7 +216,6 @@ func (ng *AlertNG) init() error {
 		DatasourceCache:      ng.DataSourceCache,
 		DatasourceService:    ng.DataSourceService,
 		RouteRegister:        ng.RouteRegister,
-		ExpressionService:    ng.ExpressionService,
 		Schedule:             ng.schedule,
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
@@ -233,6 +233,7 @@ func (ng *AlertNG) init() error {
 		MuteTimings:          muteTimingService,
 		AlertRules:           alertRuleService,
 		AlertsRouter:         alertsRouter,
+		EvaluatorFactory:     evalFactory,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
