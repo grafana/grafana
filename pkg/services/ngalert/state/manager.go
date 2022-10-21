@@ -72,7 +72,7 @@ func (st *Manager) Warm(ctx context.Context) {
 
 	orgIds, err := st.instanceStore.FetchOrgIds(ctx)
 	if err != nil {
-		st.log.Error("unable to fetch orgIds", "err", err.Error())
+		st.log.Error("unable to fetch orgIds", "error", err.Error())
 	}
 
 	statesCount := 0
@@ -259,7 +259,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 			"alert_rule", alertRule.UID,
 			"dashboard", alertRule.DashboardUID,
 			"panel", alertRule.PanelID,
-			"err", err)
+			"error", err)
 	}
 
 	st.cache.set(currentState)
@@ -321,7 +321,7 @@ func (st *Manager) saveAlertStates(ctx context.Context, states ...*State) (saved
 		_, hash, err := labels.StringAndHash()
 		if err != nil {
 			debug = append(debug, debugInfo{s.OrgID, s.AlertRuleUID, s.State.String(), s.Labels.String()})
-			st.log.Error("failed to save alert instance with invalid labels", "orgID", s.OrgID, "ruleUID", s.AlertRuleUID, "err", err)
+			st.log.Error("failed to save alert instance with invalid labels", "orgID", s.OrgID, "ruleUID", s.AlertRuleUID, "error", err)
 			continue
 		}
 		fields := ngModels.AlertInstance{
@@ -344,7 +344,7 @@ func (st *Manager) saveAlertStates(ctx context.Context, states ...*State) (saved
 		for _, inst := range instances {
 			debug = append(debug, debugInfo{inst.RuleOrgID, inst.RuleUID, string(inst.CurrentState), data.Labels(inst.Labels).String()})
 		}
-		st.log.Error("failed to save alert states", "states", debug, "err", err)
+		st.log.Error("failed to save alert states", "states", debug, "error", err)
 		return 0, len(debug)
 	}
 
@@ -390,7 +390,7 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 			ilbs := ngModels.InstanceLabels(s.Labels)
 			_, labelsHash, err := ilbs.StringAndHash()
 			if err != nil {
-				st.log.Error("unable to get labelsHash", "err", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID)
+				st.log.Error("unable to get labelsHash", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID)
 			}
 
 			toDelete = append(toDelete, ngModels.AlertInstanceKey{RuleOrgID: s.OrgID, RuleUID: s.AlertRuleUID, LabelsHash: labelsHash})
@@ -411,7 +411,7 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 	}
 
 	if err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...); err != nil {
-		st.log.Error("unable to delete stale instances from database", "err", err.Error(),
+		st.log.Error("unable to delete stale instances from database", "error", err.Error(),
 			"orgID", alertRule.OrgID, "alertRuleUID", alertRule.UID, "count", len(toDelete))
 	}
 	return resolvedStates

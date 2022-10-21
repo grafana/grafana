@@ -53,6 +53,7 @@ type Mock struct {
 // Ensure the mock stays in line with the interface
 var _ fullAccessControl = New()
 
+// Deprecated: use fake service and real access control evaluator instead
 func New() *Mock {
 	mock := &Mock{
 		Calls:          Calls{},

@@ -47,8 +47,8 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
       return monaco.languages.CompletionItemKind.Class;
     case 'LINE_FILTER':
       return monaco.languages.CompletionItemKind.TypeParameter;
-    case 'LINE_FORMAT':
-      return monaco.languages.CompletionItemKind.Event;
+    case 'PIPE_OPERATION':
+      return monaco.languages.CompletionItemKind.Interface;
     default:
       throw new NeverCaseError(type);
   }

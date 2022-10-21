@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 func exportSystemShortURL(helper *commitHelper, job *gitExportJob) error {
@@ -13,7 +13,7 @@ func exportSystemShortURL(helper *commitHelper, job *gitExportJob) error {
 	lastSeen := make(map[string]int64, 50)
 	dir := filepath.Join(helper.orgDir, "system", "short_url")
 
-	err := job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+	err := job.sql.WithDbSession(helper.ctx, func(sess *db.Session) error {
 		type urlResult struct {
 			UID        string    `xorm:"uid" json:"-"`
 			Path       string    `xorm:"path" json:"path"`

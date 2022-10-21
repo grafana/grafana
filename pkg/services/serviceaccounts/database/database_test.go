@@ -5,6 +5,10 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
@@ -15,8 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // Service Account should not create an org on its own
@@ -109,7 +111,7 @@ func TestStore_DeleteServiceAccount(t *testing.T) {
 
 func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreImpl) {
 	t.Helper()
-	db := sqlstore.InitTestDB(t)
+	db := db.InitTestDB(t)
 	apiKeyService := apikeyimpl.ProvideService(db, db.Cfg)
 	kvStore := kvstore.ProvideService(db)
 	orgService := orgimpl.ProvideService(db, setting.NewCfg())

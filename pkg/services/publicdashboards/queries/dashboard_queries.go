@@ -46,17 +46,19 @@ func GroupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.J
 		for _, queryObj := range panel.Get("targets").MustArray() {
 			query := simplejson.NewFromAny(queryObj)
 
-			// We dont support exemplars for public dashboards currently
-			query.Del("exemplar")
+			if hideAttr, exists := query.CheckGet("hide"); !exists || !hideAttr.MustBool() {
+				// We dont support exemplars for public dashboards currently
+				query.Del("exemplar")
 
-			// if query target has no datasource, set it to have the datasource on the panel
-			if _, ok := query.CheckGet("datasource"); !ok {
-				uid := GetDataSourceUidFromJson(panel)
-				datasource := map[string]interface{}{"type": "public-ds", "uid": uid}
-				query.Set("datasource", datasource)
+				// if query target has no datasource, set it to have the datasource on the panel
+				if _, ok := query.CheckGet("datasource"); !ok {
+					uid := GetDataSourceUidFromJson(panel)
+					datasource := map[string]interface{}{"type": "public-ds", "uid": uid}
+					query.Set("datasource", datasource)
+				}
+
+				panelQueries = append(panelQueries, query)
 			}
-
-			panelQueries = append(panelQueries, query)
 		}
 
 		result[panel.Get("id").MustInt64()] = panelQueries
