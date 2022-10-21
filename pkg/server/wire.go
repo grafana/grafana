@@ -392,7 +392,7 @@ var wireSet = wire.NewSet(
 var wireTestSet = wire.NewSet(
 	wireBasicSet,
 	ProvideTestEnv,
-	sqlstore.ProvideServiceForTests,
+	sqlstore.ProvideService,
 	ngmetrics.ProvideServiceForTest,
 
 	notifications.MockNotificationService,
