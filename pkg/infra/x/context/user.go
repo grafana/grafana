@@ -21,7 +21,7 @@ func ContextWithUser(ctx context.Context, data *user.SignedInUser) context.Conte
 // UserFromContext ** Experimental **
 func UserFromContext(ctx context.Context) *user.SignedInUser {
 	grpcCtx := grpccontext.FromContext(ctx)
-	if grpcCtx != nil {
+	if grpcCtx != nil && grpcCtx.SignedInUser != nil {
 		return grpcCtx.SignedInUser
 	}
 

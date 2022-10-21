@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -25,22 +27,26 @@ type Authenticator interface {
 
 // authenticator can authenticate GRPC requests.
 type authenticator struct {
+	cfg            *setting.Cfg
 	contextHandler grpccontext.ContextHandler
 	logger         log.Logger
 
 	UserService          user.Service
 	AccessControlService accesscontrol.Service
 	PluginAuthService    jwt.PluginAuthService
+	OrgService           org.Service
 }
 
-func ProvideAuthenticator(apiKeyService apikey.Service, userService user.Service, accessControlService accesscontrol.Service, contextHandler grpccontext.ContextHandler, pluginAuthService jwt.PluginAuthService) Authenticator {
+func ProvideAuthenticator(cfg *setting.Cfg, apiKeyService apikey.Service, orgService org.Service, userService user.Service, accessControlService accesscontrol.Service, contextHandler grpccontext.ContextHandler, pluginAuthService jwt.PluginAuthService) Authenticator {
 	return &authenticator{
+		cfg:            cfg,
 		contextHandler: contextHandler,
 		logger:         log.New("grpc-server-authenticator"),
 
 		AccessControlService: accessControlService,
 		UserService:          userService,
 		PluginAuthService:    pluginAuthService,
+		OrgService:           orgService,
 	}
 }
 
@@ -96,6 +102,10 @@ func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*use
 		return nil, status.Error(codes.Unauthenticated, "invalid subject claim")
 	}
 
+	if userInfo.UserID == 0 {
+		return a.getAnonymousUser(ctx)
+	}
+
 	querySignedInUser := user.GetSignedInUserQuery{UserID: userInfo.UserID, OrgID: userInfo.OrgID}
 	signedInUser, err := a.UserService.GetSignedInUser(ctx, &querySignedInUser)
 	if err != nil {
@@ -123,6 +133,22 @@ func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*use
 	}
 
 	return signedInUser, nil
+}
+
+func (a *authenticator) getAnonymousUser(ctx context.Context) (*user.SignedInUser, error) {
+	getOrg := org.GetOrgByNameQuery{Name: a.cfg.AnonymousOrgName}
+	orga, err := a.OrgService.GetByName(ctx, &getOrg)
+	if err != nil {
+		a.logger.Error("Anonymous access organization error.", "org_name", a.cfg.AnonymousOrgName, "error", err)
+		return nil, err
+	}
+
+	return &user.SignedInUser{
+		OrgID:       orga.ID,
+		OrgName:     orga.Name,
+		OrgRole:     org.RoleType(a.cfg.AnonymousOrgRole),
+		IsAnonymous: true,
+	}, nil
 }
 
 func extractAuthorization(ctx context.Context) (string, error) {
