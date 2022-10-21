@@ -7,6 +7,8 @@ import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardModel } from 'app/features/dashboard/state';
 
+import { ListPublicDashboardResponse } from '../../manage-dashboards/types';
+
 const backendSrvBaseQuery =
   ({ baseUrl }: { baseUrl: string } = { baseUrl: '' }): BaseQueryFn<BackendSrvRequest> =>
   async (requestOptions) => {
@@ -23,7 +25,7 @@ const backendSrvBaseQuery =
 export const publicDashboardApi = createApi({
   reducerPath: 'publicDashboardApi',
   baseQuery: retry(backendSrvBaseQuery({ baseUrl: '/api/dashboards' }), { maxRetries: 3 }),
-  tagTypes: ['Config'],
+  tagTypes: ['Config', 'PublicDashboards'],
   keepUnusedDataFor: 0,
   endpoints: (builder) => ({
     getConfig: builder.query<PublicDashboard, string>({
@@ -51,18 +53,18 @@ export const publicDashboardApi = createApi({
       },
       invalidatesTags: ['Config'],
     }),
-    getPublicDashboards: builder.query<PublicDashboard[], string>({
-      query: (dashboardUid) => ({
-        url: `/uid/${dashboardUid}/public-config`,
+    getPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
+      query: () => ({
+        url: '/public',
       }),
-      providesTags: ['Config'],
+      providesTags: ['PublicDashboards'],
     }),
     deletePublicDashboard: builder.mutation<
       void,
       { dashboardTitle: string; dashboardUid: string; accessToken: string }
     >({
       query: (params) => ({
-        url: `/public/${params.accessToken}/uid/${params.accessToken}`,
+        url: `/public/${params.accessToken}/uid/${params.dashboardUid}`,
         method: 'DELETE',
       }),
       async onQueryStarted({ dashboardTitle }, { dispatch, queryFulfilled }) {
@@ -71,13 +73,21 @@ export const publicDashboardApi = createApi({
           notifyApp(
             createSuccessNotification(
               'Public dashboard deleted',
-              `Public dashboard for ${dashboardTitle} has been deleted`
+              !!dashboardTitle
+                ? `Public dashboard for ${dashboardTitle} has been deleted`
+                : `Public dashboard has been deleted`
             )
           )
         );
       },
+      invalidatesTags: ['PublicDashboards'],
     }),
   }),
 });
 
-export const { useGetConfigQuery, useSaveConfigMutation, useDeletePublicDashboardMutation } = publicDashboardApi;
+export const {
+  useGetConfigQuery,
+  useSaveConfigMutation,
+  useDeletePublicDashboardMutation,
+  useGetPublicDashboardsQuery,
+} = publicDashboardApi;

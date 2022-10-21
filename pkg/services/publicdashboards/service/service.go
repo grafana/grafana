@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"errors"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
+	"github.com/grafana/grafana/pkg/util"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -402,11 +404,10 @@ func (pd *PublicDashboardServiceImpl) ListPublicDashboards(ctx context.Context, 
 }
 
 func (pd *PublicDashboardServiceImpl) DeletePublicDashboard(ctx context.Context, dashboardUid string, accessToken string) error {
-	if dashboardUid == "" {
+	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
 		return dashboards.ErrDashboardIdentifierNotSet
 	}
-
-	if accessToken == "" {
+	if accessToken == "" || !tokens.IsValidAccessToken(accessToken) {
 		return ErrPublicDashboardIdentifierNotSet
 	}
 

@@ -1,17 +1,10 @@
 import {
-  LIST_PUBLIC_DASHBOARD_URL,
   viewPublicDashboardUrl,
   //ListPublicDashboardTable,
 } from './PublicDashboardListTable';
 
 //import { render, screen, waitFor, act } from '@testing-library/react';
 //import React from 'react';
-
-describe('listPublicDashboardsUrl', () => {
-  it('has the correct url', () => {
-    expect(LIST_PUBLIC_DASHBOARD_URL).toEqual('/api/dashboards/public');
-  });
-});
 
 describe('viewPublicDashboardUrl', () => {
   it('has the correct url', () => {
