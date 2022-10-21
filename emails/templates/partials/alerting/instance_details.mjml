@@ -49,7 +49,7 @@
     </mj-text>
     <mj-text line-height="1.5">
       <mj-raw>
-        {{ range $line := (regexSplit "\n" .Annotations.description -1) }}
+        {{ range $line := (splitList "\n" .Annotations.description) }}
       </mj-raw>
       {{ $line }}<br />
       <mj-raw>
