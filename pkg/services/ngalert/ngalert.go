@@ -182,12 +182,12 @@ func (ng *AlertNG) init() error {
 
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
 	schedCfg := schedule.SchedulerCfg{
-		Cfg:         ng.Cfg.UnifiedAlerting,
-		C:           clk,
-		Evaluator:   evalFactory,
-		RuleStore:   store,
-		Metrics:     ng.Metrics.GetSchedulerMetrics(),
-		AlertSender: alertsRouter,
+		Cfg:              ng.Cfg.UnifiedAlerting,
+		C:                clk,
+		EvaluatorFactory: evalFactory,
+		RuleStore:        store,
+		Metrics:          ng.Metrics.GetSchedulerMetrics(),
+		AlertSender:      alertsRouter,
 	}
 
 	historian := historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService)

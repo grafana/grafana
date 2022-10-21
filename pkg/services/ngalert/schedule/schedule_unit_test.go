@@ -516,12 +516,12 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	}
 
 	schedCfg := SchedulerCfg{
-		Cfg:         cfg,
-		C:           mockedClock,
-		Evaluator:   evaluator,
-		RuleStore:   rs,
-		Metrics:     m.GetSchedulerMetrics(),
-		AlertSender: senderMock,
+		Cfg:              cfg,
+		C:                mockedClock,
+		EvaluatorFactory: evaluator,
+		RuleStore:        rs,
+		Metrics:          m.GetSchedulerMetrics(),
+		AlertSender:      senderMock,
 	}
 
 	stateRs := state.FakeRuleReader{}
