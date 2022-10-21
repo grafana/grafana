@@ -880,7 +880,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Secure:       true,
 				},
 				{ // New in 9.3
-					Label:        "Text",
+					Label:        "Title",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
 					Description:  "Templated title of the message",
@@ -888,7 +888,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  channels.DefaultMessageTitleEmbed,
 				},
 				{ // New in 9.3
-					Label:        "Text",
+					Label:        "Description",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
 					Description:  "Templated description of the message",
