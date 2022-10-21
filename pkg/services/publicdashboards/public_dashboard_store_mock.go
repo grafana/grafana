@@ -105,7 +105,7 @@ func (_m *FakePublicDashboardStore) GetDashboard(ctx context.Context, dashboardU
 }
 
 // GetPublicDashboard provides a mock function with given fields: ctx, accessToken
-func (_m *FakePublicDashboardStore) GetPublicDashboard(ctx context.Context, accessToken string) (*publicdashboardsmodels.PublicDashboard, *models.Dashboard, error) {
+func (_m *FakePublicDashboardStore) GetPublicDashboardAndDashboard(ctx context.Context, accessToken string) (*publicdashboardsmodels.PublicDashboard, *models.Dashboard, error) {
 	ret := _m.Called(ctx, accessToken)
 
 	var r0 *publicdashboardsmodels.PublicDashboard
@@ -159,8 +159,8 @@ func (_m *FakePublicDashboardStore) GetPublicDashboardByUid(ctx context.Context,
 	return r0, r1
 }
 
-// GetPublicDashboardConfig provides a mock function with given fields: ctx, orgId, dashboardUid
-func (_m *FakePublicDashboardStore) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*publicdashboardsmodels.PublicDashboard, error) {
+// GetPublicDashboard provides a mock function with given fields: ctx, orgId, dashboardUid
+func (_m *FakePublicDashboardStore) GetPublicDashboard(ctx context.Context, orgId int64, dashboardUid string) (*publicdashboardsmodels.PublicDashboard, error) {
 	ret := _m.Called(ctx, orgId, dashboardUid)
 
 	var r0 *publicdashboardsmodels.PublicDashboard
@@ -226,7 +226,7 @@ func (_m *FakePublicDashboardStore) ListPublicDashboards(ctx context.Context, or
 	return r0, r1
 }
 
-// PublicDashboardEnabled provides a mock function with given fields: ctx, dashboardUid
+// PublicDashboardIsEnabled provides a mock function with given fields: ctx, dashboardUid
 func (_m *FakePublicDashboardStore) PublicDashboardEnabledExistsByDashboardUid(ctx context.Context, dashboardUid string) (bool, error) {
 	ret := _m.Called(ctx, dashboardUid)
 
@@ -247,8 +247,8 @@ func (_m *FakePublicDashboardStore) PublicDashboardEnabledExistsByDashboardUid(c
 	return r0, r1
 }
 
-// SavePublicDashboardConfig provides a mock function with given fields: ctx, cmd
-func (_m *FakePublicDashboardStore) SavePublicDashboardConfig(ctx context.Context, cmd publicdashboardsmodels.SavePublicDashboardConfigCommand) error {
+// SavePublicDashboard provides a mock function with given fields: ctx, cmd
+func (_m *FakePublicDashboardStore) SavePublicDashboard(ctx context.Context, cmd publicdashboardsmodels.SavePublicDashboardConfigCommand) error {
 	ret := _m.Called(ctx, cmd)
 
 	var r0 error
@@ -262,7 +262,7 @@ func (_m *FakePublicDashboardStore) SavePublicDashboardConfig(ctx context.Contex
 }
 
 // UpdatePublicDashboardConfig provides a mock function with given fields: ctx, cmd
-func (_m *FakePublicDashboardStore) UpdatePublicDashboardConfig(ctx context.Context, cmd publicdashboardsmodels.SavePublicDashboardConfigCommand) error {
+func (_m *FakePublicDashboardStore) UpdatePublicDashboard(ctx context.Context, cmd publicdashboardsmodels.SavePublicDashboardConfigCommand) error {
 	ret := _m.Called(ctx, cmd)
 
 	var r0 error

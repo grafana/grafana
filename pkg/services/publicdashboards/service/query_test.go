@@ -399,7 +399,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 				TimeSettings: timeSettings,
 			},
 		}
-		pubdashDto, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		pubdashDto, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		resp, _ := service.GetQueryDataResponse(context.Background(), true, publicDashboardQueryDTO, 1, pubdashDto.AccessToken)
@@ -419,7 +419,7 @@ func TestGetAnnotations(t *testing.T) {
 			store:           &fakeStore,
 			AnnotationsRepo: annotationsRepo,
 		}
-		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
+		fakeStore.On("GetPublicDashboardAndDashboard", mock.Anything, mock.AnythingOfType("string")).
 			Return(&PublicDashboard{Uid: "uid1", IsEnabled: true}, grafanamodels.NewDashboard("dash1"), nil)
 		reqDTO := AnnotationsQueryDTO{
 			From: 1,
@@ -474,7 +474,7 @@ func TestGetAnnotations(t *testing.T) {
 			AnnotationsRepo: &annotationsRepo,
 		}
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
-		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+		fakeStore.On("GetPublicDashboardAndDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
 				Id:          1,
@@ -533,7 +533,7 @@ func TestGetAnnotations(t *testing.T) {
 			AnnotationsRepo: &annotationsRepo,
 		}
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
-		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+		fakeStore.On("GetPublicDashboardAndDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
 				Id:          1,
@@ -604,7 +604,7 @@ func TestGetAnnotations(t *testing.T) {
 			AnnotationsRepo: &annotationsRepo,
 		}
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
-		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+		fakeStore.On("GetPublicDashboardAndDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
 				Id:          1,
@@ -646,7 +646,7 @@ func TestGetAnnotations(t *testing.T) {
 		}
 		dashboard := grafanamodels.NewDashboard("dashWithNoAnnotations")
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
-		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+		fakeStore.On("GetPublicDashboardAndDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
 
 		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
@@ -680,7 +680,7 @@ func TestGetAnnotations(t *testing.T) {
 		annos := []DashAnnotation{grafanaAnnotation}
 		dash = AddAnnotationsToDashboard(t, dash, annos)
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dash.Uid}
-		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dash, nil)
+		fakeStore.On("GetPublicDashboardAndDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dash, nil)
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return(nil, errors.New("failed")).Maybe()
 
 		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
@@ -794,7 +794,7 @@ func TestBuildMetricRequest(t *testing.T) {
 		},
 	}
 
-	publicDashboardPD, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+	publicDashboardPD, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 	require.NoError(t, err)
 
 	nonPublicDto := &SavePublicDashboardConfigDTO{
@@ -808,7 +808,7 @@ func TestBuildMetricRequest(t *testing.T) {
 		},
 	}
 
-	_, err = service.SavePublicDashboardConfig(context.Background(), SignedInUser, nonPublicDto)
+	_, err = service.SavePublicDashboard(context.Background(), SignedInUser, nonPublicDto)
 	require.NoError(t, err)
 
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {

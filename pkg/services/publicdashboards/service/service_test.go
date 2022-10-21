@@ -98,10 +98,10 @@ func TestGetPublicDashboard(t *testing.T) {
 				store: &fakeStore,
 			}
 
-			fakeStore.On("GetPublicDashboard", mock.Anything, mock.Anything).
+			fakeStore.On("GetPublicDashboardAndDashboard", mock.Anything, mock.Anything).
 				Return(test.StoreResp.pd, test.StoreResp.d, test.StoreResp.err)
 
-			pdc, dash, err := service.GetPublicDashboard(context.Background(), test.AccessToken)
+			pdc, dash, err := service.GetPublicDashboardAndDashboard(context.Background(), test.AccessToken)
 			if test.ErrResp != nil {
 				assert.Error(t, test.ErrResp, err)
 			} else {
@@ -142,10 +142,10 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		_, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		pubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		pubdash, err := service.GetPublicDashboard(context.Background(), dashboard.OrgId, dashboard.Uid)
 		require.NoError(t, err)
 
 		// DashboardUid/OrgId/CreatedBy set by the command, not parameters
@@ -185,10 +185,10 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		_, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		pubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		pubdash, err := service.GetPublicDashboard(context.Background(), dashboard.OrgId, dashboard.Uid)
 		require.NoError(t, err)
 		assert.Equal(t, defaultPubdashTimeSettings, pubdash.TimeSettings)
 	})
@@ -216,7 +216,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		_, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 		require.Error(t, err)
 	})
 
@@ -245,11 +245,11 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		_, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 
 		require.Error(t, err)
 		require.Equal(t, err, ErrPublicDashboardFailedGenerateAccessToken)
-		publicDashboardStore.AssertNotCalled(t, "SavePublicDashboardConfig")
+		publicDashboardStore.AssertNotCalled(t, "SavePublicDashboard")
 	})
 }
 
@@ -275,7 +275,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		savedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		savedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
@@ -297,8 +297,8 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		}
 
 		// Since the dto.PublicDashboard has a uid, this will call
-		// service.updatePublicDashboardConfig
-		updatedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		// service.updatePublicDashboard
+		updatedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// don't get updated
@@ -337,8 +337,8 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		}
 
 		// Since the dto.PublicDashboard has a uid, this will call
-		// service.updatePublicDashboardConfig
-		savedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		// service.updatePublicDashboard
+		savedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
@@ -358,7 +358,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		updatedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		updatedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		assert.Equal(t, &TimeSettings{}, updatedPubdash.TimeSettings)
