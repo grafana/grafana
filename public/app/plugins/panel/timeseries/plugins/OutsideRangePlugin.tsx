@@ -37,7 +37,7 @@ export const OutsideRangePlugin: React.FC<ThresholdControlsPluginProps> = ({ con
   let i = 0,
     j = timevalues.length - 1;
 
-  while (i < timevalues.length && timevalues[i] == null) {
+  while (i <= j && timevalues[i] == null) {
     i++;
   }
 
