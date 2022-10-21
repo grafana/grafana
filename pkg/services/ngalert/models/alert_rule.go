@@ -459,13 +459,13 @@ func (g RulesGroup) SortByGroupIndex() {
 	})
 }
 
-const RuleKeyContextKey = "alerting_rule_key"
+type ruleKeyContextKey struct{}
 
 func WithRuleKey(ctx context.Context, ruleKey AlertRuleKey) context.Context {
-	return context.WithValue(ctx, RuleKeyContextKey, ruleKey)
+	return context.WithValue(ctx, ruleKeyContextKey{}, ruleKey)
 }
 
 func RuleKeyFromContext(ctx context.Context) (AlertRuleKey, bool) {
-	key, ok := ctx.Value(RuleKeyContextKey).(AlertRuleKey)
+	key, ok := ctx.Value(ruleKeyContextKey{}).(AlertRuleKey)
 	return key, ok
 }
