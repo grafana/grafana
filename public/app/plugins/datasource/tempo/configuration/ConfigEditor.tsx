@@ -9,6 +9,7 @@ import { TraceToLogsSettings } from 'app/core/components/TraceToLogs/TraceToLogs
 import { TraceToMetricsSettings } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 
 import { LokiSearchSettings } from './LokiSearchSettings';
+import { QuerySettings } from './QuerySettings';
 import { SearchSettings } from './SearchSettings';
 import { ServiceGraphSettings } from './ServiceGraphSettings';
 
@@ -48,6 +49,10 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
 
       <div className="gf-form-group">
         <LokiSearchSettings options={options} onOptionsChange={onOptionsChange} />
+      </div>
+
+      <div className="gf-form-group">
+        <QuerySettings options={options} onOptionsChange={onOptionsChange} />
       </div>
 
       <div className="gf-form-group">
