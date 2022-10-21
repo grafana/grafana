@@ -150,7 +150,8 @@ class LegendSeriesLabel extends PureComponent<LegendSeriesLabelProps & LegendSer
         onColorChange={onColorChange}
         onToggleAxis={onToggleAxis}
       />,
-      <a
+      <button
+        type="button"
         className="graph-legend-alias pointer"
         title={label}
         key="label"
@@ -158,7 +159,7 @@ class LegendSeriesLabel extends PureComponent<LegendSeriesLabelProps & LegendSer
         aria-label={selectors.components.Panels.Visualization.Graph.Legend.legendItemAlias(label)}
       >
         {label}
-      </a>,
+      </button>,
     ];
   }
 }
