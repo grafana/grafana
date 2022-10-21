@@ -222,7 +222,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
           centeredZero: customConfig.axisCenteredZero,
-          range: customConfig.stacking?.mode === StackingMode.Percent ? [0, 1] : undefined,
+          range:
+            customConfig.stacking?.mode === StackingMode.Percent
+              ? (u: uPlot, dataMin: number, dataMax: number) => {
+                  dataMin = dataMin < 0 ? -1 : 0;
+                  dataMax = dataMax > 0 ? 1 : 0;
+                  return [dataMin, dataMax];
+                }
+              : undefined,
           decimals: field.config.decimals,
         },
         field
