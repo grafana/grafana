@@ -10,11 +10,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
 // To run this test, set runMySqlTests=true
@@ -33,7 +34,7 @@ func TestIntegrationMySQL(t *testing.T) {
 	runMySQLTests := false
 	// runMySqlTests := true
 
-	if !(sqlstore.IsTestDbMySQL() || runMySQLTests) {
+	if !(db.IsTestDbMySQL() || runMySQLTests) {
 		t.Skip()
 	}
 

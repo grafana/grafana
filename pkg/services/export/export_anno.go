@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	jsoniter "github.com/json-iterator/go"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 func exportAnnotations(helper *commitHelper, job *gitExportJob) error {
-	return job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+	return job.sql.WithDbSession(helper.ctx, func(sess *db.Session) error {
 		type annoResult struct {
 			ID          int64  `xorm:"id"`
 			DashboardID int64  `xorm:"dashboard_id"`
