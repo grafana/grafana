@@ -2,6 +2,7 @@ package channels
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"path"
 	"sort"
@@ -18,19 +19,20 @@ import (
 )
 
 type ExtendedAlert struct {
-	Status        string      `json:"status"`
-	Labels        template.KV `json:"labels"`
-	Annotations   template.KV `json:"annotations"`
-	StartsAt      time.Time   `json:"startsAt"`
-	EndsAt        time.Time   `json:"endsAt"`
-	GeneratorURL  string      `json:"generatorURL"`
-	Fingerprint   string      `json:"fingerprint"`
-	SilenceURL    string      `json:"silenceURL"`
-	DashboardURL  string      `json:"dashboardURL"`
-	PanelURL      string      `json:"panelURL"`
-	ValueString   string      `json:"valueString"`
-	ImageURL      string      `json:"imageURL,omitempty"`
-	EmbeddedImage string      `json:"embeddedImage,omitempty"`
+	Status        string             `json:"status"`
+	Labels        template.KV        `json:"labels"`
+	Annotations   template.KV        `json:"annotations"`
+	StartsAt      time.Time          `json:"startsAt"`
+	EndsAt        time.Time          `json:"endsAt"`
+	GeneratorURL  string             `json:"generatorURL"`
+	Fingerprint   string             `json:"fingerprint"`
+	SilenceURL    string             `json:"silenceURL"`
+	DashboardURL  string             `json:"dashboardURL"`
+	PanelURL      string             `json:"panelURL"`
+	Values        map[string]float64 `json:"values"`
+	ValueString   string             `json:"valueString"` // TODO: Remove in Grafana 10
+	ImageURL      string             `json:"imageURL,omitempty"`
+	EmbeddedImage string             `json:"embeddedImage,omitempty"`
 }
 
 type ExtendedAlerts []ExtendedAlert
@@ -74,7 +76,7 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 	}
 	u, err := url.Parse(externalURL)
 	if err != nil {
-		logger.Debug("failed to parse external URL while extending template data", "url", externalURL, "err", err.Error())
+		logger.Debug("failed to parse external URL while extending template data", "url", externalURL, "error", err.Error())
 		return extended
 	}
 	externalPath := u.Path
@@ -90,7 +92,13 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 	}
 
 	if alert.Annotations != nil {
-		extended.ValueString = alert.Annotations[`__value_string__`]
+		if s, ok := alert.Annotations[ngmodels.ValuesAnnotation]; ok {
+			if err := json.Unmarshal([]byte(s), &extended.Values); err != nil {
+				logger.Warn("failed to unmarshal values annotation", "error", err)
+			}
+		}
+		// TODO: Remove in Grafana 10
+		extended.ValueString = alert.Annotations[ngmodels.ValueStringAnnotation]
 	}
 
 	matchers := make([]string, 0)

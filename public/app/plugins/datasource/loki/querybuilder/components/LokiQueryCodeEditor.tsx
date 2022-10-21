@@ -37,8 +37,8 @@ export function LokiQueryCodeEditor({ query, datasource, range, onRunQuery, onCh
         onBlur={onBlur}
         history={[]}
         data={data}
-        data-testid={testIds.editor}
         app={app}
+        data-testid={testIds.editor}
       />
       {showExplain && <LokiQueryBuilderExplained query={query.expr} />}
     </div>

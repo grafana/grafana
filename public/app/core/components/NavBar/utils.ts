@@ -1,8 +1,8 @@
 import { Location } from 'history';
 
 import { locationUtil, NavModelItem, NavSection } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { getConfig } from 'app/core/config';
+import { config, reportInteraction } from '@grafana/runtime';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ShowModalReactEvent } from '../../../types/events';
@@ -16,13 +16,6 @@ export const NAV_MENU_PORTAL_CONTAINER_ID = 'navbar-menu-portal-container';
 
 export const getNavMenuPortalContainer = () => document.getElementById(NAV_MENU_PORTAL_CONTAINER_ID) ?? document.body;
 
-export const getForcedLoginUrl = (url: string) => {
-  const queryParams = new URLSearchParams(url.split('?')[1]);
-  queryParams.append('forceLogin', 'true');
-
-  return `${getConfig().appSubUrl}${url.split('?')[0]}?${queryParams.toString()}`;
-};
-
 export const enrichConfigItems = (items: NavModelItem[], location: Location<unknown>) => {
   const { isSignedIn, user } = contextSrv;
   const onOpenShortcuts = () => {
@@ -33,7 +26,7 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
     appEvents.publish(new ShowModalReactEvent({ component: OrgSwitcher }));
   };
 
-  if (user && user.orgCount > 1) {
+  if (!config.featureToggles.topnav && user && user.orgCount > 1) {
     const profileNode = items.find((bottomNavItem) => bottomNavItem.id === 'profile');
     if (profileNode) {
       profileNode.showOrgSwitcher = true;
@@ -41,16 +34,16 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
     }
   }
 
-  if (!isSignedIn) {
-    const forcedLoginUrl = getForcedLoginUrl(location.pathname + location.search);
+  if (!isSignedIn && !config.featureToggles.topnav) {
+    const loginUrl = locationUtil.getUrlForPartial(location, { forceLogin: 'true' });
 
     items.unshift({
       icon: 'signout',
-      id: 'signin',
+      id: 'sign-in',
       section: NavSection.Config,
       target: '_self',
-      text: 'Sign in',
-      url: forcedLoginUrl,
+      text: t('nav.sign-in', 'Sign in'),
+      url: loginUrl,
     });
   }
 
@@ -62,19 +55,19 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
         ...getFooterLinks(),
         {
           id: 'keyboard-shortcuts',
-          text: 'Keyboard shortcuts',
+          text: t('nav.help/keyboard-shortcuts', 'Keyboard shortcuts'),
           icon: 'keyboard',
           onClick: onOpenShortcuts,
         },
       ];
     }
 
-    if (link.showOrgSwitcher) {
+    if (!config.featureToggles.topnav && link.showOrgSwitcher) {
       link.children = [
         ...menuItems,
         {
           id: 'switch-organization',
-          text: 'Switch organization',
+          text: t('nav.profile/switch-org', 'Switch organization'),
           icon: 'arrow-random',
           onClick: onOpenOrgSwitcher,
         },

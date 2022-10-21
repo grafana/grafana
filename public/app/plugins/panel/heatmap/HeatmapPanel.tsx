@@ -138,7 +138,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, data.structureRev]);
+  }, [options, timeZone, data.structureRev]);
 
   const renderLegend = () => {
     if (!info.heatmap || !options.legend.show) {

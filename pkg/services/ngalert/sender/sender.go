@@ -42,8 +42,8 @@ type ExternalAlertmanager struct {
 	sdManager *discovery.Manager
 }
 
-func NewExternalAlertmanagerSender() (*ExternalAlertmanager, error) {
-	l := log.New("sender")
+func NewExternalAlertmanagerSender() *ExternalAlertmanager {
+	l := log.New("ngalert.sender.external-alertmanager")
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &ExternalAlertmanager{
 		logger:   l,
@@ -59,7 +59,7 @@ func NewExternalAlertmanagerSender() (*ExternalAlertmanager, error) {
 
 	s.sdManager = discovery.NewManager(sdCtx, s.logger)
 
-	return s, nil
+	return s
 }
 
 // ApplyConfig syncs a configuration with the sender.
@@ -69,6 +69,9 @@ func (s *ExternalAlertmanager) ApplyConfig(cfg *ngmodels.AdminConfiguration) err
 		return err
 	}
 
+	s.logger = s.logger.New("org", cfg.OrgID, "cfg", cfg.ID)
+
+	s.logger.Info("Synchronizing config with external Alertmanager group")
 	if err := s.manager.ApplyConfig(notifierCfg); err != nil {
 		return err
 	}
@@ -85,8 +88,10 @@ func (s *ExternalAlertmanager) Run() {
 	s.wg.Add(2)
 
 	go func() {
+		s.logger.Info("Initiating communication with a group of external Alertmanagers")
+
 		if err := s.sdManager.Run(); err != nil {
-			s.logger.Error("failed to start the sender service discovery manager", "err", err)
+			s.logger.Error("Failed to start the sender service discovery manager", "error", err)
 		}
 		s.wg.Done()
 	}()
@@ -100,7 +105,6 @@ func (s *ExternalAlertmanager) Run() {
 // SendAlerts sends a set of alerts to the configured Alertmanager(s).
 func (s *ExternalAlertmanager) SendAlerts(alerts apimodels.PostableAlerts) {
 	if len(alerts.PostableAlerts) == 0 {
-		s.logger.Debug("no alerts to send to external Alertmanager(s)")
 		return
 	}
 	as := make([]*notifier.Alert, 0, len(alerts.PostableAlerts))
@@ -109,12 +113,12 @@ func (s *ExternalAlertmanager) SendAlerts(alerts apimodels.PostableAlerts) {
 		as = append(as, na)
 	}
 
-	s.logger.Debug("sending alerts to the external Alertmanager(s)", "am_count", len(s.manager.Alertmanagers()), "alert_count", len(as))
 	s.manager.Send(as...)
 }
 
 // Stop shuts down the sender.
 func (s *ExternalAlertmanager) Stop() {
+	s.logger.Info("Shutting down communication with the external Alertmanager group")
 	s.sdCancel()
 	s.manager.Stop()
 	s.wg.Wait()
@@ -197,14 +201,14 @@ func (s *ExternalAlertmanager) sanitizeLabelSet(lbls models.LabelSet) labels.Lab
 	for _, k := range sortedKeys(lbls) {
 		sanitizedLabelName, err := s.sanitizeLabelName(k)
 		if err != nil {
-			s.logger.Error("alert sending to external Alertmanager(s) contains an invalid label/annotation name that failed to sanitize, skipping", "name", k, "err", err)
+			s.logger.Error("Alert sending to external Alertmanager(s) contains an invalid label/annotation name that failed to sanitize, skipping", "name", k, "error", err)
 			continue
 		}
 
 		// There can be label name collisions after we sanitize. We check for this and attempt to make the name unique again using a short hash of the original name.
 		if _, ok := set[sanitizedLabelName]; ok {
 			sanitizedLabelName = sanitizedLabelName + fmt.Sprintf("_%.3x", md5.Sum([]byte(k)))
-			s.logger.Warn("alert contains duplicate label/annotation name after sanitization, appending unique suffix", "name", k, "new_name", sanitizedLabelName, "err", err)
+			s.logger.Warn("Alert contains duplicate label/annotation name after sanitization, appending unique suffix", "name", k, "newName", sanitizedLabelName, "error", err)
 		}
 
 		set[sanitizedLabelName] = struct{}{}
@@ -227,7 +231,7 @@ func (s *ExternalAlertmanager) sanitizeLabelName(name string) (string, error) {
 		return name, nil
 	}
 
-	s.logger.Warn("alert sending to external Alertmanager(s) contains label/annotation name with invalid characters", "name", name)
+	s.logger.Warn("Alert sending to external Alertmanager(s) contains label/annotation name with invalid characters", "name", name)
 
 	// Remove spaces. We do this instead of replacing with underscore for backwards compatibility as this existed before the rest of this function.
 	sanitized := strings.Join(strings.Fields(name), "")

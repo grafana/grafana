@@ -114,4 +114,10 @@ export const scenarios = [
     name: 'Table Static',
     stringInput: '',
   },
+  {
+    description: '',
+    id: 'flame_graph',
+    name: 'Flame Graph',
+    stringInput: '',
+  },
 ];

@@ -127,7 +127,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 			}
 			defer func() {
 				if err := f.Close(); err != nil {
-					tn.log.Warn("failed to close image", "err", err)
+					tn.log.Warn("failed to close image", "error", err)
 				}
 			}()
 			fw, err := w.CreateFormFile("photo", image.Path)
@@ -155,7 +155,7 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 	var tmplErr error
 	defer func() {
 		if tmplErr != nil {
-			tn.log.Warn("failed to template Telegram message", "err", tmplErr)
+			tn.log.Warn("failed to template Telegram message", "error", tmplErr)
 		}
 	}()
 

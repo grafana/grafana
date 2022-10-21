@@ -9,11 +9,13 @@ import {
   TimeZone,
   DataQueryResponse,
   dateTimeFormat,
-  checkLogsError,
-  escapeUnescapedString,
   GrafanaTheme2,
+  CoreApp,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { styleMixins, withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
+
+import { checkLogsError, escapeUnescapedString } from '../utils';
 
 import { LogDetails } from './LogDetails';
 import { LogLabels } from './LogLabels';
@@ -42,6 +44,9 @@ interface Props extends Themeable2 {
   logsSortOrder?: LogsSortOrder | null;
   forceEscape?: boolean;
   showDetectedFields?: string[];
+  scrollElement?: HTMLDivElement;
+  showRowMenu?: boolean;
+  app?: CoreApp;
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -52,6 +57,7 @@ interface Props extends Themeable2 {
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
+  toggleContextIsOpen?: () => void;
 }
 
 interface State {
@@ -90,7 +96,15 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     showDetails: false,
   };
 
-  toggleContext = () => {
+  toggleContext = (method: string) => {
+    const { datasourceType, uid: logRowUid } = this.props.row;
+    reportInteraction('grafana_explore_logs_log_context_clicked', {
+      datasourceType,
+      logRowUid,
+      type: method,
+    });
+
+    this.props.toggleContextIsOpen?.();
     this.setState((state) => {
       return {
         showContext: !state.showContext,
@@ -102,6 +116,14 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     if (!this.props.enableLogDetails) {
       return;
     }
+
+    reportInteraction('grafana_explore_logs_log_details_clicked', {
+      datasourceType: this.props.row.datasourceType,
+      type: this.state.showDetails ? 'close' : 'open',
+      logRowUid: this.props.row.uid,
+      app: this.props.app,
+    });
+
     this.setState((state) => {
       return {
         showDetails: !state.showDetails,
@@ -132,6 +154,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       row,
       showDuplicates,
       showContextToggle,
+      showRowMenu,
       showLabels,
       showTime,
       showDetectedFields,
@@ -141,6 +164,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       getFieldLinks,
       forceEscape,
       onLogRowHover,
+      app,
+      scrollElement,
     } = this.props;
     const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
@@ -148,6 +173,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const { errorMessage, hasError } = checkLogsError(row);
     const logRowBackground = cx(style.logsRow, {
       [styles.errorLogRow]: hasError,
+      [style.contextBackground]: showContext,
     });
 
     const processedRow =
@@ -207,9 +233,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               context={context}
               contextIsOpen={showContext}
               showContextToggle={showContextToggle}
+              showRowMenu={showRowMenu}
               wrapLogMessage={wrapLogMessage}
               prettifyLogMessage={prettifyLogMessage}
               onToggleContext={this.toggleContext}
+              app={app}
+              scrollElement={scrollElement}
               logsSortOrder={logsSortOrder}
             />
           )}
@@ -228,6 +257,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             wrapLogMessage={wrapLogMessage}
             hasError={hasError}
             showDetectedFields={showDetectedFields}
+            app={app}
           />
         )}
       </>

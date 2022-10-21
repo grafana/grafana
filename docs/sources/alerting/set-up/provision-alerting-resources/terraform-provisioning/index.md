@@ -96,19 +96,17 @@ EOT
 }
 ```
 
-1. Enter text for your notification in the text field.
+2. Enter text for your notification in the text field.
 
 The `text` field supports [Go-style templating](https://pkg.go.dev/text/template). This enables you to manage your Grafana Alerting message templates directly in Terraform.
 
-1. Run the command ‘terraform apply’.
+3. Run the command ‘terraform apply’.
 
-1. Go to the Grafana UI and check the details of your contact point.
-
-**Note:**
+4. Go to the Grafana UI and check the details of your contact point.
 
 You cannot edit resources provisioned via Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
 
-1. Click **Test** to verify that the contact point works correctly.
+5. Click **Test** to verify that the contact point works correctly.
 
 **Note:**
 
@@ -172,17 +170,17 @@ contact_point = grafana_contact_point.my_slack_contact_point.name
 
 }
 
-1. In the mute_timings field, link a mute timing to your notification policy.
+2. In the mute_timings field, link a mute timing to your notification policy.
 
-1. Run the command ‘terraform apply’.
+3. Run the command ‘terraform apply’.
 
-1. Go to the Grafana UI and check the details of your notification policy.
+4. Go to the Grafana UI and check the details of your notification policy.
 
 **Note:**
 
 You cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
 
-1. Click **Test** to verify that the notification point is working correctly.
+5. Click **Test** to verify that the notification point is working correctly.
 
 ## Provision mute timings
 
@@ -209,16 +207,16 @@ name = "My Mute Timing"
 
 }
 
-1. Run the command ‘terraform apply’.
-1. Go to the Grafana UI and check the details of your mute timing.
-1. Reference your newly created mute timing in a notification policy using the `mute_timings` field.
+2. Run the command ‘terraform apply’.
+3. Go to the Grafana UI and check the details of your mute timing.
+4. Reference your newly created mute timing in a notification policy using the `mute_timings` field.
    This will apply your mute timing to some or all of your notifications.
 
 **Note:**
 
 You cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
 
-1. Click **Test** to verify that the mute timing is working correctly.
+5. Click **Test** to verify that the mute timing is working correctly.
 
 ## Provision alert rules
 
@@ -243,11 +241,11 @@ resource "grafana_folder" "rule_folder" {
 }
 ```
 
-1. Define an alert rule.
+2. Define an alert rule.
 
 For more information on alert rules, refer to [how to create Grafana-managed alerts](https://grafana.com/blog/2022/08/01/grafana-alerting-video-how-to-create-alerts-in-grafana-9/).
 
-1. Create a rule group containing one or more rules.
+3. Create a rule group containing one or more rules.
 
 In this example, the `grafana_rule_group` resource group is used.
 
@@ -314,7 +312,7 @@ EOT
 }
 ```
 
-1. Go to the Grafana UI and check your alert rule.
+4. Go to the Grafana UI and check your alert rule.
 
 You can see whether or not the alert rule is firing. You can also see a visualization of each of the alert rule’s query stages
 

@@ -3,37 +3,42 @@ package userimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type Service struct {
-	store      store
-	orgService org.Service
-	// TODO remove sqlstore
-	sqlStore *sqlstore.SQLStore
-	cfg      *setting.Cfg
+	store        store
+	orgService   org.Service
+	teamService  team.Service
+	cacheService *localcache.CacheService
+	cfg          *setting.Cfg
 }
 
 func ProvideService(
 	db db.DB,
 	orgService org.Service,
 	cfg *setting.Cfg,
-	ss *sqlstore.SQLStore,
+	teamService team.Service,
+	cacheService *localcache.CacheService,
 ) user.Service {
 	store := ProvideStore(db, cfg)
 	return &Service{
-		store:      &store,
-		orgService: orgService,
-		cfg:        cfg,
-		sqlStore:   ss,
+		store:        &store,
+		orgService:   orgService,
+		cfg:          cfg,
+		teamService:  teamService,
+		cacheService: cacheService,
 	}
 }
 
@@ -172,140 +177,104 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 	return s.store.UpdateLastSeenAt(ctx, cmd)
 }
 
-// TODO: remove wrapper around sqlstore
 func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {
-	q := &models.SetUsingOrgCommand{
-		UserId: cmd.UserID,
-		OrgId:  cmd.OrgID,
+	getOrgsForUserCmd := &org.GetUserOrgListQuery{UserID: cmd.UserID}
+	orgsForUser, err := s.orgService.GetUserOrgList(ctx, getOrgsForUserCmd)
+	if err != nil {
+		return err
 	}
-	return s.sqlStore.SetUsingOrg(ctx, q)
+
+	valid := false
+	for _, other := range orgsForUser {
+		if other.OrgID == cmd.OrgID {
+			valid = true
+		}
+	}
+	if !valid {
+		return fmt.Errorf("user does not belong to org")
+	}
+	return s.store.UpdateUser(ctx, &user.User{
+		ID:    cmd.UserID,
+		OrgID: cmd.OrgID,
+	})
 }
 
-// TODO: remove wrapper around sqlstore
 func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	q := &models.GetSignedInUserQuery{
-		UserId: query.UserID,
-		Login:  query.Login,
-		Email:  query.Email,
-		OrgId:  query.OrgID,
+	var signedInUser *user.SignedInUser
+	cacheKey := newSignedInUserCacheKey(query.OrgID, query.UserID)
+	if cached, found := s.cacheService.Get(cacheKey); found {
+		cachedUser := cached.(user.SignedInUser)
+		signedInUser = &cachedUser
+		return signedInUser, nil
 	}
-	err := s.sqlStore.GetSignedInUserWithCacheCtx(ctx, q)
+
+	result, err := s.GetSignedInUser(ctx, query)
 	if err != nil {
 		return nil, err
 	}
-	return q.Result, nil
-}
 
-// TODO: remove wrapper around sqlstore
-func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	q := &models.GetSignedInUserQuery{
-		UserId: query.UserID,
-		Login:  query.Login,
-		Email:  query.Email,
-		OrgId:  query.OrgID,
-	}
-	err := s.sqlStore.GetSignedInUser(ctx, q)
-	return q.Result, err
-}
-
-// TODO: remove wrapper around sqlstore
-func (s *Service) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
-	var usrSeschHitDTOs []*user.UserSearchHitDTO
-	q := &models.SearchUsersQuery{
-		SignedInUser: query.SignedInUser,
-		Query:        query.Query,
-		OrgId:        query.OrgID,
-		Page:         query.Page,
-		Limit:        query.Limit,
-		AuthModule:   query.AuthModule,
-		Filters:      query.Filters,
-		IsDisabled:   query.IsDisabled,
-	}
-	err := s.sqlStore.SearchUsers(ctx, q)
-	if err != nil {
-		return nil, err
-	}
-	for _, usrSearch := range q.Result.Users {
-		usrSeschHitDTOs = append(usrSeschHitDTOs, &user.UserSearchHitDTO{
-			ID:            usrSearch.Id,
-			Login:         usrSearch.Login,
-			Email:         usrSearch.Email,
-			Name:          usrSearch.Name,
-			AvatarUrl:     usrSearch.AvatarUrl,
-			IsDisabled:    usrSearch.IsDisabled,
-			IsAdmin:       usrSearch.IsAdmin,
-			LastSeenAt:    usrSearch.LastSeenAt,
-			LastSeenAtAge: usrSearch.LastSeenAtAge,
-			AuthLabels:    usrSearch.AuthLabels,
-			AuthModule:    user.AuthModuleConversion(usrSearch.AuthModule),
-		})
-	}
-
-	res := &user.SearchUserQueryResult{
-		Users:      usrSeschHitDTOs,
-		TotalCount: q.Result.TotalCount,
-		Page:       q.Result.Page,
-		PerPage:    q.Result.PerPage,
-	}
-	return res, nil
-}
-
-// TODO: remove wrapper around sqlstore
-func (s *Service) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
-	q := &models.DisableUserCommand{
-		UserId:     cmd.UserID,
-		IsDisabled: cmd.IsDisabled,
-	}
-	return s.sqlStore.DisableUser(ctx, q)
-}
-
-// TODO: remove wrapper around sqlstore
-func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
-	c := &models.BatchDisableUsersCommand{
-		UserIds:    cmd.UserIDs,
-		IsDisabled: cmd.IsDisabled,
-	}
-	return s.sqlStore.BatchDisableUsers(ctx, c)
-}
-
-// TODO: remove wrapper around sqlstore
-func (s *Service) UpdatePermissions(userID int64, isAdmin bool) error {
-	return s.sqlStore.UpdateUserPermissions(userID, isAdmin)
-}
-
-// TODO: remove wrapper around sqlstore
-func (s *Service) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
-	c := &models.SetUserHelpFlagCommand{
-		UserId:     cmd.UserID,
-		HelpFlags1: cmd.HelpFlags1,
-	}
-	return s.sqlStore.SetUserHelpFlag(ctx, c)
-}
-
-// TODO: remove wrapper around sqlstore
-func (s *Service) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (user.UserProfileDTO, error) {
-	q := &models.GetUserProfileQuery{
-		UserId: query.UserID,
-	}
-	err := s.sqlStore.GetUserProfile(ctx, q)
-	if err != nil {
-		return user.UserProfileDTO{}, err
-	}
-	result := user.UserProfileDTO{
-		ID:             q.Result.Id,
-		Email:          q.Result.Email,
-		Name:           q.Result.Name,
-		Login:          q.Result.Login,
-		Theme:          q.Result.Theme,
-		OrgID:          q.Result.OrgId,
-		IsGrafanaAdmin: q.Result.IsGrafanaAdmin,
-		IsDisabled:     q.Result.IsDisabled,
-		IsExternal:     q.Result.IsExternal,
-		AuthLabels:     q.Result.AuthLabels,
-		UpdatedAt:      q.Result.UpdatedAt,
-		CreatedAt:      q.Result.CreatedAt,
-		AvatarUrl:      q.Result.AvatarUrl,
-		AccessControl:  q.Result.AccessControl,
-	}
+	cacheKey = newSignedInUserCacheKey(result.OrgID, query.UserID)
+	s.cacheService.Set(cacheKey, *result, time.Second*5)
 	return result, nil
+}
+
+func newSignedInUserCacheKey(orgID, userID int64) string {
+	return fmt.Sprintf("signed-in-user-%d-%d", userID, orgID)
+}
+
+func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	signedInUser, err := s.store.GetSignedInUser(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	// tempUser is used to retrieve the teams for the signed in user for internal use.
+	tempUser := &user.SignedInUser{
+		OrgID: signedInUser.OrgID,
+		Permissions: map[int64]map[string][]string{
+			signedInUser.OrgID: {
+				ac.ActionTeamsRead: {ac.ScopeTeamsAll},
+			},
+		},
+	}
+	getTeamsByUserQuery := &models.GetTeamsByUserQuery{
+		OrgId:        signedInUser.OrgID,
+		UserId:       signedInUser.UserID,
+		SignedInUser: tempUser,
+	}
+	err = s.teamService.GetTeamsByUser(ctx, getTeamsByUserQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	signedInUser.Teams = make([]int64, len(getTeamsByUserQuery.Result))
+	for i, t := range getTeamsByUserQuery.Result {
+		signedInUser.Teams[i] = t.Id
+	}
+	return signedInUser, err
+}
+
+func (s *Service) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	return s.store.Search(ctx, query)
+}
+
+func (s *Service) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
+	return s.store.Disable(ctx, cmd)
+}
+
+func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
+	return s.store.BatchDisableUsers(ctx, cmd)
+}
+
+func (s *Service) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
+	return s.store.UpdatePermissions(ctx, userID, isAdmin)
+}
+
+func (s *Service) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
+	return s.store.SetHelpFlag(ctx, cmd)
+}
+
+func (s *Service) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
+	result, err := s.store.GetProfile(ctx, query)
+	return result, err
 }

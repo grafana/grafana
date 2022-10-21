@@ -18,7 +18,7 @@ import { configureStore } from 'app/store/configureStore';
 import { ShareModal } from '../ShareModal';
 
 const server = setupServer(
-  rest.get('/api/dashboards/uid/:uId/public-config', (req, res, ctx) => {
+  rest.get('/api/dashboards/uid/:uId/public-config', (_, res, ctx) => {
     return res(
       ctx.status(200),
       ctx.json({

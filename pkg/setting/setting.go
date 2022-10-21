@@ -45,6 +45,7 @@ const (
 const (
 	RedactedPassword = "*********"
 	DefaultHTTPAddr  = "0.0.0.0"
+	DefaultHTTPPort  = "3000"
 	Dev              = "development"
 	Prod             = "production"
 	Test             = "test"
@@ -147,6 +148,7 @@ var (
 
 	// LDAP
 	LDAPEnabled           bool
+	LDAPSkipOrgRoleSync   bool
 	LDAPConfigFile        string
 	LDAPSyncCron          string
 	LDAPAllowSignup       bool
@@ -300,6 +302,7 @@ type Cfg struct {
 	BasicAuthEnabled             bool
 	AdminUser                    string
 	AdminPassword                string
+	DisableLogin                 bool
 	AdminEmail                   string
 	DisableSyncLock              bool
 
@@ -413,8 +416,9 @@ type Cfg struct {
 	FeedbackLinksEnabled                bool
 
 	// LDAP
-	LDAPEnabled     bool
-	LDAPAllowSignup bool
+	LDAPEnabled         bool
+	LDAPSkipOrgRoleSync bool
+	LDAPAllowSignup     bool
 
 	Quota QuotaSettings
 
@@ -1131,6 +1135,8 @@ func (cfg *Cfg) readLDAPConfig() {
 	LDAPSyncCron = ldapSec.Key("sync_cron").String()
 	LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
 	cfg.LDAPEnabled = LDAPEnabled
+	LDAPSkipOrgRoleSync = ldapSec.Key("skip_org_role_sync").MustBool(false)
+	cfg.LDAPSkipOrgRoleSync = LDAPSkipOrgRoleSync
 	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
 	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 	cfg.LDAPAllowSignup = LDAPAllowSignup
@@ -1332,6 +1338,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
 	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 	cfg.OAuthSkipOrgRoleUpdateSync = auth.Key("oauth_skip_org_role_update_sync").MustBool(false)
+
+	cfg.DisableLogin = auth.Key("disable_login").MustBool(false)
 
 	// SigV4
 	SigV4AuthEnabled = auth.Key("sigv4_auth_enabled").MustBool(false)
@@ -1620,7 +1628,7 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 
 	cfg.Domain = valueAsString(server, "domain", "localhost")
 	cfg.HTTPAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
-	cfg.HTTPPort = valueAsString(server, "http_port", "3000")
+	cfg.HTTPPort = valueAsString(server, "http_port", DefaultHTTPPort)
 	cfg.RouterLogging = server.Key("router_logging").MustBool(false)
 
 	cfg.EnableGzip = server.Key("enable_gzip").MustBool(false)
