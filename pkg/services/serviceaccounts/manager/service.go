@@ -58,8 +58,11 @@ func ProvideServiceAccountsService(
 	if s.secretScanEnabled {
 		s.secretScanInterval = cfg.SectionWithEnvOverrides("secretscan").
 			Key("interval").MustDuration(defaultSecretScanInterval)
+	}
 
-		s.secretScanService = secretscan.NewService(s.store, cfg)
+	s.secretScanService = secretscan.NewService(s.store, cfg)
+	if err := s.store.UpdateAPIKeysExpiryDate(context.Background(), cfg.TokenExpirationDayLimit); err != nil {
+		s.log.Error("Failed to update service account access tokens expiration dates", "error", err)
 	}
 
 	return s, nil

@@ -49,4 +49,5 @@ type Store interface {
 	RevokeServiceAccountToken(ctx context.Context, orgId, serviceAccountId, tokenId int64) error
 	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *AddServiceAccountTokenCommand) error
 	GetUsageMetrics(ctx context.Context) (*Stats, error)
+	UpdateAPIKeysExpiryDate(ctx context.Context, expiryDaysLimit int) error
 }

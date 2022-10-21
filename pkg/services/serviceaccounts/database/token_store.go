@@ -2,6 +2,9 @@ package database
 
 import (
 	"context"
+	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -145,4 +148,32 @@ func (s *ServiceAccountsStoreImpl) detachApiKeyFromServiceAccount(sess *db.Sessi
 	}
 
 	return nil
+}
+
+func (s *ServiceAccountsStoreImpl) UpdateAPIKeysExpiryDate(ctx context.Context, expiryDaysLimit int) error {
+	saTokens, err := s.ListTokens(ctx, &serviceaccounts.GetSATokensQuery{})
+
+	if err != nil {
+		s.log.Error("The following error has been encountered while reading the service access tokens from database.", "err", err)
+	}
+
+	err = s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		for _, token := range saTokens {
+			newExpiryTime := token.Created.Add(time.Duration(expiryDaysLimit+1) * time.Hour * 24).Truncate(24 * time.Hour).Unix()
+			if token.Expires == nil || *token.Expires > newExpiryTime {
+				token.Expires = &newExpiryTime
+				s.log.Info(fmt.Sprintf("The expiration date of token %s will be updated", strconv.Itoa(int(token.Id))))
+
+				rawSQL := "UPDATE api_key SET expires = ? WHERE id=?"
+				if _, err := sess.Exec(rawSQL, *token.Expires, token.Id); err != nil {
+					s.log.Error("Could not update api key", "err", err)
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+
+	return err
 }
