@@ -70,7 +70,7 @@ func ParseQueries(queries []backend.DataQuery, startTime time.Time, endTime time
 			metricsDataQuery.MatchExact = &trueBooleanValue
 		}
 
-		refID := query.RefID
+		refID := metricsDataQuery.RefId
 		query, err := parseRequestQuery(metricsDataQuery, refID, startTime, endTime)
 		if err != nil {
 			return nil, &QueryError{Err: err, RefID: refID}

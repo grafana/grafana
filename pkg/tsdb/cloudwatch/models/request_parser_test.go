@@ -375,6 +375,33 @@ func getBaseJsonQuery() metricsDataQuery {
 	}
 }
 
+func Test_ParseQueries_statistic_migration(t *testing.T) {
+	t.Run("migrates statistics to statistic first stat only", func(t *testing.T) {
+		query := []backend.DataQuery{
+			{
+				JSON: json.RawMessage(`{
+				   "refId":"A",
+				   "dimensions":{"dimensions":["test"]},
+				   "metricName":"CPUUtilization",
+				   "namespace":"ec2",
+				   "period":"600",
+				   "region":"us-east-1",
+				   "statistics":["Average", "Sum"],
+				   "hide":false
+				}`),
+			},
+		}
+
+		res, err := ParseQueries(query, time.Now(), time.Now(), false)
+		assert.NoError(t, err)
+
+		require.Len(t, res["us-east-1"], 1)
+		require.NotNil(t, res["us-east-1"][0])
+		assert.Equal(t, "A", res["us-east-1"][0].RefId)
+		assert.Equal(t, "Average", res["us-east-1"][0].Statistic)
+	})
+}
+
 func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_creates_new_label(t *testing.T) {
 	testCases := map[string]struct {
 		inputAlias    string
