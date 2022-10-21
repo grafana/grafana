@@ -6,14 +6,15 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/star"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
 	store store
 }
 
-func ProvideService(db db.DB, togggles featuremgmt.FeatureToggles) star.Service {
-	if togggles.IsEnabled(featuremgmt.FlagNewDBLibrary) {
+func ProvideService(db db.DB, cfg *setting.Cfg) star.Service {
+	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
 		return &Service{
 			store: &sqlxStore{
 				sess: db.GetSqlxSession(),
