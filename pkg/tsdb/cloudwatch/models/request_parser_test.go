@@ -335,7 +335,7 @@ func Test_ParseQueries_periods(t *testing.T) {
 }
 
 func Test_ParseQueries_query_type_and_metric_editor_mode_and_GMD_query_api_mode(t *testing.T) {
-	const dummyTestEditorMode MetricEditorMode = 3
+	const dummyTestEditorMode MetricEditorMode = 99
 	testCases := map[string]struct {
 		extraDataQueryJson       string
 		expectedMetricQueryType  MetricQueryType
@@ -343,7 +343,6 @@ func Test_ParseQueries_query_type_and_metric_editor_mode_and_GMD_query_api_mode(
 		expectedGMDApiMode       GMDApiMode
 	}{
 		"no metric query type, no metric editor mode, no expression": {
-			extraDataQueryJson:       "",
 			expectedMetricQueryType:  MetricQueryTypeSearch,
 			expectedMetricEditorMode: MetricEditorModeBuilder,
 			expectedGMDApiMode:       GMDApiModeMetricStat,
@@ -355,19 +354,19 @@ func Test_ParseQueries_query_type_and_metric_editor_mode_and_GMD_query_api_mode(
 			expectedGMDApiMode:       GMDApiModeMathExpression,
 		},
 		"no metric query type, has metric editor mode, has expression": {
-			extraDataQueryJson:       `"expression":"SUM(a)","metricEditorMode":3,`,
+			extraDataQueryJson:       `"expression":"SUM(a)","metricEditorMode":99,`,
 			expectedMetricQueryType:  MetricQueryTypeSearch,
 			expectedMetricEditorMode: dummyTestEditorMode,
 			expectedGMDApiMode:       GMDApiModeMetricStat,
 		},
 		"no metric query type, has metric editor mode, no expression": {
-			extraDataQueryJson:       `"metricEditorMode":3,`,
+			extraDataQueryJson:       `"metricEditorMode":99,`,
 			expectedMetricQueryType:  MetricQueryTypeSearch,
 			expectedMetricEditorMode: dummyTestEditorMode,
 			expectedGMDApiMode:       GMDApiModeMetricStat,
 		},
 		"has metric query type, has metric editor mode, no expression": {
-			extraDataQueryJson:       `"type":"timeSeriesQuery","metricEditorMode":3,`,
+			extraDataQueryJson:       `"type":"timeSeriesQuery","metricEditorMode":99,`,
 			expectedMetricQueryType:  MetricQueryTypeSearch,
 			expectedMetricEditorMode: dummyTestEditorMode,
 			expectedGMDApiMode:       GMDApiModeMetricStat,
@@ -379,7 +378,7 @@ func Test_ParseQueries_query_type_and_metric_editor_mode_and_GMD_query_api_mode(
 			expectedGMDApiMode:       GMDApiModeMathExpression,
 		},
 		"has metric query type, has metric editor mode, has expression": {
-			extraDataQueryJson:       `"type":"timeSeriesQuery","metricEditorMode":3,"expression":"SUM(a)",`,
+			extraDataQueryJson:       `"type":"timeSeriesQuery","metricEditorMode":99,"expression":"SUM(a)",`,
 			expectedMetricQueryType:  MetricQueryTypeSearch,
 			expectedMetricEditorMode: dummyTestEditorMode,
 			expectedGMDApiMode:       GMDApiModeMetricStat,
@@ -412,8 +411,8 @@ func Test_ParseQueries_query_type_and_metric_editor_mode_and_GMD_query_api_mode(
 	}
 }
 
-func Test_parseQueries_ReturnData(t *testing.T) {
-	t.Run("default for query type timeSeriesQuery is true", func(t *testing.T) {
+func Test_parseQueries_hide_and_ReturnData(t *testing.T) {
+	t.Run("for query type timeSeriesQuery, default ReturnData is true", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
 				JSON: json.RawMessage(`{
@@ -591,11 +590,10 @@ func Test_parseQueries_id(t *testing.T) {
 	})
 }
 
-func Test_ParseQueries_alias_to_label_migration(t *testing.T) {
-	t.Run("sets label when label is present in json query", func(t *testing.T) {
-		query := []backend.DataQuery{
-			{
-				JSON: json.RawMessage(`{
+func Test_ParseQueries_sets_label_when_label_is_present_in_json_query(t *testing.T) {
+	query := []backend.DataQuery{
+		{
+			JSON: json.RawMessage(`{
 				   "refId":"A",
 				   "region":"us-east-1",
 				   "namespace":"ec2",
@@ -607,18 +605,61 @@ func Test_ParseQueries_alias_to_label_migration(t *testing.T) {
 				   "period":"600",
 				   "hide":false
 				}`),
-			},
-		}
+		},
+	}
 
-		res, err := ParseQueries(query, time.Now(), time.Now(), true)
-		assert.NoError(t, err)
+	res, err := ParseQueries(query, time.Now(), time.Now(), true)
+	assert.NoError(t, err)
 
-		require.Len(t, res, 1)
-		require.NotNil(t, res[0])
-		assert.Equal(t, "some alias", res[0].Alias) // untouched
-		assert.Equal(t, "some label", res[0].Label)
-	})
+	require.Len(t, res, 1)
+	require.NotNil(t, res[0])
+	assert.Equal(t, "some alias", res[0].Alias) // untouched
+	assert.Equal(t, "some label", res[0].Label)
+}
 
+func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_creates_new_label(t *testing.T) {
+	testCases := map[string]struct {
+		inputAlias    string
+		expectedLabel string
+	}{
+		"one known alias pattern: metric":             {inputAlias: "{{metric}}", expectedLabel: "${PROP('MetricName')}"},
+		"one known alias pattern: namespace":          {inputAlias: "{{namespace}}", expectedLabel: "${PROP('Namespace')}"},
+		"one known alias pattern: period":             {inputAlias: "{{period}}", expectedLabel: "${PROP('Period')}"},
+		"one known alias pattern: region":             {inputAlias: "{{region}}", expectedLabel: "${PROP('Region')}"},
+		"one known alias pattern: stat":               {inputAlias: "{{stat}}", expectedLabel: "${PROP('Stat')}"},
+		"one known alias pattern: label":              {inputAlias: "{{label}}", expectedLabel: "${LABEL}"},
+		"one unknown alias pattern becomes dimension": {inputAlias: "{{any_other_word}}", expectedLabel: "${PROP('Dim.any_other_word')}"},
+		"one known alias pattern with spaces":         {inputAlias: "{{ metric   }}", expectedLabel: "${PROP('MetricName')}"},
+		"multiple alias patterns":                     {inputAlias: "some {{combination }}{{ label}} and {{metric}}", expectedLabel: "some ${PROP('Dim.combination')}${LABEL} and ${PROP('MetricName')}"},
+		"empty alias still migrates to empty label":   {inputAlias: "", expectedLabel: ""},
+	}
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			average := "Average"
+			false := false
+
+			queryToMigrate := metricsDataQuery{
+				Region:     "us-east-1",
+				Namespace:  "ec2",
+				MetricName: "CPUUtilization",
+				Alias:      tc.inputAlias,
+				Dimensions: map[string]interface{}{
+					"InstanceId": []interface{}{"test"},
+				},
+				Statistic: &average,
+				Period:    "600",
+				Hide:      &false,
+			}
+
+			migrateAliasToDynamicLabel(&queryToMigrate)
+
+			require.NotNil(t, queryToMigrate.Label)
+			assert.Equal(t, tc.expectedLabel, *queryToMigrate.Label)
+		})
+	}
+}
+
+func Test_ParseQueries_alias_to_label_migration(t *testing.T) {
 	t.Run("migrates alias to label when label does not already exist and feature toggle enabled", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
@@ -753,48 +794,6 @@ func Test_ParseQueries_alias_to_label_migration(t *testing.T) {
 			assert.Equal(t, "{{period}} {{any_other_word}}", res[0].Alias)
 		})
 	})
-}
-
-func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_creates_new_label(t *testing.T) {
-	testCases := map[string]struct {
-		inputAlias    string
-		expectedLabel string
-	}{
-		"one known alias pattern: metric":             {inputAlias: "{{metric}}", expectedLabel: "${PROP('MetricName')}"},
-		"one known alias pattern: namespace":          {inputAlias: "{{namespace}}", expectedLabel: "${PROP('Namespace')}"},
-		"one known alias pattern: period":             {inputAlias: "{{period}}", expectedLabel: "${PROP('Period')}"},
-		"one known alias pattern: region":             {inputAlias: "{{region}}", expectedLabel: "${PROP('Region')}"},
-		"one known alias pattern: stat":               {inputAlias: "{{stat}}", expectedLabel: "${PROP('Stat')}"},
-		"one known alias pattern: label":              {inputAlias: "{{label}}", expectedLabel: "${LABEL}"},
-		"one unknown alias pattern becomes dimension": {inputAlias: "{{any_other_word}}", expectedLabel: "${PROP('Dim.any_other_word')}"},
-		"one known alias pattern with spaces":         {inputAlias: "{{ metric   }}", expectedLabel: "${PROP('MetricName')}"},
-		"multiple alias patterns":                     {inputAlias: "some {{combination }}{{ label}} and {{metric}}", expectedLabel: "some ${PROP('Dim.combination')}${LABEL} and ${PROP('MetricName')}"},
-		"empty alias still migrates to empty label":   {inputAlias: "", expectedLabel: ""},
-	}
-	for name, tc := range testCases {
-		t.Run(name, func(t *testing.T) {
-			average := "Average"
-			false := false
-
-			queryToMigrate := metricsDataQuery{
-				Region:     "us-east-1",
-				Namespace:  "ec2",
-				MetricName: "CPUUtilization",
-				Alias:      tc.inputAlias,
-				Dimensions: map[string]interface{}{
-					"InstanceId": []interface{}{"test"},
-				},
-				Statistic: &average,
-				Period:    "600",
-				Hide:      &false,
-			}
-
-			migrateAliasToDynamicLabel(&queryToMigrate)
-
-			require.NotNil(t, queryToMigrate.Label)
-			assert.Equal(t, tc.expectedLabel, *queryToMigrate.Label)
-		})
-	}
 }
 
 func Test_ParseQueries_statistics_and_query_type_validation_and_MatchExact_initialization(t *testing.T) {
