@@ -264,12 +264,13 @@ func (gr *ResampleCommand) NeedsVars() []string {
 // failed to execute.
 func (gr *ResampleCommand) Execute(_ context.Context, now time.Time, vars mathexp.Vars) (mathexp.Results, error) {
 	newRes := mathexp.Results{}
+	timeRange := gr.TimeRange.AbsoluteTime(now)
 	for _, val := range vars[gr.VarToResample].Values {
 		series, ok := val.(mathexp.Series)
 		if !ok {
 			return newRes, fmt.Errorf("can only resample type series, got type %v", val.Type())
 		}
-		num, err := series.Resample(gr.refID, gr.Window, gr.Downsampler, gr.Upsampler, gr.TimeRange.From, gr.TimeRange.To)
+		num, err := series.Resample(gr.refID, gr.Window, gr.Downsampler, gr.Upsampler, timeRange.From, timeRange.To)
 		if err != nil {
 			return newRes, err
 		}
