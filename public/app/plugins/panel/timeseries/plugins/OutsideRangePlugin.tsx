@@ -34,18 +34,23 @@ export const OutsideRangePlugin: React.FC<ThresholdControlsPluginProps> = ({ con
   }
 
   // Time values are always sorted for uPlot to work
-  const first = timevalues[0] !== null ? timevalues[0] : timevalues.find((v) => v !== null);
-  const last =
-    timevalues[timevalues.length - 1] !== null
-      ? timevalues[timevalues.length - 1]
-      : timevalues
-          .slice()
-          .reverse()
-          .find((v) => v !== null);
+  let i = 0,
+    j = timevalues.length - 1;
+
+  while (i < timevalues.length && timevalues[i] == null) {
+    i++;
+  }
+
+  while (j >= 0 && timevalues[j] == null) {
+    j--;
+  }
+
+  const first = timevalues[i];
+  const last = timevalues[j];
   const fromX = timeRange.min;
   const toX = timeRange.max;
 
-  if (first === undefined || last === undefined) {
+  if (first == null || last == null) {
     return null;
   }
 
