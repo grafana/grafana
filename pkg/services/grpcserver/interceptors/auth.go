@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 
 	"google.golang.org/grpc/codes"
@@ -41,6 +40,7 @@ func ProvideAuthenticator(apiKeyService apikey.Service, userService user.Service
 
 		AccessControlService: accessControlService,
 		UserService:          userService,
+		PluginAuthService:    pluginAuthService,
 	}
 }
 
@@ -86,33 +86,28 @@ func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*use
 		return nil, err
 	}
 
-	subject, ok := claims["subject"].(string)
+	subject, ok := claims["sub"].(string)
 	if !ok || subject == "" {
 		return nil, status.Error(codes.Unauthenticated, "token missing subject claim")
 	}
 
 	userInfo := xctx.UserInfoFromString(subject)
-	if userInfo != nil {
+	if userInfo == nil {
 		return nil, status.Error(codes.Unauthenticated, "invalid subject claim")
 	}
 
 	querySignedInUser := user.GetSignedInUserQuery{UserID: userInfo.UserID, OrgID: userInfo.OrgID}
-	signedInUser, err := a.UserService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
+	signedInUser, err := a.UserService.GetSignedInUser(ctx, &querySignedInUser)
 	if err != nil {
 		return nil, err
 	}
 
 	if signedInUser == nil {
-		return nil, status.Error(codes.Unauthenticated, "service account not found")
+		return nil, status.Error(codes.Unauthenticated, "user not found")
 	}
 
-	if !signedInUser.HasRole(org.RoleAdmin) {
-		return nil, status.Error(codes.PermissionDenied, "service account does not have admin role")
-	}
-
-	// disabled service accounts are not allowed to access the API
 	if signedInUser.IsDisabled {
-		return nil, status.Error(codes.PermissionDenied, "service account is disabled")
+		return nil, status.Error(codes.PermissionDenied, "user account has been disabled")
 	}
 
 	if signedInUser.Permissions == nil {
