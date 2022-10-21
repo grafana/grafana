@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { AutoSizeInput, EditorField, EditorRow } from '@grafana/ui';
+import { EditorField, EditorRow } from '@grafana/experimental';
+import { AutoSizeInput } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { DEFAULT_LIMIT } from '../datasource';

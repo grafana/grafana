@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 
 import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
-import { EditorRow } from '@grafana/ui';
+import { EditorRow } from '@grafana/experimental';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';

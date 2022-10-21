@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import React, { FunctionComponent, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { AccessoryButton, Input, InputGroup, stylesFactory, useTheme2 } from '@grafana/ui';
+import { AccessoryButton, InputGroup } from '@grafana/experimental';
+import { Input, stylesFactory, useTheme2 } from '@grafana/ui';
 
 import { MultiFilterCondition } from './MultiFilter';
 

@@ -4,7 +4,8 @@ import React, { FC, useCallback, useState } from 'react';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
 import { isTimeSeries } from '@grafana/data/src/dataframe/utils';
-import { AutoSizeInput, Icon, IconButton, Select, Stack, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { AutoSizeInput, Icon, IconButton, Select, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';

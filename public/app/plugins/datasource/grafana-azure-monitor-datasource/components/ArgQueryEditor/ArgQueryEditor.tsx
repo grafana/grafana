@@ -1,7 +1,7 @@
 import { intersection } from 'lodash';
 import React, { useState, useMemo } from 'react';
 
-import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/ui';
+import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 
 import Datasource from '../../datasource';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
