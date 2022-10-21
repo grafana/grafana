@@ -168,14 +168,15 @@ func (pd *PublicDashboardServiceImpl) savePublicDashboard(ctx context.Context, d
 
 	cmd := SavePublicDashboardConfigCommand{
 		PublicDashboard: PublicDashboard{
-			Uid:          uid,
-			DashboardUid: dto.DashboardUid,
-			OrgId:        dto.OrgId,
-			IsEnabled:    dto.PublicDashboard.IsEnabled,
-			TimeSettings: dto.PublicDashboard.TimeSettings,
-			CreatedBy:    dto.UserId,
-			CreatedAt:    time.Now(),
-			AccessToken:  accessToken,
+			Uid:                uid,
+			DashboardUid:       dto.DashboardUid,
+			OrgId:              dto.OrgId,
+			IsEnabled:          dto.PublicDashboard.IsEnabled,
+			AnnotationsEnabled: dto.PublicDashboard.AnnotationsEnabled,
+			TimeSettings:       dto.PublicDashboard.TimeSettings,
+			CreatedBy:          dto.UserId,
+			CreatedAt:          time.Now(),
+			AccessToken:        accessToken,
 		},
 	}
 
@@ -192,11 +193,12 @@ func (pd *PublicDashboardServiceImpl) savePublicDashboard(ctx context.Context, d
 func (pd *PublicDashboardServiceImpl) updatePublicDashboard(ctx context.Context, dto *SavePublicDashboardConfigDTO) (string, error) {
 	cmd := SavePublicDashboardConfigCommand{
 		PublicDashboard: PublicDashboard{
-			Uid:          dto.PublicDashboard.Uid,
-			IsEnabled:    dto.PublicDashboard.IsEnabled,
-			TimeSettings: dto.PublicDashboard.TimeSettings,
-			UpdatedBy:    dto.UserId,
-			UpdatedAt:    time.Now(),
+			Uid:                dto.PublicDashboard.Uid,
+			IsEnabled:          dto.PublicDashboard.IsEnabled,
+			AnnotationsEnabled: dto.PublicDashboard.AnnotationsEnabled,
+			TimeSettings:       dto.PublicDashboard.TimeSettings,
+			UpdatedBy:          dto.UserId,
+			UpdatedAt:          time.Now(),
 		},
 	}
 
