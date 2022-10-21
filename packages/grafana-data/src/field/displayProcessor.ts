@@ -81,7 +81,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field, options.theme);
 
-  return (value: any, decimals?: DecimalCount) => {
+  return (value: any, adjacentDecimals?: DecimalCount) => {
     const { mappings } = config;
     const isStringUnit = unit === 'string';
 
@@ -117,13 +117,25 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
     if (!Number.isNaN(numeric)) {
       if (text == null && !isBoolean(value)) {
-        const v = formatFunc(numeric, decimals ?? config.decimals, null, options.timeZone, showMs);
+        let decimals;
+
+        if (config.decimals != null) {
+          decimals = config.decimals;
+
+          if (adjacentDecimals != null && adjacentDecimals > decimals) {
+            decimals = adjacentDecimals;
+          }
+        } else if (adjacentDecimals != null) {
+          decimals = adjacentDecimals;
+        }
+
+        const v = formatFunc(numeric, decimals, null, options.timeZone, showMs);
 
         // if no explicit decimals config, we strip trailing zeros e.g. 60.00 -> 60
-        // this is needed because we may have determined the minimum required `decimals` for y tick increments based on
+        // this is needed because we may have determined the minimum determined `adjacentDecimals` for y tick increments based on
         // e.g. 'seconds' field unit (0.15s, 0.20s, 0.25s), but then formatFunc decided to return milli or nanos (150, 200, 250)
         // so we end up with excess precision: 150.00, 200.00, 250.00
-        if (shouldTrimTrailingDecimalZeros) {
+        if (shouldTrimTrailingDecimalZeros && adjacentDecimals != null) {
           v.text = +v.text + '';
         }
 
