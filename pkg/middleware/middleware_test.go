@@ -422,6 +422,11 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.True(t, sc.context.IsSignedIn)
 			assert.Equal(t, userID, sc.context.UserID)
 			assert.Equal(t, orgID, sc.context.OrgID)
+			list := contexthandler.AuthHTTPHeaderListFromContext(sc.context.Req.Context())
+			require.NotNil(t, list)
+			require.Contains(t, list.Items, sc.cfg.AuthProxyHeaderName)
+			require.Contains(t, list.Items, "X-WEBAUTH-GROUPS")
+			require.Contains(t, list.Items, "X-WEBAUTH-ROLE")
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 			cfg.LDAPEnabled = false
