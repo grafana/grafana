@@ -8,11 +8,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/datasources/permissions"
-	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/segmentio/encoding/json"
 
+	"github.com/grafana/grafana/pkg/services/datasources/permissions"
+	"github.com/grafana/grafana/pkg/services/searchV2"
+
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/models"
@@ -22,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -51,7 +52,7 @@ type thumbService struct {
 	thumbnailRepo              thumbnailRepo
 	lockService                *serverlock.ServerLockService
 	features                   featuremgmt.FeatureToggles
-	store                      sqlstore.Store
+	store                      db.DB
 	crawlLockServiceActionName string
 	log                        log.Logger
 	canRunCrawler              bool
@@ -75,7 +76,7 @@ type crawlerScheduleOptions struct {
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	lockService *serverlock.ServerLockService, renderService rendering.Service,
-	gl *live.GrafanaLive, store *sqlstore.SQLStore, authSetupService CrawlerAuthSetupService,
+	gl *live.GrafanaLive, store db.DB, authSetupService CrawlerAuthSetupService,
 	dashboardService dashboards.DashboardService, dashboardThumbsService DashboardThumbService, searchService searchV2.SearchService,
 	dsPermissionsService permissions.DatasourcePermissionsService, licensing models.Licensing) Service {
 	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {

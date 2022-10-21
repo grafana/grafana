@@ -184,12 +184,19 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onModifyQueries = (action: QueryFixAction) => {
-    const { datasourceInstance } = this.props;
-    if (datasourceInstance?.modifyQuery) {
-      const modifier = (queries: DataQuery, modification: QueryFixAction) =>
-        datasourceInstance.modifyQuery!(queries, modification);
-      this.props.modifyQueries(this.props.exploreId, action, modifier);
-    }
+    const modifier = async (query: DataQuery, modification: QueryFixAction) => {
+      const { datasource } = query;
+      if (datasource == null) {
+        return query;
+      }
+      const ds = await getDataSourceSrv().get(datasource);
+      if (ds.modifyQuery) {
+        return ds.modifyQuery(query, modification);
+      } else {
+        return query;
+      }
+    };
+    this.props.modifyQueries(this.props.exploreId, action, modifier);
   };
 
   onResize = (size: { height: number; width: number }) => {

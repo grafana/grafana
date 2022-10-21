@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/build/config"
+	"github.com/grafana/grafana/pkg/build/fsutil"
 	"github.com/grafana/grafana/pkg/build/gcloud"
 	"github.com/grafana/grafana/pkg/build/gpg"
 	"github.com/grafana/grafana/pkg/build/packaging"
@@ -68,7 +69,10 @@ func PublishPackages(c *cli.Context) error {
 	// In test release mode, the operator should configure different GCS buckets for the package repos,
 	// so should be safe.
 	if cfg.ReleaseMode.Mode == config.TagMode {
-		workDir := os.TempDir()
+		workDir, err := fsutil.CreateTempDir("")
+		if err != nil {
+			return err
+		}
 		defer func() {
 			if err := os.RemoveAll(workDir); err != nil {
 				log.Printf("Failed to remove temporary directory %q: %s\n", workDir, err.Error())

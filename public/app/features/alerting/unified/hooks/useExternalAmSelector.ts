@@ -4,20 +4,17 @@ import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings } fr
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { useSelector } from 'app/types';
 
+import { alertmanagerApi } from '../api/alertmanagerApi';
 import { getAlertManagerDataSources } from '../utils/datasource';
-
-import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 const SUFFIX_REGEX = /\/api\/v[1|2]\/alerts/i;
 type AlertmanagerConfig = { url: string; status: string; actualUrl: string };
 
 export function useExternalAmSelector(): AlertmanagerConfig[] | [] {
-  const discoveredAlertmanagers = useSelector(
-    (state) => state.unifiedAlerting.externalAlertmanagers.discoveredAlertmanagers.result?.data
-  );
-  const alertmanagerConfig = useSelector(
-    (state) => state.unifiedAlerting.externalAlertmanagers.alertmanagerConfig.result?.alertmanagers
-  );
+  const { useGetExternalAlertmanagersQuery, useGetExternalAlertmanagerConfigQuery } = alertmanagerApi;
+
+  const { currentData: discoveredAlertmanagers } = useGetExternalAlertmanagersQuery();
+  const { currentData: alertmanagerConfig } = useGetExternalAlertmanagerConfigQuery();
 
   if (!discoveredAlertmanagers || !alertmanagerConfig) {
     return [];
@@ -30,7 +27,7 @@ export function useExternalAmSelector(): AlertmanagerConfig[] | [] {
     actualUrl: am.url,
   }));
 
-  for (const url of alertmanagerConfig) {
+  for (const url of alertmanagerConfig.alertmanagers) {
     if (discoveredAlertmanagers.activeAlertManagers.length === 0) {
       enabledAlertmanagers.push({
         url: url,
@@ -66,6 +63,9 @@ export interface ExternalDataSourceAM {
 }
 
 export function useExternalDataSourceAlertmanagers(): ExternalDataSourceAM[] {
+  const { useGetExternalAlertmanagersQuery } = alertmanagerApi;
+  const { currentData: discoveredAlertmanagers } = useGetExternalAlertmanagersQuery();
+
   const externalDsAlertManagers = getAlertManagerDataSources().filter((ds) => ds.jsonData.handleGrafanaManagedAlerts);
 
   const alertmanagerDatasources = useSelector((state) =>
@@ -73,10 +73,6 @@ export function useExternalDataSourceAlertmanagers(): ExternalDataSourceAM[] {
       state.dataSources.dataSources.filter((ds) => ds.type === 'alertmanager'),
       (ds) => ds.uid
     )
-  );
-
-  const discoveredAlertmanagers = useUnifiedAlertingSelector(
-    (state) => state.externalAlertmanagers.discoveredAlertmanagers.result?.data
   );
 
   const droppedAMUrls = countBy(discoveredAlertmanagers?.droppedAlertManagers, (x) => x.url);

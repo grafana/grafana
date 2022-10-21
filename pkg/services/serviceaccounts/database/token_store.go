@@ -3,11 +3,12 @@ package database
 import (
 	"context"
 
+	"github.com/pkg/errors"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/pkg/errors"
 )
 
 const maxRetrievedTokens = 300
@@ -16,8 +17,8 @@ func (s *ServiceAccountsStoreImpl) ListTokens(
 	ctx context.Context, query *serviceaccounts.GetSATokensQuery,
 ) ([]apikey.APIKey, error) {
 	result := make([]apikey.APIKey, 0)
-	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		quotedUser := s.sqlStore.Dialect.Quote("user")
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+		quotedUser := s.sqlStore.GetDialect().Quote("user")
 		sess := dbSession.Limit(maxRetrievedTokens, 0).Where("api_key.service_account_id IS NOT NULL")
 
 		if query.OrgID != nil {
@@ -38,7 +39,7 @@ func (s *ServiceAccountsStoreImpl) ListTokens(
 }
 
 func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, serviceAccountId int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error {
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if _, err := s.RetrieveServiceAccount(ctx, cmd.OrgId, serviceAccountId); err != nil {
 			return err
 		}
@@ -71,7 +72,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 func (s *ServiceAccountsStoreImpl) DeleteServiceAccountToken(ctx context.Context, orgId, serviceAccountId, tokenId int64) error {
 	rawSQL := "DELETE FROM api_key WHERE id=? and org_id=? and service_account_id=?"
 
-	return s.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		result, err := sess.Exec(rawSQL, tokenId, orgId, serviceAccountId)
 		if err != nil {
 			return err
@@ -88,8 +89,8 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccountToken(ctx context.Context
 func (s *ServiceAccountsStoreImpl) RevokeServiceAccountToken(ctx context.Context, orgId, serviceAccountId, tokenId int64) error {
 	rawSQL := "UPDATE api_key SET is_revoked = ? WHERE id=? and org_id=? and service_account_id=?"
 
-	return s.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		result, err := sess.Exec(rawSQL, s.sqlStore.Dialect.BooleanStr(true), tokenId, orgId, serviceAccountId)
+	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		result, err := sess.Exec(rawSQL, s.sqlStore.GetDialect().BooleanStr(true), tokenId, orgId, serviceAccountId)
 		if err != nil {
 			return err
 		}
@@ -103,7 +104,7 @@ func (s *ServiceAccountsStoreImpl) RevokeServiceAccountToken(ctx context.Context
 }
 
 // assignApiKeyToServiceAccount sets the API key service account ID
-func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *sqlstore.DBSession, apiKeyId int64, serviceAccountId int64) error {
+func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *db.Session, apiKeyId int64, serviceAccountId int64) error {
 	key := apikey.APIKey{Id: apiKeyId}
 	exists, err := sess.Get(&key)
 	if err != nil {
@@ -125,7 +126,7 @@ func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *sqlstore.D
 }
 
 // detachApiKeyFromServiceAccount converts service account token to old API key
-func (s *ServiceAccountsStoreImpl) detachApiKeyFromServiceAccount(sess *sqlstore.DBSession, apiKeyId int64) error {
+func (s *ServiceAccountsStoreImpl) detachApiKeyFromServiceAccount(sess *db.Session, apiKeyId int64) error {
 	key := apikey.APIKey{Id: apiKeyId}
 	exists, err := sess.Get(&key)
 	if err != nil {
