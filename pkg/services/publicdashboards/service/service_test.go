@@ -135,11 +135,11 @@ func TestSavePublicDashboard(t *testing.T) {
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
 			PublicDashboard: &PublicDashboard{
-				IsEnabled:            true,
-				IsAnnotationsEnabled: false,
-				DashboardUid:         "NOTTHESAME",
-				OrgId:                9999999,
-				TimeSettings:         timeSettings,
+				IsEnabled:          true,
+				AnnotationsEnabled: false,
+				DashboardUid:       "NOTTHESAME",
+				OrgId:              9999999,
+				TimeSettings:       timeSettings,
 			},
 		}
 
@@ -153,7 +153,7 @@ func TestSavePublicDashboard(t *testing.T) {
 		assert.Equal(t, dashboard.Uid, pubdash.DashboardUid)
 		assert.Equal(t, dashboard.OrgId, pubdash.OrgId)
 		assert.Equal(t, dto.UserId, pubdash.CreatedBy)
-		assert.Equal(t, dto.PublicDashboard.IsAnnotationsEnabled, pubdash.IsAnnotationsEnabled)
+		assert.Equal(t, dto.PublicDashboard.AnnotationsEnabled, pubdash.AnnotationsEnabled)
 		// IsEnabled set by parameters
 		assert.Equal(t, dto.PublicDashboard.IsEnabled, pubdash.IsEnabled)
 		// CreatedAt set to non-zero time
@@ -272,9 +272,9 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
 			PublicDashboard: &PublicDashboard{
-				IsAnnotationsEnabled: false,
-				IsEnabled:            true,
-				TimeSettings:         timeSettings,
+				AnnotationsEnabled: false,
+				IsEnabled:          true,
+				TimeSettings:       timeSettings,
 			},
 		}
 
@@ -293,10 +293,10 @@ func TestUpdatePublicDashboard(t *testing.T) {
 				CreatedBy:    9,
 				CreatedAt:    time.Time{},
 
-				IsEnabled:            true,
-				IsAnnotationsEnabled: true,
-				TimeSettings:         timeSettings,
-				AccessToken:          "NOTAREALUUID",
+				IsEnabled:          true,
+				AnnotationsEnabled: true,
+				TimeSettings:       timeSettings,
+				AccessToken:        "NOTAREALUUID",
 			},
 		}
 
@@ -314,7 +314,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 		// gets updated
 		assert.Equal(t, dto.PublicDashboard.IsEnabled, updatedPubdash.IsEnabled)
-		assert.Equal(t, dto.PublicDashboard.IsAnnotationsEnabled, updatedPubdash.IsAnnotationsEnabled)
+		assert.Equal(t, dto.PublicDashboard.AnnotationsEnabled, updatedPubdash.AnnotationsEnabled)
 		assert.Equal(t, dto.PublicDashboard.TimeSettings, updatedPubdash.TimeSettings)
 		assert.Equal(t, dto.UserId, updatedPubdash.UpdatedBy)
 		assert.NotEqual(t, &time.Time{}, updatedPubdash.UpdatedAt)

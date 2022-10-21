@@ -23,7 +23,7 @@ const server = setupServer(
       ctx.status(200),
       ctx.json({
         isEnabled: false,
-        isAnnotationsEnabled: false,
+        annotationsEnabled: false,
         uid: undefined,
         dashboardUid: undefined,
         accessToken: 'an-access-token',
@@ -225,7 +225,7 @@ describe('SharePublic - Already persisted', () => {
           ctx.status(200),
           ctx.json({
             isEnabled: true,
-            isAnnotationsEnabled: true,
+            annotationsEnabled: true,
             uid: 'a-uid',
             dashboardUid: req.params.uId,
             accessToken: 'an-access-token',
@@ -271,7 +271,7 @@ describe('SharePublic - Already persisted', () => {
           ctx.status(200),
           ctx.json({
             isEnabled: false,
-            isAnnotationsEnabled: false,
+            annotationsEnabled: false,
             uid: 'a-uid',
             dashboardUid: req.params.uId,
             accessToken: 'an-access-token',

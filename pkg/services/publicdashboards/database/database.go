@@ -243,7 +243,7 @@ func (d *PublicDashboardStoreImpl) UpdatePublicDashboardConfig(ctx context.Conte
 
 		_, err = sess.Exec("UPDATE dashboard_public SET is_enabled = ?, annotations_enabled = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
 			cmd.PublicDashboard.IsEnabled,
-			cmd.PublicDashboard.IsAnnotationsEnabled,
+			cmd.PublicDashboard.AnnotationsEnabled,
 			string(timeSettingsJSON),
 			cmd.PublicDashboard.UpdatedBy,
 			cmd.PublicDashboard.UpdatedAt.UTC().Format("2006-01-02 15:04:05"),

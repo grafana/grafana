@@ -24,7 +24,7 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 		return nil, err
 	}
 
-	if !pub.IsAnnotationsEnabled {
+	if !pub.AnnotationsEnabled {
 		return []models.AnnotationEvent{}, nil
 	}
 

@@ -233,15 +233,15 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 		setup()
 		cmd := SavePublicDashboardConfigCommand{
 			PublicDashboard: PublicDashboard{
-				IsEnabled:            true,
-				IsAnnotationsEnabled: true,
-				Uid:                  "abc1234",
-				DashboardUid:         savedDashboard.Uid,
-				OrgId:                savedDashboard.OrgId,
-				TimeSettings:         DefaultTimeSettings,
-				CreatedAt:            DefaultTime,
-				CreatedBy:            7,
-				AccessToken:          "NOTAREALUUID",
+				IsEnabled:          true,
+				AnnotationsEnabled: true,
+				Uid:                "abc1234",
+				DashboardUid:       savedDashboard.Uid,
+				OrgId:              savedDashboard.OrgId,
+				TimeSettings:       DefaultTimeSettings,
+				CreatedAt:          DefaultTime,
+				CreatedBy:          7,
+				AccessToken:        "NOTAREALUUID",
 			},
 		}
 
@@ -360,15 +360,15 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 		setup()
 		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
 			PublicDashboard: PublicDashboard{
-				IsEnabled:            true,
-				IsAnnotationsEnabled: true,
-				Uid:                  "pubdash-uid",
-				DashboardUid:         savedDashboard.Uid,
-				OrgId:                savedDashboard.OrgId,
-				TimeSettings:         DefaultTimeSettings,
-				CreatedAt:            DefaultTime,
-				CreatedBy:            7,
-				AccessToken:          "NOTAREALUUID",
+				IsEnabled:          true,
+				AnnotationsEnabled: true,
+				Uid:                "pubdash-uid",
+				DashboardUid:       savedDashboard.Uid,
+				OrgId:              savedDashboard.OrgId,
+				TimeSettings:       DefaultTimeSettings,
+				CreatedAt:          DefaultTime,
+				CreatedBy:          7,
+				AccessToken:        "NOTAREALUUID",
 			},
 		})
 		require.NoError(t, err)
@@ -426,14 +426,14 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		pdUid := "asdf1234"
 		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
 			PublicDashboard: PublicDashboard{
-				Uid:                  pdUid,
-				DashboardUid:         savedDashboard.Uid,
-				OrgId:                savedDashboard.OrgId,
-				IsEnabled:            false,
-				IsAnnotationsEnabled: true,
-				CreatedAt:            DefaultTime,
-				CreatedBy:            7,
-				AccessToken:          "NOTAREALUUID",
+				Uid:                pdUid,
+				DashboardUid:       savedDashboard.Uid,
+				OrgId:              savedDashboard.OrgId,
+				IsEnabled:          false,
+				AnnotationsEnabled: true,
+				CreatedAt:          DefaultTime,
+				CreatedBy:          7,
+				AccessToken:        "NOTAREALUUID",
 			},
 		})
 		require.NoError(t, err)
@@ -442,27 +442,27 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		anotherPdUid := "anotherUid"
 		err = publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
 			PublicDashboard: PublicDashboard{
-				Uid:                  anotherPdUid,
-				DashboardUid:         anotherSavedDashboard.Uid,
-				OrgId:                anotherSavedDashboard.OrgId,
-				IsEnabled:            true,
-				IsAnnotationsEnabled: false,
-				CreatedAt:            DefaultTime,
-				CreatedBy:            7,
-				AccessToken:          "fakeaccesstoken",
+				Uid:                anotherPdUid,
+				DashboardUid:       anotherSavedDashboard.Uid,
+				OrgId:              anotherSavedDashboard.OrgId,
+				IsEnabled:          true,
+				AnnotationsEnabled: false,
+				CreatedAt:          DefaultTime,
+				CreatedBy:          7,
+				AccessToken:        "fakeaccesstoken",
 			},
 		})
 		require.NoError(t, err)
 
 		updatedPublicDashboard := PublicDashboard{
-			Uid:                  pdUid,
-			DashboardUid:         savedDashboard.Uid,
-			OrgId:                savedDashboard.OrgId,
-			IsEnabled:            false,
-			IsAnnotationsEnabled: true,
-			TimeSettings:         &TimeSettings{From: "now-8", To: "now"},
-			UpdatedAt:            time.Now().UTC().Round(time.Second),
-			UpdatedBy:            8,
+			Uid:                pdUid,
+			DashboardUid:       savedDashboard.Uid,
+			OrgId:              savedDashboard.OrgId,
+			IsEnabled:          false,
+			AnnotationsEnabled: true,
+			TimeSettings:       &TimeSettings{From: "now-8", To: "now"},
+			UpdatedAt:          time.Now().UTC().Round(time.Second),
+			UpdatedBy:          8,
 		}
 		// update initial record
 		err = publicdashboardStore.UpdatePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
@@ -478,14 +478,14 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		// make sure we're correctly updated IsEnabled because we have to call
 		// UseBool with xorm
 		assert.Equal(t, updatedPublicDashboard.IsEnabled, pdRetrieved.IsEnabled)
-		assert.Equal(t, updatedPublicDashboard.IsAnnotationsEnabled, pdRetrieved.IsAnnotationsEnabled)
+		assert.Equal(t, updatedPublicDashboard.AnnotationsEnabled, pdRetrieved.AnnotationsEnabled)
 
 		// not updated dashboard shouldn't have changed
 		pdNotUpdatedRetrieved, err := publicdashboardStore.GetPublicDashboardConfig(context.Background(), anotherSavedDashboard.OrgId, anotherSavedDashboard.Uid)
 		require.NoError(t, err)
 		assert.NotEqual(t, updatedPublicDashboard.UpdatedAt, pdNotUpdatedRetrieved.UpdatedAt)
 		assert.NotEqual(t, updatedPublicDashboard.IsEnabled, pdNotUpdatedRetrieved.IsEnabled)
-		assert.NotEqual(t, updatedPublicDashboard.IsAnnotationsEnabled, pdNotUpdatedRetrieved.IsAnnotationsEnabled)
+		assert.NotEqual(t, updatedPublicDashboard.AnnotationsEnabled, pdNotUpdatedRetrieved.AnnotationsEnabled)
 	})
 }
 
