@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.12'
+grabpl_version = 'v3.0.14'
 build_image = 'grafana/build-container:1.6.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -111,8 +111,10 @@ def init_enterprise_step(ver_mode):
         }
         token = "--github-token $${GITHUB_TOKEN}"
     elif ver_mode == 'release-branch':
-        environment = {}
-        token = ""
+        environment = {
+            'GITHUB_TOKEN': from_secret(github_token),
+        }
+        token = "--github-token $${GITHUB_TOKEN}"
     else:
         environment = {}
         token = ""
@@ -304,13 +306,14 @@ def store_storybook_step(edition, ver_mode, trigger=None):
 def e2e_tests_artifacts(edition):
     return {
         'name': 'e2e-tests-artifacts-upload' + enterprise2_suffix(edition),
-        'image': 'google/cloud-sdk:367.0.0',
+        'image': 'google/cloud-sdk:406.0.0',
         'depends_on': [
             'end-to-end-tests-dashboards-suite',
             'end-to-end-tests-panels-suite',
             'end-to-end-tests-smoke-tests-suite',
             'end-to-end-tests-various-suite',
         ],
+        'failure': 'ignore',
         'when': {
             'status': [
                 'success',
@@ -325,8 +328,6 @@ def e2e_tests_artifacts(edition):
         'commands': [
             'apt-get update',
             'apt-get install -yq zip',
-            'ls -lah ./e2e',
-            'find ./e2e -type f -name "*.mp4"',
             'printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json',
             'gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json',
             # we want to only include files in e2e folder that end with .spec.ts.mp4
@@ -529,7 +530,6 @@ def betterer_frontend_step(edition="oss"):
         'commands': [
             'yarn betterer ci',
         ],
-        'failure': 'ignore',
     }
 
 
@@ -1044,9 +1044,9 @@ def publish_grafanacom_step(edition, ver_mode):
         ],
     }
 
-def publish_linux_packages_step(edition):
+def publish_linux_packages_step(edition, package_manager='deb'):
     return {
-        'name': 'publish-linux-packages',
+        'name': 'publish-linux-packages-{}'.format(package_manager),
         # See https://github.com/grafana/deployment_tools/blob/master/docker/package-publish/README.md for docs on that image
         'image': 'us.gcr.io/kubernetes-dev/package-publish:latest',
         'depends_on': [
@@ -1063,7 +1063,7 @@ def publish_linux_packages_step(edition):
             'gpg_passphrase': from_secret('packages_gpg_passphrase'),
             'gpg_public_key': from_secret('packages_gpg_public_key'),
             'gpg_private_key': from_secret('packages_gpg_private_key'),
-            'package_path': 'gs://grafana-prerelease/artifacts/downloads/*${{DRONE_TAG}}/{}/**.deb'.format(edition)
+            'package_path': 'gs://grafana-prerelease/artifacts/downloads/*${{DRONE_TAG}}/{}/**.{}'.format(edition, package_manager)
         }
     }
 

@@ -139,7 +139,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// GitHub.
 		if name == "github" {
 			ss.socialMap["github"] = &SocialGithub{
-				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
+				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync),
 				apiUrl:               info.ApiUrl,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
@@ -149,7 +149,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// GitLab.
 		if name == "gitlab" {
 			ss.socialMap["gitlab"] = &SocialGitlab{
-				SocialBase:    newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
+				SocialBase:    newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync),
 				apiUrl:        info.ApiUrl,
 				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
 			}
@@ -158,7 +158,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// Google.
 		if name == "google" {
 			ss.socialMap["google"] = &SocialGoogle{
-				SocialBase:   newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
+				SocialBase:   newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync),
 				hostedDomain: info.HostedDomain,
 				apiUrl:       info.ApiUrl,
 			}
@@ -167,7 +167,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// AzureAD.
 		if name == "azuread" {
 			ss.socialMap["azuread"] = &SocialAzureAD{
-				SocialBase:       newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
+				SocialBase:       newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync),
 				allowedGroups:    util.SplitString(sec.Key("allowed_groups").String()),
 				forceUseGraphAPI: sec.Key("force_use_graph_api").MustBool(false),
 			}
@@ -176,7 +176,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// Okta
 		if name == "okta" {
 			ss.socialMap["okta"] = &SocialOkta{
-				SocialBase:    newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
+				SocialBase:    newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync),
 				apiUrl:        info.ApiUrl,
 				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
 			}
@@ -185,7 +185,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// Generic - Uses the same scheme as GitHub.
 		if name == "generic_oauth" {
 			ss.socialMap["generic_oauth"] = &SocialGenericOAuth{
-				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
+				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync),
 				apiUrl:               info.ApiUrl,
 				teamsUrl:             info.TeamsUrl,
 				emailAttributeName:   info.EmailAttributeName,
@@ -215,7 +215,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 
 			ss.socialMap[grafanaCom] = &SocialGrafanaCom{
 				SocialBase: newSocialBase(name, &config, info,
-					cfg.AutoAssignOrgRole),
+					cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync),
 				url:                  cfg.GrafanaComURL,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
@@ -261,6 +261,7 @@ type SocialBase struct {
 	roleAttributePath   string
 	roleAttributeStrict bool
 	autoAssignOrgRole   string
+	skipOrgRoleSync     bool
 }
 
 type Error struct {
@@ -294,6 +295,7 @@ func newSocialBase(name string,
 	config *oauth2.Config,
 	info *OAuthInfo,
 	autoAssignOrgRole string,
+	skipOrgRoleSync bool,
 ) *SocialBase {
 	logger := log.New("oauth." + name)
 
@@ -306,6 +308,7 @@ func newSocialBase(name string,
 		autoAssignOrgRole:       autoAssignOrgRole,
 		roleAttributePath:       info.RoleAttributePath,
 		roleAttributeStrict:     info.RoleAttributeStrict,
+		skipOrgRoleSync:         skipOrgRoleSync,
 	}
 }
 
@@ -346,10 +349,10 @@ func (s *SocialBase) defaultRole(legacy bool) org.RoleType {
 		return org.RoleType(s.autoAssignOrgRole)
 	}
 
-	if legacy {
+	if legacy && !s.skipOrgRoleSync {
 		s.log.Warn("No valid role found. Skipping role sync. " +
 			"In Grafana 10, this will result in the user being assigned the default role and overriding manual assignment. " +
-			"If role sync is not desired, set oauth_skip_org_role_update_sync to false")
+			"If role sync is not desired, set oauth_skip_org_role_update_sync to true")
 	}
 
 	return ""

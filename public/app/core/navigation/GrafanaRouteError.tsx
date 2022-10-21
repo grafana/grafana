@@ -43,7 +43,7 @@ export function GrafanaRouteError({ error, errorInfo }: Props) {
           </div>
         )}
         {!isChunkLoadingError && (
-          <ErrorWithStack title={'An unexpected error happend'} error={error} errorInfo={errorInfo} />
+          <ErrorWithStack title={'An unexpected error happened'} error={error} errorInfo={errorInfo} />
         )}
       </div>
     </Page>

@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
@@ -23,7 +24,7 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 		Status: models.TmpUserInvitePending,
 	}
 	setup := func(t *testing.T) {
-		db := sqlstore.InitTestDB(t)
+		db := db.InitTestDB(t)
 		store = &xormStore{db: db}
 		err := store.CreateTempUser(context.Background(), &cmd)
 		require.Nil(t, err)

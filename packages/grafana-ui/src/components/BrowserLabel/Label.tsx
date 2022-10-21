@@ -25,7 +25,7 @@ interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
 /**
  * @internal
  */
-export const Label = forwardRef<HTMLElement, Props>(
+export const Label = forwardRef<HTMLButtonElement, Props>(
   (
     {
       name,
@@ -64,12 +64,13 @@ export const Label = forwardRef<HTMLElement, Props>(
     }
 
     return (
-      <span
+      <button
         key={text}
         ref={ref}
         onClick={onLabelClick}
         style={style}
         title={title || text}
+        type="button"
         role="option"
         aria-selected={!!active}
         className={cx(
@@ -92,7 +93,7 @@ export const Label = forwardRef<HTMLElement, Props>(
             highlightClassName={styles.matchHighLight}
           />
         )}
-      </span>
+      </button>
     );
   }
 );
@@ -111,6 +112,7 @@ const getLabelStyles = (theme: GrafanaTheme2) => ({
     text-shadow: none;
     padding: ${theme.spacing(0.5)};
     border-radius: ${theme.shape.borderRadius()};
+    border: none;
     margin-right: ${theme.spacing(1)};
     margin-bottom: ${theme.spacing(0.5)};
   `,

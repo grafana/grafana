@@ -38,8 +38,10 @@ export const ListPublicDashboardTable = () => {
       <table className="filter-table">
         <thead>
           <tr>
-            <th>Dashboard</th>
-            <th>Public dashboard enabled</th>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Public URL</th>
+            <th>Configuration</th>
             <th></th>
           </tr>
         </thead>
@@ -65,7 +67,10 @@ export const ListPublicDashboardTable = () => {
                   >
                     <Icon name="external-link-alt" />
                   </LinkButton>
-
+                </ButtonGroup>
+              </td>
+              <td>
+                <ButtonGroup>
                   <LinkButton
                     fill="text"
                     href={`/d/${pd.dashboardUid}?shareView=share`}
