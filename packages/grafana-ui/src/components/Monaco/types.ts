@@ -42,7 +42,8 @@ export interface CodeEditorProps {
   /** Handler to be performed when editor is blurred */
   onBlur?: CodeEditorChangeHandler;
 
-  onChange?: (val: string) => void;
+  /** Handler to be performed whenever the text inside the editor changes */
+  onChange?: CodeEditorChangeHandler;
 
   /** Handler to be performed when Cmd/Ctrl+S is pressed */
   onSave?: CodeEditorChangeHandler;
