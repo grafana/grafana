@@ -163,7 +163,7 @@ describe('SharedPreferences', () => {
 
     await selectOptionInTest(screen.getByLabelText('Timezone'), 'Australia/Sydney');
     await selectOptionInTest(screen.getByLabelText('Week start'), 'Saturday');
-    await selectOptionInTest(screen.getByLabelText(/language/i), 'French');
+    await selectOptionInTest(screen.getByLabelText(/language/i), 'Français');
 
     await userEvent.click(screen.getByText('Save'));
     expect(mockPrefsUpdate).toHaveBeenCalledWith({
