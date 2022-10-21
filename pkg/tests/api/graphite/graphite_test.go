@@ -50,7 +50,7 @@ func TestIntegrationGraphite(t *testing.T) {
 		"httpHeaderValue1":  "custom-header-value",
 	}
 
-	uid := "influxdb"
+	uid := "graphite"
 	err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
 		OrgId:          1,
 		Access:         datasources.DS_ACCESS_PROXY,

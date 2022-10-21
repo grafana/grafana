@@ -5,9 +5,11 @@ package setting
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -145,6 +147,7 @@ var (
 
 	// LDAP
 	LDAPEnabled           bool
+	LDAPSkipOrgRoleSync   bool
 	LDAPConfigFile        string
 	LDAPSyncCron          string
 	LDAPAllowSignup       bool
@@ -224,12 +227,13 @@ type Cfg struct {
 	Packaging string
 
 	// Paths
-	HomePath           string
-	ProvisioningPath   string
-	DataPath           string
-	LogsPath           string
-	PluginsPath        string
-	BundledPluginsPath string
+	HomePath              string
+	ProvisioningPath      string
+	DataPath              string
+	LogsPath              string
+	PluginsPath           string
+	BundledPluginsPath    string
+	EnterpriseLicensePath string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -261,7 +265,9 @@ type Cfg struct {
 	CSPTemplate           string
 	AngularSupportEnabled bool
 
-	TempDataLifetime                 time.Duration
+	TempDataLifetime time.Duration
+
+	// Plugins
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
 	PluginSettings                   PluginSettings
@@ -270,8 +276,9 @@ type Cfg struct {
 	PluginCatalogHiddenPlugins       []string
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
-	DisableSanitizeHtml              bool
-	EnterpriseLicensePath            string
+
+	// Panels
+	DisableSanitizeHtml bool
 
 	// Metrics
 	MetricsEndpointEnabled           bool
@@ -294,6 +301,7 @@ type Cfg struct {
 	BasicAuthEnabled             bool
 	AdminUser                    string
 	AdminPassword                string
+	DisableLogin                 bool
 	AdminEmail                   string
 	DisableSyncLock              bool
 
@@ -407,8 +415,9 @@ type Cfg struct {
 	FeedbackLinksEnabled                bool
 
 	// LDAP
-	LDAPEnabled     bool
-	LDAPAllowSignup bool
+	LDAPEnabled         bool
+	LDAPSkipOrgRoleSync bool
+	LDAPAllowSignup     bool
 
 	Quota QuotaSettings
 
@@ -463,6 +472,10 @@ type Cfg struct {
 	RBACPermissionCache bool
 	// Enable Permission validation during role creation and provisioning
 	RBACPermissionValidationEnabled bool
+	// GRPC Server.
+	GRPCServerNetwork   string
+	GRPCServerAddress   string
+	GRPCServerTLSConfig *tls.Config
 }
 
 type CommandLineArgs struct {
@@ -946,6 +959,10 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		return err
 	}
 
+	if err := readGRPCServerSettings(cfg, iniFile); err != nil {
+		return err
+	}
+
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
@@ -1117,6 +1134,8 @@ func (cfg *Cfg) readLDAPConfig() {
 	LDAPSyncCron = ldapSec.Key("sync_cron").String()
 	LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
 	cfg.LDAPEnabled = LDAPEnabled
+	LDAPSkipOrgRoleSync = ldapSec.Key("skip_org_role_sync").MustBool(false)
+	cfg.LDAPSkipOrgRoleSync = LDAPSkipOrgRoleSync
 	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
 	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 	cfg.LDAPAllowSignup = LDAPAllowSignup
@@ -1319,6 +1338,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 	cfg.OAuthSkipOrgRoleUpdateSync = auth.Key("oauth_skip_org_role_update_sync").MustBool(false)
 
+	cfg.DisableLogin = auth.Key("disable_login").MustBool(false)
+
 	// SigV4
 	SigV4AuthEnabled = auth.Key("sigv4_auth_enabled").MustBool(false)
 	cfg.SigV4AuthEnabled = SigV4AuthEnabled
@@ -1489,6 +1510,68 @@ func readAlertingSettings(iniFile *ini.File) error {
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
 	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
 
+	return nil
+}
+
+func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
+	server := iniFile.Section("grpc_server")
+	errPrefix := "grpc_server:"
+	useTLS := server.Key("use_tls").MustBool(false)
+	certFile := server.Key("cert_file").String()
+	keyFile := server.Key("cert_key").String()
+	if useTLS {
+		serverCert, err := tls.LoadX509KeyPair(certFile, keyFile)
+		if err != nil {
+			return fmt.Errorf("%s error loading X509 key pair: %w", errPrefix, err)
+		}
+		cfg.GRPCServerTLSConfig = &tls.Config{
+			Certificates: []tls.Certificate{serverCert},
+			ClientAuth:   tls.NoClientCert,
+		}
+	}
+
+	cfg.GRPCServerNetwork = valueAsString(server, "network", "tcp")
+	cfg.GRPCServerAddress = valueAsString(server, "address", "")
+	switch cfg.GRPCServerNetwork {
+	case "unix":
+		if cfg.GRPCServerAddress != "" {
+			// Explicitly provided path for unix domain socket.
+			if stat, err := os.Stat(cfg.GRPCServerAddress); os.IsNotExist(err) {
+				// File does not exist - nice, nothing to do.
+			} else if err != nil {
+				return fmt.Errorf("%s error getting stat for a file: %s", errPrefix, cfg.GRPCServerAddress)
+			} else {
+				if stat.Mode()&fs.ModeSocket == 0 {
+					return fmt.Errorf("%s file %s already exists and is not a unix domain socket", errPrefix, cfg.GRPCServerAddress)
+				}
+				// Unix domain socket file, should be safe to remove.
+				err := os.Remove(cfg.GRPCServerAddress)
+				if err != nil {
+					return fmt.Errorf("%s can't remove unix socket file: %s", errPrefix, cfg.GRPCServerAddress)
+				}
+			}
+		} else {
+			// Use temporary file path for a unix domain socket.
+			tf, err := os.CreateTemp("", "gf_grpc_server_api")
+			if err != nil {
+				return fmt.Errorf("%s error creating tmp file: %v", errPrefix, err)
+			}
+			unixPath := tf.Name()
+			if err := tf.Close(); err != nil {
+				return fmt.Errorf("%s error closing tmp file: %v", errPrefix, err)
+			}
+			if err := os.Remove(unixPath); err != nil {
+				return fmt.Errorf("%s error removing tmp file: %v", errPrefix, err)
+			}
+			cfg.GRPCServerAddress = unixPath
+		}
+	case "tcp":
+		if cfg.GRPCServerAddress == "" {
+			cfg.GRPCServerAddress = "127.0.0.1:10000"
+		}
+	default:
+		return fmt.Errorf("%s unsupported network %s", errPrefix, cfg.GRPCServerNetwork)
+	}
 	return nil
 }
 

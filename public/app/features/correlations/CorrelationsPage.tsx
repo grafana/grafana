@@ -148,7 +148,7 @@ export default function CorrelationsPage() {
             <Table
               renderExpandedRow={({ target, source, ...correlation }) => (
                 <EditCorrelationForm
-                  defaultValues={{ sourceUID: source.uid, ...correlation }}
+                  correlation={{ ...correlation, sourceUID: source.uid, targetUID: target.uid }}
                   onUpdated={fetchCorrelations}
                   readOnly={isSourceReadOnly({ source }) || !canWriteCorrelations}
                 />
@@ -184,7 +184,7 @@ const DataSourceCell = memo(
 
     return (
       <span className={styles.root}>
-        <img src={value.meta.info.logos.small} className={styles.dsLogo} />
+        <img src={value.meta.info.logos.small} alt="" className={styles.dsLogo} />
         {value.name}
       </span>
     );

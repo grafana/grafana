@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
@@ -26,7 +25,7 @@ import (
 type PrometheusSrv struct {
 	log     log.Logger
 	manager state.AlertInstanceManager
-	store   store.RuleStore
+	store   RuleStore
 	ac      accesscontrol.AccessControl
 }
 
@@ -285,7 +284,7 @@ func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 			}
 
 			// For any other type of error, it is unexpected abort and return the whole JSON.
-			logger.Debug("failed to parse a query", "err", err)
+			logger.Debug("failed to parse a query", "error", err)
 			queryErr = err
 			break
 		}

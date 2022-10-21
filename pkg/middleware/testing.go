@@ -6,18 +6,20 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
 type scenarioContext struct {
@@ -37,12 +39,14 @@ type scenarioContext struct {
 	jwtAuthService       *models.FakeJWTService
 	remoteCacheService   *remotecache.RemoteCache
 	cfg                  *setting.Cfg
-	sqlStore             sqlstore.Store
-	mockSQLStore         *mockstore.SQLStoreMock
+	sqlStore             db.DB
+	mockSQLStore         *dbtest.FakeDB
 	contextHandler       *contexthandler.ContextHandler
 	loginService         *loginservice.LoginServiceMock
 	apiKeyService        *apikeytest.Service
 	userService          *usertest.FakeUserService
+	oauthTokenService    *auth.FakeOAuthTokenService
+	orgService           *orgtest.FakeOrgService
 
 	req *http.Request
 }

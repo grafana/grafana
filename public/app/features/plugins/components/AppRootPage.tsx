@@ -8,7 +8,6 @@ import { AppEvents, AppPlugin, AppPluginMeta, KeyValue, NavModel, PluginType } f
 import { config } from '@grafana/runtime';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/angular/services/nav_model_srv';
 import { Page } from 'app/core/components/Page/Page';
-import { PageProps } from 'app/core/components/Page/types';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { appEvents } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -39,7 +38,9 @@ export function AppRootPage({ match, queryParams, location }: Props) {
   const portalNode = useMemo(() => createHtmlPortalNode(), []);
   const { plugin, loading, pluginNav } = state;
   const sectionNav = useSelector(
-    createSelector(getNavIndex, (navIndex) => buildPluginSectionNav(location, pluginNav, navIndex))
+    createSelector(getNavIndex, (navIndex) =>
+      buildPluginSectionNav(location, pluginNav, navIndex, match.params.pluginId)
+    )
   );
   const context = useMemo(() => buildPluginPageContext(sectionNav), [sectionNav]);
 
@@ -53,13 +54,13 @@ export function AppRootPage({ match, queryParams, location }: Props) {
   );
 
   if (!plugin || match.params.pluginId !== plugin.meta.id) {
-    return <Page {...getLoadingPageProps()}>{loading && <PageLoader />}</Page>;
+    return <Page navModel={sectionNav}>{loading && <PageLoader />}</Page>;
   }
 
   if (!plugin.root) {
     return (
-      <Page navModel={getWarningNav('Plugin load error')}>
-        <div>No root app page component found</div>;
+      <Page navModel={sectionNav ?? getWarningNav('Plugin load error')}>
+        <div>No root app page component found</div>
       </Page>
     );
   }
@@ -119,18 +120,6 @@ const stateSlice = createSlice({
     },
   },
 });
-
-function getLoadingPageProps(): Partial<PageProps> {
-  if (config.featureToggles.topnav) {
-    return { navId: 'apps' };
-  }
-
-  const loading = { text: 'Loading plugin' };
-
-  return {
-    navModel: { main: loading, node: loading },
-  };
-}
 
 async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyAction>) {
   try {

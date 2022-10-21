@@ -150,6 +150,10 @@ type DeleteCorrelationResponse struct {
 func (s *CorrelationsService) updateHandler(c *models.ReqContext) response.Response {
 	cmd := UpdateCorrelationCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
+		if errors.Is(err, ErrUpdateCorrelationEmptyParams) {
+			return response.Error(http.StatusBadRequest, "At least one of label, description or config is required", err)
+		}
+
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
@@ -159,10 +163,6 @@ func (s *CorrelationsService) updateHandler(c *models.ReqContext) response.Respo
 
 	correlation, err := s.UpdateCorrelation(c.Req.Context(), cmd)
 	if err != nil {
-		if errors.Is(err, ErrUpdateCorrelationEmptyParams) {
-			return response.Error(http.StatusBadRequest, "At least one of label, description is required", err)
-		}
-
 		if errors.Is(err, ErrSourceDataSourceDoesNotExists) {
 			return response.Error(http.StatusNotFound, "Data source not found", err)
 		}

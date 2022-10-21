@@ -30,6 +30,7 @@ interface LogsContainerProps extends PropsFromRedux {
   scanRange?: RawTimeRange;
   syncedTimes: boolean;
   loadingState: LoadingState;
+  scrollElement?: HTMLDivElement;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning: () => void;
@@ -97,6 +98,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       exploreId,
       addResultsToCache,
       clearCache,
+      scrollElement,
     } = this.props;
 
     if (!logRows) {
@@ -152,6 +154,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             getFieldLinks={this.getFieldLinks}
             addResultsToCache={() => addResultsToCache(exploreId)}
             clearCache={() => clearCache(exploreId)}
+            scrollElement={scrollElement}
           />
         </LogsCrossFadeTransition>
       </>
