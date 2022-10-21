@@ -1,5 +1,3 @@
-import { renderMarkdown } from '@grafana/data';
-
 import {
   createAggregationOperation,
   createAggregationOperationWithParam,
@@ -433,5 +431,8 @@ const definitions = getOperationDefinitions();
 export function explainOperator(id: LokiOperationId): string {
   const definition = definitions.find((operation) => operation.id === id);
 
-  return definition?.explainHandler?.({ id: '', params: ['<value>'] }) || '';
+  const explain = definition?.explainHandler?.({ id: '', params: ['<value>'] }) || '';
+
+  // Strip markdown links
+  return explain.replace(/\[(.*)\]\(.*\)/g, '$1');
 }
