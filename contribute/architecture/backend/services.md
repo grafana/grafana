@@ -19,11 +19,11 @@ package example
 type Service struct {
     logger   log.Logger
     cfg      *setting.Cfg
-    sqlStore *sqlstore.SQLStore
+    sqlStore db.DB
 }
 
 // ProvideService provides Service as dependency for other services.
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB) (*Service, error) {
     s := &Service{
         logger:     log.New("service"),
         cfg:        cfg,
@@ -76,7 +76,7 @@ package server
 import (
 	"github.com/google/wire"
 	"github.com/grafana/grafana/pkg/example"
-    "github.com/grafana/grafana/pkg/services/sqlstore"
+    "github.com/grafana/grafana/pkg/infra/db"
 )
 
 var wireBasicSet = wire.NewSet(
@@ -98,7 +98,7 @@ func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOpt
 	return &Server{}, nil
 }
 
-func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions, sqlStore *sqlstore.SQLStore) (*Server, error) {
+func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions, sqlStore db.DB) (*Server, error) {
 	wire.Build(wireExtsTestSet)
 	return &Server{}, nil
 }

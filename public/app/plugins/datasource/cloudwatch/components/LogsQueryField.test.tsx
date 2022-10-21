@@ -6,7 +6,7 @@ import { act } from 'react-dom/test-utils';
 import { ExploreId } from '../../../../types';
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
 
-import { CloudWatchLogsQueryField } from './LogsQueryField';
+import CloudWatchLogsQueryField from './LogsQueryField';
 
 jest
   .spyOn(_, 'debounce')

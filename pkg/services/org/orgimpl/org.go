@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -16,11 +16,9 @@ type Service struct {
 	store store
 	cfg   *setting.Cfg
 	log   log.Logger
-	// TODO remove sqlstore and use db.DB
-	sqlStore sqlstore.Store
 }
 
-func ProvideService(db sqlstore.Store, cfg *setting.Cfg) org.Service {
+func ProvideService(db db.DB, cfg *setting.Cfg) org.Service {
 	log := log.New("org service")
 	return &Service{
 		store: &sqlStore{
@@ -29,9 +27,8 @@ func ProvideService(db sqlstore.Store, cfg *setting.Cfg) org.Service {
 			log:     log,
 			cfg:     cfg,
 		},
-		cfg:      cfg,
-		log:      log,
-		sqlStore: db,
+		cfg: cfg,
+		log: log,
 	}
 }
 

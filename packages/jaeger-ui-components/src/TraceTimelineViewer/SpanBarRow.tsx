@@ -240,6 +240,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       &:hover > small {
         color: ${autoColor(theme, '#000')};
       }
+      text-align: left;
+      background: transparent;
+      border: none;
     `,
     nameDetailExpanded: css`
       label: nameDetailExpanded;
@@ -437,7 +440,8 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               addHoverIndentGuideId={addHoverIndentGuideId}
               removeHoverIndentGuideId={removeHoverIndentGuideId}
             />
-            <a
+            <button
+              type="button"
               className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
               aria-checked={isDetailExpanded}
               title={labelDetail}
@@ -478,7 +482,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               </span>
               <small className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</small>
               <small className={styles.endpointName}> {this.getSpanBarLabel(span, spanBarOptions, label)}</small>
-            </a>
+            </button>
             {createSpanLink &&
               (() => {
                 const links = createSpanLink(span);

@@ -45,7 +45,7 @@
     "marked": "4.1.0",
     "moment": "2.29.4",
     "moment-timezone": "0.5.35",
-    "ol": "6.15.1",
+    "ol": "7.1.0",
     "papaparse": "5.3.2",
     "regenerator-runtime": "0.13.9",
     "rxjs": "7.5.6",

@@ -311,6 +311,10 @@ var (
 			Description: "Enable more in memory caching for database queries",
 		},
 		{
+			Name:        "interFont",
+			Description: "Switch to inter font",
+		},
+		{
 			Name:         "newPanelChromeUI",
 			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
 			State:        FeatureStateAlpha,
@@ -323,9 +327,19 @@ var (
 			RequiresDevMode: true,
 		},
 		{
+			Name:        "showDashboardValidationWarnings",
+			Description: "Show warnings when Dashboards do not validate against the schema",
+		},
+		{
 			Name:        "mysqlAnsiQuotes",
 			Description: "Use double quote to escape keyword in Mysql query",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:            "accessControlOnCall",
+			Description:     "Access control primitives for OnCall",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
 		},
 	}
 )
