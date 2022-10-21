@@ -482,7 +482,6 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	t.Helper()
 
 	mockedClock := clock.NewMock()
-	logger := log.New("ngalert schedule test")
 
 	if rs == nil {
 		rs = newFakeRulesStore()
