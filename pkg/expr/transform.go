@@ -81,7 +81,7 @@ func (r RelativeTimeRange) AbsoluteTime(t time.Time) backend.TimeRange {
 
 // TransformData takes Queries which are either expressions nodes
 // or are datasource requests.
-func (s *Service) TransformData(ctx context.Context, req *Request) (r *backend.QueryDataResponse, err error) {
+func (s *Service) TransformData(ctx context.Context, now time.Time, req *Request) (r *backend.QueryDataResponse, err error) {
 	if s.isDisabled() {
 		return nil, fmt.Errorf("server side expressions are disabled")
 	}
@@ -107,7 +107,7 @@ func (s *Service) TransformData(ctx context.Context, req *Request) (r *backend.Q
 	}
 
 	// Execute the pipeline
-	responses, err := s.ExecutePipeline(ctx, pipeline)
+	responses, err := s.ExecutePipeline(ctx, now, pipeline)
 	if err != nil {
 		return nil, err
 	}

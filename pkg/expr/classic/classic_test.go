@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
@@ -405,7 +406,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := tt.conditionsCmd.Execute(context.Background(), tt.vars)
+			res, err := tt.conditionsCmd.Execute(context.Background(), time.Now(), tt.vars)
 			require.NoError(t, err)
 
 			require.Equal(t, 1, len(res.Values))

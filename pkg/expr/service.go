@@ -2,6 +2,7 @@ package expr
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -62,9 +63,9 @@ func (s *Service) BuildPipeline(req *Request) (DataPipeline, error) {
 }
 
 // ExecutePipeline executes an expression pipeline and returns all the results.
-func (s *Service) ExecutePipeline(ctx context.Context, pipeline DataPipeline) (*backend.QueryDataResponse, error) {
+func (s *Service) ExecutePipeline(ctx context.Context, now time.Time, pipeline DataPipeline) (*backend.QueryDataResponse, error) {
 	res := backend.NewQueryDataResponse()
-	vars, err := pipeline.execute(ctx, s)
+	vars, err := pipeline.execute(ctx, now, s)
 	if err != nil {
 		return nil, err
 	}
