@@ -57,7 +57,7 @@ export const SharePublicDashboard = (props: Props) => {
         datasources: true,
         usage: true,
       });
-      setAnnotationsEnabled(!!publicDashboard?.annotationsEnabled);
+      setAnnotationsEnabled(!!publicDashboard?.isAnnotationsEnabled);
     }
 
     setEnabledSwitch((prevState) => ({ ...prevState, isEnabled: !!publicDashboard?.isEnabled }));
@@ -82,7 +82,7 @@ export const SharePublicDashboard = (props: Props) => {
 
     saveConfig({
       dashboard: props.dashboard,
-      payload: { ...publicDashboard!, isEnabled: enabledSwitch.isEnabled, annotationsEnabled },
+      payload: { ...publicDashboard!, isEnabled: enabledSwitch.isEnabled, isAnnotationsEnabled: annotationsEnabled },
     });
   };
 
