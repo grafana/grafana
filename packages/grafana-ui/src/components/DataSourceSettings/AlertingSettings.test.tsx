@@ -5,7 +5,7 @@ import { AlertingSettings } from '@grafana/ui';
 
 import { Props, AlertingConfig } from './AlertingSettings';
 
-const setup = (propOverrides?: object) => {
+const setup = () => {
   const onOptionsChange = jest.fn();
   const props: Props<AlertingConfig> = {
     options: {
@@ -32,7 +32,6 @@ const setup = (propOverrides?: object) => {
       readOnly: true,
     },
     onOptionsChange,
-    ...propOverrides,
   };
 
   render(<AlertingSettings {...props} />);
