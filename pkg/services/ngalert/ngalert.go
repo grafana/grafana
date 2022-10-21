@@ -183,7 +183,7 @@ func (ng *AlertNG) init() error {
 	schedCfg := schedule.SchedulerCfg{
 		Cfg:         ng.Cfg.UnifiedAlerting,
 		C:           clk,
-		Evaluator:   eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.ExpressionService),
+		Evaluator:   eval.NewEvaluator(ng.Cfg, ng.DataSourceCache, ng.ExpressionService),
 		RuleStore:   store,
 		Metrics:     ng.Metrics.GetSchedulerMetrics(),
 		AlertSender: alertsRouter,
