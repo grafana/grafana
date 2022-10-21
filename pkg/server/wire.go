@@ -356,7 +356,6 @@ var wireBasicSet = wire.NewSet(
 	grpccontext.ProvideContextHandler,
 	grpcserver.ProvideService,
 	grpcserver.ProvideHealthService,
-	grpcserver.ProvideQueryDataService,
 	grpcserver.ProvideReflectionService,
 	interceptors.ProvideAuthenticator,
 	kind.ProvideService, // The registry known kinds
