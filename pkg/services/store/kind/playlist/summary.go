@@ -62,6 +62,6 @@ func summaryBuilder(ctx context.Context, uid string, body []byte) (*models.Objec
 		}
 	}
 
-	out, err := json.Marshal(obj)
+	out, err := json.MarshalIndent(obj, "", "  ")
 	return summary, out, err
 }
