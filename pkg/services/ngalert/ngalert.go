@@ -236,6 +236,14 @@ func (ng *AlertNG) init() error {
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
+	log.RegisterContextualLogProvider(func(ctx context.Context) ([]interface{}, bool) {
+		key, ok := models.RuleKeyFromContext(ctx)
+		if !ok {
+			return nil, false
+		}
+		return key.LogContext(), true
+	})
+
 	return DeclareFixedRoles(ng.accesscontrolService)
 }
 
