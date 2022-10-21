@@ -16,10 +16,10 @@ export function QuerySettings({ options, onOptionsChange }: Props) {
       <h3 className="page-heading">TraceID Query</h3>
       <InlineFieldRow>
         <InlineField
-          label="Span start time shift"
+          label="Time shift for start of search"
           labelWidth={26}
           grow
-          tooltip="Shifts the start time of the span. Default 0 (Time units can be used here, for example: 5s, 1m, 3h)"
+          tooltip="Shifts the start of the time range when searching by trace ID. This is needed as searching for traces can return traces that do not fully fall into the search time range, so we recommend using higher time shifts for longer traces. Default 30m (Time units can be used here, for example: 5s, 1m, 3h)"
         >
           <Input
             type="text"
@@ -37,10 +37,10 @@ export function QuerySettings({ options, onOptionsChange }: Props) {
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField
-          label="Span end time shift"
+          label="Time shift for end of search"
           labelWidth={26}
           grow
-          tooltip="Shifts the end time of the span. Default 0 Time units can be used here, for example: 5s, 1m, 3h"
+          tooltip="Shifts the end of the time range when searching by trace ID. This is needed as searching for traces can return traces that do not fully fall into the search time range, so we recommend using higher time shifts for longer traces. Default 30m (Time units can be used here, for example: 5s, 1m, 3h)"
         >
           <Input
             type="text"
