@@ -20,17 +20,14 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Any struct {
+type IntrospectionRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
-
-	TypeUrl string `protobuf:"bytes,1,opt,name=type_url,json=typeUrl,proto3" json:"type_url,omitempty"`
-	Value   []byte `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
 }
 
-func (x *Any) Reset() {
-	*x = Any{}
+func (x *IntrospectionRequest) Reset() {
+	*x = IntrospectionRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_jwt_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -38,13 +35,13 @@ func (x *Any) Reset() {
 	}
 }
 
-func (x *Any) String() string {
+func (x *IntrospectionRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Any) ProtoMessage() {}
+func (*IntrospectionRequest) ProtoMessage() {}
 
-func (x *Any) ProtoReflect() protoreflect.Message {
+func (x *IntrospectionRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_jwt_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -56,36 +53,24 @@ func (x *Any) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Any.ProtoReflect.Descriptor instead.
-func (*Any) Descriptor() ([]byte, []int) {
+// Deprecated: Use IntrospectionRequest.ProtoReflect.Descriptor instead.
+func (*IntrospectionRequest) Descriptor() ([]byte, []int) {
 	return file_jwt_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Any) GetTypeUrl() string {
-	if x != nil {
-		return x.TypeUrl
-	}
-	return ""
-}
-
-func (x *Any) GetValue() []byte {
-	if x != nil {
-		return x.Value
-	}
-	return nil
-}
-
-type VerifyRequest struct {
+type IntrospectionResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// JWT token string
-	Token string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	// Validity of the token
+	OK bool `protobuf:"varint,1,opt,name=OK,proto3" json:"OK,omitempty"`
+	// Scopes of the token
+	Scopes []string `protobuf:"bytes,2,rep,name=scopes,proto3" json:"scopes,omitempty"`
 }
 
-func (x *VerifyRequest) Reset() {
-	*x = VerifyRequest{}
+func (x *IntrospectionResponse) Reset() {
+	*x = IntrospectionResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_jwt_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -93,13 +78,13 @@ func (x *VerifyRequest) Reset() {
 	}
 }
 
-func (x *VerifyRequest) String() string {
+func (x *IntrospectionResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*VerifyRequest) ProtoMessage() {}
+func (*IntrospectionResponse) ProtoMessage() {}
 
-func (x *VerifyRequest) ProtoReflect() protoreflect.Message {
+func (x *IntrospectionResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_jwt_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -111,83 +96,41 @@ func (x *VerifyRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use VerifyRequest.ProtoReflect.Descriptor instead.
-func (*VerifyRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use IntrospectionResponse.ProtoReflect.Descriptor instead.
+func (*IntrospectionResponse) Descriptor() ([]byte, []int) {
 	return file_jwt_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *VerifyRequest) GetToken() string {
-	if x != nil {
-		return x.Token
-	}
-	return ""
-}
-
-type VerifyResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// Validity of the token
-	OK bool `protobuf:"varint,1,opt,name=OK,proto3" json:"OK,omitempty"`
-}
-
-func (x *VerifyResponse) Reset() {
-	*x = VerifyResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_jwt_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *VerifyResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*VerifyResponse) ProtoMessage() {}
-
-func (x *VerifyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_jwt_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use VerifyResponse.ProtoReflect.Descriptor instead.
-func (*VerifyResponse) Descriptor() ([]byte, []int) {
-	return file_jwt_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *VerifyResponse) GetOK() bool {
+func (x *IntrospectionResponse) GetOK() bool {
 	if x != nil {
 		return x.OK
 	}
 	return false
 }
 
+func (x *IntrospectionResponse) GetScopes() []string {
+	if x != nil {
+		return x.Scopes
+	}
+	return nil
+}
+
 var File_jwt_proto protoreflect.FileDescriptor
 
 var file_jwt_proto_rawDesc = []byte{
 	0x0a, 0x09, 0x6a, 0x77, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x03, 0x6a, 0x77, 0x74,
-	0x22, 0x36, 0x0a, 0x03, 0x41, 0x6e, 0x79, 0x12, 0x19, 0x0a, 0x08, 0x74, 0x79, 0x70, 0x65, 0x5f,
-	0x75, 0x72, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x74, 0x79, 0x70, 0x65, 0x55,
-	0x72, 0x6c, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x0c, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x25, 0x0a, 0x0d, 0x56, 0x65, 0x72, 0x69,
-	0x66, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x6f, 0x6b,
-	0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x22,
-	0x20, 0x0a, 0x0e, 0x56, 0x65, 0x72, 0x69, 0x66, 0x79, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x22, 0x16, 0x0a, 0x14, 0x49, 0x6e, 0x74, 0x72, 0x6f, 0x73, 0x70, 0x65, 0x63, 0x74, 0x69, 0x6f,
+	0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x3f, 0x0a, 0x15, 0x49, 0x6e, 0x74, 0x72,
+	0x6f, 0x73, 0x70, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
 	0x65, 0x12, 0x0e, 0x0a, 0x02, 0x4f, 0x4b, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x02, 0x4f,
-	0x4b, 0x32, 0x38, 0x0a, 0x03, 0x4a, 0x57, 0x54, 0x12, 0x31, 0x0a, 0x06, 0x56, 0x65, 0x72, 0x69,
-	0x66, 0x79, 0x12, 0x12, 0x2e, 0x6a, 0x77, 0x74, 0x2e, 0x56, 0x65, 0x72, 0x69, 0x66, 0x79, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x13, 0x2e, 0x6a, 0x77, 0x74, 0x2e, 0x56, 0x65, 0x72,
-	0x69, 0x66, 0x79, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x08, 0x5a, 0x06, 0x2e,
-	0x2f, 0x3b, 0x6a, 0x77, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x4b, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x63, 0x6f, 0x70, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28,
+	0x09, 0x52, 0x06, 0x73, 0x63, 0x6f, 0x70, 0x65, 0x73, 0x32, 0x4d, 0x0a, 0x03, 0x4a, 0x57, 0x54,
+	0x12, 0x46, 0x0a, 0x0d, 0x49, 0x6e, 0x74, 0x72, 0x6f, 0x73, 0x70, 0x65, 0x63, 0x74, 0x69, 0x6f,
+	0x6e, 0x12, 0x19, 0x2e, 0x6a, 0x77, 0x74, 0x2e, 0x49, 0x6e, 0x74, 0x72, 0x6f, 0x73, 0x70, 0x65,
+	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x6a,
+	0x77, 0x74, 0x2e, 0x49, 0x6e, 0x74, 0x72, 0x6f, 0x73, 0x70, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x08, 0x5a, 0x06, 0x2e, 0x2f, 0x3b, 0x6a,
+	0x77, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -202,15 +145,14 @@ func file_jwt_proto_rawDescGZIP() []byte {
 	return file_jwt_proto_rawDescData
 }
 
-var file_jwt_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_jwt_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_jwt_proto_goTypes = []interface{}{
-	(*Any)(nil),            // 0: jwt.Any
-	(*VerifyRequest)(nil),  // 1: jwt.VerifyRequest
-	(*VerifyResponse)(nil), // 2: jwt.VerifyResponse
+	(*IntrospectionRequest)(nil),  // 0: jwt.IntrospectionRequest
+	(*IntrospectionResponse)(nil), // 1: jwt.IntrospectionResponse
 }
 var file_jwt_proto_depIdxs = []int32{
-	1, // 0: jwt.JWT.Verify:input_type -> jwt.VerifyRequest
-	2, // 1: jwt.JWT.Verify:output_type -> jwt.VerifyResponse
+	0, // 0: jwt.JWT.Introspection:input_type -> jwt.IntrospectionRequest
+	1, // 1: jwt.JWT.Introspection:output_type -> jwt.IntrospectionResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -225,7 +167,7 @@ func file_jwt_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_jwt_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Any); i {
+			switch v := v.(*IntrospectionRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -237,19 +179,7 @@ func file_jwt_proto_init() {
 			}
 		}
 		file_jwt_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*VerifyRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_jwt_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*VerifyResponse); i {
+			switch v := v.(*IntrospectionResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -267,7 +197,7 @@ func file_jwt_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_jwt_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

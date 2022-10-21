@@ -3,21 +3,16 @@ package jwt;
 
 option go_package = "./;jwt";
 
-message Any {
-  string type_url = 1;
-  bytes value = 2;
-}
+message IntrospectionRequest {}
 
-message VerifyRequest {
-  // JWT token string
-  string token = 1;
-}
-
-message VerifyResponse {
+message IntrospectionResponse {
   // Validity of the token
   bool OK = 1;
+
+  // Scopes of the token
+  repeated string scopes = 2;
 }
 
 service JWT {
-  rpc Verify(VerifyRequest) returns (VerifyResponse);
+  rpc Introspection(IntrospectionRequest) returns (IntrospectionResponse);
 }

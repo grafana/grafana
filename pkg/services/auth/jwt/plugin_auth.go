@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
+	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 	jose "gopkg.in/square/go-jose.v2"
@@ -163,13 +164,18 @@ type PluginAuthServer struct {
 	PluginAuthService *PluginAuthService
 }
 
-func (s *PluginAuthServer) Verify(ctx context.Context, req *VerifyRequest) (*VerifyResponse, error) {
-	_, err := s.PluginAuthService.Verify(ctx, req.Token)
-	if err != nil {
-		return nil, err
+func (s *PluginAuthServer) Introspection(ctx context.Context, req *IntrospectionRequest) (*IntrospectionResponse, error) {
+	grpcContext := grpccontext.FromContext(ctx)
+	scopes := []string{}
+
+	for _, v := range grpcContext.SignedInUser.Permissions {
+		for _, s := range v {
+			scopes = append(scopes, s...)
+		}
 	}
 
-	return &VerifyResponse{
-		OK: true,
+	return &IntrospectionResponse{
+		OK:     true,
+		Scopes: scopes,
 	}, nil
 }

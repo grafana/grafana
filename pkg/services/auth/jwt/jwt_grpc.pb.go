@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type JWTClient interface {
-	Verify(ctx context.Context, in *VerifyRequest, opts ...grpc.CallOption) (*VerifyResponse, error)
+	Introspection(ctx context.Context, in *IntrospectionRequest, opts ...grpc.CallOption) (*IntrospectionResponse, error)
 }
 
 type jWTClient struct {
@@ -33,9 +33,9 @@ func NewJWTClient(cc grpc.ClientConnInterface) JWTClient {
 	return &jWTClient{cc}
 }
 
-func (c *jWTClient) Verify(ctx context.Context, in *VerifyRequest, opts ...grpc.CallOption) (*VerifyResponse, error) {
-	out := new(VerifyResponse)
-	err := c.cc.Invoke(ctx, "/jwt.JWT/Verify", in, out, opts...)
+func (c *jWTClient) Introspection(ctx context.Context, in *IntrospectionRequest, opts ...grpc.CallOption) (*IntrospectionResponse, error) {
+	out := new(IntrospectionResponse)
+	err := c.cc.Invoke(ctx, "/jwt.JWT/Introspection", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,15 +46,15 @@ func (c *jWTClient) Verify(ctx context.Context, in *VerifyRequest, opts ...grpc.
 // All implementations should embed UnimplementedJWTServer
 // for forward compatibility
 type JWTServer interface {
-	Verify(context.Context, *VerifyRequest) (*VerifyResponse, error)
+	Introspection(context.Context, *IntrospectionRequest) (*IntrospectionResponse, error)
 }
 
 // UnimplementedJWTServer should be embedded to have forward compatible implementations.
 type UnimplementedJWTServer struct {
 }
 
-func (UnimplementedJWTServer) Verify(context.Context, *VerifyRequest) (*VerifyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Verify not implemented")
+func (UnimplementedJWTServer) Introspection(context.Context, *IntrospectionRequest) (*IntrospectionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Introspection not implemented")
 }
 
 // UnsafeJWTServer may be embedded to opt out of forward compatibility for this service.
@@ -68,20 +68,20 @@ func RegisterJWTServer(s grpc.ServiceRegistrar, srv JWTServer) {
 	s.RegisterService(&JWT_ServiceDesc, srv)
 }
 
-func _JWT_Verify_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(VerifyRequest)
+func _JWT_Introspection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IntrospectionRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(JWTServer).Verify(ctx, in)
+		return srv.(JWTServer).Introspection(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/jwt.JWT/Verify",
+		FullMethod: "/jwt.JWT/Introspection",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(JWTServer).Verify(ctx, req.(*VerifyRequest))
+		return srv.(JWTServer).Introspection(ctx, req.(*IntrospectionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -94,8 +94,8 @@ var JWT_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*JWTServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Verify",
-			Handler:    _JWT_Verify_Handler,
+			MethodName: "Introspection",
+			Handler:    _JWT_Introspection_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
