@@ -4,16 +4,16 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
 	store store
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg) playlist.Service {
-	if cfg.IsFeatureToggleEnabled("newDBLibrary") {
+func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles) playlist.Service {
+	if toggles.IsEnabled(featuremgmt.FlagNewDBLibrary) {
 		return &Service{
 			store: &sqlxStore{
 				sess: db.GetSqlxSession(),

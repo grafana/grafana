@@ -22,7 +22,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureMan
 		cfg:      cfg,
 		features: features,
 	}
-	if cfg.IsFeatureToggleEnabled("newDBLibrary") {
+	if features.IsEnabled(featuremgmt.FlagNewDBLibrary) {
 		service.store = &sqlxStore{
 			sess: db.GetSqlxSession(),
 		}
