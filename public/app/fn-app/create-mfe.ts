@@ -170,7 +170,6 @@ class createMfe {
 
     createMfe.publishTheme(bootConfigWithTheme.theme2);
 
-    console.log(bootConfigWithTheme.theme2, 'bootConfigWithTheme.theme2');
 
     if (isRuntimeOnly) {
       createMfe.logger('Successfully loaded theme:', mode);
@@ -265,13 +264,8 @@ class createMfe {
         );
       }
 
-      if (props.theme || props.mode) {
-        createMfe.renderMfeComponent(props);
 
-        return Promise.resolve(true);
-      }
-
-      return Promise.resolve(false);
+      return Promise.resolve(true);
     };
 
     return lifeCycleFn;
