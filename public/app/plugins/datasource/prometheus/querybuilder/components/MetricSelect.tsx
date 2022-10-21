@@ -126,7 +126,6 @@ export function MetricSelect({ datasource, query, onChange, onGetMetrics, labels
     <EditorFieldGroup>
       <EditorField label="Metric">
         <AsyncSelect
-          width={'auto'}
           inputId="prometheus-metric-select"
           className={styles.select}
           value={query.metric ? toOption(query.metric) : undefined}
