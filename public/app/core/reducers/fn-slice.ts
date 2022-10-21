@@ -1,10 +1,10 @@
 import { Theme as MuiTheme } from '@mui/material';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { WritableDraft } from 'immer/dist/internal';
 import { merge } from 'lodash';
 
 import { createTheme, GrafanaThemeType } from '@grafana/data';
 
-import { DeepPartial } from '../../../../packages/grafana-data/src/themes/types';
 import { GrafanaTheme } from '../../../../packages/grafana-data/src/types/theme';
 import { AnyObject } from '../../fn-app/types';
 
@@ -64,14 +64,14 @@ const fnSlice = createSlice({
   reducers: {
     setInitialMountState: (state, payload: PayloadAction<FnGlobalState>) => merge({}, state, payload),
     updateFnState: (
-      state,
-      action: PayloadAction<{ type: keyof FnGlobalState; payload: DeepPartial<FnGlobalState[keyof FnGlobalState]> }>
+      state: WritableDraft<FnGlobalState>,
+      action: PayloadAction<{ type: keyof FnGlobalState; payload: FnGlobalState[keyof FnGlobalState] }>
     ) => {
       const { type, payload } = action.payload;
 
       return {
         ...state,
-        [type]: merge({}, state[type], payload),
+        [type]: payload,
       };
     },
   },

@@ -4,7 +4,7 @@ declare let __webpack_public_path__: string;
 window.__grafana_public_path__ =
   __webpack_public_path__.substring(0, __webpack_public_path__.lastIndexOf('build/')) || __webpack_public_path__;
 
-import { isNull, merge, noop, pick } from 'lodash';
+import { isNull, merge, noop } from 'lodash';
 import React, { ComponentType } from 'react';
 import ReactDOM from 'react-dom';
 
@@ -246,17 +246,26 @@ class createMfe {
       createMfe.logger('Trying to update grafana with theme:', props.mode);
 
       if (props.mode) {
-        createMfe.loadFnTheme(props.mode);
-      }
-
-      if (props.mode || props.theme) {
         dispatch(
           updateFnState({
-            type: 'FNDashboard',
-            payload: pick(props, 'mode', 'theme'),
+            type: 'mode',
+            payload: props.mode,
           })
         );
 
+        createMfe.loadFnTheme(props.mode);
+      }
+
+      if (props.theme) {
+        dispatch(
+          updateFnState({
+            type: 'theme',
+            payload: props.theme,
+          })
+        );
+      }
+
+      if (props.theme || props.mode) {
         createMfe.renderMfeComponent(props);
 
         return Promise.resolve(true);

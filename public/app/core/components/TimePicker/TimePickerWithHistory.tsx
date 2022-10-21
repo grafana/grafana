@@ -17,6 +17,7 @@ const FN_TEXT_STYLE: CSSProperties = { fontWeight: 700, fontSize: 14, marginLeft
 export const TimePickerWithHistory: React.FC<Props> = (props) => {
   const { FNDashboard, theme } = useSelector<StoreState, FnGlobalState>((state) => state.fnGlobalState);
 
+  // @ts-ignore
   const fnColor = FNDashboard ? theme?.palette?.secondary?.light : null;
 
   const fnText: ReactNode = FNDashboard ? (
