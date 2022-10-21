@@ -4,7 +4,7 @@
 // - protoc             v3.19.1
 // source: jwt.proto
 
-package jwt
+package jwtgrpc
 
 import (
 	context "context"
@@ -35,7 +35,7 @@ func NewJWTClient(cc grpc.ClientConnInterface) JWTClient {
 
 func (c *jWTClient) Introspection(ctx context.Context, in *IntrospectionRequest, opts ...grpc.CallOption) (*IntrospectionResponse, error) {
 	out := new(IntrospectionResponse)
-	err := c.cc.Invoke(ctx, "/jwt.JWT/Introspection", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/jwtgrpc.JWT/Introspection", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func _JWT_Introspection_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/jwt.JWT/Introspection",
+		FullMethod: "/jwtgrpc.JWT/Introspection",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(JWTServer).Introspection(ctx, req.(*IntrospectionRequest))
@@ -90,7 +90,7 @@ func _JWT_Introspection_Handler(srv interface{}, ctx context.Context, dec func(i
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var JWT_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "jwt.JWT",
+	ServiceName: "jwtgrpc.JWT",
 	HandlerType: (*JWTServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

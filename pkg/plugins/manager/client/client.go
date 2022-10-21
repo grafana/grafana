@@ -194,12 +194,10 @@ func (s *Service) attachJWT(ctx context.Context, pluginCtx backend.PluginContext
 		return ctx
 	}
 
-	token, err := s.jwtAuthService.Generate(pluginCtx.User.Login, pluginCtx.PluginID)
+	token, err := s.jwtAuthService.Generate(xctx.GetUserIDString(user), pluginCtx.PluginID)
 	if err != nil {
 		return ctx
 	}
 
-	md := metadata.New(map[string]string{})
-	md["authorization"] = []string{"Bearer " + token}
-	return metadata.NewOutgoingContext(ctx, md)
+	return metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
 }

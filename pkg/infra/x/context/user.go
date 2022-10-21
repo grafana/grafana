@@ -38,13 +38,45 @@ func UserFromContext(ctx context.Context) *user.SignedInUser {
 	return c.SignedInUser
 }
 
-// Really just spitballing here :) this should hook into a system that can give better display info
 func GetUserIDString(user *user.SignedInUser) string {
 	if user == nil {
 		return ""
 	}
-	if user.IsRealUser() {
-		return fmt.Sprintf("user:%d:%s", user.UserID, user.Login)
+	userType := "user"
+	if !user.IsRealUser() {
+		userType = "sys"
 	}
-	return fmt.Sprintf("sys:%d:%s", user.UserID, user.Login)
+	userInfo := UserInfo{
+		UserID:   user.UserID,
+		OrgID:    user.OrgID,
+		Login:    user.Login,
+		UserType: userType,
+	}
+	return userInfo.String()
+}
+
+type UserInfo struct {
+	UserID   int64
+	OrgID    int64
+	Login    string
+	UserType string
+}
+
+func UserInfoFromString(raw string) *UserInfo {
+	var userType, login string
+	var orgID, userID int64
+	_, err := fmt.Sscanf(raw, "%s:%d:%d:%s", &userType, &orgID, &userID, &login)
+	if err != nil {
+		return nil
+	}
+	return &UserInfo{
+		UserID:   userID,
+		OrgID:    orgID,
+		Login:    login,
+		UserType: userType,
+	}
+}
+
+func (u *UserInfo) String() string {
+	return fmt.Sprintf("%s:%d:%d:%s", u.UserType, u.OrgID, u.UserID, u.Login)
 }

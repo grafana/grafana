@@ -6,9 +6,11 @@ import (
 
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -28,7 +30,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
 		ac := accesscontrolmock.New()
-		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, ac, grpccontext.ProvideContextHandler(tracer))
+		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, ac, grpccontext.ProvideContextHandler(tracer), &fakeJWTAuth{})
 		ctx, err := setupContext()
 		require.NoError(t, err)
 		_, err = a.Authenticate(ctx)
@@ -44,7 +46,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
 		ac := accesscontrolmock.New()
-		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleEditor}, ac, grpccontext.ProvideContextHandler(tracer))
+		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleEditor}, ac, grpccontext.ProvideContextHandler(tracer), &fakeJWTAuth{})
 		ctx, err := setupContext()
 		require.NoError(t, err)
 		_, err = a.Authenticate(ctx)
@@ -60,7 +62,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
 		ac := accesscontrolmock.New()
-		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, ac, grpccontext.ProvideContextHandler(tracer))
+		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, ac, grpccontext.ProvideContextHandler(tracer), &fakeJWTAuth{})
 		ctx, err := setupContext()
 		require.NoError(t, err)
 		md, ok := metadata.FromIncomingContext(ctx)
@@ -82,7 +84,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
 		ac := accesscontrolmock.New()
-		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, ac, grpccontext.ProvideContextHandler(tracer))
+		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, ac, grpccontext.ProvideContextHandler(tracer), &fakeJWTAuth{})
 		ctx, err := setupContext()
 		require.NoError(t, err)
 		ctx, err = a.Authenticate(ctx)
@@ -106,7 +108,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			},
 		}
 		ac := accesscontrolmock.New().WithPermissions(permissions)
-		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, ac, grpccontext.ProvideContextHandler(tracer))
+		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, ac, grpccontext.ProvideContextHandler(tracer), &fakeJWTAuth{})
 		ctx, err := setupContext()
 		require.NoError(t, err)
 		ctx, err = a.Authenticate(ctx)
@@ -157,4 +159,20 @@ func setupContext() (context.Context, error) {
 	md := metadata.New(map[string]string{})
 	md["authorization"] = []string{"Bearer " + key.ClientSecret}
 	return metadata.NewIncomingContext(ctx, md), nil
+}
+
+type fakeJWTAuth struct {
+	jwt.PluginAuthService
+}
+
+func (f *fakeJWTAuth) IsEnabled() bool {
+	return true
+}
+
+func (f *fakeJWTAuth) Generate(string, string) (string, error) {
+	return "", nil
+}
+
+func (f *fakeJWTAuth) Verify(context.Context, string) (models.JWTClaims, error) {
+	return models.JWTClaims{}, nil
 }

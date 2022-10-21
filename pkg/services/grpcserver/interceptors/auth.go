@@ -5,10 +5,12 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/log"
+	xctx "github.com/grafana/grafana/pkg/infra/x/context"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
+
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -27,18 +29,17 @@ type authenticator struct {
 	contextHandler grpccontext.ContextHandler
 	logger         log.Logger
 
-	APIKeyService        apikey.Service
 	UserService          user.Service
 	AccessControlService accesscontrol.Service
+	PluginAuthService    jwt.PluginAuthService
 }
 
-func ProvideAuthenticator(apiKeyService apikey.Service, userService user.Service, accessControlService accesscontrol.Service, contextHandler grpccontext.ContextHandler) Authenticator {
+func ProvideAuthenticator(apiKeyService apikey.Service, userService user.Service, accessControlService accesscontrol.Service, contextHandler grpccontext.ContextHandler, pluginAuthService jwt.PluginAuthService) Authenticator {
 	return &authenticator{
 		contextHandler: contextHandler,
 		logger:         log.New("grpc-server-authenticator"),
 
 		AccessControlService: accessControlService,
-		APIKeyService:        apiKeyService,
 		UserService:          userService,
 	}
 }
@@ -80,26 +81,22 @@ func (a *authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 }
 
 func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*user.SignedInUser, error) {
-	decoded, err := apikeygenprefix.Decode(token)
+	claims, err := a.PluginAuthService.Verify(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 
-	hash, err := decoded.Hash()
-	if err != nil {
-		return nil, err
+	subject, ok := claims["subject"].(string)
+	if !ok || subject == "" {
+		return nil, status.Error(codes.Unauthenticated, "token missing subject claim")
 	}
 
-	apikey, err := a.APIKeyService.GetAPIKeyByHash(ctx, hash)
-	if err != nil {
-		return nil, err
+	userInfo := xctx.UserInfoFromString(subject)
+	if userInfo != nil {
+		return nil, status.Error(codes.Unauthenticated, "invalid subject claim")
 	}
 
-	if apikey == nil || apikey.ServiceAccountId == nil {
-		return nil, status.Error(codes.Unauthenticated, "api key does not have a service account")
-	}
-
-	querySignedInUser := user.GetSignedInUserQuery{UserID: *apikey.ServiceAccountId, OrgID: apikey.OrgId}
+	querySignedInUser := user.GetSignedInUserQuery{UserID: userInfo.UserID, OrgID: userInfo.OrgID}
 	signedInUser, err := a.UserService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
 	if err != nil {
 		return nil, err

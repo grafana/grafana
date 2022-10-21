@@ -116,22 +116,6 @@ func TestIntegrationPluginManager(t *testing.T) {
 	verifyPluginQuery(t, ctx, client.ProvideService(reg, &fakeJWTAuth{}))
 }
 
-type fakeJWTAuth struct {
-	jwt.PluginAuthService
-}
-
-func (f *fakeJWTAuth) IsEnabled() bool {
-	return true
-}
-
-func (f *fakeJWTAuth) Generate(string, string) (string, error) {
-	return "", nil
-}
-
-func (f *fakeJWTAuth) Verify(context.Context, string) (models.JWTClaims, error) {
-	return models.JWTClaims{}, nil
-}
-
 func verifyPluginQuery(t *testing.T, ctx context.Context, c plugins.Client) {
 	now := time.Unix(1661420870, 0)
 	req := &backend.QueryDataRequest{
@@ -303,4 +287,20 @@ func verifyBackendProcesses(t *testing.T, ps []*plugins.Plugin) {
 			require.NotNil(t, pc)
 		}
 	}
+}
+
+type fakeJWTAuth struct {
+	jwt.PluginAuthService
+}
+
+func (f *fakeJWTAuth) IsEnabled() bool {
+	return true
+}
+
+func (f *fakeJWTAuth) Generate(string, string) (string, error) {
+	return "", nil
+}
+
+func (f *fakeJWTAuth) Verify(context.Context, string) (models.JWTClaims, error) {
+	return models.JWTClaims{}, nil
 }

@@ -14,8 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/grpcserver"
-	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 	jose "gopkg.in/square/go-jose.v2"
@@ -27,13 +25,11 @@ const (
 	JWT_PLUGIN_KV_STORE_TYPE      = "private-jwk"
 )
 
-func ProvidePluginAuthService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, secretsKvStore kvstore.SecretsKVStore, verificationService *VerificationService, grpcServerProvider grpcserver.Provider) (PluginAuthService, error) {
+func ProvidePluginAuthService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, secretsKvStore kvstore.SecretsKVStore, verificationService *VerificationService) (PluginAuthService, error) {
 	service := newPluginAuthService(cfg, features, secretsKvStore, verificationService)
 	if err := service.init(); err != nil {
 		return nil, err
 	}
-	server := PluginAuthServer{}
-	RegisterJWTServer(grpcServerProvider.GetServer(), &server)
 	return service, nil
 }
 
@@ -167,24 +163,4 @@ func generateJWK() (privKey *jose.JSONWebKey, err error) {
 	}
 	privKey.KeyID = base64.RawURLEncoding.EncodeToString(thumb)
 	return privKey, nil
-}
-
-type PluginAuthServer struct {
-	JWTServer
-}
-
-func (s *PluginAuthServer) Introspection(ctx context.Context, req *IntrospectionRequest) (*IntrospectionResponse, error) {
-	grpcContext := grpccontext.FromContext(ctx)
-	scopes := []string{}
-
-	for _, v := range grpcContext.SignedInUser.Permissions {
-		for _, s := range v {
-			scopes = append(scopes, s...)
-		}
-	}
-
-	return &IntrospectionResponse{
-		OK:     true,
-		Scopes: scopes,
-	}, nil
 }
