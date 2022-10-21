@@ -222,14 +222,7 @@ For more information, see the [authentication configuration documentation](https
 
 ## Match parameter support in prometheus labels API
 
-Prometheus users running Prometheus 2.24 or higher can now elect to use the
-[labels](https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values) endpoint instead of the
-[series](https://prometheus.io/docs/prometheus/latest/querying/api/#finding-series-by-label-matchers) endpoint for the
-`label_values` [function](https://grafana.com/docs/grafana/latest/datasources/prometheus/#query-variable).
-This has no impact on dashboard functionality, but can decrease load times for templated high cardinality
-prometheus instances.
+Prometheus users running Prometheus v2.24 and higher can use the [labels endpoint](https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values) instead of the [series endpoint](https://prometheus.io/docs/prometheus/latest/querying/api/#finding-series-by-label-matchers) for the [`label_values` function]({{< relref "../datasources/prometheus/#query-variable" >}}).
+This decreases load times for templated high-cardinality Prometheus instances.
 
-In order to prevent breaking changes for prometheus versions before 2.24, users must first configure their prometheus
-type and version in the prometheus
-[configuration](https://grafana.com/docs/grafana/latest/administration/data-source-management),
-or in the [provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/) file.
+To prevent breaking changes if you're running Prometheus versions before v2.24, you must first configure the Prometheus type and version in any Prometheus data sources' [configuration]({{< relref "../datasources/prometheus/" >}}).
