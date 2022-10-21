@@ -312,7 +312,7 @@ func TestLoader_Load(t *testing.T) {
 			},
 		},
 		{
-			name:  "Load an unsigned plugin with modified signature (production)",
+			name:  "Load a plugin with v1 manifest should return signatureInvalid",
 			class: plugins.External,
 			cfg: &plugins.Cfg{
 				PluginsPath: filepath.Join(parentDir),
@@ -322,12 +322,12 @@ func TestLoader_Load(t *testing.T) {
 			pluginErrors: map[string]*plugins.Error{
 				"test": {
 					PluginID:  "test",
-					ErrorCode: "signatureModified",
+					ErrorCode: "signatureInvalid",
 				},
 			},
 		},
 		{
-			name:  "Load an unsigned plugin with modified signature using PluginsAllowUnsigned config (production) still includes a signing error",
+			name:  "Load a plugin with v1 manifest using PluginsAllowUnsigned config should return signatureInvalid",
 			class: plugins.External,
 			cfg: &plugins.Cfg{
 				PluginsPath:          filepath.Join(parentDir),
@@ -338,7 +338,7 @@ func TestLoader_Load(t *testing.T) {
 			pluginErrors: map[string]*plugins.Error{
 				"test": {
 					PluginID:  "test",
-					ErrorCode: "signatureModified",
+					ErrorCode: "signatureInvalid",
 				},
 			},
 		},

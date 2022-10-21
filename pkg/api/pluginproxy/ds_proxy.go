@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
@@ -179,6 +180,13 @@ func (proxy *DataSourceProxy) addTraceFromHeaderValue(span tracing.Span, headerN
 }
 
 func (proxy *DataSourceProxy) director(req *http.Request) {
+	list := contexthandler.AuthHTTPHeaderListFromContext(req.Context())
+	if list != nil {
+		for _, name := range list.Items {
+			req.Header.Del(name)
+		}
+	}
+
 	req.URL.Scheme = proxy.targetUrl.Scheme
 	req.URL.Host = proxy.targetUrl.Host
 	req.Host = proxy.targetUrl.Host
@@ -232,7 +240,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	proxyutil.ClearCookieHeader(req, keepCookieNames)
+	proxyutil.ClearCookieHeader(req, keepCookieNames, []string{proxy.cfg.LoginCookieName})
 	proxyutil.PrepareProxyRequest(req)
 
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))

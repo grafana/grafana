@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -280,6 +281,47 @@ func TestPluginProxy(t *testing.T) {
 		}
 
 		require.Equal(t, "sandbox", ctx.Resp.Header().Get("Content-Security-Policy"))
+	})
+
+	t.Run("When proxying a request should delete expected auth headers", func(t *testing.T) {
+		var actualReq *http.Request
+		backendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			actualReq = r
+			w.WriteHeader(200)
+			_, _ = w.Write([]byte("I am the backend"))
+		}))
+		t.Cleanup(backendServer.Close)
+
+		responseWriter := web.NewResponseWriter("GET", httptest.NewRecorder())
+
+		route := &plugins.Route{
+			Path: "/",
+			URL:  backendServer.URL,
+		}
+
+		reqCtx := &models.ReqContext{
+			SignedInUser: &models.SignedInUser{},
+			Context: &web.Context{
+				Req:  httptest.NewRequest("GET", "/", nil),
+				Resp: responseWriter,
+			},
+		}
+
+		const customHeader = "X-CUSTOM"
+		reqCtx.Req.Header.Set(customHeader, "val")
+		ctx := contexthandler.WithAuthHTTPHeader(reqCtx.Req.Context(), customHeader)
+		reqCtx.Req = reqCtx.Req.WithContext(ctx)
+
+		proxy := NewApiPluginProxy(reqCtx, "", route, "", &setting.Cfg{}, secretsService)
+		proxy.ServeHTTP(reqCtx.Resp, reqCtx.Req)
+
+		for {
+			if actualReq != nil {
+				break
+			}
+		}
+
+		require.Empty(t, actualReq.Header.Get(customHeader))
 	})
 }
 

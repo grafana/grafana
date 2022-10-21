@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -437,6 +438,34 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		assert.Equal(t, "JSESSION_ID=test", req.Header.Get("Cookie"))
 	})
 
+	t.Run("When proxying a data source with keep cookies specified including login cookie name", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(`{"keepCookies": ["JSESSION_ID", "grafana_session"]}`))
+		require.NoError(t, err)
+
+		ds := &models.DataSource{
+			Type:     models.DS_GRAPHITE,
+			Url:      "http://graphite:8086",
+			JsonData: json,
+		}
+
+		ctx := &models.ReqContext{}
+		var pluginRoutes []*plugins.Route
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
+		proxy, err := NewDataSourceProxy(ds, pluginRoutes, ctx, "", &setting.Cfg{LoginCookieName: "grafana_session"}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
+		require.NoError(t, err)
+
+		requestURL, err := url.Parse("http://grafana.com/sub")
+		require.NoError(t, err)
+		req := http.Request{URL: requestURL, Header: make(http.Header)}
+		cookies := "grafana_user=admin; grafana_remember=99; grafana_session=abc-token; JSESSION_ID=test"
+		req.Header.Set("Cookie", cookies)
+
+		proxy.director(&req)
+
+		assert.Equal(t, "JSESSION_ID=test", req.Header.Get("Cookie"))
+	})
+
 	t.Run("When proxying a custom datasource", func(t *testing.T) {
 		ds := &models.DataSource{
 			Type: "custom-datasource",
@@ -731,6 +760,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		require.NotNil(t, req)
 		require.Equal(t, "/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", req.RequestURI)
 	})
+
 	t.Run("Data source should handle proxy path url encoding correctly with opentelemetry", func(t *testing.T) {
 		var req *http.Request
 		ctx, ds := setUp(t, setUpCfg{
@@ -753,6 +783,36 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		require.NoError(t, writeErr)
 		require.NotNil(t, req)
 		require.Equal(t, "/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", req.RequestURI)
+	})
+
+	t.Run("Data source should handle proxy path url encoding correctly with opentelemetry", func(t *testing.T) {
+		var req *http.Request
+		reqCtx, ds := setUp(t, setUpCfg{
+			writeCb: func(w http.ResponseWriter, r *http.Request) {
+				req = r
+				w.WriteHeader(200)
+				_, err := w.Write([]byte("OK"))
+				require.NoError(t, err)
+			},
+		})
+
+		reqCtx.Req = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
+
+		const customHeader = "X-CUSTOM"
+		reqCtx.Req.Header.Set(customHeader, "val")
+		ctx := contexthandler.WithAuthHTTPHeader(reqCtx.Req.Context(), customHeader)
+
+		reqCtx.Req = reqCtx.Req.WithContext(ctx)
+		var routes []*plugins.Route
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
+		proxy, err := NewDataSourceProxy(ds, routes, reqCtx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
+		require.NoError(t, err)
+
+		proxy.HandleRequest()
+		require.NoError(t, writeErr)
+		require.NotNil(t, req)
+		require.Empty(t, req.Header.Get(customHeader))
 	})
 }
 
