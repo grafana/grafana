@@ -2,7 +2,7 @@ import { size } from 'lodash';
 import React, { useCallback, useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { InlineLabel, Select, InlineFormLabel, InlineSwitch, Icon } from '@grafana/ui';
+import { InlineLabel, Select, InlineFormLabel, InlineSwitch, Icon, clearButtonStyles, useStyles2 } from '@grafana/ui';
 
 import { OpenTsdbFilter, OpenTsdbQuery } from '../types';
 
@@ -23,6 +23,8 @@ export function FilterSection({
   filterTypes,
   suggestTagValues,
 }: FilterSectionProps) {
+  const buttonStyles = useStyles2(clearButtonStyles);
+
   const [tagKeys, updTagKeys] = useState<Array<SelectableValue<string>>>();
   const [keyIsLoading, updKeyIsLoading] = useState<boolean>();
 
@@ -121,20 +123,25 @@ export function FilterSection({
             return (
               <InlineFormLabel key={idx} width="auto" data-testid={testIds.list + idx}>
                 {fil.tagk} = {fil.type}({fil.filter}), groupBy = {'' + fil.groupBy}
-                <a onClick={() => editFilter(fil, idx)}>
+                <button type="button" className={buttonStyles} onClick={() => editFilter(fil, idx)}>
                   <Icon name={'pen'} />
-                </a>
-                <a onClick={() => removeFilter(idx)} data-testid={testIds.remove}>
+                </button>
+                <button
+                  type="button"
+                  className={buttonStyles}
+                  onClick={() => removeFilter(idx)}
+                  data-testid={testIds.remove}
+                >
                   <Icon name={'times'} />
-                </a>
+                </button>
               </InlineFormLabel>
             );
           })}
         {!addFilterMode && (
           <label className="gf-form-label query-keyword">
-            <a onClick={changeAddFilterMode} data-testid={testIds.open}>
+            <button type="button" className={buttonStyles} onClick={changeAddFilterMode} data-testid={testIds.open}>
               <Icon name={'plus'} />
-            </a>
+            </button>
           </label>
         )}
       </div>
@@ -224,10 +231,12 @@ export function FilterSection({
             )}
 
             <label className="gf-form-label">
-              <a onClick={addFilter}>add filter</a>
-              <a onClick={changeAddFilterMode}>
+              <button type="button" className={buttonStyles} onClick={addFilter}>
+                add filter
+              </button>
+              <button type="button" className={buttonStyles} onClick={changeAddFilterMode}>
                 <Icon name={'times'} />
-              </a>
+              </button>
             </label>
           </div>
         </div>
