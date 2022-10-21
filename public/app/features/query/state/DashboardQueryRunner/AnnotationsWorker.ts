@@ -7,7 +7,6 @@ import { getDataSourceSrv } from '@grafana/runtime';
 
 import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
 import { PUBLIC_DATASOURCE, PublicDashboardDataSource } from '../../../dashboard/services/PublicDashboardDataSource';
-import { DashboardModel } from '../../../dashboard/state';
 
 import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
 import { getDashboardQueryRunner } from './DashboardQueryRunner';
@@ -47,7 +46,7 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
     }
     const observables = annotations.map((annotation) => {
       let datasourceObservable;
-      if (dashboard.meta.publicDashboardAccessToken !== '') {
+      if (dashboard.isPublicDashboard()) {
         const pubdashDatasource = new PublicDashboardDataSource(PUBLIC_DATASOURCE);
         datasourceObservable = of(pubdashDatasource).pipe(catchError(handleDatasourceSrvError));
       } else {
@@ -108,9 +107,5 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
 
   private static getAnnotationsToProcessFilter(annotation: AnnotationQuery): boolean {
     return annotation.enable && !Boolean(annotation.snapshotData);
-  }
-
-  publicDashboardViewMode(dashboard: DashboardModel): boolean {
-    return dashboard.meta.publicDashboardAccessToken !== undefined && dashboard.meta.publicDashboardAccessToken !== '';
   }
 }

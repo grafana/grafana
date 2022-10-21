@@ -1135,6 +1135,10 @@ export class DashboardModel implements TimeModel {
     return this.originalTime;
   }
 
+  isPublicDashboard(): boolean {
+    return this.meta.publicDashboardAccessToken !== undefined && this.meta.publicDashboardAccessToken !== '';
+  }
+
   private getPanelRepeatVariable(panel: PanelModel) {
     return this.getVariablesFromState(this.uid).find((variable) => variable.name === panel.repeat);
   }
