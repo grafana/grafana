@@ -14,6 +14,8 @@ func TestGet(t *testing.T) {}
 
 func TestGetParent(t *testing.T) {}
 
+func TestGetParents(t *testing.T) {}
+
 func TestGetChildren(t *testing.T) {}
 
 func TestGetDescendents(t *testing.T) {}

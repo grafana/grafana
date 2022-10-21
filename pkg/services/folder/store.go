@@ -18,7 +18,7 @@ type Store interface {
 	Move(ctx context.Context, cmd *MoveFolderCommand) (*Folder, error)
 
 	// Get returns a folder.
-	Get(ctx context.Context, uid string, orgID int64) (*Folder, error)
+	Get(ctx context.Context, cmd *GetFolderCommand) (*Folder, error)
 
 	// GetParent returns the parent folder of the given folder.
 	GetParent(ctx context.Context, uid string, orgID int64) (*Folder, error)
