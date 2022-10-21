@@ -19,9 +19,13 @@ import (
 
 // GetAnnotations returns annotations for a public dashboard
 func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO models.AnnotationsQueryDTO, accessToken string) ([]models.AnnotationEvent, error) {
-	_, dash, err := pd.GetPublicDashboard(ctx, accessToken)
+	pub, dash, err := pd.GetPublicDashboard(ctx, accessToken)
 	if err != nil {
 		return nil, err
+	}
+
+	if !pub.AnnotationsEnabled {
+		return []models.AnnotationEvent{}, nil
 	}
 
 	annoDto, err := UnmarshalDashboardAnnotations(dash.Data)
