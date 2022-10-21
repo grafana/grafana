@@ -50,9 +50,33 @@ type Query struct {
 }
 
 // TimeRange is a time.Time based TimeRange.
-type TimeRange struct {
+type TimeRange interface {
+	AbsoluteTime(now time.Time) backend.TimeRange
+}
+
+type AbsoluteTimeRange struct {
 	From time.Time
 	To   time.Time
+}
+
+func (r AbsoluteTimeRange) AbsoluteTime(_ time.Time) backend.TimeRange {
+	return backend.TimeRange{
+		From: r.From,
+		To:   r.To,
+	}
+}
+
+// RelativeTimeRange is a time range relative to some absolute time.
+type RelativeTimeRange struct {
+	From time.Duration
+	To   time.Duration
+}
+
+func (r RelativeTimeRange) AbsoluteTime(t time.Time) backend.TimeRange {
+	return backend.TimeRange{
+		From: t.Add(r.From),
+		To:   t.Add(r.To),
+	}
 }
 
 // TransformData takes Queries which are either expressions nodes
