@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -73,7 +74,7 @@ func (ts *fakeOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr 
 // `/ds/query` endpoint test
 func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	qds := query.ProvideService(
-		nil,
+		setting.NewCfg(),
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
@@ -122,7 +123,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 
 func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 	qds := query.ProvideService(
-		nil,
+		setting.NewCfg(),
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
@@ -285,7 +286,7 @@ func TestDataSourceQueryError(t *testing.T) {
 				err := r.Add(context.Background(), p)
 				require.NoError(t, err)
 				hs.queryDataService = query.ProvideService(
-					nil,
+					setting.NewCfg(),
 					&fakeDatasources.FakeCacheService{},
 					nil,
 					&fakePluginRequestValidator{},

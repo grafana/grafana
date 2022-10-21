@@ -18,8 +18,8 @@ type FakePublicDashboardStore struct {
 	mock.Mock
 }
 
-// AccessTokenExists provides a mock function with given fields: ctx, accessToken
-func (_m *FakePublicDashboardStore) AccessTokenExists(ctx context.Context, accessToken string) (bool, error) {
+// EnabledPublicDashboardExistsByAccessToken provides a mock function with given fields: ctx, accessToken
+func (_m *FakePublicDashboardStore) PublicDashboardEnabledExistsByAccessToken(ctx context.Context, accessToken string) (bool, error) {
 	ret := _m.Called(ctx, accessToken)
 
 	var r0 bool
@@ -227,7 +227,7 @@ func (_m *FakePublicDashboardStore) ListPublicDashboards(ctx context.Context, or
 }
 
 // PublicDashboardEnabled provides a mock function with given fields: ctx, dashboardUid
-func (_m *FakePublicDashboardStore) PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error) {
+func (_m *FakePublicDashboardStore) PublicDashboardEnabledExistsByDashboardUid(ctx context.Context, dashboardUid string) (bool, error) {
 	ret := _m.Called(ctx, dashboardUid)
 
 	var r0 bool
