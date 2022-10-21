@@ -70,23 +70,40 @@ export function MetricSelect({ datasource, query, onChange, onGetMetrics, labels
   };
 
   /**
+   * Transform queryString and any currently set label filters into label_values() string
+   */
+  const queryAndFilterToLabelValuesString = (
+    queryString: string,
+    labelsFilters: QueryBuilderLabelFilter[] | undefined
+  ): string => {
+    return `label_values({__name__=~".*${queryString}"${
+      labelsFilters ? formatLabelFilters(labelsFilters).join() : ''
+    }},__name__)`;
+  };
+
+  /**
+   * There aren't any spaces in the metric names, so let's introduce a wildcard into the regex for each space to better facilitate a fuzzy search
+   */
+  const regexifyLabelValuesQueryString = (query: string) => {
+    const queryArray = query.split(' ');
+    return queryArray.map((query) => `${query}.*`).join('');
+  };
+
+  /**
    * Reformat the query string and label filters to return all valid results for current query editor state
-   * @param query
-   * @param labelsFilters
    */
   const formatKeyValueStringsForLabelValuesQuery = (
     query: string,
     labelsFilters?: QueryBuilderLabelFilter[]
   ): string => {
-    // There aren't any spaces in the metric names, so let's introduce a wildcard into the regex for each space to better facilitate a fuzzy search
-    const queryArray = query.split(' ');
-    const queryString = queryArray.map((query) => `${query}.*`).join('');
-    if (!labelsFilters) {
-      return `label_values({__name__=~".*${queryString}"},__name__)`;
-    }
-    return `label_values({__name__=~".*${queryString}"${formatLabelFilters(labelsFilters).join()}},__name__)`;
+    const queryString = regexifyLabelValuesQueryString(query);
+
+    return queryAndFilterToLabelValuesString(queryString, labelsFilters);
   };
 
+  /**
+   * Gets label_values response from prometheus API for current autocomplete query string and any existing labels filters
+   */
   const getMetricLabels = (query: string) => {
     // Since some customers can have millions of metrics, whenever the user changes the autocomplete text we want to call the backend and request all metrics that match the current query string
     const results = datasource.metricFindQuery(formatKeyValueStringsForLabelValuesQuery(query, labelsFilters));
