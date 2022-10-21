@@ -143,7 +143,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 }
 
 func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMetricData_is_called_once_per_grouping_of_queries_by_region(t *testing.T) {
-	/* TODO: This test aims to verify the logic to group regions which has been extracted from ParseQueries.
+	/* TODO: This test aims to verify the logic to group regions which has been extracted from ParseMetricDataQueries.
 	It should be replaced by a test at a lower level when grouping by regions is incorporated into a separate business logic layer */
 	origNewCWClient := NewCWClient
 	t.Cleanup(func() {

@@ -45,9 +45,9 @@ type metricsDataQuery struct {
 	Alias             string                 `json:"alias,omitempty"`
 }
 
-// ParseQueries decodes the metric data queries json, validates, sets default values and returns an array of CloudWatchQueries.
+// ParseMetricDataQueries decodes the metric data queries json, validates, sets default values and returns an array of CloudWatchQueries.
 // The CloudWatchQuery has a 1 to 1 mapping to a query editor row
-func ParseQueries(queries []backend.DataQuery, startTime time.Time, endTime time.Time, dynamicLabelsEnabled bool) ([]*CloudWatchQuery, error) {
+func ParseMetricDataQueries(queries []backend.DataQuery, startTime time.Time, endTime time.Time, dynamicLabelsEnabled bool) ([]*CloudWatchQuery, error) {
 	var result []*CloudWatchQuery
 	migratedQueries, err := migrateLegacyQuery(queries, dynamicLabelsEnabled)
 	if err != nil {
