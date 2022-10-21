@@ -2,17 +2,17 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/queries"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
-// Define the Service Implementation. We're generating mock implementation
+// PublicDashboardServiceImpl Define the Service Implementation. We're generating mock implementation
 // automatically
 type PublicDashboardServiceImpl struct {
 	log                log.Logger
@@ -29,6 +29,8 @@ type PublicDashboardServiceImpl struct {
 	store              publicdashboards.Store
 	intervalCalculator intervalv2.Calculator
 	QueryDataService   *query.Service
+	AnnotationsRepo    annotations.Repository
+	ac                 accesscontrol.AccessControl
 }
 
 var LogPrefix = "publicdashboards.service"
@@ -37,12 +39,14 @@ var LogPrefix = "publicdashboards.service"
 // the interface
 var _ publicdashboards.Service = (*PublicDashboardServiceImpl)(nil)
 
-// Factory for method used by wire to inject dependencies.
+// ProvideService Factory for method used by wire to inject dependencies.
 // builds the service, and api, and configures routes
 func ProvideService(
 	cfg *setting.Cfg,
 	store publicdashboards.Store,
 	qds *query.Service,
+	anno annotations.Repository,
+	ac accesscontrol.AccessControl,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
 		log:                log.New(LogPrefix),
@@ -50,15 +54,12 @@ func ProvideService(
 		store:              store,
 		intervalCalculator: intervalv2.NewCalculator(),
 		QueryDataService:   qds,
+		AnnotationsRepo:    anno,
+		ac:                 ac,
 	}
 }
 
-// Gets a list of public dashboards by orgId
-func (pd *PublicDashboardServiceImpl) ListPublicDashboards(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
-	return pd.store.ListPublicDashboards(ctx, orgId)
-}
-
-// Gets a dashboard by Uid
+// GetDashboard Gets a dashboard by Uid
 func (pd *PublicDashboardServiceImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
 	dashboard, err := pd.store.GetDashboard(ctx, dashboardUid)
 
@@ -69,7 +70,7 @@ func (pd *PublicDashboardServiceImpl) GetDashboard(ctx context.Context, dashboar
 	return dashboard, err
 }
 
-// Gets public dashboard via access token
+// GetPublicDashboard Gets public dashboard via access token
 func (pd *PublicDashboardServiceImpl) GetPublicDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
 	pubdash, dash, err := pd.store.GetPublicDashboard(ctx, accessToken)
 	ctxLogger := pd.log.FromContext(ctx)
@@ -202,104 +203,22 @@ func (pd *PublicDashboardServiceImpl) updatePublicDashboardConfig(ctx context.Co
 	return dto.PublicDashboard.Uid, pd.store.UpdatePublicDashboardConfig(ctx, cmd)
 }
 
-func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipCache bool, queryDto PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
-	publicDashboard, dashboard, err := pd.GetPublicDashboard(ctx, accessToken)
+// Gets a list of public dashboards by orgId
+func (pd *PublicDashboardServiceImpl) ListPublicDashboards(ctx context.Context, u *user.SignedInUser, orgId int64) ([]PublicDashboardListResponse, error) {
+	publicDashboards, err := pd.store.ListPublicDashboards(ctx, orgId)
 	if err != nil {
 		return nil, err
 	}
 
-	metricReq, err := pd.GetMetricRequest(ctx, dashboard, publicDashboard, panelId, queryDto)
-	if err != nil {
-		return nil, err
-	}
-
-	anonymousUser := pd.BuildAnonymousUser(ctx, dashboard)
-	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipCache, metricReq)
-
-	reqDatasources := metricReq.GetUniqueDatasourceTypes()
-	if err != nil {
-		LogQueryFailure(reqDatasources, pd.log, err)
-		return nil, err
-	}
-	LogQuerySuccess(reqDatasources, pd.log)
-
-	queries.SanitizeMetadataFromQueryData(res)
-
-	return res, nil
-}
-
-func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, queryDto PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
-	err := validation.ValidateQueryPublicDashboardRequest(queryDto)
-	if err != nil {
-		return dtos.MetricRequest{}, err
-	}
-
-	metricReqDTO, err := pd.buildMetricRequest(
-		ctx,
-		dashboard,
-		publicDashboard,
-		panelId,
-		queryDto,
-	)
-	if err != nil {
-		return dtos.MetricRequest{}, err
-	}
-
-	return metricReqDTO, nil
-}
-
-// buildMetricRequest merges public dashboard parameters with
-// dashboard and returns a metrics request to be sent to query backend
-func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
-	// group queries by panel
-	queriesByPanel := queries.GroupQueriesByPanelId(dashboard.Data)
-	queries, ok := queriesByPanel[panelId]
-	if !ok {
-		return dtos.MetricRequest{}, ErrPublicDashboardPanelNotFound
-	}
-
-	ts := publicDashboard.BuildTimeSettings(dashboard)
-
-	// determine safe resolution to query data at
-	safeInterval, safeResolution := pd.getSafeIntervalAndMaxDataPoints(reqDTO, ts)
-	for i := range queries {
-		queries[i].Set("intervalMs", safeInterval)
-		queries[i].Set("maxDataPoints", safeResolution)
-	}
-
-	return dtos.MetricRequest{
-		From:    ts.From,
-		To:      ts.To,
-		Queries: queries,
-	}, nil
-}
-
-// BuildAnonymousUser creates a user with permissions to read from all datasources used in the dashboard
-func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) *user.SignedInUser {
-	datasourceUids := queries.GetUniqueDashboardDatasourceUids(dashboard.Data)
-
-	// Create a temp user with read-only datasource permissions
-	anonymousUser := &user.SignedInUser{OrgID: dashboard.OrgId, Permissions: make(map[int64]map[string][]string)}
-	permissions := make(map[string][]string)
-	queryScopes := make([]string, 0)
-	readScopes := make([]string, 0)
-	for _, uid := range datasourceUids {
-		queryScopes = append(queryScopes, fmt.Sprintf("datasources:uid:%s", uid))
-		readScopes = append(readScopes, fmt.Sprintf("datasources:uid:%s", uid))
-	}
-	permissions[datasources.ActionQuery] = queryScopes
-	permissions[datasources.ActionRead] = readScopes
-	anonymousUser.Permissions[dashboard.OrgId] = permissions
-
-	return anonymousUser
+	return pd.filterDashboardsByPermissions(ctx, u, publicDashboards)
 }
 
 func (pd *PublicDashboardServiceImpl) PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error) {
-	return pd.store.PublicDashboardEnabled(ctx, dashboardUid)
+	return pd.store.PublicDashboardEnabledExistsByDashboardUid(ctx, dashboardUid)
 }
 
-func (pd *PublicDashboardServiceImpl) AccessTokenExists(ctx context.Context, accessToken string) (bool, error) {
-	return pd.store.AccessTokenExists(ctx, accessToken)
+func (pd *PublicDashboardServiceImpl) PublicDashboardEnabledExistsByAccessToken(ctx context.Context, accessToken string) (bool, error) {
+	return pd.store.PublicDashboardEnabledExistsByAccessToken(ctx, accessToken)
 }
 
 func (pd *PublicDashboardServiceImpl) GetPublicDashboardOrgId(ctx context.Context, accessToken string) (int64, error) {
@@ -346,7 +265,26 @@ func (pd *PublicDashboardServiceImpl) logIsEnabledChanged(existingPubdash *Publi
 	}
 }
 
-// Checks to see if PublicDashboard.Isenabled is true on create or changed on update
+// Filter out dashboards that user does not have read access to
+func (pd *PublicDashboardServiceImpl) filterDashboardsByPermissions(ctx context.Context, u *user.SignedInUser, publicDashboards []PublicDashboardListResponse) ([]PublicDashboardListResponse, error) {
+	result := make([]PublicDashboardListResponse, 0)
+
+	for i := range publicDashboards {
+		hasAccess, err := pd.ac.Evaluate(ctx, u, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(publicDashboards[i].DashboardUid)))
+		// If original dashboard does not exist, the public dashboard is an orphan. We want to list it anyway
+		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return nil, err
+		}
+
+		// If user has access to the original dashboard or the dashboard does not exist, add the pubdash to the result
+		if hasAccess || errors.Is(err, dashboards.ErrDashboardNotFound) {
+			result = append(result, publicDashboards[i])
+		}
+	}
+	return result, nil
+}
+
+// Checks to see if PublicDashboard.IsEnabled is true on create or changed on update
 func publicDashboardIsEnabledChanged(existingPubdash *PublicDashboard, newPubdash *PublicDashboard) bool {
 	// creating dashboard, enabled true
 	newDashCreated := existingPubdash == nil && newPubdash.IsEnabled

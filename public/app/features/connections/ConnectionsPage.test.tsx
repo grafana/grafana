@@ -8,6 +8,8 @@ import { getMockDataSources } from 'app/features/datasources/__mocks__';
 import * as api from 'app/features/datasources/api';
 import { configureStore } from 'app/store/configureStore';
 
+import { getPluginsStateMock } from '../plugins/admin/__mocks__';
+
 import ConnectionsPage from './ConnectionsPage';
 import { navIndex } from './__mocks__/store.navIndex.mock';
 import { ROUTE_BASE_ID, ROUTES } from './constants';
@@ -16,7 +18,7 @@ jest.mock('app/features/datasources/api');
 
 const renderPage = (path = `/${ROUTE_BASE_ID}`): RenderResult => {
   // @ts-ignore
-  const store = configureStore({ navIndex });
+  const store = configureStore({ navIndex, plugins: getPluginsStateMock([]) });
   locationService.push(path);
 
   return render(
@@ -35,13 +37,11 @@ describe('Connections Page', () => {
     (api.getDataSources as jest.Mock) = jest.fn().mockResolvedValue(mockDatasources);
   });
 
-  test('shows all the four tabs', async () => {
+  test('shows all tabs', async () => {
     renderPage();
 
     expect(await screen.findByLabelText('Tab Data sources')).toBeVisible();
-    expect(await screen.findByLabelText('Tab Plugins')).toBeVisible();
-    expect(await screen.findByLabelText('Tab Cloud integrations')).toBeVisible();
-    expect(await screen.findByLabelText('Tab Recorded queries')).toBeVisible();
+    expect(await screen.findByLabelText('Tab Connect Data')).toBeVisible();
   });
 
   test('shows the "Data sources" tab by default', async () => {
@@ -52,10 +52,8 @@ describe('Connections Page', () => {
   });
 
   test('renders the correct tab even if accessing it with a "sub-url"', async () => {
-    renderPage(`${ROUTES.Plugins}/foo`);
+    renderPage(`${ROUTES.ConnectData}`);
 
-    // Check if it still renders the plugins tab
-    expect(await screen.findByText('The list of plugins is under development')).toBeVisible();
-    expect(screen.queryByText('The list of data sources is under development.')).not.toBeInTheDocument();
+    expect(screen.queryByText('No results matching your query were found.')).toBeInTheDocument();
   });
 });

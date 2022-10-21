@@ -5,9 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 const (
@@ -24,7 +23,7 @@ type AccessControlStore struct {
 
 func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
 	result := make([]accesscontrol.Permission, 0)
-	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		if query.UserID == 0 && len(query.TeamIDs) == 0 && len(query.Roles) == 0 {
 			// no permission to fetch
 			return nil
@@ -112,7 +111,7 @@ func userRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (stri
 }
 
 func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {
-	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		roleDeleteQuery := "DELETE FROM user_role WHERE user_id = ?"
 		roleDeleteParams := []interface{}{roleDeleteQuery, userID}
 		if orgID != accesscontrol.GlobalOrgID {

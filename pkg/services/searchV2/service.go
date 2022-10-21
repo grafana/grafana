@@ -7,17 +7,18 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
+	"github.com/grafana/grafana/pkg/services/querylibrary"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -64,7 +65,7 @@ type StandardSearchService struct {
 	registry.BackgroundService
 
 	cfg         *setting.Cfg
-	sql         *sqlstore.SQLStore
+	sql         db.DB
 	auth        FutureAuthService // eventually injected from elsewhere
 	ac          accesscontrol.Service
 	orgService  org.Service
@@ -82,7 +83,7 @@ func (s *StandardSearchService) IsReady(ctx context.Context, orgId int64) IsSear
 	return s.dashboardIndex.isInitialized(ctx, orgId)
 }
 
-func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService,
+func ProvideService(cfg *setting.Cfg, sql db.DB, entityEventStore store.EntityEventsService,
 	ac accesscontrol.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, orgService org.Service,
 	userService user.Service, queries querylibrary.Service) SearchService {
 	extender := &NoopExtender{}
