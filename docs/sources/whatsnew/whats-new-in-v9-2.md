@@ -219,3 +219,17 @@ For more information, see the [SAML configuration documentation](https://grafana
 You can now map OAuth groups and roles to Server Admin for the GitLab, GitHub, AzureAD, Okta, and Generic OAuth integrations.
 To enable this functionality, set the `allow_assign_grafana_admin` configuration option to `true` in the desired OAuth integration section.
 For more information, see the [authentication configuration documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/) for each OAuth client.
+
+## Match parameter support in prometheus labels API
+
+Prometheus users running Prometheus 2.24 or higher can now elect to use the
+[labels](https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values) endpoint instead of the
+[series](https://prometheus.io/docs/prometheus/latest/querying/api/#finding-series-by-label-matchers) endpoint for the
+`label_values` [function](https://grafana.com/docs/grafana/latest/datasources/prometheus/#query-variable).
+This has no impact on dashboard functionality, but can decrease load times for templated high cardinality
+prometheus instances.
+
+In order to prevent breaking changes for prometheus versions before 2.24, users must first configure their prometheus
+type and version in the prometheus
+[configuration](https://grafana.com/docs/grafana/latest/administration/data-source-management),
+or in the [provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/) file.
