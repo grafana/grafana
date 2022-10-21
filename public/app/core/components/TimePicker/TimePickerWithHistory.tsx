@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { CSSProperties, ReactNode } from 'react';
 import { useSelector } from 'react-redux';
 
 import { TimeRange, isDateTime, toUtc } from '@grafana/data';
@@ -12,8 +12,18 @@ const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';
 
 interface Props extends Omit<TimeRangePickerProps, 'history' | 'theme'> {}
 
+const FN_TEXT_STYLE: CSSProperties = { fontWeight: 700, fontSize: 14, marginLeft: 8 };
+
 export const TimePickerWithHistory: React.FC<Props> = (props) => {
   const { FNDashboard, theme } = useSelector<StoreState, FnGlobalState>((state) => state.fnGlobalState);
+
+  const fnColor = FNDashboard ? theme?.palette?.secondary?.light : null;
+
+  const fnText: ReactNode = FNDashboard ? (
+    <span style={{ ...(fnColor ? { color: fnColor } : {}), ...FN_TEXT_STYLE }}>UTC</span>
+  ) : (
+    ''
+  );
 
   return (
     <LocalStorageValueProvider<TimeRange[]> storageKey={LOCAL_STORAGE_KEY} defaultValue={[]}>
@@ -26,15 +36,7 @@ export const TimePickerWithHistory: React.FC<Props> = (props) => {
               onAppendToHistory(value, values, onSaveToStore);
               props.onChange(value);
             }}
-            fnText={
-              FNDashboard ? (
-                <span style={{ color: theme.palette.secondary.light, fontWeight: 700, fontSize: 14, marginLeft: 8 }}>
-                  UTC
-                </span>
-              ) : (
-                ''
-              )
-            }
+            {...{ fnText }}
           />
         );
       }}

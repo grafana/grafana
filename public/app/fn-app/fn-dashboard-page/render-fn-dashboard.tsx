@@ -1,4 +1,4 @@
-import { merge, isEmpty } from 'lodash';
+import { merge, isEmpty, isFunction } from 'lodash';
 import React, { useEffect, FC } from 'react';
 import { useDispatch } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -59,8 +59,6 @@ export const RenderFNDashboard: FC<FNDashboardProps> = (props) => {
     return Object.values(appNotifications.byId).find(({ severity }) => severity === 'error');
   });
 
-  console.log('lands in renderFNDashboard');
-
   /**
    * NOTE:
    * Grafana renders notifications in StoredNotifications component.
@@ -68,6 +66,10 @@ export const RenderFNDashboard: FC<FNDashboardProps> = (props) => {
    * But we would like to propagate grafana's errors to FN.
    */
   useEffect(() => {
+    if (!isFunction(setErrors)) {
+      return;
+    }
+
     setErrors(firstError ? { [firstError.timestamp]: firstError.text } : {});
   }, [firstError, setErrors]);
 

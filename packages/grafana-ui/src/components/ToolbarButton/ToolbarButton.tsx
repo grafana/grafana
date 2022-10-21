@@ -1,6 +1,6 @@
 import { cx, css } from '@emotion/css';
 import { isString } from 'lodash';
-import React, { forwardRef, ButtonHTMLAttributes } from 'react';
+import React, { forwardRef, ButtonHTMLAttributes, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -36,7 +36,7 @@ type CommonProps = {
 };
 
 export type ToolbarButtonProps = CommonProps &
-  ButtonHTMLAttributes<HTMLButtonElement> & { isHidden?: boolean; fnText?: string | JSX.Element };
+  ButtonHTMLAttributes<HTMLButtonElement> & { isHidden?: boolean; fnText?: ReactNode };
 
 export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active';
 

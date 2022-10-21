@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import React, { PureComponent } from 'react';
+import React, { PureComponent, CSSProperties } from 'react';
 import { connect } from 'react-redux';
 import { Subscription } from 'rxjs';
 
@@ -66,6 +66,12 @@ export interface State {
   data: PanelData;
   liveTime?: TimeRange;
 }
+
+const FN_TITLE_STYLE: CSSProperties = {
+  textAlign: 'center',
+  padding: 3,
+  textTransform: 'capitalize',
+};
 
 class PanelChromeUnconnected extends PureComponent<Props, State> {
   private readonly timeSrv: TimeSrv = getTimeSrv();
@@ -525,15 +531,8 @@ class PanelChromeUnconnected extends PureComponent<Props, State> {
         aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
       >
         {FNDashboard ? (
-          <div
-            style={{
-              textAlign: 'center',
-              padding: 3,
-              textTransform: 'capitalize',
-            }}
-          >
-            {panel.title}
-          </div>
+          // TODO: Avoid divology. Use HTML5, i.e. wrap texts with  p or h element instead of div.
+          <div style={FN_TITLE_STYLE}>{panel.title}</div>
         ) : (
           <PanelHeader
             panel={panel}

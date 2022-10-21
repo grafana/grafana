@@ -424,7 +424,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           ) : (
             toolbar
           )
-        } //ReactDOM.createPortal(toolbar, this.props.controlsContainer)
+        }
         className={containerClassNames}
         scrollRef={this.setScrollRef}
         scrollTop={updateScrollTop}

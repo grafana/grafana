@@ -1,4 +1,4 @@
-import React, { FunctionComponent, PropsWithChildren, ReactElement, useMemo } from 'react';
+import React, { CSSProperties, FunctionComponent, PropsWithChildren, ReactElement, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
 import { GrafanaThemeType } from '@grafana/data';
@@ -32,6 +32,13 @@ export const PickerRenderer: FunctionComponent<Props> = (props) => {
   );
 };
 
+const COMMON_PICKER_LABEL_STYLE: CSSProperties = {
+  borderRadius: '4px',
+  border: 'none',
+  fontWeight: 600,
+  fontSize: '12px',
+};
+
 function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | null {
   const labelOrName = useMemo(() => variable.label || variable.name, [variable]);
   const { FNDashboard, mode, theme } = useSelector<StoreState, FnGlobalState>((state) => state.fnGlobalState);
@@ -40,17 +47,26 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
     if (!FNDashboard) {
       return {};
     }
-    const commonStyles = {
-      borderRadius: '4px',
-      border: 'none',
-      color: theme.palette.text.primary,
-      fontWeight: 600,
-      fontSize: '12px',
+
+    /**
+     * TODO:
+     * The below ts-ignores result from the fact that we expect MuiTheme in Grafana
+     * Let's pass GrafanaTheme
+     */
+    // @ts-ignore
+    const color = theme?.palette?.text?.primary;
+    // @ts-ignore
+    const lightBackgroundColor = theme?.palette?.grey;
+    // @ts-ignore
+    const darkBackgroundColor = theme?.palette?.background?.default;
+
+    const commonStyles: CSSProperties = {
+      ...COMMON_PICKER_LABEL_STYLE,
+      ...(color ? { color } : {}),
     };
-    const createLabelTheme =
-      mode === GrafanaThemeType.Light
-        ? { backgroundColor: theme.palette.grey[200] }
-        : { backgroundColor: theme.palette.background.default };
+
+    const backgroundColor = mode === GrafanaThemeType.Light ? lightBackgroundColor : darkBackgroundColor;
+    const createLabelTheme: CSSProperties = backgroundColor ? { backgroundColor } : {};
 
     return { ...createLabelTheme, ...commonStyles };
   }, [FNDashboard, mode, theme]);

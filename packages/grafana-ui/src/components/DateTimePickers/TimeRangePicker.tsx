@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { memo, FormEvent, createRef, useState, ReactElement } from 'react';
+import React, { memo, FormEvent, createRef, useState, ReactElement, ReactNode } from 'react';
 
 import {
   isDateTime,
@@ -43,7 +43,7 @@ export interface TimeRangePickerProps extends Themeable {
   history?: TimeRange[];
   hideQuickRanges?: boolean;
   widthOverride?: number;
-  fnText?: string | JSX.Element;
+  fnText?: ReactNode;
 }
 
 export interface State {
