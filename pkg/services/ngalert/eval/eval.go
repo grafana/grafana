@@ -215,9 +215,9 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 		}
 
 		req.Queries = append(req.Queries, expr.Query{
-			TimeRange: expr.TimeRange{
-				From: q.RelativeTimeRange.ToTimeRange(ctx.At).From,
-				To:   q.RelativeTimeRange.ToTimeRange(ctx.At).To,
+			TimeRange: expr.RelativeTimeRange{
+				From: time.Duration(q.RelativeTimeRange.From),
+				To:   time.Duration(q.RelativeTimeRange.To),
 			},
 			DataSource:    ds,
 			JSON:          model,
@@ -334,7 +334,7 @@ func executeQueriesAndExpressions(ctx EvaluationContext, data []models.AlertQuer
 		return nil, err
 	}
 
-	return exprService.TransformData(ctx.Ctx, queryDataReq)
+	return exprService.TransformData(ctx.Ctx, ctx.At, queryDataReq)
 }
 
 // datasourceUIDsToRefIDs returns a sorted slice of Ref IDs for each Datasource UID.
