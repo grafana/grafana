@@ -81,8 +81,9 @@ const AlertGroups = () => {
       )}
 
       {grafanaAmDeliveryDisabled && (
-        <Alert title="Grafana alerts are not delivered to built-in Grafana Alertmanager">
-          Grafana is configured to send alerts to the external Alertmanagers only.
+        <Alert title="Grafana alerts are not delivered to Grafana Alertmanager">
+          Grafana is configured to send alerts to external alertmanagers only. No alerts are expected to be available
+          here for the selected Alertmanager.
         </Alert>
       )}
 

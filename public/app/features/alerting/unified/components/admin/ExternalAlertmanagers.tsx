@@ -72,7 +72,7 @@ export const ExternalAlertmanagers = () => {
         alertmanagers: newList,
         alertmanagersChoice: alertmanagersChoice ?? AlertmanagerChoice.All,
       });
-      //
+
       setDeleteModalState({ open: false, index: 0 });
     },
     [externalAlertManagers, saveExternalAlertManagers, alertmanagersChoice]

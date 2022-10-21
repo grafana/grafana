@@ -29,10 +29,10 @@ export function GrafanaAlertmanagerDeliveryWarning({
   return (
     <Alert title="Grafana alerts are not delivered to Grafana Alertmanager">
       Grafana is configured to send alerts to external Alertmanagers only. Changing Grafana Alertmanager configuration
-      will not affect your alerts!
+      will not affect delivery of your alerts!
       <div className={styles.adminHint}>
-        This configuration can be changed in the Alerting Admin section. If you do not have access to the Admin section
-        contact the Administrator
+        You can change the configuration on the Alerting Admin page. If you do not have access, contact your
+        Administrator
       </div>
     </Alert>
   );
