@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
+	xctx "github.com/grafana/grafana/pkg/infra/x/context"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
@@ -122,7 +122,7 @@ func (c *dsCache) getDS(ctx context.Context, uid string) (*dsVal, error) {
 		}
 	}
 
-	orgID := store.UserFromContext(ctx).OrgID
+	orgID := xctx.UserFromContext(ctx).OrgID
 
 	v, ok := c.cache[orgID]
 	if !ok {
