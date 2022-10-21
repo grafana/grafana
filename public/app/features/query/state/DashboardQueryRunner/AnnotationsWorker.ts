@@ -4,6 +4,7 @@ import { catchError, filter, finalize, map, mergeAll, mergeMap, reduce, takeUnti
 
 import { AnnotationQuery, DataSourceApi } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { getConfig } from 'app/core/config';
 
 import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
 import { PUBLIC_DATASOURCE, PublicDashboardDataSource } from '../../../dashboard/services/PublicDashboardDataSource';
@@ -46,7 +47,8 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
     }
     const observables = annotations.map((annotation) => {
       let datasourceObservable;
-      if (dashboard.isPublicDashboard()) {
+
+      if (getConfig().isPublicDashboardView) {
         const pubdashDatasource = new PublicDashboardDataSource(PUBLIC_DATASOURCE);
         datasourceObservable = of(pubdashDatasource).pipe(catchError(handleDatasourceSrvError));
       } else {
