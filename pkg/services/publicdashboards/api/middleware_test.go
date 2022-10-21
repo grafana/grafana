@@ -74,7 +74,7 @@ func TestRequiresExistingAccessToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			publicdashboardService := &publicdashboards.FakePublicDashboardService{}
-			publicdashboardService.On("AccessTokenExists", mock.Anything, mock.Anything).Return(tt.AccessTokenExists, tt.AccessTokenExistsErr)
+			publicdashboardService.On("PublicDashboardEnabledExistsByAccessToken", mock.Anything, mock.Anything).Return(tt.AccessTokenExists, tt.AccessTokenExistsErr)
 			params := map[string]string{":accessToken": tt.AccessToken}
 			mw := RequiresExistingAccessToken(publicdashboardService)
 			_, resp := runMw(t, nil, "GET", tt.Path, params, mw)

@@ -32,6 +32,7 @@ const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
     return (
       <div
         {...otherProps}
+        tabIndex={-1}
         ref={localRef}
         className={styles.wrapper}
         role="menu"
