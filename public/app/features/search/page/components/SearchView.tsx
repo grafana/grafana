@@ -163,7 +163,14 @@ export const SearchView = ({
     []
   );
 
-  const results = useAsync(() => doSearch(query, searchQuery, includePanels, eventTrackingNamespace), [searchQuery]);
+  const results = useAsync(() => {
+    // No need to query all dashboards if we are in search folder view
+    if (layout === SearchLayout.Folders && !folderDTO) {
+      return Promise.resolve();
+    }
+
+    return doSearch(query, searchQuery, includePanels, eventTrackingNamespace);
+  }, [searchQuery, layout]);
 
   const clearSelection = useCallback(() => {
     searchSelection.items.clear();
@@ -193,7 +200,7 @@ export const SearchView = ({
   };
 
   const getStarredItems = useCallback(
-    (e) => {
+    (e: React.FormEvent<HTMLInputElement>) => {
       onStarredFilterChange(e);
     },
     [onStarredFilterChange]
@@ -330,6 +337,7 @@ export const SearchView = ({
           onTagFilterChange={onTagFilterChange}
           getTagOptions={getTagOptions}
           getSortOptions={getGrafanaSearcher().getSortOptions}
+          sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
           onDatasourceChange={onDatasourceChange}
           query={query}
           includePanels={includePanels!}

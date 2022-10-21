@@ -1,11 +1,14 @@
 import React from 'react';
 
+import { LinkTarget } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Icon, IconName } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 export interface FooterLink {
+  target: LinkTarget;
   text: string;
-  id?: string;
+  id: string;
   icon?: IconName;
   url?: string;
 }
@@ -13,17 +16,23 @@ export interface FooterLink {
 export let getFooterLinks = (): FooterLink[] => {
   return [
     {
-      text: 'Documentation',
+      target: '_blank',
+      id: 'documentation',
+      text: t('nav.help/documentation', 'Documentation'),
       icon: 'document-info',
       url: 'https://grafana.com/docs/grafana/latest/?utm_source=grafana_footer',
     },
     {
-      text: 'Support',
+      target: '_blank',
+      id: 'support',
+      text: t('nav.help/support', 'Support'),
       icon: 'question-circle',
       url: 'https://grafana.com/products/enterprise/?utm_source=grafana_footer',
     },
     {
-      text: 'Community',
+      target: '_blank',
+      id: 'community',
+      text: t('nav.help/community', 'Community'),
       icon: 'comments-alt',
       url: 'https://community.grafana.com/?utm_source=grafana_footer',
     },
@@ -45,7 +54,12 @@ export let getVersionLinks = (): FooterLink[] => {
   const links: FooterLink[] = [];
   const stateInfo = licenseInfo.stateInfo ? ` (${licenseInfo.stateInfo})` : '';
 
-  links.push({ text: `${buildInfo.edition}${stateInfo}`, url: licenseInfo.licenseUrl });
+  links.push({
+    target: '_blank',
+    id: 'version',
+    text: `${buildInfo.edition}${stateInfo}`,
+    url: licenseInfo.licenseUrl,
+  });
 
   if (buildInfo.hideVersion) {
     return links;
@@ -56,6 +70,8 @@ export let getVersionLinks = (): FooterLink[] => {
   const docsVersion = isBeta ? 'next' : 'latest';
 
   links.push({
+    target: '_blank',
+    id: 'version',
     text: `v${buildInfo.version} (${buildInfo.commit})`,
     url: hasReleaseNotes
       ? `https://grafana.com/docs/grafana/${docsVersion}/release-notes/release-notes-${versionSlug}/`
@@ -64,6 +80,7 @@ export let getVersionLinks = (): FooterLink[] => {
 
   if (buildInfo.hasUpdate) {
     links.push({
+      target: '_blank',
       id: 'updateVersion',
       text: `New version available!`,
       icon: 'download-alt',
@@ -109,7 +126,7 @@ Footer.displayName = 'Footer';
 
 function FooterItem({ item }: { item: FooterLink }) {
   const content = item.url ? (
-    <a href={item.url} target="_blank" rel="noopener noreferrer" id={item.id}>
+    <a href={item.url} target={item.target} rel="noopener noreferrer" id={item.id}>
       {item.text}
     </a>
   ) : (

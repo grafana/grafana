@@ -173,7 +173,15 @@ func TestVictoropsNotifier(t *testing.T) {
 			}
 
 			webhookSender := mockNotificationService()
-			cfg, err := NewVictorOpsConfig(m)
+
+			fc := FactoryConfig{
+				Config:              m,
+				NotificationService: webhookSender,
+				ImageStore:          images,
+				Template:            tmpl,
+			}
+
+			pn, err := NewVictoropsNotifier(fc)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -183,7 +191,6 @@ func TestVictoropsNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewVictoropsNotifier(cfg, images, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

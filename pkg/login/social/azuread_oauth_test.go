@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -28,8 +27,9 @@ func falseBoolPtr() *bool {
 
 func TestSocialAzureAD_UserInfo(t *testing.T) {
 	type fields struct {
-		SocialBase    *SocialBase
-		allowedGroups []string
+		SocialBase       *SocialBase
+		allowedGroups    []string
+		forceUseGraphAPI bool
 	}
 	type args struct {
 		client *http.Client
@@ -54,7 +54,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				SocialBase: &SocialBase{autoAssignOrgRole: "Viewer"},
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Viewer", false),
 			},
 			want: &BasicUserInfo{
 				Id:     "1234",
@@ -93,7 +93,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				SocialBase: &SocialBase{autoAssignOrgRole: "Viewer"},
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Viewer", false),
 			},
 			want: &BasicUserInfo{
 				Id:     "1234",
@@ -142,6 +142,9 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		},
 		{
 			name: "Only other roles",
+			fields: fields{
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Viewer", false),
+			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
@@ -168,7 +171,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				SocialBase: &SocialBase{autoAssignOrgRole: "Editor"},
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Editor", false),
 			},
 			want: &BasicUserInfo{
 				Id:     "1234",
@@ -217,7 +220,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		},
 		{
 			name:   "Grafana Admin but setting is disabled",
-			fields: fields{SocialBase: &SocialBase{allowAssignGrafanaAdmin: false}},
+			fields: fields{SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: false}, "Editor", false)},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
@@ -239,7 +242,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			name: "Editor roles in claim and GrafanaAdminAssignment enabled",
 			fields: fields{
 				SocialBase: newSocialBase("azuread",
-					&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "")},
+					&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "", false)},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
@@ -258,8 +261,9 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			},
 		},
 		{
-			name:   "Grafana Admin and Editor roles in claim",
-			fields: fields{SocialBase: &SocialBase{allowAssignGrafanaAdmin: true}},
+			name: "Grafana Admin and Editor roles in claim",
+			fields: fields{SocialBase: newSocialBase("azuread",
+				&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "", false)},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
@@ -297,7 +301,8 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			name: "Error if user is a member of allowed_groups",
 			fields: fields{
 				allowedGroups: []string{"foo", "bar"},
-				SocialBase:    &SocialBase{autoAssignOrgRole: "Viewer"},
+				SocialBase: newSocialBase("azuread",
+					&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: false}, "Viewer", false),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -319,7 +324,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch groups when ClaimsNames and ClaimsSources is set",
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, ""),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "", false),
 			},
 			claims: &azureClaims{
 				ID:                "1",
@@ -342,9 +347,36 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "Fetch groups when forceUseGraphAPI is set",
+			fields: fields{
+				SocialBase:       newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "", false),
+				forceUseGraphAPI: true,
+			},
+			claims: &azureClaims{
+				ID:                "1",
+				Name:              "test",
+				PreferredUsername: "test",
+				Email:             "test@test.com",
+				Roles:             []string{"Viewer"},
+				ClaimNames:        claimNames{Groups: "src1"},
+				ClaimSources:      nil,                    // set by the test
+				Groups:            []string{"foo", "bar"}, // must be ignored
+			},
+			settingAutoAssignOrgRole: "",
+			want: &BasicUserInfo{
+				Id:     "1",
+				Name:   "test",
+				Email:  "test@test.com",
+				Login:  "test@test.com",
+				Role:   "Viewer",
+				Groups: []string{"from_server"},
+			},
+			wantErr: false,
+		},
+		{
 			name: "Fetch empty role when strict attribute role is true and no match",
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}, ""),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}, "", false),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -360,7 +392,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch empty role when strict attribute role is true and no role claims returned",
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}, ""),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}, "", false),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -378,12 +410,13 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SocialAzureAD{
-				SocialBase:    tt.fields.SocialBase,
-				allowedGroups: tt.fields.allowedGroups,
+				SocialBase:       tt.fields.SocialBase,
+				allowedGroups:    tt.fields.allowedGroups,
+				forceUseGraphAPI: tt.fields.forceUseGraphAPI,
 			}
 
 			if tt.fields.SocialBase == nil {
-				s.SocialBase = newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "")
+				s.SocialBase = newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "", false)
 			}
 
 			key := []byte("secret")
@@ -443,9 +476,8 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				t.Errorf("UserInfo() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("UserInfo() got = %v, want %v", got, tt.want)
-			}
+
+			require.EqualValues(t, tt.want, got)
 		})
 	}
 }

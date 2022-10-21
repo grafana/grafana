@@ -16,11 +16,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -38,14 +39,14 @@ func Test_InterfaceContractValidity(t *testing.T) {
 func TestMetrics(t *testing.T) {
 	const metricName = "stats.test_metric.count"
 
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	uss := createService(t, setting.Cfg{}, sqlStore, false)
 
 	uss.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
 		return map[string]interface{}{metricName: 1}, nil
 	})
 
-	err := uss.sendUsageStats(context.Background())
+	_, err := uss.sendUsageStats(context.Background())
 	require.NoError(t, err)
 
 	t.Run("Given reporting not enabled and sending usage stats", func(t *testing.T) {
@@ -54,12 +55,13 @@ func TestMetrics(t *testing.T) {
 			sendUsageStats = origSendUsageStats
 		})
 		statsSent := false
-		sendUsageStats = func(uss *UsageStats, b *bytes.Buffer) {
+		sendUsageStats = func(uss *UsageStats, ctx context.Context, b *bytes.Buffer) error {
 			statsSent = true
+			return nil
 		}
 
 		uss.Cfg.ReportingEnabled = false
-		err := uss.sendUsageStats(context.Background())
+		_, err := uss.sendUsageStats(context.Background())
 		require.NoError(t, err)
 
 		require.False(t, statsSent)
@@ -105,8 +107,10 @@ func TestMetrics(t *testing.T) {
 		})
 		usageStatsURL = ts.URL
 
-		err := uss.sendUsageStats(context.Background())
-		require.NoError(t, err)
+		go func() {
+			_, err := uss.sendUsageStats(context.Background())
+			require.NoError(t, err)
+		}()
 
 		// Wait for fake HTTP server to receive a request
 		var resp httpResp
@@ -144,7 +148,7 @@ func TestMetrics(t *testing.T) {
 }
 
 func TestGetUsageReport_IncludesMetrics(t *testing.T) {
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	uss := createService(t, setting.Cfg{}, sqlStore, true)
 	metricName := "stats.test_metric.count"
 
@@ -162,7 +166,7 @@ func TestGetUsageReport_IncludesMetrics(t *testing.T) {
 func TestRegisterMetrics(t *testing.T) {
 	const goodMetricName = "stats.test_external_metric.count"
 
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	uss := createService(t, setting.Cfg{}, sqlStore, false)
 	metrics := map[string]interface{}{"stats.test_metric.count": 1, "stats.test_metric_second.count": 2}
 
@@ -198,47 +202,23 @@ func TestRegisterMetrics(t *testing.T) {
 	})
 }
 
-type fakePluginStore struct {
-	plugins.Store
-
-	plugins map[string]plugins.PluginDTO
-}
-
-func (pr fakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
-	p, exists := pr.plugins[pluginID]
-
-	return p, exists
-}
-
-func (pr fakePluginStore) Plugins(_ context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
-	var result []plugins.PluginDTO
-	for _, v := range pr.plugins {
-		for _, t := range pluginTypes {
-			if v.Type == t {
-				result = append(result, v)
-			}
-		}
-	}
-
-	return result
-}
-
 type httpResp struct {
 	req            *http.Request
 	responseBuffer *bytes.Buffer
 	err            error
 }
 
-func createService(t *testing.T, cfg setting.Cfg, sqlStore sqlstore.Store, withDB bool) *UsageStats {
+func createService(t *testing.T, cfg setting.Cfg, sqlStore db.DB, withDB bool) *UsageStats {
 	t.Helper()
 	if withDB {
-		sqlStore = sqlstore.InitTestDB(t)
+		sqlStore = db.InitTestDB(t)
 	}
 
 	return ProvideService(
 		&cfg,
-		&fakePluginStore{},
+		&plugins.FakePluginStore{},
 		kvstore.ProvideService(sqlStore),
 		routing.NewRouteRegister(),
+		tracing.InitializeTracerForTest(),
 	)
 }

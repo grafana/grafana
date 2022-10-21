@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
 import { Plugin } from 'slate';
@@ -13,6 +14,9 @@ import {
   SuggestionsState,
   TypeaheadInput,
   TypeaheadOutput,
+  Themeable2,
+  withTheme2,
+  clearButtonStyles,
 } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 import {
@@ -74,7 +78,7 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
   return suggestion;
 }
 
-interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions> {
+interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>, Themeable2 {
   ExtraFieldElement?: ReactNode;
   'data-testid'?: string;
 }
@@ -277,6 +281,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       query,
       ExtraFieldElement,
       history = [],
+      theme,
     } = this.props;
 
     const { labelBrowserVisible, syntaxLoaded, hint } = this.state;
@@ -297,6 +302,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                   className="gf-form-label query-keyword pointer"
                   onClick={this.onClickChooserButton}
                   disabled={buttonDisabled}
+                  type="button"
                 >
                   {chooserText}
                   <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
@@ -332,9 +338,13 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                   <div className="prom-query-field-info text-warning">
                     {hint.label}{' '}
                     {hint.fix ? (
-                      <a className="text-link muted" onClick={this.onClickHintFix}>
+                      <button
+                        type="button"
+                        className={cx(clearButtonStyles(theme), 'text-link', 'muted')}
+                        onClick={this.onClickHintFix}
+                      >
                         {hint.fix.label}
-                      </a>
+                      </button>
                     ) : null}
                   </div>
                 </div>
@@ -347,4 +357,4 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   }
 }
 
-export default PromQueryField;
+export default withTheme2(PromQueryField);

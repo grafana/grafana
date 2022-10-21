@@ -118,6 +118,8 @@ type Alertmanager struct {
 	silencer *silence.Silencer
 	silences *silence.Silences
 
+	receivers []*notify.Receiver
+
 	// muteTimes is a map where the key is the name of the mute_time_interval
 	// and the value represents all configured time_interval(s)
 	muteTimes map[string][]timeinterval.TimeInterval
@@ -195,7 +197,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		am.silences.Maintenance(silenceMaintenanceInterval, silencesFilePath, am.stopc, func() (int64, error) {
 			// Delete silences older than the retention period.
 			if _, err := am.silences.GC(); err != nil {
-				am.logger.Error("silence garbage collection", "err", err)
+				am.logger.Error("silence garbage collection", "error", err)
 				// Don't return here - we need to snapshot our state first.
 			}
 
@@ -206,7 +208,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	}()
 
 	// Initialize in-memory alerts
-	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, memoryAlertsGCInterval, nil, am.logger)
+	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, memoryAlertsGCInterval, nil, am.logger, m.Registerer)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the alert provider component of alerting: %w", err)
 	}
@@ -421,13 +423,21 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	inhibitionStage := notify.NewMuteStage(am.inhibitor)
 	timeMuteStage := notify.NewTimeMuteStage(am.muteTimes)
 	silencingStage := notify.NewMuteStage(am.silencer)
-	for name := range integrationsMap {
-		stage := am.createReceiverStage(name, integrationsMap[name], am.waitFunc, am.notificationLog)
-		routingStage[name] = notify.MultiStage{meshStage, silencingStage, timeMuteStage, inhibitionStage, stage}
-	}
 
 	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route.AsAMRoute(), nil)
 	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.logger, am.dispatcherMetrics)
+
+	// Check which receivers are active and create the receiver stage.
+	var receivers []*notify.Receiver
+	activeReceivers := am.getActiveReceiversMap(am.route)
+	for name := range integrationsMap {
+		stage := am.createReceiverStage(name, integrationsMap[name], am.waitFunc, am.notificationLog)
+		routingStage[name] = notify.MultiStage{meshStage, silencingStage, timeMuteStage, inhibitionStage, stage}
+		_, isActive := activeReceivers[name]
+
+		receivers = append(receivers, notify.NewReceiver(name, isActive, integrationsMap[name]))
+	}
+	am.receivers = receivers
 
 	am.wg.Add(1)
 	go func() {
@@ -452,8 +462,8 @@ func (am *Alertmanager) WorkingDirPath() string {
 }
 
 // buildIntegrationsMap builds a map of name to the list of Grafana integration notifiers off of a list of receiver config.
-func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiReceiver, templates *template.Template) (map[string][]notify.Integration, error) {
-	integrationsMap := make(map[string][]notify.Integration, len(receivers))
+func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiReceiver, templates *template.Template) (map[string][]*notify.Integration, error) {
+	integrationsMap := make(map[string][]*notify.Integration, len(receivers))
 	for _, receiver := range receivers {
 		integrations, err := am.buildReceiverIntegrations(receiver, templates)
 		if err != nil {
@@ -466,8 +476,8 @@ func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiR
 }
 
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
-func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *template.Template) ([]notify.Integration, error) {
-	var integrations []notify.Integration
+func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *template.Template) ([]*notify.Integration, error) {
+	var integrations []*notify.Integration
 	for i, r := range receiver.GrafanaManagedReceivers {
 		n, err := am.buildReceiverIntegration(r, tmpl)
 		if err != nil {
@@ -667,23 +677,34 @@ func (e AlertValidationError) Error() string {
 }
 
 // createReceiverStage creates a pipeline of stages for a receiver.
-func (am *Alertmanager) createReceiverStage(name string, integrations []notify.Integration, wait func() time.Duration, notificationLog notify.NotificationLog) notify.Stage {
+func (am *Alertmanager) createReceiverStage(name string, integrations []*notify.Integration, wait func() time.Duration, notificationLog notify.NotificationLog) notify.Stage {
 	var fs notify.FanoutStage
-	for i := range integrations {
+	for _, integration := range integrations {
 		recv := &nflogpb.Receiver{
 			GroupName:   name,
-			Integration: integrations[i].Name(),
-			Idx:         uint32(integrations[i].Index()),
+			Integration: integration.Name(),
+			Idx:         uint32(integration.Index()),
 		}
 		var s notify.MultiStage
 		s = append(s, notify.NewWaitStage(wait))
-		s = append(s, notify.NewDedupStage(&integrations[i], notificationLog, recv))
-		s = append(s, notify.NewRetryStage(integrations[i], name, am.stageMetrics))
+		s = append(s, notify.NewDedupStage(integration, notificationLog, recv))
+		s = append(s, notify.NewRetryStage(integration, name, am.stageMetrics))
 		s = append(s, notify.NewSetNotifiesStage(notificationLog, recv))
 
 		fs = append(fs, s)
 	}
 	return fs
+}
+
+// getActiveReceiversMap returns all receivers that are in use by a route.
+func (am *Alertmanager) getActiveReceiversMap(r *dispatch.Route) map[string]struct{} {
+	receiversMap := make(map[string]struct{})
+	visitFunc := func(r *dispatch.Route) {
+		receiversMap[r.RouteOpts.Receiver] = struct{}{}
+	}
+	r.Walk(visitFunc)
+
+	return receiversMap
 }
 
 func (am *Alertmanager) waitFunc() time.Duration {

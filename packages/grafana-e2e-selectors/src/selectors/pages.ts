@@ -181,7 +181,7 @@ export const Pages = {
   ShareDashboardModal: {
     shareButton: 'Share dashboard or panel',
     PublicDashboard: {
-      Tab: 'Tab Public Dashboard',
+      Tab: 'Tab Public dashboard',
       WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
       LimitedDSCheckbox: 'data-testid public dashboard limited datasources checkbox',
       CostIncreaseCheckbox: 'data-testid public dashboard cost may increase checkbox',
@@ -219,5 +219,11 @@ export const Pages = {
     name: 'Playlist name',
     interval: 'Playlist interval',
     itemDelete: 'Delete playlist item',
+  },
+  Search: {
+    url: '/?search=openn',
+    FolderView: {
+      url: '/?search=open&layout=folders',
+    },
   },
 };

@@ -5,25 +5,26 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type CrawlerAuthSetupService interface {
 	Setup(ctx context.Context) (CrawlerAuth, error)
 }
 
-func ProvideCrawlerAuthSetupService(serviceAccounts serviceaccounts.Service, serviceAccountsStore serviceaccounts.Store, sqlStore *sqlstore.SQLStore) *OSSCrawlerAuthSetupService {
+func ProvideCrawlerAuthSetupService(serviceAccounts serviceaccounts.Service, serviceAccountsStore serviceaccounts.Store,
+	sqlStore db.DB, orgService org.Service) *OSSCrawlerAuthSetupService {
 	return &OSSCrawlerAuthSetupService{
 		serviceAccountNamePrefix: "dashboard-previews-crawler-org-",
 		serviceAccounts:          serviceAccounts,
 		log:                      log.New("oss_crawler_account_setup_service"),
 		sqlStore:                 sqlStore,
 		serviceAccountsStore:     serviceAccountsStore,
+		orgService:               orgService,
 	}
 }
 
@@ -32,7 +33,8 @@ type OSSCrawlerAuthSetupService struct {
 	serviceAccountNamePrefix string
 	serviceAccounts          serviceaccounts.Service
 	serviceAccountsStore     serviceaccounts.Store
-	sqlStore                 *sqlstore.SQLStore
+	sqlStore                 db.DB
+	orgService               org.Service
 }
 
 type CrawlerAuth interface {
@@ -42,15 +44,16 @@ type CrawlerAuth interface {
 }
 
 func (o *OSSCrawlerAuthSetupService) findAllOrgIds(ctx context.Context) ([]int64, error) {
-	searchAllOrgsQuery := &models.SearchOrgsQuery{}
-	if err := o.sqlStore.SearchOrgs(ctx, searchAllOrgsQuery); err != nil {
+	searchAllOrgsQuery := &org.SearchOrgsQuery{}
+	result, err := o.orgService.Search(ctx, searchAllOrgsQuery)
+	if err != nil {
 		o.log.Error("Error when searching for orgs", "err", err)
 		return nil, err
 	}
 
 	orgIds := make([]int64, 0)
-	for i := range searchAllOrgsQuery.Result {
-		orgIds = append(orgIds, searchAllOrgsQuery.Result[i].Id)
+	for i := range result {
+		orgIds = append(orgIds, result[i].ID)
 	}
 
 	return orgIds, nil

@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestMiddlewareAuth(t *testing.T) {
@@ -38,7 +40,7 @@ func TestMiddlewareAuth(t *testing.T) {
 
 		middlewareScenario(t, "ReqSignIn true and NoAnonynmous true", func(
 			t *testing.T, sc *scenarioContext) {
-			sc.mockSQLStore.ExpectedOrg = &models.Org{Id: orgID, Name: "test"}
+			sc.orgService.ExpectedOrg = &org.Org{ID: orgID, Name: "test"}
 			sc.m.Get("/api/secure", ReqSignedInNoAnonymous, sc.defaultHandler)
 			sc.fakeReq("GET", "/api/secure").exec()
 
@@ -47,7 +49,7 @@ func TestMiddlewareAuth(t *testing.T) {
 
 		middlewareScenario(t, "ReqSignIn true and request with forceLogin in query string", func(
 			t *testing.T, sc *scenarioContext) {
-			sc.mockSQLStore.ExpectedOrg = &models.Org{Id: orgID, Name: "test"}
+			sc.orgService.ExpectedOrg = &org.Org{ID: orgID, Name: "test"}
 			sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
 
 			sc.fakeReq("GET", "/secure?forceLogin=true").exec()
@@ -60,20 +62,18 @@ func TestMiddlewareAuth(t *testing.T) {
 
 		middlewareScenario(t, "ReqSignIn true and request with same org provided in query string", func(
 			t *testing.T, sc *scenarioContext) {
-			sc.mockSQLStore.ExpectedOrg = &models.Org{Id: 1, Name: sc.cfg.AnonymousOrgName}
-			org, err := sc.mockSQLStore.CreateOrgWithMember(sc.cfg.AnonymousOrgName, 1)
-			require.NoError(t, err)
+			sc.orgService.ExpectedOrg = &org.Org{ID: 1, Name: sc.cfg.AnonymousOrgName}
 
 			sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
 
-			sc.fakeReq("GET", fmt.Sprintf("/secure?orgId=%d", org.Id)).exec()
+			sc.fakeReq("GET", fmt.Sprintf("/secure?orgId=%d", 1)).exec()
 
 			assert.Equal(t, 200, sc.resp.Code)
 		}, configure)
 
 		middlewareScenario(t, "ReqSignIn true and request with different org provided in query string", func(
 			t *testing.T, sc *scenarioContext) {
-			sc.mockSQLStore.ExpectedOrg = &models.Org{Id: 1, Name: sc.cfg.AnonymousOrgName}
+			sc.orgService.ExpectedOrg = &org.Org{ID: 1, Name: sc.cfg.AnonymousOrgName}
 			sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
 
 			sc.fakeReq("GET", "/secure?orgId=2").exec()

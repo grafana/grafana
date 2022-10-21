@@ -200,6 +200,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       timeRange: this.range,
       maxDataPoints: panel.maxDataPoints || this.width,
       minInterval: panel.interval,
+      publicDashboardAccessToken: this.dashboard.meta.publicDashboardAccessToken,
       scopedVars: panel.scopedVars,
       cacheTimeout: panel.cacheTimeout,
       transformations: panel.transformations,

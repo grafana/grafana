@@ -14,38 +14,27 @@ var CoremodelSet = wire.NewSet(
 	NewBase,
 )
 
-// NewBase provides a registry of all coremodels, without any composition of
-// plugin-defined schemas.
-//
-// The returned registry will use the default Grafana thema.Library, defined in
-// pkg/cuectx. If you need control over the thema.Library used by the coremodel
-// lineages, use NewBaseWithLib instead.
-func NewBase() *Base {
-	return provideBase(nil)
-}
-
-// NewBaseWithLib is the same as NewBase, but allows control over the
-// thema.Library used to initialize the underlying coremodels.
-//
-// Prefer NewBase unless you absolutely need this control.
-func NewBaseWithLib(lib thema.Library) *Base {
-	return provideBase(&lib)
-}
-
 var (
 	baseOnce    sync.Once
 	defaultBase *Base
 )
 
-func provideBase(lib *thema.Library) *Base {
-	if lib == nil {
+// NewBase provides a registry of all coremodels, without any composition of
+// plugin-defined schemas.
+//
+// All calling code within grafana/grafana is expected to use Grafana's
+// singleton [thema.Runtime], returned from [cuectx.GrafanaThemaRuntime]. If nil
+// is passed, the singleton will be used.
+func NewBase(rt *thema.Runtime) *Base {
+	allrt := cuectx.GrafanaThemaRuntime()
+	if rt == nil || rt == allrt {
 		baseOnce.Do(func() {
-			defaultBase = doProvideBase(cuectx.ProvideThemaLibrary())
+			defaultBase = doProvideBase(allrt)
 		})
 		return defaultBase
 	}
 
-	return doProvideBase(*lib)
+	return doProvideBase(rt)
 }
 
 // All returns a slice of all registered coremodels.
@@ -54,6 +43,6 @@ func provideBase(lib *thema.Library) *Base {
 //
 // The returned slice is sorted lexicographically by coremodel name. It should
 // not be modified.
-func (s *Base) All() []coremodel.Interface {
-	return s.all
+func (b *Base) All() []coremodel.Interface {
+	return b.all
 }

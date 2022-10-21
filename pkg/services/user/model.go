@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/models/roletype"
 )
 
 type HelpFlags1 uint64
@@ -104,7 +104,7 @@ type SetUsingOrgCommand struct {
 
 type SearchUsersQuery struct {
 	SignedInUser *SignedInUser
-	OrgID        int64
+	OrgID        int64 `xorm:"org_id"`
 	Query        string
 	Page         int
 	Limit        int
@@ -122,11 +122,11 @@ type SearchUserQueryResult struct {
 }
 
 type UserSearchHitDTO struct {
-	ID            int64                `json:"id"`
+	ID            int64                `json:"id" xorm:"id"`
 	Name          string               `json:"name"`
 	Login         string               `json:"login"`
 	Email         string               `json:"email"`
-	AvatarUrl     string               `json:"avatarUrl"`
+	AvatarURL     string               `json:"avatarUrl" xorm:"avatar_url"`
 	IsAdmin       bool                 `json:"isAdmin"`
 	IsDisabled    bool                 `json:"isDisabled"`
 	LastSeenAt    time.Time            `json:"lastSeenAt"`
@@ -171,34 +171,34 @@ func (auth *AuthModuleConversion) ToDB() ([]byte, error) {
 }
 
 type DisableUserCommand struct {
-	UserID     int64
+	UserID     int64 `xorm:"user_id"`
 	IsDisabled bool
 }
 
 type BatchDisableUsersCommand struct {
-	UserIDs    []int64
+	UserIDs    []int64 `xorm:"user_ids"`
 	IsDisabled bool
 }
 
 type SetUserHelpFlagCommand struct {
 	HelpFlags1 HelpFlags1
-	UserID     int64
+	UserID     int64 `xorm:"user_id"`
 }
 
 type GetSignedInUserQuery struct {
-	UserID int64
+	UserID int64 `xorm:"user_id"`
 	Login  string
 	Email  string
-	OrgID  int64
+	OrgID  int64 `xorm:"org_id"`
 }
 
 type SignedInUser struct {
 	UserID             int64 `xorm:"user_id"`
 	OrgID              int64 `xorm:"org_id"`
 	OrgName            string
-	OrgRole            org.RoleType
+	OrgRole            roletype.RoleType
 	ExternalAuthModule string
-	ExternalAuthID     string
+	ExternalAuthID     string `xorm:"external_auth_id"`
 	Login              string
 	Name               string
 	Email              string
@@ -268,7 +268,7 @@ func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 	}
 }
 
-func (u *SignedInUser) HasRole(role org.RoleType) bool {
+func (u *SignedInUser) HasRole(role roletype.RoleType) bool {
 	if u.IsGrafanaAdmin {
 		return true
 	}

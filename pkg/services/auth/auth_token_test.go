@@ -8,15 +8,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
-
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestUserAuthToken(t *testing.T) {
@@ -533,7 +532,7 @@ func createTestContext(t *testing.T) *testContext {
 	t.Helper()
 	maxInactiveDurationVal, _ := time.ParseDuration("168h")
 	maxLifetimeDurationVal, _ := time.ParseDuration("720h")
-	sqlstore := sqlstore.InitTestDB(t)
+	sqlstore := db.InitTestDB(t)
 
 	cfg := &setting.Cfg{
 		LoginMaxInactiveLifetime:     maxInactiveDurationVal,
@@ -560,46 +559,60 @@ func createTestContext(t *testing.T) *testContext {
 }
 
 type testContext struct {
-	sqlstore           *sqlstore.SQLStore
+	sqlstore           db.DB
 	tokenService       *UserAuthTokenService
 	activeTokenService *ActiveAuthTokenService
 }
 
 func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {
-	sess := c.sqlstore.NewSession(context.Background())
-	var t userAuthToken
-	found, err := sess.ID(id).Get(&t)
-	if err != nil || !found {
-		return nil, err
-	}
+	var res *userAuthToken
+	err := c.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		var t userAuthToken
+		found, err := sess.ID(id).Get(&t)
+		if err != nil || !found {
+			return err
+		}
 
-	return &t, nil
+		res = &t
+		return nil
+	})
+
+	return res, err
 }
 
 func (c *testContext) markAuthTokenAsSeen(id int64) (bool, error) {
-	sess := c.sqlstore.NewSession(context.Background())
-	res, err := sess.Exec("UPDATE user_auth_token SET auth_token_seen = ? WHERE id = ?", c.sqlstore.Dialect.BooleanStr(true), id)
-	if err != nil {
-		return false, err
-	}
+	hasRowsAffected := false
+	err := c.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		res, err := sess.Exec("UPDATE user_auth_token SET auth_token_seen = ? WHERE id = ?", c.sqlstore.GetDialect().BooleanStr(true), id)
+		if err != nil {
+			return err
+		}
 
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return false, err
-	}
-	return rowsAffected == 1, nil
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		hasRowsAffected = rowsAffected == 1
+		return nil
+	})
+	return hasRowsAffected, err
 }
 
 func (c *testContext) updateRotatedAt(id, rotatedAt int64) (bool, error) {
-	sess := c.sqlstore.NewSession(context.Background())
-	res, err := sess.Exec("UPDATE user_auth_token SET rotated_at = ? WHERE id = ?", rotatedAt, id)
-	if err != nil {
-		return false, err
-	}
+	hasRowsAffected := false
+	err := c.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		res, err := sess.Exec("UPDATE user_auth_token SET rotated_at = ? WHERE id = ?", rotatedAt, id)
+		if err != nil {
+			return err
+		}
 
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return false, err
-	}
-	return rowsAffected == 1, nil
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+
+		hasRowsAffected = rowsAffected == 1
+		return nil
+	})
+	return hasRowsAffected, err
 }

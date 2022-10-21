@@ -5,30 +5,28 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
-	"go/format"
-	"go/parser"
-	"go/token"
 	"io"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing/fstest"
-	"text/template"
 
+	cerrors "cuelang.org/go/cue/errors"
 	"cuelang.org/go/pkg/encoding/yaml"
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/grafana/cuetsy"
+	tsast "github.com/grafana/cuetsy/ts/ast"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/openapi"
-	"golang.org/x/tools/imports"
+	"golang.org/x/tools/go/ast/astutil"
 )
 
-// ExtractedLineage contains the results of statically analyzing a Grafana
+// CoremodelDeclaration contains the results of statically analyzing a Grafana
 // directory for a Thema lineage.
-type ExtractedLineage struct {
+type CoremodelDeclaration struct {
 	Lineage thema.Lineage
 	// Absolute path to the coremodel's coremodel.cue file.
 	LineagePath string
@@ -52,12 +50,12 @@ type ExtractedLineage struct {
 // This loading approach is intended primarily for use with code generators, or
 // other use cases external to grafana-server backend. For code within
 // grafana-server, prefer lineage loaders provided in e.g. pkg/coremodel/*.
-func ExtractLineage(path string, lib thema.Library) (*ExtractedLineage, error) {
+func ExtractLineage(path string, rt *thema.Runtime) (*CoremodelDeclaration, error) {
 	if !filepath.IsAbs(path) {
 		return nil, fmt.Errorf("must provide an absolute path, got %q", path)
 	}
 
-	ec := &ExtractedLineage{
+	ec := &CoremodelDeclaration{
 		LineagePath: path,
 	}
 
@@ -94,12 +92,14 @@ func ExtractLineage(path string, lib thema.Library) (*ExtractedLineage, error) {
 		},
 	}
 
-	ec.RelativePath, err = filepath.Rel(groot, filepath.Dir(path))
+	// ec.RelativePath, err = filepath.Rel(groot, filepath.Dir(path))
+	ec.RelativePath, err = filepath.Rel(groot, path)
 	if err != nil {
 		// should be unreachable, since we rootclimbed to find groot above
 		panic(err)
 	}
-	ec.Lineage, err = cuectx.LoadGrafanaInstancesWithThema(ec.RelativePath, fs, lib)
+	ec.RelativePath = filepath.ToSlash(ec.RelativePath)
+	ec.Lineage, err = cuectx.LoadGrafanaInstancesWithThema(filepath.Dir(ec.RelativePath), fs, rt)
 	if err != nil {
 		return ec, err
 	}
@@ -109,14 +109,14 @@ func ExtractLineage(path string, lib thema.Library) (*ExtractedLineage, error) {
 }
 
 // toTemplateObj extracts creates a struct with all the useful strings for template generation.
-func (ls *ExtractedLineage) toTemplateObj() tplVars {
-	lin := ls.Lineage
+func (cd *CoremodelDeclaration) toTemplateObj() tplVars {
+	lin := cd.Lineage
 	sch := thema.SchemaP(lin, thema.LatestVersion(lin))
 
 	return tplVars{
 		Name:        lin.Name(),
-		LineagePath: ls.RelativePath,
-		PkgPath:     filepath.ToSlash(filepath.Join("github.com/grafana/grafana", ls.RelativePath)),
+		LineagePath: cd.RelativePath,
+		PkgPath:     filepath.ToSlash(filepath.Join("github.com/grafana/grafana", filepath.Dir(cd.RelativePath))),
 		TitleName:   strings.Title(lin.Name()), // nolint
 		LatestSeqv:  sch.Version()[0],
 		LatestSchv:  sch.Version()[1],
@@ -141,13 +141,22 @@ var nonAPITypes = map[string]bool{
 	"pluginmeta": true,
 }
 
+// PathVersion returns the string path element to use for the latest schema.
+// "x" if not yet canonical, otherwise, "v<major>"
+func (cd *CoremodelDeclaration) PathVersion() string {
+	if !cd.IsCanonical {
+		return "x"
+	}
+	return fmt.Sprintf("v%v", thema.LatestVersion(cd.Lineage)[0])
+}
+
 // GenerateGoCoremodel generates a standard Go model struct and coremodel
 // implementation from a coremodel CUE declaration.
 //
 // The provided path must be a directory. Generated code files will be written
 // to that path. The final element of the path must match the Lineage.Name().
-func (ls *ExtractedLineage) GenerateGoCoremodel(path string) (WriteDiffer, error) {
-	lin, lib := ls.Lineage, ls.Lineage.Library()
+func (cd *CoremodelDeclaration) GenerateGoCoremodel(path string) (WriteDiffer, error) {
+	lin, rt := cd.Lineage, cd.Lineage.Runtime()
 	_, name := filepath.Split(path)
 	if name != lin.Name() {
 		return nil, fmt.Errorf("lineage name %q must match final element of path, got %q", lin.Name(), path)
@@ -159,7 +168,7 @@ func (ls *ExtractedLineage) GenerateGoCoremodel(path string) (WriteDiffer, error
 		return nil, fmt.Errorf("thema openapi generation failed: %w", err)
 	}
 
-	str, err := yaml.Marshal(lib.Context().BuildFile(f))
+	str, err := yaml.Marshal(rt.Context().BuildFile(f))
 	if err != nil {
 		return nil, fmt.Errorf("cue-yaml marshaling failed: %w", err)
 	}
@@ -170,12 +179,19 @@ func (ls *ExtractedLineage) GenerateGoCoremodel(path string) (WriteDiffer, error
 		return nil, fmt.Errorf("loading generated openapi failed; %w", err)
 	}
 
+	var importbuf bytes.Buffer
+	if err = tmpls.Lookup("coremodel_imports.tmpl").Execute(&importbuf, tvars_coremodel_imports{
+		PackageName: lin.Name(),
+	}); err != nil {
+		return nil, fmt.Errorf("error executing imports template: %w", err)
+	}
+
 	gostr, err := codegen.Generate(oT, lin.Name(), codegen.Options{
 		GenerateTypes: true,
 		SkipPrune:     true,
 		SkipFmt:       true,
 		UserTemplates: map[string]string{
-			"imports.tmpl": fmt.Sprintf(tmplImports, ls.RelativePath),
+			"imports.tmpl": importbuf.String(),
 			"typedef.tmpl": tmplTypedef,
 		},
 	})
@@ -183,34 +199,34 @@ func (ls *ExtractedLineage) GenerateGoCoremodel(path string) (WriteDiffer, error
 		return nil, fmt.Errorf("openapi generation failed: %w", err)
 	}
 
-	vars := ls.toTemplateObj()
-	var buuf bytes.Buffer
-	err = tmplAddenda.Execute(&buuf, vars)
+	buf := new(bytes.Buffer)
+	if err = tmpls.Lookup("autogen_header.tmpl").Execute(buf, tvars_autogen_header{
+		LineagePath:   cd.RelativePath,
+		GeneratorPath: "pkg/framework/coremodel/gen.go", // FIXME hardcoding is not OK
+	}); err != nil {
+		return nil, fmt.Errorf("error executing header template: %w", err)
+	}
+
+	fmt.Fprint(buf, "\n", gostr)
+
+	vars := cd.toTemplateObj()
+	err = tmpls.Lookup("addenda.tmpl").Execute(buf, vars)
 	if err != nil {
 		panic(err)
 	}
 
-	fset := token.NewFileSet()
-	fname := fmt.Sprintf("%s_gen.go", lin.Name())
-	gf, err := parser.ParseFile(fset, fname, gostr+buuf.String(), parser.ParseComments)
+	fullp := filepath.Join(path, fmt.Sprintf("%s_gen.go", lin.Name()))
+	byt, err := postprocessGoFile(genGoFile{
+		path:   fullp,
+		walker: makePrefixDropper(strings.Title(lin.Name()), "Model"),
+		in:     buf.Bytes(),
+	})
 	if err != nil {
-		return nil, fmt.Errorf("generated go file parsing failed: %w", err)
-	}
-	ast.Walk(prefixDropper(strings.Title(lin.Name())), gf)
-
-	var buf bytes.Buffer
-	err = format.Node(&buf, fset, gf)
-	if err != nil {
-		return nil, fmt.Errorf("ast printing failed: %w", err)
-	}
-
-	byt, err := imports.Process(fname, buf.Bytes(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("goimports processing failed: %w", err)
+		return nil, err
 	}
 
 	wd := NewWriteDiffer()
-	wd[filepath.Join(path, fname)] = byt
+	wd[fullp] = byt
 
 	return wd, nil
 }
@@ -223,251 +239,156 @@ type tplVars struct {
 	IsComposed             bool
 }
 
-func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffer, error) {
-	_, name := filepath.Split(path)
-	if name != ls.Lineage.Name() {
-		return nil, fmt.Errorf("lineage name %q must match final element of path, got %q", ls.Lineage.Name(), path)
+func (cd *CoremodelDeclaration) GenerateTypescriptCoremodel() (*tsast.File, error) {
+	schv := thema.SchemaP(cd.Lineage, thema.LatestVersion(cd.Lineage)).UnwrapCUE()
+
+	tf, err := cuetsy.GenerateAST(schv, cuetsy.Config{
+		Export: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cuetsy tf gen failed: %w", err)
 	}
 
-	schv := thema.SchemaP(ls.Lineage, thema.LatestVersion(ls.Lineage)).UnwrapCUE()
-
-	parts, err := cuetsy.GenerateAST(schv, cuetsy.Config{})
+	top, err := cuetsy.GenerateSingleAST(strings.Title(cd.Lineage.Name()), schv, cuetsy.TypeInterface)
 	if err != nil {
-		return nil, fmt.Errorf("cuetsy parts gen failed: %w", err)
+		return nil, fmt.Errorf("cuetsy top gen failed: %s", cerrors.Details(err, nil))
 	}
 
-	top, err := cuetsy.GenerateSingleAST(strings.Title(ls.Lineage.Name()), schv, cuetsy.TypeInterface)
-	if err != nil {
-		return nil, fmt.Errorf("cuetsy top gen failed: %w", err)
+	buf := new(bytes.Buffer)
+	if err := tmpls.Lookup("autogen_header.tmpl").Execute(buf, tvars_autogen_header{
+		LineagePath:   cd.RelativePath,
+		GeneratorPath: "pkg/framework/coremodel/gen.go", // FIXME hardcoding is not OK
+	}); err != nil {
+		return nil, fmt.Errorf("error executing header template: %w", err)
+	}
+	tf.Doc = &tsast.Comment{
+		Text: buf.String(),
 	}
 
 	// TODO until cuetsy can toposort its outputs, put the top/parent type at the bottom of the file.
-	parts.Nodes = append(parts.Nodes, top.T)
+	tf.Nodes = append(tf.Nodes, top.T)
 	if top.D != nil {
-		parts.Nodes = append(parts.Nodes, top.D)
+		tf.Nodes = append(tf.Nodes, top.D)
 	}
-
-	var strb strings.Builder
-	var str string
-	fpath := ls.Lineage.Name() + ".gen.ts"
-	strb.WriteString(fmt.Sprintf(genHeader, ls.RelativePath))
-
-	if !ls.IsCanonical {
-		fpath = fmt.Sprintf("%s_experimental.gen.ts", ls.Lineage.Name())
-		strb.WriteString(`
-// This model is a WIP and not yet canonical. Consequently, its members are
-// not exported to exclude it from grafana-schema's public API surface.
-
-`)
-		strb.WriteString(fmt.Sprint(parts))
-		// TODO replace this regexp with cuetsy config for whether members are exported
-		re := regexp.MustCompile(`(?m)^export `)
-		str = re.ReplaceAllLiteralString(strb.String(), "")
-	} else {
-		strb.WriteString(fmt.Sprint(parts))
-		str = strb.String()
-	}
-
-	wd := NewWriteDiffer()
-	wd[filepath.Join(path, fpath)] = []byte(str)
-	return wd, nil
+	return tf, nil
 }
 
-type prefixDropper string
+type prefixDropper struct {
+	str     string
+	base    string
+	rxp     *regexp.Regexp
+	rxpsuff *regexp.Regexp
+}
 
-func (d prefixDropper) Visit(n ast.Node) ast.Visitor {
-	asstr := string(d)
+func makePrefixDropper(str, base string) astutil.ApplyFunc {
+	return (&prefixDropper{
+		str:     str,
+		base:    base,
+		rxpsuff: regexp.MustCompile(fmt.Sprintf(`%s([a-zA-Z_]*)`, str)),
+		rxp:     regexp.MustCompile(fmt.Sprintf(`%s([\s.,;-])`, str)),
+	}).applyfunc
+}
+
+func depoint(e ast.Expr) ast.Expr {
+	if star, is := e.(*ast.StarExpr); is {
+		return star.X
+	}
+	return e
+}
+
+func (d prefixDropper) applyfunc(c *astutil.Cursor) bool {
+	n := c.Node()
+
+	// fmt.Printf("%T %s\n", c.Node(), ast.Print(nil, c.Node()))
 	switch x := n.(type) {
-	case *ast.Ident:
-		if x.Name != asstr {
-			x.Name = strings.TrimPrefix(x.Name, asstr)
-		} else {
-			x.Name = "Model"
+	case *ast.ValueSpec:
+		// fmt.Printf("%T %s\n", c.Node(), ast.Print(nil, c.Node()))
+		d.handleExpr(x.Type)
+		for _, id := range x.Names {
+			d.do(id)
+		}
+	case *ast.TypeSpec:
+		// Always do typespecs
+		d.do(x.Name)
+	case *ast.Field:
+		// Don't rename struct fields. We just want to rename type declarations, and
+		// field value specifications that reference those types.
+		d.handleExpr(x.Type)
+		// return false
+
+	case *ast.CommentGroup:
+		for _, c := range x.List {
+			c.Text = d.rxp.ReplaceAllString(c.Text, d.base+"$1")
+			c.Text = d.rxpsuff.ReplaceAllString(c.Text, "$1")
 		}
 	}
-	return d
+	return true
+}
+
+func (d prefixDropper) handleExpr(e ast.Expr) {
+	// Deref a StarExpr, if there is one
+	expr := depoint(e)
+	switch x := expr.(type) {
+	case *ast.Ident:
+		d.do(x)
+	case *ast.ArrayType:
+		if id, is := depoint(x.Elt).(*ast.Ident); is {
+			d.do(id)
+		}
+	case *ast.MapType:
+		if id, is := depoint(x.Key).(*ast.Ident); is {
+			d.do(id)
+		}
+		if id, is := depoint(x.Value).(*ast.Ident); is {
+			d.do(id)
+		}
+	}
+}
+
+func (d prefixDropper) do(n *ast.Ident) {
+	if n.Name != d.str {
+		n.Name = strings.TrimPrefix(n.Name, d.str)
+	} else {
+		n.Name = d.base
+	}
 }
 
 // GenerateCoremodelRegistry produces Go files that define a registry with
 // references to all the Go code that is expected to be generated from the
 // provided lineages.
-func GenerateCoremodelRegistry(path string, ecl []*ExtractedLineage) (WriteDiffer, error) {
+func GenerateCoremodelRegistry(path string, ecl []*CoremodelDeclaration) (WriteDiffer, error) {
 	var cml []tplVars
 	for _, ec := range ecl {
 		cml = append(cml, ec.toTemplateObj())
 	}
 
-	var buf bytes.Buffer
-	err := tmplRegistry.Execute(&buf, struct {
-		Coremodels []tplVars
-	}{
+	buf := new(bytes.Buffer)
+	if err := tmpls.Lookup("coremodel_registry.tmpl").Execute(buf, tvars_coremodel_registry{
+		Header: tvars_autogen_header{
+			GeneratorPath: "pkg/framework/coremodel/gen.go", // FIXME hardcoding is not OK
+		},
 		Coremodels: cml,
+	}); err != nil {
+		return nil, fmt.Errorf("failed executing coremodel registry template: %w", err)
+	}
+
+	byt, err := postprocessGoFile(genGoFile{
+		path: path,
+		in:   buf.Bytes(),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed generating template: %w", err)
+		return nil, err
 	}
-
-	byt, err := imports.Process(path, buf.Bytes(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("goimports processing failed: %w", err)
-	}
-
 	wd := NewWriteDiffer()
 	wd[path] = byt
 	return wd, nil
 }
 
-var genHeader = `// This file is autogenerated. DO NOT EDIT.
-//
-// Run "make gen-cue" from repository root to regenerate.
-//
-// Derived from the Thema lineage at %s
-
-`
-
-var tmplImports = genHeader + `package {{ .PackageName }}
-
-import (
-	"embed"
-	"path/filepath"
-
-	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/framework/coremodel"
-	"github.com/grafana/thema"
-)
-`
-
-var tmplAddenda = template.Must(template.New("addenda").Parse(`
-//go:embed coremodel.cue
-var cueFS embed.FS
-
-// codegen ensures that this is always the latest Thema schema version
-var currentVersion = thema.SV({{ .LatestSeqv }}, {{ .LatestSchv }})
-
-// Lineage returns the Thema lineage representing a Grafana {{ .Name }}.
-//
-// The lineage is the canonical specification of the current {{ .Name }} schema,
-// all prior schema versions, and the mappings that allow migration between
-// schema versions.
-{{- if .IsComposed }}//
-// This is the base variant of the schema. It does not include any composed
-// plugin schemas.{{ end }}
-func Lineage(lib thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
-	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("pkg", "coremodel", "{{ .Name }}"), cueFS, lib, opts...)
-}
-
-var _ thema.LineageFactory = Lineage
-var _ coremodel.Interface = &Coremodel{}
-
-// Coremodel contains the foundational schema declaration for {{ .Name }}s.
-// It implements coremodel.Interface.
-type Coremodel struct {
-	lin thema.Lineage
-}
-
-// Lineage returns the canonical {{ .Name }} Lineage.
-func (c *Coremodel) Lineage() thema.Lineage {
-	return c.lin
-}
-
-// CurrentSchema returns the current (latest) {{ .Name }} Thema schema.
-func (c *Coremodel) CurrentSchema() thema.Schema {
-	return thema.SchemaP(c.lin, currentVersion)
-}
-
-// GoType returns a pointer to an empty Go struct that corresponds to
-// the current Thema schema.
-func (c *Coremodel) GoType() interface{} {
-	return &Model{}
-}
-
-// New returns a new instance of the {{ .Name }} coremodel.
-//
-// Note that this function does not cache, and initially loading a Thema lineage
-// can be expensive. As such, the Grafana backend should prefer to access this
-// coremodel through a registry (pkg/framework/coremodel/registry), which does cache.
-func New(lib thema.Library) (*Coremodel, error) {
-	lin, err := Lineage(lib)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Coremodel{
-		lin: lin,
-	}, nil
-}
-`))
-
 var tmplTypedef = `{{range .Types}}
-{{ with .Schema.Description }}{{ . }}{{ else }}// {{.TypeName}} defines model for {{.JsonName}}.{{ end }}
+{{ with .Schema.Description }}{{ . }}{{ else }}// {{.TypeName}} is the Go representation of a {{.JsonName}}.{{ end }}
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
 {{end}}
 `
-
-var tmplRegistry = template.Must(template.New("registry").Parse(`
-// This file is autogenerated. DO NOT EDIT.
-//
-// Generated by pkg/framework/coremodel/gen.go
-// Run "make gen-cue" from repository root to regenerate.
-
-package registry
-
-import (
-	"fmt"
-	"sync"
-
-	"github.com/google/wire"
-	{{range .Coremodels }}
-	"{{ .PkgPath }}"{{end}}
-	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/framework/coremodel"
-	"github.com/grafana/thema"
-)
-
-// Base is a registry of coremodel.Interface. It provides two modes for accessing
-// coremodels: individually via literal named methods, or as a slice returned from All().
-//
-// Prefer the individual named methods for use cases where the particular coremodel(s) that
-// are needed are known to the caller. For example, a dashboard linter can know that it
-// specifically wants the dashboard coremodel.
-//
-// Prefer All() when performing operations generically across all coremodels. For example,
-// a validation HTTP middleware for any coremodel-schematized object type.
-type Base struct {
-	all []coremodel.Interface
-	{{- range .Coremodels }}
-	{{ .Name }} *{{ .Name }}.Coremodel{{end}}
-}
-
-// type guards
-var (
-{{- range .Coremodels }}
-	_ coremodel.Interface = &{{ .Name }}.Coremodel{}{{end}}
-)
-
-{{range .Coremodels }}
-// {{ .TitleName }} returns the {{ .Name }} coremodel. The return value is guaranteed to
-// implement coremodel.Interface.
-func (s *Base) {{ .TitleName }}() *{{ .Name }}.Coremodel {
-	return s.{{ .Name }}
-}
-{{end}}
-
-func doProvideBase(lib thema.Library) *Base {
-	var err error
-	reg := &Base{}
-
-{{range .Coremodels }}
-	reg.{{ .Name }}, err = {{ .Name }}.New(lib)
-	if err != nil {
-		panic(fmt.Sprintf("error while initializing {{ .Name }} coremodel: %s", err))
-	}
-    reg.all = append(reg.all, reg.{{ .Name }})
-{{end}}
-
-	return reg
-}
-`))

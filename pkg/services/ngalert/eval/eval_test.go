@@ -1,13 +1,23 @@
 package eval
 
 import (
+	"context"
 	"fmt"
+	"math/rand"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
+
+	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestEvaluateExecutionResult(t *testing.T) {
@@ -20,7 +30,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "zero valued single instance is single Normal state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("", data.NewField("", nil, []*float64{ptr.Float64(0)})),
 				},
 			},
@@ -34,7 +44,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "non-zero valued single instance is single Alerting state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("", data.NewField("", nil, []*float64{ptr.Float64(1)})),
 				},
 			},
@@ -48,7 +58,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "nil value single instance is single a NoData state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("", data.NewField("", nil, []*float64{nil})),
 				},
 			},
@@ -85,7 +95,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "frame with no fields produces a NoData state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame(""),
 				},
 			},
@@ -99,7 +109,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "empty field produces a NoData state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("", data.NewField("", nil, []*float64{})),
 				},
 			},
@@ -113,7 +123,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "empty field with labels produces a NoData state result with labels",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("", data.NewField("", data.Labels{"a": "b"}, []*float64{})),
 				},
 			},
@@ -128,7 +138,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "malformed frame (unequal lengths) produces Error state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []*float64{ptr.Float64(23)}),
 						data.NewField("", nil, []*float64{}),
@@ -146,7 +156,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "too many fields produces Error state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []*float64{}),
 						data.NewField("", nil, []*float64{}),
@@ -164,7 +174,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "more than one row produces Error state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []*float64{ptr.Float64(2), ptr.Float64(3)}),
 					),
@@ -181,7 +191,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "time fields (looks like time series) returns error",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []time.Time{}),
 					),
@@ -198,7 +208,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "non []*float64 field will produce Error state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []float64{2}),
 					),
@@ -215,7 +225,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "duplicate labels produce a single Error state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []*float64{ptr.Float64(1)}),
 					),
@@ -235,7 +245,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "error that produce duplicate empty labels produce a single Error state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", data.Labels{"a": "b"}, []float64{2}),
 					),
@@ -255,7 +265,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "certain errors will produce multiple mixed Error and other state results",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []float64{3}),
 					),
@@ -339,4 +349,110 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 		require.ElementsMatch(t, []string{"1", "2"}, datasourceUIDs)
 		require.ElementsMatch(t, []string{"A,B", "C"}, refIDs)
 	})
+}
+
+func TestValidate(t *testing.T) {
+	testCases := []struct {
+		name      string
+		condition func(service *fakes.FakeCacheService) models.Condition
+		error     bool
+	}{
+		{
+			name:  "fail if no expressions",
+			error: true,
+			condition: func(service *fakes.FakeCacheService) models.Condition {
+				return models.Condition{
+					Condition: "A",
+					Data:      []models.AlertQuery{},
+				}
+			},
+		},
+		{
+			name:  "fail if condition RefID does not exist",
+			error: true,
+			condition: func(service *fakes.FakeCacheService) models.Condition {
+				ds := models.GenerateAlertQuery()
+				service.DataSources = append(service.DataSources, &datasources.DataSource{
+					Uid: ds.DatasourceUID,
+				})
+
+				return models.Condition{
+					Condition: "C",
+					Data: []models.AlertQuery{
+						ds,
+						models.CreateClassicConditionExpression("B", ds.RefID, "last", "gt", rand.Int()),
+					},
+				}
+			},
+		},
+		{
+			name:  "fail if condition RefID is empty",
+			error: true,
+			condition: func(service *fakes.FakeCacheService) models.Condition {
+				ds := models.GenerateAlertQuery()
+				service.DataSources = append(service.DataSources, &datasources.DataSource{
+					Uid: ds.DatasourceUID,
+				})
+
+				return models.Condition{
+					Condition: "",
+					Data: []models.AlertQuery{
+						ds,
+						models.CreateClassicConditionExpression("B", ds.RefID, "last", "gt", rand.Int()),
+					},
+				}
+			},
+		},
+		{
+			name:  "fail if datasource with UID does not exists",
+			error: true,
+			condition: func(service *fakes.FakeCacheService) models.Condition {
+				ds := models.GenerateAlertQuery()
+				// do not update the cache service
+				return models.Condition{
+					Condition: ds.RefID,
+					Data: []models.AlertQuery{
+						ds,
+					},
+				}
+			},
+		},
+		{
+			name:  "pass if datasource exists and condition is correct",
+			error: false,
+			condition: func(service *fakes.FakeCacheService) models.Condition {
+				ds := models.GenerateAlertQuery()
+				service.DataSources = append(service.DataSources, &datasources.DataSource{
+					Uid: ds.DatasourceUID,
+				})
+
+				return models.Condition{
+					Condition: "B",
+					Data: []models.AlertQuery{
+						ds,
+						models.CreateClassicConditionExpression("B", ds.RefID, "last", "gt", rand.Int()),
+					},
+				}
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		u := &user.SignedInUser{}
+
+		t.Run(testCase.name, func(t *testing.T) {
+			cacheService := &fakes.FakeCacheService{}
+			condition := testCase.condition(cacheService)
+
+			evaluator := NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, log.New("test"), cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil))
+			evalCtx := Context(context.Background(), u)
+
+			err := evaluator.Validate(evalCtx, condition)
+			if testCase.error {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -24,6 +24,7 @@ var (
 	ErrAbsoluteRedirectTo    = errors.New("absolute URLs are not allowed for redirect_to cookie value")
 	ErrInvalidRedirectTo     = errors.New("invalid redirect_to cookie value")
 	ErrForbiddenRedirectTo   = errors.New("forbidden redirect_to cookie value")
+	ErrNoAuthProvider        = errors.New("enable at least one login provider")
 )
 
 var loginLogger = log.New("login")
@@ -38,7 +39,7 @@ type AuthenticatorService struct {
 	userService         user.Service
 }
 
-func ProvideService(store sqlstore.Store, loginService login.Service, loginAttemptService loginattempt.Service, userService user.Service) *AuthenticatorService {
+func ProvideService(store db.DB, loginService login.Service, loginAttemptService loginattempt.Service, userService user.Service) *AuthenticatorService {
 	a := &AuthenticatorService{
 		loginService:        loginService,
 		loginAttemptService: loginAttemptService,
@@ -57,9 +58,15 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *mode
 		return err
 	}
 
-	err := loginUsingGrafanaDB(ctx, query, a.userService)
-	if err == nil || (!errors.Is(err, user.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
-		!errors.Is(err, ErrUserDisabled)) {
+	isGrafanaLoginEnabled := !query.Cfg.DisableLogin
+	var err error
+
+	if isGrafanaLoginEnabled {
+		err = loginUsingGrafanaDB(ctx, query, a.userService)
+	}
+
+	if isGrafanaLoginEnabled && (err == nil || (!errors.Is(err, user.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
+		!errors.Is(err, ErrUserDisabled))) {
 		query.AuthModule = "grafana"
 		return err
 	}
@@ -82,6 +89,10 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *mode
 		}
 
 		return ErrInvalidCredentials
+	}
+
+	if !isGrafanaLoginEnabled && !ldapEnabled {
+		return ErrNoAuthProvider
 	}
 
 	return err

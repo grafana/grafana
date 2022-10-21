@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -25,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -42,10 +44,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 
 	"github.com/centrifugal/centrifuge"
@@ -72,9 +74,10 @@ type CoreGrafanaScope struct {
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	pluginStore plugins.Store, cacheService *localcache.CacheService,
-	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, secretsService secrets.Service,
+	dataSourceCache datasources.CacheService, sqlStore db.DB, secretsService secrets.Service,
 	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles,
-	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService) (*GrafanaLive, error) {
+	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService, annotationsRepo annotations.Repository,
+	orgService org.Service) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		Features:              toggles,
@@ -91,23 +94,19 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			Features: make(map[string]models.ChannelHandlerFactory),
 		},
 		usageStatsService: usageStatsService,
+		orgService:        orgService,
 	}
 
 	logger.Debug("GrafanaLive initialization", "ha", g.IsHA())
 
-	// We use default config here as starting point. Default config contains
-	// reasonable values for available options.
-	scfg := centrifuge.DefaultConfig
-
-	// scfg.LogLevel = centrifuge.LogLevelDebug
-	scfg.LogHandler = handleLog
-	scfg.LogLevel = centrifuge.LogLevelError
-	scfg.MetricsNamespace = "grafana_live"
-
 	// Node is the core object in Centrifuge library responsible for many useful
 	// things. For example Node allows to publish messages to channels from server
 	// side with its Publish method.
-	node, err := centrifuge.New(scfg)
+	node, err := centrifuge.New(centrifuge.Config{
+		LogHandler:       handleLog,
+		LogLevel:         centrifuge.LogLevelError,
+		MetricsNamespace: "grafana_live",
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -211,16 +210,16 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		// Pre-build/validate channel rules for all organizations on start.
 		// This can be unreasonable to have in production scenario with many
 		// organizations.
-		orgQuery := &models.SearchOrgsQuery{}
+		orgQuery := &org.SearchOrgsQuery{}
 
-		err := sqlStore.SearchOrgs(context.Background(), orgQuery)
+		result, err := orgService.Search(context.Background(), orgQuery)
 		if err != nil {
 			return nil, fmt.Errorf("can't get org list: %w", err)
 		}
-		for _, org := range orgQuery.Result {
-			_, _, err := channelRuleGetter.Get(org.Id, "")
+		for _, org := range result {
+			_, _, err := channelRuleGetter.Get(org.ID, "")
 			if err != nil {
-				return nil, fmt.Errorf("error building channel rules for org %d: %w", org.Id, err)
+				return nil, fmt.Errorf("error building channel rules for org %d: %w", org.ID, err)
 			}
 		}
 
@@ -246,7 +245,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
-	g.GrafanaScope.Features["comment"] = features.NewCommentHandler(commentmodel.NewPermissionChecker(g.SQLStore, g.Features, accessControl, dashboardService))
+	g.GrafanaScope.Features["comment"] = features.NewCommentHandler(commentmodel.NewPermissionChecker(g.SQLStore, g.Features, accessControl, dashboardService, annotationsRepo))
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()
@@ -308,12 +307,9 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		})
 
 		client.OnDisconnect(func(e centrifuge.DisconnectEvent) {
-			reason := "normal"
-			if e.Disconnect != nil {
-				reason = e.Disconnect.Reason
-				if e.Disconnect.Code == 3001 { // Shutdown
-					return
-				}
+			reason := e.Disconnect.Reason
+			if e.Disconnect.Code == 3001 { // Shutdown
+				return
 			}
 			logger.Debug("Client disconnected", "user", client.UserID(), "client", client.ID(), "reason", reason, "elapsed", time.Since(connectedAt))
 		})
@@ -335,6 +331,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	// Use a pure websocket transport.
 	wsHandler := centrifuge.NewWebsocketHandler(node, centrifuge.WebsocketConfig{
+		ProtocolVersion: centrifuge.ProtocolVersion2,
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin:     checkOrigin,
@@ -407,10 +404,11 @@ type GrafanaLive struct {
 	RouteRegister         routing.RouteRegister
 	CacheService          *localcache.CacheService
 	DataSourceCache       datasources.CacheService
-	SQLStore              *sqlstore.SQLStore
+	SQLStore              db.DB
 	SecretsService        secrets.Service
 	pluginStore           plugins.Store
 	queryDataService      *query.Service
+	orgService            org.Service
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller
@@ -592,14 +590,14 @@ func (g *GrafanaLive) handleOnRPC(client *centrifuge.Client, e centrifuge.RPCEve
 	if err != nil {
 		return centrifuge.RPCReply{}, centrifuge.ErrorBadRequest
 	}
-	resp, err := g.queryDataService.QueryData(client.Context(), user, false, req, true)
+	resp, err := g.queryDataService.QueryData(client.Context(), user, false, req)
 	if err != nil {
 		logger.Error("Error query data", "user", client.UserID(), "client", client.ID(), "method", e.Method, "error", err)
 		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 			return centrifuge.RPCReply{}, &centrifuge.Error{Code: uint32(http.StatusForbidden), Message: http.StatusText(http.StatusForbidden)}
 		}
-		var badQuery *query.ErrBadQuery
-		if errors.As(err, &badQuery) {
+		var gfErr *errutil.Error
+		if errors.As(err, &gfErr) && gfErr.Reason.Status() == errutil.StatusBadRequest {
 			return centrifuge.RPCReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: http.StatusText(http.StatusBadRequest)}
 		}
 		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
@@ -706,10 +704,11 @@ func (g *GrafanaLive) handleOnSubscribe(ctx context.Context, client *centrifuge.
 	logger.Debug("Client subscribed", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 	return centrifuge.SubscribeReply{
 		Options: centrifuge.SubscribeOptions{
-			Presence:  reply.Presence,
-			JoinLeave: reply.JoinLeave,
-			Recover:   reply.Recover,
-			Data:      reply.Data,
+			EmitPresence:   reply.Presence,
+			EmitJoinLeave:  reply.JoinLeave,
+			PushJoinLeave:  reply.JoinLeave,
+			EnableRecovery: reply.Recover,
+			Data:           reply.Data,
 		},
 	}, nil
 }

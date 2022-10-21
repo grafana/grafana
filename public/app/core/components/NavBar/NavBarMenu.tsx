@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { useLingui } from '@lingui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
@@ -16,7 +15,7 @@ import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarToggle } from './NavBarToggle';
 import { NavFeatureHighlight } from './NavFeatureHighlight';
-import menuItemTranslations from './navBarItem-translations';
+import { getNavTitle } from './navBarItem-translations';
 import { isMatchOrChildMatch } from './utils';
 
 const MENU_WIDTH = '350px';
@@ -35,6 +34,7 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
   const ANIMATION_DURATION = theme.transitions.duration.standard;
   const animStyles = getAnimStyles(theme, ANIMATION_DURATION);
   const ref = useRef(null);
+  const backdropRef = useRef(null);
   const { dialogProps } = useDialog({}, ref);
 
   const { overlayProps, underlayProps } = useOverlay(
@@ -50,6 +50,7 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
     <OverlayContainer>
       <FocusScope contain restoreFocus autoFocus>
         <CSSTransition
+          nodeRef={ref}
           onEnter={() => setMenuAnimationInProgress(true)}
           onExited={() => setMenuAnimationInProgress(false)}
           appear={isOpen}
@@ -88,8 +89,14 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
           </div>
         </CSSTransition>
       </FocusScope>
-      <CSSTransition appear={isOpen} in={isOpen} classNames={animStyles.backdrop} timeout={ANIMATION_DURATION}>
-        <div className={styles.backdrop} {...underlayProps} />
+      <CSSTransition
+        nodeRef={backdropRef}
+        appear={isOpen}
+        in={isOpen}
+        classNames={animStyles.backdrop}
+        timeout={ANIMATION_DURATION}
+      >
+        <div className={styles.backdrop} {...underlayProps} ref={backdropRef} />
       </CSSTransition>
     </OverlayContainer>
   );
@@ -228,7 +235,6 @@ export function NavItem({
   activeItem?: NavModelItem;
   onClose: () => void;
 }) {
-  const { i18n } = useLingui();
   const styles = useStyles2(getNavItemStyles);
 
   if (linkHasChildren(link)) {
@@ -261,7 +267,7 @@ export function NavItem({
       </CollapsibleNavItem>
     );
   } else if (link.emptyMessageId) {
-    const emptyMessageTranslated = i18n._(menuItemTranslations[link.emptyMessageId]);
+    const emptyMessageTranslated = getNavTitle(link.emptyMessageId);
     return (
       <CollapsibleNavItem onClose={onClose} link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
         <ul className={styles.children}>

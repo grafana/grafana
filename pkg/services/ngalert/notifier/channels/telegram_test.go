@@ -93,7 +93,7 @@ func TestTelegramNotifier(t *testing.T) {
 			},
 			expMsg: map[string]string{
 				"parse_mode": "html",
-				"text":       strings.Repeat("1", 4096-3) + "...",
+				"text":       strings.Repeat("1", 4096-1) + "…",
 			},
 			expMsgError: nil,
 		}, {
@@ -123,17 +123,16 @@ func TestTelegramNotifier(t *testing.T) {
 				ImageStore:          images,
 				NotificationService: notificationService,
 				DecryptFunc:         decryptFn,
+				Template:            tmpl,
 			}
 
-			cfg, err := NewTelegramConfig(fc.Config, decryptFn)
+			n, err := NewTelegramNotifier(fc)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
-
-			n := NewTelegramNotifier(cfg, images, notificationService, tmpl)
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})

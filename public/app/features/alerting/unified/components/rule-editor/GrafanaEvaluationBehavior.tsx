@@ -1,67 +1,81 @@
 import { css } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import { RegisterOptions, useFormContext } from 'react-hook-form';
 
-import { durationToMilliseconds, GrafanaTheme2, parseDuration } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Field, InlineLabel, Input, InputControl, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
-import {
-  durationValidationPattern,
-  parseDurationToMilliseconds,
-  positiveDurationValidationPattern,
-} from '../../utils/time';
+import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
-import { PreviewRule } from './PreviewRule';
 import { RuleEditorSection } from './RuleEditorSection';
 
 const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
-const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
+export const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
   required: {
     value: true,
     message: 'Required.',
   },
-  pattern: durationValidationPattern,
-  validate: (value) => {
-    const millisFor = parseDurationToMilliseconds(value);
-    const millisEvery = parseDurationToMilliseconds(evaluateEvery);
-
-    // 0 is a special value meaning for equals evaluation interval
-    if (millisFor === 0) {
+  validate: (value: string) => {
+    // parsePrometheusDuration does not allow 0 but does allow 0s
+    if (value === '0') {
       return true;
     }
 
-    return millisFor >= millisEvery ? true : 'For must be greater than or equal to evaluate every.';
+    try {
+      const millisFor = parsePrometheusDuration(value);
+
+      // 0 is a special value meaning for equals evaluation interval
+      if (millisFor === 0) {
+        return true;
+      }
+
+      try {
+        const millisEvery = parsePrometheusDuration(evaluateEvery);
+        return millisFor >= millisEvery
+          ? true
+          : 'For duration must be greater than or equal to the evaluation interval.';
+      } catch (err) {
+        // if we fail to parse "every", assume validation is successful, or the error messages
+        // will overlap in the UI
+        return true;
+      }
+    } catch (error) {
+      return error instanceof Error ? error.message : 'Failed to parse duration';
+    }
   },
 });
 
-const evaluateEveryValidationOptions: RegisterOptions = {
+export const evaluateEveryValidationOptions: RegisterOptions = {
   required: {
     value: true,
     message: 'Required.',
   },
-  pattern: positiveDurationValidationPattern,
   validate: (value: string) => {
-    const duration = parseDuration(value);
-    if (Object.keys(duration).length) {
-      const diff = durationToMilliseconds(duration);
-      if (diff < MIN_TIME_RANGE_STEP_S * 1000) {
+    try {
+      const duration = parsePrometheusDuration(value);
+
+      if (duration < MIN_TIME_RANGE_STEP_S * 1000) {
         return `Cannot be less than ${MIN_TIME_RANGE_STEP_S} seconds.`;
       }
-      if (diff % (MIN_TIME_RANGE_STEP_S * 1000) !== 0) {
+
+      if (duration % (MIN_TIME_RANGE_STEP_S * 1000) !== 0) {
         return `Must be a multiple of ${MIN_TIME_RANGE_STEP_S} seconds.`;
       }
+
+      return true;
+    } catch (error) {
+      return error instanceof Error ? error.message : 'Failed to parse duration';
     }
-    return true;
   },
 };
 
-export const GrafanaEvaluationBehavior: FC = () => {
+export const GrafanaEvaluationBehavior = () => {
   const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
   const {
@@ -161,7 +175,6 @@ export const GrafanaEvaluationBehavior: FC = () => {
           </Field>
         </>
       )}
-      <PreviewRule />
     </RuleEditorSection>
   );
 };

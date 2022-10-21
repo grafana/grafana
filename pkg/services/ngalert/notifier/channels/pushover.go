@@ -106,7 +106,7 @@ func NewPushoverConfig(config *NotificationChannelConfig, decryptFunc GetDecrypt
 		AlertingSound:             config.Settings.Get("sound").MustString(),
 		OKSound:                   config.Settings.Get("okSound").MustString(),
 		Upload:                    config.Settings.Get("uploadImage").MustBool(true),
-		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		Message:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
 	}, nil
 }
 
@@ -156,7 +156,7 @@ func (pn *PushoverNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	if err := pn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		pn.log.Error("failed to send pushover notification", "err", err, "webhook", pn.Name)
+		pn.log.Error("failed to send pushover notification", "error", err, "webhook", pn.Name)
 		return false, err
 	}
 
@@ -286,7 +286,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	}
 
 	if tmplErr != nil {
-		pn.log.Warn("failed to template pushover message", "err", tmplErr.Error())
+		pn.log.Warn("failed to template pushover message", "error", tmplErr.Error())
 	}
 
 	headers := map[string]string{

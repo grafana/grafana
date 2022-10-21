@@ -1,9 +1,8 @@
-import { t } from '@lingui/macro';
-
 import { PanelMenuItem } from '@grafana/data';
-import { AngularComponent, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { AngularComponent, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -63,6 +62,10 @@ export function getPanelMenu(
       inspect: panel.id,
       inspectTab: tab,
     });
+
+    reportInteraction('grafana_panel_menu_inspect', {
+      tab: tab ?? InspectTab.Data,
+    });
   };
 
   const onMore = (event: React.MouseEvent<any>) => {
@@ -98,10 +101,7 @@ export function getPanelMenu(
   const menu: PanelMenuItem[] = [];
 
   if (!panel.isEditing) {
-    const viewTextTranslation = t({
-      id: 'panel.header-menu.view',
-      message: `View`,
-    });
+    const viewTextTranslation = t('panel.header-menu.view', `View`);
     menu.push({
       text: viewTextTranslation,
       iconClassName: 'eye',
@@ -119,10 +119,7 @@ export function getPanelMenu(
     });
   }
 
-  const shareTextTranslation = t({
-    id: 'panel.header-menu.share',
-    message: `Share`,
-  });
+  const shareTextTranslation = t('panel.header-menu.share', `Share`);
 
   menu.push({
     text: shareTextTranslation,
@@ -144,10 +141,7 @@ export function getPanelMenu(
 
   // Only show these inspect actions for data plugins
   if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
-    const dataTextTranslation = t({
-      id: 'panel.header-menu.inspect-data',
-      message: `Data`,
-    });
+    const dataTextTranslation = t('panel.header-menu.inspect-data', `Data`);
 
     inspectMenu.push({
       text: dataTextTranslation,
@@ -162,28 +156,14 @@ export function getPanelMenu(
     }
   }
 
-  const jsonTextTranslation = t({
-    id: 'panel.header-menu.inspect-json',
-    message: `Panel JSON`,
-  });
+  const jsonTextTranslation = t('panel.header-menu.inspect-json', `Panel JSON`);
 
   inspectMenu.push({
     text: jsonTextTranslation,
     onClick: (e: React.MouseEvent<any>) => onInspectPanel(InspectTab.JSON),
   });
 
-  // Only show for editors
-  if (panel.plugin && dashboard.meta.canEdit && !panel.plugin.meta.skipDataQuery) {
-    inspectMenu.push({
-      text: 'Support snapshot',
-      onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.Support),
-    });
-  }
-
-  const inspectTextTranslation = t({
-    id: 'panel.header-menu.inspect',
-    message: `Inspect`,
-  });
+  const inspectTextTranslation = t('panel.header-menu.inspect', `Inspect`);
 
   menu.push({
     type: 'submenu',
@@ -195,8 +175,9 @@ export function getPanelMenu(
   });
 
   const subMenu: PanelMenuItem[] = [];
+  const canEdit = dashboard.canEditPanel(panel);
 
-  if (dashboard.canEditPanel(panel) && !(panel.isViewing || panel.isEditing)) {
+  if (canEdit && !(panel.isViewing || panel.isEditing)) {
     subMenu.push({
       text: 'Duplicate',
       onClick: onDuplicatePanel,
@@ -252,11 +233,20 @@ export function getPanelMenu(
     });
   }
 
-  if (!panel.isEditing && subMenu.length) {
-    const moreTextTranslation = t({
-      id: 'panel.header-menu.more',
-      message: `More...`,
+  // When editing hide most actions
+  if (panel.isEditing) {
+    subMenu.length = 0;
+  }
+
+  if (canEdit && panel.plugin && !panel.plugin.meta.skipDataQuery) {
+    subMenu.push({
+      text: 'Get help',
+      onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.Help),
     });
+  }
+
+  if (subMenu.length) {
+    const moreTextTranslation = t('panel.header-menu.more', `More...`);
     menu.push({
       type: 'submenu',
       text: moreTextTranslation,

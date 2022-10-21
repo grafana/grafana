@@ -55,7 +55,7 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Respon
 		}
 
 		msg := "failed to fetch admin configuration from the database"
-		srv.log.Error(msg, "err", err)
+		srv.log.Error(msg, "error", err)
 		return ErrResp(http.StatusInternalServerError, err, msg)
 	}
 
@@ -94,14 +94,14 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels
 
 	if err := cfg.Validate(); err != nil {
 		msg := "failed to validate admin configuration"
-		srv.log.Error(msg, "err", err)
+		srv.log.Error(msg, "error", err)
 		return ErrResp(http.StatusBadRequest, err, msg)
 	}
 
 	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: cfg}
 	if err := srv.store.UpdateAdminConfiguration(cmd); err != nil {
 		msg := "failed to save the admin configuration to the database"
-		srv.log.Error(msg, "err", err)
+		srv.log.Error(msg, "error", err)
 		return ErrResp(http.StatusBadRequest, err, msg)
 	}
 
@@ -115,7 +115,7 @@ func (srv ConfigSrv) RouteDeleteNGalertConfig(c *models.ReqContext) response.Res
 
 	err := srv.store.DeleteAdminConfiguration(c.OrgID)
 	if err != nil {
-		srv.log.Error("unable to delete configuration", "err", err)
+		srv.log.Error("unable to delete configuration", "error", err)
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
@@ -142,4 +142,23 @@ func (srv ConfigSrv) externalAlertmanagers(ctx context.Context, orgID int64) ([]
 		}
 	}
 	return alertmanagers, nil
+}
+
+func (srv ConfigSrv) RouteGetAlertingStatus(c *models.ReqContext) response.Response {
+	sendsAlertsTo := ngmodels.InternalAlertmanager
+
+	cfg, err := srv.store.GetAdminConfiguration(c.OrgID)
+	if err != nil && !errors.Is(err, store.ErrNoAdminConfiguration) {
+		msg := "failed to fetch configuration from the database"
+		srv.log.Error(msg, "error", err)
+		return ErrResp(http.StatusInternalServerError, err, msg)
+	}
+	if cfg != nil {
+		sendsAlertsTo = cfg.SendAlertsTo
+	}
+
+	resp := apimodels.AlertingStatus{
+		AlertmanagersChoice: apimodels.AlertmanagersChoice(sendsAlertsTo.String()),
+	}
+	return response.JSON(http.StatusOK, resp)
 }

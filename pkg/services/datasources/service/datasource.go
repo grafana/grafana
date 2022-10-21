@@ -14,6 +14,7 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -21,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -527,8 +527,9 @@ func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues ma
 		return headers
 	}
 
-	index := 1
+	index := 0
 	for {
+		index++
 		headerNameSuffix := fmt.Sprintf("httpHeaderName%d", index)
 		headerValueSuffix := fmt.Sprintf("httpHeaderValue%d", index)
 
@@ -538,10 +539,16 @@ func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues ma
 			break
 		}
 
+		// skip a header with name that corresponds to auth proxy header's name
+		// to make sure that data source proxy isn't used to circumvent auth proxy.
+		// For more context take a look at CVE-2022-35957
+		if s.cfg.AuthProxyEnabled && http.CanonicalHeaderKey(key) == http.CanonicalHeaderKey(s.cfg.AuthProxyHeaderName) {
+			continue
+		}
+
 		if val, ok := decryptedValues[headerValueSuffix]; ok {
 			headers[key] = val
 		}
-		index++
 	}
 
 	return headers

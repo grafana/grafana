@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
@@ -168,30 +169,32 @@ func TestIntegrationDeleteExpiredImages(t *testing.T) {
 	image2 := models.Image{URL: "https://example.com/example.png"}
 	require.NoError(t, dbstore.SaveImage(ctx, &image2))
 
-	s := dbstore.SQLStore.NewSession(ctx)
-	t.Cleanup(s.Close)
+	err := dbstore.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		// should return both images
+		var result1, result2 models.Image
+		ok, err := sess.Where("token = ?", image1.Token).Get(&result1)
+		require.NoError(t, err)
+		assert.True(t, ok)
+		ok, err = sess.Where("token = ?", image2.Token).Get(&result2)
+		require.NoError(t, err)
+		assert.True(t, ok)
 
-	// should return both images
-	var result1, result2 models.Image
-	ok, err := s.Where("token = ?", image1.Token).Get(&result1)
-	require.NoError(t, err)
-	assert.True(t, ok)
-	ok, err = s.Where("token = ?", image2.Token).Get(&result2)
-	require.NoError(t, err)
-	assert.True(t, ok)
+		// should delete expired image
+		image1.ExpiresAt = time.Now().Add(-time.Second)
+		require.NoError(t, dbstore.SaveImage(ctx, &image1))
+		n, err := dbstore.DeleteExpiredImages(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), n)
 
-	// should delete expired image
-	image1.ExpiresAt = time.Now().Add(-time.Second)
-	require.NoError(t, dbstore.SaveImage(ctx, &image1))
-	n, err := dbstore.DeleteExpiredImages(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, int64(1), n)
+		// should return just the second image
+		ok, err = sess.Where("token = ?", image1.Token).Get(&result1)
+		require.NoError(t, err)
+		assert.False(t, ok)
+		ok, err = sess.Where("token = ?", image2.Token).Get(&result2)
+		require.NoError(t, err)
+		assert.True(t, ok)
 
-	// should return just the second image
-	ok, err = s.Where("token = ?", image1.Token).Get(&result1)
+		return nil
+	})
 	require.NoError(t, err)
-	assert.False(t, ok)
-	ok, err = s.Where("token = ?", image2.Token).Get(&result2)
-	require.NoError(t, err)
-	assert.True(t, ok)
 }

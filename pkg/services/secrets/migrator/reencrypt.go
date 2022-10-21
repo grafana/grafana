@@ -6,19 +6,21 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func (s simpleSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore *sqlstore.SQLStore) bool {
+func (s simpleSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore db.DB) bool {
 	var rows []struct {
 		Id     int
 		Secret []byte
 	}
 
-	if err := sqlStore.NewSession(ctx).Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
+	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows)
+	}); err != nil {
 		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
 		return false
 	}
@@ -30,7 +32,7 @@ func (s simpleSecret) reencrypt(ctx context.Context, secretsSrv *manager.Secrets
 			continue
 		}
 
-		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 			decrypted, err := secretsSrv.Decrypt(ctx, row.Secret)
 			if err != nil {
 				logger.Warn("Could not decrypt secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
@@ -66,13 +68,15 @@ func (s simpleSecret) reencrypt(ctx context.Context, secretsSrv *manager.Secrets
 	return !anyFailure
 }
 
-func (s b64Secret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore *sqlstore.SQLStore) bool {
+func (s b64Secret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore db.DB) bool {
 	var rows []struct {
 		Id     int
 		Secret string
 	}
 
-	if err := sqlStore.NewSession(ctx).Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
+	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows)
+	}); err != nil {
 		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
 		return false
 	}
@@ -84,7 +88,7 @@ func (s b64Secret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSer
 			continue
 		}
 
-		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 			decoded, err := s.encoding.DecodeString(row.Secret)
 			if err != nil {
 				logger.Warn("Could not decode base64-encoded secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
@@ -134,13 +138,15 @@ func (s b64Secret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSer
 	return !anyFailure
 }
 
-func (s jsonSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore *sqlstore.SQLStore) bool {
+func (s jsonSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore db.DB) bool {
 	var rows []struct {
 		Id             int
 		SecureJsonData map[string][]byte
 	}
 
-	if err := sqlStore.NewSession(ctx).Table(s.tableName).Cols("id", "secure_json_data").Find(&rows); err != nil {
+	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(s.tableName).Cols("id", "secure_json_data").Find(&rows)
+	}); err != nil {
 		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
 		return false
 	}
@@ -152,7 +158,7 @@ func (s jsonSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSe
 			continue
 		}
 
-		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 			decrypted, err := secretsSrv.DecryptJsonData(ctx, row.SecureJsonData)
 			if err != nil {
 				logger.Warn("Could not decrypt secrets while re-encrypting them", "table", s.tableName, "id", row.Id, "error", err)
@@ -192,14 +198,16 @@ func (s jsonSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSe
 	return !anyFailure
 }
 
-func (s alertingSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore *sqlstore.SQLStore) bool {
+func (s alertingSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore db.DB) bool {
 	var results []struct {
 		Id                        int
 		AlertmanagerConfiguration string
 	}
 
 	selectSQL := "SELECT id, alertmanager_configuration FROM alert_configuration"
-	if err := sqlStore.NewSession(ctx).SQL(selectSQL).Find(&results); err != nil {
+	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL(selectSQL).Find(&results)
+	}); err != nil {
 		logger.Warn("Could not find any alert_configuration secret to re-encrypt")
 		return false
 	}
@@ -209,7 +217,7 @@ func (s alertingSecret) reencrypt(ctx context.Context, secretsSrv *manager.Secre
 	for _, result := range results {
 		result := result
 
-		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 			postableUserConfig, err := notifier.Load([]byte(result.AlertmanagerConfiguration))
 			if err != nil {
 				logger.Warn("Could not load alert_configuration while re-encrypting it", "id", result.Id, "error", err)

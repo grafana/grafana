@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useLingui } from '@lingui/react';
 import { useMenu } from '@react-aria/menu';
 import { mergeProps } from '@react-aria/utils';
 import { useTreeState } from '@react-stately/tree';
@@ -11,7 +10,7 @@ import { CustomScrollbar, useTheme2 } from '@grafana/ui';
 
 import { NavBarItemMenuItem } from './NavBarItemMenuItem';
 import { useNavBarItemMenuContext } from './context';
-import menuItemTranslations from './navBarItem-translations';
+import { getNavTitle } from './navBarItem-translations';
 import { getNavModelItemKey } from './utils';
 
 export interface NavBarItemMenuProps extends SpectrumMenuProps<NavModelItem> {
@@ -22,7 +21,6 @@ export interface NavBarItemMenuProps extends SpectrumMenuProps<NavModelItem> {
 
 export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null {
   const { reverseMenuDirection, adjustHeightForBorder, disabledKeys, onNavigate, ...rest } = props;
-  const { i18n } = useLingui();
   const contextProps = useNavBarItemMenuContext();
   const completeProps = {
     ...mergeProps(contextProps, rest),
@@ -61,7 +59,7 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
   ));
 
   if (itemComponents.length === 0 && section.value.emptyMessageId) {
-    const emptyMessageTranslated = i18n._(menuItemTranslations[section.value.emptyMessageId]);
+    const emptyMessageTranslated = getNavTitle(section.value.emptyMessageId);
     itemComponents.push(
       <div key="empty-message" className={styles.emptyMessage}>
         {emptyMessageTranslated}
@@ -85,7 +83,7 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
   const menu = [headerComponent, contentComponent];
 
   return (
-    <ul className={styles.menu} ref={ref} {...mergeProps(menuProps, contextMenuProps)} tabIndex={menuHasFocus ? 0 : -1}>
+    <ul className={styles.menu} ref={ref} {...mergeProps(menuProps, contextMenuProps)} tabIndex={-1}>
       {reverseMenuDirection ? menu.reverse() : menu}
     </ul>
   );

@@ -86,10 +86,10 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 		"%s\n%s\n\n%s",
 		tmpl(DefaultMessageTitleEmbed),
 		ruleURL,
-		tmpl(`{{ template "default.message" . }}`),
+		tmpl(DefaultMessageEmbed),
 	)
 	if tmplErr != nil {
-		ln.log.Warn("failed to template Line message", "err", tmplErr.Error())
+		ln.log.Warn("failed to template Line message", "error", tmplErr.Error())
 	}
 
 	form := url.Values{}
@@ -106,7 +106,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 	}
 
 	if err := ln.ns.SendWebhookSync(ctx, cmd); err != nil {
-		ln.log.Error("failed to send notification to LINE", "err", err, "body", body)
+		ln.log.Error("failed to send notification to LINE", "error", err, "body", body)
 		return false, err
 	}
 

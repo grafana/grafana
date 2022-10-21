@@ -1,7 +1,7 @@
 import { Map as OpenLayersMap } from 'ol';
 import { FeatureLike } from 'ol/Feature';
+import { Units } from 'ol/control/ScaleLine';
 import BaseLayer from 'ol/layer/Base';
-import Units from 'ol/proj/Units';
 import { Subject } from 'rxjs';
 
 import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
@@ -48,6 +48,10 @@ export interface MapViewConfig {
   zoom?: number;
   minZoom?: number;
   maxZoom?: number;
+  padding?: number;
+  allLayers?: boolean;
+  lastOnly?: boolean;
+  layer?: string;
   shared?: boolean;
 }
 
@@ -56,6 +60,7 @@ export const defaultView: MapViewConfig = {
   lat: 0,
   lon: 0,
   zoom: 1,
+  allLayers: true,
 };
 
 /** Support hide from legend/tooltip */

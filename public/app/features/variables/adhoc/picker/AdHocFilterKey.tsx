@@ -52,9 +52,9 @@ export const REMOVE_FILTER_KEY = '-- remove filter --';
 const REMOVE_VALUE = { label: REMOVE_FILTER_KEY, value: REMOVE_FILTER_KEY };
 
 const plusSegment: ReactElement = (
-  <a className="gf-form-label query-part" aria-label="Add Filter">
+  <span className="gf-form-label query-part" aria-label="Add Filter">
     <Icon name="plus" />
-  </a>
+  </span>
 );
 
 const fetchFilterKeys = async (

@@ -10,6 +10,11 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
+			Name:        "alertingBigTransactions",
+			Description: "Use big transactions for alerting database writes",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
@@ -101,6 +106,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "lokiMonacoEditor",
+			Description: "Access to Monaco query editor for Loki",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "swaggerUi",
 			Description: "Serves swagger UI",
 			State:       FeatureStateBeta,
@@ -173,6 +183,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "correlations",
+			Description: "Correlations page",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "cloudWatchDynamicLabels",
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,
@@ -233,12 +248,6 @@ var (
 			State:       FeatureStateStable,
 		},
 		{
-			Name:         "cloudMonitoringExperimentalUI",
-			Description:  "Use grafana-experimental UI in Cloud Monitoring",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
 			Name:            "disableSecretsCompatibility",
 			Description:     "Disable duplicated secret storage in legacy tables",
 			State:           FeatureStateAlpha,
@@ -250,7 +259,7 @@ var (
 		},
 		{
 			Name:        "dataConnectionsConsole",
-			Description: "Enables a new top-level page called Data Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.",
+			Description: "Enables a new top-level page called Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -264,13 +273,25 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "customBranding",
-			Description: "Replaces whitelabeling with the new custom branding feature",
-			State:       FeatureStateAlpha,
+			Name:            "grpcServer",
+			Description:     "Run GRPC server",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:            "objectStore",
+			Description:     "SQL based object store",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
 		},
 		{
 			Name:        "traceqlEditor",
 			Description: "Show the TraceQL editor in the explore page",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "flameGraph",
+			Description: "Show the flame graph",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -288,6 +309,37 @@ var (
 		{
 			Name:        "increaseInMemDatabaseQueryCache",
 			Description: "Enable more in memory caching for database queries",
+		},
+		{
+			Name:        "interFont",
+			Description: "Switch to inter font",
+		},
+		{
+			Name:         "newPanelChromeUI",
+			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:            "queryLibrary",
+			Description:     "Reusable query library",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:        "showDashboardValidationWarnings",
+			Description: "Show warnings when Dashboards do not validate against the schema",
+		},
+		{
+			Name:        "mysqlAnsiQuotes",
+			Description: "Use double quote to escape keyword in Mysql query",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:            "accessControlOnCall",
+			Description:     "Access control primitives for OnCall",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
 		},
 	}
 )
