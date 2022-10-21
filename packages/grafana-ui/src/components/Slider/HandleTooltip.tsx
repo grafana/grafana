@@ -2,6 +2,10 @@ import { css } from '@emotion/css';
 import Tooltip from 'rc-tooltip';
 import React, { useEffect, useRef } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes/ThemeContext';
+
 interface RCTooltipRef {
   // rc-tooltip's ref is essentially untyped, so we be cautious by saying the function is
   // potentially undefined which, given rc's track record, seems likely :)
@@ -19,7 +23,7 @@ const HandleTooltip = (props: {
 
   const tooltipRef = useRef<RCTooltipRef>();
   const rafRef = useRef<number | null>(null);
-  const styles = tooltipStyles();
+  const styles = useStyles2(tooltipStyles);
 
   function cancelKeepAlign() {
     if (rafRef.current !== null) {
@@ -58,15 +62,13 @@ const HandleTooltip = (props: {
   );
 };
 
-const tooltipStyles = () => {
+const tooltipStyles = (theme: GrafanaTheme2) => {
   return {
     tooltip: css({
       position: 'absolute',
-      zIndex: 1070,
       display: 'block',
       visibility: 'visible',
-      fontSize: 12,
-      lineHeight: 1.5,
+      fontSize: theme.typography.bodySmall.fontSize,
       opacity: 0.9,
       padding: 3,
     }),
