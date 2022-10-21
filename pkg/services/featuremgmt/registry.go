@@ -336,8 +336,10 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "accessControlOnCall",
-			Description: "Access control primitives for OnCall",
+			Name:            "accessControlOnCall",
+			Description:     "Access control primitives for OnCall",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
 		},
 		{
 			Name:            "jwtTokenGeneration",
