@@ -11,7 +11,7 @@ import { loadScript } from '../../utils';
 
 interface ApplicationInsights {
   trackPageView: () => void;
-  trackEvent: (event: { name: string; properties?: Record<string, any> }) => void;
+  trackEvent: (event: { name: string; properties?: Record<string, unknown> }) => void;
 }
 
 declare global {

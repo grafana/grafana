@@ -55,9 +55,9 @@ export const LayerName = ({ name, onChange, verifyLayerNameUniqueness }: LayerNa
     onEndEditName(event.currentTarget.value.trim());
   };
 
-  const onKeyDown = (event: React.KeyboardEvent) => {
+  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      onEndEditName((event.target as any).value);
+      onEndEditName(event.currentTarget.value);
     }
   };
 

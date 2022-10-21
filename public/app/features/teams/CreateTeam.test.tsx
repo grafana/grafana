@@ -29,7 +29,7 @@ const mockPost = jest.fn(() => {
 
 setBackendSrv({
   post: mockPost,
-} as any as BackendSrv);
+} as unknown as BackendSrv);
 
 const setup = () => {
   return render(<CreateTeam />);

@@ -70,7 +70,7 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
       </div>
 
       <SearchView
-        showManage={isEditor || hasEditPermissionInFolders || canSave}
+        showManage={Boolean(isEditor || hasEditPermissionInFolders || canSave)}
         folderDTO={folder}
         hidePseudoFolders={true}
         includePanels={includePanels!}

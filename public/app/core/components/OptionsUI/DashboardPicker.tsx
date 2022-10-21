@@ -8,7 +8,7 @@ export interface DashboardPickerOptions {
   isClearable?: boolean;
 }
 
-type Props = StandardEditorProps<string, DashboardPickerOptions, any>;
+type Props = StandardEditorProps<string, DashboardPickerOptions>;
 
 /** This will return the item UID */
 export const DashboardPicker = ({ value, onChange, item }: Props) => {

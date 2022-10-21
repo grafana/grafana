@@ -124,7 +124,7 @@ describe('runQueries', () => {
 
     const state = getState().explore[ExploreId.left];
     expect(state.queryResponse.request?.requestId).toBe('explore_left');
-    const datasource = state.datasourceInstance as any as DataSourceWithLogsVolumeSupport<DataQuery>;
+    const datasource = state.datasourceInstance as unknown as DataSourceWithLogsVolumeSupport<DataQuery>;
     expect(datasource.getLogsVolumeDataProvider).toBeCalledWith(
       expect.objectContaining({
         requestId: 'explore_left_log_volume',

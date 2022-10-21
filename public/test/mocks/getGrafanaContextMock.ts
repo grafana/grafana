@@ -19,7 +19,7 @@ export function getGrafanaContextMock(overrides: Partial<GrafanaContextType> = {
       clearAndInitGlobalBindings: jest.fn(),
       setupDashboardBindings: jest.fn(),
       setupTimeRangeBindings: jest.fn(),
-    } as any as KeybindingSrv,
+    } as unknown as KeybindingSrv,
     ...overrides,
   };
 }

@@ -60,9 +60,9 @@ export class ContextSrv {
   pinned: any;
   version: any;
   user: User;
-  isSignedIn: any;
-  isGrafanaAdmin: any;
-  isEditor: any;
+  isSignedIn: boolean;
+  isGrafanaAdmin: boolean;
+  isEditor: boolean;
   sidemenuSmallBreakpoint = false;
   hasEditPermissionInFolders: boolean;
   minRefreshInterval: string;

@@ -235,7 +235,7 @@ describe('hasNonEmptyQuery', () => {
 describe('hasRefId', () => {
   describe('when called with a null value', () => {
     it('then it should return undefined', () => {
-      const input: any = null;
+      const input = null;
       const result = getValueWithRefId(input);
 
       expect(result).toBeUndefined();
@@ -328,7 +328,7 @@ describe('getTimeRange', () => {
 describe('getRefIds', () => {
   describe('when called with a null value', () => {
     it('then it should return empty array', () => {
-      const input: any = null;
+      const input = null;
       const result = getRefIds(input);
 
       expect(result).toEqual([]);
@@ -364,7 +364,7 @@ describe('getRefIds', () => {
 
   describe('when called with an object that has refIds somewhere in the object tree', () => {
     it('then it should return return an array with unique refIds', () => {
-      const input: any = {
+      const input = {
         data: [
           123,
           null,

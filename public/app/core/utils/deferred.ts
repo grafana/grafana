@@ -1,4 +1,4 @@
-export class Deferred<T = any> {
+export class Deferred<T = unknown> {
   resolve?: (reason: T | PromiseLike<T>) => void;
   reject?: (reason?: any) => void;
   promise: Promise<T>;
