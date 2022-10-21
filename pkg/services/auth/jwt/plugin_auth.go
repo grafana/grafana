@@ -54,6 +54,7 @@ func newPluginAuthService(cfg *setting.Cfg, features *featuremgmt.FeatureManager
 type PluginAuthService interface {
 	Verify(context.Context, string) (models.JWTClaims, error)
 	Generate(string, string) (string, error)
+	IsEnabled() bool
 }
 
 type pluginAuthService struct {
@@ -70,8 +71,12 @@ type pluginAuthService struct {
 	verificationService *VerificationService
 }
 
+func (s *pluginAuthService) IsEnabled() bool {
+	return s.Features.IsEnabled(featuremgmt.FlagJwtTokenGeneration)
+}
+
 func (s *pluginAuthService) Verify(ctx context.Context, token string) (models.JWTClaims, error) {
-	if !s.Features.IsEnabled(featuremgmt.FlagJwtTokenGeneration) {
+	if !s.IsEnabled() {
 		return make(models.JWTClaims), errors.New("JWT token generation is disabled")
 	}
 
@@ -86,7 +91,7 @@ func (s *pluginAuthService) Verify(ctx context.Context, token string) (models.JW
 }
 
 func (s *pluginAuthService) Generate(subject, audience string) (string, error) {
-	if !s.Features.IsEnabled(featuremgmt.FlagJwtTokenGeneration) {
+	if !s.IsEnabled() {
 		return "", errors.New("JWT token generation is disabled")
 	}
 

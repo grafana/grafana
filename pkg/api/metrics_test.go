@@ -338,3 +338,7 @@ func (f *fakeJWTAuth) Generate(string, string) (string, error) {
 func (f *fakeJWTAuth) Verify(context.Context, string) (models.JWTClaims, error) {
 	return models.JWTClaims{}, nil
 }
+
+func (f *fakeJWTAuth) IsEnabled() bool {
+	return true
+}

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"google.golang.org/grpc/metadata"
 
+	xctx "github.com/grafana/grafana/pkg/infra/x/context"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
@@ -184,7 +185,12 @@ func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin,
 }
 
 func (s *Service) attachJWT(ctx context.Context, pluginCtx backend.PluginContext) context.Context {
-	if pluginCtx.User == nil {
+	if !s.jwtAuthService.IsEnabled() {
+		return ctx
+	}
+
+	user := xctx.UserFromContext(ctx)
+	if user == nil {
 		return ctx
 	}
 

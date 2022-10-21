@@ -120,6 +120,10 @@ type fakeJWTAuth struct {
 	jwt.PluginAuthService
 }
 
+func (f *fakeJWTAuth) IsEnabled() bool {
+	return true
+}
+
 func (f *fakeJWTAuth) Generate(string, string) (string, error) {
 	return "", nil
 }
