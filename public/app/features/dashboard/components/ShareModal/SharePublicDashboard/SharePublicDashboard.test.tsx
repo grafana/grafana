@@ -23,6 +23,7 @@ const server = setupServer(
       ctx.status(200),
       ctx.json({
         isEnabled: false,
+        annotationsEnabled: false,
         uid: undefined,
         dashboardUid: undefined,
         accessToken: 'an-access-token',
@@ -170,6 +171,7 @@ describe('SharePublic', () => {
     expect(screen.getByTestId(selectors.LimitedDSCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.CostIncreaseCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeDisabled();
+    expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeDisabled();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
   });
   // test checking if current version of dashboard in state is persisted to db
@@ -188,6 +190,7 @@ describe('SharePublic - New config setup', () => {
     expect(screen.getByTestId(selectors.LimitedDSCheckbox)).toBeEnabled();
     expect(screen.getByTestId(selectors.CostIncreaseCheckbox)).toBeEnabled();
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeEnabled();
+    expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeEnabled();
 
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
   });
@@ -222,6 +225,7 @@ describe('SharePublic - Already persisted', () => {
           ctx.status(200),
           ctx.json({
             isEnabled: true,
+            annotationsEnabled: true,
             uid: 'a-uid',
             dashboardUid: req.params.uId,
             accessToken: 'an-access-token',
@@ -236,6 +240,13 @@ describe('SharePublic - Already persisted', () => {
     await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
 
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeEnabled();
+  });
+  it('when modal is opened, then annotations toggle is enabled and checked when its enabled in the db', async () => {
+    await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
+    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+
+    expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeEnabled();
+    expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeChecked();
   });
   it('when fetch is done, then loader spinner is gone, inputs are disabled and save button is enabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
@@ -253,13 +264,14 @@ describe('SharePublic - Already persisted', () => {
     await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
     expect(screen.getByTestId(selectors.CopyUrlInput)).toBeInTheDocument();
   });
-  it('when pubdash is disabled in the db, then link url is not available', async () => {
+  it('when pubdash is disabled in the db, then link url is not available and annotations toggle is disabled', async () => {
     server.use(
       rest.get('/api/dashboards/uid/:uId/public-config', (req, res, ctx) => {
         return res(
           ctx.status(200),
           ctx.json({
             isEnabled: false,
+            annotationsEnabled: false,
             uid: 'a-uid',
             dashboardUid: req.params.uId,
             accessToken: 'an-access-token',
@@ -272,6 +284,7 @@ describe('SharePublic - Already persisted', () => {
     await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
 
     expect(screen.queryByTestId(selectors.CopyUrlInput)).not.toBeInTheDocument();
+    expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).not.toBeChecked();
   });
   it('when pubdash is disabled by the user, then link url is not available', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });

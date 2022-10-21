@@ -58,7 +58,8 @@ publicDashboards = true
 - Template variables are currently not supported, but are planned to be in the future.
 - The time range is permanently set to the default time range on the dashboard. If you update the default time range for a dashboard, it will be reflected in the public dashboard.
 - Exemplars will be omitted from the panel.
-- Annotations will not be displayed in public dashboards.
+- Only annotations that query the `-- Grafana --` datasource are supported.
+- Organization annotations are not supported.
 - Grafana Live and real-time event streams are not supported.
 - Library panels are currently not supported, but are planned to be in the future.
 - Datasources using Reverse Proxy functionality are not supported.

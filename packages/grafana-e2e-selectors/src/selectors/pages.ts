@@ -186,6 +186,7 @@ export const Pages = {
       LimitedDSCheckbox: 'data-testid public dashboard limited datasources checkbox',
       CostIncreaseCheckbox: 'data-testid public dashboard cost may increase checkbox',
       EnableSwitch: 'data-testid public dashboard on off switch',
+      EnableAnnotationsSwitch: 'data-testid public dashboard on off switch for annotations',
       SaveConfigButton: 'data-testid public dashboard save config button',
       CopyUrlInput: 'data-testid public dashboard copy url input',
       CopyUrlButton: 'data-testid public dashboard copy url button',
