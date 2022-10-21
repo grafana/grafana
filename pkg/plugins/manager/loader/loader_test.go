@@ -298,7 +298,7 @@ func TestLoader_Load(t *testing.T) {
 			},
 		},
 		{
-			name:        "Load an unsigned plugin with modified signature (production)",
+			name:        "Load a plugin with v1 manifest should return signatureInvalid",
 			class:       plugins.External,
 			cfg:         &config.Cfg{},
 			pluginPaths: []string{"../testdata/lacking-files"},
@@ -306,12 +306,12 @@ func TestLoader_Load(t *testing.T) {
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
 					PluginID:  "test-datasource",
-					ErrorCode: "signatureModified",
+					ErrorCode: "signatureInvalid",
 				},
 			},
 		},
 		{
-			name:  "Load an unsigned plugin with modified signature using PluginsAllowUnsigned config (production) still includes a signing error",
+			name:  "Load a plugin with v1 manifest using PluginsAllowUnsigned config (production) should return signatureInvali",
 			class: plugins.External,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
@@ -321,7 +321,7 @@ func TestLoader_Load(t *testing.T) {
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
 					PluginID:  "test-datasource",
-					ErrorCode: "signatureModified",
+					ErrorCode: "signatureInvalid",
 				},
 			},
 		},

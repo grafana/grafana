@@ -51,7 +51,6 @@ import {
   createTableFrameFromSearch,
   createTableFrameFromTraceQlQuery,
 } from './resultTransformer';
-import { mockedSearchResponse } from './traceql/mockedSearchResponse';
 import { SearchQueryParams, TempoQuery, TempoJsonData } from './types';
 
 export const DEFAULT_LIMIT = 20;
@@ -174,9 +173,21 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         });
 
         subQueries.push(
-          of({
-            data: [createTableFrameFromTraceQlQuery(mockedSearchResponse().traces, this.instanceSettings)],
-          })
+          this._request('/api/search', {
+            q: targets.traceql[0].query,
+            limit: options.targets[0].limit,
+            start: 0, // Currently the API doesn't return traces when using the 'From' time selected in Explore
+            end: options.range.to.unix(),
+          }).pipe(
+            map((response) => {
+              return {
+                data: [createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings)],
+              };
+            }),
+            catchError((error) => {
+              return of({ error: { message: error.data.message }, data: [] });
+            })
+          )
         );
       } catch (error) {
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
