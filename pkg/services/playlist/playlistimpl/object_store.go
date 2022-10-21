@@ -8,7 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	objectstore "github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/object"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // This is a playlist implementation that will:
@@ -18,32 +20,53 @@ import (
 // This givs us a safe test bed to work with the store but still roll back without any lost work
 type objectStoreImpl struct {
 	sess   *session.SessionDB
-	backup store // raw SQL store
+	backup *Service
 	server object.ObjectStoreServer
 }
 
 var _ playlist.Service = &objectStoreImpl{}
 
 func (s *objectStoreImpl) sync() {
-	rows, err := s.sess.Query(context.Background(), "SELECT orgId,uid FROM playlist ORDER BY orgId asc")
+	rows, err := s.sess.Query(context.Background(), "SELECT org_id,uid FROM playlist ORDER BY org_id asc")
 	if err != nil {
 		fmt.Printf("error loading playlists")
 		return
 	}
-	orgId := int64(0)
+
+	// Change the org_id with each row
+	rowUser := &user.SignedInUser{
+		Login:  "?",
+		OrgID:  0, // gets filled in from each row
+		UserID: 0,
+	}
+	ctx := objectstore.ContextWithUser(context.Background(), rowUser)
 	uid := ""
 	for rows.Next() {
-		err = rows.Scan(&orgId, &uid)
+		err = rows.Scan(&rowUser.OrgID, &uid)
 		if err != nil {
-			fmt.Printf("error loading playlists")
+			fmt.Printf("error loading playlists: %v", err)
 			return
 		}
-		fmt.Printf("GOT: %d/%s\n", orgId, uid)
+
+		dto, err := s.backup.Get(ctx, &playlist.GetPlaylistByUidQuery{
+			OrgId: rowUser.OrgID,
+			UID:   uid,
+		})
+		if err != nil {
+			fmt.Printf("error loading playlist: %v", err)
+			return
+		}
+		body, _ := json.Marshal(dto)
+		_, _ = s.server.Write(ctx, &object.WriteObjectRequest{
+			UID:  uid,
+			Kind: models.StandardKindPlaylist,
+			Body: body,
+		})
 	}
 }
 
 func (s *objectStoreImpl) Create(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
-	rsp, err := s.backup.Insert(ctx, cmd)
+	rsp, err := s.backup.store.Insert(ctx, cmd)
 	if err == nil && rsp != nil {
 		body, err := json.Marshal(cmd)
 		if err != nil {
@@ -62,9 +85,9 @@ func (s *objectStoreImpl) Create(ctx context.Context, cmd *playlist.CreatePlayli
 }
 
 func (s *objectStoreImpl) Update(ctx context.Context, cmd *playlist.UpdatePlaylistCommand) (*playlist.PlaylistDTO, error) {
-	rsp, err := s.backup.Update(ctx, cmd)
+	rsp, err := s.backup.store.Update(ctx, cmd)
 	if err == nil {
-		body, err := json.Marshal(rsp)
+		body, err := json.Marshal(cmd)
 		if err != nil {
 			return rsp, fmt.Errorf("unable to write playlist to store")
 		}
@@ -81,7 +104,7 @@ func (s *objectStoreImpl) Update(ctx context.Context, cmd *playlist.UpdatePlayli
 }
 
 func (s *objectStoreImpl) Delete(ctx context.Context, cmd *playlist.DeletePlaylistCommand) error {
-	err := s.backup.Delete(ctx, cmd)
+	err := s.backup.store.Delete(ctx, cmd)
 	if err == nil {
 		_, err = s.server.Delete(ctx, &object.DeleteObjectRequest{
 			UID:  cmd.UID,

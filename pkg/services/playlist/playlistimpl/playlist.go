@@ -28,11 +28,12 @@ func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver obje
 			db: db,
 		}
 	}
+	svc := &Service{store: sqlstore}
 
 	// This is currently a developement only feature toggle
 	if toggles.IsEnabled(featuremgmt.FlagObjectStore) {
 		impl := &objectStoreImpl{
-			backup: sqlstore,
+			backup: svc,
 			server: objserver,
 			sess:   db.GetSqlxSession(),
 		}
@@ -40,7 +41,7 @@ func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver obje
 		return impl
 	}
 
-	return &Service{store: sqlstore}
+	return svc
 }
 
 func (s *Service) Create(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
