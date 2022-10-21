@@ -408,6 +408,8 @@ func TestGetQueryDataResponse(t *testing.T) {
 }
 
 func TestGetAnnotations(t *testing.T) {
+	color := "red"
+	name := "annoName"
 	t.Run("will build anonymous user with correct permissions to get annotations", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		config := setting.NewCfg()
@@ -436,8 +438,6 @@ func TestGetAnnotations(t *testing.T) {
 
 	t.Run("Test events from tag queries overwrite built-in annotation queries and duplicate events are not returned", func(t *testing.T) {
 		dash := grafanamodels.NewDashboard("test")
-		color := "red"
-		name := "annoName"
 		grafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
@@ -508,8 +508,6 @@ func TestGetAnnotations(t *testing.T) {
 
 	t.Run("Test panelId set to zero when annotation event is for a tags query", func(t *testing.T) {
 		dash := grafanamodels.NewDashboard("test")
-		color := "red"
-		name := "annoName"
 		grafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
@@ -567,8 +565,6 @@ func TestGetAnnotations(t *testing.T) {
 
 	t.Run("Test can get grafana annotations and will skip annotation queries and disabled annotations", func(t *testing.T) {
 		dash := grafanamodels.NewDashboard("test")
-		color := "red"
-		name := "annoName"
 		disabledGrafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     false,
@@ -663,8 +659,6 @@ func TestGetAnnotations(t *testing.T) {
 			AnnotationsRepo: &annotationsRepo,
 		}
 		dash := grafanamodels.NewDashboard("test")
-		color := "red"
-		name := "annoName"
 		grafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
@@ -698,8 +692,6 @@ func TestGetAnnotations(t *testing.T) {
 			AnnotationsRepo: &annotationsRepo,
 		}
 		dash := grafanamodels.NewDashboard("test")
-		color := "red"
-		name := "annoName"
 		grafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
