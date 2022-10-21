@@ -11,13 +11,16 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web/webtest"
+
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/models"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 var queryDatasourceInput = `{
@@ -64,7 +67,7 @@ func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool
 // `/ds/query` endpoint test
 func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	qds := query.ProvideService(
-		nil,
+		setting.NewCfg(),
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
@@ -111,7 +114,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 
 func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 	qds := query.ProvideService(
-		nil,
+		setting.NewCfg(),
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
