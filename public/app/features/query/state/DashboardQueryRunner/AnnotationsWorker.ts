@@ -47,7 +47,7 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
     }
     const observables = annotations.map((annotation) => {
       let datasourceObservable;
-      if (dashboard.meta.publicDashboardAccessToken) {
+      if (dashboard.meta.publicDashboardAccessToken !== '') {
         const pubdashDatasource = new PublicDashboardDataSource(PUBLIC_DATASOURCE);
         datasourceObservable = of(pubdashDatasource).pipe(catchError(handleDatasourceSrvError));
       } else {
