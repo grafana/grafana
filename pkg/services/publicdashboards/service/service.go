@@ -401,14 +401,16 @@ func (pd *PublicDashboardServiceImpl) ListPublicDashboards(ctx context.Context, 
 	return pd.filterDashboardsByPermissions(ctx, u, publicDashboards)
 }
 
-func (pd *PublicDashboardServiceImpl) DeletePublicDashboard(ctx context.Context, u *user.SignedInUser, orgId int64, dashboardUid string) error {
-	//publicDashboards, err := pd.store.ListPublicDashboards(ctx, orgId)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//return pd.filterDashboardsByPermissions(ctx, u, publicDashboards)
-	return nil
+func (pd *PublicDashboardServiceImpl) DeletePublicDashboard(ctx context.Context, dashboardUid string, accessToken string) error {
+	if dashboardUid == "" {
+		return dashboards.ErrDashboardIdentifierNotSet
+	}
+
+	if accessToken == "" {
+		return ErrPublicDashboardIdentifierNotSet
+	}
+
+	return pd.store.DeletePublicDashboard(ctx, dashboardUid, accessToken)
 }
 
 func (pd *PublicDashboardServiceImpl) PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error) {

@@ -57,6 +57,17 @@ func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, org
 	return resp, nil
 }
 
+func (d *PublicDashboardStoreImpl) DeletePublicDashboard(ctx context.Context, dashboardUid string, accessToken string) error {
+	dashboard := &PublicDashboard{DashboardUid: dashboardUid, AccessToken: accessToken}
+	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Delete(dashboard)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
 func (d *PublicDashboardStoreImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
 	dashboard := &models.Dashboard{Uid: dashboardUid}
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {

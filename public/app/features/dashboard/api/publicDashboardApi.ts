@@ -51,7 +51,33 @@ export const publicDashboardApi = createApi({
       },
       invalidatesTags: ['Config'],
     }),
+    getPublicDashboards: builder.query<PublicDashboard[], string>({
+      query: (dashboardUid) => ({
+        url: `/uid/${dashboardUid}/public-config`,
+      }),
+      providesTags: ['Config'],
+    }),
+    deletePublicDashboard: builder.mutation<
+      void,
+      { dashboardTitle: string; dashboardUid: string; accessToken: string }
+    >({
+      query: (params) => ({
+        url: `/public/${params.accessToken}/uid/${params.accessToken}`,
+        method: 'DELETE',
+      }),
+      async onQueryStarted({ dashboardTitle }, { dispatch, queryFulfilled }) {
+        await queryFulfilled;
+        dispatch(
+          notifyApp(
+            createSuccessNotification(
+              'Public dashboard deleted',
+              `Public dashboard for ${dashboardTitle} has been deleted`
+            )
+          )
+        );
+      },
+    }),
   }),
 });
 
-export const { useGetConfigQuery, useSaveConfigMutation } = publicDashboardApi;
+export const { useGetConfigQuery, useSaveConfigMutation, useDeletePublicDashboardMutation } = publicDashboardApi;

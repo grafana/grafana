@@ -5,11 +5,12 @@ import useAsync from 'react-use/lib/useAsync';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Link, ButtonGroup, LinkButton, Icon, Tag, useStyles2, Tooltip, useTheme2 } from '@grafana/ui';
+import { Link, ButtonGroup, LinkButton, Icon, Tag, useStyles2, Tooltip, useTheme2, IconButton } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 
 import { contextSrv } from '../../../core/services/context_srv';
 import { AccessControlAction } from '../../../types';
+import { useDeletePublicDashboardMutation } from '../../dashboard/api/publicDashboardApi';
 import { isOrgAdmin } from '../../plugins/admin/permissions';
 
 export interface ListPublicDashboardResponse {
@@ -36,8 +37,14 @@ export const ListPublicDashboardTable = () => {
   const styles = useStyles2(() => getStyles(theme, isMobile));
   const [publicDashboards, setPublicDashboards] = useState<ListPublicDashboardResponse[]>([]);
 
+  const [deletePublicDashboard, { isLoading }] = useDeletePublicDashboardMutation();
+
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const responsiveSize = isMobile ? 'sm' : 'md';
+
+  const onDeletePublicDashboardClick = (pd: ListPublicDashboardResponse) => {
+    deletePublicDashboard({ accessToken: pd.accessToken, dashboardUid: pd.dashboardUid, dashboardTitle: pd.title });
+  };
 
   useAsync(async () => {
     const publicDashboards = await getPublicDashboards();
@@ -88,14 +95,22 @@ export const ListPublicDashboardTable = () => {
                     <Icon size={responsiveSize} name="cog" />
                   </LinkButton>
                   {hasWritePermissions && (
-                    <LinkButton
-                      fill="text"
+                    // <LinkButton
+                    //   fill="text"
+                    //   size={responsiveSize}
+                    //   href={`/d/${pd.dashboardUid}?shareView=share`}
+                    //   title="Configure public dashboard"
+                    // >
+                    //   <Icon size={responsiveSize} name="trash-alt" />
+                    // </LinkButton>
+
+                    <IconButton
+                      aria-label="Delete public dashboard"
+                      name="trash-alt"
+                      onClick={() => onDeletePublicDashboardClick(pd)}
                       size={responsiveSize}
-                      href={`/d/${pd.dashboardUid}?shareView=share`}
-                      title="Configure public dashboard"
-                    >
-                      <Icon size={responsiveSize} name="trash-alt" />
-                    </LinkButton>
+                      type="button"
+                    />
                   )}
                 </ButtonGroup>
               </td>
