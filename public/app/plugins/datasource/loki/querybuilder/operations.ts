@@ -1,3 +1,5 @@
+import { renderMarkdown } from '@grafana/data';
+
 import {
   createAggregationOperation,
   createAggregationOperationWithParam,
@@ -419,4 +421,17 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   ];
 
   return list;
+}
+
+// Keeping a local copy as an optimization measure.
+const definitions = getOperationDefinitions();
+
+/**
+ * Given an operator, return the corresponding explain.
+ * Conceibed for usage within the Query Editor.
+ */
+export function explainOperator(id: LokiOperationId): string {
+  const definition = definitions.find((operation) => operation.id === id);
+
+  return definition?.explainHandler?.({ id: '', params: ['<value>'] }) || '';
 }
