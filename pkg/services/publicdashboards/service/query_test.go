@@ -423,6 +423,7 @@ func TestGetAnnotations(t *testing.T) {
 		}
 		fakeStore.On("GetPublicDashboardAndDashboard", mock.Anything, mock.AnythingOfType("string")).
 			Return(&PublicDashboard{Uid: "uid1", IsEnabled: true}, grafanamodels.NewDashboard("dash1"), nil)
+
 		reqDTO := AnnotationsQueryDTO{
 			From: 1,
 			To:   2,
@@ -642,7 +643,7 @@ func TestGetAnnotations(t *testing.T) {
 		}
 		dashboard := grafanamodels.NewDashboard("dashWithNoAnnotations")
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: true}
-		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+		fakeStore.On("GetPublicDashboardAndDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
 
 		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
