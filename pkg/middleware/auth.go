@@ -64,15 +64,13 @@ func writeRedirectCookie(c *models.ReqContext) {
 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
 	}
 
-	if redirectTo != "/" {
-		if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
-			redirectTo = setting.AppSubUrl + c.Req.RequestURI
-		}
-
-		// remove any forceLogin=true params
-		redirectTo = removeForceLoginParams(redirectTo)
-		cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
+	if redirectTo == "/" {
+		return
 	}
+
+	// remove any forceLogin=true params
+	redirectTo = removeForceLoginParams(redirectTo)
+	cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
 }
 
 var forceLoginParamsRegexp = regexp.MustCompile(`&?forceLogin=true`)
