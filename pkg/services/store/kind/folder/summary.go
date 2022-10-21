@@ -3,9 +3,9 @@ package folder
 import (
 	"context"
 	"encoding/json"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/store"
 )
 
 type Model struct {
@@ -29,7 +29,7 @@ func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
 		}
 
 		if obj.Name == "" {
-			obj.Name = guessNameFromUID(uid)
+			obj.Name = store.GuessNameFromUID(uid)
 		}
 
 		summary := &models.ObjectSummary{
@@ -42,16 +42,4 @@ func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
 		out, err := json.MarshalIndent(obj, "", "  ")
 		return summary, out, err
 	}
-}
-
-func guessNameFromUID(uid string) string {
-	sidx := strings.LastIndex(uid, "/") + 1
-	didx := strings.LastIndex(uid, ".")
-	if didx > sidx && didx != sidx {
-		return uid[sidx:didx]
-	}
-	if sidx > 0 {
-		return uid[sidx:]
-	}
-	return uid
 }
