@@ -94,6 +94,8 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 			return
 		}
 	}
+
+	ctx.Resp.WriteHeader(http.StatusOK)
 }
 
 func (g *Gateway) HandlePipelinePush(ctx *models.ReqContext) {
@@ -126,4 +128,6 @@ func (g *Gateway) HandlePipelinePush(ctx *models.ReqContext) {
 		ctx.Resp.WriteHeader(http.StatusNotFound)
 		return
 	}
+
+	ctx.Resp.WriteHeader(http.StatusOK)
 }
