@@ -43,6 +43,10 @@ func TestService(t *testing.T) {
 				Type:  "test",
 			},
 			JSON: json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange: AbsoluteTimeRange{
+				From: time.Time{},
+				To:   time.Time{},
+			},
 		},
 		{
 			RefID:      "B",

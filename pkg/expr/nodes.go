@@ -156,6 +156,9 @@ func (dn *DSNode) NodeType() NodeType {
 }
 
 func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Request) (*DSNode, error) {
+	if rn.TimeRange == nil {
+		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
+	}
 	encodedQuery, err := json.Marshal(rn.Query)
 	if err != nil {
 		return nil, err
@@ -215,11 +218,8 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 			MaxDataPoints: dn.maxDP,
 			Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
 			JSON:          dn.query,
-			TimeRange: backend.TimeRange{
-				From: dn.timeRange.From,
-				To:   dn.timeRange.To,
-			},
-			QueryType: dn.queryType,
+			TimeRange:     dn.timeRange.AbsoluteTime(now),
+			QueryType:     dn.queryType,
 		},
 	}
 
