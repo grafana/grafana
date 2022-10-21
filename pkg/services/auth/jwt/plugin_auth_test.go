@@ -48,7 +48,7 @@ func pluginScenario(t *testing.T, desc string, fn pluginScenarioFunc, cbs ...con
 	t.Run(desc, pluginScenarioRunner(fn, cbs...))
 }
 
-func initPluginAuthService(t *testing.T, cbs ...configureFunc) (*PluginAuthService, error) {
+func initPluginAuthService(t *testing.T, cbs ...configureFunc) (*pluginAuthService, error) {
 	t.Helper()
 
 	cfg := setting.NewCfg()
@@ -68,7 +68,7 @@ type pluginScenarioFunc func(*testing.T, pluginScenarioContext)
 
 type pluginScenarioContext struct {
 	ctx        context.Context
-	authJWTSvc *PluginAuthService
+	authJWTSvc *pluginAuthService
 	cfg        *setting.Cfg
 }
 

@@ -19,10 +19,10 @@ var _ plugins.Client = (*Service)(nil)
 
 type Service struct {
 	pluginRegistry registry.Service
-	jwtAuthService *jwt.PluginAuthService
+	jwtAuthService jwt.PluginAuthService
 }
 
-func ProvideService(pluginRegistry registry.Service, jwtAuthService *jwt.PluginAuthService) *Service {
+func ProvideService(pluginRegistry registry.Service, jwtAuthService jwt.PluginAuthService) *Service {
 	return &Service{
 		pluginRegistry: pluginRegistry,
 		jwtAuthService: jwtAuthService,
@@ -184,10 +184,15 @@ func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin,
 }
 
 func (s *Service) attachJWT(ctx context.Context, pluginCtx backend.PluginContext) context.Context {
+	if pluginCtx.User == nil {
+		return ctx
+	}
+
 	token, err := s.jwtAuthService.Generate(pluginCtx.User.Login, pluginCtx.PluginID)
 	if err != nil {
 		return ctx
 	}
+
 	md := metadata.New(map[string]string{})
 	md["authorization"] = []string{"Bearer " + token}
 	return metadata.NewOutgoingContext(ctx, md)
