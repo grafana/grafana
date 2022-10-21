@@ -17,6 +17,7 @@ export const PostgreSQLConnectionDetails: FC<MainDetailsFormPartProps> = ({ form
 
   const portValidators = useMemo(() => [validators.required, Validators.validatePort], []);
   const userPassValidators = useMemo(() => (tlsFlag ? [] : [validators.required]), [tlsFlag]);
+  const maxQueryLengthValidators = useMemo(() => [Validators.min(-1)], []);
 
   return (
     <div className={styles.groupWrapper}>
@@ -73,6 +74,16 @@ export const PostgreSQLConnectionDetails: FC<MainDetailsFormPartProps> = ({ form
         key="database"
         name="database"
         placeholder={Messages.form.placeholders.postgresqlDetails.database}
+      />
+      <div className={styles.labelWrapper} data-testid="max-query-length-label">
+        <span>{Messages.form.labels.postgresqlDetails.maxQueryLength}</span>
+        <LinkTooltip tooltipContent={Messages.form.tooltips.postgresqlDetails.maxQueryLength} icon="info-circle" />
+      </div>
+      <TextInputField
+        key="maxQueryLength"
+        name="maxQueryLength"
+        placeholder={Messages.form.placeholders.postgresqlDetails.maxQueryLength}
+        validators={maxQueryLengthValidators}
       />
     </div>
   );
