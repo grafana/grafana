@@ -34,6 +34,7 @@ func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver obje
 		impl := &objectStoreImpl{
 			backup: sqlstore,
 			server: objserver,
+			sess:   db.GetSqlxSession(),
 		}
 		impl.sync() // load everythign from the existing SQL setup into the new object store
 		return impl

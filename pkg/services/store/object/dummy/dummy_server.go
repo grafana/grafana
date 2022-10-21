@@ -351,14 +351,24 @@ func (i dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchReq
 
 	searchResults := make([]*object.ObjectSearchResult, 0)
 	for _, o := range objects {
+		builder := i.kinds.GetSummaryBuilder(o.Object.Kind)
+		if builder == nil {
+			continue
+		}
+		summary, clean, e2 := builder(ctx, o.Object.UID, o.Object.Body)
+		if e2 != nil {
+			continue
+		}
+
 		searchResults = append(searchResults, &object.ObjectSearchResult{
-			UID:       o.Object.UID,
-			Kind:      o.Object.Kind,
-			Version:   o.Object.Version,
-			Updated:   o.Object.Updated,
-			UpdatedBy: o.Object.UpdatedBy,
-			Name:      "? name from summary",
-			Body:      o.Object.Body,
+			UID:         o.Object.UID,
+			Kind:        o.Object.Kind,
+			Version:     o.Object.Version,
+			Updated:     o.Object.Updated,
+			UpdatedBy:   o.Object.UpdatedBy,
+			Name:        summary.Name,
+			Description: summary.Description,
+			Body:        clean,
 		})
 	}
 

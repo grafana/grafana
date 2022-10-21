@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/object"
 )
 
@@ -16,6 +17,7 @@ import (
 // 3. Use the object store for all read operations
 // This givs us a safe test bed to work with the store but still roll back without any lost work
 type objectStoreImpl struct {
+	sess   *session.SessionDB
 	backup store // raw SQL store
 	server object.ObjectStoreServer
 }
@@ -23,13 +25,27 @@ type objectStoreImpl struct {
 var _ playlist.Service = &objectStoreImpl{}
 
 func (s *objectStoreImpl) sync() {
-	// TODO? need to get a user for each org
+	rows, err := s.sess.Query(context.Background(), "SELECT orgId,uid FROM playlist ORDER BY orgId asc")
+	if err != nil {
+		fmt.Printf("error loading playlists")
+		return
+	}
+	orgId := int64(0)
+	uid := ""
+	for rows.Next() {
+		err = rows.Scan(&orgId, &uid)
+		if err != nil {
+			fmt.Printf("error loading playlists")
+			return
+		}
+		fmt.Printf("GOT: %d/%s\n", orgId, uid)
+	}
 }
 
 func (s *objectStoreImpl) Create(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
 	rsp, err := s.backup.Insert(ctx, cmd)
 	if err == nil && rsp != nil {
-		body, err := json.Marshal(rsp)
+		body, err := json.Marshal(cmd)
 		if err != nil {
 			return rsp, fmt.Errorf("unable to write playlist to store")
 		}
@@ -83,12 +99,13 @@ func (s *objectStoreImpl) Delete(ctx context.Context, cmd *playlist.DeletePlayli
 //------------------------------------------------------
 
 func (s *objectStoreImpl) GetWithoutItems(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.Playlist, error) {
-	p, err := s.Get(ctx, q)
+	p, err := s.Get(ctx, q) // OrgID is actually picked from the user!
 	if err != nil {
 		return nil, err
 	}
 	return &playlist.Playlist{
 		UID:      p.Uid,
+		OrgId:    q.OrgId,
 		Name:     p.Name,
 		Interval: p.Interval,
 	}, nil
