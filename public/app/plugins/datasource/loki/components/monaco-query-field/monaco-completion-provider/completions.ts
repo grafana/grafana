@@ -1,4 +1,6 @@
 import { escapeLabelValueInExactSelector } from '../../../languageUtils';
+import { explainOperator } from '../../../querybuilder/operations';
+import { LokiOperationId } from '../../../querybuilder/types';
 import { AGGREGATION_OPERATORS, RANGE_VEC_FUNCTIONS } from '../../../syntax';
 
 import { CompletionDataProvider } from './CompletionDataProvider';
@@ -152,7 +154,6 @@ async function getInGroupingCompletions(
 }
 
 const PARSERS = ['json', 'logfmt', 'pattern', 'regexp', 'unpack'];
-const PARSER_DOCUMENTATION = 'Parse and extract labels from the log content.';
 
 async function getAfterSelectorCompletions(
   labels: Label[],
@@ -171,7 +172,9 @@ async function getAfterSelectorCompletions(
       type: 'PARSER',
       label: `json${extra}`,
       insertText: `${prefix}json`,
-      documentation: hasLevelInExtractedLabels ? 'Use it to get log-levels in the histogram' : PARSER_DOCUMENTATION,
+      documentation: hasLevelInExtractedLabels
+        ? 'Use it to get log-levels in the histogram'
+        : explainOperator(LokiOperationId.Json),
     });
   }
 
@@ -182,7 +185,9 @@ async function getAfterSelectorCompletions(
       type: 'DURATION',
       label: `logfmt${extra}`,
       insertText: `${prefix}logfmt`,
-      documentation: hasLevelInExtractedLabels ? 'Get detected levels in the histogram' : PARSER_DOCUMENTATION,
+      documentation: hasLevelInExtractedLabels
+        ? 'Get detected levels in the histogram'
+        : explainOperator(LokiOperationId.Logfmt),
     });
   }
 
@@ -192,7 +197,7 @@ async function getAfterSelectorCompletions(
       type: 'PARSER',
       label: parser,
       insertText: `${prefix}${parser}`,
-      documentation: PARSER_DOCUMENTATION,
+      documentation: explainOperator(parser),
     });
   });
 
