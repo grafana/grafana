@@ -4,9 +4,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { CoreApp, DataQuery, DataQueryRequest, LoadingState, MetricFindValue, VariableOption } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { runRequest } from 'app/features/query/state/runRequest';
+import { queryMetricTree } from 'app/plugins/datasource/testdata/metricTree';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 
+import { sceneTemplateInterpolator } from './SceneVariableSet';
 import { SceneVariable, SceneVariableState, VariableUpdateContext } from './types';
 
 export interface QueryVariableState extends SceneVariableState {
@@ -16,16 +18,16 @@ export interface QueryVariableState extends SceneVariableState {
 }
 
 export class QueryVariable extends SceneObjectBase<QueryVariableState> implements SceneVariable {
-  update(ctx: VariableUpdateContext) {
+  updateOptions(ctx: VariableUpdateContext) {
     const { query } = this.state;
     //const range = this.getTimeRange();
 
     try {
       this.setState({ state: LoadingState.Loading });
 
-      return new Observable<void>((observer) => {
+      return new Observable<number>((observer) => {
         const timeout = setTimeout(() => {
-          observer.complete();
+          setDummyOptions(variable, ctx);
         }, 1000);
 
         return () => {
@@ -40,4 +42,8 @@ export class QueryVariable extends SceneObjectBase<QueryVariableState> implement
   }
 }
 
-function query(variable: QueryVariable): MetricFindValue[] {}
+function setDummyOptions(variable: QueryVariable, ctx: VariableUpdateContext) {
+  const interpolatedQuery = sceneTemplateInterpolator(variable.state.query, ctx.sceneLocation);
+  console.log('interpolated query', interpolatedQuery);
+  const result = queryMetricTree(interpolatedQuery);
+}

@@ -17,10 +17,11 @@ export interface SceneVariableState extends SceneObjectStatePlain {
 }
 
 export interface SceneVariable extends SceneObject<SceneVariableState> {
-  update(context: VariableUpdateContext): Observable<void>;
+  updateOptions(context: VariableUpdateContext): Observable<number>;
 }
 
 export interface VariableUpdateContext {
+  sceneLocation: SceneObject;
   searchFilter?: string;
 }
 
