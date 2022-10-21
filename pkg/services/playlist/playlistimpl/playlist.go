@@ -30,7 +30,7 @@ func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver obje
 	}
 	svc := &Service{store: sqlstore}
 
-	// This is currently a developement only feature toggle
+	// FlagObjectStore is only supported in development mode
 	if toggles.IsEnabled(featuremgmt.FlagObjectStore) {
 		impl := &objectStoreImpl{
 			backup: svc,
