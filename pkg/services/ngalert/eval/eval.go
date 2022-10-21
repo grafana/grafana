@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
+	exprModels "github.com/grafana/grafana/pkg/expr/models"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -177,28 +178,42 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
 	return headers
 }
 
+type RelativeTimeRanges map[string]models.RelativeTimeRange
+
+func (r RelativeTimeRanges) TimeRanges(now time.Time) exprModels.TimeRanges {
+	result := make(exprModels.TimeRanges, len(r))
+	for s, rtr := range r {
+		result[s] = exprModels.TimeRange{
+			From: now.Add(-time.Duration(rtr.From)),
+			To:   now.Add(-time.Duration(rtr.To)),
+		}
+	}
+	return result
+}
+
 // getExprRequest validates the condition, gets the datasource information and creates an expr.Request from it.
-func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheService datasources.CacheService) (*expr.Request, error) {
+func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheService datasources.CacheService) (*expr.Request, RelativeTimeRanges, error) {
 	req := &expr.Request{
 		OrgId:   ctx.User.OrgID,
 		Headers: buildDatasourceHeaders(ctx),
 	}
 
 	datasources := make(map[string]*datasources.DataSource, len(data))
+	timeRanges := make(RelativeTimeRanges, len(data))
 
 	for _, q := range data {
 		model, err := q.GetModel()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get query model from '%s': %w", q.RefID, err)
+			return nil, nil, fmt.Errorf("failed to get query model from '%s': %w", q.RefID, err)
 		}
 		interval, err := q.GetIntervalDuration()
 		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve intervalMs from '%s': %w", q.RefID, err)
+			return nil, nil, fmt.Errorf("failed to retrieve intervalMs from '%s': %w", q.RefID, err)
 		}
 
 		maxDatapoints, err := q.GetMaxDatapoints()
 		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve maxDatapoints from '%s': %w", q.RefID, err)
+			return nil, nil, fmt.Errorf("failed to retrieve maxDatapoints from '%s': %w", q.RefID, err)
 		}
 
 		ds, ok := datasources[q.DatasourceUID]
@@ -208,17 +223,15 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 			} else {
 				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, true)
 				if err != nil {
-					return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
+					return nil, nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
 				}
 			}
 			datasources[q.DatasourceUID] = ds
 		}
 
+		timeRanges[q.RefID] = q.RelativeTimeRange
+
 		req.Queries = append(req.Queries, expr.Query{
-			TimeRange: expr.TimeRange{
-				From: q.RelativeTimeRange.ToTimeRange(ctx.At).From,
-				To:   q.RelativeTimeRange.ToTimeRange(ctx.At).To,
-			},
 			DataSource:    ds,
 			JSON:          model,
 			Interval:      interval,
@@ -227,7 +240,7 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 			QueryType:     q.QueryType,
 		})
 	}
-	return req, nil
+	return req, timeRanges, nil
 }
 
 type NumberValueCapture struct {
@@ -329,12 +342,12 @@ func executeQueriesAndExpressions(ctx EvaluationContext, data []models.AlertQuer
 		}
 	}()
 
-	queryDataReq, err := getExprRequest(ctx, data, dsCacheService)
+	queryDataReq, timeRanges, err := getExprRequest(ctx, data, dsCacheService)
 	if err != nil {
 		return nil, err
 	}
 
-	return exprService.TransformData(ctx.Ctx, queryDataReq)
+	return exprService.TransformData(ctx.Ctx, timeRanges.TimeRanges(ctx.At), queryDataReq)
 }
 
 // datasourceUIDsToRefIDs returns a sorted slice of Ref IDs for each Datasource UID.
@@ -599,7 +612,7 @@ func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Conditi
 
 	ctx.At = time.Now()
 
-	req, err := getExprRequest(ctx, condition.Data, e.dataSourceCache)
+	req, _, err := getExprRequest(ctx, condition.Data, e.dataSourceCache)
 	if err != nil {
 		return err
 	}

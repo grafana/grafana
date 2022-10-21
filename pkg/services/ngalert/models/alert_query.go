@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/expr"
 )
 
@@ -68,13 +67,6 @@ type RelativeTimeRange struct {
 // isValid checks that From duration is greater than To duration.
 func (rtr *RelativeTimeRange) isValid() bool {
 	return rtr.From > rtr.To
-}
-
-func (rtr *RelativeTimeRange) ToTimeRange(now time.Time) backend.TimeRange {
-	return backend.TimeRange{
-		From: now.Add(-time.Duration(rtr.From)),
-		To:   now.Add(-time.Duration(rtr.To)),
-	}
 }
 
 // AlertQuery represents a single query associated with an alert definition.
