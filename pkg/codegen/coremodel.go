@@ -155,7 +155,7 @@ func (cd *CoremodelDeclaration) PathVersion() string {
 //
 // The provided path must be a directory. Generated code files will be written
 // to that path. The final element of the path must match the Lineage.Name().
-func (cd *CoremodelDeclaration) GenerateGoCoremodel(path string) (WriteDiffer, error) {
+func (cd *CoremodelDeclaration) GenerateGoCoremodel(path string) (*WriteDiffer, error) {
 	lin, rt := cd.Lineage, cd.Lineage.Runtime()
 	_, name := filepath.Split(path)
 	if name != lin.Name() {
@@ -225,10 +225,7 @@ func (cd *CoremodelDeclaration) GenerateGoCoremodel(path string) (WriteDiffer, e
 		return nil, err
 	}
 
-	wd := NewWriteDiffer()
-	wd[fullp] = byt
-
-	return wd, nil
+	return WithOne("GenerateGoCoremodel", File{RelativePath: fullp, Data: byt}), nil
 }
 
 type tplVars struct {
@@ -356,7 +353,7 @@ func (d prefixDropper) do(n *ast.Ident) {
 // GenerateCoremodelRegistry produces Go files that define a registry with
 // references to all the Go code that is expected to be generated from the
 // provided lineages.
-func GenerateCoremodelRegistry(path string, ecl []*CoremodelDeclaration) (WriteDiffer, error) {
+func GenerateCoremodelRegistry(path string, ecl []*CoremodelDeclaration) (*WriteDiffer, error) {
 	var cml []tplVars
 	for _, ec := range ecl {
 		cml = append(cml, ec.toTemplateObj())
@@ -379,9 +376,7 @@ func GenerateCoremodelRegistry(path string, ecl []*CoremodelDeclaration) (WriteD
 	if err != nil {
 		return nil, err
 	}
-	wd := NewWriteDiffer()
-	wd[path] = byt
-	return wd, nil
+	return WithOne("GenerateCoremodelRegistry", File{RelativePath: path, Data: byt}), nil
 }
 
 var tmplTypedef = `{{range .Types}}

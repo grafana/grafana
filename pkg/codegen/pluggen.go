@@ -197,7 +197,7 @@ type GoGenConfig struct {
 	DocPathPrefix string
 }
 
-func (pt *PluginTree) GenerateGo(path string, cfg GoGenConfig) (WriteDiffer, error) {
+func (pt *PluginTree) GenerateGo(path string, cfg GoGenConfig) (*WriteDiffer, error) {
 	t := (*pfs.Tree)(pt)
 	wd := NewWriteDiffer()
 
@@ -231,7 +231,7 @@ func (pt *PluginTree) GenerateGo(path string, cfg GoGenConfig) (WriteDiffer, err
 	return wd, nil
 }
 
-func genGoTypes(plug pfs.PluginInfo, path, subpath, prefix string) (WriteDiffer, error) {
+func genGoTypes(plug pfs.PluginInfo, path, subpath, prefix string) (*WriteDiffer, error) {
 	wd := NewWriteDiffer()
 	for slotname, lin := range plug.SlotImplementations() {
 		lowslot := strings.ToLower(slotname)
@@ -294,14 +294,16 @@ func genGoTypes(plug pfs.PluginInfo, path, subpath, prefix string) (WriteDiffer,
 			return nil, err
 		}
 
-		wd[finalpath] = byt
+		err = wd.Add("pluggenGoTypes", File{RelativePath: finalpath, Data: byt})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return wd, nil
 }
 
-func genThemaBindings(plug pfs.PluginInfo, path, subpath, prefix string) (WriteDiffer, error) {
-	wd := NewWriteDiffer()
+func genThemaBindings(plug pfs.PluginInfo, path, subpath, prefix string) (*WriteDiffer, error) {
 	bindings := make([]tvars_plugin_lineage_binding, 0)
 	for slotname, lin := range plug.SlotImplementations() {
 		lv := thema.LatestVersion(lin)
@@ -329,16 +331,15 @@ func genThemaBindings(plug pfs.PluginInfo, path, subpath, prefix string) (WriteD
 	}
 
 	fullpath := filepath.Join(path, subpath, "pfs_gen.go")
-	if byt, err := postprocessGoFile(genGoFile{
+	byt, err := postprocessGoFile(genGoFile{
 		path: fullpath,
 		in:   buf.Bytes(),
-	}); err != nil {
+	})
+	if err != nil {
 		return nil, err
-	} else {
-		wd[fullpath] = byt
 	}
 
-	return wd, nil
+	return WithOne("pluggenThemaBindings", File{RelativePath: fullpath, Data: byt}), nil
 }
 
 // Plugin IDs are allowed to contain characters that aren't allowed in CUE
@@ -364,7 +365,7 @@ func sanitizePluginId(s string) string {
 }
 
 // FIXME unexport this and refactor, this is way too one-off to be in here
-func GenPluginTreeList(trees []TreeAndPath, prefix, target string, ref bool) (WriteDiffer, error) {
+func GenPluginTreeList(trees []TreeAndPath, prefix, target string, ref bool) (*WriteDiffer, error) {
 	buf := new(bytes.Buffer)
 	vars := tvars_plugin_registry{
 		Header: tvars_autogen_header{
@@ -410,9 +411,7 @@ func GenPluginTreeList(trees []TreeAndPath, prefix, target string, ref bool) (Wr
 		return nil, fmt.Errorf("error postprocessing plugin registry: %w", err)
 	}
 
-	wd := NewWriteDiffer()
-	wd[target] = byt
-	return wd, nil
+	return WithOne("GenPluginTreeList", File{RelativePath: target, Data: byt}), nil
 }
 
 // FIXME unexport this and refactor, this is way too one-off to be in here

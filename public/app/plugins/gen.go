@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -87,7 +88,7 @@ func main() {
 		return ptrees[i].Path < ptrees[j].Path
 	})
 
-	var wdm codegen.WriteDiffer
+	var wdm *codegen.WriteDiffer
 	for _, ptp := range ptrees {
 		tfast, err := ptp.Tree.GenerateTypeScriptAST()
 		if err != nil {
@@ -96,7 +97,10 @@ func main() {
 		}
 		// nil return if there was nothing to generate (no slot implementations)
 		if tfast != nil {
-			wd[filepath.Join(ptp.Path, "models.gen.ts")] = []byte(tfast.String())
+			wd.Add("GenerateTypeScriptAST", codegen.File{
+				RelativePath: filepath.Join(ptp.Path, "models.gen.ts"),
+				Data:         []byte(tfast.String()),
+			})
 		}
 
 		relp, _ := filepath.Rel(groot, ptp.Path)
@@ -127,7 +131,7 @@ func main() {
 			os.Exit(1)
 		}
 	} else {
-		err = wd.Write()
+		err = wd.Write(context.Background())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error while writing generated code to disk:\n%s\n", err)
 			os.Exit(1)
