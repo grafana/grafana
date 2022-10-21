@@ -11,13 +11,17 @@ const expanderContainerStyles = css`
 `;
 
 export function ExpanderCell<K extends object>({ row }: CellProps<K, void>) {
+  console.log(row.subRows[0]?.id);
   return (
     <div className={expanderContainerStyles}>
       <IconButton
+        tooltip="Expand row"
         // @ts-expect-error react-table doesn't ship with useExpanded types and we can't use declaration merging without affecting the table viz
         name={row.isExpanded ? 'angle-down' : 'angle-right'}
         // @ts-expect-error same as the line above
-        {...row.getToggleRowExpandedProps({})}
+        aria-expanded={row.isExpanded}
+        // @ts-expect-error same as the line above
+        {...row.getToggleRowExpandedProps()}
       />
     </div>
   );

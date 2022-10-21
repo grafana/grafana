@@ -1,4 +1,5 @@
 import { cx, css } from '@emotion/css';
+import { uniqueId } from 'lodash';
 import React, { useMemo, Fragment, ReactNode } from 'react';
 import { useExpanded, useSortBy, useTable, TableOptions } from 'react-table';
 
@@ -82,6 +83,7 @@ export function DataTable<TableData extends object>({
     const cols = getColumns<TableData>(columns);
     return cols;
   }, [columns]);
+  const id = useUniqueId();
 
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable<TableData>(
     {
@@ -117,7 +119,6 @@ export function DataTable<TableData extends object>({
           return (
             <tr key={key} {...headerRowProps}>
               {headerGroup.headers.map((column) => {
-                // TODO: if the column is a function, it should also provide an accessible name as a string to be used a the column title in getSortByToggleProps
                 const { key, ...headerCellProps } = column.getHeaderProps(
                   column.canSort ? column.getSortByToggleProps() : undefined
                 );
@@ -131,10 +132,7 @@ export function DataTable<TableData extends object>({
                     {column.render('Header')}
 
                     {column.isSorted && (
-                      <span
-                        // FIXME: move this
-                        className={styles.sortIcon}
-                      >
+                      <span className={styles.sortIcon}>
                         <Icon name={column.isSortedDesc ? 'angle-down' : 'angle-up'} />
                       </span>
                     )}
@@ -166,7 +164,8 @@ export function DataTable<TableData extends object>({
               {
                 // @ts-expect-error react-table doesn't ship with useExpanded types and we can't use declaration merging without affecting the table viz
                 row.isExpanded && renderExpandedRow && (
-                  <tr className={className} {...otherRowProps}>
+                  // TODO: generate a custom id for this row and the expander cell
+                  <tr className={className} {...otherRowProps} id={`${id}-${row.id}`}>
                     <td colSpan={row.cells.length}>{renderExpandedRow(row.original)}</td>
                   </tr>
                 )
@@ -178,3 +177,7 @@ export function DataTable<TableData extends object>({
     </table>
   );
 }
+
+const useUniqueId = () => {
+  return useMemo(() => uniqueId('datatable'), []);
+};
