@@ -28,6 +28,7 @@ import {
   AdditionalOptions,
   Labels,
   MainDetails,
+  MongoDBConnectionDetails,
   MySQLConnectionDetails,
   PostgreSQLConnectionDetails,
 } from './FormParts';
@@ -90,6 +91,8 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
           return <HAProxyConnectionDetails remoteInstanceCredentials={remoteInstanceCredentials} />;
         case Databases.postgresql:
           return <PostgreSQLConnectionDetails remoteInstanceCredentials={remoteInstanceCredentials} />;
+        case Databases.mongodb:
+          return <MongoDBConnectionDetails remoteInstanceCredentials={remoteInstanceCredentials} />;
         case Databases.mysql:
           return <MySQLConnectionDetails remoteInstanceCredentials={remoteInstanceCredentials} />;
         default:

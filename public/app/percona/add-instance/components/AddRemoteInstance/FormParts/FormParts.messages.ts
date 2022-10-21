@@ -33,6 +33,9 @@ export const Messages = {
       mysqlDetails: {
         maxQueryLength: 'Max query length',
       },
+      mongodbDetails: {
+        maxQueryLength: 'Max query length',
+      },
       labels: {
         environment: 'Environment',
         region: 'Region',
@@ -85,6 +88,9 @@ export const Messages = {
       mysqlDetails: {
         maxQueryLength: 'Max query length',
       },
+      mongodbDetails: {
+        maxQueryLength: 'Max query length',
+      },
       labels: {
         environment: 'Environment',
         region: 'Region',
@@ -119,6 +125,9 @@ export const Messages = {
         maxQueryLength: 'Full Example (Fingerprint) storage is not allowed by default to have the best performance',
       },
       mysqlDetails: {
+        maxQueryLength: 'Full Example (Fingerprint) storage is not allowed by default to have the best performance',
+      },
+      mongodbDetails: {
         maxQueryLength: 'Full Example (Fingerprint) storage is not allowed by default to have the best performance',
       },
       haproxy: {

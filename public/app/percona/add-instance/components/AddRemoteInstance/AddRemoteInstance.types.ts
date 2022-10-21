@@ -140,6 +140,7 @@ export interface MongoDBPayload extends RemoteCommonPayload, TLSCommon {
   authentication_mechanism: string;
   authentication_database: string;
   agent_password: string;
+  max_query_length: number;
 }
 
 export interface HaProxyPayload extends RemoteCommonPayload {
