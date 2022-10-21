@@ -42,6 +42,7 @@ export function useContextMenu(
           onClick: (node: NodeDatum) => {
             setFocusedNodeId(node.id);
             setConfig({ ...config, gridLayout: showGridLayout });
+            setMenu(undefined);
           },
         },
       ];
