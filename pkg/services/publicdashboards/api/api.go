@@ -70,7 +70,7 @@ func (api *Api) RegisterAPIEndpoints() {
 	// List Public Dashboards
 	api.RouteRegister.Get("/api/dashboards/public", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
 	// Delete Public dashboard
-	api.RouteRegister.Delete("/api/dashboards/public/:accessToken/uid/:uid",
+	api.RouteRegister.Delete("/api/dashboards/:uid/public/:publicDashboardUid",
 		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.DeletePublicDashboard))
 
@@ -137,10 +137,11 @@ func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
 // Delete a public dashboard
 // DELETE /api/dashboards/public/uid/:uid
 func (api *Api) DeletePublicDashboard(c *models.ReqContext) response.Response {
-	err := api.PublicDashboardService.DeletePublicDashboard(c.Req.Context(), web.Params(c.Req)[":uid"], web.Params(c.Req)[":accessToken"])
+	err := api.PublicDashboardService.DeletePublicDashboard(c.Req.Context(), c.SignedInUser.OrgID, web.Params(c.Req)[":uid"], web.Params(c.Req)[":publicDashboardUid"])
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "DeletePublicDashboard: failed to delete public dashboard", err)
 	}
+
 	return response.Success("Public dashboard deleted")
 }
 

@@ -59,12 +59,9 @@ export const publicDashboardApi = createApi({
       }),
       providesTags: ['PublicDashboards'],
     }),
-    deletePublicDashboard: builder.mutation<
-      void,
-      { dashboardTitle: string; dashboardUid: string; accessToken: string }
-    >({
+    deletePublicDashboard: builder.mutation<void, { dashboardTitle: string; dashboardUid: string; uid: string }>({
       query: (params) => ({
-        url: `/public/${params.accessToken}/uid/${params.dashboardUid}`,
+        url: `/${params.dashboardUid}/public/${params.uid}`,
         method: 'DELETE',
       }),
       async onQueryStarted({ dashboardTitle }, { dispatch, queryFulfilled }) {

@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	"github.com/grafana/grafana/pkg/util"
 	"time"
 
@@ -403,15 +402,15 @@ func (pd *PublicDashboardServiceImpl) ListPublicDashboards(ctx context.Context, 
 	return pd.filterDashboardsByPermissions(ctx, u, publicDashboards)
 }
 
-func (pd *PublicDashboardServiceImpl) DeletePublicDashboard(ctx context.Context, dashboardUid string, accessToken string) error {
+func (pd *PublicDashboardServiceImpl) DeletePublicDashboard(ctx context.Context, userOrgId int64, dashboardUid string, uid string) error {
 	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
 		return dashboards.ErrDashboardIdentifierNotSet
 	}
-	if accessToken == "" || !tokens.IsValidAccessToken(accessToken) {
+	if uid == "" || !util.IsValidShortUID(uid) {
 		return ErrPublicDashboardIdentifierNotSet
 	}
 
-	return pd.store.DeletePublicDashboard(ctx, dashboardUid, accessToken)
+	return pd.store.DeletePublicDashboard(ctx, userOrgId, dashboardUid, uid)
 }
 
 func (pd *PublicDashboardServiceImpl) PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error) {

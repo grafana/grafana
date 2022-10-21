@@ -16,8 +16,9 @@ export const DeletePublicDashboardButton = ({
 }) => {
   const [deletePublicDashboard, { isLoading }] = useDeletePublicDashboardMutation();
 
-  const onDeletePublicDashboardClick = (pd: ListPublicDashboardResponse) => {
-    deletePublicDashboard({ accessToken: pd.accessToken, dashboardUid: pd.dashboardUid, dashboardTitle: pd.title });
+  const onDeletePublicDashboardClick = async (pd: ListPublicDashboardResponse, onDelete: () => void) => {
+    await deletePublicDashboard({ uid: pd.uid, dashboardUid: pd.dashboardUid, dashboardTitle: pd.title });
+    onDelete();
   };
 
   return (
@@ -30,7 +31,7 @@ export const DeletePublicDashboardButton = ({
           onClick={() =>
             showModal(DeletePublicDashboardModal, {
               dashboardTitle: publicDashboard.title,
-              onConfirm: () => onDeletePublicDashboardClick(publicDashboard),
+              onConfirm: () => onDeletePublicDashboardClick(publicDashboard, hideModal),
               onDismiss: hideModal,
             })
           }

@@ -24,7 +24,7 @@ type Service interface {
 	GetPublicDashboardOrgId(ctx context.Context, accessToken string) (int64, error)
 	GetQueryDataResponse(ctx context.Context, skipCache bool, reqDTO PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error)
 	ListPublicDashboards(ctx context.Context, u *user.SignedInUser, orgId int64) ([]PublicDashboardListResponse, error)
-	DeletePublicDashboard(ctx context.Context, dashboardUid string, accessToken string) error
+	DeletePublicDashboard(ctx context.Context, userOrgId int64, dashboardUid string, uid string) error
 	PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error)
 	SavePublicDashboardConfig(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error)
 }
@@ -40,7 +40,7 @@ type Store interface {
 	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
 	GetPublicDashboardOrgId(ctx context.Context, accessToken string) (int64, error)
 	ListPublicDashboards(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error)
-	DeletePublicDashboard(ctx context.Context, dashboardUid, accessToken string) error
+	DeletePublicDashboard(ctx context.Context, userOrgId int64, dashboardUid, uid string) error
 	PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error)
 	SavePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error
 	UpdatePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error
