@@ -21,10 +21,6 @@ import { useDispatch } from 'app/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { useExternalAmSelector, useExternalDataSourceAlertmanagers } from '../../hooks/useExternalAmSelector';
-import // addExternalAlertmanagersAction,
-// fetchExternalAlertmanagersAction,
-// fetchExternalAlertmanagersConfigAction,
-'../../state/actions';
 
 import { AddAlertManagerModal } from './AddAlertManagerModal';
 import { ExternalAlertmanagerDataSources } from './ExternalAlertmanagerDataSources';
