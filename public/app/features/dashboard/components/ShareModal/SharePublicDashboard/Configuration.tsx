@@ -46,7 +46,7 @@ export const Configuration = ({
               data-testid={selectors.EnableAnnotationsSwitch}
               value={isAnnotationsEnabled}
               onChange={() => {
-                reportInteraction('grafana_dashboards_annotations_toggled', {
+                reportInteraction('grafana_dashboards_annotations_clicked', {
                   action: isAnnotationsEnabled ? 'disable' : 'enable',
                 });
                 onToggleAnnotations();
