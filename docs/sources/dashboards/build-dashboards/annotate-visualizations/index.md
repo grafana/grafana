@@ -28,9 +28,9 @@ Grafana comes with a native annotation store and the ability to add annotation e
 
 1. In the dashboard click on the Time series panel. A context menu will appear.
 1. In the context menu click on **Add annotation**.
-   ![Add annotation context menu](/static/img/docs/time-series-panel/time-series-annotations-context-menu.png)
+   <!--![Add annotation context menu](/static/img/docs/time-series-panel/time-series-annotations-context-menu.png)-->
 1. Add an annotation description and tags(optional).
-   ![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-add-annotation.png)
+   <!--![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-add-annotation.png)-->
 1. Click save.
 
 Alternatively, to add an annotation, Ctrl/Cmd+Click on the Time series panel and the Add annotation popover will appear
