@@ -265,7 +265,12 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 				i = timestamp.UnixMilli()
 			}
 			versionInfo.Version = fmt.Sprintf("%d", i+1)
+		}
+		if err := rows.Close(); err != nil {
+			return err
+		}
 
+		if isUpdate {
 			// Clear the labels+refs
 			if _, err := tx.Exec(ctx, "DELETE FROM object_labels WHERE key = ?", key); err != nil {
 				return err
@@ -401,7 +406,7 @@ func (s sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryReq
 	}
 
 	// TODO limiting...
-	query := `SELECT "version","size","etag","updated","updated_by","message" 
+	query := `SELECT "version","size","etag","updated","updated_by","message"
 		FROM object_history
 		WHERE "key"=? ` + page + `
 		ORDER BY "updated" DESC
