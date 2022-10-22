@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	xctx "github.com/grafana/grafana/pkg/infra/x/context"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,7 +36,7 @@ type authenticator struct {
 	OrgService           org.Service
 }
 
-func ProvideAuthenticator(cfg *setting.Cfg, apiKeyService apikey.Service, orgService org.Service, userService user.Service, accessControlService accesscontrol.Service, contextHandler grpccontext.ContextHandler, pluginAuthService jwt.PluginAuthService) Authenticator {
+func ProvideAuthenticator(cfg *setting.Cfg, orgService org.Service, userService user.Service, accessControlService accesscontrol.Service, contextHandler grpccontext.ContextHandler, pluginAuthService jwt.PluginAuthService) Authenticator {
 	return &authenticator{
 		cfg:            cfg,
 		contextHandler: contextHandler,
@@ -107,7 +106,7 @@ func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*use
 	}
 
 	querySignedInUser := user.GetSignedInUserQuery{UserID: userInfo.UserID, OrgID: userInfo.OrgID}
-	signedInUser, err := a.UserService.GetSignedInUser(ctx, &querySignedInUser)
+	signedInUser, err := a.UserService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
 	if err != nil {
 		return nil, err
 	}
