@@ -327,6 +327,94 @@ func TestQuery_ResourceRequest_DescribeAllLogGroups(t *testing.T) {
 		assert.Equal(t, stringsToSuggestData([]string{
 			"group_a", "group_b", "group_c", "group_x", "group_y", "group_z",
 		}), suggestDataResponse)
+
+		firstCall := cli.calls.describeLogGroups[0]
+		secondCall := cli.calls.describeLogGroups[1]
+
+		expectedFirst := &cloudwatchlogs.DescribeLogGroupsInput{
+			Limit: aws.Int64(50),
+		}
+		expectedSecond := &cloudwatchlogs.DescribeLogGroupsInput{
+			Limit:     aws.Int64(50),
+			NextToken: aws.String("foo"),
+		}
+		assert.Equal(t, expectedFirst, firstCall)
+		assert.Equal(t, expectedSecond, secondCall)
+	})
+
+	t.Run("Should call api with LogGroupNamePrefix if passed in resource call", func(t *testing.T) {
+		cli = fakeCWLogsClient{
+			logGroups: []cloudwatchlogs.DescribeLogGroupsOutput{
+				{LogGroups: []*cloudwatchlogs.LogGroup{}},
+			},
+		}
+
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   "/all-log-groups?logGroupNamePrefix=test",
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					ID: 0,
+				},
+				PluginID: "cloudwatch",
+			},
+		}
+		err := executor.CallResource(context.Background(), req, sender)
+
+		require.NoError(t, err)
+		sent := sender.Response
+		require.NotNil(t, sent)
+		require.Equal(t, http.StatusOK, sent.Status)
+
+		assert.Equal(t, []*cloudwatchlogs.DescribeLogGroupsInput{
+			{
+				Limit:              aws.Int64(defaultLogGroupLimit),
+				LogGroupNamePrefix: aws.String("test"),
+			},
+		}, cli.calls.describeLogGroups)
+	})
+
+	t.Run("Should call api without LogGroupNamePrefix an empty string is passed in resource call", func(t *testing.T) {
+		cli = fakeCWLogsClient{
+			logGroups: []cloudwatchlogs.DescribeLogGroupsOutput{
+				{LogGroups: []*cloudwatchlogs.LogGroup{}},
+			},
+		}
+
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   "/all-log-groups?logGroupNamePrefix=",
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					ID: 0,
+				},
+				PluginID: "cloudwatch",
+			},
+		}
+		err := executor.CallResource(context.Background(), req, sender)
+
+		require.NoError(t, err)
+		sent := sender.Response
+		require.NotNil(t, sent)
+		require.Equal(t, http.StatusOK, sent.Status)
+
+		assert.Equal(t, []*cloudwatchlogs.DescribeLogGroupsInput{
+			{
+				Limit: aws.Int64(50),
+			},
+		}, cli.calls.describeLogGroups)
 	})
 }
 
