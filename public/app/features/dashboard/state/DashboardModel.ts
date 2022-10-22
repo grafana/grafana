@@ -1116,7 +1116,7 @@ export class DashboardModel implements TimeModel {
   canAddAnnotations() {
     // When the builtin annotations are disabled, we should not add any in the UI
     const found = this.annotations.list.find((item) => item.builtIn === 1);
-    if (found?.enable === false) {
+    if (found?.enable === false || !this.canEditDashboard()) {
       return false;
     }
 
