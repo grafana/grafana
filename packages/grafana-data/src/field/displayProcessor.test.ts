@@ -408,6 +408,11 @@ describe('Format value', () => {
       expect(processor(1666402869517, 2).text).toEqual('2022-10-21 20:41:09');
     });
 
+    it('should not attempt to trim zeros from dateTimeAsUS', () => {
+      const processor = getDisplayProcessorFromConfig({ unit: 'dateTimeAsUS' }, FieldType.number);
+      expect(processor(1666402869517, 2).text).toEqual('10/21/2022 8:41:09 pm');
+    });
+
     it('should not attempt to trim zeros from locale', () => {
       const processor = getDisplayProcessorFromConfig({ unit: 'locale' }, FieldType.number);
       expect(processor(3500000, 2).text).toEqual('3,500,000');
