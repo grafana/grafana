@@ -42,12 +42,12 @@ func (b *Base) {{ .TitleName }}() *{{ .Name }}.Coremodel {
 }
 {{end}}
 
-func doProvideBase(lib thema.Library) *Base {
+func doProvideBase(rt *thema.Runtime) *Base {
 	var err error
 	reg := &Base{}
 
 {{range .Coremodels }}
-	reg.{{ .Name }}, err = {{ .Name }}.New(lib)
+	reg.{{ .Name }}, err = {{ .Name }}.New(rt)
 	if err != nil {
 		panic(fmt.Sprintf("error while initializing {{ .Name }} coremodel: %s", err))
 	}

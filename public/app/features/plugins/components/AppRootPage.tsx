@@ -60,7 +60,7 @@ export function AppRootPage({ match, queryParams, location }: Props) {
   if (!plugin.root) {
     return (
       <Page navModel={sectionNav ?? getWarningNav('Plugin load error')}>
-        <div>No root app page component found</div>;
+        <div>No root app page component found</div>
       </Page>
     );
   }

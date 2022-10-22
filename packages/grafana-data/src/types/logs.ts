@@ -78,6 +78,7 @@ export interface LogRowModel {
   timeUtc: string;
   uid: string;
   uniqueLabels?: Labels;
+  datasourceType?: string;
 }
 
 export interface LogsModel {

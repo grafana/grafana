@@ -211,5 +211,18 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 }
 
 function getPrettyJSON(obj: any): string {
-  return JSON.stringify(obj, null, 2);
+  let r = '';
+  try {
+    r = JSON.stringify(obj, null, 2);
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.toString().includes('RangeError') || e.toString().includes('allocation size overflow'))
+    ) {
+      appEvents.emit(AppEvents.alertError, [e.toString(), 'Cannot display JSON, the object is too big.']);
+    } else {
+      appEvents.emit(AppEvents.alertError, [e instanceof Error ? e.toString() : e]);
+    }
+  }
+  return r;
 }

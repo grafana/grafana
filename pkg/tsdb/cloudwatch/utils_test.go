@@ -80,39 +80,6 @@ func (m *fakeCWLogsClient) GetLogEventsWithContext(ctx context.Context, input *c
 	}, nil
 }
 
-type fakeCWClient struct {
-	cloudwatchiface.CloudWatchAPI
-	cloudwatch.GetMetricDataOutput
-
-	Metrics        []*cloudwatch.Metric
-	MetricsPerPage int
-
-	callsGetMetricDataWithContext []*cloudwatch.GetMetricDataInput
-}
-
-func (c *fakeCWClient) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
-	c.callsGetMetricDataWithContext = append(c.callsGetMetricDataWithContext, input)
-
-	return &c.GetMetricDataOutput, nil
-}
-
-func (c *fakeCWClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
-	if c.MetricsPerPage == 0 {
-		c.MetricsPerPage = 1000
-	}
-	chunks := chunkSlice(c.Metrics, c.MetricsPerPage)
-
-	for i, metrics := range chunks {
-		response := fn(&cloudwatch.ListMetricsOutput{
-			Metrics: metrics,
-		}, i+1 == len(chunks))
-		if !response {
-			break
-		}
-	}
-	return nil
-}
-
 type fakeCWAnnotationsClient struct {
 	cloudwatchiface.CloudWatchAPI
 	calls annontationsQueryCalls
@@ -217,23 +184,6 @@ func (c fakeCheckHealthClient) DescribeLogGroups(input *cloudwatchlogs.DescribeL
 		return c.describeLogGroups(input)
 	}
 	return nil, nil
-}
-
-func chunkSlice(slice []*cloudwatch.Metric, chunkSize int) [][]*cloudwatch.Metric {
-	var chunks [][]*cloudwatch.Metric
-	for {
-		if len(slice) == 0 {
-			break
-		}
-		if len(slice) < chunkSize {
-			chunkSize = len(slice)
-		}
-
-		chunks = append(chunks, slice[0:chunkSize])
-		slice = slice[chunkSize:]
-	}
-
-	return chunks
 }
 
 func newTestConfig() *setting.Cfg {

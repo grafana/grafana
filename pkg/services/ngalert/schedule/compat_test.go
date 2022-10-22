@@ -276,5 +276,6 @@ func randomState(evalState eval.State) *state.State {
 		LastSentAt:         randomTimeInPast(),
 		Annotations:        make(map[string]string),
 		Labels:             make(map[string]string),
+		Values:             make(map[string]float64),
 	}
 }

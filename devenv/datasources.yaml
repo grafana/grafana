@@ -245,7 +245,7 @@ datasources:
           type: query
           target:
             expr: "{ job=\"test\" }"
-          field: "labels"
+          field: "traceID"
     jsonData:
       manageAlerts: false
       derivedFields:

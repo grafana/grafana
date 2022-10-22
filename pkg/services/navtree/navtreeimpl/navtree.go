@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -33,6 +34,7 @@ type ServiceImpl struct {
 	accesscontrolService ac.Service
 	kvStore              kvstore.KVStore
 	apiKeyService        apikey.Service
+	queryLibraryService  querylibrary.HTTPService
 
 	// Navigation
 	navigationAppConfig     map[string]NavigationAppConfig
@@ -44,7 +46,7 @@ type NavigationAppConfig struct {
 	SortWeight int64
 }
 
-func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore plugins.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service) navtree.Service {
+func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore plugins.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service, queryLibraryService querylibrary.HTTPService) navtree.Service {
 	service := &ServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("navtree service"),
@@ -57,6 +59,7 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 		accesscontrolService: accesscontrolService,
 		kvStore:              kvStore,
 		apiKeyService:        apiKeyService,
+		queryLibraryService:  queryLibraryService,
 	}
 
 	service.readNavigationSettings()
@@ -88,7 +91,9 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 			Children:       starredItemsLinks,
 			EmptyMessageId: "starred-empty",
 		})
+	}
 
+	if hasAccess(ac.ReqSignedIn, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(dashboards.ActionDashboardsCreate))) {
 		dashboardChildLinks := s.buildDashboardNavLinks(c, hasEditPerm)
 
 		dashboardLink := &navtree.NavLink{
@@ -118,6 +123,18 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 			SortWeight: navtree.WeightExplore,
 			Section:    navtree.NavSectionCore,
 			Url:        s.cfg.AppSubURL + "/explore",
+		})
+	}
+
+	if !s.queryLibraryService.IsDisabled() {
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:       "Query Library",
+			Id:         "query",
+			SubTitle:   "Store, import, export and manage your team queries in an easy way.",
+			Icon:       "file-search-alt",
+			SortWeight: navtree.WeightQueryLibrary,
+			Section:    navtree.NavSectionCore,
+			Url:        s.cfg.AppSubURL + "/query-library",
 		})
 	}
 
@@ -366,6 +383,15 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 			Url:      s.cfg.AppSubURL + "/library-panels",
 			Icon:     "library-panel",
 		})
+
+		if s.features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text: "Public dashboards",
+				Id:   "dashboards/public",
+				Url:  s.cfg.AppSubURL + "/dashboard/public",
+				Icon: "library-panel",
+			})
+		}
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagScenes) {
@@ -520,19 +546,11 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 	})
 
 	children = append(children, &navtree.NavLink{
-		Id:       baseId + "-plugins",
-		Text:     "Plugins",
+		Id:       baseId + "-connect-data",
+		Text:     "Connect Data",
 		Icon:     "plug",
-		SubTitle: "Manage plugins",
-		Url:      baseUrl + "/plugins",
-	})
-
-	children = append(children, &navtree.NavLink{
-		Id:       baseId + "-cloud-integrations",
-		Text:     "Cloud integrations",
-		Icon:     "bolt",
-		SubTitle: "Manage your cloud integrations",
-		Url:      baseUrl + "/cloud-integrations",
+		SubTitle: "Manage data sources",
+		Url:      baseUrl + "/connect-data",
 	})
 
 	navLink = &navtree.NavLink{

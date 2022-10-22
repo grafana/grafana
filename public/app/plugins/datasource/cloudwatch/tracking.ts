@@ -2,8 +2,16 @@ import { DashboardLoadedEvent } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
 import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
+import { migrateMetricQuery } from './migrations/metricQueryMigrations';
 import pluginJson from './plugin.json';
-import { CloudWatchMetricsQuery, CloudWatchQuery, MetricEditorMode, MetricQueryType } from './types';
+import {
+  CloudWatchLogsQuery,
+  CloudWatchMetricsQuery,
+  CloudWatchQuery,
+  MetricEditorMode,
+  MetricQueryType,
+} from './types';
+import { filterMetricsQuery } from './utils/utils';
 
 interface CloudWatchOnDashboardLoadedTrackingEvent {
   grafana_version?: string;
@@ -56,8 +64,21 @@ export const onDashboardLoadedHandler = ({
       return;
     }
 
-    const logsQueries = cloudWatchQueries.filter(isCloudWatchLogsQuery);
-    const metricsQueries = cloudWatchQueries.filter(isCloudWatchMetricsQuery);
+    let logsQueries: CloudWatchLogsQuery[] = [];
+    let metricsQueries: CloudWatchMetricsQuery[] = [];
+
+    for (const query of cloudWatchQueries) {
+      if (query.hide) {
+        continue;
+      }
+
+      if (isCloudWatchLogsQuery(query)) {
+        query.logGroupNames?.length && logsQueries.push(query);
+      } else if (isCloudWatchMetricsQuery(query)) {
+        const migratedQuery = migrateMetricQuery(query);
+        filterMetricsQuery(migratedQuery) && metricsQueries.push(query);
+      }
+    }
 
     const e: CloudWatchOnDashboardLoadedTrackingEvent = {
       grafana_version: grafanaVersion,

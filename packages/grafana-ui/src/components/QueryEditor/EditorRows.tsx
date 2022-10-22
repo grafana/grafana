@@ -4,7 +4,7 @@ import { Stack } from './Stack';
 
 interface EditorRowsProps {}
 
-export const EditorRows: React.FC<EditorRowsProps> = ({ children }) => {
+export const EditorRows = ({ children }: React.PropsWithChildren<EditorRowsProps>) => {
   return (
     <Stack gap={0.5} direction="column">
       {children}

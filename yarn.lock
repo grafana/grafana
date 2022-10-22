@@ -5258,7 +5258,7 @@ __metadata:
     marked: 4.1.0
     moment: 2.29.4
     moment-timezone: 0.5.35
-    ol: 6.15.1
+    ol: 7.1.0
     papaparse: 5.3.2
     react: 17.0.2
     react-dom: 17.0.2
@@ -5667,7 +5667,7 @@ __metadata:
     mock-raf: 1.0.1
     moment: 2.29.4
     monaco-editor: 0.34.0
-    ol: 6.15.1
+    ol: 7.1.0
     prismjs: 1.29.0
     process: ^0.11.10
     rc-cascader: 3.7.0
@@ -19658,6 +19658,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"earcut@npm:^2.2.3":
+  version: 2.2.4
+  resolution: "earcut@npm:2.2.4"
+  checksum: aea0466cb2f24e0c3c57148d8d28ac9846f53c4f43ee66780826474303ac851b305ef988152d0bdeb31e8f7ca939dc0df737e7505cfb1c1bdf2ff9d7f9ea2faa
+  languageName: node
+  linkType: hard
+
 "eastasianwidth@npm:^0.2.0":
   version: 0.2.0
   resolution: "eastasianwidth@npm:0.2.0"
@@ -23410,8 +23417,8 @@ __metadata:
     mutationobserver-shim: 0.3.7
     ngtemplate-loader: 2.1.0
     node-notifier: 10.0.1
-    ol: 6.15.1
-    ol-ext: 3.2.28
+    ol: 7.1.0
+    ol-ext: 4.0.2
     papaparse: 5.3.2
     pluralize: ^8.0.0
     postcss: 8.4.14
@@ -30811,34 +30818,35 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-ext@npm:3.2.28":
-  version: 3.2.28
-  resolution: "ol-ext@npm:3.2.28"
+"ol-ext@npm:4.0.2":
+  version: 4.0.2
+  resolution: "ol-ext@npm:4.0.2"
   peerDependencies:
     ol: ">= 5.3.0"
-  checksum: 8738031b7499a6af343bf15bc8eb01025d0136078c7ccf5cf482f5fc8d8921b811b19c3b3f1fdc0ad4cf6269dc3c355cd1066e87cb30195122aa4f1546883595
+  checksum: f7c53fd04dac442c704943585b0a4259bbe92a9c5ad6a514eea191193fc33891a1adf5709db383953aef3600d76eaf77bbd326e5d66f2ca7f782ec33a9db45da
   languageName: node
   linkType: hard
 
-"ol-mapbox-style@npm:^8.0.5":
-  version: 8.2.0
-  resolution: "ol-mapbox-style@npm:8.2.0"
+"ol-mapbox-style@npm:9.1.0":
+  version: 9.1.0
+  resolution: "ol-mapbox-style@npm:9.1.0"
   dependencies:
     "@mapbox/mapbox-gl-style-spec": ^13.23.1
     mapbox-to-css-font: ^2.4.1
-  checksum: a1bb0a8789e86cba4f1577c22b22add94bc8504a38df2625f1ee40b6bdacb515bfd574ecb738e72af54e2ca9a58764ca25386f931bb76f8b978280a5623b97b6
+  checksum: 587a41456b76e1bd592b7594c288661ee8c651e9f1cd038a53ff5c01654b68081911088a6feba6ee3ac133f34072d629f171dbf35cd2f13dab3908d519268978
   languageName: node
   linkType: hard
 
-"ol@npm:6.15.1":
-  version: 6.15.1
-  resolution: "ol@npm:6.15.1"
+"ol@npm:7.1.0":
+  version: 7.1.0
+  resolution: "ol@npm:7.1.0"
   dependencies:
+    earcut: ^2.2.3
     geotiff: 2.0.4
-    ol-mapbox-style: ^8.0.5
+    ol-mapbox-style: 9.1.0
     pbf: 3.2.1
     rbush: ^3.0.1
-  checksum: 61199a0cfd11830919861f92cc7dcd50f94077972cd5777691834186991cfc0f59da69a5c35281047c64a8e0b857a228cc37e663b5579c93b5fb08d2eb0f4b4d
+  checksum: 0935be63be953d29e142ea38191e0161c58ec75375bd60640f7e54c4c831dd5d0401c55f4144ede159e90c0bb3c3e6bc7a71c1f82e640208df6dfc9325da5abd
   languageName: node
   linkType: hard
 

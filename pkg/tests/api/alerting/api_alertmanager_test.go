@@ -239,13 +239,11 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "editor request should succeed",
 				url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusAccepted,
-				expBody:   `{"id":"0","message":"silence created"}`,
 			},
 			{
 				desc:      "admin request should succeed",
 				url:       "http://admin:admin@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusAccepted,
-				expBody:   `{"id":"0","message":"silence created"}`,
 			},
 		}
 
@@ -263,8 +261,10 @@ func TestAMConfigAccess(t *testing.T) {
 				b, err := io.ReadAll(resp.Body)
 				require.NoError(t, err)
 				if tc.expStatus == http.StatusAccepted {
-					re := regexp.MustCompile(`"id":"([\w|-]+)"`)
-					b = re.ReplaceAll(b, []byte(`"id":"0"`))
+					response := apimodels.PostSilencesOKBody{}
+					require.NoError(t, json.Unmarshal(b, &response))
+					require.NotEmpty(t, response.SilenceID)
+					return
 				}
 				require.Contains(t, string(b), tc.expBody)
 			})

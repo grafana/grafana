@@ -8,8 +8,8 @@ import { setPanelInstanceState } from '../../panel/state/reducers';
 import { DashboardModel, PanelModel } from '../state';
 
 import { LazyLoader } from './LazyLoader';
-import { PanelChrome } from './PanelChrome';
 import { PanelChromeAngular } from './PanelChromeAngular';
+import { PanelStateWrapper } from './PanelStateWrapper';
 
 export interface OwnProps {
   panel: PanelModel;
@@ -86,7 +86,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
           height={height}
         />
       ) : (
-        <PanelChrome
+        <PanelStateWrapper
           plugin={plugin}
           panel={panel}
           dashboard={dashboard}

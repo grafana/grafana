@@ -31,10 +31,10 @@ export interface VizTooltipContentProps<T extends Dimensions = any> {
 
 export interface VizTooltipProps {
   /** Element used as tooltips content */
-  content?: React.ReactElement<any>;
+  content?: React.ReactElement;
 
   /** Optional component to be used as a tooltip content */
-  tooltipComponent?: React.ComponentType<VizTooltipContentProps>;
+  tooltipComponent?: React.ComponentType<React.PropsWithChildren<VizTooltipContentProps>>;
 
   /** x/y position relative to the window */
   position?: { x: number; y: number };
@@ -51,7 +51,7 @@ export interface VizTooltipProps {
 /**
  * @public
  */
-export const VizTooltip: React.FC<VizTooltipProps> = ({ content, position, offset }) => {
+export const VizTooltip = ({ content, position, offset }: VizTooltipProps) => {
   const styles = useStyles(getStyles);
   if (position) {
     return (

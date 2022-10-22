@@ -66,8 +66,16 @@ export interface FeatureToggles {
   internationalization?: boolean;
   topnav?: boolean;
   grpcServer?: boolean;
+  objectStore?: boolean;
   traceqlEditor?: boolean;
+  flameGraph?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   increaseInMemDatabaseQueryCache?: boolean;
+  interFont?: boolean;
+  newPanelChromeUI?: boolean;
+  queryLibrary?: boolean;
+  showDashboardValidationWarnings?: boolean;
+  mysqlAnsiQuotes?: boolean;
+  accessControlOnCall?: boolean;
 }

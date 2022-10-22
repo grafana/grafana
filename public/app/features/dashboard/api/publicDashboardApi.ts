@@ -38,6 +38,7 @@ export const publicDashboardApi = createApi({
         method: 'POST',
         data: params.payload,
       }),
+      extraOptions: { maxRetries: 0 },
       async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
         dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));

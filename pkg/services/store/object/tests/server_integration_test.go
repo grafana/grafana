@@ -122,7 +122,7 @@ func TestObjectServer(t *testing.T) {
 
 	fakeUser := fmt.Sprintf("user:%d:%s", testCtx.user.UserID, testCtx.user.Login)
 	firstVersion := "1"
-	kind := "dashboard"
+	kind := "dummy"
 	uid := "my-test-entity"
 	body := []byte("{\"name\":\"John\"}")
 
@@ -348,7 +348,7 @@ func TestObjectServer(t *testing.T) {
 			version = append(version, res.Version)
 		}
 		require.Equal(t, []string{"my-test-entity", "uid2", "uid3", "uid4"}, uids)
-		require.Equal(t, []string{"dashboard", "dashboard", "kind2", "kind2"}, kinds)
+		require.Equal(t, []string{"dummy", "dummy", "kind2", "kind2"}, kinds)
 		require.Equal(t, []string{
 			w1.Object.Version,
 			w2.Object.Version,
@@ -370,7 +370,7 @@ func TestObjectServer(t *testing.T) {
 			version = append(version, res.Version)
 		}
 		require.Equal(t, []string{"my-test-entity", "uid2"}, uids)
-		require.Equal(t, []string{"dashboard", "dashboard"}, kinds)
+		require.Equal(t, []string{"dummy", "dummy"}, kinds)
 		require.Equal(t, []string{
 			w1.Object.Version,
 			w2.Object.Version,

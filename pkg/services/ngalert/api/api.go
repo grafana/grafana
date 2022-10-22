@@ -50,7 +50,7 @@ type Alertmanager interface {
 	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
 
 	// Receivers
-	GetReceivers(ctx context.Context) apimodels.Receivers
+	GetReceivers(ctx context.Context) []apimodels.Receiver
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
 }
 

@@ -13,6 +13,7 @@ import {
   GrafanaTheme2,
   outerJoinDataFrames,
   reduceField,
+  TimeZone,
   VizOrientation,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
@@ -54,6 +55,7 @@ function getBarCharScaleOrientation(orientation: VizOrientation) {
 export interface BarChartOptionsEX extends PanelOptions {
   rawValue: (seriesIdx: number, valueIdx: number) => number | null;
   getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
+  timeZone?: TimeZone;
   fillOpacity?: number;
 }
 
@@ -75,6 +77,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   xTickLabelMaxLength,
   xTickLabelSpacing = 0,
   legend,
+  timeZone,
 }) => {
   const builder = new UPlotConfigBuilder();
   const defaultValueFormatter = (seriesIdx: number, value: any) => {
@@ -103,6 +106,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     getColor,
     fillOpacity,
     formatValue,
+    timeZone,
     text,
     showValue,
     legend,
@@ -151,6 +155,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     label: frame.fields[0].config.custom?.axisLabel,
     splits: config.xSplits,
     values: config.xValues,
+    timeZone,
     grid: { show: false },
     ticks: { show: false },
     gap: 15,

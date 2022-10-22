@@ -46,7 +46,7 @@ export const defaultQuery: (dataSource: CloudMonitoringDatasource) => MetricQuer
   metricType: '',
   metricKind: MetricKind.GAUGE,
   valueType: '',
-  crossSeriesReducer: 'REDUCE_MEAN',
+  crossSeriesReducer: 'REDUCE_NONE',
   alignmentPeriod: 'cloud-monitoring-auto',
   perSeriesAligner: AlignmentTypes.ALIGN_MEAN,
   groupBys: [],
