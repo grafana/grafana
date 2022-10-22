@@ -19,9 +19,9 @@ import (
 // 3. Use the object store for all read operations
 // This givs us a safe test bed to work with the store but still roll back without any lost work
 type objectStoreImpl struct {
-	sess   *session.SessionDB
-	backup *Service
-	server object.ObjectStoreServer
+	sess        *session.SessionDB
+	sqlimpl     *Service
+	objectstore object.ObjectStoreServer
 }
 
 var _ playlist.Service = &objectStoreImpl{}
@@ -48,7 +48,7 @@ func (s *objectStoreImpl) sync() {
 			return
 		}
 
-		dto, err := s.backup.Get(ctx, &playlist.GetPlaylistByUidQuery{
+		dto, err := s.sqlimpl.Get(ctx, &playlist.GetPlaylistByUidQuery{
 			OrgId: rowUser.OrgID,
 			UID:   uid,
 		})
@@ -57,7 +57,7 @@ func (s *objectStoreImpl) sync() {
 			return
 		}
 		body, _ := json.Marshal(dto)
-		_, _ = s.server.Write(ctx, &object.WriteObjectRequest{
+		_, _ = s.objectstore.Write(ctx, &object.WriteObjectRequest{
 			UID:  uid,
 			Kind: models.StandardKindPlaylist,
 			Body: body,
@@ -66,13 +66,13 @@ func (s *objectStoreImpl) sync() {
 }
 
 func (s *objectStoreImpl) Create(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
-	rsp, err := s.backup.store.Insert(ctx, cmd)
+	rsp, err := s.sqlimpl.store.Insert(ctx, cmd)
 	if err == nil && rsp != nil {
 		body, err := json.Marshal(cmd)
 		if err != nil {
 			return rsp, fmt.Errorf("unable to write playlist to store")
 		}
-		_, err = s.server.Write(ctx, &object.WriteObjectRequest{
+		_, err = s.objectstore.Write(ctx, &object.WriteObjectRequest{
 			UID:  rsp.UID,
 			Kind: models.StandardKindPlaylist,
 			Body: body,
@@ -85,13 +85,13 @@ func (s *objectStoreImpl) Create(ctx context.Context, cmd *playlist.CreatePlayli
 }
 
 func (s *objectStoreImpl) Update(ctx context.Context, cmd *playlist.UpdatePlaylistCommand) (*playlist.PlaylistDTO, error) {
-	rsp, err := s.backup.store.Update(ctx, cmd)
+	rsp, err := s.sqlimpl.store.Update(ctx, cmd)
 	if err == nil {
 		body, err := json.Marshal(cmd)
 		if err != nil {
 			return rsp, fmt.Errorf("unable to write playlist to store")
 		}
-		_, err = s.server.Write(ctx, &object.WriteObjectRequest{
+		_, err = s.objectstore.Write(ctx, &object.WriteObjectRequest{
 			UID:  rsp.Uid,
 			Kind: models.StandardKindPlaylist,
 			Body: body,
@@ -104,9 +104,9 @@ func (s *objectStoreImpl) Update(ctx context.Context, cmd *playlist.UpdatePlayli
 }
 
 func (s *objectStoreImpl) Delete(ctx context.Context, cmd *playlist.DeletePlaylistCommand) error {
-	err := s.backup.store.Delete(ctx, cmd)
+	err := s.sqlimpl.store.Delete(ctx, cmd)
 	if err == nil {
-		_, err = s.server.Delete(ctx, &object.DeleteObjectRequest{
+		_, err = s.objectstore.Delete(ctx, &object.DeleteObjectRequest{
 			UID:  cmd.UID,
 			Kind: models.StandardKindPlaylist,
 		})
@@ -135,7 +135,7 @@ func (s *objectStoreImpl) GetWithoutItems(ctx context.Context, q *playlist.GetPl
 }
 
 func (s *objectStoreImpl) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.PlaylistDTO, error) {
-	rsp, err := s.server.Read(ctx, &object.ReadObjectRequest{
+	rsp, err := s.objectstore.Read(ctx, &object.ReadObjectRequest{
 		UID:      q.UID,
 		Kind:     models.StandardKindPlaylist,
 		WithBody: true,
@@ -156,7 +156,7 @@ func (s *objectStoreImpl) Get(ctx context.Context, q *playlist.GetPlaylistByUidQ
 func (s *objectStoreImpl) Search(ctx context.Context, q *playlist.GetPlaylistsQuery) (playlist.Playlists, error) {
 	playlists := make(playlist.Playlists, 0)
 
-	rsp, err := s.server.Search(ctx, &object.ObjectSearchRequest{
+	rsp, err := s.objectstore.Search(ctx, &object.ObjectSearchRequest{
 		Kind:     []string{models.StandardKindPlaylist},
 		WithBody: true,
 		Limit:    1000,

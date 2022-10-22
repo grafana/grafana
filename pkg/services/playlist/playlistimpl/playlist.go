@@ -33,9 +33,9 @@ func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver obje
 	// FlagObjectStore is only supported in development mode
 	if toggles.IsEnabled(featuremgmt.FlagObjectStore) {
 		impl := &objectStoreImpl{
-			backup: svc,
-			server: objserver,
-			sess:   db.GetSqlxSession(),
+			sqlimpl:     svc,
+			objectstore: objserver,
+			sess:        db.GetSqlxSession(),
 		}
 		impl.sync() // load everythign from the existing SQL setup into the new object store
 		return impl
