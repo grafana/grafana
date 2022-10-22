@@ -10,6 +10,7 @@ const (
 	StandardKindDashboard = "dashboard"
 	StandardKindPlaylist  = "playlist"
 	StandardKindFolder    = "folder"
+	StandardKindSnapshot  = "snapshot" // dashboard with all embedded data
 
 	// StandardKindDataSource: not a real kind yet, but used to define references from dashboards
 	// Types: influx, prometheus, testdata, ...

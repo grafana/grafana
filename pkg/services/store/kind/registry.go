@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind/geojson"
 	"github.com/grafana/grafana/pkg/services/store/kind/playlist"
 	"github.com/grafana/grafana/pkg/services/store/kind/png"
+	"github.com/grafana/grafana/pkg/services/store/kind/snapshot"
 	"github.com/grafana/grafana/pkg/services/store/kind/svg"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -37,6 +38,10 @@ func NewKindRegistry() KindRegistry {
 	kinds[models.StandardKindFolder] = &kindValues{
 		info:    folder.GetObjectKindInfo(),
 		builder: folder.GetObjectSummaryBuilder(),
+	}
+	kinds[models.StandardKindSnapshot] = &kindValues{
+		info:    snapshot.GetObjectKindInfo(),
+		builder: snapshot.GetObjectSummaryBuilder(),
 	}
 	kinds[models.StandardKindPNG] = &kindValues{
 		info:    png.GetObjectKindInfo(),
