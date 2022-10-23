@@ -35,8 +35,8 @@ export function LabelFilterItem({
     isLoadingLabelValues?: boolean;
   }>({});
 
-  const isMultiSelect = () => {
-    return operators.find((op) => op.label === item.op)?.isMultiValue;
+  const isMultiSelect = (operator = item.op) => {
+    return operators.find((op) => op.label === operator)?.isMultiValue;
   };
 
   const getSelectOptionsFromString = (item?: string): string[] => {
@@ -93,7 +93,11 @@ export function LabelFilterItem({
           width="auto"
           onChange={(change) => {
             if (change.value != null) {
-              onChange({ ...item, op: change.value } as any as QueryBuilderLabelFilter);
+              onChange({
+                ...item,
+                op: change.value,
+                value: isMultiSelect(change.value) ? item.value : getSelectOptionsFromString(item?.value)[0],
+              } as any as QueryBuilderLabelFilter);
             }
           }}
         />
