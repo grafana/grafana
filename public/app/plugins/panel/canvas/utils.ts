@@ -1,7 +1,7 @@
 import { AppEvents, PluginState, SelectableValue } from '@grafana/data/src';
+import { hasAlphaPanels } from 'app/core/config';
 
 import appEvents from '../../../core/app_events';
-import { hasAlphaPanels } from '../../../core/config';
 import { advancedElementItems, CanvasElementItem, defaultElementItems } from '../../../features/canvas';
 import { ElementState } from '../../../features/canvas/runtime/element';
 import { FrameState } from '../../../features/canvas/runtime/frame';
@@ -43,29 +43,29 @@ export function getElementTypesOptions(
   items: Array<CanvasElementItem<any>>,
   current: string | undefined
 ): RegistrySelectInfo {
-  const opt: RegistrySelectInfo = { options: [], current: [] };
+  const selectables: RegistrySelectInfo = { options: [], current: [] };
   const alpha: Array<SelectableValue<string>> = [];
 
   for (const item of items) {
-    const opt: SelectableValue<string> = { label: item.name, value: item.id, description: item.description };
+    const option: SelectableValue<string> = { label: item.name, value: item.id, description: item.description };
     if (item.state === PluginState.alpha) {
       if (!hasAlphaPanels) {
         continue;
       }
-      opt.label = `${item.name} (Alpha)`;
-      alpha.push(opt);
+      option.label = `${item.name} (Alpha)`;
+      alpha.push(option);
     } else {
-      opt.options.push(opt);
+      selectables.options.push(option);
     }
 
     if (item.id === current) {
-      opt.current.push(opt);
+      selectables.current.push(option);
     }
   }
 
   for (const a of alpha) {
-    opt.options.push(a);
+    selectables.options.push(a);
   }
 
-  return opt;
+  return selectables;
 }
