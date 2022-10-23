@@ -368,12 +368,12 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 }
 
 func (s sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
-	modifier := store.UserFromContext(ctx)
-	key := fmt.Sprintf("%d/%s.%s", modifier.OrgID, r.UID, r.Kind)
+	route, err := s.getRouteInfo(ctx, r.Kind, r.UID)
+	key := route.Key
 
 	rsp := &object.DeleteObjectResponse{}
-	err := s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		results, err := tx.Exec(ctx, `DELETE FROM object key=?`, key)
+	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
+		results, err := tx.Exec(ctx, `DELETE FROM object WHERE key=?`, key)
 		if err != nil {
 			return err
 		}
@@ -386,9 +386,9 @@ func (s sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectReque
 		}
 
 		// TODO: keep history? would need current version bump, and the "write" would have to get from history
-		_, _ = tx.Exec(ctx, `DELETE FROM object_history key=?`, key)
-		_, _ = tx.Exec(ctx, `DELETE FROM object_labels key=?`, key)
-		_, _ = tx.Exec(ctx, `DELETE FROM object_ref key=?`, key)
+		_, _ = tx.Exec(ctx, `DELETE FROM object_history WHERE key=?`, key)
+		_, _ = tx.Exec(ctx, `DELETE FROM object_labels WHERE key=?`, key)
+		_, _ = tx.Exec(ctx, `DELETE FROM object_ref WHERE key=?`, key)
 		return nil
 	})
 	return rsp, err
