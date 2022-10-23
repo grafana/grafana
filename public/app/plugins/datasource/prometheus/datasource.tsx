@@ -642,10 +642,14 @@ export class PrometheusDatasource
       data['timeout'] = this.queryTimeout;
     }
 
-    return this._request<PromDataSuccessResponse<PromVectorData | PromScalarData>>(url, data, {
-      requestId: query.requestId,
-      headers: query.headers,
-    }).pipe(
+    return this._request<PromDataSuccessResponse<PromVectorData | PromScalarData>>(
+      `/api/datasources/${this.id}/resources${url}`,
+      data,
+      {
+        requestId: query.requestId,
+        headers: query.headers,
+      }
+    ).pipe(
       catchError((err: FetchError<PromDataErrorResponse<PromVectorData | PromScalarData>>) => {
         if (err.cancelled) {
           return of(err);

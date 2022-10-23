@@ -18,6 +18,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/extensions"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -79,7 +80,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 func SetUpDatabase(t *testing.T, grafDir string) *sqlstore.SQLStore {
 	t.Helper()
 
-	sqlStore := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{
 		EnsureDefaultOrgAndUser: true,
 	})
 

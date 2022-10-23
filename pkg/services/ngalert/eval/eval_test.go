@@ -445,8 +445,9 @@ func TestValidate(t *testing.T) {
 			condition := testCase.condition(cacheService)
 
 			evaluator := NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, log.New("test"), cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil))
+			evalCtx := Context(context.Background(), u)
 
-			err := evaluator.Validate(context.Background(), u, condition)
+			err := evaluator.Validate(evalCtx, condition)
 			if testCase.error {
 				require.Error(t, err)
 			} else {

@@ -1,36 +1,20 @@
-import i18n, { BackendModule, ResourceKey } from 'i18next';
+import i18n, { BackendModule } from 'i18next';
 import React from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
-import {
-  DEFAULT_LOCALE,
-  ENGLISH_US,
-  FRENCH_FRANCE,
-  SPANISH_SPAIN,
-  PSEUDO_LOCALE,
-  VALID_LOCALES,
-  CHINESE_SIMPLIFIED,
-} from './constants';
-
-const messageLoaders: Record<string, () => Promise<ResourceKey>> = {
-  // English phrases are the default fallback string in the source, so we don't need to load the catalogue
-  [ENGLISH_US]: () => Promise.resolve({}),
-  [FRENCH_FRANCE]: () => import('../../../locales/fr-FR/grafana.json'),
-  [SPANISH_SPAIN]: () => import('../../../locales/es-ES/grafana.json'),
-  [CHINESE_SIMPLIFIED]: () => import('../../../locales/zh-Hans/grafana.json'),
-  [PSEUDO_LOCALE]: () => import('../../../locales/pseudo-LOCALE/grafana.json'),
-};
+import { DEFAULT_LOCALE, LOCALES, VALID_LOCALES } from './constants';
 
 const loadTranslations: BackendModule = {
   type: 'backend',
   init() {},
   async read(language, namespace, callback) {
-    const loader = messageLoaders[language];
-    if (!loader) {
+    const localeDef = LOCALES.find((v) => v.code === language);
+
+    if (!localeDef) {
       return callback(new Error('No message loader available for ' + language), null);
     }
 
-    const messages = await loader();
+    const messages = await localeDef.loader();
     callback(null, messages);
   },
 };

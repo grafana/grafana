@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -24,7 +25,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 	var dashboardStore *DashboardStore
 
 	setup := func(t *testing.T) {
-		sqlStore = sqlstore.InitTestDB(t)
+		sqlStore = db.InitTestDB(t)
 		dashboardStore = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		currentUser = createUser(t, sqlStore, "viewer", "Viewer", false)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
@@ -237,7 +238,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 	t.Run("Default permissions for root folder dashboards", func(t *testing.T) {
 		setup(t)
 		var rootFolderId int64 = 0
-		//sqlStore := sqlstore.InitTestDB(t)
+		//sqlStore := db.InitTestDB(t)
 
 		query := models.GetDashboardACLInfoListQuery{DashboardID: rootFolderId, OrgID: 1}
 

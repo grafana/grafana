@@ -20,7 +20,7 @@ interface LogRowContextProps {
   errors?: LogRowContextQueryErrors;
   hasMoreContextRows?: HasMoreContextRows;
   logsSortOrder?: LogsSortOrder | null;
-  onOutsideClick: () => void;
+  onOutsideClick: (method: string) => void;
   onLoadMoreContext: () => void;
 }
 
@@ -290,21 +290,21 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
 }) => {
   useEffect(() => {
     const handleEscKeyDown = (e: KeyboardEvent): void => {
-      if (e.keyCode === 27) {
-        onOutsideClick();
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        onOutsideClick('close_esc');
       }
     };
     document.addEventListener('keydown', handleEscKeyDown, false);
     return () => {
       document.removeEventListener('keydown', handleEscKeyDown, false);
     };
-  }, [onOutsideClick]);
+  }, [onOutsideClick, row]);
   const { afterContext, beforeContext, title, top, actions, width } = useStyles2((theme) =>
     getLogRowContextStyles(theme, wrapLogMessage)
   );
 
   return (
-    <ClickOutsideWrapper onClick={onOutsideClick}>
+    <ClickOutsideWrapper onClick={() => onOutsideClick('close_outside_click')}>
       {/* e.stopPropagation is necessary so the log details doesn't open when clicked on log line in context
        * and/or when context log line is being highlighted */}
       <div onClick={(e) => e.stopPropagation()}>
@@ -337,7 +337,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
         <div className={cx(title, width)}>
           <h5>Log context</h5>
           <div className={actions}>
-            <IconButton size="lg" name="times" onClick={onOutsideClick} />
+            <IconButton size="lg" name="times" onClick={() => onOutsideClick('close_button')} />
           </div>
         </div>
       </div>

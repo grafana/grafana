@@ -147,7 +147,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		image := models.Image{Path: screenshot.Path}
 		if s.uploads != nil {
 			if image, err = s.uploads.Upload(ctx, image); err != nil {
-				s.logger.Warn("failed to upload image", "path", image.Path, "err", err)
+				s.logger.Warn("failed to upload image", "path", image.Path, "error", err)
 			}
 		}
 		if err := s.store.SaveImage(ctx, &image); err != nil {
