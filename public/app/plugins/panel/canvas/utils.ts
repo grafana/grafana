@@ -1,7 +1,8 @@
-import { AppEvents } from '@grafana/data/src';
+import { AppEvents, PluginState, SelectableValue } from '@grafana/data/src';
 
 import appEvents from '../../../core/app_events';
-import { CanvasElementItem, canvasElementRegistry, defaultElementItems } from '../../../features/canvas';
+import { hasAlphaPanels } from '../../../core/config';
+import { advancedElementItems, CanvasElementItem, defaultElementItems } from '../../../features/canvas';
 import { ElementState } from '../../../features/canvas/runtime/element';
 import { FrameState } from '../../../features/canvas/runtime/frame';
 import { Scene, SelectionParams } from '../../../features/canvas/runtime/scene';
@@ -25,13 +26,46 @@ export function doSelect(scene: Scene, element: ElementState | FrameState) {
   }
 }
 
-export function getElementTypes(
-  shouldShowAdvancedTypes: boolean | undefined,
-  current: string[] | undefined = undefined
-) {
-  return shouldShowAdvancedTypes
-    ? canvasElementRegistry.selectOptions(current, (elementItem) => elementItem.id !== 'button').options
-    : canvasElementRegistry.selectOptions(current, (elementItem: CanvasElementItem<any, any>) => {
-        return !!defaultElementItems.filter((item) => item.id === elementItem.id).length;
-      }).options;
+export function getElementTypes(shouldShowAdvancedTypes: boolean | undefined, current?: string): RegistrySelectInfo {
+  if (shouldShowAdvancedTypes) {
+    return getElementTypesOptions([...defaultElementItems, ...advancedElementItems], current);
+  }
+
+  return getElementTypesOptions([...defaultElementItems], current);
+}
+
+interface RegistrySelectInfo {
+  options: Array<SelectableValue<string>>;
+  current: Array<SelectableValue<string>>;
+}
+
+export function getElementTypesOptions(
+  items: Array<CanvasElementItem<any>>,
+  current: string | undefined
+): RegistrySelectInfo {
+  const opt: RegistrySelectInfo = { options: [], current: [] };
+  const alpha: Array<SelectableValue<string>> = [];
+
+  for (const item of items) {
+    const opt: SelectableValue<string> = { label: item.name, value: item.id, description: item.description };
+    if (item.state === PluginState.alpha) {
+      if (!hasAlphaPanels) {
+        continue;
+      }
+      opt.label = `${item.name} (Alpha)`;
+      alpha.push(opt);
+    } else {
+      opt.options.push(opt);
+    }
+
+    if (item.id === current) {
+      opt.current.push(opt);
+    }
+  }
+
+  for (const a of alpha) {
+    opt.options.push(a);
+  }
+
+  return opt;
 }
