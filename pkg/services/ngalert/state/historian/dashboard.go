@@ -27,12 +27,12 @@ type dashboardResolver struct {
 	log          log.Logger
 }
 
-func newDashboardResolver(dbs dashboards.DashboardService, log log.Logger, expiry time.Duration) *dashboardResolver {
+func newDashboardResolver(dbs dashboards.DashboardService, expiry time.Duration) *dashboardResolver {
 	return &dashboardResolver{
 		dashboards:   dbs,
 		cache:        cache.New(expiry, maxDuration(2*expiry, minCleanupInterval)),
 		singleflight: singleflight.Group{},
-		log:          log,
+		log:          log.New("ngalert.dashboard-resolver"),
 	}
 }
 
@@ -48,7 +48,7 @@ func (r *dashboardResolver) getID(ctx context.Context, orgID int64, uid string) 
 	}
 
 	id, err, _ := r.singleflight.Do(key, func() (interface{}, error) {
-		r.log.Debug("dashboard cache miss, querying dashboards", "dashboardUID", uid)
+		r.log.Debug("Dashboard cache miss, querying dashboards", "dashboardUID", uid)
 
 		var result interface{}
 		query := &models.GetDashboardQuery{

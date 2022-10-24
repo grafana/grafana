@@ -13,22 +13,6 @@ import (
 )
 
 func Test_DimensionKeys_Route(t *testing.T) {
-	t.Run("rejects POST method", func(t *testing.T) {
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("POST", "/dimension-keys?region=us-east-1", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionKeysHandler, nil))
-		handler.ServeHTTP(rr, req)
-		assert.Equal(t, http.StatusMethodNotAllowed, rr.Code)
-	})
-
-	t.Run("requires region query value", func(t *testing.T) {
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/dimension-keys", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionKeysHandler, nil))
-		handler.ServeHTTP(rr, req)
-		assert.Equal(t, http.StatusBadRequest, rr.Code)
-	})
-
 	tests := []struct {
 		url         string
 		methodName  string
