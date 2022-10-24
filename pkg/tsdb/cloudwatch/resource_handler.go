@@ -18,12 +18,12 @@ func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/namespaces", handleResourceReq(e.handleGetNamespaces))
 	mux.HandleFunc("/metrics", handleResourceReq(e.handleGetMetrics))
 	mux.HandleFunc("/all-metrics", handleResourceReq(e.handleGetAllMetrics))
-	mux.HandleFunc("/dimension-values", handleResourceReq(e.handleGetDimensionValues))
 	mux.HandleFunc("/ebs-volume-ids", handleResourceReq(e.handleGetEbsVolumeIds))
 	mux.HandleFunc("/ec2-instance-attribute", handleResourceReq(e.handleGetEc2InstanceAttribute))
 	mux.HandleFunc("/resource-arns", handleResourceReq(e.handleGetResourceArns))
 	mux.HandleFunc("/log-groups", handleResourceReq(e.handleGetLogGroups))
 	mux.HandleFunc("/all-log-groups", handleResourceReq(e.handleGetAllLogGroups))
+	mux.HandleFunc("/dimension-values", routes.ResourceRequestMiddleware(routes.DimensionValuesHandler, e.getClients))
 	mux.HandleFunc("/dimension-keys", routes.ResourceRequestMiddleware(routes.DimensionKeysHandler, e.getClients))
 	return mux
 }

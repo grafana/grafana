@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
+	"github.com/stretchr/testify/mock"
 )
 
 type FakeMetricsAPI struct {
@@ -55,4 +56,15 @@ func chunkSlice(slice []*cloudwatch.Metric, chunkSize int) [][]*cloudwatch.Metri
 	}
 
 	return chunks
+}
+
+type MetricsClient struct {
+	cloudwatchiface.CloudWatchAPI
+	mock.Mock
+}
+
+func (m *MetricsClient) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
+	args := m.Called(ctx, input, opts)
+
+	return args.Get(0).(*cloudwatch.GetMetricDataOutput), args.Error(1)
 }
