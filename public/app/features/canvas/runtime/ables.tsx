@@ -77,6 +77,91 @@ export const dimensionViewable = {
   },
 };
 
+export const arrowViewable = {
+  name: 'arrowViewable',
+  props: {},
+  events: {},
+  render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
+    const rect = moveable.getRect();
+
+    const north = React.createElement(
+      'div',
+      {
+        style: {
+          position: 'absolute',
+          left: `${(rect.width - 12.5) / 2}px`,
+          bottom: '50px',
+          zIndex: 100,
+          cursor: 'pointer',
+          width: '25px',
+        },
+        onclick: () => {
+          console.log('north clicked');
+        },
+      },
+      ['⬆️']
+    );
+
+    const south = React.createElement(
+      'div',
+      {
+        style: {
+          position: 'absolute',
+          left: `${(rect.width - 12.5) / 2}px`,
+          top: `${rect.height + 50}px`,
+          zIndex: 100,
+          cursor: 'pointer',
+          width: '25px',
+        },
+        onclick: () => {
+          console.log('south clicked');
+        },
+      },
+      ['⬇️']
+    );
+
+    const east = React.createElement(
+      'div',
+      {
+        style: {
+          position: 'absolute',
+          left: `${rect.width + 50}px`,
+          top: `${(rect.height - 12.5) / 2}px`,
+          zIndex: 100,
+          cursor: 'pointer',
+          width: '25px',
+        },
+        onclick: () => {
+          console.log('east clicked');
+        },
+      },
+      ['➡️']
+    );
+
+    const west = React.createElement(
+      'div',
+      {
+        style: {
+          position: 'absolute',
+          right: `${50}px`,
+          top: `${(rect.height - 12.5) / 2}px`,
+          zIndex: 100,
+          cursor: 'pointer',
+          width: '25px',
+        },
+        onclick: () => {
+          console.log('west clicked');
+        },
+      },
+      ['⬅️']
+    );
+
+    const arrowVisualization = React.createElement('div', {}, [north, south, east, west]);
+
+    return arrowVisualization;
+  },
+};
+
 export const constraintViewable = (scene: Scene) => ({
   name: 'constraintViewable',
   props: {},
