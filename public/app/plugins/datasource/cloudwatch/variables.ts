@@ -93,7 +93,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
   }
 
   async handleDimensionKeysQuery({ namespace, region }: VariableQuery) {
-    const keys = await this.api.getDimensionKeys(namespace, region);
+    const keys = await this.api.getDimensionKeys({ namespace, region });
     return keys.map((s) => ({
       text: s.label,
       value: s.value,

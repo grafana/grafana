@@ -58,11 +58,12 @@ export const VirtualizedSelectMenu = ({ children, maxHeight, options, getValue }
 
   const longestOption = max(options.map((option) => option.label?.length)) ?? 0;
   const widthEstimate = longestOption * VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER;
+  const heightEstimate = Math.min(options.length * VIRTUAL_LIST_ITEM_HEIGHT, maxHeight);
 
   return (
     <List
       className={styles.menu}
-      height={maxHeight}
+      height={heightEstimate}
       width={widthEstimate}
       aria-label="Select options menu"
       itemCount={children.length}

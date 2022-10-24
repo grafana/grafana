@@ -133,7 +133,7 @@ func (am *LotexAM) RouteCreateSilence(ctx *models.ReqContext, silenceBody apimod
 		"silences",
 		nil,
 		bytes.NewBuffer(blob),
-		jsonExtractor(&apimodels.GettableSilence{}),
+		jsonExtractor(&apimodels.PostSilencesOKBody{}),
 		map[string]string{"Content-Type": "application/json"},
 	)
 }

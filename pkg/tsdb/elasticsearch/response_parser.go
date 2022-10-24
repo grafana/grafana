@@ -537,10 +537,14 @@ func (rp *responseParser) trimDatapoints(queryResult backend.DataResponse, targe
 	for _, frame := range frames {
 		for _, field := range frame.Fields {
 			if field.Len() > trimEdges*2 {
-				for i := 0; i < field.Len(); i++ {
-					if i < trimEdges || i >= field.Len()-trimEdges {
-						field.Delete(i)
-					}
+				// first we delete the first "trim" items
+				for i := 0; i < trimEdges; i++ {
+					field.Delete(0)
+				}
+
+				// then we delete the last "trim" items
+				for i := 0; i < trimEdges; i++ {
+					field.Delete(field.Len() - 1)
 				}
 			}
 		}

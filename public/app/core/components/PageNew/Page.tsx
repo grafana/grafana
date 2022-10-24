@@ -124,13 +124,21 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     pageInner: css({
       label: 'page-inner',
-      padding: theme.spacing(3),
+      padding: theme.spacing(2),
       boxShadow: shadow,
       background: theme.colors.background.primary,
-      margin: theme.spacing(2, 2, 2, 1),
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
+      margin: theme.spacing(0, 0, 0, 0),
+
+      [theme.breakpoints.up('sm')]: {
+        margin: theme.spacing(0, 1, 1, 1),
+      },
+      [theme.breakpoints.up('md')]: {
+        margin: theme.spacing(2, 2, 2, 1),
+        padding: theme.spacing(3),
+      },
     }),
     canvasContent: css({
       label: 'canvas-content',

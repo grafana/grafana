@@ -27,7 +27,7 @@ interface Props extends Themeable2 {
   scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
   getRows: () => LogRowModel[];
-  onToggleContext: () => void;
+  onToggleContext: (method: string) => void;
   updateLimit?: () => void;
   logsSortOrder?: LogsSortOrder | null;
 }
@@ -122,7 +122,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
 
   onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
     e.stopPropagation();
-    this.props.onToggleContext();
+    this.props.onToggleContext('open');
   };
 
   onShowContextClick = (e: React.SyntheticEvent<HTMLElement, Event>) => {
@@ -207,11 +207,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
                 </Tooltip>
               )}
               <Tooltip placement="top" content={'Copy'}>
-                <IconButton
-                  size="md"
-                  name="copy"
-                  onClick={() => navigator.clipboard.writeText(JSON.stringify(restructuredEntry))}
-                />
+                <IconButton size="md" name="copy" onClick={() => navigator.clipboard.writeText(restructuredEntry)} />
               </Tooltip>
             </span>
           </td>

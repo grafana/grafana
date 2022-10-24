@@ -5,21 +5,21 @@ import (
 	"fmt"
 	"os"
 	"sort"
-
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/team/teamimpl"
-	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
-const ignoredDatabase = "mysql"
+const ignoredDatabase = migrator.MySQL
 
 func TestBuildConflictBlock(t *testing.T) {
 	type testBuildConflictBlock struct {
@@ -100,7 +100,7 @@ func TestBuildConflictBlock(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore := sqlstore.InitTestDB(t)
+			sqlStore := db.InitTestDB(t)
 
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
@@ -205,7 +205,7 @@ conflict: test2
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore := sqlstore.InitTestDB(t)
+			sqlStore := db.InitTestDB(t)
 
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
@@ -383,7 +383,7 @@ func TestGetConflictingUsers(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore := sqlstore.InitTestDB(t)
+			sqlStore := db.InitTestDB(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
@@ -491,7 +491,7 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore := sqlstore.InitTestDB(t)
+			sqlStore := db.InitTestDB(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
@@ -541,7 +541,7 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 func TestRunValidateConflictUserFile(t *testing.T) {
 	t.Run("should validate file thats gets created", func(t *testing.T) {
 		// Restore after destructive operation
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		const testOrgID int64 = 1
 		if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 			// add additional user with conflicting login where DOMAIN is upper case
@@ -581,7 +581,7 @@ func TestRunValidateConflictUserFile(t *testing.T) {
 func TestMergeUser(t *testing.T) {
 	t.Run("should be able to merge user", func(t *testing.T) {
 		// Restore after destructive operation
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		teamSvc := teamimpl.ProvideService(sqlStore, setting.NewCfg())
 		team1, err := teamSvc.CreateTeam("team1 name", "", 1)
 		require.Nil(t, err)
@@ -641,7 +641,7 @@ func TestMergeUser(t *testing.T) {
 func TestMergeUserFromNewFileInput(t *testing.T) {
 	t.Run("should be able to merge users after choosing a different user to keep", func(t *testing.T) {
 		// Restore after destructive operation
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 
 		type testBuildConflictBlock struct {
 			desc                string

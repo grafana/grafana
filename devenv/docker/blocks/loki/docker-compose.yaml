@@ -3,7 +3,7 @@
     ports:
       - "3100:3100"
 
-  data:
+  loki-data:
     build: docker/blocks/loki/data
     command: node /home/node/data.js http://loki:3100
     depends_on:

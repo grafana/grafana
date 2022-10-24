@@ -92,7 +92,7 @@ The "Validate selector" button will check with Prometheus how many time series a
 
 #### Options
 
-![Options](/static/img/docs/prometheus/options-9-1.png 'Options')
+![Options](/static/img/docs/prometheus/options-8-5.png 'Options')
 
 | Name        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -150,7 +150,7 @@ In same cases the query editor can detect which operations would be most appropr
 
 ### Explain
 
-![Explain mode](/static/img/docs/prometheus/explain-9-1.png 'Explain mode')
+![Explain mode](/static/img/docs/prometheus/explain-9-1.gif 'Explain mode')
 
 Explain mode helps with understanding the query. It shows a step by step explanation of all query parts and the operations.
 

@@ -413,6 +413,9 @@
     "auth_password": {
      "$ref": "#/definitions/Secret"
     },
+    "auth_password_file": {
+     "type": "string"
+    },
     "auth_secret": {
      "$ref": "#/definitions/Secret"
     },
@@ -1160,6 +1163,9 @@
     },
     "smtp_auth_password": {
      "$ref": "#/definitions/Secret"
+    },
+    "smtp_auth_password_file": {
+     "type": "string"
     },
     "smtp_auth_secret": {
      "$ref": "#/definitions/Secret"
@@ -3035,6 +3041,9 @@
      },
      "type": "array"
     },
+    "location": {
+     "type": "string"
+    },
     "months": {
      "items": {
       "type": "string"
@@ -3078,7 +3087,6 @@
    "type": "object"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -3114,7 +3122,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
   "Userinfo": {
@@ -3270,6 +3278,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3293,6 +3302,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -3397,6 +3407,7 @@
    "type": "object"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3452,7 +3463,6 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -3507,6 +3517,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -3610,6 +3621,15 @@
    ],
    "type": "object"
   },
+  "postSilencesOKBody": {
+   "properties": {
+    "silenceID": {
+     "description": "silence ID",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "postableAlert": {
    "description": "PostableAlert postable alert",
    "properties": {
@@ -3648,6 +3668,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3685,7 +3706,6 @@
    "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -4066,9 +4086,9 @@
     ],
     "responses": {
      "201": {
-      "description": "gettableSilence",
+      "description": "postSilencesOKBody",
       "schema": {
-       "$ref": "#/definitions/gettableSilence"
+       "$ref": "#/definitions/postSilencesOKBody"
       }
      },
      "400": {
@@ -4182,13 +4202,13 @@
   },
   "/api/alertmanager/grafana/config/api/v1/receivers": {
    "get": {
+    "description": "Get a list of all receivers",
     "operationId": "RouteGetGrafanaReceivers",
     "responses": {
      "200": {
-      "$ref": "#/responses/receivers"
+      "$ref": "#/responses/receiversResponse"
      }
     },
-    "summary": "Get a list of all receivers.",
     "tags": [
      "alertmanager"
     ]
@@ -4602,9 +4622,9 @@
     ],
     "responses": {
      "201": {
-      "description": "gettableSilence",
+      "description": "postSilencesOKBody",
       "schema": {
-       "$ref": "#/definitions/gettableSilence"
+       "$ref": "#/definitions/postSilencesOKBody"
       }
      },
      "400": {
@@ -6307,6 +6327,17 @@
  "produces": [
   "application/json"
  ],
+ "responses": {
+  "receiversResponse": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/receiver"
+    },
+    "type": "array"
+   }
+  }
+ },
  "schemes": [
   "http",
   "https"
