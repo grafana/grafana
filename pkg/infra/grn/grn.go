@@ -61,7 +61,7 @@ func MustParseStr(str string) GRN {
 }
 
 // String returns a string representation of a grn in the format
-// grn:tenandID:kind/resourceIdentifier
+// grn:tenantID:kind/resourceIdentifier
 func (g *GRN) String() string {
 	return fmt.Sprintf("grn:%s:%s/%s", g.TenantID, g.ResourceKind, g.ResourceIdentifier)
 }
