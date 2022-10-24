@@ -822,7 +822,6 @@ type dashboardsRes struct {
 
 func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, orgID int64, dashboardUID string) chan *dashboardsRes {
 	ch := make(chan *dashboardsRes, 3)
-	layout := "2006-01-02T15:04:05Z0700"
 
 	go func() {
 		defer close(ch)
@@ -902,12 +901,14 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 					parsingErr = err
 					break
 				}
-				created, err := time.Parse(layout, slices[i][6])
+
+				// xorm/session_query.go::value2String() uses `time.RFC3339Nano` to format the time type
+				created, err := time.Parse(time.RFC3339Nano, slices[i][6])
 				if err != nil {
 					parsingErr = err
 					break
 				}
-				updated, err := time.Parse(layout, slices[i][7])
+				updated, err := time.Parse(time.RFC3339Nano, slices[i][7])
 				if err != nil {
 					parsingErr = err
 					break
