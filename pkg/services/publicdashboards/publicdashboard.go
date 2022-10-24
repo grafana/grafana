@@ -14,6 +14,8 @@ import (
 
 //go:generate mockery --name Service --structname FakePublicDashboardService --inpackage --filename public_dashboard_service_mock.go
 type Service interface {
+	GenerateNewPublicDashboardAccessToken(ctx context.Context) (string, error)
+	GenerateNewPublicDashboardUid(ctx context.Context) (string, error)
 	GetAnnotations(ctx context.Context, reqDTO AnnotationsQueryDTO, accessToken string) ([]AnnotationEvent, error)
 	GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error)
 	GetMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO PublicDashboardQueryDTO) (dtos.MetricRequest, error)
@@ -29,11 +31,10 @@ type Service interface {
 
 //go:generate mockery --name Store --structname FakePublicDashboardStore --inpackage --filename public_dashboard_store_mock.go
 type Store interface {
-	GenerateNewPublicDashboardUid(ctx context.Context) (string, error)
-	GenerateNewPublicDashboardAccessToken(ctx context.Context) (string, error)
 	GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error)
 	GetPublicDashboard(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
 	GetPublicDashboardAndDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error)
+	GetPublicDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error)
 	GetPublicDashboardByUid(ctx context.Context, uid string) (*PublicDashboard, error)
 	GetPublicDashboardOrgId(ctx context.Context, accessToken string) (int64, error)
 	ListPublicDashboards(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error)

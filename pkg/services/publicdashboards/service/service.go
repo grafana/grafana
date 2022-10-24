@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/query"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // PublicDashboardServiceImpl Define the Service Implementation. We're generating mock implementation
@@ -153,15 +155,47 @@ func (pd *PublicDashboardServiceImpl) SavePublicDashboard(ctx context.Context, u
 	return newPubdash, err
 }
 
+// GenerateNewPublicDashboardUid Generates not existent uid to create a public dashboard
+func (pd *PublicDashboardServiceImpl) GenerateNewPublicDashboardUid(ctx context.Context) (string, error) {
+	var uid string
+	for i := 0; i < 3; i++ {
+		uid = util.GenerateShortUID()
+
+		pubdash, _ := pd.store.GetPublicDashboardByUid(ctx, uid)
+		if pubdash == nil {
+			return uid, nil
+		}
+	}
+	return "", ErrPublicDashboardFailedGenerateUniqueUid
+}
+
+// GenerateNewPublicDashboardAccessToken Generates not existent accessToken to create a public dashboard
+func (pd *PublicDashboardServiceImpl) GenerateNewPublicDashboardAccessToken(ctx context.Context) (string, error) {
+	var accessToken string
+	for i := 0; i < 3; i++ {
+		var err error
+		accessToken, err = tokens.GenerateAccessToken()
+		if err != nil {
+			continue
+		}
+
+		pubdash, _ := pd.store.GetPublicDashboardByAccessToken(ctx, accessToken)
+		if pubdash == nil {
+			return accessToken, nil
+		}
+	}
+	return "", ErrPublicDashboardFailedGenerateAccessToken
+}
+
 // Called by SavePublicDashboard this handles business logic
 // to generate token and calls create at the database layer
 func (pd *PublicDashboardServiceImpl) savePublicDashboard(ctx context.Context, dto *SavePublicDashboardConfigDTO) (string, error) {
-	uid, err := pd.store.GenerateNewPublicDashboardUid(ctx)
+	uid, err := pd.GenerateNewPublicDashboardUid(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	accessToken, err := pd.store.GenerateNewPublicDashboardAccessToken(ctx)
+	accessToken, err := pd.GenerateNewPublicDashboardAccessToken(ctx)
 	if err != nil {
 		return "", err
 	}
