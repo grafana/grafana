@@ -1,4 +1,4 @@
-import { AppEvents, PluginState, SelectableValue } from '@grafana/data/src';
+import { AppEvents, PluginState, SelectableValue } from '@grafana/data';
 import { hasAlphaPanels } from 'app/core/config';
 
 import appEvents from '../../../core/app_events';
