@@ -262,8 +262,9 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				{ // New in 8.0.
 					Label:        "Summary",
 					Description:  "You can use templates for summary",
-					Element:      ElementTypeTextArea,
-					Placeholder:  channels.DefaultMessageEmbed,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  channels.DefaultMessageTitleEmbed,
 					PropertyName: "summary",
 				},
 			},
