@@ -863,14 +863,9 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 
 				sql += " order by id asc"
 
-				all := append([]interface{}{sql}, args...)
-				output, err := sess.QuerySliceString(all...)
-				if err != nil {
-					return err
-				}
+				output, err := sess.QuerySliceString(append([]interface{}{sql}, args...)...)
 				slices = output
-
-				return nil
+				return err
 			})
 
 			if err != nil || slices == nil {
