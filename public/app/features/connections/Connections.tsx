@@ -17,6 +17,7 @@ import {
 export default function Connections() {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const isCloud = Boolean(navIndex['standalone-plugin-page-/connections/agent']);
+  const pluginServedPageIds = Object.keys(navIndex).filter((id) => id.includes('standalone-plugin-page-/connections'));
 
   return (
     <DataSourcesRoutesContext.Provider
@@ -38,10 +39,15 @@ export default function Connections() {
 
         {/* Connect Data  - serve from the core by default, unless the Cloud Onboarding app is available and enabled */}
         {/* TODO: update the navIndex to contain the plugin id for any standalone plugin pages */}
-        {!isCloud && <Route path={ROUTES.ConnectData} component={ConnectDataPage} />}
-        {isCloud && <AppPluginLoader id="grafana-easystart-app" />}
+        <Route
+          path={ROUTES.ConnectData}
+          render={() => (isCloud ? <AppPluginLoader id="grafana-easystart-app" /> : <ConnectDataPage />)}
+        />
 
         {/* Plugin routes - route any plugin registered page to the plugins */}
+        {pluginServedPageIds.map((navId) => (
+          <Route key={navId} path={navIndex[navId].url} render={() => <AppPluginLoader id="grafana-easystart-app" />} />
+        ))}
 
         {/* Default page */}
         <Route component={DataSourcesListPage} />
