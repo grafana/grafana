@@ -25,12 +25,10 @@ You can install Grafana from a YUM repository, manually using YUM, manually usin
 
 If you install from the YUM repository, then Grafana is automatically updated every time you run `sudo yum update`.
 
-| Grafana Version           | Package            | Repository                                         |
-| ------------------------- | ------------------ | -------------------------------------------------- |
-| Grafana Enterprise        | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm`      |
-| Grafana Enterprise (Beta) | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm-beta` |
-| Grafana OSS               | grafana            | `https://packages.grafana.com/oss/rpm`             |
-| Grafana OSS (Beta)        | grafana            | `https://packages.grafana.com/oss/rpm-beta`        |
+| Grafana Version    | Package            | Repository                |
+| ------------------ | ------------------ | ------------------------- |
+| Grafana Enterprise | grafana-enterprise | `https://rpm.grafana.com` |
+| Grafana OSS        | grafana            | `https://rpm.grafana.com` |
 
 > **Note:** Grafana Enterprise is the recommended and default edition. It is available for free and includes all the features of the OSS Edition. You can also upgrade to the [full Enterprise feature set](https://grafana.com/products/enterprise/?utm_source=grafana-install-page) and has support for [Enterprise plugins](https://grafana.com/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
 
@@ -49,11 +47,11 @@ For Enterprise releases:
 ```bash
 [grafana]
 name=grafana
-baseurl=https://packages.grafana.com/enterprise/rpm
+baseurl=https://rpm.grafana.com
 repo_gpgcheck=1
 enabled=1
 gpgcheck=1
-gpgkey=https://packages.grafana.com/gpg.key
+gpgkey=https://rpm.grafana.com/gpg.key
 sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 ```
@@ -63,13 +61,19 @@ For OSS releases:
 ```bash
 [grafana]
 name=grafana
-baseurl=https://packages.grafana.com/oss/rpm
+baseurl=https://rpm.grafana.com
 repo_gpgcheck=1
 enabled=1
 gpgcheck=1
-gpgkey=https://packages.grafana.com/gpg.key
+gpgkey=https://rpm.grafana.com/gpg.key
 sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+```
+
+Optionally, add an exclude line to your `.repo` file to prevent beta versions from being installed.
+
+```bash
+exclude=*beta*
 ```
 
 Install Grafana with one of the following commands:
@@ -110,7 +114,7 @@ sudo yum install <rpm package url>
 
 If you install with RPM, then you will need to manually update Grafana for each new version. This method varies according to which Linux OS you are running. Read the instructions fully before you begin.
 
-**Note:** The .rpm files are signed, you can verify the signature with this [public GPG key](https://packages.grafana.com/gpg.key).
+**Note:** The .rpm files are signed, you can verify the signature with this [public GPG key](https://rpm.grafana.com/gpg.key).
 
 1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install.
    - The most recent Grafana version is selected by default.
