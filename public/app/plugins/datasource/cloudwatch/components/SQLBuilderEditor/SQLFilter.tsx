@@ -105,12 +105,12 @@ const FilterItem: React.FC<FilterItemProps> = (props) => {
   const dimensionKeys = useDimensionKeys(datasource, { region: query.region, namespace, metricName });
 
   const loadDimensionValues = async () => {
-    if (!filter.property?.name) {
+    if (!filter.property?.name || !namespace) {
       return [];
     }
 
     return datasource.api
-      .getDimensionValues(query.region, namespace, metricName, filter.property.name, {})
+      .getDimensionValues({ region: query.region, namespace, metricName, dimensionKey: filter.property.name })
       .then((result: Array<SelectableValue<string>>) => {
         return appendTemplateVariables(datasource, result);
       });
