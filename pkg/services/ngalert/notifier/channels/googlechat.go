@@ -47,7 +47,7 @@ func GoogleChatFactory(fc FactoryConfig) (NotificationChannel, error) {
 }
 
 func newGoogleChatNotifier(fc FactoryConfig) (*GoogleChatNotifier, error) {
-	settings := googleChatSettings{}
+	var settings googleChatSettings
 	err := fc.Config.unmarshalSettings(&settings)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
