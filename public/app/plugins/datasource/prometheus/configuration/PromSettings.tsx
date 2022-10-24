@@ -203,6 +203,18 @@ export const PromSettings = (props: Props) => {
       </div>
 
       <h3 className="page-heading">Type and version</h3>
+      {!options.jsonData.prometheusType && !options.jsonData.prometheusVersion && (
+        <div style={{ marginBottom: '12px' }}>
+          If your prometheus instance is provisioned, see the{' '}
+          <a
+            style={{ textDecoration: 'underline' }}
+            href="https://grafana.com/docs/grafana/latest/administration/provisioning/"
+          >
+            docs for more details
+          </a>{' '}
+          on how to configure.
+        </div>
+      )}
       <div className="gf-form-group">
         <div className="gf-form">
           <div className="gf-form">
