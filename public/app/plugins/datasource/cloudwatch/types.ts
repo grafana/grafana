@@ -467,3 +467,8 @@ export interface GetDimensionValuesRequest extends ResourceRequest {
   metricName?: string;
   dimensionFilters?: Dimensions;
 }
+
+export interface MetricResponse {
+  name: string;
+  namespace: string;
+}

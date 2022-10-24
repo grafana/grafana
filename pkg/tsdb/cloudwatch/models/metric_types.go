@@ -7,9 +7,9 @@ import (
 
 type ListMetricsProvider interface {
 	GetDimensionKeysByDimensionFilter(*request.DimensionKeysRequest) ([]string, error)
-	GetHardCodedDimensionKeysByNamespace(string) ([]string, error)
 	GetDimensionKeysByNamespace(string) ([]string, error)
 	GetDimensionValuesByDimensionFilter(*request.DimensionValuesRequest) ([]string, error)
+	GetMetricsByNamespace(namespace string) ([]*Metric, error)
 }
 
 type MetricsClientProvider interface {

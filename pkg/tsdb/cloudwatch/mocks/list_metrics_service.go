@@ -1,6 +1,7 @@
 package mocks
 
 import (
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/request"
 	"github.com/stretchr/testify/mock"
 )
@@ -27,8 +28,8 @@ func (a *ListMetricsServiceMock) GetDimensionKeysByNamespace(string) ([]string, 
 	return args.Get(0).([]string), args.Error(1)
 }
 
-func (a *ListMetricsServiceMock) GetHardCodedDimensionKeysByNamespace(string) ([]string, error) {
+func (a *ListMetricsServiceMock) GetMetricsByNamespace(namespace string) ([]*models.Metric, error) {
 	args := a.Called()
 
-	return args.Get(0).([]string), args.Error(1)
+	return args.Get(0).([]*models.Metric), args.Error(1)
 }
