@@ -23,7 +23,7 @@ For further details about how to operate a Grafana instance with envelope encryp
 
 ## Envelope encryption
 
-> **Note:** Since Grafana v9.0, you can turn envelope encryption off by adding the feature toggle`disableEnvelopeEncryption` to your [Grafana configuration]({{< relref "../../configure-grafana/#feature_toggles" >}}).
+> **Note:** Since Grafana v9.0, you can turn envelope encryption off by adding the feature toggle `disableEnvelopeEncryption` to your [Grafana configuration]({{< relref "../../configure-grafana/#feature_toggles" >}}).
 
 Instead of encrypting all secrets with a single key, Grafana uses a set of keys called data encryption keys (DEKs) to encrypt them. These data encryption keys are themselves encrypted with a single key encryption key (KEK), configured through the `secret_key` attribute in your
 [Grafana configuration]({{< relref "../../configure-grafana/#secret_key" >}}) or with a [key management service (KMS) integration](#kms-integration).
