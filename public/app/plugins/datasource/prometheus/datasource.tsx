@@ -3,6 +3,7 @@ import LRU from 'lru-cache';
 import React from 'react';
 import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
+import semver from 'semver/preload';
 
 import {
   AnnotationEvent,
@@ -140,6 +141,33 @@ export class PrometheusDatasource
 
   getQueryDisplayText(query: PromQuery) {
     return query.expr;
+  }
+
+  hasLabelsMatchAPISupport(): boolean {
+    return (
+      // https://github.com/prometheus/prometheus/releases/tag/v2.24.0
+      this._isDatasourceVersionGreaterOrEqualTo('2.24.0', PromApplication.Prometheus) ||
+      // All versions of Mimir support matchers for labels API
+      this._isDatasourceVersionGreaterOrEqualTo('2.0.0', PromApplication.Mimir) ||
+      // https://github.com/cortexproject/cortex/discussions/4542
+      this._isDatasourceVersionGreaterOrEqualTo('1.11.0', PromApplication.Cortex) ||
+      // https://github.com/thanos-io/thanos/pull/3566
+      //https://github.com/thanos-io/thanos/releases/tag/v0.18.0
+      this._isDatasourceVersionGreaterOrEqualTo('0.18', PromApplication.Thanos)
+    );
+  }
+
+  _isDatasourceVersionGreaterOrEqualTo(targetVersion: string, targetFlavor: PromApplication): boolean {
+    // User hasn't configured flavor/version yet, default behavior is to not support features that require version configuration when not provided
+    if (!this.datasourceConfigurationPrometheusVersion || !this.datasourceConfigurationPrometheusFlavor) {
+      return false;
+    }
+
+    if (targetFlavor !== this.datasourceConfigurationPrometheusFlavor) {
+      return false;
+    }
+
+    return semver.gte(this.datasourceConfigurationPrometheusVersion, targetVersion);
   }
 
   _addTracingHeaders(httpOptions: PromQueryRequest, options: DataQueryRequest<PromQuery>) {
