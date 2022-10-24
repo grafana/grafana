@@ -847,7 +847,7 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 			dashboardQuerySpan.SetAttributes("dashboardUID", dashboardUID, attribute.Key("dashboardUID").String(dashboardUID))
 			dashboardQuerySpan.SetAttributes("lastID", lastID, attribute.Key("lastID").Int64(lastID))
 
-			rows := make([]*dashboardQueryResult, 0)
+			var slices [][]string
 			err := l.sql.WithDbSession(dashboardQueryCtx, func(sess *db.Session) error {
 				sql := "select id, uid, is_folder, folder_id, slug, data, created, updated from dashboard where org_id = ?"
 				args := []interface{}{orgID}
@@ -865,41 +865,50 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 				sql += " order by id asc"
 
 				all := append([]interface{}{sql}, args...)
-				slices, err := sess.QuerySliceString(all...)
+				output, err := sess.QuerySliceString(all...)
 				if err != nil {
 					return err
 				}
-
-				for i := range slices {
-					id, _ := strconv.ParseInt(slices[i][0], 10, 64)
-					uid := slices[i][1]
-					isFolder := false
-					if slices[i][2] == "1" {
-						isFolder = true
-					}
-
-					folderID, _ := strconv.ParseInt(slices[i][3], 10, 64)
-					created, _ := time.Parse(layout, slices[i][6])
-					updated, _ := time.Parse(layout, slices[i][7])
-
-					rows = append(rows, &dashboardQueryResult{
-						Id:       id,
-						Uid:      uid,
-						IsFolder: isFolder,
-						FolderID: folderID,
-						Slug:     slices[i][4],
-						Data:     []byte(slices[i][5]),
-						Created:  created,
-						Updated:  updated,
-					})
-				}
+				slices = output
 
 				return nil
 			})
-
 			dashboardQuerySpan.End()
 
-			if err != nil || len(rows) < limit || dashboardUID != "" {
+			if err != nil || slices == nil {
+				ch <- &dashboardsRes{
+					dashboards: nil,
+					err:        err,
+				}
+				break
+			}
+
+			rows := make([]*dashboardQueryResult, len(slices))
+			for i := range slices {
+				id, _ := strconv.ParseInt(slices[i][0], 10, 64)
+				uid := slices[i][1]
+				isFolder := false
+				if slices[i][2] == "1" {
+					isFolder = true
+				}
+
+				folderID, _ := strconv.ParseInt(slices[i][3], 10, 64)
+				created, _ := time.Parse(layout, slices[i][6])
+				updated, _ := time.Parse(layout, slices[i][7])
+
+				rows[i] = &dashboardQueryResult{
+					Id:       id,
+					Uid:      uid,
+					IsFolder: isFolder,
+					FolderID: folderID,
+					Slug:     slices[i][4],
+					Data:     []byte(slices[i][5]),
+					Created:  created,
+					Updated:  updated,
+				}
+			}
+
+			if len(rows) < limit || dashboardUID != "" {
 				ch <- &dashboardsRes{
 					dashboards: rows,
 					err:        err,
