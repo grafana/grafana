@@ -26,7 +26,7 @@ func Test_DimensionKeys_Route(t *testing.T) {
 		mockListMetricsService.AssertNumberOfCalls(t, "GetDimensionKeysByDimensionFilter", 1)
 	})
 
-	t.Run("return 500 if %s returns an error", func(t *testing.T) {
+	t.Run("return 500 if GetDimensionKeysByDimensionFilter returns an error", func(t *testing.T) {
 		mockListMetricsService := mocks.ListMetricsServiceMock{}
 		mockListMetricsService.On("GetDimensionKeysByDimensionFilter").Return([]string{}, fmt.Errorf("some error"))
 		newListMetricsService = func(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, region string) (models.ListMetricsProvider, error) {
