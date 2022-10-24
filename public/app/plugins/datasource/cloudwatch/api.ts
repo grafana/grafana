@@ -5,7 +5,13 @@ import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudWatchRequest } from './query-runner/CloudWatchRequest';
-import { CloudWatchJsonData, DescribeLogGroupsRequest, GetDimensionKeysRequest, MultiFilters } from './types';
+import {
+  CloudWatchJsonData,
+  DescribeLogGroupsRequest,
+  GetDimensionKeysRequest,
+  GetDimensionValuesRequest,
+  MultiFilters,
+} from './types';
 
 export interface SelectableResourceValue extends SelectableValue<string> {
   text: string;
@@ -83,13 +89,13 @@ export class CloudWatchAPI extends CloudWatchRequest {
     }).then((dimensionKeys) => dimensionKeys.map(toOption));
   }
 
-  async getDimensionValues(
-    region: string,
-    namespace: string | undefined,
-    metricName: string | undefined,
-    dimensionKey: string,
-    dimensionFilters: {}
-  ) {
+  async getDimensionValues({
+    dimensionKey,
+    region,
+    namespace,
+    dimensionFilters = {},
+    metricName = '',
+  }: GetDimensionValuesRequest) {
     if (!namespace || !metricName) {
       return [];
     }
