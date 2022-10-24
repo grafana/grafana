@@ -21,6 +21,7 @@ func TestKindRegistry(t *testing.T) {
 	require.Equal(t, []string{
 		"dashboard",
 		"dummy",
+		"folder",
 		"geojson",
 		"kind1",
 		"kind2",

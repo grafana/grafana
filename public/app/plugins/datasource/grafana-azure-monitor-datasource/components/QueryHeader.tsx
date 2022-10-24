@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorHeader, InlineSelect } from '@grafana/ui';
+import { EditorHeader, InlineSelect } from '@grafana/experimental';
 
 import { AzureMonitorQuery, AzureQueryType } from '../types';
 

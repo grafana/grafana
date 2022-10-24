@@ -112,7 +112,7 @@ func (_m *FakePublicDashboardService) GetMetricRequest(ctx context.Context, dash
 }
 
 // GetPublicDashboard provides a mock function with given fields: ctx, accessToken
-func (_m *FakePublicDashboardService) GetPublicDashboard(ctx context.Context, accessToken string) (*models.PublicDashboard, *pkgmodels.Dashboard, error) {
+func (_m *FakePublicDashboardService) GetPublicDashboardAndDashboard(ctx context.Context, accessToken string) (*models.PublicDashboard, *pkgmodels.Dashboard, error) {
 	ret := _m.Called(ctx, accessToken)
 
 	var r0 *models.PublicDashboard
@@ -144,7 +144,7 @@ func (_m *FakePublicDashboardService) GetPublicDashboard(ctx context.Context, ac
 }
 
 // GetPublicDashboardConfig provides a mock function with given fields: ctx, orgId, dashboardUid
-func (_m *FakePublicDashboardService) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error) {
+func (_m *FakePublicDashboardService) GetPublicDashboard(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error) {
 	ret := _m.Called(ctx, orgId, dashboardUid)
 
 	var r0 *models.PublicDashboard
@@ -234,7 +234,7 @@ func (_m *FakePublicDashboardService) ListPublicDashboards(ctx context.Context, 
 }
 
 // PublicDashboardEnabled provides a mock function with given fields: ctx, dashboardUid
-func (_m *FakePublicDashboardService) PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error) {
+func (_m *FakePublicDashboardService) PublicDashboardIsEnabled(ctx context.Context, dashboardUid string) (bool, error) {
 	ret := _m.Called(ctx, dashboardUid)
 
 	var r0 bool
@@ -255,7 +255,7 @@ func (_m *FakePublicDashboardService) PublicDashboardEnabled(ctx context.Context
 }
 
 // SavePublicDashboardConfig provides a mock function with given fields: ctx, u, dto
-func (_m *FakePublicDashboardService) SavePublicDashboardConfig(ctx context.Context, u *user.SignedInUser, dto *models.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
+func (_m *FakePublicDashboardService) SavePublicDashboard(ctx context.Context, u *user.SignedInUser, dto *models.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
 	ret := _m.Called(ctx, u, dto)
 
 	var r0 *models.PublicDashboard

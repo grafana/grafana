@@ -255,7 +255,7 @@
     "@grafana/aws-sdk": "0.0.37",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
-    "@grafana/experimental": "^0.0.2-canary.36",
+    "@grafana/experimental": "1.0.1",
     "@grafana/google-sdk": "0.0.3",
     "@grafana/lezer-logql": "0.1.1",
     "@grafana/monaco-logql": "^0.0.6",
