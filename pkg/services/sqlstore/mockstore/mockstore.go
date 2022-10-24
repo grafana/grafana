@@ -194,3 +194,7 @@ func (m *SQLStoreMock) GetUserLoginAttemptCount(ctx context.Context, query *mode
 	query.Result = m.ExpectedLoginAttempts
 	return m.ExpectedError
 }
+
+func (m *SQLStoreMock) GetAlertStatesForDashboard(ctx context.Context, query *models.GetAlertStatesForDashboardQuery) error {
+	return m.ExpectedError
+}
