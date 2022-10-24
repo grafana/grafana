@@ -170,11 +170,13 @@ const FlameGraph = ({
   ]);
 
   return (
-    <div className={styles.graph} ref={sizeRef}>
+    <>
       <div className={styles.xAxis}>x-axis represents % of {getUnit(valueField!)}</div>
-      <canvas ref={graphRef} data-testid="flameGraph" />
-      <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} showTooltip={showTooltip} />
-    </div>
+      <div className={styles.graph} ref={sizeRef}>
+        <canvas ref={graphRef} data-testid="flameGraph" />
+        <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} showTooltip={showTooltip} />
+      </div>
+    </>
   );
 };
 
@@ -196,8 +198,8 @@ const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: n
     overflow: scroll;
     width: ${selectedView === SelectedView.FlameGraph ? '100%' : '50%'};
     ${app !== CoreApp.Explore
-      ? `height: calc(${flameGraphHeight}px - 44px)`
-      : ''}; // 44px to adjust for header pushing content down
+      ? `height: calc(${flameGraphHeight}px - 74px)`
+      : ''}; // 74px to adjust for space needed above flame graph
   `,
   xAxis: css`
     height: 30px;

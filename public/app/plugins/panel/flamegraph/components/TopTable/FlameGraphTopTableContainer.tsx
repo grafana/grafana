@@ -133,7 +133,7 @@ const getStyles = (selectedView: SelectedView, app: CoreApp) => {
       float: left;
       margin: 30px ${marginRight} 0 0;
       width: ${selectedView === SelectedView.TopTable ? '100%' : `calc(50% - ${marginRight})`};
-      ${app !== CoreApp.Explore ? 'height: calc(100% - 44px)' : ''}; // 44px to adjust for header pushing content down
+      ${app !== CoreApp.Explore ? 'height: calc(100% - 74px)' : ''}; // 74px to adjust for space needed above top table
     `,
   };
 };
