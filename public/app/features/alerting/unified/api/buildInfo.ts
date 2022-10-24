@@ -78,7 +78,7 @@ export async function discoverDataSourceFeatures(dsSettings: {
     const rulerSupported = await hasRulerSupport(name);
 
     return {
-      application: PromApplication.Cortex,
+      application: PromApplication.Lotex,
       features: {
         rulerApiEnabled: rulerSupported,
       },

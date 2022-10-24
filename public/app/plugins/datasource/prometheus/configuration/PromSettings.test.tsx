@@ -1,11 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import React, { SyntheticEvent } from 'react';
-import { Provider } from 'react-redux';
 
 import { SelectableValue } from '@grafana/data';
 import { EventsWithValidation } from '@grafana/ui';
-
-import { configureStore } from '../../../../store/configureStore';
 
 import { getValueFromEventItem, promSettingsValidationEvents, PromSettings } from './PromSettings';
 import { createDefaultConfigOptions } from './mocks';
@@ -97,12 +94,11 @@ describe('PromSettings', () => {
       const options = defaultProps;
       options.url = '';
       options.jsonData.httpMethod = '';
-      const store = configureStore();
 
       render(
-        <Provider store={store}>
+        <div>
           <PromSettings onOptionsChange={() => {}} options={options} />
-        </Provider>
+        </div>
       );
       expect(screen.getByText('POST')).toBeInTheDocument();
     });
@@ -110,12 +106,11 @@ describe('PromSettings', () => {
       const options = defaultProps;
       options.url = 'test_url';
       options.jsonData.httpMethod = 'POST';
-      const store = configureStore();
 
       render(
-        <Provider store={store}>
+        <div>
           <PromSettings onOptionsChange={() => {}} options={options} />
-        </Provider>
+        </div>
       );
       expect(screen.getByText('POST')).toBeInTheDocument();
     });
@@ -123,12 +118,11 @@ describe('PromSettings', () => {
       const options = defaultProps;
       options.url = 'test_url';
       options.jsonData.httpMethod = 'GET';
-      const store = configureStore();
 
       render(
-        <Provider store={store}>
+        <div>
           <PromSettings onOptionsChange={() => {}} options={options} />
-        </Provider>
+        </div>
       );
       expect(screen.getByText('GET')).toBeInTheDocument();
     });
