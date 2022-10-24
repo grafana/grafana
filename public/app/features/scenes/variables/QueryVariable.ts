@@ -1,9 +1,6 @@
 import { Observable } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 
-import { CoreApp, DataQuery, DataQueryRequest, LoadingState, MetricFindValue, VariableOption } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { runRequest } from 'app/features/query/state/runRequest';
+import { LoadingState, VariableOption } from '@grafana/data';
 import { queryMetricTree } from 'app/plugins/datasource/testdata/metricTree';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
@@ -19,7 +16,6 @@ export interface QueryVariableState extends SceneVariableState {
 
 export class QueryVariable extends SceneObjectBase<QueryVariableState> implements SceneVariable {
   updateOptions(ctx: VariableUpdateContext) {
-    const { query } = this.state;
     //const range = this.getTimeRange();
 
     try {
@@ -27,7 +23,7 @@ export class QueryVariable extends SceneObjectBase<QueryVariableState> implement
 
       return new Observable<number>((observer) => {
         const timeout = setTimeout(() => {
-          setDummyOptions(variable, ctx);
+          setDummyOptions(this, ctx);
         }, 1000);
 
         return () => {
@@ -46,4 +42,11 @@ function setDummyOptions(variable: QueryVariable, ctx: VariableUpdateContext) {
   const interpolatedQuery = sceneTemplateInterpolator(variable.state.query, ctx.sceneLocation);
   console.log('interpolated query', interpolatedQuery);
   const result = queryMetricTree(interpolatedQuery);
+  const options = result.map((x) => ({ text: x.name, value: x.name, selected: false }));
+  variable.setState({
+    options,
+    value: options[0].value,
+    text: options[0].text,
+    state: LoadingState.Done,
+  });
 }

@@ -17,7 +17,7 @@ export interface SceneVariableState extends SceneObjectStatePlain {
 }
 
 export interface SceneVariable extends SceneObject<SceneVariableState> {
-  updateOptions(context: VariableUpdateContext): Observable<number>;
+  updateOptions?(context: VariableUpdateContext): Observable<number>;
 }
 
 export interface VariableUpdateContext {

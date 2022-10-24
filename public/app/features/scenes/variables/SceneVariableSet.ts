@@ -1,3 +1,5 @@
+import { isArray } from 'lodash';
+
 import { variableRegex } from 'app/features/variables/utils';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
@@ -8,6 +10,11 @@ import { SceneVariable, SceneVariableSet, SceneVariableSetState, SceneVariableSt
 export class TextBoxSceneVariable extends SceneObjectBase<SceneVariableState> implements SceneVariable {}
 
 export class SceneVariableManager extends SceneObjectBase<SceneVariableSetState> implements SceneVariableSet {
+  activate(): void {
+    super.activate();
+    this.state.variables.forEach((x) => x.activate());
+  }
+
   getVariableByName(name: string): SceneVariable | undefined {
     // TODO: Replace with index
     return this.state.variables.find((x) => x.state.name === name);
@@ -23,6 +30,10 @@ export function sceneTemplateInterpolator(target: string, sceneObject: SceneObje
 
     if (!variable) {
       return match;
+    }
+
+    if (isArray(variable.state.value)) {
+      return 'not supported yet';
     }
 
     return variable.state.value;

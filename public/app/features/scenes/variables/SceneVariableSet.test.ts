@@ -16,11 +16,13 @@ describe('SceneObject with variables', () => {
         variables: [
           new TextBoxSceneVariable({
             name: 'test',
-            current: { value: 'hello' },
+            value: 'hello',
+            text: 'hello',
           }),
           new TextBoxSceneVariable({
             name: 'atRootOnly',
-            current: { value: 'RootValue' },
+            value: 'RootValue',
+            text: 'RootValue',
           }),
         ],
       }),
@@ -29,7 +31,8 @@ describe('SceneObject with variables', () => {
           variables: [
             new TextBoxSceneVariable({
               name: 'test',
-              current: { value: 'nestedValue' },
+              value: 'nestedValue',
+              text: 'nestedValue',
             }),
           ],
         }),
