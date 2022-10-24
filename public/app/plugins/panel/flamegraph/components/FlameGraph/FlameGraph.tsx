@@ -142,7 +142,7 @@ const FlameGraph = ({
             tooltipRef.current.style.top = e.clientY + 40 + 'px';
 
             const bar = levels[levelIndex][barIndex];
-            const tooltipData = getTooltipData(valueField!, bar.label, bar.value, totalTicks);
+            const tooltipData = getTooltipData(valueField!, bar.label, bar.value, bar.self, totalTicks);
             setTooltipData(tooltipData);
             setShowTooltip(true);
           }
