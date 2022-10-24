@@ -88,19 +88,19 @@ export class CloudWatchAPI extends CloudWatchRequest {
     namespace: string | undefined,
     metricName: string | undefined,
     dimensionKey: string,
-    filterDimensions: {}
+    dimensionFilters: {}
   ) {
     if (!namespace || !metricName) {
       return [];
     }
 
-    const values = await this.memoizedGetRequest<SelectableResourceValue[]>('dimension-values', {
+    const values = await this.memoizedGetRequest<string[]>('dimension-values', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
       metricName: this.templateSrv.replace(metricName.trim()),
       dimensionKey: this.templateSrv.replace(dimensionKey),
-      dimensions: JSON.stringify(this.convertDimensionFormat(filterDimensions, {})),
-    });
+      dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
+    }).then((dimensionValues) => dimensionValues.map(toOption));
 
     return values;
   }
