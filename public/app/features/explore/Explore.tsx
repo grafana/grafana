@@ -8,7 +8,7 @@ import { Unsubscribable } from 'rxjs';
 
 import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, QueryFixAction, RawTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
@@ -38,6 +38,7 @@ import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeSize, changeGraphStyle } from './state/explorePane';
 import { splitOpen } from './state/main';
 import { addQueryRow, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
+import { isSplit } from './state/selectors';
 import { makeAbsoluteTime, updateTimeRange } from './state/time';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -66,6 +67,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex-direction: column;
       padding: ${theme.spacing(2)};
       padding-top: 0;
+    `,
+    exploreContainerTopnav: css`
+      padding-top: ${theme.spacing(2)};
     `,
   };
 };
@@ -169,13 +173,20 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     makeAbsoluteTime();
   };
 
-  onModifyQueries = (action: QueryFixAction, index?: number) => {
-    const { datasourceInstance } = this.props;
-    if (datasourceInstance?.modifyQuery) {
-      const modifier = (queries: DataQuery, modification: QueryFixAction) =>
-        datasourceInstance.modifyQuery!(queries, modification);
-      this.props.modifyQueries(this.props.exploreId, action, modifier, index);
-    }
+  onModifyQueries = (action: QueryFixAction) => {
+    const modifier = async (query: DataQuery, modification: QueryFixAction) => {
+      const { datasource } = query;
+      if (datasource == null) {
+        return query;
+      }
+      const ds = await getDataSourceSrv().get(datasource);
+      if (ds.modifyQuery) {
+        return ds.modifyQuery(query, modification);
+      } else {
+        return query;
+      }
+    };
+    this.props.modifyQueries(this.props.exploreId, action, modifier);
   };
 
   onResize = (size: { height: number; width: number }) => {
@@ -264,13 +275,13 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderTablePanel(width: number) {
-    const { exploreId, datasourceInstance, timeZone } = this.props;
+    const { exploreId, timeZone } = this.props;
     return (
       <TableContainer
         ariaLabel={selectors.pages.Explore.General.table}
         width={width}
         exploreId={exploreId}
-        onCellFilterAdded={datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined}
+        onCellFilterAdded={this.onCellFilterAdded}
         timeZone={timeZone}
       />
     );
@@ -349,6 +360,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showTrace,
       showNodeGraph,
       showFlameGraph,
+      splitted,
       timeZone,
     } = this.props;
     const { openDrawer } = this.state;
@@ -377,7 +389,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} topOfViewRef={this.topOfViewRef} />
         {datasourceMissing ? this.renderEmptyState(styles.exploreContainer) : null}
         {datasourceInstance && (
-          <div className={cx(styles.exploreContainer)}>
+          <div
+            className={cx(styles.exploreContainer, {
+              [styles.exploreContainerTopnav]: Boolean(config.featureToggles.topnav && !splitted),
+            })}
+          >
             <PanelContainer className={styles.queryContainer}>
               <QueryRows exploreId={exploreId} />
               <SecondaryActions
@@ -486,6 +502,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showTrace,
     showNodeGraph,
     showFlameGraph,
+    splitted: isSplit(state),
     loading,
     graphStyle,
   };

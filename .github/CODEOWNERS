@@ -30,6 +30,7 @@
 /docs/sources/old-alerting @brendamuir
 /docs/sources/panels/ @chri2547
 /docs/sources/release-notes/ @gguillotte-grafana
+/docs/sources/setup-grafana/ @chri2547
 /docs/sources/visualization/ @chri2547
 /docs/sources/whatsnew/ @gguillotte-grafana
 
@@ -111,14 +112,16 @@ go.sum @grafana/backend-platform
 /contribute/architecture/backend @grafana/backend-platform
 /contribute/engineering/backend @grafana/backend-platform
 
+/crowdin.yml @grafana/user-essentials
 /public/locales @grafana/user-essentials
+/public/app/core/internationalization @grafana/user-essentials
 /e2e @grafana/user-essentials
 /packages @grafana/user-essentials @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
 /packages/grafana-e2e-selectors @grafana/user-essentials
 /packages/grafana-e2e @grafana/user-essentials
 /packages/grafana-toolkit @grafana/plugins-platform-frontend
 /packages/grafana-ui/.storybook @grafana/plugins-platform-frontend
-/packages/grafana-ui/src/components/DateTimePickers @grafana/grafana-bi-squad
+/packages/grafana-ui/src/components/DateTimePickers @grafana/user-essentials
 /packages/grafana-ui/src/components/GraphNG @grafana/grafana-bi-squad
 /packages/grafana-ui/src/components/Logs @grafana/observability-logs
 /packages/grafana-ui/src/components/Table @grafana/grafana-bi-squad
@@ -172,7 +175,7 @@ lerna.json @grafana/frontend-ops
 .betterer.results @joshhunt
 
 # @grafana/ui component documentation
-*.mdx @jessover9000 @grafana/plugins-platform-frontend
+*.mdx @grafana/plugins-platform-frontend
 
 # Core datasources
 /public/app/plugins/datasource/cloudwatch @grafana/aws-plugins

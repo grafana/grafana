@@ -20,7 +20,7 @@ interface LogRowContextProps {
   errors?: LogRowContextQueryErrors;
   hasMoreContextRows?: HasMoreContextRows;
   logsSortOrder?: LogsSortOrder | null;
-  onOutsideClick: () => void;
+  onOutsideClick: (method: string) => void;
   onLoadMoreContext: () => void;
 }
 
@@ -35,13 +35,13 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
   const headerHeight = 40;
   const logsHeight = 220;
   const contextHeight = headerHeight + logsHeight;
+  const width = wrapLogMessage ? '100%' : '75%';
   const afterContext = wrapLogMessage
     ? css`
         top: -${contextHeight}px;
       `
     : css`
         margin-top: -${contextHeight}px;
-        width: 75%;
       `;
 
   const beforeContext = wrapLogMessage
@@ -50,9 +50,11 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
       `
     : css`
         margin-top: 20px;
-        width: 75%;
       `;
   return {
+    width: css`
+      width: ${width};
+    `,
     commonStyles: css`
       position: absolute;
       height: ${contextHeight}px;
@@ -78,7 +80,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
     `,
     title: css`
       position: absolute;
-      width: 75%;
+      width: ${width};
       margin-top: -${contextHeight + headerHeight}px;
       z-index: ${theme.zIndex.modal};
       height: ${headerHeight}px;
@@ -288,21 +290,21 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
 }) => {
   useEffect(() => {
     const handleEscKeyDown = (e: KeyboardEvent): void => {
-      if (e.keyCode === 27) {
-        onOutsideClick();
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        onOutsideClick('close_esc');
       }
     };
     document.addEventListener('keydown', handleEscKeyDown, false);
     return () => {
       document.removeEventListener('keydown', handleEscKeyDown, false);
     };
-  }, [onOutsideClick]);
-  const { afterContext, beforeContext, title, top, actions } = useStyles2((theme) =>
+  }, [onOutsideClick, row]);
+  const { afterContext, beforeContext, title, top, actions, width } = useStyles2((theme) =>
     getLogRowContextStyles(theme, wrapLogMessage)
   );
 
   return (
-    <ClickOutsideWrapper onClick={onOutsideClick}>
+    <ClickOutsideWrapper onClick={() => onOutsideClick('close_outside_click')}>
       {/* e.stopPropagation is necessary so the log details doesn't open when clicked on log line in context
        * and/or when context log line is being highlighted */}
       <div onClick={(e) => e.stopPropagation()}>
@@ -311,7 +313,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
             rows={context.after}
             error={errors && errors.after}
             row={row}
-            className={cx(afterContext, top)}
+            className={cx(afterContext, top, width)}
             shouldScrollToBottom
             canLoadMoreRows={hasMoreContextRows ? hasMoreContextRows.after : false}
             onLoadMoreContext={onLoadMoreContext}
@@ -327,15 +329,15 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
             row={row}
             rows={context.before}
             error={errors && errors.before}
-            className={beforeContext}
+            className={cx(beforeContext, width)}
             groupPosition={LogGroupPosition.Bottom}
             logsSortOrder={logsSortOrder}
           />
         )}
-        <div className={title}>
+        <div className={cx(title, width)}>
           <h5>Log context</h5>
           <div className={actions}>
-            <IconButton size="lg" name="times" onClick={onOutsideClick} />
+            <IconButton size="lg" name="times" onClick={() => onOutsideClick('close_button')} />
           </div>
         </div>
       </div>

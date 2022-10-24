@@ -7,9 +7,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/store/kind/dummy"
+	"github.com/grafana/grafana/pkg/services/store/kind/folder"
+	"github.com/grafana/grafana/pkg/services/store/kind/geojson"
 	"github.com/grafana/grafana/pkg/services/store/kind/playlist"
 	"github.com/grafana/grafana/pkg/services/store/kind/png"
 	"github.com/grafana/grafana/pkg/services/store/kind/svg"
@@ -29,9 +30,21 @@ func NewKindRegistry() KindRegistry {
 		info:    playlist.GetObjectKindInfo(),
 		builder: playlist.GetObjectSummaryBuilder(),
 	}
+	kinds[models.StandardKindDashboard] = &kindValues{
+		info:    dashboard.GetObjectKindInfo(),
+		builder: dashboard.GetObjectSummaryBuilder(),
+	}
+	kinds[models.StandardKindFolder] = &kindValues{
+		info:    folder.GetObjectKindInfo(),
+		builder: folder.GetObjectSummaryBuilder(),
+	}
 	kinds[models.StandardKindPNG] = &kindValues{
 		info:    png.GetObjectKindInfo(),
 		builder: png.GetObjectSummaryBuilder(),
+	}
+	kinds[models.StandardKindGeoJSON] = &kindValues{
+		info:    geojson.GetObjectKindInfo(),
+		builder: geojson.GetObjectSummaryBuilder(),
 	}
 
 	// FIXME -- these are registered because existing tests use them
@@ -52,12 +65,8 @@ func NewKindRegistry() KindRegistry {
 }
 
 // TODO? This could be a zero dependency service that others are responsible for configuring
-func ProvideService(cfg *setting.Cfg, renderer rendering.Service, sql *sqlstore.SQLStore) KindRegistry {
+func ProvideService(cfg *setting.Cfg, renderer rendering.Service) KindRegistry {
 	reg := NewKindRegistry()
-
-	// Register Dashboard support
-	//-----------------------
-	_ = reg.Register(dashboard.GetObjectKindInfo(), dashboard.NewDashboardSummary(sql))
 
 	// Register SVG support
 	//-----------------------

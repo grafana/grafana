@@ -7,11 +7,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 func dumpAuthTables(helper *commitHelper, job *gitExportJob) error {
-	return job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+	return job.sql.WithDbSession(helper.ctx, func(sess *db.Session) error {
 		commit := commitOptions{
 			comment: "auth tables dump",
 		}

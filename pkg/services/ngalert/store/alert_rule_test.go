@@ -11,14 +11,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestIntegrationUpdateAlertRules(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	store := DBstore{
 		SQLStore: sqlStore,
 		Cfg: setting.UnifiedAlertingSettings{
@@ -27,7 +27,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 	}
 	createRule := func(t *testing.T) *models.AlertRule {
 		rule := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval))()
-		err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			_, err := sess.Table(models.AlertRule{}).InsertOne(rule)
 			if err != nil {
 				return err
@@ -59,7 +59,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		require.NoError(t, err)
 
 		dbrule := &models.AlertRule{}
-		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			exist, err := sess.Table(models.AlertRule{}).ID(rule.ID).Get(dbrule)
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule.ID))
 			return err

@@ -185,8 +185,8 @@ func TestTimeSeriesFilter(t *testing.T) {
 		require.NoError(t, err)
 		frames := res.Frames
 		require.NoError(t, err)
-		assert.Equal(t, 33, len(frames))
-		for i := 0; i < 33; i++ {
+		assert.Equal(t, 42, len(frames))
+		for i := 0; i < 42; i++ {
 			if i == 0 {
 				assert.Equal(t, "0", frames[i].Fields[1].Name)
 			}

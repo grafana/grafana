@@ -17,10 +17,11 @@ interface EditorFieldProps extends ComponentProps<typeof Field> {
   width?: number | string;
   optional?: boolean;
   tooltip?: PopoverContent;
+  tooltipInteractive?: boolean;
 }
 
 export const EditorField: React.FC<EditorFieldProps> = (props) => {
-  const { label, optional, tooltip, children, width, ...fieldProps } = props;
+  const { label, optional, tooltip, tooltipInteractive, children, width, ...fieldProps } = props;
 
   const theme = useTheme2();
   const styles = getStyles(theme, width);
@@ -34,7 +35,7 @@ export const EditorField: React.FC<EditorFieldProps> = (props) => {
         {label}
         {optional && <span className={styles.optional}> - optional</span>}
         {tooltip && (
-          <Tooltip placement="top" content={tooltip} theme="info">
+          <Tooltip placement="top" content={tooltip} theme="info" interactive={tooltipInteractive}>
             <Icon name="info-circle" size="sm" className={styles.icon} />
           </Tooltip>
         )}

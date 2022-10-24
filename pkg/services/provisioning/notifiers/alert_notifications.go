@@ -24,14 +24,10 @@ type Manager interface {
 	GetAlertNotificationsWithUidToSend(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error
 	UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error
 }
-type SQLStore interface {
-	GetOrgById(c context.Context, cmd *models.GetOrgByIdQuery) error
-	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
-}
 
 // Provision alert notifiers
-func Provision(ctx context.Context, configDirectory string, alertingService Manager, orgService org.Service, sqlstore SQLStore, encryptionService encryption.Internal, notificationService *notifications.NotificationService) error {
-	dc := newNotificationProvisioner(orgService, sqlstore, alertingService, encryptionService, notificationService, log.New("provisioning.notifiers"))
+func Provision(ctx context.Context, configDirectory string, alertingService Manager, orgService org.Service, encryptionService encryption.Internal, notificationService *notifications.NotificationService) error {
+	dc := newNotificationProvisioner(orgService, alertingService, encryptionService, notificationService, log.New("provisioning.notifiers"))
 	return dc.applyChanges(ctx, configDirectory)
 }
 
@@ -40,11 +36,10 @@ type NotificationProvisioner struct {
 	log             log.Logger
 	cfgProvider     *configReader
 	alertingManager Manager
-	sqlstore        SQLStore
 	orgService      org.Service
 }
 
-func newNotificationProvisioner(orgService org.Service, store SQLStore, alertingManager Manager, encryptionService encryption.Internal, notifiationService *notifications.NotificationService, log log.Logger) NotificationProvisioner {
+func newNotificationProvisioner(orgService org.Service, alertingManager Manager, encryptionService encryption.Internal, notifiationService *notifications.NotificationService, log log.Logger) NotificationProvisioner {
 	return NotificationProvisioner{
 		log:             log,
 		alertingManager: alertingManager,
@@ -52,9 +47,8 @@ func newNotificationProvisioner(orgService org.Service, store SQLStore, alerting
 			encryptionService:   encryptionService,
 			notificationService: notifiationService,
 			log:                 log,
-			orgStore:            store,
+			orgService:          orgService,
 		},
-		sqlstore:   store,
 		orgService: orgService,
 	}
 }

@@ -1,5 +1,3 @@
-import $ from 'jquery';
-
 import {
   EchoBackend,
   EchoEventType,
@@ -8,6 +6,8 @@ import {
   isPageviewEvent,
   PageviewEchoEvent,
 } from '@grafana/runtime';
+
+import { loadScript } from '../../utils';
 
 interface ApplicationInsights {
   trackPageView: () => void;
@@ -31,18 +31,15 @@ export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent
   supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction];
 
   constructor(public options: ApplicationInsightsBackendOptions) {
-    $.ajax({
-      url: 'https://js.monitor.azure.com/scripts/b/ai.2.min.js',
-      dataType: 'script',
-      cache: true,
-    }).done(function () {
-      const applicationInsightsOpts = {
-        config: {
-          connectionString: options.connectionString,
-          endpointUrl: options.endpointUrl,
-        },
-      };
+    const applicationInsightsOpts = {
+      config: {
+        connectionString: options.connectionString,
+        endpointUrl: options.endpointUrl,
+      },
+    };
 
+    const url = 'https://js.monitor.azure.com/scripts/b/ai.2.min.js';
+    loadScript(url).then(() => {
       const init = new (window as any).Microsoft.ApplicationInsights.ApplicationInsights(applicationInsightsOpts);
       (window as any).applicationInsights = init.loadAppInsights();
     });

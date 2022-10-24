@@ -115,8 +115,7 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 		}
 
 		if serverAdminNode := root.FindById(NavIDAdmin); serverAdminNode != nil {
-			serverAdminNode.Url = "/admin/settings"
-			serverAdminNode.Text = "Server admin"
+			serverAdminNode.Url = "/admin/server"
 			serverAdminNode.SortWeight = 0
 
 			if orgAdminNode != nil {

@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import lodash from 'lodash'; // eslint-disable-line lodash/import-scope
 import React from 'react';
@@ -26,7 +26,7 @@ describe('LogGroupSelector', () => {
     jest.resetAllMocks();
   });
 
-  it('updates upstream query log groups on region change', async () => {
+  it('does not clear previously selected log groups after region change', async () => {
     ds.datasource.api.describeLogGroups = jest.fn().mockImplementation(async (params: DescribeLogGroupsRequest) => {
       if (params.region === 'region1') {
         return Promise.resolve(['log_group_1'].map(toOption));
@@ -40,36 +40,10 @@ describe('LogGroupSelector', () => {
     };
 
     const { rerender } = render(<LogGroupSelector {...props} />);
-    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
-    expect(onChange).toHaveBeenLastCalledWith(['log_group_1']);
     expect(await screen.findByText('log_group_1')).toBeInTheDocument();
 
     act(() => rerender(<LogGroupSelector {...props} region="region2" />));
-    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
-    expect(onChange).toHaveBeenLastCalledWith([]);
-  });
-
-  it('does not update upstream query log groups if saved is false', async () => {
-    ds.datasource.api.describeLogGroups = jest.fn().mockImplementation(async (params: DescribeLogGroupsRequest) => {
-      if (params.region === 'region1') {
-        return Promise.resolve(['log_group_1'].map(toOption));
-      } else {
-        return Promise.resolve(['log_group_2'].map(toOption));
-      }
-    });
-    const props = {
-      ...defaultProps,
-      selectedLogGroups: ['log_group_1'],
-    };
-
-    const { rerender } = render(<LogGroupSelector {...props} />);
-    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
-    expect(onChange).toHaveBeenLastCalledWith(['log_group_1']);
     expect(await screen.findByText('log_group_1')).toBeInTheDocument();
-
-    act(() => rerender(<LogGroupSelector {...props} region="region2" saved={false} />));
-    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
-    expect(onChange).toHaveBeenLastCalledWith(['log_group_1']);
   });
 
   it('should merge results of remote log groups search with existing results', async () => {

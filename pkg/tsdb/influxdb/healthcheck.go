@@ -100,6 +100,11 @@ func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, s *
 		if res.Error != nil {
 			return getHealthCheckMessage(s, "error reading influxDB", res.Error)
 		}
+
+		if len(res.Frames) == 0 {
+			return getHealthCheckMessage(s, "0 measurements found", nil)
+		}
+
 		if len(res.Frames) > 0 && len(res.Frames[0].Fields) > 0 {
 			return getHealthCheckMessage(s, fmt.Sprintf("%d measurements found", res.Frames[0].Fields[0].Len()), nil)
 		}

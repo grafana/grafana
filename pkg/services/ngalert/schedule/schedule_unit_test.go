@@ -240,7 +240,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			for i := 0; i < 2; i++ {
 				states = append(states, &state.State{
 					AlertRuleUID: rule.UID,
-					CacheId:      util.GenerateShortUID(),
+					CacheID:      util.GenerateShortUID(),
 					OrgID:        rule.OrgID,
 					State:        s,
 					StartsAt:     sch.clock.Now(),
@@ -522,13 +522,12 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		C:           mockedClock,
 		Evaluator:   evaluator,
 		RuleStore:   rs,
-		Logger:      logger,
 		Metrics:     m.GetSchedulerMetrics(),
 		AlertSender: senderMock,
 	}
 
 	stateRs := state.FakeRuleReader{}
-	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, &stateRs, is, &image.NoopImageService{}, mockedClock, &state.FakeHistorian{})
+	st := state.NewManager(m.GetStateMetrics(), nil, &stateRs, is, &image.NoopImageService{}, mockedClock, &state.FakeHistorian{})
 	return NewScheduler(schedCfg, appUrl, st)
 }
 

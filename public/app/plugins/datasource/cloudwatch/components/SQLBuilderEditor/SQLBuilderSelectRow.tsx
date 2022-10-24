@@ -49,7 +49,12 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
   const namespaceOptions = useNamespaces(datasource);
   const metricOptions = useMetrics(datasource, query.region, namespace);
   const existingFilters = useMemo(() => stringArrayToDimensions(schemaLabels ?? []), [schemaLabels]);
-  const unusedDimensionKeys = useDimensionKeys(datasource, query.region, namespace, metricName, existingFilters);
+  const unusedDimensionKeys = useDimensionKeys(datasource, {
+    region: query.region,
+    namespace,
+    metricName,
+    dimensionFilters: existingFilters,
+  });
   const dimensionKeys = useMemo(
     () => (schemaLabels?.length ? [...unusedDimensionKeys, ...schemaLabels.map(toOption)] : unusedDimensionKeys),
     [unusedDimensionKeys, schemaLabels]
