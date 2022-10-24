@@ -822,7 +822,7 @@ type dashboardsRes struct {
 
 func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, orgID int64, dashboardUID string) chan *dashboardsRes {
 	ch := make(chan *dashboardsRes, 3)
-	layout := "2006-01-02T15:04:05.000-03:00"
+	layout := "2006-01-02T15:04:05Z0700"
 
 	go func() {
 		defer close(ch)
@@ -884,17 +884,34 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 			}
 
 			rows := make([]*dashboardQueryResult, len(slices))
+			var parsingErr error
 			for i := range slices {
-				id, _ := strconv.ParseInt(slices[i][0], 10, 64)
+				id, err := strconv.ParseInt(slices[i][0], 10, 64)
+				if err != nil {
+					parsingErr = err
+					break
+				}
 				uid := slices[i][1]
 				isFolder := false
 				if slices[i][2] == "1" {
 					isFolder = true
 				}
 
-				folderID, _ := strconv.ParseInt(slices[i][3], 10, 64)
-				created, _ := time.Parse(layout, slices[i][6])
-				updated, _ := time.Parse(layout, slices[i][7])
+				folderID, err := strconv.ParseInt(slices[i][3], 10, 64)
+				if err != nil {
+					parsingErr = err
+					break
+				}
+				created, err := time.Parse(layout, slices[i][6])
+				if err != nil {
+					parsingErr = err
+					break
+				}
+				updated, err := time.Parse(layout, slices[i][7])
+				if err != nil {
+					parsingErr = err
+					break
+				}
 
 				rows[i] = &dashboardQueryResult{
 					Id:       id,
@@ -909,6 +926,13 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 			}
 
 			dashboardQuerySpan.End()
+			if parsingErr != nil {
+				ch <- &dashboardsRes{
+					dashboards: nil,
+					err:        parsingErr,
+				}
+				break
+			}
 
 			if len(rows) < limit || dashboardUID != "" {
 				ch <- &dashboardsRes{
