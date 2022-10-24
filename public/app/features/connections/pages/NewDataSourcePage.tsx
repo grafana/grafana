@@ -4,10 +4,11 @@ import { Page } from 'app/core/components/Page/Page';
 import { NewDataSource } from 'app/features/datasources/components/NewDataSource';
 
 export function NewDataSourcePage() {
-  // TODO: make sure to use the correct nav id here (breadcrumbs?)
-  // Also figure out how we can make the page title and the breadcumbs dynamic (using the plugins name) - only with navModel?
   return (
-    <Page navId={'connections-your-connections-datasources'}>
+    <Page
+      navId={'connections-your-connections-datasources'}
+      pageNav={{ text: 'Add data source', subTitle: 'Choose a data source type', active: true }}
+    >
       <Page.Contents>
         <NewDataSource />
       </Page.Contents>

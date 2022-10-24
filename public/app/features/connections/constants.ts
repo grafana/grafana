@@ -5,6 +5,8 @@ export const CLOUD_ONBOARDING_APP_ID = 'grafana-easystart-app';
 export const ROUTE_BASE_ID = 'connections';
 
 export const ROUTES = {
+  Base: `/${ROUTE_BASE_ID}`,
+
   // Your Connections
   YourConnections: `/${ROUTE_BASE_ID}/your-connections`,
 
