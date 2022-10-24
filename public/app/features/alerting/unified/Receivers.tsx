@@ -4,7 +4,8 @@ import React, { FC, useEffect } from 'react';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation, useParams } from 'react-router-dom';
 
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
-import { Alert, LoadingPlaceholder, withErrorBoundary, useStyles2, Icon, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Alert, LoadingPlaceholder, withErrorBoundary, useStyles2, Icon } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { AlertManagerPicker } from './components/AlertManagerPicker';

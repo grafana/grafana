@@ -5371,17 +5371,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/experimental@npm:^0.0.2-canary.36":
-  version: 0.0.2-canary.36
-  resolution: "@grafana/experimental@npm:0.0.2-canary.36"
+"@grafana/experimental@npm:1.0.1":
+  version: 1.0.1
+  resolution: "@grafana/experimental@npm:1.0.1"
   dependencies:
     "@types/uuid": ^8.3.3
     uuid: ^8.3.2
   peerDependencies:
     "@emotion/css": 11.1.3
-    react: 17.0.1
-    react-select: 5.2.1
-  checksum: 2aea6c2cbed323f7212c82df1b529897296c5c2938345dc0e7866cc4576c763f731f4f89803e6344ec7a3eb3940e0e8bdc4a01739b67833a5513913434130aba
+    "@grafana/data": ^9.2.0
+    "@grafana/runtime": ^9.2.0
+    "@grafana/ui": ^9.2.0
+    react: 17.0.2
+    react-dom: 17.0.2
+    react-select: ^5.2.1
+  checksum: 126042201975927516248c182045c130fbad069c353846810490729cad0db0062dd98d58cfadc0134e9fc0236ba8ce76b2db2ac25ca98b164cb3ca7205f2c39f
   languageName: node
   linkType: hard
 
@@ -22416,7 +22420,7 @@ __metadata:
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": 5.0.0
-    "@grafana/experimental": ^0.0.2-canary.36
+    "@grafana/experimental": 1.0.1
     "@grafana/google-sdk": 0.0.3
     "@grafana/lezer-logql": 0.1.0
     "@grafana/runtime": "workspace:*"
