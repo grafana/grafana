@@ -1120,7 +1120,6 @@ export class DashboardModel implements TimeModel {
       return false;
     }
 
-
     // If RBAC is enabled there are additional conditions to check.
     return !contextSrv.accessControlEnabled() || Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
   }
