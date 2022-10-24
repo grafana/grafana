@@ -97,7 +97,6 @@ export interface ResourceDimensionOptions {
   placeholderValue?: string;
   // If you want your icon to be driven by value of a field
   showSourceRadio?: boolean;
-  defaultTab?: PickerTabType;
 }
 
 export enum ResourceDimensionMode {

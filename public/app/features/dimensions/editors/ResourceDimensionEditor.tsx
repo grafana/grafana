@@ -111,7 +111,6 @@ export const ResourceDimensionEditor = (
           mediaType={mediaType}
           folderName={folderName}
           size={ResourcePickerSize.NORMAL}
-          defaultTab={item.settings?.defaultTab}
         />
       )}
       {mode === ResourceDimensionMode.Mapping && (

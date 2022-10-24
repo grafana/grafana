@@ -20,14 +20,13 @@ interface Props {
   onChange: (value?: string) => void;
   mediaType: MediaType;
   folderName: ResourceFolderName;
-  defaultTab?: PickerTabType;
 }
 
 interface ErrorResponse {
   message: string;
 }
 export const ResourcePickerPopover = (props: Props) => {
-  const { value, onChange, mediaType, folderName, defaultTab } = props;
+  const { value, onChange, mediaType, folderName } = props;
   const styles = useStyles2(getStyles);
 
   const onClose = () => {
@@ -39,7 +38,7 @@ export const ResourcePickerPopover = (props: Props) => {
   const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen: true }, ref);
 
   const [newValue, setNewValue] = useState<string>(value ?? '');
-  const [activePicker, setActivePicker] = useState<PickerTabType>(defaultTab ?? PickerTabType.Folder);
+  const [activePicker, setActivePicker] = useState<PickerTabType>(PickerTabType.Folder);
   const [formData, setFormData] = useState<FormData>(new FormData());
   const [upload, setUpload] = useState<boolean>(false);
   const [error, setError] = useState<ErrorResponse>({ message: '' });

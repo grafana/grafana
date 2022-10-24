@@ -1,6 +1,5 @@
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { CanvasElementOptions } from 'app/features/canvas';
-import { PickerTabType } from 'app/features/dimensions';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import { BackgroundSizeEditor } from 'app/features/dimensions/editors/BackgroundSizeEditor';
 
@@ -40,7 +39,6 @@ export const optionBuilder: OptionSuppliers = {
         editor: ResourceDimensionEditor,
         settings: {
           resourceType: 'image',
-          defaultTab: PickerTabType.URL,
         },
       })
       .addCustomEditor({
