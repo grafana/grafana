@@ -3,7 +3,6 @@ package dashboard
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -30,16 +29,6 @@ func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
 // This implementation moves datasources referenced by internal ID or name to UID
 func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup) models.ObjectSummaryBuilder {
 	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
-		var parsed map[string]interface{}
-		err := json.Unmarshal(body, &parsed)
-		if err != nil {
-			return nil, nil, err // did not parse
-		}
-		// values that should be managed by the container
-		delete(parsed, "uid")
-		delete(parsed, "version")
-		// slug? (derived from title)
-
 		summary := &models.ObjectSummary{
 			Labels: make(map[string]string),
 			Fields: make(map[string]interface{}),
