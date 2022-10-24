@@ -186,6 +186,39 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 		assert.Equal(t, 900, res[0].Period)
 	})
 
+	t.Run("returns error if period is invalid duration", func(t *testing.T) {
+		query := []backend.DataQuery{
+			{
+				JSON: json.RawMessage(`{
+				   "statistic":"Average",
+				   "period":"invalid"
+				}`),
+			},
+		}
+
+		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
+		require.Error(t, err)
+
+		assert.Equal(t, `failed to parse period as duration: time: invalid duration "invalid"`, err.Error())
+	})
+
+	t.Run("returns parsed duration in seconds", func(t *testing.T) {
+		query := []backend.DataQuery{
+			{
+				JSON: json.RawMessage(`{
+				   "statistic":"Average",
+				   "period":"2h45m"
+				}`),
+			},
+		}
+
+		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
+		assert.NoError(t, err)
+
+		require.Len(t, res, 1)
+		assert.Equal(t, 9900, res[0].Period)
+	})
+
 	t.Run("Period is parsed correctly if not defined by user", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
