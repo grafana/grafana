@@ -33,21 +33,6 @@ func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args user.CreateUserComm
 	return ss.getOrCreateOrg(sess, orgName)
 }
 
-// func (ss *SQLStore) userCaseInsensitiveLoginConflict(ctx context.Context, sess *DBSession, login, email string) error {
-// 	users := make([]user.User, 0)
-
-// 	if err := sess.Where("LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)",
-// 		email, login).Find(&users); err != nil {
-// 		return err
-// 	}
-
-// 	if len(users) > 1 {
-// 		return &user.ErrCaseInsensitiveLoginConflict{Users: users}
-// 	}
-
-// 	return nil
-// }
-
 // createUser creates a user in the database
 // if autoAssignOrg is enabled then args.OrgID will be used
 // to add to an existing Org with id=args.OrgID
