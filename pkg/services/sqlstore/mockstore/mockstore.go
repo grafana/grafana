@@ -185,3 +185,12 @@ func (m *SQLStoreMock) GetAlertNotificationUidWithId(ctx context.Context, query 
 func (m *SQLStoreMock) DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error {
 	return m.ExpectedError
 }
+
+func (m *SQLStoreMock) GetAlertNotificationsWithUidToSend(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error {
+	query.Result = m.ExpectedLoginAttempts
+	return m.ExpectedError
+}
