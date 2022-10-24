@@ -30,7 +30,7 @@ const SQLGroupBy: React.FC<SQLGroupByProps> = ({ query, datasource, onQueryChang
   const namespace = getNamespaceFromExpression(sql.from);
   const metricName = getMetricNameFromExpression(sql.select);
 
-  const baseOptions = useDimensionKeys(datasource, query.region, namespace, metricName);
+  const baseOptions = useDimensionKeys(datasource, { region: query.region, namespace, metricName });
   const options = useMemo(
     // Exclude options we've already selected
     () => baseOptions.filter((option) => !groupBysFromQuery.some((v) => v.property.name === option.value)),

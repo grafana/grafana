@@ -5,14 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestService_DecryptedValuesCache(t *testing.T) {
@@ -98,9 +98,9 @@ func TestIntegrationPluginSettings(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	db := sqlstore.InitTestDB(t)
+	store := db.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	psService := ProvideService(db, secretsService)
+	psService := ProvideService(store, secretsService)
 
 	t.Run("Existing plugin settings", func(t *testing.T) {
 		secureJsonData, err := secretsService.EncryptJsonData(context.Background(), map[string]string{"secureKey": "secureValue"}, secrets.WithoutScope())
@@ -120,7 +120,7 @@ func TestIntegrationPluginSettings(t *testing.T) {
 			Updated:        time.Now(),
 		}
 
-		err = db.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err = store.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
 			affectedRows, innerErr := sess.Insert(&existing)
 			require.Equal(t, int64(1), affectedRows)
 			return innerErr
@@ -168,7 +168,7 @@ func TestIntegrationPluginSettings(t *testing.T) {
 
 		t.Run("UpdatePluginSetting should update existing plugin settings and publish PluginStateChangedEvent", func(t *testing.T) {
 			var pluginStateChangedEvent *models.PluginStateChangedEvent
-			db.Bus().AddEventListener(func(_ context.Context, evt *models.PluginStateChangedEvent) error {
+			store.Bus().AddEventListener(func(_ context.Context, evt *models.PluginStateChangedEvent) error {
 				pluginStateChangedEvent = evt
 				return nil
 			})
@@ -226,7 +226,7 @@ func TestIntegrationPluginSettings(t *testing.T) {
 	t.Run("Non-existing plugin settings", func(t *testing.T) {
 		t.Run("UpdatePluginSetting should insert plugin settings and publish PluginStateChangedEvent", func(t *testing.T) {
 			var pluginStateChangedEvent *models.PluginStateChangedEvent
-			db.Bus().AddEventListener(func(_ context.Context, evt *models.PluginStateChangedEvent) error {
+			store.Bus().AddEventListener(func(_ context.Context, evt *models.PluginStateChangedEvent) error {
 				pluginStateChangedEvent = evt
 				return nil
 			})

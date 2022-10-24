@@ -45,7 +45,7 @@ Controls the opacity of state regions.
 
 ## Value mappings
 
-To assign colors to boolean or string values, use the [Value mappings](< {{ refref "../value-mappings.md"}} >).
+To assign colors to boolean or string values, use the [Value mappings]({{< relref "../../configure-value-mappings/" >}}).
 
 {{< figure src="/static/img/docs/v8/value_mappings_side_editor.png" max-width="300px" caption="Value mappings side editor" >}}
 

@@ -30,7 +30,7 @@ export function MetricStatEditor({
   const { region, namespace, metricName, dimensions } = metricStat;
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, region, namespace);
-  const dimensionKeys = useDimensionKeys(datasource, region, namespace, metricName, dimensions ?? {});
+  const dimensionKeys = useDimensionKeys(datasource, { region, namespace, metricName, dimensionFilters: dimensions });
 
   const onMetricStatChange = (metricStat: MetricStat) => {
     onChange(metricStat);

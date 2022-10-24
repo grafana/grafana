@@ -10,6 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+type testUserKey struct{}
+
+func ContextWithUser(ctx context.Context, data *user.SignedInUser) context.Context {
+	return context.WithValue(ctx, testUserKey{}, data)
+}
+
 // UserFromContext ** Experimental **
 // TODO: move to global infra package / new auth service
 func UserFromContext(ctx context.Context) *user.SignedInUser {
@@ -18,6 +24,13 @@ func UserFromContext(ctx context.Context) *user.SignedInUser {
 		return grpcCtx.SignedInUser
 	}
 
+	// Explicitly set in context
+	u, ok := ctx.Value(testUserKey{}).(*user.SignedInUser)
+	if ok && u != nil {
+		return u
+	}
+
+	// From the HTTP request
 	c, ok := ctxkey.Get(ctx).(*models.ReqContext)
 	if !ok || c == nil || c.SignedInUser == nil {
 		return nil
