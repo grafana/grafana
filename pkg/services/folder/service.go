@@ -31,15 +31,17 @@ type NestedFolderService interface {
 	// a folder's parent folder, use Move.
 	Update(ctx context.Context, cmd *UpdateFolderCommand) (*Folder, error)
 
-	// Move changes a folder's parent folder to the requested new parent. A side effect of this
+	// Move changes a folder's parent folder to the requested new parent.
 	Move(ctx context.Context, cmd *MoveFolderCommand) (*Folder, error)
 
-	// Delete deletes a folder. This will return an error if there are any dashboards in the folder.
+	// Delete deletes a folder. This will return an error if there are any
+	// dashboards in the folder.
 	Delete(ctx context.Context, cmd *DeleteFolderCommand) (*Folder, error)
 
-	// GetFolder take a GetFolderCmd and returns a folder matching the request. One of ID, UID, or
-	// Title must be included. If multiple values are included in the request,
-	// Grafana will select one in order of specificity (ID, UID, Title).
+	// GetFolder takes a GetFolderCommand and returns a folder matching the
+	// request. One of ID, UID, or Title must be included. If multiple values
+	// are included in the request, Grafana will select one in order of
+	// specificity (ID, UID, Title).
 	Get(ctx context.Context, cmd *GetFolderCommand) (*Folder, error)
 
 	// GetParents returns an ordered list of parent folders for the given
