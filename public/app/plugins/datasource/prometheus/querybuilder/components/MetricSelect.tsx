@@ -3,8 +3,9 @@ import debounce from 'debounce-promise';
 import React, { useCallback, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
-import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
-import { AsyncSelect, EditorField, EditorFieldGroup, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
+import { SelectableValue, toOption, GrafanaTheme2 } from '@grafana/data';
+import { EditorField, EditorFieldGroup } from '@grafana/experimental';
+import { AsyncSelect, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { QueryBuilderLabelFilter } from '../shared/types';
