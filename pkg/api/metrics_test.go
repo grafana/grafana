@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -290,7 +291,7 @@ func TestDataSourceQueryError(t *testing.T) {
 					nil,
 					&fakePluginRequestValidator{},
 					&fakeDatasources.FakeDataSourceService{},
-					pluginClient.ProvideService(r),
+					pluginClient.ProvideService(r, &fakeJWTAuth{}),
 					&fakeOAuthTokenService{},
 				)
 				hs.QuotaService = quotatest.NewQuotaServiceFake()
@@ -325,4 +326,20 @@ func (f *fakePluginBackend) QueryData(ctx context.Context, req *backend.QueryDat
 
 func (f *fakePluginBackend) IsDecommissioned() bool {
 	return false
+}
+
+type fakeJWTAuth struct {
+	jwt.PluginAuthService
+}
+
+func (f *fakeJWTAuth) Generate(string, string) (string, error) {
+	return "", nil
+}
+
+func (f *fakeJWTAuth) Verify(context.Context, string) (models.JWTClaims, error) {
+	return models.JWTClaims{}, nil
+}
+
+func (f *fakeJWTAuth) IsEnabled() bool {
+	return true
 }

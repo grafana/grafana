@@ -7,16 +7,19 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/stretchr/testify/require"
 )
 
 func TestQueryData(t *testing.T) {
 	t.Run("Empty registry should return not registered error", func(t *testing.T) {
 		registry := fakes.NewFakePluginRegistry()
-		client := ProvideService(registry)
+		pluginAuth := &fakeJWTAuth{}
+		client := ProvideService(registry, pluginAuth)
 		_, err := client.QueryData(context.Background(), &backend.QueryDataRequest{})
 		require.Error(t, err)
 		require.ErrorIs(t, err, plugins.ErrPluginNotRegistered)
@@ -57,7 +60,8 @@ func TestQueryData(t *testing.T) {
 				err := registry.Add(context.Background(), p)
 				require.NoError(t, err)
 
-				client := ProvideService(registry)
+				pluginAuth := &fakeJWTAuth{}
+				client := ProvideService(registry, pluginAuth)
 				_, err = client.QueryData(context.Background(), &backend.QueryDataRequest{
 					PluginContext: backend.PluginContext{
 						PluginID: "grafana",
@@ -85,4 +89,20 @@ func (f *fakePluginBackend) QueryData(ctx context.Context, req *backend.QueryDat
 
 func (f *fakePluginBackend) IsDecommissioned() bool {
 	return false
+}
+
+type fakeJWTAuth struct {
+	jwt.PluginAuthService
+}
+
+func (f *fakeJWTAuth) IsEnabled() bool {
+	return true
+}
+
+func (f *fakeJWTAuth) Generate(string, string) (string, error) {
+	return "", nil
+}
+
+func (f *fakeJWTAuth) Verify(context.Context, string) (models.JWTClaims, error) {
+	return models.JWTClaims{}, nil
 }

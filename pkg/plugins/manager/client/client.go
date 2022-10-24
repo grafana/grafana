@@ -6,22 +6,27 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"google.golang.org/grpc/metadata"
 
+	xctx "github.com/grafana/grafana/pkg/infra/x/context"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 )
 
 var _ plugins.Client = (*Service)(nil)
 
 type Service struct {
 	pluginRegistry registry.Service
+	jwtAuthService jwt.PluginAuthService
 }
 
-func ProvideService(pluginRegistry registry.Service) *Service {
+func ProvideService(pluginRegistry registry.Service, jwtAuthService jwt.PluginAuthService) *Service {
 	return &Service{
 		pluginRegistry: pluginRegistry,
+		jwtAuthService: jwtAuthService,
 	}
 }
 
@@ -30,6 +35,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	if !exists {
 		return nil, plugins.ErrPluginNotRegistered.Errorf("%w", backendplugin.ErrPluginNotRegistered)
 	}
+
+	ctx = s.attachJWT(ctx, req.PluginContext)
 
 	var resp *backend.QueryDataResponse
 	err := instrumentation.InstrumentQueryDataRequest(req.PluginContext.PluginID, func() (innerErr error) {
@@ -66,6 +73,9 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
+
+	ctx = s.attachJWT(ctx, req.PluginContext)
+
 	err := instrumentation.InstrumentCallResourceRequest(p.PluginID(), func() error {
 		if err := p.CallResource(ctx, req, sender); err != nil {
 			return err
@@ -104,6 +114,8 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
+	ctx = s.attachJWT(ctx, req.PluginContext)
+
 	var resp *backend.CheckHealthResult
 	err := instrumentation.InstrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
 		resp, innerErr = p.CheckHealth(ctx, req)
@@ -131,6 +143,8 @@ func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStr
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
+	ctx = s.attachJWT(ctx, req.PluginContext)
+
 	return plugin.SubscribeStream(ctx, req)
 }
 
@@ -140,6 +154,8 @@ func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamR
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
+	ctx = s.attachJWT(ctx, req.PluginContext)
+
 	return plugin.PublishStream(ctx, req)
 }
 
@@ -148,6 +164,8 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
+
+	ctx = s.attachJWT(ctx, req.PluginContext)
 
 	return plugin.RunStream(ctx, req, sender)
 }
@@ -164,4 +182,22 @@ func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin,
 	}
 
 	return p, true
+}
+
+func (s *Service) attachJWT(ctx context.Context, pluginCtx backend.PluginContext) context.Context {
+	if !s.jwtAuthService.IsEnabled() {
+		return ctx
+	}
+
+	user := xctx.UserFromContext(ctx)
+	if user == nil || user.IsAnonymous || user.IsDisabled {
+		return ctx
+	}
+
+	token, err := s.jwtAuthService.Generate(xctx.GetUserIDString(user), pluginCtx.PluginID)
+	if err != nil {
+		return ctx
+	}
+
+	return metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
 }

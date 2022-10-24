@@ -50,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
+	"github.com/grafana/grafana/pkg/services/auth/jwt/grpc"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -250,8 +251,10 @@ var wireBasicSet = wire.NewSet(
 	pushhttp.ProvideService,
 	plugincontext.ProvideService,
 	contexthandler.ProvideService,
-	jwt.ProvideService,
-	wire.Bind(new(models.JWTService), new(*jwt.AuthService)),
+	jwt.ProvideVerificationService,
+	jwt.ProvideUserAuthService,
+	jwt.ProvidePluginAuthService,
+	wire.Bind(new(models.JWTService), new(*jwt.UserAuthService)),
 	ngstore.ProvideDBStore,
 	ngimage.ProvideDeleteExpiredService,
 	ngalert.ProvideService,
@@ -355,6 +358,7 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideService,
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
+	jwtgrpc.ProvidePluginAuthServer,
 	interceptors.ProvideAuthenticator,
 	kind.ProvideService, // The registry known kinds
 	objectdummyserver.ProvideDummyObjectServer,

@@ -1,0 +1,18 @@
+syntax = "proto3";
+package jwtgrpc;
+
+option go_package = "./;jwtgrpc";
+
+message IntrospectionRequest {}
+
+message IntrospectionResponse {
+  // Validity of the token
+  bool OK = 1;
+
+  // Scopes of the token
+  repeated string scopes = 2;
+}
+
+service JWT {
+  rpc Introspection(IntrospectionRequest) returns (IntrospectionResponse);
+}

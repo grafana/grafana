@@ -8,10 +8,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	xctx "github.com/grafana/grafana/pkg/infra/x/context"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -88,7 +88,7 @@ func (e *objectStoreJob) start() {
 		OrgID:  0, // gets filled in from each row
 		UserID: 0,
 	}
-	ctx := store.ContextWithUser(context.Background(), rowUser)
+	ctx := xctx.ContextWithUser(context.Background(), rowUser)
 
 	what := models.StandardKindDashboard
 	e.status.Count[what] = 0

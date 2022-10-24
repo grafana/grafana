@@ -4,18 +4,18 @@ import (
 	"context"
 	"testing"
 
+	xctx "github.com/grafana/grafana/pkg/infra/x/context"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
-	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
 
 func TestResolver(t *testing.T) {
-	ctxOrg1 := store.ContextWithUser(context.Background(), &user.SignedInUser{OrgID: 1})
+	ctxOrg1 := xctx.ContextWithUser(context.Background(), &user.SignedInUser{OrgID: 1})
 
 	ds := &fakeDatasources.FakeDataSourceService{
 		DataSources: []*datasources.DataSource{

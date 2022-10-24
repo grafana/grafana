@@ -341,5 +341,11 @@ var (
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
+		{
+			Name:            "jwtTokenGeneration",
+			Description:     "Enable token generation in JWT Auth service.",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
 	}
 )
