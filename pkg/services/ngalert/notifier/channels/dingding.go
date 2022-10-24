@@ -25,7 +25,7 @@ type dingDingSettings struct {
 }
 
 func buildDingDingSettings(fc FactoryConfig) (dingDingSettings, error) {
-	settings := dingDingSettings{}
+	var settings dingDingSettings
 	err := fc.Config.unmarshalSettings(&settings)
 	if err != nil {
 		return settings, fmt.Errorf("failed to unmarshal settings: %w", err)
