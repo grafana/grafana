@@ -12,10 +12,14 @@ enum GRPCMethods {
 }
 
 export class ObjectStoreClient {
+  private connected = false;
   constructor(private client: grpc.Client, private grpcAddress: string, private grpcToken: string) {}
 
   connect = () => {
-    this.client.connect(this.grpcAddress, { plaintext: true, reflect: true });
+    if (!this.connected) {
+      this.client.connect(this.grpcAddress, { plaintext: true, reflect: true });
+      this.connected = true;
+    }
   };
 
   grpcRequestParams = () => {
