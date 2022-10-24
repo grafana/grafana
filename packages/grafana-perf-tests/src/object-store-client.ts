@@ -140,8 +140,9 @@ export class ObjectStoreClient {
       this.grpcRequestParams()
     );
 
+    const checkName = opts?.checkCreatedOrUpdated ? 'object was created or updated' : 'object was created';
     check(response, {
-      'object was created or updated': (r) => {
+      [checkName]: (r) => {
         const statusOK = r && r.status === grpc.StatusOK;
         if (!statusOK) {
           return false;

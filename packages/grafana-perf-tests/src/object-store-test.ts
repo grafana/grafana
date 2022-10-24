@@ -8,11 +8,19 @@ import { Data, prepareData } from './prepare-data';
 const grpcToken = __ENV.GRPC_TOKEN;
 const grpcAddress = __ENV.GRPC_ADDRESS;
 
+if (typeof grpcToken !== 'string' || !grpcToken.length) {
+  throw new Error('GRPC_TOKEN env variable is missing');
+}
+
+if (typeof grpcAddress !== 'string' || !grpcAddress.length) {
+  throw new Error('GRPC_ADDRESS env variable is missing');
+}
+
 const client = new grpc.Client();
 const objectStoreClient = new ObjectStoreClient(client, grpcAddress, grpcToken);
 
 const data: Data = new SharedArray('data', () => {
-  return [prepareData(JSON.parse(open('../scripts/tmp/filenames.json')), 100)];
+  return [prepareData(JSON.parse(open('../scripts/tmp/filenames.json')), 10000)];
 })[0];
 
 const scenarioDuration = '2m';
@@ -82,24 +90,25 @@ export const options = {
 };
 
 export function setup() {
-  if (typeof grpcToken !== 'string' || !grpcToken.length) {
-    throw new Error('GRPC_TOKEN env variable is missing');
-  }
-
-  if (typeof grpcAddress !== 'string' || !grpcAddress.length) {
-    throw new Error('GRPC_ADDRESS env variable is missing');
-  }
-
   objectStoreClient.healthCheck();
 
+  console.log('inserting base objects');
   for (let i = 0; i < data.base.length; i++) {
+    if (i % 100 === 0) {
+      console.log(`inserted ${i} / ${data.base.length}`);
+    }
     objectStoreClient.writeObject(data.base[i], { randomizeData: false, checkCreatedOrUpdated: false });
   }
 }
 
 export function teardown() {
   const toDelete = [...data.base, ...data.toWrite];
+
+  console.log('deleting base objects');
   for (let i = 0; i < toDelete.length; i++) {
+    if (i % 100 === 0) {
+      console.log(`deleted ${i} / ${data.base.length}`);
+    }
     objectStoreClient.deleteObject(toDelete[i].uid, toDelete[i].kind);
   }
 }
