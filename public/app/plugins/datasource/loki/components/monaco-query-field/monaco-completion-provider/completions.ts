@@ -69,21 +69,21 @@ const DURATION_COMPLETIONS: Completion[] = ['$__interval', '$__range', '1m', '5m
 const LINE_FILTER_COMPLETIONS = [
   {
     operator: '|=',
-    documentation: 'Log line contains string',
+    documentation: explainOperator(LokiOperationId.LineContains),
     afterPipe: true,
   },
   {
     operator: '!=',
-    documentation: 'Log line does not contain string',
+    documentation: explainOperator(LokiOperationId.LineContainsNot),
   },
   {
     operator: '|~',
-    documentation: 'Log line contains a match to the regular expression',
+    documentation: explainOperator(LokiOperationId.LineMatchesRegex),
     afterPipe: true,
   },
   {
     operator: '!~',
-    documentation: 'Log line does not contain a match to the regular expression',
+    documentation: explainOperator(LokiOperationId.LineMatchesRegexNot),
   },
 ];
 
@@ -213,6 +213,7 @@ async function getAfterSelectorCompletions(
     type: 'PIPE_OPERATION',
     label: 'unwrap',
     insertText: `${prefix}unwrap`,
+    documentation: explainOperator(LokiOperationId.Unwrap),
   });
 
   completions.push({
@@ -220,6 +221,7 @@ async function getAfterSelectorCompletions(
     label: 'line_format',
     insertText: `${prefix}line_format "{{.$0}}"`,
     isSnippet: true,
+    documentation: explainOperator(LokiOperationId.LineFormat),
   });
 
   completions.push({
@@ -227,6 +229,7 @@ async function getAfterSelectorCompletions(
     label: 'label_format',
     insertText: `${prefix}label_format`,
     isSnippet: true,
+    documentation: explainOperator(LokiOperationId.LabelFormat),
   });
 
   return [...getLineFilterCompletions(afterPipe), ...completions];
