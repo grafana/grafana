@@ -93,7 +93,7 @@ export const options = {
 
 export function setup() {
   if (!objectStoreClient.healthCheck()) {
-    fail('server should be healthy');
+    execution.test.abort('server should be healthy');
   }
 
   console.log('inserting base objects');
