@@ -476,6 +476,8 @@ type Cfg struct {
 	GRPCServerNetwork   string
 	GRPCServerAddress   string
 	GRPCServerTLSConfig *tls.Config
+	// Object Store
+	ObjectStore ObjectStoreSettings
 }
 
 type CommandLineArgs struct {
@@ -960,6 +962,10 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	if err := readGRPCServerSettings(cfg, iniFile); err != nil {
+		return err
+	}
+
+	if err := readObjectStoreSettings(cfg, iniFile); err != nil {
 		return err
 	}
 
@@ -1510,6 +1516,17 @@ func readAlertingSettings(iniFile *ini.File) error {
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
 	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
 
+	return nil
+}
+
+type ObjectStoreSettings struct {
+	Address string
+}
+
+func readObjectStoreSettings(cfg *Cfg, iniFile *ini.File) error {
+	os := iniFile.Section("object_store")
+	address := os.Key("address").MustString("127.0.0.1:10000")
+	cfg.ObjectStore = ObjectStoreSettings{Address: address}
 	return nil
 }
 
