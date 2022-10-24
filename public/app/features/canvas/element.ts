@@ -27,6 +27,26 @@ export interface CanvasElementOptions<TConfig = any> {
   placement?: Placement;
   background?: BackgroundConfig;
   border?: LineConfig;
+  arrows?: CanvasElementArrow[];
+}
+
+// North, south, east, west
+enum CanvasElementArrowAnchor {
+  N = 'n',
+  S = 's',
+  E = 'e',
+  W = 'w',
+}
+
+interface CanvasElementArrow {
+  sourceAnchor: CanvasElementArrowAnchor;
+  targetElementAnchor?: CanvasElementArrowAnchor;
+  targetElementName?: string;
+  targetCoords: { x: number; y: number };
+  color: string;
+  size: number;
+  path: 'straight';
+  // See https://github.com/anseki/leader-line#options for more examples of more properties
 }
 
 export interface CanvasElementProps<TConfig = any, TData = any> {
