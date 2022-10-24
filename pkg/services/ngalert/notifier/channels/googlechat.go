@@ -22,59 +22,61 @@ import (
 // alert notifications to Google chat.
 type GoogleChatNotifier struct {
 	*Base
-	URL     string
-	log     log.Logger
-	ns      notifications.WebhookSender
-	images  ImageStore
-	tmpl    *template.Template
-	content string
+	log      log.Logger
+	ns       notifications.WebhookSender
+	images   ImageStore
+	tmpl     *template.Template
+	settings googleChatSettings
 }
 
-type GoogleChatConfig struct {
-	*NotificationChannelConfig
-	URL     string
-	Content string
+type googleChatSettings struct {
+	URL     string `json:"url,omitempty" yaml:"url,omitempty"`
+	Title   string `json:"title,omitempty" yaml:"title,omitempty"`
+	Content string `json:"message,omitempty" yaml:"message,omitempty"`
 }
 
 func GoogleChatFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewGoogleChatConfig(fc.Config)
+	gcn, err := newGoogleChatNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewGoogleChatNotifier(cfg, fc.ImageStore, fc.NotificationService, fc.Template), nil
+	return gcn, nil
 }
 
-func NewGoogleChatConfig(config *NotificationChannelConfig) (*GoogleChatConfig, error) {
-	url := config.Settings.Get("url").MustString()
-	if url == "" {
+func newGoogleChatNotifier(fc FactoryConfig) (*GoogleChatNotifier, error) {
+	settings := googleChatSettings{}
+	err := fc.Config.unmarshalSettings(&settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+
+	if settings.URL == "" {
 		return nil, errors.New("could not find url property in settings")
 	}
-	return &GoogleChatConfig{
-		NotificationChannelConfig: config,
-		URL:                       url,
-		Content:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
-	}, nil
-}
+	if settings.Title == "" {
+		settings.Title = DefaultMessageTitleEmbed
+	}
+	if settings.Content == "" {
+		settings.Content = DefaultMessageEmbed
+	}
 
-func NewGoogleChatNotifier(config *GoogleChatConfig, images ImageStore, ns notifications.WebhookSender, t *template.Template) *GoogleChatNotifier {
 	return &GoogleChatNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			Type:                  config.Type,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
+			Uid:                   fc.Config.UID,
+			Name:                  fc.Config.Name,
+			Type:                  fc.Config.Type,
+			DisableResolveMessage: fc.Config.DisableResolveMessage,
+			Settings:              fc.Config.Settings,
 		}),
-		content: config.Content,
-		URL:     config.URL,
-		log:     log.New("alerting.notifier.googlechat"),
-		ns:      ns,
-		images:  images,
-		tmpl:    t,
-	}
+		log:      log.New("alerting.notifier.googlechat"),
+		ns:       fc.NotificationService,
+		images:   fc.ImageStore,
+		tmpl:     fc.Template,
+		settings: settings,
+	}, nil
 }
 
 // Notify send an alert notification to Google Chat.
@@ -84,16 +86,12 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, gcn.tmpl, as, gcn.log, &tmplErr)
 
-	widgets := []widget{}
+	var widgets []widget
 
-	if msg := tmpl(gcn.content); msg != "" {
+	if msg := tmpl(gcn.settings.Content); msg != "" {
 		// Add a text paragraph widget for the message if there is a message.
 		// Google Chat API doesn't accept an empty text property.
-		widgets = append(widgets, textParagraphWidget{
-			Text: text{
-				Text: msg,
-			},
-		})
+		widgets = append(widgets, textParagraphWidget{Text: text{Text: msg}})
 	}
 
 	if tmplErr != nil {
@@ -129,19 +127,16 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		},
 	})
 
+	title := tmpl(gcn.settings.Title)
 	// Nest the required structs.
 	res := &outerStruct{
-		PreviewText:  tmpl(DefaultMessageTitleEmbed),
-		FallbackText: tmpl(DefaultMessageTitleEmbed),
+		PreviewText:  title,
+		FallbackText: title,
 		Cards: []card{
 			{
-				Header: header{
-					Title: tmpl(DefaultMessageTitleEmbed),
-				},
+				Header: header{Title: title},
 				Sections: []section{
-					{
-						Widgets: widgets,
-					},
+					{Widgets: widgets},
 				},
 			},
 		},
@@ -155,10 +150,10 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		tmplErr = nil
 	}
 
-	u := tmpl(gcn.URL)
+	u := tmpl(gcn.settings.URL)
 	if tmplErr != nil {
-		gcn.log.Warn("failed to template GoogleChat URL", "error", tmplErr.Error(), "fallback", gcn.URL)
-		u = gcn.URL
+		gcn.log.Warn("failed to template GoogleChat URL", "error", tmplErr.Error(), "fallback", gcn.settings.URL)
+		u = gcn.settings.URL
 	}
 
 	body, err := json.Marshal(res)
@@ -199,9 +194,7 @@ func (gcn *GoogleChatNotifier) isUrlAbsolute(urlToCheck string) bool {
 
 func (gcn *GoogleChatNotifier) buildScreenshotCard(ctx context.Context, alerts []*types.Alert) *card {
 	card := card{
-		Header: header{
-			Title: "Screenshots",
-		},
+		Header:   header{Title: "Screenshots"},
 		Sections: []section{},
 	}
 
@@ -218,11 +211,7 @@ func (gcn *GoogleChatNotifier) buildScreenshotCard(ctx context.Context, alerts [
 							Text: fmt.Sprintf("%s: %s", alerts[index].Status(), alerts[index].Name()),
 						},
 					},
-					imageWidget{
-						Image: imageData{
-							ImageURL: image.URL,
-						},
-					},
+					imageWidget{Image: imageData{ImageURL: image.URL}},
 				},
 			}
 			card.Sections = append(card.Sections, section)
