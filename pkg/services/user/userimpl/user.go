@@ -255,6 +255,10 @@ func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUs
 }
 
 func (s *Service) NewAnonymousSignedInUser(ctx context.Context) (*user.SignedInUser, error) {
+	if !s.cfg.AnonymousEnabled {
+		return nil, fmt.Errorf("anonymous access is disabled")
+	}
+
 	getOrg := org.GetOrgByNameQuery{Name: s.cfg.AnonymousOrgName}
 	anonymousOrg, err := s.orgService.GetByName(ctx, &getOrg)
 	if err != nil {
