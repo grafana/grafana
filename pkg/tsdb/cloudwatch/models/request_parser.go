@@ -26,9 +26,9 @@ type metricsDataQuery struct {
 	Expression        string                 `json:"expression"`
 	Id                string                 `json:"id"`
 	Label             *string                `json:"label"`
-	MatchExactPointer *bool                  `json:"matchExact"`
+	MatchExact        *bool                  `json:"matchExact"`
 	MaxDataPoints     int                    `json:"maxDataPoints"`
-	MetricEditorMode  *MetricEditorMode      `json:"metricEditorMode"`
+	MetricEditorMode  *MetricEditorMode      `json:"metricEditorMode"` // TODO: the type of this wasn't MetricEditorMode before
 	MetricName        string                 `json:"metricName"`
 	MetricQueryType   MetricQueryType        `json:"metricQueryType"`
 	Namespace         string                 `json:"namespace"`
@@ -69,7 +69,7 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 		}
 
 		// migrate
-		cloudWatchQuery.Statistic = migrateStatisticsToStatistic(query)
+		cloudWatchQuery.Statistic = getStatistic(query)
 		cloudWatchQuery.Label = migrateAliasToDynamicLabel(query, dynamicLabelsEnabled)
 
 		cloudWatchQueries = append(cloudWatchQueries, cloudWatchQuery)
@@ -107,8 +107,8 @@ func (q *CloudWatchQuery) validateAndSetDefaults(metricsDataQuery metricsDataQue
 	}
 
 	q.MatchExact = true
-	if metricsDataQuery.MatchExactPointer != nil {
-		q.MatchExact = *metricsDataQuery.MatchExactPointer
+	if metricsDataQuery.MatchExact != nil {
+		q.MatchExact = *metricsDataQuery.MatchExact
 	}
 
 	q.ReturnData = true
@@ -136,10 +136,11 @@ func (q *CloudWatchQuery) validateAndSetDefaults(metricsDataQuery metricsDataQue
 	return nil
 }
 
-// migrateStatisticsToStatistic migrates queries that has a `statistics` field to use the `statistic` field instead.
+// getStatistic determines the value of Statistic in a CloudWatchQuery from the metricsDataQuery input
+// migrates queries that has a `statistics` field to use the `statistic` field instead.
 // In case the query used more than one stat, the first stat in the slice will be used in the statistic field
 // Read more here https://github.com/grafana/grafana/issues/30629
-func migrateStatisticsToStatistic(query metricsDataQuery) string {
+func getStatistic(query metricsDataQuery) string {
 	// If there's not a statistic property in the json, we know it's the legacy format and then it has to be migrated
 	if query.Statistic == nil {
 		return *query.Statistics[0]
