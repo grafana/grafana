@@ -300,7 +300,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Label:        "Title",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Description:  "Templated title to display.",
+					Description:  "Templated title to display",
 					PropertyName: "title",
 					Placeholder:  channels.DefaultMessageTitleEmbed,
 				},
