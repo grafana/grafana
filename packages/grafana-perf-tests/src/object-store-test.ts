@@ -1,4 +1,3 @@
-import { fail } from 'k6';
 import { SharedArray } from 'k6/data';
 import execution from 'k6/execution';
 import grpc from 'k6/net/grpc';
