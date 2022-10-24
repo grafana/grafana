@@ -25,8 +25,7 @@
   },
   "scripts": {
     "start": "webpack",
-    "run-test": "webpack && cross-env GRPC_TOKEN= GRPC_ADDRESS=127.0.0.1:10000 k6 run ./dist/object-store-test.js",
-    "run-test-out-cloud": "webpack && cross-env GRPC_TOKEN= K6_CLOUD_TOKEN= GRPC_ADDRESS=127.0.0.1:10000 k6 run --out cloud ./dist/object-store-test.js",
-    "prepareDashboardFileNames": "ts-node scripts/prepareDashboardFileNames.ts ../../devenv/dev-dashboards ./scripts/tmp/filenames.json"
+    "run:object-store:local": "webpack && cross-env GRPC_TOKEN= GRPC_ADDRESS=127.0.0.1:10000 k6 run .",
+    "run:object-store:local-cloud-output": "&& cross-env GRPC_TOKEN= K6_CLOUD_TOKEN= GRPC_ADDRESS=127.0.0.1:10000 k6 run --out cloud ."
   }
 }
