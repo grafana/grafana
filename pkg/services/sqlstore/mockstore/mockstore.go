@@ -198,3 +198,36 @@ func (m *SQLStoreMock) GetUserLoginAttemptCount(ctx context.Context, query *mode
 func (m *SQLStoreMock) GetAlertStatesForDashboard(ctx context.Context, query *models.GetAlertStatesForDashboardQuery) error {
 	return m.ExpectedError
 }
+
+func (m *SQLStoreMock) GetAllAlertQueryHandler(ctx context.Context, query *models.GetAllAlertsQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) HandleAlertsQuery(ctx context.Context, query *models.GetAlertsQuery) error {
+	m.LastGetAlertsQuery = query
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) PauseAlert(ctx context.Context, cmd *models.PauseAlertCommand) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) PauseAllAlerts(ctx context.Context, cmd *models.PauseAllAlertCommand) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error {
+	return m.ExpectedError
+}
+
+func (m SQLStoreMock) SetAlertState(ctx context.Context, cmd *models.SetAlertStateCommand) error {
+	return m.ExpectedError
+}
