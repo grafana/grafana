@@ -32,7 +32,7 @@ Instead of encrypting all secrets with a single key, Grafana uses a set of keys 
 
 Envelope encryption introduces an implicit breaking change to versions of Grafana prior to v9.0, because it changes how secrets stored in the Grafana database are encrypted. Grafana administrators can upgrade to Grafana v9.0 with no action required from the database encryption perspective, but must be extremely careful if they need to roll an upgrade back to Grafana v8.5 or earlier because secrets created or modified after upgrading to Grafana v9.0 can’t be decrypted by previous versions.
 
-Grafana v8.5 implemented envelope encryption behind an optional feature toggle. Grafana administrators who need to downgrade to Grafana v8.5 can enable envelope encryption as a workaround by adding the feature toggle `envelopeEncryption` to your [Grafana configuration]({{< relref "../../configure-grafana/#feature_toggles" >}}).
+Grafana v8.5 implemented envelope encryption behind an optional feature toggle. Grafana administrators who need to downgrade to Grafana v8.5 can enable envelope encryption as a workaround by adding the feature toggle `envelopeEncryption` to the [Grafana configuration]({{< relref "../../configure-grafana/#feature_toggles" >}}).
 
 ## Operational work
 
