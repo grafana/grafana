@@ -121,9 +121,11 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
         {ds && !ds.annotations && <AngularEditorLoader datasource={ds} annotation={annotation} onChange={onUpdate} />}
       </FieldSet>
       <Stack>
-        <Button variant="destructive" onClick={onDelete}>
-          Delete
-        </Button>
+        {!annotation.builtIn && (
+          <Button variant="destructive" onClick={onDelete}>
+            Delete
+          </Button>
+        )}
         <Button variant="secondary" onClick={onPreview}>
           Preview in dashboard
         </Button>
