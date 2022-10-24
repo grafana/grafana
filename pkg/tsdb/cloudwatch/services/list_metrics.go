@@ -116,20 +116,20 @@ func (l *ListMetricsService) GetDimensionKeysByNamespace(namespace string) ([]st
 	return dimensionKeys, nil
 }
 
-func (l *ListMetricsService) GetMetricsByNamespace(namespace string) ([]*models.Metric, error) {
+func (l *ListMetricsService) GetMetricsByNamespace(namespace string) ([]models.Metric, error) {
 	metrics, err := l.ListMetricsWithPageLimit(&cloudwatch.ListMetricsInput{Namespace: aws.String(namespace)})
 	if err != nil {
 		return nil, err
 	}
 
-	response := []*models.Metric{}
+	response := []models.Metric{}
 	dupCheck := make(map[string]struct{})
 	for _, metric := range metrics {
 		if _, exists := dupCheck[*metric.MetricName]; exists {
 			continue
 		}
 		dupCheck[*metric.MetricName] = struct{}{}
-		response = append(response, &models.Metric{Name: *metric.MetricName, Namespace: *metric.Namespace})
+		response = append(response, models.Metric{Name: *metric.MetricName, Namespace: *metric.Namespace})
 	}
 
 	return response, nil

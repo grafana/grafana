@@ -15,7 +15,7 @@ import (
 func Test_Metrics_Route(t *testing.T) {
 	t.Run("calls GetMetricsByNamespace when a CustomNamespaceRequestType is passed", func(t *testing.T) {
 		mockListMetricsService := mocks.ListMetricsServiceMock{}
-		mockListMetricsService.On("GetMetricsByNamespace").Return([]*models.Metric{}, nil)
+		mockListMetricsService.On("GetMetricsByNamespace").Return([]models.Metric{}, nil)
 		newListMetricsService = func(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, region string) (models.ListMetricsProvider, error) {
 			return &mockListMetricsService, nil
 		}
@@ -28,7 +28,7 @@ func Test_Metrics_Route(t *testing.T) {
 
 	t.Run("returns 500 if GetMetricsByNamespace returns an error", func(t *testing.T) {
 		mockListMetricsService := mocks.ListMetricsServiceMock{}
-		mockListMetricsService.On("GetMetricsByNamespace").Return([]*models.Metric{}, fmt.Errorf("some error"))
+		mockListMetricsService.On("GetMetricsByNamespace").Return([]models.Metric{}, fmt.Errorf("some error"))
 		newListMetricsService = func(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, region string) (models.ListMetricsProvider, error) {
 			return &mockListMetricsService, nil
 		}

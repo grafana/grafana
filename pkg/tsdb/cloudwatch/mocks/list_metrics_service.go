@@ -28,8 +28,8 @@ func (a *ListMetricsServiceMock) GetDimensionKeysByNamespace(string) ([]string, 
 	return args.Get(0).([]string), args.Error(1)
 }
 
-func (a *ListMetricsServiceMock) GetMetricsByNamespace(namespace string) ([]*models.Metric, error) {
+func (a *ListMetricsServiceMock) GetMetricsByNamespace(namespace string) ([]models.Metric, error) {
 	args := a.Called()
 
-	return args.Get(0).([]*models.Metric), args.Error(1)
+	return args.Get(0).([]models.Metric), args.Error(1)
 }

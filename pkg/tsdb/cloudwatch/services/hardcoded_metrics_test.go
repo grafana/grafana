@@ -34,6 +34,6 @@ func TestHardcodedMetrics_GetHardCodedMetricsByNamespace(t *testing.T) {
 	t.Run("Should return metrics if namespace exist", func(t *testing.T) {
 		resp, err := GetHardCodedMetricsByNamespace("AWS/IoTAnalytics")
 		require.NoError(t, err)
-		assert.Equal(t, []*models.Metric{{Name: "ActionExecution", Namespace: "AWS/IoTAnalytics"}, {Name: "ActivityExecutionError", Namespace: "AWS/IoTAnalytics"}, {Name: "IncomingMessages", Namespace: "AWS/IoTAnalytics"}}, resp)
+		assert.Equal(t, []models.Metric{{Name: "ActionExecution", Namespace: "AWS/IoTAnalytics"}, {Name: "ActivityExecutionError", Namespace: "AWS/IoTAnalytics"}, {Name: "IncomingMessages", Namespace: "AWS/IoTAnalytics"}}, resp)
 	})
 }

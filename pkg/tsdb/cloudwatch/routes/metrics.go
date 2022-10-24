@@ -22,7 +22,7 @@ func MetricsHandler(pluginCtx backend.PluginContext, clientFactory models.Client
 		return nil, models.NewHttpError("error in MetricsHandler", http.StatusInternalServerError, err)
 	}
 
-	var metrics []*models.Metric
+	var metrics []models.Metric
 	switch metricsRequest.Type() {
 	case request.AllMetricsRequestType:
 		metrics = services.GetAllHardCodedMetrics()

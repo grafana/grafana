@@ -16,8 +16,8 @@ func GetHardCodedDimensionKeysByNamespace(namespace string) ([]string, error) {
 	return dimensionKeys, nil
 }
 
-func GetHardCodedMetricsByNamespace(namespace string) ([]*models.Metric, error) {
-	response := []*models.Metric{}
+func GetHardCodedMetricsByNamespace(namespace string) ([]models.Metric, error) {
+	response := []models.Metric{}
 	exists := false
 	var metrics []string
 	if metrics, exists = constants.NamespaceMetricsMap[namespace]; !exists {
@@ -25,17 +25,17 @@ func GetHardCodedMetricsByNamespace(namespace string) ([]*models.Metric, error) 
 	}
 
 	for _, metric := range metrics {
-		response = append(response, &models.Metric{Namespace: namespace, Name: metric})
+		response = append(response, models.Metric{Namespace: namespace, Name: metric})
 	}
 
 	return response, nil
 }
 
-func GetAllHardCodedMetrics() []*models.Metric {
-	response := []*models.Metric{}
+func GetAllHardCodedMetrics() []models.Metric {
+	response := []models.Metric{}
 	for namespace, metrics := range constants.NamespaceMetricsMap {
 		for _, metric := range metrics {
-			response = append(response, &models.Metric{Namespace: namespace, Name: metric})
+			response = append(response, models.Metric{Namespace: namespace, Name: metric})
 		}
 	}
 
