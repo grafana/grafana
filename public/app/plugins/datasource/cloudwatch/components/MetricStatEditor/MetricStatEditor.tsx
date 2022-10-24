@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch, Select } from '@grafana/ui';
+import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch } from '@grafana/experimental';
+import { Select } from '@grafana/ui';
 
 import { Dimensions } from '..';
 import { CloudWatchDatasource } from '../../datasource';
