@@ -52,6 +52,76 @@ publicDashboards = true
 - Click `Save Sharing Configuration` to save your changes.
 - Anyone with the link will not be able to access the dashboard publicly anymore.
 
+#### Supported Datasources
+
+Public dashboards _should_ work with any datasource that has the properties `backend` and `alerting` both set to true. However, this cannot always be
+guaranteed. Below are the datasources that are confirmed to be working with public dashboards, and the ones that should work (but have not been confirmed compatible).
+
+Confirmed:
+
+- Altinity plugin for ClickHouse
+- ClickHouse
+- Elasticsearch
+- Graphite
+- Infinity
+- InfluxDB
+- Loki
+- Microsoft SQL Server
+- MongoDB
+- MySQL
+- OpenTSDB
+- Oracle Database
+- PostgreSQL
+- Prometheus
+- SQLite
+
+Unconfirmed:
+
+- AWS IoT SiteWise
+- Amazon Athena
+- Amazon Redshift
+- Amazon Timestream
+- Apache Cassandra
+- AppDynamics
+- Azure Data Explorer Datasource
+- Azure Monitor
+- CSV
+- CloudWatch
+- DB2 Datasource
+- Databricks
+- Datadog
+- Dataset
+- Druid
+- Dynatrace
+- GitHub
+- Google BigQuery
+- Google BigQuery
+- Grafana for YNAB
+- Honeycomb
+- Jira
+- Mock
+- Neo4j Datasource
+- New Relic
+- OPC UA (Unified Architecture)
+- Open Distro for Elasticsearch
+- OpenSearch
+- Orbit
+- Redis
+- SAP HANA®
+- Salesforce
+- Sentry
+- ServiceNow
+- Snowflake
+- Splunk
+- Splunk Infrastructure Monitoring
+- Sqlyze Datasource
+- TDengine
+- Vertica
+- Wavefront
+- X-Ray
+- kdb+
+- simple grpc datasource
+
 #### Limitations
 
 - Panels that use frontend datasources will fail to fetch data.
