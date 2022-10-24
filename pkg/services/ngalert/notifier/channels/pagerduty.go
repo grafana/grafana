@@ -39,7 +39,6 @@ type PagerdutyNotifier struct {
 }
 
 type pagerdutySettings struct {
-	*NotificationChannelConfig
 	Key           string `json:"integrationKey,omitempty" yaml:"integrationKey,omitempty"`
 	Severity      string `json:"severity,omitempty" yaml:"severity,omitempty"`
 	customDetails map[string]string
@@ -68,8 +67,8 @@ func newPagerdutyNotifier(fc FactoryConfig) (*PagerdutyNotifier, error) {
 		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
 	}
 
-	key := fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "integrationKey", settings.Key)
-	if key == "" {
+	settings.Key = fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "integrationKey", settings.Key)
+	if settings.Key == "" {
 		return nil, errors.New("could not find integration key property in settings")
 	}
 
