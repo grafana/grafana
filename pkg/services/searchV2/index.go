@@ -822,6 +822,7 @@ type dashboardsRes struct {
 
 func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, orgID int64, dashboardUID string) chan *dashboardsRes {
 	ch := make(chan *dashboardsRes, 3)
+	layout := "2006-01-02T15:04:05.000-03:00"
 
 	go func() {
 		defer close(ch)
@@ -848,23 +849,52 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 
 			rows := make([]*dashboardQueryResult, 0)
 			err := l.sql.WithDbSession(dashboardQueryCtx, func(sess *db.Session) error {
-				sess.Table("dashboard").
-					Where("org_id = ?", orgID)
+				sql := "select id, uid, is_folder, folder_id, slug, data, created, updated from dashboard where org_id = ?"
+				args := []interface{}{orgID}
 
 				if lastID > 0 {
-					sess.Where("id > ?", lastID)
+					sql += " AND id > ?"
+					args = append(args, lastID)
 				}
 
 				if dashboardUID != "" {
-					sess.Where("uid = ?", dashboardUID)
+					sql += " AND uid = ?"
+					args = append(args, dashboardUID)
 				}
 
-				sess.Cols("id", "uid", "is_folder", "folder_id", "data", "slug", "created", "updated")
+				sql += " order by id asc"
 
-				sess.OrderBy("id ASC")
-				sess.Limit(limit)
+				all := append([]interface{}{sql}, args...)
+				slices, err := sess.QuerySliceString(all...)
+				if err != nil {
+					return err
+				}
 
-				return sess.Find(&rows)
+				for i := range slices {
+					id, _ := strconv.ParseInt(slices[i][0], 10, 64)
+					uid := slices[i][1]
+					isFolder := true
+					if slices[i][2] == "1" {
+						isFolder = true
+					}
+
+					folderID, _ := strconv.ParseInt(slices[i][3], 10, 64)
+					created, _ := time.Parse(layout, slices[i][6])
+					updated, _ := time.Parse(layout, slices[i][7])
+
+					rows = append(rows, &dashboardQueryResult{
+						Id:       id,
+						Uid:      uid,
+						IsFolder: isFolder,
+						FolderID: folderID,
+						Slug:     slices[i][4],
+						Data:     []byte(slices[i][5]),
+						Created:  created,
+						Updated:  updated,
+					})
+				}
+
+				return nil
 			})
 
 			dashboardQuerySpan.End()
