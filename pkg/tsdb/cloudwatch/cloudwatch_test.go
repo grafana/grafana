@@ -480,6 +480,42 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		return datasourceInfo{}, nil
 	})
 
+	t.Run("Should handle dimension value request and return values from the api", func(t *testing.T) {
+		pageLimit := 100
+		api = mocks.FakeMetricsAPI{Metrics: []*cloudwatch.Metric{
+			{MetricName: aws.String("Test_MetricName1"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1"), Value: aws.String("Value1")}, {Name: aws.String("Test_DimensionName2"), Value: aws.String("Value2")}}},
+			{MetricName: aws.String("Test_MetricName2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1"), Value: aws.String("Value3")}}},
+			{MetricName: aws.String("Test_MetricName3"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName2"), Value: aws.String("Value1")}}},
+			{MetricName: aws.String("Test_MetricName10"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4"), Value: aws.String("Value2")}, {Name: aws.String("Test_DimensionName5")}}},
+			{MetricName: aws.String("Test_MetricName4"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName2"), Value: aws.String("Value3")}}},
+			{MetricName: aws.String("Test_MetricName5"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1"), Value: aws.String("Value4")}}},
+			{MetricName: aws.String("Test_MetricName6"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1"), Value: aws.String("Value6")}}},
+			{MetricName: aws.String("Test_MetricName7"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4"), Value: aws.String("Value7")}}},
+			{MetricName: aws.String("Test_MetricName8"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4"), Value: aws.String("Value1")}}},
+			{MetricName: aws.String("Test_MetricName9"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1"), Value: aws.String("Value2")}}},
+		}, MetricsPerPage: 100}
+		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: pageLimit}, &fakeSessionCache{}, featuremgmt.WithFeatures())
+
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   `/dimension-values?region=us-east-2&dimensionKey=Test_DimensionName4&namespace=AWS/EC2&metricName=CPUUtilization`,
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
+				PluginID:                   "cloudwatch",
+			},
+		}
+		err := executor.CallResource(context.Background(), req, sender)
+
+		require.NoError(t, err)
+		sent := sender.Response
+		require.NotNil(t, sent)
+		require.Equal(t, http.StatusOK, sent.Status)
+		res := []string{}
+		err = json.Unmarshal(sent.Body, &res)
+		require.Nil(t, err)
+		assert.Equal(t, []string{"Value1", "Value2", "Value7"}, res)
+	})
+
 	t.Run("Should handle dimension key filter query and return keys from the api", func(t *testing.T) {
 		pageLimit := 3
 		api = mocks.FakeMetricsAPI{Metrics: []*cloudwatch.Metric{
