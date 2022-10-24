@@ -73,9 +73,9 @@ func (d *PublicDashboardStoreImpl) GetDashboard(ctx context.Context, dashboardUi
 	return dashboard, err
 }
 
-// Retrieves public dashboard. This method makes 2 queries to the db so that in the
+// GetPublicDashboardAndDashboard Retrieves public dashboard. This method makes 2 queries to the db so that in the
 // even that the underlying dashboard is missing it will return a 404.
-func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
+func (d *PublicDashboardStoreImpl) GetPublicDashboardAndDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
 	if accessToken == "" {
 		return nil, nil, ErrPublicDashboardIdentifierNotSet
 	}
@@ -192,7 +192,7 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardByUid(ctx context.Context, 
 }
 
 // Retrieves public dashboard configuration
-func (d *PublicDashboardStoreImpl) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
+func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
 	if dashboardUid == "" {
 		return nil, dashboards.ErrDashboardIdentifierNotSet
 	}
@@ -216,7 +216,7 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardConfig(ctx context.Context,
 }
 
 // Persists public dashboard configuration
-func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
+func (d *PublicDashboardStoreImpl) SavePublicDashboard(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
 	if cmd.PublicDashboard.DashboardUid == "" {
 		return dashboards.ErrDashboardIdentifierNotSet
 	}
@@ -234,15 +234,16 @@ func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context
 }
 
 // Updates existing public dashboard configuration
-func (d *PublicDashboardStoreImpl) UpdatePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
+func (d *PublicDashboardStoreImpl) UpdatePublicDashboard(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		timeSettingsJSON, err := json.Marshal(cmd.PublicDashboard.TimeSettings)
 		if err != nil {
 			return err
 		}
 
-		_, err = sess.Exec("UPDATE dashboard_public SET is_enabled = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
+		_, err = sess.Exec("UPDATE dashboard_public SET is_enabled = ?, annotations_enabled = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
 			cmd.PublicDashboard.IsEnabled,
+			cmd.PublicDashboard.AnnotationsEnabled,
 			string(timeSettingsJSON),
 			cmd.PublicDashboard.UpdatedBy,
 			cmd.PublicDashboard.UpdatedAt.UTC().Format("2006-01-02 15:04:05"),

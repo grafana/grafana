@@ -98,10 +98,10 @@ func TestGetPublicDashboard(t *testing.T) {
 				store: &fakeStore,
 			}
 
-			fakeStore.On("GetPublicDashboard", mock.Anything, mock.Anything).
+			fakeStore.On("GetPublicDashboardAndDashboard", mock.Anything, mock.Anything).
 				Return(test.StoreResp.pd, test.StoreResp.d, test.StoreResp.err)
 
-			pdc, dash, err := service.GetPublicDashboard(context.Background(), test.AccessToken)
+			pdc, dash, err := service.GetPublicDashboardAndDashboard(context.Background(), test.AccessToken)
 			if test.ErrResp != nil {
 				assert.Error(t, test.ErrResp, err)
 			} else {
@@ -135,23 +135,25 @@ func TestSavePublicDashboard(t *testing.T) {
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
 			PublicDashboard: &PublicDashboard{
-				IsEnabled:    true,
-				DashboardUid: "NOTTHESAME",
-				OrgId:        9999999,
-				TimeSettings: timeSettings,
+				IsEnabled:          true,
+				AnnotationsEnabled: false,
+				DashboardUid:       "NOTTHESAME",
+				OrgId:              9999999,
+				TimeSettings:       timeSettings,
 			},
 		}
 
-		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		_, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		pubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		pubdash, err := service.GetPublicDashboard(context.Background(), dashboard.OrgId, dashboard.Uid)
 		require.NoError(t, err)
 
 		// DashboardUid/OrgId/CreatedBy set by the command, not parameters
 		assert.Equal(t, dashboard.Uid, pubdash.DashboardUid)
 		assert.Equal(t, dashboard.OrgId, pubdash.OrgId)
 		assert.Equal(t, dto.UserId, pubdash.CreatedBy)
+		assert.Equal(t, dto.PublicDashboard.AnnotationsEnabled, pubdash.AnnotationsEnabled)
 		// IsEnabled set by parameters
 		assert.Equal(t, dto.PublicDashboard.IsEnabled, pubdash.IsEnabled)
 		// CreatedAt set to non-zero time
@@ -185,10 +187,10 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		_, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		pubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		pubdash, err := service.GetPublicDashboard(context.Background(), dashboard.OrgId, dashboard.Uid)
 		require.NoError(t, err)
 		assert.Equal(t, defaultPubdashTimeSettings, pubdash.TimeSettings)
 	})
@@ -216,7 +218,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		_, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 		require.Error(t, err)
 	})
 
@@ -245,11 +247,11 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		_, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 
 		require.Error(t, err)
 		require.Equal(t, err, ErrPublicDashboardFailedGenerateAccessToken)
-		publicDashboardStore.AssertNotCalled(t, "SavePublicDashboardConfig")
+		publicDashboardStore.AssertNotCalled(t, "SavePublicDashboard")
 	})
 }
 
@@ -270,12 +272,13 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
 			PublicDashboard: &PublicDashboard{
-				IsEnabled:    true,
-				TimeSettings: timeSettings,
+				AnnotationsEnabled: false,
+				IsEnabled:          true,
+				TimeSettings:       timeSettings,
 			},
 		}
 
-		savedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		savedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
@@ -290,15 +293,16 @@ func TestUpdatePublicDashboard(t *testing.T) {
 				CreatedBy:    9,
 				CreatedAt:    time.Time{},
 
-				IsEnabled:    true,
-				TimeSettings: timeSettings,
-				AccessToken:  "NOTAREALUUID",
+				IsEnabled:          true,
+				AnnotationsEnabled: true,
+				TimeSettings:       timeSettings,
+				AccessToken:        "NOTAREALUUID",
 			},
 		}
 
 		// Since the dto.PublicDashboard has a uid, this will call
-		// service.updatePublicDashboardConfig
-		updatedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		// service.updatePublicDashboard
+		updatedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// don't get updated
@@ -310,6 +314,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 		// gets updated
 		assert.Equal(t, dto.PublicDashboard.IsEnabled, updatedPubdash.IsEnabled)
+		assert.Equal(t, dto.PublicDashboard.AnnotationsEnabled, updatedPubdash.AnnotationsEnabled)
 		assert.Equal(t, dto.PublicDashboard.TimeSettings, updatedPubdash.TimeSettings)
 		assert.Equal(t, dto.UserId, updatedPubdash.UpdatedBy)
 		assert.NotEqual(t, &time.Time{}, updatedPubdash.UpdatedAt)
@@ -337,8 +342,8 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		}
 
 		// Since the dto.PublicDashboard has a uid, this will call
-		// service.updatePublicDashboardConfig
-		savedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		// service.updatePublicDashboard
+		savedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
@@ -358,7 +363,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		updatedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		updatedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		assert.Equal(t, &TimeSettings{}, updatedPubdash.TimeSettings)
