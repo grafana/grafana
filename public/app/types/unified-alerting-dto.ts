@@ -54,12 +54,10 @@ export enum PromRuleType {
   Alerting = 'alerting',
   Recording = 'recording',
 }
-
 export enum PromApplication {
-  Cortex = 'Cortex',
+  Lotex = 'Lotex',
   Mimir = 'Mimir',
   Prometheus = 'Prometheus',
-  Thanos = 'Thanos',
 }
 
 export interface PromBuildInfoResponse {

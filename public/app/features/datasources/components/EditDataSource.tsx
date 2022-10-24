@@ -86,7 +86,7 @@ export type ViewProps = {
   onNameChange: (name: string) => AnyAction;
   onOptionsChange: (dataSource: DataSourceSettingsType) => AnyAction;
   onTest: () => void;
-  onUpdate: (dataSource: DataSourceSettingsType) => Promise<DataSourceSettingsType>;
+  onUpdate: (dataSource: DataSourceSettingsType) => Promise<void>;
 };
 
 export function EditDataSourceView({
