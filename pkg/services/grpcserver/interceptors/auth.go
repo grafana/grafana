@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -70,7 +69,7 @@ func (a *authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 
 	signedInUser, err := a.getSignedInUser(ctx, token)
 	if err != nil {
-		logger.Warn("request with invalid token", "error", err, "token", token)
+		a.logger.Warn("request with invalid token", "error", err, "token", token)
 		return ctx, status.Error(codes.Unauthenticated, "invalid token")
 	}
 

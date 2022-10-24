@@ -2,11 +2,7 @@
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
   "common": {
     "locale": {
-      "default": "Par défaut",
-      "en-US": "Anglais",
-      "es-ES": "Espagnol",
-      "fr-FR": "Français",
-      "zh-Hans": "Chinois (simplifié)"
+      "default": "Par défaut"
     },
     "save": "Enregistrer"
   },
