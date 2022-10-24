@@ -177,3 +177,11 @@ func (m *SQLStoreMock) GetAlertById(ctx context.Context, query *models.GetAlertB
 	query.Result = m.ExpectedAlert
 	return m.ExpectedError
 }
+
+func (m *SQLStoreMock) GetAlertNotificationUidWithId(ctx context.Context, query *models.GetAlertNotificationUidQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error {
+	return m.ExpectedError
+}
