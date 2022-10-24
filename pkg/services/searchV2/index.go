@@ -873,7 +873,7 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 				for i := range slices {
 					id, _ := strconv.ParseInt(slices[i][0], 10, 64)
 					uid := slices[i][1]
-					isFolder := true
+					isFolder := false
 					if slices[i][2] == "1" {
 						isFolder = true
 					}
