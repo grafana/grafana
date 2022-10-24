@@ -162,7 +162,6 @@ func TestUserService(t *testing.T) {
 			require.Equal(t, roletype.RoleType(userService.cfg.AnonymousOrgRole), u.OrgRole)
 		})
 	})
-
 }
 
 type FakeUserStore struct {
