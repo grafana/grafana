@@ -27,6 +27,7 @@ const scenarioDuration = '2m';
 
 export const options = {
   setupTimeout: '5m',
+  teardownTimeout: '5m',
   noConnectionReuse: true,
   scenarios: {
     writer: {
