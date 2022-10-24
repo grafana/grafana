@@ -73,19 +73,19 @@ func (a *State) GetRuleKey() models.AlertRuleKey {
 	}
 }
 
-// ContextualState is a state bundled with contextual info from when the state originated.
-type ContextualState struct {
+// StateTransition describes the transition from one state to another.
+type StateTransition struct {
 	*State
 	PreviousState       eval.State
 	PreviousStateReason string
 	Rule                *models.AlertRule
 }
 
-func (c ContextualState) Formatted() string {
+func (c StateTransition) Formatted() string {
 	return FormatStateAndReason(c.State.State, c.State.StateReason)
 }
 
-func (c ContextualState) PreviousFormatted() string {
+func (c StateTransition) PreviousFormatted() string {
 	return FormatStateAndReason(c.PreviousState, c.PreviousStateReason)
 }
 

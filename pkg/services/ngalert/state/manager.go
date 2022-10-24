@@ -168,7 +168,7 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
 	logger := st.log.FromContext(ctx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
-	var states []ContextualState
+	var states []StateTransition
 	processedResults := make(map[string]*State, len(results))
 	for _, result := range results {
 		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
@@ -181,7 +181,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		_, _ = st.saveAlertStates(ctx, states...)
 	}
 
-	changedStates := make([]ContextualState, 0, len(states))
+	changedStates := make([]StateTransition, 0, len(states))
 	for _, s := range states {
 		if stateTransitioned(s) {
 			changedStates = append(changedStates, s)
@@ -198,7 +198,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 }
 
 // Set the current state based on evaluation results
-func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, logger log.Logger) ContextualState {
+func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, logger log.Logger) StateTransition {
 	currentState := st.cache.getOrCreate(ctx, st.log, alertRule, result, extraLabels, st.externalURL)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
@@ -254,7 +254,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	st.cache.set(currentState)
 
-	nextState := ContextualState{
+	nextState := StateTransition{
 		State:               currentState,
 		Rule:                alertRule,
 		PreviousState:       oldState,
@@ -297,7 +297,7 @@ func (st *Manager) Put(states []*State) {
 }
 
 // TODO: Is the `State` type necessary? Should it embed the instance?
-func (st *Manager) saveAlertStates(ctx context.Context, states ...ContextualState) (saved, failed int) {
+func (st *Manager) saveAlertStates(ctx context.Context, states ...StateTransition) (saved, failed int) {
 	if st.instanceStore == nil {
 		return 0, 0
 	}
@@ -360,12 +360,12 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State, logger log.Logger) []ContextualState {
+func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State, logger log.Logger) []StateTransition {
 	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
 	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
 	var resolvedImage *ngModels.Image
 
-	var resolvedStates []ContextualState
+	var resolvedStates []StateTransition
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
 	toDelete := make([]ngModels.AlertInstanceKey, 0)
 
@@ -391,7 +391,7 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 				s.EndsAt = evaluatedAt
 				s.Resolved = true
 				s.LastEvaluationTime = evaluatedAt
-				record := ContextualState{
+				record := StateTransition{
 					State:               s,
 					Rule:                alertRule,
 					PreviousState:       oldState,
@@ -432,6 +432,6 @@ func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int
 	return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
 }
 
-func stateTransitioned(s ContextualState) bool {
+func stateTransitioned(s StateTransition) bool {
 	return s.PreviousState != s.State.State || s.PreviousStateReason != s.State.StateReason
 }

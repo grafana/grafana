@@ -33,7 +33,7 @@ func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashb
 	}
 }
 
-func (h *AnnotationStateHistorian) RecordStates(ctx context.Context, states []state.ContextualState) {
+func (h *AnnotationStateHistorian) RecordStates(ctx context.Context, states []state.StateTransition) {
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
 	annotations := h.buildAnnotations(states)
 	go h.recordAnnotationsSync(ctx, annotations)
@@ -45,7 +45,7 @@ type itemWithMetadata struct {
 	parsedPanelID int64
 }
 
-func (h *AnnotationStateHistorian) buildAnnotations(states []state.ContextualState) []itemWithMetadata {
+func (h *AnnotationStateHistorian) buildAnnotations(states []state.StateTransition) []itemWithMetadata {
 	items := make([]itemWithMetadata, 0, len(states))
 	for _, state := range states {
 		logger := h.log.New(state.State.GetRuleKey().LogContext()...)

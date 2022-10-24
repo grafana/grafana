@@ -48,5 +48,5 @@ func (f *FakeRuleReader) ListAlertRules(_ context.Context, q *models.ListAlertRu
 
 type FakeHistorian struct{}
 
-func (f *FakeHistorian) RecordStates(ctx context.Context, states []ContextualState) {
+func (f *FakeHistorian) RecordStates(ctx context.Context, states []StateTransition) {
 }
