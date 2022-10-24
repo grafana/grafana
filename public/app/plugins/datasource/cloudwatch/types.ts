@@ -460,3 +460,10 @@ export interface GetDimensionKeysRequest extends ResourceRequest {
   namespace?: string;
   dimensionFilters?: Dimensions;
 }
+
+export interface GetDimensionValuesRequest extends ResourceRequest {
+  dimensionKey: string;
+  namespace: string;
+  metricName?: string;
+  dimensionFilters?: Dimensions;
+}
