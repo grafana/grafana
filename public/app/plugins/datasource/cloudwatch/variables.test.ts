@@ -76,13 +76,13 @@ describe('variables', () => {
     });
     it('should run if values are set', async () => {
       const result = await variables.execute(query);
-      expect(getDimensionValues).toBeCalledWith(
-        query.region,
-        query.namespace,
-        query.metricName,
-        query.dimensionKey,
-        query.dimensionFilters
-      );
+      expect(getDimensionValues).toBeCalledWith({
+        region: query.region,
+        namespace: query.namespace,
+        metricName: query.metricName,
+        dimensionKey: query.dimensionKey,
+        dimensionFilters: query.dimensionFilters,
+      });
       expect(result).toEqual([{ text: 'e', value: 'e', expandable: true }]);
     });
   });

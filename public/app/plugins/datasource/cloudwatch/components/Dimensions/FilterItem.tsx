@@ -51,7 +51,13 @@ export const FilterItem: FunctionComponent<Props> = ({
     }
 
     return datasource.api
-      .getDimensionValues(region, namespace, metricName, filter.key, dimensionsExcludingCurrentKey)
+      .getDimensionValues({
+        dimensionKey: filter.key,
+        dimensionFilters: dimensionsExcludingCurrentKey,
+        region,
+        namespace,
+        metricName,
+      })
       .then((result: Array<SelectableValue<string>>) => {
         if (result.length && !disableExpressions && !result.some((o) => o.value === wildcardOption.value)) {
           result.unshift(wildcardOption);

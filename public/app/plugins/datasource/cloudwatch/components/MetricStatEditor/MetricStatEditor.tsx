@@ -27,10 +27,10 @@ export function MetricStatEditor({
   onChange,
   onRunQuery,
 }: React.PropsWithChildren<Props>) {
-  const { region, namespace, metricName, dimensions } = metricStat;
+  const { region, namespace } = metricStat;
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, region, namespace);
-  const dimensionKeys = useDimensionKeys(datasource, { region, namespace, metricName, dimensionFilters: dimensions });
+  const dimensionKeys = useDimensionKeys(datasource, { ...metricStat, dimensionFilters: metricStat.dimensions });
 
   const onMetricStatChange = (metricStat: MetricStat) => {
     onChange(metricStat);
