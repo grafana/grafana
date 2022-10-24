@@ -13,11 +13,12 @@ import {
   EditDataSourcePage,
   NewDataSourcePage,
 } from './pages';
-import { ConnectData } from './tabs/ConnectData';
 
-export default function ConnectionsPage() {
+export default function Connections() {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const isCloud = Boolean(navIndex['standalone-plugin-page-/connections/agent']);
+
+  console.log({ isCloud });
 
   return (
     <DataSourcesRoutesContext.Provider
@@ -35,10 +36,13 @@ export default function ConnectionsPage() {
         <Route exact path={ROUTES.DataSourcesDetails} component={DataSourceDetailsPage} />
         <Route exact path={ROUTES.DataSourcesNew} component={NewDataSourcePage} />
         <Route exact path={ROUTES.DataSourcesEdit} component={EditDataSourcePage} />
-        <Route path={ROUTES.ConnectData} component={ConnectDataPage} />
 
-        {!isCloud && <Route path={ROUTES.ConnectData} component={ConnectData} />}
+        {/* Connect Data  - serve from the core by default, unless the Cloud Onboarding app is available and enabled */}
+        {/* TODO: update the navIndex to contain the plugin id for any standalone plugin pages */}
+        {!isCloud && <Route path={ROUTES.ConnectData} component={ConnectDataPage} />}
         {isCloud && <AppPluginLoader id="grafana-easystart-app" />}
+
+        {/* Plugin routes - route any plugin registered page to the plugins */}
 
         {/* Default page */}
         <Route component={DataSourcesListPage} />

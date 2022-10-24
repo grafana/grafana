@@ -5,14 +5,16 @@ export const CLOUD_ONBOARDING_APP_ID = 'grafana-easystart-app';
 export const ROUTE_BASE_ID = 'connections';
 
 export const ROUTES = {
+  // Your Connections
   YourConnections: `/${ROUTE_BASE_ID}/your-connections`,
 
   // Your Connections / Datasources
   DataSources: `/${ROUTE_BASE_ID}/your-connections/datasources`,
   DataSourcesNew: `/${ROUTE_BASE_ID}/your-connections/datasources/new`,
-  DataSourcesDetails: `/${ROUTE_BASE_ID}/your-connections/datasources/:id`,
   DataSourcesEdit: `/${ROUTE_BASE_ID}/your-connections/datasources/edit/:uid`,
   DataSourcesDashboards: `/${ROUTE_BASE_ID}/datasources/edit/:uid/dashboards`,
 
+  // Connect Data
   ConnectData: `/${ROUTE_BASE_ID}/connect-data`,
+  DataSourcesDetails: `/${ROUTE_BASE_ID}/connect-data/datasources/:id`,
 } as const;
