@@ -238,6 +238,95 @@ func TestAPIListPublicDashboard(t *testing.T) {
 	}
 }
 
+func TestAPIDeletePublicDashboard(t *testing.T) {
+	dashboardUid := "abc1234"
+	publicDashboardUid := "1234asdfasdf"
+	userEditorAllPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Login: "testEditorUser", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {dashboards.ScopeDashboardsAll}}}}
+	userEditorAnotherPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Login: "testEditorUser", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {"another-uid"}}}}
+	userEditorPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Login: "testEditorUser", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {fmt.Sprintf("dashboards:uid:%s", dashboardUid)}}}}
+
+	testCases := []struct {
+		Name                 string
+		User                 *user.SignedInUser
+		ResponseErr          error
+		ExpectedHttpResponse int
+		ShouldCallService    bool
+	}{
+		{
+			Name:                 "User viewer cannot delete public dashboard",
+			User:                 userViewer,
+			ResponseErr:          nil,
+			ExpectedHttpResponse: http.StatusForbidden,
+			ShouldCallService:    false,
+		},
+		{
+			Name:                 "User editor without specific dashboard access cannot delete public dashboard",
+			User:                 userEditorAnotherPublicDashboard,
+			ResponseErr:          nil,
+			ExpectedHttpResponse: http.StatusForbidden,
+			ShouldCallService:    false,
+		},
+		{
+			Name:                 "User editor with all dashboard accesses can delete public dashboard",
+			User:                 userEditorAllPublicDashboard,
+			ResponseErr:          nil,
+			ExpectedHttpResponse: http.StatusOK,
+			ShouldCallService:    true,
+		},
+		{
+			Name:                 "User editor with dashboard access can delete public dashboard",
+			User:                 userEditorPublicDashboard,
+			ResponseErr:          nil,
+			ExpectedHttpResponse: http.StatusOK,
+			ShouldCallService:    true,
+		},
+		{
+			Name:                 "Internal server error returns an error",
+			User:                 userEditorPublicDashboard,
+			ResponseErr:          errors.New("server error"),
+			ExpectedHttpResponse: http.StatusInternalServerError,
+			ShouldCallService:    true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.Name, func(t *testing.T) {
+			service := publicdashboards.NewFakePublicDashboardService(t)
+
+			if test.ShouldCallService {
+				service.On("DeletePublicDashboard", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return(test.ResponseErr)
+			}
+
+			cfg := setting.NewCfg()
+
+			features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
+			testServer := setupTestServer(t, cfg, features, service, nil, test.User)
+
+			response := callAPI(testServer, http.MethodDelete, fmt.Sprintf("/api/dashboards/%s/public/%s", dashboardUid, publicDashboardUid), nil, t)
+			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
+
+			if test.ExpectedHttpResponse == http.StatusOK {
+				var jsonResp any
+				err := json.Unmarshal(response.Body.Bytes(), &jsonResp)
+				require.NoError(t, err)
+				assert.Equal(t, jsonResp, nil)
+			}
+
+			if !test.ShouldCallService {
+				service.AssertNotCalled(t, "DeletePublicDashboard")
+			}
+
+			if test.ResponseErr != nil {
+				var errResp JsonErrResponse
+				err := json.Unmarshal(response.Body.Bytes(), &errResp)
+				require.NoError(t, err)
+				assert.Equal(t, test.ResponseErr.Error(), errResp.Error)
+			}
+		})
+	}
+}
+
 func TestAPIGetPublicDashboard(t *testing.T) {
 	DashboardUid := "dashboard-abcd1234"
 
@@ -282,7 +371,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			service.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
+			service.On("GetPublicDashboardAndDashboard", mock.Anything, mock.AnythingOfType("string")).
 				Return(&PublicDashboard{}, test.DashboardResult, test.Err).Maybe()
 
 			cfg := setting.NewCfg()
@@ -396,7 +485,7 @@ func TestAPIGetPublicDashboardConfig(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
 
 			if test.ShouldCallService {
-				service.On("GetPublicDashboardConfig", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+				service.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
 					Return(test.PublicDashboardResult, test.PublicDashboardErr)
 			}
 
@@ -507,7 +596,7 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 
 			// this is to avoid AssertExpectations fail at t.Cleanup when the middleware returns before calling the service
 			if test.ShouldCallService {
-				service.On("SavePublicDashboardConfig", mock.Anything, mock.Anything, mock.AnythingOfType("*models.SavePublicDashboardConfigDTO")).
+				service.On("SavePublicDashboard", mock.Anything, mock.Anything, mock.AnythingOfType("*models.SavePublicDashboardConfigDTO")).
 					Return(&PublicDashboard{IsEnabled: true}, test.SaveDashboardErr)
 			}
 
@@ -732,7 +821,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	ac := acmock.New()
 	cfg.RBACEnabled = false
 	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac)
-	pubdash, err := service.SavePublicDashboardConfig(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
+	pubdash, err := service.SavePublicDashboard(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 
 	// setup test server

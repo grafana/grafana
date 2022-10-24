@@ -49,7 +49,7 @@ export const SubMenu: React.FC<SubMenuProps> = React.memo(
             className={styles.subMenu(localRef.current)}
             aria-label={selectors.components.Menu.SubMenu.container}
           >
-            <div className={styles.itemsWrapper} role="menu" onKeyDown={handleKeys}>
+            <div tabIndex={-1} className={styles.itemsWrapper} role="menu" onKeyDown={handleKeys}>
               {items}
             </div>
           </div>

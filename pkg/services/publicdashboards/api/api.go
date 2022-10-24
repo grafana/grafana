@@ -93,11 +93,10 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Invalid Access Token", nil)
 	}
 
-	pubdash, dash, err := api.PublicDashboardService.GetPublicDashboard(
+	pubdash, dash, err := api.PublicDashboardService.GetPublicDashboardAndDashboard(
 		c.Req.Context(),
 		accessToken,
 	)
-
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "GetPublicDashboard: failed to get public dashboard", err)
 	}
@@ -142,14 +141,14 @@ func (api *Api) DeletePublicDashboard(c *models.ReqContext) response.Response {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "DeletePublicDashboard: failed to delete public dashboard", err)
 	}
 
-	return response.Success("Public dashboard deleted")
+	return response.JSON(http.StatusOK, nil)
 }
 
 // Gets public dashboard configuration for dashboard
 // GetPublicDashboardConfig Gets public dashboard configuration for dashboard
 // GET /api/dashboards/uid/:uid/public-config
 func (api *Api) GetPublicDashboardConfig(c *models.ReqContext) response.Response {
-	pdc, err := api.PublicDashboardService.GetPublicDashboardConfig(c.Req.Context(), c.OrgID, web.Params(c.Req)[":uid"])
+	pdc, err := api.PublicDashboardService.GetPublicDashboard(c.Req.Context(), c.OrgID, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "GetPublicDashboardConfig: failed to get public dashboard config", err)
 	}
@@ -180,7 +179,7 @@ func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Respons
 	}
 
 	// Save the public dashboard
-	pubdash, err := api.PublicDashboardService.SavePublicDashboardConfig(c.Req.Context(), c.SignedInUser, &dto)
+	pubdash, err := api.PublicDashboardService.SavePublicDashboard(c.Req.Context(), c.SignedInUser, &dto)
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "SavePublicDashboardConfig: failed to save public dashboard configuration", err)
 	}

@@ -17,7 +17,7 @@ export const DeletePublicDashboardButton = ({
   const [deletePublicDashboard, { isLoading }] = useDeletePublicDashboardMutation();
 
   const onDeletePublicDashboardClick = async (pd: ListPublicDashboardResponse, onDelete: () => void) => {
-    await deletePublicDashboard({ uid: pd.uid, dashboardUid: pd.dashboardUid, dashboardTitle: pd.title });
+    await deletePublicDashboard({ uid: pd.uid, dashboardUid: pd.dashboardUid, dashboardTitle: pd.title }).unwrap();
     onDelete();
   };
 

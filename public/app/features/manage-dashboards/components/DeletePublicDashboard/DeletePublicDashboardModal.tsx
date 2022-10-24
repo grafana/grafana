@@ -5,7 +5,9 @@ import { ConfirmModal } from '@grafana/ui/src';
 const Body = ({ title }: { title?: string }) => (
   <>
     <p>Do you want to delete this public dashboard?</p>
-    {title && <p>{title}</p>}
+    <p>
+      Only &quot;<b>{title}</b>&quot; public dashboard will be deleted.
+    </p>
   </>
 );
 
