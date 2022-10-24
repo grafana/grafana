@@ -25,7 +25,7 @@
   },
   "scripts": {
     "start": "webpack",
-    "run:object-store:local": "webpack && cross-env GRPC_TOKEN= GRPC_ADDRESS=127.0.0.1:10000 k6 run .",
-    "run:object-store:local-cloud-output": "&& cross-env GRPC_TOKEN= K6_CLOUD_TOKEN= GRPC_ADDRESS=127.0.0.1:10000 k6 run --out cloud ."
+    "run:object-store:local": "webpack && cross-env GRPC_TOKEN= GRPC_ADDRESS=127.0.0.1:10000 k6 run ./dist/object-store-test.js",
+    "run:object-store:local-cloud-output": "&& cross-env GRPC_TOKEN= K6_CLOUD_TOKEN= GRPC_ADDRESS=127.0.0.1:10000 k6 run --out cloud ./dist/object-store-test.js"
   }
 }
