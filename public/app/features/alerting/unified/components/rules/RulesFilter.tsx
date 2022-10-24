@@ -3,8 +3,9 @@ import { debounce } from 'lodash';
 import React, { FormEvent, useState } from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme, SelectableValue } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles } from '@grafana/ui';
+import { Button, Field, Icon, Input, Label, RadioButtonGroup, Tooltip, useStyles } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
