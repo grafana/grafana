@@ -25,16 +25,20 @@ type AccessControlAPI struct {
 func (api *AccessControlAPI) RegisterAPIEndpoints() {
 	// Users
 	api.RouteRegister.Get("/api/access-control/user/permissions",
-		middleware.ReqSignedIn, routing.Wrap(api.getUsersPermissions))
+		middleware.ReqSignedIn, routing.Wrap(api.getUserPermissions))
 }
 
 // GET /api/access-control/user/permissions
-func (api *AccessControlAPI) getUsersPermissions(c *models.ReqContext) response.Response {
+func (api *AccessControlAPI) getUserPermissions(c *models.ReqContext) response.Response {
 	reloadCache := c.QueryBool("reloadcache")
 	permissions, err := api.Service.GetUserPermissions(c.Req.Context(),
 		c.SignedInUser, ac.Options{ReloadCache: reloadCache})
 	if err != nil {
 		response.JSON(http.StatusInternalServerError, err)
+	}
+
+	if c.QueryBool("scoped") {
+		return response.JSON(http.StatusOK, ac.GroupScopesByAction(permissions))
 	}
 
 	return response.JSON(http.StatusOK, ac.BuildPermissionsMap(permissions))
