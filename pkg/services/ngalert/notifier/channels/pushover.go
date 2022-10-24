@@ -66,7 +66,7 @@ func PushoverFactory(fc FactoryConfig) (NotificationChannel, error) {
 	return pn, nil
 }
 
-// newSlackNotifier is the constructor for the Slack notifier
+// newPushoverNotifier is the constructor for the Pushover notifier
 func newPushoverNotifier(fc FactoryConfig) (*PushoverNotifier, error) {
 	decryptFunc := fc.DecryptFunc
 	var settings pushoverSettings
