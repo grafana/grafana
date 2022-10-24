@@ -190,7 +190,7 @@ func (s *Service) attachJWT(ctx context.Context, pluginCtx backend.PluginContext
 	}
 
 	user := xctx.UserFromContext(ctx)
-	if user == nil {
+	if user == nil || user.IsAnonymous || user.IsDisabled {
 		return ctx
 	}
 

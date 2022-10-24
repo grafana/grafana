@@ -98,11 +98,10 @@ func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*use
 
 	userInfo := xctx.UserInfoFromString(subject)
 	if userInfo == nil {
+		if a.cfg.AnonymousEnabled {
+			return a.getAnonymousUser(ctx)
+		}
 		return nil, status.Error(codes.Unauthenticated, "invalid subject claim")
-	}
-
-	if userInfo.UserID == 0 {
-		return a.getAnonymousUser(ctx)
 	}
 
 	querySignedInUser := user.GetSignedInUserQuery{UserID: userInfo.UserID, OrgID: userInfo.OrgID}
