@@ -63,7 +63,7 @@ func DiscordFactory(fc FactoryConfig) (NotificationChannel, error) {
 }
 
 func newDiscordNotifier(fc FactoryConfig) (*DiscordNotifier, error) {
-	settings := discordSettings{}
+	var settings discordSettings
 	err := fc.Config.unmarshalSettings(&settings)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
