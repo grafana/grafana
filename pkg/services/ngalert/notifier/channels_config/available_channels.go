@@ -173,7 +173,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				{
 					Label:        "Details",
 					Element:      ElementTypeTextArea,
-					Description:  "Templated details of the kafka message",
+					Description:  "Custom details to include with the message. You can use template variables.",
 					PropertyName: "details",
 					Placeholder:  channels.DefaultMessageEmbed,
 				},
