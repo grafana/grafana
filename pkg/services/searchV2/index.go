@@ -862,12 +862,16 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 				}
 
 				sql += " order by id asc"
+				sql += " limit ?"
+				sqlAndArgs = append(sqlAndArgs, limit)
 
 				sqlAndArgs[0] = sql
 				output, err := sess.QuerySliceString(sqlAndArgs...)
 				slices = output
 				return err
 			})
+
+			dashboardQuerySpan.SetAttributes("dashboardCount", len(slices), attribute.Key("dashboardCount").Int(len(slices)))
 
 			if err != nil || slices == nil {
 				dashboardQuerySpan.End()
