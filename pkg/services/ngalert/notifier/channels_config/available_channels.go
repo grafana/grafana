@@ -166,7 +166,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Label:        "Description",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Description:  "Templated description of the kafka message",
+					Description:  "Templated description of the Kafka message",
 					PropertyName: "description",
 					Placeholder:  channels.DefaultMessageTitleEmbed,
 				},
