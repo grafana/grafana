@@ -687,23 +687,7 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 				Hide:      &false,
 			}
 
-			migrateAliasToDynamicLabel(&queryToMigrate)
-
-			expected := metricsDataQuery{
-				Alias: tc.inputAlias,
-				Dimensions: map[string]interface{}{
-					"InstanceId": []interface{}{"test"},
-				},
-				Hide:       &false,
-				Label:      &tc.expectedLabel,
-				MetricName: "CPUUtilization",
-				Namespace:  "ec2",
-				Period:     "600",
-				Region:     "us-east-1",
-				Statistic:  &average,
-			}
-
-			assert.Equal(t, expected, queryToMigrate)
+			assert.Equal(t, tc.expectedLabel, getLabel(queryToMigrate, true))
 		})
 	}
 }

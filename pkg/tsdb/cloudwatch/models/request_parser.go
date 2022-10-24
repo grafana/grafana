@@ -46,6 +46,7 @@ type metricsDataQuery struct {
 
 // TODO: move this to cloudwatch_query.go
 func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time, endTime time.Time, dynamicLabelsEnabled bool) ([]*CloudWatchQuery, error) {
+	cwlog.Debug("Parsing request query", "query", dataQuery) // TODO: find a good place for this log
 	var metricDataQueries []metricsDataQuery
 	for _, dataQuery := range dataQueries {
 		var mdq metricsDataQuery
@@ -54,6 +55,7 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 			return nil, &QueryError{Err: err, RefID: dataQuery.RefID}
 		}
 
+		mdq.RefId = dataQuery.RefID                                  // TODO: this was done in the original code, seems we need to take the data query's RefId. Are there any other fields like this that should come from the data query directly and not its JSON?
 		if mdq.QueryType != timeSeriesQuery && mdq.QueryType != "" { // TODO: do we need this line or can we check for it in QueryData?
 			continue
 		}
@@ -68,9 +70,9 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 			return nil, err
 		}
 
-		// migrate
+		// TODO: these are the "migrations". I was thinking about making them methods on cloudWatchQuery and renaming to "setStatistic", for example. should we wrap them in a migration function?
 		cloudWatchQuery.Statistic = getStatistic(query)
-		cloudWatchQuery.Label = migrateAliasToDynamicLabel(query, dynamicLabelsEnabled)
+		cloudWatchQuery.Label = getLabel(query, dynamicLabelsEnabled)
 
 		cloudWatchQueries = append(cloudWatchQueries, cloudWatchQuery)
 	}
@@ -159,35 +161,35 @@ var aliasPatterns = map[string]string{
 
 var legacyAliasRegexp = regexp.MustCompile(`{{\s*(.+?)\s*}}`)
 
-func migrateAliasToDynamicLabel(query metricsDataQuery, dynamicLabelsEnabled bool) string {
-	if query.Label == nil {
-		if dynamicLabelsEnabled {
-			fullAliasField := query.Alias
-			if fullAliasField != "" {
-				matches := legacyAliasRegexp.FindAllStringSubmatch(query.Alias, -1)
+func getLabel(query metricsDataQuery, dynamicLabelsEnabled bool) string {
+	if query.Label != nil {
+		return *query.Label
+	}
+	var result string
+	if dynamicLabelsEnabled {
+		fullAliasField := query.Alias
+		if fullAliasField != "" {
+			matches := legacyAliasRegexp.FindAllStringSubmatch(query.Alias, -1)
 
-				for _, groups := range matches {
-					fullMatch := groups[0]
-					subgroup := groups[1]
-					if dynamicLabel, ok := aliasPatterns[subgroup]; ok {
-						fullAliasField = strings.ReplaceAll(fullAliasField, fullMatch, dynamicLabel)
-					} else {
-						fullAliasField = strings.ReplaceAll(fullAliasField, fullMatch, fmt.Sprintf(`${PROP('Dim.%s')}`, subgroup))
-					}
+			for _, groups := range matches {
+				fullMatch := groups[0]
+				subgroup := groups[1]
+				if dynamicLabel, ok := aliasPatterns[subgroup]; ok {
+					fullAliasField = strings.ReplaceAll(fullAliasField, fullMatch, dynamicLabel)
+				} else {
+					fullAliasField = strings.ReplaceAll(fullAliasField, fullMatch, fmt.Sprintf(`${PROP('Dim.%s')}`, subgroup))
 				}
 			}
-			return fullAliasField
 		}
-		return ""
+		result = fullAliasField
 	}
-	return *query.Label
+	return result
 }
 
 func toCloudWatchQuery(dataQuery metricsDataQuery) *CloudWatchQuery {
-	cwlog.Debug("Parsing request query", "query", dataQuery)
 	result := CloudWatchQuery{
 		Alias:             dataQuery.Alias,
-		UsedExpression:    "", // TODO this doesn't seem right
+		UsedExpression:    "", // TODO check if this makes sense, remove line if it is OK
 		RefId:             dataQuery.RefId,
 		Id:                dataQuery.Id,
 		Region:            dataQuery.Region,
