@@ -48,17 +48,17 @@ func (b *Base) Pluginmeta() *pluginmeta.Coremodel {
 	return b.pluginmeta
 }
 
-func doProvideBase(lib thema.Library) *Base {
+func doProvideBase(rt *thema.Runtime) *Base {
 	var err error
 	reg := &Base{}
 
-	reg.dashboard, err = dashboard.New(lib)
+	reg.dashboard, err = dashboard.New(rt)
 	if err != nil {
 		panic(fmt.Sprintf("error while initializing dashboard coremodel: %s", err))
 	}
 	reg.all = append(reg.all, reg.dashboard)
 
-	reg.pluginmeta, err = pluginmeta.New(lib)
+	reg.pluginmeta, err = pluginmeta.New(rt)
 	if err != nil {
 		panic(fmt.Sprintf("error while initializing pluginmeta coremodel: %s", err))
 	}
