@@ -11,6 +11,7 @@ import {
   FieldType,
   isValidGoDuration,
   LoadingState,
+  rangeUtil,
   ScopedVars,
 } from '@grafana/data';
 import {
@@ -67,6 +68,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   lokiSearch?: {
     datasourceUid?: string;
   };
+  traceQuery?: {
+    spanStartTimeShift?: string;
+    spanEndTimeShift?: string;
+  };
   uploadedJson?: string | ArrayBuffer | null = null;
   spanBar?: SpanBarOptions;
   languageProvider: TempoLanguageProvider;
@@ -81,6 +86,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.search = instanceSettings.jsonData.search;
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
     this.lokiSearch = instanceSettings.jsonData.lokiSearch;
+    this.traceQuery = instanceSettings.jsonData.traceQuery;
     this.languageProvider = new TempoLanguageProvider(this);
   }
 
@@ -300,16 +306,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
    * @param targets
    * @private
    */
-  private handleTraceIdQuery(
-    options: DataQueryRequest<TempoQuery>,
-    targets: TempoQuery[]
-  ): Observable<DataQueryResponse> {
+  handleTraceIdQuery(options: DataQueryRequest<TempoQuery>, targets: TempoQuery[]): Observable<DataQueryResponse> {
     const validTargets = targets.filter((t) => t.query).map((t) => ({ ...t, query: t.query.trim() }));
     if (!validTargets.length) {
       return EMPTY;
     }
 
-    const traceRequest: DataQueryRequest<TempoQuery> = { ...options, targets: validTargets };
+    const traceRequest = this.traceIdQueryRequest(options, validTargets);
+
     return super.query(traceRequest).pipe(
       map((response) => {
         if (response.error) {
@@ -318,6 +322,21 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         return transformTrace(response, this.nodeGraph?.enabled);
       })
     );
+  }
+
+  traceIdQueryRequest(options: DataQueryRequest<TempoQuery>, targets: TempoQuery[]): DataQueryRequest<TempoQuery> {
+    return {
+      ...options,
+      range: options.range && {
+        ...options.range,
+        from: options.range.from.subtract(
+          rangeUtil.intervalToMs(this.traceQuery?.spanStartTimeShift || '30m'),
+          'milliseconds'
+        ),
+        to: options.range.to.add(rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'), 'milliseconds'),
+      },
+      targets,
+    };
   }
 
   async metadataRequest(url: string, params = {}) {

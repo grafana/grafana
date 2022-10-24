@@ -50,7 +50,7 @@ func RequiresExistingAccessToken(publicDashboardService publicdashboards.Service
 		}
 
 		// Check that the access token references an enabled public dashboard
-		exists, err := publicDashboardService.AccessTokenExists(c.Req.Context(), accessToken)
+		exists, err := publicDashboardService.PublicDashboardEnabledExistsByAccessToken(c.Req.Context(), accessToken)
 		if err != nil {
 			c.JsonApiErr(http.StatusInternalServerError, "Failed to query access token", nil)
 			return
