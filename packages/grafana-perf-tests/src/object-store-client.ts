@@ -30,11 +30,11 @@ export class GRPCObjectStoreClient {
     };
   };
 
-  healthCheck = () => {
+  healthCheck = (): boolean => {
     this.connect();
     const response = this.client.invoke(GRPCMethods.ServerHealth, {});
 
-    check(response, {
+    return check(response, {
       'server is healthy': (r) => {
         const statusOK = r && r.status === grpc.StatusOK;
         if (!statusOK) {

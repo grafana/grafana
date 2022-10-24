@@ -1,3 +1,4 @@
+import { fail } from 'k6';
 import { SharedArray } from 'k6/data';
 import execution from 'k6/execution';
 import grpc from 'k6/net/grpc';
@@ -91,7 +92,9 @@ export const options = {
 };
 
 export function setup() {
-  objectStoreClient.healthCheck();
+  if (!objectStoreClient.healthCheck()) {
+    fail('server should be healthy');
+  }
 
   console.log('inserting base objects');
   for (let i = 0; i < data.base.length; i++) {
