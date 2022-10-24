@@ -143,7 +143,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
-					Description:  "Templated description of the message",
+					Description:  "Custom DingDing message. You can use template variables.",
 					Placeholder:  channels.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
