@@ -17,7 +17,7 @@ func TestParseGRNStr(t *testing.T) {
 			true,
 		},
 		{ // too few parts
-			"grn::dashboards",
+			"grn:dashboards",
 			GRN{},
 			true,
 		},
@@ -32,22 +32,22 @@ func TestParseGRNStr(t *testing.T) {
 			true,
 		},
 		{ // Missing Kind
-			"grn:::foo",
+			"grn::foo",
 			GRN{},
 			true,
 		},
 		{ // good!
-			"grn:::roles/Admin",
+			"grn::roles/Admin",
 			GRN{ResourceKind: "roles", ResourceIdentifier: "Admin"},
 			false,
 		},
 		{ // good!
-			"grn:::roles/Admin/with/some/slashes",
+			"grn::roles/Admin/with/some/slashes",
 			GRN{ResourceKind: "roles", ResourceIdentifier: "Admin/with/some/slashes"},
 			false,
 		},
 		{ // Weird, but valid.
-			"grn:::roles///Admin/with/leading/slashes",
+			"grn::roles///Admin/with/leading/slashes",
 			GRN{ResourceKind: "roles", ResourceIdentifier: "//Admin/with/leading/slashes"},
 			false,
 		},

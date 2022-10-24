@@ -6,14 +6,11 @@ import (
 )
 
 type GRN struct {
-	// TenantID is specific to hosted grafana and will be omitted in other
-	// environments.
+	// TenantID contains the ID of the tenant (in hosted grafana) or
+	// organization (in other environments) the resource belongs to. This field
+	// may be omitted for global Grafana resources which are not associated with
+	// an organization.
 	TenantID string
-
-	// OrgID contains the ID of the organization the resource belongs to. This
-	// field may be omitted for global Grafana resources which are not
-	// associated with an organization.
-	OrgID string
 
 	// The kind of resource being identified, for e.g. "dashboard" or "user".
 	// The caller is responsible for validating the value.
@@ -30,7 +27,7 @@ func ParseStr(str string) (GRN, error) {
 	ret := GRN{}
 	parts := strings.Split(str, ":")
 
-	if len(parts) != 4 {
+	if len(parts) != 3 {
 		return ret, ErrInvalidGRN.Errorf("%q is not a complete GRN", str)
 	}
 
@@ -40,7 +37,7 @@ func ParseStr(str string) (GRN, error) {
 
 	// split the final segment into Kind and ID. This only splits after the
 	// first occurrence of "/"; a ResourceIdentifier may contain "/"
-	kind, id, found := strings.Cut(parts[3], "/")
+	kind, id, found := strings.Cut(parts[2], "/")
 	if !found { // missing "/"
 		return ret, ErrInvalidGRN.Errorf("invalid resource identifier in GRN %q", str)
 	}
@@ -48,7 +45,6 @@ func ParseStr(str string) (GRN, error) {
 	// todo: validation
 	return GRN{
 		TenantID:           parts[1],
-		OrgID:              parts[2],
 		ResourceKind:       kind,
 		ResourceIdentifier: id,
 	}, nil
@@ -64,6 +60,8 @@ func MustParseStr(str string) GRN {
 	return grn
 }
 
+// String returns a string representation of a grn in the format
+// grn:tenandID:kind/resourceIdentifier
 func (g *GRN) String() string {
-	return fmt.Sprintf("grn:%s:%s:%s/%s", g.TenantID, g.OrgID, g.ResourceKind, g.ResourceIdentifier)
+	return fmt.Sprintf("grn:%s:%s/%s", g.TenantID, g.ResourceKind, g.ResourceIdentifier)
 }
