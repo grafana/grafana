@@ -19,28 +19,16 @@ type OrgListResponse []struct {
 type SQLStoreMock struct {
 	LastGetAlertsQuery      *models.GetAlertsQuery
 	LastLoginAttemptCommand *models.CreateLoginAttemptCommand
-	LatestUserId            int64
 
-	ExpectedUser                   *user.User
 	ExpectedAlert                  *models.Alert
-	ExpectedPluginSetting          *models.PluginSetting
-	ExpectedDashboards             []*models.Dashboard
-	ExpectedDashboardACLInfoList   []*models.DashboardACLInfoDTO
-	ExpectedUserOrgList            []*models.UserOrgDTO
-	ExpectedOrgListResponse        OrgListResponse
-	ExpectedTeamsByUser            []*models.TeamDTO
-	ExpectedOrg                    *models.Org
 	ExpectedSystemStats            *models.SystemStats
 	ExpectedDataSourceStats        []*models.DataSourceStats
 	ExpectedDataSourcesAccessStats []*models.DataSourceAccessStats
 	ExpectedNotifierUsageStats     []*models.NotifierUsageStats
-	ExpectedPersistedDashboards    models.HitList
 	ExpectedSignedInUser           *user.SignedInUser
-	ExpectedUserStars              map[int64]bool
 	ExpectedLoginAttempts          int64
 
-	ExpectedError            error
-	ExpectedSetUsingOrgError error
+	ExpectedError error
 }
 
 func NewSQLStoreMock() *SQLStoreMock {
