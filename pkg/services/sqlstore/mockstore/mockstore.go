@@ -20,6 +20,8 @@ type SQLStoreMock struct {
 	LastGetAlertsQuery      *models.GetAlertsQuery
 	LastLoginAttemptCommand *models.CreateLoginAttemptCommand
 
+	ExpectedUser                   *user.User
+	ExpectedTeamsByUser            []*models.TeamDTO
 	ExpectedAlert                  *models.Alert
 	ExpectedSystemStats            *models.SystemStats
 	ExpectedDataSourceStats        []*models.DataSourceStats
