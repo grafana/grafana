@@ -98,7 +98,6 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup) models.ObjectSumm
 		}
 
 		summary.References = dashboardRefs.Get()
-		out, err := json.MarshalIndent(parsed, "", "  ")
-		return summary, out, err
+		return summary, body, err
 	}
 }
