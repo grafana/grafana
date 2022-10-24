@@ -50,6 +50,15 @@ export interface GridPos {
   static?: boolean;
 }
 
+type RunPanelQueryOptions = {
+  /** @deprecate */
+  dashboardId: number;
+  dashboardUID: string;
+  dashboardTimezone: string;
+  timeData: TimeOverrideResult;
+  width: number;
+  publicDashboardAccessToken?: string;
+};
 const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
   isViewing: true,
@@ -61,6 +70,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   queryRunner: true,
   replaceVariables: true,
   configRev: true,
+  hasSavedPanelEditChange: true,
   getDisplayTitle: true,
   dataSupport: true,
   key: true,
@@ -161,7 +171,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   links?: DataLink[];
   declare transparent: boolean;
 
-  libraryPanel?: { uid: undefined; name: string } | PanelModelLibraryPanel;
+  libraryPanel?: { uid: undefined; name: string; version?: number } | PanelModelLibraryPanel;
 
   autoMigrateFrom?: string;
 
@@ -170,6 +180,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   isEditing = false;
   isInView = false;
   configRev = 0; // increments when configs change
+  hasSavedPanelEditChange?: boolean;
   hasRefreshed?: boolean;
   cacheTimeout?: string | null;
   cachedPluginOptions: Record<string, PanelOptionsCache> = {};
@@ -323,18 +334,20 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     }
   }
 
-  runAllPanelQueries(
-    dashboardId: number,
-    dashboardTimezone: string,
-    timeData: TimeOverrideResult,
-    width: number,
-    publicDashboardAccessToken?: string
-  ) {
+  runAllPanelQueries({
+    dashboardId,
+    dashboardUID,
+    dashboardTimezone,
+    timeData,
+    width,
+    publicDashboardAccessToken,
+  }: RunPanelQueryOptions) {
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
       panelId: this.id,
       dashboardId: dashboardId,
+      dashboardUID: dashboardUID,
       publicDashboardAccessToken,
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
@@ -533,6 +546,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     const clone = new PanelModel(sourceModel);
     clone.isEditing = true;
+    clone.plugin = this.plugin;
 
     const sourceQueryRunner = this.getQueryRunner();
 

@@ -7,25 +7,26 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/plugins"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*web.Mux, *HTTPServer) {
 	t.Helper()
-	sqlstore.InitTestDB(t)
+	db.InitTestDB(t)
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	{
@@ -39,7 +40,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 		})
 	}
 
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 
 	hs := &HTTPServer{
@@ -52,11 +53,10 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 		},
 		SQLStore:             sqlStore,
 		SettingsProvider:     setting.ProvideProvider(cfg),
-		pluginStore:          &fakePluginStore{},
+		pluginStore:          &plugins.FakePluginStore{},
 		grafanaUpdateChecker: &updatechecker.GrafanaService{},
 		AccessControl:        accesscontrolmock.New().WithDisabled(),
 		PluginSettings:       pluginSettings.ProvideService(sqlStore, secretsService),
-		remoteSecretsCheck:   &kvstore.OSSRemoteSecretsPluginCheck{},
 	}
 
 	m := web.New()

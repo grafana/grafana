@@ -82,7 +82,7 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
     return {
       refId: target.refId,
       datasource: this.getRef(),
-      rawSql: queryModel.render(this.interpolateVariable as any),
+      rawSql: queryModel.render(this.interpolateVariable),
       format: target.format,
     };
   }
@@ -189,7 +189,7 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
     const results = value.data.results['meta'];
     if (results.frames) {
       // This returns number
-      return results.frames[0].data?.values[0][0].toString();
+      return (results.frames[0].data?.values[0] as number[])[0].toString();
     }
     return '';
   }
@@ -200,7 +200,7 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
     );
     const results = value.data.results['meta'];
     if (results.frames) {
-      return results.frames[0].data?.values[0][0];
+      return results.frames[0].data?.values[0][0] as string[];
     }
     return undefined;
   }

@@ -1,0 +1,9 @@
+files:
+  - source: /public/locales/en-US/grafana.json
+    translation: /public/locales/%locale%/%original_file_name%
+
+pull_request_title: 'I18n: Crowdin sync'
+pull_request_labels:
+  - area/internationalization
+  - no-changelog
+  - no-backport

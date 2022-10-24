@@ -14,7 +14,7 @@ interface SaveDashboardAsFormDTO {
 }
 
 const getSaveAsDashboardClone = (dashboard: DashboardModel) => {
-  const clone: any = dashboard.getSaveModelClone();
+  const clone = dashboard.getSaveModelClone();
   clone.id = null;
   clone.uid = '';
   clone.title += ' Copy';

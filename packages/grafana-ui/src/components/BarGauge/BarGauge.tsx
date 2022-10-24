@@ -19,7 +19,7 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import {  BarGaugeDisplayMode, VizTextDisplayOptions } from '@grafana/schema';
+import { BarGaugeDisplayMode, VizTextDisplayOptions } from '@grafana/schema';
 
 import { Themeable2 } from '../../types';
 import { calculateFontSize, measureText } from '../../utils/measureText';
@@ -424,7 +424,9 @@ export function getCellColor(
 }
 
 export function getValuePercent(value: number, minValue: number, maxValue: number): number {
-  return Math.min((value - minValue) / (maxValue - minValue), 1);
+  // Need special logic for when minValue === maxValue === value to prevent returning NaN
+  const valueRatio = Math.min((value - minValue) / (maxValue - minValue), 1);
+  return isNaN(valueRatio) ? 0 : valueRatio;
 }
 
 /**

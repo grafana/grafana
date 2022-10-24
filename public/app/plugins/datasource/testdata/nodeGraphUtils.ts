@@ -123,9 +123,9 @@ export function generateRandomNodes(count = 10) {
   for (const node of nodes) {
     nodeFields.id.values.add(node.id);
     nodeFields.title.values.add(node.title);
-    nodeFields.subTitle.values.add(node.subTitle);
-    nodeFields.mainStat.values.add(node.stat1);
-    nodeFields.secondaryStat.values.add(node.stat2);
+    nodeFields[NodeGraphDataFrameFieldNames.subTitle].values.add(node.subTitle);
+    nodeFields[NodeGraphDataFrameFieldNames.mainStat].values.add(node.stat1);
+    nodeFields[NodeGraphDataFrameFieldNames.secondaryStat].values.add(node.stat2);
     nodeFields.arc__success.values.add(node.success);
     nodeFields.arc__errors.values.add(node.error);
     for (const edge of node.edges) {

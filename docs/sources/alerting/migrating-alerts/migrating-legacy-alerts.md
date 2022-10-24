@@ -31,6 +31,8 @@ longer supported. We refer to these as [Differences]({{< relref "#differences" >
 
 5. Unlike legacy dashboard alerts where images in notifications are enabled per contact point, images in notifications for Grafana Alerting must be enabled in the Grafana configuration, either in the configuration file or environment variables, and are enabled for either all or no contact points. Please refer to the [documentation for images in notifications]({{< relref "../images-in-notifications" >}}).
 
+6. Grafana Alerting does not support pausing the evaluation of alert rules. After migration, all paused alert rules will become active, which may cause unexpected notifications to be sent.
+
 ## Limitations
 
 1. Since `Hipchat` and `Sensu` notification channels are no longer supported, legacy alerts associated with these channels are not automatically migrated to Grafana Alerting. Assign the legacy alerts to a supported notification channel so that you continue to receive notifications for those alerts.

@@ -19,25 +19,34 @@ describe('AzureMonitorUrlBuilder', () => {
   describe('buildResourceUri', () => {
     it('builds a resource uri when the required properties are provided', () => {
       expect(
-        UrlBuilder.buildResourceUri('sub', 'group', templateSrv, 'Microsoft.NetApp/netAppAccounts', 'name')
+        UrlBuilder.buildResourceUri(templateSrv, {
+          subscription: 'sub',
+          resourceGroup: 'group',
+          metricNamespace: 'Microsoft.NetApp/netAppAccounts',
+          resourceName: 'name',
+        })
       ).toEqual('/subscriptions/sub/resourceGroups/group/providers/Microsoft.NetApp/netAppAccounts/name');
     });
 
     it('builds a resource uri correctly when a template variable is used as namespace', () => {
-      expect(UrlBuilder.buildResourceUri('sub', 'group', templateSrv, '$ns', 'name')).toEqual(
-        '/subscriptions/sub/resourceGroups/group/providers/$ns/name'
-      );
+      expect(
+        UrlBuilder.buildResourceUri(templateSrv, {
+          subscription: 'sub',
+          resourceGroup: 'group',
+          metricNamespace: '$ns',
+          resourceName: 'name',
+        })
+      ).toEqual('/subscriptions/sub/resourceGroups/group/providers/$ns/name');
     });
 
     it('builds a resource uri correctly when the namespace includes a storage sub-resource', () => {
       expect(
-        UrlBuilder.buildResourceUri(
-          'sub',
-          'group',
-          templateSrv,
-          'Microsoft.Storage/storageAccounts/tableServices',
-          'name'
-        )
+        UrlBuilder.buildResourceUri(templateSrv, {
+          subscription: 'sub',
+          resourceGroup: 'group',
+          metricNamespace: 'Microsoft.Storage/storageAccounts/tableServices',
+          resourceName: 'name',
+        })
       ).toEqual(
         '/subscriptions/sub/resourceGroups/group/providers/Microsoft.Storage/storageAccounts/name/tableServices/default'
       );
@@ -56,27 +65,64 @@ describe('AzureMonitorUrlBuilder', () => {
       templateSrv = getTemplateSrv();
 
       it('builds a resource uri without specifying a subresource (default)', () => {
-        expect(UrlBuilder.buildResourceUri('sub', 'group', templateSrv, '$ns/tableServices', 'name')).toEqual(
-          '/subscriptions/sub/resourceGroups/group/providers/$ns/name/tableServices/default'
-        );
+        expect(
+          UrlBuilder.buildResourceUri(templateSrv, {
+            subscription: 'sub',
+            resourceGroup: 'group',
+            metricNamespace: '$ns/tableServices',
+            resourceName: 'name',
+          })
+        ).toEqual('/subscriptions/sub/resourceGroups/group/providers/$ns/name/tableServices/default');
       });
 
       it('builds a resource uri specifying a subresource (default)', () => {
-        expect(UrlBuilder.buildResourceUri('sub', 'group', templateSrv, '$ns/tableServices', 'name/default')).toEqual(
-          '/subscriptions/sub/resourceGroups/group/providers/$ns/name/tableServices/default'
-        );
+        expect(
+          UrlBuilder.buildResourceUri(templateSrv, {
+            subscription: 'sub',
+            resourceGroup: 'group',
+            metricNamespace: '$ns/tableServices',
+            resourceName: 'name/default',
+          })
+        ).toEqual('/subscriptions/sub/resourceGroups/group/providers/$ns/name/tableServices/default');
       });
 
       it('builds a resource uri specifying a resource template variable', () => {
-        expect(UrlBuilder.buildResourceUri('sub', 'group', templateSrv, '$ns/tableServices', '$rs/default')).toEqual(
-          '/subscriptions/sub/resourceGroups/group/providers/$ns/$rs/tableServices/default'
-        );
+        expect(
+          UrlBuilder.buildResourceUri(templateSrv, {
+            subscription: 'sub',
+            resourceGroup: 'group',
+            metricNamespace: '$ns/tableServices',
+            resourceName: '$rs/default',
+          })
+        ).toEqual('/subscriptions/sub/resourceGroups/group/providers/$ns/$rs/tableServices/default');
       });
 
       it('builds a resource uri specifying multiple template variables', () => {
-        expect(UrlBuilder.buildResourceUri('sub', 'group', templateSrv, '$ns/$ns2', '$rs/$rs2')).toEqual(
-          '/subscriptions/sub/resourceGroups/group/providers/$ns/$rs/$ns2/$rs2'
-        );
+        expect(
+          UrlBuilder.buildResourceUri(templateSrv, {
+            subscription: 'sub',
+            resourceGroup: 'group',
+            metricNamespace: '$ns/$ns2',
+            resourceName: '$rs/$rs2',
+          })
+        ).toEqual('/subscriptions/sub/resourceGroups/group/providers/$ns/$rs/$ns2/$rs2');
+      });
+
+      it('builds a resource uri with only a subscription', () => {
+        expect(
+          UrlBuilder.buildResourceUri(templateSrv, {
+            subscription: 'sub',
+          })
+        ).toEqual('/subscriptions/sub');
+      });
+
+      it('builds a resource uri with a subscription and a resource group', () => {
+        expect(
+          UrlBuilder.buildResourceUri(templateSrv, {
+            subscription: 'sub',
+            resourceGroup: 'group',
+          })
+        ).toEqual('/subscriptions/sub/resourceGroups/group');
       });
     });
   });
@@ -89,10 +135,11 @@ describe('AzureMonitorUrlBuilder', () => {
         {
           resourceUri: '/subscriptions/sub/resource-uri/resource',
         },
+        true,
         templateSrv
       );
       expect(url).toBe(
-        '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricNamespaces?region=global&api-version=2017-05-01-preview'
+        '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=global'
       );
     });
   });
@@ -109,7 +156,22 @@ describe('AzureMonitorUrlBuilder', () => {
         templateSrv
       );
       expect(url).toBe(
-        '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=Microsoft.Sql%2Fservers'
+        '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
+      );
+    });
+
+    it('handles a custom namespace', () => {
+      const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
+        '',
+        '2017-05-01-preview',
+        {
+          resourceUri: '/subscriptions/sub/resource-uri/resource',
+          customNamespace: 'custom/namespace',
+        },
+        templateSrv
+      );
+      expect(url).toBe(
+        '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=custom%2Fnamespace'
       );
     });
   });
@@ -126,11 +188,12 @@ describe('AzureMonitorUrlBuilder', () => {
             metricNamespace: 'Microsoft.NetApp/netAppAccounts/capacityPools/volumes',
             resourceName: 'rn1/rn2/rn3',
           },
+          true,
           templateSrv
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/' +
-            'providers/microsoft.insights/metricNamespaces?region=global&api-version=2017-05-01-preview'
+            'providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=global'
         );
       });
     });
@@ -146,11 +209,31 @@ describe('AzureMonitorUrlBuilder', () => {
             metricNamespace: 'Microsoft.Sql/servers/databases',
             resourceName: 'rn1/rn2',
           },
+          true,
           templateSrv
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn1/databases/rn2/' +
-            'providers/microsoft.insights/metricNamespaces?region=global&api-version=2017-05-01-preview'
+            'providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=global'
+        );
+      });
+
+      it('should omit global region if specified', () => {
+        const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
+          '',
+          '2017-05-01-preview',
+          {
+            subscription: 'sub1',
+            resourceGroup: 'rg',
+            metricNamespace: 'Microsoft.Sql/servers/databases',
+            resourceName: 'rn1/rn2',
+          },
+          false,
+          templateSrv
+        );
+        expect(url).toBe(
+          '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn1/databases/rn2/' +
+            'providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview'
         );
       });
     });
@@ -166,11 +249,12 @@ describe('AzureMonitorUrlBuilder', () => {
             metricNamespace: 'Microsoft.Sql/servers',
             resourceName: 'rn',
           },
+          true,
           templateSrv
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn/' +
-            'providers/microsoft.insights/metricNamespaces?region=global&api-version=2017-05-01-preview'
+            'providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=global'
         );
       });
     });
@@ -190,7 +274,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/' +
-            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=Microsoft.NetApp%2FnetAppAccounts%2FcapacityPools%2Fvolumes'
+            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
         );
       });
     });
@@ -210,7 +294,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn1/databases/rn2/' +
-            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=Microsoft.Sql%2Fservers%2Fdatabases'
+            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
         );
       });
     });
@@ -230,7 +314,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn/' +
-            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=Microsoft.Sql%2Fservers'
+            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
         );
       });
     });
@@ -250,7 +334,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/blobServices/default/' +
-            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=Microsoft.Storage%2FstorageAccounts%2FblobServices'
+            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
         );
       });
     });
@@ -270,7 +354,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/fileServices/default/' +
-            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=Microsoft.Storage%2FstorageAccounts%2FfileServices'
+            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
         );
       });
     });
@@ -290,7 +374,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/tableServices/default/' +
-            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=Microsoft.Storage%2FstorageAccounts%2FtableServices'
+            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
         );
       });
     });
@@ -310,7 +394,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/queueServices/default/' +
-            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=Microsoft.Storage%2FstorageAccounts%2FqueueServices'
+            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
         );
       });
     });

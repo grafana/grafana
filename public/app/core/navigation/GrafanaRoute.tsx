@@ -1,38 +1,37 @@
-import React, { useEffect } from 'react';
+import React, { Suspense, useEffect } from 'react';
 // @ts-ignore
 import Drop from 'tether-drop';
 
 import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
+import { ErrorBoundary } from '@grafana/ui';
 
 import { useGrafana } from '../context/GrafanaContext';
-import { keybindingSrv } from '../services/keybindingSrv';
 
+import { GrafanaRouteError } from './GrafanaRouteError';
+import { GrafanaRouteLoading } from './GrafanaRouteLoading';
 import { GrafanaRouteComponentProps, RouteDescriptor } from './types';
 
 export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
 
 export function GrafanaRoute(props: Props) {
-  const { chrome } = useGrafana();
+  const { chrome, keybindings } = useGrafana();
+
+  chrome.setMatchedRoute(props.route);
 
   useEffect(() => {
-    chrome.routeMounted(props.route);
+    keybindings.clearAndInitGlobalBindings();
 
     updateBodyClassNames(props.route);
     cleanupDOM();
-    reportPageview();
     navigationLogger('GrafanaRoute', false, 'Mounted', props.match);
 
     return () => {
       navigationLogger('GrafanaRoute', false, 'Unmounted', props.route);
       updateBodyClassNames(props.route, true);
     };
-  }, [chrome, props.route, props.match]);
-
-  useEffect(() => {
-    // unbinds all and re-bind global keybindins
-    keybindingSrv.reset();
-    keybindingSrv.initGlobals();
-  }, [chrome, props.route]);
+    // props.match instance change even though only query params changed so to make this effect only trigger on route mount we have to disable exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     cleanupDOM();
@@ -42,7 +41,21 @@ export function GrafanaRoute(props: Props) {
 
   navigationLogger('GrafanaRoute', false, 'Rendered', props.route);
 
-  return <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />;
+  return (
+    <ErrorBoundary>
+      {({ error, errorInfo }) => {
+        if (error) {
+          return <GrafanaRouteError error={error} errorInfo={errorInfo} />;
+        }
+
+        return (
+          <Suspense fallback={<GrafanaRouteLoading />}>
+            <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
+          </Suspense>
+        );
+      }}
+    </ErrorBoundary>
+  );
 }
 
 function getPageClasses(route: RouteDescriptor) {

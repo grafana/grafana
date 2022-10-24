@@ -650,6 +650,8 @@ Content-Type: application/json
 
 `POST /api/admin/provisioning/access-control/reload`
 
+`POST /api/admin/provisioning/alerting/reload`
+
 Reloads the provisioning config files for specified type and provision entities again. It won't return
 until the new provisioned entities are already stored in the database. In case of dashboards, it will stop
 polling for changes in dashboard files and then restart it with new configurations after returning.
@@ -667,6 +669,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 | provisioning:reload | provisioners:datasources   | datasources      |
 | provisioning:reload | provisioners:plugins       | plugins          |
 | provisioning:reload | provisioners:notifications | notifications    |
+| provisioning:reload | provisioners:alerting      | alerting         |
 
 **Example Request**:
 

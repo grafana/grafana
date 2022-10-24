@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline } from '@grafana/data';
+import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline, VizOrientation } from '@grafana/data';
 import { VizTextDisplayOptions } from '@grafana/schema';
 
 import { Themeable2 } from '../../types';
@@ -63,6 +63,8 @@ export interface Props extends Themeable2 {
   textMode?: BigValueTextMode;
   /** If true disables the tooltip */
   hasLinks?: boolean;
+  /** The orientation of the parent container */
+  parentOrientation?: VizOrientation;
 
   /**
    * If part of a series of stat panes, this is the total number.

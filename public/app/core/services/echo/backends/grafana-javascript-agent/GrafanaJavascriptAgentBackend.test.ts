@@ -115,7 +115,6 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     expect(mockedSetUser).toHaveBeenCalledTimes(1);
     expect(mockedSetUser).toHaveBeenCalledWith({
       id: '504',
-      email: 'darth.vader@sith.glx',
       attributes: {
         orgId: '1',
       },

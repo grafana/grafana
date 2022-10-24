@@ -6,12 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 type FakeCondition struct{}
@@ -84,7 +86,7 @@ func TestAlertRuleForParsing(t *testing.T) {
 }
 
 func TestAlertRuleModel(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := &sqlStore{db: db.InitTestDB(t), cache: localcache.New(time.Minute, time.Minute)}
 	RegisterCondition("test", func(model *simplejson.Json, index int) (Condition, error) {
 		return &FakeCondition{}, nil
 	})

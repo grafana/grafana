@@ -42,17 +42,21 @@ Supported auth providers:
 - [Azure AD OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/azuread/#team-sync-enterprise-only" >}})
 - [GitHub OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/github/#team-sync-enterprise-only" >}})
 - [GitLab OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/gitlab/#team-sync-enterprise-only" >}})
-- [LDAP]({{< relref "../setup-grafana/configure-security/configure-authentication/enhanced_ldap/#ldap-group-synchronization-for-teams" >}})
+- [LDAP]({{< relref "../setup-grafana/configure-security/configure-authentication/enhanced-ldap/#ldap-group-synchronization-for-teams" >}})
 - [Okta]({{< relref "../setup-grafana/configure-security/configure-authentication/okta/#team-sync-enterprise-only" >}})
 - [SAML]({{< relref "../setup-grafana/configure-security/configure-authentication/saml/#configure-team-sync" >}})
 
 ### Enhanced LDAP integration
 
-With [enhanced LDAP integration]({{< relref "../setup-grafana/configure-security/configure-authentication/enhanced_ldap/" >}}), you can set up active LDAP synchronization.
+With [enhanced LDAP integration]({{< relref "../setup-grafana/configure-security/configure-authentication/enhanced-ldap/" >}}), you can set up active LDAP synchronization.
 
 ### SAML authentication
 
 [SAML authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/saml/" >}}) enables users to authenticate with single sign-on services that use Security Assertion Markup Language (SAML).
+
+### Protected roles
+
+With [protected roles]({{< relref "../setup-grafana/configure-security/configure-authentication/#protected-roles" >}}), you can define user roles that are exempt from being converted from one authentication type to another when changing auth providers.
 
 ## Enterprise features
 
@@ -60,16 +64,16 @@ Grafana Enterprise adds the following features:
 
 - [Role-based access control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) to control access with role-based permissions.
 - [Data source permissions]({{< relref "../administration/data-source-management/" >}}) to restrict query access to specific teams and users.
-- [Data source query caching]({{< relref "query-caching/" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
-- [Reporting]({{< relref "reporting/" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
-- [Export dashboard as PDF]({{< relref "export-pdf/" >}})
+- [Data source query caching]({{< relref "query-caching" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
+- [Reporting]({{< relref "../dashboards/create-reports/" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
+- [Export dashboard as PDF]({{< relref "../dashboards/share-dashboards-panels/#export-dashboard-as-pdf" >}})
 - [Custom branding]({{< relref "../setup-grafana/configure-grafana/configure-custom-branding/" >}}) to customize Grafana from the brand and logo to the footer links.
-- [Usage insights]({{< relref "usage-insights/" >}}) to understand how your Grafana instance is used.
+- [Usage insights]({{< relref "../dashboards/assess-dashboard-usage/" >}}) to understand how your Grafana instance is used.
+- [Recorded queries]({{< relref "recorded-queries" >}}) to see trends over time for your data sources.
 - [Vault integration]({{< relref "../setup-grafana/configure-security/configure-database-encryption/integrate-with-hashicorp-vault/" >}}) to manage your configuration or provisioning secrets with Vault.
-- [AWS Secrets Manager integration]({{< relref "../setup-grafana/configure-security/configure-database-encryption/store-secrets-using-aws-secrets-manager-plugin/" >}}) to store datasource secrets in AWS Secrets Manager.
 - [Auditing]({{< relref "../setup-grafana/configure-security/audit-grafana/" >}}) tracks important changes to your Grafana instance to help you manage and mitigate suspicious activity and meet compliance requirements.
 - [Request security]({{< relref "../setup-grafana/configure-security/configure-request-security/" >}}) makes it possible to restrict outgoing requests from the Grafana server.
-- [Settings updates at runtime]({{< relref "settings-updates/" >}}) allows you to update Grafana settings at runtime without requiring a restart.
+- [Settings updates at runtime]({{< relref "settings-updates" >}}) allows you to update Grafana settings at runtime without requiring a restart.
 
 ## Enterprise data sources
 

@@ -2,7 +2,7 @@ package opentsdb
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -27,7 +27,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, "POST", req.Method)
-		body, err := ioutil.ReadAll(req.Body)
+		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 
 		testBody := "{\"start\":0,\"end\":0,\"queries\":null}"
@@ -37,7 +37,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	t.Run("Parse response should handle invalid JSON", func(t *testing.T) {
 		response := `{ invalid }`
 
-		result, err := service.parseResponse(&http.Response{Body: ioutil.NopCloser(strings.NewReader(response))})
+		result, err := service.parseResponse(&http.Response{Body: io.NopCloser(strings.NewReader(response))})
 		require.Nil(t, result)
 		require.Error(t, err)
 	})
@@ -65,7 +65,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 				50}),
 		)
 
-		resp := http.Response{Body: ioutil.NopCloser(strings.NewReader(response))}
+		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200
 		result, err := service.parseResponse(&resp)
 		require.NoError(t, err)

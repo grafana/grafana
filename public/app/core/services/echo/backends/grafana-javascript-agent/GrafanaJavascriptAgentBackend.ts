@@ -1,6 +1,7 @@
 import { BaseTransport } from '@grafana/agent-core';
 import {
   initializeAgent,
+  defaultMetas,
   BrowserConfig,
   ErrorsInstrumentation,
   ConsoleInstrumentation,
@@ -48,7 +49,7 @@ export class GrafanaJavascriptAgentBackend
       instrumentations.push(new WebVitalsInstrumentation());
     }
 
-    // initialize GrafanaJavascriptAgent so it can set up it's hooks and start collecting errors
+    // initialize GrafanaJavascriptAgent so it can set up its hooks and start collecting errors
     const grafanaJavaScriptAgentOptions: BrowserConfig = {
       globalObjectKey: options.globalObjectKey || 'grafanaAgent',
       preventGlobalExposure: options.preventGlobalExposure || false,
@@ -58,12 +59,25 @@ export class GrafanaJavascriptAgentBackend
       },
       instrumentations,
       transports: [new EchoSrvTransport()],
+      ignoreErrors: [
+        'ResizeObserver loop limit exceeded',
+        'ResizeObserver loop completed',
+        'Non-Error exception captured with keys',
+      ],
+      metas: [
+        ...defaultMetas,
+        {
+          session: {
+            // new session id for every page load
+            id: (Math.random() + 1).toString(36).substring(2),
+          },
+        },
+      ],
     };
     this.agentInstance = initializeAgent(grafanaJavaScriptAgentOptions);
 
     if (options.user) {
       this.agentInstance.api.setUser({
-        email: options.user.email,
         id: options.user.id,
         attributes: {
           orgId: String(options.user.orgId) || '',

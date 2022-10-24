@@ -15,16 +15,18 @@ enum TokenType {
 
 // list of available functions in Alertmanager templates
 // see https://cs.github.com/prometheus/alertmanager/blob/805e505288ce82c3e2b625a3ca63aaf2b0aa9cea/template/template.go?q=join#L132-L151
-export const availableAlertManagerFunctions = [
-  'toUpper',
-  'toLower',
-  'title',
-  'join',
-  'match',
-  'safeHtml',
-  'reReplaceAll',
-  'stringSlice',
-];
+export enum AlertmanagerTemplateFunction {
+  toUpper = 'toUpper',
+  toLower = 'toLower',
+  title = 'title',
+  join = 'join',
+  match = 'match',
+  safeHtml = 'safeHtml',
+  reReplaceAll = 'reReplaceAll',
+  stringSlice = 'stringSlice',
+}
+
+export const availableAlertManagerFunctions = Object.values(AlertmanagerTemplateFunction);
 
 // boolean functions
 const booleanFunctions = ['eq', 'ne', 'lt', 'le', 'gt', 'ge'];
@@ -77,7 +79,7 @@ export const language: monacoType.languages.IMonarchLanguage = {
       [/{{-?/, TokenType.Delimiter],
       [/-?}}/, TokenType.Delimiter],
       // variables
-      // [/\.([A-Za-z]+)?/, TokenType.Variable],
+      [/\.([A-Za-z]+)?/, TokenType.Variable],
       // identifiers and keywords
       [
         /[a-zA-Z_]\w*/,

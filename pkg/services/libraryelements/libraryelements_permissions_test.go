@@ -7,18 +7,19 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
 )
 
 func TestLibraryElementPermissions(t *testing.T) {
 	var defaultPermissions = []folderACLItem{}
-	var adminOnlyPermissions = []folderACLItem{{models.ROLE_ADMIN, models.PERMISSION_EDIT}}
-	var editorOnlyPermissions = []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}}
-	var editorAndViewerPermissions = []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}, {models.ROLE_VIEWER, models.PERMISSION_EDIT}}
-	var viewerOnlyPermissions = []folderACLItem{{models.ROLE_VIEWER, models.PERMISSION_EDIT}}
-	var everyonePermissions = []folderACLItem{{models.ROLE_ADMIN, models.PERMISSION_EDIT}, {models.ROLE_EDITOR, models.PERMISSION_EDIT}, {models.ROLE_VIEWER, models.PERMISSION_EDIT}}
-	var noPermissions = []folderACLItem{{models.ROLE_VIEWER, models.PERMISSION_VIEW}}
+	var adminOnlyPermissions = []folderACLItem{{org.RoleAdmin, models.PERMISSION_EDIT}}
+	var editorOnlyPermissions = []folderACLItem{{org.RoleEditor, models.PERMISSION_EDIT}}
+	var editorAndViewerPermissions = []folderACLItem{{org.RoleEditor, models.PERMISSION_EDIT}, {org.RoleViewer, models.PERMISSION_EDIT}}
+	var viewerOnlyPermissions = []folderACLItem{{org.RoleViewer, models.PERMISSION_EDIT}}
+	var everyonePermissions = []folderACLItem{{org.RoleAdmin, models.PERMISSION_EDIT}, {org.RoleEditor, models.PERMISSION_EDIT}, {org.RoleViewer, models.PERMISSION_EDIT}}
+	var noPermissions = []folderACLItem{{org.RoleViewer, models.PERMISSION_VIEW}}
 	var folderCases = [][]folderACLItem{
 		defaultPermissions,
 		adminOnlyPermissions,
@@ -36,34 +37,34 @@ func TestLibraryElementPermissions(t *testing.T) {
 	var everyoneDesc = "everyone has editor permissions"
 	var noDesc = "everyone has view permissions"
 	var accessCases = []struct {
-		role   models.RoleType
+		role   org.RoleType
 		items  []folderACLItem
 		desc   string
 		status int
 	}{
-		{models.ROLE_ADMIN, defaultPermissions, defaultDesc, 200},
-		{models.ROLE_ADMIN, adminOnlyPermissions, adminOnlyDesc, 200},
-		{models.ROLE_ADMIN, editorOnlyPermissions, editorOnlyDesc, 200},
-		{models.ROLE_ADMIN, editorAndViewerPermissions, editorAndViewerDesc, 200},
-		{models.ROLE_ADMIN, viewerOnlyPermissions, viewerOnlyDesc, 200},
-		{models.ROLE_ADMIN, everyonePermissions, everyoneDesc, 200},
-		{models.ROLE_ADMIN, noPermissions, noDesc, 200},
+		{org.RoleAdmin, defaultPermissions, defaultDesc, 200},
+		{org.RoleAdmin, adminOnlyPermissions, adminOnlyDesc, 200},
+		{org.RoleAdmin, editorOnlyPermissions, editorOnlyDesc, 200},
+		{org.RoleAdmin, editorAndViewerPermissions, editorAndViewerDesc, 200},
+		{org.RoleAdmin, viewerOnlyPermissions, viewerOnlyDesc, 200},
+		{org.RoleAdmin, everyonePermissions, everyoneDesc, 200},
+		{org.RoleAdmin, noPermissions, noDesc, 200},
 
-		{models.ROLE_EDITOR, defaultPermissions, defaultDesc, 200},
-		{models.ROLE_EDITOR, adminOnlyPermissions, adminOnlyDesc, 403},
-		{models.ROLE_EDITOR, editorOnlyPermissions, editorOnlyDesc, 200},
-		{models.ROLE_EDITOR, editorAndViewerPermissions, editorAndViewerDesc, 200},
-		{models.ROLE_EDITOR, viewerOnlyPermissions, viewerOnlyDesc, 403},
-		{models.ROLE_EDITOR, everyonePermissions, everyoneDesc, 200},
-		{models.ROLE_EDITOR, noPermissions, noDesc, 403},
+		{org.RoleEditor, defaultPermissions, defaultDesc, 200},
+		{org.RoleEditor, adminOnlyPermissions, adminOnlyDesc, 403},
+		{org.RoleEditor, editorOnlyPermissions, editorOnlyDesc, 200},
+		{org.RoleEditor, editorAndViewerPermissions, editorAndViewerDesc, 200},
+		{org.RoleEditor, viewerOnlyPermissions, viewerOnlyDesc, 403},
+		{org.RoleEditor, everyonePermissions, everyoneDesc, 200},
+		{org.RoleEditor, noPermissions, noDesc, 403},
 
-		{models.ROLE_VIEWER, defaultPermissions, defaultDesc, 403},
-		{models.ROLE_VIEWER, adminOnlyPermissions, adminOnlyDesc, 403},
-		{models.ROLE_VIEWER, editorOnlyPermissions, editorOnlyDesc, 403},
-		{models.ROLE_VIEWER, editorAndViewerPermissions, editorAndViewerDesc, 200},
-		{models.ROLE_VIEWER, viewerOnlyPermissions, viewerOnlyDesc, 200},
-		{models.ROLE_VIEWER, everyonePermissions, everyoneDesc, 200},
-		{models.ROLE_VIEWER, noPermissions, noDesc, 403},
+		{org.RoleViewer, defaultPermissions, defaultDesc, 403},
+		{org.RoleViewer, adminOnlyPermissions, adminOnlyDesc, 403},
+		{org.RoleViewer, editorOnlyPermissions, editorOnlyDesc, 403},
+		{org.RoleViewer, editorAndViewerPermissions, editorAndViewerDesc, 200},
+		{org.RoleViewer, viewerOnlyPermissions, viewerOnlyDesc, 200},
+		{org.RoleViewer, everyonePermissions, everyoneDesc, 200},
+		{org.RoleViewer, noPermissions, noDesc, 403},
 	}
 
 	for _, testCase := range accessCases {
@@ -128,12 +129,12 @@ func TestLibraryElementPermissions(t *testing.T) {
 	}
 
 	var generalFolderCases = []struct {
-		role   models.RoleType
+		role   org.RoleType
 		status int
 	}{
-		{models.ROLE_ADMIN, 200},
-		{models.ROLE_EDITOR, 200},
-		{models.ROLE_VIEWER, 403},
+		{org.RoleAdmin, 200},
+		{org.RoleEditor, 200},
+		{org.RoleViewer, 403},
 	}
 
 	for _, testCase := range generalFolderCases {
@@ -194,11 +195,11 @@ func TestLibraryElementPermissions(t *testing.T) {
 	}
 
 	var missingFolderCases = []struct {
-		role models.RoleType
+		role org.RoleType
 	}{
-		{models.ROLE_ADMIN},
-		{models.ROLE_EDITOR},
-		{models.ROLE_VIEWER},
+		{org.RoleAdmin},
+		{org.RoleEditor},
+		{org.RoleViewer},
 	}
 
 	for _, testCase := range missingFolderCases {
@@ -230,12 +231,12 @@ func TestLibraryElementPermissions(t *testing.T) {
 	}
 
 	var getCases = []struct {
-		role     models.RoleType
+		role     org.RoleType
 		statuses []int
 	}{
-		{models.ROLE_ADMIN, []int{200, 200, 200, 200, 200, 200, 200}},
-		{models.ROLE_EDITOR, []int{200, 404, 200, 200, 200, 200, 200}},
-		{models.ROLE_VIEWER, []int{200, 404, 404, 200, 200, 200, 200}},
+		{org.RoleAdmin, []int{200, 200, 200, 200, 200, 200, 200}},
+		{org.RoleEditor, []int{200, 404, 200, 200, 200, 200, 200}},
+		{org.RoleViewer, []int{200, 404, 404, 200, 200, 200, 200}},
 	}
 
 	for _, testCase := range getCases {
@@ -292,13 +293,13 @@ func TestLibraryElementPermissions(t *testing.T) {
 	}
 
 	var getAllCases = []struct {
-		role          models.RoleType
+		role          org.RoleType
 		panels        int
 		folderIndexes []int
 	}{
-		{models.ROLE_ADMIN, 7, []int{0, 1, 2, 3, 4, 5, 6}},
-		{models.ROLE_EDITOR, 6, []int{0, 2, 3, 4, 5, 6}},
-		{models.ROLE_VIEWER, 5, []int{0, 3, 4, 5, 6}},
+		{org.RoleAdmin, 7, []int{0, 1, 2, 3, 4, 5, 6}},
+		{org.RoleEditor, 6, []int{0, 2, 3, 4, 5, 6}},
+		{org.RoleViewer, 5, []int{0, 3, 4, 5, 6}},
 	}
 
 	for _, testCase := range getAllCases {

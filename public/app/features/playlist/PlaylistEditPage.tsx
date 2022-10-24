@@ -1,16 +1,14 @@
-import React, { FC } from 'react';
+import React from 'react';
+import { useAsync } from 'react-use';
 
+import { NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-
-import { GrafanaRouteComponentProps } from '../../core/navigation/types';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { PlaylistForm } from './PlaylistForm';
-import { updatePlaylist } from './api';
-import { getPlaylistStyles } from './styles';
+import { getPlaylist, updatePlaylist } from './api';
 import { Playlist } from './types';
-import { usePlaylist } from './usePlaylist';
 
 export interface RouteParams {
   uid: string;
@@ -18,25 +16,26 @@ export interface RouteParams {
 
 interface Props extends GrafanaRouteComponentProps<RouteParams> {}
 
-export const PlaylistEditPage: FC<Props> = ({ match }) => {
-  const styles = useStyles2(getPlaylistStyles);
-  const { playlist, loading } = usePlaylist(match.params.uid);
+export const PlaylistEditPage = ({ match }: Props) => {
+  const playlist = useAsync(() => getPlaylist(match.params.uid), [match.params]);
+
   const onSubmit = async (playlist: Playlist) => {
     await updatePlaylist(match.params.uid, playlist);
     locationService.push('/playlists');
   };
 
+  const pageNav: NavModelItem = {
+    text: 'Edit playlist',
+    subTitle:
+      'A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.',
+  };
+
   return (
-    <Page navId="dashboards/playlists">
-      <Page.Contents isLoading={loading}>
-        <h3 className={styles.subHeading}>Edit playlist</h3>
+    <Page navId="dashboards/playlists" pageNav={pageNav}>
+      <Page.Contents isLoading={playlist.loading}>
+        {playlist.error && <div>Error loading playlist: {JSON.stringify(playlist.error)}</div>}
 
-        <p className={styles.description}>
-          A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build
-          situational awareness, or just show off your metrics to your team or visitors.
-        </p>
-
-        <PlaylistForm onSubmit={onSubmit} playlist={playlist} />
+        {playlist.value && <PlaylistForm onSubmit={onSubmit} playlist={playlist.value} />}
       </Page.Contents>
     </Page>
   );

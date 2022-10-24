@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
 
@@ -135,6 +136,32 @@ func TestReduceExecute(t *testing.T) {
 				require.Equal(t, data.NoticeSeverityWarning, notice.Severity)
 			}
 		})
+	})
+
+	t.Run("should return new NoData", func(t *testing.T) {
+		var noData mathexp.Values = []mathexp.Value{
+			mathexp.NoData{Frame: data.NewFrame("no data")},
+		}
+
+		vars := map[string]mathexp.Results{
+			varToReduce: {
+				Values: noData,
+			},
+		}
+
+		results, err := cmd.Execute(context.Background(), vars)
+		require.NoError(t, err)
+
+		require.Len(t, results.Values, 1)
+
+		v := results.Values[0]
+		assert.Equal(t, v, mathexp.NoData{}.New())
+
+		// should not be able to change the original frame
+		v.AsDataFrame().Name = "there is still no data"
+		assert.NotEqual(t, v, mathexp.NoData{}.New())
+		assert.NotEqual(t, v, noData[0])
+		assert.Equal(t, "no data", noData[0].AsDataFrame().Name)
 	})
 }
 

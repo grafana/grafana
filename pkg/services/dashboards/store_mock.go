@@ -231,7 +231,7 @@ func (_m *FakeDashboardStore) GetFolderByUID(ctx context.Context, orgID int64, u
 }
 
 // GetProvisionedDashboardData provides a mock function with given fields: name
-func (_m *FakeDashboardStore) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
+func (_m *FakeDashboardStore) GetProvisionedDashboardData(ctx context.Context, name string) ([]*models.DashboardProvisioning, error) {
 	ret := _m.Called(name)
 
 	var r0 []*models.DashboardProvisioning
@@ -254,7 +254,7 @@ func (_m *FakeDashboardStore) GetProvisionedDashboardData(name string) ([]*model
 }
 
 // GetProvisionedDataByDashboardID provides a mock function with given fields: dashboardID
-func (_m *FakeDashboardStore) GetProvisionedDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
+func (_m *FakeDashboardStore) GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*models.DashboardProvisioning, error) {
 	ret := _m.Called(dashboardID)
 
 	var r0 *models.DashboardProvisioning
@@ -277,7 +277,7 @@ func (_m *FakeDashboardStore) GetProvisionedDataByDashboardID(dashboardID int64)
 }
 
 // GetProvisionedDataByDashboardUID provides a mock function with given fields: orgID, dashboardUID
-func (_m *FakeDashboardStore) GetProvisionedDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
+func (_m *FakeDashboardStore) GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
 	ret := _m.Called(orgID, dashboardUID)
 
 	var r0 *models.DashboardProvisioning
@@ -342,7 +342,7 @@ func (_m *FakeDashboardStore) SaveAlerts(ctx context.Context, dashID int64, aler
 }
 
 // SaveDashboard provides a mock function with given fields: cmd
-func (_m *FakeDashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
+func (_m *FakeDashboardStore) SaveDashboard(ctx context.Context, cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
 	ret := _m.Called(cmd)
 
 	var r0 *models.Dashboard
@@ -365,7 +365,7 @@ func (_m *FakeDashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*m
 }
 
 // SaveProvisionedDashboard provides a mock function with given fields: cmd, provisioning
-func (_m *FakeDashboardStore) SaveProvisionedDashboard(cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
+func (_m *FakeDashboardStore) SaveProvisionedDashboard(ctx context.Context, cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
 	ret := _m.Called(cmd, provisioning)
 
 	var r0 *models.Dashboard
@@ -416,7 +416,7 @@ func (_m *FakeDashboardStore) UpdateDashboardACL(ctx context.Context, uid int64,
 }
 
 // ValidateDashboardBeforeSave provides a mock function with given fields: dashboard, overwrite
-func (_m *FakeDashboardStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (bool, error) {
+func (_m *FakeDashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dashboard *models.Dashboard, overwrite bool) (bool, error) {
 	ret := _m.Called(dashboard, overwrite)
 
 	var r0 bool

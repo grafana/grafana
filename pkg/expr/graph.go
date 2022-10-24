@@ -189,7 +189,7 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 			}
 
 			if neededNode.ID() == cmdNode.ID() {
-				return fmt.Errorf("can not add self referencing node for var '%v' ", neededVar)
+				return fmt.Errorf("expression '%v' cannot reference itself. Must be query or another expression", neededVar)
 			}
 
 			if cmdNode.CMDType == TypeClassicConditions {

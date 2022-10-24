@@ -45,7 +45,7 @@ func (_m *FakeDashboardProvisioning) DeleteProvisionedDashboard(ctx context.Cont
 }
 
 // GetProvisionedDashboardData provides a mock function with given fields: name
-func (_m *FakeDashboardProvisioning) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
+func (_m *FakeDashboardProvisioning) GetProvisionedDashboardData(ctx context.Context, name string) ([]*models.DashboardProvisioning, error) {
 	ret := _m.Called(name)
 
 	var r0 []*models.DashboardProvisioning
@@ -68,7 +68,7 @@ func (_m *FakeDashboardProvisioning) GetProvisionedDashboardData(name string) ([
 }
 
 // GetProvisionedDashboardDataByDashboardID provides a mock function with given fields: dashboardID
-func (_m *FakeDashboardProvisioning) GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
+func (_m *FakeDashboardProvisioning) GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (*models.DashboardProvisioning, error) {
 	ret := _m.Called(dashboardID)
 
 	var r0 *models.DashboardProvisioning
@@ -91,7 +91,7 @@ func (_m *FakeDashboardProvisioning) GetProvisionedDashboardDataByDashboardID(da
 }
 
 // GetProvisionedDashboardDataByDashboardUID provides a mock function with given fields: orgID, dashboardUID
-func (_m *FakeDashboardProvisioning) GetProvisionedDashboardDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
+func (_m *FakeDashboardProvisioning) GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
 	ret := _m.Called(orgID, dashboardUID)
 
 	var r0 *models.DashboardProvisioning

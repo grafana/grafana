@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -39,7 +39,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, resp)
 
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.Equal(t, "http_errors=2", string(body))
 			require.NoError(t, resp.Body.Close())
@@ -53,7 +53,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, resp)
 
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.Empty(t, string(body))
 			require.NoError(t, resp.Body.Close())
@@ -106,7 +106,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, resp)
 
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.Equal(t, "http_errors=2", string(body))
 			require.NoError(t, resp.Body.Close())

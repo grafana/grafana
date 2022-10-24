@@ -29,7 +29,7 @@ func ProvideService(httpClientProvider httpclient.Provider) *Service {
 	eslog.Debug("initializing")
 
 	return &Service{
-		im:                 datasource.NewInstanceManager(newInstanceSettings()),
+		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		httpClientProvider: httpClientProvider,
 		intervalCalculator: intervalv2.NewCalculator(),
 	}
@@ -51,7 +51,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	client, err := es.NewClient(ctx, s.httpClientProvider, dsInfo, req.Queries[0].TimeRange)
+	client, err := es.NewClient(ctx, dsInfo, req.Queries[0].TimeRange)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -60,7 +60,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return query.execute()
 }
 
-func newInstanceSettings() datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := map[string]interface{}{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -70,6 +70,11 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 		httpCliOpts, err := settings.HTTPClientOptions()
 		if err != nil {
 			return nil, fmt.Errorf("error getting http options: %w", err)
+		}
+
+		httpCli, err := httpClientProvider.New(httpCliOpts)
+		if err != nil {
+			return nil, err
 		}
 
 		// Set SigV4 service namespace
@@ -128,7 +133,7 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 		model := es.DatasourceInfo{
 			ID:                         settings.ID,
 			URL:                        settings.URL,
-			HTTPClientOpts:             httpCliOpts,
+			HTTPClient:                 httpCli,
 			Database:                   settings.Database,
 			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
 			ESVersion:                  version,

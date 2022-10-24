@@ -15,11 +15,18 @@ import { SearchResultsProps } from '../components/SearchResultsTable';
 
 import { DashboardSection, FolderSection } from './FolderSection';
 
-type Props = Pick<SearchResultsProps, 'selection' | 'selectionToggle' | 'onTagSelected'> & {
+type Props = Pick<SearchResultsProps, 'selection' | 'selectionToggle' | 'onTagSelected' | 'onClickItem'> & {
   tags?: string[];
   hidePseudoFolders?: boolean;
 };
-export const FolderView = ({ selection, selectionToggle, onTagSelected, tags, hidePseudoFolders }: Props) => {
+export const FolderView = ({
+  selection,
+  selectionToggle,
+  onTagSelected,
+  tags,
+  hidePseudoFolders,
+  onClickItem,
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   const results = useAsync(async () => {
@@ -32,19 +39,19 @@ export const FolderView = ({ selection, selectionToggle, onTagSelected, tags, hi
         }
       }
 
-      const ids = impressionSrv.getDashboardOpened();
-      if (ids.length) {
-        const itemsUIDs = await getBackendSrv().get(`/api/dashboards/ids/${ids.slice(0, 30).join(',')}`);
-        if (itemsUIDs.length) {
-          folders.push({ title: 'Recent', icon: 'clock-nine', kind: 'query-recent', uid: '__recent', itemsUIDs });
-        }
+      const itemsUIDs = await impressionSrv.getDashboardOpened();
+      if (itemsUIDs.length) {
+        folders.push({ title: 'Recent', icon: 'clock-nine', kind: 'query-recent', uid: '__recent', itemsUIDs });
       }
     }
     folders.push({ title: 'General', url: '/dashboards', kind: 'folder', uid: GENERAL_FOLDER_UID });
 
-    const rsp = await getGrafanaSearcher().search({
+    const searcher = getGrafanaSearcher();
+    const rsp = await searcher.search({
       query: '*',
       kind: ['folder'],
+      sort: searcher.getFolderViewSort(),
+      limit: 1000,
     });
     for (const row of rsp.view) {
       folders.push({
@@ -73,6 +80,7 @@ export const FolderView = ({ selection, selectionToggle, onTagSelected, tags, hi
               onTagSelected={onTagSelected}
               section={section}
               tags={tags}
+              onClickItem={onClickItem}
             />
           )}
         </div>

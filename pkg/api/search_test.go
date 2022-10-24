@@ -12,12 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestHTTPServer_Search(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	sc.initCtx.IsSignedIn = true
-	sc.initCtx.SignedInUser = &models.SignedInUser{}
+	sc.initCtx.SignedInUser = &user.SignedInUser{}
 
 	sc.hs.SearchService = &mockSearchService{
 		ExpectedResult: models.HitList{
@@ -27,7 +28,7 @@ func TestHTTPServer_Search(t *testing.T) {
 		},
 	}
 
-	sc.acmock.GetUserPermissionsFunc = func(ctx context.Context, user *models.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	sc.acmock.GetUserPermissionsFunc = func(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 		return []accesscontrol.Permission{
 			{Action: "folders:read", Scope: "folders:*"},
 			{Action: "folders:write", Scope: "folders:uid:folder2"},

@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "XY Chart",
   "id": "xychart",
-  "state": "alpha",
+  "state": "beta",
 
   "info": {
     "author": {

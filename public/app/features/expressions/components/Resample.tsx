@@ -8,11 +8,11 @@ import { downsamplingTypes, ExpressionQuery, upsamplingTypes } from '../types';
 interface Props {
   refIds: Array<SelectableValue<string>>;
   query: ExpressionQuery;
-  labelWidth: number;
+  labelWidth?: number | 'auto';
   onChange: (query: ExpressionQuery) => void;
 }
 
-export const Resample: FC<Props> = ({ labelWidth, onChange, refIds, query }) => {
+export const Resample: FC<Props> = ({ labelWidth = 'auto', onChange, refIds, query }) => {
   const downsampler = downsamplingTypes.find((o) => o.value === query.downsampler);
   const upsampler = upsamplingTypes.find((o) => o.value === query.upsampler);
 

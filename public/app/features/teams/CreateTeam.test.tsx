@@ -10,6 +10,19 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    licensedAccessControlEnabled: () => false,
+    hasPermission: () => true,
+    hasPermissionInMetadata: () => true,
+    user: { orgId: 1 },
+  },
+}));
+
+jest.mock('app/core/components/RolePicker/hooks', () => ({
+  useRoleOptions: jest.fn().mockReturnValue([{ roleOptions: [] }, jest.fn()]),
+}));
+
 const mockPost = jest.fn(() => {
   return Promise.resolve({});
 });
@@ -25,7 +38,9 @@ const setup = () => {
 describe('Create team', () => {
   it('should render component', () => {
     setup();
-    expect(screen.getByText(/new team/i)).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /name/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByRole('button')).toBeInTheDocument();
   });
 
   it('should send correct data to the server', async () => {

@@ -6,7 +6,7 @@ import { GrafanaTheme2, SelectableValue, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { AsyncSelect, Button, Modal, useStyles2 } from '@grafana/ui';
 
-import { DashboardSearchHit } from '../../../search/types';
+import { DashboardSearchItem } from '../../../search/types';
 import { getConnectedDashboards, getLibraryPanelConnectedDashboards } from '../../state/api';
 import { LibraryElementDTO } from '../../types';
 
@@ -19,7 +19,7 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
   const styles = useStyles2(getStyles);
   const [loading, setLoading] = useState(false);
   const [connected, setConnected] = useState(0);
-  const [option, setOption] = useState<SelectableValue<DashboardSearchHit> | undefined>(undefined);
+  const [option, setOption] = useState<SelectableValue<DashboardSearchItem> | undefined>(undefined);
   useEffect(() => {
     const getConnected = async () => {
       const connectedDashboards = await getLibraryPanelConnectedDashboards(libraryPanel.uid);

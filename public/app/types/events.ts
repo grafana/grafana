@@ -111,17 +111,21 @@ export class PanelTransformationsChangedEvent extends BusEventBase {
 }
 
 /**
- * Used by panel editor to know when panel plugin it'self trigger option updates
+ * Used by panel editor to know when panel plugin itself trigger option updates
  */
 export class PanelOptionsChangedEvent extends BusEventBase {
   static type = 'panels-options-changed';
 }
 
 /**
- * Used internally by DashboardModel to commmunicate with DashboardGrid that it needs to re-render
+ * Used internally by DashboardModel to communicate with DashboardGrid that it needs to re-render
  */
 export class DashboardPanelsChangedEvent extends BusEventBase {
   static type = 'dashboard-panels-changed';
+}
+
+export class DashboardMetaChangedEvent extends BusEventBase {
+  static type = 'dashboard-meta-changed';
 }
 
 export class PanelDirectiveReadyEvent extends BusEventBase {

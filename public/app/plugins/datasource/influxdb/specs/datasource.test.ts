@@ -6,6 +6,7 @@ import { FetchResponse } from '@grafana/runtime';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
+import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
 import InfluxDatasource from '../datasource';
 
 //@ts-ignore
@@ -26,6 +27,7 @@ describe('InfluxDataSource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
+    ctx.instanceSettings.access = 'proxy';
     ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
   });
 
@@ -124,6 +126,25 @@ describe('InfluxDataSource', () => {
     });
   });
 
+  describe('When getting a request after issuing a query using outdated Browser Mode', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      ctx.instanceSettings.url = '/api/datasources/proxy/1';
+      ctx.instanceSettings.access = 'direct';
+      ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
+    });
+
+    it('throws an error', async () => {
+      try {
+        await lastValueFrom(ctx.ds.query({}));
+      } catch (err) {
+        if (err instanceof Error) {
+          expect(err.message).toBe(BROWSER_MODE_DISABLED_MESSAGE);
+        }
+      }
+    });
+  });
+
   describe('InfluxDataSource in POST query mode', () => {
     const ctx: any = {
       instanceSettings: { url: 'url', name: 'influxDb', jsonData: { httpMode: 'POST' } },
@@ -189,7 +210,18 @@ describe('InfluxDataSource', () => {
       $interpolationVar: text,
       $interpolationVar2: text2,
     };
+    const adhocFilters = [
+      {
+        key: 'adhoc',
+        operator: '=',
+        value: 'val',
+        condition: '',
+      },
+    ];
     const templateSrv: any = {
+      getAdhocFilters: jest.fn((name: string) => {
+        return adhocFilters;
+      }),
       replace: jest.fn((target?: string, scopedVars?: ScopedVars, format?: string | Function): string => {
         if (!format) {
           return variableMap[target!] || '';
@@ -231,6 +263,7 @@ describe('InfluxDataSource', () => {
           },
         ],
       ],
+      adhocFilters,
     };
 
     function influxChecks(query: any) {
@@ -244,6 +277,7 @@ describe('InfluxDataSource', () => {
       expect(query.tags![0].value).toBe(textWithFormatRegex);
       expect(query.groupBy![0].params![0]).toBe(textWithFormatRegex);
       expect(query.select![0][0].params![0]).toBe(textWithFormatRegex);
+      expect(query.adhocFilters[0].key).toBe(adhocFilters[0].key);
     }
 
     describe('when interpolating query variables for dashboard->explore', () => {
@@ -297,6 +331,19 @@ describe('InfluxDataSource', () => {
           interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
         });
         influxChecks(query);
+      });
+
+      it('should apply all scopedVars to tags', () => {
+        ds.isFlux = false;
+        ds.access = 'proxy';
+        config.featureToggles.influxdbBackendMigration = true;
+        const query = ds.applyTemplateVariables(influxQuery, {
+          interpolationVar: { text: text, value: text },
+          interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
+        });
+        const value = query.tags[0].value;
+        const scopedVars = 'interpolationText|interpolationText2';
+        expect(value).toBe(scopedVars);
       });
     });
   });

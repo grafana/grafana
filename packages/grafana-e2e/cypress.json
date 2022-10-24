@@ -1,4 +1,5 @@
 {
   "projectId": "zb7k1c",
-  "supportFile": "cypress/support/index.ts"
+  "supportFile": "cypress/support/index.ts",
+  "videoCompression": 20
 }

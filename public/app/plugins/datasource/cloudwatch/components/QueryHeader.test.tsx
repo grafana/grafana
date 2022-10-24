@@ -9,7 +9,7 @@ import QueryHeader from './QueryHeader';
 const ds = setupMockedDataSource({
   variables: [],
 });
-ds.datasource.getRegions = jest.fn().mockResolvedValue([]);
+ds.datasource.api.getRegions = jest.fn().mockResolvedValue([]);
 
 describe('QueryHeader', () => {
   it('should display metric options for metrics', async () => {

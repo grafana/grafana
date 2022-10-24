@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
@@ -26,7 +25,7 @@ import (
 type PrometheusSrv struct {
 	log     log.Logger
 	manager state.AlertInstanceManager
-	store   store.RuleStore
+	store   RuleStore
 	ac      accesscontrol.AccessControl
 }
 
@@ -47,7 +46,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
-	for _, alertState := range srv.manager.GetAll(c.OrgId) {
+	for _, alertState := range srv.manager.GetAll(c.OrgID) {
 		startsAt := alertState.StartsAt
 		valString := ""
 
@@ -133,7 +132,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
-	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.OrgId, c.SignedInUser)
+	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.OrgID, c.SignedInUser)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}
@@ -149,7 +148,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 	}
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
-		OrgID:         c.SignedInUser.OrgId,
+		OrgID:         c.SignedInUser.OrgID,
 		NamespaceUIDs: namespaceUIDs,
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
@@ -285,7 +284,7 @@ func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 			}
 
 			// For any other type of error, it is unexpected abort and return the whole JSON.
-			logger.Debug("failed to parse a query", "err", err)
+			logger.Debug("failed to parse a query", "error", err)
 			queryErr = err
 			break
 		}

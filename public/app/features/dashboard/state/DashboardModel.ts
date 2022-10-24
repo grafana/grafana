@@ -25,7 +25,7 @@ import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
 import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
-import { DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
+import { DashboardMetaChangedEvent, DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 
 import { appEvents } from '../../../core/core';
 import { dispatch } from '../../../store/store';
@@ -480,6 +480,11 @@ export class DashboardModel implements TimeModel {
     this.events.publish(new DashboardPanelsChangedEvent());
   }
 
+  updateMeta(updates: Partial<DashboardMeta>) {
+    this.meta = { ...this.meta, ...updates };
+    this.events.publish(new DashboardMetaChangedEvent());
+  }
+
   sortPanelsByGridPos() {
     this.panels.sort((panelA, panelB) => {
       if (panelA.gridPos.y === panelB.gridPos.y) {
@@ -493,6 +498,12 @@ export class DashboardModel implements TimeModel {
   clearUnsavedChanges() {
     for (const panel of this.panels) {
       panel.configRev = 0;
+    }
+
+    if (this.panelInEdit) {
+      // Remember that we have a saved a change in panel editor so we apply it when leaving panel edit
+      this.panelInEdit.hasSavedPanelEditChange = this.panelInEdit.configRev > 0;
+      this.panelInEdit.configRev = 0;
     }
   }
 
@@ -1073,12 +1084,13 @@ export class DashboardModel implements TimeModel {
     return this.getVariablesFromState(this.uid);
   }
 
-  canEditAnnotations(dashboardId: number) {
+  canEditAnnotations(dashboardUID?: string) {
     let canEdit = true;
 
     // if RBAC is enabled there are additional conditions to check
     if (contextSrv.accessControlEnabled()) {
-      if (dashboardId === 0) {
+      // dashboardUID is falsy when it is an organizational annotation
+      if (!dashboardUID) {
         canEdit = !!this.meta.annotationsPermissions?.organization.canEdit;
       } else {
         canEdit = !!this.meta.annotationsPermissions?.dashboard.canEdit;
@@ -1087,14 +1099,29 @@ export class DashboardModel implements TimeModel {
     return this.canEditDashboard() && canEdit;
   }
 
+  canDeleteAnnotations(dashboardUID?: string) {
+    let canDelete = true;
+
+    if (contextSrv.accessControlEnabled()) {
+      // dashboardUID is falsy when it is an organizational annotation
+      if (!dashboardUID) {
+        canDelete = !!this.meta.annotationsPermissions?.organization.canDelete;
+      } else {
+        canDelete = !!this.meta.annotationsPermissions?.dashboard.canDelete;
+      }
+    }
+    return canDelete && this.canEditDashboard();
+  }
+
   canAddAnnotations() {
-    // If RBAC is enabled there are additional conditions to check
-    const canAdd = !contextSrv.accessControlEnabled() || this.meta.annotationsPermissions?.dashboard.canAdd;
+    // If RBAC is enabled there are additional conditions to check.
+    const canAdd = !contextSrv.accessControlEnabled() || Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
+
     return this.canEditDashboard() && canAdd;
   }
 
   canEditDashboard() {
-    return this.meta.canEdit || this.meta.canMakeEditable;
+    return Boolean(this.meta.canEdit || this.meta.canMakeEditable);
   }
 
   shouldUpdateDashboardPanelFromJSON(updatedPanel: PanelModel, panel: PanelModel) {

@@ -50,6 +50,7 @@ export enum AccessControlAction {
   DataSourcesWrite = 'datasources:write',
   DataSourcesDelete = 'datasources:delete',
   DataSourcesPermissionsRead = 'datasources.permissions:read',
+  DataSourcesCachingRead = 'datasources.caching:read',
   DataSourcesInsightsRead = 'datasources.insights:read',
 
   ActionServerStatsRead = 'server.stats:read',
@@ -62,7 +63,6 @@ export enum AccessControlAction {
   ActionTeamsPermissionsWrite = 'teams.permissions:write',
 
   ActionRolesList = 'roles:read',
-  ActionBuiltinRolesList = 'roles.builtin:list',
   ActionTeamsRolesList = 'teams.roles:read',
   ActionTeamsRolesAdd = 'teams.roles:add',
   ActionTeamsRolesRemove = 'teams.roles:remove',
@@ -76,6 +76,7 @@ export enum AccessControlAction {
   DashboardsCreate = 'dashboards:create',
   DashboardsPermissionsRead = 'dashboards.permissions:read',
   DashboardsPermissionsWrite = 'dashboards.permissions:write',
+  DashboardsPublicWrite = 'dashboards.public:write',
 
   FoldersRead = 'folders:read',
   FoldersWrite = 'folders:write',
@@ -114,6 +115,9 @@ export enum AccessControlAction {
   ActionAPIKeysRead = 'apikeys:read',
   ActionAPIKeysCreate = 'apikeys:create',
   ActionAPIKeysDelete = 'apikeys:delete',
+
+  PluginsInstall = 'plugins:install',
+  PluginsWrite = 'plugins:write',
 }
 
 export interface Role {

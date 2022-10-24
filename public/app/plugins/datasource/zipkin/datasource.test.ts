@@ -91,4 +91,5 @@ const defaultSettings: DataSourceInstanceSettings = {
   meta: {} as any,
   jsonData: {},
   access: 'proxy',
+  readOnly: false,
 };

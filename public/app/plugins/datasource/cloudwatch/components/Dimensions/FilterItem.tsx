@@ -50,10 +50,10 @@ export const FilterItem: FunctionComponent<Props> = ({
       return [];
     }
 
-    return datasource
+    return datasource.api
       .getDimensionValues(region, namespace, metricName, filter.key, dimensionsExcludingCurrentKey)
       .then((result: Array<SelectableValue<string>>) => {
-        if (result.length && !disableExpressions) {
+        if (result.length && !disableExpressions && !result.some((o) => o.value === wildcardOption.value)) {
           result.unshift(wildcardOption);
         }
         return appendTemplateVariables(datasource, result);

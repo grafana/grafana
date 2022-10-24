@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { Placement, Rect } from '@popperjs/core';
 import React, { useCallback, useRef, useState } from 'react';
 import SVG from 'react-inlinesvg';
 import { usePopper } from 'react-popper';
@@ -20,28 +21,32 @@ export interface Props {
   item: DashboardSectionItem;
   onTagSelected?: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
+  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
 export function getThumbnailURL(uid: string, isLight?: boolean) {
   return `/api/dashboards/uid/${uid}/img/thumb/${isLight ? 'light' : 'dark'}`;
 }
 
-export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: Props) {
+export function SearchCard({ editable, item, onTagSelected, onToggleChecked, onClick }: Props) {
   const [hasImage, setHasImage] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [showExpandedView, setShowExpandedView] = useState(false);
   const timeout = useRef<number | null>(null);
 
   // Popper specific logic
-  const offsetCallback = useCallback(({ placement, reference, popper }) => {
-    let result: [number, number] = [0, 0];
-    if (placement === 'bottom' || placement === 'top') {
-      result = [0, -(reference.height + popper.height) / 2];
-    } else if (placement === 'left' || placement === 'right') {
-      result = [-(reference.width + popper.width) / 2, 0];
-    }
-    return result;
-  }, []);
+  const offsetCallback = useCallback(
+    ({ placement, reference, popper }: { placement: Placement; reference: Rect; popper: Rect }) => {
+      let result: [number, number] = [0, 0];
+      if (placement === 'bottom' || placement === 'top') {
+        result = [0, -(reference.height + popper.height) / 2];
+      } else if (placement === 'left' || placement === 'right') {
+        result = [-(reference.width + popper.width) / 2, 0];
+      }
+      return result;
+    },
+    []
+  );
   const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
   const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
   const { styles: popperStyles, attributes } = usePopper(markerElement, popperElement, {
@@ -118,6 +123,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onMouseMove={onMouseMove}
+      onClick={onClick}
     >
       <div className={styles.imageContainer}>
         <SearchCheckbox
@@ -128,7 +134,13 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
           onClick={onCheckboxClick}
         />
         {hasImage ? (
-          <img loading="lazy" className={styles.image} src={imageSrc} onError={() => setHasImage(false)} />
+          <img
+            loading="lazy"
+            className={styles.image}
+            src={imageSrc}
+            alt="Dashboard preview"
+            onError={() => setHasImage(false)}
+          />
         ) : (
           <div className={styles.imagePlaceholder}>
             {item.icon ? (
@@ -152,6 +164,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
               imageWidth={320}
               item={item}
               lastUpdated={lastUpdated}
+              onClick={onClick}
             />
           </div>
         </Portal>

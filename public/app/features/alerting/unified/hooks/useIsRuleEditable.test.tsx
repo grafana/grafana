@@ -3,10 +3,16 @@ import React from 'react';
 import { Provider } from 'react-redux';
 
 import { contextSrv } from 'app/core/services/context_srv';
-import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction, FolderDTO, StoreState } from 'app/types';
 
-import { disableRBAC, enableRBAC, mockFolder, mockRulerAlertingRule, mockRulerGrafanaRule } from '../mocks';
+import {
+  disableRBAC,
+  enableRBAC,
+  mockFolder,
+  mockRulerAlertingRule,
+  mockRulerGrafanaRule,
+  mockUnifiedAlertingStore,
+} from '../mocks';
 
 import { useFolder } from './useFolder';
 import { useIsRuleEditable } from './useIsRuleEditable';
@@ -166,7 +172,7 @@ function mockPermissions(grantedPermissions: AccessControlAction[]) {
 
 function getProviderWrapper() {
   const dataSources = getMockedDataSources();
-  const store = mockStore({ dataSources });
+  const store = mockUnifiedAlertingStore({ dataSources });
   const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
   return wrapper;
 }
@@ -192,16 +198,4 @@ function getMockedDataSources(): StoreState['unifiedAlerting']['dataSources'] {
       },
     },
   };
-}
-
-function mockStore(unifiedAlerting?: Partial<StoreState['unifiedAlerting']>) {
-  const defaultState = configureStore().getState();
-
-  return configureStore({
-    ...defaultState,
-    unifiedAlerting: {
-      ...defaultState.unifiedAlerting,
-      ...unifiedAlerting,
-    },
-  });
 }

@@ -3,13 +3,11 @@ package es
 import (
 	"strings"
 
-	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 // SearchRequestBuilder represents a builder which can build a search request
 type SearchRequestBuilder struct {
-	version      *semver.Version
 	interval     intervalv2.Interval
 	index        string
 	size         int
@@ -20,9 +18,8 @@ type SearchRequestBuilder struct {
 }
 
 // NewSearchRequestBuilder create a new search request builder
-func NewSearchRequestBuilder(version *semver.Version, interval intervalv2.Interval) *SearchRequestBuilder {
+func NewSearchRequestBuilder(interval intervalv2.Interval) *SearchRequestBuilder {
 	builder := &SearchRequestBuilder{
-		version:     version,
 		interval:    interval,
 		sort:        make(map[string]interface{}),
 		customProps: make(map[string]interface{}),
@@ -87,13 +84,7 @@ func (b *SearchRequestBuilder) SortDesc(field, unmappedType string) *SearchReque
 
 // AddDocValueField adds a doc value field to the search request
 func (b *SearchRequestBuilder) AddDocValueField(field string) *SearchRequestBuilder {
-	// fields field not supported on version >= 5
-	if b.version.Major() < 5 {
-		b.customProps["fields"] = []string{"*", "_source"}
-		b.customProps["fielddata_fields"] = []string{field}
-	} else {
-		b.customProps["docvalue_fields"] = []string{field}
-	}
+	b.customProps["docvalue_fields"] = []string{field}
 
 	b.customProps["script_fields"] = make(map[string]interface{})
 
@@ -110,27 +101,24 @@ func (b *SearchRequestBuilder) Query() *QueryBuilder {
 
 // Agg initiate and returns a new aggregation builder
 func (b *SearchRequestBuilder) Agg() AggBuilder {
-	aggBuilder := newAggBuilder(b.version)
+	aggBuilder := newAggBuilder()
 	b.aggBuilders = append(b.aggBuilders, aggBuilder)
 	return aggBuilder
 }
 
 // MultiSearchRequestBuilder represents a builder which can build a multi search request
 type MultiSearchRequestBuilder struct {
-	version         *semver.Version
 	requestBuilders []*SearchRequestBuilder
 }
 
 // NewMultiSearchRequestBuilder creates a new multi search request builder
-func NewMultiSearchRequestBuilder(version *semver.Version) *MultiSearchRequestBuilder {
-	return &MultiSearchRequestBuilder{
-		version: version,
-	}
+func NewMultiSearchRequestBuilder() *MultiSearchRequestBuilder {
+	return &MultiSearchRequestBuilder{}
 }
 
 // Search initiates and returns a new search request builder
 func (m *MultiSearchRequestBuilder) Search(interval intervalv2.Interval) *SearchRequestBuilder {
-	b := NewSearchRequestBuilder(m.version, interval)
+	b := NewSearchRequestBuilder(interval)
 	m.requestBuilders = append(m.requestBuilders, b)
 	return b
 }
@@ -273,13 +261,11 @@ type AggBuilder interface {
 type aggBuilderImpl struct {
 	AggBuilder
 	aggDefs []*aggDef
-	version *semver.Version
 }
 
-func newAggBuilder(version *semver.Version) *aggBuilderImpl {
+func newAggBuilder() *aggBuilderImpl {
 	return &aggBuilderImpl{
 		aggDefs: make([]*aggDef, 0),
-		version: version,
 	}
 }
 
@@ -317,7 +303,7 @@ func (b *aggBuilderImpl) Histogram(key, field string, fn func(a *HistogramAgg, b
 	})
 
 	if fn != nil {
-		builder := newAggBuilder(b.version)
+		builder := newAggBuilder()
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}
@@ -337,7 +323,7 @@ func (b *aggBuilderImpl) DateHistogram(key, field string, fn func(a *DateHistogr
 	})
 
 	if fn != nil {
-		builder := newAggBuilder(b.version)
+		builder := newAggBuilder()
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}
@@ -360,12 +346,12 @@ func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b
 	})
 
 	if fn != nil {
-		builder := newAggBuilder(b.version)
+		builder := newAggBuilder()
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}
 
-	if b.version.Major() >= 6 && len(innerAgg.Order) > 0 {
+	if len(innerAgg.Order) > 0 {
 		if orderBy, exists := innerAgg.Order[termsOrderTerm]; exists {
 			innerAgg.Order["_key"] = orderBy
 			delete(innerAgg.Order, termsOrderTerm)
@@ -386,7 +372,7 @@ func (b *aggBuilderImpl) Filters(key string, fn func(a *FiltersAggregation, b Ag
 		Aggregation: innerAgg,
 	})
 	if fn != nil {
-		builder := newAggBuilder(b.version)
+		builder := newAggBuilder()
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}
@@ -407,7 +393,7 @@ func (b *aggBuilderImpl) GeoHashGrid(key, field string, fn func(a *GeoHashGridAg
 	})
 
 	if fn != nil {
-		builder := newAggBuilder(b.version)
+		builder := newAggBuilder()
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}

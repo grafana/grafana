@@ -17,6 +17,7 @@ export interface LibraryElementConnectionDTO {
   kind: LibraryElementConnectionKind;
   elementId: number;
   connectionId: number;
+  connectionUid: string;
   created: string;
   createdBy: LibraryElementDTOMetaUser;
 }

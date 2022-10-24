@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -36,7 +36,7 @@ var (
 	resourceNameLandmark = regexp.MustCompile(`(?i)(/(?P<resourceName>[\w-\.]+)/providers/Microsoft\.Insights/metrics)`)
 )
 
-const AzureMonitorAPIVersion = "2018-01-01"
+const AzureMonitorAPIVersion = "2021-05-01"
 
 func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
 	e.Proxy.Do(rw, req, cli)
@@ -79,22 +79,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 			azJSONModel.MetricNamespace = azJSONModel.MetricDefinition
 		}
 
-		ub := urlBuilder{
-			ResourceURI: azJSONModel.ResourceURI,
-			// Alternative, used to reconstruct resource URI if it's not present
-			DefaultSubscription: dsInfo.Settings.SubscriptionId,
-			Subscription:        queryJSONModel.Subscription,
-			ResourceGroup:       azJSONModel.ResourceGroup,
-			MetricNamespace:     azJSONModel.MetricNamespace,
-			ResourceName:        azJSONModel.ResourceName,
-		}
-
 		azJSONModel.DimensionFilters = MigrateDimensionFilters(azJSONModel.DimensionFilters)
-		azureURL := ub.BuildMetricsURL()
-
-		if azJSONModel.ResourceName == "" {
-			azJSONModel.ResourceName = extractResourceNameFromMetricsURL(azureURL)
-		}
 
 		alias := azJSONModel.Alias
 
@@ -113,8 +98,30 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 		params.Add("timespan", fmt.Sprintf("%v/%v", query.TimeRange.From.UTC().Format(time.RFC3339), query.TimeRange.To.UTC().Format(time.RFC3339)))
 		params.Add("interval", timeGrain)
 		params.Add("aggregation", azJSONModel.Aggregation)
-		params.Add("metricnames", azJSONModel.MetricName) // MetricName or MetricNames ?
-		params.Add("metricnamespace", azJSONModel.MetricNamespace)
+		params.Add("metricnames", azJSONModel.MetricName)
+
+		if azJSONModel.CustomNamespace != "" {
+			params.Add("metricnamespace", azJSONModel.CustomNamespace)
+		} else {
+			params.Add("metricnamespace", azJSONModel.MetricNamespace)
+		}
+
+		azureURL := BuildSubscriptionMetricsURL(queryJSONModel.Subscription)
+		if azJSONModel.Region != "" {
+			params.Add("region", azJSONModel.Region)
+		} else {
+			// Deprecated, if no region is specified, only one resource group and name is supported
+			ub := urlBuilder{
+				ResourceURI: azJSONModel.ResourceURI,
+				// Alternative, used to reconstruct resource URI if it's not present
+				DefaultSubscription: dsInfo.Settings.SubscriptionId,
+				Subscription:        queryJSONModel.Subscription,
+				ResourceGroup:       azJSONModel.ResourceGroup,
+				MetricNamespace:     azJSONModel.MetricNamespace,
+				ResourceName:        azJSONModel.ResourceName,
+			}
+			azureURL = ub.BuildMetricsURL()
+		}
 
 		// old model
 		dimension := strings.TrimSpace(azJSONModel.Dimension)
@@ -137,8 +144,25 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 			}
 		}
 
+		resourceIDs := []string{}
+		for _, r := range azJSONModel.Resources {
+			ub := urlBuilder{
+				DefaultSubscription: dsInfo.Settings.SubscriptionId,
+				Subscription:        queryJSONModel.Subscription,
+				ResourceGroup:       r.ResourceGroup,
+				MetricNamespace:     azJSONModel.MetricNamespace,
+				ResourceName:        r.ResourceName,
+			}
+			resourceIDs = append(resourceIDs, fmt.Sprintf("Microsoft.ResourceId eq '%s'", ub.buildResourceURI()))
+		}
+		filterString := strings.Join(resourceIDs, " or ")
+
 		if dimSB.String() != "" {
-			params.Add("$filter", dimSB.String())
+			if filterString != "" {
+				filterString = fmt.Sprintf("(%s) and (%s)", filterString, dimSB.String())
+			} else {
+				filterString = dimSB.String()
+			}
 			if azJSONModel.Top != "" {
 				params.Add("top", azJSONModel.Top)
 			}
@@ -151,14 +175,13 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 		}
 
 		azureMonitorQueries = append(azureMonitorQueries, &types.AzureMonitorQuery{
-			ResourceName: azJSONModel.ResourceName,
-			ResourceURI:  ub.buildResourceURI(),
-			URL:          azureURL,
-			Target:       target,
-			Params:       params,
-			RefID:        query.RefID,
-			Alias:        alias,
-			TimeRange:    query.TimeRange,
+			URL:       azureURL,
+			Target:    target,
+			Params:    params,
+			RefID:     query.RefID,
+			Alias:     alias,
+			TimeRange: query.TimeRange,
+			Filter:    filterString,
 		})
 	}
 
@@ -177,6 +200,10 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
 	req.URL.RawQuery = query.Params.Encode()
+	if query.Filter != "" {
+		req.Method = http.MethodPost
+		req.Body = io.NopCloser(strings.NewReader(fmt.Sprintf(`{"filter": "%s"}`, query.Filter)))
+	}
 
 	ctx, span := tracer.Start(ctx, "azuremonitor query")
 	span.SetAttributes("target", query.Target, attribute.Key("target").String(query.Target))
@@ -234,7 +261,7 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo types
 }
 
 func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (types.AzureMonitorResponse, error) {
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return types.AzureMonitorResponse{}, err
 	}
@@ -259,11 +286,6 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 		return nil, nil
 	}
 
-	queryUrl, err := getQueryUrl(query, azurePortalUrl)
-	if err != nil {
-		return nil, err
-	}
-
 	frames := data.Frames{}
 	for _, series := range amr.Value[0].Timeseries {
 		labels := data.Labels{}
@@ -283,8 +305,19 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 				Unit: toGrafanaUnit(amr.Value[0].Unit),
 			})
 		}
+		resourceID := labels["microsoft.resourceid"]
+		resourceIDSlice := strings.Split(resourceID, "/")
+		resourceName := ""
+		if len(resourceIDSlice) > 1 {
+			resourceName = resourceIDSlice[len(resourceIDSlice)-1]
+		} else {
+			// Deprecated: This is for backward compatibility, the URL should contain
+			// the resource ID
+			resourceName = extractResourceNameFromMetricsURL(query.URL)
+			resourceID = extractResourceIDFromMetricsURL(query.URL)
+		}
 		if query.Alias != "" {
-			displayName := formatAzureMonitorLegendKey(query.Alias, query.ResourceName,
+			displayName := formatAzureMonitorLegendKey(query.Alias, resourceName,
 				amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID, labels)
 
 			if dataField.Config != nil {
@@ -318,6 +351,11 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			frame.SetRow(i, point.TimeStamp, value)
 		}
 
+		queryUrl, err := getQueryUrl(query, azurePortalUrl, resourceID, resourceName)
+		if err != nil {
+			return nil, err
+		}
+
 		frameWithLink := resourcegraph.AddConfigLinks(*frame, queryUrl)
 		frames = append(frames, &frameWithLink)
 	}
@@ -326,7 +364,7 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 }
 
 // Gets the deep link for the given query
-func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl string) (string, error) {
+func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, resourceName string) (string, error) {
 	aggregationType := aggregationTypeMap["Average"]
 	aggregation := query.Params.Get("aggregation")
 	if aggregation != "" {
@@ -355,14 +393,14 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl string) (string,
 				"metrics": []types.MetricChartDefinition{
 					{
 						ResourceMetadata: map[string]string{
-							"id": query.ResourceURI,
+							"id": resourceID,
 						},
 						Name:            query.Params.Get("metricnames"),
 						AggregationType: aggregationType,
 						Namespace:       query.Params.Get("metricnamespace"),
 						MetricVisualization: types.MetricVisualization{
 							DisplayName:         query.Params.Get("metricnames"),
-							ResourceDisplayName: query.ResourceName,
+							ResourceDisplayName: resourceName,
 						},
 					},
 				},
@@ -445,9 +483,12 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 }
 
 // Map values from:
-//   https://docs.microsoft.com/en-us/rest/api/monitor/metrics/list#unit
+//
+//	https://docs.microsoft.com/en-us/rest/api/monitor/metrics/list#unit
+//
 // to
-//   https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts#L24
+//
+//	https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts#L24
 func toGrafanaUnit(unit string) string {
 	switch unit {
 	case "BitsPerSecond":
@@ -488,4 +529,8 @@ func extractResourceNameFromMetricsURL(url string) string {
 	}
 
 	return resourceName
+}
+
+func extractResourceIDFromMetricsURL(url string) string {
+	return strings.Split(url, "/providers/microsoft.insights/metrics")[0]
 }

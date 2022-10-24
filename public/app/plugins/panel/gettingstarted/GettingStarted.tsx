@@ -71,15 +71,9 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 
     dashboard?.removePanel(panel!);
 
-    backendSrv
-      .request({
-        method: 'PUT',
-        url: '/api/user/helpflags/1',
-        showSuccessAlert: false,
-      })
-      .then((res: any) => {
-        contextSrv.user.helpFlags1 = res.helpFlags1;
-      });
+    backendSrv.put('/api/user/helpflags/1', undefined, { showSuccessAlert: false }).then((res: any) => {
+      contextSrv.user.helpFlags1 = res.helpFlags1;
+    });
   };
 
   render() {

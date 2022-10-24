@@ -101,7 +101,7 @@ export class Node {
   }
 
   getOptimizedInputEdges(): Edge[] {
-    const toBeRemoved: any[] = [];
+    const toBeRemoved: Edge[] = [];
     this.inputEdges.forEach((e) => {
       const inputEdgesNodes = e.inputNode?.inputEdges.map((e) => e.inputNode);
 

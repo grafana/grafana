@@ -95,8 +95,8 @@ export function AnnotationMarker({ annotation, timeZone, width }: Props) {
         timeFormatter={timeFormatter}
         onEdit={onAnnotationEdit}
         onDelete={onAnnotationDelete}
-        canEdit={canEditAnnotations!(annotation.dashboardId)}
-        canDelete={canDeleteAnnotations!(annotation.dashboardId)}
+        canEdit={canEditAnnotations!(annotation.dashboardUID)}
+        canDelete={canDeleteAnnotations!(annotation.dashboardUID)}
       />
     );
   }, [canEditAnnotations, canDeleteAnnotations, onAnnotationDelete, onAnnotationEdit, timeFormatter, annotation]);

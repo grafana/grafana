@@ -4,25 +4,25 @@ ace.define(
   function (require, exports, module) {
     'use strict';
 
-    var oop = require('../lib/oop');
-    var TextHighlightRules = require('./text_highlight_rules').TextHighlightRules;
+    const oop = require('../lib/oop');
+    const TextHighlightRules = require('./text_highlight_rules').TextHighlightRules;
 
-    var SqlHighlightRules = function () {
-      var keywords =
+    const SqlHighlightRules = function () {
+      const keywords =
         'select|insert|update|delete|from|where|and|or|group|by|order|limit|offset|having|as|case|' +
         'when|else|end|type|left|right|join|on|outer|desc|asc|union|create|table|primary|key|if|' +
         'foreign|not|references|default|null|inner|cross|natural|database|drop|grant';
 
-      var builtinConstants = 'true|false';
+      const builtinConstants = 'true|false';
 
-      var builtinFunctions =
+      const builtinFunctions =
         'avg|count|first|last|max|min|sum|upper|lower|substring|char_length|round|rank|now|' + 'coalesce';
 
-      var dataTypes =
+      const dataTypes =
         'int|int2|int4|int8|numeric|decimal|date|varchar|char|bigint|float|bool|bytea|text|timestamp|' +
         'time|money|real|integer';
 
-      var keywordMapper = this.createKeywordMapper(
+      const keywordMapper = this.createKeywordMapper(
         {
           'support.function': builtinFunctions,
           keyword: keywords,
@@ -93,11 +93,11 @@ ace.define(
   function (require, exports, module) {
     'use strict';
 
-    var oop = require('../lib/oop');
-    var TextMode = require('./text').Mode;
-    var SqlHighlightRules = require('./sql_highlight_rules').SqlHighlightRules;
+    const oop = require('../lib/oop');
+    const TextMode = require('./text').Mode;
+    const SqlHighlightRules = require('./sql_highlight_rules').SqlHighlightRules;
 
-    var Mode = function () {
+    const Mode = function () {
       this.HighlightRules = SqlHighlightRules;
       this.$behaviour = this.$defaultBehaviour;
     };

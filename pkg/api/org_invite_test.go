@@ -7,8 +7,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
 
 func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
@@ -27,7 +29,7 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(models.ROLE_VIEWER) + `"}`,
+			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.RoleViewer) + `"}`,
 		},
 		{
 			expectedCode: http.StatusForbidden,
@@ -35,7 +37,7 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
 			permissions:  []accesscontrol.Permission{},
-			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(models.ROLE_VIEWER) + `"}`,
+			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.RoleViewer) + `"}`,
 		},
 		{
 			expectedCode: http.StatusForbidden,
@@ -43,7 +45,7 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:id:100"}},
-			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(models.ROLE_VIEWER) + `"}`,
+			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.RoleViewer) + `"}`,
 		},
 		{
 			expectedCode: http.StatusOK,
@@ -51,7 +53,7 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"loginOrEmail": "new user", "role": "` + string(models.ROLE_VIEWER) + `"}`,
+			input:        `{"loginOrEmail": "new user", "role": "` + string(org.RoleViewer) + `"}`,
 		},
 		{
 			expectedCode: http.StatusForbidden,
@@ -59,16 +61,19 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
 			permissions:  []accesscontrol.Permission{},
-			input:        `{"loginOrEmail": "new user", "role": "` + string(models.ROLE_VIEWER) + `"}`,
+			input:        `{"loginOrEmail": "new user", "role": "` + string(org.RoleViewer) + `"}`,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			sc := setupHTTPServer(t, true, true)
+			sc := setupHTTPServer(t, true)
+			userService := usertest.NewUserServiceFake()
+			userService.ExpectedUser = &user.User{ID: 2}
+			sc.hs.userService = userService
 			setInitCtxSignedInViewer(sc.initCtx)
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
-			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgId)
+			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgID)
 
 			input := strings.NewReader(test.input)
 			response := callAPI(sc.server, test.method, test.url, input, t)

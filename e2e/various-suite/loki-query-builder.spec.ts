@@ -1,5 +1,6 @@
 import { e2e } from '@grafana/e2e';
 
+const MISSING_LABEL_FILTER_ERROR_MESSAGE = 'Select at least 1 label filter (label and value)';
 const dataSourceName = 'LokiBuilder';
 const addDataSource = () => {
   e2e.flows.addDataSource({
@@ -12,6 +13,8 @@ const addDataSource = () => {
     },
   });
 };
+
+const finalQuery = 'rate({instance=~"instance1|instance2"} | logfmt | __error__=`` [$__interval]';
 
 describe('Loki query builder', () => {
   beforeEach(() => {
@@ -36,15 +39,15 @@ describe('Loki query builder', () => {
       req.reply({ status: 'success', data: [{ instance: 'instance1' }] });
     });
 
-    const finalQuery = 'rate({instance=~"instance1|instance2"} | logfmt | __error__=`` [$__interval]';
-
     // Go to Explore and choose Loki data source
     e2e.pages.Explore.visit();
     e2e.components.DataSourcePicker.container().should('be.visible').click();
     e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
 
     // Start in builder mode, click and choose query pattern
-    e2e.components.QueryBuilder.queryPatterns().click().type('Log query with parsing{enter}');
+    e2e.components.QueryBuilder.queryPatterns().click();
+    e2e().contains('Log query starters').click();
+    e2e().contains('Use this query').click();
     e2e().contains('No pipeline errors').should('be.visible');
     e2e().contains('Logfmt').should('be.visible');
     e2e().contains('{} | logfmt | __error__=``').should('be.visible');
@@ -56,7 +59,7 @@ describe('Loki query builder', () => {
     e2e().contains('rate({} | logfmt | __error__=`` [$__interval]').should('be.visible');
 
     // Check for expected error
-    e2e().contains('You need to specify at least 1 label filter (stream selector)').should('be.visible');
+    e2e().contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('be.visible');
 
     // Add labels to remove error
     e2e.components.QueryBuilder.labelSelect().should('be.visible').click().type('instance{enter}');
@@ -66,16 +69,24 @@ describe('Loki query builder', () => {
       .click()
       .type('instance1{enter}')
       .type('instance2{enter}');
-    e2e().contains('You need to specify at least 1 label filter (stream selector)').should('not.exist');
+    e2e().contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('not.exist');
     e2e().contains(finalQuery).should('be.visible');
 
-    // Switch to code editor and check if query was parsed
-    for (const word of finalQuery.split(' ')) {
-      e2e().contains(word).should('be.visible');
-    }
+    // Toggle raw query
+    e2e().contains('label', 'Raw query').click();
+    e2e().contains('Raw query').should('have.length', 1);
 
-    // Switch to explain mode and check if query is visible
+    // Change to code editor
+    e2e().contains('label', 'Code').click();
+    // We need to test this manually because the final query is split into separate DOM elements using e2e().contains(finalQuery).should('be.visible'); does not detect the query.
+    e2e().contains('rate').should('be.visible');
+    e2e().contains('instance1|instance2').should('be.visible');
+    e2e().contains('logfmt').should('be.visible');
+    e2e().contains('__error__').should('be.visible');
+    e2e().contains('$__interval').should('be.visible');
+
+    // Checks the explain mode toggle
     e2e().contains('label', 'Explain').click();
-    e2e().contains(finalQuery).should('be.visible');
+    e2e().contains('Fetch all log lines matching label filters.').should('be.visible');
   });
 });

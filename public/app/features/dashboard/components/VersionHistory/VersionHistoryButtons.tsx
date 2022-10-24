@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { HorizontalGroup, Tooltip, Button } from '@grafana/ui';
+import { Tooltip, Button, Stack } from '@grafana/ui';
 
 type VersionsButtonsType = {
   hasMore: boolean;
@@ -16,7 +16,7 @@ export const VersionsHistoryButtons: React.FC<VersionsButtonsType> = ({
   getDiff,
   isLastPage,
 }) => (
-  <HorizontalGroup>
+  <Stack>
     {hasMore && (
       <Button type="button" onClick={() => getVersions(true)} variant="secondary" disabled={isLastPage}>
         Show more versions
@@ -27,5 +27,5 @@ export const VersionsHistoryButtons: React.FC<VersionsButtonsType> = ({
         Compare versions
       </Button>
     </Tooltip>
-  </HorizontalGroup>
+  </Stack>
 );

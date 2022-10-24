@@ -277,12 +277,17 @@ export interface AlertmanagerUrl {
 
 export interface ExternalAlertmanagersResponse {
   data: ExternalAlertmanagers;
-  status: 'string';
+}
+
+export enum AlertmanagerChoice {
+  Internal = 'internal',
+  External = 'external',
+  All = 'all',
 }
 
 export interface ExternalAlertmanagerConfig {
   alertmanagers: string[];
-  alertmanagersChoice: string;
+  alertmanagersChoice: AlertmanagerChoice;
 }
 
 export enum AlertManagerImplementation {
@@ -310,4 +315,7 @@ export type MuteTimeInterval = {
   provenance?: string;
 };
 
-export type AlertManagerDataSourceJsonData = DataSourceJsonData & { implementation?: AlertManagerImplementation };
+export interface AlertManagerDataSourceJsonData extends DataSourceJsonData {
+  implementation?: AlertManagerImplementation;
+  handleGrafanaManagedAlerts?: boolean;
+}

@@ -11,9 +11,9 @@ const ds = setupMockedDataSource({
   variables: [],
 });
 
-ds.datasource.getNamespaces = jest.fn().mockResolvedValue([]);
-ds.datasource.getMetrics = jest.fn().mockResolvedValue([]);
-ds.datasource.getDimensionKeys = jest.fn().mockResolvedValue([]);
+ds.datasource.api.getNamespaces = jest.fn().mockResolvedValue([]);
+ds.datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
+ds.datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
 ds.datasource.getVariables = jest.fn().mockReturnValue([]);
 const metricStat: MetricStat = {
   region: 'us-east-2',
@@ -121,8 +121,8 @@ describe('MetricStatEditor', () => {
     };
 
     beforeEach(() => {
-      propsNamespaceMetrics.datasource.getNamespaces = jest.fn().mockResolvedValue(namespaces);
-      propsNamespaceMetrics.datasource.getMetrics = jest.fn().mockResolvedValue(metrics);
+      propsNamespaceMetrics.datasource.api.getNamespaces = jest.fn().mockResolvedValue(namespaces);
+      propsNamespaceMetrics.datasource.api.getMetrics = jest.fn().mockResolvedValue(metrics);
       onChange.mockClear();
       onRunQuery.mockClear();
     });
@@ -148,7 +148,7 @@ describe('MetricStatEditor', () => {
     });
 
     it('should remove metricName from metricStat if it does not exist in new namespace', async () => {
-      propsNamespaceMetrics.datasource.getMetrics = jest
+      propsNamespaceMetrics.datasource.api.getMetrics = jest
         .fn()
         .mockImplementation((namespace: string, region: string) => {
           let mockMetrics =
@@ -189,6 +189,16 @@ describe('MetricStatEditor', () => {
       expect(onChange.mock.calls).toEqual([
         [{ ...propsNamespaceMetrics.metricStat, metricName: 'm1', namespace: 'n2' }],
       ]);
+    });
+  });
+
+  describe('metric value', () => {
+    it('should be displayed when a custom value is used and its value is not in the select options', async () => {
+      const expected = 'CPUUtilzation';
+      await act(async () => {
+        render(<MetricStatEditor {...props} metricStat={{ ...props.metricStat, metricName: expected }} />);
+      });
+      expect(await screen.findByText(expected)).toBeInTheDocument();
     });
   });
 });

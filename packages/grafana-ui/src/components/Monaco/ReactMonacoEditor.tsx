@@ -33,8 +33,8 @@ export const ReactMonacoEditor = (props: ReactMonacoEditorProps) => {
   const monaco = useMonaco();
 
   useEffect(() => {
-    // monaco can be null at the beginning, because it is loaded in asynchronously
-    if (monaco !== null) {
+    // monaco can be null or undefined at the beginning, because it is loaded in asynchronously
+    if (monaco != null) {
       defineThemes(monaco, theme);
     }
   }, [monaco, theme]);

@@ -5,16 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
-
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/datasources"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -23,7 +20,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager/installer"
+	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/plugins/storage"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -33,22 +34,33 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
 	embeddedFilter := c.Query("embedded")
+	// "" => no filter
+	// "0" => filter out core plugins
+	// "1" => filter out non-core plugins
 	coreFilter := c.Query("core")
 
-	// When using access control anyone that can create a data source should be able to list all data sources installed
+	// FIXME: while we don't have permissions for listing plugins we need this complex check:
+	// When using access control, should be able to list non-core plugins:
+	//  * anyone that can create a data source
+	//  * anyone that can install a plugin
 	// Fallback to only letting admins list non-core plugins
-	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
-	if !hasAccess(accesscontrol.ReqOrgAdmin, accesscontrol.EvalPermission(datasources.ActionCreate)) && !c.HasRole(models.ROLE_ADMIN) {
-		coreFilter = "1"
-	}
+	reqOrgAdmin := ac.ReqHasRole(org.RoleAdmin)
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
+	canListNonCorePlugins := reqOrgAdmin(c) || hasAccess(reqOrgAdmin, ac.EvalAny(
+		ac.EvalPermission(datasources.ActionCreate),
+		ac.EvalPermission(plugins.ActionInstall),
+	))
 
-	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgId)
+	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgID)
 	if err != nil {
-		return response.Error(500, "Failed to get list of plugins", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get list of plugins", err)
 	}
 
-	result := make(dtos.PluginList, 0)
-	for _, pluginDef := range hs.pluginStore.Plugins(c.Req.Context()) {
+	// Filter plugins
+	pluginDefinitions := hs.pluginStore.Plugins(c.Req.Context())
+	filteredPluginDefinitions := []plugins.PluginDTO{}
+	filteredPluginIDs := map[string]bool{}
+	for _, pluginDef := range pluginDefinitions {
 		// filter out app sub plugins
 		if embeddedFilter == "0" && pluginDef.IncludedInAppID != "" {
 			continue
@@ -56,6 +68,17 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 
 		// filter out core plugins
 		if (coreFilter == "0" && pluginDef.IsCorePlugin()) || (coreFilter == "1" && !pluginDef.IsCorePlugin()) {
+			continue
+		}
+
+		// FIXME: while we don't have permissions for listing plugins we need this complex check:
+		// When using access control, should be able to list non-core plugins:
+		//  * anyone that can create a data source
+		//  * anyone that can install a plugin
+		// Should be able to list this installed plugin:
+		//  * anyone that can edit its settings
+		if !pluginDef.IsCorePlugin() && !canListNonCorePlugins && !hasAccess(reqOrgAdmin,
+			ac.EvalPermission(plugins.ActionWrite, plugins.ScopeProvider.GetResourceScope(pluginDef.ID))) {
 			continue
 		}
 
@@ -68,6 +91,29 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			continue
 		}
 
+		// filter out built in plugins
+		if pluginDef.BuiltIn {
+			continue
+		}
+
+		// filter out disabled plugins
+		if pluginSetting, exists := pluginSettingsMap[pluginDef.ID]; exists {
+			if enabledFilter == "1" && !pluginSetting.Enabled {
+				continue
+			}
+		}
+
+		filteredPluginDefinitions = append(filteredPluginDefinitions, pluginDef)
+		filteredPluginIDs[pluginDef.ID] = true
+	}
+
+	// Compute metadata
+	pluginsMetadata := hs.getMultiAccessControlMetadata(c, c.OrgID,
+		plugins.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
+
+	// Prepare DTO
+	result := make(dtos.PluginList, 0)
+	for _, pluginDef := range filteredPluginDefinitions {
 		listItem := dtos.PluginListItem{
 			Id:            pluginDef.ID,
 			Name:          pluginDef.Name,
@@ -80,6 +126,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			Signature:     pluginDef.Signature,
 			SignatureType: pluginDef.SignatureType,
 			SignatureOrg:  pluginDef.SignatureOrg,
+			AccessControl: pluginsMetadata[pluginDef.ID],
 		}
 
 		update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), pluginDef.ID)
@@ -95,16 +142,6 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 
 		if listItem.DefaultNavUrl == "" || !listItem.Enabled {
 			listItem.DefaultNavUrl = hs.Cfg.AppSubURL + "/plugins/" + listItem.Id + "/"
-		}
-
-		// filter out disabled plugins
-		if enabledFilter == "1" && !listItem.Enabled {
-			continue
-		}
-
-		// filter out built in plugins
-		if pluginDef.BuiltIn {
-			continue
 		}
 
 		result = append(result, listItem)
@@ -125,27 +162,28 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 	// In a first iteration, we only have one permission for app plugins.
 	// We will need a different permission to allow users to configure the plugin without needing access to it.
 	if plugin.IsApp() {
-		hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
-		if !hasAccess(accesscontrol.ReqSignedIn,
-			accesscontrol.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
+		hasAccess := ac.HasAccess(hs.AccessControl, c)
+		if !hasAccess(ac.ReqSignedIn,
+			ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
 			return response.Error(http.StatusForbidden, "Access Denied", nil)
 		}
 	}
 
 	dto := &dtos.PluginSetting{
-		Type:          string(plugin.Type),
-		Id:            plugin.ID,
-		Name:          plugin.Name,
-		Info:          plugin.Info,
-		Dependencies:  plugin.Dependencies,
-		Includes:      plugin.Includes,
-		BaseUrl:       plugin.BaseURL,
-		Module:        plugin.Module,
-		DefaultNavUrl: path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
-		State:         plugin.State,
-		Signature:     plugin.Signature,
-		SignatureType: plugin.SignatureType,
-		SignatureOrg:  plugin.SignatureOrg,
+		Type:             string(plugin.Type),
+		Id:               plugin.ID,
+		Name:             plugin.Name,
+		Info:             plugin.Info,
+		Dependencies:     plugin.Dependencies,
+		Includes:         plugin.Includes,
+		BaseUrl:          plugin.BaseURL,
+		Module:           plugin.Module,
+		DefaultNavUrl:    path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
+		State:            plugin.State,
+		Signature:        plugin.Signature,
+		SignatureType:    plugin.SignatureType,
+		SignatureOrg:     plugin.SignatureOrg,
+		SecureJsonFields: map[string]bool{},
 	}
 
 	if plugin.IsApp() {
@@ -155,7 +193,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 
 	ps, err := hs.PluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
 		PluginID: pluginID,
-		OrgID:    c.OrgId,
+		OrgID:    c.OrgID,
 	})
 	if err != nil {
 		if !errors.Is(err, models.ErrPluginSettingNotFound) {
@@ -165,6 +203,12 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		dto.Enabled = ps.Enabled
 		dto.Pinned = ps.Pinned
 		dto.JsonData = ps.JSONData
+
+		for k, v := range hs.PluginSettings.DecryptedValues(ps) {
+			if len(v) > 0 {
+				dto.SecureJsonFields[k] = true
+			}
+		}
 	}
 
 	update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), plugin.ID)
@@ -187,7 +231,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Respons
 		return response.Error(404, "Plugin not installed", nil)
 	}
 
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 	cmd.PluginId = pluginID
 	if err := hs.PluginSettings.UpdatePluginSetting(c.Req.Context(), &pluginsettings.UpdateArgs{
 		Enabled:                 cmd.Enabled,
@@ -280,6 +324,7 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 	}
 
 	pluginFilePath := filepath.Join(absPluginDir, rel)
+
 	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
 	// use this with a prefix of the plugin's directory, which is set during plugin loading
 	// nolint:gosec
@@ -368,21 +413,25 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginManager.Add(c.Req.Context(), pluginID, dto.Version)
+	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, plugins.CompatOpts{
+		GrafanaVersion: hs.Cfg.BuildVersion,
+		OS:             runtime.GOOS,
+		Arch:           runtime.GOARCH,
+	})
 	if err != nil {
 		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {
 			return response.Error(http.StatusConflict, "Plugin already installed", err)
 		}
-		var versionUnsupportedErr installer.ErrVersionUnsupported
+		var versionUnsupportedErr repo.ErrVersionUnsupported
 		if errors.As(err, &versionUnsupportedErr) {
 			return response.Error(http.StatusConflict, "Plugin version not supported", err)
 		}
-		var versionNotFoundErr installer.ErrVersionNotFound
+		var versionNotFoundErr repo.ErrVersionNotFound
 		if errors.As(err, &versionNotFoundErr) {
 			return response.Error(http.StatusNotFound, "Plugin version not found", err)
 		}
-		var clientError installer.Response4xxError
+		var clientError repo.Response4xxError
 		if errors.As(err, &clientError) {
 			return response.Error(clientError.StatusCode, clientError.Message, err)
 		}
@@ -399,7 +448,7 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginManager.Remove(c.Req.Context(), pluginID)
+	err := hs.pluginInstaller.Remove(c.Req.Context(), pluginID)
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotInstalled) {
 			return response.Error(http.StatusNotFound, "Plugin not installed", err)
@@ -407,7 +456,7 @@ func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
 		if errors.Is(err, plugins.ErrUninstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot uninstall a Core plugin", err)
 		}
-		if errors.Is(err, plugins.ErrUninstallOutsideOfPluginDir) {
+		if errors.Is(err, storage.ErrUninstallOutsideOfPluginDir) {
 			return response.Error(http.StatusForbidden, "Cannot uninstall a plugin outside of the plugins directory", err)
 		}
 
@@ -465,7 +514,7 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 	// nolint:gosec
 	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
 	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

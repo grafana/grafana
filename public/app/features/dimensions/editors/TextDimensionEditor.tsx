@@ -31,7 +31,7 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
   const labelWidth = 9;
 
   const onModeChange = useCallback(
-    (mode) => {
+    (mode: TextDimensionMode) => {
       onChange({
         ...value,
         mode,
@@ -41,7 +41,7 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
   );
 
   const onFieldChange = useCallback(
-    (field) => {
+    (field?: string) => {
       onChange({
         ...value,
         field,
@@ -51,7 +51,7 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
   );
 
   const onFixedChange = useCallback(
-    (fixed) => {
+    (fixed = '') => {
       onChange({
         ...value,
         fixed,
@@ -60,14 +60,11 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
     [onChange, value]
   );
 
-  const onClearFixedText = () => {
-    // Need to first change to field in order to clear fixed value in editor
-    onChange({ mode: TextDimensionMode.Field, fixed: '', field: '' });
-    onChange({ mode: TextDimensionMode.Fixed, fixed: '', field: '' });
+  const onClearFixed = () => {
+    onFixedChange('');
   };
 
   const mode = value?.mode ?? TextDimensionMode.Fixed;
-
   return (
     <>
       <InlineFieldRow>
@@ -88,19 +85,17 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
         </InlineFieldRow>
       )}
       {mode === TextDimensionMode.Fixed && (
-        <InlineFieldRow>
+        <InlineFieldRow key={value?.fixed}>
           <InlineField label={'Value'} labelWidth={labelWidth} grow={true}>
-            <>
-              <StringValueEditor
-                context={context}
-                value={value?.fixed}
-                onChange={onFixedChange}
-                item={dummyStringSettings}
-              />
-              {value?.fixed && (
-                <Button icon="times" variant="secondary" fill="text" size="sm" onClick={onClearFixedText} />
-              )}
-            </>
+            <StringValueEditor
+              context={context}
+              value={value?.fixed}
+              onChange={onFixedChange}
+              item={dummyStringSettings}
+              suffix={
+                value?.fixed && <Button icon="times" variant="secondary" fill="text" size="sm" onClick={onClearFixed} />
+              }
+            />
           </InlineField>
         </InlineFieldRow>
       )}

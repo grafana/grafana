@@ -6,16 +6,25 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
+)
+
+type WriteValueWorkflow = string
+
+var (
+	WriteValueWorkflow_Save WriteValueWorkflow = "save" // or empty
+	WriteValueWorkflow_PR   WriteValueWorkflow = "pr"
+	WriteValueWorkflow_Push WriteValueWorkflow = "push"
 )
 
 type WriteValueRequest struct {
-	Path    string
-	User    *models.SignedInUser
-	Body    json.RawMessage `json:"body,omitempty"`
-	Message string          `json:"message,omitempty"`
-	Title   string          `json:"title,omitempty"`  // For PRs
-	Action  string          `json:"action,omitempty"` // pr | save
+	User       *user.SignedInUser
+	Path       string             // added from URL
+	EntityType EntityType         `json:"kind,omitempty"` // for now only dashboard
+	Body       json.RawMessage    `json:"body,omitempty"`
+	Message    string             `json:"message,omitempty"`
+	Title      string             `json:"title,omitempty"`    // For PRs
+	Workflow   WriteValueWorkflow `json:"workflow,omitempty"` // save | pr | push
 }
 
 type WriteValueResponse struct {
@@ -48,40 +57,6 @@ type storageRuntime interface {
 	Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error)
 }
 
-type baseStorageRuntime struct {
-	meta  RootStorageMeta
-	store filestorage.FileStorage
-}
-
-func (t *baseStorageRuntime) Meta() RootStorageMeta {
-	return t.meta
-}
-
-func (t *baseStorageRuntime) Store() filestorage.FileStorage {
-	return t.store
-}
-
-func (t *baseStorageRuntime) Sync() error {
-	return nil
-}
-
-func (t *baseStorageRuntime) Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error) {
-	return &WriteValueResponse{
-		Code:    500,
-		Message: "unsupportted operation (base)",
-	}, nil
-}
-
-func (t *baseStorageRuntime) setReadOnly(val bool) *baseStorageRuntime {
-	t.meta.ReadOnly = val
-	return t
-}
-
-func (t *baseStorageRuntime) setBuiltin(val bool) *baseStorageRuntime {
-	t.meta.Builtin = val
-	return t
-}
-
 type RootStorageMeta struct {
 	ReadOnly bool          `json:"editable,omitempty"`
 	Builtin  bool          `json:"builtin,omitempty"`
@@ -100,9 +75,6 @@ const (
 	nameListFrameField        = "name"
 	descriptionListFrameField = "description"
 	mediaTypeListFrameField   = "mediaType"
-	storageTypeListFrameField = "storageType"
-	readOnlyListFrameField    = "readOnly"
-	builtInListFrameField     = "builtIn"
 	sizeListFrameField        = "size"
 )
 

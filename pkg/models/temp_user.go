@@ -3,6 +3,8 @@ package models
 import (
 	"errors"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 // Typed errors
@@ -27,7 +29,7 @@ type TempUser struct {
 	Version         int
 	Email           string
 	Name            string
-	Role            RoleType
+	Role            org.RoleType
 	InvitedByUserId int64
 	Status          TempUserStatus
 
@@ -50,7 +52,7 @@ type CreateTempUserCommand struct {
 	InvitedByUserId int64
 	Status          TempUserStatus
 	Code            string
-	Role            RoleType
+	Role            org.RoleType
 	RemoteAddr      string
 
 	Result *TempUser
@@ -90,7 +92,7 @@ type TempUserDTO struct {
 	OrgId          int64          `json:"orgId"`
 	Name           string         `json:"name"`
 	Email          string         `json:"email"`
-	Role           RoleType       `json:"role"`
+	Role           org.RoleType   `json:"role"`
 	InvitedByLogin string         `json:"invitedByLogin"`
 	InvitedByEmail string         `json:"invitedByEmail"`
 	InvitedByName  string         `json:"invitedByName"`

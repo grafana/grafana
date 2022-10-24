@@ -10,6 +10,7 @@ export interface ApiKey extends WithAccessControlMetadata {
   expiration?: string;
   secondsUntilExpiration?: number;
   hasExpired?: boolean;
+  isRevoked?: boolean;
   created?: string;
   lastUsedAt?: string;
 }

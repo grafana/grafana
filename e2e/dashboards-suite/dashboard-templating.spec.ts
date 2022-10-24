@@ -10,7 +10,7 @@ e2e.scenario({
     // Open dashboard global variables and interpolation
     e2e.flows.openDashboard({ uid: 'HYaGDGIMk' });
 
-    const items: any = [];
+    const items: string[] = [];
     const expectedItems: string[] = [
       '__dashboard = Templating - Global variables and interpolation',
       '__dashboard.name = Templating - Global variables and interpolation',

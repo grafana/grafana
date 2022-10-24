@@ -1,5 +1,5 @@
 import { each, indexOf, isArray, isString, map as _map } from 'lodash';
-import { lastValueFrom, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
+import { lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
@@ -17,6 +17,7 @@ import {
   QueryResultMetaStat,
   ScopedVars,
   TimeRange,
+  TimeZone,
   toDataFrame,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
@@ -26,9 +27,11 @@ import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/data
 
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
+import { AnnotationEditor } from './components/AnnotationsEditor';
 import { convertToGraphiteQueryObject } from './components/helpers';
 import gfunc, { FuncDefs, FuncInstance } from './gfunc';
 import GraphiteQueryModel from './graphite_query';
+import { prepareAnnotation } from './migrations';
 // Types
 import {
   GraphiteLokiMapping,
@@ -36,6 +39,7 @@ import {
   GraphiteOptions,
   GraphiteQuery,
   GraphiteQueryImportConfiguration,
+  GraphiteQueryRequest,
   GraphiteQueryType,
   GraphiteType,
   MetricTankRequestMeta,
@@ -97,6 +101,10 @@ export class GraphiteDatasource
     this.funcDefs = null;
     this.funcDefsPromise = null;
     this._seriesRefLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    this.annotations = {
+      QueryEditor: AnnotationEditor,
+      prepareAnnotation,
+    };
   }
 
   getQueryOptionsInfo() {
@@ -182,11 +190,29 @@ export class GraphiteDatasource
   }
 
   query(options: DataQueryRequest<GraphiteQuery>): Observable<DataQueryResponse> {
+    if (options.targets.some((target: GraphiteQuery) => target.fromAnnotations)) {
+      const streams: Array<Observable<DataQueryResponse>> = [];
+
+      for (const target of options.targets) {
+        streams.push(
+          new Observable((subscriber) => {
+            this.annotationEvents(options.range, target)
+              .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
+              .catch((ex) => subscriber.error(new Error(ex)))
+              .finally(() => subscriber.complete());
+          })
+        );
+      }
+
+      return merge(...streams);
+    }
+
+    // handle the queries here
     const graphOptions = {
       from: this.translateTime(options.range.from, false, options.timezone),
       until: this.translateTime(options.range.to, true, options.timezone),
       targets: options.targets,
-      format: (options as any).format ?? 'json',
+      format: (options as GraphiteQueryRequest).format,
       cacheTimeout: options.cacheTimeout || this.cacheTimeout,
       maxDataPoints: options.maxDataPoints,
     };
@@ -330,13 +356,13 @@ export class GraphiteDatasource
     return expandedQueries;
   }
 
-  annotationQuery(options: any) {
-    // Graphite metric as annotation
-    if (options.annotation.target) {
-      const target = this.templateSrv.replace(options.annotation.target, {}, 'glob');
+  annotationEvents(range: any, target: any) {
+    if (target.target) {
+      // Graphite query as target as annotation
+      const targetAnnotation = this.templateSrv.replace(target.target, {}, 'glob');
       const graphiteQuery = {
-        range: options.range,
-        targets: [{ target: target }],
+        range: range,
+        targets: [{ target: targetAnnotation }],
         format: 'json',
         maxDataPoints: 100,
       } as unknown as DataQueryRequest<GraphiteQuery>;
@@ -358,7 +384,7 @@ export class GraphiteDatasource
                 }
 
                 list.push({
-                  annotation: options.annotation,
+                  annotation: target,
                   time,
                   title: target.name,
                 });
@@ -370,9 +396,9 @@ export class GraphiteDatasource
         )
       );
     } else {
-      // Graphite event as annotation
-      const tags = this.templateSrv.replace(options.annotation.tags);
-      return this.events({ range: options.range, tags: tags }).then((results: any) => {
+      // Graphite event/tag as annotation
+      const tags = this.templateSrv.replace(target.tags?.join(' '));
+      return this.events({ range: range, tags: tags }).then((results: any) => {
         const list = [];
         if (!isArray(results.data)) {
           console.error(`Unable to get annotations from ${results.url}.`);
@@ -387,7 +413,7 @@ export class GraphiteDatasource
           }
 
           list.push({
-            annotation: options.annotation,
+            annotation: target,
             time: e.when * 1000,
             title: e.what,
             tags: tags,
@@ -426,7 +452,7 @@ export class GraphiteDatasource
     return this.templateSrv.containsTemplate(target.target ?? '');
   }
 
-  translateTime(date: any, roundUp: any, timezone: any) {
+  translateTime(date: any, roundUp: any, timezone: TimeZone) {
     if (isString(date)) {
       if (date === 'now') {
         return 'now';
@@ -830,15 +856,24 @@ export class GraphiteDatasource
   }
 
   testDatasource() {
-    const query = {
+    const query: DataQueryRequest<GraphiteQuery> = {
+      app: 'graphite',
+      interval: '10ms',
+      intervalMs: 10,
+      requestId: 'reqId',
+      scopedVars: {},
+      startTime: 0,
+      timezone: 'browser',
       panelId: 3,
       rangeRaw: { from: 'now-1h', to: 'now' },
       range: {
+        from: dateTime('now-1h'),
+        to: dateTime('now'),
         raw: { from: 'now-1h', to: 'now' },
       },
-      targets: [{ target: 'constantLine(100)' }],
+      targets: [{ refId: 'A', target: 'constantLine(100)' }],
       maxDataPoints: 300,
-    } as unknown as DataQueryRequest<GraphiteQuery>;
+    };
 
     return lastValueFrom(this.query(query)).then(() => ({ status: 'success', message: 'Data source is working' }));
   }

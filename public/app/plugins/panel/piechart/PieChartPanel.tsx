@@ -22,17 +22,18 @@ import {
 } from '@grafana/ui';
 
 import { PieChart } from './PieChart';
-import { PieChartLegendOptions, PieChartLegendValues, PieChartOptions } from './types';
+import { PieChartLegendOptions, PieChartLegendValues, PanelOptions } from './models.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
+  showLegend: true,
   placement: 'right',
   calcs: [],
   values: [PieChartLegendValues.Percent],
 };
 
-interface Props extends PanelProps<PieChartOptions> {}
+interface Props extends PanelProps<PanelOptions> {}
 
 /**
  * @beta
@@ -77,7 +78,7 @@ export function PieChartPanel(props: Props) {
 function getLegend(props: Props, displayValues: FieldDisplay[]) {
   const legendOptions = props.options.legend ?? defaultLegendOptions;
 
-  if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
+  if (legendOptions.showLegend === false) {
     return undefined;
   }
   const total = displayValues.filter(filterDisplayItems).reduce(sumDisplayItemsReducer, 0);

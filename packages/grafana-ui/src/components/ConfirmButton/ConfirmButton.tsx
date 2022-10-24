@@ -1,14 +1,14 @@
 import { cx, css } from '@emotion/css';
 import React, { PureComponent, SyntheticEvent } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, withTheme } from '../../themes';
-import { Themeable } from '../../types';
+import { stylesFactory, withTheme2 } from '../../themes';
+import { Themeable2 } from '../../types';
 import { ComponentSize } from '../../types/size';
 import { Button, ButtonVariant } from '../Button';
 
-export interface Props extends Themeable {
+export interface Props extends Themeable2 {
   /** Confirm action callback */
   onConfirm(): void;
   /** Custom button styles */
@@ -36,7 +36,7 @@ interface State {
   showConfirm: boolean;
 }
 
-class UnThemedConfirmButton extends PureComponent<Props, State> {
+class UnThemedConfirmButton extends PureComponent<React.PropsWithChildren<Props>, State> {
   mainButtonRef = React.createRef<HTMLButtonElement>();
   confirmButtonRef = React.createRef<HTMLButtonElement>();
   state: State = {
@@ -143,9 +143,9 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
   }
 }
 
-export const ConfirmButton = withTheme(UnThemedConfirmButton);
+export const ConfirmButton = withTheme2(UnThemedConfirmButton);
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     buttonContainer: css`
       display: flex;
@@ -154,7 +154,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     buttonDisabled: css`
       text-decoration: none;
-      color: ${theme.colors.text};
+      color: ${theme.colors.text.primary};
       opacity: 0.65;
       pointer-events: none;
     `,
@@ -171,7 +171,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     confirmButton: css`
       align-items: flex-start;
-      background: ${theme.colors.bg1};
+      background: ${theme.colors.background.primary};
       display: flex;
       position: absolute;
       pointer-events: none;

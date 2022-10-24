@@ -1,5 +1,7 @@
 import { NavModel, NavModelItem, NavIndex } from '@grafana/data';
 
+import { HOME_NAV_ID } from '../reducers/navModel';
+
 const getNotFoundModel = (): NavModel => {
   const node: NavModelItem = {
     id: 'not-found',
@@ -18,11 +20,12 @@ const getNotFoundModel = (): NavModel => {
 export const getNavModel = (navIndex: NavIndex, id: string, fallback?: NavModel, onlyChild = false): NavModel => {
   if (navIndex[id]) {
     const node = navIndex[id];
-    const main = onlyChild ? node : getSectionRoot(node);
+    const main = onlyChild ? node : getRootSectionForNode(node);
+    const mainWithActive = enrichNodeWithActiveState(main, id);
 
     return {
-      node,
-      main,
+      node: node,
+      main: mainWithActive,
     };
   }
 
@@ -33,24 +36,23 @@ export const getNavModel = (navIndex: NavIndex, id: string, fallback?: NavModel,
   return getNotFoundModel();
 };
 
-function getSectionRoot(node: NavModelItem): NavModelItem {
-  if (!node.parentItem) {
-    return node;
+export function getRootSectionForNode(node: NavModelItem): NavModelItem {
+  return node.parentItem && node.parentItem.id !== HOME_NAV_ID ? getRootSectionForNode(node.parentItem) : node;
+}
+
+function enrichNodeWithActiveState(node: NavModelItem, activeId: string): NavModelItem {
+  if (node.id === activeId) {
+    return { ...node, active: true };
   }
 
-  const root = (node.parentItem = { ...node.parentItem });
-
-  if (root.children) {
-    root.children = root.children.map((item) => {
-      if (item.id === node.id) {
-        return { ...node, active: true };
-      }
-
-      return item;
-    });
+  if (node.children && node.children.length > 0) {
+    return {
+      ...node,
+      children: node.children.map((child) => enrichNodeWithActiveState(child, activeId)),
+    };
   }
 
-  return getSectionRoot(root);
+  return node;
 }
 
 export const getTitleFromNavModel = (navModel: NavModel) => {

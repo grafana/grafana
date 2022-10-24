@@ -82,8 +82,8 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 
 	saveCmd := models.SaveDashboardCommand{
 		Dashboard: generatedDash,
-		OrgId:     req.User.OrgId,
-		UserId:    req.User.UserId,
+		OrgId:     req.User.OrgID,
+		UserId:    req.User.UserID,
 		Overwrite: req.Overwrite,
 		PluginId:  req.PluginId,
 		FolderId:  req.FolderId,

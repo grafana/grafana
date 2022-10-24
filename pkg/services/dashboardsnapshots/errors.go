@@ -1,8 +1,7 @@
 package dashboardsnapshots
 
-import "github.com/grafana/grafana/pkg/services/dashboards"
+import (
+	"github.com/grafana/grafana/pkg/util/errutil"
+)
 
-var ErrDashboardSnapshotNotFound = dashboards.DashboardErr{
-	Reason:     "Dashboard snapshot not found",
-	StatusCode: 404,
-}
+var ErrBaseNotFound = errutil.NewBase(errutil.StatusNotFound, "dashboardsnapshots.not-found", errutil.WithPublicMessage("Snapshot not found"))

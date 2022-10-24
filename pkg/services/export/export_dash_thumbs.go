@@ -3,17 +3,17 @@ package export
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 func exportDashboardThumbnails(helper *commitHelper, job *gitExportJob) error {
 	alias := make(map[string]string, 100)
-	aliasLookup, err := ioutil.ReadFile(filepath.Join(helper.orgDir, "root-alias.json"))
+	aliasLookup, err := os.ReadFile(filepath.Join(helper.orgDir, "root-alias.json"))
 	if err != nil {
 		return fmt.Errorf("missing dashboard alias files (must export dashboards first)")
 	}
@@ -22,7 +22,7 @@ func exportDashboardThumbnails(helper *commitHelper, job *gitExportJob) error {
 		return err
 	}
 
-	return job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+	return job.sql.WithDbSession(helper.ctx, func(sess *db.Session) error {
 		type dashboardThumb struct {
 			UID      string `xorm:"uid"`
 			Image    []byte `xorm:"image"`

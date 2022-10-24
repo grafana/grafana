@@ -4,18 +4,18 @@ import { TagBadge } from './TagBadge';
 
 export interface Props {
   value: any;
-  className: any;
-  onClick: any;
-  onRemove: any;
+  className: string;
+  onClick: React.MouseEventHandler<HTMLDivElement>;
+  onRemove: (value: any, event: React.MouseEvent<HTMLDivElement>) => void;
 }
 
-export class TagValue extends React.Component<Props, any> {
+export class TagValue extends React.Component<Props> {
   constructor(props: Props) {
     super(props);
     this.onClick = this.onClick.bind(this);
   }
 
-  onClick(event: React.SyntheticEvent) {
+  onClick(event: React.MouseEvent<HTMLDivElement>) {
     this.props.onRemove(this.props.value, event);
   }
 

@@ -5,11 +5,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered/azureauth"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/middleware"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
@@ -20,7 +19,7 @@ import (
 
 // CreateTransportOptions creates options for the http client. Probably should be shared and should not live in the
 // buffered package.
-func CreateTransportOptions(settings backend.DataSourceInstanceSettings, azureSettings *azsettings.AzureSettings, features featuremgmt.FeatureToggles, logger log.Logger) (*sdkhttpclient.Options, error) {
+func CreateTransportOptions(settings backend.DataSourceInstanceSettings, cfg *setting.Cfg, logger log.Logger) (*sdkhttpclient.Options, error) {
 	opts, err := settings.HTTPClientOptions()
 	if err != nil {
 		return nil, err
@@ -39,9 +38,9 @@ func CreateTransportOptions(settings backend.DataSourceInstanceSettings, azureSe
 		opts.SigV4.Service = "aps"
 	}
 
-	// Azure authentication is experimental (#35857)
-	if features.IsEnabled(featuremgmt.FlagPrometheusAzureAuth) {
-		err = azureauth.ConfigureAzureAuthentication(settings, azureSettings, &opts)
+	// Set Azure authentication
+	if cfg.AzureAuthEnabled {
+		err = azureauth.ConfigureAzureAuthentication(settings, cfg.Azure, &opts)
 		if err != nil {
 			return nil, fmt.Errorf("error configuring Azure auth: %v", err)
 		}

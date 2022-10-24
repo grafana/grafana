@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "Flame Graph",
+  "id": "flamegraph",
+  "state": "beta",
+
+  "info": {
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "public/img/icn-panel.svg",
+      "large": "public/img/icn-panel.svg"
+    }
+  }
+}

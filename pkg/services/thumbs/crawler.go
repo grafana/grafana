@@ -28,18 +28,19 @@ type simpleCrawler struct {
 	glive                   *live.GrafanaLive
 	thumbnailRepo           thumbnailRepo
 	mode                    CrawlerMode
-	thumbnailKind           models.ThumbnailKind
+	thumbnailKind           ThumbnailKind
 	auth                    CrawlerAuth
 	opts                    rendering.Opts
 	status                  crawlStatus
 	statusMutex             sync.RWMutex
-	queue                   []*models.DashboardWithStaleThumbnail
+	queue                   []*DashboardWithStaleThumbnail
 	queueMutex              sync.Mutex
 	log                     log.Logger
 	renderingSessionByOrgId map[int64]rendering.Session
+	dsUidsLookup            getDatasourceUidsForDashboard
 }
 
-func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo, cfg *setting.Cfg, settings setting.DashboardPreviewsSettings) dashRenderer {
+func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo, cfg *setting.Cfg, settings setting.DashboardPreviewsSettings, dsUidsLookup getDatasourceUidsForDashboard) dashRenderer {
 	threadCount := int(settings.CrawlThreadCount)
 	c := &simpleCrawler{
 		// temporarily increases the concurrentLimit from the 'cfg.RendererConcurrentRequestLimit' to 'cfg.RendererConcurrentRequestLimit + crawlerThreadCount'
@@ -48,6 +49,7 @@ func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, rep
 		renderService:    renderService,
 		threadCount:      threadCount,
 		glive:            gl,
+		dsUidsLookup:     dsUidsLookup,
 		thumbnailRepo:    repo,
 		log:              log.New("thumbnails_crawler"),
 		status: crawlStatus{
@@ -62,7 +64,7 @@ func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, rep
 	return c
 }
 
-func (r *simpleCrawler) next(ctx context.Context) (*models.DashboardWithStaleThumbnail, rendering.Session, rendering.AuthOpts, error) {
+func (r *simpleCrawler) next(ctx context.Context) (*DashboardWithStaleThumbnail, rendering.Session, rendering.AuthOpts, error) {
 	r.queueMutex.Lock()
 	defer r.queueMutex.Unlock()
 
@@ -114,14 +116,14 @@ func (r *simpleCrawler) broadcastStatus() {
 	}
 }
 
-type byOrgId []*models.DashboardWithStaleThumbnail
+type byOrgId []*DashboardWithStaleThumbnail
 
 func (d byOrgId) Len() int           { return len(d) }
 func (d byOrgId) Less(i, j int) bool { return d[i].OrgId > d[j].OrgId }
 func (d byOrgId) Swap(i, j int)      { d[i], d[j] = d[j], d[i] }
 
-func (r *simpleCrawler) Run(ctx context.Context, auth CrawlerAuth, mode CrawlerMode, theme models.Theme, thumbnailKind models.ThumbnailKind) error {
-	res, err := r.renderService.HasCapability(rendering.ScalingDownImages)
+func (r *simpleCrawler) Run(ctx context.Context, auth CrawlerAuth, mode CrawlerMode, theme models.Theme, thumbnailKind ThumbnailKind) error {
+	res, err := r.renderService.HasCapability(ctx, rendering.ScalingDownImages)
 	if err != nil {
 		return err
 	}
@@ -287,6 +289,13 @@ func (r *simpleCrawler) walk(ctx context.Context, id int) {
 		url := models.GetKioskModeDashboardUrl(item.Uid, item.Slug, r.opts.Theme)
 		r.log.Info("Getting dashboard thumbnail", "walkerId", id, "dashboardUID", item.Uid, "url", url)
 
+		dsUids, err := r.dsUidsLookup(ctx, item.Uid, item.OrgId)
+		if err != nil {
+			r.log.Warn("Error getting datasource uids", "walkerId", id, "dashboardUID", item.Uid, "url", url, "err", err)
+			r.newErrorResult()
+			continue
+		}
+
 		res, err := r.renderService.Render(ctx, rendering.Opts{
 			Width:             320,
 			Height:            240,
@@ -316,12 +325,12 @@ func (r *simpleCrawler) walk(ctx context.Context, id int) {
 					}
 				}()
 
-				thumbnailId, err := r.thumbnailRepo.saveFromFile(ctx, res.FilePath, models.DashboardThumbnailMeta{
+				thumbnailId, err := r.thumbnailRepo.saveFromFile(ctx, res.FilePath, DashboardThumbnailMeta{
 					DashboardUID: item.Uid,
 					OrgId:        item.OrgId,
 					Theme:        r.opts.Theme,
 					Kind:         r.thumbnailKind,
-				}, item.Version)
+				}, item.Version, dsUids)
 
 				if err != nil {
 					r.log.Warn("Error saving image image", "walkerId", id, "dashboardUID", item.Uid, "url", url, "err", err, "itemTime", time.Since(itemStarted))

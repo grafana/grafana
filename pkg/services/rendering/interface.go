@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 var ErrTimeout = errors.New("timeout error - you can set timeout in seconds with &timeout url parameter")
@@ -27,7 +28,7 @@ type TimeoutOpts struct {
 type AuthOpts struct {
 	OrgID   int64
 	UserID  int64
-	OrgRole models.RoleType
+	OrgRole org.RoleType
 }
 
 func getRequestTimeout(opt TimeoutOpts) time.Duration {
@@ -116,13 +117,13 @@ type CapabilitySupportRequestResult struct {
 
 //go:generate mockgen -destination=mock.go -package=rendering github.com/grafana/grafana/pkg/services/rendering Service
 type Service interface {
-	IsAvailable() bool
+	IsAvailable(ctx context.Context) bool
 	Version() string
 	Render(ctx context.Context, opts Opts, session Session) (*RenderResult, error)
 	RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error)
 	RenderErrorImage(theme models.Theme, error error) (*RenderResult, error)
 	GetRenderUser(ctx context.Context, key string) (*RenderUser, bool)
-	HasCapability(capability CapabilityName) (CapabilitySupportRequestResult, error)
+	HasCapability(ctx context.Context, capability CapabilityName) (CapabilitySupportRequestResult, error)
 	CreateRenderingSession(ctx context.Context, authOpts AuthOpts, sessionOpts SessionOpts) (Session, error)
 	SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error)
 }

@@ -6,13 +6,13 @@ import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { ExpressionQuery, ExpressionQuerySettings, ReducerMode, reducerMode, reducerTypes } from '../types';
 
 interface Props {
-  labelWidth: number;
+  labelWidth?: number | 'auto';
   refIds: Array<SelectableValue<string>>;
   query: ExpressionQuery;
   onChange: (query: ExpressionQuery) => void;
 }
 
-export const Reduce: FC<Props> = ({ labelWidth, onChange, refIds, query }) => {
+export const Reduce: FC<Props> = ({ labelWidth = 'auto', onChange, refIds, query }) => {
   const reducer = reducerTypes.find((o) => o.value === query.reducer);
 
   const onRefIdChange = (value: SelectableValue<string>) => {

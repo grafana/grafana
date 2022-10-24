@@ -1,6 +1,6 @@
-import React, { FC } from 'react';
+import React from 'react';
 
-export const AnnotationsHelp: FC = () => {
+export const AnnotationsHelp = () => {
   return (
     <div className="gf-form grafana-info-box alert-info">
       <div>

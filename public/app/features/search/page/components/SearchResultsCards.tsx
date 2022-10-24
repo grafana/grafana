@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-no-undef */
 import { css } from '@emotion/css';
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useCallback, useState, CSSProperties } from 'react';
 import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
@@ -21,10 +21,9 @@ export const SearchResultsCards = React.memo(
     height,
     selection,
     selectionToggle,
-    clearSelection,
     onTagSelected,
-    onDatasourceChange,
     keyboardEvents,
+    onClickItem,
   }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
     const infiniteLoaderRef = useRef<InfiniteLoader>(null);
@@ -42,7 +41,7 @@ export const SearchResultsCards = React.memo(
     }, [response, listEl]);
 
     const RenderRow = useCallback(
-      ({ index: rowIndex, style }) => {
+      ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
         const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
 
         let className = '';
@@ -89,11 +88,12 @@ export const SearchResultsCards = React.memo(
                 }
               }}
               editable={Boolean(selection != null)}
+              onClickItem={onClickItem}
             />
           </div>
         );
       },
-      [response.view, highlightIndex, styles, onTagSelected, selection, selectionToggle]
+      [response.view, highlightIndex, styles, onTagSelected, selection, selectionToggle, onClickItem]
     );
 
     if (!response.totalRows) {

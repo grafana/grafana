@@ -71,7 +71,7 @@ export class JsonExplorer {
    *   preview. Any object with more properties that thin number will be
    *   truncated.
    *
-   * @param {string} [key=undefined] The key that this object in it's parent
+   * @param {string} [key=undefined] The key that this object in its parent
    * context
    */
   constructor(

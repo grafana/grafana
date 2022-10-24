@@ -6,7 +6,7 @@ import { act } from 'react-dom/test-utils';
 import { ExploreId } from '../../../../types';
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
 
-import { CloudWatchLogsQueryField } from './LogsQueryField';
+import CloudWatchLogsQueryField from './LogsQueryField';
 
 jest
   .spyOn(_, 'debounce')
@@ -38,7 +38,7 @@ describe('CloudWatchLogsQueryField', () => {
   it('loads defaultLogGroups', async () => {
     const onRunQuery = jest.fn();
     const ds = setupMockedDataSource();
-    ds.datasource.defaultLogGroups = ['foo'];
+    ds.datasource.logsQueryRunner.defaultLogGroups = ['foo'];
 
     render(
       <CloudWatchLogsQueryField

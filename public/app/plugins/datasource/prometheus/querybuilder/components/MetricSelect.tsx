@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
-// @ts-ignore
 import Highlighter from 'react-highlight-words';
 
 import { SelectableValue, toOption, GrafanaTheme2 } from '@grafana/data';
@@ -65,6 +64,7 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
           className={styles.select}
           value={query.metric ? toOption(query.metric) : undefined}
           placeholder="Select metric"
+          virtualized
           allowCustomValue
           formatOptionLabel={formatOptionLabel}
           filterOption={customFilterOption}

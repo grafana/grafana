@@ -1,12 +1,11 @@
 import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { AnyAction } from 'redux';
 
 import { DataSourcePluginMeta } from '@grafana/data';
 import { LinkButton, FilterInput } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PluginsErrorsInfo } from 'app/features/plugins/components/PluginsErrorsInfo';
-import { DataSourcePluginCategory, StoreState } from 'app/types';
+import { DataSourcePluginCategory, StoreState, useDispatch, useSelector } from 'app/types';
 
 import { DataSourceCategories } from '../components/DataSourceCategories';
 import { DataSourceTypeCardList } from '../components/DataSourceTypeCardList';

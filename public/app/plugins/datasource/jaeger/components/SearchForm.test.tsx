@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UserEvent } from '@testing-library/user-event/dist/types/setup';
 import React from 'react';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
@@ -70,7 +69,7 @@ describe('SearchForm', () => {
 });
 
 describe('SearchForm', () => {
-  let user: UserEvent;
+  let user: ReturnType<typeof userEvent.setup>;
   let query: JaegerQuery;
   let ds: JaegerDatasource;
 
@@ -123,7 +122,7 @@ describe('SearchForm', () => {
     jest.advanceTimersByTime(3000);
 
     await user.type(asyncServiceSelect, 'j');
-    var option = await screen.findByText('jaeger-query');
+    let option = await screen.findByText('jaeger-query');
     expect(option).toBeDefined();
 
     await user.type(asyncServiceSelect, 'c');
@@ -147,7 +146,7 @@ describe('SearchForm', () => {
     jest.advanceTimersByTime(3000);
 
     await user.type(asyncServiceSelect, '$');
-    var serviceOption = await screen.findByText('$service');
+    const serviceOption = await screen.findByText('$service');
     expect(serviceOption).toBeDefined();
 
     const asyncOperationSelect = screen.getByRole('combobox', { name: 'select-operation-name' });
@@ -156,7 +155,7 @@ describe('SearchForm', () => {
     jest.advanceTimersByTime(3000);
 
     await user.type(asyncOperationSelect, '$');
-    var operationOption = await screen.findByText('$operation');
+    const operationOption = await screen.findByText('$operation');
     expect(operationOption).toBeDefined();
   });
 });
@@ -189,6 +188,7 @@ const defaultSettings: DataSourceInstanceSettings<JaegerJsonData> = {
       enabled: true,
     },
   },
+  readOnly: false,
 };
 
 const defaultQuery: DataQueryRequest<JaegerQuery> = {

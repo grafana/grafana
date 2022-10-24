@@ -31,7 +31,7 @@ const tabs: TabInfo[] = [
   { label: 'Test', isTest: true, icon: 'flask' },
 ];
 
-export const RuleModal: React.FC<Props> = (props) => {
+export const RuleModal = (props: Props) => {
   const { isOpen, onClose, clickColumn } = props;
   const [rule, setRule] = useState<Rule>(props.rule);
   const [activeTab, setActiveTab] = useState<TabInfo | undefined>(tabs.find((t) => t.type === clickColumn));

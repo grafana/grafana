@@ -6,58 +6,39 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
-	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
-	"github.com/grafana/grafana/pkg/services/star"
-	"github.com/grafana/grafana/pkg/services/teamguardian"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/userauth"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-
-	"golang.org/x/sync/errgroup"
 )
 
 type Service struct {
-	store              store
-	orgService         org.Service
-	starService        star.Service
-	dashboardService   dashboards.DashboardService
-	preferenceService  pref.Service
-	teamMemberService  teamguardian.TeamGuardian
-	userAuthService    userauth.Service
-	quotaService       quota.Service
-	accessControlStore accesscontrol.AccessControl
+	store        store
+	orgService   org.Service
+	teamService  team.Service
+	cacheService *localcache.CacheService
+	cfg          *setting.Cfg
 }
 
 func ProvideService(
 	db db.DB,
 	orgService org.Service,
-	starService star.Service,
-	dashboardService dashboards.DashboardService,
-	preferenceService pref.Service,
-	teamMemberService teamguardian.TeamGuardian,
-	userAuthService userauth.Service,
-	quotaService quota.Service,
-	accessControlStore accesscontrol.AccessControl,
+	cfg *setting.Cfg,
+	teamService team.Service,
+	cacheService *localcache.CacheService,
 ) user.Service {
+	store := ProvideStore(db, cfg)
 	return &Service{
-		store: &sqlStore{
-			db:      db,
-			dialect: db.GetDialect(),
-		},
-		orgService:         orgService,
-		starService:        starService,
-		dashboardService:   dashboardService,
-		preferenceService:  preferenceService,
-		teamMemberService:  teamMemberService,
-		userAuthService:    userAuthService,
-		quotaService:       quotaService,
-		accessControlStore: accessControlStore,
+		store:        &store,
+		orgService:   orgService,
+		cfg:          cfg,
+		teamService:  teamService,
+		cacheService: cacheService,
 	}
 }
 
@@ -132,7 +113,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		orgUser := org.OrgUser{
 			OrgID:   orgID,
 			UserID:  usr.ID,
-			Role:    org.ROLE_ADMIN,
+			Role:    org.RoleAdmin,
 			Created: time.Now(),
 			Updated: time.Now(),
 		}
@@ -157,71 +138,143 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
 	_, err := s.store.GetNotServiceAccount(ctx, cmd.UserID)
 	if err != nil {
-		return fmt.Errorf("failed to get user with not service account: %w", err)
+		return err
 	}
 	// delete from all the stores
-	if err := s.store.Delete(ctx, cmd.UserID); err != nil {
+	return s.store.Delete(ctx, cmd.UserID)
+}
+
+func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
+	user, err := s.store.GetByID(ctx, query.ID)
+	if err != nil {
+		return nil, err
+	}
+	if s.cfg.CaseInsensitiveLogin {
+		if err := s.store.CaseInsensitiveLoginConflict(ctx, user.Login, user.Email); err != nil {
+			return nil, err
+		}
+	}
+	return user, nil
+}
+
+func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
+	return s.store.GetByLogin(ctx, query)
+}
+
+func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
+	return s.store.GetByEmail(ctx, query)
+}
+
+func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
+	return s.store.Update(ctx, cmd)
+}
+
+func (s *Service) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
+	return s.store.ChangePassword(ctx, cmd)
+}
+
+func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
+	return s.store.UpdateLastSeenAt(ctx, cmd)
+}
+
+func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {
+	getOrgsForUserCmd := &org.GetUserOrgListQuery{UserID: cmd.UserID}
+	orgsForUser, err := s.orgService.GetUserOrgList(ctx, getOrgsForUserCmd)
+	if err != nil {
 		return err
 	}
 
-	g, ctx := errgroup.WithContext(ctx)
-	g.Go(func() error {
-		if err := s.starService.DeleteByUser(ctx, cmd.UserID); err != nil {
-			return err
+	valid := false
+	for _, other := range orgsForUser {
+		if other.OrgID == cmd.OrgID {
+			valid = true
 		}
-		return nil
+	}
+	if !valid {
+		return fmt.Errorf("user does not belong to org")
+	}
+	return s.store.UpdateUser(ctx, &user.User{
+		ID:    cmd.UserID,
+		OrgID: cmd.OrgID,
 	})
-	g.Go(func() error {
-		if err := s.orgService.DeleteUserFromAll(ctx, cmd.UserID); err != nil {
-			return err
-		}
-		return nil
-	})
-	g.Go(func() error {
-		if err := s.dashboardService.DeleteACLByUser(ctx, cmd.UserID); err != nil {
-			return err
-		}
-		return nil
-	})
-	g.Go(func() error {
-		if err := s.preferenceService.DeleteByUser(ctx, cmd.UserID); err != nil {
-			return err
-		}
-		return nil
-	})
-	g.Go(func() error {
-		if err := s.teamMemberService.DeleteByUser(ctx, cmd.UserID); err != nil {
-			return err
-		}
-		return nil
-	})
-	g.Go(func() error {
-		if err := s.userAuthService.Delete(ctx, cmd.UserID); err != nil {
-			return err
-		}
-		return nil
-	})
-	g.Go(func() error {
-		if err := s.userAuthService.DeleteToken(ctx, cmd.UserID); err != nil {
-			return err
-		}
-		return nil
-	})
-	g.Go(func() error {
-		if err := s.quotaService.DeleteByUser(ctx, cmd.UserID); err != nil {
-			return err
-		}
-		return nil
-	})
-	g.Go(func() error {
-		if err := s.accessControlStore.DeleteUserPermissions(ctx, cmd.UserID); err != nil {
-			return err
-		}
-		return nil
-	})
-	if err := g.Wait(); err != nil {
-		return err
+}
+
+func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	var signedInUser *user.SignedInUser
+	cacheKey := newSignedInUserCacheKey(query.OrgID, query.UserID)
+	if cached, found := s.cacheService.Get(cacheKey); found {
+		cachedUser := cached.(user.SignedInUser)
+		signedInUser = &cachedUser
+		return signedInUser, nil
 	}
 
-	return nil
+	result, err := s.GetSignedInUser(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	cacheKey = newSignedInUserCacheKey(result.OrgID, query.UserID)
+	s.cacheService.Set(cacheKey, *result, time.Second*5)
+	return result, nil
+}
+
+func newSignedInUserCacheKey(orgID, userID int64) string {
+	return fmt.Sprintf("signed-in-user-%d-%d", userID, orgID)
+}
+
+func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	signedInUser, err := s.store.GetSignedInUser(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	// tempUser is used to retrieve the teams for the signed in user for internal use.
+	tempUser := &user.SignedInUser{
+		OrgID: signedInUser.OrgID,
+		Permissions: map[int64]map[string][]string{
+			signedInUser.OrgID: {
+				ac.ActionTeamsRead: {ac.ScopeTeamsAll},
+			},
+		},
+	}
+	getTeamsByUserQuery := &models.GetTeamsByUserQuery{
+		OrgId:        signedInUser.OrgID,
+		UserId:       signedInUser.UserID,
+		SignedInUser: tempUser,
+	}
+	err = s.teamService.GetTeamsByUser(ctx, getTeamsByUserQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	signedInUser.Teams = make([]int64, len(getTeamsByUserQuery.Result))
+	for i, t := range getTeamsByUserQuery.Result {
+		signedInUser.Teams[i] = t.Id
+	}
+	return signedInUser, err
+}
+
+func (s *Service) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	return s.store.Search(ctx, query)
+}
+
+func (s *Service) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
+	return s.store.Disable(ctx, cmd)
+}
+
+func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
+	return s.store.BatchDisableUsers(ctx, cmd)
+}
+
+func (s *Service) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
+	return s.store.UpdatePermissions(ctx, userID, isAdmin)
+}
+
+func (s *Service) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
+	return s.store.SetHelpFlag(ctx, cmd)
+}
+
+func (s *Service) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
+	result, err := s.store.GetProfile(ctx, query)
+	return result, err
 }

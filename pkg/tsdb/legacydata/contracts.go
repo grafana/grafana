@@ -10,8 +10,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // RequestHandler is a data request handler interface.
@@ -37,7 +37,7 @@ type DataQuery struct {
 	Queries   []DataSubQuery
 	Headers   map[string]string
 	Debug     bool
-	User      *models.SignedInUser
+	User      *user.SignedInUser
 }
 
 type DataTable struct {

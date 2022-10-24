@@ -8,22 +8,24 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/login/loginservice"
-	"github.com/grafana/grafana/pkg/services/login/logintest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type LDAPMock struct {
@@ -57,7 +59,7 @@ func (m *LDAPMock) User(login string) (*models.ExternalUserInfo, ldap.ServerConf
 // GetUserFromLDAP tests
 // ***
 
-func getUserFromLDAPContext(t *testing.T, requestURL string, searchOrgRst []*models.OrgDTO) *scenarioContext {
+func getUserFromLDAPContext(t *testing.T, requestURL string, searchOrgRst []*org.OrgDTO) *scenarioContext {
 	t.Helper()
 
 	sc := setupScenarioContext(t, requestURL)
@@ -66,7 +68,7 @@ func getUserFromLDAPContext(t *testing.T, requestURL string, searchOrgRst []*mod
 	setting.LDAPEnabled = true
 	t.Cleanup(func() { setting.LDAPEnabled = origLDAP })
 
-	hs := &HTTPServer{Cfg: setting.NewCfg(), ldapGroups: ldap.ProvideGroupsService(), SQLStore: &mockstore.SQLStoreMock{ExpectedSearchOrgList: searchOrgRst}}
+	hs := &HTTPServer{Cfg: setting.NewCfg(), ldapGroups: ldap.ProvideGroupsService(), orgService: &orgtest.FakeOrgService{ExpectedOrgs: searchOrgRst}}
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		sc.context = c
@@ -94,7 +96,7 @@ func TestGetUserFromLDAPAPIEndpoint_UserNotFound(t *testing.T) {
 
 	userSearchResult = nil
 
-	sc := getUserFromLDAPContext(t, "/api/admin/ldap/user-that-does-not-exist", []*models.OrgDTO{})
+	sc := getUserFromLDAPContext(t, "/api/admin/ldap/user-that-does-not-exist", []*org.OrgDTO{})
 
 	require.Equal(t, sc.resp.Code, http.StatusNotFound)
 	assert.JSONEq(t, "{\"message\":\"No user was found in the LDAP server(s) with that username\"}", sc.resp.Body.String())
@@ -107,7 +109,7 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
 		Groups:         []string{"cn=admins,ou=groups,dc=grafana,dc=org"},
-		OrgRoles:       map[int64]models.RoleType{1: models.ROLE_ADMIN, 2: models.ROLE_VIEWER},
+		OrgRoles:       map[int64]org.RoleType{1: org.RoleAdmin, 2: org.RoleViewer},
 		IsGrafanaAdmin: &isAdmin,
 	}
 
@@ -122,18 +124,18 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
 				OrgId:   1,
-				OrgRole: models.ROLE_ADMIN,
+				OrgRole: org.RoleAdmin,
 			},
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
 				OrgId:   2,
-				OrgRole: models.ROLE_VIEWER,
+				OrgRole: org.RoleViewer,
 			},
 		},
 	}
 
-	mockOrgSearchResult := []*models.OrgDTO{
-		{Id: 1, Name: "Main Org."},
+	mockOrgSearchResult := []*org.OrgDTO{
+		{ID: 1, Name: "Main Org."},
 	}
 
 	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
@@ -162,7 +164,7 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
 		Groups:         []string{"cn=admins,ou=groups,dc=grafana,dc=org", "another-group-not-matched"},
-		OrgRoles:       map[int64]models.RoleType{1: models.ROLE_ADMIN},
+		OrgRoles:       map[int64]org.RoleType{1: org.RoleAdmin},
 		IsGrafanaAdmin: &isAdmin,
 	}
 
@@ -177,18 +179,18 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
 				OrgId:   1,
-				OrgRole: models.ROLE_ADMIN,
+				OrgRole: org.RoleAdmin,
 			},
 			{
 				GroupDN: "cn=admins2,ou=groups,dc=grafana,dc=org",
 				OrgId:   1,
-				OrgRole: models.ROLE_ADMIN,
+				OrgRole: org.RoleAdmin,
 			},
 		},
 	}
 
-	mockOrgSearchResult := []*models.OrgDTO{
-		{Id: 1, Name: "Main Org."},
+	mockOrgSearchResult := []*org.OrgDTO{
+		{ID: 1, Name: "Main Org."},
 	}
 
 	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
@@ -237,7 +239,7 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
 		Groups:         []string{"cn=admins,ou=groups,dc=grafana,dc=org"},
-		OrgRoles:       map[int64]models.RoleType{1: models.ROLE_ADMIN},
+		OrgRoles:       map[int64]org.RoleType{1: org.RoleAdmin},
 		IsGrafanaAdmin: &isAdmin,
 	}
 
@@ -252,13 +254,13 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
 				OrgId:   1,
-				OrgRole: models.ROLE_ADMIN,
+				OrgRole: org.RoleAdmin,
 			},
 		},
 	}
 
-	mockOrgSearchResult := []*models.OrgDTO{
-		{Id: 1, Name: "Main Org."},
+	mockOrgSearchResult := []*org.OrgDTO{
+		{ID: 1, Name: "Main Org."},
 	}
 
 	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
@@ -363,7 +365,7 @@ func TestGetLDAPStatusAPIEndpoint(t *testing.T) {
 // PostSyncUserWithLDAP tests
 // ***
 
-func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*testing.T, *scenarioContext), sqlstoremock sqlstore.Store) *scenarioContext {
+func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*testing.T, *scenarioContext), userService user.Service) *scenarioContext {
 	t.Helper()
 
 	sc := setupScenarioContext(t, requestURL)
@@ -378,9 +380,9 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*
 	hs := &HTTPServer{
 		Cfg:              sc.cfg,
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
-		SQLStore:         sqlstoremock,
 		Login:            loginservice.LoginServiceMock{},
 		authInfoService:  sc.authInfoService,
+		userService:      userService,
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -403,8 +405,8 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
-	sqlstoremock := mockstore.SQLStoreMock{}
-	sqlstoremock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
+	userServiceMock := usertest.NewUserServiceFake()
+	userServiceMock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
@@ -417,7 +419,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 		userSearchResult = &models.ExternalUserInfo{
 			Login: "ldap-daniel",
 		}
-	}, &sqlstoremock)
+	}, userServiceMock)
 
 	assert.Equal(t, http.StatusOK, sc.resp.Code)
 
@@ -431,7 +433,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
-	sqlstoremock := mockstore.SQLStoreMock{ExpectedError: user.ErrUserNotFound}
+	userServiceMock := usertest.NewUserServiceFake()
+	userServiceMock.ExpectedError = user.ErrUserNotFound
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
@@ -440,7 +443,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 		newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
 			return &LDAPMock{}
 		}
-	}, &sqlstoremock)
+	}, userServiceMock)
 
 	assert.Equal(t, http.StatusNotFound, sc.resp.Code)
 
@@ -454,7 +457,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
-	sqlstoremock := mockstore.SQLStoreMock{ExpectedUser: &user.User{Login: "ldap-daniel", ID: 34}}
+	userServiceMock := usertest.NewUserServiceFake()
+	userServiceMock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
@@ -467,7 +471,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 		userSearchError = multildap.ErrDidNotFindUser
 
 		sc.cfg.AdminUser = "ldap-daniel"
-	}, &sqlstoremock)
+	}, userServiceMock)
 	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
 
 	var res map[string]interface{}
@@ -478,7 +482,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
-	sqlstoremock := mockstore.SQLStoreMock{ExpectedUser: &user.User{Login: "ldap-daniel", ID: 34}}
+	userServiceMock := usertest.NewUserServiceFake()
+	userServiceMock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
 		sc.authInfoService.ExpectedExternalUser = &models.ExternalUserInfo{IsDisabled: true, UserId: 34}
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
@@ -491,7 +496,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 
 		userSearchResult = nil
 		userSearchError = multildap.ErrDidNotFindUser
-	}, &sqlstoremock)
+	}, userServiceMock)
 
 	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
 
@@ -603,8 +608,10 @@ func TestLDAP_AccessControl(t *testing.T) {
 			cfg.LDAPEnabled = true
 			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
 			hs.SQLStore = &mockstore.SQLStoreMock{ExpectedUser: &user.User{}}
+			hs.userService = &usertest.FakeUserService{ExpectedUser: &user.User{}}
 			hs.authInfoService = &logintest.AuthInfoServiceFake{}
 			hs.Login = &loginservice.LoginServiceMock{}
+			hs.orgService = &orgtest.FakeOrgService{}
 			sc.resp = httptest.NewRecorder()
 			sc.req, err = http.NewRequest(test.method, test.url, nil)
 			assert.NoError(t, err)

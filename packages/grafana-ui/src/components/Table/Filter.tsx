@@ -17,7 +17,7 @@ interface Props {
 }
 
 export const Filter: FC<Props> = ({ column, field, tableStyles }) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLButtonElement>(null);
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
   const styles = useStyles(getStyles);
   const filterEnabled = useMemo(() => Boolean(column.filterValue), [column.filterValue]);
@@ -27,12 +27,11 @@ export const Filter: FC<Props> = ({ column, field, tableStyles }) => {
   if (!field || !field.config.custom?.filterable) {
     return null;
   }
-
   return (
-    <span
+    <button
       className={cx(tableStyles.headerFilter, filterEnabled ? styles.filterIconEnabled : styles.filterIconDisabled)}
       ref={ref}
-      role="filterIcon"
+      type="button"
       onClick={onShowPopover}
     >
       <Icon name="filter" />
@@ -44,7 +43,7 @@ export const Filter: FC<Props> = ({ column, field, tableStyles }) => {
           show
         />
       )}
-    </span>
+    </button>
   );
 };
 

@@ -8,14 +8,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister,
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister,
 	libraryElementService libraryelements.Service) *LibraryPanelService {
 	return &LibraryPanelService{
 		Cfg:                   cfg,
@@ -30,8 +31,8 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister
 type Service interface {
 	LoadLibraryPanelsForDashboard(c context.Context, dash *models.Dashboard) error
 	CleanLibraryPanelsForDashboard(dash *models.Dashboard) error
-	ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard) error
-	ImportLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error
+	ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, dash *models.Dashboard) error
+	ImportLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error
 }
 
 type LibraryInfo struct {
@@ -42,7 +43,7 @@ type LibraryInfo struct {
 // LibraryPanelService is the service for the Panel Library feature.
 type LibraryPanelService struct {
 	Cfg                   *setting.Cfg
-	SQLStore              *sqlstore.SQLStore
+	SQLStore              db.DB
 	RouteRegister         routing.RouteRegister
 	LibraryElementService libraryelements.Service
 	log                   log.Logger
@@ -203,7 +204,7 @@ func cleanLibraryPanelsRecursively(parent *simplejson.Json) error {
 }
 
 // ConnectLibraryPanelsForDashboard loops through all panels in dashboard JSON and connects any library panels to the dashboard.
-func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard) error {
+func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, dash *models.Dashboard) error {
 	panels := dash.Data.Get("panels").MustArray()
 	libraryPanels := make(map[string]string)
 	err := connectLibraryPanelsRecursively(c, panels, libraryPanels)
@@ -257,11 +258,11 @@ func connectLibraryPanelsRecursively(c context.Context, panels []interface{}, li
 }
 
 // ImportLibraryPanelsForDashboard loops through all panels in dashboard JSON and creates any missing library panels in the database.
-func (lps *LibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
+func (lps *LibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
 	return importLibraryPanelsRecursively(c, lps.LibraryElementService, signedInUser, libraryPanels, panels, folderID)
 }
 
-func importLibraryPanelsRecursively(c context.Context, service libraryelements.Service, signedInUser *models.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
+func importLibraryPanelsRecursively(c context.Context, service libraryelements.Service, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
 	for _, panel := range panels {
 		panelAsJSON := simplejson.NewFromAny(panel)
 		libraryPanel := panelAsJSON.Get("libraryPanel")

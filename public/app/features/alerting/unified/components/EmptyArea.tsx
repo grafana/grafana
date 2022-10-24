@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
 
-export const EmptyArea: FC = ({ children }) => {
+export const EmptyArea = ({ children }: React.PropsWithChildren<{}>) => {
   const styles = useStyles(getStyles);
 
   return <div className={styles.container}>{children}</div>;

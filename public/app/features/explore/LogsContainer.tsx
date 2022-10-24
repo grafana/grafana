@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -19,7 +18,7 @@ import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
 import { splitOpen } from './state/main';
-import { addResultsToCache, clearCache, loadLogsVolumeData } from './state/query';
+import { addResultsToCache, clearCache, loadLogsVolumeData, setLogsVolumeEnabled } from './state/query';
 import { updateTimeRange } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
@@ -31,6 +30,7 @@ interface LogsContainerProps extends PropsFromRedux {
   scanRange?: RawTimeRange;
   syncedTimes: boolean;
   loadingState: LoadingState;
+  scrollElement?: HTMLDivElement;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning: () => void;
@@ -98,21 +98,12 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       exploreId,
       addResultsToCache,
       clearCache,
+      scrollElement,
     } = this.props;
 
     if (!logRows) {
       return null;
     }
-
-    // We need to override css overflow of divs in Collapse element to enable sticky Logs navigation
-    const styleOverridesForStickyNavigation = css`
-      & > div {
-        overflow: visible;
-        & > div {
-          overflow: visible;
-        }
-      }
-    `;
 
     return (
       <>
@@ -133,37 +124,38 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
           </Collapse>
         </LogsCrossFadeTransition>
         <LogsCrossFadeTransition visible={!isLive}>
-          <Collapse label="Logs" loading={loading} isOpen className={styleOverridesForStickyNavigation}>
-            <Logs
-              exploreId={exploreId}
-              datasourceType={this.props.datasourceInstance?.type}
-              logRows={logRows}
-              logsMeta={logsMeta}
-              logsSeries={logsSeries}
-              logsVolumeData={logsVolumeData}
-              logsQueries={logsQueries}
-              width={width}
-              splitOpen={splitOpen}
-              loading={loading}
-              loadingState={loadingState}
-              loadLogsVolumeData={loadLogsVolumeData}
-              onChangeTime={this.onChangeTime}
-              onClickFilterLabel={onClickFilterLabel}
-              onClickFilterOutLabel={onClickFilterOutLabel}
-              onStartScanning={onStartScanning}
-              onStopScanning={onStopScanning}
-              absoluteRange={absoluteRange}
-              visibleRange={visibleRange}
-              timeZone={timeZone}
-              scanning={scanning}
-              scanRange={range.raw}
-              showContextToggle={this.showContextToggle}
-              getRowContext={this.getLogRowContext}
-              getFieldLinks={this.getFieldLinks}
-              addResultsToCache={() => addResultsToCache(exploreId)}
-              clearCache={() => clearCache(exploreId)}
-            />
-          </Collapse>
+          <Logs
+            exploreId={exploreId}
+            datasourceType={this.props.datasourceInstance?.type}
+            logRows={logRows}
+            logsMeta={logsMeta}
+            logsSeries={logsSeries}
+            logsVolumeEnabled={this.props.logsVolumeEnabled}
+            onSetLogsVolumeEnabled={(enabled) => this.props.setLogsVolumeEnabled(exploreId, enabled)}
+            logsVolumeData={logsVolumeData}
+            logsQueries={logsQueries}
+            width={width}
+            splitOpen={splitOpen}
+            loading={loading}
+            loadingState={loadingState}
+            loadLogsVolumeData={loadLogsVolumeData}
+            onChangeTime={this.onChangeTime}
+            onClickFilterLabel={onClickFilterLabel}
+            onClickFilterOutLabel={onClickFilterOutLabel}
+            onStartScanning={onStartScanning}
+            onStopScanning={onStopScanning}
+            absoluteRange={absoluteRange}
+            visibleRange={visibleRange}
+            timeZone={timeZone}
+            scanning={scanning}
+            scanRange={range.raw}
+            showContextToggle={this.showContextToggle}
+            getRowContext={this.getLogRowContext}
+            getFieldLinks={this.getFieldLinks}
+            addResultsToCache={() => addResultsToCache(exploreId)}
+            clearCache={() => clearCache(exploreId)}
+            scrollElement={scrollElement}
+          />
         </LogsCrossFadeTransition>
       </>
     );
@@ -183,6 +175,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
+    logsVolumeEnabled,
     logsVolumeDataProvider,
     logsVolumeData,
   } = item;
@@ -202,6 +195,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
+    logsVolumeEnabled,
     logsVolumeDataProvider,
     logsVolumeData,
   };
@@ -213,6 +207,7 @@ const mapDispatchToProps = {
   addResultsToCache,
   clearCache,
   loadLogsVolumeData,
+  setLogsVolumeEnabled,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

@@ -73,7 +73,7 @@
         "type": "other",
         "typeInfo": {
           "frame": "json.RawMessage",
-          "nullable": true
+          "nullable": false
         }
       },
       {
@@ -133,7 +133,7 @@
         ]
       ],
       [
-        null,
+        [],
         [
           "datasource-1"
         ],

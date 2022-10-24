@@ -10,7 +10,7 @@ type Props = {
   style?: React.CSSProperties;
 };
 
-export const CloseButton: React.FC<Props> = ({ onClick, 'aria-label': ariaLabel, style }) => {
+export const CloseButton = ({ onClick, 'aria-label': ariaLabel, style }: Props) => {
   const styles = useStyles2(getStyles);
   return (
     <IconButton aria-label={ariaLabel ?? 'Close'} className={styles} name="times" onClick={onClick} style={style} />

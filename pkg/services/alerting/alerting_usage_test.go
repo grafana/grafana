@@ -3,7 +3,7 @@ package alerting
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -12,19 +12,29 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	fd "github.com/grafana/grafana/pkg/services/datasources/fakes"
 )
 
 func TestAlertingUsageStats(t *testing.T) {
 	store := &AlertStoreMock{}
+	dsMock := &fd.FakeDataSourceService{
+		DataSources: []*datasources.DataSource{
+			{Id: 1, Type: datasources.DS_INFLUXDB},
+			{Id: 2, Type: datasources.DS_GRAPHITE},
+			{Id: 3, Type: datasources.DS_PROMETHEUS},
+			{Id: 4, Type: datasources.DS_PROMETHEUS},
+		},
+	}
 	ae := &AlertEngine{
-		sqlStore: store,
+		AlertStore:        store,
+		datasourceService: dsMock,
 	}
 
 	store.getAllAlerts = func(ctx context.Context, query *models.GetAllAlertsQuery) error {
 		var createFake = func(file string) *simplejson.Json {
 			// Ignore gosec warning G304 since it's a test
 			// nolint:gosec
-			content, err := ioutil.ReadFile(file)
+			content, err := os.ReadFile(file)
 			require.NoError(t, err, "expected to be able to read file")
 
 			j, err := simplejson.NewJson(content)
@@ -38,23 +48,6 @@ func TestAlertingUsageStats(t *testing.T) {
 			{Id: 2, Settings: createFake("testdata/settings/three_conditions.json")},
 			{Id: 3, Settings: createFake("testdata/settings/empty.json")},
 		}
-		return nil
-	}
-
-	store.getDataSource = func(ctx context.Context, query *datasources.GetDataSourceQuery) error {
-		ds := map[int64]*datasources.DataSource{
-			1: {Type: "influxdb"},
-			2: {Type: "graphite"},
-			3: {Type: "prometheus"},
-			4: {Type: "prometheus"},
-		}
-
-		r, exist := ds[query.Id]
-		if !exist {
-			return datasources.ErrDataSourceNotFound
-		}
-
-		query.Result = r
 		return nil
 	}
 
@@ -111,7 +104,7 @@ func TestParsingAlertRuleSettings(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var settings json.Marshaler
 			if tc.file != "" {
-				content, err := ioutil.ReadFile(tc.file)
+				content, err := os.ReadFile(tc.file)
 				require.NoError(t, err, "expected to be able to read file")
 
 				settings, err = simplejson.NewJson(content)

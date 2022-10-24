@@ -7,9 +7,9 @@ import { Field, KeyValue, SelectableValue } from '@grafana/data';
 import { TableStyles } from './styles';
 
 export {
-  TableFieldOptions,
+  type TableFieldOptions,
   TableCellDisplayMode,
-  FieldTextAlignment,
+  type FieldTextAlignment,
   BarGaugeDisplayMode,
   BackgroundDisplayMode,
 } from '@grafana/schema';
@@ -50,3 +50,10 @@ export type GrafanaTableColumn = Column & {
   justifyContent: Property.JustifyContent;
   minWidth: number;
 };
+
+export interface TableFooterCalc {
+  show: boolean;
+  reducer: string[]; // actually 1 value
+  fields?: string[];
+  enablePagination?: boolean;
+}

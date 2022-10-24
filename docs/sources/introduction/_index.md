@@ -11,7 +11,7 @@ weight: 5
 
 [Grafana open source software](https://grafana.com/oss/) enables you to query, visualize, alert on, and explore your metrics, logs, and traces wherever they are stored. Grafana OSS provides you with tools to turn your time-series database (TSDB) data into insightful graphs and visualizations.
 
-After you have [installed Grafana]({{< relref "../setup-grafana/installation/" >}}) and set up your first dashboard using instructions in [Getting started with Grafana]({{< relref "../getting-started/build-first-dashboard.md" >}}), you will have many options to choose from depending on your requirements. For example, if you want to view weather data and statistics about your smart home, then you can create a [playlist]({{< relref "../dashboards/playlist.md" >}}). If you are the administrator for an enterprise and are managing Grafana for multiple teams, then you can set up [provisioning]({{< relref "../administration/provisioning/" >}}) and [authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}}).
+After you have [installed Grafana]({{< relref "../setup-grafana/installation/" >}}) and set up your first dashboard using instructions in [Getting started with Grafana]({{< relref "../getting-started/build-first-dashboard.md" >}}), you will have many options to choose from depending on your requirements. For example, if you want to view weather data and statistics about your smart home, then you can create a [playlist]({{< relref "../dashboards/create-manage-playlists/" >}}). If you are the administrator for an enterprise and are managing Grafana for multiple teams, then you can set up [provisioning]({{< relref "../administration/provisioning/" >}}) and [authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}}).
 
 The following sections provide an overview of Grafana features and links to product documentation to help you learn more. For more guidance and ideas, check out our [Grafana Community forums](https://community.grafana.com/).
 
@@ -29,11 +29,11 @@ Alert hooks allow you to create different notifiers with a bit of code if you pr
 
 Annotate graphs with rich events from different data sources. Hover over events to see the full event metadata and tags.
 
-This feature, which shows up as a graph marker in Grafana, is useful for correlating data in case something goes wrong. You can create the annotations manually—just control-click on a graph and input some text—or you can fetch data from any data source. Refer to [Annotations]({{< relref "../dashboards/annotations.md" >}}) for more information.
+This feature, which shows up as a graph marker in Grafana, is useful for correlating data in case something goes wrong. You can create the annotations manually—just control-click on a graph and input some text—or you can fetch data from any data source. Refer to [Annotations]({{< relref "../dashboards/build-dashboards/annotate-visualizations" >}}) for more information.
 
 ## Dashboard variables
 
-[Template variables]({{< relref "../variables/" >}}) allow you to create dashboards that can be reused for lots of different use cases. Values aren't hard-coded with these templates, so for instance, if you have a production server and a test server, you can use the same dashboard for both.
+[Template variables]({{< relref "../dashboards/variables" >}}) allow you to create dashboards that can be reused for lots of different use cases. Values aren't hard-coded with these templates, so for instance, if you have a production server and a test server, you can use the same dashboard for both.
 
 Templating allows you to drill down into your data, say, from all data to North America data, down to Texas data, and beyond. You can also share these dashboards across teams within your organization—or if you create a great dashboard template for a popular data source, you can contribute it to the whole community to customize and use.
 

@@ -11,6 +11,9 @@ describe('Join by labels', () => {
           {
             name: 'Value',
             type: FieldType.number,
+            config: {
+              displayNameFromDS: '111',
+            },
             values: [10, 200],
             labels: { what: 'Temp', cluster: 'A', job: 'J1' },
           },
@@ -22,6 +25,9 @@ describe('Join by labels', () => {
           {
             name: 'Value',
             type: FieldType.number,
+            config: {
+              displayNameFromDS: '222',
+            },
             values: [10, 200],
             labels: { what: 'Temp', cluster: 'B', job: 'J1' },
           },
@@ -33,6 +39,9 @@ describe('Join by labels', () => {
           {
             name: 'Value',
             type: FieldType.number,
+            config: {
+              displayNameFromDS: '333',
+            },
             values: [22, 77],
             labels: { what: 'Speed', cluster: 'B', job: 'J1' },
           },
@@ -46,6 +55,7 @@ describe('Join by labels', () => {
       },
       input
     );
+    expect(result.fields[result.fields.length - 1].config).toMatchInlineSnapshot(`Object {}`);
     expect(toRowsSnapshow(result)).toMatchInlineSnapshot(`
       Object {
         "columns": Array [

@@ -46,10 +46,10 @@ const setup = () => {
 
   const datasource = new CloudWatchDatasource(instanceSettings, templateSrv as any, {} as any);
   datasource.metricFindQuery = async () => [{ value: 'test', label: 'test', text: 'test' }];
-  datasource.getNamespaces = jest.fn().mockResolvedValue([]);
-  datasource.getMetrics = jest.fn().mockResolvedValue([]);
-  datasource.getRegions = jest.fn().mockResolvedValue([]);
-  datasource.getDimensionKeys = jest.fn().mockResolvedValue([]);
+  datasource.api.getNamespaces = jest.fn().mockResolvedValue([]);
+  datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
+  datasource.api.getRegions = jest.fn().mockResolvedValue([]);
+  datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
 
   const props: Props = {
     query: {
@@ -150,7 +150,7 @@ describe('QueryEditor', () => {
       if (props.query.queryMode !== 'Metrics') {
         fail(`expected props.query.queryMode to be 'Metrics', got '${props.query.queryMode}' instead`);
       }
-      props.datasource.getDimensionValues = jest.fn().mockResolvedValue([[{ label: 'dimVal1', value: 'dimVal1' }]]);
+      props.datasource.api.getDimensionValues = jest.fn().mockResolvedValue([[{ label: 'dimVal1', value: 'dimVal1' }]]);
       props.query.metricQueryType = MetricQueryType.Search;
       props.query.metricEditorMode = MetricEditorMode.Builder;
       props.query.dimensions = { instanceId: 'instance-123' };

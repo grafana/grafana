@@ -1,10 +1,22 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel } from '@grafana/data';
-import { Button, Tooltip, LogLabels } from '@grafana/ui';
-import { MAX_CHARACTERS } from '@grafana/ui/src/components/Logs/LogRowMessage';
+import { Button, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
+
+import { downloadLogsModelAsTxt } from '../inspector/utils/download';
+import { LogLabels } from '../logs/components/LogLabels';
+import { MAX_CHARACTERS } from '../logs/components/LogRowMessage';
 
 import { MetaInfoText, MetaItemProps } from './MetaInfoText';
+
+const getStyles = () => ({
+  metaContainer: css`
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+  `,
+});
 
 export type Props = {
   meta: LogsMetaItem[];
@@ -18,7 +30,7 @@ export type Props = {
   clearDetectedFields: () => void;
 };
 
-export const LogsMetaRow: React.FC<Props> = React.memo(
+export const LogsMetaRow = React.memo(
   ({
     meta,
     dedupStrategy,
@@ -29,7 +41,13 @@ export const LogsMetaRow: React.FC<Props> = React.memo(
     forceEscape,
     onEscapeNewlines,
     logRows,
-  }) => {
+  }: Props) => {
+    const style = useStyles2(getStyles);
+
+    const downloadLogs = () => {
+      downloadLogsModelAsTxt({ meta, rows: logRows }, 'Explore');
+    };
+
     const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
 
     // Add deduplication info
@@ -83,18 +101,22 @@ export const LogsMetaRow: React.FC<Props> = React.memo(
         ),
       });
     }
-
     return (
       <>
         {logsMetaItem && (
-          <MetaInfoText
-            metaItems={logsMetaItem.map((item) => {
-              return {
-                label: item.label,
-                value: 'kind' in item ? renderMetaItem(item.value, item.kind) : item.value,
-              };
-            })}
-          />
+          <div className={style.metaContainer}>
+            <MetaInfoText
+              metaItems={logsMetaItem.map((item) => {
+                return {
+                  label: item.label,
+                  value: 'kind' in item ? renderMetaItem(item.value, item.kind) : item.value,
+                };
+              })}
+            />
+            <ToolbarButton onClick={downloadLogs} variant="default" icon="download-alt">
+              Download logs
+            </ToolbarButton>
+          </div>
         )}
       </>
     );

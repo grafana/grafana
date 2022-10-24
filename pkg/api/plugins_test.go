@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -17,11 +16,19 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -45,22 +52,20 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			action, testCase.expectedHTTPStatus, testCase.pluginAdminEnabled, testCase.pluginAdminExternalManageEnabled)
 	}
 
-	pm := &fakePluginManager{
-		plugins: make(map[string]fakePlugin),
-	}
+	inst := NewFakePluginInstaller()
 	for _, tc := range tcs {
 		srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 			hs.Cfg = &setting.Cfg{
 				PluginAdminEnabled:               tc.pluginAdminEnabled,
 				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled,
 			}
-			hs.pluginManager = pm
+			hs.pluginInstaller = inst
 			hs.QuotaService = quotatest.NewQuotaServiceFake()
 		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
 			req := srv.NewPostRequest("/api/plugins/test/install", strings.NewReader("{ \"version\": \"1.0.2\" }"))
-			webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, OrgRole: models.ROLE_EDITOR, IsGrafanaAdmin: true})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleEditor, IsGrafanaAdmin: true})
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
 
@@ -72,13 +77,13 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			require.Equal(t, tc.expectedHTTPStatus, resp.StatusCode)
 
 			if tc.expectedHTTPStatus == 200 {
-				require.Equal(t, fakePlugin{pluginID: "test", version: "1.0.2"}, pm.plugins["test"])
+				require.Equal(t, fakePlugin{pluginID: "test", version: "1.0.2"}, inst.plugins["test"])
 			}
 		})
 
 		t.Run(testName("Uninstall", tc), func(t *testing.T) {
 			req := srv.NewPostRequest("/api/plugins/test/uninstall", strings.NewReader("{}"))
-			webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, OrgRole: models.ROLE_VIEWER, IsGrafanaAdmin: true})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer, IsGrafanaAdmin: true})
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
 
@@ -90,8 +95,54 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			require.Equal(t, tc.expectedHTTPStatus, resp.StatusCode)
 
 			if tc.expectedHTTPStatus == 200 {
-				require.Empty(t, pm.plugins)
+				require.Empty(t, inst.plugins)
 			}
+		})
+	}
+}
+
+func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
+	canInstall := []ac.Permission{{Action: plugins.ActionInstall}}
+	cannotInstall := []ac.Permission{{Action: "plugins:cannotinstall"}}
+
+	type testCase struct {
+		expectedCode                     int
+		permissions                      []ac.Permission
+		pluginAdminEnabled               bool
+		pluginAdminExternalManageEnabled bool
+	}
+	tcs := []testCase{
+		{expectedCode: http.StatusNotFound, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true},
+		{expectedCode: http.StatusNotFound, permissions: canInstall, pluginAdminEnabled: false, pluginAdminExternalManageEnabled: true},
+		{expectedCode: http.StatusNotFound, permissions: canInstall, pluginAdminEnabled: false, pluginAdminExternalManageEnabled: false},
+		{expectedCode: http.StatusForbidden, permissions: cannotInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false},
+		{expectedCode: http.StatusOK, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false},
+	}
+
+	testName := func(action string, tc testCase) string {
+		return fmt.Sprintf("%s request returns %d when adminEnabled: %t, externalEnabled: %t, permissions: %q",
+			action, tc.expectedCode, tc.pluginAdminEnabled, tc.pluginAdminExternalManageEnabled, tc.permissions)
+	}
+
+	for _, tc := range tcs {
+		sc := setupHTTPServerWithCfg(t, true, &setting.Cfg{
+			RBACEnabled:                      true,
+			PluginAdminEnabled:               tc.pluginAdminEnabled,
+			PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled})
+		setInitCtxSignedInViewer(sc.initCtx)
+		setAccessControlPermissions(sc.acmock, tc.permissions, sc.initCtx.OrgID)
+		sc.hs.pluginInstaller = NewFakePluginInstaller()
+
+		t.Run(testName("Install", tc), func(t *testing.T) {
+			input := strings.NewReader("{ \"version\": \"1.0.2\" }")
+			response := callAPI(sc.server, http.MethodPost, "/api/plugins/test/install", input, t)
+			assert.Equal(t, tc.expectedCode, response.Code)
+		})
+
+		t.Run(testName("Uninstall", tc), func(t *testing.T) {
+			input := strings.NewReader("{ }")
+			response := callAPI(sc.server, http.MethodPost, "/api/plugins/test/uninstall", input, t)
+			assert.Equal(t, tc.expectedCode, response.Code)
 		})
 	}
 }
@@ -99,9 +150,9 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 func Test_GetPluginAssets(t *testing.T) {
 	pluginID := "test-plugin"
 	pluginDir := "."
-	tmpFile, err := ioutil.TempFile(pluginDir, "")
+	tmpFile, err := os.CreateTemp(pluginDir, "")
 	require.NoError(t, err)
-	tmpFileInParentDir, err := ioutil.TempFile("..", "")
+	tmpFileInParentDir, err := os.CreateTemp("..", "")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := os.RemoveAll(tmpFile.Name())
@@ -125,10 +176,8 @@ func Test_GetPluginAssets(t *testing.T) {
 				requestedFile: {},
 			},
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: p,
-			},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{p},
 		}
 		l := &logtest.Fake{}
 
@@ -150,10 +199,8 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: p,
-			},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{p},
 		}
 		l := &logtest.Fake{}
 
@@ -173,10 +220,8 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: p,
-			},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{p},
 		}
 		l := &logtest.Fake{}
 
@@ -198,10 +243,8 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: p,
-			},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{p},
 		}
 		l := &logtest.Fake{}
 
@@ -221,8 +264,8 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin", func(t *testing.T) {
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{},
 		}
 		l := &logtest.Fake{}
 
@@ -242,10 +285,11 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for a core plugin's file", func(t *testing.T) {
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: {
-					Class: plugins.Core,
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{
+				{
+					JSONData: plugins.JSONData{ID: pluginID},
+					Class:    plugins.Core,
 				},
 			},
 		}
@@ -264,13 +308,18 @@ func Test_GetPluginAssets(t *testing.T) {
 }
 
 func TestMakePluginResourceRequest(t *testing.T) {
-	pluginClient := &fakePluginClient{}
 	hs := HTTPServer{
 		Cfg:          setting.NewCfg(),
 		log:          log.New(),
-		pluginClient: pluginClient,
+		pluginClient: &fakePluginClient{},
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	const customHeader = "X-CUSTOM"
+	req.Header.Set(customHeader, "val")
+	ctx := contexthandler.WithAuthHTTPHeader(req.Context(), customHeader)
+	req = req.WithContext(ctx)
+
 	resp := httptest.NewRecorder()
 	pCtx := backend.PluginContext{}
 	err := hs.makePluginResourceRequest(resp, req, pCtx)
@@ -283,6 +332,7 @@ func TestMakePluginResourceRequest(t *testing.T) {
 	}
 
 	require.Equal(t, "sandbox", resp.Header().Get("Content-Security-Policy"))
+	require.Empty(t, req.Header.Get(customHeader))
 }
 
 func callGetPluginAsset(sc *scenarioContext) {
@@ -340,4 +390,102 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 	}
 
 	return backend.NewQueryDataResponse(), nil
+}
+
+func Test_PluginsList_AccessControl(t *testing.T) {
+	pluginStore := plugins.FakePluginStore{PluginList: []plugins.PluginDTO{
+		{
+			PluginDir:     "/grafana/plugins/test-app/dist",
+			Class:         "external",
+			DefaultNavURL: "/plugins/test-app/page/test",
+			Pinned:        false,
+			Signature:     "unsigned",
+			Module:        "plugins/test-app/module",
+			BaseURL:       "public/plugins/test-app",
+			JSONData: plugins.JSONData{
+				ID:   "test-app",
+				Type: "app",
+				Name: "test-app",
+				Info: plugins.Info{
+					Version: "1.0.0",
+				},
+			},
+		},
+		{
+			PluginDir: "/grafana/public/app/plugins/datasource/mysql",
+			Class:     "core",
+			Pinned:    false,
+			Signature: "internal",
+			Module:    "app/plugins/datasource/mysql/module",
+			BaseURL:   "public/app/plugins/datasource/mysql",
+			JSONData: plugins.JSONData{
+				ID:   "mysql",
+				Type: "datasource",
+				Name: "MySQL",
+				Info: plugins.Info{
+					Author:      plugins.InfoLink{Name: "Grafana Labs", URL: "https://grafana.com"},
+					Description: "Data source for MySQL databases",
+				},
+			},
+		},
+	}}
+
+	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+		"test-app": {ID: 0, OrgID: 1, PluginID: "test-app", PluginVersion: "1.0.0", Enabled: true},
+		"mysql":    {ID: 0, OrgID: 1, PluginID: "mysql", PluginVersion: "", Enabled: true}},
+	}
+
+	type testCase struct {
+		expectedCode    int
+		role            org.RoleType
+		isGrafanaAdmin  bool
+		expectedPlugins []string
+		filters         map[string]string
+	}
+	tcs := []testCase{
+		{expectedCode: http.StatusOK, role: org.RoleViewer, expectedPlugins: []string{"mysql"}},
+		{expectedCode: http.StatusOK, role: org.RoleViewer, isGrafanaAdmin: true, expectedPlugins: []string{"mysql", "test-app"}},
+		{expectedCode: http.StatusOK, role: org.RoleAdmin, expectedPlugins: []string{"mysql", "test-app"}},
+	}
+
+	testName := func(tc testCase) string {
+		return fmt.Sprintf("List request returns %d when role: %s, isGrafanaAdmin: %t, filters: %v",
+			tc.expectedCode, tc.role, tc.isGrafanaAdmin, tc.filters)
+	}
+
+	testUser := func(role org.RoleType, isGrafanaAdmin bool) user.SignedInUser {
+		return user.SignedInUser{
+			UserID:         2,
+			OrgID:          2,
+			OrgName:        "TestOrg2",
+			OrgRole:        role,
+			Login:          "testUser",
+			Name:           "testUser",
+			Email:          "testUser@example.org",
+			OrgCount:       1,
+			IsGrafanaAdmin: isGrafanaAdmin,
+			IsAnonymous:    false,
+		}
+	}
+
+	for _, tc := range tcs {
+		sc := setupHTTPServer(t, true)
+		sc.hs.PluginSettings = &pluginSettings
+		sc.hs.pluginStore = pluginStore
+		sc.hs.pluginsUpdateChecker = updatechecker.ProvidePluginsService(sc.hs.Cfg, pluginStore)
+		setInitCtxSignedInUser(sc.initCtx, testUser(tc.role, tc.isGrafanaAdmin))
+
+		t.Run(testName(tc), func(t *testing.T) {
+			response := callAPI(sc.server, http.MethodGet, "/api/plugins/", nil, t)
+			require.Equal(t, tc.expectedCode, response.Code)
+
+			var res dtos.PluginList
+			err := json.NewDecoder(response.Body).Decode(&res)
+			require.NoError(t, err)
+			require.Len(t, res, len(tc.expectedPlugins))
+			for _, plugin := range res {
+				require.Contains(t, tc.expectedPlugins, plugin.Id)
+			}
+		})
+	}
 }

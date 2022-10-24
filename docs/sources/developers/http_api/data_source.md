@@ -714,7 +714,7 @@ Proxies all calls to the actual data source identified by the `uid`.
 
 `GET /api/datasources/:datasourceId/health`
 
-Makes a call to the health endpoint of data source identified by the given `dashboardId`.
+Makes a call to the health endpoint of data source identified by the given `datasourceId`. This is not mandatory - every plugin author has to <a href="https://grafana.com/tutorials/build-a-data-source-backend-plugin/#add-support-for-health-checks" target="_blank">implement support for health checks</a> in their plugin themselves.
 
 ### Examples
 
@@ -743,7 +743,7 @@ Content-Type: application/json
 
 `GET /api/datasources/uid/:uid/health`
 
-Makes a call to the health endpoint of data source identified by the given `uid`.
+Makes a call to the health endpoint of data source identified by the given `uid`. This is not mandatory - every plugin author has to <a href="https://grafana.com/tutorials/build-a-data-source-backend-plugin/#add-support-for-health-checks" target="_blank">implement support for health checks</a> in their plugin themselves.
 
 ### Examples
 

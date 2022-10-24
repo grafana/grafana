@@ -44,8 +44,8 @@ type MockAMConfigStore_GetLatestAlertmanagerConfiguration_Call struct {
 }
 
 // GetLatestAlertmanagerConfiguration is a helper method to define mock.On call
-//  - ctx context.Context
-//  - query *models.GetLatestAlertmanagerConfigurationQuery
+//   - ctx context.Context
+//   - query *models.GetLatestAlertmanagerConfigurationQuery
 func (_e *MockAMConfigStore_Expecter) GetLatestAlertmanagerConfiguration(ctx interface{}, query interface{}) *MockAMConfigStore_GetLatestAlertmanagerConfiguration_Call {
 	return &MockAMConfigStore_GetLatestAlertmanagerConfiguration_Call{Call: _e.mock.On("GetLatestAlertmanagerConfiguration", ctx, query)}
 }
@@ -82,8 +82,8 @@ type MockAMConfigStore_UpdateAlertmanagerConfiguration_Call struct {
 }
 
 // UpdateAlertmanagerConfiguration is a helper method to define mock.On call
-//  - ctx context.Context
-//  - cmd *models.SaveAlertmanagerConfigurationCmd
+//   - ctx context.Context
+//   - cmd *models.SaveAlertmanagerConfigurationCmd
 func (_e *MockAMConfigStore_Expecter) UpdateAlertmanagerConfiguration(ctx interface{}, cmd interface{}) *MockAMConfigStore_UpdateAlertmanagerConfiguration_Call {
 	return &MockAMConfigStore_UpdateAlertmanagerConfiguration_Call{Call: _e.mock.On("UpdateAlertmanagerConfiguration", ctx, cmd)}
 }

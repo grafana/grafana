@@ -1,6 +1,6 @@
 import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import {
   StackingMode,
@@ -12,8 +12,7 @@ import {
 } from '@grafana/schema';
 import { measureText, PlotTooltipInterpolator } from '@grafana/ui';
 import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
-
-import { preparePlotData2, StackingGroup } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import { StackingGroup, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { intersects, pointWithin, Quadtree, Rect } from './quadtree';
@@ -52,12 +51,14 @@ export interface BarsOptions {
   getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
   fillOpacity?: number;
   formatValue: (seriesIdx: number, value: any) => string;
+  timeZone?: TimeZone;
   text?: VizTextDisplayOptions;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
   onLeave?: (seriesIdx: number, valueIdx: number) => void;
   legend?: VizLegendOptions;
   xSpacing?: number;
   xTimeAuto?: boolean;
+  negY?: boolean[];
 }
 
 /**
@@ -353,6 +354,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         let middleShift = isXHorizontal ? 0 : -Math.round(MIDDLE_BASELINE_SHIFT * fontSize);
         let value = rawValue(seriesIdx, dataIdx);
 
+        if (opts.negY?.[seriesIdx] && value != null) {
+          value *= -1;
+        }
+
         if (value != null) {
           // Calculate final co-ordinates for text position
           const x =
@@ -381,7 +386,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             // Adjust for baseline which is "top" in this case
             xAdjust = (textMetrics.width * scaleFactor) / 2;
 
-            // yAdjust only matters when when the value isn't negative
+            // yAdjust only matters when the value isn't negative
             yAdjust =
               value > 0
                 ? (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor
@@ -517,7 +522,12 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
       for (const sidx in labels[didx]) {
         const label = labels[didx][sidx];
-        const { text, value, x = 0, y = 0 } = label;
+        const { text, x = 0, y = 0 } = label;
+        let { value } = label;
+
+        if (opts.negY?.[sidx] && value != null) {
+          value *= -1;
+        }
 
         let align: CanvasTextAlign = isXHorizontal ? 'center' : value !== null && value < 0 ? 'right' : 'left';
         let baseline: CanvasTextBaseline = isXHorizontal

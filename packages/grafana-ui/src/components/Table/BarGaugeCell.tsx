@@ -1,7 +1,7 @@
 import { isFunction } from 'lodash';
 import React, { FC } from 'react';
 
-import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax, LinkModel } from '@grafana/data';
+import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
 import { BarGaugeDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../BarGauge/BarGauge';
@@ -51,7 +51,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
 
   const getLinks = () => {
     if (!isFunction(field.getLinks)) {
-      return [] as LinkModel[];
+      return [];
     }
 
     return field.getLinks({ valueRowIndex: row.index });

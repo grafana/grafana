@@ -10,17 +10,17 @@ import {
   SQLSelectableValue,
 } from 'app/features/plugins/sql/types';
 
-import { getSchema, showDatabases, showTables } from './MSSqlMetaQuery';
+import { getSchema, showDatabases, getSchemaAndName } from './MSSqlMetaQuery';
 import { MSSqlQueryModel } from './MSSqlQueryModel';
 import { MSSqlResponseParser } from './response_parser';
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
-import { getIcon, getRAQBType, SCHEMA_NAME, toRawSql } from './sqlUtil';
+import { getIcon, getRAQBType, toRawSql } from './sqlUtil';
 import { MssqlOptions } from './types';
 
 export class MssqlDatasource extends SqlDatasource {
   completionProvider: LanguageCompletionProvider | undefined = undefined;
-  constructor(instanceSettings: DataSourceInstanceSettings<MssqlOptions>, templateSrv?: TemplateSrv) {
-    super(instanceSettings, templateSrv);
+  constructor(instanceSettings: DataSourceInstanceSettings<MssqlOptions>) {
+    super(instanceSettings);
   }
 
   getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): MSSqlQueryModel {
@@ -37,12 +37,19 @@ export class MssqlDatasource extends SqlDatasource {
   }
 
   async fetchTables(dataset?: string): Promise<string[]> {
-    const tables = await this.runSql<{ name: string[] }>(showTables(dataset), { refId: 'tables' });
-    return tables.fields.name.values.toArray().flat();
+    // We get back the table name with the schema as well. like dbo.table
+    const tables = await this.runSql<{ schemaAndName: string[] }>(getSchemaAndName(dataset), { refId: 'tables' });
+    return tables.fields.schemaAndName.values.toArray().flat();
   }
 
   async fetchFields(query: SQLQuery): Promise<SQLSelectableValue[]> {
-    const schema = await this.runSql<{ column: string; type: string }>(getSchema(query.table), { refId: 'columns' });
+    if (!query.table) {
+      return [];
+    }
+    const [_, table] = query.table.split('.');
+    const schema = await this.runSql<{ column: string; type: string }>(getSchema(query.dataset, table), {
+      refId: 'columns',
+    });
     const result: SQLSelectableValue[] = [];
     for (let i = 0; i < schema.length; i++) {
       const column = schema.fields.column.values.get(i);
@@ -71,7 +78,7 @@ export class MssqlDatasource extends SqlDatasource {
       tables: (dataset?: string) => this.fetchTables(dataset),
       getSqlCompletionProvider: () => this.getSqlCompletionProvider(this.db),
       fields: async (query: SQLQuery) => {
-        if (!query?.dataset && !query?.table) {
+        if (!query?.dataset || !query?.table) {
           return [];
         }
         return this.fetchFields(query);
@@ -84,7 +91,7 @@ export class MssqlDatasource extends SqlDatasource {
       lookup: async (path?: string) => {
         if (!path) {
           const datasets = await this.fetchDatasets();
-          return datasets.map((d) => ({ name: d, completion: `${d}.${SCHEMA_NAME}.` }));
+          return datasets.map((d) => ({ name: d, completion: d }));
         } else {
           const parts = path.split('.').filter((s: string) => s);
           if (parts.length > 2) {
@@ -92,7 +99,7 @@ export class MssqlDatasource extends SqlDatasource {
           }
           if (parts.length === 1) {
             const tables = await this.fetchTables(parts[0]);
-            return tables.map((t) => ({ name: t, completion: `${t}` }));
+            return tables.map((t) => ({ name: t, completion: t }));
           } else {
             return [];
           }

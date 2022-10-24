@@ -18,7 +18,7 @@ func (hs *HTTPServer) GetPluginDashboards(c *models.ReqContext) response.Respons
 	pluginID := web.Params(c.Req)[":pluginId"]
 
 	listReq := &plugindashboards.ListPluginDashboardsRequest{
-		OrgID:    c.OrgId,
+		OrgID:    c.OrgID,
 		PluginID: pluginID,
 	}
 	list, err := hs.pluginDashboardService.ListPluginDashboards(c.Req.Context(), listReq)

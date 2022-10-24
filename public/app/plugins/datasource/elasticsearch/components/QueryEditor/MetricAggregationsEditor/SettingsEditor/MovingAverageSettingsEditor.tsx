@@ -4,7 +4,7 @@ import React, { useRef } from 'react';
 import { Input, InlineField, Select, InlineSwitch } from '@grafana/ui';
 
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
-import { movingAvgModelOptions } from '../../../../query_def';
+import { movingAvgModelOptions } from '../../../../queryDef';
 import { isEWMAMovingAverage, isHoltMovingAverage, isHoltWintersMovingAverage, MovingAverage } from '../aggregations';
 import { changeMetricSetting } from '../state/actions';
 

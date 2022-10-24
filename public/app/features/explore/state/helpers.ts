@@ -40,6 +40,7 @@ export const createDefaultInitialState = () => {
         },
         cache: [],
         richHistory: [],
+        logsVolumeEnabled: true,
       },
     },
   };

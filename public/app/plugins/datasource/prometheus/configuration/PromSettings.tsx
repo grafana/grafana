@@ -13,12 +13,13 @@ import {
   InlineFormLabel,
   LegacyForms,
   regexValidation,
+  Select,
 } from '@grafana/ui';
 
 import { PromOptions } from '../types';
 
 import { ExemplarsSettings } from './ExemplarsSettings';
-const { Select, Input, FormField } = LegacyForms;
+const { Input, FormField } = LegacyForms;
 
 const httpOptions = [
   { value: 'POST', label: 'POST' },
@@ -89,7 +90,7 @@ export const PromSettings = (props: Props) => {
             options={httpOptions}
             value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
             onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
-            width={7}
+            className="width-6"
           />
         </div>
       </div>

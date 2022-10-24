@@ -5,11 +5,13 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
 func (e *cloudWatchExecutor) buildMetricDataInput(startTime time.Time, endTime time.Time,
-	queries []*cloudWatchQuery) (*cloudwatch.GetMetricDataInput, error) {
+	queries []*models.CloudWatchQuery) (*cloudwatch.GetMetricDataInput, error) {
 	metricDataInput := &cloudwatch.GetMetricDataInput{
 		StartTime: aws.Time(startTime),
 		EndTime:   aws.Time(endTime),
@@ -27,7 +29,7 @@ func (e *cloudWatchExecutor) buildMetricDataInput(startTime time.Time, endTime t
 	for _, query := range queries {
 		metricDataQuery, err := e.buildMetricDataQuery(query)
 		if err != nil {
-			return nil, &queryError{err, query.RefId}
+			return nil, &models.QueryError{Err: err, RefID: query.RefId}
 		}
 		metricDataInput.MetricDataQueries = append(metricDataInput.MetricDataQueries, metricDataQuery)
 	}

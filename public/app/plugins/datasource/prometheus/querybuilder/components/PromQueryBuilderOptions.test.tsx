@@ -26,6 +26,22 @@ describe('PromQueryBuilderOptions', () => {
     });
   });
 
+  it('Can set query type to "Both" on render for PanelEditor', async () => {
+    setup({ instant: true, range: true });
+
+    screen.getByTitle('Click to edit options').click();
+
+    expect(screen.getByLabelText('Both')).toBeChecked();
+  });
+
+  it('Can set query type to "Both" on render for Explorer', async () => {
+    setup({ instant: true, range: true }, CoreApp.Explore);
+
+    screen.getByTitle('Click to edit options').click();
+
+    expect(screen.getByLabelText('Both')).toBeChecked();
+  });
+
   it('Legend format default to Auto', async () => {
     setup();
     expect(screen.getByText('Legend: Auto')).toBeInTheDocument();
@@ -85,8 +101,9 @@ describe('PromQueryBuilderOptions', () => {
   });
 });
 
-function setup(queryOverrides: Partial<PromQuery> = {}) {
+function setup(queryOverrides: Partial<PromQuery> = {}, app: CoreApp = CoreApp.PanelEditor) {
   const props = {
+    app,
     query: {
       ...getQueryWithDefaults({ refId: 'A' } as PromQuery, CoreApp.PanelEditor),
       ...queryOverrides,

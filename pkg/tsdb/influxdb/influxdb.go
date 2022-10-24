@@ -64,11 +64,15 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		if maxSeries == 0 {
 			maxSeries = 1000
 		}
+		version := jsonData.Version
+		if version == "" {
+			version = influxVersionInfluxQL
+		}
 		model := &models.DatasourceInfo{
 			HTTPClient:    client,
 			URL:           settings.URL,
 			Database:      settings.Database,
-			Version:       jsonData.Version,
+			Version:       version,
 			HTTPMode:      httpMode,
 			TimeInterval:  jsonData.TimeInterval,
 			DefaultBucket: jsonData.DefaultBucket,

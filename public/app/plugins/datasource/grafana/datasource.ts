@@ -14,6 +14,8 @@ import {
   MutableDataFrame,
   parseLiveChannelAddress,
   toDataFrame,
+  dataFrameFromJSON,
+  LoadingState,
 } from '@grafana/data';
 import {
   DataSourceWithBackend,
@@ -80,6 +82,15 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         );
       }
       if (target.hide) {
+        continue;
+      }
+      if (target.queryType === GrafanaQueryType.Snapshot) {
+        results.push(
+          of({
+            data: (target.snapshot ?? []).map((v) => dataFrameFromJSON(v)),
+            state: LoadingState.Done,
+          })
+        );
         continue;
       }
       if (target.queryType === GrafanaQueryType.LiveMeasurements) {
@@ -170,11 +181,11 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
     if (target.type === GrafanaAnnotationType.Dashboard) {
       // if no dashboard id yet return
-      if (!options.dashboard.id) {
+      if (!options.dashboard.uid) {
         return Promise.resolve({ data: [] });
       }
       // filter by dashboard id
-      params.dashboardId = options.dashboard.id;
+      params.dashboardUID = options.dashboard.uid;
       // remove tags filter if any
       delete params.tags;
     } else {
@@ -202,7 +213,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     const annotations = await getBackendSrv().get(
       '/api/annotations',
       params,
-      `grafana-data-source-annotations-${annotation.name}-${options.dashboard?.id}`
+      `grafana-data-source-annotations-${annotation.name}-${options.dashboard?.uid}`
     );
     return { data: [toDataFrame(annotations)] };
   }

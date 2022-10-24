@@ -21,7 +21,7 @@ title: RBAC HTTP API
 
 The API can be used to create, update, delete, get, and list roles.
 
-To check which basic or fixed roles have the required permissions, refer to [RBAC role definitions]({{< ref "../../administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions.md" >}}).
+To check which basic or fixed roles have the required permissions, refer to [RBAC role definitions]({{< ref "../../administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/" >}}).
 
 ## Get status
 

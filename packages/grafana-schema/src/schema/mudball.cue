@@ -21,7 +21,7 @@ GraphTransform:     "constant" | "negative-Y"                               @cue
 LineInterpolation:  "linear" | "smooth" | "stepBefore" | "stepAfter"        @cuetsy(kind="enum")
 
 // TODO docs
-ScaleDistribution:  "linear" | "log" | "ordinal"                            @cuetsy(kind="enum")
+ScaleDistribution:  "linear" | "log" | "ordinal" | "symlog"                 @cuetsy(kind="enum")
 
 // TODO docs
 GraphGradientMode:  "none" | "opacity" | "hue" | "scheme"                   @cuetsy(kind="enum")
@@ -83,6 +83,7 @@ PointsConfig: {
 ScaleDistributionConfig: {
 	type: ScaleDistribution
 	log?: number
+	linearThreshold?: number
 } @cuetsy(kind="interface")
 
 // TODO docs
@@ -122,7 +123,7 @@ HideableFieldConfig: {
 } @cuetsy(kind="interface")
 
 // TODO docs
-GraphTresholdsStyleMode: "off" | "line" | "area" | "line+area" | "series" @cuetsy(kind="enum",memberNames="Off|Line|Area|LineAndArea|Series")
+GraphTresholdsStyleMode: "off" | "line" | "dashed" | "area" | "line+area" | "dashed+area" | "series" @cuetsy(kind="enum",memberNames="Off|Line|Dashed|Area|LineAndArea|DashedAndArea|Series")
 
 // TODO docs
 GraphThresholdsStyleConfig: {
@@ -133,6 +134,7 @@ GraphThresholdsStyleConfig: {
 LegendPlacement: "bottom" | "right" @cuetsy(kind="type")
 
 // TODO docs
+// Note: "hidden" needs to remain as an option for plugins compatibility
 LegendDisplayMode: "list" | "table" | "hidden" @cuetsy(kind="enum")
 
 // TODO docs
@@ -175,7 +177,7 @@ OptionsWithLegend: {
 
 // TODO docs
 OptionsWithTimezones: {
-	timezones?: [...string]
+	timezone?: [...string]
 } @cuetsy(kind="interface")
 
 // TODO docs
@@ -239,11 +241,12 @@ GraphFieldConfig: {
 VizLegendOptions: {
 	displayMode:  LegendDisplayMode
 	placement:    LegendPlacement
+	showLegend: 	bool
 	asTable?:     bool
 	isVisible?:   bool
-  sortBy?:      string
-  sortDesc?:    bool
-  width?:       number
+	sortBy?:      string
+	sortDesc?:    bool
+	width?:       number
 	calcs:        [...string]
 } @cuetsy(kind="interface")
 

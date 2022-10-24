@@ -72,7 +72,7 @@ func NewSensuGoConfig(config *NotificationChannelConfig, decryptFunc GetDecrypte
 		Namespace:                 config.Settings.Get("namespace").MustString(),
 		Handler:                   config.Settings.Get("handler").MustString(),
 		APIKey:                    apikey,
-		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		Message:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
 	}, nil
 }
 
@@ -176,7 +176,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	if tmplErr != nil {
-		sn.log.Warn("failed to template sensugo message", "err", tmplErr.Error())
+		sn.log.Warn("failed to template sensugo message", "error", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsgType)
@@ -194,7 +194,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		},
 	}
 	if err := sn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		sn.log.Error("failed to send Sensu Go event", "err", err, "sensugo", sn.Name)
+		sn.log.Error("failed to send Sensu Go event", "error", err, "sensugo", sn.Name)
 		return false, err
 	}
 

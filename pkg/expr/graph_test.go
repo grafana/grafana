@@ -77,7 +77,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 					},
 				},
 			},
-			expectErrContains: "self referencing node",
+			expectErrContains: "expression 'A' cannot reference itself. Must be query or another expression",
 		},
 		{
 			name: "missing dependency will error",

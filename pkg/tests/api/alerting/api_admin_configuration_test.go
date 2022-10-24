@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -12,10 +12,10 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -35,7 +35,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, s, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_ADMIN),
+		DefaultOrgRole: string(org.RoleAdmin),
 		Login:          "grafana",
 		Password:       "password",
 	})
@@ -47,7 +47,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 
 	// create user under different organisation
 	createUser(t, s, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_ADMIN),
+		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin-42",
 		Login:          "admin-42",
 		OrgID:          orgID,
@@ -62,7 +62,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	{
 		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/v1/ngalert/admin_config", grafanaListedAddr)
 		resp := getRequest(t, alertsURL, http.StatusNotFound) // nolint
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		var res map[string]interface{}
 		err = json.Unmarshal(b, &res)
@@ -82,7 +82,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 
 		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/v1/ngalert/admin_config", grafanaListedAddr)
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusBadRequest) // nolint
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		var res map[string]interface{}
 		err = json.Unmarshal(b, &res)
@@ -103,7 +103,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 
 		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/v1/ngalert/admin_config", grafanaListedAddr)
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusBadRequest) // nolint
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		var res map[string]interface{}
 		err = json.Unmarshal(b, &res)
@@ -125,7 +125,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 
 		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/v1/ngalert/admin_config", grafanaListedAddr)
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusCreated) // nolint
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		var res map[string]interface{}
 		err = json.Unmarshal(b, &res)
@@ -137,7 +137,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	{
 		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/v1/ngalert/admin_config", grafanaListedAddr)
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.JSONEq(t, fmt.Sprintf("{\"alertmanagers\":[\"%s\",\"%s\"], \"alertmanagersChoice\": %q}\n", fakeAM1.URL(), fakeAM2.URL(), ngmodels.ExternalAlertmanagers), string(b))
 	}
@@ -147,7 +147,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/v1/ngalert/alertmanagers", grafanaListedAddr)
 		require.Eventually(t, func() bool {
 			resp := getRequest(t, alertsURL, http.StatusOK) // nolint
-			b, err := ioutil.ReadAll(resp.Body)
+			b, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 
 			var alertmanagers apimodels.GettableAlertmanagers
@@ -227,7 +227,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 
 		alertsURL := fmt.Sprintf("http://admin-42:admin-42@%s/api/v1/ngalert/admin_config", grafanaListedAddr)
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusCreated) // nolint
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		var res map[string]interface{}
 		err = json.Unmarshal(b, &res)
@@ -239,7 +239,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	{
 		alertsURL := fmt.Sprintf("http://admin-42:admin-42@%s/api/v1/ngalert/admin_config", grafanaListedAddr)
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.JSONEq(t, fmt.Sprintf("{\"alertmanagers\":[\"%s\"], \"alertmanagersChoice\": %q}\n", fakeAM3.URL(), ngmodels.AllAlertmanagers), string(b))
 	}
@@ -249,7 +249,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		alertsURL := fmt.Sprintf("http://admin-42:admin-42@%s/api/v1/ngalert/alertmanagers", grafanaListedAddr)
 		require.Eventually(t, func() bool {
 			resp := getRequest(t, alertsURL, http.StatusOK) // nolint
-			b, err := ioutil.ReadAll(resp.Body)
+			b, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 
 			var alertmanagers apimodels.GettableAlertmanagers

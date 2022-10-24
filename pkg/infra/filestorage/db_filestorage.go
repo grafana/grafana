@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -33,6 +33,11 @@ type file struct {
 	MimeType             string    `xorm:"mime_type"`
 }
 
+var (
+	fileColsNoContents = []string{"path", "path_hash", "parent_folder_path_hash", "etag", "cache_control", "content_disposition", "updated", "created", "size", "mime_type"}
+	allFileCols        = append([]string{"contents"}, fileColsNoContents...)
+)
+
 type fileMeta struct {
 	PathHash string `xorm:"path_hash"`
 	Key      string `xorm:"key"`
@@ -40,7 +45,7 @@ type fileMeta struct {
 }
 
 type dbFileStorage struct {
-	db  *sqlstore.SQLStore
+	db  db.DB
 	log log.Logger
 }
 
@@ -58,14 +63,14 @@ func createContentsHash(contents []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func NewDbStorage(log log.Logger, db *sqlstore.SQLStore, filter PathFilter, rootFolder string) FileStorage {
+func NewDbStorage(log log.Logger, db db.DB, filter PathFilter, rootFolder string) FileStorage {
 	return newWrapper(log, &dbFileStorage{
 		log: log,
 		db:  db,
 	}, filter, rootFolder)
 }
 
-func (s dbFileStorage) getProperties(sess *sqlstore.DBSession, pathHashes []string) (map[string]map[string]string, error) {
+func (s dbFileStorage) getProperties(sess *db.Session, pathHashes []string) (map[string]map[string]string, error) {
 	attributesByPath := make(map[string]map[string]string)
 
 	entities := make([]*fileMeta, 0)
@@ -83,16 +88,24 @@ func (s dbFileStorage) getProperties(sess *sqlstore.DBSession, pathHashes []stri
 	return attributesByPath, nil
 }
 
-func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) {
+func (s dbFileStorage) Get(ctx context.Context, path string, options *GetFileOptions) (*File, bool, error) {
 	var result *File
 
-	pathHash, err := createPathHash(filePath)
+	pathHash, err := createPathHash(path)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithDbSession(ctx, func(sess *db.Session) error {
 		table := &file{}
-		exists, err := sess.Table("file").Where("path_hash = ?", pathHash).Get(table)
+
+		sess.Table("file")
+		if options.WithContents {
+			sess.Cols(allFileCols...)
+		} else {
+			sess.Cols(fileColsNoContents...)
+		}
+
+		exists, err := sess.Where("path_hash = ?", pathHash).Get(table)
 		if !exists {
 			return nil
 		}
@@ -128,7 +141,7 @@ func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) 
 		return err
 	})
 
-	return result, err
+	return result, result != nil, err
 }
 
 func (s dbFileStorage) Delete(ctx context.Context, filePath string) error {
@@ -136,7 +149,7 @@ func (s dbFileStorage) Delete(ctx context.Context, filePath string) error {
 	if err != nil {
 		return err
 	}
-	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		deletedFilesCount, err := sess.Table("file").Where("path_hash = ?", pathHash).Delete(&file{})
 		if err != nil {
 			return err
@@ -165,7 +178,7 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 		return err
 	}
 
-	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		existing := &file{}
 		exists, err := sess.Table("file").Where("path_hash = ?", pathHash).Get(existing)
 		if err != nil {
@@ -219,7 +232,7 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 		}
 
 		if len(cmd.Properties) != 0 {
-			if err = upsertProperties(s.db.Dialect, sess, now, cmd, pathHash); err != nil {
+			if err = upsertProperties(s.db.GetDialect(), sess, now, cmd, pathHash); err != nil {
 				if rollbackErr := sess.Rollback(); rollbackErr != nil {
 					s.log.Error("failed while rolling back upsert", "path", cmd.Path)
 				}
@@ -233,7 +246,7 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 	return err
 }
 
-func upsertProperties(dialect migrator.Dialect, sess *sqlstore.DBSession, now time.Time, cmd *UpsertFileCommand, pathHash string) error {
+func upsertProperties(dialect migrator.Dialect, sess *db.Session, now time.Time, cmd *UpsertFileCommand, pathHash string) error {
 	fileMeta := &fileMeta{}
 	_, err := sess.Table("file_meta").Where("path_hash = ?", pathHash).Delete(fileMeta)
 	if err != nil {
@@ -248,7 +261,7 @@ func upsertProperties(dialect migrator.Dialect, sess *sqlstore.DBSession, now ti
 	return nil
 }
 
-func upsertProperty(dialect migrator.Dialect, sess *sqlstore.DBSession, now time.Time, pathHash string, key string, val string) error {
+func upsertProperty(dialect migrator.Dialect, sess *db.Session, now time.Time, pathHash string, key string, val string) error {
 	existing := &fileMeta{}
 
 	keyEqualsCondition := fmt.Sprintf("%s = ?", dialect.Quote("key"))
@@ -270,11 +283,11 @@ func upsertProperty(dialect migrator.Dialect, sess *sqlstore.DBSession, now time
 	return err
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListResponse, error) {
 	var resp *ListResponse
 
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.db.WithDbSession(ctx, func(sess *db.Session) error {
 		cursor := ""
 		if paging != nil && paging.After != "" {
 			pagingFolderPathHash, err := createPathHash(paging.After + Delimiter)
@@ -337,6 +350,12 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 
 		if cursor != "" {
 			sess.Where("path > ?", cursor)
+		}
+
+		if options.WithContents {
+			sess.Cols(allFileCols...)
+		} else {
+			sess.Cols(fileColsNoContents...)
 		}
 
 		if err := sess.Find(&foundFiles); err != nil {
@@ -418,7 +437,7 @@ func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 	now := time.Now()
 	precedingFolders := precedingFolders(path)
 
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var insertErr error
 		sess.MustLogSQL(true)
 		previousFolder := Delimiter
@@ -496,7 +515,7 @@ func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string, opti
 		return s.Delete(ctx, lowerFolderPath)
 	}
 
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var rawHashes []interface{}
 
 		// xorm does not support `.Delete()` with `.Join()`, so we first have to retrieve all path_hashes and then use them to filter `file_meta` table

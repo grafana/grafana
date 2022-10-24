@@ -7,13 +7,13 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func ProvideService(sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister, ds datasources.DataSourceService, ac accesscontrol.AccessControl, bus bus.Bus) *CorrelationsService {
+func ProvideService(sqlStore db.DB, routeRegister routing.RouteRegister, ds datasources.DataSourceService, ac accesscontrol.AccessControl, bus bus.Bus) *CorrelationsService {
 	s := &CorrelationsService{
 		SQLStore:          sqlStore,
 		RouteRegister:     routeRegister,
@@ -37,7 +37,7 @@ type Service interface {
 }
 
 type CorrelationsService struct {
-	SQLStore          *sqlstore.SQLStore
+	SQLStore          db.DB
 	RouteRegister     routing.RouteRegister
 	log               log.Logger
 	DataSourceService datasources.DataSourceService
@@ -50,6 +50,22 @@ func (s CorrelationsService) CreateCorrelation(ctx context.Context, cmd CreateCo
 
 func (s CorrelationsService) DeleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error {
 	return s.deleteCorrelation(ctx, cmd)
+}
+
+func (s CorrelationsService) UpdateCorrelation(ctx context.Context, cmd UpdateCorrelationCommand) (Correlation, error) {
+	return s.updateCorrelation(ctx, cmd)
+}
+
+func (s CorrelationsService) GetCorrelation(ctx context.Context, cmd GetCorrelationQuery) (Correlation, error) {
+	return s.getCorrelation(ctx, cmd)
+}
+
+func (s CorrelationsService) GetCorrelationsBySourceUID(ctx context.Context, cmd GetCorrelationsBySourceUIDQuery) ([]Correlation, error) {
+	return s.getCorrelationsBySourceUID(ctx, cmd)
+}
+
+func (s CorrelationsService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) ([]Correlation, error) {
+	return s.getCorrelations(ctx, cmd)
 }
 
 func (s CorrelationsService) DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {

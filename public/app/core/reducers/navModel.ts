@@ -1,37 +1,47 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
+import { cloneDeep } from 'lodash';
 
 import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 
+export const HOME_NAV_ID = 'home';
+
 export function buildInitialState(): NavIndex {
   const navIndex: NavIndex = {};
-  const rootNodes = config.bootData.navTree as NavModelItem[];
-  buildNavIndex(navIndex, rootNodes);
+  const rootNodes = cloneDeep(config.bootData.navTree);
+  const homeNav = rootNodes.find((node) => node.id === HOME_NAV_ID);
+
+  // set home as parent for the rootNodes
+  buildNavIndex(navIndex, rootNodes, homeNav);
+
+  // remove circular parent reference on the home node
+  if (navIndex[HOME_NAV_ID]) {
+    delete navIndex[HOME_NAV_ID].parentItem;
+  }
+
   return navIndex;
 }
 
 function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?: NavModelItem) {
   for (const node of children) {
-    const newNode = {
-      ...node,
-      parentItem: parentItem,
-    };
+    node.parentItem = parentItem;
 
-    navIndex[node.id!] = newNode;
+    navIndex[node.id!] = node;
 
     if (node.children) {
-      buildNavIndex(navIndex, node.children, newNode);
+      buildNavIndex(navIndex, node.children, node);
     }
   }
 
   navIndex['not-found'] = { ...buildWarningNav('Page not found', '404 Error').node };
+  navIndex['error'] = { ...buildWarningNav('Page error', 'An unexpected error').node };
 }
 
 function buildWarningNav(text: string, subTitle?: string): NavModel {
   const node = {
     text,
     subTitle,
-    icon: 'exclamation-triangle',
+    icon: 'exclamation-triangle' as const,
   };
   return {
     node: node,
@@ -79,6 +89,7 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
       ...state,
       cfg: { ...state.cfg, subTitle },
       datasources: getItemWithNewSubTitle(state.datasources, subTitle),
+      correlations: getItemWithNewSubTitle(state.correlations, subTitle),
       users: getItemWithNewSubTitle(state.users, subTitle),
       teams: getItemWithNewSubTitle(state.teams, subTitle),
       plugins: getItemWithNewSubTitle(state.plugins, subTitle),

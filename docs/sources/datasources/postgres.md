@@ -19,26 +19,26 @@ Grafana ships with a built-in PostgreSQL data source plugin that allows you to q
 
 To access PostgreSQL settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the PostgreSQL data source.
 
-| Name                      | Description                                                                                                                                                                                                                             |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`                    | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                   |
-| `Default`                 | Default data source means that it will be pre-selected for new panels.                                                                                                                                                                  |
-| `Host`                    | The IP address/hostname and optional port of your PostgreSQL instance. _Do not_ include the database name. The connection string for connecting to Postgres will not be correct and it may cause errors.                                |
-| `Database`                | Name of your PostgreSQL database.                                                                                                                                                                                                       |
-| `User`                    | Database user's login/username                                                                                                                                                                                                          |
-| `Password`                | Database user's password                                                                                                                                                                                                                |
-| `SSL Mode`                | Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. When SSL Mode is disabled, SSL Method and Auth Details would not be visible.                                                |
-| `SSL Auth Details Method` | Determines whether the SSL Auth details will be configured as a file path or file content. Grafana v7.5+                                                                                                                                |
-| `SSL Auth Details Value`  | File path or file content of SSL root certificate, client certificate and client key                                                                                                                                                    |
-| `Max open`                | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).                                                                                                                                            |
-| `Max idle`                | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).                                                                                                                                             |
-| `Max lifetime`            | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours (Grafana v5.4+).                                                                                                                              |
-| `Version`                 | Determines which functions are available in the query builder (only available in Grafana 5.3+).                                                                                                                                         |
-| `TimescaleDB`             | A time-series database built as a PostgreSQL extension. When enabled, Grafana uses `time_bucket` in the `$__timeGroup` macro to display TimescaleDB specific aggregate functions in the query builder (only available in Grafana 5.3+). |
+| Name                      | Description                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Name`                    | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                                                                                                                                                                                   |
+| `Default`                 | Default data source means that it will be pre-selected for new panels.                                                                                                                                                                                                                                                                                                                                                  |
+| `Host`                    | The IP address/hostname and optional port of your PostgreSQL instance. _Do not_ include the database name. The connection string for connecting to Postgres will not be correct and it may cause errors.                                                                                                                                                                                                                |
+| `Database`                | Name of your PostgreSQL database.                                                                                                                                                                                                                                                                                                                                                                                       |
+| `User`                    | Database user's login/username                                                                                                                                                                                                                                                                                                                                                                                          |
+| `Password`                | Database user's password                                                                                                                                                                                                                                                                                                                                                                                                |
+| `SSL Mode`                | Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. When SSL Mode is disabled, SSL Method and Auth Details would not be visible.                                                                                                                                                                                                                                |
+| `SSL Auth Details Method` | Determines whether the SSL Auth details will be configured as a file path or file content. Grafana v7.5+                                                                                                                                                                                                                                                                                                                |
+| `SSL Auth Details Value`  | File path or file content of SSL root certificate, client certificate and client key                                                                                                                                                                                                                                                                                                                                    |
+| `Max open`                | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                            |
+| `Max idle`                | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                             |
+| `Max lifetime`            | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours (Grafana v5.4+).                                                                                                                                                                                                                                                                                                              |
+| `Version`                 | Determines which functions are available in the query builder (only available in Grafana 5.3+).                                                                                                                                                                                                                                                                                                                         |
+| `TimescaleDB`             | A time-series database built as a PostgreSQL extension. When enabled, Grafana uses `time_bucket` in the `$__timeGroup` macro to display TimescaleDB specific aggregate functions in the query builder (only available in Grafana 5.3+). For more information, see [TimescaleDB documentation](https://docs.timescale.com/timescaledb/latest/tutorials/grafana/grafana-timescalecloud/#connect-timescaledb-and-grafana). |
 
 ### Min time interval
 
-A lower limit for the [$__interval]({{< relref "../variables/variable-types/global-variables/#__interval" >}}) and [$__interval_ms]({{< relref "../variables/variable-types/global-variables/#__interval_ms" >}}) variables.
+A lower limit for the [$__interval]({{< relref "../dashboards/variables/add-template-variables/#__interval" >}}) and [$__interval_ms]({{< relref "../dashboards/variables/add-template-variables/#__interval_ms" >}}) variables.
 Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
@@ -71,69 +71,51 @@ Example:
 
 Make sure the user does not get any unwanted privileges from the public role.
 
-## Query editor
+## Query builder
 
-{{< figure src="/static/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/static/img/docs/v53/postgres_query.gif" >}}
+{{< figure src="/static/img/docs/v92/postgresql_query_builder.png" class="docs-image--no-shadow" >}}
 
-You find the PostgreSQL query editor in the metrics tab in Graph or Singlestat panel's edit mode. You enter edit mode by clicking the
-panel title, then edit.
+The PostgreSQL query builder is available when editing a panel using a PostgreSQL data source. The built query can be run by pressing the `Run query` button in the top right corner of the editor.
 
-The query editor has a link named `Generated SQL` that shows up after a query has been executed, while in panel edit mode. Click on it and it will expand and show the raw interpolated SQL string that was executed.
+### Format
 
-### Select table, time column and metric column (FROM)
+The response from PostgreSQL can be formatted as either a table or as a time series. To use the time series format one of the columns must be named `time`.
 
-When you enter edit mode for the first time or add a new query Grafana will try to prefill the query builder with the first table that has a timestamp column and a numeric column.
+### Dataset and Table selection
 
-In the FROM field, Grafana will suggest tables that are in the `search_path` of the database user. To select a table or view not in your `search_path`
-you can manually enter a fully qualified name (schema.table) like `public.metrics`.
+In the dataset dropdown, choose the PostgreSQL database to query. The dropdown is be populated with the databases that the user has access to.
+When the dataset is selected, the table dropdown is populated with the tables that are available.
 
-The Time column field refers to the name of the column holding your time values. Selecting a value for the Metric column field is optional. If a value is selected, the Metric column field will be used as the series name.
+### Columns and Aggregation functions (SELECT)
 
-The metric column suggestions will only contain columns with a text datatype (char,varchar,text).
-If you want to use a column with a different datatype as metric column you may enter the column name with a cast: `ip::text`.
-You may also enter arbitrary SQL expressions in the metric column field that evaluate to a text datatype like
-`hostname || ' ' || container_name`.
+Using the dropdown, select a column to include in the data. You can also specify an optional aggregation function.
 
-### Columns, window, and aggregation functions (SELECT)
-
-In the `SELECT` row you can specify what columns and functions you want to use.
-In the column field you may write arbitrary expressions instead of a column name like `column1 * column2 / column3`.
-
-The available functions in the query editor depend on the PostgreSQL version you selected when configuring the data source.
-If you use aggregate functions you need to group your resultset. The editor will automatically add a `GROUP BY time` if you add an aggregate function.
-
-The editor tries to simplify and unify this part of the query. For example:<br>
-![](/static/img/docs/v53/postgres_select_editor.png)<br>
-
-The above will generate the following PostgreSQL `SELECT` clause:
-
-```sql
-avg(tx_bytes) OVER (ORDER BY "time" ROWS 5 PRECEDING) AS "tx_bytes"
-```
-
-You may add further value columns by clicking the plus button and selecting `Column` from the menu. Multiple value columns will be plotted as separate series in the graph panel.
+Add further value columns by clicking the plus button and another column dropdown appears.
 
 ### Filter data (WHERE)
 
-To add a filter click the plus icon to the right of the `WHERE` condition. You can remove filters by clicking on
-the filter and selecting `Remove`. A filter for the current selected timerange is automatically added to new queries.
+To add a filter, flip the switch at the top of the editor.
+Using the first dropdown, select if all the filters need to match (AND) or if only one of the filters needs to match (OR).
 
-### Group by
+To add more columns to filter on use the plus button.
 
-To group by time or any other columns click the plus icon at the end of the GROUP BY row. The suggestion dropdown will only show text columns of your currently selected table but you may manually enter any column.
-You can remove the group by clicking on the item and then selecting `Remove`.
+### Group By
 
-If you add any grouping, all selected columns need to have an aggregate function applied. The query builder will automatically add aggregate functions to all columns without aggregate functions when you add groupings.
+To group the results by column, flip the group switch at the top of the editor. You can then choose which column to group the results by. The group by clause can be removed by pressing the X button.
 
-#### Gap filling
+### Preview
 
-Grafana can fill in missing values when you group by time. The time function accepts two arguments. The first argument is the time window that you would like to group by, and the second argument is the value you want Grafana to fill missing items with.
+By flipping the preview switch at the top of the editor, you can get a preview of the SQL query generated by the query builder.
 
-### Text editor mode (RAW)
+## Code editor
 
-You can switch to the raw query editor mode by clicking the hamburger icon and selecting `Switch editor mode` or by clicking `Edit SQL` below the query.
+{{< figure src="/static/img/docs/v92/sql_code_editor.png" class="docs-image--no-shadow" >}}
 
-> If you use the raw query editor, be sure your query at minimum has `ORDER BY time` and a filter on the returned time range.
+To make advanced queries, switch to the code editor by clicking `code` in the top right corner of the editor. The code editor support autocompletion of tables, columns, SQL keywords, standard sql functions, Grafana template variables and Grafana macros. Columns cannot be completed before a table has been specified.
+
+You can expand the code editor by pressing the `chevron` pointing downwards in the lower right corner of the code editor.
+
+`CTRL/CMD + Return` works as a keyboard shortcut to run the query.
 
 ## Macros
 
@@ -196,7 +178,7 @@ A time series query result is returned in a [wide data frame format]({{< relref 
 
 > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
-To optionally customize the default series name formatting, refer to [Standard options definitions]({{< relref "../panels/configure-standard-options/#display-name" >}}).
+To optionally customize the default series name formatting, refer to [Standard options definitions]({{< relref "../panels-visualizations/configure-standard-options/#display-name" >}}).
 
 **Example with `metric` column:**
 
@@ -238,7 +220,7 @@ GROUP BY time, hostname
 ORDER BY time
 ```
 
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions]({{< relref "../panels/configure-standard-options/#display-name" >}}) display value of `${__field.labels.hostname}`.
+Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions]({{< relref "../panels-visualizations/configure-standard-options/#display-name" >}}) display value of `${__field.labels.hostname}`.
 
 Data frame result:
 
@@ -283,7 +265,7 @@ Data frame result:
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-Refer to [Templates and variables]({{< relref "../variables/" >}}) for an introduction to the templating feature and the different types of template variables.
+Refer to [Templates and variables]({{< relref "../dashboards/variables" >}}) for an introduction to the templating feature and the different types of template variables.
 
 ### Query variable
 
@@ -376,11 +358,11 @@ Grafana automatically creates a quoted, comma-separated string for multi-value v
 
 `${servers:csv}`
 
-Read more about variable formatting options in the [Variables]({{< relref "../variables/#advanced-formatting-options" >}}) documentation.
+Read more about variable formatting options in the [Variables]({{< relref "../dashboards/variables/variable-syntax/#advanced-variable-format-options" >}}) documentation.
 
 ## Annotations
 
-[Annotations]({{< relref "../dashboards/annotations/" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+[Annotations]({{< relref "../dashboards/build-dashboards/annotate-visualizations" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
 
 **Example query using time column with epoch values:**
 

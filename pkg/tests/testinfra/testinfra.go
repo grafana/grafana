@@ -18,9 +18,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/extensions"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/fs"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -79,16 +80,12 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 func SetUpDatabase(t *testing.T, grafDir string) *sqlstore.SQLStore {
 	t.Helper()
 
-	sqlStore := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{
 		EnsureDefaultOrgAndUser: true,
 	})
-	// We need the main org, since it's used for anonymous access
-	org, err := sqlStore.GetOrgByName(sqlstore.MainOrgName)
-	require.NoError(t, err)
-	require.NotNil(t, org)
 
 	// Make sure changes are synced with other goroutines
-	err = sqlStore.Sync()
+	err := sqlStore.Sync()
 	require.NoError(t, err)
 
 	return sqlStore
@@ -189,6 +186,8 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = serverSect.NewKey("port", "0")
 	require.NoError(t, err)
+	_, err = serverSect.NewKey("static_root_path", publicDir)
+	require.NoError(t, err)
 
 	anonSect, err := cfg.NewSection("auth.anonymous")
 	require.NoError(t, err)
@@ -200,6 +199,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	_, err = alertingSect.NewKey("notification_timeout_seconds", "1")
 	require.NoError(t, err)
 	_, err = alertingSect.NewKey("max_attempts", "3")
+	require.NoError(t, err)
+
+	rbacSect, err := cfg.NewSection("rbac")
+	require.NoError(t, err)
+	_, err = rbacSect.NewKey("permission_cache", "false")
 	require.NoError(t, err)
 
 	getOrCreateSection := func(name string) (*ini.Section, error) {
@@ -304,6 +308,12 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = logSection.NewKey("enabled", "false")
 			require.NoError(t, err)
 		}
+		if o.GRPCServerAddress != "" {
+			logSection, err := getOrCreateSection("grpc_server")
+			require.NoError(t, err)
+			_, err = logSection.NewKey("address", o.GRPCServerAddress)
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -321,7 +331,7 @@ type GrafanaOpts struct {
 	EnableFeatureToggles                  []string
 	NGAlertAdminConfigPollInterval        time.Duration
 	NGAlertAlertmanagerConfigPollInterval time.Duration
-	AnonymousUserRole                     models.RoleType
+	AnonymousUserRole                     org.RoleType
 	EnableQuota                           bool
 	DashboardOrgQuota                     *int64
 	DisableAnonymous                      bool
@@ -334,4 +344,5 @@ type GrafanaOpts struct {
 	EnableUnifiedAlerting                 bool
 	UnifiedAlertingDisabledOrgs           []int64
 	EnableLog                             bool
+	GRPCServerAddress                     string
 }

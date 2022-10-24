@@ -8,7 +8,6 @@ import (
 
 type DashboardMeta struct {
 	IsStarred                  bool                  `json:"isStarred,omitempty"`
-	IsHome                     bool                  `json:"isHome,omitempty"`
 	IsSnapshot                 bool                  `json:"isSnapshot,omitempty"`
 	Type                       string                `json:"type,omitempty"`
 	CanSave                    bool                  `json:"canSave"`
@@ -34,6 +33,7 @@ type DashboardMeta struct {
 	ProvisionedExternalId      string                `json:"provisionedExternalId"`
 	AnnotationsPermissions     *AnnotationPermission `json:"annotationsPermissions"`
 	PublicDashboardAccessToken string                `json:"publicDashboardAccessToken"`
+	PublicDashboardUID         string                `json:"publicDashboardUid"`
 	PublicDashboardEnabled     bool                  `json:"publicDashboardEnabled"`
 }
 type AnnotationPermission struct {

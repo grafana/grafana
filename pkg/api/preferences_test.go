@@ -2,10 +2,12 @@ package api
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -33,7 +35,9 @@ var (
 )
 
 func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	dashSvc := dashboards.NewFakeDashboardService(t)
 	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
 		q := args.Get(1).(*models.GetDashboardQuery)
@@ -60,7 +64,7 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 		response := callAPI(sc.server, http.MethodGet, getOrgPreferencesURL, nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 		var resp map[string]interface{}
-		b, err := ioutil.ReadAll(response.Body)
+		b, err := io.ReadAll(response.Body)
 		assert.NoError(t, err)
 		assert.NoError(t, json.Unmarshal(b, &resp))
 		assert.Equal(t, "home", resp["homeDashboardUID"])
@@ -68,7 +72,7 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 }
 
 func TestAPIEndpoint_GetCurrentOrgPreferences_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	prefService := preftest.NewPreferenceServiceFake()
@@ -79,24 +83,26 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_AccessControl(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("AccessControl allows getting org preferences with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsPreferencesRead}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsPreferencesRead}}, sc.initCtx.OrgID)
 		response := callAPI(sc.server, http.MethodGet, getOrgPreferencesURL, nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 	t.Run("AccessControl prevents getting org preferences with correct permissions in another org", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsPreferencesRead}}, 2)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsPreferencesRead}}, 2)
 		response := callAPI(sc.server, http.MethodGet, getOrgPreferencesURL, nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 	t.Run("AccessControl prevents getting org preferences with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgID)
 		response := callAPI(sc.server, http.MethodGet, getOrgPreferencesURL, nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 }
 
 func TestAPIEndpoint_PutCurrentOrgPreferences_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
@@ -117,7 +123,7 @@ func TestAPIEndpoint_PutCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 }
 
 func TestAPIEndpoint_PutCurrentOrgPreferences_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
@@ -125,28 +131,30 @@ func TestAPIEndpoint_PutCurrentOrgPreferences_AccessControl(t *testing.T) {
 
 	input := strings.NewReader(testUpdateOrgPreferencesCmd)
 	t.Run("AccessControl allows updating org preferences with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsPreferencesWrite}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsPreferencesWrite}}, sc.initCtx.OrgID)
 		response := callAPI(sc.server, http.MethodPut, putOrgPreferencesURL, input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
 	input = strings.NewReader(testUpdateOrgPreferencesCmd)
 	t.Run("AccessControl prevents updating org preferences with correct permissions in another org", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsPreferencesWrite}}, 2)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsPreferencesWrite}}, 2)
 		response := callAPI(sc.server, http.MethodPut, putOrgPreferencesURL, input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
 	input = strings.NewReader(testUpdateOrgPreferencesCmd)
 	t.Run("AccessControl prevents updating org preferences with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgID)
 		response := callAPI(sc.server, http.MethodPut, putOrgPreferencesURL, input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 }
 
 func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
@@ -177,7 +185,9 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 }
 
 func TestAPIEndpoint_PatchOrgPreferences(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)

@@ -4,14 +4,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type ActiveLast30DaysFilter struct {
 	active bool
 }
 
-func NewActiveLast30DaysFilter(params []string) (models.Filter, error) {
+func NewActiveLast30DaysFilter(params []string) (user.Filter, error) {
 	active, err := strconv.ParseBool(params[0])
 	if err != nil {
 		return nil, err
@@ -19,21 +19,21 @@ func NewActiveLast30DaysFilter(params []string) (models.Filter, error) {
 	return &ActiveLast30DaysFilter{active: active}, nil
 }
 
-func (a *ActiveLast30DaysFilter) WhereCondition() *models.WhereCondition {
+func (a *ActiveLast30DaysFilter) WhereCondition() *user.WhereCondition {
 	if !a.active {
 		return nil
 	}
-	return &models.WhereCondition{
+	return &user.WhereCondition{
 		Condition: "last_seen_at > ?",
 		Params:    a.whereParams(),
 	}
 }
 
-func (a *ActiveLast30DaysFilter) JoinCondition() *models.JoinCondition {
+func (a *ActiveLast30DaysFilter) JoinCondition() *user.JoinCondition {
 	return nil
 }
 
-func (a *ActiveLast30DaysFilter) InCondition() *models.InCondition {
+func (a *ActiveLast30DaysFilter) InCondition() *user.InCondition {
 	return nil
 }
 

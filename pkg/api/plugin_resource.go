@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"sync"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -118,10 +118,18 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 			hs.log.Warn("failed to unpack JSONData in datasource instance settings", "err", err)
 		}
 	}
-	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies)
+
+	list := contexthandler.AuthHTTPHeaderListFromContext(req.Context())
+	if list != nil {
+		for _, name := range list.Items {
+			req.Header.Del(name)
+		}
+	}
+
+	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies, []string{hs.Cfg.LoginCookieName})
 	proxyutil.PrepareProxyRequest(req)
 
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read request body: %w", err)
 	}

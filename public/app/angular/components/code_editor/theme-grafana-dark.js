@@ -111,7 +111,7 @@ ace.define(
   background: url(data:image/png;base64,ivborw0kggoaaaansuheugaaaaeaaaaccayaaaczgbynaaaaekleqvqimwpq0fd0zxbzd/wpaajvaoxesgneaaaaaelftksuqmcc) right repeat-y\
   }';
 
-    var dom = acequire('../lib/dom');
+    const dom = acequire('../lib/dom');
     dom.importCssString(exports.cssText, exports.cssClass);
   }
 );

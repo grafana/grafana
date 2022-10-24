@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -86,15 +86,13 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		return
 	}
 
-	traceID := tracing.TraceIDFromContext(proxy.ctx.Req.Context(), false)
 	proxyErrorLogger := logger.New(
-		"userId", proxy.ctx.UserId,
-		"orgId", proxy.ctx.OrgId,
+		"userId", proxy.ctx.UserID,
+		"orgId", proxy.ctx.OrgID,
 		"uname", proxy.ctx.Login,
 		"path", proxy.ctx.Req.URL.Path,
 		"remote_addr", proxy.ctx.RemoteAddr(),
 		"referer", proxy.ctx.Req.Referer(),
-		"traceID", traceID,
 	)
 
 	transport, err := proxy.dataSourcesService.GetHTTPTransport(proxy.ctx.Req.Context(), proxy.ds, proxy.clientProvider)
@@ -106,19 +104,20 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	modifyResponse := func(resp *http.Response) error {
 		if resp.StatusCode == 401 {
 			// The data source rejected the request as unauthorized, convert to 400 (bad request)
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				return fmt.Errorf("failed to read data source response body: %w", err)
 			}
 			_ = resp.Body.Close()
 
-			proxyErrorLogger.Info("Authentication to data source failed", "body", string(body), "statusCode",
+			ctxLogger := proxyErrorLogger.FromContext(resp.Request.Context())
+			ctxLogger.Info("Authentication to data source failed", "body", string(body), "statusCode",
 				resp.StatusCode)
 			msg := "Authentication to data source failed"
 			*resp = http.Response{
 				StatusCode:    400,
 				Status:        "Bad Request",
-				Body:          ioutil.NopCloser(strings.NewReader(msg)),
+				Body:          io.NopCloser(strings.NewReader(msg)),
 				ContentLength: int64(len(msg)),
 				Header:        http.Header{},
 			}
@@ -142,7 +141,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	span.SetAttributes("datasource_name", proxy.ds.Name, attribute.Key("datasource_name").String(proxy.ds.Name))
 	span.SetAttributes("datasource_type", proxy.ds.Type, attribute.Key("datasource_type").String(proxy.ds.Type))
 	span.SetAttributes("user", proxy.ctx.SignedInUser.Login, attribute.Key("user").String(proxy.ctx.SignedInUser.Login))
-	span.SetAttributes("org_id", proxy.ctx.SignedInUser.OrgId, attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgId))
+	span.SetAttributes("org_id", proxy.ctx.SignedInUser.OrgID, attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID))
 
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
 	proxy.addTraceFromHeaderValue(span, "X-Dashboard-Id", "dashboard_id")
@@ -167,11 +166,13 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	reqQueryVals := req.URL.Query()
 
+	ctxLogger := logger.FromContext(req.Context())
+
 	switch proxy.ds.Type {
 	case datasources.DS_INFLUXDB_08:
 		password, err := proxy.dataSourcesService.DecryptedPassword(req.Context(), proxy.ds)
 		if err != nil {
-			logger.Error("Error interpolating proxy url", "error", err)
+			ctxLogger.Error("Error interpolating proxy url", "error", err)
 			return
 		}
 
@@ -182,7 +183,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	case datasources.DS_INFLUXDB:
 		password, err := proxy.dataSourcesService.DecryptedPassword(req.Context(), proxy.ds)
 		if err != nil {
-			logger.Error("Error interpolating proxy url", "error", err)
+			ctxLogger.Error("Error interpolating proxy url", "error", err)
 			return
 		}
 		req.URL.RawPath = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
@@ -199,7 +200,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	unescapedPath, err := url.PathUnescape(req.URL.RawPath)
 	if err != nil {
-		logger.Error("Failed to unescape raw path", "rawPath", req.URL.RawPath, "error", err)
+		ctxLogger.Error("Failed to unescape raw path", "rawPath", req.URL.RawPath, "error", err)
 		return
 	}
 
@@ -208,7 +209,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	if proxy.ds.BasicAuth {
 		password, err := proxy.dataSourcesService.DecryptedBasicAuthPassword(req.Context(), proxy.ds)
 		if err != nil {
-			logger.Error("Error interpolating proxy url", "error", err)
+			ctxLogger.Error("Error interpolating proxy url", "error", err)
 			return
 		}
 		req.Header.Set("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser,
@@ -223,14 +224,14 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	applyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
 
-	proxyutil.ClearCookieHeader(req, proxy.ds.AllowedCookies())
+	proxyutil.ClearCookieHeader(req, proxy.ds.AllowedCookies(), []string{proxy.cfg.LoginCookieName})
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 	jsonData := make(map[string]interface{})
 	if proxy.ds.JsonData != nil {
 		jsonData, err = proxy.ds.JsonData.Map()
 		if err != nil {
-			logger.Error("Failed to get json data as map", "jsonData", proxy.ds.JsonData, "error", err)
+			ctxLogger.Error("Failed to get json data as map", "jsonData", proxy.ds.JsonData, "error", err)
 			return
 		}
 	}
@@ -238,7 +239,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	if proxy.matchedRoute != nil {
 		decryptedValues, err := proxy.dataSourcesService.DecryptedValues(req.Context(), proxy.ds)
 		if err != nil {
-			logger.Error("Error interpolating proxy url", "error", err)
+			ctxLogger.Error("Error interpolating proxy url", "error", err)
 			return
 		}
 
@@ -324,16 +325,17 @@ func (proxy *DataSourceProxy) logRequest() {
 
 	var body string
 	if proxy.ctx.Req.Body != nil {
-		buffer, err := ioutil.ReadAll(proxy.ctx.Req.Body)
+		buffer, err := io.ReadAll(proxy.ctx.Req.Body)
 		if err == nil {
-			proxy.ctx.Req.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
+			proxy.ctx.Req.Body = io.NopCloser(bytes.NewBuffer(buffer))
 			body = string(buffer)
 		}
 	}
 
-	logger.Info("Proxying incoming request",
-		"userid", proxy.ctx.UserId,
-		"orgid", proxy.ctx.OrgId,
+	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
+	ctxLogger.Info("Proxying incoming request",
+		"userid", proxy.ctx.UserID,
+		"orgid", proxy.ctx.OrgID,
 		"username", proxy.ctx.Login,
 		"datasource", proxy.ds.Type,
 		"uri", proxy.ctx.Req.RequestURI,

@@ -15,7 +15,7 @@ export function EditDataSourcePage(props: Props) {
   const nav = useDataSourceSettingsNav(uid, pageId);
 
   return (
-    <Page navModel={nav}>
+    <Page navId="datasources" pageNav={nav.main}>
       <Page.Contents>
         <EditDataSource uid={uid} pageId={pageId} />
       </Page.Contents>

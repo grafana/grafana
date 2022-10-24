@@ -41,7 +41,7 @@ Grafana ships with a built-in MySQL data source plugin that allows you to query 
 
 ### Min time interval
 
-A lower limit for the [$__interval]({{< relref "../variables/variable-types/global-variables/#__interval" >}}) and [$__interval_ms]({{< relref "../variables/variable-types/global-variables/#__interval_ms" >}}) variables.
+A lower limit for the [$__interval]({{< relref "../dashboards/variables/add-template-variables/#__interval" >}}) and [$__interval_ms]({{< relref "../dashboards/variables/add-template-variables/#__interval_ms" >}}) variables.
 Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
@@ -73,60 +73,51 @@ Example:
 
 You can use wildcards (`*`) in place of database or table if you want to grant access to more databases and tables.
 
-## Query Editor
+## Query builder
 
-> Only available in Grafana v5.4+.
+{{< figure src="/static/img/docs/v92/mysql_query_builder.png" class="docs-image--no-shadow" >}}
 
-{{< figure src="/static/img/docs/v54/mysql_query_still.png" class="docs-image--no-shadow" animated-gif="/static/img/docs/v54/mysql_query.gif" >}}
+The MySQL query builder is available when editing a panel using a MySQL data source. The built query can be run by pressing the `Run query` button in the top right corner of the editor.
 
-You find the MySQL query editor in the metrics tab in a panel's edit mode. You enter edit mode by clicking the
-panel title, then edit.
+### Format
 
-The query editor has a link named `Generated SQL` that shows up after a query has been executed, while in panel edit mode. Click on it and it will expand and show the raw interpolated SQL string that was executed.
+The response from MySQL can be formatted as either a table or as a time series. To use the time series format one of the columns must be named `time`.
 
-### Select table, time column and metric column (FROM)
+### Dataset and Table selection
 
-When you enter edit mode for the first time or add a new query Grafana will try to prefill the query builder with the first table that has a timestamp column and a numeric column.
-
-In the FROM field, Grafana will suggest tables that are in the configured database. To select a table or view in another database that your database user has access to you can manually enter a fully qualified name (database.table) like `otherDb.metrics`.
-
-The Time column field refers to the name of the column holding your time values. Selecting a value for the Metric column field is optional. If a value is selected, the Metric column field will be used as the series name.
-
-The metric column suggestions will only contain columns with a text datatype (text, tinytext, mediumtext, longtext, varchar, char).
-If you want to use a column with a different datatype as metric column you may enter the column name with a cast: `CAST(numericColumn as CHAR)`.
-You may also enter arbitrary SQL expressions in the metric column field that evaluate to a text datatype like
-`CONCAT(column1, " ", CAST(numericColumn as CHAR))`.
+In the dataset dropdown, choose the MySQL database to query. The dropdown is be populated with the databases that the user has access to.
+When the dataset is selected, the table dropdown is populated with the tables that are available.
 
 ### Columns and Aggregation functions (SELECT)
 
-In the `SELECT` row you can specify what columns and functions you want to use.
-In the column field you may write arbitrary expressions instead of a column name like `column1 * column2 / column3`.
+Using the dropdown, select a column to include in the data. You can also specify an optional aggregation function.
 
-If you use aggregate functions you need to group your resultset. The editor will automatically add a `GROUP BY time` if you add an aggregate function.
-
-You may add further value columns by clicking the plus button and selecting `Column` from the menu. Multiple value columns will be plotted as separate series in the graph panel.
+Add further value columns by clicking the plus button and another column dropdown appears.
 
 ### Filter data (WHERE)
 
-To add a filter click the plus icon to the right of the `WHERE` condition. You can remove filters by clicking on
-the filter and selecting `Remove`. A filter for the current selected timerange is automatically added to new queries.
+To add a filter, flip the switch at the top of the editor.
+Using the first dropdown, select if all the filters need to match (AND) or if only one of the filters needs to match (OR).
+
+To add more columns to filter on use the plus button.
 
 ### Group By
 
-To group by time or any other columns click the plus icon at the end of the GROUP BY row. The suggestion dropdown will only show text columns of your currently selected table but you may manually enter any column.
-You can remove the group by clicking on the item and then selecting `Remove`.
+To group the results by column, flip the group switch at the top of the editor. You can then choose which column to group the results by. The group by clause can be removed by pressing the X button.
 
-If you add any grouping, all selected columns need to have an aggregate function applied. The query builder will automatically add aggregate functions to all columns without aggregate functions when you add groupings.
+### Preview
 
-#### Gap Filling
+By flipping the preview switch at the top of the editor, you can get a preview of the SQL query generated by the query builder.
 
-Grafana can fill in missing values when you group by time. The time function accepts two arguments. The first argument is the time window that you would like to group by, and the second argument is the value you want Grafana to fill missing items with.
+## Code editor
 
-### Text Editor Mode (RAW)
+{{< figure src="/static/img/docs/v92/sql_code_editor.png" class="docs-image--no-shadow" >}}
 
-You can switch to the raw query editor mode by clicking the hamburger icon and selecting `Switch editor mode` or by clicking `Edit SQL` below the query.
+To make advanced queries, switch to the code editor by clicking `code` in the top right corner of the editor. The code editor support autocompletion of tables, columns, SQL keywords, standard sql functions, Grafana template variables and Grafana macros. Columns cannot be completed before a table has been specified.
 
-> If you use the raw query editor, be sure your query at minimum has `ORDER BY time` and a filter on the returned time range.
+You can expand the code editor by pressing the `chevron` pointing downwards in the lower right corner of the code editor.
+
+`CTRL/CMD + Return` works as a keyboard shortcut to run the query.
 
 ## Macros
 
@@ -191,7 +182,7 @@ A time series query result is returned in a [wide data frame format]({{< relref 
 
 > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
-To optionally customize the default series name formatting, refer to [Standard options definitions]({{< relref "../panels/configure-standard-options/#display-name" >}}).
+To optionally customize the default series name formatting, refer to [Standard options definitions]({{< relref "../panels-visualizations/configure-standard-options/#display-name" >}}).
 
 **Example with `metric` column:**
 
@@ -233,7 +224,7 @@ GROUP BY time, hostname
 ORDER BY time
 ```
 
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [[Standard options definitions]({{< relref "../panels/configure-standard-options/#display-name" >}}) display value of `${__field.labels.hostname}`.
+Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [[Standard options definitions]({{< relref "../panels-visualizations/configure-standard-options/#display-name" >}}) display value of `${__field.labels.hostname}`.
 
 Data frame result:
 
@@ -283,7 +274,7 @@ This feature is currently available in the nightly builds and will be included i
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../dashboards/variables/" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query Variable
 
@@ -378,11 +369,11 @@ Grafana automatically creates a quoted, comma-separated string for multi-value v
 
 `${servers:csv}`
 
-Read more about variable formatting options in the [Variables]({{< relref "../variables/#advanced-formatting-options" >}}) documentation.
+Read more about variable formatting options in the [Variables]({{< relref "../dashboards/variables/variable-syntax/#advanced-variable-format-options" >}}) documentation.
 
 ## Annotations
 
-[Annotations]({{< relref "../dashboards/annotations/" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+[Annotations]({{< relref "../dashboards/build-dashboards/annotate-visualizations" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
 
 **Example query using time column with epoch values:**
 

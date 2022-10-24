@@ -3,13 +3,11 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -25,279 +23,30 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func TestCalculateChanges(t *testing.T) {
-	orgId := rand.Int63()
-
-	t.Run("detects alerts that need to be added", func(t *testing.T) {
-		fakeStore := store.NewFakeRuleStore(t)
-
-		groupKey := models.GenerateGroupKey(orgId)
-		submitted := models.GenerateAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withOrgID(orgId), simulateSubmitted, withoutUID))
-
-		changes, err := calculateChanges(context.Background(), fakeStore, groupKey, submitted)
-		require.NoError(t, err)
-
-		require.Len(t, changes.New, len(submitted))
-		require.Empty(t, changes.Delete)
-		require.Empty(t, changes.Update)
-
-	outerloop:
-		for _, expected := range submitted {
-			for _, rule := range changes.New {
-				if len(expected.Diff(rule)) == 0 {
-					continue outerloop
-				}
-			}
-			require.Fail(t, "changes did not contain rule that was submitted")
-		}
-	})
-
-	t.Run("detects alerts that need to be deleted", func(t *testing.T) {
-		groupKey := models.GenerateGroupKey(orgId)
-		inDatabaseMap, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withGroupKey(groupKey)))
-
-		fakeStore := store.NewFakeRuleStore(t)
-		fakeStore.PutRule(context.Background(), inDatabase...)
-
-		changes, err := calculateChanges(context.Background(), fakeStore, groupKey, make([]*models.AlertRule, 0))
-		require.NoError(t, err)
-
-		require.Equal(t, groupKey, changes.GroupKey)
-		require.Empty(t, changes.New)
-		require.Empty(t, changes.Update)
-		require.Len(t, changes.Delete, len(inDatabaseMap))
-		for _, toDelete := range changes.Delete {
-			require.Contains(t, inDatabaseMap, toDelete.UID)
-			db := inDatabaseMap[toDelete.UID]
-			require.Equal(t, db, toDelete)
-		}
-		require.Contains(t, changes.AffectedGroups, groupKey)
-		require.Equal(t, models.RulesGroup(inDatabase), changes.AffectedGroups[groupKey])
-	})
-
-	t.Run("should detect alerts that needs to be updated", func(t *testing.T) {
-		groupKey := models.GenerateGroupKey(orgId)
-		inDatabaseMap, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withGroupKey(groupKey)))
-		submittedMap, submitted := models.GenerateUniqueAlertRules(len(inDatabase), models.AlertRuleGen(simulateSubmitted, withGroupKey(groupKey), withUIDs(inDatabaseMap)))
-
-		fakeStore := store.NewFakeRuleStore(t)
-		fakeStore.PutRule(context.Background(), inDatabase...)
-
-		changes, err := calculateChanges(context.Background(), fakeStore, groupKey, submitted)
-		require.NoError(t, err)
-
-		require.Equal(t, groupKey, changes.GroupKey)
-		require.Len(t, changes.Update, len(inDatabase))
-		for _, upsert := range changes.Update {
-			require.NotNil(t, upsert.Existing)
-			require.Equal(t, upsert.Existing.UID, upsert.New.UID)
-			require.Equal(t, inDatabaseMap[upsert.Existing.UID], upsert.Existing)
-			require.Equal(t, submittedMap[upsert.Existing.UID], upsert.New)
-			require.NotEmpty(t, upsert.Diff)
-		}
-		require.Empty(t, changes.Delete)
-		require.Empty(t, changes.New)
-
-		require.Contains(t, changes.AffectedGroups, groupKey)
-		require.Equal(t, models.RulesGroup(inDatabase), changes.AffectedGroups[groupKey])
-	})
-
-	t.Run("should include only if there are changes ignoring specific fields", func(t *testing.T) {
-		groupKey := models.GenerateGroupKey(orgId)
-		_, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withGroupKey(groupKey)))
-
-		submitted := make([]*models.AlertRule, 0, len(inDatabase))
-		for _, rule := range inDatabase {
-			r := models.CopyRule(rule)
-
-			// Ignore difference in the following fields as submitted models do not have them set
-			r.ID = rand.Int63()
-			r.Version = rand.Int63()
-			r.Updated = r.Updated.Add(1 * time.Minute)
-
-			submitted = append(submitted, r)
-		}
-
-		fakeStore := store.NewFakeRuleStore(t)
-		fakeStore.PutRule(context.Background(), inDatabase...)
-
-		changes, err := calculateChanges(context.Background(), fakeStore, groupKey, submitted)
-		require.NoError(t, err)
-
-		require.Empty(t, changes.Update)
-		require.Empty(t, changes.Delete)
-		require.Empty(t, changes.New)
-	})
-
-	t.Run("should patch rule with UID specified by existing rule", func(t *testing.T) {
-		testCases := []struct {
-			name    string
-			mutator func(r *models.AlertRule)
-		}{
-			{
-				name: "title is empty",
-				mutator: func(r *models.AlertRule) {
-					r.Title = ""
-				},
-			},
-			{
-				name: "condition and data are empty",
-				mutator: func(r *models.AlertRule) {
-					r.Condition = ""
-					r.Data = nil
-				},
-			},
-			{
-				name: "ExecErrState is empty",
-				mutator: func(r *models.AlertRule) {
-					r.ExecErrState = ""
-				},
-			},
-			{
-				name: "NoDataState is empty",
-				mutator: func(r *models.AlertRule) {
-					r.NoDataState = ""
-				},
-			},
-			{
-				name: "For is 0",
-				mutator: func(r *models.AlertRule) {
-					r.For = 0
-				},
-			},
-		}
-
-		dbRule := models.AlertRuleGen(withOrgID(orgId))()
-
-		fakeStore := store.NewFakeRuleStore(t)
-		fakeStore.PutRule(context.Background(), dbRule)
-
-		groupKey := models.GenerateGroupKey(orgId)
-
-		for _, testCase := range testCases {
-			t.Run(testCase.name, func(t *testing.T) {
-				expected := models.AlertRuleGen(simulateSubmitted, testCase.mutator)()
-				expected.UID = dbRule.UID
-				submitted := *expected
-				changes, err := calculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRule{&submitted})
-				require.NoError(t, err)
-				require.Len(t, changes.Update, 1)
-				ch := changes.Update[0]
-				require.Equal(t, ch.Existing, dbRule)
-				fixed := *expected
-				models.PatchPartialAlertRule(dbRule, &fixed)
-				require.Equal(t, fixed, *ch.New)
-			})
-		}
-	})
-
-	t.Run("should be able to find alerts by UID in other group/namespace", func(t *testing.T) {
-		sourceGroupKey := models.GenerateGroupKey(orgId)
-		inDatabaseMap, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(10)+10, models.AlertRuleGen(withGroupKey(sourceGroupKey)))
-
-		fakeStore := store.NewFakeRuleStore(t)
-		fakeStore.PutRule(context.Background(), inDatabase...)
-
-		namespace := randFolder()
-		groupName := util.GenerateShortUID()
-
-		groupKey := models.AlertRuleGroupKey{
-			OrgID:        orgId,
-			NamespaceUID: namespace.Uid,
-			RuleGroup:    groupName,
-		}
-
-		submittedMap, submitted := models.GenerateUniqueAlertRules(rand.Intn(len(inDatabase)-5)+5, models.AlertRuleGen(simulateSubmitted, withGroupKey(groupKey), withUIDs(inDatabaseMap)))
-
-		changes, err := calculateChanges(context.Background(), fakeStore, groupKey, submitted)
-		require.NoError(t, err)
-
-		require.Equal(t, groupKey, changes.GroupKey)
-		require.Empty(t, changes.Delete)
-		require.Empty(t, changes.New)
-		require.Len(t, changes.Update, len(submitted))
-		for _, update := range changes.Update {
-			require.NotNil(t, update.Existing)
-			require.Equal(t, update.Existing.UID, update.New.UID)
-			require.Equal(t, inDatabaseMap[update.Existing.UID], update.Existing)
-			require.Equal(t, submittedMap[update.Existing.UID], update.New)
-			require.NotEmpty(t, update.Diff)
-		}
-
-		require.Contains(t, changes.AffectedGroups, sourceGroupKey)
-		require.NotContains(t, changes.AffectedGroups, groupKey) // because there is no such group in database yet
-
-		require.Len(t, changes.AffectedGroups[sourceGroupKey], len(inDatabase))
-	})
-
-	t.Run("should fail when submitted rule has UID that does not exist in db", func(t *testing.T) {
-		fakeStore := store.NewFakeRuleStore(t)
-		groupKey := models.GenerateGroupKey(orgId)
-		submitted := models.AlertRuleGen(withOrgID(orgId), simulateSubmitted)()
-		require.NotEqual(t, "", submitted.UID)
-
-		_, err := calculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRule{submitted})
-		require.Error(t, err)
-	})
-
-	t.Run("should fail if cannot fetch current rules in the group", func(t *testing.T) {
-		fakeStore := store.NewFakeRuleStore(t)
-		expectedErr := errors.New("TEST ERROR")
-		fakeStore.Hook = func(cmd interface{}) error {
-			switch cmd.(type) {
-			case models.ListAlertRulesQuery:
-				return expectedErr
-			}
-			return nil
-		}
-
-		groupKey := models.GenerateGroupKey(orgId)
-		submitted := models.AlertRuleGen(withOrgID(orgId), simulateSubmitted, withoutUID)()
-
-		_, err := calculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRule{submitted})
-		require.ErrorIs(t, err, expectedErr)
-	})
-
-	t.Run("should fail if cannot fetch rule by UID", func(t *testing.T) {
-		fakeStore := store.NewFakeRuleStore(t)
-		expectedErr := errors.New("TEST ERROR")
-		fakeStore.Hook = func(cmd interface{}) error {
-			switch cmd.(type) {
-			case models.GetAlertRulesGroupByRuleUIDQuery:
-				return expectedErr
-			}
-			return nil
-		}
-
-		groupKey := models.GenerateGroupKey(orgId)
-		submitted := models.AlertRuleGen(withOrgID(orgId), simulateSubmitted)()
-
-		_, err := calculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRule{submitted})
-		require.ErrorIs(t, err, expectedErr)
-	})
-}
-
 func TestRouteDeleteAlertRules(t *testing.T) {
-	getRecordedCommand := func(ruleStore *store.FakeRuleStore) []store.GenericRecordedQuery {
+	getRecordedCommand := func(ruleStore *fakes.RuleStore) []fakes.GenericRecordedQuery {
 		results := ruleStore.GetRecordedCommands(func(cmd interface{}) (interface{}, bool) {
-			c, ok := cmd.(store.GenericRecordedQuery)
+			c, ok := cmd.(fakes.GenericRecordedQuery)
 			if !ok || c.Name != "DeleteAlertRulesByUID" {
 				return nil, false
 			}
 			return c, ok
 		})
-		var result []store.GenericRecordedQuery
+		var result []fakes.GenericRecordedQuery
 		for _, cmd := range results {
-			result = append(result, cmd.(store.GenericRecordedQuery))
+			result = append(result, cmd.(fakes.GenericRecordedQuery))
 		}
 		return result
 	}
 
-	assertRulesDeleted := func(t *testing.T, expectedRules []*models.AlertRule, ruleStore *store.FakeRuleStore, scheduler *schedule.FakeScheduleService) {
+	assertRulesDeleted := func(t *testing.T, expectedRules []*models.AlertRule, ruleStore *fakes.RuleStore, scheduler *schedule.FakeScheduleService) {
 		deleteCommands := getRecordedCommand(ruleStore)
 		require.Len(t, deleteCommands, 1)
 		cmd := deleteCommands[0]
@@ -307,217 +56,208 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			require.Containsf(t, actualUIDs, rule.UID, "Rule %s was expected to be deleted but it wasn't", rule.UID)
 		}
 
-		require.Len(t, scheduler.Calls, len(expectedRules))
+		notDeletedRules := make(map[models.AlertRuleKey]struct{}, len(expectedRules))
+		for _, rule := range expectedRules {
+			notDeletedRules[rule.GetKey()] = struct{}{}
+		}
 		for _, call := range scheduler.Calls {
 			require.Equal(t, "DeleteAlertRule", call.Method)
-			key, ok := call.Arguments.Get(0).(models.AlertRuleKey)
+			keys, ok := call.Arguments.Get(0).([]models.AlertRuleKey)
 			require.Truef(t, ok, "Expected AlertRuleKey but got something else")
-			found := false
-			for _, rule := range expectedRules {
-				if rule.GetKey() == key {
-					found = true
-					break
-				}
+			for _, key := range keys {
+				delete(notDeletedRules, key)
 			}
-			require.Truef(t, found, "Key %v was not expected to be submitted to scheduler", key)
 		}
+		require.Emptyf(t, notDeletedRules, "Not all rules were deleted")
+	}
+
+	orgID := rand.Int63()
+	folder := randFolder()
+
+	initFakeRuleStore := func(t *testing.T) *fakes.RuleStore {
+		ruleStore := fakes.NewRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		// add random data
+		ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID)))...)
+		return ruleStore
 	}
 
 	t.Run("when fine-grained access is disabled", func(t *testing.T) {
+		ac := acMock.New().WithDisabled()
 		t.Run("viewer should not be authorized", func(t *testing.T) {
-			ruleStore := store.NewFakeRuleStore(t)
-			orgID := rand.Int63()
-			folder := randFolder()
-			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
-			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID)))...)
-
-			scheduler := &schedule.FakeScheduleService{}
-			scheduler.On("DeleteAlertRule", mock.Anything).Panic("should not be called")
-
-			ac := acMock.New().WithDisabled()
-			request := createRequestContext(orgID, models2.ROLE_VIEWER, nil)
-			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, "")
-			require.Equalf(t, 401, response.Status(), "Expected 403 but got %d: %v", response.Status(), string(response.Body()))
-
-			scheduler.AssertNotCalled(t, "DeleteAlertRule")
-			require.Empty(t, getRecordedCommand(ruleStore))
-		})
-		t.Run("editor should be able to delete all rules in folder", func(t *testing.T) {
-			ruleStore := store.NewFakeRuleStore(t)
-			orgID := rand.Int63()
-			folder := randFolder()
-			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-			rulesInFolder := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
-			ruleStore.PutRule(context.Background(), rulesInFolder...)
-			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID)))...)
+			ruleStore := initFakeRuleStore(t)
+			ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
 
 			scheduler := &schedule.FakeScheduleService{}
 			scheduler.On("DeleteAlertRule", mock.Anything)
 
-			ac := acMock.New().WithDisabled()
-			request := createRequestContext(orgID, models2.ROLE_EDITOR, nil)
+			request := createRequestContext(orgID, org.RoleViewer, nil)
 			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, "")
+			require.Equalf(t, 401, response.Status(), "Expected 401 but got %d: %v", response.Status(), string(response.Body()))
+
+			scheduler.AssertNotCalled(t, "DeleteAlertRule")
+			require.Empty(t, getRecordedCommand(ruleStore))
+		})
+		t.Run("editor should be able to delete all non-provisioned rules in folder", func(t *testing.T) {
+			ruleStore := initFakeRuleStore(t)
+			rulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
+			ruleStore.PutRule(context.Background(), rulesInFolder...)
+
+			scheduler := &schedule.FakeScheduleService{}
+			scheduler.On("DeleteAlertRule", mock.Anything)
+
+			request := createRequestContext(orgID, org.RoleEditor, nil)
+			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, "")
+
 			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 			assertRulesDeleted(t, rulesInFolder, ruleStore, scheduler)
 		})
-		t.Run("editor should be able to delete rules in a group in a folder", func(t *testing.T) {
-			ruleStore := store.NewFakeRuleStore(t)
-			orgID := rand.Int63()
+		t.Run("editor should be able to delete rules group if it is not provisioned", func(t *testing.T) {
 			groupName := util.GenerateShortUID()
-			folder := randFolder()
-			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-			rulesInFolderInGroup := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))
+			rulesInFolderInGroup := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))
+
+			ruleStore := initFakeRuleStore(t)
 			ruleStore.PutRule(context.Background(), rulesInFolderInGroup...)
 			// rules in different groups but in the same namespace
-			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
+			ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
 			// rules in the same group but different folder
-			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withGroup(groupName)))...)
+			ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withGroup(groupName)))...)
 
 			scheduler := &schedule.FakeScheduleService{}
-			scheduler.On("DeleteAlertRule", mock.Anything)
+			scheduler.On("DeleteAlertRule", mock.Anything).Return()
 
-			ac := acMock.New().WithDisabled()
-			request := createRequestContext(orgID, models2.ROLE_EDITOR, nil)
+			request := createRequestContext(orgID, org.RoleEditor, nil)
 			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, groupName)
+
 			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 			assertRulesDeleted(t, rulesInFolderInGroup, ruleStore, scheduler)
 		})
-		t.Run("editor shouldn't be able to delete provisioned rules", func(t *testing.T) {
-			ruleStore := store.NewFakeRuleStore(t)
-			orgID := rand.Int63()
-			folder := randFolder()
-			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-			rulesInFolder := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
-			ruleStore.PutRule(context.Background(), rulesInFolder...)
-			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID)))...)
+		t.Run("should return 202 if folder is empty", func(t *testing.T) {
+			ruleStore := initFakeRuleStore(t)
 
 			scheduler := &schedule.FakeScheduleService{}
 			scheduler.On("DeleteAlertRule", mock.Anything)
 
-			ac := acMock.New().WithDisabled()
+			requestCtx := createRequestContext(orgID, org.RoleEditor, nil)
+			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(requestCtx, folder.Title, "")
 
-			svc := createService(ac, ruleStore, scheduler)
-
-			err := svc.provenanceStore.SetProvenance(context.Background(), rulesInFolder[0], orgID, models.ProvenanceAPI)
-			require.NoError(t, err)
-
-			request := createRequestContext(orgID, models2.ROLE_EDITOR, nil)
-			response := svc.RouteDeleteAlertRules(request, folder.Title, "")
 			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
-			assertRulesDeleted(t, rulesInFolder[1:], ruleStore, scheduler)
-		})
-	})
-	t.Run("when fine-grained access is enabled", func(t *testing.T) {
-		t.Run("and user does not have access to any of data sources used by alert rules", func(t *testing.T) {
-			ruleStore := store.NewFakeRuleStore(t)
-			orgID := rand.Int63()
-			folder := randFolder()
-			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
-			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID)))...)
-
-			scheduler := &schedule.FakeScheduleService{}
-			scheduler.On("DeleteAlertRule", mock.Anything).Panic("should not be called")
-
-			ac := acMock.New()
-			request := createRequestContext(orgID, "None", nil)
-			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, "")
-			require.Equalf(t, 401, response.Status(), "Expected 403 but got %d: %v", response.Status(), string(response.Body()))
-
 			scheduler.AssertNotCalled(t, "DeleteAlertRule")
 			require.Empty(t, getRecordedCommand(ruleStore))
 		})
-		t.Run("and user has access to all alert rules", func(t *testing.T) {
-			t.Run("should delete all rules", func(t *testing.T) {
-				ruleStore := store.NewFakeRuleStore(t)
-				orgID := rand.Int63()
-				folder := randFolder()
-				ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-				rulesInFolder := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
-				ruleStore.PutRule(context.Background(), rulesInFolder...)
-				ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID)))...)
+	})
+	t.Run("when fine-grained access is enabled", func(t *testing.T) {
+		requestCtx := createRequestContext(orgID, "None", nil)
+
+		t.Run("and group argument is empty", func(t *testing.T) {
+			t.Run("return 401 if user is not authorized to access any group in the folder", func(t *testing.T) {
+				ruleStore := initFakeRuleStore(t)
+				ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
 
 				scheduler := &schedule.FakeScheduleService{}
-				scheduler.On("DeleteAlertRule", mock.Anything)
+				scheduler.On("DeleteAlertRule", mock.Anything).Panic("should not be called")
 
-				ac := acMock.New().WithPermissions(createPermissionsForRules(rulesInFolder))
+				ac := acMock.New()
 				request := createRequestContext(orgID, "None", nil)
 
 				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, "")
-				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
-				assertRulesDeleted(t, rulesInFolder, ruleStore, scheduler)
+				require.Equalf(t, 401, response.Status(), "Expected 401 but got %d: %v", response.Status(), string(response.Body()))
+
+				scheduler.AssertNotCalled(t, "DeleteAlertRule")
+				require.Empty(t, getRecordedCommand(ruleStore))
 			})
-			t.Run("shouldn't be able to delete provisioned rules", func(t *testing.T) {
-				ruleStore := store.NewFakeRuleStore(t)
-				orgID := rand.Int63()
-				folder := randFolder()
-				ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-				rulesInFolder := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
-				ruleStore.PutRule(context.Background(), rulesInFolder...)
-				ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID)))...)
+			t.Run("delete only non-provisioned groups that user is authorized", func(t *testing.T) {
+				ruleStore := initFakeRuleStore(t)
+				provisioningStore := provisioning.NewFakeProvisioningStore()
 
 				scheduler := &schedule.FakeScheduleService{}
 				scheduler.On("DeleteAlertRule", mock.Anything)
 
-				ac := acMock.New().WithPermissions(createPermissionsForRules(rulesInFolder))
-				svc := createService(ac, ruleStore, scheduler)
+				authorizedRulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup("authz_"+util.GenerateShortUID())))
 
-				err := svc.provenanceStore.SetProvenance(context.Background(), rulesInFolder[0], orgID, models.ProvenanceAPI)
+				provisionedRulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup("provisioned_"+util.GenerateShortUID())))
+				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
 				require.NoError(t, err)
 
-				request := createRequestContext(orgID, "None", nil)
-
-				response := svc.RouteDeleteAlertRules(request, folder.Title, "")
-				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
-				assertRulesDeleted(t, rulesInFolder[1:], ruleStore, scheduler)
-			})
-		})
-		t.Run("and user has access to data sources of some of alert rules", func(t *testing.T) {
-			t.Run("should delete only those that are accessible in folder", func(t *testing.T) {
-				ruleStore := store.NewFakeRuleStore(t)
-				orgID := rand.Int63()
-				folder := randFolder()
-				ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-				authorizedRulesInFolder := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
 				ruleStore.PutRule(context.Background(), authorizedRulesInFolder...)
+				ruleStore.PutRule(context.Background(), provisionedRulesInFolder...)
 				// more rules in the same namespace but user does not have access to them
-				ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
-				ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID)))...)
+				ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup("unauthz"+util.GenerateShortUID())))...)
 
-				scheduler := &schedule.FakeScheduleService{}
-				scheduler.On("DeleteAlertRule", mock.Anything)
+				ac := acMock.New().WithPermissions(createPermissionsForRules(append(authorizedRulesInFolder, provisionedRulesInFolder...)))
 
-				ac := acMock.New().WithPermissions(createPermissionsForRules(authorizedRulesInFolder))
-				request := createRequestContext(orgID, "None", nil)
+				response := createServiceWithProvenanceStore(ac, ruleStore, scheduler, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.Title, "")
 
-				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, "")
 				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 				assertRulesDeleted(t, authorizedRulesInFolder, ruleStore, scheduler)
 			})
-			t.Run("should delete only rules in a group that are authorized", func(t *testing.T) {
-				ruleStore := store.NewFakeRuleStore(t)
-				orgID := rand.Int63()
-				groupName := util.GenerateShortUID()
-				folder := randFolder()
-				ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-				authorizedRulesInGroup := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))
+			t.Run("return 400 if all rules user can access are provisioned", func(t *testing.T) {
+				ruleStore := initFakeRuleStore(t)
+				provisioningStore := provisioning.NewFakeProvisioningStore()
+
+				provisionedRulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(util.GenerateShortUID())))
+				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
+				require.NoError(t, err)
+
+				ruleStore.PutRule(context.Background(), provisionedRulesInFolder...)
+				// more rules in the same namespace but user does not have access to them
+				ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(util.GenerateShortUID())))...)
+
+				scheduler := &schedule.FakeScheduleService{}
+				scheduler.On("DeleteAlertRule", mock.Anything)
+
+				ac := acMock.New().WithPermissions(createPermissionsForRules(provisionedRulesInFolder))
+
+				response := createServiceWithProvenanceStore(ac, ruleStore, scheduler, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.Title, "")
+
+				require.Equalf(t, 400, response.Status(), "Expected 400 but got %d: %v", response.Status(), string(response.Body()))
+				scheduler.AssertNotCalled(t, "DeleteAlertRule")
+				require.Empty(t, getRecordedCommand(ruleStore))
+			})
+		})
+		t.Run("and group argument is not empty", func(t *testing.T) {
+			groupName := util.GenerateShortUID()
+			t.Run("return 401 if user is not authorized to access the group", func(t *testing.T) {
+				ruleStore := initFakeRuleStore(t)
+
+				authorizedRulesInGroup := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))
 				ruleStore.PutRule(context.Background(), authorizedRulesInGroup...)
 				// more rules in the same group but user is not authorized to access them
-				ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))...)
-				// rules in different groups but in the same namespace
-				ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
-				// rules in the same group but different folder
-				ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withGroup(groupName)))...)
+				ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))...)
 
 				scheduler := &schedule.FakeScheduleService{}
 				scheduler.On("DeleteAlertRule", mock.Anything)
 
 				ac := acMock.New().WithPermissions(createPermissionsForRules(authorizedRulesInGroup))
-				request := createRequestContext(orgID, "None", nil)
-				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, groupName)
-				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
-				assertRulesDeleted(t, authorizedRulesInGroup, ruleStore, scheduler)
+
+				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(requestCtx, folder.Title, groupName)
+
+				require.Equalf(t, 401, response.Status(), "Expected 401 but got %d: %v", response.Status(), string(response.Body()))
+				scheduler.AssertNotCalled(t, "DeleteAlertRule", mock.Anything)
+				deleteCommands := getRecordedCommand(ruleStore)
+				require.Empty(t, deleteCommands)
+			})
+			t.Run("return 400 if group is provisioned", func(t *testing.T) {
+				ruleStore := initFakeRuleStore(t)
+				provisioningStore := provisioning.NewFakeProvisioningStore()
+
+				provisionedRulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))
+				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
+				require.NoError(t, err)
+
+				ruleStore.PutRule(context.Background(), provisionedRulesInFolder...)
+
+				scheduler := &schedule.FakeScheduleService{}
+				scheduler.On("DeleteAlertRule", mock.Anything)
+
+				ac := acMock.New().WithPermissions(createPermissionsForRules(provisionedRulesInFolder))
+
+				response := createServiceWithProvenanceStore(ac, ruleStore, scheduler, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.Title, groupName)
+
+				require.Equalf(t, 400, response.Status(), "Expected 400 but got %d: %v", response.Status(), string(response.Body()))
+				scheduler.AssertNotCalled(t, "DeleteAlertRule", mock.Anything)
+				deleteCommands := getRecordedCommand(ruleStore)
+				require.Empty(t, deleteCommands)
 			})
 		})
 	})
@@ -528,7 +268,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		t.Run("should return rules for which user has access to data source", func(t *testing.T) {
 			orgID := rand.Int63()
 			folder := randFolder()
-			ruleStore := store.NewFakeRuleStore(t)
+			ruleStore := fakes.NewRuleStore(t)
 			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 			expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
 			ruleStore.PutRule(context.Background(), expectedRules...)
@@ -564,13 +304,13 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		t.Run("should return all rules from folder", func(t *testing.T) {
 			orgID := rand.Int63()
 			folder := randFolder()
-			ruleStore := store.NewFakeRuleStore(t)
+			ruleStore := fakes.NewRuleStore(t)
 			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 			expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
 			ruleStore.PutRule(context.Background(), expectedRules...)
 			ac := acMock.New().WithDisabled()
 
-			req := createRequestContext(orgID, models2.ROLE_VIEWER, nil)
+			req := createRequestContext(orgID, org.RoleViewer, nil)
 			response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(req, folder.Title)
 
 			require.Equal(t, http.StatusAccepted, response.Status())
@@ -598,7 +338,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 	t.Run("should return the provenance of the alert rules", func(t *testing.T) {
 		orgID := rand.Int63()
 		folder := randFolder()
-		ruleStore := store.NewFakeRuleStore(t)
+		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
 		ruleStore.PutRule(context.Background(), expectedRules...)
@@ -613,7 +353,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		err := svc.provenanceStore.SetProvenance(context.Background(), rule, orgID, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		req := createRequestContext(orgID, models2.ROLE_VIEWER, nil)
+		req := createRequestContext(orgID, org.RoleViewer, nil)
 		response := svc.RouteGetNamespaceRulesConfig(req, folder.Title)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
@@ -639,7 +379,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 	t.Run("should enforce order of rules in the group", func(t *testing.T) {
 		orgID := rand.Int63()
 		folder := randFolder()
-		ruleStore := store.NewFakeRuleStore(t)
+		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.Uid
@@ -648,7 +388,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		ruleStore.PutRule(context.Background(), expectedRules...)
 		ac := acMock.New().WithDisabled()
 
-		response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(createRequestContext(orgID, models2.ROLE_VIEWER, nil), folder.Title)
+		response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(createRequestContext(orgID, org.RoleViewer, nil), folder.Title)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
 		result := &apimodels.NamespaceConfigResponse{}
@@ -683,7 +423,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 	t.Run("fine-grained access is enabled", func(t *testing.T) {
 		t.Run("should check access to data source", func(t *testing.T) {
 			orgID := rand.Int63()
-			ruleStore := store.NewFakeRuleStore(t)
+			ruleStore := fakes.NewRuleStore(t)
 			folder1 := randFolder()
 			folder2 := randFolder()
 			ruleStore.Folders[orgID] = []*models2.Folder{folder1, folder2}
@@ -721,7 +461,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 	t.Run("should return rules in group sorted by group index", func(t *testing.T) {
 		orgID := rand.Int63()
 		folder := randFolder()
-		ruleStore := store.NewFakeRuleStore(t)
+		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.Uid
@@ -730,7 +470,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 		ruleStore.PutRule(context.Background(), expectedRules...)
 		ac := acMock.New().WithDisabled()
 
-		response := createService(ac, ruleStore, nil).RouteGetRulesConfig(createRequestContext(orgID, models2.ROLE_VIEWER, nil))
+		response := createService(ac, ruleStore, nil).RouteGetRulesConfig(createRequestContext(orgID, org.RoleViewer, nil))
 
 		require.Equal(t, http.StatusOK, response.Status())
 		result := &apimodels.NamespaceConfigResponse{}
@@ -766,7 +506,7 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 		t.Run("should check access to data source", func(t *testing.T) {
 			orgID := rand.Int63()
 			folder := randFolder()
-			ruleStore := store.NewFakeRuleStore(t)
+			ruleStore := fakes.NewRuleStore(t)
 			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 			groupKey := models.GenerateGroupKey(orgID)
 			groupKey.NamespaceUID = folder.Uid
@@ -801,7 +541,7 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 	t.Run("should return rules in group sorted by group index", func(t *testing.T) {
 		orgID := rand.Int63()
 		folder := randFolder()
-		ruleStore := store.NewFakeRuleStore(t)
+		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.Uid
@@ -810,7 +550,7 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 		ruleStore.PutRule(context.Background(), expectedRules...)
 		ac := acMock.New().WithDisabled()
 
-		response := createService(ac, ruleStore, nil).RouteGetRulesGroupConfig(createRequestContext(orgID, models2.ROLE_VIEWER, nil), folder.Title, groupKey.RuleGroup)
+		response := createService(ac, ruleStore, nil).RouteGetRulesGroupConfig(createRequestContext(orgID, org.RoleViewer, nil), folder.Title, groupKey.RuleGroup)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
 		result := &apimodels.RuleGroupConfigResponse{}
@@ -852,7 +592,7 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 			affectedGroups[g] = rules
 		}
 	}
-	ch := &changes{
+	ch := &store.GroupDelta{
 		GroupKey:       group,
 		AffectedGroups: affectedGroups,
 	}
@@ -897,146 +637,16 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 	})
 }
 
-func TestCalculateAutomaticChanges(t *testing.T) {
-	orgID := rand.Int63()
-
-	t.Run("should mark all rules in affected groups", func(t *testing.T) {
-		group := models.GenerateGroupKey(orgID)
-		rules := models.GenerateAlertRules(10, models.AlertRuleGen(withGroupKey(group)))
-		// copy rules to make sure that the function does not modify the original rules
-		copies := make([]*models.AlertRule, 0, len(rules))
-		for _, rule := range rules {
-			copies = append(copies, models.CopyRule(rule))
-		}
-
-		var updates []ruleUpdate
-		for i := 0; i < 5; i++ {
-			ruleCopy := models.CopyRule(copies[i])
-			ruleCopy.Title += util.GenerateShortUID()
-			updates = append(updates, ruleUpdate{
-				Existing: copies[i],
-				New:      ruleCopy,
-			})
-		}
-
-		// simulate adding new rules, updating a few existing and delete some from the same rule
-		ch := &changes{
-			GroupKey: group,
-			AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
-				group: copies,
-			},
-			New:    models.GenerateAlertRules(2, models.AlertRuleGen(withGroupKey(group))),
-			Update: updates,
-			Delete: rules[5:7],
-		}
-
-		result := calculateAutomaticChanges(ch)
-
-		require.NotEqual(t, ch, result)
-		require.Equal(t, ch.GroupKey, result.GroupKey)
-		require.Equal(t, map[models.AlertRuleGroupKey]models.RulesGroup{
-			group: rules,
-		}, result.AffectedGroups)
-		require.Equal(t, ch.New, result.New)
-		require.Equal(t, rules[5:7], result.Delete)
-		var expected []ruleUpdate
-		expected = append(expected, updates...)
-		// all rules that were not updated directly by user should be added to the
-		for _, rule := range rules[7:] {
-			expected = append(expected, ruleUpdate{
-				Existing: rule,
-				New:      rule,
-			})
-		}
-		require.Equal(t, expected, result.Update)
-	})
-
-	t.Run("should re-index rules in affected groups other than updated", func(t *testing.T) {
-		group := models.GenerateGroupKey(orgID)
-		rules := models.GenerateAlertRules(3, models.AlertRuleGen(withGroupKey(group), models.WithSequentialGroupIndex()))
-		group2 := models.GenerateGroupKey(orgID)
-		rules2 := models.GenerateAlertRules(4, models.AlertRuleGen(withGroupKey(group2), models.WithSequentialGroupIndex()))
-
-		movedIndex := rand.Intn(len(rules2) - 1)
-		movedRule := rules2[movedIndex]
-		copyRule := models.CopyRule(movedRule)
-		copyRule.RuleGroup = group.RuleGroup
-		copyRule.NamespaceUID = group.NamespaceUID
-		copyRule.RuleGroupIndex = len(rules)
-		update := ruleUpdate{
-			Existing: movedRule,
-			New:      copyRule,
-		}
-
-		shuffled := make([]*models.AlertRule, 0, len(rules2))
-		copy(shuffled, rules2)
-		rand.Shuffle(len(shuffled), func(i, j int) {
-			shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
-		})
-
-		// simulate moving a rule from one group to another.
-		ch := &changes{
-			GroupKey: group,
-			AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
-				group:  rules,
-				group2: shuffled,
-			},
-			Update: []ruleUpdate{
-				update,
-			},
-		}
-
-		result := calculateAutomaticChanges(ch)
-
-		require.NotEqual(t, ch, result)
-		require.Equal(t, ch.GroupKey, result.GroupKey)
-		require.Equal(t, ch.AffectedGroups, result.AffectedGroups)
-		require.Equal(t, ch.New, result.New)
-		require.Equal(t, ch.Delete, result.Delete)
-
-		require.Equal(t, ch.Update, result.Update[0:1])
-
-		require.Contains(t, result.Update, update)
-		for _, rule := range rules {
-			assert.Containsf(t, result.Update, ruleUpdate{
-				Existing: rule,
-				New:      rule,
-			}, "automatic changes expected to contain all rules of the updated group")
-		}
-
-		// calculate expected index of the rules in the source group after the move
-		expectedReindex := make(map[string]int, len(rules2)-1)
-		idx := 1
-		for _, rule := range rules2 {
-			if rule.UID == movedRule.UID {
-				continue
-			}
-			expectedReindex[rule.UID] = idx
-			idx++
-		}
-
-		for _, upd := range result.Update {
-			expectedIdx, ok := expectedReindex[upd.Existing.UID]
-			if !ok {
-				continue
-			}
-			diff := upd.Existing.Diff(upd.New)
-			if upd.Existing.RuleGroupIndex != expectedIdx {
-				require.Lenf(t, diff, 1, fmt.Sprintf("the rule in affected group should be re-indexed to %d but it still has index %d. Moved rule with index %d", expectedIdx, upd.Existing.RuleGroupIndex, movedIndex))
-				require.Equal(t, "RuleGroupIndex", diff[0].Path)
-				require.Equal(t, expectedIdx, upd.New.RuleGroupIndex)
-			} else {
-				require.Empty(t, diff)
-			}
-		}
-	})
+func createServiceWithProvenanceStore(ac *acMock.Mock, store *fakes.RuleStore, scheduler schedule.ScheduleService, provenanceStore provisioning.ProvisioningStore) *RulerSrv {
+	svc := createService(ac, store, scheduler)
+	svc.provenanceStore = provenanceStore
+	return svc
 }
 
-func createService(ac *acMock.Mock, store *store.FakeRuleStore, scheduler schedule.ScheduleService) *RulerSrv {
+func createService(ac *acMock.Mock, store *fakes.RuleStore, scheduler schedule.ScheduleService) *RulerSrv {
 	return &RulerSrv{
 		xactManager:     store,
 		store:           store,
-		DatasourceCache: nil,
 		QuotaService:    nil,
 		provenanceStore: provisioning.NewFakeProvisioningStore(),
 		scheduleService: scheduler,
@@ -1046,7 +656,7 @@ func createService(ac *acMock.Mock, store *store.FakeRuleStore, scheduler schedu
 	}
 }
 
-func createRequestContext(orgID int64, role models2.RoleType, params map[string]string) *models2.ReqContext {
+func createRequestContext(orgID int64, role org.RoleType, params map[string]string) *models2.ReqContext {
 	uri, _ := url.Parse("http://localhost")
 	ctx := web.Context{Req: &http.Request{
 		URL: uri,
@@ -1057,9 +667,9 @@ func createRequestContext(orgID int64, role models2.RoleType, params map[string]
 
 	return &models2.ReqContext{
 		IsSignedIn: true,
-		SignedInUser: &models2.SignedInUser{
+		SignedInUser: &user.SignedInUser{
 			OrgRole: role,
-			OrgId:   orgID,
+			OrgID:   orgID,
 		},
 		Context: &ctx,
 	}
@@ -1100,30 +710,5 @@ func withGroupKey(groupKey models.AlertRuleGroupKey) func(rule *models.AlertRule
 		rule.RuleGroup = groupKey.RuleGroup
 		rule.OrgID = groupKey.OrgID
 		rule.NamespaceUID = groupKey.NamespaceUID
-	}
-}
-
-// simulateSubmitted resets some fields of the structure that are not populated by API model to model conversion
-func simulateSubmitted(rule *models.AlertRule) {
-	rule.ID = 0
-	rule.Version = 0
-	rule.Updated = time.Time{}
-}
-
-func withoutUID(rule *models.AlertRule) {
-	rule.UID = ""
-}
-
-func withUIDs(uids map[string]*models.AlertRule) func(rule *models.AlertRule) {
-	unused := make([]string, 0, len(uids))
-	for s := range uids {
-		unused = append(unused, s)
-	}
-	return func(rule *models.AlertRule) {
-		if len(unused) == 0 {
-			return
-		}
-		rule.UID = unused[0]
-		unused = unused[1:]
 	}
 }

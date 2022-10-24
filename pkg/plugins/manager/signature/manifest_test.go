@@ -153,7 +153,7 @@ func TestCalculate(t *testing.T) {
 
 			sig, err := Calculate(log.NewNopLogger(), &plugins.Plugin{
 				JSONData: plugins.JSONData{
-					ID: "test",
+					ID: "test-datasource",
 					Info: plugins.Info{
 						Version: "1.0.0",
 					},

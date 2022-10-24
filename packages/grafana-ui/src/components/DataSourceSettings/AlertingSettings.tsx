@@ -7,7 +7,8 @@ import { InlineField } from '../Forms/InlineField';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
 import { Select } from '../Select/Select';
 
-interface Props<T> extends Pick<DataSourcePluginOptionsEditorProps<T>, 'options' | 'onOptionsChange'> {
+interface Props<T extends DataSourceJsonData>
+  extends Pick<DataSourcePluginOptionsEditorProps<T>, 'options' | 'onOptionsChange'> {
   alertmanagerDataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
 }
 

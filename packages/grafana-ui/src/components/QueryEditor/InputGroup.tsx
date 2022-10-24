@@ -1,20 +1,40 @@
-import { css } from '@emotion/css';
-import React from 'react';
+import { css, cx } from '@emotion/css';
+import React, { Children, cloneElement, isValidElement, ReactElement } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '../../themes';
 
-import { stylesFactory, useTheme2 } from '../../themes';
+type Child = string | undefined | ReactElement<{ className?: string; invalid?: unknown }>;
+interface InputGroupProps {
+  // we type the children props so we can test them later on
+  children: Child | Child[];
+}
 
-interface InputGroupProps {}
+export const InputGroup = ({ children }: InputGroupProps) => {
+  const styles = useStyles2(getStyles);
 
-export const InputGroup: React.FC<InputGroupProps> = ({ children }) => {
-  const theme = useTheme2();
-  const styles = useStyles(theme);
+  // Find children with an invalid prop, and set a class name to raise their z-index so all
+  // of the invalid border is visible
+  const modifiedChildren = Children.map(children, (child) => {
+    if (isValidElement(child) && child.props.invalid) {
+      return cloneElement(child, { className: cx(child.props.className, styles.invalidChild) });
+    }
 
-  return <div className={styles.root}>{children}</div>;
+    return child;
+  });
+
+  return <div className={styles.root}>{modifiedChildren}</div>;
 };
 
-const useStyles = stylesFactory((theme: GrafanaTheme2) => ({
+// The later in the array the higher the priority for showing that element's border
+const borderPriority = [
+  '' as const, // lowest priority
+  'base' as const,
+  'hovered' as const,
+  'invalid' as const,
+  'focused' as const, // highest priority
+];
+
+const getStyles = () => ({
   root: css({
     display: 'flex',
 
@@ -41,14 +61,20 @@ const useStyles = stylesFactory((theme: GrafanaTheme2) => ({
 
       //
       position: 'relative',
-      zIndex: 1,
+      zIndex: borderPriority.indexOf('base'),
 
+      // Adjacent borders are overlapping, so raise children up when hovering etc
+      // so all that child's borders are visible.
       '&:hover': {
-        zIndex: 2,
+        zIndex: borderPriority.indexOf('hovered'),
       },
       '&:focus-within': {
-        zIndex: 2,
+        zIndex: borderPriority.indexOf('focused'),
       },
     },
   }),
-}));
+
+  invalidChild: css({
+    zIndex: borderPriority.indexOf('invalid'),
+  }),
+});

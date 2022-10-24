@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -23,33 +24,35 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	settings := setting.NewCfg()
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	hs := &HTTPServer{
 		Cfg:           settings,
 		SQLStore:      sqlStore,
 		AccessControl: acmock.New(),
 	}
 
-	mockResult := models.SearchUserQueryResult{
-		Users: []*models.UserSearchHitDTO{
+	mockResult := user.SearchUserQueryResult{
+		Users: []*user.UserSearchHitDTO{
 			{Name: "user1"},
 			{Name: "user2"},
 		},
 		TotalCount: 2,
 	}
 	mock := mockstore.NewSQLStoreMock()
+	userMock := usertest.NewUserServiceFake()
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-		authInfoStore := authinfostore.ProvideAuthInfoStore(sqlStore, secretsService)
+		authInfoStore := authinfostore.ProvideAuthInfoStore(sqlStore, secretsService, userMock)
 		srv := authinfoservice.ProvideAuthInfoService(
 			&authinfoservice.OSSUserProtectionImpl{},
 			authInfoStore,
@@ -65,6 +68,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		}
 		user, err := sqlStore.CreateUser(context.Background(), createUserCmd)
 		require.Nil(t, err)
+		hs.userService = userimpl.ProvideService(sqlStore, nil, sc.cfg, nil, nil)
 
 		sc.handlerFunc = hs.GetUserByID
 
@@ -123,21 +127,23 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.Nil(t, err)
 
 		sc.handlerFunc = hs.GetUserByLoginOrEmail
+
+		userMock := usertest.NewUserServiceFake()
+		userMock.ExpectedUser = &user.User{ID: 2}
+		sc.userService = userMock
+		hs.userService = userMock
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"loginOrEmail": "admin@test.com"}).exec()
 
 		var resp models.UserProfileDTO
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 		err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
-		require.Equal(t, "admin", resp.Login)
-		require.Equal(t, "admin@test.com", resp.Email)
-		require.True(t, resp.IsGrafanaAdmin)
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users", "/api/users", func(sc *scenarioContext) {
-		mock.ExpectedSearchUsers = mockResult
+		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(mock, filters.ProvideOSSSearchUserFilter())
+		searchUsersService := searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -148,9 +154,9 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET with page and limit querystring parameters on", "/api/users", "/api/users", func(sc *scenarioContext) {
-		mock.ExpectedSearchUsers = mockResult
+		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(mock, filters.ProvideOSSSearchUserFilter())
+		searchUsersService := searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 
@@ -161,9 +167,9 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
-		mock.ExpectedSearchUsers = mockResult
+		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(mock, filters.ProvideOSSSearchUserFilter())
+		searchUsersService := searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -177,9 +183,9 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET with page and perpage querystring parameters on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
-		mock.ExpectedSearchUsers = mockResult
+		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(mock, filters.ProvideOSSSearchUserFilter())
+		searchUsersService := searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 

@@ -267,7 +267,7 @@ async function prepareSVG(url: string, size?: number): Promise<string> {
       return `data:image/svg+xml,${svgURI}`;
     })
     .catch((error) => {
-      console.error(error);
+      console.error(error); // eslint-disable-line no-console
       return '';
     });
 }

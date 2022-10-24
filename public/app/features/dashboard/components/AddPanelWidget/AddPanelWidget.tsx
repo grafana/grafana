@@ -58,7 +58,7 @@ const getCopiedPanelPlugins = () => {
   return sortBy(copiedPanels, 'sort');
 };
 
-export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard }) => {
+export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
   const [addPanelView, setAddPanelView] = useState(false);
 
   const onCancelAddPanel = (evt: React.MouseEvent<HTMLButtonElement>) => {

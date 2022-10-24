@@ -2,8 +2,11 @@ package buffered
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -13,9 +16,37 @@ import (
 )
 
 // when memory-profiling this benchmark, these commands are recommended:
-// - go test -benchmem -run=^$ -benchtime 1x -memprofile memprofile.out -memprofilerate 1 -bench ^BenchmarkJson$ github.com/grafana/grafana/pkg/tsdb/prometheus
+// - go test -benchmem -run=^$ -benchtime 1x -memprofile memprofile.out -memprofilerate 1 -bench ^BenchmarkExemplarJson$ github.com/grafana/grafana/pkg/tsdb/prometheus/buffered
 // - go tool pprof -http=localhost:6061 memprofile.out
-func BenchmarkJson(b *testing.B) {
+func BenchmarkExemplarJson(b *testing.B) {
+	queryFileName := filepath.Join("../testdata", "exemplar.query.json")
+	query, err := loadStoredQuery(queryFileName)
+	require.NoError(b, err)
+
+	responseFileName := filepath.Join("../testdata", "exemplar.result.json")
+	// This is a test, so it's safe to ignore gosec warning G304.
+	// nolint:gosec
+	responseBytes, err := os.ReadFile(responseFileName)
+	require.NoError(b, err)
+
+	api, err := makeMockedApi(responseBytes)
+	require.NoError(b, err)
+
+	tracer := tracing.InitializeTracerForTest()
+
+	s := Buffered{tracer: tracer, log: &fakeLogger{}, client: api}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_, err := s.runQueries(context.Background(), []*PrometheusQuery{query})
+		require.NoError(b, err)
+	}
+}
+
+// when memory-profiling this benchmark, these commands are recommended:
+// - go test -benchmem -run=^$ -benchtime 1x -memprofile memprofile.out -memprofilerate 1 -bench ^BenchmarkRangeJson$ github.com/grafana/grafana/pkg/tsdb/prometheus/buffered
+// - go tool pprof -http=localhost:6061 memprofile.out
+func BenchmarkRangeJson(b *testing.B) {
 	resp, query := createJsonTestData(1642000000, 1, 300, 400)
 
 	api, err := makeMockedApi(resp)
@@ -81,4 +112,29 @@ func createJsonTestData(start int64, step int64, timestampCount int, seriesCount
 	}
 
 	return bytes, query
+}
+
+func loadStoredQuery(fileName string) (*PrometheusQuery, error) {
+	// This is a test, so it's safe to ignore gosec warning G304.
+	// nolint:gosec
+	bytes, err := os.ReadFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	var sq storedPrometheusQuery
+
+	err = json.Unmarshal(bytes, &sq)
+	if err != nil {
+		return nil, err
+	}
+
+	return &PrometheusQuery{
+		RefId:         "A",
+		ExemplarQuery: sq.ExemplarQuery,
+		Start:         time.Unix(sq.Start, 0),
+		End:           time.Unix(sq.End, 0),
+		Step:          time.Second * time.Duration(sq.Step),
+		Expr:          sq.Expr,
+	}, nil
 }

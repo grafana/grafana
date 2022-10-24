@@ -19,8 +19,8 @@ type Props = {
 const OFFSET_X = 10;
 const OFFSET_Y = 32;
 
-export const InlineEdit = ({ onClose, id, scene }: Props) => {
-  const root = scene.root.div!.getBoundingClientRect();
+export function InlineEdit({ onClose, id, scene }: Props) {
+  const root = scene.root.div?.getBoundingClientRect();
   const windowHeight = window.innerHeight;
   const windowWidth = window.innerWidth;
   const ref = useRef<HTMLDivElement>(null);
@@ -28,8 +28,9 @@ export const InlineEdit = ({ onClose, id, scene }: Props) => {
   const inlineEditKey = 'inlineEditPanel' + id.toString();
 
   const defaultMeasurements = { width: 350, height: 400 };
-  const defaultX = root.x + root.width - defaultMeasurements.width - OFFSET_X;
-  const defaultY = root.y + OFFSET_Y;
+  const widthOffset = root?.width ?? defaultMeasurements.width + OFFSET_X * 2;
+  const defaultX = root?.x ?? 0 + widthOffset - defaultMeasurements.width - OFFSET_X;
+  const defaultY = root?.y ?? 0 + OFFSET_Y;
 
   const savedPlacement = store.getObject(inlineEditKey, {
     x: defaultX,
@@ -96,7 +97,7 @@ export const InlineEdit = ({ onClose, id, scene }: Props) => {
       </div>
     </Portal>
   );
-};
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   inlineEditorContainer: css`

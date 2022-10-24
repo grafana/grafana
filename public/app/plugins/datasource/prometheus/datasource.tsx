@@ -22,6 +22,7 @@ import {
   TimeRange,
   DataFrame,
   dateTime,
+  AnnotationQueryRequest,
   QueryFixAction,
 } from '@grafana/data';
 import {
@@ -143,9 +144,9 @@ export class PrometheusDatasource
 
   _addTracingHeaders(httpOptions: PromQueryRequest, options: DataQueryRequest<PromQuery>) {
     httpOptions.headers = {};
-    const proxyMode = !this.url.match(/^http/);
-    if (proxyMode) {
+    if (this.access === 'proxy') {
       httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      httpOptions.headers['X-Dashboard-UID'] = options.dashboardUID;
       httpOptions.headers['X-Panel-Id'] = options.panelId;
     }
   }
@@ -160,6 +161,13 @@ export class PrometheusDatasource
     data: Record<string, string> | null,
     overrides: Partial<BackendSrvRequest> = {}
   ): Observable<FetchResponse<T>> {
+    if (this.access === 'direct') {
+      const error = new Error(
+        'Browser access mode in the Prometheus datasource is no longer available. Switch to server access mode.'
+      );
+      return throwError(() => error);
+    }
+
     data = data || {};
     for (const [key, value] of this.customQueryParameters) {
       if (data[key] == null) {
@@ -634,10 +642,14 @@ export class PrometheusDatasource
       data['timeout'] = this.queryTimeout;
     }
 
-    return this._request<PromDataSuccessResponse<PromVectorData | PromScalarData>>(url, data, {
-      requestId: query.requestId,
-      headers: query.headers,
-    }).pipe(
+    return this._request<PromDataSuccessResponse<PromVectorData | PromScalarData>>(
+      `/api/datasources/${this.id}/resources${url}`,
+      data,
+      {
+        requestId: query.requestId,
+        headers: query.headers,
+      }
+    ).pipe(
       catchError((err: FetchError<PromDataErrorResponse<PromVectorData | PromScalarData>>) => {
         if (err.cancelled) {
           return of(err);
@@ -697,7 +709,14 @@ export class PrometheusDatasource
     };
   }
 
-  async annotationQuery(options: any): Promise<AnnotationEvent[]> {
+  async annotationQuery(options: AnnotationQueryRequest<PromQuery>): Promise<AnnotationEvent[]> {
+    if (this.access === 'direct') {
+      const error = new Error(
+        'Browser access mode in the Prometheus datasource is no longer available. Switch to server access mode.'
+      );
+      return Promise.reject(error);
+    }
+
     const annotation = options.annotation;
     const { expr = '' } = annotation;
 
@@ -737,7 +756,7 @@ export class PrometheusDatasource
     );
   }
 
-  processAnnotationResponse = (options: any, data: BackendDataSourceResponse) => {
+  processAnnotationResponse = (options: AnnotationQueryRequest<PromQuery>, data: BackendDataSourceResponse) => {
     const frames: DataFrame[] = toDataQueryResponse({ data: data }).data;
     if (!frames || !frames.length) {
       return [];
@@ -781,7 +800,7 @@ export class PrometheusDatasource
         timeValueTuple.push([timeStampValue, valueValue]);
       });
 
-      const activeValues = timeValueTuple.filter((value) => value[1] >= 1);
+      const activeValues = timeValueTuple.filter((value) => value[1] > 0);
       const activeValuesTimestamps = activeValues.map((value) => value[0]);
 
       // Instead of creating singular annotation for each active event we group events into region if they are less
@@ -908,6 +927,7 @@ export class PrometheusDatasource
             <img
               style={{ width: 14, height: 14, verticalAlign: 'text-bottom' }}
               src={LOGOS[buildInfo.application ?? PromApplication.Prometheus]}
+              alt=""
             />{' '}
             {buildInfo.application ? AppDisplayNames[buildInfo.application] : 'Unknown'}
           </span>
@@ -986,7 +1006,9 @@ export class PrometheusDatasource
         const expandedQuery = {
           ...query,
           datasource: this.getRef(),
-          expr: this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
+          expr: this.enhanceExprWithAdHocFilters(
+            this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr)
+          ),
           interval: this.templateSrv.replace(query.interval, scopedVars),
         };
         return expandedQuery;

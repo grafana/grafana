@@ -1,5 +1,5 @@
 import { setTimeRange, TimeRangeConfig } from './setTimeRange';
 
-export { TimeRangeConfig };
+export type { TimeRangeConfig };
 
 export const setDashboardTimeRange = (config: TimeRangeConfig) => setTimeRange(config);

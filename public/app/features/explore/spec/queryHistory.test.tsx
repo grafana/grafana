@@ -168,7 +168,7 @@ describe('Explore: Query History', () => {
     await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], ExploreId.right);
 
     // star one one query
-    starQueryHistory(1, ExploreId.left);
+    await starQueryHistory(1, ExploreId.left);
     await assertQueryHistoryIsStarred([false, true], ExploreId.left);
     await assertQueryHistoryIsStarred([false, true], ExploreId.right);
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_starred', {
@@ -176,7 +176,7 @@ describe('Explore: Query History', () => {
       newValue: true,
     });
 
-    deleteQueryHistory(0, ExploreId.left);
+    await deleteQueryHistory(0, ExploreId.left);
     await assertQueryHistory(['{"expr":"query #1"}'], ExploreId.left);
     await assertQueryHistory(['{"expr":"query #1"}'], ExploreId.right);
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_deleted', {
@@ -253,7 +253,7 @@ describe('Explore: Query History', () => {
       expect(fetchMock).toBeCalledWith(
         expect.objectContaining({
           url: expect.stringMatching('/api/query-history/migrate'),
-          data: { queries: [expect.objectContaining({ datasourceUid: 'loki' })] },
+          data: { queries: [expect.objectContaining({ datasourceUid: 'loki-uid' })] },
         })
       );
       fetchMock.mockReset();

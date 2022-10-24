@@ -139,7 +139,7 @@ function getUrlSearchParams(): UrlQueryMap {
  * @returns {Object.<string,boolean|Array>}
  */
 export function parseKeyValue(keyValue: string) {
-  var obj: any = {};
+  const obj: any = {};
   const parts = (keyValue || '').split('&');
 
   for (let keyValue of parts) {

@@ -28,7 +28,7 @@ export interface Props {
   inputId?: string;
 }
 
-export const TimeZonePicker: React.FC<Props> = (props) => {
+export const TimeZonePicker = (props: Props) => {
   const {
     onChange,
     width,

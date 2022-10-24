@@ -7,6 +7,7 @@ import {
   GAUGE_DEFAULT_MINIMUM,
   getActiveThreshold,
   GrafanaTheme,
+  GrafanaTheme2,
   Threshold,
   ThresholdsConfig,
   ThresholdsMode,
@@ -44,7 +45,7 @@ export function getFormattedThresholds(
   decimals: number,
   field: FieldConfig,
   value: DisplayValue,
-  theme: GrafanaTheme
+  theme: GrafanaTheme | GrafanaTheme2
 ): Threshold[] {
   if (field.color?.mode !== FieldColorModeId.Thresholds) {
     return [{ value: field.min ?? GAUGE_DEFAULT_MINIMUM, color: value.color ?? FALLBACK_COLOR }];

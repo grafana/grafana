@@ -112,10 +112,6 @@ export class ContextSrv {
     return config.rbacEnabled;
   }
 
-  accessControlBuiltInRoleAssignmentEnabled(): boolean {
-    return config.rbacBuiltInRoleAssignmentEnabled;
-  }
-
   licensedAccessControlEnabled(): boolean {
     return featureEnabled('accesscontrol') && config.rbacEnabled;
   }
@@ -161,7 +157,7 @@ export class ContextSrv {
 
   hasAccessToExplore() {
     if (this.accessControlEnabled()) {
-      return this.hasPermission(AccessControlAction.DataSourcesExplore);
+      return this.hasPermission(AccessControlAction.DataSourcesExplore) && config.exploreEnabled;
     }
     return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
   }
@@ -173,7 +169,7 @@ export class ContextSrv {
     return this.hasPermission(action);
   }
 
-  hasAccessInMetadata(action: string, object: WithAccessControlMetadata, fallBack: boolean) {
+  hasAccessInMetadata(action: string, object: WithAccessControlMetadata, fallBack: boolean): boolean {
     if (!this.accessControlEnabled()) {
       return fallBack;
     }
