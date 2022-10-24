@@ -167,3 +167,13 @@ func (m *SQLStoreMock) GetDBHealthQuery(ctx context.Context, query *models.GetDB
 func (m *SQLStoreMock) GetSqlxSession() *session.SessionDB {
 	return nil
 }
+
+func (m *SQLStoreMock) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
+	m.LastLoginAttemptCommand = cmd
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error {
+	query.Result = m.ExpectedAlert
+	return m.ExpectedError
+}
