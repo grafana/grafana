@@ -72,4 +72,7 @@ export interface GrafanaSearcher {
   tags: (query: SearchQuery) => Promise<TermCount[]>;
   getSortOptions: () => Promise<SelectableValue[]>;
   sortPlaceholder?: string;
+
+  /** Gets the default sort used for the Folder view */
+  getFolderViewSort: () => string;
 }

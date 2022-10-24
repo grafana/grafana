@@ -20,7 +20,7 @@ import (
 
 var validAccessToken, _ = tokens.GenerateAccessToken()
 
-func TestRequiresValidAccessToken(t *testing.T) {
+func TestRequiresExistingAccessToken(t *testing.T) {
 	tests := []struct {
 		Name                 string
 		Path                 string
@@ -74,9 +74,9 @@ func TestRequiresValidAccessToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			publicdashboardService := &publicdashboards.FakePublicDashboardService{}
-			publicdashboardService.On("AccessTokenExists", mock.Anything, mock.Anything).Return(tt.AccessTokenExists, tt.AccessTokenExistsErr)
+			publicdashboardService.On("PublicDashboardEnabledExistsByAccessToken", mock.Anything, mock.Anything).Return(tt.AccessTokenExists, tt.AccessTokenExistsErr)
 			params := map[string]string{":accessToken": tt.AccessToken}
-			mw := RequiresValidAccessToken(publicdashboardService)
+			mw := RequiresExistingAccessToken(publicdashboardService)
 			_, resp := runMw(t, nil, "GET", tt.Path, params, mw)
 			require.Equal(t, tt.ExpectedResponseCode, resp.Code)
 		})

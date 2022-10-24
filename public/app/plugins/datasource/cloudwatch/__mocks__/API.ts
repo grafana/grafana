@@ -10,7 +10,9 @@ import { CloudWatchSettings, setupMockedTemplateService } from './CloudWatchData
 export function setupMockedAPI({
   variables,
   response,
+  getMock,
 }: {
+  getMock?: jest.Func;
   response?: Array<{ text: string; label: string; value: string }>;
   variables?: CustomVariableModel[];
   mockGetVariableName?: boolean;

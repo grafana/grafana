@@ -42,13 +42,13 @@ Supported auth providers:
 - [Azure AD OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/azuread/#team-sync-enterprise-only" >}})
 - [GitHub OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/github/#team-sync-enterprise-only" >}})
 - [GitLab OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/gitlab/#team-sync-enterprise-only" >}})
-- [LDAP]({{< relref "../setup-grafana/configure-security/configure-authentication/enhanced_ldap/#ldap-group-synchronization-for-teams" >}})
+- [LDAP]({{< relref "../setup-grafana/configure-security/configure-authentication/enhanced-ldap/#ldap-group-synchronization-for-teams" >}})
 - [Okta]({{< relref "../setup-grafana/configure-security/configure-authentication/okta/#team-sync-enterprise-only" >}})
 - [SAML]({{< relref "../setup-grafana/configure-security/configure-authentication/saml/#configure-team-sync" >}})
 
 ### Enhanced LDAP integration
 
-With [enhanced LDAP integration]({{< relref "../setup-grafana/configure-security/configure-authentication/enhanced_ldap/" >}}), you can set up active LDAP synchronization.
+With [enhanced LDAP integration]({{< relref "../setup-grafana/configure-security/configure-authentication/enhanced-ldap/" >}}), you can set up active LDAP synchronization.
 
 ### SAML authentication
 

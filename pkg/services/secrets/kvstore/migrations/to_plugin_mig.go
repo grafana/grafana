@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,7 +20,7 @@ var errSecretStoreIsNotPlugin = errors.New("SecretsKVStore is not a SecretsKVSto
 type MigrateToPluginService struct {
 	secretsStore   secretskvs.SecretsKVStore
 	cfg            *setting.Cfg
-	sqlStore       sqlstore.Store
+	sqlStore       db.DB
 	secretsService secrets.Service
 	kvstore        kvstore.KVStore
 	manager        plugins.SecretsPluginManager
@@ -29,7 +29,7 @@ type MigrateToPluginService struct {
 func ProvideMigrateToPluginService(
 	secretsStore secretskvs.SecretsKVStore,
 	cfg *setting.Cfg,
-	sqlStore sqlstore.Store,
+	sqlStore db.DB,
 	secretsService secrets.Service,
 	kvstore kvstore.KVStore,
 	manager plugins.SecretsPluginManager,

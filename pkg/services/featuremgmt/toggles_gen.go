@@ -250,4 +250,8 @@ const (
 	// FlagMysqlAnsiQuotes
 	// Use double quote to escape keyword in Mysql query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
+
+	// FlagAccessControlOnCall
+	// Access control primitives for OnCall
+	FlagAccessControlOnCall = "accessControlOnCall"
 )

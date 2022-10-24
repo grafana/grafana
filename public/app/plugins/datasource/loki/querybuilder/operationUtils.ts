@@ -54,7 +54,7 @@ export function createRangeOperation(name: string, isRangeOperationWithGrouping?
       let opDocs = FUNCTIONS.find((x) => x.insertText === op.id)?.documentation ?? '';
 
       if (op.params[0] === '$__interval') {
-        return `${opDocs} \`$__interval\` is variable that will be replaced with a calculated interval based on **Max data points**,  **Min interval** and query time range. You find these options you find under **Query options** at the right of the data source select dropdown.`;
+        return `${opDocs} \`$__interval\` is a variable that will be replaced with the [calculated interval](https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#__interval) based on the time range and width of the graph. In Dashboards, you can affect the interval variable using **Max data points** and **Min interval**. You can find these options under **Query options** right of the data source select dropdown.`;
       } else {
         return `${opDocs} The [range vector](https://grafana.com/docs/loki/latest/logql/metric_queries/#range-vector-aggregation) is set to \`${op.params[0]}\`.`;
       }

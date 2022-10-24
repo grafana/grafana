@@ -253,7 +253,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
         label: customConfig.axisLabel,
         size: customConfig.axisWidth,
         placement,
-        formatValue: (v, decimals) => formattedValueToString(field.display!(v, field.config.decimals ?? decimals)),
+        formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
         theme,
         grid: { show: customConfig.axisGridShow },
       });
