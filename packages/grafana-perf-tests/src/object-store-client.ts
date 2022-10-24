@@ -11,7 +11,7 @@ enum GRPCMethods {
   ObjectRead = 'object.ObjectStore/Read',
 }
 
-export class ObjectStoreClient {
+export class GRPCObjectStoreClient {
   private connected = false;
   constructor(private client: grpc.Client, private grpcAddress: string, private grpcToken: string) {}
 

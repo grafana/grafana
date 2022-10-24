@@ -2,7 +2,7 @@ import { SharedArray } from 'k6/data';
 import execution from 'k6/execution';
 import grpc from 'k6/net/grpc';
 
-import { ObjectStoreClient } from './object-store-client';
+import { GRPCObjectStoreClient } from './object-store-client';
 import { Data, prepareData } from './prepare-data';
 
 const grpcToken = __ENV.GRPC_TOKEN;
@@ -17,7 +17,7 @@ if (typeof grpcAddress !== 'string' || !grpcAddress.length) {
 }
 
 const client = new grpc.Client();
-const objectStoreClient = new ObjectStoreClient(client, grpcAddress, grpcToken);
+const objectStoreClient = new GRPCObjectStoreClient(client, grpcAddress, grpcToken);
 
 const data: Data = new SharedArray('data', () => {
   return [prepareData(JSON.parse(open('../scripts/tmp/filenames.json')), 10000)];
