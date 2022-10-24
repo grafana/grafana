@@ -153,3 +153,59 @@ You can assign on of the following permissions to a specific user or a team:
 1. In the **Permissions** section at the bottom, click **Add permission**.
 1. Choose **User** in the dropdown and select your desired user.
 1. Choose **View**, **Edit** or **Admin** role in the dropdown and click **Save**.
+
+## Debug the permissions of a service account token
+
+Sometimes, for debugging purposes, you might need to know which RBAC permissions are attached to a service account token.
+This section will give you an overview of how to do it.
+
+### Before you begin
+
+Make sure to read the section to [add a token to a service account]({{< relref "#add-a-token-to-a-service-account-in-grafana" >}})
+as we will need to use the token to authenticate against Grafana.
+
+### List a service account token's permissions
+
+To list your token's permissions, you can target the `/api/access-control/user/permissions` permissions.
+
+#### Example
+
+> note that the following command output is shortened
+
+```bash
+curl -H "Authorization: Bearer glsa_HOruNAb7SOiCdshU9algkrq7FDsNSLAa_54e2f8be" -X GET '<grafana_url>/api/access-control/user/permissions?scoped=true' | jq
+```
+
+output:
+
+```json
+{
+  "dashboards:read": ["dashboards:uid:70KrY6IVz"],
+  "dashboards:write": ["dashboards:uid:70KrY6IVz"],
+  "datasources.id:read": ["datasources:*"],
+  "datasources:read": ["datasources:*"],
+  "datasources:explore": [""],
+  "datasources:query": ["datasources:uid:grafana"],
+  "datasources:read": ["datasources:uid:grafana"],
+  "orgs:read": [""]
+}
+```
+
+### Check which dashboards a token is allowed to see
+
+To see which dashboards a token is allowed to see, you can target the `/api/access-control/user/permissions` permissions.
+
+#### Example
+
+```bash
+curl -H "Authorization: Bearer glsa_HOruNAb7SOiCdshU9algkrq7FDsNSLAa_54e2f8be" -X GET '<grafana_url>/api/access-control/user/permissions?scoped=true' | jq '."dashboards:read"'
+```
+
+output:
+
+```json
+[
+  "dashboards:uid:70KrY6IVz",
+  "dashboards:uid:d61be733D",
+],
+```
