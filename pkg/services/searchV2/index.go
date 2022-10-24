@@ -849,21 +849,22 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 			var slices [][]string
 			err := l.sql.WithDbSession(dashboardQueryCtx, func(sess *db.Session) error {
 				sql := "select id, uid, is_folder, folder_id, slug, data, created, updated from dashboard where org_id = ?"
-				args := []interface{}{orgID}
+				sqlAndArgs := []interface{}{"", orgID}
 
 				if lastID > 0 {
 					sql += " AND id > ?"
-					args = append(args, lastID)
+					sqlAndArgs = append(sqlAndArgs, lastID)
 				}
 
 				if dashboardUID != "" {
 					sql += " AND uid = ?"
-					args = append(args, dashboardUID)
+					sqlAndArgs = append(sqlAndArgs, dashboardUID)
 				}
 
 				sql += " order by id asc"
 
-				output, err := sess.QuerySliceString(append([]interface{}{sql}, args...)...)
+				sqlAndArgs[0] = sql
+				output, err := sess.QuerySliceString(sqlAndArgs...)
 				slices = output
 				return err
 			})
