@@ -89,6 +89,8 @@ export class PrometheusDatasource
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: any;
+  datasourceConfigurationPrometheusFlavor?: PromApplication;
+  datasourceConfigurationPrometheusVersion?: string;
   exemplarsAvailable: boolean;
   subType: PromApplication;
   rulerEnabled: boolean;
@@ -121,6 +123,8 @@ export class PrometheusDatasource
     this.languageProvider = languageProvider ?? new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
+    this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
+    this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
 
@@ -849,11 +853,6 @@ export class PrometheusDatasource
     );
   }
 
-  async getSubtitle(): Promise<JSX.Element | null> {
-    const buildInfo = await this.getBuildInfo();
-    return buildInfo ? this.getBuildInfoMessage(buildInfo) : null;
-  }
-
   async getTagKeys(options?: any) {
     if (options?.series) {
       // Get tags for the provided series only
@@ -902,22 +901,27 @@ export class PrometheusDatasource
     );
 
     const LOGOS = {
-      [PromApplication.Lotex]: '/public/app/plugins/datasource/prometheus/img/cortex_logo.svg',
+      [PromApplication.Cortex]: '/public/app/plugins/datasource/prometheus/img/cortex_logo.svg',
       [PromApplication.Mimir]: '/public/app/plugins/datasource/prometheus/img/mimir_logo.svg',
       [PromApplication.Prometheus]: '/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg',
+      [PromApplication.Thanos]: '/public/app/plugins/datasource/prometheus/img/thanos_logo.svg',
     };
 
     const COLORS: Record<PromApplication, BadgeColor> = {
-      [PromApplication.Lotex]: 'blue',
+      [PromApplication.Cortex]: 'blue',
       [PromApplication.Mimir]: 'orange',
       [PromApplication.Prometheus]: 'red',
+      [PromApplication.Thanos]: 'purple', // Purple hex taken from thanos.io
     };
 
     const AppDisplayNames: Record<PromApplication, string> = {
-      [PromApplication.Lotex]: 'Cortex',
+      [PromApplication.Cortex]: 'Cortex',
       [PromApplication.Mimir]: 'Mimir',
       [PromApplication.Prometheus]: 'Prometheus',
+      [PromApplication.Thanos]: 'Thanos',
     };
+
+    const application = this.datasourceConfigurationPrometheusFlavor ?? buildInfo.application;
 
     // this will inform the user about what "subtype" the datasource is; Mimir, Cortex or vanilla Prometheus
     const applicationSubType = (
@@ -926,13 +930,13 @@ export class PrometheusDatasource
           <span>
             <img
               style={{ width: 14, height: 14, verticalAlign: 'text-bottom' }}
-              src={LOGOS[buildInfo.application ?? PromApplication.Prometheus]}
+              src={LOGOS[application ?? PromApplication.Prometheus]}
               alt=""
             />{' '}
-            {buildInfo.application ? AppDisplayNames[buildInfo.application] : 'Unknown'}
+            {application ? AppDisplayNames[application] : 'Unknown'}
           </span>
         }
-        color={COLORS[buildInfo.application ?? PromApplication.Prometheus]}
+        color={COLORS[application ?? PromApplication.Prometheus]}
       />
     );
 
