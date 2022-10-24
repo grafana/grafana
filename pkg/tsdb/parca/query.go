@@ -9,7 +9,6 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	v1alpha1 "github.com/parca-dev/parca/gen/proto/go/parca/query/v1alpha1"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -46,7 +45,7 @@ func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext,
 	}
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
-		log.DefaultLogger.Debug("Querying SelectMergeStacktraces()", "queryModel", qm)
+		logger.Debug("Querying SelectMergeStacktraces()", "queryModel", qm)
 		resp, err := d.client.Query(ctx, makeProfileRequest(qm, query))
 		if err != nil {
 			response.Error = err

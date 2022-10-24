@@ -31,8 +31,6 @@ type PhlareDatasource struct {
 
 // NewFireDatasource creates a new datasource instance.
 func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	logger.Info("Created DataSource", "settings", settings)
-
 	opt, err := settings.HTTPClientOptions()
 	if err != nil {
 		return nil, err
@@ -48,7 +46,7 @@ func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backen
 }
 
 func (d *PhlareDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	logger.Info("CallResource", "req", req)
+	logger.Debug("CallResource", "req.Path", req.Path, "req.Method", req.Method, "req.Body", req.Body)
 	if req.Path == "profileTypes" {
 		return d.callProfileTypes(ctx, req, sender)
 	}
@@ -132,7 +130,7 @@ func (d *PhlareDatasource) callLabelNames(ctx context.Context, req *backend.Call
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
 func (d *PhlareDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	logger.Info("QueryData called", "request", req)
+	logger.Debug("QueryData called", "req.Queries", req.Queries)
 
 	// create response struct
 	response := backend.NewQueryDataResponse()
@@ -154,7 +152,7 @@ func (d *PhlareDatasource) QueryData(ctx context.Context, req *backend.QueryData
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (d *PhlareDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	logger.Info("CheckHealth called", "request", req)
+	logger.Debug("CheckHealth called", "request", req)
 
 	status := backend.HealthStatusOk
 	message := "Data source is working"
@@ -173,7 +171,7 @@ func (d *PhlareDatasource) CheckHealth(ctx context.Context, req *backend.CheckHe
 // SubscribeStream is called when a client wants to connect to a stream. This callback
 // allows sending the first message.
 func (d *PhlareDatasource) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	logger.Info("SubscribeStream called", "request", req)
+	logger.Debug("SubscribeStream called", "request", req)
 
 	status := backend.SubscribeStreamStatusPermissionDenied
 	if req.Path == "stream" {
@@ -188,7 +186,7 @@ func (d *PhlareDatasource) SubscribeStream(_ context.Context, req *backend.Subsc
 // RunStream is called once for any open channel.  Results are shared with everyone
 // subscribed to the same channel.
 func (d *PhlareDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	logger.Info("RunStream called", "request", req)
+	logger.Debug("RunStream called", "request", req)
 
 	// Create the same data frame as for query data.
 	frame := data.NewFrame("response")
@@ -225,7 +223,7 @@ func (d *PhlareDatasource) RunStream(ctx context.Context, req *backend.RunStream
 
 // PublishStream is called when a client sends a message to the stream.
 func (d *PhlareDatasource) PublishStream(_ context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	logger.Info("PublishStream called", "request", req)
+	logger.Debug("PublishStream called", "request", req)
 
 	// Do not allow publishing at all.
 	return &backend.PublishStreamResponse{

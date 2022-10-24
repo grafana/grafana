@@ -6,7 +6,6 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/tsdb/parca/gen/parca/parca/query/v1alpha1/queryv1alpha1connect"
 	v1alpha1 "github.com/parca-dev/parca/gen/proto/go/parca/query/v1alpha1"
@@ -34,8 +33,6 @@ type ParcaDatasource struct {
 
 // NewParcaDatasource creates a new datasource instance.
 func NewParcaDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	log.DefaultLogger.Info("Created DataSource", "settings", settings)
-
 	opt, err := settings.HTTPClientOptions()
 	if err != nil {
 		return nil, err
@@ -58,7 +55,7 @@ func (d *ParcaDatasource) Dispose() {
 }
 
 func (d *ParcaDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	log.DefaultLogger.Info("CallResource", "req", req)
+	logger.Debug("CallResource", "req.Path", req.Path, "req.Method", req.Method, "req.Body", req.Body)
 	if req.Path == "profileTypes" {
 		return d.callProfileTypes(ctx, req, sender)
 	}
@@ -78,7 +75,7 @@ func (d *ParcaDatasource) CallResource(ctx context.Context, req *backend.CallRes
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
 func (d *ParcaDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	log.DefaultLogger.Info("QueryData called", "request", req)
+	logger.Debug("QueryData called", "queries", req.Queries)
 
 	// create response struct
 	response := backend.NewQueryDataResponse()
@@ -100,7 +97,7 @@ func (d *ParcaDatasource) QueryData(ctx context.Context, req *backend.QueryDataR
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (d *ParcaDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	log.DefaultLogger.Info("CheckHealth called", "request", req)
+	logger.Debug("CheckHealth called", "request", req)
 
 	status := backend.HealthStatusOk
 	message := "Data source is working"
