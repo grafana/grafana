@@ -17,12 +17,13 @@ import { updateFnState } from 'app/core/reducers/fn-slice';
 import { backendSrv } from 'app/core/services/backend_srv';
 import fn_app from 'app/fn_app';
 import { FnLoggerService } from 'app/fn_logger';
-import { dispatch } from 'app/store/store';
+import { dispatch, store } from 'app/store/store';
 
 import { GrafanaTheme2 } from '../../../packages/grafana-data/src/themes/types';
 import { GrafanaBootConfig } from '../../../packages/grafana-runtime/src/config';
 
 import { FNDashboardProps, FailedToMountGrafanaErrorName } from './types';
+import { createFnColors } from '../../../packages/grafana-data/src/themes/fnCreateColors';
 
 /**
  * NOTE:
@@ -106,7 +107,11 @@ class createMfe {
       },
     });
 
+    config.theme2.colors = createFnColors({mode})
+
     config.theme2.v1 = getTheme(mode);
+
+    config.theme2.v1.colors = config.theme2.colors
 
     return config.theme2;
   }
@@ -271,8 +276,19 @@ class createMfe {
     return lifeCycleFn;
   }
 
-  static renderMfeComponent(props: FNDashboardProps, onSuccess = noop) {
-    ReactDOM.render(React.createElement(createMfe.component, props), createMfe.getContainer(props), () => {
+  static renderMfeComponent(props: Partial<FNDashboardProps>, onSuccess = noop) {
+    const {fnGlobalState} = store.getState();
+
+    /**
+     * NOTE:
+     * It may happen that only partial props are received in arguments.
+     * Then we should keep the current props.
+     * That's why we read them from the state.
+     */
+    const mergedProps = merge({}, fnGlobalState, props)
+
+
+    ReactDOM.render(React.createElement(createMfe.component,mergedProps), createMfe.getContainer(mergedProps), () => {
       createMfe.logger('Successfully rendered mfe component.');
       onSuccess();
     });
