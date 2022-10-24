@@ -62,7 +62,7 @@ To roll back secrets, use the [Grafana CLI]({{< ref “/cli/” >}}) by running 
 
 You can re-encrypt data keys encrypted with a specific key encryption key (KEK). This allows you to either re-encrypt existing data keys with a new KEK version (see [KMS integration](#kms-integration) rotation) or to re-encrypt them with a completely different KEK.
 
-To re-encrypt data keys, use the [Grafana CLI]({{< ref “/cli/” >}})Grafana CLI by running the `grafana-cli admin secrets-migration re-encrypt-data-keys` command. It's safe to run more than once, but should be run under maintenance mode.
+To re-encrypt data keys, use the [Grafana CLI]({{< ref “/cli/” >}}) by running the `grafana-cli admin secrets-migration re-encrypt-data-keys` command. It's safe to run more than once, but should be run under maintenance mode.
 
 ### Rotate data keys
 
