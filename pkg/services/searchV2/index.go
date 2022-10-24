@@ -873,9 +873,9 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 
 				return nil
 			})
-			dashboardQuerySpan.End()
 
 			if err != nil || slices == nil {
+				dashboardQuerySpan.End()
 				ch <- &dashboardsRes{
 					dashboards: nil,
 					err:        err,
@@ -907,6 +907,8 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 					Updated:  updated,
 				}
 			}
+
+			dashboardQuerySpan.End()
 
 			if len(rows) < limit || dashboardUID != "" {
 				ch <- &dashboardsRes{
