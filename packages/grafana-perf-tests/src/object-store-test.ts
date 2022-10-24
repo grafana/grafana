@@ -1,20 +1,21 @@
-import { check } from 'k6';
 import { SharedArray } from 'k6/data';
-import { b64encode } from 'k6/encoding';
 import execution from 'k6/execution';
 import grpc from 'k6/net/grpc';
 
+import { ObjectStoreClient } from './object-store-client';
 import { Data, prepareData } from './prepare-data';
 
-const client = new grpc.Client();
 const grpcToken = __ENV.GRPC_TOKEN;
 const grpcAddress = __ENV.GRPC_ADDRESS;
+
+const client = new grpc.Client();
+const objectStoreClient = new ObjectStoreClient(client, grpcAddress, grpcToken);
 
 const data: Data = new SharedArray('data', () => {
   return [prepareData(JSON.parse(open('../scripts/tmp/filenames.json')), 100)];
 })[0];
 
-const scenarioDuration = '15s';
+const scenarioDuration = '2m';
 
 export const options = {
   setupTimeout: '5m',
@@ -33,10 +34,48 @@ export const options = {
       exec: 'reader',
       executor: 'constant-arrival-rate',
       rate: 100,
-      timeUnit: '2s', // 1000 iterations per second, i.e. 1000 RPS
+      timeUnit: '2s',
       duration: scenarioDuration,
-      preAllocatedVUs: 1, // how large the initial pool of VUs would be
-      maxVUs: 100, // if th
+      preAllocatedVUs: 1,
+      maxVUs: 100,
+    },
+    writer1mb: {
+      exec: 'writer1mb',
+      executor: 'constant-arrival-rate',
+      rate: 1,
+      timeUnit: '2s',
+      duration: scenarioDuration,
+      preAllocatedVUs: 1,
+      maxVUs: 5,
+    },
+    reader1mb: {
+      startTime: '2s',
+      exec: 'reader1mb',
+      executor: 'constant-arrival-rate',
+      rate: 4,
+      timeUnit: '1s',
+      duration: scenarioDuration,
+      preAllocatedVUs: 1,
+      maxVUs: 5,
+    },
+    writer4mb: {
+      exec: 'writer4mb',
+      executor: 'constant-arrival-rate',
+      rate: 1,
+      timeUnit: '3s',
+      duration: scenarioDuration,
+      preAllocatedVUs: 1,
+      maxVUs: 5,
+    },
+    reader4mb: {
+      startTime: '3s',
+      exec: 'reader4mb',
+      executor: 'constant-arrival-rate',
+      rate: 2,
+      timeUnit: '1s',
+      duration: scenarioDuration,
+      preAllocatedVUs: 1,
+      maxVUs: 5,
     },
   },
   // thresholds: { http_req_duration: ['avg<100', 'p(95)<200'] },
@@ -50,147 +89,45 @@ export function setup() {
   if (typeof grpcAddress !== 'string' || !grpcAddress.length) {
     throw new Error('GRPC_ADDRESS env variable is missing');
   }
-  client.connect(grpcAddress, { plaintext: true, reflect: true });
 
-  const response = client.invoke('grpc.health.v1.Health/Check', {});
-
-  check(response, {
-    'server is healthy': (r) => {
-      const statusOK = r && r.status === grpc.StatusOK;
-      if (!statusOK) {
-        return false;
-      }
-
-      const body = r.message;
-      // @ts-ignore
-      return 'status' in body && body.status === 'SERVING';
-    },
-  });
+  objectStoreClient.healthCheck();
 
   for (let i = 0; i < data.base.length; i++) {
-    const obj = data.base[i];
-    const response = client.invoke(
-      'object.ObjectStore/Write',
-      {
-        body: b64encode(JSON.stringify(obj.data)),
-        comment: 'hello-world-2',
-        kind: obj.kind,
-        UID: obj.uid,
-      },
-      {
-        metadata: {
-          authorization: `Bearer ${grpcToken}`,
-        },
-      }
-    );
-
-    check(response, {
-      'object was created': (r) => {
-        const statusOK = r && r.status === grpc.StatusOK;
-        if (!statusOK) {
-          return false;
-        }
-
-        const body = r.message;
-        return 'status' in body && body.status === 'CREATED';
-      },
-    });
+    objectStoreClient.writeObject(data.base[i], { randomizeData: false, checkCreatedOrUpdated: false });
   }
 }
 
 export function teardown() {
-  client.connect(grpcAddress, { plaintext: true, reflect: true });
-
   const toDelete = [...data.base, ...data.toWrite];
   for (let i = 0; i < toDelete.length; i++) {
-    const obj = toDelete[i];
-    const response = client.invoke(
-      'object.ObjectStore/Delete',
-      {
-        kind: obj.kind,
-        UID: obj.uid,
-      },
-      {
-        metadata: {
-          authorization: `Bearer ${grpcToken}`,
-        },
-      }
-    );
-
-    check(response, {
-      'object was deleted': (r) => {
-        return r && r.status === grpc.StatusOK;
-      },
-    });
+    objectStoreClient.deleteObject(toDelete[i].uid, toDelete[i].kind);
   }
 }
 
 export function reader() {
-  client.connect(grpcAddress, { plaintext: true, reflect: true });
   const item = data.base[execution.scenario.iterationInTest % data.base.length];
-  const response = client.invoke(
-    'object.ObjectStore/Read',
-    {
-      kind: item.kind,
-      UID: item.uid,
-      with_body: true,
-      with_summary: true,
-    },
-    {
-      metadata: {
-        authorization: `Bearer ${grpcToken}`,
-      },
-    }
-  );
-
-  check(response, {
-    'object exists': (r) => {
-      const statusOK = r && r.status === grpc.StatusOK;
-      if (!statusOK) {
-        return false;
-      }
-
-      const body = r.message;
-      return 'object' in body && typeof body.object?.body === 'string';
-    },
-  });
+  objectStoreClient.readObject(item.uid, item.kind);
 }
 
 export function writer() {
   const item = data.toWrite[execution.scenario.iterationInTest % data.toWrite.length];
-  client.connect(grpcAddress, { plaintext: true, reflect: true });
+  objectStoreClient.writeObject(item, { randomizeData: true, checkCreatedOrUpdated: true });
+}
 
-  const randomData = {
-    ...item.data,
-    __random: Date.now(),
-  };
-  const response = client.invoke(
-    'object.ObjectStore/Write',
-    {
-      body: b64encode(JSON.stringify(randomData)),
-      comment: 'hello-world-2',
-      kind: item.kind,
-      UID: item.uid,
-    },
-    {
-      metadata: {
-        authorization: `Bearer ${grpcToken}`,
-      },
-    }
-  );
+export function writer1mb() {
+  objectStoreClient.writeObject(data.size1mb, { randomizeData: true, checkCreatedOrUpdated: true });
+}
 
-  check(response, {
-    'object was created or updated': (r) => {
-      const statusOK = r && r.status === grpc.StatusOK;
-      if (!statusOK) {
-        return false;
-      }
+export function reader1mb() {
+  const item = data.size1mb;
+  objectStoreClient.readObject(item.uid, item.kind);
+}
 
-      const body = r.message;
-      // return 'status' in body;
-      return 'status' in body && (body.status === 'CREATED' || body.status === 'UPDATED');
-    },
-  });
+export function writer4mb() {
+  objectStoreClient.writeObject(data.size4mb, { randomizeData: true, checkCreatedOrUpdated: true });
+}
 
-  client.close();
+export function reader4mb() {
+  const item = data.size4mb;
+  objectStoreClient.readObject(item.uid, item.kind);
 }
