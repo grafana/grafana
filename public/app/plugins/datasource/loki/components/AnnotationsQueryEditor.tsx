@@ -18,7 +18,7 @@ type Props = LokiQueryEditorProps & {
 };
 
 export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEditor(props: Props) {
-  const { annotation, onAnnotationChange } = props;
+  const { annotation, onAnnotationChange, history } = props;
 
   // this should never happen, but we want to keep typescript happy
   if (annotation === undefined || onAnnotationChange === undefined) {
@@ -56,7 +56,7 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
           onChange={onChangeQuery}
           onRunQuery={() => {}}
           onBlur={() => {}}
-          history={[]}
+          history={history}
           ExtraFieldElement={
             <LokiOptionFields
               lineLimitValue={queryWithRefId?.maxLines?.toString() || ''}
