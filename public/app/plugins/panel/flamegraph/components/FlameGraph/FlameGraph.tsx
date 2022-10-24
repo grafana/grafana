@@ -20,10 +20,10 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { CoreApp, DataFrame, FieldType } from '@grafana/data';
+import { CoreApp, DataFrame, Field, FieldType } from '@grafana/data';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { TooltipData, SelectedView } from '../types';
+import { TooltipData, SelectedView, SampleUnit } from '../types';
 
 import FlameGraphTooltip, { getTooltipData } from './FlameGraphTooltip';
 import { ItemWithStart } from './dataTransform';
@@ -171,10 +171,22 @@ const FlameGraph = ({
 
   return (
     <div className={styles.graph} ref={sizeRef}>
+      <div className={styles.xAxis}>x-axis represents % of {getUnit(valueField!)}</div>
       <canvas ref={graphRef} data-testid="flameGraph" />
       <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} showTooltip={showTooltip} />
     </div>
   );
+};
+
+const getUnit = (field: Field) => {
+  switch (field.config.unit) {
+    case SampleUnit.Bytes:
+      return 'RAM';
+    case SampleUnit.Nanoseconds:
+      return 'time';
+    default:
+      return 'count';
+  }
 };
 
 const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: number | undefined) => ({
@@ -186,6 +198,10 @@ const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: n
     ${app !== CoreApp.Explore
       ? `height: calc(${flameGraphHeight}px - 44px)`
       : ''}; // 44px to adjust for header pushing content down
+  `,
+  xAxis: css`
+    height: 30px;
+    text-align: center;
   `,
 });
 

@@ -45,13 +45,28 @@ const FlameGraphTooltip = ({ tooltipRef, tooltipData, showTooltip }: Props) => {
 
 export const getTooltipData = (field: Field, label: string, value: number, totalTicks: number): TooltipData => {
   let samples = value;
-  let percentTitle = '';
-  let unitTitle = '';
 
   const processor = getDisplayProcessor({ field, theme: createTheme() /* theme does not matter for us here */ });
   const displayValue = processor(value);
   const percent = Math.round(10000 * (samples / totalTicks)) / 100;
-  let unitValue = displayValue.text + displayValue.suffix;
+  const titles = getTitles(field);
+
+  // Makes sure we don't show 123undefined or something like that if suffix isn't defined
+  let unitValue = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
+
+  return {
+    name: label,
+    percentTitle: titles.percentTitle,
+    percentValue: percent,
+    unitTitle: titles.unitTitle,
+    unitValue,
+    samples: samples.toLocaleString(),
+  };
+};
+
+const getTitles = (field: Field) => {
+  let percentTitle = '';
+  let unitTitle = '';
 
   switch (field.config.unit) {
     case SampleUnit.Bytes:
@@ -65,20 +80,12 @@ export const getTooltipData = (field: Field, label: string, value: number, total
     default:
       percentTitle = '% of total';
       unitTitle = 'Count';
-      if (!displayValue.suffix) {
-        // Makes sure we don't show 123undefined or something like that if suffix isn't defined
-        unitValue = displayValue.text;
-      }
       break;
   }
 
   return {
-    name: label,
     percentTitle: percentTitle,
-    percentValue: percent,
     unitTitle: unitTitle,
-    unitValue,
-    samples: samples.toLocaleString(),
   };
 };
 
