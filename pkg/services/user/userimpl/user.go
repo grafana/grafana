@@ -254,6 +254,21 @@ func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUs
 	return signedInUser, err
 }
 
+func (s *Service) NewAnonymousSignedInUser(ctx context.Context) (*user.SignedInUser, error) {
+	getOrg := org.GetOrgByNameQuery{Name: s.cfg.AnonymousOrgName}
+	anonymousOrg, err := s.orgService.GetByName(ctx, &getOrg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user.SignedInUser{
+		OrgID:       anonymousOrg.ID,
+		OrgName:     anonymousOrg.Name,
+		OrgRole:     org.RoleType(s.cfg.AnonymousOrgRole),
+		IsAnonymous: true,
+	}, nil
+}
+
 func (s *Service) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
 	return s.store.Search(ctx, query)
 }
