@@ -1015,14 +1015,14 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 
 		rows := res.dashboards
 
-		_, readDashboardSpan := l.tracer.Start(ctx, "sqlDashboardLoader readDashboard")
+		readDashboardCtx, readDashboardSpan := l.tracer.Start(ctx, "sqlDashboardLoader readDashboard")
 		readDashboardSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
 		readDashboardSpan.SetAttributes("dashboardCount", len(rows), attribute.Key("dashboardCount").Int(len(rows)))
 
 		reader := kdash.NewStaticDashboardSummaryBuilder(lookup)
 
 		for _, row := range rows {
-			summary, _, err := reader(ctx, row.Uid, row.Data)
+			summary, _, err := reader(readDashboardCtx, row.Uid, row.Data)
 			if err != nil {
 				l.logger.Warn("Error indexing dashboard data", "error", err, "dashboardId", row.Id, "dashboardSlug", row.Slug)
 				// But append info anyway for now, since we possibly extracted useful information.
