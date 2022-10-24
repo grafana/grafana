@@ -97,16 +97,6 @@ const afterSelectorCompletions = [
     type: 'PARSER',
   },
   {
-    insertText: '| extracted',
-    label: 'extracted (detected)',
-    type: 'LABEL_NAME',
-  },
-  {
-    insertText: '| label',
-    label: 'label (detected)',
-    type: 'LABEL_NAME',
-  },
-  {
     insertText: '| unwrap extracted',
     label: 'unwrap extracted (detected)',
     type: 'LINE_FILTER',
@@ -239,13 +229,13 @@ describe('getCompletions', () => {
       },
       {
         insertText: 'extracted',
-        label: 'extracted (parsed)',
+        label: 'extracted (extracted)',
         triggerOnInsert: false,
         type: 'LABEL_NAME',
       },
       {
         insertText: 'label',
-        label: 'label (parsed)',
+        label: 'label (extracted)',
         triggerOnInsert: false,
         type: 'LABEL_NAME',
       },

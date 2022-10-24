@@ -129,7 +129,7 @@ async function getLabelNamesForCompletions(
     extractedLabelKeys.forEach((key) => {
       result.push({
         type: 'LABEL_NAME',
-        label: `${key} (parsed)`,
+        label: `${key} (extracted)`,
         insertText: `${key}${suffix}`,
         triggerOnInsert,
       });
@@ -203,14 +203,6 @@ async function getAfterSelectorCompletions(
 
   extractedLabelKeys.forEach((key) => {
     completions.push({
-      type: 'LABEL_NAME',
-      label: `${key} (detected)`,
-      insertText: `${prefix}${key}`,
-    });
-  });
-
-  extractedLabelKeys.forEach((key) => {
-    completions.push({
       type: 'LINE_FILTER',
       label: `unwrap ${key} (detected)`,
       insertText: `${prefix}unwrap ${key}`,
@@ -261,6 +253,7 @@ export async function getCompletions(
   situation: Situation,
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
+  console.log(situation.type);
   switch (situation.type) {
     case 'EMPTY':
     case 'AT_ROOT':
