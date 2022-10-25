@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/kind"
+	"github.com/grafana/grafana/pkg/services/store/kind/access"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/store/router"
@@ -127,7 +128,7 @@ func (s sqlObjectServer) getRouteInfo(ctx context.Context, kind string, uid stri
 		OrgID:     modifier.OrgID,
 		Kind:      kind,
 		UID:       uid,
-		Namespace: "flat", // "drive",
+		Namespace: "drive", // "flat",
 	})
 }
 
@@ -328,7 +329,30 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 			}
 		}
 
-		// 4. Add/update the main `object` table
+		// 4. Special handling for the access object
+		// rules get saved individually in addition to the object
+		accessRules, err := access.GetFolderAccessRules(r.Kind, body)
+		if err != nil {
+			return err
+		}
+		if accessRules != nil {
+			prefix := key[:strings.LastIndex(key, "/")+1]
+			if _, err := tx.Exec(ctx, "DELETE FROM object_access WHERE prefix = ?", prefix); err != nil {
+				return err
+			}
+			for _, rule := range accessRules.Rules {
+				_, err = tx.Exec(ctx, `INSERT INTO object_access (`+
+					`"prefix", "action", "kind", "who") `+
+					`VALUES (?, ?, ?, ?)`,
+					prefix, rule.Action, rule.Kind, rule.Who,
+				)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		// 5. Add/update the main `object` table
 		rsp.Object = versionInfo
 		if isUpdate {
 			rsp.Status = object.WriteObjectResponse_UPDATED
@@ -369,6 +393,9 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 
 func (s sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
 	route, err := s.getRouteInfo(ctx, r.Kind, r.UID)
+	if err != nil {
+		return nil, err
+	}
 	key := route.Key
 
 	rsp := &object.DeleteObjectResponse{}

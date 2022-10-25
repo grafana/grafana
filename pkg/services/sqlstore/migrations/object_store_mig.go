@@ -114,18 +114,14 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	objectAccessTable := migrator.Table{
 		Name: "object_access",
 		Columns: []*migrator.Column{
-			{Name: "who", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},    // user + roles?
+			{Name: "prefix", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
 			{Name: "action", Type: migrator.DB_NVarchar, Length: 255, Nullable: false}, // read, write, admin, none
 			{Name: "kind", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "prefix", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
-
-			// Basic audit logging
-			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
-			{Name: "updated_by", Type: migrator.DB_Int, Nullable: false},
+			{Name: "who", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"prefix"}, Type: migrator.IndexType},
-			{Cols: []string{"who", "action", "kind", "prefix"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"prefix", "action", "kind", "who"}, Type: migrator.UniqueIndex},
 		},
 	}
 

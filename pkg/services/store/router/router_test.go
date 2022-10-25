@@ -46,6 +46,22 @@ func TestSimpleRouter(t *testing.T) {
 			Kind:      "dashboard",
 		},
 	}, {
+		Key: "11/drive/path/to/folder/__folder.json",
+		GRN: models.GRN{
+			OrgID:     11,
+			Namespace: "drive",
+			UID:       "path/to/folder",
+			Kind:      "folder",
+		},
+	}, {
+		Key: "11/drive/path/to/folder/__access.json",
+		GRN: models.GRN{
+			OrgID:     11,
+			Namespace: "drive",
+			UID:       "path/to/folder",
+			Kind:      "folder-access",
+		},
+	}, {
 		Key: "10/drive/path/to/file.png",
 		GRN: models.GRN{
 			OrgID:     10,

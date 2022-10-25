@@ -82,23 +82,27 @@ func (r *standardStoreRouter) Route(ctx context.Context, grn models.GRN) (Resour
 	}
 
 	if grn.Namespace == "" {
-		grn.Namespace = "store"
+		grn.Namespace = "drive" // defatul to the file path model for HTTP!
 	}
 
 	// Human readable file system
 	if grn.Namespace == "drive" || grn.Namespace == "public" {
-		if kind.FileExtension != "" {
-			info.Key = fmt.Sprintf("%d/%s/%s.%s", grn.OrgID, grn.Namespace, grn.UID, kind.FileExtension)
+		// Special folder for
+		if grn.Kind == models.StandardKindFolder {
+			info.Key = fmt.Sprintf("%d/%s/%s/__folder.json", grn.OrgID, grn.Namespace, grn.UID)
+		} else if grn.Kind == models.StandardKindFolderAccess {
+			info.Key = fmt.Sprintf("%d/%s/%s/__access.json", grn.OrgID, grn.Namespace, grn.UID)
 		} else {
-			info.Key = fmt.Sprintf("%d/%s/%s-%s.json", grn.OrgID, grn.Namespace, grn.UID, grn.Kind)
+			if kind.FileExtension != "" {
+				info.Key = fmt.Sprintf("%d/%s/%s.%s", grn.OrgID, grn.Namespace, grn.UID, kind.FileExtension)
+			} else {
+				info.Key = fmt.Sprintf("%d/%s/%s-%s.json", grn.OrgID, grn.Namespace, grn.UID, grn.Kind)
+			}
 		}
 	} else {
 		// kind as root folder
 		info.Key = fmt.Sprintf("%d/%s/kind/%s/%s", grn.OrgID, grn.Namespace, grn.Kind, grn.UID)
 	}
-
-	// TODO
-	// size + sync support
 
 	info.GRN = grn
 	return info, nil
@@ -133,16 +137,37 @@ func (r *standardStoreRouter) RouteFromKey(ctx context.Context, key string) (Res
 	// Human file system style
 	if p2 == "drive" || p2 == "public" {
 		if strings.HasSuffix(key, ".json") {
+			sdx := strings.LastIndex(key, "/")
 			idx = strings.LastIndex(key, "-")
-			ddx := strings.LastIndex(key, ".") // .json
-
-			info.GRN.UID = key[:idx]
-			info.GRN.Kind = key[idx+1 : ddx]
+			if idx > sdx {
+				ddx := strings.LastIndex(key, ".") // .json
+				info.GRN.UID = key[:idx]
+				info.GRN.Kind = key[idx+1 : ddx]
+			} else {
+				switch key[sdx+1:] {
+				case "__folder.json":
+					{
+						info.GRN.UID = key[:sdx]
+						info.GRN.Kind = models.StandardKindFolder
+					}
+				case "__access.json":
+					{
+						info.GRN.UID = key[:sdx]
+						info.GRN.Kind = models.StandardKindFolderAccess
+					}
+				default:
+					return info, fmt.Errorf("unable to parse drive path")
+				}
+			}
 		} else {
-			// Lookup by suffix!
+			// Lookup by kind extension ()
 			idx = strings.LastIndex(key, ".")
 			info.GRN.UID = key[:idx]
-			info.GRN.Kind = key[idx+1:]
+			k, err := r.kinds.GetFromExtension(key[idx+1:])
+			if err != nil {
+				return info, err
+			}
+			info.GRN.Kind = k.ID
 		}
 	} else {
 		if !strings.HasPrefix(key, "kind/") {
