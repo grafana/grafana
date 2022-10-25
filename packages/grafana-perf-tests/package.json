@@ -1,5 +1,8 @@
 {
   "private": true,
+  "license": "Apache-2.0",
+  "name": "@grafana/perf-tests",
+  "version": "9.3.0-pre",
   "devDependencies": {
     "@babel/core": "7.19.0",
     "@babel/plugin-proposal-class-properties": "7.18.6",

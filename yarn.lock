@@ -5400,6 +5400,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/perf-tests@workspace:packages/grafana-perf-tests":
+  version: 0.0.0-use.local
+  resolution: "@grafana/perf-tests@workspace:packages/grafana-perf-tests"
+  dependencies:
+    "@babel/core": 7.19.0
+    "@babel/plugin-proposal-class-properties": 7.18.6
+    "@babel/plugin-proposal-object-rest-spread": 7.18.9
+    "@babel/preset-env": 7.19.0
+    "@babel/preset-typescript": 7.18.6
+    "@types/k6": 0.39.0
+    "@types/shortid": 0.0.29
+    "@types/webpack": 5.28.0
+    babel-loader: 8.2.5
+    clean-webpack-plugin: 4.0.0-alpha.0
+    copy-webpack-plugin: 9.0.1
+    shortid: 2.2.16
+    ts-node: 10.9.1
+    typescript: 4.8.2
+    webpack: 5.74.0
+    webpack-cli: 4.10.0
+    webpack-glob-entries: 1.0.1
+  languageName: unknown
+  linkType: soft
+
 "@grafana/runtime@9.3.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
@@ -23269,30 +23293,6 @@ __metadata:
   checksum: 68ea4e07ff2c041ada184f9278b830375f8e0b75154e3f080af6b70f66172fabb4108d19b3863a96b53fc068a310b9b6493d86d1291acc5f3861eb4b79d26ad6
   languageName: node
   linkType: hard
-
-"grafana-perf-tests-10d7c0@workspace:packages/grafana-perf-tests":
-  version: 0.0.0-use.local
-  resolution: "grafana-perf-tests-10d7c0@workspace:packages/grafana-perf-tests"
-  dependencies:
-    "@babel/core": 7.19.0
-    "@babel/plugin-proposal-class-properties": 7.18.6
-    "@babel/plugin-proposal-object-rest-spread": 7.18.9
-    "@babel/preset-env": 7.19.0
-    "@babel/preset-typescript": 7.18.6
-    "@types/k6": 0.39.0
-    "@types/shortid": 0.0.29
-    "@types/webpack": 5.28.0
-    babel-loader: 8.2.5
-    clean-webpack-plugin: 4.0.0-alpha.0
-    copy-webpack-plugin: 9.0.1
-    shortid: 2.2.16
-    ts-node: 10.9.1
-    typescript: 4.8.2
-    webpack: 5.74.0
-    webpack-cli: 4.10.0
-    webpack-glob-entries: 1.0.1
-  languageName: unknown
-  linkType: soft
 
 "grafana@workspace:.":
   version: 0.0.0-use.local
