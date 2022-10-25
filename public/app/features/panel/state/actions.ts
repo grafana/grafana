@@ -8,8 +8,6 @@ import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
 import { ThunkResult } from 'app/types';
 import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
 
-import { getLibraryPanelLoadingView } from '../components/LibraryPanelLoader';
-
 import {
   changePanelKey,
   cleanUpAngularComponent,
@@ -21,12 +19,6 @@ import {
 export function initPanelState(panel: PanelModel): ThunkResult<void> {
   return async (dispatch, getStore) => {
     if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
-      dispatch(
-        panelModelAndPluginReady({
-          key: panel.key,
-          plugin: getLibraryPanelLoadingView(panel),
-        })
-      );
       // this will call init with a loaded libary panel if it loads succesfully
       dispatch(loadLibraryPanelAndUpdate(panel));
       return;

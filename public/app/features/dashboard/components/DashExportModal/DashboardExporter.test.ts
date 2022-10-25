@@ -40,6 +40,20 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+jest.mock('app/features/library-panels/state/api', () => ({
+  getLibraryPanel: jest.fn().mockReturnValue(
+    Promise.resolve({
+      model: {
+        type: 'graph',
+        datasource: {
+          type: 'testdb',
+          uid: '${DS_GFDB}',
+        },
+      },
+    })
+  ),
+}));
+
 variableAdapters.register(createQueryVariableAdapter());
 variableAdapters.register(createConstantVariableAdapter());
 variableAdapters.register(createDataSourceVariableAdapter());
@@ -222,7 +236,8 @@ describe('given dashboard with repeated panels', () => {
       uid: 'ah8NqyDPs',
       name: 'Library Panel 2',
       model: {
-        datasource: { uid: '$ds', type: 'other2' },
+        datasource: { type: 'other2', uid: '$ds' },
+        targets: [{ refId: 'A', datasource: { type: 'other2', uid: '$ds' } }],
         type: 'graph',
       },
     });
