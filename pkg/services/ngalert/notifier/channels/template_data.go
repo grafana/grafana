@@ -149,7 +149,6 @@ func TmplText(ctx context.Context, tmpl *template.Template, alerts []*types.Aler
 	data := ExtendData(promTmplData, l)
 
 	return func(name string) (s string) {
-		// TODO: Make templating function return new error each time instead of passing pointer by parameter
 		if *tmplErr != nil {
 			return
 		}
