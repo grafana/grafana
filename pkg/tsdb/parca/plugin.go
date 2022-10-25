@@ -26,7 +26,7 @@ var (
 	_ backend.CheckHealthHandler  = (*ParcaDatasource)(nil)
 )
 
-// ParcaDatasource is an datasource for querying application performance profiles.
+// ParcaDatasource is a datasource for querying application performance profiles.
 type ParcaDatasource struct {
 	client queryv1alpha1connect.QueryServiceClient
 }
@@ -55,7 +55,7 @@ func (d *ParcaDatasource) Dispose() {
 }
 
 func (d *ParcaDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	logger.Debug("CallResource", "req.Path", req.Path, "req.Method", req.Method, "req.Body", req.Body)
+	logger.Debug("CallResource", "Path", req.Path, "Method", req.Method, "Body", req.Body)
 	if req.Path == "profileTypes" {
 		return d.callProfileTypes(ctx, req, sender)
 	}
@@ -96,8 +96,8 @@ func (d *ParcaDatasource) QueryData(ctx context.Context, req *backend.QueryDataR
 // The main use case for these health checks is the test button on the
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
-func (d *ParcaDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	logger.Debug("CheckHealth called", "request", req)
+func (d *ParcaDatasource) CheckHealth(ctx context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	logger.Debug("CheckHealth called")
 
 	status := backend.HealthStatusOk
 	message := "Data source is working"

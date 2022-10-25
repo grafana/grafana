@@ -24,12 +24,12 @@ var (
 	_ backend.StreamHandler       = (*PhlareDatasource)(nil)
 )
 
-// FireDatasource is an datasource for querying application performance profiles.
+// PhlareDatasource is a datasource for querying application performance profiles.
 type PhlareDatasource struct {
 	client querierv1connect.QuerierServiceClient
 }
 
-// NewFireDatasource creates a new datasource instance.
+// NewPhlareDatasource creates a new datasource instance.
 func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	opt, err := settings.HTTPClientOptions()
 	if err != nil {
@@ -46,7 +46,7 @@ func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backen
 }
 
 func (d *PhlareDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	logger.Debug("CallResource", "req.Path", req.Path, "req.Method", req.Method, "req.Body", req.Body)
+	logger.Debug("CallResource", "Path", req.Path, "Method", req.Method, "Body", req.Body)
 	if req.Path == "profileTypes" {
 		return d.callProfileTypes(ctx, req, sender)
 	}
@@ -130,7 +130,7 @@ func (d *PhlareDatasource) callLabelNames(ctx context.Context, req *backend.Call
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
 func (d *PhlareDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	logger.Debug("QueryData called", "req.Queries", req.Queries)
+	logger.Debug("QueryData called", "Queries", req.Queries)
 
 	// create response struct
 	response := backend.NewQueryDataResponse()
@@ -151,8 +151,8 @@ func (d *PhlareDatasource) QueryData(ctx context.Context, req *backend.QueryData
 // The main use case for these health checks is the test button on the
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
-func (d *PhlareDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	logger.Debug("CheckHealth called", "request", req)
+func (d *PhlareDatasource) CheckHealth(ctx context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	logger.Debug("CheckHealth called")
 
 	status := backend.HealthStatusOk
 	message := "Data source is working"
@@ -171,7 +171,7 @@ func (d *PhlareDatasource) CheckHealth(ctx context.Context, req *backend.CheckHe
 // SubscribeStream is called when a client wants to connect to a stream. This callback
 // allows sending the first message.
 func (d *PhlareDatasource) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	logger.Debug("SubscribeStream called", "request", req)
+	logger.Debug("SubscribeStream called")
 
 	status := backend.SubscribeStreamStatusPermissionDenied
 	if req.Path == "stream" {
@@ -186,7 +186,7 @@ func (d *PhlareDatasource) SubscribeStream(_ context.Context, req *backend.Subsc
 // RunStream is called once for any open channel.  Results are shared with everyone
 // subscribed to the same channel.
 func (d *PhlareDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	logger.Debug("RunStream called", "request", req)
+	logger.Debug("RunStream called")
 
 	// Create the same data frame as for query data.
 	frame := data.NewFrame("response")
@@ -222,8 +222,8 @@ func (d *PhlareDatasource) RunStream(ctx context.Context, req *backend.RunStream
 }
 
 // PublishStream is called when a client sends a message to the stream.
-func (d *PhlareDatasource) PublishStream(_ context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	logger.Debug("PublishStream called", "request", req)
+func (d *PhlareDatasource) PublishStream(_ context.Context, _ *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	logger.Debug("PublishStream called")
 
 	// Do not allow publishing at all.
 	return &backend.PublishStreamResponse{
