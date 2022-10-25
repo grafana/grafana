@@ -3,6 +3,8 @@ package grn
 import (
 	"fmt"
 	"strings"
+
+	"cuelang.org/go/pkg/strconv"
 )
 
 type GRN struct {
@@ -10,7 +12,7 @@ type GRN struct {
 	// organization (in other environments) the resource belongs to. This field
 	// may be omitted for global Grafana resources which are not associated with
 	// an organization.
-	TenantID string
+	TenantID int
 
 	// The kind of resource being identified, for e.g. "dashboard" or "user".
 	// The caller is responsible for validating the value.
@@ -41,13 +43,19 @@ func ParseStr(str string) (GRN, error) {
 	if !found { // missing "/"
 		return ret, ErrInvalidGRN.Errorf("invalid resource identifier in GRN %q", str)
 	}
+	ret.ResourceIdentifier = id
+	ret.ResourceKind = kind
 
-	// todo: validation
-	return GRN{
-		TenantID:           parts[1],
-		ResourceKind:       kind,
-		ResourceIdentifier: id,
-	}, nil
+	if parts[1] != "" {
+		tID, err := strconv.Atoi(parts[1])
+		if err != nil {
+			return ret, ErrInvalidGRN.Errorf("ID segment cannot be converted to an integer")
+		} else {
+			ret.TenantID = tID
+		}
+	}
+
+	return ret, nil
 }
 
 // MustParseStr is a wrapper around ParseStr that panics if the given input is
@@ -63,5 +71,5 @@ func MustParseStr(str string) GRN {
 // String returns a string representation of a grn in the format
 // grn:tenantID:kind/resourceIdentifier
 func (g *GRN) String() string {
-	return fmt.Sprintf("grn:%s:%s/%s", g.TenantID, g.ResourceKind, g.ResourceIdentifier)
+	return fmt.Sprintf("grn:%d:%s/%s", g.TenantID, g.ResourceKind, g.ResourceIdentifier)
 }
