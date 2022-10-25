@@ -25,10 +25,6 @@ For instructions on how to add a data source to Grafana, refer to the [administr
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
-> **Note:** You can use [Grafana Cloud](/products/cloud/features/#cloud-logs) to avoid the overhead of installing, maintaining, and scaling your observability stack.
-> The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs, and more.
-> [Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-install&plcmt=in-text).
-
 Once you've added the Elasticsearch data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]{{< relref "./query-editor/" >}} when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
 
 ## Supported Elasticsearch versions
