@@ -1,5 +1,5 @@
-import { readdirSync, writeFileSync } from 'fs';
-import { resolve } from 'path';
+import { readdirSync, writeFileSync, mkdirSync } from 'fs';
+import { dirname, resolve } from 'path';
 
 const args = process.argv.slice(2);
 
@@ -20,4 +20,5 @@ const getFiles = (dirPath: string, ext?: string): string[] =>
 
 const files = getFiles(devDashboardsDir, '.json');
 
+mkdirSync(dirname(outputFilePath), { recursive: true });
 writeFileSync(outputFilePath, JSON.stringify(files, null, 2));
