@@ -5,7 +5,7 @@ import { promiseToDigest } from './promiseToDigest';
 describe('promiseToDigest', () => {
   describe('when called with a promise that resolves', () => {
     it('then evalAsync should be called on $scope', async () => {
-      const $scope: IScope = { $evalAsync: jest.fn() } as unknown as IScope;
+      const $scope = { $evalAsync: jest.fn() } as jest.MockedObject<IScope>;
 
       await promiseToDigest($scope)(Promise.resolve(123));
 
