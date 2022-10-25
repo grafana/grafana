@@ -1,13 +1,15 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/postgres/
   - /docs/grafana/latest/features/datasources/postgres/
+  - /docs/grafana/latest/datasources/postgres/
+  - /docs/grafana/latest/data-sources/postgres/
 description: Guide for using PostgreSQL in Grafana
 keywords:
   - grafana
   - postgresql
   - guide
-title: PostgreSQL
+menuTitle: PostgreSQL
+title: PostgreSQL data source
 weight: 1200
 ---
 

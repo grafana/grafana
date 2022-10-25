@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/testdata/
   - /docs/grafana/latest/features/datasources/testdata/
+  - /docs/grafana/latest/datasources/testdata/
   - /docs/grafana/latest/data-sources/testdata/
 keywords:
   - grafana

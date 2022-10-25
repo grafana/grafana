@@ -1,17 +1,19 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/mysql/
   - /docs/grafana/latest/features/datasources/mysql/
+  - /docs/grafana/latest/datasources/mysql/
+  - /docs/grafana/latest/data-sources/mysql/
 description: Guide for using MySQL in Grafana
 keywords:
   - grafana
   - mysql
   - guide
-title: MySQL
+menuTitle: MySQL
+title: MySQL data source
 weight: 1000
 ---
 
-# Using MySQL in Grafana
+# MySQL data source
 
 > Starting from Grafana v5.1 you can name the time column _time_ in addition to earlier supported _time_sec_. Usage of _time_sec_ will eventually be deprecated.
 

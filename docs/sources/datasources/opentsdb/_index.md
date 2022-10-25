@@ -1,18 +1,20 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/opentsdb/
-  - /docs/grafana/latest/features/datasources/opentsdb/
   - /docs/grafana/latest/features/opentsdb/
+  - /docs/grafana/latest/features/datasources/opentsdb/
+  - /docs/grafana/latest/datasources/opentsdb/
+  - /docs/grafana/latest/data-sources/opentsdb/
 description: Guide for using OpenTSDB in Grafana
 keywords:
   - grafana
   - opentsdb
   - guide
-title: OpenTSDB
+menuTitle: OpenTSDB
+title: OpenTSDB data source
 weight: 1100
 ---
 
-# Using OpenTSDB in Grafana
+# OpenTSDB data source
 
 Grafana ships with advanced support for OpenTSDB. This topic explains options, variables, querying, and other options specific to the OpenTSDB data source. Refer to [Add a data source]({{< relref "add-a-data-source/" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 

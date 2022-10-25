@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/tempo/
   - /docs/grafana/latest/features/datasources/tempo/
+  - /docs/grafana/latest/datasources/tempo/
   - /docs/grafana/latest/data-sources/tempo/
 description: Guide for using Tempo in Grafana
 keywords:
