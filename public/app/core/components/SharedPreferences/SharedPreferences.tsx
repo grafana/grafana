@@ -19,13 +19,7 @@ import {
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
-import {
-  CHINESE_SIMPLIFIED,
-  ENGLISH_US,
-  FRENCH_FRANCE,
-  PSEUDO_LOCALE,
-  SPANISH_SPAIN,
-} from 'app/core/internationalization/constants';
+import { LOCALES } from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { UserPreferencesDTO } from 'app/types';
 
@@ -43,35 +37,18 @@ const themes: SelectableValue[] = [
 ];
 
 function getLanguageOptions(): Array<SelectableValue<string>> {
+  const languageOptions = LOCALES.map((v) => ({
+    value: v.code,
+    label: v.name,
+  }));
+
   const options = [
     {
       value: '',
       label: t('common.locale.default', 'Default'),
     },
-    {
-      value: ENGLISH_US,
-      label: t('common.locale.en-US', 'English'),
-    },
-    {
-      value: SPANISH_SPAIN,
-      label: t('common.locale.es-ES', 'Spanish'),
-    },
-    {
-      value: FRENCH_FRANCE,
-      label: t('common.locale.fr-FR', 'French'),
-    },
-    {
-      value: CHINESE_SIMPLIFIED,
-      label: t('common.locale.zh-Hans', 'Chinese (Simplified)'),
-    },
+    ...languageOptions,
   ];
-
-  if (process.env.NODE_ENV === 'development') {
-    options.push({
-      value: PSEUDO_LOCALE,
-      label: 'Pseudo-locale', // no need to translate this key
-    });
-  }
 
   return options;
 }

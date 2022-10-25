@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -39,7 +39,7 @@ type AuthenticatorService struct {
 	userService         user.Service
 }
 
-func ProvideService(store sqlstore.Store, loginService login.Service, loginAttemptService loginattempt.Service, userService user.Service) *AuthenticatorService {
+func ProvideService(store db.DB, loginService login.Service, loginAttemptService loginattempt.Service, userService user.Service) *AuthenticatorService {
 	a := &AuthenticatorService{
 		loginService:        loginService,
 		loginAttemptService: loginAttemptService,

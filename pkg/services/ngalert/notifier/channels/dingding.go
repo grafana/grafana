@@ -123,13 +123,13 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	if tmplErr != nil {
-		dd.log.Warn("failed to template DingDing message", "err", tmplErr.Error())
+		dd.log.Warn("failed to template DingDing message", "error", tmplErr.Error())
 		tmplErr = nil
 	}
 
 	u := tmpl(dd.URL)
 	if tmplErr != nil {
-		dd.log.Warn("failed to template DingDing URL", "err", tmplErr.Error(), "fallback", dd.URL)
+		dd.log.Warn("failed to template DingDing URL", "error", tmplErr.Error(), "fallback", dd.URL)
 		u = dd.URL
 	}
 

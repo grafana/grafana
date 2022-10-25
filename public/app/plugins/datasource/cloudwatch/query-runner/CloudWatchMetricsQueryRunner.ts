@@ -28,11 +28,10 @@ import {
   CloudWatchMetricsQuery,
   CloudWatchQuery,
   DataQueryError,
-  MetricEditorMode,
   MetricQuery,
-  MetricQueryType,
   MetricRequest,
 } from '../types';
+import { filterMetricsQuery } from '../utils/utils';
 
 import { CloudWatchRequest } from './CloudWatchRequest';
 
@@ -172,21 +171,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
   }
 
   filterMetricQuery(query: CloudWatchMetricsQuery): boolean {
-    const { region, metricQueryType, metricEditorMode, expression, metricName, namespace, sqlExpression, statistic } =
-      query;
-    if (!region) {
-      return false;
-    }
-    if (metricQueryType === MetricQueryType.Search && metricEditorMode === MetricEditorMode.Builder) {
-      return !!namespace && !!metricName && !!statistic;
-    } else if (metricQueryType === MetricQueryType.Search && metricEditorMode === MetricEditorMode.Code) {
-      return !!expression;
-    } else if (metricQueryType === MetricQueryType.Query) {
-      // still TBD how to validate the visual query builder for SQL
-      return !!sqlExpression;
-    }
-
-    throw new Error('invalid metric editor mode');
+    return filterMetricsQuery(query);
   }
 
   replaceMetricQueryVars(

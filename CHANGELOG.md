@@ -1,3 +1,88 @@
+<!-- 9.2.2 START -->
+
+# 9.2.2 (2022-10-25)
+
+### Features and enhancements
+
+- **Alerting:** Add support for wecom apiapp. [#55991](https://github.com/grafana/grafana/pull/55991), [@aimuz](https://github.com/aimuz)
+- **Canvas:** Improve resource picker initialization. [#57319](https://github.com/grafana/grafana/pull/57319), [@nmarrs](https://github.com/nmarrs)
+- **Canvas:** Improve text element readability. [#57371](https://github.com/grafana/grafana/pull/57371), [@adela-almasan](https://github.com/adela-almasan)
+- **CloudWatch:** Make sure adoption tracking is done on valid, migrated queries. [#56872](https://github.com/grafana/grafana/pull/56872), [@sunker](https://github.com/sunker)
+- **Dashboard:** Alerts user to incorrect tag format for JSON import. [#54657](https://github.com/grafana/grafana/pull/54657), [@iamelDuderino](https://github.com/iamelDuderino)
+- **MSSQL:** Support tables from all schemas. [#53099](https://github.com/grafana/grafana/pull/53099), [@zoltanbedi](https://github.com/zoltanbedi)
+- **Opentsdb:** Allow template variables for filter keys. [#57226](https://github.com/grafana/grafana/pull/57226), [@bohandley](https://github.com/bohandley)
+- **Prometheus:** Provide label values match parameter API when supported prometheus instance is configured. [#56510](https://github.com/grafana/grafana/pull/56510), [@gtk-grafana](https://github.com/gtk-grafana)
+- **QueryEditor:** Revert components from grafana-ui. [#57436](https://github.com/grafana/grafana/pull/57436), [@zoltanbedi](https://github.com/zoltanbedi)
+- **TeamSync:** Allow team sync when external organization mapping returns no organization role. (Enterprise)
+
+### Bug fixes
+
+- **Browse:** Fix General folder not showing in FolderPicker. [#57156](https://github.com/grafana/grafana/pull/57156), [@eledobleefe](https://github.com/eledobleefe)
+- **Elasticsearch:** Fix calculation of trimEdges in alert mode. [#56148](https://github.com/grafana/grafana/pull/56148), [@jorgelbg](https://github.com/jorgelbg)
+- **Elasticsearch:** Fix trimEdges delete logic in alert mode. [#56985](https://github.com/grafana/grafana/pull/56985), [@gabor](https://github.com/gabor)
+- **GoogleOAuth:** Unlock User Admin UI. [#57350](https://github.com/grafana/grafana/pull/57350), [@gamab](https://github.com/gamab)
+- **LogContext:** Fix wrong color of `show context` icon in light theme. [#57427](https://github.com/grafana/grafana/pull/57427), [@svennergr](https://github.com/svennergr)
+- **Loki:** Fix adding of adhoc filters to stream selector when query with empty stream selector. [#57280](https://github.com/grafana/grafana/pull/57280), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Loki:** Fix double stringified log-lines when copied via Copy button. [#57243](https://github.com/grafana/grafana/pull/57243), [@svennergr](https://github.com/svennergr)
+- **Loki:** Fix explain section about $\_\_interval variable. [#57188](https://github.com/grafana/grafana/pull/57188), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Loki:** Remove already selected options from next label filter options in builder. [#57187](https://github.com/grafana/grafana/pull/57187), [@ivanahuckova](https://github.com/ivanahuckova)
+- **NodeGraph:** Fix rendering issues when values of arc are over 1. [#57460](https://github.com/grafana/grafana/pull/57460), [@aocenas](https://github.com/aocenas)
+- **PublicDashboards:** Fix hidden queries execution. [#57194](https://github.com/grafana/grafana/pull/57194), [@juanicabanas](https://github.com/juanicabanas)
+- **PublicDashboards:** Fix hidden queries execution. [#57004](https://github.com/grafana/grafana/pull/57004), [@juanicabanas](https://github.com/juanicabanas)
+- **Tempo:** Fix Node Graph visualization type in dashboard. [#56931](https://github.com/grafana/grafana/pull/56931), [@CrypticSignal](https://github.com/CrypticSignal)
+- **TimeSeries:** Fix stacking when first value is negative zero. [#57257](https://github.com/grafana/grafana/pull/57257), [@zoltanbedi](https://github.com/zoltanbedi)
+- **TimeseriesPanel:** Fix variables in data links. [#56729](https://github.com/grafana/grafana/pull/56729), [@mdvictor](https://github.com/mdvictor)
+- **User:** Fix externalUserId not being populated. [#57341](https://github.com/grafana/grafana/pull/57341), [@joshhunt](https://github.com/joshhunt)
+
+### Breaking changes
+
+We added some components a bit too early to @grafana/ui in 9.2 so we are moving them back to @grafana/experimental. If you used any of these components
+
+- AccessoryButton
+- EditorFieldGroup
+- EditorHeader
+- EditorField
+- EditorRow
+- EditorList
+- EditorRows
+- EditorSwitch
+- FlexItem
+- Stack
+- InlineSelect
+- InputGroup
+- Space
+
+Please use them from grafana/experimental from now on. Issue [#57436](https://github.com/grafana/grafana/issues/57436)
+
+<!-- 9.2.2 END -->
+<!-- 9.2.1 START -->
+
+# 9.2.1 (2022-10-18)
+
+### Features and enhancements
+
+- **Alerting:** Improve notification policies created during migration. [#52071](https://github.com/grafana/grafana/pull/52071), [@JacobsonMT](https://github.com/JacobsonMT)
+- **AzureAD:** Add option to force fetch the groups from the Graph API. [#56916](https://github.com/grafana/grafana/pull/56916), [@gamab](https://github.com/gamab)
+- **AzureAD:** Add option to force fetch the groups from the Graph API (#56916). [#56947](https://github.com/grafana/grafana/pull/56947), [@gamab](https://github.com/gamab)
+- **Docs:** Note end of release notes publication. [#57013](https://github.com/grafana/grafana/pull/57013), [@gguillotte-grafana](https://github.com/gguillotte-grafana)
+- **Inspect:** Handle JSON tab crash when the provided object is too big to stringify. [#55939](https://github.com/grafana/grafana/pull/55939), [@TsotosA](https://github.com/TsotosA)
+- **TablePanel:** Footer now updates values on column filtering. [#56354](https://github.com/grafana/grafana/pull/56354), [@mdvictor](https://github.com/mdvictor)
+
+### Bug fixes
+
+- **Alerting:** Fix email image embedding on Windows. [#56766](https://github.com/grafana/grafana/pull/56766), [@joeblubaugh](https://github.com/joeblubaugh)
+- **Alerting:** Fix mathexp.NoData for ConditionsCmd. [#56816](https://github.com/grafana/grafana/pull/56816), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Legacy Alerting:** Fix duration calculation when testing a rule. [#56616](https://github.com/grafana/grafana/pull/56616), [@jorgelbg](https://github.com/jorgelbg)
+- **Loki:** Propagate additional headers from Grafana to Loki when querying data. [#56896](https://github.com/grafana/grafana/pull/56896), [@alexweav](https://github.com/alexweav)
+- **Search:** Sort alphabetically in the folder view, increase the limit of the folder search from 50 to 1000. [#57141](https://github.com/grafana/grafana/pull/57141), [@ArturWierzbicki](https://github.com/ArturWierzbicki)
+- **TablePanel:** Fix last table column to be centered. [#56047](https://github.com/grafana/grafana/pull/56047), [@gitstart](https://github.com/gitstart)
+
+### Plugin development fixes & changes
+
+- **Grafana UI:** Export prop types for queryfield, modal and field components. [#57097](https://github.com/grafana/grafana/pull/57097), [@jackw](https://github.com/jackw)
+- **Toolkit:** Fix `Cannot use import statement outside...` error in tests. [#57071](https://github.com/grafana/grafana/pull/57071), [@jackw](https://github.com/jackw)
+
+<!-- 9.2.1 END -->
 <!-- 9.2.0 START -->
 
 # 9.2.0 (2022-10-11)

@@ -252,6 +252,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       getTimeRange,
+      timeZone,
       theme,
       timeZones: [timeZone],
       eventBus,

@@ -144,10 +144,10 @@ import (
 
 // swagger:route GET /api/alertmanager/grafana/config/api/v1/receivers alertmanager RouteGetGrafanaReceivers
 //
-// Get a list of all receivers.
+// Get a list of all receivers
 //
 //     Responses:
-//       200: receivers
+//       200: receiversResponse
 
 // swagger:route POST /api/alertmanager/grafana/config/api/v1/receivers/test alertmanager RoutePostTestGrafanaReceivers
 //
@@ -199,7 +199,7 @@ import (
 // create silence
 //
 //     Responses:
-//       201: gettableSilence
+//       201: postSilencesOKBody
 //       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{DatasourceUID}/api/v2/silences alertmanager RouteCreateSilence
@@ -207,7 +207,7 @@ import (
 // create silence
 //
 //     Responses:
-//       201: gettableSilence
+//       201: postSilencesOKBody
 //       400: ValidationError
 //       404: NotFound
 
@@ -389,6 +389,12 @@ func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
 // swagger:model postableSilence
 type PostableSilence = amv2.PostableSilence
 
+// swagger:model postSilencesOKBody
+type PostSilencesOKBody struct { // vendored from "github.com/prometheus/alertmanager/api/v2/restapi/operations/silence/PostSilencesOKBody" because import brings too many other things
+	// silence ID
+	SilenceID string `json:"silenceID,omitempty"`
+}
+
 // swagger:model gettableSilences
 type GettableSilences = amv2.GettableSilences
 
@@ -410,8 +416,11 @@ type AlertGroup = amv2.AlertGroup
 // swagger:model receiver
 type Receiver = amv2.Receiver
 
-// swagger:model receivers
-type Receivers = []amv2.Receiver
+// swagger:response receiversResponse
+type ReceiversResponse struct {
+	// in:body
+	Body []amv2.Receiver
+}
 
 // swagger:model integration
 type Integration = amv2.Integration

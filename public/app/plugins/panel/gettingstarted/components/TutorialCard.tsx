@@ -18,7 +18,13 @@ export const TutorialCard: FC<Props> = ({ card }) => {
   const styles = getStyles(theme, card.done);
 
   return (
-    <a className={styles.card} onClick={(event: MouseEvent<HTMLAnchorElement>) => handleTutorialClick(event, card)}>
+    <a
+      className={styles.card}
+      target="_blank"
+      rel="noreferrer"
+      href={`${card.href}?utm_source=grafana_gettingstarted`}
+      onClick={(event: MouseEvent<HTMLAnchorElement>) => handleTutorialClick(event, card)}
+    >
       <div className={cardContent}>
         <div className={styles.type}>{card.type}</div>
         <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
@@ -36,7 +42,6 @@ const handleTutorialClick = (event: MouseEvent<HTMLAnchorElement>, card: Tutoria
   if (!isSet) {
     store.set(card.key, true);
   }
-  window.open(`${card.href}?utm_source=grafana_gettingstarted`, '_blank');
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
