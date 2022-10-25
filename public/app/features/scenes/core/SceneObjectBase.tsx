@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Observer, Subject, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { EventBusSrv } from '@grafana/data';
+import { EventBusSrv, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { useForceUpdate } from '@grafana/ui';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
@@ -18,7 +18,7 @@ import {
   SceneLayoutChild,
 } from './types';
 
-export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
+export class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
   subject = new Subject<TState>();
   state: TState;
   parent?: SceneObjectBase<SceneObjectState>;
@@ -151,7 +151,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
       return this.parent.getData();
     }
 
-    throw new Error('No data found in scene tree');
+    return EmptyDataNode;
   }
 
   /**
@@ -213,3 +213,14 @@ function useSceneObjectState<TState extends SceneObjectState>(model: SceneObject
 
   return model.state;
 }
+
+/**
+ * The default data object returned for scenes missing a data object
+ */
+export const EmptyDataNode = new SceneObjectBase<SceneDataState>({
+  data: {
+    state: LoadingState.Done,
+    series: [],
+    timeRange: getDefaultTimeRange(),
+  },
+});

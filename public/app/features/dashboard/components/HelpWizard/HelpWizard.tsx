@@ -4,7 +4,6 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { PanelPlugin, GrafanaTheme2, FeatureState } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
 import {
   Drawer,
   Tab,
@@ -22,7 +21,6 @@ import {
   ClipboardButton,
   Icon,
 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 import { PanelModel } from 'app/features/dashboard/state';
 
 import { ShowMessage, SnapshotTab, SupportSnapshotService } from './SupportSnapshotService';
@@ -41,7 +39,7 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
     currentTab,
     loading,
     error,
-    iframeLoading,
+    scene,
     options,
     showMessage,
     snapshotSize,
@@ -49,17 +47,11 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
     snapshotText,
     randomize,
     panelTitle,
-    snapshotUpdate,
   } = service.useState();
 
   useEffect(() => {
     service.buildDebugDashboard();
   }, [service, plugin, randomize]);
-
-  useEffect(() => {
-    // Listen for messages from loaded iframe
-    return service.subscribeToIframeLoadingMessage();
-  }, [service]);
 
   if (!plugin) {
     return null;
@@ -109,115 +101,99 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
         </TabsBar>
       }
     >
-      {loading && <Spinner />}
-      {error && <Alert title={error.title}>{error.message}</Alert>}
+      <div className={styles.container}>
+        {loading && <Spinner />}
+        {error && <Alert title={error.title}>{error.message}</Alert>}
 
-      {currentTab === SnapshotTab.Data && (
-        <div className={styles.code}>
-          <div className={styles.opts}>
-            <Field label="Template" className={styles.field}>
-              <Select options={options} value={showMessage} onChange={service.onShowMessageChange} />
+        {currentTab === SnapshotTab.Data && (
+          <div className={styles.code}>
+            <div className={styles.opts}>
+              <Field label="Template" className={styles.field}>
+                <Select options={options} value={showMessage} onChange={service.onShowMessageChange} />
+              </Field>
+
+              {showMessage === ShowMessage.GithubComment ? (
+                <ClipboardButton icon="copy" getText={service.onGetMarkdownForClipboard}>
+                  Copy to clipboard
+                </ClipboardButton>
+              ) : (
+                <Button icon="download-alt" onClick={service.onDownloadDashboard}>
+                  Download ({snapshotSize})
+                </Button>
+              )}
+            </div>
+            <AutoSizer disableWidth>
+              {({ height }) => (
+                <CodeEditor
+                  width="100%"
+                  height={height}
+                  language={showMessage === ShowMessage.GithubComment ? 'markdown' : 'json'}
+                  showLineNumbers={true}
+                  showMiniMap={true}
+                  value={showMessage === ShowMessage.GithubComment ? markdownText : snapshotText}
+                  readOnly={false}
+                  onBlur={service.onSetSnapshotText}
+                />
+              )}
+            </AutoSizer>
+          </div>
+        )}
+        {currentTab === SnapshotTab.Support && (
+          <>
+            <Field
+              label="Randomize data"
+              description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
+            >
+              <HorizontalGroup>
+                <InlineSwitch
+                  label="Labels"
+                  id="randomize-labels"
+                  showLabel={true}
+                  value={Boolean(randomize.labels)}
+                  onChange={() => service.onToggleRandomize('labels')}
+                />
+                <InlineSwitch
+                  label="Field names"
+                  id="randomize-field-names"
+                  showLabel={true}
+                  value={Boolean(randomize.names)}
+                  onChange={() => service.onToggleRandomize('names')}
+                />
+                <InlineSwitch
+                  label="String values"
+                  id="randomize-string-values"
+                  showLabel={true}
+                  value={Boolean(randomize.values)}
+                  onChange={() => service.onToggleRandomize('values')}
+                />
+              </HorizontalGroup>
             </Field>
 
-            {showMessage === ShowMessage.GithubComment ? (
-              <ClipboardButton icon="copy" getText={service.onGetMarkdownForClipboard}>
-                Copy to clipboard
-              </ClipboardButton>
-            ) : (
-              <Button icon="download-alt" onClick={service.onDownloadDashboard}>
-                Download ({snapshotSize})
-              </Button>
-            )}
-          </div>
-          <AutoSizer disableWidth>
-            {({ height }) => (
-              <CodeEditor
-                width="100%"
-                height={height}
-                language={showMessage === ShowMessage.GithubComment ? 'markdown' : 'json'}
-                showLineNumbers={true}
-                showMiniMap={true}
-                value={showMessage === ShowMessage.GithubComment ? markdownText : snapshotText}
-                readOnly={false}
-                onBlur={service.onSetSnapshotText}
-              />
-            )}
-          </AutoSizer>
-        </div>
-      )}
-      {currentTab === SnapshotTab.Support && (
-        <>
-          <Field
-            label="Randomize data"
-            description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
-          >
-            <HorizontalGroup>
-              <InlineSwitch
-                label="Labels"
-                id="randomize-labels"
-                showLabel={true}
-                value={Boolean(randomize.labels)}
-                onChange={() => service.onToggleRandomize('labels')}
-              />
-              <InlineSwitch
-                label="Field names"
-                id="randomize-field-names"
-                showLabel={true}
-                value={Boolean(randomize.names)}
-                onChange={() => service.onToggleRandomize('names')}
-              />
-              <InlineSwitch
-                label="String values"
-                id="randomize-string-values"
-                showLabel={true}
-                value={Boolean(randomize.values)}
-                onChange={() => service.onToggleRandomize('values')}
-              />
-            </HorizontalGroup>
-          </Field>
-
-          <Field label="Support snapshot" description={`Panel: ${panelTitle}`}>
-            <Stack>
-              <Button icon="download-alt" onClick={service.onDownloadDashboard}>
-                Dashboard ({snapshotSize})
-              </Button>
-              <ClipboardButton
-                icon="github"
-                getText={service.onGetMarkdownForClipboard}
-                title="Copy a complete GitHub comment to the clipboard"
-              >
-                Copy to clipboard
-              </ClipboardButton>
-              <Button
-                onClick={service.onPreviewDashboard}
-                variant="secondary"
-                title="Open support snapshot dashboard in a new tab"
-              >
-                Preview
-              </Button>
-            </Stack>
-          </Field>
-
-          <AutoSizer disableWidth>
-            {({ height }) => (
-              <>
-                <iframe
-                  title="Support snapshot preview"
-                  src={`${config.appUrl}dashboard/new?orgId=${contextSrv.user.orgId}&kiosk&${snapshotUpdate}`}
-                  width="100%"
-                  height={height - 100}
-                  frameBorder="0"
-                  style={{
-                    display: iframeLoading ? 'block' : 'none',
-                    marginTop: 16,
-                  }}
-                />
-                {!iframeLoading && <div>&nbsp;</div>}
-              </>
-            )}
-          </AutoSizer>
-        </>
-      )}
+            <Field label="Support snapshot" description={`Panel: ${panelTitle}`}>
+              <Stack>
+                <Button icon="download-alt" onClick={service.onDownloadDashboard}>
+                  Dashboard ({snapshotSize})
+                </Button>
+                <ClipboardButton
+                  icon="github"
+                  getText={service.onGetMarkdownForClipboard}
+                  title="Copy a complete GitHub comment to the clipboard"
+                >
+                  Copy to clipboard
+                </ClipboardButton>
+                <Button
+                  onClick={service.onPreviewDashboard}
+                  variant="secondary"
+                  title="Open support snapshot dashboard in a new tab"
+                >
+                  Preview
+                </Button>
+              </Stack>
+            </Field>
+            <div className={styles.sceneWrapper}>{scene && <scene.Component model={scene} />}</div>
+          </>
+        )}
+      </div>
     </Drawer>
   );
 }
@@ -243,4 +219,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
       margin-left: 8px;
     }
   `,
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+  }),
+  sceneWrapper: css({
+    display: 'flex',
+    flexGrow: 1,
+    padding: theme.spacing(1),
+    background: theme.colors.background.canvas,
+  }),
 });

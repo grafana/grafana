@@ -216,6 +216,7 @@ export function dataFrameToJSON(frame: DataFrame): DataFrameJSON {
   const data: DataFrameData = {
     values: [],
   };
+
   const schema: DataFrameSchema = {
     refId: frame.refId,
     meta: frame.meta,

@@ -40,7 +40,6 @@ export type SceneComponent<TModel> = React.FunctionComponent<SceneComponentProps
 export interface SceneDataState extends SceneObjectStatePlain {
   data?: PanelData;
 }
-
 export interface SceneObject<TState extends SceneObjectState = SceneObjectState> extends Subscribable<TState> {
   /** The current state */
   state: TState;

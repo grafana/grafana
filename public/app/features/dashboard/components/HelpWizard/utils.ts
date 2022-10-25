@@ -11,9 +11,15 @@ import {
   LoadingState,
   dataFrameToJSON,
   DataTopic,
+  dataFrameFromJSON,
+  DataSourceRef,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { PanelModel } from 'app/features/dashboard/state';
+import { SceneFlexLayout } from 'app/features/scenes/components/SceneFlexLayout';
+import { VizPanel } from 'app/features/scenes/components/VizPanel';
+import { SceneDataNode } from 'app/features/scenes/core/SceneDataNode';
+import { SceneObject } from 'app/features/scenes/core/types';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { Randomize, randomizeData } from './randomizer';
@@ -25,6 +31,7 @@ export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
       frames.push(dataFrameToJSON(f));
     }
   }
+
   if (data?.annotations) {
     for (const f of data.annotations) {
       const json = dataFrameToJSON(f);
@@ -35,6 +42,7 @@ export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
       frames.push(json);
     }
   }
+
   return frames;
 }
 
@@ -61,10 +69,6 @@ export function getGithubMarkdown(panel: PanelModel, snapshot: string): string {
 export async function getDebugDashboard(panel: PanelModel, rand: Randomize, timeRange: TimeRange) {
   const saveModel = panel.getSaveModel();
   const dashboard = cloneDeep(embeddedDataTemplate);
-  const info = {
-    panelType: saveModel.type,
-    datasource: '??',
-  };
 
   // reproducable
   const data = await firstValueFrom(
@@ -78,28 +82,6 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
   const frames = randomizeData(getPanelDataFrames(data), rand);
   const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
   const queries = saveModel?.targets ?? [];
-  const html = `<table width="100%">
-    <tr>
-      <th width="2%">Panel</th>
-      <td >${info.panelType} @ ${saveModel.pluginVersion ?? grafanaVersion}</td>
-    </tr>
-    <tr>
-      <th>Queries</th>
-      <td>${queries
-        .map((t: DataQuery) => {
-          const ds = t.datasource ?? dsref;
-          return `${t.refId}[${ds?.type}]`;
-        })
-        .join(', ')}</td>
-    </tr>
-    ${getTransformsRow(saveModel)}
-    ${getDataRow(data, frames)}
-    ${getAnnotationsRow(data)}
-    <tr>
-      <th>Grafana</th>
-      <td>${grafanaVersion} // ${config.buildInfo.edition}</td>
-    </tr>
-  </table>`.trim();
 
   // Replace the panel with embedded data
   dashboard.panels[0] = {
@@ -163,11 +145,11 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
     });
   }
 
-  dashboard.panels[1].options.content = html;
-  dashboard.panels[2].options.content = JSON.stringify(saveModel, null, 2);
+  dashboard.panels[1].options = getDebugPanelOptions(panel.type, saveModel, grafanaVersion, queries, dsref, data);
+  dashboard.panels[2].options = getJsonPanelOptions(saveModel);
 
   dashboard.title = `Debug: ${saveModel.title} // ${dateTimeFormat(new Date())}`;
-  dashboard.tags = ['debug', `debug-${info.panelType}`];
+  dashboard.tags = ['debug', `debug-${panel.type}`];
   dashboard.time = {
     from: timeRange.from.toISOString(),
     to: timeRange.to.toISOString(),
@@ -187,7 +169,7 @@ function getTransformsRow(saveModel: any): string {
   </tr>`;
 }
 
-function getDataRow(data: PanelData, frames: DataFrameJSON[]): string {
+function getDataRow(data: PanelData): string {
   let frameCount = data.series.length ?? 0;
   let fieldCount = 0;
   let rowCount = 0;
@@ -304,3 +286,143 @@ const embeddedDataTemplate: any = {
   ],
   schemaVersion: 37,
 };
+
+export async function getDebugScene(panel: PanelModel, rand: Randomize, timeRange: TimeRange): Promise<SceneObject> {
+  const saveModel = panel.getSaveModel();
+
+  // reproducable
+  const data = await firstValueFrom(
+    panel.getQueryRunner().getData({
+      withFieldConfig: false,
+      withTransforms: false,
+    })
+  );
+
+  const dsref = panel.datasource;
+  const frames = randomizeData(getPanelDataFrames(data), rand);
+  const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
+  const queries = saveModel?.targets ?? [];
+
+  const scene = new SceneFlexLayout({
+    children: [
+      new SceneFlexLayout({
+        direction: 'column',
+        children: [
+          new VizPanel({
+            title: 'Reproduced with embedded data',
+            pluginId: saveModel.type,
+            options: saveModel.options,
+            fieldConfig: saveModel.fieldConfig,
+            $data: new SceneDataNode({
+              data: {
+                state: LoadingState.Done,
+                series: frames.map(dataFrameFromJSON),
+                timeRange,
+              },
+            }),
+          }),
+          new VizPanel({
+            title: 'Data from panel above',
+            pluginId: 'table',
+            size: { height: '30%' },
+            options: { showTypeIcons: true },
+            $data: new SceneDataNode({
+              data: {
+                state: LoadingState.Done,
+                series: frames.map(dataFrameFromJSON),
+                timeRange,
+              },
+            }),
+          }),
+        ],
+      }),
+      new SceneFlexLayout({
+        direction: 'column',
+        size: { width: '40%' },
+        children: [
+          new VizPanel({
+            title: 'Debug info',
+            size: { height: 250 },
+            pluginId: 'text',
+            options: getDebugPanelOptions(panel.type, saveModel, grafanaVersion, queries, dsref, data),
+          }),
+          new VizPanel({
+            title: 'Original Panel JSON',
+            pluginId: 'text',
+            options: getJsonPanelOptions(saveModel),
+          }),
+        ],
+      }),
+    ],
+  });
+
+  // if (saveModel.transformations?.length) {
+  //   const last = dashboard.panels[dashboard.panels.length - 1];
+  //   last.title = last.title + ' (after transformations)';
+
+  //   const before = cloneDeep(last);
+  //   before.id = 100;
+  //   before.title = 'Data (before transformations)';
+  //   before.gridPos.w = 24; // full width
+  //   before.targets[0].withTransforms = false;
+  //   dashboard.panels.push(before);
+  // }
+
+  // dashboard.panels[1].options.content = html;
+  // dashboard.panels[2].options.content = JSON.stringify(saveModel, null, 2);
+
+  // dashboard.title = `Debug: ${saveModel.title} // ${dateTimeFormat(new Date())}`;
+  // dashboard.tags = ['debug', `debug-${info.panelType}`];
+  // dashboard.time = {
+  //   from: timeRange.from.toISOString(),
+  //   to: timeRange.to.toISOString(),
+  // };
+
+  return scene;
+}
+function getDebugPanelOptions(
+  panelType: string,
+  saveModel: any,
+  grafanaVersion: string,
+  queries: any,
+  dsref: DataSourceRef | null,
+  data: PanelData
+) {
+  return {
+    mode: 'html',
+    content: `<table width="100%">
+    <tr>
+      <th width="2%">Panel</th>
+      <td >${panelType} @ ${saveModel.pluginVersion ?? grafanaVersion}</td>
+    </tr>
+    <tr>
+      <th>Queries</th>
+      <td>${queries
+        .map((t: DataQuery) => {
+          const ds = t.datasource ?? dsref;
+          return `${t.refId}[${ds?.type}]`;
+        })
+        .join(', ')}</td>
+    </tr>
+    ${getTransformsRow(saveModel)}
+    ${getDataRow(data)}
+    ${getAnnotationsRow(data)}
+    <tr>
+      <th>Grafana</th>
+      <td>${grafanaVersion} // ${config.buildInfo.edition}</td>
+    </tr>
+  </table>`.trim(),
+  };
+}
+
+function getJsonPanelOptions(saveModel: any) {
+  return {
+    content: JSON.stringify(saveModel, null, 2),
+    mode: 'code',
+    code: {
+      language: 'json',
+      showLineNumbers: true,
+      showMiniMap: true,
+    },
+  };
+}
