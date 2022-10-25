@@ -29,15 +29,7 @@ const backendSrvBaseQuery =
     }
   };
 
-const getConfigError = (err: { status: number }) => {
-  if (err.status !== 404) {
-    return {
-      error: err,
-    };
-  }
-
-  return { error: null };
-};
+const getConfigError = (err: { status: number }) => ({ error: err.status !== 404 ? err : null });
 
 export const publicDashboardApi = createApi({
   reducerPath: 'publicDashboardApi',
