@@ -55,7 +55,7 @@ publicDashboards = true
 #### Supported Datasources
 
 Public dashboards _should_ work with any datasource that has the properties `backend` and `alerting` both set to true in it's `package.json`. However, this cannot always be
-guaranteed since plugin developers can override this functionality. Below are the datasources that are confirmed to be working with public dashboards, and the ones that should work (but have not been confirmed compatible).
+guaranteed because plugin developers can override this functionality. The following lists include data sources confirmed to work with public dashboards and data sources that should work but have not been confirmed as compatible.
 
 ##### Confirmed:
 
