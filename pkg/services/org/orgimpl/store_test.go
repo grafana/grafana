@@ -468,7 +468,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 }
 
 // This test will be refactore after the CRUD store  refactor
-func TestSQLStore_AddOrgUser(t *testing.T) {
+func TestIntegrationSQLStore_AddOrgUser(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -776,7 +776,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 	}
 }
 
-func TestSQLStore_RemoveOrgUser(t *testing.T) {
+func TestIntegrationSQLStore_RemoveOrgUser(t *testing.T) {
 	store := db.InitTestDB(t)
 	orgUserStore := sqlStore{
 		db:      store,
@@ -806,12 +806,6 @@ func TestSQLStore_RemoveOrgUser(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// assert the org has been assigned
-	user := &models.GetUserByIdQuery{Id: 2}
-	err = store.GetUserById(context.Background(), user)
-	require.NoError(t, err)
-	require.Equal(t, user.Result.OrgID, int64(1))
-
 	// remove the user org
 	err = orgUserStore.RemoveOrgUser(context.Background(), &org.RemoveOrgUserCommand{
 		UserID:                   2,
@@ -819,10 +813,4 @@ func TestSQLStore_RemoveOrgUser(t *testing.T) {
 		ShouldDeleteOrphanedUser: false,
 	})
 	require.NoError(t, err)
-
-	// assert the org has been removed
-	user = &models.GetUserByIdQuery{Id: 2}
-	err = store.GetUserById(context.Background(), user)
-	require.NoError(t, err)
-	require.Equal(t, user.Result.OrgID, int64(0))
 }
