@@ -7,6 +7,7 @@ import {
   EventBus,
   PluginState,
   FieldType,
+  Field,
 } from '@grafana/data';
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
@@ -15,13 +16,15 @@ import VectorLayer from 'ol/layer/Vector';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { Stroke, Style } from 'ol/style';
 import Photo from 'ol-ext/style/Photo';
+import { findField } from 'app/features/dimensions';
 
 // Configuration options for Circle overlays
 export interface PhotoConfig {
   kind: 'square' | 'circle' | 'anchored' | 'folio';
-  border?: number; //
-  shadow?: boolean;
-  crop?: boolean;
+  border?: number; // Sets border width around images
+  shadow?: boolean; // Renders drop shadow behind images
+  crop?: boolean; // Crops images to fill shape
+  src?: string; // Image source field
 }
 
 const defaultOptions: PhotoConfig = {
@@ -44,8 +47,8 @@ export const defaultPhotosConfig: MapLayerOptions<PhotoConfig> = {
   tooltip: true,
 };
 
-// TODO, should be a question mark or missing or something?
-const unknownImage = 'http://www2.culture.gouv.fr/Wave/image/memoire/1597/sap40_d0000861_v.jpg';
+// TODO, should be a question mark or missing or something? - let's embed a simple base64 image?
+const unknownImage = 'https://cdn.iconscout.com/icon/free/png-256/question-mark-1768084-1502257.png';
 
 /**
  * Map layer configuration for circle overlay
@@ -86,6 +89,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
         const idx = feature.get('rowIndex') as number;
         src = images[idx] ?? unknownImage;
       }
+      // TODO getImage results in 404 needs handling
 
       return new Style({
         image: new Photo({
@@ -96,9 +100,12 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
           shadow: config.shadow,
           stroke: new Stroke({
             width: config.border ?? 0,
-            color: '#000' // ????
-          })
-        })
+            color: '#000', // TODO set border color from theme?
+          }),
+          onload: () => {
+            console.log('loaded');
+          },
+        }),
       });
     });
 
@@ -113,22 +120,36 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
         for (const frame of data.series) {
           source.update(frame);
 
-          // TODO... pick from config? first string?
-          for (let i = 0; i < frame.fields.length; i++) {
-            const field = frame.fields[i];
-            if (field.type === FieldType.string) {
-              images = field.values.toArray();
-              break;
+          // Pick field from config, otherwise use first string field
+          if (config.src) {
+            const srcField: Field | undefined = findField(frame, config.src);
+            if (srcField) {
+              images = srcField?.values.toArray();
+            }
+          } else {
+            for (let i = 0; i < frame.fields.length; i++) {
+              const field = frame.fields[i];
+              if (field.type === FieldType.string) {
+                images = field.values.toArray();
+                break;
+              }
             }
           }
           break; // Only the first frame for now!
         }
-
       },
 
       // Marker overlay options
       registerOptionsUI: (builder) => {
         builder
+          .addFieldNamePicker({
+            path: `config.src`,
+            name: 'Image Source field',
+            settings: {
+              filter: (f: Field) => f.type === FieldType.string,
+              noFieldsMessage: 'No string fields found',
+            },
+          })
           .addRadio({
             path: 'config.kind',
             name: 'Kind',
@@ -137,8 +158,8 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
                 { label: 'Square', value: 'square' },
                 { label: 'Circle', value: 'circle' },
                 { label: 'Anchored', value: 'anchored' },
-                { label: 'Folio', value: 'folio' }
-              ]
+                { label: 'Folio', value: 'folio' },
+              ],
             },
             defaultValue: defaultOptions.kind,
           })
@@ -162,7 +183,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
               max: 10,
             },
             defaultValue: defaultOptions.border,
-          })
+          });
       },
     };
   },
