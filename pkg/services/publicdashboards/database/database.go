@@ -107,7 +107,7 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardAndDashboard(ctx context.Co
 // GetPublicDashboardByUid Returns public dashboard configuration by Uid or nil if not found
 func (d *PublicDashboardStoreImpl) GetPublicDashboardByUid(ctx context.Context, uid string) (*PublicDashboard, error) {
 	if uid == "" {
-		return nil, ErrPublicDashboardIdentifierNotSet
+		return nil, nil
 	}
 
 	var found bool
