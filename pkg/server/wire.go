@@ -364,6 +364,7 @@ var wireBasicSet = wire.NewSet(
 	objectdummyserver.ProvideDummyObjectServer,
 	resolver.ProvideObjectReferenceResolver,
 	object.ProvideHTTPObjectStore,
+	object.ProvideObjectStoreService,
 	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,
 	loginattemptimpl.ProvideService,

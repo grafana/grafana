@@ -4,6 +4,7 @@ import (
 	context "context"
 
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/setting"
 	grpc "google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -12,17 +13,28 @@ import (
 type Service struct {
 	*services.BasicService
 	ObjectStoreClient
+	cfg               *setting.Cfg
+	pluginAuthService jwt.PluginAuthService
 }
 
-func ProvideService(cfg *setting.Cfg) *Service {
-	s := &Service{}
+func ProvideObjectStoreService(cfg *setting.Cfg, pluginAuthService jwt.PluginAuthService) *Service {
+	s := &Service{cfg: cfg, pluginAuthService: pluginAuthService}
 	s.BasicService = services.NewBasicService(nil, s.run, nil)
-	conn, err := grpc.Dial(cfg.ObjectStore.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	return s
+}
+
+func (s *Service) start(ctx context.Context) error {
+	conn, err := grpc.Dial(
+		s.cfg.ObjectStore.Address,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithChainUnaryInterceptor(s.pluginAuthService.UnaryClientInterceptor("object-store")),
+		grpc.WithChainStreamInterceptor(s.pluginAuthService.StreamClientInterceptor("object-store")),
+	)
 	if err != nil {
-		return nil
+		return err
 	}
 	s.ObjectStoreClient = NewObjectStoreClient(conn)
-	return s
+	return nil
 }
 
 func (s *Service) run(ctx context.Context) error {
