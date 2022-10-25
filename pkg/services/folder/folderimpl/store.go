@@ -26,35 +26,28 @@ func ProvideStore(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureManage
 
 func (s *store) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	panic("not implemented")
-	return nil, nil
 }
 
 func (s *store) Delete(ctx context.Context, uid string, orgID int64) error {
 	panic("not implemented")
-	return nil
 }
 
 func (s *store) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
 	panic("not implemented")
-	return nil, nil
 }
 
 func (s *store) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
 	panic("not implemented")
-	return nil, nil
 }
 
 func (s *store) Get(ctx context.Context, cmd *folder.GetFolderCommand) (*folder.Folder, error) {
 	panic("not implemented")
-	return nil, nil
 }
 
 func (s *store) GetParents(ctx context.Context, cmd *folder.GetParentsCommand) ([]*folder.Folder, error) {
 	panic("not implemented")
-	return nil, nil
 }
 
 func (s *store) GetChildren(ctx context.Context, cmd *folder.GetTreeCommand) ([]*folder.Folder, error) {
 	panic("not implemented")
-	return nil, nil
 }

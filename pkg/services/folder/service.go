@@ -18,7 +18,7 @@ type Service interface {
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error
 }
 
-// NestedFolderService is the temporay interface definition for the folder
+// NestedFolderService is the temporary interface definition for the folder
 // Service which includes any new or alternate methods. These will be collapsed
 // into a single service when the nested folder implementation is rolled out.
 // Note that the commands in this service use models from this package, while
