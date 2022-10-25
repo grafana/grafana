@@ -90,6 +90,11 @@ func (s *Service) GetFolderByID(ctx context.Context, user *user.SignedInUser, id
 	if id == 0 {
 		return &models.Folder{Id: id, Title: "General"}, nil
 	}
+
+	if s.features.IsEnabled("nestedFolders") {
+		// do stuff!
+	}
+
 	dashFolder, err := s.dashboardStore.GetFolderByID(ctx, orgID, id)
 	if err != nil {
 		return nil, err

@@ -2,8 +2,6 @@ package folder
 
 import (
 	"time"
-
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Folder struct {
@@ -35,8 +33,6 @@ func NewFolder(title string, description string) *Folder {
 // CreateFolderCommand captures the information required by the folder service
 // to create a folder.
 type CreateFolderCommand struct {
-	OrgID       int `json:"org_id"`
-	User        *user.SignedInUser
 	UID         string `json:"uid"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
@@ -47,17 +43,14 @@ type CreateFolderCommand struct {
 // to update a folder.
 type UpdateFolderCommand struct {
 	Folder      *Folder `json:"folder"` // The extant folder
-	User        *user.SignedInUser
-	UID         string `json:"uid"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
+	UID         string  `json:"uid"`
+	Title       string  `json:"title"`
+	Description string  `json:"description"`
 }
 
 // MoveFolderCommand captures the information required by the folder service
 // to move a folder.
 type MoveFolderCommand struct {
-	OrgID        int `json:"org_id"`
-	User         *user.SignedInUser
 	UID          string `json:"uid"`
 	NewParentUID string `json:"new_parent_uid"`
 }
@@ -65,16 +58,13 @@ type MoveFolderCommand struct {
 // DeleteFolderCommand captures the information required by the folder service
 // to delete a folder.
 type DeleteFolderCommand struct {
-	User *user.SignedInUser
-	UID  string `json:"uid"`
+	UID string `json:"uid"`
 }
 
 // GetFolderCommand is used for all folder Get requests. Only one of UID, ID, or
 // Title should be set; if multilpe fields are set by the caller the dashboard
 // service will select the field with the most specificity, in order: ID, UID, Title.
 type GetFolderCommand struct {
-	OrgID int
-	User  *user.SignedInUser
 	UID   *int
 	ID    *int
 	Title *string
