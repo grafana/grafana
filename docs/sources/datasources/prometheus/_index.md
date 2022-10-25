@@ -21,10 +21,6 @@ This topic explains options, variables, querying, and other features specific to
 For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "/administration/data-source-management/" >}}).
 Only users with the organization administrator role can add data sources.
 
-> **Note:** You can use [Grafana Cloud](/products/cloud/features/#cloud-logs) to avoid the overhead of installing, maintaining, and scaling your observability stack.
-> The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs, and more.
-> [Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-install&plcmt=in-text).
-
 Once you've added the Prometheus data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]{{< relref "./query-editor/" >}} when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}), use [Explore]({{< relref "../../explore/" >}}), and [annotate visualizations]({{< relref "./query-editor/#apply-annotations" >}}).
 
 ## Prometheus API
