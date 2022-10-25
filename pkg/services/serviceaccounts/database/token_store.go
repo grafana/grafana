@@ -33,6 +33,10 @@ func (s *ServiceAccountsStoreImpl) ListTokens(
 			sess = sess.Where("api_key.service_account_id=?", *query.ServiceAccountID)
 		}
 
+		if query.TokenExpirationDate != nil {
+			sess = sess.Where("api_key.expires - CAST(strftime('%s', api_key.created) AS INT) > ? * 24  * 60 * 60", *query.TokenExpirationDate)
+		}
+
 		sess = sess.Join("inner", quotedUser, quotedUser+".id = api_key.service_account_id").
 			Asc("api_key.name")
 
@@ -151,7 +155,11 @@ func (s *ServiceAccountsStoreImpl) detachApiKeyFromServiceAccount(sess *db.Sessi
 }
 
 func (s *ServiceAccountsStoreImpl) UpdateAPIKeysExpiryDate(ctx context.Context, expiryDaysLimit int) error {
-	saTokens, err := s.ListTokens(ctx, &serviceaccounts.GetSATokensQuery{})
+	tokenQuery := serviceaccounts.GetSATokensQuery{}
+	if expiryDaysLimit > 0 {
+		tokenQuery.TokenExpirationDate = &expiryDaysLimit
+	}
+	saTokens, err := s.ListTokens(ctx, &tokenQuery)
 
 	if err != nil {
 		s.log.Error("The following error has been encountered while reading the service access tokens from database.", "err", err)
