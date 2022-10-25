@@ -215,7 +215,7 @@ describe('datasource', () => {
           },
         ]),
       }).datasource;
-      const allMetrics = await datasource.api.getAllMetrics('us-east-2');
+      const allMetrics = await datasource.api.getAllMetrics({ region: 'us-east-2' });
       expect(allMetrics[0].metricName).toEqual('CPUUtilization');
       expect(allMetrics[0].namespace).toEqual('AWS/EC2');
       expect(allMetrics[1].metricName).toEqual('CPUPercentage');
