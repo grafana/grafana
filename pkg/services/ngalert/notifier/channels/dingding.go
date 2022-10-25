@@ -18,31 +18,23 @@ import (
 const defaultDingdingMsgType = "link"
 
 type dingDingSettings struct {
-	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
-	MessageType string `json:"msgType,omitempty" yaml:"msgType,omitempty"`
-	Title       string `json:"title,omitempty" yaml:"title,omitempty"`
-	Message     string `json:"message,omitempty" yaml:"message,omitempty"`
+	URL         string
+	MessageType string
+	Title       string
+	Message     string
 }
 
-func buildDingDingSettings(fc FactoryConfig) (dingDingSettings, error) {
-	var settings dingDingSettings
-	err := fc.Config.unmarshalSettings(&settings)
-	if err != nil {
-		return settings, fmt.Errorf("failed to unmarshal settings: %w", err)
+func buildDingDingSettings(fc FactoryConfig) (*dingDingSettings, error) {
+	URL := fc.Config.Settings.Get("url").MustString()
+	if URL == "" {
+		return nil, errors.New("could not find url property in settings")
 	}
-	if settings.URL == "" {
-		return settings, errors.New("could not find url property in settings")
-	}
-	if settings.MessageType == "" {
-		settings.MessageType = defaultDingdingMsgType
-	}
-	if settings.Title == "" {
-		settings.Title = DefaultMessageTitleEmbed
-	}
-	if settings.Message == "" {
-		settings.Message = DefaultMessageEmbed
-	}
-	return settings, nil
+	return &dingDingSettings{
+		URL:         URL,
+		MessageType: fc.Config.Settings.Get("msgType").MustString(defaultDingdingMsgType),
+		Title:       fc.Config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
+		Message:     fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
+	}, nil
 }
 
 func DingDingFactory(fc FactoryConfig) (NotificationChannel, error) {
@@ -73,7 +65,7 @@ func newDingDingNotifier(fc FactoryConfig) (*DingDingNotifier, error) {
 		log:      log.New("alerting.notifier.dingding"),
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
-		settings: settings,
+		settings: *settings,
 	}, nil
 }
 
