@@ -48,7 +48,7 @@
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
     "plugins:build-bundled": "grafana-toolkit plugin:bundle-managed",
     "watch": "yarn start -d watch,start core:start --watchTheme",
-    "ci:test-frontend": "yarn run test:ci && npx --yes node-version-check --package",
+    "ci:test-frontend": "yarn run test:ci",
     "postinstall": "husky install",
     "i18n:clean": "rimraf public/locales/en-US/grafana.json",
     "i18n:extract": "yarn i18n:clean && yarn run i18next -c public/locales/i18next-parser.config.js 'public/**/*.{tsx,ts}' 'packages/grafana-ui/**/*.{tsx,ts}' && node ./public/locales/psuedo.js",
