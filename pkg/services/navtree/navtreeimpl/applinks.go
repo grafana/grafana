@@ -103,12 +103,20 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 				if sectionForPage := treeRoot.FindById(pathConfig.SectionID); sectionForPage != nil {
 					link.Id = "standalone-plugin-page-" + include.Path
 					link.SortWeight = pathConfig.SortWeight
-
+					
+					found := false
 					// Check if there is an existing page with the same URL
-					if doesExist {
-						// replace child
-
-					} else {
+					for _, child := range sectionForPage.Children {
+						if child.Url == link.Url {
+							child.Id = link.Id
+							child.SortWeight = link.SortWeight
+							child.Children = []*navtree.NavLink{}
+							found = true
+							break
+						} 
+					}
+				
+					if !found {
 						sectionForPage.Children = append(sectionForPage.Children, link)
 					}
 
