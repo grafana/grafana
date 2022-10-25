@@ -436,7 +436,7 @@ DashNav.displayName = 'DashNav';
 
 export default connector(DashNav);
 
-const modalStyles = css`
-  width: max-content;
-  max-width: 80vw;
-`;
+const modalStyles = css({
+  width: 'max-content',
+  maxWidth: '80vw',
+});
