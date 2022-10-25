@@ -17,18 +17,19 @@ weight: 300
 
 # AWS CloudWatch query editor
 
+This topic explains querying specific to the CloudWatch data source.
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+
+## Choose a query editing mode
+
 The CloudWatch data source can query data from both CloudWatch metrics and CloudWatch Logs APIs, each with its own specialized query editor.
 
 - [CloudWatch metrics]({{< relref "#query-cloudwatch-metrics" >}})
 - [CloudWatch Logs]({{< relref "#query-cloudwatch-logs" >}})
 
-![CloudWatch API modes](/static/img/docs/cloudwatch/cloudwatch-query-editor-api-modes-8.3.0.png)
+{{< figure src="/static/img/docs/cloudwatch/cloudwatch-query-editor-api-modes-8.3.0.png" max-width="500px" class="docs-image--right" caption="CloudWatch API modes" >}}
 
 Select which API to query by using the query mode switch on top of the editor.
-
-You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
-
-For options and functions common to all query editors, refer to [Query and transform data]({{< relref "../../panels-visualizations/query-transform-data" >}}).
 
 ## Query CloudWatch metrics
 
@@ -45,11 +46,13 @@ If you enable `Match Exact`, you must also specify all dimensions of the metric 
 If `Match Exact` is disabled, you can specify any number of dimensions on which you'd like to filter.
 The data source returns up to 100 metrics matching your filter criteria.
 
+You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+
 #### Create dynamic queries with dimension wildcards
 
 Use the asterisk (`*`) wildcard for one or more dimension values to monitor a dynamic list of metrics.
 
-![CloudWatch dimension wildcard](/static/img/docs/cloudwatch/cloudwatch-dimension-wildcard-8.3.0.png)
+{{< figure src="/static/img/docs/cloudwatch/cloudwatch-dimension-wildcard-8.3.0.png" max-width="500px" class="docs-image--right" caption="CloudWatch dimension wildcard" >}}
 
 In this example, the query returns all metrics in the namespace `AWS/EC2` with a metric name of `CPUUtilization`, and also queries ANY value for the `InstanceId` dimension.
 This can help you monitor metrics for AWS resources, like EC2 instances or containers.
@@ -63,7 +66,7 @@ To learn more about search expressions, refer to the [CloudWatch documentation](
 The search expression is defined by default in such a way that the queried metrics must match the defined dimension names exactly.
 This means that in the example, the query returns only metrics with exactly one dimension containing the name 'InstanceId'.
 
-![CloudWatch Meta Inspector](/static/img/docs/cloudwatch/cloudwatch-meta-inspector-8.3.0.png)
+{{< figure src="/static/img/docs/cloudwatch/cloudwatch-meta-inspector-8.3.0.png" max-width="500px" class="docs-image--right" caption="CloudWatch Meta Inspector" >}}
 
 You can disable `Match Exact` to include metrics that have other dimensions defined.
 Disabling `Match Exact` also creates a search expression even if you don't use wildcards. We simply search for any metric that matches at least the namespace, metric name, and all defined dimensions.
@@ -129,6 +132,8 @@ For details about the Metrics Insights syntax, refer to the [AWS reference docum
 
 For information about Metrics Insights limits, refer to the [AWS feature documentation](https://docs.aws.amazon.com/console/cloudwatch/metricsinsights).
 
+You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+
 #### Use Metrics Insights keywords
 
 This table summarizes common Metrics Insights query keywords:
@@ -160,7 +165,7 @@ You can also write your SQL query directly in a code editor by using Code mode.
 The code editor has a built-in autocomplete feature that suggests keywords, aggregations, namespaces, metrics, labels, and label values.
 The suggestions appear after typing a space, comma, or dollar (`$`) character, or the keyboard combination <key>CTRL</key>+<key>Space</key>.
 
-![Code editor autocomplete](/static/img/docs/cloudwatch/cloudwatch-code-editor-autocomplete-8.3.0.gif)
+{{< figure src="/static/img/docs/cloudwatch/cloudwatch-code-editor-autocomplete-8.3.0.png" max-width="500px" class="docs-image--right" caption="Code editor autocomplete" >}}
 
 > **Note:** Template variables in the code editor can interfere with autocompletion.
 

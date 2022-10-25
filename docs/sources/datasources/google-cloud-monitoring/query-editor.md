@@ -15,6 +15,11 @@ weight: 300
 
 # Google Cloud Monitoring query editor
 
+This topic explains querying specific to the Google Cloud Monitoring data source.
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+
+## Choose a query editing mode
+
 The Google Cloud Monitoring query editor helps you build queries for two types of data, which both return time series data:
 
 - [Metrics]({{< relref "#query-metrics" >}})
@@ -27,7 +32,7 @@ You also use the query editor when you [annotate]({{< relref "#apply-annotations
 
 ## Query metrics
 
-{{< figure src="/static/img/docs/google-cloud-monitoring/metric-query-builder-8-0.png" max-width= "400px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/google-cloud-monitoring/metric-query-builder-8-0.png" max-width="400px" class="class="docs-image--no-shadow" caption="Google Cloud Monitoring metrics query builder"  >}}
 
 The metrics query editor helps you select metrics, group and aggregate by labels and time, and use filters to specify which time series you want to query.
 
@@ -174,7 +179,7 @@ An expected result would look like: `gce_instance - compute.googleapis.com/insta
 
 > **Note:** Available in Grafana v7.1 and higher.
 
-{{< figure src="/static/img/docs/v71/cloudmonitoring_deep_linking.png" max-width="500px" class="docs-image--right" caption="Google Cloud Monitoring deep linking" >}}
+{{< figure src="/static/img/docs/v71/cloudmonitoring_deep_linking.png" max-width="500px" class="docs-image--no-shadow" caption="Google Cloud Monitoring deep linking" >}}
 
 You can click on a time series in the panel to access a context menu, which contains a link to **View in Metrics Explorer in Google Cloud Console**.
 The link points to the Google Cloud Console's Metrics Explorer and runs the Grafana panel's query there.
@@ -219,7 +224,7 @@ However, `{{metric.service}}` is not supported, and `{{metric.type}}` and `{{met
 
 > **Note:** Available in Grafana v7.0 and higher.
 
-{{< figure src="/static/img/docs/google-cloud-monitoring/slo-query-builder-8-0.png" max-width= "400px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/google-cloud-monitoring/slo-query-builder-8-0.png" max-width="400px" class="docs-image--no-shadow" caption="Service Level Objectives (SLO) query editor" >}}
 
 The SLO query builder helps you visualize SLO data in time series format.
 To understand basic concepts in service monitoring, refer to the [Google Cloud Monitoring documentation](https://cloud.google.com/monitoring/service-monitoring).

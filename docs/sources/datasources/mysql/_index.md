@@ -19,12 +19,11 @@ weight: 1000
 
 Grafana ships with a built-in MySQL data source plugin that allows you to query and visualize data from a MySQL compatible database.
 
-## Adding the data source
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+Only users with the organization administrator role can add data sources.
+Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
-1. Open the side menu by clicking the Grafana icon in the top header.
-1. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
-1. Click the `+ Add data source` button in the top header.
-1. Select _MySQL_ from the _Type_ dropdown.
+## Configure the data source
 
 ### Data source options
 
@@ -75,11 +74,40 @@ Example:
 
 You can use wildcards (`*`) in place of database or table if you want to grant access to more databases and tables.
 
+### Provision the data source
+
+You can define and configure the data source in YAML files as part of Grafana's provisioning system.
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+
+#### Provisioning example
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: MySQL
+    type: mysql
+    url: localhost:3306
+    database: grafana
+    user: grafana
+    jsonData:
+      maxOpenConns: 0 # Grafana v5.4+
+      maxIdleConns: 2 # Grafana v5.4+
+      connMaxLifetime: 14400 # Grafana v5.4+
+    secureJsonData:
+      password: ${GRAFANA_MYSQL_PASSWORD}
+```
+
 ## Query builder
 
 {{< figure src="/static/img/docs/v92/mysql_query_builder.png" class="docs-image--no-shadow" >}}
 
-The MySQL query builder is available when editing a panel using a MySQL data source. The built query can be run by pressing the `Run query` button in the top right corner of the editor.
+The MySQL query builder is available when editing a panel using a MySQL data source.
+
+This topic explains querying specific to the MySQL data source.
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+
+You can run the built query by pressing the `Run query` button in the top right corner of the editor.
 
 ### Format
 
@@ -429,26 +457,3 @@ WHERE
 ## Alerting
 
 Time series queries should work in alerting conditions. Table formatted queries are not yet supported in alert rule conditions.
-
-## Configure the data source with provisioning
-
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
-
-Here are some provisioning examples for this data source.
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: MySQL
-    type: mysql
-    url: localhost:3306
-    database: grafana
-    user: grafana
-    jsonData:
-      maxOpenConns: 0 # Grafana v5.4+
-      maxIdleConns: 2 # Grafana v5.4+
-      connMaxLifetime: 14400 # Grafana v5.4+
-    secureJsonData:
-      password: ${GRAFANA_MYSQL_PASSWORD}
-```

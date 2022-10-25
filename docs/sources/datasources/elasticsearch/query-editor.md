@@ -17,15 +17,21 @@ weight: 300
 
 # Elasticsearch query editor
 
-![Elasticsearch Query Editor](/static/img/docs/elasticsearch/query-editor-7-4.png)
+{{< figure src="/static/img/docs/elasticsearch/query-editor-7-4.png" max-width="500px" class="docs-image--no-shadow" caption="Elasticsearch Query Editor" >}}
+
+This topic explains querying specific to the Elasticsearch data source.
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+
+## Select and edit metrics
 
 You can select multiple metrics and group by multiple terms or filters when using the Elasticsearch query editor.
+
 Use the plus and minus icons to the right to add and remove metrics or group by clauses.
 To expand the row to view and edit any available metric or group-by options, click the option text.
 
-You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+## Use template variables
 
-For options and functions common to all query editors, refer to [Query and transform data]({{< relref "../../panels-visualizations/query-transform-data" >}}).
+You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
 
 ## Name a time series
 
@@ -45,7 +51,7 @@ Elasticsearch pipeline metrics must be based on another metric.
 Use the eye icon next to the metric to prevent metrics from appearing in the graph.
 This is useful for metrics you only have in the query for use in a pipeline metric.
 
-![Pipeline aggregation editor](/static/img/docs/elasticsearch/pipeline-aggregation-editor-7-4.png)
+{{< figure src="/static/img/docs/elasticsearch/pipeline-aggregation-editor-7-4.png" max-width="500px" class="docs-image--no-shadow" caption="Pipeline aggregation editor" >}}
 
 ## Create a query
 

@@ -16,6 +16,9 @@ weight: 300
 
 The Tempo data source's query editor helps you query and display traces from Tempo in [Explore]({{< relref "../../explore/" >}}).
 
+This topic explains configuration and queries specific to the Tempo data source.
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+
 ## Query Tempo search
 
 Tempo search is an experimental feature behind a feature toggle.

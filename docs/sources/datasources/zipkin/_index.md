@@ -17,9 +17,8 @@ weight: 1600
 # Zipkin data source
 
 Grafana ships with built-in support for Zipkin, an open source, distributed tracing system.
-This topic explains configuration and queries specific to the Zipkin data source.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "/administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
@@ -104,6 +103,9 @@ You can choose one of three options:
 ## Query traces
 
 You can query and display traces from Zipkin via [Explore]({{< relref "../../explore/" >}}).
+
+This topic explains configuration and queries specific to the Zipkin data source.
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
 
 {{< figure src="/static/img/docs/v70/zipkin-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor" >}}
 

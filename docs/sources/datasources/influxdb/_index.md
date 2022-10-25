@@ -23,7 +23,7 @@ weight: 700
 Grafana includes built-in support for InfluxDB.
 This topic explains options, variables, querying, and other features specific to the InfluxDB data source, which include its [feature-rich code editor for queries and visual query builder]({{< relref "./query-editor/" >}}).
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "/administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
@@ -112,7 +112,7 @@ Configure these options if you select the Flux query language:
 
 ### Provision the data source
 
-You can define and configure the InfluxDB data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
 #### Provisioning examples

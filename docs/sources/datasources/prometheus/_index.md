@@ -18,10 +18,11 @@ weight: 1300
 Grafana ships with built-in support for Prometheus.
 This topic explains options, variables, querying, and other features specific to the Prometheus data source, which include its [feature-rich code editor for queries and visual query builder]({{< relref "./query-editor/" >}}).
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "/administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
 Only users with the organization administrator role can add data sources.
+Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
-Once you've added the Prometheus data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]{{< relref "./query-editor/" >}} when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}), use [Explore]({{< relref "../../explore/" >}}), and [annotate visualizations]({{< relref "./query-editor/#apply-annotations" >}}).
+Once you've added the data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]{{< relref "./query-editor/" >}} when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}), use [Explore]({{< relref "../../explore/" >}}), and [annotate visualizations]({{< relref "./query-editor/#apply-annotations" >}}).
 
 ## Prometheus API
 
@@ -53,27 +54,27 @@ Set the data source's basic configuration options carefully:
 | **Password**                | Sets the password for basic authentication.                                                                                                                                                                                                                                                                                                                    |
 | **Scrape interval**         | Sets the scrape and evaluation interval. We recommend the same value as the typical configured in Prometheus. Defaults to 15s.                                                                                                                                                                                                                                 |
 | **Type**                    | Defines the type of your Prometheus server. Valid values are `Prometheus`, `Cortex`, `Thanos`, `Mimir`. When selected, the Prometheus version field attempts to detect the version automatically using the Prometheus [buildinfo](https://semver.org/) API. Some Prometheus types, such as Cortex, don't support this API, and you must provide their version. |
-| `Version`                   | The version of your Prometheus server, note that this field is not visible until the Prometheus type is selected.                                                                                                                                                                                                                                              |
+| **Version**                 | Defines the version of your Prometheus server. This field is visible only after the **Type** field is defined.                                                                                                                                                                                                                                                 |
 | **HTTP method**             | Sets the HTTP method used to query your data source. We recommend POST, which is pre-selected, because it allows for larger queries. Use GET if the Prometheus version is older than 2.1, or if POST requests are restricted in your network.                                                                                                                  |
 | **Disable metrics lookup**  | Disables the metrics chooser and metric/label support in the query field's autocompletion. This can prevent performance issues with larger Prometheus instances.                                                                                                                                                                                               |
 | **Custom query parameters** | Adds custom parameters to the Prometheus query URL, such as `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Concatenate multiple parameters with '&amp;'.                                                                                                                                                                                  |
 
 **Exemplars configuration:**
 
-| Name              | Description                                                                                                                                                                                                                                             |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Internal link** | Enable this option if you have an internal link. When enabled, this reveals the data source selector. Select the backend tracing data store for your exemplar data.                                                                                     |
-| **Data source**   | (Visible only if you enable `Internal link`) Selects the backend tracing data store for your exemplar data.                                                                                                                                             |
-| **URL**           | (Visible only if you disable `Internal link`). Defines the external link's full URL. You can interpolate the value from the field by using the [`${__value.raw}` macro]({{< relref "/panels-visualizations/configure-data-links/#value-variables" >}}). |
-| **URL label**     | (Optional) Adds a custom display label to override the value of the `Label name` field.                                                                                                                                                                 |
-| **Label name**    | Adds a name for the exemplar traceID property.                                                                                                                                                                                                          |
+| Name              | Description                                                                                                                                                                                                                                              |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Internal link** | Enable this option if you have an internal link. When enabled, this reveals the data source selector. Select the backend tracing data store for your exemplar data.                                                                                      |
+| **Data source**   | _(Visible only if you enable `Internal link`)_ Selects the backend tracing data store for your exemplar data.                                                                                                                                            |
+| **URL**           | _(Visible only if you disable `Internal link`)_ Defines the external link's full URL. You can interpolate the value from the field by using the [`${__value.raw}` macro]({{< relref "/panels-visualizations/configure-data-links/#value-variables" >}}). |
+| **URL label**     | _(Optional)_ Adds a custom display label to override the value of the `Label name` field.                                                                                                                                                                |
+| **Label name**    | Adds a name for the exemplar traceID property.                                                                                                                                                                                                           |
 
 ### Provision the data source
 
-You can define and configure the Prometheus data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
-#### Provisioning examplee
+#### Provisioning example
 
 ```yaml
 apiVersion: 1

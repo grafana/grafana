@@ -59,7 +59,7 @@ You can alternatively use other sorting criteria, such as **Alphabetical**, to r
 
 ## Template variable examples
 
-![Query with template variables](/static/img/docs/elasticsearch/elastic-templating-query-7-4.png)
+{{< figure src="/static/img/docs/elasticsearch/elastic-templating-query-7-4.png" max-width="500px" class="docs-image--no-shadow" caption="Query with template variables" >}}
 
 In the above example, a Lucene query filters documents based on the `hostname` property using a variable named `$hostname`.
 The example also uses a variable in the _Terms_ group by field input box, which you can use to quickly change how data is grouped.

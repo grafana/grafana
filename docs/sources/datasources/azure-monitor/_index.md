@@ -26,7 +26,7 @@ weight: 300
 Grafana ships with built-in support for Azure Monitor, the Azure service to maximize the availability and performance of applications and services in the Azure Cloud.
 This topic explains configuring and querying specific to the Azure Monitor data source.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "/administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
 Only users with the organization administrator role can add data sources.
 
 Once you've added the Azure Monitor data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]{{< relref "./query-editor/" >}} when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
@@ -68,7 +68,7 @@ For details, refer to [Configuring using Managed Identity](#configuring-using-ma
 
 ### Provision the data source
 
-You can define and configure the Azure Monitor data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
 #### Provisioning examples

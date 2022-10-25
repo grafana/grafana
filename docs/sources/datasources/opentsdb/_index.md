@@ -16,21 +16,46 @@ weight: 1100
 
 # OpenTSDB data source
 
-Grafana ships with advanced support for OpenTSDB. This topic explains options, variables, querying, and other options specific to the OpenTSDB data source. Refer to [Add a data source]({{< relref "add-a-data-source/" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
+Grafana ships with advanced support for OpenTSDB.
+This topic explains configuration, variables, querying, and other features specific to the OpenTSDB data source.
+
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+Only users with the organization administrator role can add data sources.
+Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
 ## OpenTSDB settings
 
 To access OpenTSDB settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the OpenTSDB data source.
 
-| Name              | Description                                                                             |
-| ----------------- | --------------------------------------------------------------------------------------- |
-| `Name`            | The data source name. This is how you refer to the data source in panels and queries.   |
-| `Default`         | Default data source means that it will be pre-selected for new panels.                  |
-| `URL`             | The HTTP protocol, IP, and port of your OpenTSDB server (default port is usually 4242)  |
-| `Allowed cookies` | List the names of cookies to forward to the data source.                                |
-| `Version`         | Version = opentsdb version, either <=2.1 or 2.2                                         |
-| `Resolution`      | Metrics from opentsdb may have datapoints with either second or millisecond resolution. |
-| `Lookup limit`    | Default is 1000.                                                                        |
+| Name                | Description                                                                             |
+| ------------------- | --------------------------------------------------------------------------------------- |
+| **Name**            | The data source name. This is how you refer to the data source in panels and queries.   |
+| **Default**         | Default data source means that it will be pre-selected for new panels.                  |
+| **URL**             | The HTTP protocol, IP, and port of your OpenTSDB server (default port is usually 4242)  |
+| **Allowed cookies** | List the names of cookies to forward to the data source.                                |
+| **Version**         | Version = opentsdb version, either <=2.1 or 2.2                                         |
+| **Resolution**      | Metrics from opentsdb may have datapoints with either second or millisecond resolution. |
+| **Lookup limit**    | Default is 1000.                                                                        |
+
+### Provision the data source
+
+You can define and configure the data source in YAML files as part of Grafana's provisioning system.
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+
+#### Provisioning example
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: OpenTsdb
+    type: opentsdb
+    access: proxy
+    url: http://localhost:4242
+    jsonData:
+      tsdbResolution: 1
+      tsdbVersion: 1
+```
 
 ## Query editor
 
@@ -87,22 +112,3 @@ Some examples are mentioned below to make nested template queries work successfu
 | `tag_values(cpu, hostname, env=$env, region=$region)` | Return tag values for cpu metric, selected env tag value, selected region tag value and tag key hostname |
 
 For details on OpenTSDB metric queries, check out the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
-
-## Configure the data source with provisioning
-
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
-
-Here are some provisioning examples for this data source.
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: OpenTsdb
-    type: opentsdb
-    access: proxy
-    url: http://localhost:4242
-    jsonData:
-      tsdbResolution: 1
-      tsdbVersion: 1
-```

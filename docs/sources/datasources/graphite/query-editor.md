@@ -22,6 +22,8 @@ Grafana includes a Graphite-specific query editor to help you build queries.
 The query editor helps you quickly navigate the metric space, add functions, and change function parameters.
 It can handle all types of Graphite queries, including complex nested queries through the use of query references.
 
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+
 ## View the raw query
 
 To see the raw text of the query that Grafana sends to Graphite, click the **Toggle text edit mode** (pencil) icon.
@@ -32,8 +34,7 @@ Click **Select metric** to navigate the metric space.
 Once you begin, you can use the mouse or keyboard arrow keys.
 You can also select a wildcard and still continue.
 
-{{< figure src="/static/img/docs/graphite/graphite-query-editor-still.png"
-                  animated-gif="/static/img/docs/graphite/graphite-query-editor.gif" >}}
+{{< figure src="/static/img/docs/graphite/graphite-query-editor-still.png" animated-gif="/static/img/docs/graphite/graphite-query-editor.gif" >}}
 
 ## Functions
 
@@ -43,8 +44,7 @@ a function is selected, it will be added and your focus will be in the text box 
 - To edit or change a parameter, click on it and it will turn into a text box.
 - To delete a function, click the function name followed by the x icon.
 
-{{< figure src="/static/img/docs/graphite/graphite-functions-still.png"
-                  animated-gif="/static/img/docs/graphite/graphite-functions-demo.gif" >}}
+{{< figure src="/static/img/docs/graphite/graphite-functions-still.png" animated-gif="/static/img/docs/graphite/graphite-functions-demo.gif" >}}
 
 Some functions like aliasByNode support an optional second argument. To add an argument, hover your mouse over the first argument and then click the `+` symbol that appears. To remove the second optional parameter, click on it and leave it blank and the editor will remove it.
 

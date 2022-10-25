@@ -14,6 +14,11 @@ weight: 300
 
 # Prometheus query editor
 
+This topic explains querying specific to the Prometheus data source.
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+
+## Choose a query editing mode
+
 You can switch the Prometheus query editor between two modes:
 
 - [Code mode](#code-mode), which provides a feature-rich editor for writing queries

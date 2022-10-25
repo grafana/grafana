@@ -19,6 +19,11 @@ weight: 300
 
 You can create queries with the Microsoft SQL Server data source's query editor when editing a panel that uses a MS SQL data source.
 
+This topic explains querying specific to the MS SQL data source.
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+
+## Choose a query editing mode
+
 You can switch the query editor between two modes:
 
 - [Code mode]({{< relref "#code-mode" >}}), which provides a feature-rich editor for writing queries

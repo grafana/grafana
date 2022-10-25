@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/graphite/
   - /docs/grafana/latest/features/datasources/graphite/
+  - /docs/grafana/latest/datasources/graphite/
   - /docs/grafana/latest/data-sources/graphite/
 description: Guide for using Graphite in Grafana
 keywords:
@@ -16,9 +16,9 @@ weight: 600
 # Graphite data source
 
 Grafana includes built-in support for Graphite.
-This topic explains options, variables, querying, and other features specific to the Graphite data source, which include its [feature-rich query editor]({{< relref "./query-editor/" >}}).
+This topic explains options, variables, querying, and other features specific to the Graphite data source, which include its feature-rich query editor.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "/administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
 Only users with the organization administrator role can add data sources.
 
 Once you've added the Graphite data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]{{< relref "./query-editor/" >}} when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
@@ -61,7 +61,7 @@ Queries using tags with `seriesByTags()` are also transformed without any additi
 
 ### Provision the data source
 
-You can define and configure the Graphite data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for lists of common configuration options and JSON data options, refer to [Provisioning data sources]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
 #### Provisioning example

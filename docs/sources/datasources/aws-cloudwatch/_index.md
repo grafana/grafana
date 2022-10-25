@@ -22,7 +22,7 @@ weight: 200
 Grafana ships with built-in support for AWS CloudWatch.
 This topic describes queries, templates, variables, and other configuration specific to the CloudWatch data source.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "/administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
 Only users with the organization administrator role can add data sources.
 Administrators can also [provision the data source]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system, and should [control pricing]({{< relref "#control-pricing" >}}) and [manage service quotas]({{< relref "#manage-service-quotas" >}}) accordingly.
 
@@ -189,7 +189,7 @@ Because of limits on concurrently running queries in CloudWatch, they can also t
 
 To automatically add links in your logs when the log contains the `@xrayTraceId` field, link an X-Ray data source in the "X-Ray trace link" section of the data source configuration.
 
-![Trace link configuration](/static/img/docs/cloudwatch/xray-trace-link-configuration-8-2.png 'Trace link configuration')
+{{< figure src="/static/img/docs/cloudwatch/xray-trace-link-configuration-8-2.png" max-width="800px" class="docs-image--no-shadow" caption="Trace link configuration" >}}
 
 The data source select contains only existing data source instances of type X-Ray.
 To use this feature, you must already have an X-Ray data source configured.
@@ -201,7 +201,7 @@ To log the `@xrayTraceId`, see the [AWS X-Ray documentation](https://docs.amazon
 
 To provide the field to Grafana, your log queries must also contain the `@xrayTraceId` field, for example by using the query `fields @message, @xrayTraceId`.
 
-![Trace link in log details](/static/img/docs/cloudwatch/xray-link-log-details-8-2.png 'Trace link in log details')
+{{< figure src="/static/img/docs/cloudwatch/xray-link-log-details-8-2.png" max-width="800px" class="docs-image--no-shadow" caption="Trace link in log details" >}}
 
 ### Configure the data source with grafana.ini
 
@@ -215,7 +215,7 @@ The Grafana [configuration file]({{< relref "../../setup-grafana/configure-grafa
 
 ### Provision the data source
 
-You can define and configure the CloudWatch data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
 #### Provisioning examples

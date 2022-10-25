@@ -21,7 +21,7 @@ You can make many types of queries to visualize logs or metrics stored in Elasti
 This topic explains configuring and querying specific to the Elasticsearch data source.
 For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "/administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
@@ -55,7 +55,7 @@ You must also configure settings specific to the Elasticsearch data source.
 
 ### Index settings
 
-![Elasticsearch data source details](/static/img/docs/elasticsearch/elasticsearch-ds-details-7-4.png)
+{{< figure src="/static/img/docs/elasticsearch/elasticsearch-ds-details-7-4.png" max-width="500px" class="docs-image--right" caption="Elasticsearch data source details" >}}
 
 Use the index settings to specify a default for the `time field` and your Elasticsearch index's name.
 You can use a time pattern, such as `YYYY.MM.DD`, or a wildcard for the index name.
@@ -138,7 +138,7 @@ For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amaz
 
 > **Note:** Available in Grafana v7.3 and higher.
 
-To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration]({{< relref "/setup-grafana/configure-grafana/#sigv4_auth_enabled" >}}).
+To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration]({{< relref "../../setup-grafana/configure-grafana/#sigv4_auth_enabled" >}}).
 
 Once AWS SigV4 is enabled, you can configure it on the Elasticsearch data source configuration page.
 For more information about AWS authentication options, refer to [AWS authentication]({{< relref "../aws-cloudwatch/aws-authentication/" >}}).
@@ -147,7 +147,7 @@ For more information about AWS authentication options, refer to [AWS authenticat
 
 ### Provision the data source
 
-You can define and configure the Elasticsearch data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
 #### Provisioning examples

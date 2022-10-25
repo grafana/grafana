@@ -18,15 +18,16 @@ weight: 300
 
 # Azure Monitor query editor
 
+This topic explains querying specific to the Azure Monitor data source.
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+
+## Choose a query editing mode
+
 The Azure Monitor data source's query editor has three modes depending on which Azure service you want to query:
 
 - **Metrics** for [Azure Monitor Metrics](#query-azure-monitor-metrics)
 - **Logs** for [Azure Monitor Logs](#query-azure-monitor-logs)
 - [**Azure Resource Graph**](#query-azure-resource-graph)
-
-You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
-
-For options and functions common to all query editors, refer to [Query and transform data]({{< relref "../../panels-visualizations/query-transform-data" >}}).
 
 ## Query Azure Monitor Metrics
 
@@ -41,15 +42,15 @@ In contrast, Azure Monitor Logs can store a variety of data types, each with the
 
 **To create a Metrics query:**
 
-1. In a Grafana panel, select the Azure Monitor data source.
-1. Select the Metrics service.
+1. In a Grafana panel, select the **Azure Monitor** data source.
+1. Select the **Metrics** service.
 1. Select a resource from which to metrics by using the subscription, resource group, resource type, and resource fields.
-1. To select a different namespace than the default—for instance, to select resources like storage accounts that are organized under multiple namespaces—use the Namespace option.
+1. To select a different namespace than the default—for instance, to select resources like storage accounts that are organized under multiple namespaces—use the **Namespace** option.
 
    > **Note:** Not all metrics returned by the Azure Monitor Metrics API have values.
    > The data source retrieves lists of supported metrics for each subscription and ignores metrics that never have values.
 
-1. Select a metric from the Metric field.
+1. Select a metric from the **Metric** field.
 
 Optionally, you can apply further aggregations or filter by dimensions.
 
@@ -61,6 +62,8 @@ Optionally, you can apply further aggregations or filter by dimensions.
 {{< figure src="/static/img/docs/azure-monitor/query-editor-metrics-dimensions.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor Metrics screenshot showing Dimensions" >}}
 
 The available options change depending on what is relevant to the selected metric.
+
+You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
 
 ### Format legend aliases
 
@@ -105,13 +108,15 @@ You can also perform complex analysis of Logs data by using KQL.
 
 **To create a Logs query:**
 
-1. In a Grafana panel, select the Azure Monitor data source.
-1. Select the Logs service.
+1. In a Grafana panel, select the **Azure Monitor** data source.
+1. Select the **Logs** service.
 1. Select a resource to query.
 
    Alternatively, you can dynamically query all resources under a single resource group or subscription.
 
 1. Enter your KQL query.
+
+You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
 
 ### Logs query examples
 

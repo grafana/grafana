@@ -27,7 +27,7 @@ This topic describes queries, templates, variables, and other configuration spec
 
 > **Note:** Before Grafana v7.1, Google Cloud Monitoring was referred to as Google Stackdriver.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "/administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
 Only users with the organization administrator role can add data sources.
 
 Once you've added the Google Cloud Monitoring data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]{{< relref "./query-editor/" >}}) and apply [annotations]({{< relref "#annotations" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
@@ -81,7 +81,7 @@ Before you can request data from Google Cloud Monitoring, you must first enable 
 
 ### Provision the data source
 
-You can define and configure the Google Cloud Monitoring data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
 #### Provisioning examples
@@ -127,6 +127,8 @@ datasources:
 The Google Cloud Monitoring data source ships with pre-configured dashboards for some of the most popular GCP services.
 These curated dashboards are based on similar dashboards in the GCP dashboard samples repository.
 
+{{< figure src="/static/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" class="docs-image--no-shadow" max-width="650px" caption="Curated dashboards for Google Cloud Monitoring" >}}
+
 **To import curated dashboards:**
 
 1. Navigate to the data source's [configuration page]({{< relref "#configure-the-data-source" >}}).
@@ -135,8 +137,6 @@ These curated dashboards are based on similar dashboards in the GCP dashboard sa
    This displays the curated selection of importable dashboards.
 
 1. Select **Import** for the dashboard to import.
-
-{{< figure src="/static/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" max-width= "650px" >}}
 
 The dashboards include a [template variable]({{< relref "./template-variables/" >}}) populated with the projects accessible by the configured [Service Account]({{< relref "./google-authentication/" >}}) each time you load the dashboard.
 After Grafana loads the dashboard, you can select a project from the dropdown list.

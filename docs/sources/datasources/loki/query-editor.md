@@ -16,6 +16,11 @@ weight: 300
 
 The Loki data source's query editor helps you create [log]({{< relref "#create-a-logs-query" >}}) and [metric]({{< relref "#create-a-metrics-query" >}}) queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
 
+This topic explains querying specific to the Loki data source.
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+
+## Choose a query editing mode
+
 You can switch the Loki query editor between two modes:
 
 - [Code mode]({{< relref "#code-mode" >}}), which provides a feature-rich editor for writing queries

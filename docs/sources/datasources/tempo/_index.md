@@ -18,14 +18,11 @@ weight: 1400
 
 Grafana ships with built-in support for Tempo, a high-volume, minimal-dependency trace storage, open-source tracing solution from Grafana Labs.
 
-This topic explains configuration and queries specific to the Tempo data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
-
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "/administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
-Once you've added the Tempo data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]{{< relref "./query-editor/" >}} when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
+Once you've added the data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]{{< relref "./query-editor/" >}} when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
 
 You can also [use the service graph]({{< relref "#use-the-service-graph" >}}) to view service relationships, [track Application Performance Management metrics]({{< relref "#view-the-apm-table" >}}), [upload a JSON trace file]({{< relref "#upload-a-json-trace-file" >}}), and [link a trace ID from logs]({{< relref "#link-a-trace-id-from-logs" >}}) in Loki or Elasticsearch.
 

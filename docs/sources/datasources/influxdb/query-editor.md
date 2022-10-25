@@ -10,6 +10,11 @@ weight: 200
 
 # InfluxDB query editor
 
+This topic explains querying specific to the InfluxDB data source.
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+
+## Choose a query editing mode
+
 The InfluxDB data source's query editor has two modes depending on your choice of query language in the [data source configuration]({{< relref "../#configure-the-data-source" >}}):
 
 - [InfluxQL]({{< relref "#influxql-query-editor" >}})
