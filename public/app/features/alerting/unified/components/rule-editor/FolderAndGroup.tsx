@@ -116,7 +116,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
       setSelectedGroup('');
     }
     initialRender.current = false;
-  }, [initialRender, folder, setSelectedGroup, group]);
+  }, [group, folder?.title]);
 
   const groupIsInGroupOptions = useCallback(
     (group_: string) => {
@@ -124,15 +124,6 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
     },
     [groupOptions]
   );
-  const folderTilte = folder?.title ?? '';
-
-  useEffect(() => {
-    if (folderTilte && groupOptions && !groupIsInGroupOptions(selectedGroup)) {
-      setIsAddingGroup(false);
-      resetGroup();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [folderTilte]);
 
   return (
     <div className={classNames([styles.flexRow, styles.alignBaseline])}>
@@ -163,6 +154,13 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
               enableReset={true}
               filter={folderFilter}
               dissalowSlashes={true}
+              onChange={({ title, id }) => {
+                field.onChange({ title, id });
+                if (!groupIsInGroupOptions(selectedGroup)) {
+                  setIsAddingGroup(false);
+                  resetGroup();
+                }
+              }}
             />
           )}
           name="folder"
@@ -189,6 +187,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
               <LoadingPlaceholder text="Loading..." />
             ) : (
               <SelectWithAdd
+                key={`my_unique_select_key__${folder?.title ?? ''}`}
                 {...field}
                 options={groupOptions}
                 getOptionLabel={(option: SelectableValue<string>) =>

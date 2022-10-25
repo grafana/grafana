@@ -35,10 +35,7 @@ export const SelectWithAdd: FC<Props> = ({
   const [isCustom, setIsCustom] = useState(custom);
 
   useEffect(() => {
-    //not sure why do we need this if
-    // if (custom) {
     setIsCustom(custom);
-    //  }
   }, [custom]);
 
   const _options = useMemo(

@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 import { RegisterOptions, useFormContext } from 'react-hook-form';
 
@@ -172,7 +172,10 @@ function FolderGroupAndEvaluationInterval({
     editInterval && setFocus('evaluateEvery');
   }, [editInterval, setFocus]);
 
-  const intervalHasChanged = initialEvaluateEvery !== parseDurationToMilliseconds(evaluateEvery);
+  const intervalHasChanged =
+    parseDurationToMilliseconds(getIntervalForGroup(groupfoldersForGrafana?.result, group, folder?.title ?? '')) !==
+    parseDurationToMilliseconds(evaluateEvery);
+
   return (
     <div>
       <FolderAndGroup initialFolder={initialFolder} />
@@ -189,11 +192,11 @@ function FolderGroupAndEvaluationInterval({
           someRulesBelongToThisGroup(initialRuleName, groupfoldersForGrafana?.result, group, folder?.title ?? '') ? (
             <>
               <div className={styles.intervalChangedLabel}>
-                <Icon name="exclamation-triangle" size="xs" className={cx('text-warning', styles.warningIcon)} />
+                <Icon name="exclamation-triangle" size="xs" className={styles.warningIcon} />
                 {`More alert rules belong to this group.You are going to update evaluation interval for group '${group}' with this new value: `}
-                <span className={cx('text-warning')}>{evaluateEvery}</span>
+                <span className={styles.warningMessage}>{evaluateEvery}</span>
               </div>
-              <div className={cx('text-warning')}>
+              <div className={styles.warningMessage}>
                 You should review the For duration, for all alerts that belong to this group
               </div>
             </>
@@ -202,7 +205,7 @@ function FolderGroupAndEvaluationInterval({
             !editInterval && (
               <div className={styles.intervalChangedLabel}>
                 {`Evaluation interval for group '${group}' will be updated with: `}
-                <span className={cx('text-warning')}>{evaluateEvery}</span>
+                <span className={styles.warningMessage}>{evaluateEvery}</span>
               </div>
             )
           )}
@@ -213,6 +216,7 @@ function FolderGroupAndEvaluationInterval({
               type="button"
               variant="secondary"
               disabled={groupfoldersForGrafana?.loading}
+              className={styles.editButton}
               onClick={() => {
                 setEditInterval(true);
               }}
@@ -388,5 +392,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   warningIcon: css`
     justify-self: center;
     margin-right: ${theme.spacing(1)};
+    color: ${theme.colors.warning.text};
+  `,
+  warningMessage: css`
+    color: ${theme.colors.warning.text};
+  `,
+  editButton: css`
+    margin-top: ${theme.spacing(1)};
   `,
 });
