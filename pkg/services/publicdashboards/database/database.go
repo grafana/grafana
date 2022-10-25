@@ -3,15 +3,15 @@ package database
 import (
 	"context"
 	"encoding/json"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // Define the storage implementation. We're generating the mock implementation
@@ -84,9 +84,9 @@ func (d *PublicDashboardStoreImpl) GetDashboard(ctx context.Context, dashboardUi
 	return dashboard, err
 }
 
-// Retrieves public dashboard. This method makes 2 queries to the db so that in the
+// GetPublicDashboardAndDashboard Retrieves public dashboard. This method makes 2 queries to the db so that in the
 // even that the underlying dashboard is missing it will return a 404.
-func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
+func (d *PublicDashboardStoreImpl) GetPublicDashboardAndDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
 	if accessToken == "" {
 		return nil, nil, ErrPublicDashboardIdentifierNotSet
 	}
@@ -177,7 +177,7 @@ func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardAccessToken(ctx con
 	return accessToken, nil
 }
 
-// Retrieves public dashboard configuration by Uid
+// GetPublicDashboardByUid Returns public dashboard configuration by Uid or nil if not found
 func (d *PublicDashboardStoreImpl) GetPublicDashboardByUid(ctx context.Context, uid string) (*PublicDashboard, error) {
 	if uid == "" {
 		return nil, nil
@@ -203,7 +203,7 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardByUid(ctx context.Context, 
 }
 
 // Retrieves public dashboard configuration
-func (d *PublicDashboardStoreImpl) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
+func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
 	if dashboardUid == "" {
 		return nil, dashboards.ErrDashboardIdentifierNotSet
 	}
@@ -230,7 +230,7 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardConfig(ctx context.Context,
 }
 
 // Persists public dashboard configuration
-func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
+func (d *PublicDashboardStoreImpl) SavePublicDashboard(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
 	if cmd.PublicDashboard.DashboardUid == "" {
 		return dashboards.ErrDashboardIdentifierNotSet
 	}
@@ -248,15 +248,16 @@ func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context
 }
 
 // Updates existing public dashboard configuration
-func (d *PublicDashboardStoreImpl) UpdatePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
+func (d *PublicDashboardStoreImpl) UpdatePublicDashboard(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		timeSettingsJSON, err := json.Marshal(cmd.PublicDashboard.TimeSettings)
 		if err != nil {
 			return err
 		}
 
-		_, err = sess.Exec("UPDATE dashboard_public SET is_enabled = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
+		_, err = sess.Exec("UPDATE dashboard_public SET is_enabled = ?, annotations_enabled = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
 			cmd.PublicDashboard.IsEnabled,
+			cmd.PublicDashboard.AnnotationsEnabled,
 			string(timeSettingsJSON),
 			cmd.PublicDashboard.UpdatedBy,
 			cmd.PublicDashboard.UpdatedAt.UTC().Format("2006-01-02 15:04:05"),
@@ -272,8 +273,8 @@ func (d *PublicDashboardStoreImpl) UpdatePublicDashboardConfig(ctx context.Conte
 	return err
 }
 
-// Responds true if public dashboard for a dashboard exists and isEnabled
-func (d *PublicDashboardStoreImpl) PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error) {
+// EnabledPublicDashboardExistsByDashboardUid Responds true if there is an enabled public dashboard for a dashboard uid
+func (d *PublicDashboardStoreImpl) PublicDashboardEnabledExistsByDashboardUid(ctx context.Context, dashboardUid string) (bool, error) {
 	hasPublicDashboard := false
 	err := d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sql := "SELECT COUNT(*) FROM dashboard_public WHERE dashboard_uid=? AND is_enabled=true"
@@ -290,9 +291,8 @@ func (d *PublicDashboardStoreImpl) PublicDashboardEnabled(ctx context.Context, d
 	return hasPublicDashboard, err
 }
 
-// Responds true if accessToken exists and isEnabled. May be renamed in the
-// future
-func (d *PublicDashboardStoreImpl) AccessTokenExists(ctx context.Context, accessToken string) (bool, error) {
+// EnabledPublicDashboardExistsByAccessToken Responds true if accessToken exists and isEnabled
+func (d *PublicDashboardStoreImpl) PublicDashboardEnabledExistsByAccessToken(ctx context.Context, accessToken string) (bool, error) {
 	hasPublicDashboard := false
 	err := d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sql := "SELECT COUNT(*) FROM dashboard_public WHERE access_token=? AND is_enabled=true"
