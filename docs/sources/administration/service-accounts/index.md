@@ -89,6 +89,13 @@ You can create a service account token using the Grafana UI or via the API. For 
 
 - Ensure you have permission to create and edit service accounts. By default, the organization administrator role is required to create and edit service accounts. For more information about user permissions, refer to [About users and permissions]({{< relref "../roles-and-permissions/#" >}}).
 
+### Service account token expiration dates
+
+By default, service account tokens don't have an expiration date, meaning they won't expire at all. However, if `token_expiration_day_limit` is set to a value greater than 0, Grafana restricts the lifetime of all existing and future tokens to the configured value in days.
+
+> **Warning:** When set, Grafana reduces the lifespan of _all existing tokens_ that have a days-to-live value greater than `token_expiration_day_limit` in order to comply with this setting.
+> This action is irreversible; you can't extend existing tokens' days-to-live by changing this setting to a larger value.
+
 ### To add a token to a service account
 
 1. Sign in to Grafana, then hover your cursor over **Configuration** (the gear icon) in the sidebar.
