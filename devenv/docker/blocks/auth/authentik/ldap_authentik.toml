@@ -1,6 +1,6 @@
 [[servers]]
 host = "127.0.0.1"
-port = 389
+port = 3389
 use_ssl = false
 start_tls = false
 ssl_skip_verify = true
