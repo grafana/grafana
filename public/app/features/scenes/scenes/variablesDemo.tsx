@@ -3,13 +3,14 @@ import { getDefaultTimeRange } from '@grafana/data';
 import { Scene } from '../components/Scene';
 import { SceneCanvasText } from '../components/SceneCanvasText';
 import { SceneFlexLayout } from '../components/SceneFlexLayout';
+import { SceneSubMenu } from '../components/SceneSubMenu';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { SceneTimeRange } from '../core/SceneTimeRange';
-import { SceneEditManager } from '../editor/SceneEditManager';
 import { QueryVariable } from '../variables/QueryVariable';
 import { SceneVariableManager } from '../variables/SceneVariableSet';
+import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
 
-export function getVariablesDdemo(): Scene {
+export function getVariablesDemo(): Scene {
   const scene = new Scene({
     title: 'Variables',
     layout: new SceneFlexLayout({
@@ -42,6 +43,9 @@ export function getVariablesDdemo(): Scene {
     }),
     $timeRange: new SceneTimeRange(getDefaultTimeRange()),
     actions: [new SceneTimePicker({})],
+    subMenu: new SceneSubMenu({
+      children: [new VariableValueSelectors({})],
+    }),
   });
 
   return scene;

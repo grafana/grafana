@@ -1,8 +1,6 @@
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneObjectStatePlain } from '../core/types';
 
-import { sceneTemplateInterpolator, SceneVariableManager, TextBoxSceneVariable } from './SceneVariableSet';
-
 interface TestSceneState extends SceneObjectStatePlain {
   nested?: TestScene;
 }

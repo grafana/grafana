@@ -5,7 +5,8 @@ import { queryMetricTree } from 'app/plugins/datasource/testdata/metricTree';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 
-import { sceneTemplateInterpolator } from './SceneVariableSet';
+import { VariableValueSelect } from './components/VariableValueSelect';
+import { sceneTemplateInterpolator } from './sceneTemplateInterpolator';
 import { SceneVariable, SceneVariableState, VariableUpdateContext } from './types';
 
 export interface QueryVariableState extends SceneVariableState {
@@ -15,6 +16,8 @@ export interface QueryVariableState extends SceneVariableState {
 }
 
 export class QueryVariable extends SceneObjectBase<QueryVariableState> implements SceneVariable {
+  ValueSelectComponent = VariableValueSelect;
+
   updateOptions(ctx: VariableUpdateContext) {
     //const range = this.getTimeRange();
 

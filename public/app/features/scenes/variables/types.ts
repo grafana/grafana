@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { LoadingState } from '@grafana/data';
 import { VariableHide } from 'app/features/variables/types';
 
-import { SceneObject, SceneObjectStatePlain } from '../core/types';
+import { SceneComponent, SceneObject, SceneObjectStatePlain } from '../core/types';
 
 export interface SceneVariableState extends SceneObjectStatePlain {
   name: string;
@@ -17,6 +17,7 @@ export interface SceneVariableState extends SceneObjectStatePlain {
 }
 
 export interface SceneVariable extends SceneObject<SceneVariableState> {
+  ValueSelectComponent?: SceneComponent<SceneVariable>;
   updateOptions?(context: VariableUpdateContext): Observable<number>;
 }
 

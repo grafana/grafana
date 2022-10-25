@@ -171,7 +171,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   }
 
   /**
-   * Will create new SceneItem with shalled cloned state, but all states items of type SceneItem are deep cloned
+   * Will create new SceneItem with shalled cloned state, but all states items of type SceneObject are deep cloned
    */
   clone(withState?: Partial<TState>): this {
     const clonedState = { ...this.state };
