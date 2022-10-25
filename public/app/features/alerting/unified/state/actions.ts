@@ -331,7 +331,6 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<Prom
 
     await Promise.allSettled(
       getAllRulesSourceNames().map(async (rulesSourceName) => {
-        const dsStartLoadingTs = performance.now();
         await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
 
         const { promRules, rulerRules, dataSources } = getStore().unifiedAlerting;
@@ -349,13 +348,6 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<Prom
           shouldLoadProm && dispatch(fetchPromRulesAction({ rulesSourceName })),
           shouldLoadRuler && dispatch(fetchRulerRulesAction({ rulesSourceName })),
         ]);
-
-        logInfo(`[${rulesSourceName}] Rules loaded`, {
-          loadTimeMs: (performance.now() - dsStartLoadingTs).toFixed(0),
-          dataSourceName: rulesSourceName,
-          prometheusRulesLoaded: String(shouldLoadProm ?? false),
-          rulerRulesLoaded: String(shouldLoadRuler ?? false),
-        });
       })
     );
 
