@@ -11,7 +11,7 @@ declare -A cfg=(
   [grpcToken]=$GRPC_TOKEN
   [grpcAddress]="127.0.0.1:10000"
   [execution]="local"
-  [testFilepath]="object-store-test"
+  [test]="object-store-test"
   [k6CloudToken]=$K6_CLOUD_TOKEN
 )
 
@@ -25,12 +25,12 @@ do
 done
 
 function usage() {
-    echo "$0 grpcAddress= grpcToken= execution= k6CloudToken= testFilepath=
+    echo "$0 grpcAddress= grpcToken= execution= k6CloudToken= test=
 - 'grpcAddress' is the address of Grafana gRPC server. 127.0.0.1:10000 is the default.
 - 'grpcToken' is the service account admin token used for Grafana gRPC server authentication.
 - 'execution' is the test execution mode; one of 'local', 'cloud-output', 'cloud'. 'local' is the default.
 - 'k6CloudToken' is the k6 cloud token required for 'cloud-output' and 'cloud' execution modes.
-- 'testFilepath' is the filepath of the test to execute relative to ./src, without the extension. example 'object-store-test'"
+- 'test' is the filepath of the test to execute relative to ./src, without the extension. example 'object-store-test'"
     exit 0
 }
 
@@ -51,8 +51,9 @@ elif [ "${cfg[execution]}" != "local" ]; then
 fi
 
 yarn run build
+yarn run prepare
 
-TEST_PATH="./dist/${cfg[testFilepath]}.js"
+TEST_PATH="./dist/${cfg[test]}.js"
 echo "$(date '+%Y-%m-%d %H:%M:%S'): Executing test ${TEST_PATH} in ${cfg[execution]} mode"
 
 if [ "${cfg[execution]}" == "cloud-output" ]; then

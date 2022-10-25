@@ -20,7 +20,7 @@ const client = new grpc.Client();
 const objectStoreClient = new GRPCObjectStoreClient(client, grpcAddress, grpcToken);
 
 const data: Data = new SharedArray('data', () => {
-  return [prepareData(JSON.parse(open('../scripts/tmp/filenames.json')), 10000)];
+  return [prepareData(JSON.parse(open('../scripts/tmp/filenames.json')), 50)];
 })[0];
 
 const scenarioDuration = '2m';
@@ -33,26 +33,26 @@ export const options = {
     writer: {
       exec: 'writer',
       executor: 'constant-arrival-rate',
+      rate: 1,
+      timeUnit: '2s',
+      duration: scenarioDuration,
+      preAllocatedVUs: 1,
+      maxVUs: 1,
+    },
+    reader: {
+      exec: 'reader',
+      executor: 'constant-arrival-rate',
       rate: 10,
       timeUnit: '2s',
       duration: scenarioDuration,
       preAllocatedVUs: 1,
       maxVUs: 10,
     },
-    reader: {
-      exec: 'reader',
-      executor: 'constant-arrival-rate',
-      rate: 100,
-      timeUnit: '2s',
-      duration: scenarioDuration,
-      preAllocatedVUs: 1,
-      maxVUs: 100,
-    },
     writer1mb: {
       exec: 'writer1mb',
       executor: 'constant-arrival-rate',
       rate: 1,
-      timeUnit: '2s',
+      timeUnit: '20s',
       duration: scenarioDuration,
       preAllocatedVUs: 1,
       maxVUs: 5,
@@ -61,7 +61,7 @@ export const options = {
       startTime: '2s',
       exec: 'reader1mb',
       executor: 'constant-arrival-rate',
-      rate: 4,
+      rate: 1,
       timeUnit: '1s',
       duration: scenarioDuration,
       preAllocatedVUs: 1,
@@ -71,7 +71,7 @@ export const options = {
       exec: 'writer4mb',
       executor: 'constant-arrival-rate',
       rate: 1,
-      timeUnit: '3s',
+      timeUnit: '30s',
       duration: scenarioDuration,
       preAllocatedVUs: 1,
       maxVUs: 5,
@@ -80,8 +80,8 @@ export const options = {
       startTime: '3s',
       exec: 'reader4mb',
       executor: 'constant-arrival-rate',
-      rate: 2,
-      timeUnit: '1s',
+      rate: 1,
+      timeUnit: '5s',
       duration: scenarioDuration,
       preAllocatedVUs: 1,
       maxVUs: 5,
@@ -105,7 +105,7 @@ export function setup() {
 }
 
 export function teardown() {
-  const toDelete = [...data.base, ...data.toWrite];
+  const toDelete = [...data.base, ...data.toWrite, data.size1mb, data.size4mb, data.size100kb];
 
   console.log('deleting base objects');
   for (let i = 0; i < toDelete.length; i++) {

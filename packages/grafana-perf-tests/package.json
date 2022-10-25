@@ -24,6 +24,8 @@
     "webpack-glob-entries": "^1.0.1"
   },
   "scripts": {
-    "build": "webpack"
+    "build": "webpack",
+    "prepare": "yarn run prepare:object-store-test",
+    "prepare:object-store-test": "ts-node scripts/prepareDashboardFileNames.ts ../../devenv/dev-dashboards ./scripts/tmp/filenames.json"
   }
 }

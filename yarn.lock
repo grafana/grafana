@@ -12948,6 +12948,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/shortid@npm:0.0.29":
+  version: 0.0.29
+  resolution: "@types/shortid@npm:0.0.29"
+  checksum: 06d940fabc5774ff2221da6ba3496cef97ae7c2f7f0fee4740144a68cf2b630b109db2f934133096daa58045e4e7aaffba687934166bb0b2b0d5c52679b10d08
+  languageName: node
+  linkType: hard
+
 "@types/sinon@npm:10.0.13":
   version: 10.0.13
   resolution: "@types/sinon@npm:10.0.13"
@@ -30634,6 +30641,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nanoid@npm:^2.1.0":
+  version: 2.1.11
+  resolution: "nanoid@npm:2.1.11"
+  checksum: 18cd14386816873849787eb4e65667021bfdeb019a8f14c74287c23594c67b7c0e8f42c7d69f6aedf05cd3d100f1ddc41184f9f9b6b17fbaea1c3ee3f0704eec
+  languageName: node
+  linkType: hard
+
 "nanoid@npm:^3.1.30":
   version: 3.1.30
   resolution: "nanoid@npm:3.1.30"
@@ -37449,6 +37463,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"shortid@npm:2.2.16":
+  version: 2.2.16
+  resolution: "shortid@npm:2.2.16"
+  dependencies:
+    nanoid: ^2.1.0
+  checksum: 0790ce22fe20aacc226915160da178b5a6af7814d1796404684f6699b60f77e291d39ad3b6b2b4c6efcf5553e1deeee7e29a48b8f46955de1425e67ab934e309
+  languageName: node
+  linkType: hard
+
 "side-channel@npm:^1.0.4":
   version: 1.0.4
   resolution: "side-channel@npm:1.0.4"
@@ -40318,11 +40341,14 @@ __metadata:
     "@babel/preset-typescript": 7.13.0
     "@faker-js/faker": 7.6.0
     "@types/k6": ~0.39.0
+    "@types/shortid": 0.0.29
     "@types/webpack": 5.28.0
     babel-loader: 8.2.2
     clean-webpack-plugin: 4.0.0-alpha.0
     copy-webpack-plugin: ^9.0.1
     cross-env: 7.0.3
+    shortid: 2.2.16
+    ts-node: 10.9.1
     typescript: 4.2.4
     webpack: 5.35.1
     webpack-cli: 4.6.0
