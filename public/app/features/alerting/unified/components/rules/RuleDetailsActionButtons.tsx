@@ -19,6 +19,7 @@ import { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from '..
 import { createExploreLink, createViewLink, makeRuleBasedSilenceLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
+import { DeclareIncident } from '../bridges/DeclareIncidentButton';
 
 interface Props {
   rule: CombinedRule;
@@ -81,8 +82,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   if (isCloudRulesSource(rulesSource) && hasExplorePermission && !isFederated) {
     leftButtons.push(
       <LinkButton
-        className={style.button}
-        size="xs"
+        size="sm"
         key="explore"
         variant="primary"
         icon="chart-line"
@@ -96,8 +96,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   if (rule.annotations[Annotation.runbookURL]) {
     leftButtons.push(
       <LinkButton
-        className={style.button}
-        size="xs"
+        size="sm"
         key="runbook"
         variant="primary"
         icon="book"
@@ -113,8 +112,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     if (dashboardUID) {
       leftButtons.push(
         <LinkButton
-          className={style.button}
-          size="xs"
+          size="sm"
           key="dashboard"
           variant="primary"
           icon="apps"
@@ -128,8 +126,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
       if (panelId) {
         leftButtons.push(
           <LinkButton
-            className={style.button}
-            size="xs"
+            size="sm"
             key="panel"
             variant="primary"
             icon="apps"
@@ -146,8 +143,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   if (alertmanagerSourceName && contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor)) {
     leftButtons.push(
       <LinkButton
-        className={style.button}
-        size="xs"
+        size="sm"
         key="silence"
         icon="bell-slash"
         target="__blank"
@@ -161,7 +157,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   if (alertId) {
     leftButtons.push(
       <Fragment key="history">
-        <Button className={style.button} size="xs" icon="history" onClick={() => showStateHistoryModal()}>
+        <Button size="sm" icon="history" onClick={() => showStateHistoryModal()}>
           Show state history
         </Button>
         {StateHistoryModal}
@@ -172,8 +168,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   if (!isViewMode) {
     rightButtons.push(
       <LinkButton
-        className={style.button}
-        size="xs"
+        size="sm"
         key="view"
         variant="secondary"
         icon="eye"
@@ -203,7 +198,6 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
           onClipboardError={(copiedText) => {
             notifyApp.error('Error while copying URL', copiedText);
           }}
-          className={style.button}
           size="sm"
           getText={buildShareUrl}
         >
@@ -213,7 +207,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     }
 
     rightButtons.push(
-      <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
+      <LinkButton size="sm" key="edit" variant="secondary" icon="pen" href={editURL}>
         Edit
       </LinkButton>
     );
@@ -222,8 +216,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   if (isRemovable && rulerRule && !isFederated && !isProvisioned) {
     rightButtons.push(
       <Button
-        className={style.button}
-        size="xs"
+        size="sm"
         type="button"
         key="delete"
         variant="secondary"
@@ -239,7 +232,10 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     return (
       <>
         <div className={style.wrapper}>
-          <HorizontalGroup width="auto">{leftButtons.length ? leftButtons : <div />}</HorizontalGroup>
+          <HorizontalGroup width="auto">
+            {leftButtons.length ? leftButtons : <div />}
+            <DeclareIncident title={rule.name} />
+          </HorizontalGroup>
           <HorizontalGroup width="auto">{rightButtons.length ? rightButtons : <div />}</HorizontalGroup>
         </div>
         {!!ruleToDelete && (
@@ -273,9 +269,5 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     flex-wrap: wrap;
     border-bottom: solid 1px ${theme.colors.border.medium};
   `,
-  button: css`
-    height: 24px;
-    margin-top: ${theme.spacing(1)};
-    font-size: ${theme.typography.size.sm};
-  `,
+  button: css``,
 });
