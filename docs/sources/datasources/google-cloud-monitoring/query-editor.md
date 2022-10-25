@@ -32,7 +32,7 @@ You also use the query editor when you [annotate]({{< relref "#apply-annotations
 
 ## Query metrics
 
-{{< figure src="/static/img/docs/google-cloud-monitoring/metric-query-builder-8-0.png" max-width="400px" class="class="docs-image--no-shadow" caption="Google Cloud Monitoring metrics query builder"  >}}
+{{< figure src="/static/img/docs/google-cloud-monitoring/metric-query-builder-8-0.png" max-width="400px" class="docs-image--no-shadow" caption="Google Cloud Monitoring metrics query builder" >}}
 
 The metrics query editor helps you select metrics, group and aggregate by labels and time, and use filters to specify which time series you want to query.
 
