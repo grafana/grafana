@@ -60,16 +60,18 @@ func (s *httpObjectStore) RegisterHTTPRoutes(route routing.RouteRegister) {
 // This function will extract UID+Kind from the requested path "*" in our router
 // This is far from ideal! but is at least consistent for these endpoints.
 // This will quickly be revisited as we explore how to encode UID+Kind in a "GRN" format
-func parseRequestParams(req *http.Request) (uid string, kind string, params map[string]string) {
-	params = web.Params(req)
+func parseRequestParams(c *models.ReqContext) (grn.GRN, map[string]string) {
+	req := c.Req
+	grn := grn.GRN{TenantID: c.OrgID}
+
+	params := web.Params(req)
 	path := params["*"]
 	idx := strings.LastIndex(path, ".")
 	if idx > 0 {
-		uid = path[:idx]
-		kind = path[idx+1:]
+		grn.ResourceIdentifier = path[:idx]
+		grn.ResourceKind = path[idx+1:]
 	} else {
-		uid = path
-		kind = "?"
+		grn.ResourceIdentifier = path
 	}
 
 	// Read parameters that are encoded in the URL
@@ -79,16 +81,11 @@ func parseRequestParams(req *http.Request) (uid string, kind string, params map[
 			params[k] = v[0]
 		}
 	}
-	return
+	return grn, params
 }
 
 func (s *httpObjectStore) doGetObject(c *models.ReqContext) response.Response {
-	uid, kind, params := parseRequestParams(c.Req)
-	grn := grn.GRN{
-		TenantID:           c.OrgID,
-		ResourceKind:       kind,
-		ResourceIdentifier: uid,
-	}
+	grn, params := parseRequestParams(c)
 
 	rsp, err := s.store.Read(c.Req.Context(), &ReadObjectRequest{
 		GRN:         grn.String(),
@@ -121,12 +118,7 @@ func (s *httpObjectStore) doGetObject(c *models.ReqContext) response.Response {
 }
 
 func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response {
-	uid, kind, params := parseRequestParams(c.Req)
-	grn := grn.GRN{
-		TenantID:           c.OrgID,
-		ResourceKind:       kind,
-		ResourceIdentifier: uid,
-	}
+	grn, params := parseRequestParams(c)
 	rsp, err := s.store.Read(c.Req.Context(), &ReadObjectRequest{
 		GRN:         grn.String(),
 		Version:     params["version"], // ?version = XYZ
@@ -136,7 +128,7 @@ func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response
 	if err != nil {
 		return response.Error(500, "?", err)
 	}
-	info, err := s.kinds.GetInfo(kind)
+	info, err := s.kinds.GetInfo(grn.ResourceKind)
 	if err != nil {
 		return response.Error(400, "Unsupported kind", err)
 	}
@@ -173,12 +165,7 @@ func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response
 const MAX_UPLOAD_SIZE = 5 * 1024 * 1024 // 5MB
 
 func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response {
-	uid, kind, params := parseRequestParams(c.Req)
-	grn := grn.GRN{
-		TenantID:           c.OrgID,
-		ResourceKind:       kind,
-		ResourceIdentifier: uid,
-	}
+	grn, params := parseRequestParams(c)
 
 	// Cap the max size
 	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, MAX_UPLOAD_SIZE)
@@ -200,12 +187,7 @@ func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response 
 }
 
 func (s *httpObjectStore) doDeleteObject(c *models.ReqContext) response.Response {
-	uid, kind, params := parseRequestParams(c.Req)
-	grn := grn.GRN{
-		TenantID:           c.OrgID,
-		ResourceKind:       kind,
-		ResourceIdentifier: uid,
-	}
+	grn, params := parseRequestParams(c)
 
 	rsp, err := s.store.Delete(c.Req.Context(), &DeleteObjectRequest{
 		GRN:             grn.String(),
@@ -218,12 +200,7 @@ func (s *httpObjectStore) doDeleteObject(c *models.ReqContext) response.Response
 }
 
 func (s *httpObjectStore) doGetHistory(c *models.ReqContext) response.Response {
-	uid, kind, params := parseRequestParams(c.Req)
-	grn := grn.GRN{
-		TenantID:           c.OrgID,
-		ResourceKind:       kind,
-		ResourceIdentifier: uid,
-	}
+	grn, params := parseRequestParams(c)
 
 	limit := int64(20) // params
 	rsp, err := s.store.History(c.Req.Context(), &ObjectHistoryRequest{
