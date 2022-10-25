@@ -105,7 +105,13 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     if (!dimensionKey || !metricName) {
       return [];
     }
-    const keys = await this.api.getDimensionValues(region, namespace, metricName, dimensionKey, dimensionFilters ?? {});
+    const keys = await this.api.getDimensionValues({
+      region,
+      namespace,
+      metricName,
+      dimensionKey,
+      dimensionFilters,
+    });
     return keys.map((s) => ({
       text: s.label,
       value: s.value,

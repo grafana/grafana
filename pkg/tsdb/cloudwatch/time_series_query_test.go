@@ -56,7 +56,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
+			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 		})
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -156,7 +156,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 	}
 
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return datasourceInfo{}, nil
+		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 	})
 
 	t.Run("Queries with the same region should call GetSession with that region 1 time and call GetMetricDataWithContext 1 time", func(t *testing.T) {
@@ -348,7 +348,7 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 	}
 
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return datasourceInfo{}, nil
+		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 	})
 
 	t.Run("passes query label as GetMetricData label when dynamic labels feature toggle is enabled", func(t *testing.T) {
@@ -446,7 +446,7 @@ func Test_QueryData_response_data_frame_names(t *testing.T) {
 		},
 	}
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return datasourceInfo{}, nil
+		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 	})
 	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 

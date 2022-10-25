@@ -230,11 +230,23 @@ describe('AnnotationsSettings', () => {
   });
 
   test('Deleting annotation', async () => {
-    setup(dashboard, 0);
+    dashboard.annotations.list = [
+      ...dashboard.annotations.list,
+      {
+        builtIn: 0,
+        datasource: { uid: 'uid3', type: 'prometheus' },
+        enable: true,
+        hide: true,
+        iconColor: 'rgba(0, 211, 255, 1)',
+        name: 'Annotation 2',
+        type: 'dashboard',
+      },
+    ];
+    setup(dashboard, 1); // Edit the not built-in annotations
 
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
     expect(locationService.getSearchObject().editIndex).toBe(undefined);
-    expect(dashboard.annotations.list.length).toBe(0);
+    expect(dashboard.annotations.list.length).toBe(1); // started with two
   });
 });

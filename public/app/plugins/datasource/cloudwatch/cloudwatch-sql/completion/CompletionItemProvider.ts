@@ -199,13 +199,12 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
             const metricNameToken = getMetricNameToken(currentToken);
             const labelKey = currentToken?.getPreviousNonWhiteSpaceToken()?.getPreviousNonWhiteSpaceToken();
             if (namespaceToken?.value && labelKey?.value && metricNameToken?.value) {
-              const values = await this.api.getDimensionValues(
-                this.templateSrv.replace(this.region),
-                this.templateSrv.replace(namespaceToken.value.replace(/\"/g, '')),
-                this.templateSrv.replace(metricNameToken.value),
-                this.templateSrv.replace(labelKey.value),
-                {}
-              );
+              const values = await this.api.getDimensionValues({
+                region: this.region,
+                namespace: namespaceToken.value.replace(/\"/g, ''),
+                metricName: metricNameToken.value,
+                dimensionKey: labelKey.value,
+              });
               values.map((o) =>
                 addSuggestion(`'${o.value}'`, { insertText: `'${o.value}' `, command: TRIGGER_SUGGEST })
               );
