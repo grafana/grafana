@@ -19,6 +19,7 @@ import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { getDefaultFormValues, getDefaultQueries, rulerRuleToFormValues } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
+import { parseDurationToMilliseconds } from '../../utils/time';
 
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
 import { DetailsStep } from './DetailsStep';
@@ -136,6 +137,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
         },
         existing,
         redirectOnSave: exitOnSave ? returnTo : undefined,
+        initialAlertRuleName: defaultValues.name,
       })
     );
   };
@@ -214,7 +216,11 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
               {showStep2 && (
                 <>
                   {type === RuleFormType.grafana ? (
-                    <GrafanaEvaluationBehavior initialFolder={defaultValues.folder} />
+                    <GrafanaEvaluationBehavior
+                      initialFolder={defaultValues.folder}
+                      initialRuleName={defaultValues.name}
+                      initialEvaluateEvery={parseDurationToMilliseconds(defaultValues.evaluateEvery)}
+                    />
                   ) : (
                     <CloudEvaluationBehavior />
                   )}

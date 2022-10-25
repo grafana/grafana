@@ -1,11 +1,8 @@
 import { css, cx } from '@emotion/css';
-import classNames from 'classnames';
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RegisterOptions, useFormContext } from 'react-hook-form';
 
-import { durationToMilliseconds, GrafanaTheme2, parseDuration, SelectableValue } from '@grafana/data';
-import { secondsToHms } from '@grafana/data/src/datetime/rangeutil';
-import { Stack } from '@grafana/experimental';
+import { durationToMilliseconds, GrafanaTheme2, parseDuration } from '@grafana/data';
 import {
   Button,
   Card,
@@ -14,58 +11,38 @@ import {
   InlineLabel,
   Input,
   InputControl,
-  Label,
-  Tooltip,
+  LoadingPlaceholder,
   useStyles2,
 } from '@grafana/ui';
-import { FolderPickerFilter } from 'app/core/components/Select/FolderPicker';
-import { contextSrv } from 'app/core/core';
-import { DashboardSearchHit } from 'app/features/search/types';
-import { AccessControlAction, useDispatch } from 'app/types';
-import { RuleNamespace } from 'app/types/unified-alerting';
+import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { fetchAllPromRulesAction } from '../../state/actions';
+import { isRulerGrafanaRuleDTO } from '../../state/actions';
 import { RuleForm, RuleFormValues } from '../../types/rule-form';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { AsyncRequestState } from '../../utils/redux';
-import { parsePrometheusDuration } from '../../utils/time';
+import { parseDurationToMilliseconds, parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 
+import { FolderAndGroup } from './FolderAndGroup';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { RuleEditorSection } from './RuleEditorSection';
-import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
-import { SelectWithAdd } from './SelectWIthAdd';
-import { checkForPathSeparator } from './util';
 
 const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
+const MINUTE = '1m';
 
-const getIntervalForGroup = (promRules: RuleNamespace[], group: string, folder: string) => {
-  const folderObj = promRules.find((ruleNameSpace) => ruleNameSpace.name === folder);
-  const groupObj = folderObj?.groups.find((ruleGroup) => ruleGroup.name === group);
+export const getIntervalForGroup = (
+  rulerRules: RulerRulesConfigDTO | null | undefined,
+  group: string,
+  folder: string
+) => {
+  const folderObj: Array<RulerRuleGroupDTO<RulerRuleDTO>> = rulerRules ? rulerRules[folder] : [];
+  const groupObj = folderObj?.find((rule) => rule.name === group);
+
   const interval = groupObj?.interval ?? MINUTE;
   return interval;
 };
-
-const useGetGroups = (groupfoldersForGrafana: AsyncRequestState<RuleNamespace[]>, folderName: string) => {
-  const groupOptions = useMemo(() => {
-    const groupsForFolderResult: [string, RuleNamespace] | undefined = Object.entries(
-      groupfoldersForGrafana?.result ?? {}
-    ).find((entry) => entry[1].name === folderName);
-    if (!groupfoldersForGrafana?.loading && !groupfoldersForGrafana?.error && groupfoldersForGrafana?.result) {
-      return groupsForFolderResult ? groupsForFolderResult[1].groups.map((group) => group.name) : [];
-    } else {
-      return [];
-    }
-  }, [groupfoldersForGrafana, folderName]);
-  return groupOptions;
-};
-
-function mapGroupsToOptions(groups: string[]): Array<SelectableValue<string>> {
-  return groups.map((group) => ({ label: group, value: group }));
-}
 
 const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
   required: {
@@ -101,184 +78,39 @@ const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
     }
   },
 });
+export const evaluateEveryValidationOptions: RegisterOptions = {
+  required: {
+    value: true,
+    message: 'Required.',
+  },
+  validate: (value: string) => {
+    try {
+      const duration = parsePrometheusDuration(value);
 
-const useRuleFolderFilter = (existingRuleForm: RuleForm | null) => {
-  const isSearchHitAvailable = useCallback(
-    (hit: DashboardSearchHit) => {
-      const rbacDisabledFallback = contextSrv.hasEditPermissionInFolders;
+      if (duration < MIN_TIME_RANGE_STEP_S * 1000) {
+        return `Cannot be less than ${MIN_TIME_RANGE_STEP_S} seconds.`;
+      }
 
-      const canCreateRuleInFolder = contextSrv.hasAccessInMetadata(
-        AccessControlAction.AlertingRuleCreate,
-        hit,
-        rbacDisabledFallback
-      );
+      if (duration % (MIN_TIME_RANGE_STEP_S * 1000) !== 0) {
+        return `Must be a multiple of ${MIN_TIME_RANGE_STEP_S} seconds.`;
+      }
 
-      const canUpdateInCurrentFolder =
-        existingRuleForm &&
-        hit.folderId === existingRuleForm.id &&
-        contextSrv.hasAccessInMetadata(AccessControlAction.AlertingRuleUpdate, hit, rbacDisabledFallback);
-      return canCreateRuleInFolder || canUpdateInCurrentFolder;
-    },
-    [existingRuleForm]
-  );
-
-  return useCallback<FolderPickerFilter>(
-    (folderHits) =>
-      folderHits
-        .filter(isSearchHitAvailable)
-        .filter((value: DashboardSearchHit) => !containsSlashes(value.title ?? '')),
-    [isSearchHitAvailable]
-  );
+      return true;
+    } catch (error) {
+      return error instanceof Error ? error.message : 'Failed to parse duration';
+    }
+  },
 };
 
-function InfoIcon({ text }: { text: string }) {
-  return (
-    <Tooltip placement="top" content={<div>{text}</div>}>
-      <Icon name="info-circle" size="xs" />
-    </Tooltip>
-  );
-}
-
-interface FolderAndGroupProps {
+function FolderGroupAndEvaluationInterval({
+  initialFolder,
+  initialRuleName,
+  initialEvaluateEvery,
+}: {
   initialFolder: RuleForm | null;
-}
-
-const useGetGroupOptionsFromFolder = (folderTilte: string) => {
-  const promRules = useUnifiedAlertingSelector((state) => state.promRules);
-  const groupfoldersForGrafana = promRules[GRAFANA_RULES_SOURCE_NAME];
-
-  const groupOptions: Array<SelectableValue<string>> = mapGroupsToOptions(
-    useGetGroups(groupfoldersForGrafana, folderTilte)
-  );
-  const groupsForFolder = groupfoldersForGrafana?.result ?? [];
-  return { groupOptions, groupsForFolder };
-};
-
-const MINUTE = 60;
-
-function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
-  const {
-    formState: { errors },
-    watch,
-    control,
-  } = useFormContext<RuleFormValues>();
-
-  const styles = useStyles2(getStyles);
-  const folderFilter = useRuleFolderFilter(initialFolder);
-  const dispatch = useDispatch();
-
-  const folder = watch('folder');
-  const group = watch('group');
-  const [selectedGroup, setSelectedGroup] = useState(group);
-  const initialRender = useRef(true);
-
-  const { groupOptions, groupsForFolder } = useGetGroupOptionsFromFolder(folder?.title ?? '');
-
-  useEffect(() => {
-    dispatch(fetchAllPromRulesAction());
-  }, [dispatch]);
-
-  const resetGroup = useCallback(() => {
-    if (group && !initialRender.current && folder?.title) {
-      setSelectedGroup('');
-    }
-    initialRender.current = false;
-  }, [initialRender, folder, setSelectedGroup, group]);
-
-  const groupIsInGroupOptions = useCallback(
-    (group_: string) => {
-      return groupOptions.includes((groupInList: SelectableValue<string>) => groupInList.label === group_);
-    },
-    [groupOptions]
-  );
-  const folderTilte = folder?.title ?? '';
-
-  useEffect(() => {
-    if (folderTilte && groupOptions && !groupIsInGroupOptions(selectedGroup)) {
-      resetGroup();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [folderTilte]);
-
-  return (
-    <div className={classNames([styles.flexRow, styles.alignBaseline])}>
-      <Field
-        label={
-          <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
-            <Stack gap={0.5}>
-              Folder
-              <InfoIcon
-                text={
-                  'Each folder has unique folder permission. When you store multiple rules in a folder, the folder access permissions get assigned to the rules.'
-                }
-              />
-            </Stack>
-          </Label>
-        }
-        className={styles.formInput}
-        error={errors.folder?.message}
-        invalid={!!errors.folder?.message}
-        data-testid="folder-picker"
-      >
-        <InputControl
-          render={({ field: { ref, ...field } }) => (
-            <RuleFolderPicker
-              inputId="folder"
-              {...field}
-              enableCreateNew={contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
-              enableReset={true}
-              filter={folderFilter}
-              dissalowSlashes={true}
-            />
-          )}
-          name="folder"
-          rules={{
-            required: { value: true, message: 'Please select a folder' },
-            validate: {
-              pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
-            },
-          }}
-        />
-      </Field>
-
-      <Field
-        label="Group"
-        data-testid="group-picker"
-        description="Rules within the same group are evaluated after the same time interval."
-        className={styles.formInput}
-        error={errors.group?.message}
-        invalid={!!errors.group?.message}
-      >
-        <InputControl
-          render={({ field: { ref, ...field } }) => (
-            <SelectWithAdd
-              {...field}
-              options={groupOptions}
-              getOptionLabel={(option: SelectableValue<string>) =>
-                `${option.label} -- ${secondsToHms(
-                  getIntervalForGroup(groupsForFolder ?? [], option.label ?? '', folder?.title ?? '')
-                )}`
-              }
-              width={42}
-              value={selectedGroup}
-              onChange={(value: string) => {
-                field.onChange(value);
-                setSelectedGroup(value);
-              }}
-            />
-          )}
-          name="group"
-          control={control}
-          rules={{
-            required: { value: true, message: 'Must enter a group name' },
-          }}
-        />
-      </Field>
-    </div>
-  );
-}
-
-function EvaluationIntervalInput({ initialFolder }: { initialFolder: RuleForm | null }) {
+  initialRuleName: string;
+  initialEvaluateEvery: number;
+}) {
   const styles = useStyles2(getStyles);
   const [editInterval, setEditInterval] = useState(false);
   const {
@@ -293,22 +125,20 @@ function EvaluationIntervalInput({ initialFolder }: { initialFolder: RuleForm | 
   const folder = watch('folder');
   const evaluateEveryId = 'eval-every-input';
   const evaluateEvery = watch('evaluateEvery');
-  const alertName = watch('name');
-  const promRules = useUnifiedAlertingSelector((state) => state.promRules);
-  const groupfoldersForGrafana = promRules[GRAFANA_RULES_SOURCE_NAME];
-
-  //const [evaluateEveryChanged, setEvaluateEveryChanged]= useState(false)
+  const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
+  const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
 
   const someRulesBelongToThisGroup = (
-    currentRule: string,
-    promRules: RuleNamespace[],
+    initialRuleName: string,
+    rulerRules: RulerRulesConfigDTO | null | undefined,
     group: string,
     folder_: string
   ) => {
-    const folderObj = promRules.find((ruleNameSpace) => ruleNameSpace.name === folder_);
-    const groupObj = folderObj?.groups.find((ruleGroup) => ruleGroup.name === group);
+    const folderObj: Array<RulerRuleGroupDTO<RulerRuleDTO>> = rulerRules ? rulerRules[folder_] : [];
+    const groupObj = folderObj?.find((rule) => rule.name === group);
+
     const rules = groupObj?.rules ?? [];
-    return rules.find((rule) => rule.name !== currentRule);
+    return rules.find((rule) => (isRulerGrafanaRuleDTO(rule) ? rule.grafana_alert.title !== initialRuleName : false));
   };
 
   const onBlur = () => setEditInterval(false);
@@ -335,22 +165,14 @@ function EvaluationIntervalInput({ initialFolder }: { initialFolder: RuleForm | 
   useEffect(() => {
     group &&
       folder &&
-      setValue(
-        'evaluateEvery',
-        secondsToHms(getIntervalForGroup(groupfoldersForGrafana?.result ?? [], group, folder?.title ?? ''))
-      );
+      setValue('evaluateEvery', getIntervalForGroup(groupfoldersForGrafana?.result, group, folder?.title ?? ''));
   }, [group, folder, groupfoldersForGrafana?.result, setValue]);
-
-  // useEffect(() => setEvaluateEveryChanged(false), [folder, group])
 
   useEffect(() => {
     editInterval && setFocus('evaluateEvery');
   }, [editInterval, setFocus]);
 
-  const intervalHasChanged =
-    secondsToHms(getIntervalForGroup(groupfoldersForGrafana?.result ?? [], group, folder?.title ?? '')) !==
-    evaluateEvery;
-
+  const intervalHasChanged = initialEvaluateEvery !== parseDurationToMilliseconds(evaluateEvery);
   return (
     <div>
       <FolderAndGroup initialFolder={initialFolder} />
@@ -364,7 +186,7 @@ function EvaluationIntervalInput({ initialFolder }: { initialFolder: RuleForm | 
         <Card.Actions>
           {intervalHasChanged &&
           !editInterval &&
-          someRulesBelongToThisGroup(alertName, groupfoldersForGrafana?.result ?? [], group, folder?.title ?? '') ? (
+          someRulesBelongToThisGroup(initialRuleName, groupfoldersForGrafana?.result, group, folder?.title ?? '') ? (
             <>
               <div className={styles.intervalChangedLabel}>
                 <Icon name="exclamation-triangle" size="xs" className={cx('text-warning', styles.warningIcon)} />
@@ -384,12 +206,13 @@ function EvaluationIntervalInput({ initialFolder }: { initialFolder: RuleForm | 
               </div>
             )
           )}
-
+          {groupfoldersForGrafana?.loading && <LoadingPlaceholder text="Loading ..." />}
           {!editInterval && (
             <Button
               icon={editInterval ? 'exclamation-circle' : 'edit'}
               type="button"
               variant="secondary"
+              disabled={groupfoldersForGrafana?.loading}
               onClick={() => {
                 setEditInterval(true);
               }}
@@ -416,10 +239,6 @@ function EvaluationIntervalInput({ initialFolder }: { initialFolder: RuleForm | 
                   className={styles.evaluateInput}
                 />
               </Field>
-
-              <span className={cx('text-warning', styles.evalEditingLabel)}>
-                {`You are updating evaluation interval for the group '${group}'`}
-              </span>
             </div>
           )}
         </Card.Actions>
@@ -463,7 +282,15 @@ function ForInput() {
   );
 }
 
-export function GrafanaEvaluationBehavior({ initialFolder }: { initialFolder: RuleForm | null }) {
+export function GrafanaEvaluationBehavior({
+  initialFolder,
+  initialRuleName,
+  initialEvaluateEvery,
+}: {
+  initialFolder: RuleForm | null;
+  initialRuleName: string;
+  initialEvaluateEvery: number;
+}) {
   const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
   const { watch } = useFormContext<RuleFormValues>();
@@ -474,7 +301,11 @@ export function GrafanaEvaluationBehavior({ initialFolder }: { initialFolder: Ru
     // TODO remove "and alert condition" for recording rules
     <RuleEditorSection stepNo={3} title="Alert evaluation behavior">
       <div className={styles.flexColumn}>
-        <EvaluationIntervalInput initialFolder={initialFolder} />
+        <FolderGroupAndEvaluationInterval
+          initialFolder={initialFolder}
+          initialRuleName={initialRuleName}
+          initialEvaluateEvery={initialEvaluateEvery}
+        />
         <ForInput />
       </div>
       {exceedsGlobalEvaluationLimit && <EvaluationIntervalLimitExceeded />}
@@ -523,6 +354,12 @@ export function GrafanaEvaluationBehavior({ initialFolder }: { initialFolder: Ru
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  flexRow: css`
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: flex-start;
+  `,
   inlineField: css`
     margin-bottom: 0;
   `,
@@ -532,17 +369,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: flex-start;
     align-items: flex-start;
   `,
-  flexRow: css`
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: flex-start;
-  `,
   collapseToggle: css`
     margin: ${theme.spacing(2, 0, 2, -1)};
-  `,
-  globalLimitValue: css`
-    font-weight: ${theme.typography.fontWeightBold};
   `,
   evaluateLabel: css`
     align-self: center;
@@ -550,21 +378,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   evaluateInput: css`
     margin-right: ${theme.spacing(1)};
-  `,
-  alignBaseline: css`
-    align-items: baseline;
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  formInput: css`
-    width: 275px;
-
-    & + & {
-      margin-left: ${theme.spacing(3)};
-    }
-  `,
-  evalEditingLabel: css`
-    align-self: baseline;
-    margin-left: ${theme.spacing(1)};
   `,
   cardContainer: css`
     max-width: ${theme.breakpoints.values.sm}px;

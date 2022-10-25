@@ -1,7 +1,12 @@
 import { createAsyncThunk, AsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
+<<<<<<< HEAD
 import { locationService } from '@grafana/runtime';
+=======
+import { durationToMilliseconds, parseDuration } from '@grafana/data';
+import { locationService, logInfo } from '@grafana/runtime';
+>>>>>>> ba276a3ac4 (Avoid saving evaluation interval when some rules in the same group would have invalid For with this change)
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -27,7 +32,9 @@ import {
 import {
   PostableRulerRuleGroupDTO,
   PromApplication,
+  RulerGrafanaRuleDTO,
   RulerRuleDTO,
+  RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
@@ -436,6 +443,36 @@ export function deleteRuleAction(
   };
 }
 
+export const isRulerGrafanaRuleDTO = (rule: RulerRuleDTO): rule is RulerGrafanaRuleDTO => 'grafana_alert' in rule;
+
+// This method was introduced for making betterer happy (it was complaining about using as StoreState)
+const isStoreState = (something: unknown): something is StoreState => {
+  if (typeof something === 'object') {
+    return something ? 'unifiedAlerting' in something : false;
+  } else {
+    return false;
+  }
+};
+
+const rulesInSameGroupHaveInvalidFor = (
+  initialRuleName: string,
+  rulerRules: RulerRulesConfigDTO | null | undefined,
+  group: string,
+  folder_: string,
+  everyDuration: number
+) => {
+  const folderObj: RulerRuleGroupDTO[] = (rulerRules && rulerRules[folder_]) ?? [];
+  const groupObj = folderObj?.find((ruleGroup) => ruleGroup.name === group);
+
+  const rulesSameGroup: RulerRuleDTO[] = groupObj?.rules ?? [];
+
+  return rulesSameGroup.filter((rule: RulerRuleDTO) =>
+    isRulerGrafanaRuleDTO(rule)
+      ? rule.grafana_alert.title !== initialRuleName && durationToMilliseconds(parseDuration(rule.for)) < everyDuration
+      : false
+  );
+};
+
 export const saveRuleFormAction = createAsyncThunk(
   'unifiedalerting/saveRuleForm',
   (
@@ -443,10 +480,12 @@ export const saveRuleFormAction = createAsyncThunk(
       values,
       existing,
       redirectOnSave,
+      initialAlertRuleName,
     }: {
       values: RuleFormValues;
       existing?: RuleWithLocation;
       redirectOnSave?: string;
+      initialAlertRuleName?: string;
     },
     thunkAPI
   ): Promise<void> =>
@@ -471,7 +510,27 @@ export const saveRuleFormAction = createAsyncThunk(
           } else if (type === RuleFormType.grafana) {
             const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, GRAFANA_RULES_SOURCE_NAME);
             const rulerClient = getRulerClient(rulerConfig);
-            identifier = await rulerClient.saveGrafanaRule(values, existing);
+            const storeState = thunkAPI.getState();
+
+            const groupfoldersForGrafana = isStoreState(storeState)
+              ? storeState?.unifiedAlerting.rulerRules[GRAFANA_RULES_SOURCE_NAME]
+              : null;
+            const notValidRules = rulesInSameGroupHaveInvalidFor(
+              initialAlertRuleName ?? '',
+              groupfoldersForGrafana?.result,
+              values.group,
+              values.folder?.title ?? '',
+              durationToMilliseconds(parseDuration(values.evaluateEvery))
+            );
+            if (notValidRules.length > 0) {
+              throw new Error(
+                `These alerts belonging to the same group would have an invalid For value: ${notValidRules
+                  .map((rule) => (isRulerGrafanaRuleDTO(rule) ? rule.grafana_alert.title : ''))
+                  .join(',')}`
+              );
+            } else {
+              identifier = await rulerClient.saveGrafanaRule(values, existing);
+            }
           } else {
             throw new Error('Unexpected rule form type');
           }
