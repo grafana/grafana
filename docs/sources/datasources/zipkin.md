@@ -1,107 +1,135 @@
 ---
 aliases:
   - /docs/grafana/latest/datasources/zipkin/
+  - /docs/grafana/latest/data-sources/zipkin/
+  - /docs/grafana/latest/data-sources/zipkin/query-editor/
 description: Guide for using Zipkin in Grafana
 keywords:
   - grafana
   - zipkin
-  - guide
   - tracing
-title: Zipkin
+  - querying
+menuTitle: Zipkin
+title: Zipkin data source
 weight: 1600
 ---
 
 # Zipkin data source
 
 Grafana ships with built-in support for Zipkin, an open source, distributed tracing system.
-Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore/" >}}).
+This topic explains configuration and queries specific to the Zipkin data source.
 
-## Adding the data source
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "/administration/data-source-management/" >}}).
+Only users with the organization administrator role can add data sources.
+Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
-To access Zipkin settings, click the **Configuration** (gear) icon, then click **Data Sources** > **Zipkin**.
+Once you've added the Zipkin data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]{{< relref "./query-editor/" >}} when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
 
-| Name         | Description                                                           |
-| ------------ | --------------------------------------------------------------------- |
-| `Name`       | The data source name in panels, queries, and Explore.                 |
-| `Default`    | The pre-selected data source for a new panel.                         |
-| `URL`        | The URL of the Zipkin instance. For example, `http://localhost:9411`. |
-| `Basic Auth` | Enable basic authentication for the Zipkin data source.               |
-| `User`       | Specify a user name for basic authentication.                         |
-| `Password`   | Specify a password for basic authentication.                          |
+## Configure the data source
 
-### Trace to logs
+**To access the data source configuration page:**
 
-> **Note:** This feature is available in Grafana 7.4+.
+1. Hover the cursor over the **Configuration** (gear) icon.
+1. Select **Data Sources**.
+1. Select the Zipkin data source.
 
-This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration/" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
+Set the data source's basic configuration options carefully:
 
-- **Data source -** Target data source.
-- **Tags -** The tags that will be used in the logs query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
-- **Map tag names -** When enabled, allows configuring how Zipkin tag names map to logs label names. For example, map `service.name` to `service`.
-- **Span start time shift -** Shift in the start time for the logs query based on the span start time. In order to extend to the past, you need to use a negative value. Use time interval units like 5s, 1m, 3h. The default is 0.
-- **Span end time shift -** Shift in the end time for the logs query based on the span end time. Time units can be used here, for example, 5s, 1m, 3h. The default is 0.
-- **Filter by Trace ID -** Toggle to append the trace ID to the logs query.
-- **Filter by Span ID -** Toggle to append the span ID to the logs query.
+| Name           | Description                                                              |
+| -------------- | ------------------------------------------------------------------------ |
+| **Name**       | Sets the name you use to refer to the data source in panels and queries. |
+| **Default**    | Defines whether this data source is pre-selected for new panels.         |
+| **URL**        | Sets the URL of the Zipkin instance, such as `http://localhost:9411`.    |
+| **Basic Auth** | Enables basic authentication for the Zipkin data source.                 |
+| **User**       | Defines the user name for basic authentication.                          |
+| **Password**   | Defines the password for basic authentication.                           |
 
-![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-8-2.png 'Screenshot of the trace to logs settings')
+### Configure trace to logs
 
-### Trace to metrics
+> **Note:** Available in Grafana v7.4 and higher.
 
-> **Note:** This feature is behind the `traceToMetrics` feature toggle.
+The **Trace to logs** section configures the [trace to logs feature]({{< relref "../../explore/trace-integration/" >}}).
+Select a target data source, limited to Loki and Splunk \[logs\] data sources, and which tags to use in the logs query.
 
-To configure trace to metrics, select the target Prometheus data source and create any desired linked queries.
+{{< figure src="/static/img/docs/explore/trace-to-log-8-2.png" class="docs-image--no-shadow" caption"Screenshot of the trace to logs settings" >}}
 
--- **Data source -** Target data source.
--- **Tags -** You can use tags in the linked queries. The key is the span attribute name. The optional value is the corresponding metric label name (for example, map `k8s.pod` to `pod`). You may interpolate these tags into your queries using the `$__tags` keyword.
+| Name                      | Description                                                                                                                                                                        |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data source**           | Sets the target data source.                                                                                                                                                       |
+| **Tags**                  | Defines the tags to use in the logs query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.                                                                                 |
+| **Map tag names**         | Enables configuring how Jaeger tag names map to logs label names. For example, map `service.name` to `service`.                                                                    |
+| **Span start time shift** | Shifts the start time for the logs query based on the span start time. To extend to the past, use a negative value. Use time interval units like `5s`, `1m`, `3h`. Default is `0`. |
+| **Span end time shift**   | Shifts the end time for the logs query based on the span end time. Use time interval units. Default is `0`.                                                                        |
+| **Filter by Trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                          |
+| **Filter by Span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                           |
+
+### Configure trace to metrics
+
+> **Note:** This feature is behind the `traceToMetrics` [feature toggle]({{< relref "../../configure-grafana/#feature_toggles" >}}).
+
+The **Trace to metrics** section configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/).
+
+Use the settings to select the target Prometheus data source, and create any desired linked queries.
+
+| Setting name    | Description                                                                                                                                                                                                                                                     |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data source** | Defines the target data source.                                                                                                                                                                                                                                 |
+| **Tags**        | Defines the tags used in linked queries. The key sets the span attribute name, and the optional value sets the corresponding metric label name. For example, you can map `k8s.pod` to `pod`. To interpolate these tags into queries, use the `$__tags` keyword. |
 
 Each linked query consists of:
 
--- **Link Label -** (Optional) Descriptive label for the linked query.
--- **Query -** Query that runs when navigating from a trace to the metrics data source. Interpolate tags using the `$__tags` keyword. For example, when you configure the query `requests_total{$__tags}`with the tags `k8s.pod=pod` and `cluster`, it results in `requests_total{pod="nginx-554b9", cluster="us-east-1"}`.
+- **Link Label:** _(Optional)_ Descriptive label for the linked query.
+- **Query:** The query ran when navigating from a trace to the metrics data source.
+  Interpolate tags using the `$__tags` keyword.
+  For example, when you configure the query `requests_total{$__tags}`with the tags `k8s.pod=pod` and `cluster`, the result looks like `requests_total{pod="nginx-554b9", cluster="us-east-1"}`.
 
-### Node Graph
+### Enable Node Graph
 
-This is a configuration for the beta Node Graph visualization. The Node Graph is shown after the trace view is loaded and is disabled by default.
+The **Node Graph** setting enables the beta [Node Graph visualization]({{< relref "../../panels-visualizations/visualizations/node-graph/" >}}), which is disabled by default.
 
--- **Enable Node Graph -** Enables the Node Graph visualization.
+Once enabled, Grafana displays the Node Graph after loading the trace view.
 
-### Span bar label
+### Configure the span bar label
 
-You can configure the span bar label. The span bar label allows you add additional information to the span bar row.
+The **Span bar label** section helps you display additional information in the span bar row.
 
-Select one of the following four options. The default selection is Duration.
+You can choose one of three options:
 
-- **None -** Do not show any additional information on the span bar row.
-- **Duration -** Show the span duration on the span bar row.
-- **Tag -** Show the span tag on the span bar row. Note: You will also need to specify the tag key to use to get the tag value. For example, `span.kind`.
+| Name         | Description                                                                                                                      |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| **None**     | Adds nothing to the span bar row.                                                                                                |
+| **Duration** | _(Default)_ Displays the span duration on the span bar row.                                                                      |
+| **Tag**      | Displays the span tag on the span bar row. You must also specify which tag key to use to get the tag value, such as `span.kind`. |
 
 ## Query traces
 
-Querying and displaying traces from Zipkin is available via [Explore]({{< relref "../explore/" >}}).
+You can query and display traces from Zipkin via [Explore]({{< relref "../../explore/" >}}).
 
 {{< figure src="/static/img/docs/v70/zipkin-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor" >}}
 
-The Zipkin query editor allows you to query by trace ID directly or selecting a trace from trace selector. To query by trace ID, insert the ID into the text input.
+To query by trace ID, enter it.
 
 {{< figure src="/static/img/docs/v70/zipkin-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor with trace selector expanded" >}}
 
-Use the trace selector to pick particular trace from all traces logged in the time range you have selected in Explore. The trace selector has three levels of nesting:
+To select a particular trace from all traces logged in the time range you have selected in Explore, you can also query by trace selector.
+The trace selector has three levels of nesting:
 
-1. The service you are interested in.
-1. Particular operation is part of the selected service
-1. Specific trace in which the selected operation occurred, represented by the root operation name and trace duration.
+- The service you're interested in.
+- Particular operation, part of the selected service
+- Specific trace in which the selected operation occurred, represented by the root operation name and trace duration
 
-## Data mapping in the trace UI
+## View data mapping in the trace UI
 
-Zipkin annotations are shown in the trace view as logs with annotation value shown under annotation key.
+You can view Zipkin annotations in the trace view as logs with annotation value displayed under the annotation key.
 
-## Upload JSON trace file
+## Upload a JSON trace file
 
-You can upload a JSON file that contains a single trace to visualize it.
+You can upload a JSON file that contains a single trace and visualize it.
+If the file has multiple traces, Grafana visualizes its first trace.
 
 {{< figure src="/static/img/docs/explore/zipkin-upload-json.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin data source in explore with upload selected" >}}
 
-Here is an example JSON:
+### Trace JSON example
 
 ```json
 [
@@ -125,6 +153,8 @@ Here is an example JSON:
 ]
 ```
 
-## Linking Trace ID from logs
+## Link a trace ID from logs
 
-You can link to Zipkin trace from logs in Loki or Splunk by configuring a derived field with internal link. See [Loki documentation]({{< relref "loki/#derived-fields" >}}) for details.
+You can link to a Zipkin trace from logs in [Loki](/docs/loki/latest/) or Splunk by configuring a derived field with an internal link.
+
+For details, refer to [Derived fields]({{< relref "../loki/#configure-derived-fields" >}}) section of the [Loki data source]({{< relref "../loki/" >}}) documentation.
