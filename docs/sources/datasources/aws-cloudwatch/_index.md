@@ -26,7 +26,7 @@ For instructions on how to add a data source to Grafana, refer to the [administr
 Only users with the organization administrator role can add data sources.
 Administrators can also [provision the data source]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system, and should [control pricing]({{< relref "#control-pricing" >}}) and [manage service quotas]({{< relref "#manage-service-quotas" >}}) accordingly.
 
-Once you've added the data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]{{< relref "./query-editor/" >}} when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
+Once you've added the data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
 
 > **Note:** To troubleshoot issues while setting up the CloudWatch data source, check the `/var/log/grafana/grafana.log` file.
 
