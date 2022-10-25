@@ -38,7 +38,7 @@ export default function Connections() {
         <Route exact path={ROUTES.DataSourcesEdit} component={EditDataSourcePage} />
 
         {/* Connect Data  - serve from the core by default, unless the Cloud Onboarding app is available and enabled */}
-        {/* TODO: update the navIndex to contain the plugin id for any standalone plugin pages */}
+        {/* TODO: update the navIndex[] objects to contain the `pluginId` for any standalone plugin pages */}
         <Route
           path={ROUTES.ConnectData}
           render={() => (isCloud ? <AppPluginLoader id="grafana-easystart-app" /> : <ConnectDataPage />)}
