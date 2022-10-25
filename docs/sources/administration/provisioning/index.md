@@ -66,7 +66,7 @@ Currently we do not provide any scripts/manifests for configuring Grafana. Rathe
 
 > **Note:** Available in Grafana v5.0 and higher.
 
-You can manage data sources in Grafana by adding YAML configuration files in the [`provisioning/datasources`](/administration/configuration/#provisioning) directory.
+You can manage data sources in Grafana by adding YAML configuration files in the [`provisioning/datasources`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory.
 Each config file can contain a list of `datasources` to add or update during startup.
 If the data source already exists, Grafana reconfigures it to match the provisioned configuration file.
 
@@ -81,7 +81,7 @@ This prevents old configurations from overwriting newer ones if you have differe
 
 ### Example data source config file
 
-This example provisions a [Graphite data source]({{< relref "../datasources/graphite/" >}}):
+This example provisions a [Graphite data source]({{< relref "../../datasources/graphite" >}}):
 
 ```yaml
 # Configuration file version
@@ -155,14 +155,14 @@ datasources:
     editable: false
 ```
 
-For provisioning examples of specific data sources, refer to that [data source's documentation]({{< relref "../datasources/" >}}).
+For provisioning examples of specific data sources, refer to that [data source's documentation]({{< relref "../../datasources" >}}).
 
 #### JSON Data
 
 Since not all data sources have the same configuration settings, we include only the most common ones as fields.
 To provision the rest of a data source's settings, include them as a JSON blob in the `jsonData` field.
 
-Common settings in the [built-in core data sources]({{< relref "../datasources/#built-in-core-data-sources" >}}) include:
+Common settings in the [built-in core data sources]({{< relref "../../datasources#built-in-core-data-sources" >}}) include:
 
 > **Note:** Data sources tagged with _HTTP\*_ communicate using the HTTP protocol, which includes all core data source plugins except MySQL, PostgreSQL, and MSSQL.
 
@@ -216,11 +216,11 @@ Common settings in the [built-in core data sources]({{< relref "../datasources/#
 | prometheusVersion          | string  | Prometheus                                                       | The version of the Prometheus data source, such as `2.37.0`, `2.24.0`                                                                                                                                                                                                                                               |
 | prometheusType             | string  | Prometheus                                                       | The type of the Prometheus data sources. such as `Prometheus`, `Cortex`, `Thanos`, `Mimir`                                                                                                                                                                                                                          |
 
-For examples of specific data sources' JSON data, refer to that [data source's documentation]({{< relref "../datasources/" >}}).
+For examples of specific data sources' JSON data, refer to that [data source's documentation]({{< relref "../../datasources" >}}).
 
 #### Secure JSON Data
 
-Secure JSON data is a map of settings that will be encrypted with [secret key]({{< relref "../../setup-grafana/configure-grafana/#secret_key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
+Secure JSON data is a map of settings that will be encrypted with [secret key]({{< relref "../../setup-grafana/configure-grafana#secret_key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
 
 > **Note:** The _HTTP\*_ tag denotes data sources that communicate using the HTTP protocol, including all core data source plugins except MySQL, PostgreSQL, and MSSQL.
 
@@ -259,7 +259,7 @@ datasources:
 
 > **Note:** Available in Grafana v7.1 and higher.
 
-You can manage plugin applications in Grafana by adding one or more YAML config files in the [`provisioning/plugins`]({{< relref "../../setup-grafana/configure-grafana/#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana updates each app to match the configuration file.
+You can manage plugin applications in Grafana by adding one or more YAML config files in the [`provisioning/plugins`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana updates each app to match the configuration file.
 
 > **Note:** This feature enables you to provision plugin configurations, not the plugins themselves.
 > The plugins must already be installed on the Grafana instance.
@@ -290,7 +290,7 @@ apps:
 
 ## Dashboards
 
-You can manage dashboards in Grafana by adding one or more YAML config files in the [`provisioning/dashboards`]({{< relref "../../setup-grafana/configure-grafana/" >}}) directory. Each config file can contain a list of `dashboards providers` that load dashboards into Grafana from the local filesystem.
+You can manage dashboards in Grafana by adding one or more YAML config files in the [`provisioning/dashboards`]({{< relref "../../setup-grafana/configure-grafana#dashboards" >}}) directory. Each config file can contain a list of `dashboards providers` that load dashboards into Grafana from the local filesystem.
 
 The dashboard provider config file looks somewhat like this:
 
