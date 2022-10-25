@@ -793,7 +793,7 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 	}
 }
 
-func TestPublicDashboardServiceImpl_GenerateNewPublicDashboardUid(t *testing.T) {
+func TestPublicDashboardServiceImpl_NewPublicDashboardUid(t *testing.T) {
 	mockedDashboard := &PublicDashboard{
 		IsEnabled:          true,
 		AnnotationsEnabled: false,
@@ -857,7 +857,7 @@ func TestPublicDashboardServiceImpl_GenerateNewPublicDashboardUid(t *testing.T) 
 	}
 }
 
-func TestPublicDashboardServiceImpl_GenerateNewPublicDashboardAccessToken(t *testing.T) {
+func TestPublicDashboardServiceImpl_NewPublicDashboardAccessToken(t *testing.T) {
 	mockedDashboard := &PublicDashboard{
 		IsEnabled:          true,
 		AnnotationsEnabled: false,
@@ -915,134 +915,6 @@ func TestPublicDashboardServiceImpl_GenerateNewPublicDashboardAccessToken(t *tes
 				store.AssertNumberOfCalls(t, "FindByAccessToken", 1)
 			} else {
 				store.AssertNumberOfCalls(t, "FindByAccessToken", 3)
-				assert.True(t, errors.Is(err, ErrPublicDashboardFailedGenerateAccessToken))
-			}
-		})
-	}
-}
-
-func TestPublicDashboardServiceImpl_GenerateNewPublicDashboardUid(t *testing.T) {
-	mockedDashboard := &PublicDashboard{
-		IsEnabled:          true,
-		AnnotationsEnabled: false,
-		DashboardUid:       "NOTTHESAME",
-		OrgId:              9999999,
-		TimeSettings:       timeSettings,
-	}
-
-	type args struct {
-		ctx context.Context
-	}
-
-	type mockResponse struct {
-		PublicDashboard *PublicDashboard
-		Err             error
-	}
-	tests := []struct {
-		name      string
-		args      args
-		mockStore *mockResponse
-		want      string
-		wantErr   assert.ErrorAssertionFunc
-	}{
-		{
-			name:      "should return a new uid",
-			args:      args{ctx: context.Background()},
-			mockStore: &mockResponse{nil, nil},
-			want:      "NOTTHESAME",
-			wantErr:   assert.NoError,
-		},
-		{
-			name:      "should return an error if the generated uid exists 3 times",
-			args:      args{ctx: context.Background()},
-			mockStore: &mockResponse{mockedDashboard, nil},
-			want:      "",
-			wantErr:   assert.Error,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			store := NewFakePublicDashboardStore(t)
-			store.On("GetPublicDashboardByUid", mock.Anything, mock.Anything).
-				Return(tt.mockStore.PublicDashboard, tt.mockStore.Err)
-
-			pd := &PublicDashboardServiceImpl{store: store}
-
-			got, err := pd.GenerateNewPublicDashboardUid(tt.args.ctx)
-			if !tt.wantErr(t, err, fmt.Sprintf("GenerateNewPublicDashboardUid(%v)", tt.args.ctx)) {
-				return
-			}
-
-			if err == nil {
-				assert.NotEqual(t, got, tt.want, "GenerateNewPublicDashboardUid(%v)", tt.args.ctx)
-				assert.True(t, util.IsValidShortUID(got), "GenerateNewPublicDashboardUid(%v)", tt.args.ctx)
-				store.AssertNumberOfCalls(t, "GetPublicDashboardByUid", 1)
-			} else {
-				store.AssertNumberOfCalls(t, "GetPublicDashboardByUid", 3)
-				assert.True(t, errors.Is(err, ErrPublicDashboardFailedGenerateUniqueUid))
-			}
-		})
-	}
-}
-
-func TestPublicDashboardServiceImpl_GenerateNewPublicDashboardAccessToken(t *testing.T) {
-	mockedDashboard := &PublicDashboard{
-		IsEnabled:          true,
-		AnnotationsEnabled: false,
-		DashboardUid:       "NOTTHESAME",
-		OrgId:              9999999,
-		TimeSettings:       timeSettings,
-	}
-
-	type args struct {
-		ctx context.Context
-	}
-
-	type mockResponse struct {
-		PublicDashboard *PublicDashboard
-		Err             error
-	}
-	tests := []struct {
-		name      string
-		args      args
-		mockStore *mockResponse
-		want      string
-		wantErr   assert.ErrorAssertionFunc
-	}{
-		{
-			name:      "should return a new access token",
-			args:      args{ctx: context.Background()},
-			mockStore: &mockResponse{nil, nil},
-			want:      "6522e152530f4ee76522e152530f4ee7",
-			wantErr:   assert.NoError,
-		},
-		{
-			name:      "should return an error if the generated access token exists 3 times",
-			args:      args{ctx: context.Background()},
-			mockStore: &mockResponse{mockedDashboard, nil},
-			want:      "",
-			wantErr:   assert.Error,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			store := NewFakePublicDashboardStore(t)
-			store.On("GetPublicDashboardByAccessToken", mock.Anything, mock.Anything).
-				Return(tt.mockStore.PublicDashboard, tt.mockStore.Err)
-
-			pd := &PublicDashboardServiceImpl{store: store}
-
-			got, err := pd.GenerateNewPublicDashboardAccessToken(tt.args.ctx)
-			if !tt.wantErr(t, err, fmt.Sprintf("GenerateNewPublicDashboardAccessToken(%v)", tt.args.ctx)) {
-				return
-			}
-
-			if err == nil {
-				assert.NotEqual(t, got, tt.want, "GenerateNewPublicDashboardAccessToken(%v)", tt.args.ctx)
-				assert.True(t, tokens.IsValidAccessToken(got), "GenerateNewPublicDashboardAccessToken(%v)", tt.args.ctx)
-				store.AssertNumberOfCalls(t, "GetPublicDashboardByAccessToken", 1)
-			} else {
-				store.AssertNumberOfCalls(t, "GetPublicDashboardByAccessToken", 3)
 				assert.True(t, errors.Is(err, ErrPublicDashboardFailedGenerateAccessToken))
 			}
 		})
