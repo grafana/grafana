@@ -444,7 +444,7 @@ func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
 		require.NotNil(t, res[0])
 		require.True(t, res[0].ReturnData)
 	})
-	t.Run("when hide is true, ReturnData is false", func(t *testing.T) {
+	t.Run("when query type is timeSeriesQuery, and hide is true, then ReturnData is false", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
 				JSON: json.RawMessage(`{
@@ -465,7 +465,7 @@ func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
 		require.NotNil(t, res[0])
 		require.False(t, res[0].ReturnData)
 	})
-	t.Run("when hide is false, ReturnData is true", func(t *testing.T) {
+	t.Run("when query type is timeSeriesQuery, and hide is false, then ReturnData is true", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
 				JSON: json.RawMessage(`{
@@ -486,7 +486,7 @@ func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
 		require.NotNil(t, res[0])
 		require.True(t, res[0].ReturnData)
 	})
-	t.Run("when query type is empty and hide is missing, ReturnData is true", func(t *testing.T) {
+	t.Run("when query type is empty, and hide is empty, then ReturnData is true", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
 				JSON: json.RawMessage(`{
@@ -506,7 +506,7 @@ func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
 		require.True(t, res[0].ReturnData)
 	})
 
-	t.Run("when query type is empty and hide is false, ReturnData is true", func(t *testing.T) {
+	t.Run("when query type is empty, and hide is false, then ReturnData is true", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
 				JSON: json.RawMessage(`{
@@ -527,7 +527,7 @@ func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
 		require.True(t, res[0].ReturnData)
 	})
 
-	t.Run("when query type is empty and hide is true, ReturnData is true", func(t *testing.T) {
+	t.Run("when query type is empty, and hide is true, then ReturnData is true", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
 				JSON: json.RawMessage(`{
@@ -674,7 +674,6 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 		})
 	}
 }
-
 func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 	t.Run("migrates alias to label when label does not already exist and feature toggle enabled", func(t *testing.T) {
 		query := []backend.DataQuery{
@@ -770,21 +769,21 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 
 	t.Run("does not migrate alias to label", func(t *testing.T) {
 		testCases := map[string]struct {
-			inputLabelJson                    string
+			labelJson                         string
 			dynamicLabelsFeatureToggleEnabled bool
 			expectedLabel                     string
 		}{
 			"when label already exists, feature toggle enabled": {
-				inputLabelJson:                    `"label":"some label",`,
+				labelJson:                         `"label":"some label",`,
 				dynamicLabelsFeatureToggleEnabled: true,
 				expectedLabel:                     "some label"},
 			"when label does not exist, feature toggle is disabled": {
-				inputLabelJson:                    "",
+				labelJson:                         "",
 				dynamicLabelsFeatureToggleEnabled: false,
 				expectedLabel:                     "",
 			},
 			"when label already exists, feature toggle is disabled": {
-				inputLabelJson:                    `"label":"some label",`,
+				labelJson:                         `"label":"some label",`,
 				dynamicLabelsFeatureToggleEnabled: false,
 				expectedLabel:                     "some label"},
 		}
@@ -804,7 +803,7 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 				   "statistic":"Average",
 				   "period":"600",
 				   "hide":false
-				}`, tc.inputLabelJson)),
+				}`, tc.labelJson)),
 					},
 				}
 				res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), tc.dynamicLabelsFeatureToggleEnabled)
