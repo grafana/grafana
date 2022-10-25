@@ -43,13 +43,14 @@ func TestRequestParser(t *testing.T) {
 			},
 		}
 
-		migratedQuery, err := ParseMetricDataQueries(oldQuery, time.Now(), time.Now(), false)
+		migratedQueries, err := ParseMetricDataQueries(oldQuery, time.Now(), time.Now(), false)
 		assert.NoError(t, err)
-		require.Len(t, migratedQuery, 1)
-		require.NotNil(t, migratedQuery[0])
+		require.Len(t, migratedQueries, 1)
+		require.NotNil(t, migratedQueries[0])
 
-		assert.Equal(t, "A", migratedQuery[0].RefId)
-		assert.Equal(t, "Average", migratedQuery[0].Statistic)
+		migratedQuery := migratedQueries[0]
+		assert.Equal(t, "A", migratedQuery.RefId)
+		assert.Equal(t, "Average", migratedQuery.Statistic)
 	})
 
 	t.Run("New dimensions structure", func(t *testing.T) {
@@ -182,7 +183,6 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 		assert.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
-
 		assert.Equal(t, 900, res[0].Period)
 	})
 
@@ -201,6 +201,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 					  "InstanceType":["test2"]
 				   },
 				   "statistic":"Average",
+				   "hide":false,
 				   "period":"auto"
 				}`),
 			},
@@ -211,8 +212,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			from := to.Local().Add(time.Minute * time.Duration(5))
 
 			res, err := ParseMetricDataQueries(query, from, to, false)
-			assert.NoError(t, err)
-
+			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 60, res[0].Period)
 		})
@@ -222,7 +222,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			from := to.AddDate(0, 0, -1)
 
 			res, err := ParseMetricDataQueries(query, from, to, false)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 60, res[0].Period)
 		})
@@ -231,7 +231,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			to := time.Now()
 			from := to.AddDate(0, 0, -2)
 			res, err := ParseMetricDataQueries(query, from, to, false)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 300, res[0].Period)
 		})
@@ -241,7 +241,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			from := to.AddDate(0, 0, -7)
 
 			res, err := ParseMetricDataQueries(query, from, to, false)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 900, res[0].Period)
 		})
@@ -251,7 +251,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			from := to.AddDate(0, 0, -30)
 
 			res, err := ParseMetricDataQueries(query, from, to, false)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 3600, res[0].Period)
 		})
@@ -261,7 +261,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			from := to.AddDate(0, 0, -90)
 
 			res, err := ParseMetricDataQueries(query, from, to, false)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 21600, res[0].Period)
 		})
@@ -281,7 +281,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			from := to.AddDate(-2, 0, 0)
 
 			res, err := ParseMetricDataQueries(query, from, to, false)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 86400, res[0].Period)
 		})
@@ -290,7 +290,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			to := time.Now().AddDate(0, 0, -14)
 			from := to.AddDate(0, 0, -2)
 			res, err := ParseMetricDataQueries(query, from, to, false)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 300, res[0].Period)
 		})
@@ -299,7 +299,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			to := time.Now().AddDate(0, 0, -88)
 			from := to.AddDate(0, 0, -2)
 			res, err := ParseMetricDataQueries(query, from, to, false)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 3600, res[0].Period)
 		})
@@ -308,42 +308,9 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			to := time.Now().AddDate(0, 0, -454)
 			from := to.AddDate(0, 0, -2)
 			res, err := ParseMetricDataQueries(query, from, to, false)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 21600, res[0].Period)
-		})
-
-		t.Run("returns error if period is invalid duration", func(t *testing.T) {
-			query := []backend.DataQuery{
-				{
-					JSON: json.RawMessage(`{
-				   "statistic":"Average",
-				   "period":"invalid"
-				}`),
-				},
-			}
-
-			_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
-			require.Error(t, err)
-
-			assert.Equal(t, `error parsing query "", failed to parse period as duration: time: invalid duration "invalid"`, err.Error())
-		})
-
-		t.Run("returns parsed duration in seconds", func(t *testing.T) {
-			query := []backend.DataQuery{
-				{
-					JSON: json.RawMessage(`{
-				   "statistic":"Average",
-				   "period":"2h45m"
-				}`),
-				},
-			}
-
-			res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
-			assert.NoError(t, err)
-
-			require.Len(t, res, 1)
-			assert.Equal(t, 9900, res[0].Period)
 		})
 	})
 }
@@ -807,6 +774,39 @@ func Test_ParseMetricDataQueries_alias_to_label_migration(t *testing.T) {
 			require.NotNil(t, res[0].Alias)
 			assert.Equal(t, "{{period}} {{any_other_word}}", res[0].Alias)
 		})
+	})
+}
+
+func Test_ParseMetricDataQueries_period(t *testing.T) {
+	t.Run("returns error if period is invalid duration", func(t *testing.T) {
+		query := []backend.DataQuery{
+			{
+				JSON: json.RawMessage(`{
+				   "statistic":"Average",
+				   "period":"invalid"
+				}`),
+			},
+		}
+		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
+		require.Error(t, err)
+		assert.Equal(t, `error parsing query "", failed to parse period as duration: time: invalid duration "invalid"`, err.Error())
+	})
+
+	t.Run("returns parsed duration in seconds", func(t *testing.T) {
+		query := []backend.DataQuery{
+			{
+				JSON: json.RawMessage(`{
+				   "statistic":"Average",
+				   "period":"2h45m"
+				}`),
+			},
+		}
+
+		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
+		assert.NoError(t, err)
+
+		require.Len(t, res, 1)
+		assert.Equal(t, 9900, res[0].Period)
 	})
 }
 
