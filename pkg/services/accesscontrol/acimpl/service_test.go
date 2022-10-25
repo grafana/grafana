@@ -86,9 +86,7 @@ func TestService_DeclareFixedRoles(t *testing.T) {
 			name: "should add registration",
 			registrations: []accesscontrol.RoleRegistration{
 				{
-					Role: accesscontrol.RoleDTO{
-						Name: "fixed:test:test",
-					},
+					Role:   accesscontrol.RoleDTO{Name: "fixed:test:test"},
 					Grants: []string{"Admin"},
 				},
 			},
@@ -98,9 +96,7 @@ func TestService_DeclareFixedRoles(t *testing.T) {
 			name: "should fail registration invalid role name",
 			registrations: []accesscontrol.RoleRegistration{
 				{
-					Role: accesscontrol.RoleDTO{
-						Name: "custom:test:test",
-					},
+					Role:   accesscontrol.RoleDTO{Name: "custom:test:test"},
 					Grants: []string{"Admin"},
 				},
 			},
@@ -108,12 +104,10 @@ func TestService_DeclareFixedRoles(t *testing.T) {
 			err:     accesscontrol.ErrFixedRolePrefixMissing,
 		},
 		{
-			name: "should fail registration invalid builtin role assignment",
+			name: "should fail registration invalid basic role assignment",
 			registrations: []accesscontrol.RoleRegistration{
 				{
-					Role: accesscontrol.RoleDTO{
-						Name: "fixed:test:test",
-					},
+					Role:   accesscontrol.RoleDTO{Name: "fixed:test:test"},
 					Grants: []string{"WrongAdmin"},
 				},
 			},
@@ -124,15 +118,11 @@ func TestService_DeclareFixedRoles(t *testing.T) {
 			name: "should add multiple registrations at once",
 			registrations: []accesscontrol.RoleRegistration{
 				{
-					Role: accesscontrol.RoleDTO{
-						Name: "fixed:test:test",
-					},
+					Role:   accesscontrol.RoleDTO{Name: "fixed:test:test"},
 					Grants: []string{"Admin"},
 				},
 				{
-					Role: accesscontrol.RoleDTO{
-						Name: "fixed:test2:test2",
-					},
+					Role:   accesscontrol.RoleDTO{Name: "fixed:test2:test2"},
 					Grants: []string{"Admin"},
 				},
 			},
@@ -148,6 +138,130 @@ func TestService_DeclareFixedRoles(t *testing.T) {
 
 			// Test
 			err := ac.DeclareFixedRoles(tt.registrations...)
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.ErrorIs(t, err, tt.err)
+				return
+			}
+			require.NoError(t, err)
+
+			registrationCnt := 0
+			ac.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
+				registrationCnt++
+				return true
+			})
+			assert.Equal(t, len(tt.registrations), registrationCnt,
+				"expected service registration list to contain all test registrations")
+		})
+	}
+}
+
+func TestService_DeclarePluginRoles(t *testing.T) {
+	tests := []struct {
+		name          string
+		pluginID      string
+		registrations []accesscontrol.RoleRegistration
+		wantErr       bool
+		err           error
+	}{
+		{
+			name:    "should work with empty list",
+			wantErr: false,
+		},
+		{
+			name:     "should add registration",
+			pluginID: "test-app",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role:   accesscontrol.RoleDTO{Name: "plugins.app:test-app:test"},
+					Grants: []string{"Admin"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:     "should fail registration invalid role name",
+			pluginID: "test-app",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role:   accesscontrol.RoleDTO{Name: "invalid.plugins.app:test-app:test"},
+					Grants: []string{"Admin"},
+				},
+			},
+			wantErr: true,
+			err:     &accesscontrol.ErrorInvalidRole{},
+		},
+		{
+			name:     "should add registration with valid permissions",
+			pluginID: "test-app",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role: accesscontrol.RoleDTO{
+						Name: "plugins.app:test-app:test",
+						Permissions: []accesscontrol.Permission{
+							{Action: "test-app.resource:read"},
+						},
+					},
+					Grants: []string{"Admin"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:     "should fail registration invalid permission action",
+			pluginID: "test-app",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role: accesscontrol.RoleDTO{
+						Name: "plugins.app:test-app:test",
+						Permissions: []accesscontrol.Permission{
+							{Action: "invalid.test-app.resource:read"},
+						},
+					},
+					Grants: []string{"Admin"},
+				},
+			},
+			wantErr: true,
+			err:     &accesscontrol.ErrorInvalidRole{},
+		},
+		{
+			name:     "should fail registration invalid basic role assignment",
+			pluginID: "test-app",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role:   accesscontrol.RoleDTO{Name: "plugins.app:test-app:test"},
+					Grants: []string{"WrongAdmin"},
+				},
+			},
+			wantErr: true,
+			err:     accesscontrol.ErrInvalidBuiltinRole,
+		},
+		{
+			name:     "should add multiple registrations at once",
+			pluginID: "test-app",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role:   accesscontrol.RoleDTO{Name: "plugins.app:test-app:test"},
+					Grants: []string{"Admin"},
+				},
+				{
+					Role:   accesscontrol.RoleDTO{Name: "plugins.app:test-app:test2"},
+					Grants: []string{"Admin"},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ac := setupTestEnv(t)
+			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
+
+			// Reset the registations
+			ac.registrations = accesscontrol.RegistrationList{}
+
+			// Test
+			err := ac.DeclarePluginRoles(tt.pluginID, tt.registrations...)
 			if tt.wantErr {
 				require.Error(t, err)
 				assert.ErrorIs(t, err, tt.err)
