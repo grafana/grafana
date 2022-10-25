@@ -46,7 +46,11 @@ export default function Connections() {
 
         {/* Plugin routes - route any plugin registered page to the plugins */}
         {pluginServedPageIds.map((navId) => (
-          <Route key={navId} path={navIndex[navId].url} render={() => <AppPluginLoader id="grafana-easystart-app" />} />
+          <Route
+            key={navId}
+            path={navIndex[navId].url}
+            render={() => <AppPluginLoader id="grafana-easystart-app" navId={navId} />}
+          />
         ))}
 
         {/* Default page */}
