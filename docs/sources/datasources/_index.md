@@ -9,9 +9,7 @@ weight: 60
 
 # Data sources
 
-Grafana supports many different backends for your time series data, and lets you create your own interfaces to backends.
-Grafana refers to these backends as **data sources**.
-
+Grafana can query and integrate with many different types of databases. This is done by adding a **data source** of the type you want to query or integrate with. 
 You can use this flexibility to build [panels]({{< relref "../panels-visualizations/" >}}) that collect and visualize data of many types, and from many sources, in a single [dashboard]({{< relref "../dashboards/" >}}).
 Each panel uses one specific data source, which can belong to a particular [organization]({{< relref "../administration/organization-management/" >}}).
 
