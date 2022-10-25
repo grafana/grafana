@@ -30,12 +30,12 @@ export interface CanvasElementOptions<TConfig = any> {
   arrows?: CanvasElementArrow[];
 }
 
-// North, south, east, west
+// Top, bottom, left, right
 enum CanvasElementArrowAnchor {
-  N = 'n',
-  S = 's',
-  E = 'e',
-  W = 'w',
+  T = 't',
+  B = 'b',
+  L = 'l',
+  R = 'r',
 }
 
 interface CanvasElementArrow {

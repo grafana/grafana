@@ -84,7 +84,7 @@ export const arrowViewable = {
   render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
     const rect = moveable.getRect();
 
-    const north = React.createElement(
+    const top = React.createElement(
       'div',
       {
         style: {
@@ -96,13 +96,13 @@ export const arrowViewable = {
           width: '25px',
         },
         onclick: () => {
-          console.log('north clicked');
+          console.log('top clicked');
         },
       },
       ['⬆️']
     );
 
-    const south = React.createElement(
+    const bottom = React.createElement(
       'div',
       {
         style: {
@@ -114,31 +114,13 @@ export const arrowViewable = {
           width: '25px',
         },
         onclick: () => {
-          console.log('south clicked');
+          console.log('bottom clicked');
         },
       },
       ['⬇️']
     );
 
-    const east = React.createElement(
-      'div',
-      {
-        style: {
-          position: 'absolute',
-          left: `${rect.width + 50}px`,
-          top: `${(rect.height - 12.5) / 2}px`,
-          zIndex: 100,
-          cursor: 'pointer',
-          width: '25px',
-        },
-        onclick: () => {
-          console.log('east clicked');
-        },
-      },
-      ['➡️']
-    );
-
-    const west = React.createElement(
+    const left = React.createElement(
       'div',
       {
         style: {
@@ -150,13 +132,31 @@ export const arrowViewable = {
           width: '25px',
         },
         onclick: () => {
-          console.log('west clicked');
+          console.log('left clicked');
         },
       },
       ['⬅️']
     );
 
-    const arrowVisualization = React.createElement('div', {}, [north, south, east, west]);
+    const right = React.createElement(
+      'div',
+      {
+        style: {
+          position: 'absolute',
+          left: `${rect.width + 50}px`,
+          top: `${(rect.height - 12.5) / 2}px`,
+          zIndex: 100,
+          cursor: 'pointer',
+          width: '25px',
+        },
+        onclick: () => {
+          console.log('right clicked');
+        },
+      },
+      ['➡️']
+    );
+
+    const arrowVisualization = React.createElement('div', {}, [top, bottom, left, right]);
 
     return arrowVisualization;
   },
