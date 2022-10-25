@@ -34,11 +34,11 @@ type DiscordNotifier struct {
 }
 
 type discordSettings struct {
-	Title              string `json:"title,omitempty" yaml:"title,omitempty"`
-	Content            string `json:"message,omitempty" yaml:"message,omitempty"`
-	AvatarURL          string `json:"avatar_url,omitempty" yaml:"avatar_url,omitempty"`
-	WebhookURL         string `json:"url,omitempty" yaml:"url,omitempty"`
-	UseDiscordUsername bool   `json:"use_discord_username,omitempty" yaml:"use_discord_username,omitempty"`
+	Title              string
+	Content            string
+	AvatarURL          string
+	WebhookURL         string
+	UseDiscordUsername bool
 }
 
 type discordAttachment struct {
@@ -63,20 +63,9 @@ func DiscordFactory(fc FactoryConfig) (NotificationChannel, error) {
 }
 
 func newDiscordNotifier(fc FactoryConfig) (*DiscordNotifier, error) {
-	var settings discordSettings
-	err := fc.Config.unmarshalSettings(&settings)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
-	}
-
-	if settings.WebhookURL == "" {
+	dUrl := fc.Config.Settings.Get("url").MustString()
+	if dUrl == "" {
 		return nil, errors.New("could not find webhook url property in settings")
-	}
-	if settings.Title == "" {
-		settings.Title = DefaultMessageTitleEmbed
-	}
-	if settings.Content == "" {
-		settings.Content = DefaultMessageEmbed
 	}
 
 	return &DiscordNotifier{
@@ -88,11 +77,17 @@ func newDiscordNotifier(fc FactoryConfig) (*DiscordNotifier, error) {
 			Settings:              fc.Config.Settings,
 			SecureSettings:        fc.Config.SecureSettings,
 		}),
-		log:      log.New("alerting.notifier.discord"),
-		ns:       fc.NotificationService,
-		images:   fc.ImageStore,
-		tmpl:     fc.Template,
-		settings: settings,
+		log:    log.New("alerting.notifier.discord"),
+		ns:     fc.NotificationService,
+		images: fc.ImageStore,
+		tmpl:   fc.Template,
+		settings: discordSettings{
+			Title:              fc.Config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
+			Content:            fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
+			AvatarURL:          fc.Config.Settings.Get("avatar_url").MustString(),
+			WebhookURL:         dUrl,
+			UseDiscordUsername: fc.Config.Settings.Get("use_discord_username").MustBool(false),
+		},
 	}, nil
 }
 
