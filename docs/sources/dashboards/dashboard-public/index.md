@@ -54,8 +54,8 @@ publicDashboards = true
 
 #### Supported Datasources
 
-Public dashboards _should_ work with any datasource that has the properties `backend` and `alerting` both set to true. However, this cannot always be
-guaranteed. Below are the datasources that are confirmed to be working with public dashboards, and the ones that should work (but have not been confirmed compatible).
+Public dashboards _should_ work with any datasource that has the properties `backend` and `alerting` both set to true in it's `package.json`. However, this cannot always be
+guaranteed since plugin developers can override this functionality. Below are the datasources that are confirmed to be working with public dashboards, and the ones that should work (but have not been confirmed compatible).
 
 Confirmed:
 
@@ -73,6 +73,7 @@ Confirmed:
 - Oracle Database
 - PostgreSQL
 - Prometheus
+- Redis
 - SQLite
 
 Unconfirmed:
@@ -95,7 +96,6 @@ Unconfirmed:
 - Dynatrace
 - GitHub
 - Google BigQuery
-- Google BigQuery
 - Grafana for YNAB
 - Honeycomb
 - Jira
@@ -106,7 +106,6 @@ Unconfirmed:
 - Open Distro for Elasticsearch
 - OpenSearch
 - Orbit
-- Redis
 - SAP HANA®
 - Salesforce
 - Sentry
