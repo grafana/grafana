@@ -56,3 +56,12 @@ active_sync_enabled = true
 
 - username: authentik-viewer
 - password: grafana
+
+## Backing up DB
+
+In case you want to make changes to the devenv setup, you can dump keycloak's DB:
+
+```bash
+cd devenv;
+docker-compose exec -T authentikdb bash -c "pg_dump -U authentik authentik" > docker/blocks/auth/authentik/cloak.sql
+```
