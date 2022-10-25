@@ -40,15 +40,15 @@ const getTestContext = (overides?: object) => {
   const appEventsMock: EventBusExtended = {
     emit: jest.fn(),
     publish: jest.fn(),
-  } as unknown as EventBusExtended;
+  } as jest.MockedObject<EventBusExtended>;
 
   const user: User = {
     isSignedIn: props.isSignedIn,
     orgId: props.orgId,
-  } as unknown as User;
+  } as jest.MockedObject<User>;
   const contextSrvMock: ContextSrv = {
     user,
-  } as unknown as ContextSrv;
+  } as jest.MockedObject<ContextSrv>;
   const logoutMock = jest.fn();
   const parseRequestOptionsMock = jest.fn().mockImplementation((options) => options);
 
