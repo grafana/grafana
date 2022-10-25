@@ -12,6 +12,11 @@ type selectQuery struct {
 	args  []interface{}
 }
 
+func (q *selectQuery) addWhere(f string, val string) {
+	q.args = append(q.args, val)
+	q.where = append(q.where, f+" = ?")
+}
+
 func (q *selectQuery) addWhereIn(f string, vals []string) {
 	count := len(vals)
 	if count > 1 {
@@ -28,8 +33,7 @@ func (q *selectQuery) addWhereIn(f string, vals []string) {
 		sb.WriteString(") ")
 		q.where = append(q.where, sb.String())
 	} else if count == 1 {
-		q.args = append(q.args, vals[0])
-		q.where = append(q.where, f+" = ?")
+		q.addWhere(f, vals[0])
 	}
 }
 

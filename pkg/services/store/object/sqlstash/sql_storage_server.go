@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/kind/access"
+	"github.com/grafana/grafana/pkg/services/store/kind/folder"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/store/router"
@@ -230,6 +231,12 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		Status: object.WriteObjectResponse_CREATED, // Will be changed if not true
 	}
 
+	// Make sure all parent folders exist
+	err = s.ensureFolders(ctx, &route)
+	if err != nil {
+		return nil, err
+	}
+
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
 		rows, err := tx.Query(ctx, `SELECT "etag","version","updated","size" FROM object WHERE key=?`, key)
 		if err != nil {
@@ -377,7 +384,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 			`"name", "description",`+
 			`"labels", "fields", "errors") `+
 			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			key, getParentFolderKey(key), r.Kind, versionInfo.Size, body, etag, versionInfo.Version,
+			key, getParentFolderKey(r.Kind, key), r.Kind, versionInfo.Size, body, etag, versionInfo.Version,
 			timestamp, modifier.UserID, timestamp, modifier.UserID, // created + updated are the same
 			summary.Name, summary.Description,
 			summaryjson.labels, summaryjson.fields, summaryjson.errors,
@@ -493,12 +500,19 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 		selectQuery.addWhereIn("kind", r.Kind)
 	}
 
-	// Basic org constraint
-	keyPrefix := fmt.Sprintf("%d/", user.OrgID)
+	// Locked to a folder or prefix
 	if r.Folder != "" {
-		keyPrefix = fmt.Sprintf("%d/%s", user.OrgID, r.Folder)
+		if strings.HasSuffix(r.Folder, "*") {
+			keyPrefix := fmt.Sprintf("%d/%s", user.OrgID, strings.ReplaceAll(r.Folder, "*", ""))
+			selectQuery.addWherePrefix("key", keyPrefix)
+		} else {
+			keyPrefix := fmt.Sprintf("%d/%s", user.OrgID, r.Folder)
+			selectQuery.addWhere("parent_folder_key", keyPrefix)
+		}
+	} else {
+		keyPrefix := fmt.Sprintf("%d/", user.OrgID)
+		selectQuery.addWherePrefix("key", keyPrefix)
 	}
-	selectQuery.addWherePrefix("key", keyPrefix)
 
 	query, args := selectQuery.toQuery()
 
@@ -572,4 +586,47 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 		rsp.Results = append(rsp.Results, result)
 	}
 	return rsp, err
+}
+
+func (s sqlObjectServer) ensureFolders(ctx context.Context, route *router.ResourceRouteInfo) error {
+	uid := route.GRN.UID
+	idx := strings.LastIndex(uid, "/")
+	for idx > 0 {
+		parent := uid[:idx]
+		fr, err := s.router.Route(ctx, models.GRN{
+			OrgID: route.GRN.OrgID,
+			Kind:  models.StandardKindFolder,
+			UID:   parent,
+		})
+		if err != nil {
+			return err
+		}
+
+		rows, err := s.sess.Query(ctx, "SELECT 1 from object WHERE key = ?", fr.Key)
+		if err != nil {
+			return err
+		}
+		if !rows.Next() {
+			f := &folder.Model{
+				Name: store.GuessNameFromUID(fr.GRN.UID),
+			}
+			fmt.Printf("CREATE:%s :: %v\n", fr.Key, f)
+			body, err := json.Marshal(f)
+			if err != nil {
+				return err
+			}
+
+			_, err = s.Write(ctx, &object.WriteObjectRequest{
+				UID:  fr.GRN.UID,
+				Kind: fr.GRN.Kind,
+				Body: body,
+			})
+			if err != nil {
+				return err
+			}
+		}
+		rows.Close()
+		idx = strings.LastIndex(parent, "/")
+	}
+	return nil
 }
