@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -46,7 +45,8 @@ func newDiskStorage(prefix string, name string, cfg *StorageLocalDiskConfig) *ro
 	s := &rootStorageDisk{}
 
 	if meta.Notice == nil {
-		path := fmt.Sprintf("file://%s", cfg.Path)
+		protocol := "file:///"
+		path := protocol + cfg.Path
 		bucket, err := blob.OpenBucket(context.Background(), path)
 		if err != nil {
 			grafanaStorageLogger.Warn("error loading storage", "prefix", prefix, "err", err)
