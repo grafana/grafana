@@ -34,10 +34,10 @@ func (f *FakeStore) Get(ctx context.Context, cmd *folder.GetFolderCommand) (*fol
 	return f.ExpectedFolder, f.ExpectedError
 }
 
-func (f *FakeStore) GetParents(ctx context.Context, uid string, orgID int64) ([]*folder.Folder, error) {
+func (f *FakeStore) GetParents(ctx context.Context, cmd *folder.GetParentsCommand) ([]*folder.Folder, error) {
 	return f.ExpectedFolders, f.ExpectedError
 }
 
-func (f *FakeStore) GetChildren(ctx context.Context, uid string, orgID, limit, page int64) ([]*folder.Folder, error) {
+func (f *FakeStore) GetChildren(ctx context.Context, cmd *folder.GetTreeCommand) ([]*folder.Folder, error) {
 	return f.ExpectedFolders, f.ExpectedError
 }

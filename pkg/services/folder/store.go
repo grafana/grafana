@@ -21,10 +21,9 @@ type Store interface {
 	Get(ctx context.Context, cmd *GetFolderCommand) (*Folder, error)
 
 	// GetParents returns an ordered list of parent folder of the given folder.
-	GetParents(ctx context.Context, uid string, orgID int64) ([]*Folder, error)
+	GetParents(ctx context.Context, cmd *GetParentsCommand) ([]*Folder, error)
 
 	// GetChildren returns the set of immediate children folders (depth=1) of the
-	// given folder. Use GetDescendents to get all descendents of a given parent
-	// folder.
-	GetChildren(ctx context.Context, uid string, orgID, limit, page int64) ([]*Folder, error)
+	// given folder.
+	GetChildren(ctx context.Context, cmd *GetTreeCommand) ([]*Folder, error)
 }

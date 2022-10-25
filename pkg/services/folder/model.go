@@ -63,9 +63,28 @@ type DeleteFolderCommand struct {
 
 // GetFolderCommand is used for all folder Get requests. Only one of UID, ID, or
 // Title should be set; if multilpe fields are set by the caller the dashboard
-// service will select the field with the most specificity, in order: ID, UID, Title.
+// service will select the field with the most specificity, in order: ID, UID,
+// Title.
 type GetFolderCommand struct {
-	UID   *int
+	UID   *string
 	ID    *int
 	Title *string
+}
+
+// GetParentsCommand captures the information required by the folder service to
+// return a list of all parent folders of a given folder.
+type GetParentsCommand struct {
+	UID string
+}
+
+// GetTreeCommand captures the information required by the folder service to
+// return a list of child folders of the given folder.
+
+type GetTreeCommand struct {
+	UID   string
+	Depth int64
+
+	// Pagination options
+	Limit int64
+	Page  int64
 }

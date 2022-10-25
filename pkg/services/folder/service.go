@@ -47,7 +47,7 @@ type NestedFolderService interface {
 	// GetParents returns an ordered list of parent folders for the given
 	// folder, starting with the root node and ending with the requested child
 	// node.
-	GetParents(ctx context.Context, orgID int64, folderUID string) ([]*Folder, error)
+	GetParents(ctx context.Context, cmd *GetParentsCommand) ([]*Folder, error)
 
 	// GetTree returns an map containing all child folders starting from the
 	// given parent folder UID and descending to the requested depth. Use the
@@ -55,5 +55,5 @@ type NestedFolderService interface {
 	//
 	// The map keys are folder uids and the values are the list of child folders
 	// for that parent.
-	GetTree(ctx context.Context, orgID int64, folderUID string, depth int64) (map[string][]*Folder, error)
+	GetTree(ctx context.Context, orgID int64, cmd *GetTreeCommand) (map[string][]*Folder, error)
 }
