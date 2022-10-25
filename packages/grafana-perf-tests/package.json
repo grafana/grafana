@@ -1,6 +1,4 @@
 {
-  "name": "grafana-perf-tests",
-  "version": "1.0.0",
   "private": true,
   "devDependencies": {
     "@babel/core": "7.19.0",

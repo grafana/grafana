@@ -23270,9 +23270,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"grafana-perf-tests@workspace:packages/grafana-perf-tests":
+"grafana-perf-tests-10d7c0@workspace:packages/grafana-perf-tests":
   version: 0.0.0-use.local
-  resolution: "grafana-perf-tests@workspace:packages/grafana-perf-tests"
+  resolution: "grafana-perf-tests-10d7c0@workspace:packages/grafana-perf-tests"
   dependencies:
     "@babel/core": 7.19.0
     "@babel/plugin-proposal-class-properties": 7.18.6
