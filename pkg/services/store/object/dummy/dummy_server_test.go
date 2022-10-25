@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/stretchr/testify/require"
 )
@@ -43,6 +44,7 @@ func TestRawObjectWithHistory(t *testing.T) {
 	require.NoError(t, err)
 
 	raw := &RawObjectWithHistory{
+		GRN: grn.GRN{TenantID: 123, ResourceKind: "a"}.String(),
 		Object: &object.RawObject{
 			Version: "A",
 			Body:    body,
@@ -61,7 +63,7 @@ func TestRawObjectWithHistory(t *testing.T) {
 
 	str := string(b)
 	fmt.Printf("expect: %s", str)
-	require.JSONEq(t, `{"object":{"UID":"","version":"A","body":{"field":1.23,"hello":"world"}},"history":[{"info":{"version":"B"},"body":"eyJmaWVsZCI6MS4yMywiaGVsbG8iOiJ3b3JsZCJ9"}]}`, str)
+	require.JSONEq(t, `{"grn":"grn:123:a/","object":{"GRN":"","version":"A","body":{"field":1.23,"hello":"world"}},"history":[{"info":{"version":"B"},"body":"eyJmaWVsZCI6MS4yMywiaGVsbG8iOiJ3b3JsZCJ9"}]}`, str)
 
 	copy := &ObjectVersionWithBody{}
 	err = json.Unmarshal(b, copy)
