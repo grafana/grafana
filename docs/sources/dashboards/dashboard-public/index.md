@@ -59,69 +59,96 @@ guaranteed since plugin developers can override this functionality. Below are th
 
 ##### Confirmed:
 
-- Altinity plugin for ClickHouse
-- ClickHouse
-- Elasticsearch
-- Graphite
-- Infinity
-- InfluxDB
-- Loki
-- Microsoft SQL Server
-- MongoDB
-- MySQL
-- OpenTSDB
-- Oracle Database
-- PostgreSQL
-- Prometheus
-- Redis
-- SQLite
+<table>
+  <tr>
+    <td>
+      <ul>
+        <li>Altinity plugin for ClickHouse</li>
+        <li>ClickHouse</li>
+        <li>Elasticsearch</li>
+        <li>Graphite</li>
+        <li>Infinity</li>
+        <li>InfluxDB</li>
+        <li>Loki</li>
+        <li>Microsoft SQL Server</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li>MongoDB</li>
+        <li>MySQL</li>
+        <li>OpenTSDB</li>
+        <li>Oracle Database</li>
+        <li>PostgreSQL</li>
+        <li>Prometheus</li>
+        <li>Redis</li>
+        <li>SQLite</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
 ##### Unconfirmed:
 
 > **Note:** If you've confirmed one of these datasources work with public dashboards, let us know in our [Github discussion](https://github.com/grafana/grafana/discussions/49253) and we'll mark it as confirmed!
 
-- AWS IoT SiteWise
-- Amazon Athena
-- Amazon Redshift
-- Amazon Timestream
-- Apache Cassandra
-- AppDynamics
-- Azure Data Explorer Datasource
-- Azure Monitor
-- CSV
-- CloudWatch
-- DB2 Datasource
-- Databricks
-- Datadog
-- Dataset
-- Druid
-- Dynatrace
-- GitHub
-- Google BigQuery
-- Grafana for YNAB
-- Honeycomb
-- Jira
-- Mock
-- Neo4j Datasource
-- New Relic
-- OPC UA (Unified Architecture)
-- Open Distro for Elasticsearch
-- OpenSearch
-- Orbit
-- SAP HANA®
-- Salesforce
-- Sentry
-- ServiceNow
-- Snowflake
-- Splunk
-- Splunk Infrastructure Monitoring
-- Sqlyze Datasource
-- TDengine
-- Vertica
-- Wavefront
-- X-Ray
-- kdb+
-- simple grpc datasource
+<table>
+  <tr>
+    <td>
+      <ul>
+        <li>Amazon Athena</li>
+        <li>Amazon Redshift</li>
+        <li>Amazon Timestream</li>
+        <li>Apache Cassandra</li>
+        <li>AppDynamics</li>
+        <li>Azure Data Explorer Datasource</li>
+        <li>Azure Monitor</li>
+        <li>CSV</li>
+        <li>CloudWatch</li>
+        <li>DB2 Datasource</li>
+        <li>Databricks</li>
+        <li>Datadog</li>
+        <li>Dataset</li>
+        <li>Druid</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li>Dynatrace</li>
+        <li>GitHub</li>
+        <li>Google BigQuery</li>
+        <li>Grafana for YNAB</li>
+        <li>Honeycomb</li>
+        <li>Jira</li>
+        <li>Mock</li>
+        <li>Neo4j Datasource</li>
+        <li>New Relic</li>
+        <li>OPC UA (Unified Architecture)</li>
+        <li>Open Distro for Elasticsearch</li>
+        <li>OpenSearch</li>
+        <li>Orbit</li>
+        <li>SAP HANA®</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li>Salesforce</li>
+        <li>Sentry</li>
+        <li>ServiceNow</li>
+        <li>Snowflake</li>
+        <li>Splunk</li>
+        <li>Splunk Infrastructure Monitoring</li>
+        <li>Sqlyze Datasource</li>
+        <li>TDengine</li>
+        <li>Vertica</li>
+        <li>Wavefront</li>
+        <li>X-Ray</li>
+        <li>kdb+</li>
+        <li>simple grpc datasource</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
 #### Limitations
 
