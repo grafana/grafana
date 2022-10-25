@@ -20,7 +20,7 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../dashboards/variables/" >}}) and [Add and manage variables]({{< relref "../../dashboards/variables/add-template-variables/" >}}) documentation.
+For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../../dashboards/variables" >}}) and [Add and manage variables]({{< relref "../../../dashboards/variables/add-template-variables" >}}) documentation.
 
 ## Use query variables
 
@@ -41,7 +41,7 @@ For details on _metric names_, _label names_, and _label values_, refer to the [
 ### Use interval and range variables
 
 You can use some global built-in variables in query variables, for example, `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`.
-For details, see [Global built-in variables]({{< relref "../dashboards/variables/add-template-variables/#global-variables" >}}).
+For details, see [Global built-in variables]({{< relref "../../../dashboards/variables/add-template-variables#global-variables" >}}).
 The `label_values` function doesn't support queries, so you can use these variables in conjunction with the `query_result` function to filter variable queries.
 
 Make sure to set the variable's `refresh` trigger to be `On Time Range Change` to get the correct instances when changing the time range on the dashboard.
@@ -94,7 +94,7 @@ Otherwise, Grafana uses the Prometheus data source's "Scrape interval" setting.
 
 The "Min interval" setting in the panel is modified by the resolution setting, and therefore doesn't have any effect on _Scrape interval_.
 
-For details, refer to the [Grafana blog](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
+For details, refer to the [Grafana blog](/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
 
 ## Choose a variable syntax
 
@@ -107,5 +107,5 @@ If you've enabled the _Multi-value_ or _Include all value_ options, Grafana conv
 
 ## Use the ad hoc filters variable type
 
-Prometheus supports the special [ad hoc filters]({{< relref "../dashboards/variables/add-template-variables/#add-ad-hoc-filters" >}}) variable type, which you can use to specify any number of label/value filters on the fly.
+Prometheus supports the special [ad hoc filters]({{< relref "../../../dashboards/variables/add-template-variables#add-ad-hoc-filters" >}}) variable type, which you can use to specify any number of label/value filters on the fly.
 These filters are automatically applied to all your Prometheus queries.

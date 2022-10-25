@@ -42,10 +42,9 @@ Administrators can also [configure the data source via YAML]({{< relref "#provis
 
 ### Min time interval
 
-A lower limit for the [$__interval]({{< relref "../dashboards/variables/add-template-variables/#__interval" >}}) and [$__interval_ms]({{< relref "../dashboards/variables/add-template-variables/#__interval_ms" >}}) variables.
-Recommended to be set to write frequency, for example `1m` if your data is written every minute.
-This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
-number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
+The **Min time interval** setting defines a lower limit for the [`$__interval`]({{< relref "../../dashboards/variables/add-template-variables#__interval" >}}) and [`$__interval_ms`]({{< relref "../../dashboards/variables/add-template-variables#__interval_ms" >}}) variables.
+
+This value _must_ be formatted as a number followed by a valid time identifier:
 
 | Identifier | Description |
 | ---------- | ----------- |
@@ -57,6 +56,11 @@ number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 se
 | `m`        | minute      |
 | `s`        | second      |
 | `ms`       | millisecond |
+
+We recommend setting this value to match your MySQL write frequency.
+For example, use `1m` if MySQL writes data every minute.
+
+You can also override this setting in a dashboard panel under its data source options.
 
 ### Database User Permissions (Important!)
 
@@ -105,7 +109,7 @@ datasources:
 The MySQL query builder is available when editing a panel using a MySQL data source.
 
 This topic explains querying specific to the MySQL data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualizations/query-transform-data/" >}}).
 
 You can run the built query by pressing the `Run query` button in the top right corner of the editor.
 
@@ -208,11 +212,11 @@ The resulting table panel:
 
 If you set Format as to _Time series_, then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result.
 
-A time series query result is returned in a [wide data frame format]({{< relref "../developers/plugins/data-frames/#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
+A time series query result is returned in a [wide data frame format]({{< relref "../../developers/plugins/data-frames#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
 
 > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
-To optionally customize the default series name formatting, refer to [Standard options definitions]({{< relref "../panels-visualizations/configure-standard-options/#display-name" >}}).
+To optionally customize the default series name formatting, refer to [Standard options definitions]({{< relref "../../panels-visualizations/configure-standard-options#display-name" >}}).
 
 **Example with `metric` column:**
 
@@ -254,7 +258,7 @@ GROUP BY time, hostname
 ORDER BY time
 ```
 
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [[Standard options definitions]({{< relref "../panels-visualizations/configure-standard-options/#display-name" >}}) display value of `${__field.labels.hostname}`.
+Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [[Standard options definitions]({{< relref "../../panels-visualizations/configure-standard-options#display-name" >}}) display value of `${__field.labels.hostname}`.
 
 Data frame result:
 
@@ -304,7 +308,7 @@ This feature is currently available in the nightly builds and will be included i
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../dashboards/variables/" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../../dashboards/variables" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query Variable
 
@@ -399,11 +403,11 @@ Grafana automatically creates a quoted, comma-separated string for multi-value v
 
 `${servers:csv}`
 
-Read more about variable formatting options in the [Variables]({{< relref "../dashboards/variables/variable-syntax/#advanced-variable-format-options" >}}) documentation.
+Read more about variable formatting options in the [Variables]({{< relref "../../dashboards/variables/variable-syntax#advanced-variable-format-options" >}}) documentation.
 
 ## Annotations
 
-[Annotations]({{< relref "../dashboards/build-dashboards/annotate-visualizations" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+[Annotations]({{< relref "../../dashboards/build-dashboards/annotate-visualizations" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
 
 **Example query using time column with epoch values:**
 

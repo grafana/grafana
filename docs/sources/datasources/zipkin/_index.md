@@ -22,7 +22,7 @@ For instructions on how to add a data source to Grafana, refer to the [administr
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
-Once you've added the Zipkin data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
+Once you've added the Zipkin data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "#query-traces" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
 
 ## Configure the data source
 
@@ -64,7 +64,7 @@ Select a target data source, limited to Loki and Splunk \[logs\] data sources, a
 
 ### Configure trace to metrics
 
-> **Note:** This feature is behind the `traceToMetrics` [feature toggle]({{< relref "../../configure-grafana/#feature_toggles" >}}).
+> **Note:** This feature is behind the `traceToMetrics` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
 
 The **Trace to metrics** section configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/).
 
@@ -105,7 +105,7 @@ You can choose one of three options:
 You can query and display traces from Zipkin via [Explore]({{< relref "../../explore/" >}}).
 
 This topic explains configuration and queries specific to the Zipkin data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualizations/query-transform-data" >}}).
 
 {{< figure src="/static/img/docs/v70/zipkin-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor" >}}
 

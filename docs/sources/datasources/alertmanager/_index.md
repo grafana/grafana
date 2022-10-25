@@ -23,9 +23,9 @@ Grafana includes built-in support for Prometheus Alertmanager. Once you add it a
 
 [Prometheus](https://prometheus.io/) and [Grafana Mimir](/docs/mimir/latest/) (default) implementations of Alertmanager are supported. You can specify implementation in the data source settings page. In case of Prometheus contact points and notification policies are read-only in the Grafana Alerting UI, as it does not support updating configuration via HTTP API.
 
-## Provision the Alertmanager data source
+## Provision the data source
 
-Configure the Alertmanager data sources by updating Grafana's configuration files. For more information on how it works and the settings available, refer to the [provisioning docs page]({{< relref "/administration/provisioning/#data-sources" >}}).
+Configure the Alertmanager data sources by updating Grafana's configuration files. For more information on how it works and the settings available, refer to the [provisioning docs page]({{< relref "../../administration/provisioning#data-sources" >}}).
 
 For example, this YAML provisions an Alertmanager data source running on port 9093, with proxy access and basic authentication:
 

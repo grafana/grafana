@@ -57,7 +57,7 @@ You can also configure settings specific to the Microsoft SQL Server data source
 
 ### Min time interval
 
-The **Min time interval** setting defines a lower limit for the [`$__interval`]({{< relref "../dashboards/variables/add-template-variables/#__interval" >}}) and [`$__interval_ms`]({{< relref "../dashboards/variables/add-template-variables/#__interval_ms" >}}) variables.
+The **Min time interval** setting defines a lower limit for the [`$__interval`]({{< relref "../../dashboards/variables/add-template-variables#__interval" >}}) and [`$__interval_ms`]({{< relref "../../dashboards/variables/add-template-variables#__interval_ms" >}}) variables.
 
 This value _must_ be formatted as a number followed by a valid time identifier:
 

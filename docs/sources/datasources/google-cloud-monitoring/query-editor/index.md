@@ -16,7 +16,7 @@ weight: 300
 # Google Cloud Monitoring query editor
 
 This topic explains querying specific to the Google Cloud Monitoring data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
 
 ## Choose a query editing mode
 
@@ -134,7 +134,7 @@ The default values for "cloud monitoring auto" are:
 
 The other automatic option is "grafana auto", which automatically sets the Group By time depending on the time range chosen and width of the time series panel.
 
-For more information about "grafana auto", refer to [Interval variable]({{< relref "../../dashboards/variables/add-template-variables/#add-an-interval-variable" >}}).
+For more information about "grafana auto", refer to [Interval variable]({{< relref "../../../dashboards/variables/add-template-variables/#add-an-interval-variable" >}}).
 
 You can also choose fixed time intervals to group by, like `1h` or `1d`.
 
@@ -267,7 +267,7 @@ SLO queries use the same alignment period functionality as [metric queries]({{< 
 
 {{< figure src="/static/img/docs/google-cloud-monitoring/annotations-8-0.png" max-width= "400px" class="docs-image--right" >}}
 
-[Annotations]({{< relref "../../dashboards/build-dashboards/annotate-visualizations" >}}) overlay rich event information on top of graphs.
+[Annotations]({{< relref "../../../dashboards/build-dashboards/annotate-visualizations" >}}) overlay rich event information on top of graphs.
 You can add annotation queries in the Dashboard menu's Annotations view.
 
 Rendering annotations is expensive, and it's important to limit the number of rows returned.
@@ -282,7 +282,7 @@ For example, the Title field could have the following text:
 
 Example result: `monitoring.googleapis.com/uptime_check/http_status has this value: 502`
 
-### Patterns for the Annotation Query Editor
+### Patterns for the annotation query editor
 
 | Alias pattern format     | Description                       | Alias pattern example            | Example result                                    |
 | ------------------------ | --------------------------------- | -------------------------------- | ------------------------------------------------- |

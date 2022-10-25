@@ -20,7 +20,7 @@ weight: 300
 You can create queries with the Microsoft SQL Server data source's query editor when editing a panel that uses a MS SQL data source.
 
 This topic explains querying specific to the MS SQL data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
 
 ## Choose a query editing mode
 
@@ -159,7 +159,7 @@ To display the raw interpolated SQL string that the data source executed, click 
 
 ## Use table queries
 
-If the **Format** query option is set to **Table** for a [Table panel]{{< relref "../../panels-visualizations/visualizations/table/" >}}, you can enter any type of SQL query.
+If the **Format** query option is set to **Table** for a [Table panel]{{< relref "../../../panels-visualizations/visualizations/table/" >}}, you can enter any type of SQL query.
 The Table panel then displays the query results with whatever columns and rows are returned.
 
 **Example database table:**
@@ -220,7 +220,7 @@ The resulting table panel:
 If you set the **Format** setting in the query editor to **Time series**, then the query must have a column named `time` that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds.
 Result sets of time series queries must also be sorted by time for panels to properly visualize the result.
 
-A time series query result is returned in a [wide data frame format]({{< relref "../developers/plugins/data-frames/#wide-format" >}}).
+A time series query result is returned in a [wide data frame format]({{< relref "../../../developers/plugins/data-frames#wide-format" >}}).
 Any column except time or of type string transforms into value fields in the data frame query result.
 Any string column transforms into field labels in the data frame query result.
 
@@ -230,7 +230,7 @@ For backward compatibility, there's an exception to the above rule for queries t
 Instead of transforming the `metric` column into field labels, it becomes the field name, and then the series name is formatted as the value of the `metric` column.
 See the example with the `metric` column below.
 
-To optionally customize the default series name formatting, refer to [Standard options definitions]({{< relref "../../panels-visualizations/configure-standard-options/#display-name" >}}).
+To optionally customize the default series name formatting, refer to [Standard options definitions]({{< relref "../../../panels-visualizations/configure-standard-options#display-name" >}}).
 
 **Example with `metric` column:**
 
@@ -276,7 +276,7 @@ GROUP BY
 ORDER BY 1
 ```
 
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions]({{< relref "../panels-visualizations/configure-standard-options/#display-name" >}}) display name value of `${__field.labels.hostname}`.
+Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions]({{< relref "../../../panels-visualizations/configure-standard-options#display-name" >}}) display name value of `${__field.labels.hostname}`.
 
 Data frame result:
 
@@ -319,7 +319,7 @@ Data frame result:
 
 ## Apply annotations
 
-[Annotations]({{< relref "../../dashboards/build-dashboards/annotate-visualizations" >}}) overlay rich event information on top of graphs.
+[Annotations]({{< relref "../../../dashboards/build-dashboards/annotate-visualizations" >}}) overlay rich event information on top of graphs.
 You can add annotation queries in the Dashboard menu's Annotations view.
 
 **Columns:**

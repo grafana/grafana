@@ -21,14 +21,14 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../dashboards/variables/" >}}) and [Add and manage variables]({{< relref "../../dashboards/variables/add-template-variables/" >}}) documentation.
+For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../../dashboards/variables" >}}) and [Add and manage variables]({{< relref "../../../dashboards/variables/add-template-variables" >}}) documentation.
 
 ## Use query variables
 
 If you add a query template variable, you can write an InfluxDB exploration (metadata) query.
 These queries can return results like measurement names, key names, or key values.
 
-For more information, refer to [Add query variable]({{< relref "../../dashboards/variables/add-template-variables/#add-a-query-variable" >}}).
+For more information, refer to [Add query variable]({{< relref "../../../dashboards/variables/add-template-variables#add-a-query-variable" >}}).
 
 For example, to create a variable that contains all values for tag `hostname`, specify a query like this in the query variable **Query**:
 
@@ -38,7 +38,7 @@ SHOW TAG VALUES WITH KEY = "hostname"
 
 ### Chain or nest variables
 
-You can also create nested variables, sometimes called [chained variables]({{< relref "../../dashboards/variables/add-template-variables/#chained-variables" >}}).
+You can also create nested variables, sometimes called [chained variables]({{< relref "../../../dashboards/variables/add-template-variables#chained-variables" >}}).
 
 For example, if you had a variable called `region`, you could have the `hosts` variable show only hosts from the selected region with a query like:
 
@@ -60,7 +60,7 @@ This helps you change group-by using the variable list at the top of the dashboa
 InfluxDB supports the special **Ad hoc filters** variable type.
 You can use this variable type to specify any number of key/value filters, and Grafana applies them automatically to all of your InfluxDB queries.
 
-For more information, refer to [Add ad hoc filters]({{< relref "../../dashboards/variables/add-template-variables/#add-ad-hoc-filters" >}}).
+For more information, refer to [Add ad hoc filters]({{< relref "../../../dashboards/variables/add-template-variables#add-ad-hoc-filters" >}}).
 
 ## Choose a variable syntax
 

@@ -54,7 +54,7 @@ You can also configure settings specific to the Tempo data source:
 > **Note:** Available in Grafana v7.4 and higher.
 > If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
 
-The **Trace to logs** setting configures the [trace to logs feature]({{< relref "../../explore/trace-integration/" >}}) available when integrating Grafana with Tempo.
+The **Trace to logs** setting configures the [trace to logs feature]({{< relref "../../explore/trace-integration" >}}) available when integrating Grafana with Tempo.
 
 **To configure trace to logs:**
 
@@ -73,7 +73,7 @@ The **Trace to logs** setting configures the [trace to logs feature]({{< relref 
 
 ### Configure trace to metrics
 
-> **Note:** This feature is behind the `traceToMetrics` [feature toggle]({{< relref "../../configure-grafana/#feature_toggles" >}}).
+> **Note:** This feature is behind the `traceToMetrics` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
 > If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
 
 The **Trace to metrics** setting configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/) available when integrating Grafana with Tempo.
@@ -120,7 +120,7 @@ Once enabled, Grafana displays the Node Graph after loading the trace view.
 The **Loki search** section configures the Loki search query type.
 
 Configure the **Data source** setting to define which Loki instance you want to use to search traces.
-You must configure [derived fields]({{< relref "./loki/#configure-derived-fields" >}}) in the Loki instance.
+You must configure [derived fields]({{< relref "../loki#configure-derived-fields" >}}) in the Loki instance.
 
 ### Span bar label
 
@@ -179,9 +179,9 @@ datasources:
 
 ## Query the data source
 
-The Tempo data source's query editor helps you query and display traces from Tempo in [Explore]({{< relref "../explore/" >}}).
+The Tempo data source's query editor helps you query and display traces from Tempo in [Explore]({{< relref "../../explore" >}}).
 
-For details, refer to the [query editor documentation]({{< relref "./query-editor/" >}}).
+For details, refer to the [query editor documentation]({{< relref "./query-editor" >}}).
 
 ## Upload a JSON trace file
 
@@ -284,9 +284,9 @@ For details, refer to the [APM dashboard documentation](/docs/tempo/latest/metri
 
 **To display the APM table:**
 
-1. Activate the `tempoApmTable` [feature toggle]({{< relref "../../configure-grafana/#feature_toggles" >}}) in your `grafana.ini` file.
+1. Activate the `tempoApmTable` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}) in your `grafana.ini` file.
 1. Link a Prometheus data source in the Tempo data source settings.
-1. Navigate to [Explore]({{< relref "../explore/_index.md" >}}).
+1. Navigate to [Explore]({{< relref "../../explore/" >}}).
 1. Select the Tempo data source.
 1. Select the **Service Graph** query type and run the query.
 1. _(Optional)_ Filter your results.
@@ -302,4 +302,4 @@ To open a query in Tempo with the span name of that row automatically set in the
 
 You can link to Tempo trace from logs in [Loki](/docs/loki/latest) or Elasticsearch by configuring an internal link.
 
-To configure this feature, see the [Derived fields]({{< relref "./loki/#configure-derived-fields" >}}) section of the [Loki data source docs]({{< relref "./loki/" >}}), or the [Data links]({{< relref "./elasticsearch/#data-links" >}}) section of the [Elasticsearch data source docs]({{< relref "./elasticsearch/" >}}).
+To configure this feature, see the [Derived fields]({{< relref "../loki#configure-derived-fields" >}}) section of the [Loki data source docs]({{< relref "../loki/" >}}), or the [Data links]({{< relref "../elasticsearch#data-links" >}}) section of the [Elasticsearch data source docs]({{< relref "../elasticsearch" >}}).

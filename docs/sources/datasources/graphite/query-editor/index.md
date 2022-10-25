@@ -22,7 +22,7 @@ Grafana includes a Graphite-specific query editor to help you build queries.
 The query editor helps you quickly navigate the metric space, add functions, and change function parameters.
 It can handle all types of Graphite queries, including complex nested queries through the use of query references.
 
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
 
 ## View the raw query
 
@@ -101,7 +101,7 @@ This is more efficient than adding a query for each time series, such as `cpu.pe
 
 ## Apply annotations
 
-[Annotations]({{< relref "../../dashboards/build-dashboards/annotate-visualizations" >}}) overlay rich event information on top of graphs.
+[Annotations]({{< relref "../../../dashboards/build-dashboards/annotate-visualizations" >}}) overlay rich event information on top of graphs.
 You can add annotation queries in the Dashboard menu's Annotations view.
 
 Graphite supports two ways to query annotations:
@@ -112,7 +112,7 @@ Graphite supports two ways to query annotations:
 ## Get Grafana metrics into Graphite
 
 Grafana exposes metrics for Graphite on the `/metrics` endpoint.
-For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../setup-grafana/set-up-grafana-monitoring/" >}}).
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../../../setup-grafana/set-up-grafana-monitoring" >}}).
 
 ## Integration with Loki
 

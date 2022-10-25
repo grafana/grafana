@@ -20,7 +20,7 @@ weight: 300
 {{< figure src="/static/img/docs/elasticsearch/query-editor-7-4.png" max-width="500px" class="docs-image--no-shadow" caption="Elasticsearch Query Editor" >}}
 
 This topic explains querying specific to the Elasticsearch data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
 
 ## Select and edit metrics
 

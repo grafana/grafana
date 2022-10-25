@@ -49,7 +49,7 @@ Open source Grafana enables the `AWS SDK Default`, `Credentials file`, and `Acce
   This option is enabled by default only in Amazon Managed Grafana.
 
 If necessary, you can enable or disable them if you have server configuration access.
-For more information, refer to the [`allowed_auth_providers` documentation]({{< relref "../../setup-grafana/configure-grafana/#allowed_auth_providers" >}}).
+For more information, refer to the [`allowed_auth_providers` documentation]({{< relref "../../../setup-grafana/configure-grafana#allowed_auth_providers" >}}).
 
 ## Assume a role
 
@@ -59,7 +59,7 @@ If this field is left blank, Grafana uses the provided credentials directly, and
 
 If this field isn't blank, Grafana uses the provided credentials to perform an [sts:AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) call.
 
-To disable this feature, refer to the [`assume_role_enabled` documentation]({{< relref "../../setup-grafana/configure-grafana/#assume_role_enabled" >}}).
+To disable this feature, refer to the [`assume_role_enabled` documentation]({{< relref "../../../setup-grafana/configure-grafana#assume_role_enabled" >}}).
 
 ### Use an external ID
 

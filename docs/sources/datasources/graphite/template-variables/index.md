@@ -19,7 +19,7 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../dashboards/variables/" >}}) and [Add and manage variables]({{< relref "../../dashboards/variables/add-template-variables/" >}}) documentation.
+For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../../dashboards/variables" >}}) and [Add and manage variables]({{< relref "../../../dashboards/variables/add-template-variables" >}}) documentation.
 
 ## Use tag variables
 
@@ -53,7 +53,7 @@ Non-tag queries use the default glob formatting for multi-value variables.
 server=~${servers:regex}
 ```
 
-For more information, refer to [Advanced variable format options]({{< relref "../../dashboards/variables/variable-syntax/#advanced-variable-format-options" >}}).
+For more information, refer to [Advanced variable format options]({{< relref "../../../dashboards/variables/variable-syntax#advanced-variable-format-options" >}}).
 
 ## Use other query variables
 

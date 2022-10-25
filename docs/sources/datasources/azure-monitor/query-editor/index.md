@@ -19,15 +19,15 @@ weight: 300
 # Azure Monitor query editor
 
 This topic explains querying specific to the Azure Monitor data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
 
 ## Choose a query editing mode
 
 The Azure Monitor data source's query editor has three modes depending on which Azure service you want to query:
 
-- **Metrics** for [Azure Monitor Metrics](#query-azure-monitor-metrics)
-- **Logs** for [Azure Monitor Logs](#query-azure-monitor-logs)
-- [**Azure Resource Graph**](#query-azure-resource-graph)
+- **Metrics** for [Azure Monitor Metrics]({{< relref "#query-azure-monitor-metrics" >}})
+- **Logs** for [Azure Monitor Logs]({{< relref "#query-azure-monitor-logs" >}})
+- [**Azure Resource Graph**]({{< relref "#query-azure-resource-graph" >}})
 
 ## Query Azure Monitor Metrics
 
@@ -190,7 +190,7 @@ To help you write queries, you can use several Grafana macros in the `where` cla
 | `$__escapeMulti($myVar)`        | Escapes illegal characters in multi-value template variables.<br/>If `$myVar` has the values `'\\grafana-vm\Network(eth0)\Total','\\hello!'` as a string, use this to expand it to `@'\\grafana-vm\Network(eth0)\Total', @'\\hello!'`.<br/><br/>If using single-value variables, escape the variable inline instead: `@'\$myVar'`.                                                                                                                                                              |
 | `$__contains(colName, $myVar)`  | Expands multi-value template variables.<br/>If `$myVar` has the value `'value1','value2'`, use this to expand it to `colName in ('value1','value2')`.<br/><br/>If using the `All` option, check the `Include All Option` checkbox, and type the value `all` in the `Custom all value` field. If `$myVar` has the value `all`, the macro instead expands to `1 == 1`.<br/>For template variables with many options, this avoids building a large "where..in" clause, which improves performance. |
 
-Additionally, Grafana has the built-in [`$__interval` macro]({{< relref "panels-visualizations/query-transform-data/#query-options" >}}), which calculates an interval in seconds.
+Additionally, Grafana has the built-in [`$__interval` macro]({{< relref "../../../panels-visualizations/query-transform-data#query-options" >}}), which calculates an interval in seconds.
 
 ## Query Azure Resource Graph
 

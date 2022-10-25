@@ -20,7 +20,7 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../dashboards/variables/" >}}) and [Add and manage variables]({{< relref "../../dashboards/variables/add-template-variables/" >}}) documentation.
+For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../../dashboards/variables" >}}) and [Add and manage variables]({{< relref "../../../dashboards/variables/add-template-variables" >}}) documentation.
 
 ## Use query variables
 
@@ -40,10 +40,10 @@ The form has these options:
 Loki supports the special **Ad hoc filters** variable type.
 You can use this variable type to specify any number of key/value filters, and Grafana applies them automatically to all of your Loki queries.
 
-For more information, refer to [Add ad hoc filters]({{< relref "../../dashboards/variables/add-template-variables/#add-ad-hoc-filters" >}}).
+For more information, refer to [Add ad hoc filters]({{< relref "../../../dashboards/variables/add-template-variables#add-ad-hoc-filters" >}}).
 
 ## Use interval and range variables
 
 You can use some global built-in variables in query variables: `$__interval`, `$__interval_ms`, `$__range`, `$__range_s`, and `$__range_ms`.
 
-For more information, refer to [Global built-in variables]({{< relref "../../dashboards/variables/add-template-variables/#global-variables/" >}}).
+For more information, refer to [Global built-in variables]({{< relref "../../../dashboards/variables/add-template-variables#global-variables" >}}).

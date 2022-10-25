@@ -61,13 +61,13 @@ Set the data source's basic configuration options carefully:
 
 **Exemplars configuration:**
 
-| Name              | Description                                                                                                                                                                                                                                              |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Internal link** | Enable this option if you have an internal link. When enabled, this reveals the data source selector. Select the backend tracing data store for your exemplar data.                                                                                      |
-| **Data source**   | _(Visible only if you enable `Internal link`)_ Selects the backend tracing data store for your exemplar data.                                                                                                                                            |
-| **URL**           | _(Visible only if you disable `Internal link`)_ Defines the external link's full URL. You can interpolate the value from the field by using the [`${__value.raw}` macro]({{< relref "/panels-visualizations/configure-data-links/#value-variables" >}}). |
-| **URL label**     | _(Optional)_ Adds a custom display label to override the value of the `Label name` field.                                                                                                                                                                |
-| **Label name**    | Adds a name for the exemplar traceID property.                                                                                                                                                                                                           |
+| Name              | Description                                                                                                                                                                                                                                                    |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Internal link** | Enable this option if you have an internal link. When enabled, this reveals the data source selector. Select the backend tracing data store for your exemplar data.                                                                                            |
+| **Data source**   | _(Visible only if you enable `Internal link`)_ Selects the backend tracing data store for your exemplar data.                                                                                                                                                  |
+| **URL**           | _(Visible only if you disable `Internal link`)_ Defines the external link's full URL. You can interpolate the value from the field by using the [`${__value.raw}` macro]({{< relref "../..//panels-visualizations/configure-data-links/#value-variables" >}}). |
+| **URL label**     | _(Optional)_ Adds a custom display label to override the value of the `Label name` field.                                                                                                                                                                      |
+| **Label name**    | Adds a name for the exemplar traceID property.                                                                                                                                                                                                                 |
 
 ### Provision the data source
 
@@ -102,7 +102,7 @@ datasources:
 
 The Prometheus query editor includes a code editor and visual query builder.
 
-For details, see the [query editor documentation]({{< relref "./query-editor/" >}}).
+For details, see the [query editor documentation]({{< relref "./query-editor" >}}).
 
 ## View Grafana metrics with Prometheus
 

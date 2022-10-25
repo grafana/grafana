@@ -97,4 +97,4 @@ For details, see the [template variables documentation]({{< relref "./template-v
 ## Get Grafana metrics into Graphite
 
 Grafana exposes metrics for Graphite on the `/metrics` endpoint.
-For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../setup-grafana/set-up-grafana-monitoring/" >}}).
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../../setup-grafana/set-up-grafana-monitoring" >}}).

@@ -11,7 +11,7 @@ weight: 200
 # InfluxDB query editor
 
 This topic explains querying specific to the InfluxDB data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
 
 ## Choose a query editing mode
 
@@ -157,11 +157,11 @@ from(bucket: "grafana")
   |> yield(name: "mean")
 ```
 
-To view the interpolated version of a query with the query inspector, refer to [Panel Inspector]({{< relref "../../panels-visualizations/panel-inspector/" >}}).
+To view the interpolated version of a query with the query inspector, refer to [Panel Inspector]({{< relref "../../../panels-visualizations/panel-inspector" >}}).
 
 ## Query logs
 
-You can query and display log data from InfluxDB in [Explore]({{< relref "../../explore/" >}}) and with the [Logs panel]({{< relref "../../panels-visualizations/visualizations/logs/" >}}) for dashboards.
+You can query and display log data from InfluxDB in [Explore]({{< relref "../../../explore" >}}) and with the [Logs panel]({{< relref "../../../panels-visualizations/visualizations/logs" >}}) for dashboards.
 
 Select the InfluxDB data source, then enter a query to display your logs.
 
@@ -180,7 +180,7 @@ To remove tag filters, click the first select, then choose **--remove filter--**
 
 ## Apply annotations
 
-[Annotations]({{< relref "../../dashboards/build-dashboards/annotate-visualizations" >}}) overlay rich event information on top of graphs.
+[Annotations]({{< relref "../../../dashboards/build-dashboards/annotate-visualizations" >}}) overlay rich event information on top of graphs.
 You can add annotation queries in the Dashboard menu's Annotations view.
 
 For InfluxDB, your query **must** include `WHERE $timeFilter`.

@@ -26,22 +26,22 @@ Instead of hard-coding details such as resource group or resource name values in
 This helps you create more interactive, dynamic, and reusable dashboards.
 Grafana refers to such variables as template variables.
 
-For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../dashboards/variables/" >}}) and [Add and manage variables]({{< relref "../../dashboards/variables/add-template-variables/" >}}) documentation.
+For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../../dashboards/variables" >}}) and [Add and manage variables]({{< relref "../../../dashboards/variables/add-template-variables" >}}) documentation.
 
 ## Use query variables
 
-You can specify these Azure Monitor data source queries in the Variable edit view's `Query Type` field.
+You can specify these Azure Monitor data source queries in the Variable edit view's **Query Type** field.
 
-| Name            | Description                                                                                  |
-| --------------- | -------------------------------------------------------------------------------------------- |
-| Subscriptions   | Returns subscriptions.                                                                       |
-| Resource Groups | Returns resource groups for a specified subscription.                                        |
-| Namespaces      | Returns metric namespaces for the specified subscription and resource group.                 |
-| Resource Names  | Returns a list of resource names for a specified subscription, resource group and namespace. |
-| Metric Names    | Returns a list of metric names for a resource.                                               |
-| Workspaces      | Returns a list of workspaces for the specified subscription.                                 |
-| Logs            | Use a KQL query to return values.                                                            |
-| Resource Graph  | Use an ARG query to return values.                                                           |
+| Name                | Description                                                                                  |
+| ------------------- | -------------------------------------------------------------------------------------------- |
+| **Subscriptions**   | Returns subscriptions.                                                                       |
+| **Resource Groups** | Returns resource groups for a specified subscription.                                        |
+| **Namespaces**      | Returns metric namespaces for the specified subscription and resource group.                 |
+| **Resource Names**  | Returns a list of resource names for a specified subscription, resource group and namespace. |
+| **Metric Names**    | Returns a list of metric names for a resource.                                               |
+| **Workspaces**      | Returns a list of workspaces for the specified subscription.                                 |
+| **Logs**            | Use a KQL query to return values.                                                            |
+| **Resource Graph**  | Use an ARG query to return values.                                                           |
 
 Any Log Analytics Kusto Query Language (KQL) query that returns a single list of values can also be used in the Query field.
 For example:

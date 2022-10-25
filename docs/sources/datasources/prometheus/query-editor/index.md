@@ -15,7 +15,7 @@ weight: 300
 # Prometheus query editor
 
 This topic explains querying specific to the Prometheus data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualization/query-transform-data/" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
 
 ## Choose a query editing mode
 
@@ -30,7 +30,7 @@ To switch between the editor modes, select the corresponding **Builder** and **C
 
 To run a query, select **Run queries** located at the top of the editor.
 
-> **Note:** To run Prometheus queries in [Explore]({{< relref "../../explore/" >}}), select **Run query**.
+> **Note:** To run Prometheus queries in [Explore]({{< relref "../../../explore" >}}), select **Run query**.
 
 Each mode is synchronized with the other modes, so you can switch between them without losing your work, although there are some limitations.
 
@@ -40,7 +40,7 @@ You can then decide whether you still want to switch to Builder mode.
 
 You can also use the [Explain feature]({{< relref "#use-explain-mode-to-understand-queries" >}}) to help understand how a query works, and augment queries by using [template variables]({{< relref "./template-variables/" >}}).
 
-For options and functions common to all query editors, refer to [Query and transform data]({{< relref "../../panels-visualizations/query-transform-data" >}}).
+For options and functions common to all query editors, refer to [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
 
 ## Configure common options
 
@@ -68,11 +68,11 @@ This setting supports the `$__interval` and `$__rate_interval` macros.
 
 You can switch between **Table**, **Time series**, and **Heatmap** options by configuring the query's **Format**.
 
-| Option          | Description                                                                                                                                                                                                                |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Table**       | This works only in a [Table panel]{{< relref "/panels-visualizations/visualizations/table/" >}}.                                                                                                                           |
-| **Time series** | Uses the default time series format.                                                                                                                                                                                       |
-| **Heatmap**     | Displays metrics of the Histogram type on a [Heatmap panel]{{< relref "/panels-visualizations/visualizations/heatmap/" >}} by converting cumulative histograms to regular ones and sorting the series by the bucket bound. |
+| Option          | Description                                                                                                                                                                                                                       |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Table**       | This works only in a [Table panel]{{< relref "../../../panels-visualizations/visualizations/table" >}}.                                                                                                                           |
+| **Time series** | Uses the default time series format.                                                                                                                                                                                              |
+| **Heatmap**     | Displays metrics of the Histogram type on a [Heatmap panel]{{< relref "../../../panels-visualizations/visualizations/heatmap" >}} by converting cumulative histograms to regular ones and sorting the series by the bucket bound. |
 
 ### Type
 
@@ -83,7 +83,7 @@ The **Type** setting selects the query type.
 
   Instant query results are comprised of only one data point per series and can be shown in the time series panel by adding a field override, adding a property to the override named `Transform`, and selecting `Constant` from the **Transform** dropdown.
 
-  For more information, refer to the [Time Series Transform option documentation]({{< relref "../panels-visualizations/visualizations/time-series/#transform" >}}).
+  For more information, refer to the [Time Series Transform option documentation]({{< relref "../../../panels-visualizations/visualizations/time-series#transform" >}}).
 
 - An **Exemplars** query runs with the regular query and shows exemplars in the graph.
 
@@ -95,7 +95,7 @@ The **Type** setting selects the query type.
 {{< figure src="/static/img/docs/prometheus/code-mode-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Code mode" >}}
 
 In **Code mode**, you can write complex queries using a text editor with autocompletion features and syntax highlighting.
-It also contains a [Metrics browser](#metrics-browser) to further help you write queries.
+It also contains a [Metrics browser]({{< relref "#metrics-browser" >}}) to further help you write queries.
 
 For more information about Prometheus's query language, refer to the [Prometheus documentation](http://prometheus.io/docs/querying/basics/).
 
@@ -109,7 +109,7 @@ To manually trigger autocompletion, use the keyboard shortcut <key>Ctrl</key>/<k
 The query editor can autocomplete static functions, aggregations, and keywords, and also dynamic items like metrics and labels.
 The autocompletion dropdown includes documentation for the suggested items where available.
 
-To run a query in [Explore]({{< relref "../../explore/" >}}), use the keyboard shortcut <key>Shift</key> + <key>Enter</key>.
+To run a query in [Explore]({{< relref "../../../explore/" >}}), use the keyboard shortcut <key>Shift</key> + <key>Enter</key>.
 
 ### Metrics browser
 
@@ -217,7 +217,7 @@ For details, refer to the [common options]({{< relref "#configure-common-options
 
 ## Apply annotations
 
-[Annotations]({{< relref "../../dashboards/build-dashboards/annotate-visualizations" >}}) overlay rich event information on top of graphs.
+[Annotations]({{< relref "../../../dashboards/build-dashboards/annotate-visualizations" >}}) overlay rich event information on top of graphs.
 You can add annotation queries in the Dashboard menu's Annotations view.
 
 Prometheus supports two ways to query annotations.

@@ -195,7 +195,7 @@ The data source select contains only existing data source instances of type X-Ra
 To use this feature, you must already have an X-Ray data source configured.
 For details, see the [X-Ray data source docs](/grafana/plugins/grafana-x-ray-datasource/).
 
-To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel]({{< relref "../../panels-visualizations/visualizations/logs/" >}}) to view the log details section.
+To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel]({{< relref "../../panels-visualizations/visualizations/logs" >}}) to view the log details section.
 
 To log the `@xrayTraceId`, see the [AWS X-Ray documentation](https://docs.amazonaws.cn/en_us/xray/latest/devguide/xray-services.html).
 
@@ -205,7 +205,7 @@ To provide the field to Grafana, your log queries must also contain the `@xrayTr
 
 ### Configure the data source with grafana.ini
 
-The Grafana [configuration file]({{< relref "../../setup-grafana/configure-grafana/#aws" >}}) includes an `AWS` section where you can configure data source options:
+The Grafana [configuration file]({{< relref "../../setup-grafana/configure-grafana#aws" >}}) includes an `AWS` section where you can configure data source options:
 
 | Configuration option      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -331,7 +331,7 @@ filter @message like /Exception/
 
 > **Note:** If you receive an error like `input data must be a wide series but got ...` when trying to alert on a query, make sure that your query returns valid numeric data that can be output to a Time series panel.
 
-For more information on Grafana alerts, refer to [Alerting]({{< relref "/alerting/" >}}).
+For more information on Grafana alerts, refer to [Alerting]({{< relref "../../alerting" >}}).
 
 ## Control pricing
 
