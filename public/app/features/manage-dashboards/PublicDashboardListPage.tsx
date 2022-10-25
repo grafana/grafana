@@ -7,9 +7,7 @@ import { ListPublicDashboardTable } from './components/PublicDashboardListTable'
 export const ListPublicDashboardPage = ({}) => {
   return (
     <Page navId="dashboards/public">
-      <Page.Contents>
-        <ListPublicDashboardTable />
-      </Page.Contents>
+      <ListPublicDashboardTable />
     </Page>
   );
 };

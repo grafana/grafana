@@ -59,6 +59,7 @@ describe('api', () => {
     it('should not initiate new api request in case a previous request had same args', async () => {
       const getMock = jest.fn();
       const { api, resourceRequestMock } = setupMockedAPI({ getMock });
+      resourceRequestMock.mockResolvedValue([]);
       await Promise.all([
         api.getMetrics('AWS/EC2', 'us-east-1'),
         api.getMetrics('AWS/EC2', 'us-east-1'),

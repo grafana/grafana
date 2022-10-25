@@ -138,7 +138,7 @@ describe('geomap migrations', () => {
         ],
       },
       pluginVersion: '8.2.0',
-    } as any as PanelModel;
+    } as unknown as PanelModel;
     panel.options = mapMigrationHandler(panel);
 
     expect(panel).toMatchInlineSnapshot(`

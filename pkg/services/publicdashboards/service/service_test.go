@@ -428,10 +428,14 @@ func TestDeletePublicDashboard(t *testing.T) {
 		savedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
+		pubdash, err := service.GetPublicDashboard(context.Background(), savedPubdash.OrgId, savedPubdash.DashboardUid)
+		require.NoError(t, err)
+		require.Equal(t, pubdash, savedPubdash)
+
 		deletedError := service.DeletePublicDashboard(context.Background(), dashboard.OrgId, dashboard.Uid, savedPubdash.Uid)
 		require.NoError(t, deletedError)
 
-		pubdash, err := service.GetPublicDashboard(context.Background(), savedPubdash.OrgId, savedPubdash.DashboardUid)
+		pubdash, err = service.GetPublicDashboard(context.Background(), savedPubdash.OrgId, savedPubdash.DashboardUid)
 		require.Error(t, err)
 		require.Equal(t, ErrPublicDashboardNotFound, err)
 		require.Nil(t, pubdash)
