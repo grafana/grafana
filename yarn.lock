@@ -3784,7 +3784,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@daybrush/utils@npm:1.10.0":
+"@daybrush/utils@npm:1.10.0, @daybrush/utils@npm:^1.10.0":
   version: 1.10.0
   resolution: "@daybrush/utils@npm:1.10.0"
   checksum: bd8401971012052c420046e45b143fa9a211a2dc80c782ebc930865df6da8da8544f683a2b8728862a97407ff48bd7eb02657279b19f261e95541818441023db
@@ -16631,6 +16631,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"css-styled@npm:~1.0.1":
+  version: 1.0.1
+  resolution: "css-styled@npm:1.0.1"
+  dependencies:
+    "@daybrush/utils": ^1.0.0
+    string-hash: ^1.1.3
+  peerDependencies:
+    "@daybrush/utils": ">=1.0.0"
+  checksum: 2599d0345b5749cac264f3ae6226b597c10d2b5a59da39456e0df61cd4cbbaa1efcaef87c11fccd7bf035062b6f4efd3c69535fb992ef0029f7bc6da4559eeef
+  languageName: node
+  linkType: hard
+
 "css-to-mat@npm:^1.0.3":
   version: 1.0.3
   resolution: "css-to-mat@npm:1.0.3"
@@ -21105,7 +21117,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"gesto@npm:^1.13.1":
+"gesto@npm:^1.13.1, gesto@npm:^1.13.3":
   version: 1.13.3
   resolution: "gesto@npm:1.13.3"
   dependencies:
@@ -21866,7 +21878,7 @@ __metadata:
     react-hook-form: 7.5.3
     react-i18next: ^11.18.6
     react-inlinesvg: 3.0.0
-    react-moveable: 0.38.4
+    react-moveable: 0.40.0
     react-popper: 2.3.0
     react-popper-tooltip: 4.4.2
     react-redux: 7.2.6
@@ -32103,6 +32115,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-css-styled@npm:^1.0.4":
+  version: 1.0.4
+  resolution: "react-css-styled@npm:1.0.4"
+  dependencies:
+    css-styled: ~1.0.1
+    framework-utils: ^1.1.0
+  checksum: f75a2283713d7cee06e721db5c76b420db55650dbf83cae33b2424acebe96e698f5f522fff834f289bf823aa9c0f3249f40358d72ec460497a8a74d8194a0b68
+  languageName: node
+  linkType: hard
+
 "react-custom-scrollbars-2@npm:4.5.0":
   version: 4.5.0
   resolution: "react-custom-scrollbars-2@npm:4.5.0"
@@ -32462,7 +32484,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-moveable@npm:0.38.4, react-moveable@npm:~0.38.4":
+"react-moveable@npm:0.40.0":
+  version: 0.40.0
+  resolution: "react-moveable@npm:0.40.0"
+  dependencies:
+    "@daybrush/utils": ^1.10.0
+    "@egjs/agent": ^2.2.1
+    "@egjs/children-differ": ^1.0.1
+    "@egjs/list-differ": ^1.0.0
+    "@scena/dragscroll": ^1.2.0
+    "@scena/event-emitter": ^1.0.5
+    "@scena/matrix": ^1.1.1
+    css-to-mat: ^1.0.3
+    framework-utils: ^1.1.0
+    gesto: ^1.13.3
+    overlap-area: ^1.1.0
+    react-css-styled: ^1.0.4
+  checksum: ac89a1325dce4e2c2c4ebd0460ac75b3c4d89e02bf49cf296db027268357b2b2e81ba867d8a2e0f6ed6d66991260ba3d5532dcff0a6c37ff138d173e48a460e0
+  languageName: node
+  linkType: hard
+
+"react-moveable@npm:~0.38.4":
   version: 0.38.4
   resolution: "react-moveable@npm:0.38.4"
   dependencies:
