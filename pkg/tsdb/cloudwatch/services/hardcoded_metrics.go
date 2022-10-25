@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
-func GetHardCodedDimensionKeysByNamespace(namespace string) ([]string, error) {
+var GetHardCodedDimensionKeysByNamespace = func(namespace string) ([]string, error) {
 	var dimensionKeys []string
 	exists := false
 	if dimensionKeys, exists = constants.NamespaceDimensionKeysMap[namespace]; !exists {
@@ -16,7 +16,7 @@ func GetHardCodedDimensionKeysByNamespace(namespace string) ([]string, error) {
 	return dimensionKeys, nil
 }
 
-func GetHardCodedMetricsByNamespace(namespace string) ([]models.Metric, error) {
+var GetHardCodedMetricsByNamespace = func(namespace string) ([]models.Metric, error) {
 	response := []models.Metric{}
 	exists := false
 	var metrics []string
@@ -31,7 +31,7 @@ func GetHardCodedMetricsByNamespace(namespace string) ([]models.Metric, error) {
 	return response, nil
 }
 
-func GetAllHardCodedMetrics() []models.Metric {
+var GetAllHardCodedMetrics = func() []models.Metric {
 	response := []models.Metric{}
 	for namespace, metrics := range constants.NamespaceMetricsMap {
 		for _, metric := range metrics {
