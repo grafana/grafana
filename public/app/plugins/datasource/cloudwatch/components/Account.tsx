@@ -2,8 +2,9 @@ import React, { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
+import { EditorField } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { EditorField, Select } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 
 import { CloudWatchAPI } from '../api';
 import { MetricStat } from '../types';
