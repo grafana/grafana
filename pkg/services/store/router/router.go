@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/store/kind"
 )
@@ -23,7 +24,7 @@ type UpstreamResourceSync struct {
 
 type ResourceRouteInfo struct {
 	// Resource identifier
-	GRN models.GRN
+	GRN grn.GRN
 
 	// The storage key -- absolute includeing the orgID
 	Key string
@@ -42,7 +43,7 @@ type ResourceRouteInfo struct {
 
 type ObjectStoreRouter interface {
 	// This will throw exceptions for unsupported
-	Route(ctx context.Context, grn models.GRN) (ResourceRouteInfo, error)
+	Route(ctx context.Context, grn grn.GRN) (ResourceRouteInfo, error)
 
 	// Parse a key to get the GRN and storage information
 	RouteFromKey(ctx context.Context, key string) (ResourceRouteInfo, error)
@@ -58,21 +59,21 @@ func NewObjectStoreRouter(kinds kind.KindRegistry) ObjectStoreRouter {
 
 var _ ObjectStoreRouter = &standardStoreRouter{}
 
-func (r *standardStoreRouter) Route(ctx context.Context, grn models.GRN) (ResourceRouteInfo, error) {
+func (r *standardStoreRouter) Route(ctx context.Context, grn grn.GRN) (ResourceRouteInfo, error) {
 	info := ResourceRouteInfo{}
 
 	// Make sure the orgID is set
-	if grn.OrgID < 1 {
-		return info, fmt.Errorf("missing OrgID")
+	if grn.TenantID < 1 {
+		return info, fmt.Errorf("missing TenantID")
 	}
-	if grn.Kind == "" {
-		return info, fmt.Errorf("missing Kind")
+	if grn.ResourceKind == "" {
+		return info, fmt.Errorf("missing ResourceKind")
 	}
-	if grn.UID == "" {
-		return info, fmt.Errorf("missing UID")
+	if grn.ResourceIdentifier == "" {
+		return info, fmt.Errorf("missing ResourceIdentifier")
 	}
 
-	kind, err := r.kinds.GetInfo(grn.Kind)
+	kind, err := r.kinds.GetInfo(grn.ResourceKind)
 	if err != nil {
 		return info, fmt.Errorf("unknown kind")
 	}
@@ -88,20 +89,20 @@ func (r *standardStoreRouter) Route(ctx context.Context, grn models.GRN) (Resour
 	// Human readable file system
 	if grn.Namespace == "drive" || grn.Namespace == "public" {
 		// Special folder for
-		if grn.Kind == models.StandardKindFolder {
-			info.Key = fmt.Sprintf("%d/%s/%s/__folder.json", grn.OrgID, grn.Namespace, grn.UID)
-		} else if grn.Kind == models.StandardKindFolderAccess {
-			info.Key = fmt.Sprintf("%d/%s/%s/__access.json", grn.OrgID, grn.Namespace, grn.UID)
+		if grn.ResourceKind == models.StandardKindFolder {
+			info.Key = fmt.Sprintf("%d/%s/%s/__folder.json", grn.TenantID, grn.Namespace, grn.ResourceIdentifier)
+		} else if grn.ResourceKind == models.StandardKindFolderAccess {
+			info.Key = fmt.Sprintf("%d/%s/%s/__access.json", grn.TenantID, grn.Namespace, grn.ResourceIdentifier)
 		} else {
 			if kind.FileExtension != "" {
-				info.Key = fmt.Sprintf("%d/%s/%s.%s", grn.OrgID, grn.Namespace, grn.UID, kind.FileExtension)
+				info.Key = fmt.Sprintf("%d/%s/%s.%s", grn.TenantID, grn.Namespace, grn.ResourceIdentifier, kind.FileExtension)
 			} else {
-				info.Key = fmt.Sprintf("%d/%s/%s-%s.json", grn.OrgID, grn.Namespace, grn.UID, grn.Kind)
+				info.Key = fmt.Sprintf("%d/%s/%s-%s.json", grn.TenantID, grn.Namespace, grn.ResourceIdentifier, grn.ResourceKind)
 			}
 		}
 	} else {
 		// kind as root folder
-		info.Key = fmt.Sprintf("%d/%s/kind/%s/%s", grn.OrgID, grn.Namespace, grn.Kind, grn.UID)
+		info.Key = fmt.Sprintf("%d/%s/kind/%s/%s", grn.TenantID, grn.Namespace, grn.ResourceKind, grn.ResourceIdentifier)
 	}
 
 	info.GRN = grn
@@ -127,11 +128,11 @@ func (r *standardStoreRouter) RouteFromKey(ctx context.Context, key string) (Res
 	p2 := key[:idx]
 	key = key[idx+1:]
 
-	orgId, err := strconv.ParseInt(p0, 10, 64)
+	tenantID, err := strconv.ParseInt(p0, 10, 64)
 	if err != nil {
 		return info, fmt.Errorf("error parsing orgID")
 	}
-	info.GRN.OrgID = orgId
+	info.GRN.TenantID = tenantID
 	info.GRN.Namespace = p2
 
 	// Human file system style
@@ -141,19 +142,19 @@ func (r *standardStoreRouter) RouteFromKey(ctx context.Context, key string) (Res
 			idx = strings.LastIndex(key, "-")
 			if idx > sdx {
 				ddx := strings.LastIndex(key, ".") // .json
-				info.GRN.UID = key[:idx]
-				info.GRN.Kind = key[idx+1 : ddx]
+				info.GRN.ResourceIdentifier = key[:idx]
+				info.GRN.ResourceKind = key[idx+1 : ddx]
 			} else {
 				switch key[sdx+1:] {
 				case "__folder.json":
 					{
-						info.GRN.UID = key[:sdx]
-						info.GRN.Kind = models.StandardKindFolder
+						info.GRN.ResourceIdentifier = key[:sdx]
+						info.GRN.ResourceKind = models.StandardKindFolder
 					}
 				case "__access.json":
 					{
-						info.GRN.UID = key[:sdx]
-						info.GRN.Kind = models.StandardKindFolderAccess
+						info.GRN.ResourceIdentifier = key[:sdx]
+						info.GRN.ResourceKind = models.StandardKindFolderAccess
 					}
 				default:
 					return info, fmt.Errorf("unable to parse drive path")
@@ -162,12 +163,12 @@ func (r *standardStoreRouter) RouteFromKey(ctx context.Context, key string) (Res
 		} else {
 			// Lookup by kind extension ()
 			idx = strings.LastIndex(key, ".")
-			info.GRN.UID = key[:idx]
+			info.GRN.ResourceIdentifier = key[:idx]
 			k, err := r.kinds.GetFromExtension(key[idx+1:])
 			if err != nil {
 				return info, err
 			}
-			info.GRN.Kind = k.ID
+			info.GRN.ResourceKind = k.ID
 		}
 	} else {
 		if !strings.HasPrefix(key, "kind/") {
@@ -177,8 +178,8 @@ func (r *standardStoreRouter) RouteFromKey(ctx context.Context, key string) (Res
 		key = key[idx:]
 		idx = strings.Index(key, "/")
 
-		info.GRN.Kind = key[:idx]
-		info.GRN.UID = key[idx+1:]
+		info.GRN.ResourceKind = key[:idx]
+		info.GRN.ResourceIdentifier = key[idx+1:]
 	}
 
 	return info, nil

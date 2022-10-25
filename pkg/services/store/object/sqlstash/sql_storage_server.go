@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -125,11 +126,11 @@ func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*obje
 
 func (s sqlObjectServer) getRouteInfo(ctx context.Context, kind string, uid string) (router.ResourceRouteInfo, error) {
 	modifier := store.UserFromContext(ctx)
-	return s.router.Route(ctx, models.GRN{
-		OrgID:     modifier.OrgID,
-		Kind:      kind,
-		UID:       uid,
-		Namespace: "drive", // "flat",
+	return s.router.Route(ctx, grn.GRN{
+		TenantID:           modifier.OrgID,
+		ResourceKind:       kind,
+		ResourceIdentifier: uid,
+		Namespace:          "drive", // "flat",
 	})
 }
 
@@ -592,14 +593,14 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 }
 
 func (s sqlObjectServer) ensureFolders(ctx context.Context, route *router.ResourceRouteInfo) error {
-	uid := route.GRN.UID
+	uid := route.GRN.ResourceIdentifier
 	idx := strings.LastIndex(uid, "/")
 	for idx > 0 {
 		parent := uid[:idx]
-		fr, err := s.router.Route(ctx, models.GRN{
-			OrgID: route.GRN.OrgID,
-			Kind:  models.StandardKindFolder,
-			UID:   parent,
+		fr, err := s.router.Route(ctx, grn.GRN{
+			TenantID:           route.GRN.TenantID,
+			ResourceKind:       models.StandardKindFolder,
+			ResourceIdentifier: parent,
 		})
 		if err != nil {
 			return err
@@ -612,7 +613,7 @@ func (s sqlObjectServer) ensureFolders(ctx context.Context, route *router.Resour
 		}
 		if !rows.Next() {
 			f := &folder.Model{
-				Name: store.GuessNameFromUID(fr.GRN.UID),
+				Name: store.GuessNameFromUID(fr.GRN.ResourceIdentifier),
 			}
 			fmt.Printf("CREATE:%s :: %v\n", fr.Key, f)
 			body, err := json.Marshal(f)
@@ -621,8 +622,8 @@ func (s sqlObjectServer) ensureFolders(ctx context.Context, route *router.Resour
 			}
 
 			_, err = s.Write(ctx, &object.WriteObjectRequest{
-				UID:  fr.GRN.UID,
-				Kind: fr.GRN.Kind,
+				UID:  fr.GRN.ResourceIdentifier,
+				Kind: fr.GRN.ResourceKind,
 				Body: body,
 			})
 			if err != nil {

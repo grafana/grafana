@@ -2,9 +2,8 @@ package grn
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
-
-	"cuelang.org/go/pkg/strconv"
 )
 
 type GRN struct {
@@ -12,7 +11,13 @@ type GRN struct {
 	// organization (in other environments) the resource belongs to. This field
 	// may be omitted for global Grafana resources which are not associated with
 	// an organization.
-	TenantID int
+	TenantID int64
+
+	// The service controller (only 'store' for now)
+	Service string
+
+	// Constrained area for the service
+	Namespace string
 
 	// The kind of resource being identified, for e.g. "dashboard" or "user".
 	// The caller is responsible for validating the value.
@@ -21,6 +26,9 @@ type GRN struct {
 	// ResourceIdentifier is used by the underlying service to identify the
 	// resource.
 	ResourceIdentifier string
+
+	// GRN can not be extended
+	_ interface{}
 }
 
 // ParseStr attempts to parse a string into a GRN. It returns an error if the
@@ -29,7 +37,7 @@ func ParseStr(str string) (GRN, error) {
 	ret := GRN{}
 	parts := strings.Split(str, ":")
 
-	if len(parts) != 3 {
+	if len(parts) != 5 {
 		return ret, ErrInvalidGRN.Errorf("%q is not a complete GRN", str)
 	}
 
@@ -37,23 +45,26 @@ func ParseStr(str string) (GRN, error) {
 		return ret, ErrInvalidGRN.Errorf("%q does not look like a GRN", str)
 	}
 
-	// split the final segment into Kind and ID. This only splits after the
-	// first occurrence of "/"; a ResourceIdentifier may contain "/"
-	kind, id, found := strings.Cut(parts[2], "/")
-	if !found { // missing "/"
-		return ret, ErrInvalidGRN.Errorf("invalid resource identifier in GRN %q", str)
-	}
-	ret.ResourceIdentifier = id
-	ret.ResourceKind = kind
-
 	if parts[1] != "" {
-		tID, err := strconv.Atoi(parts[1])
+		tID, err := strconv.ParseInt(parts[1], 10, 64)
 		if err != nil {
 			return ret, ErrInvalidGRN.Errorf("ID segment cannot be converted to an integer")
 		} else {
 			ret.TenantID = tID
 		}
 	}
+
+	ret.Service = parts[2]
+	ret.Namespace = parts[3]
+
+	// split the final segment into Kind and ID. This only splits after the
+	// first occurrence of "/"; a ResourceIdentifier may contain "/"
+	kind, id, found := strings.Cut(parts[4], "/")
+	if !found { // missing "/"
+		return ret, ErrInvalidGRN.Errorf("invalid resource identifier in GRN %q", str)
+	}
+	ret.ResourceIdentifier = id
+	ret.ResourceKind = kind
 
 	return ret, nil
 }
@@ -69,7 +80,12 @@ func MustParseStr(str string) GRN {
 }
 
 // String returns a string representation of a grn in the format
-// grn:tenantID:kind/resourceIdentifier
+// grn:tenantID:service:namespace:kind/resourceIdentifier
 func (g *GRN) String() string {
-	return fmt.Sprintf("grn:%d:%s/%s", g.TenantID, g.ResourceKind, g.ResourceIdentifier)
+	tenant := ""
+	if g.TenantID > 0 {
+		tenant = fmt.Sprintf("%d", g.TenantID)
+	}
+
+	return fmt.Sprintf("grn:%s:%s:%s:%s/%s", tenant, g.Service, g.Namespace, g.ResourceKind, g.ResourceIdentifier)
 }

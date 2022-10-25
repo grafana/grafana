@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/stretchr/testify/require"
 )
@@ -15,67 +15,67 @@ func TestSimpleRouter(t *testing.T) {
 	router := &standardStoreRouter{
 		kinds: kind.NewKindRegistry(),
 	}
-	info, err := router.Route(ctx, models.GRN{
-		UID: "path/to/file",
+	info, err := router.Route(ctx, grn.GRN{
+		ResourceIdentifier: "path/to/file",
 	})
 	require.Error(t, err) // needs OrgID
 
 	type routeScenario struct {
-		GRN   models.GRN
+		GRN   grn.GRN
 		Error string
 		Key   string
 	}
 
 	scenarios := []routeScenario{{
 		Error: "missing OrgID",
-		GRN:   models.GRN{Namespace: "drive"},
+		GRN:   grn.GRN{Namespace: "drive"},
 	}, {
 		Error: "unknown kind",
-		GRN: models.GRN{
-			OrgID:     11,
-			Namespace: "drive",
-			UID:       "path/to/file",
-			Kind:      "xyz",
+		GRN: grn.GRN{
+			TenantID:           11,
+			Namespace:          "drive",
+			ResourceIdentifier: "path/to/file",
+			ResourceKind:       "xyz",
 		},
 	}, {
 		Key: "11/drive/path/to/file-dashboard.json",
-		GRN: models.GRN{
-			OrgID:     11,
-			Namespace: "drive",
-			UID:       "path/to/file",
-			Kind:      "dashboard",
+		GRN: grn.GRN{
+			TenantID:           11,
+			Namespace:          "drive",
+			ResourceIdentifier: "path/to/file",
+			ResourceKind:       "dashboard",
 		},
 	}, {
 		Key: "11/drive/path/to/folder/__folder.json",
-		GRN: models.GRN{
-			OrgID:     11,
-			Namespace: "drive",
-			UID:       "path/to/folder",
-			Kind:      "folder",
+		GRN: grn.GRN{
+			TenantID:           11,
+			Namespace:          "drive",
+			ResourceIdentifier: "path/to/folder",
+			ResourceKind:       "folder",
 		},
 	}, {
 		Key: "11/drive/path/to/folder/__access.json",
-		GRN: models.GRN{
-			OrgID:     11,
-			Namespace: "drive",
-			UID:       "path/to/folder",
-			Kind:      "folder-access",
+		GRN: grn.GRN{
+			TenantID:           11,
+			Namespace:          "drive",
+			ResourceIdentifier: "path/to/folder",
+			ResourceKind:       "folder-access",
 		},
 	}, {
 		Key: "10/drive/path/to/file.png",
-		GRN: models.GRN{
-			OrgID:     10,
-			Namespace: "drive",
-			UID:       "path/to/file",
-			Kind:      "png",
+		GRN: grn.GRN{
+			TenantID:           10,
+			Namespace:          "drive",
+			ResourceIdentifier: "path/to/file",
+			ResourceKind:       "png",
 		},
 	}, {
 		Key: "10/custom/kind/playlist/aaaaa", // ?.json better or not?
-		GRN: models.GRN{
-			OrgID:     10,
-			Namespace: "custom", // can this have slashes?
-			UID:       "aaaaa",
-			Kind:      "playlist",
+		GRN: grn.GRN{
+			TenantID:           10,
+			Namespace:          "custom", // can this have slashes?
+			ResourceIdentifier: "aaaaa",
+			ResourceKind:       "playlist",
 		},
 	}}
 
