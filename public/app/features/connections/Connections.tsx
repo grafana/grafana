@@ -16,7 +16,7 @@ import {
 
 export default function Connections() {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
-  const isCloud = Boolean(navIndex['standalone-plugin-page-/connections/agent']);
+  const isCloud = Boolean(navIndex['standalone-plugin-page-/connections/connect-data']);
   const pluginServedPageIds = Object.keys(navIndex).filter((id) => id.includes('standalone-plugin-page-/connections'));
   const location = useLocation();
 
@@ -47,7 +47,11 @@ export default function Connections() {
               <AppRootPage
                 // @ts-ignore
                 route={{}}
-                match={{ ...match, params: { ...match.params, pluginId: 'grafana-easystart-app' } }}
+                match={{
+                  ...match,
+                  url: '/connections',
+                  params: { ...match.params, pluginId: 'grafana-easystart-app' },
+                }}
                 queryParams={{}}
                 location={location}
               />
@@ -66,7 +70,11 @@ export default function Connections() {
               <AppRootPage
                 // @ts-ignore
                 route={{}}
-                match={{ ...match, params: { ...match.params, pluginId: 'grafana-easystart-app' } }}
+                match={{
+                  ...match,
+                  url: '/connections',
+                  params: { ...match.params, pluginId: 'grafana-easystart-app' },
+                }}
                 queryParams={{}}
                 location={location}
               />
