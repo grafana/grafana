@@ -95,7 +95,7 @@ For example, if you group by `instance_name`, Grafana displays an aggregated met
 ##### Metadata labels
 
 Resource metadata labels contain information that can uniquely identify a resource in Google Cloud.
-A time series reponse returns metadata labels only if they're part of the Group By segment in the time series request.
+A time series response returns metadata labels only if they're part of the Group By segment in the time series request.
 
 There's no API for retrieving metadata labels, so you can't populate the Group By list with the metadata labels that are available for the selected service and metric.
 However, the **Group By** field list comes with a pre-defined set of common system labels.

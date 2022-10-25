@@ -1,7 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/data-sources/mssql/template-variables/
-description: Using template variables with Microsft SQL Server in Grafana
+description: Using template variables with Microsoft SQL Server in Grafana
 keywords:
   - grafana
   - MSSQL
@@ -12,7 +12,7 @@ keywords:
   - variables
   - queries
 menuTitle: Template variables
-title: Microsft SQL Server template variables
+title: Microsoft SQL Server template variables
 weight: 400
 ---
 
