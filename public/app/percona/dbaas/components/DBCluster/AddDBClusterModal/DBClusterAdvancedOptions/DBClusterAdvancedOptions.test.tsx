@@ -41,6 +41,9 @@ describe('DBClusterAdvancedOptions::', () => {
     expect(screen.getByTestId('dbcluster-resources-bar-memory')).toBeInTheDocument();
     expect(screen.getByTestId('dbcluster-resources-bar-cpu')).toBeInTheDocument();
     expect(screen.getByTestId('disk-number-input')).toBeInTheDocument();
+    const databaseVersionField = screen.getByTestId('dbcluster-database-version-field');
+    expect(databaseVersionField).toBeInTheDocument();
+    expect(databaseVersionField.querySelector('input')).toBeDisabled();
   });
 
   it('renders correctly with initial values', async () => {

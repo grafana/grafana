@@ -17,13 +17,10 @@ describe('DBClusterBasicOptions::', () => {
         render={({ form }: FormRenderProps) => <DBClusterBasicOptions kubernetes={kubernetesStub} form={form} />}
       />
     );
-    const databaseVersionField = screen.getByTestId('dbcluster-database-version-field');
 
     expect(screen.getByTestId('name-text-input')).toBeInTheDocument();
     expect(screen.getByTestId('dbcluster-kubernetes-cluster-field')).toBeInTheDocument();
     expect(screen.getByTestId('dbcluster-database-type-field')).toBeInTheDocument();
-    expect(databaseVersionField).toBeInTheDocument();
-    expect(databaseVersionField.querySelector('input')).toBeDisabled();
   });
 
   it('renders correctly with default values', () => {

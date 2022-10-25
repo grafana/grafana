@@ -1,21 +1,25 @@
 import { cx } from '@emotion/css';
 import { NumberInputField, RadioButtonGroupField, logger } from '@percona/platform-core';
 import React, { FC, useCallback, useState, useMemo, useEffect } from 'react';
-import { FormRenderProps } from 'react-final-form';
+import { FormRenderProps, Field } from 'react-final-form';
 
+import { SelectableValue } from '@grafana/data/src';
 import { Icon, useStyles } from '@grafana/ui';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { Overlay } from 'app/percona/shared/components/Elements/Overlay/Overlay';
 import { Databases } from 'app/percona/shared/core';
 import validators from 'app/percona/shared/helpers/validators';
 
+import { AsyncSelectFieldAdapter } from '../../../../../shared/components/Form/FieldAdapters/FieldAdapters';
 import { CPU, Disk, Memory } from '../../../DBaaSIcons';
 import { SwitchField } from '../../../Switch/Switch';
 import { DBClusterService } from '../../DBCluster.service';
 import { DBClusterAllocatedResources, DBClusterExpectedResources } from '../../DBCluster.types';
-import { newDBClusterService } from '../../DBCluster.utils';
+import { isOptionEmpty, newDBClusterService } from '../../DBCluster.utils';
 import { ResourcesBar } from '../../ResourcesBar/ResourcesBar';
 import { AddDBClusterFields } from '../AddDBClusterModal.types';
+import { useDatabaseVersions } from '../DBClusterBasicOptions/DBClusterBasicOptions.hooks';
+import { optionRequired } from '../DBClusterBasicOptions/DBClusterBasicOptions.utils';
 
 import {
   TOPOLOGY_OPTIONS,
@@ -43,6 +47,8 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
   const [loadingAllocatedResources, setLoadingAllocatedResources] = useState(false);
   const [expectedResources, setExpectedResources] = useState<DBClusterExpectedResources>();
   const [loadingExpectedResources, setLoadingExpectedResources] = useState(false);
+  const [databaseVersions, setDatabaseVersions] = useState<SelectableValue[]>([]);
+  const [loadingDatabaseVersions, setLoadingDatabaseVersions] = useState(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const mounted = { current: true };
   const { required, min } = validators;
@@ -51,6 +57,10 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
   const nodeValidators = [required, min(MIN_NODES)];
   const parameterValidators = [required, min(MIN_RESOURCES), resourceValidator];
   const { name, kubernetesCluster, topology, resources, memory, cpu, databaseType, disk, nodes, single } = values;
+  const resourcesInputProps = { step: '0.1' };
+
+  const parsePositiveInt = useCallback((value) => (value > 0 && Number.isInteger(+value) ? value : undefined), []);
+
   const resourcesBarStyles = useMemo(
     () => ({
       [styles.resourcesBar]: !!allocatedResources,
@@ -58,9 +68,7 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
     }),
     [allocatedResources, styles.resourcesBar, styles.resourcesBarEmpty]
   );
-  const resourcesInputProps = { step: '0.1' };
-  const parsePositiveInt = useCallback((value) => (value > 0 && Number.isInteger(+value) ? value : undefined), []);
-
+  const isDatabaseVersionDisabled = useMemo(() => isOptionEmpty(databaseType), [databaseType]);
   const topologies = useMemo(
     () =>
       databaseType?.value !== Databases.mysql
@@ -170,8 +178,20 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topology]);
 
+  useDatabaseVersions(form, databaseType, kubernetesCluster, setLoadingDatabaseVersions, setDatabaseVersions);
+
   return (
     <>
+      <Field
+        disabled={isDatabaseVersionDisabled}
+        dataTestId="dbcluster-database-version-field"
+        name={AddDBClusterFields.databaseVersion}
+        label={Messages.dbcluster.addModal.fields.databaseVersion}
+        component={AsyncSelectFieldAdapter}
+        loading={loadingDatabaseVersions}
+        options={databaseVersions}
+        validate={optionRequired}
+      />
       <RadioButtonGroupField
         name={AddDBClusterFields.topology}
         label={Messages.dbcluster.addModal.fields.topology}
