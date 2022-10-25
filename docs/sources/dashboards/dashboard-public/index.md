@@ -90,7 +90,7 @@ guaranteed because plugin developers can override this functionality. The follow
 
 ##### Unconfirmed:
 
-> **Note:** If you've confirmed one of these datasources work with public dashboards, let us know in our [Github discussion](https://github.com/grafana/grafana/discussions/49253) and we'll mark it as confirmed!
+> **Note:** If you've confirmed one of these datasources work with public dashboards, let us know in our [Github](https://github.com/grafana/grafana/discussions/49253) discussion, and we'll mark it as confirmed!
 
 <table>
   <tr>
