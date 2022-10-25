@@ -268,6 +268,7 @@ function initEchoSrv() {
     registerEchoBackend(
       new GA4EchoBackend({
         googleAnalyticsId: config.googleAnalytics4Id,
+        googleAnalytics4EnchancedTrackingIsActive: config.googleAnalytics4EnchancedTrackingIsActive,
       })
     );
   }

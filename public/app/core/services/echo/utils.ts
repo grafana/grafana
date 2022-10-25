@@ -14,11 +14,14 @@ export function getUserIdentifier(user: CurrentUserDTO) {
   return user.email;
 }
 
-export function loadScript(url: string) {
+export function loadScript(url: string, async = false) {
   return new Promise((resolve) => {
     const script = document.createElement('script');
     script.onload = resolve;
     script.src = url;
+    if (async) {
+      script.async = true;
+    }
     document.head.appendChild(script);
   });
 }

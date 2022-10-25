@@ -137,13 +137,14 @@ var (
 	appliedEnvOverrides          []string
 
 	// analytics
-	GoogleAnalyticsId       string
-	GoogleAnalytics4Id      string
-	GoogleTagManagerId      string
-	RudderstackDataPlaneUrl string
-	RudderstackWriteKey     string
-	RudderstackSdkUrl       string
-	RudderstackConfigUrl    string
+	GoogleAnalyticsId                         string
+	GoogleAnalytics4Id                        string
+	GoogleAnalytics4EnchancedTrackingIsActive bool
+	GoogleTagManagerId                        string
+	RudderstackDataPlaneUrl                   string
+	RudderstackWriteKey                       string
+	RudderstackSdkUrl                         string
+	RudderstackConfigUrl                      string
 
 	// LDAP
 	LDAPEnabled           bool
@@ -992,6 +993,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.CheckForPluginUpdates = analytics.Key("check_for_plugin_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleAnalytics4Id = analytics.Key("google_analytics_4_id").String()
+	GoogleAnalytics4EnchancedTrackingIsActive = analytics.Key("google_analytics_4_enhanced_measurement_is_active").MustBool(true)
+
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 	RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
 	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
