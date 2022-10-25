@@ -23,7 +23,7 @@ type FakePublicDashboardService struct {
 	mock.Mock
 }
 
-// GenerateNewPublicDashboardAccessToken provides a mock function with given fields: ctx
+// NewPublicDashboardAccessToken provides a mock function with given fields: ctx
 func (_m *FakePublicDashboardService) NewPublicDashboardAccessToken(ctx context.Context) (string, error) {
 	ret := _m.Called(ctx)
 

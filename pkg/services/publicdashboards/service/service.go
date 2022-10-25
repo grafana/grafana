@@ -155,7 +155,7 @@ func (pd *PublicDashboardServiceImpl) Save(ctx context.Context, u *user.SignedIn
 	return newPubdash, err
 }
 
-// GenerateNewPublicDashboardUid Generates not existent uid to create a public dashboard
+// NewPublicDashboardUid Generates a unique uid to create a public dashboard. Will make 3 attempts and fail if it cannot find an unused uid
 func (pd *PublicDashboardServiceImpl) NewPublicDashboardUid(ctx context.Context) (string, error) {
 	var uid string
 	for i := 0; i < 3; i++ {
@@ -169,7 +169,7 @@ func (pd *PublicDashboardServiceImpl) NewPublicDashboardUid(ctx context.Context)
 	return "", ErrPublicDashboardFailedGenerateUniqueUid
 }
 
-// GenerateNewPublicDashboardAccessToken Generates not existent accessToken to create a public dashboard
+// NewPublicDashboardAccessToken Generates a unique accessToken to create a public dashboard. Will make 3 attempts and fail if it cannot find an unused access token
 func (pd *PublicDashboardServiceImpl) NewPublicDashboardAccessToken(ctx context.Context) (string, error) {
 	var accessToken string
 	for i := 0; i < 3; i++ {
