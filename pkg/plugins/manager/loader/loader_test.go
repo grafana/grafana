@@ -696,7 +696,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 			})
 			l.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
 
-			got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/test-app-with-roles"})
+			got, err := l.Load(context.Background(), plugins.External, tt.pluginPaths)
 			require.NoError(t, err)
 
 			if !cmp.Equal(got, tt.want, compareOpts) {
