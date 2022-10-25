@@ -1,7 +1,7 @@
 import { logger } from '@percona/platform-core';
 import React, { FC, useEffect, useState } from 'react';
 
-import { useStyles } from '@grafana/ui';
+import { Spinner, useStyles } from '@grafana/ui';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 
 import { DBClusterConnection as ConnectionParams, DBClusterStatus, DBClusterConnectionAPI } from '../DBCluster.types';
@@ -69,6 +69,7 @@ export const DBClusterConnection: FC<DBClusterConnectionProps> = ({ dbCluster })
             />
           </>
         )}
+        {loading && <Spinner />}
       </div>
     </>
   );

@@ -1,5 +1,7 @@
-import { api } from 'app/percona/shared/helpers/api';
 import { CancelToken } from 'axios';
+
+import { api } from 'app/percona/shared/helpers/api';
+
 import { EntitlementsResponse, Entitlement } from './Entitlements.types';
 
 const BASE_URL = '/v1/Platform';

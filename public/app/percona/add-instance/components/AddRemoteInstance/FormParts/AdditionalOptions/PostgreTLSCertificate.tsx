@@ -1,6 +1,7 @@
 import { TextareaInputField } from '@percona/platform-core';
-import { Messages } from '../FormParts.messages';
 import React, { FC } from 'react';
+
+import { Messages } from '../FormParts.messages';
 import { FormPartProps } from '../FormParts.types';
 
 export const PostgreTLSCertificate: FC<FormPartProps> = ({ form }) => {

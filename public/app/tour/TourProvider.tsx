@@ -6,7 +6,7 @@ import { contextSrv } from '../core/services/context_srv';
 import Close from './Close';
 import Navigation from './Navigation';
 import { useAppDispatch } from 'app/store/store';
-import { setProductTourCompleted } from 'app/percona/shared/core/reducers';
+import { setProductTourCompleted } from 'app/percona/shared/core/reducers/user/user';
 import { getTheme } from '@grafana/ui';
 import { config } from '@grafana/runtime';
 

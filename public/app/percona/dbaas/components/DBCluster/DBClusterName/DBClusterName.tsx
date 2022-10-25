@@ -1,8 +1,10 @@
 import React, { FC } from 'react';
+
 import { Icon, useStyles } from '@grafana/ui';
+
+import { DASHBOARD_URL_MAP } from './DBClusterName.constants';
 import { getStyles } from './DBClusterName.styles';
 import { DBClusterNameProps } from './DBClusterName.types';
-import { DASHBOARD_URL_MAP } from './DBClusterName.constants';
 
 export const DBClusterName: FC<DBClusterNameProps> = ({ dbCluster: { clusterName, databaseType } }) => {
   const styles = useStyles(getStyles);

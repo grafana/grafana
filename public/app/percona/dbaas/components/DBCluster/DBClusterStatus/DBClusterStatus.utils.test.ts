@@ -1,5 +1,7 @@
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
+
 import { DBClusterStatus } from '../DBCluster.types';
+
 import { getProgressMessage, getShowProgressBarValue } from './DBClusterStatus.utils';
 
 const { progressError, processing, complete } = Messages.dbcluster.table.status;

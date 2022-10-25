@@ -1,4 +1,4 @@
-import { UserDetailsResponse } from '../../services/user/User.types';
+import { UserDetailsResponse } from '../../../services/user/User.types';
 
 import { UserDetails } from './user.types';
 

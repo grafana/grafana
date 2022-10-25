@@ -1,8 +1,10 @@
-import { useStyles2 } from '@grafana/ui';
 import React from 'react';
+
+import { useStyles2 } from '@grafana/ui';
+
+import { Messages } from './SectionLabel.messages';
 import { getStyles } from './SectionLabel.styles';
 import { LabelProps } from './SectionLabel.types';
-import { Messages } from './SectionLabel.messages';
 
 export const Label = ({ name, endDate }: LabelProps) => {
   const styles = useStyles2(getStyles);

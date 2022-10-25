@@ -1,5 +1,7 @@
 import { SelectableValue } from '@grafana/data';
+
 import { DBCluster } from '../../DBCluster.types';
+
 import { DBClusterTopology } from './DBClusterAdvancedOptions.types';
 
 export const resourceValidator = (value?: number) => {

@@ -1,5 +1,6 @@
 /* eslint implicit-arrow-linebreak: 0 */
 import { Databases } from 'app/percona/shared/core';
+
 import { DashboardURLMap } from './DBClusterName.types';
 
 export const DASHBOARD_URL_MAP: DashboardURLMap = {

@@ -1,5 +1,6 @@
 import { DBClusterLogs } from '../DBCluster.types';
 import { dbClusterLogsAPI } from '../__mocks__/dbClustersStubs';
+
 import { logsToString, toggleLogs, transformLogs } from './DBClusterLogsModal.utils';
 
 describe('DBClusterLogsModal.utils::', () => {

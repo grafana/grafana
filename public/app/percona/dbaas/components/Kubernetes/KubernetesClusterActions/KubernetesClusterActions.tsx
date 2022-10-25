@@ -16,7 +16,6 @@ export const KubernetesClusterActions: FC<DBClusterActionsProps> = ({
   setDeleteModalVisible,
   setViewConfigModalVisible,
   setManageComponentsModalVisible,
-  getDBClusters,
 }) => {
   const isAdmin = config.bootData.user.isGrafanaAdmin;
   const getActions = useCallback(

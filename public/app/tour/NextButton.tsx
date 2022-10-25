@@ -2,7 +2,7 @@ import { BtnFnProps } from '@reactour/tour/dist/types';
 import React, { FC } from 'react';
 
 import { Button, IconButton } from '@grafana/ui';
-import { setProductTourCompleted } from 'app/percona/shared/core/reducers';
+import { setProductTourCompleted } from 'app/percona/shared/core/reducers/user/user';
 import { useAppDispatch } from 'app/store/store';
 
 const NextButton: FC<BtnFnProps> = ({ currentStep, setCurrentStep, stepsLength, setIsOpen }) => {

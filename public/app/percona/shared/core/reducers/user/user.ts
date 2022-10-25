@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { withSerializedError } from 'app/features/alerting/unified/utils/redux';
 
-import { UserService } from '../../services/user/User.service';
+import { UserService } from '../../../services/user/User.service';
 
 import { PerconaUserState, UserDetails } from './user.types';
 import { toUserDetailsModel } from './user.utils';

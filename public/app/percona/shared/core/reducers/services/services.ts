@@ -6,8 +6,8 @@ import { createAsyncThunk } from 'app/types';
 
 import { filterFulfilled, processPromiseResults } from '../../../helpers/promises';
 
-import { RemoveServicesParams, ListServicesParams, ServicesState } from './services.types';
-import { toRemoveServiceBody, toListServicesBody } from './services.utils';
+import { ListServicesParams, RemoveServicesParams, ServicesState } from './services.types';
+import { toListServicesBody, toRemoveServiceBody } from './services.utils';
 
 const initialState: ServicesState = {
   activeTypes: [],
@@ -63,8 +63,7 @@ export const fetchServicesAction = createAsyncThunk<ServiceListPayload, Partial<
   'percona/fetchServices',
   async (params = {}) => {
     const body = toListServicesBody(params);
-    const response = await ServicesService.getServices(body, params.token);
-    return response;
+    return await ServicesService.getServices(body, params.token);
   }
 );
 
@@ -74,8 +73,7 @@ export const removeServicesAction = createAsyncThunk(
     const bodies = params.services.map(toRemoveServiceBody);
     const requests = bodies.map((body) => ServicesService.removeService(body, params.cancelToken));
     const results = await processPromiseResults(requests);
-    const successfullyDeletedCount = results.filter(filterFulfilled).length;
-    return successfullyDeletedCount;
+    return results.filter(filterFulfilled).length;
   }
 );
 
