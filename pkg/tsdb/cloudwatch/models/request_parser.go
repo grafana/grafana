@@ -40,6 +40,8 @@ type metricsDataQuery struct {
 	Alias             string                 `json:"alias"`
 }
 
+// ParseMetricDataQueries decodes the metric data queries json, validates, sets default values and returns an array of CloudWatchQueries.
+// The CloudWatchQuery has a 1 to 1 mapping to a query editor row
 func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time, endTime time.Time, dynamicLabelsEnabled bool) ([]*CloudWatchQuery, error) {
 	var metricDataQueries = make(map[string]metricsDataQuery)
 	for _, dataQuery := range dataQueries {
