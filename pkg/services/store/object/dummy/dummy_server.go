@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	xctx "github.com/grafana/grafana/pkg/infra/x/context"
 	"github.com/grafana/grafana/pkg/infra/x/persistentcollection"
@@ -41,19 +42,33 @@ func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Pr
 		log:        log.New("in-memory-object-server"),
 		kinds:      kinds,
 	}
-	object.RegisterObjectStoreServer(grpcServerProvider.GetServer(), objectServer)
+	objectServer.BasicService = services.NewIdleService(objectServer.start, nil)
+
+	// TODO: remove this
+	err := objectServer.StartAsync(context.Background())
+	if err != nil {
+		objectServer.log.Error("Failed to start object server", "error", err)
+	}
+
 	return objectServer
 }
 
 type dummyObjectServer struct {
-	log        log.Logger
-	collection persistentcollection.PersistentCollection[*RawObjectWithHistory]
-	kinds      kind.KindRegistry
+	*services.BasicService
+	log                log.Logger
+	collection         persistentcollection.PersistentCollection[*RawObjectWithHistory]
+	kinds              kind.KindRegistry
+	grpcServerProvider grpcserver.Provider
 }
 
 func namespaceFromUID(uid string) string {
 	// TODO
 	return "orgId-1"
+}
+
+func (i *dummyObjectServer) start(ctx context.Context) error {
+	object.RegisterObjectStoreServer(i.grpcServerProvider.GetServer(), i)
+	return nil
 }
 
 func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind string, version string) (*RawObjectWithHistory, *object.RawObject, error) {
