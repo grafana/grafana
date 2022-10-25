@@ -153,7 +153,7 @@ func TestRequestParser(t *testing.T) {
 		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
 		require.Error(t, err)
 
-		assert.Equal(t, `error parsing query "", failed to parse dimensions: unknown type as dimension value`, err.Error())
+		assert.Equal(t, `failed to parse dimensions: unknown type as dimension value`, err.Error())
 	})
 }
 
@@ -324,7 +324,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 		}
 		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
 		require.Error(t, err)
-		assert.Equal(t, `error parsing query "", failed to parse period as duration: time: invalid duration "invalid"`, err.Error())
+		assert.Equal(t, `failed to parse period as duration: time: invalid duration "invalid"`, err.Error())
 	})
 
 	t.Run("returns parsed duration in seconds", func(t *testing.T) {
@@ -654,23 +654,7 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 				Hide:      &false,
 			}
 
-			migrateAliasToDynamicLabel(&queryToMigrate)
-
-			expected := metricsDataQuery{
-				Alias: tc.inputAlias,
-				Dimensions: map[string]interface{}{
-					"InstanceId": []interface{}{"test"},
-				},
-				Hide:       &false,
-				Label:      &tc.expectedLabel,
-				MetricName: "CPUUtilization",
-				Namespace:  "ec2",
-				Period:     "600",
-				Region:     "us-east-1",
-				Statistic:  &average,
-			}
-
-			assert.Equal(t, expected, queryToMigrate)
+			assert.Equal(t, tc.expectedLabel, getLabel(queryToMigrate, true))
 		})
 	}
 }
@@ -712,8 +696,8 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 	t.Run("successfully migrates alias to dynamic label for multiple queries", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
+				RefID: "A",
 				JSON: json.RawMessage(`{
-				   "refId":"A",
 				   "region":"us-east-1",
 				   "namespace":"ec2",
 				   "metricName":"CPUUtilization",
@@ -725,8 +709,8 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 				}`),
 			},
 			{
+				RefID: "B",
 				JSON: json.RawMessage(`{
-				   "refId":"A",
 				   "region":"us-east-1",
 				   "namespace":"ec2",
 				   "metricName":"CPUUtilization",
