@@ -22,7 +22,7 @@
   },
   "scripts": {
     "build": "webpack",
-    "prepare-testdata": "yarn run prepare:object-store-test",
-    "prepare-testdata:object-store-test": "ts-node scripts/prepareDashboardFileNames.ts ../../devenv/dev-dashboards ./scripts/tmp/filenames.json"
+    "prepare-testdata": "yarn run prepare-testdata:object-store-test",
+    "prepare-testdata:object-store-test": "ts-node scripts/prepareDashboardFileNames.ts ../../dev-dashboards ./scripts/tmp/filenames.json"
   }
 }

@@ -6,7 +6,6 @@ if ((BASH_VERSINFO[0] < 4)); then
   exit 1;
 fi
 
-
 declare -A cfg=(
   [grpcToken]=$GRPC_TOKEN
   [grpcAddress]="127.0.0.1:10000"
