@@ -502,6 +502,9 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 
 	// Locked to a folder or prefix
 	if r.Folder != "" {
+		if strings.HasSuffix(r.Folder, "/") {
+			return nil, fmt.Errorf("folder should not end with slash")
+		}
 		if strings.HasSuffix(r.Folder, "*") {
 			keyPrefix := fmt.Sprintf("%d/%s", user.OrgID, strings.ReplaceAll(r.Folder, "*", ""))
 			selectQuery.addWherePrefix("key", keyPrefix)
@@ -602,6 +605,7 @@ func (s sqlObjectServer) ensureFolders(ctx context.Context, route *router.Resour
 			return err
 		}
 
+		// Not super efficient, but maybe it is OK?
 		rows, err := s.sess.Query(ctx, "SELECT 1 from object WHERE key = ?", fr.Key)
 		if err != nil {
 			return err
@@ -625,7 +629,7 @@ func (s sqlObjectServer) ensureFolders(ctx context.Context, route *router.Resour
 				return err
 			}
 		}
-		rows.Close()
+		_ = rows.Close()
 		idx = strings.LastIndex(parent, "/")
 	}
 	return nil

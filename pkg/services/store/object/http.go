@@ -214,44 +214,37 @@ func (s *httpObjectStore) doGetHistory(c *models.ReqContext) response.Response {
 }
 
 func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
-	type rspInfo struct {
-		Message string `json:"message,omitempty"`
-		Path    string `json:"path,omitempty"`
-		Count   int    `json:"count,omitempty"`
-		Bytes   int    `json:"bytes,omitempty"`
-		Error   bool   `json:"err,omitempty"`
-	}
-	rsp := &rspInfo{Message: "uploaded"}
-
 	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, MAX_UPLOAD_SIZE)
 	if err := c.Req.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
-		rsp.Message = fmt.Sprintf("Please limit file uploaded under %s", util.ByteCountSI(MAX_UPLOAD_SIZE))
-		rsp.Error = true
-		return response.JSON(400, rsp)
+		msg := fmt.Sprintf("Please limit file uploaded under %s", util.ByteCountSI(MAX_UPLOAD_SIZE))
+		return response.Error(400, msg, nil)
 	}
+	var rsp []*WriteObjectResponse
+
 	message := getMultipartFormValue(c.Req, "message")
 	overwriteExistingFile := getMultipartFormValue(c.Req, "overwriteExistingFile") != "false" // must explicitly overwrite
 	folder := getMultipartFormValue(c.Req, "folder")
 
-	for k, fileHeaders := range c.Req.MultipartForm.File {
-		path := getMultipartFormValue(c.Req, k+".path") // match the path with a file
-		if len(fileHeaders) > 1 {
-			path = ""
-		}
-		if path == "" && folder == "" {
-			rsp.Message = "please specify the upload folder or full path"
-			rsp.Error = true
-			return response.JSON(400, rsp)
-		}
-
+	for _, fileHeaders := range c.Req.MultipartForm.File {
 		for _, fileHeader := range fileHeaders {
-			// restrict file size based on file size
-			// open each file to copy contents
-			file, err := fileHeader.Open()
-			if err != nil {
-				return response.Error(500, "Internal Server Error", err)
+			idx := strings.LastIndex(fileHeader.Filename, ".")
+			if idx <= 0 {
+				return response.Error(400, "Expecting file extension: "+fileHeader.Filename, nil)
 			}
-			err = file.Close()
+
+			ext := strings.ToLower(fileHeader.Filename[idx+1:])
+			kind, err := s.kinds.GetFromExtension(ext)
+			if err != nil || kind.ID == "" {
+				return response.Error(400, "Unsupported kind: "+fileHeader.Filename, err)
+			}
+			uid := folder
+			if uid != "" {
+				uid = uid + "/" + fileHeader.Filename[:idx]
+			} else {
+				uid = fileHeader.Filename[:idx]
+			}
+
+			file, err := fileHeader.Open()
 			if err != nil {
 				return response.Error(500, "Internal Server Error", err)
 			}
@@ -259,26 +252,19 @@ func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
 			if err != nil {
 				return response.Error(500, "Internal Server Error", err)
 			}
-
-			if path == "" {
-				path = folder + "/" + fileHeader.Filename
+			err = file.Close()
+			if err != nil {
+				return response.Error(500, "Internal Server Error", err)
 			}
-
-			uid := path
-			kind := models.StandardKindDashboard
-			mimeType := http.DetectContentType(data)
-
-			if strings.HasPrefix(mimeType, "image") || strings.HasSuffix(path, ".svg") {
-				kind = models.StandardKindPNG
-			}
+			// mimeType := http.DetectContentType(data)
 
 			if !overwriteExistingFile {
-				fmt.Printf("????")
+				fmt.Printf("TODO! check previous version exits?\n")
 			}
 
 			result, err := s.store.Write(c.Req.Context(), &WriteObjectRequest{
 				UID:     uid,
-				Kind:    kind,
+				Kind:    kind.ID,
 				Body:    data,
 				Comment: message,
 				//	PreviousVersion: params["previousVersion"],
@@ -287,9 +273,7 @@ func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
 			if err != nil {
 				return response.Error(500, err.Error(), err) // TODO, better errors
 			}
-			rsp.Count++
-			rsp.Bytes += len(data)
-			rsp.Path = result.Object.ETag
+			rsp = append(rsp, result)
 		}
 	}
 
