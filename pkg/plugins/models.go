@@ -87,7 +87,6 @@ type Includes struct {
 	Type       string       `json:"type"`
 	Component  string       `json:"component"`
 	Role       org.RoleType `json:"role"`
-	Action     string       `json:"action,omitempty"`
 	AddToNav   bool         `json:"addToNav"`
 	DefaultNav bool         `json:"defaultNav"`
 	Slug       string       `json:"slug"`
@@ -102,10 +101,6 @@ func (e Includes) DashboardURLPath() string {
 		return ""
 	}
 	return "/d/" + e.UID
-}
-
-func (e Includes) IsRBACReady() bool {
-	return e.Action != ""
 }
 
 type Dependency struct {
