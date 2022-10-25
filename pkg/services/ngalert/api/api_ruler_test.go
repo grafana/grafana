@@ -524,7 +524,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			ruleStore.PutRule(context.Background(), expectedRules...)
 			ac := acMock.New().WithDisabled()
 
-			response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(createRequestContext(orgID, "", map[string]string{
+			response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(createRequestContext(orgID, models2.ROLE_VIEWER, map[string]string{
 				":Namespace": folder.Title,
 			}))
 
@@ -549,6 +549,48 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			}
 			assert.Emptyf(t, expectedRules, "not all expected rules were returned")
 		})
+	})
+	t.Run("should return the provenance of the alert rules", func(t *testing.T) {
+		orgID := rand.Int63()
+		folder := randFolder()
+		ruleStore := store.NewFakeRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
+		ruleStore.PutRule(context.Background(), expectedRules...)
+		ac := acMock.New().WithDisabled()
+
+		svc := createService(ac, ruleStore, nil)
+
+		// add provenance to the first generated rule
+		rule := &models.AlertRule{
+			UID: expectedRules[0].UID,
+		}
+		err := svc.provenanceStore.SetProvenance(context.Background(), rule, orgID, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		response := svc.RouteGetNamespaceRulesConfig(createRequestContext(orgID, models2.ROLE_VIEWER, map[string]string{
+			":Namespace": folder.Title,
+		}))
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		result := &apimodels.NamespaceConfigResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.NotNil(t, result)
+		found := false
+		for namespace, groups := range *result {
+			require.Equal(t, folder.Title, namespace)
+			for _, group := range groups {
+				for _, actualRule := range group.Rules {
+					if actualRule.GrafanaManagedAlert.UID == expectedRules[0].UID {
+						require.Equal(t, models.ProvenanceAPI, actualRule.GrafanaManagedAlert.Provenance)
+						found = true
+					} else {
+						require.Equal(t, models.ProvenanceNone, actualRule.GrafanaManagedAlert.Provenance)
+					}
+				}
+			}
+		}
+		require.True(t, found)
 	})
 }
 

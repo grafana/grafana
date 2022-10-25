@@ -45,8 +45,36 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 
 ## Grafana Alerting - main / unreleased
 
+- [ENHANCEMENT] Scheduler: Ticker expose new metrics. In legacy, metrics are prefixed with `legacy_` #47828, #48190
+  - `grafana_alerting_ticker_last_consumed_tick_timestamp_seconds`
+  - `grafana_alerting_ticker_next_tick_timestamp_seconds`
+  - `grafana_alerting_ticker_interval_seconds`
+- [ENHANCEMENT] Create folder 'General Alerting' when Grafana starts from the scratch #48866
+- [ENHANCEMENT] Rule changes authorization logic to use UID folder scope instead of ID scope #48970
+- [FEATURE] Indicate whether routes are provisioned when GETting Alertmanager configuration #47857
+- [FEATURE] Indicate whether contact point is provisioned when GETting Alertmanager configuration #48323
+- [FEATURE] Indicate whether alert rule is provisioned when GETting the rule #48458
+- [BUGFIX] Migration: ignore alerts that do not belong to any existing organization\dashboard #49192
+- [BUGFIX] Allow anonymous access to alerts #49203
+
+## 8.5.3
+
+- [BUGFIX] Migration: Remove data source disabled property when migrating alerts #48559
+
+## 8.5.2
+
+- [FEATURE] Migration: Adds `force_migration` as a flag to prevent truncating the unified alerting tables as we migrate. #48526
+- [BUGFIX] Use `NaN` and do not panic when captured alert values are empty #48370
+
+## 8.5.1
+
+- [BUGFIX] Silences: Invalid silences created through the API made grafana panic, they are now validated. #46892
+- [ENHANCEMENT] Migration: Migrate each legacy notification channel to its own contact point, use nested routes to reproduce multi-channel alerts #47291
+
+## 8.5.0
+
 - [CHANGE] Prometheus Compatible API: Use float-like values for `api/prometheus/grafana/api/v1/alerts` and `api/prometheus/grafana/api/v1/rules` instead of the evaluation string #47216
-- [BUGFIX] Scheduler: Fix state manager to support OK option of `AlertRule.ExecErrState` #47670 
+- [BUGFIX] Scheduler: Fix state manager to support OK option of `AlertRule.ExecErrState` #47670
 - [ENHANCEMENT] Templates: Enable the use of classic condition values in templates #46971
 - [CHANGE] Notification URL points to alert view page instead of alert edit page. #47752
 - [FEATURE]  Indicate whether routes are provisioned when GETting Alertmanager configuration #47857
