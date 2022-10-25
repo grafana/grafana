@@ -1,3 +1,6 @@
+import { agent, LogLevel as GrafanaLogLevel } from '@grafana/agent-web';
+import { config } from '@grafana/runtime/src';
+
 export const LogMessages = {
   filterByLabel: 'filtering alert instances by label',
   loadedList: 'loaded Alert Rules list',
@@ -8,3 +11,30 @@ export const LogMessages = {
   cancelSavingAlertRule: 'user canceled alert rule creation',
   successSavingAlertRule: 'alert rule saved successfully',
 };
+
+// logInfo from '@grafana/runtime' should be used, but it doesn't handle Grafana JS Agent and Sentry correctly
+export function logInfo(message: string, context: Record<string, string | number> = {}) {
+  if (config.grafanaJavascriptAgent.enabled) {
+    agent.api.pushLog([message], {
+      level: GrafanaLogLevel.INFO,
+      context: { ...context, module: 'Alerting' },
+    });
+  }
+}
+
+export function withPerfLogging<TFunc extends (...args: any[]) => Promise<any>>(
+  func: TFunc,
+  message: string,
+  context: Record<string, string>
+): (...args: Parameters<TFunc>) => Promise<Awaited<ReturnType<TFunc>>> {
+  return async function (...args) {
+    const startLoadingTs = performance.now();
+    const response = await func(...args);
+    logInfo(message, {
+      loadTimeMs: (performance.now() - startLoadingTs).toFixed(0),
+      ...context,
+    });
+
+    return response;
+  };
+}

@@ -1,7 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
-import { locationService, logInfo } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -32,7 +32,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
-import { LogMessages } from '../Analytics';
+import { logInfo, LogMessages, withPerfLogging } from '../Analytics';
 import {
   addAlertManagers,
   createOrUpdateSilence,
@@ -103,7 +103,13 @@ export const fetchPromRulesAction = createAsyncThunk(
     thunkAPI
   ): Promise<RuleNamespace[]> => {
     await thunkAPI.dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
-    return await withSerializedError(fetchRules(rulesSourceName, filter));
+
+    const fetchRulesWithLogging = withPerfLogging(fetchRules, `[${rulesSourceName}] Prometheus rules loaded`, {
+      dataSourceName: rulesSourceName,
+      thunk: 'unifiedalerting/fetchPromRules',
+    });
+
+    return await withSerializedError(fetchRulesWithLogging(rulesSourceName, filter));
   }
 );
 
@@ -127,9 +133,17 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
         );
 
         const lazyConfigInitSupported = amFeatures?.lazyConfigInit ?? false;
+        const fetchAMconfigWithLogging = withPerfLogging(
+          fetchAlertManagerConfig,
+          `[${alertManagerSourceName}] Alertmanager config loaded`,
+          {
+            dataSourceName: alertManagerSourceName,
+            thunk: 'unifiedalerting/fetchAmConfig',
+          }
+        );
 
         return retryWhile(
-          () => fetchAlertManagerConfig(alertManagerSourceName),
+          () => fetchAMconfigWithLogging(alertManagerSourceName),
           // if config has been recently deleted, it takes a while for cortex start returning the default one.
           // retry for a short while instead of failing
           (e) => !!messageFromError(e)?.includes('alertmanager storage object not found') && !lazyConfigInitSupported,
@@ -195,7 +209,13 @@ export const fetchRulerRulesAction = createAsyncThunk(
   ): Promise<RulerRulesConfigDTO | null> => {
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const rulerConfig = getDataSourceRulerConfig(getState, rulesSourceName);
-    return await withSerializedError(fetchRulerRules(rulerConfig, filter));
+
+    const fetchRulerRulesWithLogging = withPerfLogging(fetchRulerRules, `[${rulesSourceName}] Ruler rules loaded`, {
+      dataSourceName: rulesSourceName,
+      thunk: 'unifiedalerting/fetchRulerRules',
+    });
+
+    return await withSerializedError(fetchRulerRulesWithLogging(rulerConfig, filter));
   }
 );
 
@@ -214,7 +234,12 @@ export function fetchPromAndRulerRulesAction({ rulesSourceName }: { rulesSourceN
 export const fetchSilencesAction = createAsyncThunk(
   'unifiedalerting/fetchSilences',
   (alertManagerSourceName: string): Promise<Silence[]> => {
-    return withSerializedError(fetchSilences(alertManagerSourceName));
+    const fetchSilencesWithLogging = withPerfLogging(fetchSilences, `[${alertManagerSourceName}] Silences loaded`, {
+      dataSourceName: alertManagerSourceName,
+      thunk: 'unifiedalerting/fetchSilences',
+    });
+
+    return withSerializedError(fetchSilencesWithLogging(alertManagerSourceName));
   }
 );
 
@@ -261,7 +286,17 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
         }
 
         const { id, name } = ds;
-        const buildInfo = await discoverFeatures(name);
+
+        const discoverFeaturesWithLogging = withPerfLogging(
+          discoverFeatures,
+          `[${rulesSourceName}] Rules source features discovered`,
+          {
+            dataSourceName: rulesSourceName,
+            thunk: 'unifiedalerting/fetchPromBuildinfo',
+          }
+        );
+
+        const buildInfo = await discoverFeaturesWithLogging(name);
 
         const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerApiEnabled
           ? {
@@ -292,8 +327,11 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
 
 export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
+    const allStartLoadingTs = performance.now();
+
     await Promise.allSettled(
       getAllRulesSourceNames().map(async (rulesSourceName) => {
+        const dsStartLoadingTs = performance.now();
         await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
 
         const { promRules, rulerRules, dataSources } = getStore().unifiedAlerting;
@@ -304,14 +342,26 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<Prom
         }
 
         const shouldLoadProm = force || !promRules[rulesSourceName]?.loading;
-        const shouldLoadRuler = (force || !rulerRules[rulesSourceName]?.loading) && dataSourceConfig.rulerConfig;
+        const shouldLoadRuler =
+          (force || !rulerRules[rulesSourceName]?.loading) && Boolean(dataSourceConfig.rulerConfig);
 
         await Promise.allSettled([
           shouldLoadProm && dispatch(fetchPromRulesAction({ rulesSourceName })),
           shouldLoadRuler && dispatch(fetchRulerRulesAction({ rulesSourceName })),
         ]);
+
+        logInfo(`[${rulesSourceName}] Rules loaded`, {
+          loadTimeMs: (performance.now() - dsStartLoadingTs).toFixed(0),
+          dataSourceName: rulesSourceName,
+          prometheusRulesLoaded: String(shouldLoadProm ?? false),
+          rulerRulesLoaded: String(shouldLoadRuler ?? false),
+        });
       })
     );
+
+    logInfo('All Prom and Ruler rules loaded', {
+      loadTimeMs: (performance.now() - allStartLoadingTs).toFixed(0),
+    });
   };
 }
 
