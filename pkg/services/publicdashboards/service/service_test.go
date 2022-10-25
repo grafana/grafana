@@ -371,7 +371,39 @@ func TestUpdatePublicDashboard(t *testing.T) {
 }
 
 func TestDeletePublicDashboard(t *testing.T) {
-	t.Run("Deleting public dashboard", func(t *testing.T) {
+	testCases := []struct {
+		Name               string
+		DashboardUid       string
+		PublicDashboardUid string
+		CheckErrorOn       string
+	}{
+		{
+			Name:               "Empty dashboardUid throws an error",
+			DashboardUid:       "",
+			PublicDashboardUid: "79lE9IH4z",
+			CheckErrorOn:       "dashboardUid",
+		},
+		{
+			Name:               "Invalid dashboardUid throws an error",
+			DashboardUid:       "inv@lid-d@shboard-uid!",
+			PublicDashboardUid: "79lE9IH4z",
+			CheckErrorOn:       "dashboardUid",
+		},
+		{
+			Name:               "Empty publicDashboardUid throws an error",
+			DashboardUid:       "79lE9IH4z",
+			PublicDashboardUid: "",
+			CheckErrorOn:       "publicDashboardUid",
+		},
+		{
+			Name:               "Invalid publicDashboardUid throws an error",
+			DashboardUid:       "79lE9IH4z",
+			PublicDashboardUid: "inv@lid-publicd@shboard-uid!",
+			CheckErrorOn:       "publicDashboardUid",
+		},
+	}
+
+	t.Run("When public dashboard is deleted, then get public dashboard throws an error", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicDashboardStore := database.ProvideStore(sqlStore)
@@ -399,74 +431,49 @@ func TestDeletePublicDashboard(t *testing.T) {
 		deletedError := service.DeletePublicDashboard(context.Background(), dashboard.OrgId, dashboard.Uid, savedPubdash.Uid)
 		require.NoError(t, deletedError)
 
-		// Since the dto.PublicDashboard has a uid, this will call
-		// service.updatePublicDashboard
-		updatedPubdash, err := service.GetPublicDashboard(context.Background(), savedPubdash.OrgId, savedPubdash.DashboardUid)
-		require.NoError(t, err)
-
-		// don't get updated
-		assert.Equal(t, savedPubdash.DashboardUid, updatedPubdash.DashboardUid)
-		assert.Equal(t, savedPubdash.OrgId, updatedPubdash.OrgId)
-		assert.Equal(t, savedPubdash.CreatedAt, updatedPubdash.CreatedAt)
-		assert.Equal(t, savedPubdash.CreatedBy, updatedPubdash.CreatedBy)
-		assert.Equal(t, savedPubdash.AccessToken, updatedPubdash.AccessToken)
-
-		// gets updated
-		assert.Equal(t, dto.PublicDashboard.IsEnabled, updatedPubdash.IsEnabled)
-		assert.Equal(t, dto.PublicDashboard.AnnotationsEnabled, updatedPubdash.AnnotationsEnabled)
-		assert.Equal(t, dto.PublicDashboard.TimeSettings, updatedPubdash.TimeSettings)
-		assert.Equal(t, dto.UserId, updatedPubdash.UpdatedBy)
-		assert.NotEqual(t, &time.Time{}, updatedPubdash.UpdatedAt)
+		pubdash, err := service.GetPublicDashboard(context.Background(), savedPubdash.OrgId, savedPubdash.DashboardUid)
+		require.Error(t, err)
+		require.Equal(t, ErrPublicDashboardNotFound, err)
+		require.Nil(t, pubdash)
 	})
 
-	t.Run("Updating set empty time settings", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
-		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
-		publicdashboardStore := database.ProvideStore(sqlStore)
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
+	for _, test := range testCases {
+		t.Run(test.Name, func(t *testing.T) {
+			sqlStore := db.InitTestDB(t)
+			dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+			publicDashboardStore := database.ProvideStore(sqlStore)
+			dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 
-		service := &PublicDashboardServiceImpl{
-			log:   log.New("test.logger"),
-			store: publicdashboardStore,
-		}
+			service := &PublicDashboardServiceImpl{
+				log:   log.New("test.logger"),
+				store: publicDashboardStore,
+			}
 
-		dto := &SavePublicDashboardConfigDTO{
-			DashboardUid: dashboard.Uid,
-			OrgId:        dashboard.OrgId,
-			UserId:       7,
-			PublicDashboard: &PublicDashboard{
-				IsEnabled:    true,
-				TimeSettings: timeSettings,
-			},
-		}
+			dto := &SavePublicDashboardConfigDTO{
+				DashboardUid: dashboard.Uid,
+				OrgId:        dashboard.OrgId,
+				UserId:       7,
+				PublicDashboard: &PublicDashboard{
+					AnnotationsEnabled: false,
+					IsEnabled:          true,
+					TimeSettings:       timeSettings,
+				},
+			}
 
-		// Since the dto.PublicDashboard has a uid, this will call
-		// service.updatePublicDashboard
-		savedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
-		require.NoError(t, err)
+			_, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
+			require.NoError(t, err)
 
-		// attempt to overwrite settings
-		dto = &SavePublicDashboardConfigDTO{
-			DashboardUid: dashboard.Uid,
-			OrgId:        dashboard.OrgId,
-			UserId:       8,
-			PublicDashboard: &PublicDashboard{
-				Uid:          savedPubdash.Uid,
-				OrgId:        9,
-				DashboardUid: "abc1234",
-				CreatedBy:    9,
-				CreatedAt:    time.Time{},
+			deletedError := service.DeletePublicDashboard(context.Background(), dashboard.OrgId, test.DashboardUid, test.PublicDashboardUid)
+			require.Error(t, deletedError)
 
-				IsEnabled:   true,
-				AccessToken: "NOTAREALUUID",
-			},
-		}
+			if test.CheckErrorOn == "dashboardUid" {
+				assert.Equal(t, dashboards.ErrDashboardIdentifierNotSet, deletedError)
+			} else {
+				assert.Equal(t, ErrPublicDashboardIdentifierNotSet, deletedError)
+			}
 
-		updatedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
-		require.NoError(t, err)
-
-		assert.Equal(t, &TimeSettings{}, updatedPubdash.TimeSettings)
-	})
+		})
+	}
 }
 
 func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,
