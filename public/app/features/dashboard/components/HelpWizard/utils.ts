@@ -19,6 +19,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { SceneFlexLayout } from 'app/features/scenes/components/SceneFlexLayout';
 import { VizPanel } from 'app/features/scenes/components/VizPanel';
 import { SceneDataNode } from 'app/features/scenes/core/SceneDataNode';
+import { SceneTimeRange } from 'app/features/scenes/core/SceneTimeRange';
 import { SceneObject } from 'app/features/scenes/core/types';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
@@ -304,6 +305,7 @@ export async function getDebugScene(panel: PanelModel, rand: Randomize, timeRang
   const queries = saveModel?.targets ?? [];
 
   const scene = new SceneFlexLayout({
+    $timeRange: new SceneTimeRange(timeRange),
     children: [
       new SceneFlexLayout({
         direction: 'column',
@@ -368,18 +370,9 @@ export async function getDebugScene(panel: PanelModel, rand: Randomize, timeRang
   //   dashboard.panels.push(before);
   // }
 
-  // dashboard.panels[1].options.content = html;
-  // dashboard.panels[2].options.content = JSON.stringify(saveModel, null, 2);
-
-  // dashboard.title = `Debug: ${saveModel.title} // ${dateTimeFormat(new Date())}`;
-  // dashboard.tags = ['debug', `debug-${info.panelType}`];
-  // dashboard.time = {
-  //   from: timeRange.from.toISOString(),
-  //   to: timeRange.to.toISOString(),
-  // };
-
   return scene;
 }
+
 function getDebugPanelOptions(
   panelType: string,
   saveModel: any,
