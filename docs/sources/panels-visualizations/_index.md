@@ -18,7 +18,7 @@ keywords:
 
 The _panel_ is the basic visualization building block in Grafana.
 Each panel has a query editor specific to the data source selected in the panel.
-The query editor allows you to build a query that returns the data you want to visualize. 
+The query editor allows you to build a query that returns the data you want to visualize.
 
 There are a wide variety of styling and formatting options for each panel.
 Panels can be dragged, dropped, and resized to rearrange them on the dashboard.
