@@ -57,7 +57,7 @@ publicDashboards = true
 Public dashboards _should_ work with any datasource that has the properties `backend` and `alerting` both set to true in it's `package.json`. However, this cannot always be
 guaranteed since plugin developers can override this functionality. Below are the datasources that are confirmed to be working with public dashboards, and the ones that should work (but have not been confirmed compatible).
 
-Confirmed:
+##### Confirmed:
 
 - Altinity plugin for ClickHouse
 - ClickHouse
@@ -76,7 +76,9 @@ Confirmed:
 - Redis
 - SQLite
 
-Unconfirmed:
+##### Unconfirmed:
+
+> **Note:** If you've confirmed one of these datasources work with public dashboards, let us know in our [Github discussion](https://github.com/grafana/grafana/discussions/49253) and we'll mark it as confirmed!
 
 - AWS IoT SiteWise
 - Amazon Athena
