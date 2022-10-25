@@ -51,7 +51,7 @@ elif [ "${cfg[execution]}" != "local" ]; then
 fi
 
 yarn run build
-yarn run prepare
+yarn run prepare-testdata
 
 TEST_PATH="./dist/${cfg[test]}.js"
 echo "$(date '+%Y-%m-%d %H:%M:%S'): Executing test ${TEST_PATH} in ${cfg[execution]} mode"
