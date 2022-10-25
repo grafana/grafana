@@ -25,7 +25,7 @@ func DimensionKeysHandler(pluginCtx backend.PluginContext, clientFactory models.
 	dimensionKeys := []string{}
 	switch dimensionKeysRequest.Type() {
 	case request.StandardDimensionKeysRequest:
-		dimensionKeys, err = service.GetHardCodedDimensionKeysByNamespace(dimensionKeysRequest.Namespace)
+		dimensionKeys, err = services.GetHardCodedDimensionKeysByNamespace(dimensionKeysRequest.Namespace)
 	case request.FilterDimensionKeysRequest:
 		dimensionKeys, err = service.GetDimensionKeysByDimensionFilter(dimensionKeysRequest)
 	case request.CustomMetricDimensionKeysRequest:

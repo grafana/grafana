@@ -55,12 +55,12 @@ func parseMultiSelectValue(input string) []string {
 // Whenever this list is updated, the frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
-	dsInfo, err := e.getDSInfo(pluginCtx)
+	instance, err := e.getInstance(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	profile := dsInfo.profile
+	profile := instance.Settings.Profile
 	if cache, ok := regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
 			return cache2, nil
@@ -109,12 +109,12 @@ func (e *cloudWatchExecutor) handleGetNamespaces(pluginCtx backend.PluginContext
 		keys = append(keys, key)
 	}
 
-	dsInfo, err := e.getDSInfo(pluginCtx)
+	instance, err := e.getInstance(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	customNamespaces := dsInfo.namespace
+	customNamespaces := instance.Settings.Namespace
 	if customNamespaces != "" {
 		keys = append(keys, strings.Split(customNamespaces, ",")...)
 	}
@@ -395,24 +395,24 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
-	dsInfo, err := e.getDSInfo(pluginCtx)
+	instance, err := e.getInstance(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	if _, ok := customMetricsMetricsMap[dsInfo.profile]; !ok {
-		customMetricsMetricsMap[dsInfo.profile] = make(map[string]map[string]*customMetricsCache)
+	if _, ok := customMetricsMetricsMap[instance.Settings.Profile]; !ok {
+		customMetricsMetricsMap[instance.Settings.Profile] = make(map[string]map[string]*customMetricsCache)
 	}
-	if _, ok := customMetricsMetricsMap[dsInfo.profile][dsInfo.region]; !ok {
-		customMetricsMetricsMap[dsInfo.profile][dsInfo.region] = make(map[string]*customMetricsCache)
+	if _, ok := customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region]; !ok {
+		customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region] = make(map[string]*customMetricsCache)
 	}
-	if _, ok := customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace]; !ok {
-		customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace] = &customMetricsCache{}
-		customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache = make([]string, 0)
+	if _, ok := customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace]; !ok {
+		customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace] = &customMetricsCache{}
+		customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Cache = make([]string, 0)
 	}
 
-	if customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Expire.After(time.Now()) {
-		return customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache, nil
+	if customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Expire.After(time.Now()) {
+		return customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Cache, nil
 	}
 	metrics, err := e.listMetrics(pluginCtx, region, &cloudwatch.ListMetricsInput{
 		Namespace: aws.String(namespace),
@@ -421,18 +421,18 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string
 		return []string{}, err
 	}
 
-	customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache = make([]string, 0)
-	customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Expire = time.Now().Add(5 * time.Minute)
+	customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Cache = make([]string, 0)
+	customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Expire = time.Now().Add(5 * time.Minute)
 
 	for _, metric := range metrics {
-		if isDuplicate(customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache, *metric.MetricName) {
+		if isDuplicate(customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Cache, *metric.MetricName) {
 			continue
 		}
-		customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache = append(
-			customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache, *metric.MetricName)
+		customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Cache = append(
+			customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Cache, *metric.MetricName)
 	}
 
-	return customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache, nil
+	return customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Cache, nil
 }
 
 func (e *cloudWatchExecutor) handleGetLogGroups(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
