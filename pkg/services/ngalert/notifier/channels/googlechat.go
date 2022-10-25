@@ -30,9 +30,9 @@ type GoogleChatNotifier struct {
 }
 
 type googleChatSettings struct {
-	URL     string `json:"url,omitempty" yaml:"url,omitempty"`
-	Title   string `json:"title,omitempty" yaml:"title,omitempty"`
-	Content string `json:"message,omitempty" yaml:"message,omitempty"`
+	URL     string
+	Title   string
+	Content string
 }
 
 func GoogleChatFactory(fc FactoryConfig) (NotificationChannel, error) {
@@ -53,14 +53,9 @@ func newGoogleChatNotifier(fc FactoryConfig) (*GoogleChatNotifier, error) {
 		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
 	}
 
-	if settings.URL == "" {
+	URL := fc.Config.Settings.Get("url").MustString()
+	if URL == "" {
 		return nil, errors.New("could not find url property in settings")
-	}
-	if settings.Title == "" {
-		settings.Title = DefaultMessageTitleEmbed
-	}
-	if settings.Content == "" {
-		settings.Content = DefaultMessageEmbed
 	}
 
 	return &GoogleChatNotifier{
@@ -71,11 +66,15 @@ func newGoogleChatNotifier(fc FactoryConfig) (*GoogleChatNotifier, error) {
 			DisableResolveMessage: fc.Config.DisableResolveMessage,
 			Settings:              fc.Config.Settings,
 		}),
-		log:      log.New("alerting.notifier.googlechat"),
-		ns:       fc.NotificationService,
-		images:   fc.ImageStore,
-		tmpl:     fc.Template,
-		settings: settings,
+		log:    log.New("alerting.notifier.googlechat"),
+		ns:     fc.NotificationService,
+		images: fc.ImageStore,
+		tmpl:   fc.Template,
+		settings: googleChatSettings{
+			URL:     URL,
+			Title:   fc.Config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
+			Content: fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
+		},
 	}, nil
 }
 
