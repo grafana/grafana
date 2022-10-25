@@ -257,9 +257,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 				AccessToken:  "an-access-token",
 			},
 		}
-		err := publicDashboardStore.SavePublicDashboard(context.Background(), cmd)
+		err := publicDashboardStore.Save(context.Background(), cmd)
 		require.NoError(t, err)
-		pubdashConfig, _, _ := publicDashboardStore.GetPublicDashboardAndDashboard(context.Background(), "an-access-token")
+		pubdashConfig, _, _ := publicDashboardStore.FindPublicDashboardAndDashboardByAccessToken(context.Background(), "an-access-token")
 		require.NotNil(t, pubdashConfig)
 
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedDash.Id, OrgId: savedDash.OrgId}
@@ -271,7 +271,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, getErr, dashboards.ErrDashboardNotFound)
 		assert.Nil(t, dash)
 
-		pubdashConfig, _, err = publicDashboardStore.GetPublicDashboardAndDashboard(context.Background(), "an-access-token")
+		pubdashConfig, _, err = publicDashboardStore.FindPublicDashboardAndDashboardByAccessToken(context.Background(), "an-access-token")
 		require.Equal(t, err, publicDashboardModels.ErrPublicDashboardNotFound)
 		require.Nil(t, pubdashConfig)
 	})
@@ -292,9 +292,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 				AccessToken:  "an-access-token",
 			},
 		}
-		err := publicDashboardStore.SavePublicDashboard(context.Background(), cmd)
+		err := publicDashboardStore.Save(context.Background(), cmd)
 		require.NoError(t, err)
-		pubdashConfig, _, _ := publicDashboardStore.GetPublicDashboardAndDashboard(context.Background(), "an-access-token")
+		pubdashConfig, _, _ := publicDashboardStore.FindPublicDashboardAndDashboardByAccessToken(context.Background(), "an-access-token")
 		require.NotNil(t, pubdashConfig)
 
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: true}
@@ -308,7 +308,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, len(query.Result), 0)
 
-		pubdashConfig, _, err = publicDashboardStore.GetPublicDashboardAndDashboard(context.Background(), "an-access-token")
+		pubdashConfig, _, err = publicDashboardStore.FindPublicDashboardAndDashboardByAccessToken(context.Background(), "an-access-token")
 		require.Equal(t, err, publicDashboardModels.ErrPublicDashboardNotFound)
 		require.Nil(t, pubdashConfig)
 	})
