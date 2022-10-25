@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -595,6 +596,118 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				}
 				verifyState(t, tt.want, reg, procPrvdr, storage, procMgr)
 			})
+		}
+	})
+}
+
+func TestLoader_Load_RBACReady(t *testing.T) {
+	pluginDir, err := filepath.Abs("../testdata/test-app-with-roles")
+	if err != nil {
+		t.Errorf("could not construct absolute path of current dir")
+		return
+	}
+
+	t.Run("Load with RBAC roles", func(t *testing.T) {
+		tests := []struct {
+			name            string
+			cfg             *config.Cfg
+			pluginPaths     []string
+			appURL          string
+			existingPlugins map[string]struct{}
+			want            []*plugins.Plugin
+			pluginErrors    map[string]*plugins.Error
+		}{
+			{
+				name:        "Load multiple plugins (broken, valid, unsigned)",
+				cfg:         &config.Cfg{},
+				appURL:      "http://localhost:3000",
+				pluginPaths: []string{"../testdata/test-app-with-roles"},
+				want: []*plugins.Plugin{
+					{
+						JSONData: plugins.JSONData{
+							ID:   "test-app",
+							Type: "app",
+							Name: "Test App",
+							Info: plugins.Info{
+								Author: plugins.InfoLink{
+									Name: "Test Inc.",
+									URL:  "http://test.com",
+								},
+								Description: "Test App",
+								Version:     "1.0.0",
+								Links:       []plugins.InfoLink{},
+								Logos: plugins.Logos{
+									Small: "public/img/icn-app.svg",
+									Large: "public/img/icn-app.svg",
+								},
+								Updated: "2015-02-10",
+							},
+							Dependencies: plugins.Dependencies{
+								GrafanaVersion:    "*",
+								GrafanaDependency: ">=8.0.0",
+								Plugins:           []plugins.Dependency{},
+							},
+							Includes: []*plugins.Includes{},
+							Roles: []accesscontrol.RoleRegistration{
+								{
+									Role: accesscontrol.RoleDTO{
+										Name:        "plugins.app:test-app:reader",
+										DisplayName: "test-app reader",
+										Description: "View everything in the test-app plugin",
+										Group:       "Plugins",
+										Permissions: []accesscontrol.Permission{
+											{Action: "plugins.app:access", Scope: "plugins.app:id:test-app"},
+											{Action: "test-app.resource:read", Scope: "resources:*"},
+											{Action: "test-app.otherresource:toggle"},
+										},
+									},
+									Grants: []string{"Admin"},
+								},
+							},
+							Backend: false,
+						},
+						PluginDir:     pluginDir,
+						Class:         plugins.External,
+						Signature:     plugins.SignatureValid,
+						SignatureType: plugins.PrivateSignature,
+						SignatureOrg:  "gabrielmabille",
+						Module:        "plugins/test-app/module",
+						BaseURL:       "public/plugins/test-app",
+					},
+				},
+			},
+		}
+
+		for _, tt := range tests {
+			origAppURL := setting.AppUrl
+			t.Cleanup(func() {
+				setting.AppUrl = origAppURL
+			})
+			setting.AppUrl = "http://localhost:3000"
+			reg := fakes.NewFakePluginRegistry()
+			storage := fakes.NewFakePluginStorage()
+			procPrvdr := fakes.NewFakeBackendProcessProvider()
+			procMgr := fakes.NewFakeProcessManager()
+			l := newLoader(tt.cfg, func(l *Loader) {
+				l.pluginRegistry = reg
+				l.pluginStorage = storage
+				l.processManager = procMgr
+				l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService())
+			})
+			l.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
+
+			got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/test-app-with-roles"})
+			require.NoError(t, err)
+
+			if !cmp.Equal(got, tt.want, compareOpts) {
+				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
+			}
+			pluginErrs := l.PluginErrors()
+			require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
+			for _, pluginErr := range pluginErrs {
+				require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
+			}
+			verifyState(t, tt.want, reg, procPrvdr, storage, procMgr)
 		}
 	})
 }
