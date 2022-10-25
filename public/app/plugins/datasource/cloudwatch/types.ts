@@ -450,3 +450,20 @@ export interface LegacyAnnotationQuery extends MetricStat, DataQuery {
   };
   type: string;
 }
+
+export interface ResourceRequest {
+  region: string;
+}
+
+export interface GetDimensionKeysRequest extends ResourceRequest {
+  metricName?: string;
+  namespace?: string;
+  dimensionFilters?: Dimensions;
+}
+
+export interface GetDimensionValuesRequest extends ResourceRequest {
+  dimensionKey: string;
+  namespace: string;
+  metricName?: string;
+  dimensionFilters?: Dimensions;
+}

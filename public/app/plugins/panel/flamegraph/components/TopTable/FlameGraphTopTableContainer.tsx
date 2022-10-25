@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { createTheme, DataFrame, Field, FieldType, getDisplayProcessor } from '@grafana/data';
+import { CoreApp, createTheme, DataFrame, Field, FieldType, getDisplayProcessor } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
@@ -12,6 +12,7 @@ import FlameGraphTopTable from './FlameGraphTopTable';
 
 type Props = {
   data: DataFrame;
+  app: CoreApp;
   totalLevels: number;
   selectedView: SelectedView;
   search: string;
@@ -23,6 +24,7 @@ type Props = {
 
 const FlameGraphTopTableContainer = ({
   data,
+  app,
   totalLevels,
   selectedView,
   search,
@@ -31,7 +33,7 @@ const FlameGraphTopTableContainer = ({
   setRangeMin,
   setRangeMax,
 }: Props) => {
-  const styles = useStyles2(() => getStyles(selectedView));
+  const styles = useStyles2(() => getStyles(selectedView, app));
   const [topTable, setTopTable] = useState<TopTableData[]>();
   const valueField =
     data.fields.find((f) => f.name === 'value') ?? data.fields.find((f) => f.type === FieldType.number);
@@ -122,7 +124,7 @@ const FlameGraphTopTableContainer = ({
   );
 };
 
-const getStyles = (selectedView: SelectedView) => {
+const getStyles = (selectedView: SelectedView, app: CoreApp) => {
   const marginRight = '20px';
 
   return {
@@ -131,6 +133,7 @@ const getStyles = (selectedView: SelectedView) => {
       float: left;
       margin-right: ${marginRight};
       width: ${selectedView === SelectedView.TopTable ? '100%' : `calc(50% - ${marginRight})`};
+      ${app !== CoreApp.Explore ? 'height: calc(100% - 44px)' : ''}; // 44px to adjust for header pushing content down
     `,
   };
 };

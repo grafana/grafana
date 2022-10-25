@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func TestIntegrationDataAccess(t *testing.T) {
@@ -36,7 +36,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		Url:    "http://test",
 	}
 
-	initDatasource := func(db *sqlstore.SQLStore) *datasources.DataSource {
+	initDatasource := func(db db.DB) *datasources.DataSource {
 		cmd := defaultAddDatasourceCommand
 		ss := SqlStore{db: db}
 		err := ss.AddDataSource(context.Background(), &cmd)
@@ -52,7 +52,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 	t.Run("AddDataSource", func(t *testing.T) {
 		t.Run("Can add datasource", func(t *testing.T) {
-			db := sqlstore.InitTestDB(t)
+			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 			err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 				OrgId:    10,
@@ -78,13 +78,13 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("generates uid if not specified", func(t *testing.T) {
-			db := sqlstore.InitTestDB(t)
+			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			require.NotEmpty(t, ds.Uid)
 		})
 
 		t.Run("fails to insert ds with same uid", func(t *testing.T) {
-			db := sqlstore.InitTestDB(t)
+			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 			cmd1 := defaultAddDatasourceCommand
 			cmd2 := defaultAddDatasourceCommand
@@ -98,7 +98,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("fires an event when the datasource is added", func(t *testing.T) {
-			db := sqlstore.InitTestDB(t)
+			db := db.InitTestDB(t)
 			sqlStore := SqlStore{db: db}
 			var created *events.DataSourceCreated
 			db.Bus().AddEventListener(func(ctx context.Context, e *events.DataSourceCreated) error {
@@ -127,7 +127,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 	t.Run("UpdateDataSource", func(t *testing.T) {
 		t.Run("updates datasource with version", func(t *testing.T) {
-			db := sqlstore.InitTestDB(t)
+			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			cmd := defaultUpdateDatasourceCommand
 			cmd.Id = ds.Id
@@ -138,7 +138,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("does not overwrite Uid if not specified", func(t *testing.T) {
-			db := sqlstore.InitTestDB(t)
+			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
 			require.NotEmpty(t, ds.Uid)
@@ -155,7 +155,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("prevents update if version changed", func(t *testing.T) {
-			db := sqlstore.InitTestDB(t)
+			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
 
@@ -179,7 +179,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("updates ds without version specified", func(t *testing.T) {
-			db := sqlstore.InitTestDB(t)
+			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
 
@@ -197,7 +197,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("updates ds without higher version", func(t *testing.T) {
-			db := sqlstore.InitTestDB(t)
+			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
 
@@ -218,7 +218,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 	t.Run("DeleteDataSourceById", func(t *testing.T) {
 		t.Run("can delete datasource", func(t *testing.T) {
-			db := sqlstore.InitTestDB(t)
+			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
 
@@ -233,7 +233,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("Can not delete datasource with wrong orgId", func(t *testing.T) {
-			db := sqlstore.InitTestDB(t)
+			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
 
@@ -250,7 +250,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 	})
 
 	t.Run("fires an event when the datasource is deleted", func(t *testing.T) {
-		db := sqlstore.InitTestDB(t)
+		db := db.InitTestDB(t)
 		ds := initDatasource(db)
 		ss := SqlStore{db: db}
 
@@ -275,7 +275,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 	})
 
 	t.Run("does not fire an event when the datasource is not deleted", func(t *testing.T) {
-		db := sqlstore.InitTestDB(t)
+		db := db.InitTestDB(t)
 		ss := SqlStore{db: db}
 
 		var called bool
@@ -294,7 +294,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 	})
 
 	t.Run("DeleteDataSourceByName", func(t *testing.T) {
-		db := sqlstore.InitTestDB(t)
+		db := db.InitTestDB(t)
 		ds := initDatasource(db)
 		ss := SqlStore{db: db}
 		query := datasources.GetDataSourcesQuery{OrgId: 10}
@@ -309,12 +309,12 @@ func TestIntegrationDataAccess(t *testing.T) {
 	})
 
 	t.Run("DeleteDataSourceAccessControlPermissions", func(t *testing.T) {
-		db := sqlstore.InitTestDB(t)
-		ds := initDatasource(db)
-		ss := SqlStore{db: db}
+		store := db.InitTestDB(t)
+		ds := initDatasource(store)
+		ss := SqlStore{db: store}
 
 		// Init associated permission
-		errAddPermissions := db.WithTransactionalDbSession(context.TODO(), func(sess *sqlstore.DBSession) error {
+		errAddPermissions := store.WithTransactionalDbSession(context.TODO(), func(sess *db.Session) error {
 			_, err := sess.Table("permission").Insert(ac.Permission{
 				RoleID:  1,
 				Action:  "datasources:read",
@@ -334,7 +334,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 		// Check associated permission
 		permCount := int64(0)
-		errGetPermissions := db.WithTransactionalDbSession(context.TODO(), func(sess *sqlstore.DBSession) error {
+		errGetPermissions := store.WithTransactionalDbSession(context.TODO(), func(sess *db.Session) error {
 			var err error
 			permCount, err = sess.Table("permission").Count()
 			return err
@@ -347,7 +347,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 	t.Run("GetDataSources", func(t *testing.T) {
 		t.Run("Number of data sources returned limited to 6 per organization", func(t *testing.T) {
-			db := sqlstore.InitTestDB(t)
+			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 			datasourceLimit := 6
 			for i := 0; i < datasourceLimit+1; i++ {
@@ -371,7 +371,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("No limit should be applied on the returned data sources if the limit is not set", func(t *testing.T) {
-			db := sqlstore.InitTestDB(t)
+			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 			numberOfDatasource := 5100
 			for i := 0; i < numberOfDatasource; i++ {
@@ -395,7 +395,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("No limit should be applied on the returned data sources if the limit is negative", func(t *testing.T) {
-			db := sqlstore.InitTestDB(t)
+			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 			numberOfDatasource := 5100
 			for i := 0; i < numberOfDatasource; i++ {
@@ -421,7 +421,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 	t.Run("GetDataSourcesByType", func(t *testing.T) {
 		t.Run("Only returns datasources of specified type", func(t *testing.T) {
-			db := sqlstore.InitTestDB(t)
+			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 
 			err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
@@ -455,7 +455,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("Returns an error if no type specified", func(t *testing.T) {
-			db := sqlstore.InitTestDB(t)
+			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 
 			query := datasources.GetDataSourcesByTypeQuery{}
@@ -473,7 +473,7 @@ func TestIntegrationGetDefaultDataSource(t *testing.T) {
 	}
 
 	t.Run("should return error if there is no default datasource", func(t *testing.T) {
-		db := sqlstore.InitTestDB(t)
+		db := db.InitTestDB(t)
 		ss := SqlStore{db: db}
 
 		cmd := datasources.AddDataSourceCommand{
@@ -494,7 +494,7 @@ func TestIntegrationGetDefaultDataSource(t *testing.T) {
 	})
 
 	t.Run("should return default datasource if exists", func(t *testing.T) {
-		db := sqlstore.InitTestDB(t)
+		db := db.InitTestDB(t)
 		ss := SqlStore{db: db}
 
 		cmd := datasources.AddDataSourceCommand{
@@ -516,7 +516,7 @@ func TestIntegrationGetDefaultDataSource(t *testing.T) {
 	})
 
 	t.Run("should not return default datasource of other organisation", func(t *testing.T) {
-		db := sqlstore.InitTestDB(t)
+		db := db.InitTestDB(t)
 		ss := SqlStore{db: db}
 		query := datasources.GetDefaultDataSourceQuery{OrgId: 1}
 		err := ss.GetDefaultDataSource(context.Background(), &query)

@@ -20,13 +20,13 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -799,7 +799,7 @@ func TestNotificationChannels(t *testing.T) {
 		t.Cleanup(func() {
 			store.GenerateNewAlertRuleUID = originalFunction
 		})
-		store.GenerateNewAlertRuleUID = func(_ *sqlstore.DBSession, _ int64, ruleTitle string) (string, error) {
+		store.GenerateNewAlertRuleUID = func(_ *db.Session, _ int64, ruleTitle string) (string, error) {
 			return "UID_" + ruleTitle, nil
 		}
 

@@ -36,8 +36,6 @@ type customMetricsCache struct {
 }
 
 var customMetricsMetricsMap = make(map[string]map[string]map[string]*customMetricsCache)
-var customMetricsDimensionsMap = make(map[string]map[string]map[string]*customMetricsCache)
-
 var regionCache sync.Map
 
 func parseMultiSelectValue(input string) []string {
@@ -57,12 +55,12 @@ func parseMultiSelectValue(input string) []string {
 // Whenever this list is updated, the frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
-	dsInfo, err := e.getDSInfo(pluginCtx)
+	instance, err := e.getInstance(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	profile := dsInfo.profile
+	profile := instance.Settings.Profile
 	if cache, ok := regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
 			return cache2, nil
@@ -111,12 +109,12 @@ func (e *cloudWatchExecutor) handleGetNamespaces(pluginCtx backend.PluginContext
 		keys = append(keys, key)
 	}
 
-	dsInfo, err := e.getDSInfo(pluginCtx)
+	instance, err := e.getInstance(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	customNamespaces := dsInfo.namespace
+	customNamespaces := instance.Settings.Namespace
 	if customNamespaces != "" {
 		keys = append(keys, strings.Split(customNamespaces, ",")...)
 	}
@@ -164,177 +162,6 @@ func (e *cloudWatchExecutor) handleGetAllMetrics(pluginCtx backend.PluginContext
 			result = append(result, suggestData{Text: namespace, Value: metric, Label: namespace})
 		}
 	}
-
-	return result, nil
-}
-
-// handleGetDimensionKeys returns a slice of suggestData structs with dimension keys.
-// If a dimension filters parameter is specified, a new api call to list metrics will be issued to load dimension keys for the given filter.
-// If no dimension filter is specified, dimension keys will be retrieved from the hard coded map in this file.
-func (e *cloudWatchExecutor) handleGetDimensionKeys(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
-	region := parameters.Get("region")
-	namespace := parameters.Get("namespace")
-	metricName := parameters.Get("metricName")
-	dimensionFilterJson := parameters.Get("dimensionFilters")
-
-	dimensionFilters := map[string]interface{}{}
-	if dimensionFilterJson != "" {
-		err := json.Unmarshal([]byte(dimensionFilterJson), &dimensionFilters)
-		if err != nil {
-			return nil, fmt.Errorf("error unmarshaling dimensionFilters: %v", err)
-		}
-	}
-
-	var dimensionValues []string
-	if !isCustomMetrics(namespace) {
-		if len(dimensionFilters) != 0 {
-			var dimensions []*cloudwatch.DimensionFilter
-			addDimension := func(key string, value string) {
-				filter := &cloudwatch.DimensionFilter{
-					Name: aws.String(key),
-				}
-				// if value is not specified or a wildcard is used, simply don't use the value field
-				if value != "" && value != "*" {
-					filter.Value = aws.String(value)
-				}
-				dimensions = append(dimensions, filter)
-			}
-			for k, v := range dimensionFilters {
-				// due to legacy, value can be a string, a string slice or nil
-				if vv, ok := v.(string); ok {
-					addDimension(k, vv)
-				} else if vv, ok := v.([]interface{}); ok {
-					for _, v := range vv {
-						addDimension(k, v.(string))
-					}
-				} else if v == nil {
-					addDimension(k, "")
-				}
-			}
-
-			input := &cloudwatch.ListMetricsInput{
-				Namespace:  aws.String(namespace),
-				Dimensions: dimensions,
-			}
-
-			if metricName != "" {
-				input.MetricName = aws.String(metricName)
-			}
-
-			metrics, err := e.listMetrics(pluginCtx,
-				region, input)
-
-			if err != nil {
-				return nil, fmt.Errorf("%v: %w", "unable to call AWS API", err)
-			}
-
-			dupCheck := make(map[string]bool)
-			for _, metric := range metrics {
-				for _, dim := range metric.Dimensions {
-					if _, exists := dupCheck[*dim.Name]; exists {
-						continue
-					}
-
-					// keys in the dimension filter should not be included
-					if _, ok := dimensionFilters[*dim.Name]; ok {
-						continue
-					}
-
-					dupCheck[*dim.Name] = true
-					dimensionValues = append(dimensionValues, *dim.Name)
-				}
-			}
-		} else {
-			var exists bool
-			if dimensionValues, exists = constants.NamespaceDimensionKeysMap[namespace]; !exists {
-				return nil, fmt.Errorf("unable to find dimension %q", namespace)
-			}
-		}
-	} else {
-		var err error
-		if dimensionValues, err = e.getDimensionsForCustomMetrics(region, namespace, pluginCtx); err != nil {
-			return nil, fmt.Errorf("%v: %w", "unable to call AWS API", err)
-		}
-	}
-	sort.Strings(dimensionValues)
-
-	result := make([]suggestData, 0)
-	for _, name := range dimensionValues {
-		result = append(result, suggestData{Text: name, Value: name, Label: name})
-	}
-
-	return result, nil
-}
-
-// handleGetDimensionValues returns a slice of suggestData structs with dimension values.
-// A call to the list metrics api is issued to retrieve the dimension values. All parameters are used as input args to the list metrics call.
-func (e *cloudWatchExecutor) handleGetDimensionValues(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
-	region := parameters.Get("region")
-	namespace := parameters.Get("namespace")
-	metricName := parameters.Get("metricName")
-	dimensionKey := parameters.Get("dimensionKey")
-	dimensionsJson := parameters.Get("dimensions")
-
-	dimensionsValues := map[string]interface{}{}
-	err := json.Unmarshal([]byte(dimensionsJson), &dimensionsValues)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling dimension: %v", err)
-	}
-
-	var dimensions []*cloudwatch.DimensionFilter
-	addDimension := func(key string, value string) {
-		filter := &cloudwatch.DimensionFilter{
-			Name: aws.String(key),
-		}
-		// if value is not specified or a wildcard is used, simply don't use the value field
-		if value != "" && value != "*" {
-			filter.Value = aws.String(value)
-		}
-		dimensions = append(dimensions, filter)
-	}
-
-	for k, v := range dimensionsValues {
-		if vv, ok := v.(string); ok {
-			addDimension(k, vv)
-		} else if vv, ok := v.([]interface{}); ok {
-			for _, v := range vv {
-				addDimension(k, v.(string))
-			}
-		} else if v == nil {
-			addDimension(k, "")
-		}
-	}
-
-	params := &cloudwatch.ListMetricsInput{
-		Namespace:  aws.String(namespace),
-		Dimensions: dimensions,
-	}
-	if metricName != "" {
-		params.MetricName = aws.String(metricName)
-	}
-	metrics, err := e.listMetrics(pluginCtx, region, params)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([]suggestData, 0)
-	dupCheck := make(map[string]bool)
-	for _, metric := range metrics {
-		for _, dim := range metric.Dimensions {
-			if *dim.Name == dimensionKey {
-				if _, exists := dupCheck[*dim.Value]; exists {
-					continue
-				}
-
-				dupCheck[*dim.Value] = true
-				result = append(result, suggestData{Text: *dim.Value, Value: *dim.Value, Label: *dim.Value})
-			}
-		}
-	}
-
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].Text < result[j].Text
-	})
 
 	return result, nil
 }
@@ -568,24 +395,24 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
-	dsInfo, err := e.getDSInfo(pluginCtx)
+	instance, err := e.getInstance(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	if _, ok := customMetricsMetricsMap[dsInfo.profile]; !ok {
-		customMetricsMetricsMap[dsInfo.profile] = make(map[string]map[string]*customMetricsCache)
+	if _, ok := customMetricsMetricsMap[instance.Settings.Profile]; !ok {
+		customMetricsMetricsMap[instance.Settings.Profile] = make(map[string]map[string]*customMetricsCache)
 	}
-	if _, ok := customMetricsMetricsMap[dsInfo.profile][dsInfo.region]; !ok {
-		customMetricsMetricsMap[dsInfo.profile][dsInfo.region] = make(map[string]*customMetricsCache)
+	if _, ok := customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region]; !ok {
+		customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region] = make(map[string]*customMetricsCache)
 	}
-	if _, ok := customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace]; !ok {
-		customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace] = &customMetricsCache{}
-		customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache = make([]string, 0)
+	if _, ok := customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace]; !ok {
+		customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace] = &customMetricsCache{}
+		customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Cache = make([]string, 0)
 	}
 
-	if customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Expire.After(time.Now()) {
-		return customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache, nil
+	if customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Expire.After(time.Now()) {
+		return customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Cache, nil
 	}
 	metrics, err := e.listMetrics(pluginCtx, region, &cloudwatch.ListMetricsInput{
 		Namespace: aws.String(namespace),
@@ -594,63 +421,18 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string
 		return []string{}, err
 	}
 
-	customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache = make([]string, 0)
-	customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Expire = time.Now().Add(5 * time.Minute)
+	customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Cache = make([]string, 0)
+	customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Expire = time.Now().Add(5 * time.Minute)
 
 	for _, metric := range metrics {
-		if isDuplicate(customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache, *metric.MetricName) {
+		if isDuplicate(customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Cache, *metric.MetricName) {
 			continue
 		}
-		customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache = append(
-			customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache, *metric.MetricName)
+		customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Cache = append(
+			customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Cache, *metric.MetricName)
 	}
 
-	return customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache, nil
-}
-
-var dimensionsCacheLock sync.Mutex
-
-func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region, namespace string, pluginCtx backend.PluginContext) ([]string, error) {
-	dimensionsCacheLock.Lock()
-	defer dimensionsCacheLock.Unlock()
-
-	dsInfo, err := e.getDSInfo(pluginCtx)
-	if err != nil {
-		return nil, err
-	}
-
-	if _, ok := customMetricsDimensionsMap[dsInfo.profile]; !ok {
-		customMetricsDimensionsMap[dsInfo.profile] = make(map[string]map[string]*customMetricsCache)
-	}
-	if _, ok := customMetricsDimensionsMap[dsInfo.profile][dsInfo.region]; !ok {
-		customMetricsDimensionsMap[dsInfo.profile][dsInfo.region] = make(map[string]*customMetricsCache)
-	}
-	if _, ok := customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace]; !ok {
-		customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace] = &customMetricsCache{}
-		customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache = make([]string, 0)
-	}
-
-	if customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Expire.After(time.Now()) {
-		return customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache, nil
-	}
-	metrics, err := e.listMetrics(pluginCtx, region, &cloudwatch.ListMetricsInput{Namespace: aws.String(namespace)})
-	if err != nil {
-		return []string{}, err
-	}
-	customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache = make([]string, 0)
-	customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Expire = time.Now().Add(5 * time.Minute)
-
-	for _, metric := range metrics {
-		for _, dimension := range metric.Dimensions {
-			if isDuplicate(customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache, *dimension.Name) {
-				continue
-			}
-			customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache = append(
-				customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache, *dimension.Name)
-		}
-	}
-
-	return customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache, nil
+	return customMetricsMetricsMap[instance.Settings.Profile][instance.Settings.Region][namespace].Cache, nil
 }
 
 func (e *cloudWatchExecutor) handleGetLogGroups(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {

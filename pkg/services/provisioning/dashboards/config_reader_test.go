@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 var (
@@ -26,7 +26,7 @@ var (
 func TestDashboardsAsConfig(t *testing.T) {
 	t.Run("Dashboards as configuration", func(t *testing.T) {
 		logger := log.New("test-logger")
-		store := sqlstore.InitTestDB(t)
+		store := db.InitTestDB(t)
 		orgFake := orgtest.NewOrgServiceFake()
 
 		t.Run("Should fail if orgs don't exist in the database", func(t *testing.T) {

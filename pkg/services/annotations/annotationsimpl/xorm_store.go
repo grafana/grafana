@@ -8,12 +8,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/tag"
@@ -60,7 +59,7 @@ func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) er
 		return err
 	}
 
-	return r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return r.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if _, err := sess.Table("annotation").Insert(item); err != nil {
 			return err
 		}
@@ -81,7 +80,7 @@ func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) er
 }
 
 func (r *xormRepositoryImpl) Update(ctx context.Context, item *annotations.Item) error {
-	return r.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return r.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var (
 			isExist bool
 			err     error
@@ -137,7 +136,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 	items := make([]*annotations.ItemDTO, 0)
-	err := r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := r.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql.WriteString(`
 			SELECT
 				annotation.id,
@@ -293,7 +292,7 @@ func getAccessControlFilter(user *user.SignedInUser) (string, []interface{}, err
 }
 
 func (r *xormRepositoryImpl) Delete(ctx context.Context, params *annotations.DeleteParams) error {
-	return r.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return r.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var (
 			sql        string
 			annoTagSQL string
@@ -330,7 +329,7 @@ func (r *xormRepositoryImpl) Delete(ctx context.Context, params *annotations.Del
 
 func (r *xormRepositoryImpl) GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	var items []*annotations.Tag
-	err := r.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := r.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		if query.Limit == 0 {
 			query.Limit = 100
 		}
@@ -446,7 +445,7 @@ func (r *xormRepositoryImpl) executeUntilDoneOrCancelled(ctx context.Context, sq
 			return totalAffected, ctx.Err()
 		default:
 			var affected int64
-			err := r.db.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+			err := r.db.WithDbSession(ctx, func(session *db.Session) error {
 				res, err := session.Exec(sql)
 				if err != nil {
 					return err

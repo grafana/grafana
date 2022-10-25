@@ -335,5 +335,11 @@ var (
 			Description: "Use double quote to escape keyword in Mysql query",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:            "accessControlOnCall",
+			Description:     "Access control primitives for OnCall",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
 	}
 )
