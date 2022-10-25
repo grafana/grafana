@@ -25,6 +25,7 @@ export interface PhotoConfig {
   shadow?: boolean; // Renders drop shadow behind images
   crop?: boolean; // Crops images to fill shape
   src?: string; // Image source field
+  radius?: number; // Image radius
 }
 
 const defaultOptions: PhotoConfig = {
@@ -32,6 +33,7 @@ const defaultOptions: PhotoConfig = {
   border: 2,
   shadow: true,
   crop: true,
+  radius: 20,
 };
 
 export const PHOTOS_LAYER_ID = 'photos';
@@ -94,7 +96,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
       return new Style({
         image: new Photo({
           src,
-          radius: 20,
+          radius: config.radius,
           crop: config.crop,
           kind: config.kind,
           shadow: config.shadow,
@@ -183,6 +185,15 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
               max: 10,
             },
             defaultValue: defaultOptions.border,
+          })
+          .addSliderInput({
+            path: 'config.radius',
+            name: 'Radius',
+            settings: {
+              min: 1,
+              max: 100,
+            },
+            defaultValue: defaultOptions.radius,
           });
       },
     };
