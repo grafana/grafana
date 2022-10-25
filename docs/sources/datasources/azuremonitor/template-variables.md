@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/datasources/azuremonitor/template-variables/
+  - /docs/grafana/latest/data-sources/azure-monitor/template-variables/
 description: Using template variables with Azure Monitor in Grafana
 keywords:
   - grafana
@@ -11,19 +12,25 @@ keywords:
   - insights
   - log
   - analytics
-  - guide
+  - templates
+  - variables
+  - queries
+menuTitle: Template variables
 title: Azure Monitor template variables
-weight: 2
+weight: 400
 ---
 
-# Template variables
+# Azure Monitor template variables
 
-Instead of hard-coding values for fields like resource group or resource name in your queries, you can use variables in their place to create more interactive, dynamic, and reusable dashboards.
+Instead of hard-coding details such as resource group or resource name values in metric queries, you can use variables.
+This helps you create more interactive, dynamic, and reusable dashboards.
+Grafana refers to such variables as template variables.
 
-Check out the [Templating]({{< relref "../../dashboards/variables" >}}) documentation for an introduction to the templating feature and the different
-types of template variables.
+For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../dashboards/variables/" >}}) and [Add and manage variables]({{< relref "../../dashboards/variables/add-template-variables/" >}}) documentation.
 
-The Azure Monitor data source provides the following queries you can specify in the Query field in the Variable edit view
+## Use query variables
+
+You can specify these Azure Monitor data source queries in the Variable edit view's `Query Type` field.
 
 | Name            | Description                                                                                  |
 | --------------- | -------------------------------------------------------------------------------------------- |
@@ -36,16 +43,19 @@ The Azure Monitor data source provides the following queries you can specify in 
 | Logs            | Use a KQL query to return values.                                                            |
 | Resource Graph  | Use an ARG query to return values.                                                           |
 
-Any Log Analytics KQL query that returns a single list of values can also be used in the Query field. For example:
+Any Log Analytics Kusto Query Language (KQL) query that returns a single list of values can also be used in the Query field.
+For example:
 
-| Query                                                                                     | Description                                               |
-| ----------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `workspace("myWorkspace").Heartbeat \| distinct Computer`                                 | Returns a list of Virtual Machines                        |
-| `workspace("$workspace").Heartbeat \| distinct Computer`                                  | Returns a list of Virtual Machines with template variable |
-| `workspace("$workspace").Perf \| distinct ObjectName`                                     | Returns a list of objects from the Perf table             |
-| `workspace("$workspace").Perf \| where ObjectName == "$object"` `\| distinct CounterName` | Returns a list of metric names from the Perf table        |
+| Query                                                                                     | List of values returned                 |
+| ----------------------------------------------------------------------------------------- | --------------------------------------- |
+| `workspace("myWorkspace").Heartbeat \| distinct Computer`                                 | Virtual machines                        |
+| `workspace("$workspace").Heartbeat \| distinct Computer`                                  | Virtual machines with template variable |
+| `workspace("$workspace").Perf \| distinct ObjectName`                                     | Objects from the Perf table             |
+| `workspace("$workspace").Perf \| where ObjectName == "$object"` `\| distinct CounterName` | Metric names from the Perf table        |
 
-Example of a time series query using variables:
+### Query variable example
+
+This time series query uses query variables:
 
 ```kusto
 Perf
