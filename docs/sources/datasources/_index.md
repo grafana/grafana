@@ -46,7 +46,7 @@ These built-in core data sources are included in the Grafana documentation:
 
 - [Alertmanager]({{< relref "./alertmanager/" >}})
 - [AWS CloudWatch]({{< relref "./aws-cloudwatch/" >}})
-- [Azure Monitor]({{< relref "./azuremonitor/" >}})
+- [Azure Monitor]({{< relref "./azure-monitor/" >}})
 - [Elasticsearch]({{< relref "./elasticsearch/" >}})
 - [Google Cloud Monitoring]({{< relref "./google-cloud-monitoring/" >}})
 - [Graphite]({{< relref "./graphite/" >}})

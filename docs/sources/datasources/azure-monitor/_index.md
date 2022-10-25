@@ -3,6 +3,7 @@ aliases:
   - /docs/grafana/latest/datasources/azuremonitor/
   - /docs/grafana/latest/features/datasources/azuremonitor/
   - /docs/grafana/latest/datasources/azuremonitor/deprecated-application-insights/
+  - /docs/grafana/latest/datasources/azure-monitor/
   - /docs/grafana/latest/data-sources/azure-monitor/
 description: Guide for using Azure Monitor in Grafana
 keywords:
