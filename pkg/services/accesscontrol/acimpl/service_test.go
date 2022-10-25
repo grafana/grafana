@@ -199,6 +199,7 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 					Role: accesscontrol.RoleDTO{
 						Name: "plugins.app:test-app:test",
 						Permissions: []accesscontrol.Permission{
+							{Action: "plugins.app:read"},
 							{Action: "test-app:read"},
 							{Action: "test-app.resource:read"},
 						},
