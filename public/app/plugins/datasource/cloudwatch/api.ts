@@ -40,7 +40,9 @@ export class CloudWatchAPI extends CloudWatchRequest {
   }
 
   getNamespaces() {
-    return this.memoizedGetRequest<SelectableResourceValue[]>('namespaces');
+    return this.memoizedGetRequest<string[]>('namespaces').then((namespaces) =>
+      namespaces.map((n) => ({ label: n, value: n }))
+    );
   }
 
   async describeLogGroups(params: DescribeLogGroupsRequest) {
