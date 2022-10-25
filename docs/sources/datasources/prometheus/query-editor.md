@@ -19,7 +19,7 @@ You can switch the Prometheus query editor between two modes:
 - [Code mode](#code-mode), which provides a feature-rich editor for writing queries
 - [Builder mode](#builder-mode), which provides a visual query designer
 
-{{< figure src="/static/img/docs/prometheus/header-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Editor toolbar" }}
+{{< figure src="/static/img/docs/prometheus/header-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Editor toolbar" >}}
 
 To switch between the editor modes, select the corresponding **Builder** and **Code** tabs.
 
@@ -41,7 +41,7 @@ For options and functions common to all query editors, refer to [Query and trans
 
 You can configure Prometheus-specific options in the query editor by setting several options regardless of its mode.
 
-{{< figure src="/static/img/docs/prometheus/options-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Options" }}
+{{< figure src="/static/img/docs/prometheus/options-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Options" >}}
 
 ### Legend
 
@@ -87,7 +87,7 @@ The **Type** setting selects the query type.
 
 ## Code mode
 
-{{< figure src="/static/img/docs/prometheus/code-mode-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Code mode" }}
+{{< figure src="/static/img/docs/prometheus/code-mode-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Code mode" >}}
 
 In **Code mode**, you can write complex queries using a text editor with autocompletion features and syntax highlighting.
 It also contains a [Metrics browser](#metrics-browser) to further help you write queries.
@@ -96,7 +96,7 @@ For more information about Prometheus's query language, refer to the [Prometheus
 
 ### Use autocompletion
 
-{{< figure src="/static/img/docs/prometheus/autocomplete-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Autocomplete" }}
+{{< figure src="/static/img/docs/prometheus/autocomplete-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Autocomplete" >}}
 
 Code mode's autocompletion feature works automatically while typing.
 To manually trigger autocompletion, use the keyboard shortcut <key>Ctrl</key>/<key>Cmd</key> + <key>Space</key>.
@@ -112,7 +112,7 @@ The metrics browser locates metrics and selects relevant labels to help you buil
 When you open the browser, it displays all available metrics and labels.
 If supported by your Prometheus instance, each metric also displays its HELP and TYPE as a tooltip.
 
-{{< figure src="/static/img/docs/prometheus/metric-browser-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics browser" }}
+{{< figure src="/static/img/docs/prometheus/metric-browser-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics browser" >}}
 
 When you select a metric, the browser narrows down the available labels to show only the ones applicable to the metric.
 You can then select one or more labels for which the available label values are shown in lists in the bottom section.
@@ -150,7 +150,7 @@ In addition to the **Run query** button and mode switcher, Builder mode includes
 
 ### Metric and labels
 
-{{< figure src="/static/img/docs/prometheus/metric-select-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Metric and labels" }}
+{{< figure src="/static/img/docs/prometheus/metric-select-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Metric and labels" >}}
 
 Select a specific metric name from the dropdown list.
 The data source requests the list of available metrics from the Prometheus server based on the selected time rage.
@@ -162,7 +162,7 @@ Use the `+` button to add a label, and the `x` button to remove a label.
 
 ### Operations
 
-{{< figure src="/static/img/docs/prometheus/operations-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Operations" }}
+{{< figure src="/static/img/docs/prometheus/operations-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Operations" >}}
 
 Select the `+ Operations` button to add operations to your query.
 The query editor groups operations into related sections, and you can type while the operations dropdown is open to search and filter the list.
@@ -185,7 +185,7 @@ To re-order operations manually, drag the operation box by its name and drop it 
 
 #### Hints
 
-{{< figure src="/static/img/docs/prometheus/hint-8-5.png" max-width="500px" class="docs-image--no-shadow" caption="Hint" }}
+{{< figure src="/static/img/docs/prometheus/hint-8-5.png" max-width="500px" class="docs-image--no-shadow" caption="Hint" >}}
 
 The query editor can detect which operations are most appropriate for some selected metrics.
 If it does, it displays a hint next to the `+ Operations` button.
@@ -194,13 +194,13 @@ To add the operations to your query, click the hint.
 
 ## Use Explain mode to understand queries
 
-{{< figure src="/static/img/docs/prometheus/explain-8-5.png" max-width="500px" class="docs-image--no-shadow" caption="Explain mode" }}
+{{< figure src="/static/img/docs/prometheus/explain-8-5.png" max-width="500px" class="docs-image--no-shadow" caption="Explain mode" >}}
 
 Explain mode helps you understand a query by displaying a step-by-step explanation of all query components and operations.
 
 ### Raw query
 
-{{< figure src="/static/img/docs/prometheus/raw-query-8-5.png" max-width="500px" class="docs-image--no-shadow" caption="Raw query" }}
+{{< figure src="/static/img/docs/prometheus/raw-query-8-5.png" max-width="500px" class="docs-image--no-shadow" caption="Raw query" >}}
 
 The query editor displays the raw query only if the **Raw query** switch from the query editor toolbar is enabled.
 If visible, it displays the raw query that the query editor has created.
