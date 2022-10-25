@@ -19,11 +19,11 @@ import fn_app from 'app/fn_app';
 import { FnLoggerService } from 'app/fn_logger';
 import { dispatch, store } from 'app/store/store';
 
+import { createFnColors } from '../../../packages/grafana-data/src/themes/fnCreateColors';
 import { GrafanaTheme2 } from '../../../packages/grafana-data/src/themes/types';
 import { GrafanaBootConfig } from '../../../packages/grafana-runtime/src/config';
 
 import { FNDashboardProps, FailedToMountGrafanaErrorName } from './types';
-import { createFnColors } from '../../../packages/grafana-data/src/themes/fnCreateColors';
 
 /**
  * NOTE:
@@ -58,7 +58,7 @@ class createMfe {
   private static readonly logPrefix = '[FN Grafana]';
 
   mode: FNDashboardProps['mode'];
-  static component: ComponentType<FNDashboardProps>;
+  static Component: ComponentType<FNDashboardProps>;
   constructor(readonly props: FNDashboardProps) {
     this.mode = props.mode;
   }
@@ -107,11 +107,11 @@ class createMfe {
       },
     });
 
-    config.theme2.colors = createFnColors({mode})
+    config.theme2.colors = createFnColors({ mode });
 
     config.theme2.v1 = getTheme(mode);
 
-    config.theme2.v1.colors = config.theme2.colors
+    config.theme2.v1.colors = config.theme.colors;
 
     return config.theme2;
   }
@@ -134,14 +134,11 @@ class createMfe {
   }
 
   // NOTE: based on grafana function: 'toggleTheme'
-  private static removeThemeLinks(
-    modeToBeTurnedOff: GrafanaThemeType.Light | GrafanaThemeType.Dark,
-    timeout: number | null = null
-  ) {
+  private static removeThemeLinks(modeToBeTurnedOff: GrafanaThemeType.Light | GrafanaThemeType.Dark, timeout?: number) {
     Array.from(document.getElementsByTagName('link')).forEach(createMfe.removeThemeLink(modeToBeTurnedOff, timeout));
   }
 
-  private static removeThemeLink(modeToBeTurnedOff: FNDashboardProps['mode'], timeout: number | null = null) {
+  private static removeThemeLink(modeToBeTurnedOff: FNDashboardProps['mode'], timeout?: number) {
     return (link: HTMLLinkElement) => {
       if (!link.href?.includes(`build/grafana.${modeToBeTurnedOff}`)) {
         return;
@@ -175,7 +172,6 @@ class createMfe {
 
     createMfe.publishTheme(bootConfigWithTheme.theme2);
 
-
     if (isRuntimeOnly) {
       createMfe.logger('Successfully loaded theme:', mode);
 
@@ -197,14 +193,14 @@ class createMfe {
     return parentElement.querySelector(createMfe.containerSelector);
   }
 
-  static mountFnApp(component: ComponentType<FNDashboardProps>) {
+  static mountFnApp(Component: ComponentType<FNDashboardProps>) {
     const lifeCycleFn: FrameworkLifeCycles['mount'] = (props: FNDashboardProps) => {
       return new Promise((res, rej) => {
         createMfe.logger('Trying to mount grafana...');
 
         try {
           createMfe.loadFnTheme(props.mode);
-          createMfe.component = component;
+          createMfe.Component = Component;
 
           createMfe.renderMfeComponent(props, () => res(true));
         } catch (err) {
@@ -231,7 +227,9 @@ class createMfe {
 
       if (container) {
         createMfe.logger('Trying to unmount grafana...');
+
         ReactDOM.unmountComponentAtNode(container);
+
         createMfe.logger('Successfully unmounted grafana.');
       } else {
         createMfe.logger('Failed to unmount grafana. Container does not exist.');
@@ -250,6 +248,11 @@ class createMfe {
       createMfe.logger('Trying to update grafana with theme:', props.mode);
 
       if (props.mode) {
+        /**
+         * NOTE
+         * We do not use the "mode" state right now,
+         * but I believe that as long as we store the "mode, we should update it
+         */
         dispatch(
           updateFnState({
             type: 'mode',
@@ -257,38 +260,35 @@ class createMfe {
           })
         );
 
+        /**
+         * NOTE:
+         * Here happens the theme change.
+         *
+         * TODO:
+         * We could probably made the theme change smoother
+         * if we use state to update the theme
+         */
         createMfe.loadFnTheme(props.mode);
       }
 
-      if (props.theme) {
-        dispatch(
-          updateFnState({
-            type: 'theme',
-            payload: props.theme,
-          })
-        );
-      }
-
-
-      return Promise.resolve(true);
+      // NOTE: The false/true value does not change anything
+      return Promise.resolve(false);
     };
 
     return lifeCycleFn;
   }
 
   static renderMfeComponent(props: Partial<FNDashboardProps>, onSuccess = noop) {
-    const {fnGlobalState} = store.getState();
+    const { fnGlobalState } = store.getState();
 
     /**
      * NOTE:
      * It may happen that only partial props are received in arguments.
-     * Then we should keep the current props.
-     * That's why we read them from the state.
+     * Then we should keep the current props that are read them from the state.
      */
-    const mergedProps = merge({}, fnGlobalState, props)
+    const mergedProps = merge({}, fnGlobalState, props) as FNDashboardProps;
 
-
-    ReactDOM.render(React.createElement(createMfe.component,mergedProps), createMfe.getContainer(mergedProps), () => {
+    ReactDOM.render(React.createElement(createMfe.Component, mergedProps), createMfe.getContainer(mergedProps), () => {
       createMfe.logger('Successfully rendered mfe component.');
       onSuccess();
     });

@@ -41,7 +41,6 @@ export const RenderFNDashboard: FC<FNDashboardProps> = (props) => {
     queryParams,
     uid,
     slug,
-    theme,
     mode,
     controlsContainer,
     pageTitle = '',
@@ -81,7 +80,6 @@ export const RenderFNDashboard: FC<FNDashboardProps> = (props) => {
         FNDashboard: true,
         uid,
         slug,
-        theme,
         mode,
         controlsContainer,
         pageTitle,
@@ -111,7 +109,7 @@ export const RenderFNDashboard: FC<FNDashboardProps> = (props) => {
       );
       dispatch(cancelVariables(uid));
     };
-  }, [dispatch, uid, slug, theme, controlsContainer, pageTitle, hiddenVariables, queryParams, mode]);
+  }, [dispatch, uid, slug, controlsContainer, pageTitle, hiddenVariables, queryParams, mode]);
 
   const dashboardPageProps: DashboardPageProps = merge({}, DEFAULT_DASHBOARD_PAGE_PROPS, {
     ...DEFAULT_DASHBOARD_PAGE_PROPS,

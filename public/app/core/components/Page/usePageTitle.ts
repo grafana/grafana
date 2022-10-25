@@ -9,6 +9,7 @@ import { Branding } from '../Branding/Branding';
 
 export function usePageTitle(navModel?: NavModel, pageNav?: NavModelItem) {
   const { FNDashboard, pageTitle } = useSelector<StoreState, FnGlobalState>((state) => state.fnGlobalState);
+
   useEffect(() => {
     const parts: string[] = [];
 

@@ -1,9 +1,8 @@
 import React, { CSSProperties, FunctionComponent, PropsWithChildren, ReactElement, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
-import { GrafanaThemeType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Tooltip } from '@grafana/ui';
+import { Tooltip, useTheme2 } from '@grafana/ui';
 import { FnGlobalState } from 'app/core/reducers/fn-slice';
 import type { StoreState } from 'app/types';
 
@@ -41,35 +40,8 @@ const COMMON_PICKER_LABEL_STYLE: CSSProperties = {
 
 function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | null {
   const labelOrName = useMemo(() => variable.label || variable.name, [variable]);
-  const { FNDashboard, mode, theme } = useSelector<StoreState, FnGlobalState>((state) => state.fnGlobalState);
-
-  const changeLabelStyle = useMemo(() => {
-    if (!FNDashboard) {
-      return {};
-    }
-
-    /**
-     * TODO:
-     * The below ts-ignores result from the fact that we expect MuiTheme in Grafana
-     * Let's pass GrafanaTheme
-     */
-    // @ts-ignore
-    const color = theme?.palette?.text?.primary;
-    // @ts-ignore
-    const lightBackgroundColor = theme?.palette?.grey;
-    // @ts-ignore
-    const darkBackgroundColor = theme?.palette?.background?.default;
-
-    const commonStyles: CSSProperties = {
-      ...COMMON_PICKER_LABEL_STYLE,
-      ...(color ? { color } : {}),
-    };
-
-    const backgroundColor = mode === GrafanaThemeType.Light ? lightBackgroundColor : darkBackgroundColor;
-    const createLabelTheme: CSSProperties = backgroundColor ? { backgroundColor } : {};
-
-    return { ...createLabelTheme, ...commonStyles };
-  }, [FNDashboard, mode, theme]);
+  const { FNDashboard } = useSelector<StoreState, FnGlobalState>(({ fnGlobalState }) => fnGlobalState);
+  const theme = useTheme2();
 
   if (variable.hide !== VariableHide.dontHide) {
     return null;
@@ -82,7 +54,7 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
       <Tooltip content={variable.description} placement={'bottom'}>
         <label
           className="gf-form-label gf-form-label--variable"
-          style={FNDashboard ? changeLabelStyle : {}}
+          style={FNDashboard ? { ...COMMON_PICKER_LABEL_STYLE, color: theme.colors.text.secondary } : {}}
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
           htmlFor={elementId}
         >
@@ -94,7 +66,7 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
   return (
     <label
       className="gf-form-label gf-form-label--variable"
-      style={FNDashboard ? changeLabelStyle : {}}
+      style={FNDashboard ? { ...COMMON_PICKER_LABEL_STYLE, color: theme.colors.text.secondary } : {}}
       data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
       htmlFor={elementId}
     >

@@ -1,13 +1,14 @@
 import { merge } from 'lodash';
 
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
-import { palette } from './palette';
-import { DeepPartial, ThemeRichColor } from './types';
-import {ThemeColorsBase, ThemeColorsMode, ThemeColors} from './createColors'
+import { ThemeColorsBase, ThemeColorsMode, ThemeColors, ThemeColorsInput } from './createColors';
+import { palette } from './fnPalette';
+import { ThemeRichColor } from './types';
 
-
-/** @internal */
-export type ThemeColorsInput = DeepPartial<ThemeColorsBase<ThemeRichColor>>;
+interface GetRichColorProps {
+  color: Partial<ThemeRichColor>;
+  name: string;
+}
 
 class FnDarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   mode: ThemeColorsMode = 'dark';
@@ -136,7 +137,7 @@ class FnLightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   warning = {
-    main: '#F3D086',
+    main: '#EB7B18', // FN color
     text: palette.orangeLightText,
   };
 
@@ -166,6 +167,7 @@ class FnLightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   tonalOffset = 0.2;
 }
 
+// NOTE: createFnColors used in create-mfe to create grafana theme2 colors
 export function createFnColors(colors: ThemeColorsInput): ThemeColors {
   const dark = new FnDarkColors();
   const light = new FnLightColors();
@@ -233,9 +235,4 @@ export function createFnColors(colors: ThemeColorsInput): ThemeColors {
     },
     other
   );
-}
-
-interface GetRichColorProps {
-  color: Partial<ThemeRichColor>;
-  name: string;
 }

@@ -1,7 +1,6 @@
 import { ReactNode } from 'react';
 
 import { GrafanaThemeType } from '@grafana/data';
-import { FnTheme } from 'app/core/reducers/fn-slice';
 
 export type FailedToMountGrafanaErrorName = 'FailedToMountGrafana';
 
@@ -18,13 +17,12 @@ export type AnyObject<K extends string | number | symbol = string, V = any> = {
   [key in K]: V;
 };
 
-export interface FNDashboardProps<Q extends string = string> {
+export interface FNDashboardProps {
   name: string;
   uid: string;
   slug: string;
   mode: GrafanaThemeType.Dark | GrafanaThemeType.Light;
-  theme: FnTheme;
-  queryParams: Partial<AnyObject<Q, string>>;
+  queryParams: Partial<AnyObject<string, string>>;
   fnError?: ReactNode;
   fnLoader?: ReactNode;
   pageTitle?: string;
