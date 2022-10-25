@@ -9,11 +9,10 @@ weight: 60
 
 # Data sources
 
-Grafana supports many different backends for your time series data, and lets you create your own interfaces to backends.
-Grafana refers to these backends as **data sources**.
+Grafana can query and integrate with many different types of databases. This is done by adding a **data source** of the type you want to query or integrate with. 
+When you have created and configured a data source you are ready to start exploring and visualizing data, either in Explore or in a new Dashboard. A dashboard is composed of [panels]({{< relref "../panels-visualizations/" >}}), each panel contains a set of queries to one or more data sources. 
 
-You can use this flexibility to build [panels]({{< relref "../panels-visualizations/" >}}) that collect and visualize data of many types, and from many sources, in a single [dashboard]({{< relref "../dashboards/" >}}).
-Each panel uses one specific data source, which can belong to a particular [organization]({{< relref "../administration/organization-management/" >}}).
+You can also create new a alert rule from a data source query and have Grafana continuously evaluate it and notify you when things change. 
 
 You can also query data sources without building a dashboard by using the [Explore]({{< relref "../explore/" >}}) feature.
 
