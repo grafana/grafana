@@ -7,14 +7,14 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type Service struct {
+type Client struct {
 	ObjectStoreClient
 	cfg               *setting.Cfg
 	pluginAuthService jwt.PluginAuthService
 }
 
-func ProvideObjectStoreService(cfg *setting.Cfg, pluginAuthService jwt.PluginAuthService) *Service {
-	s := &Service{cfg: cfg, pluginAuthService: pluginAuthService}
+func ProvideObjectStoreClient(cfg *setting.Cfg, pluginAuthService jwt.PluginAuthService) *Client {
+	s := &Client{cfg: cfg, pluginAuthService: pluginAuthService}
 	conn, err := grpc.Dial(
 		s.cfg.ObjectStore.Address,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
