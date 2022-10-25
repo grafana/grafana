@@ -34,3 +34,8 @@ type metricStatMeta struct {
 	Period int    `json:"period"`
 	Label  string `json:"label,omitempty"`
 }
+
+type Metric struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}

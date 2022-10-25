@@ -2,8 +2,6 @@ package request
 
 import (
 	"net/url"
-
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
 )
 
 type DimensionKeysRequestType uint32
@@ -22,7 +20,7 @@ type DimensionKeysRequest struct {
 }
 
 func (q *DimensionKeysRequest) Type() DimensionKeysRequestType {
-	if _, exist := constants.NamespaceMetricsMap[q.Namespace]; !exist {
+	if isCustomNamespace(q.Namespace) {
 		return CustomMetricDimensionKeysRequest
 	}
 

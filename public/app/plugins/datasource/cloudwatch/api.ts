@@ -5,7 +5,14 @@ import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudWatchRequest } from './query-runner/CloudWatchRequest';
-import { CloudWatchJsonData, DescribeLogGroupsRequest, GetDimensionKeysRequest, MultiFilters } from './types';
+import {
+  CloudWatchJsonData,
+  DescribeLogGroupsRequest,
+  GetDimensionKeysRequest,
+  GetDimensionValuesRequest,
+  MetricResponse,
+  MultiFilters,
+} from './types';
 
 export interface SelectableResourceValue extends SelectableValue<string> {
   text: string;
@@ -50,23 +57,23 @@ export class CloudWatchAPI extends CloudWatchRequest {
     });
   }
 
-  async getMetrics(namespace: string | undefined, region?: string) {
+  async getMetrics(namespace: string | undefined, region?: string): Promise<Array<SelectableValue<string>>> {
     if (!namespace) {
       return [];
     }
 
-    return this.memoizedGetRequest<SelectableResourceValue[]>('metrics', {
+    return this.memoizedGetRequest<MetricResponse[]>('metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
-    });
+    }).then((metrics) => metrics.map((m) => ({ label: m.name, value: m.name })));
   }
 
   async getAllMetrics(region: string): Promise<Array<{ metricName?: string; namespace: string }>> {
-    const values = await this.memoizedGetRequest<SelectableResourceValue[]>('all-metrics', {
+    const values = await this.memoizedGetRequest<MetricResponse[]>('all-metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
     });
 
-    return values.map((v) => ({ metricName: v.value, namespace: v.text }));
+    return values.map((v) => ({ metricName: v.name, namespace: v.namespace }));
   }
 
   async getDimensionKeys({
@@ -83,13 +90,13 @@ export class CloudWatchAPI extends CloudWatchRequest {
     }).then((dimensionKeys) => dimensionKeys.map(toOption));
   }
 
-  async getDimensionValues(
-    region: string,
-    namespace: string | undefined,
-    metricName: string | undefined,
-    dimensionKey: string,
-    dimensionFilters: {}
-  ) {
+  async getDimensionValues({
+    dimensionKey,
+    region,
+    namespace,
+    dimensionFilters = {},
+    metricName = '',
+  }: GetDimensionValuesRequest) {
     if (!namespace || !metricName) {
       return [];
     }
