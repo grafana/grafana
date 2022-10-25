@@ -11,12 +11,12 @@ import {
 } from '@grafana/data';
 import { VizTextDisplayOptions } from '@grafana/schema';
 
-import { Themeable } from '../../types';
+import { Themeable2 } from '../../types';
 import { calculateFontSize } from '../../utils/measureText';
 
 import { calculateGaugeAutoProps, DEFAULT_THRESHOLDS, getFormattedThresholds } from './utils';
 
-export interface Props extends Themeable {
+export interface Props extends Themeable2 {
   height: number;
   field: FieldConfig;
   showThresholdMarkers: boolean;
@@ -54,7 +54,7 @@ export class Gauge extends PureComponent<Props> {
 
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
     const dimension = Math.min(width, autoProps.gaugeHeight);
-    const backgroundColor = theme.colors.bg2;
+    const backgroundColor = theme.colors.background.secondary;
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 5.5, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
@@ -120,7 +120,7 @@ export class Gauge extends PureComponent<Props> {
             formatter: () => {
               return text;
             },
-            font: { size: fontSize, family: theme.typography.fontFamily.sansSerif },
+            font: { size: fontSize, family: theme.typography.fontFamily },
           },
           show: true,
         },
