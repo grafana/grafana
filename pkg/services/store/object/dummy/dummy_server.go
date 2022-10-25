@@ -38,9 +38,10 @@ var (
 
 func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry) object.ObjectStoreServer {
 	objectServer := &dummyObjectServer{
-		collection: persistentcollection.NewLocalFSPersistentCollection[*RawObjectWithHistory]("raw-object", cfg.DataPath, rawObjectVersion),
-		log:        log.New("in-memory-object-server"),
-		kinds:      kinds,
+		collection:         persistentcollection.NewLocalFSPersistentCollection[*RawObjectWithHistory]("raw-object", cfg.DataPath, rawObjectVersion),
+		log:                log.New("in-memory-object-server"),
+		kinds:              kinds,
+		grpcServerProvider: grpcServerProvider,
 	}
 	objectServer.BasicService = services.NewIdleService(objectServer.start, nil)
 
