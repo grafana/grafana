@@ -316,8 +316,6 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(pluginCtx backend.Plugin
 	return &resp, nil
 }
 
-var metricsCacheLock sync.Mutex
-
 func (e *cloudWatchExecutor) handleGetLogGroups(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	limit := parameters.Get("limit")
