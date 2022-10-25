@@ -16,7 +16,7 @@ func addFolderMigrations(mg *migrator.Migrator) {
 	).Postgres("INSERT INTO folder (id, uid, org_id, title, parent_uid, created, updated) SELECT id, uid, org_id, title, folder_id, created, updated FROM dashboard WHERE is_folder = true;"))
 
 	mg.AddMigration("Add index for parent_uid", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
-		Cols: []string{"parent_uid", "org_id"}, Type: migrator.UniqueIndex,
+		Cols: []string{"parent_uid", "org_id"},
 	}))
 }
 
