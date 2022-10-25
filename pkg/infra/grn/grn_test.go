@@ -1,66 +1,70 @@
-package grn
+package grn_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/infra/grn"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseGRNStr(t *testing.T) {
 	tests := []struct {
 		input     string
-		expect    GRN
+		expect    grn.GRN
 		expectErr bool
 	}{
 		{ // empty
 			"",
-			GRN{},
+			grn.GRN{},
 			true,
 		},
 		{ // too few parts
 			"grn:dashboards",
-			GRN{},
+			grn.GRN{},
 			true,
 		},
 		{ // too many parts
 			"grn::dashboards:user:orgs:otherthings:hello:stillgoing",
-			GRN{},
+			grn.GRN{},
 			true,
 		},
 		{ // Does not look like a GRN
 			"hrn:grafana::123:dashboards/foo",
-			GRN{},
+			grn.GRN{},
 			true,
 		},
 		{ // Missing Kind
 			"grn::foo",
-			GRN{},
+			grn.GRN{},
 			true,
 		},
 		{ // good!
 			"grn::roles/Admin",
-			GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "Admin"},
+			grn.GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "Admin"},
 			false,
 		},
 		{ // good!
 			"grn::roles/Admin/with/some/slashes",
-			GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "Admin/with/some/slashes"},
+			grn.GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "Admin/with/some/slashes"},
 			false,
 		},
 		{ // good!
 			"grn:123456789:roles/Admin/with/some/slashes",
-			GRN{TenantID: 123456789, ResourceKind: "roles", ResourceIdentifier: "Admin/with/some/slashes"},
+			grn.GRN{TenantID: 123456789, ResourceKind: "roles", ResourceIdentifier: "Admin/with/some/slashes"},
 			false,
 		},
 		{ // Weird, but valid.
 			"grn::roles///Admin/with/leading/slashes",
-			GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "//Admin/with/leading/slashes"},
+			grn.GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "//Admin/with/leading/slashes"},
 			false,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("ParseStr(%q)", test.input), func(t *testing.T) {
-			got, err := ParseStr(test.input)
+			got, err := grn.ParseStr(test.input)
 			if test.expectErr && err == nil {
 				t.Fatal("wrong result. Expected error, got success")
 			}
@@ -74,4 +78,22 @@ func TestParseGRNStr(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMarshalGRNs(t *testing.T) {
+	simple := grn.GRN{TenantID: 123, ResourceKind: "A", ResourceIdentifier: "B"}
+	require.Equal(t, simple, simple)
+	require.Equal(t, simple, grn.GRN{TenantID: 123, ResourceIdentifier: "B", ResourceKind: "A"})
+
+	type test struct {
+		Hello grn.GRN `json:"hello"`
+	}
+	out, err := json.Marshal(test{Hello: simple})
+	require.NoError(t, err)
+	require.JSONEq(t, `{"hello":"grn:123:A/B"}`, string(out))
+
+	copy := &test{}
+	err = json.Unmarshal(out, copy)
+	require.NoError(t, err)
+	require.Equal(t, simple, copy.Hello)
 }

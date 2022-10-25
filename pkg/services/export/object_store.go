@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/playlist"
@@ -109,8 +110,11 @@ func (e *objectStoreJob) start() {
 		}
 
 		_, err = e.store.Write(ctx, &object.WriteObjectRequest{
-			UID:     fmt.Sprintf("export/%s", dash.UID),
-			Kind:    models.StandardKindDashboard,
+			GRN: grn.GRN{
+				TenantID:           dash.OrgID,
+				ResourceKind:       models.StandardKindDashboard,
+				ResourceIdentifier: fmt.Sprintf("export/%s", dash.UID),
+			}.String(),
 			Body:    dash.Body,
 			Comment: "export from dashboard table",
 		})
@@ -149,8 +153,11 @@ func (e *objectStoreJob) start() {
 		}
 
 		_, err = e.store.Write(ctx, &object.WriteObjectRequest{
-			UID:     fmt.Sprintf("export/%s", playlist.Uid),
-			Kind:    models.StandardKindPlaylist,
+			GRN: grn.GRN{
+				TenantID:           rowUser.OrgID,
+				ResourceKind:       models.StandardKindPlaylist,
+				ResourceIdentifier: fmt.Sprintf("export/%s", playlist.Uid),
+			}.String(),
 			Body:    prettyJSON(playlist),
 			Comment: "export from playlists",
 		})

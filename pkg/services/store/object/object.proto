@@ -5,41 +5,45 @@ option go_package = "./;object";
 
 // The canonical object/document data -- this represents the raw bytes and storage level metadata
 message RawObject {
+  // Grafana resource identifier (includes kind+uid)
+  string GRN = 1;
+
   // Unique ID
-  string UID = 1;
+  string UID = 2;
 
   // Identify the object kind.  This kind will be used to apply a schema to the body and
   // will trigger additional indexing behavior.
-  string kind = 2;
+  string kind = 3;
 
+  
   // Time in epoch milliseconds that the object was created
-  int64 created = 3;
+  int64 created = 4;
 
   // Time in epoch milliseconds that the object was updated
-  int64 updated = 4;
+  int64 updated = 5;
 
   // Who created the object
-  string created_by = 5;
+  string created_by = 6;
 
   // Who updated the object
-  string updated_by = 6;
+  string updated_by = 7;
 
   // Content Length
-  int64 size = 7;
+  int64 size = 8;
 
   // MD5 digest of the body
-  string ETag = 8;
+  string ETag = 9;
 
   // Raw bytes of the storage object.  The kind will determine what is a valid payload
-  bytes body = 9;
+  bytes body = 10;
 
   // The version will change when the object is saved. It is not necessarily sortable
   //
   // NOTE: currently managed by the dashboard+dashboard_version tables
-  string version = 10;
+  string version = 11;
 
   // External location info
-  RawObjectSyncInfo sync = 11;
+  RawObjectSyncInfo sync = 12;
 }
 
 message RawObjectSyncInfo {
@@ -91,20 +95,17 @@ message ObjectVersionInfo {
 //-----------------------------------------------
 
 message ReadObjectRequest {
-  // Unique ID (Kind is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
-  string UID = 1;
-
-  // Object kind (UID is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
-  string kind = 2;
-
+  // Grafana resource identifier
+  string GRN = 1;
+  
   // Fetch an explicit version
-  string version = 3;
+  string version = 2;
 
   // Include the full body bytes
-  bool with_body = 4;
+  bool with_body = 3;
 
   // Include derived summary metadata
-  bool with_summary = 5;
+  bool with_summary = 4;
 }
 
 message ReadObjectResponse {
@@ -133,19 +134,16 @@ message BatchReadObjectResponse {
 
 message WriteObjectRequest {
   // Unique ID (Kind is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
-  string UID = 1;
-
-  // Object kind (UID is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
-  string kind = 2;
+  string GRN = 1;
 
   // The raw object body
-  bytes body = 3;
+  bytes body = 2;
 
   // Message that can be seen when exploring object history
-  string comment = 4;
+  string comment = 3;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
-  string previous_version = 6;
+  string previous_version = 4;
 }
 
 message WriteObjectResponse {
@@ -175,14 +173,11 @@ message WriteObjectResponse {
 //-----------------------------------------------
 
 message DeleteObjectRequest {
-  // Unique ID (Kind is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
-  string UID = 1;
-
-  // Object kind (UID is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
-  string kind = 2;
+  // Grafana resource identifier (includes kind+uid)
+  string GRN = 1;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
-  string previous_version = 3;
+  string previous_version = 2;
 }
 
 message DeleteObjectResponse {
@@ -194,11 +189,8 @@ message DeleteObjectResponse {
 //-----------------------------------------------
 
 message ObjectHistoryRequest {
-  // Unique ID (Kind is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
-  string UID = 1;
-
-  // Object kind (UID is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
-  string kind = 2;
+  // Grafana resource identifier (includes kind+uid)
+  string GRN = 1;
 
   // Maximum number of items to return
   int64 limit = 3; 
@@ -254,43 +246,46 @@ message ObjectSearchRequest {
 
 // Search result metadata for each object
 message ObjectSearchResult {
+  // Grafana resource identifier
+  string GRN = 1;
+
   // Unique ID
-  string UID = 1;
+  string UID = 2;
 
   // Identify the object kind.  This kind will be used to apply a schema to the body and
   // will trigger additional indexing behavior.
-  string kind = 2;
+  string kind = 3;
 
   // The current veresion of this object
-  string version = 3;
+  string version = 4;
 
   // Time in epoch milliseconds that the object was updated
-  int64 updated = 4;
+  int64 updated = 5;
 
   // Who updated the object
-  string updated_by = 5;
+  string updated_by = 6;
 
   // Optionally include the full object body
-  bytes body = 6;
+  bytes body = 7;
 
   //----------------------------------------
   // Derived from body in the summary
   //----------------------------------------
 
   // Always included
-  string name = 7;
+  string name = 8;
 
   // Always included
-  string description = 8;
+  string description = 9;
 
   // The structured labels
-  map<string,string> labels = 9;
+  map<string,string> labels = 10;
 
   // Optionally include extracted JSON
-  bytes fields_json = 10;
+  bytes fields_json = 11;
 
   // ObjectErrorInfo in json
-  bytes error_json = 11;
+  bytes error_json = 12;
 }
 
 message ObjectSearchResponse {

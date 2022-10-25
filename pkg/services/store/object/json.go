@@ -52,8 +52,15 @@ func (codec *rawObjectCodec) IsEmpty(ptr unsafe.Pointer) bool {
 func (codec *rawObjectCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	obj := (*RawObject)(ptr)
 	stream.WriteObjectStart()
-	stream.WriteObjectField("UID")
-	stream.WriteString(obj.UID)
+
+	stream.WriteObjectField("GRN")
+	stream.WriteString(obj.GRN)
+
+	if obj.UID != "" {
+		stream.WriteMore()
+		stream.WriteObjectField("UID")
+		stream.WriteString(obj.UID)
+	}
 
 	if obj.Kind != "" {
 		stream.WriteMore()
@@ -125,6 +132,8 @@ func (codec *rawObjectCodec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator)
 func readRawObject(iter *jsoniter.Iterator, raw *RawObject) {
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 		switch l1Field {
+		case "GRN":
+			raw.GRN = iter.ReadString()
 		case "UID":
 			raw.UID = iter.ReadString()
 		case "kind":

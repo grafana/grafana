@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,6 +16,7 @@ func TestRawEncoders(t *testing.T) {
 	require.NoError(t, err)
 
 	raw := &RawObject{
+		GRN:     grn.GRN{TenantID: 123, ResourceIdentifier: "X"}.String(),
 		UID:     "a",
 		Kind:    "b",
 		Version: "c",
@@ -26,7 +28,7 @@ func TestRawEncoders(t *testing.T) {
 	require.NoError(t, err)
 
 	str := string(b)
-	require.JSONEq(t, `{"UID":"a","kind":"b","version":"c","body":{"field":1.23,"hello":"world"},"etag":"d"}`, str)
+	require.JSONEq(t, `{"GRN":"grn:123:/X","UID":"a","kind":"b","version":"c","body":{"field":1.23,"hello":"world"},"etag":"d"}`, str)
 
 	copy := &RawObject{}
 	err = json.Unmarshal(b, copy)

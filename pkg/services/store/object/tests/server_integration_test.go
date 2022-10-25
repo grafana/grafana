@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
@@ -125,11 +126,15 @@ func TestObjectServer(t *testing.T) {
 	kind := "dummy"
 	uid := "my-test-entity"
 	body := []byte("{\"name\":\"John\"}")
+	testGRN := grn.GRN{
+		TenantID:           testCtx.user.OrgID,
+		ResourceKind:       kind,
+		ResourceIdentifier: uid,
+	}.String()
 
 	t.Run("should not retrieve non-existent objects", func(t *testing.T) {
 		resp, err := testCtx.client.Read(ctx, &object.ReadObjectRequest{
-			UID:  uid,
-			Kind: kind,
+			GRN: testGRN,
 		})
 		require.NoError(t, err)
 
@@ -140,8 +145,7 @@ func TestObjectServer(t *testing.T) {
 	t.Run("should be able to read persisted objects", func(t *testing.T) {
 		before := time.Now()
 		writeReq := &object.WriteObjectRequest{
-			UID:     uid,
-			Kind:    kind,
+			GRN:     testGRN,
 			Body:    body,
 			Comment: "first entity!",
 		}
@@ -157,8 +161,7 @@ func TestObjectServer(t *testing.T) {
 		requireVersionMatch(t, writeResp.Object, versionMatcher)
 
 		readResp, err := testCtx.client.Read(ctx, &object.ReadObjectRequest{
-			UID:      uid,
-			Kind:     kind,
+			GRN:      testGRN,
 			Version:  "",
 			WithBody: true,
 		})
@@ -178,16 +181,14 @@ func TestObjectServer(t *testing.T) {
 		requireObjectMatch(t, readResp.Object, objectMatcher)
 
 		deleteResp, err := testCtx.client.Delete(ctx, &object.DeleteObjectRequest{
-			UID:             uid,
-			Kind:            kind,
+			GRN:             testGRN,
 			PreviousVersion: writeResp.Object.Version,
 		})
 		require.NoError(t, err)
 		require.True(t, deleteResp.OK)
 
 		readRespAfterDelete, err := testCtx.client.Read(ctx, &object.ReadObjectRequest{
-			UID:      uid,
-			Kind:     kind,
+			GRN:      testGRN,
 			Version:  "",
 			WithBody: true,
 		})
@@ -198,8 +199,7 @@ func TestObjectServer(t *testing.T) {
 	t.Run("should be able to update an object", func(t *testing.T) {
 		before := time.Now()
 		writeReq1 := &object.WriteObjectRequest{
-			UID:     uid,
-			Kind:    kind,
+			GRN:     testGRN,
 			Body:    body,
 			Comment: "first entity!",
 		}
@@ -210,8 +210,7 @@ func TestObjectServer(t *testing.T) {
 		body2 := []byte("{\"name\":\"John2\"}")
 
 		writeReq2 := &object.WriteObjectRequest{
-			UID:     uid,
-			Kind:    kind,
+			GRN:     testGRN,
 			Body:    body2,
 			Comment: "update1",
 		}
@@ -229,8 +228,7 @@ func TestObjectServer(t *testing.T) {
 
 		body3 := []byte("{\"name\":\"John3\"}")
 		writeReq3 := &object.WriteObjectRequest{
-			UID:     uid,
-			Kind:    kind,
+			GRN:     testGRN,
 			Body:    body3,
 			Comment: "update3",
 		}
@@ -249,8 +247,7 @@ func TestObjectServer(t *testing.T) {
 			version:      &writeResp3.Object.Version,
 		}
 		readRespLatest, err := testCtx.client.Read(ctx, &object.ReadObjectRequest{
-			UID:      uid,
-			Kind:     kind,
+			GRN:      testGRN,
 			Version:  "", // latest
 			WithBody: true,
 		})
@@ -259,8 +256,7 @@ func TestObjectServer(t *testing.T) {
 		requireObjectMatch(t, readRespLatest.Object, latestMatcher)
 
 		readRespFirstVer, err := testCtx.client.Read(ctx, &object.ReadObjectRequest{
-			UID:      uid,
-			Kind:     kind,
+			GRN:      testGRN,
 			Version:  writeResp1.Object.Version,
 			WithBody: true,
 		})
@@ -280,8 +276,7 @@ func TestObjectServer(t *testing.T) {
 		})
 
 		history, err := testCtx.client.History(ctx, &object.ObjectHistoryRequest{
-			UID:  uid,
-			Kind: kind,
+			GRN: testGRN,
 		})
 		require.NoError(t, err)
 		require.Equal(t, []*object.ObjectVersionInfo{
@@ -291,8 +286,7 @@ func TestObjectServer(t *testing.T) {
 		}, history.Versions)
 
 		deleteResp, err := testCtx.client.Delete(ctx, &object.DeleteObjectRequest{
-			UID:             uid,
-			Kind:            kind,
+			GRN:             testGRN,
 			PreviousVersion: writeResp3.Object.Version,
 		})
 		require.NoError(t, err)
@@ -305,29 +299,37 @@ func TestObjectServer(t *testing.T) {
 		uid4 := "uid4"
 		kind2 := "kind2"
 		w1, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
-			UID:  uid,
-			Kind: kind,
+			GRN:  testGRN,
 			Body: body,
 		})
 		require.NoError(t, err)
 
 		w2, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
-			UID:  uid2,
-			Kind: kind,
+			GRN: grn.GRN{
+				TenantID:           testCtx.user.OrgID,
+				ResourceKind:       kind,
+				ResourceIdentifier: uid2,
+			}.String(),
 			Body: body,
 		})
 		require.NoError(t, err)
 
 		w3, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
-			UID:  uid3,
-			Kind: kind2,
+			GRN: grn.GRN{
+				TenantID:           testCtx.user.OrgID,
+				ResourceKind:       kind2,
+				ResourceIdentifier: uid3,
+			}.String(),
 			Body: body,
 		})
 		require.NoError(t, err)
 
 		w4, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
-			UID:  uid4,
-			Kind: kind2,
+			GRN: grn.GRN{
+				TenantID:           testCtx.user.OrgID,
+				ResourceKind:       kind2,
+				ResourceIdentifier: uid4,
+			}.String(),
 			Body: body,
 		})
 		require.NoError(t, err)
