@@ -155,7 +155,7 @@ func (pd *PublicDashboardServiceImpl) SavePublicDashboard(ctx context.Context, u
 	return newPubdash, err
 }
 
-// GenerateNewPublicDashboardUid Generates not existent uid to create a public dashboard
+// GenerateNewPublicDashboardUid Generates a unique uid to create a public dashboard. Will make 3 attempts and fail if it cannot find an unused uid
 func (pd *PublicDashboardServiceImpl) GenerateNewPublicDashboardUid(ctx context.Context) (string, error) {
 	var uid string
 	for i := 0; i < 3; i++ {
