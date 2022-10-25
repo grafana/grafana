@@ -1,12 +1,15 @@
 export function withFocusedPanel(fn: (panelId: number) => void) {
   return () => {
-    const elements = document.querySelectorAll(':hover');
+    const elementFocus = document.querySelector<HTMLInputElement>(':focus-visible.react-grid-item');
+    const elementHover = document.querySelector<HTMLInputElement>(':hover.react-grid-item');
 
-    for (let i = elements.length - 1; i > 0; i--) {
-      const element = elements[i];
-      if (element instanceof HTMLElement && element.dataset?.panelid) {
-        fn(parseInt(element.dataset?.panelid, 10));
-      }
+    if (elementFocus && elementFocus.dataset.panelid) {
+      fn(parseInt(elementFocus.dataset.panelid, 10));
+      return;
+    }
+    if (elementHover && elementHover.dataset.panelid) {
+      fn(parseInt(elementHover.dataset.panelid, 10));
+      return;
     }
   };
 }

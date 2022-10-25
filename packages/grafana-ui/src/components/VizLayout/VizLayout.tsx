@@ -41,9 +41,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   if (!legend) {
     return (
       <>
-        {/* tabIndex={0} is needed for keyboard accessibility in the plot area */}
-        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
-        <div tabIndex={0} style={containerStyle} className={styles.viz}>
+        <div style={containerStyle} className={styles.viz}>
           {children(width, height)}
         </div>
       </>

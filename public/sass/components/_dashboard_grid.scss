@@ -15,6 +15,15 @@
       visibility: visible;
     }
   }
+
+  &:focus-visible {
+    outline: none;
+    outline-offset: '2px';
+    box-shadow: 0 0 0 2px $dashboard-bg, 0 0 0px 4px $info-box-border-color;
+    transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+    transition-duration: '0.2s';
+    transition-property: 'outline, outline-offset, box-shadow';
+  }
 }
 
 .panel-in-fullscreen {
