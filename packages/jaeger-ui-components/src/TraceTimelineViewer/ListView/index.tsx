@@ -215,7 +215,7 @@ export default class ListView extends React.Component<TListViewProps> {
     }
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: TListViewProps) {
     if (this._itemHolderElm) {
       this._scanItemHeights();
     }
