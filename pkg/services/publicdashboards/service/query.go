@@ -131,7 +131,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 	}
 
 	if len(metricReq.Queries) == 0 {
-		return nil, nil
+		return nil, models.ErrNoPanelQueriesFound
 	}
 
 	anonymousUser := buildAnonymousUser(ctx, dashboard)
