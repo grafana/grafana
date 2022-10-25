@@ -23,27 +23,33 @@ func TestQueryJSON(t *testing.T) {
 
 func TestRequestParser(t *testing.T) {
 	t.Run("legacy statistics field is migrated: migrates first stat only", func(t *testing.T) {
-		query := []backend.DataQuery{
+		oldQuery := []backend.DataQuery{
 			{
+				MaxDataPoints: 0,
+				QueryType:     "timeSeriesQuery",
+				Interval:      0,
+				RefID:         "A",
 				JSON: json.RawMessage(`{
-				   "refId":"A",
-				   "dimensions":{"dimensions":["test"]},
-				   "metricName":"CPUUtilization",
-				   "namespace":"ec2",
-				   "period":"600",
 				   "region":"us-east-1",
+				   "namespace":"ec2",
+				   "metricName":"CPUUtilization",
+				   "dimensions":{
+						"InstanceId": ["test"]
+					},
 				   "statistics":["Average", "Sum"],
+				   "period":"600",
 				   "hide":false
 				}`),
 			},
 		}
 
-		res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), false)
+		migratedQuery, err := ParseMetricDataQueries(oldQuery, time.Now(), time.Now(), false)
 		assert.NoError(t, err)
+		require.Len(t, migratedQuery, 1)
+		require.NotNil(t, migratedQuery[0])
 
-		require.Len(t, res, 1)
-		require.NotNil(t, res[0])
-		assert.Equal(t, "Average", res[0].Statistic)
+		assert.Equal(t, "A", migratedQuery[0].RefId)
+		assert.Equal(t, "Average", migratedQuery[0].Statistic)
 	})
 
 	t.Run("New dimensions structure", func(t *testing.T) {
@@ -55,14 +61,11 @@ func TestRequestParser(t *testing.T) {
 				   "region":"us-east-1",
 				   "namespace":"ec2",
 				   "metricName":"CPUUtilization",
+				   "id": "",
+				   "expression": "",
 				   "dimensions":{
-					  "InstanceId":[
-						 "test"
-					  ],
-					  "InstanceType":[
-						 "test2",
-						 "test3"
-					  ]
+					  "InstanceId":["test"],
+					  "InstanceType":["test2","test3"]
 				   },
 				   "statistic":"Average",
 				   "period":"600"
@@ -72,9 +75,10 @@ func TestRequestParser(t *testing.T) {
 
 		results, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
 		require.NoError(t, err)
-
 		require.Len(t, results, 1)
 		res := results[0]
+		require.NotNil(t, res)
+
 		assert.Equal(t, "us-east-1", res.Region)
 		assert.Equal(t, "ref1", res.RefId)
 		assert.Equal(t, "ec2", res.Namespace)
@@ -99,21 +103,25 @@ func TestRequestParser(t *testing.T) {
 				   "region":"us-east-1",
 				   "namespace":"ec2",
 				   "metricName":"CPUUtilization",
+				   "id": "",
+				   "expression": "",
 				   "dimensions":{
-					  "InstanceId":"test",
-					  "InstanceType":"test2"
+					  "InstanceId":["test"],
+					  "InstanceType":["test2"]
 				   },
 				   "statistic":"Average",
-				   "period":"600"
+				   "period":"600",
+				   "hide": false
 				}`),
 			},
 		}
 
 		results, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
 		assert.NoError(t, err)
-
 		require.Len(t, results, 1)
 		res := results[0]
+		require.NotNil(t, res)
+
 		assert.Equal(t, "us-east-1", res.Region)
 		assert.Equal(t, "ref1", res.RefId)
 		assert.Equal(t, "ec2", res.Namespace)
@@ -129,7 +137,7 @@ func TestRequestParser(t *testing.T) {
 		assert.Equal(t, "Average", res.Statistic)
 	})
 
-	t.Run("parseDimensions returns error for unknown type", func(t *testing.T) {
+	t.Run("parseDimensions returns error for non-string type dimension value", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
 				JSON: json.RawMessage(`{
@@ -142,9 +150,9 @@ func TestRequestParser(t *testing.T) {
 		}
 
 		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
-		assert.Error(t, err)
+		require.Error(t, err)
 
-		assert.Equal(t, "error parsing query \"\", failed to parse dimensions: unknown type as dimension value", err.Error())
+		assert.Equal(t, `error parsing query "", failed to parse dimensions: unknown type as dimension value`, err.Error())
 	})
 }
 
@@ -157,54 +165,25 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 				   "region":"us-east-1",
 				   "namespace":"ec2",
 				   "metricName":"CPUUtilization",
+				   "id": "",
+				   "expression": "",
 				   "dimensions":{
 					  "InstanceId":["test"],
 					  "InstanceType":["test2"]
 				   },
 				   "statistic":"Average",
-				   "period":"900"
+				   "period":"900",
+				   "hide":false
 				}`),
 			},
 		}
 
 		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
 		assert.NoError(t, err)
-
 		require.Len(t, res, 1)
+		require.NotNil(t, res[0])
+
 		assert.Equal(t, 900, res[0].Period)
-	})
-
-	t.Run("returns error if period is invalid duration", func(t *testing.T) {
-		query := []backend.DataQuery{
-			{
-				JSON: json.RawMessage(`{
-				   "statistic":"Average",
-				   "period":"invalid"
-				}`),
-			},
-		}
-
-		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
-		require.Error(t, err)
-
-		assert.Equal(t, `error parsing query "", failed to parse period as duration: time: invalid duration "invalid"`, err.Error())
-	})
-
-	t.Run("returns parsed duration in seconds", func(t *testing.T) {
-		query := []backend.DataQuery{
-			{
-				JSON: json.RawMessage(`{
-				   "statistic":"Average",
-				   "period":"2h45m"
-				}`),
-			},
-		}
-
-		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
-		assert.NoError(t, err)
-
-		require.Len(t, res, 1)
-		assert.Equal(t, 9900, res[0].Period)
 	})
 
 	t.Run("Period is parsed correctly if not defined by user", func(t *testing.T) {
@@ -215,6 +194,8 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 				   "region":"us-east-1",
 				   "namespace":"ec2",
 				   "metricName":"CPUUtilization",
+				   "id": "",
+				   "expression": "",
 				   "dimensions":{
 					  "InstanceId":["test"],
 					  "InstanceType":["test2"]
@@ -330,6 +311,39 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			assert.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 21600, res[0].Period)
+		})
+
+		t.Run("returns error if period is invalid duration", func(t *testing.T) {
+			query := []backend.DataQuery{
+				{
+					JSON: json.RawMessage(`{
+				   "statistic":"Average",
+				   "period":"invalid"
+				}`),
+				},
+			}
+
+			_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
+			require.Error(t, err)
+
+			assert.Equal(t, `error parsing query "", failed to parse period as duration: time: invalid duration "invalid"`, err.Error())
+		})
+
+		t.Run("returns parsed duration in seconds", func(t *testing.T) {
+			query := []backend.DataQuery{
+				{
+					JSON: json.RawMessage(`{
+				   "statistic":"Average",
+				   "period":"2h45m"
+				}`),
+				},
+			}
+
+			res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
+			assert.NoError(t, err)
+
+			require.Len(t, res, 1)
+			assert.Equal(t, 9900, res[0].Period)
 		})
 	})
 }
