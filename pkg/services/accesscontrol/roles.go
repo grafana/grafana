@@ -245,6 +245,9 @@ func ValidatePluginPermissions(pluginID string, permissions []Permission) error 
 // ValidatePluginRole errors when a plugin role does not match expected pattern
 // or doesn't have permissions matching the expected pattern.
 func ValidatePluginRole(pluginID string, role RoleDTO) error {
+	if pluginID == "" {
+		return ErrPluginIDRequired
+	}
 	if !strings.HasPrefix(role.Name, AppPluginRolePrefix+pluginID+":") {
 		return &ErrorRolePrefixMissing{Role: role.Name, Prefixes: []string{AppPluginRolePrefix + pluginID + ":"}}
 	}

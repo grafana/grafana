@@ -10,6 +10,7 @@ var (
 	ErrInvalidBuiltinRole     = errors.New("built-in role is not valid")
 	ErrInvalidScope           = errors.New("invalid scope")
 	ErrResolverNotFound       = errors.New("no resolver found")
+	ErrPluginIDRequired       = errors.New("plugin ID is required")
 )
 
 type ErrorInvalidRole struct{}
