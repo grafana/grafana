@@ -826,7 +826,6 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 	})
 }
 
-
 func Test_ParseMetricDataQueries_statistics_and_query_type_validation_and_MatchExact_initialization(t *testing.T) {
 	t.Run("requires statistics or statistic field", func(t *testing.T) {
 		actual, err := ParseMetricDataQueries(
