@@ -151,3 +151,17 @@ Exemplars associate higher-cardinality metadata from a specific event with tradi
 Configure Exemplars in the data source settings by adding external or internal links.
 
 {{< figure src="/static/img/docs/v74/exemplars-setting.png" class="docs-image--no-shadow" caption="Screenshot of the Exemplars configuration" >}}
+
+## Query the data source
+
+You can create queries with the Prometheus data source's query editor.
+
+For details, refer to the [query editor documentation]({{< relref "./query-editor/" >}}).
+
+## Use template variables
+
+Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
+Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
+Grafana refers to such variables as template variables.
+
+For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).

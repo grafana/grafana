@@ -83,36 +83,6 @@ Before you can request data from Google Cloud Monitoring, you must first enable 
 
    {{< figure src="/static/img/docs/v71/cloudmonitoring_enable_api.png" max-width="450px" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
 
-## Import pre-configured dashboards
-
-The Google Cloud Monitoring data source ships with pre-configured dashboards for some of the most popular GCP services.
-These curated dashboards are based on similar dashboards in the GCP dashboard samples repository.
-
-**To import curated dashboards:**
-
-1. Navigate to the data source's [configuration page]({{< relref "#configure-the-data-source" >}}).
-1. Select the **Dashboards** tab.
-
-   This displays the curated selection of importable dashboards.
-
-1. Select **Import** for the dashboard to import.
-
-{{< figure src="/static/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" max-width= "650px" >}}
-
-The dashboards include a [template variable]({{< relref "./template-variables/" >}}) populated with the projects accessible by the configured [Service Account]({{< relref "./google-authentication/" >}}) each time you load the dashboard.
-After Grafana loads the dashboard, you can select a project from the dropdown list.
-
-**To customize an imported dashboard:**
-
-To customize one of these dashboards, we recommend that you save it under a different name.
-If you don't, upgrading Grafana can overwrite the customized dashboard with the new version.
-
-## Query the data source
-
-The Google Cloud Monitoring query editor helps you build two types of queries: **Metric** and **Service Level Objective (SLO)**.
-
-For details, refer to the [query editor documentation]({{< relref "./query-editor/" >}}).
-
 ### Provision the data source
 
 You can define and configure the Google Cloud Monitoring data source in YAML files as part of Grafana's provisioning system.
@@ -155,3 +125,41 @@ datasources:
     jsonData:
       authenticationType: gce
 ```
+
+## Import pre-configured dashboards
+
+The Google Cloud Monitoring data source ships with pre-configured dashboards for some of the most popular GCP services.
+These curated dashboards are based on similar dashboards in the GCP dashboard samples repository.
+
+**To import curated dashboards:**
+
+1. Navigate to the data source's [configuration page]({{< relref "#configure-the-data-source" >}}).
+1. Select the **Dashboards** tab.
+
+   This displays the curated selection of importable dashboards.
+
+1. Select **Import** for the dashboard to import.
+
+{{< figure src="/static/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" max-width= "650px" >}}
+
+The dashboards include a [template variable]({{< relref "./template-variables/" >}}) populated with the projects accessible by the configured [Service Account]({{< relref "./google-authentication/" >}}) each time you load the dashboard.
+After Grafana loads the dashboard, you can select a project from the dropdown list.
+
+**To customize an imported dashboard:**
+
+To customize one of these dashboards, we recommend that you save it under a different name.
+If you don't, upgrading Grafana can overwrite the customized dashboard with the new version.
+
+## Query the data source
+
+The Google Cloud Monitoring query editor helps you build two types of queries: **Metric** and **Service Level Objective (SLO)**.
+
+For details, refer to the [query editor documentation]({{< relref "./query-editor/" >}}).
+
+## Use template variables
+
+Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
+Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
+Grafana refers to such variables as template variables.
+
+For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).

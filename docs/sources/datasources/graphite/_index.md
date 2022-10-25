@@ -82,6 +82,22 @@ datasources:
       graphiteVersion: '1.1'
 ```
 
+## Query the data source
+
+Grafana includes a Graphite-specific query editor to help you build queries.
+The query editor helps you quickly navigate the metric space, add functions, and change function parameters.
+It can handle all types of Graphite queries, including complex nested queries through the use of query references.
+
+For details, refer to the [query editor documentation]({{< relref "./query-editor/" >}}).
+
+## Use template variables
+
+Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
+Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
+Grafana refers to such variables as template variables.
+
+For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).
+
 ## Get Grafana metrics into Graphite
 
 Grafana exposes metrics for Graphite on the `/metrics` endpoint.

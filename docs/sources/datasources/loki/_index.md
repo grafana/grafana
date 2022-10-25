@@ -148,3 +148,17 @@ datasources:
       # UID should match the datasourceUid in derivedFields.
       uid: my_jaeger_uid
 ```
+
+## Query the data source
+
+The Loki data source's query editor helps you create log and metric queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
+
+For details, refer to the [query editor documentation]({{< relref "./query-editor/" >}}).
+
+## Use template variables
+
+Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
+Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
+Grafana refers to such variables as template variables.
+
+For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).

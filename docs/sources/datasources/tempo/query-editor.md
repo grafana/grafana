@@ -14,7 +14,7 @@ weight: 300
 
 # Tempo query editor
 
-The Tempo data source's query editor helps you query and display traces from Tempo in [Explore]({{< relref "../explore/" >}}).
+The Tempo data source's query editor helps you query and display traces from Tempo in [Explore]({{< relref "../../explore/" >}}).
 
 ## Query Tempo search
 

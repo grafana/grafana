@@ -194,3 +194,17 @@ datasources:
           field: traceID
           url: '$${__value.raw}' # Careful about the double "$$" because of env var expansion
 ```
+
+## Query the data source
+
+You can select multiple metrics and group by multiple terms or filters when using the Elasticsearch query editor.
+
+For details, see the [query editor documentation]({{< relref "./query-editor/" >}}).
+
+## Use template variables
+
+Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
+Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
+Grafana refers to such variables as template variables.
+
+For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).

@@ -125,3 +125,17 @@ datasources:
     secureJsonData:
       password: 'Password!'
 ```
+
+## Query the data source
+
+You can create queries with the Microsoft SQL Server data source's query editor when editing a panel that uses a MS SQL data source.
+
+For details, refer to the [query editor documentation]({{< relref "./query-editor/" >}}).
+
+## Use template variables
+
+Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
+Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
+Grafana refers to such variables as template variables.
+
+For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).

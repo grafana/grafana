@@ -140,9 +140,17 @@ For details on Azure managed identities, refer to the [Azure documentation](http
 
 ## Query the data source
 
-The CloudWatch data source can query data from Azure Monitor Metrics and Logs, and the Azure Resource Graph, each with its own specialized query editor.
+The Azure Monitor data source can query data from Azure Monitor Metrics and Logs, and the Azure Resource Graph, each with its own specialized query editor.
 
 For details, see the [query editor documentation]({{< relref "./query-editor/" >}}).
+
+## Use template variables
+
+Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
+Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
+Grafana refers to such variables as template variables.
+
+For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).
 
 ## Application Insights and Insights Analytics (removed))
 

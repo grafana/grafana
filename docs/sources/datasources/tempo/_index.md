@@ -180,6 +180,12 @@ datasources:
         datasourceUid: 'loki'
 ```
 
+## Query the data source
+
+The Tempo data source's query editor helps you query and display traces from Tempo in [Explore]({{< relref "../explore/" >}}).
+
+For details, refer to the [query editor documentation]({{< relref "./query-editor/" >}}).
+
 ## Upload a JSON trace file
 
 You can upload a JSON file that contains a single trace and visualize it.

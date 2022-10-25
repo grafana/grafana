@@ -1,6 +1,8 @@
 ---
 aliases:
   - /docs/grafana/latest/datasources/influxdb/influxdb-flux/
+  - /docs/grafana/latest/datasources/influxdb/query-editor/
+  - /docs/grafana/latest/data-sources/influxdb/query-editor/
 description: Guide for Flux in Grafana
 title: Flux support in Grafana
 weight: 200
@@ -8,7 +10,7 @@ weight: 200
 
 # InfluxDB query editor
 
-The InfluxDB data source's query editor has two modes depending on your choice of query language in the [data source configuration]({{< relref "./#configure-the-data-source" >}}):
+The InfluxDB data source's query editor has two modes depending on your choice of query language in the [data source configuration]({{< relref "../#configure-the-data-source" >}}):
 
 - [InfluxQL]({{< relref "#influxql-query-editor" >}})
 - [Flux]({{< relref "#flux-query-editor" >}})
