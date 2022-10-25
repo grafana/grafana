@@ -50,6 +50,9 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
     .ol-scale-line {
       background: ${theme.colors.border.weak}; // rgba(0,60,136,0.3);
     }
+    .ol-scale-line.contrast {
+      background: ${theme.colors.background.primary};
+    }
     .ol-scale-line-inner {
       border: 1px solid ${theme.colors.text.primary}; // #eee;
       border-top: 0px;

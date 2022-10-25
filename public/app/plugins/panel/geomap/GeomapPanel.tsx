@@ -156,7 +156,7 @@ export class GeomapPanel extends Component<Props, State> {
       }
     }
 
-    if (options.controls !== oldOptions.controls) {
+    if (options.controls !== oldOptions.controls || options.layers !== oldOptions.layers) {
       this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
     }
   }
@@ -324,10 +324,17 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     if (options.showScale) {
+      const layersCopy = [...this.layers].reverse();
+      const layersTypes = ['esri-xyz', 'osm-standard', 'xyz', 'carto'];
+      const layer = layersCopy.find((layer) => layer.options.opacity !== 0 && layersTypes.includes(layer.options.type));
+      const isDarkCarto = layer?.options.type === 'carto' && Object(layer.options.config).theme !== 'light';
+      const addContrast = config.theme2.isDark && layer && !isDarkCarto;
+
       this.map.addControl(
         new ScaleLine({
           units: options.scaleUnits,
           minWidth: 100,
+          ...(addContrast ? { className: 'contrast ol-scale-line' } : {}),
         })
       );
     }
