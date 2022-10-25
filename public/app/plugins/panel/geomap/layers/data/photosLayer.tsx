@@ -91,8 +91,6 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
         const idx = feature.get('rowIndex') as number;
         src = images[idx] ?? unknownImage;
       }
-      // TODO getImage results in 404 needs handling
-
       return new Style({
         image: new Photo({
           src,
@@ -105,7 +103,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
             color: '#000', // TODO set border color from theme?
           }),
           onload: () => {
-            console.log('loaded');
+            map.render(); // ensure map is rendered properly after image load
           },
         }),
       });
