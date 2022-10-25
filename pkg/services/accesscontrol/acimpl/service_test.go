@@ -199,6 +199,7 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 					Role: accesscontrol.RoleDTO{
 						Name: "plugins.app:test-app:test",
 						Permissions: []accesscontrol.Permission{
+							{Action: "test-app:read"},
 							{Action: "test-app.resource:read"},
 						},
 					},
@@ -310,6 +311,29 @@ func TestService_RegisterFixedRoles(t *testing.T) {
 					Role: accesscontrol.RoleDTO{
 						Name:        "fixed:test:test",
 						Permissions: []accesscontrol.Permission{{Action: "test:test"}},
+					},
+					Grants: []string{"Editor"},
+				},
+				{
+					Role: accesscontrol.RoleDTO{
+						Name: "fixed:test2:test2",
+						Permissions: []accesscontrol.Permission{
+							{Action: "test:test2"},
+							{Action: "test:test3", Scope: "test:*"},
+						},
+					},
+					Grants: []string{"Viewer"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should register and assign fixed and plugins roles",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role: accesscontrol.RoleDTO{
+						Name:        "plugins.app:test-app:test",
+						Permissions: []accesscontrol.Permission{{Action: "test-app:test"}},
 					},
 					Grants: []string{"Editor"},
 				},
