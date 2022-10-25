@@ -177,7 +177,7 @@ func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardAccessToken(ctx con
 	return accessToken, nil
 }
 
-// Retrieves public dashboard configuration by Uidgi
+// Retrieves public dashboard configuration by Uid
 func (d *PublicDashboardStoreImpl) GetPublicDashboardByUid(ctx context.Context, uid string) (*PublicDashboard, error) {
 	if uid == "" {
 		return nil, nil
