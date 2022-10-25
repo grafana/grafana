@@ -30,18 +30,7 @@ module.exports = {
   stats: {
     colors: true,
   },
-  plugins: [
-    // Copy assets to the destination folder
-    // see `src/post-file-test.ts` for an test example using an asset
-    new CopyPlugin({
-      patterns: [
-        {
-          from: path.resolve(__dirname, 'assets'),
-          noErrorOnMissing: true,
-        },
-      ],
-    }),
-  ],
+  plugins: [],
   optimization: {
     // Don't minimize, as it's not used in the browser
     minimize: false,
