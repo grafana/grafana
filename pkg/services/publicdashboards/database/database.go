@@ -9,9 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // Define the storage implementation. We're generating the mock implementation
@@ -106,67 +104,7 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardAndDashboard(ctx context.Co
 	return pdRes, dashRes, err
 }
 
-// Generates a new unique uid to retrieve a public dashboard
-func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardUid(ctx context.Context) (string, error) {
-	var uid string
-
-	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		for i := 0; i < 3; i++ {
-			uid = util.GenerateShortUID()
-
-			exists, err := sess.Get(&PublicDashboard{Uid: uid})
-			if err != nil {
-				return err
-			}
-
-			if !exists {
-				return nil
-			}
-		}
-
-		return ErrPublicDashboardFailedGenerateUniqueUid
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	return uid, nil
-}
-
-// Generates a new unique access token for a new public dashboard
-func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardAccessToken(ctx context.Context) (string, error) {
-	var accessToken string
-
-	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		for i := 0; i < 3; i++ {
-			var err error
-			accessToken, err = tokens.GenerateAccessToken()
-			if err != nil {
-				continue
-			}
-
-			exists, err := sess.Get(&PublicDashboard{AccessToken: accessToken})
-			if err != nil {
-				return err
-			}
-
-			if !exists {
-				return nil
-			}
-		}
-
-		return ErrPublicDashboardFailedGenerateAccessToken
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	return accessToken, nil
-}
-
-// Retrieves public dashboard configuration by Uid
+// GetPublicDashboardByUid Returns public dashboard configuration by Uid or nil if not found
 func (d *PublicDashboardStoreImpl) GetPublicDashboardByUid(ctx context.Context, uid string) (*PublicDashboard, error) {
 	if uid == "" {
 		return nil, nil
@@ -174,6 +112,31 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardByUid(ctx context.Context, 
 
 	var found bool
 	pdRes := &PublicDashboard{Uid: uid}
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		found, err = sess.Get(pdRes)
+		return err
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !found {
+		return nil, nil
+	}
+
+	return pdRes, err
+}
+
+// GetPublicDashboardByAccessToken Returns public dashboard by access token or nil if not found
+func (d *PublicDashboardStoreImpl) GetPublicDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error) {
+	if accessToken == "" {
+		return nil, ErrPublicDashboardIdentifierNotSet
+	}
+
+	var found bool
+	pdRes := &PublicDashboard{AccessToken: accessToken}
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		found, err = sess.Get(pdRes)

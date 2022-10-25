@@ -576,8 +576,7 @@ func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardSto
 func insertPublicDashboard(t *testing.T, publicdashboardStore *PublicDashboardStoreImpl, dashboardUid string, orgId int64, isEnabled bool) *PublicDashboard {
 	ctx := context.Background()
 
-	uid, err := publicdashboardStore.GenerateNewPublicDashboardUid(ctx)
-	require.NoError(t, err)
+	uid := util.GenerateShortUID()
 
 	accessToken, err := tokens.GenerateAccessToken()
 	require.NoError(t, err)

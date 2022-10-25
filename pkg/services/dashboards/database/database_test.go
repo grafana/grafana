@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestIntegrationDashboardDataAccess(t *testing.T) {
@@ -243,7 +244,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	t.Run("Should be able to delete dashboard and related public dashboard", func(t *testing.T) {
 		setup()
 
-		uid, _ := publicDashboardStore.GenerateNewPublicDashboardUid(context.Background())
+		uid := util.GenerateShortUID()
 		cmd := publicDashboardModels.SavePublicDashboardConfigCommand{
 			PublicDashboard: publicDashboardModels.PublicDashboard{
 				Uid:          uid,
@@ -278,7 +279,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	t.Run("Should be able to delete a dashboard folder, with its dashboard and related public dashboard", func(t *testing.T) {
 		setup()
 
-		uid, _ := publicDashboardStore.GenerateNewPublicDashboardUid(context.Background())
+		uid := util.GenerateShortUID()
 		cmd := publicDashboardModels.SavePublicDashboardConfigCommand{
 			PublicDashboard: publicDashboardModels.PublicDashboard{
 				Uid:          uid,
