@@ -17,20 +17,33 @@ func NativeSettingsForDialect(d migrator.Dialect) BulkOpSettings {
 	}
 }
 
-func Test() {
-	s := &DBSession{}
-	records := []int{1, 2, 3}
-	s.BulkInsert(1, BulkOpSettings{}, records...)
+func (sess *DBSession) BulkInsert(table interface{}, recordsSlice interface{}, opts BulkOpSettings) (int64, error) {
+	var inserted int64
+	err := InBatches(recordsSlice, opts, func(batch interface{}) error {
+		a, err := sess.Table(table).InsertMulti(batch)
+		inserted += a
+		return err
+	})
+	return inserted, err
 }
 
-func (sess *DBSession) BulkInsert(table interface{}, opts BulkOpSettings, records ...any) {
-	sess.Table(table).InsertMulti(records)
-}
+func InBatches(items interface{}, opts BulkOpSettings, fn func(batch interface{}) error) error {
+	slice := reflect.Indirect(reflect.ValueOf(items))
+	if slice.Kind() != reflect.Slice {
+		return fmt.Errorf("need a slice in order to batch records")
+	}
 
-func inBatches(items interface{}, size int, fn func(batch []interface{}) error) error {
-	t := reflect.ValueOf(items)
-	if t.Kind() != reflect.Slice {
-		return fmt.Errorf("cannot batch records on a non-slice")
+	for i := 0; i < slice.Len(); i += opts.BatchSize {
+		end := i + opts.BatchSize
+		if end > slice.Len() {
+			end = slice.Len()
+		}
+
+		chunk := slice.Slice(i, end).Interface()
+
+		if err := fn(chunk); err != nil {
+			return err
+		}
 	}
 	return nil
 }
