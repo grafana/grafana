@@ -169,6 +169,14 @@ GF_AUTH_AZUREAD_CLIENT_SECRET
 
 **Note:** Verify that the Grafana [root_url]({{< relref "../../../configure-grafana/#root-url" >}}) is set in your Azure Application Redirect URLs.
 
+### Refresh Token
+
+> Available in Grafana v9.3 and later versions.
+
+A refresh token is a special token that is used to get new access tokens without having to ask the user to log in again. Without a refresh token the user gets logged out from Grafana (and they need to log in again) when the access token is expired, therefore it is recommended to configure refresh tokens.
+
+1. Extend the `scopes` in `[auth.azuread]` with `offline_access`
+
 ### Configure allowed groups
 
 To limit access to authenticated users who are members of one or more groups, set `allowed_groups`

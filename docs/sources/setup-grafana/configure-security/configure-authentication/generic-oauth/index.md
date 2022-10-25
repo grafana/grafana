@@ -116,6 +116,12 @@ use_pkce = true
 
 Grafana always uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.
 
+### Refresh Token
+
+> Available in Grafana v9.3 and later versions.
+
+A refresh token is a special token that is used to get new access tokens without having to ask the user to log in again. Without a refresh token the user gets logged out from Grafana (and they need to log in again) when the access token is expired, therefore it is recommended to configure refresh tokens. Generic OAuth supports obtaining access tokens by using the refresh token, but the `[auth.generic_oauth]` section should be extended with additional scopes and it should be enabled on the provider side as well.
+
 ## Set up OAuth2 with Auth0
 
 1. Create a new Client in Auth0
@@ -138,7 +144,7 @@ Grafana always uses the SHA256 based `S256` challenge method and a 128 bytes (ba
    name = Auth0
    client_id = <client id>
    client_secret = <client secret>
-   scopes = openid profile email
+   scopes = openid profile email offline_access
    auth_url = https://<domain>/authorize
    token_url = https://<domain>/oauth/token
    api_url = https://<domain>/userinfo
@@ -163,6 +169,8 @@ team_ids_attribute_path = values[*].workspace.slug
 team_ids =
 allowed_organizations =
 ```
+
+A refresh token is included in the response by default for the **Authorization Code Grant**.
 
 ## Set up OAuth2 with Centrify
 
@@ -194,6 +202,8 @@ allowed_organizations =
    token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
    api_url = https://<your domain>.my.centrify.com/OAuth2/UserInfo/<Application ID>
    ```
+
+A refresh token is included in the response by default for the **Authorization Code Grant**.
 
 ## Set up OAuth2 with OneLogin
 

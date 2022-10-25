@@ -64,6 +64,12 @@ automatically signed up.
 
 You can also use [variable expansion]({{< relref "../../../configure-grafana/#variable-expansion" >}}) to reference environment variables and local files in your GitHub auth configuration.
 
+### Refresh Token
+
+> Available in Grafana v9.3 and later versions.
+
+GitHub OAuth applications do not support refresh tokens, because the provided access token doesn't specify an expiry date.
+
 ### team_ids
 
 Require an active team membership for at least one of the given teams on

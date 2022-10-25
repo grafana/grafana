@@ -81,6 +81,12 @@ to login on your Grafana instance.
 You can limit access to only members of a given group or list of
 groups by setting the `allowed_groups` option.
 
+### Refresh Token
+
+> Available in Grafana v9.3 and later versions.
+
+A refresh token is a special token that is used to get new access tokens without having to ask the user to log in again. Without a refresh token the user gets logged out from Grafana (and they need to log in again) when the access token is expired, therefore it is recommended to configure refresh tokens. GitLab by default does provide a refresh token.
+
 ### allowed_groups
 
 To limit access to authenticated users that are members of one or more [GitLab

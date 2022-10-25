@@ -54,6 +54,15 @@ allowed_groups =
 role_attribute_path =
 ```
 
+### Refresh Token
+
+> Available in Grafana v9.3 and later versions.
+
+A refresh token is a special token that is used to get new access tokens without having to ask the user to log in again. Without a refresh token the user gets logged out from Grafana (and they need to log in again) when the access token is expired, therefore it is recommended to configure refresh tokens.
+
+1. Enable the `Refresh Token` grant type in the `General Settings` section
+1. Extend the `scopes` in `[auth.okta]` with `offline_access`
+
 ### Configure allowed groups and domains
 
 To limit access to authenticated users that are members of one or more groups, set `allowed_groups`
