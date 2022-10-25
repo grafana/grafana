@@ -3,6 +3,8 @@ package acimpl
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -24,11 +26,11 @@ const (
 	cacheTTL = 10 * time.Second
 )
 
-func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService, accessControl accesscontrol.AccessControl) (*Service, error) {
 	service := ProvideOSSService(cfg, database.ProvideService(store), cache)
 
 	if !accesscontrol.IsDisabled(cfg) {
-		api.NewAccessControlAPI(routeRegister, service).RegisterAPIEndpoints()
+		api.NewAccessControlAPI(routeRegister, accessControl, service).RegisterAPIEndpoints()
 		if err := accesscontrol.DeclareFixedRoles(service); err != nil {
 			return nil, err
 		}
@@ -51,6 +53,7 @@ func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheSer
 
 type store interface {
 	GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error)
+	GetUsersPermissions(ctx context.Context, orgID int64, actionPrefix string) (map[int64][]accesscontrol.Permission, map[int64][]string, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
 }
 
@@ -197,4 +200,90 @@ func permissionCacheKey(user *user.SignedInUser) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("rbac-permissions-%s", key), nil
+}
+
+// GetSimplifiedUsersPermissions returns all users' permissions filtered by action prefixes
+func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64,
+	actionPrefix string) (map[int64][]accesscontrol.SimplifiedUserPermissionDTO, error) {
+	// Filter ram permissions
+	basicPermissions := map[string][]accesscontrol.Permission{}
+	for role, basicRole := range s.roles {
+		for i := range basicRole.Permissions {
+			if strings.HasPrefix(basicRole.Permissions[i].Action, actionPrefix) {
+				basicPermissions[role] = append(basicPermissions[role], basicRole.Permissions[i])
+			}
+		}
+	}
+	// Get stored (DB) permissions
+	usersPermissions, usersRoles, err := s.store.GetUsersPermissions(ctx, orgID, actionPrefix)
+	if err != nil {
+		return nil, err
+	}
+
+	// FIXME replace with checker eventually
+	canView := func() func(userID int64) bool {
+		siuPermissions, ok := user.Permissions[orgID]
+		if !ok {
+			return func(_ int64) bool { return false }
+		}
+		scopes, ok := siuPermissions[accesscontrol.ActionUsersPermissionsRead]
+		if !ok {
+			return func(_ int64) bool { return false }
+		}
+
+		ids := map[int64]bool{}
+		for i := range scopes {
+			if strings.HasSuffix(scopes[i], "*") {
+				return func(_ int64) bool { return true }
+			}
+			parts := strings.Split(scopes[i], ":")
+			if len(parts) != 3 {
+				continue
+			}
+			id, err := strconv.ParseInt(parts[2], 10, 64)
+			if err != nil {
+				continue
+			}
+			ids[id] = true
+		}
+
+		return func(userID int64) bool { return ids[userID] }
+	}()
+
+	// Merge stored (DB) and basic role permissions (RAM)
+	res := map[int64][]accesscontrol.SimplifiedUserPermissionDTO{}
+	for userID, perms := range usersPermissions {
+		if !canView(userID) {
+			continue
+		}
+		if roles, ok := usersRoles[userID]; ok {
+			for i := range roles {
+				if basicPermission, ok := basicPermissions[roles[i]]; ok {
+					perms = append(perms, basicPermission...)
+				}
+			}
+			delete(usersRoles, userID)
+		}
+		res[userID] = accesscontrol.Simplify(perms)
+	}
+
+	// Handle the remaining users that had no stored permissions
+	for userID, roles := range usersRoles {
+		if !canView(userID) {
+			continue
+		}
+		perms := []accesscontrol.Permission{}
+		for i := range roles {
+			basicPermission, ok := basicPermissions[roles[i]]
+			if !ok {
+				continue
+			}
+			perms = append(perms, basicPermission...)
+		}
+		if len(perms) > 0 {
+			res[userID] = accesscontrol.Simplify(perms)
+		}
+	}
+
+	return res, nil
 }

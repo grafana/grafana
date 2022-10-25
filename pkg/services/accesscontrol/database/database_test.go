@@ -2,20 +2,23 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	rs "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
 
 type getUserPermissionsTestCase struct {
@@ -82,7 +85,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store, permissionStore, sql, teamSvc := setupTestEnv(t)
+			store, permissionStore, sql, teamSvc, _ := setupTestEnv(t)
 
 			user, team := createUserAndTeam(t, sql, teamSvc, tt.orgID)
 
@@ -145,7 +148,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 
 func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	t.Run("expect permissions in all orgs to be deleted", func(t *testing.T) {
-		store, permissionsStore, sql, teamSvc := setupTestEnv(t)
+		store, permissionsStore, sql, teamSvc, _ := setupTestEnv(t)
 		user, _ := createUserAndTeam(t, sql, teamSvc, 1)
 
 		// generate permissions in org 1
@@ -185,7 +188,7 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	})
 
 	t.Run("expect permissions in org 1 to be deleted", func(t *testing.T) {
-		store, permissionsStore, sql, teamSvc := setupTestEnv(t)
+		store, permissionsStore, sql, teamSvc, _ := setupTestEnv(t)
 		user, _ := createUserAndTeam(t, sql, teamSvc, 1)
 
 		// generate permissions in org 1
@@ -225,10 +228,10 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	})
 }
 
-func createUserAndTeam(t *testing.T, sql *sqlstore.SQLStore, teamSvc team.Service, orgID int64) (*user.User, models.Team) {
+func createUserAndTeam(t *testing.T, userSrv user.Service, teamSvc team.Service, orgID int64) (*user.User, models.Team) {
 	t.Helper()
 
-	user, err := sql.CreateUser(context.Background(), user.CreateUserCommand{
+	user, err := userSrv.Create(context.Background(), &user.CreateUserCommand{
 		Login: "user",
 		OrgID: orgID,
 	})
@@ -243,10 +246,266 @@ func createUserAndTeam(t *testing.T, sql *sqlstore.SQLStore, teamSvc team.Servic
 	return user, team
 }
 
-func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, *sqlstore.SQLStore, team.Service) {
+type helperServices struct {
+	userSvc user.Service
+	teamSvc team.Service
+	orgSvc  org.Service
+}
+
+type testUser struct {
+	orgRole org.RoleType
+	isAdmin bool
+}
+
+type dbUser struct {
+	userID int64
+	teamID int64
+}
+
+func createUsersAndTeams(t *testing.T, svcs helperServices, orgID int64, users []testUser) []dbUser {
+	t.Helper()
+	res := []dbUser{}
+
+	for i := range users {
+		user, err := svcs.userSvc.Create(context.Background(), &user.CreateUserCommand{
+			Login:   fmt.Sprintf("user%v", i+1),
+			OrgID:   orgID,
+			IsAdmin: users[i].isAdmin,
+		})
+		require.NoError(t, err)
+
+		// User is not member of the org
+		if users[i].orgRole == "" {
+			err = svcs.orgSvc.RemoveOrgUser(context.Background(),
+				&org.RemoveOrgUserCommand{OrgID: orgID, UserID: user.ID})
+			require.NoError(t, err)
+
+			res = append(res, dbUser{userID: user.ID})
+			continue
+		}
+
+		team, err := svcs.teamSvc.CreateTeam(fmt.Sprintf("team%v", i+1), "", orgID)
+		require.NoError(t, err)
+
+		err = svcs.teamSvc.AddTeamMember(user.ID, orgID, team.Id, false, models.PERMISSION_VIEW)
+		require.NoError(t, err)
+
+		err = svcs.orgSvc.UpdateOrgUser(context.Background(),
+			&org.UpdateOrgUserCommand{Role: users[i].orgRole, OrgID: orgID, UserID: user.ID})
+		require.NoError(t, err)
+
+		res = append(res, dbUser{userID: user.ID, teamID: team.Id})
+	}
+
+	return res
+}
+
+func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, user.Service, team.Service, org.Service) {
 	sql, cfg := db.InitTestDBwithCfg(t)
 	acstore := ProvideService(sql)
 	permissionStore := rs.NewStore(sql)
 	teamService := teamimpl.ProvideService(sql, cfg)
-	return acstore, permissionStore, sql, teamService
+	orgService := orgimpl.ProvideService(sql, cfg)
+	userService := userimpl.ProvideService(sql, orgService, cfg, teamService, localcache.ProvideService())
+	return acstore, permissionStore, userService, teamService, orgService
+}
+
+func TestAccessControlStore_GetUsersPermissions(t *testing.T) {
+	ctx := context.Background()
+	actionPrefix := "teams:"
+	readTeamPerm := func(teamID string) rs.SetResourcePermissionCommand {
+		return rs.SetResourcePermissionCommand{
+			Actions:           []string{"teams:read"},
+			Resource:          "teams",
+			ResourceAttribute: "id",
+			ResourceID:        teamID,
+		}
+	}
+	writeTeamPerm := func(teamID string) rs.SetResourcePermissionCommand {
+		return rs.SetResourcePermissionCommand{
+			Actions:           []string{"teams:read", "teams:write"},
+			Resource:          "teams",
+			ResourceAttribute: "id",
+			ResourceID:        teamID,
+		}
+	}
+	readDashPerm := func(dashUID string) rs.SetResourcePermissionCommand {
+		return rs.SetResourcePermissionCommand{
+			Actions:           []string{"dashboards:read"},
+			Resource:          "dashboards",
+			ResourceAttribute: "uid",
+			ResourceID:        dashUID,
+		}
+	}
+	tests := []struct {
+		name        string
+		users       []testUser
+		permCmds    []rs.SetResourcePermissionsCommand
+		wantPerm    map[int64][]accesscontrol.Permission
+		wantOrgRole map[int64][]string
+		wantErr     bool
+	}{
+		{
+			name:  "user assignment",
+			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: false}},
+			permCmds: []rs.SetResourcePermissionsCommand{
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("1")},
+			},
+			wantPerm:    map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
+			wantOrgRole: map[int64][]string{1: {string(org.RoleAdmin)}},
+		},
+		{
+			name: "users assignment",
+			users: []testUser{
+				{orgRole: org.RoleAdmin, isAdmin: false},
+				{orgRole: org.RoleEditor, isAdmin: false},
+			},
+			permCmds: []rs.SetResourcePermissionsCommand{
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: writeTeamPerm("1")},
+				{User: accesscontrol.User{ID: 2, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("2")},
+			},
+			wantPerm: map[int64][]accesscontrol.Permission{
+				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:write", Scope: "teams:id:1"}},
+				2: {{Action: "teams:read", Scope: "teams:id:2"}},
+			},
+			wantOrgRole: map[int64][]string{
+				1: {string(org.RoleAdmin)},
+				2: {string(org.RoleEditor)},
+			},
+		},
+		{
+			name:        "team assignment",
+			users:       []testUser{{orgRole: org.RoleAdmin, isAdmin: false}},
+			permCmds:    []rs.SetResourcePermissionsCommand{{TeamID: 1, SetResourcePermissionCommand: readTeamPerm("1")}},
+			wantPerm:    map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
+			wantOrgRole: map[int64][]string{1: {string(org.RoleAdmin)}},
+		},
+		{
+			name:  "basic role assignment",
+			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: false}},
+			permCmds: []rs.SetResourcePermissionsCommand{
+				{BuiltinRole: string(org.RoleAdmin), SetResourcePermissionCommand: readTeamPerm("1")},
+			},
+			wantPerm:    map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
+			wantOrgRole: map[int64][]string{1: {string(org.RoleAdmin)}},
+		},
+		{
+			name:  "server admin assignment",
+			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: true}},
+			permCmds: []rs.SetResourcePermissionsCommand{
+				{BuiltinRole: accesscontrol.RoleGrafanaAdmin, SetResourcePermissionCommand: readTeamPerm("1")},
+			},
+			wantPerm:    map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
+			wantOrgRole: map[int64][]string{1: {string(org.RoleAdmin), accesscontrol.RoleGrafanaAdmin}},
+		},
+		{
+			name: "all assignments",
+			users: []testUser{
+				{orgRole: org.RoleAdmin, isAdmin: true},
+				{orgRole: org.RoleEditor, isAdmin: false},
+			},
+			permCmds: []rs.SetResourcePermissionsCommand{
+				// User assignments
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("1")},
+				{User: accesscontrol.User{ID: 2, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("2")},
+				// Team assignments
+				{TeamID: 1, SetResourcePermissionCommand: readTeamPerm("10")},
+				{TeamID: 2, SetResourcePermissionCommand: readTeamPerm("20")},
+				// Basic Assignments
+				{BuiltinRole: string(org.RoleAdmin), SetResourcePermissionCommand: readTeamPerm("100")},
+				{BuiltinRole: string(org.RoleEditor), SetResourcePermissionCommand: readTeamPerm("200")},
+				// Server Admin Assignment
+				{BuiltinRole: accesscontrol.RoleGrafanaAdmin, SetResourcePermissionCommand: readTeamPerm("1000")},
+			},
+			wantPerm: map[int64][]accesscontrol.Permission{
+				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:read", Scope: "teams:id:10"},
+					{Action: "teams:read", Scope: "teams:id:100"}, {Action: "teams:read", Scope: "teams:id:1000"}},
+				2: {{Action: "teams:read", Scope: "teams:id:2"}, {Action: "teams:read", Scope: "teams:id:20"},
+					{Action: "teams:read", Scope: "teams:id:200"}},
+			},
+			wantOrgRole: map[int64][]string{
+				1: {string(org.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+				2: {string(org.RoleEditor)},
+			},
+		},
+		{
+			name:  "filter permissions by action prefix",
+			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: true}},
+			permCmds: []rs.SetResourcePermissionsCommand{
+				// User assignments
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("1")},
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readDashPerm("d1")},
+				// Team assignments
+				{TeamID: 1, SetResourcePermissionCommand: readTeamPerm("10")},
+				{TeamID: 1, SetResourcePermissionCommand: readDashPerm("d10")},
+				// Basic Assignments
+				{BuiltinRole: string(org.RoleAdmin), SetResourcePermissionCommand: readTeamPerm("100")},
+				{BuiltinRole: string(org.RoleAdmin), SetResourcePermissionCommand: readDashPerm("d100")},
+				// Server Admin Assignment
+				{BuiltinRole: accesscontrol.RoleGrafanaAdmin, SetResourcePermissionCommand: readTeamPerm("1000")},
+				{BuiltinRole: accesscontrol.RoleGrafanaAdmin, SetResourcePermissionCommand: readDashPerm("d1000")},
+			},
+			wantPerm: map[int64][]accesscontrol.Permission{
+				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:read", Scope: "teams:id:10"},
+					{Action: "teams:read", Scope: "teams:id:100"}, {Action: "teams:read", Scope: "teams:id:1000"}},
+			},
+			wantOrgRole: map[int64][]string{
+				1: {string(org.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+			},
+		},
+		{
+			name: "include not org member server admin permissions",
+			// Three users, one member, one not member but Server Admin, one not member and not server admin
+			users:    []testUser{{orgRole: org.RoleAdmin, isAdmin: false}, {isAdmin: true}, {}},
+			permCmds: []rs.SetResourcePermissionsCommand{{BuiltinRole: accesscontrol.RoleGrafanaAdmin, SetResourcePermissionCommand: readTeamPerm("1")}},
+			wantPerm: map[int64][]accesscontrol.Permission{
+				2: {{Action: "teams:read", Scope: "teams:id:1"}},
+			},
+			wantOrgRole: map[int64][]string{
+				1: {string(org.RoleAdmin)},
+				2: {string(accesscontrol.RoleGrafanaAdmin)},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			acStore, permissionsStore, userSvc, teamSvc, orgSvc := setupTestEnv(t)
+			dbUsers := createUsersAndTeams(t, helperServices{userSvc, teamSvc, orgSvc}, 1, tt.users)
+
+			// Switch userID and TeamID by the real stored ones
+			for i := range tt.permCmds {
+				if tt.permCmds[i].User.ID != 0 {
+					tt.permCmds[i].User.ID = dbUsers[tt.permCmds[i].User.ID-1].userID
+				}
+				if tt.permCmds[i].TeamID != 0 {
+					tt.permCmds[i].TeamID = dbUsers[tt.permCmds[i].TeamID-1].teamID
+				}
+			}
+			_, err := permissionsStore.SetResourcePermissions(ctx, 1, tt.permCmds, rs.ResourceHooks{})
+			require.NoError(t, err)
+
+			// Test
+			dbPermissions, dbRoles, err := acStore.GetUsersPermissions(ctx, 1, actionPrefix)
+			if tt.wantErr {
+				require.NotNil(t, err)
+				return
+			}
+			require.Nil(t, err)
+
+			require.Len(t, dbPermissions, len(tt.wantPerm))
+			require.Len(t, dbRoles, len(tt.wantOrgRole))
+
+			for userID, expectedUserPerms := range tt.wantPerm {
+				dbUserPerms, ok := dbPermissions[dbUsers[userID-1].userID]
+				require.True(t, ok, "expected permissions for user", userID)
+				require.ElementsMatch(t, expectedUserPerms, dbUserPerms)
+			}
+
+			for userID, expectedUserRoles := range tt.wantOrgRole {
+				dbUserRoles, ok := dbRoles[dbUsers[userID-1].userID]
+				require.True(t, ok, "expected role for user", userID)
+				require.ElementsMatch(t, expectedUserRoles, dbUserRoles)
+			}
+		})
+	}
 }
