@@ -40,7 +40,7 @@ func InBatches(items interface{}, opts BulkOpSettings, fn func(batch interface{}
 	opts = normalizeBulkSettings(opts)
 	slice := reflect.Indirect(reflect.ValueOf(items))
 	if slice.Kind() != reflect.Slice {
-		return fmt.Errorf("need a slice in order to batch records")
+		return fmt.Errorf("need a slice of objects in order to batch")
 	}
 
 	for i := 0; i < slice.Len(); i += opts.BatchSize {
