@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React, { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
@@ -12,9 +12,9 @@ interface Props {
   card: Card;
 }
 
-export const DocsCard: FC<Props> = ({ card }) => {
-  const styles = useStyles2((theme) => getStyles(theme, card.done));
-  const iconStyles = useStyles2((theme) => iconStyle(theme, card.done));
+export const DocsCard = ({ card }: Props) => {
+  const styles = useStyles2(useCallback((theme: GrafanaTheme2) => getStyles(theme, card.done), [card.done]));
+  const iconStyles = useStyles2(useCallback((theme: GrafanaTheme2) => iconStyle(theme, card.done), [card.done]));
 
   return (
     <div className={styles.card}>
@@ -39,12 +39,10 @@ export const DocsCard: FC<Props> = ({ card }) => {
   );
 };
 
-const getStyles = (newTheme: GrafanaTheme2, complete: boolean) => {
-  const theme = newTheme;
-
+const getStyles = (theme: GrafanaTheme2, complete: boolean) => {
   return {
     card: css`
-      ${cardStyle(newTheme, complete)}
+      ${cardStyle(theme, complete)}
 
       min-width: 230px;
 
