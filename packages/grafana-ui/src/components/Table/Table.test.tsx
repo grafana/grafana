@@ -230,7 +230,7 @@ describe('Table', () => {
 
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('7');
 
-      await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
+      await userEvent.click(within(getColumnHeader(/number/)).getByRole('filterIcon'));
       await userEvent.click(screen.getByLabelText('1'));
       await userEvent.click(screen.getByText('Ok'));
 
@@ -260,7 +260,7 @@ describe('Table', () => {
       expect(within(getTable()).getAllByRole('row')).toHaveLength(8);
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('13');
 
-      await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
+      await userEvent.click(within(getColumnHeader(/number/)).getByRole('filterIcon'));
       await userEvent.click(screen.getByLabelText('2'));
       await userEvent.click(screen.getByLabelText('3'));
       await userEvent.click(screen.getByText('Ok'));
@@ -290,7 +290,7 @@ describe('Table', () => {
         }),
       });
 
-      await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
+      await userEvent.click(within(getColumnHeader(/number/)).getByRole('filterIcon'));
       await userEvent.click(screen.getByLabelText('1'));
       await userEvent.click(screen.getByText('Ok'));
 
@@ -298,7 +298,7 @@ describe('Table', () => {
       expect(within(getTable()).getAllByRole('row')).toHaveLength(4);
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('3');
 
-      await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
+      await userEvent.click(within(getColumnHeader(/number/)).getByRole('filterIcon'));
       await userEvent.click(screen.getByText('Clear filter'));
 
       //5 + header row
