@@ -101,7 +101,7 @@
     "react-use": "17.4.0",
     "react-window": "1.8.7",
     "rxjs": "7.5.6",
-    "slate": "0.47.9",
+    "slate": "0.84.0",
     "slate-plain-serializer": "0.7.11",
     "slate-react": "0.22.10",
     "tinycolor2": "1.4.2",

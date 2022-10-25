@@ -4835,7 +4835,7 @@ __metadata:
     rollup-plugin-svg-import: ^1.6.0
     rxjs: 7.5.6
     sass-loader: 13.0.2
-    slate: 0.47.9
+    slate: 0.84.0
     slate-plain-serializer: 0.7.11
     slate-react: 0.22.10
     storybook-addon-turbo-build: 1.1.0
@@ -17893,15 +17893,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"direction@npm:^0.1.5":
-  version: 0.1.5
-  resolution: "direction@npm:0.1.5"
-  bin:
-    direction: cli.js
-  checksum: bf7d6ceca38f1cd4ffd33777207d0d64fe6075a2dee9c2b6c99b18ec9550fe20526a65baf1e0c1c9e683af6f4be27f84d55f753fc0c50df56dbd5551814b70c8
-  languageName: node
-  linkType: hard
-
 "discontinuous-range@npm:1.0.0":
   version: 1.0.0
   resolution: "discontinuous-range@npm:1.0.0"
@@ -19717,15 +19708,6 @@ __metadata:
   dependencies:
     estraverse: ^5.2.0
   checksum: ebc17b1a33c51cef46fdc28b958994b1dc43cd2e86237515cbc3b4e5d2be6a811b2315d0a1a4d9d340b6d2308b15322f5c8291059521cc5f4802f65e7ec32837
-  languageName: node
-  linkType: hard
-
-"esrever@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "esrever@npm:0.2.0"
-  bin:
-    esrever: bin/esrever
-  checksum: 2404ae76ff8f04979c9e2eba4d5b1c03b07bb754f284af1115d1566c27660a3f42bb7c64e3a08deed6e7ce5aea12ffe3cb130955d619d278323ac5482300b144
   languageName: node
   linkType: hard
 
@@ -21899,7 +21881,7 @@ __metadata:
     selecto: 1.20.2
     semver: 7.3.7
     sinon: 14.0.0
-    slate: 0.47.9
+    slate: 0.84.0
     slate-plain-serializer: 0.7.11
     slate-react: 0.22.10
     sql-formatter-plus: ^1.3.6
@@ -22906,6 +22888,13 @@ __metadata:
   version: 9.0.15
   resolution: "immer@npm:9.0.15"
   checksum: 92e3d63e810e3c3c2bb61b70c45443e37ef983ad12924e3edaf03725ae5979618f5b473439bb3bb4a8c4769f25132f18dec10ea15c40f0b20da5691ff96ff611
+  languageName: node
+  linkType: hard
+
+"immer@npm:^9.0.6":
+  version: 9.0.16
+  resolution: "immer@npm:9.0.16"
+  checksum: e9a5ca65c929b329da7a3b7beccf7984271cda7bdd47b2cab619eac3277dcd56598c211b55cc340786b6eff0c06652ac018808d9fd744443f06882364dece6bc
   languageName: node
   linkType: hard
 
@@ -26405,7 +26394,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:4.17.21, lodash@npm:^4, lodash@npm:^4.0.0, lodash@npm:^4.1.1, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.19, lodash@npm:^4.17.20, lodash@npm:^4.17.21, lodash@npm:^4.17.4, lodash@npm:^4.7.0":
+"lodash@npm:4.17.21, lodash@npm:^4, lodash@npm:^4.0.0, lodash@npm:^4.1.1, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.19, lodash@npm:^4.17.20, lodash@npm:^4.17.21, lodash@npm:^4.7.0":
   version: 4.17.21
   resolution: "lodash@npm:4.17.21"
   checksum: eb835a2e51d381e561e508ce932ea50a8e5a68f4ebdd771ea240d3048244a8d13658acbd502cd4829768c56f2e16bdd4340b9ea141297d472517b83868e677f7
@@ -34869,21 +34858,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"slate@npm:0.47.9":
-  version: 0.47.9
-  resolution: "slate@npm:0.47.9"
+"slate@npm:0.84.0":
+  version: 0.84.0
+  resolution: "slate@npm:0.84.0"
   dependencies:
-    debug: ^3.1.0
-    direction: ^0.1.5
-    esrever: ^0.2.0
-    is-plain-object: ^2.0.4
-    lodash: ^4.17.4
-    tiny-invariant: ^1.0.1
-    tiny-warning: ^0.0.3
-    type-of: ^2.0.1
-  peerDependencies:
-    immutable: ">=3.8.1 || >4.0.0-rc"
-  checksum: a128d1eaa4c203dbb13d197d69758341df485e42e52aea1739d05939b16df42633949f116ae9b75b95b647ec39b18867ca5c8a05dbe97eeb15cf31bc8d2edc7f
+    immer: ^9.0.6
+    is-plain-object: ^5.0.0
+    tiny-warning: ^1.0.3
+  checksum: d74de16a40571b2513dbd96efee8fe891909357a7011131f8fae738a0eace5b3c7c2da1c0ebfb1ffe66c8c933507ca618772fb607fbc9e44aa5158d3d874c5a2
   languageName: node
   linkType: hard
 
@@ -37250,13 +37232,6 @@ __metadata:
   version: 2.0.2
   resolution: "type-name@npm:2.0.2"
   checksum: 747a8503393ae19590f7658965b40970fd515ca4c581b28707d1436bd7e31311e5016ee5729be2cc4b8ab83717a9b3eaf2241ed351ef8aed773ed926429a1301
-  languageName: node
-  linkType: hard
-
-"type-of@npm:^2.0.1":
-  version: 2.0.1
-  resolution: "type-of@npm:2.0.1"
-  checksum: 51e889c9b09644ce4ec343ae24cfaa73399f6416c68532d46df1f068bd1773f639bb9dbf5d4bf0078825d0767810e6c7940489c17bd94998ad4e3770488956fe
   languageName: node
   linkType: hard
 
