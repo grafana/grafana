@@ -200,9 +200,12 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, orgId
 	pdRes := &PublicDashboard{OrgId: orgId, DashboardUid: dashboardUid}
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		// publicDashboard
-		_, err := sess.Get(pdRes)
+		exists, err := sess.Get(pdRes)
 		if err != nil {
 			return err
+		}
+		if !exists {
+			return ErrPublicDashboardNotFound
 		}
 
 		return nil
