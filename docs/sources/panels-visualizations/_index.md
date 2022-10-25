@@ -24,7 +24,6 @@ There are a wide variety of styling and formatting options for each panel.
 Panels can be dragged, dropped, and resized to rearrange them on the dashboard.
 
 Before you add a panel, ensure that you have configured a data source.
-While you can use the [special built-in "Grafana" data source]({{< relref "../datasources/#special-data-sources" >}}) to generate random data for testing, you can accomplish more with panels once you add a live data source.
 
 - For more information about adding and managing data sources as an administrator, refer to [Data source management]({{< relref "../administration/data-source-management/" >}}).
 - For details about using specific data sources, refer to [Data sources]({{< relref "../datasources/" >}}).
