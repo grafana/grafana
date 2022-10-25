@@ -602,6 +602,42 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		require.Nil(t, err)
 		assert.Equal(t, []string{"ClientId", "DomainName"}, res)
 	})
+
+	t.Run("Should handle custom namespace metrics query and return metrics from api", func(t *testing.T) {
+		pageLimit := 3
+		api = mocks.FakeMetricsAPI{Metrics: []*cloudwatch.Metric{
+			{MetricName: aws.String("Test_MetricName1"), Namespace: aws.String("AWS/EC2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}, {Name: aws.String("Test_DimensionName2")}}},
+			{MetricName: aws.String("Test_MetricName2"), Namespace: aws.String("AWS/EC2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
+			{MetricName: aws.String("Test_MetricName3"), Namespace: aws.String("AWS/ECS"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName2")}}},
+			{MetricName: aws.String("Test_MetricName10"), Namespace: aws.String("AWS/ECS"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4")}, {Name: aws.String("Test_DimensionName5")}}},
+			{MetricName: aws.String("Test_MetricName4"), Namespace: aws.String("AWS/ECS"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName2")}}},
+			{MetricName: aws.String("Test_MetricName5"), Namespace: aws.String("AWS/Redshift"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
+			{MetricName: aws.String("Test_MetricName6"), Namespace: aws.String("AWS/Redshift"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
+			{MetricName: aws.String("Test_MetricName7"), Namespace: aws.String("AWS/EC2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4")}}},
+			{MetricName: aws.String("Test_MetricName8"), Namespace: aws.String("AWS/EC2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4")}}},
+			{MetricName: aws.String("Test_MetricName9"), Namespace: aws.String("AWS/EC2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
+		}, MetricsPerPage: 2}
+		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: pageLimit}, &fakeSessionCache{}, featuremgmt.WithFeatures())
+
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   `/metrics?region=us-east-2&namespace=custom-namespace`,
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
+				PluginID:                   "cloudwatch",
+			},
+		}
+		err := executor.CallResource(context.Background(), req, sender)
+
+		require.NoError(t, err)
+		sent := sender.Response
+		require.NotNil(t, sent)
+		require.Equal(t, http.StatusOK, sent.Status)
+		res := []models.Metric{}
+		err = json.Unmarshal(sent.Body, &res)
+		require.Nil(t, err)
+		assert.Equal(t, []models.Metric{{Name: "Test_MetricName1", Namespace: "AWS/EC2"}, {Name: "Test_MetricName2", Namespace: "AWS/EC2"}, {Name: "Test_MetricName3", Namespace: "AWS/ECS"}, {Name: "Test_MetricName10", Namespace: "AWS/ECS"}, {Name: "Test_MetricName4", Namespace: "AWS/ECS"}, {Name: "Test_MetricName5", Namespace: "AWS/Redshift"}}, res)
+	})
 }
 
 func stringsToSuggestData(values []string) []suggestData {
