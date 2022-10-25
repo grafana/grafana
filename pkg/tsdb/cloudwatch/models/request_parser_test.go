@@ -313,6 +313,36 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			assert.Equal(t, 21600, res[0].Period)
 		})
 	})
+	t.Run("returns error if period is invalid duration", func(t *testing.T) {
+		query := []backend.DataQuery{
+			{
+				JSON: json.RawMessage(`{
+				   "statistic":"Average",
+				   "period":"invalid"
+				}`),
+			},
+		}
+		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
+		require.Error(t, err)
+		assert.Equal(t, `error parsing query "", failed to parse period as duration: time: invalid duration "invalid"`, err.Error())
+	})
+
+	t.Run("returns parsed duration in seconds", func(t *testing.T) {
+		query := []backend.DataQuery{
+			{
+				JSON: json.RawMessage(`{
+				   "statistic":"Average",
+				   "period":"2h45m"
+				}`),
+			},
+		}
+
+		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
+		assert.NoError(t, err)
+
+		require.Len(t, res, 1)
+		assert.Equal(t, 9900, res[0].Period)
+	})
 }
 
 func Test_ParseMetricDataQueries_query_type_and_metric_editor_mode_and_GMD_query_api_mode(t *testing.T) {
@@ -369,20 +399,21 @@ func Test_ParseMetricDataQueries_query_type_and_metric_editor_mode_and_GMD_query
 		t.Run(name, func(t *testing.T) {
 			query := []backend.DataQuery{
 				{
-					JSON: json.RawMessage(fmt.Sprintf(`{
-								   "refId":"ref1",
-								   "region":"us-east-1",
-								   "namespace":"ec2",
-								   "metricName":"CPUUtilization",
-								   "statistic":"Average",
-									%s
-								   "period":"900"
-								}`, tc.extraDataQueryJson)),
+					JSON: json.RawMessage(fmt.Sprintf(
+						`{
+						   "refId":"ref1",
+						   "region":"us-east-1",
+						   "namespace":"ec2",
+						   "metricName":"CPUUtilization",
+						   "statistic":"Average",
+							%s
+						   "period":"900"
+						}`, tc.extraDataQueryJson),
+					),
 				},
 			}
 			res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), false)
-			assert.NoError(t, err)
-
+			require.NoError(t, err)
 			require.Len(t, res, 1)
 			require.NotNil(t, res[0])
 			assert.Equal(t, tc.expectedMetricQueryType, res[0].MetricQueryType)
@@ -393,7 +424,7 @@ func Test_ParseMetricDataQueries_query_type_and_metric_editor_mode_and_GMD_query
 }
 
 func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
-	t.Run("for query type timeSeriesQuery, default ReturnData is true", func(t *testing.T) {
+	t.Run("default: when query type timeSeriesQuery, default ReturnData is true", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
 				JSON: json.RawMessage(`{
@@ -408,11 +439,10 @@ func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
 			},
 		}
 		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
-		assert.NoError(t, err)
-
+		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
-		assert.True(t, res[0].ReturnData)
+		require.True(t, res[0].ReturnData)
 	})
 	t.Run("when hide is true, ReturnData is false", func(t *testing.T) {
 		query := []backend.DataQuery{
@@ -430,11 +460,10 @@ func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
 			},
 		}
 		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
-		assert.NoError(t, err)
-
+		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
-		assert.False(t, res[0].ReturnData)
+		require.False(t, res[0].ReturnData)
 	})
 	t.Run("when hide is false, ReturnData is true", func(t *testing.T) {
 		query := []backend.DataQuery{
@@ -452,11 +481,10 @@ func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
 			},
 		}
 		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
-		assert.NoError(t, err)
-
+		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
-		assert.True(t, res[0].ReturnData)
+		require.True(t, res[0].ReturnData)
 	})
 	t.Run("when query type is empty and hide is missing, ReturnData is true", func(t *testing.T) {
 		query := []backend.DataQuery{
@@ -472,11 +500,10 @@ func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
 			},
 		}
 		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
-		assert.NoError(t, err)
-
+		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
-		assert.True(t, res[0].ReturnData)
+		require.True(t, res[0].ReturnData)
 	})
 
 	t.Run("when query type is empty and hide is false, ReturnData is true", func(t *testing.T) {
@@ -494,11 +521,10 @@ func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
 			},
 		}
 		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
-		assert.NoError(t, err)
-
+		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
-		assert.True(t, res[0].ReturnData)
+		require.True(t, res[0].ReturnData)
 	})
 
 	t.Run("when query type is empty and hide is true, ReturnData is true", func(t *testing.T) {
@@ -516,15 +542,14 @@ func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
 			},
 		}
 		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
-		assert.NoError(t, err)
-
+		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
-		assert.True(t, res[0].ReturnData)
+		require.True(t, res[0].ReturnData)
 	})
 }
 
-func Test_ParseMetricDataQueries_id(t *testing.T) {
+func Test_ParseMetricDataQueries_ID(t *testing.T) {
 	t.Run("ID is the string `query` appended with refId if refId is a valid MetricData ID", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
@@ -540,8 +565,7 @@ func Test_ParseMetricDataQueries_id(t *testing.T) {
 			},
 		}
 		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
-		assert.NoError(t, err)
-
+		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
 		assert.Equal(t, "ref1", res[0].RefId)
@@ -562,8 +586,7 @@ func Test_ParseMetricDataQueries_id(t *testing.T) {
 			},
 		}
 		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
-		assert.NoError(t, err)
-
+		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
 		assert.Equal(t, "$$", res[0].RefId)
@@ -591,7 +614,6 @@ func Test_ParseMetricDataQueries_sets_label_when_label_is_present_in_json_query(
 
 	res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), true)
 	assert.NoError(t, err)
-
 	require.Len(t, res, 1)
 	require.NotNil(t, res[0])
 	assert.Equal(t, "some alias", res[0].Alias) // untouched
@@ -634,17 +656,30 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 
 			migrateAliasToDynamicLabel(&queryToMigrate)
 
-			require.NotNil(t, queryToMigrate.Label)
-			assert.Equal(t, tc.expectedLabel, *queryToMigrate.Label)
+			expected := metricsDataQuery{
+				Alias: tc.inputAlias,
+				Dimensions: map[string]interface{}{
+					"InstanceId": []interface{}{"test"},
+				},
+				Hide:       &false,
+				Label:      &tc.expectedLabel,
+				MetricName: "CPUUtilization",
+				Namespace:  "ec2",
+				Period:     "600",
+				Region:     "us-east-1",
+				Statistic:  &average,
+			}
+
+			assert.Equal(t, expected, queryToMigrate)
 		})
 	}
 }
 
-func Test_ParseMetricDataQueries_alias_to_label_migration(t *testing.T) {
+func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 	t.Run("migrates alias to label when label does not already exist and feature toggle enabled", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
-				JSON: json.RawMessage(`{
+				JSON: []byte(`{
 				   "refId":"A",
 				   "region":"us-east-1",
 				   "namespace":"ec2",
@@ -663,8 +698,16 @@ func Test_ParseMetricDataQueries_alias_to_label_migration(t *testing.T) {
 
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
-		assert.Equal(t, "{{period}} {{any_other_word}}", res[0].Alias) // untouched
+
+		assert.Equal(t, "{{period}} {{any_other_word}}", res[0].Alias)
 		assert.Equal(t, "${PROP('Period')} ${PROP('Dim.any_other_word')}", res[0].Label)
+		assert.Equal(t, map[string][]string{"InstanceId": {"test"}}, res[0].Dimensions)
+		assert.Equal(t, true, res[0].ReturnData)
+		assert.Equal(t, "CPUUtilization", res[0].MetricName)
+		assert.Equal(t, "ec2", res[0].Namespace)
+		assert.Equal(t, 600, res[0].Period)
+		assert.Equal(t, "us-east-1", res[0].Region)
+		assert.Equal(t, "Average", res[0].Statistic)
 	})
 
 	t.Run("successfully migrates alias to dynamic label for multiple queries", func(t *testing.T) {
@@ -705,19 +748,45 @@ func Test_ParseMetricDataQueries_alias_to_label_migration(t *testing.T) {
 		require.NotNil(t, res[0])
 		assert.Equal(t, "{{period}} {{any_other_word}}", res[0].Alias)
 		assert.Equal(t, "${PROP('Period')} ${PROP('Dim.any_other_word')}", res[0].Label)
+		assert.Equal(t, map[string][]string{"InstanceId": {"test"}}, res[0].Dimensions)
+		assert.Equal(t, true, res[0].ReturnData)
+		assert.Equal(t, "CPUUtilization", res[0].MetricName)
+		assert.Equal(t, "ec2", res[0].Namespace)
+		assert.Equal(t, 600, res[0].Period)
+		assert.Equal(t, "us-east-1", res[0].Region)
+		assert.Equal(t, "Average", res[0].Statistic)
 
 		require.NotNil(t, res[1])
 		assert.Equal(t, "{{  label }}", res[1].Alias)
 		assert.Equal(t, "${LABEL}", res[1].Label)
+		assert.Equal(t, map[string][]string{"InstanceId": {"test"}}, res[1].Dimensions)
+		assert.Equal(t, true, res[1].ReturnData)
+		assert.Equal(t, "CPUUtilization", res[1].MetricName)
+		assert.Equal(t, "ec2", res[1].Namespace)
+		assert.Equal(t, 600, res[1].Period)
+		assert.Equal(t, "us-east-1", res[1].Region)
+		assert.Equal(t, "Average", res[1].Statistic)
 	})
 
 	t.Run("does not migrate alias to label", func(t *testing.T) {
 		testCases := map[string]struct {
-			labelJson                         string
+			inputLabelJson                    string
 			dynamicLabelsFeatureToggleEnabled bool
+			expectedLabel                     string
 		}{
-			"when label already exists, feature toggle enabled":     {labelJson: `"label":"some label",`, dynamicLabelsFeatureToggleEnabled: true},
-			"when label already exists, feature toggle is disabled": {labelJson: `"label":"some label",`, dynamicLabelsFeatureToggleEnabled: false},
+			"when label already exists, feature toggle enabled": {
+				inputLabelJson:                    `"label":"some label",`,
+				dynamicLabelsFeatureToggleEnabled: true,
+				expectedLabel:                     "some label"},
+			"when label does not exist, feature toggle is disabled": {
+				inputLabelJson:                    "",
+				dynamicLabelsFeatureToggleEnabled: false,
+				expectedLabel:                     "",
+			},
+			"when label already exists, feature toggle is disabled": {
+				inputLabelJson:                    `"label":"some label",`,
+				dynamicLabelsFeatureToggleEnabled: false,
+				expectedLabel:                     "some label"},
 		}
 
 		for name, tc := range testCases {
@@ -735,7 +804,7 @@ func Test_ParseMetricDataQueries_alias_to_label_migration(t *testing.T) {
 				   "statistic":"Average",
 				   "period":"600",
 				   "hide":false
-				}`, tc.labelJson)),
+				}`, tc.inputLabelJson)),
 					},
 				}
 				res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), tc.dynamicLabelsFeatureToggleEnabled)
@@ -743,72 +812,21 @@ func Test_ParseMetricDataQueries_alias_to_label_migration(t *testing.T) {
 
 				require.Len(t, res, 1)
 				require.NotNil(t, res[0])
-				assert.Equal(t, "some label", res[0].Label) // input label is unchanged
-				require.NotNil(t, res[0].Alias)
+
 				assert.Equal(t, "{{period}} {{any_other_word}}", res[0].Alias)
+				assert.Equal(t, tc.expectedLabel, res[0].Label)
+				assert.Equal(t, map[string][]string{"InstanceId": {"test"}}, res[0].Dimensions)
+				assert.Equal(t, true, res[0].ReturnData)
+				assert.Equal(t, "CPUUtilization", res[0].MetricName)
+				assert.Equal(t, "ec2", res[0].Namespace)
+				assert.Equal(t, 600, res[0].Period)
+				assert.Equal(t, "us-east-1", res[0].Region)
+				assert.Equal(t, "Average", res[0].Statistic)
 			})
 		}
-
-		t.Run("when label does not exist, feature toggle is disabled", func(t *testing.T) {
-			query := []backend.DataQuery{
-				{
-					JSON: json.RawMessage(`{
-				   "refId":"A",
-				   "region":"us-east-1",
-				   "namespace":"ec2",
-				   "metricName":"CPUUtilization",
-				   "alias":"{{period}} {{any_other_word}}",
-				   "dimensions":{"InstanceId":["test"]},
-				   "statistic":"Average",
-				   "period":"600",
-				   "hide":false
-				}`),
-				},
-			}
-			res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), false)
-			assert.NoError(t, err)
-
-			require.Len(t, res, 1)
-			require.NotNil(t, res[0])
-			assert.Empty(t, res[0].Label)
-			require.NotNil(t, res[0].Alias)
-			assert.Equal(t, "{{period}} {{any_other_word}}", res[0].Alias)
-		})
 	})
 }
 
-func Test_ParseMetricDataQueries_period(t *testing.T) {
-	t.Run("returns error if period is invalid duration", func(t *testing.T) {
-		query := []backend.DataQuery{
-			{
-				JSON: json.RawMessage(`{
-				   "statistic":"Average",
-				   "period":"invalid"
-				}`),
-			},
-		}
-		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
-		require.Error(t, err)
-		assert.Equal(t, `error parsing query "", failed to parse period as duration: time: invalid duration "invalid"`, err.Error())
-	})
-
-	t.Run("returns parsed duration in seconds", func(t *testing.T) {
-		query := []backend.DataQuery{
-			{
-				JSON: json.RawMessage(`{
-				   "statistic":"Average",
-				   "period":"2h45m"
-				}`),
-			},
-		}
-
-		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
-		assert.NoError(t, err)
-
-		require.Len(t, res, 1)
-		assert.Equal(t, 9900, res[0].Period)
-	})
-}
 
 func Test_ParseMetricDataQueries_statistics_and_query_type_validation_and_MatchExact_initialization(t *testing.T) {
 	t.Run("requires statistics or statistic field", func(t *testing.T) {
