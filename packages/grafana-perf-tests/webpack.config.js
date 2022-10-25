@@ -1,4 +1,3 @@
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const path = require('path');
 const GlobEntries = require('webpack-glob-entries');
@@ -10,6 +9,7 @@ module.exports = {
     path: path.join(__dirname, 'dist'),
     libraryTarget: 'commonjs',
     filename: '[name].js',
+    clean: true,
   },
   resolve: {
     extensions: ['.ts', '.js'],
@@ -31,7 +31,6 @@ module.exports = {
     colors: true,
   },
   plugins: [
-    new CleanWebpackPlugin(),
     // Copy assets to the destination folder
     // see `src/post-file-test.ts` for an test example using an asset
     new CopyPlugin({
