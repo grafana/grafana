@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_Namespaces_Route(t *testing.T) {
@@ -37,9 +35,6 @@ func Test_Namespaces_Route(t *testing.T) {
 		req := httptest.NewRequest("GET", "/namespaces", nil)
 		handler := http.HandlerFunc(ResourceRequestMiddleware(NamespacesHandler, factoryFunc))
 		handler.ServeHTTP(rr, req)
-		res := []models.Metric{}
-		err := json.Unmarshal(rr.Body.Bytes(), &res)
-		require.Nil(t, err)
 		assert.True(t, haveBeenCalled)
 	})
 
@@ -56,10 +51,7 @@ func Test_Namespaces_Route(t *testing.T) {
 		customNamespaces = "customNamespace1,customNamespace2"
 		handler := http.HandlerFunc(ResourceRequestMiddleware(NamespacesHandler, factoryFunc))
 		handler.ServeHTTP(rr, req)
-		res := []string{}
-		err := json.Unmarshal(rr.Body.Bytes(), &res)
-		require.Nil(t, err)
-		assert.Equal(t, []string{"AWS/EC2", "AWS/ELB", "customNamespace1", "customNamespace2"}, res)
+		assert.JSONEq(t, `["AWS/EC2", "AWS/ELB", "customNamespace1", "customNamespace2"]`, rr.Body.String())
 	})
 
 	t.Run("sorts result", func(t *testing.T) {
@@ -75,9 +67,6 @@ func Test_Namespaces_Route(t *testing.T) {
 		customNamespaces = "DCustomNamespace1,ACustomNamespace2"
 		handler := http.HandlerFunc(ResourceRequestMiddleware(NamespacesHandler, factoryFunc))
 		handler.ServeHTTP(rr, req)
-		res := []string{}
-		err := json.Unmarshal(rr.Body.Bytes(), &res)
-		require.Nil(t, err)
-		assert.Equal(t, []string{"ACustomNamespace2", "AWS/ELB", "AWS/XYZ", "DCustomNamespace1"}, res)
+		assert.JSONEq(t, `["ACustomNamespace2", "AWS/ELB", "AWS/XYZ", "DCustomNamespace1"]`, rr.Body.String())
 	})
 }

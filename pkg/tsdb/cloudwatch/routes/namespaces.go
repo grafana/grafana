@@ -19,9 +19,9 @@ func NamespacesHandler(pluginCtx backend.PluginContext, reqCtxFactory models.Req
 	}
 
 	hardcodedNamespaces := services.GetHardCodedNamespaces()
-	customNamespaces := reqCtx.Settings.Namespace
-	if customNamespaces != "" {
-		hardcodedNamespaces = append(hardcodedNamespaces, strings.Split(customNamespaces, ",")...)
+	result := reqCtx.Settings.Namespace
+	if result != "" {
+		hardcodedNamespaces = append(hardcodedNamespaces, strings.Split(result, ",")...)
 	}
 	sort.Strings(hardcodedNamespaces)
 
