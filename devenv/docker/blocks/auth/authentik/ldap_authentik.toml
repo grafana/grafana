@@ -9,7 +9,7 @@ bind_dn = "cn=ldapservice,ou=users,dc=ldap,dc=goauthentik,dc=io"
 bind_password = 'grafana'
 timeout = 10
 
-search_filter   = "(sAMAccountName=%s)"
+search_filter = "(cn=%s)"
 search_base_dns = ["DC=ldap,DC=goauthentik,DC=io"]
 
 # Specify names of the ldap attributes your ldap uses
