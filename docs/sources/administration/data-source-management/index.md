@@ -14,7 +14,7 @@ weight: 100
 # Data source management
 
 Grafana supports many different storage backends for your time series data (data source).
-Refer to [data sources]({{< relref "../../datasources/" >}}) for more information about using data sources in Grafana.
+Refer to [data sources]({{< relref "../../datasources" >}}) for more information about using data sources in Grafana.
 Only users with the organization admin role can add data sources.
 
 ## Add a data source
@@ -58,7 +58,7 @@ Before you can create your first dashboard, you need to add your data source.
 You can configure data source permissions to allow or deny certain users the ability to query a data source.
 Each data source's configuration includes a permissions page where you can enable permissions and restrict query permissions to specific **Users** and **Teams**.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/latest/).
 
 ### Enable data source permissions
 
@@ -113,16 +113,16 @@ Note that _all_ existing permissions created for the data source will be deleted
 
 ## Add data source plugins
 
-Grafana ships with several [built-in data sources]({{< relref "../datasources/#built-in-core-data-sources" >}}).
+Grafana ships with several [built-in data sources]({{< relref "../../datasources#built-in-core-data-sources" >}}).
 You can add additional data sources as plugins, which you can install or create yourself.
 
 ### Find data source plugins in the plugin catalog
 
 To view available data source plugins, go to the [plugin catalog](/grafana/plugins/?type=datasource) and select the "Data sources" filter.
-For details about the plugin catalog, refer to [Plugin management]({{< relref "../administration/plugin-management/" >}}).
+For details about the plugin catalog, refer to [Plugin management]({{< relref "../../administration/plugin-management/" >}}).
 
 You can further filter the plugin catalog's results for data sources provided by the Grafana community, Grafana Labs, and partners.
-If you use [Grafana Enterprise]{{< relref "../enterprise/" >}}, you can also filter by Enterprise-supported plugins.
+If you use [Grafana Enterprise]{{< relref "../../enterprise/" >}}, you can also filter by Enterprise-supported plugins.
 
 For more documentation on a specific data source plugin's features, including its query language and editor, refer to its plugin catalog page.
 
