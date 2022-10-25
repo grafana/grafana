@@ -98,6 +98,7 @@ export const arrowViewable = {
         onclick: () => {
           console.log('top clicked');
         },
+        class: 'arrowControl',
       },
       ['⬆️']
     );
@@ -116,6 +117,7 @@ export const arrowViewable = {
         onclick: () => {
           console.log('bottom clicked');
         },
+        class: 'arrowControl',
       },
       ['⬇️']
     );
@@ -134,6 +136,7 @@ export const arrowViewable = {
         onclick: () => {
           console.log('left clicked');
         },
+        class: 'arrowControl',
       },
       ['⬅️']
     );
@@ -152,6 +155,7 @@ export const arrowViewable = {
         onclick: () => {
           console.log('right clicked');
         },
+        class: 'arrowControl',
       },
       ['➡️']
     );

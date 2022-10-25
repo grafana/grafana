@@ -451,9 +451,29 @@ export class Scene {
         }
       });
 
+    const arrowListener = (event: MouseEvent) => {
+      event.preventDefault();
+      // TODO: Handle drawing arrow
+
+      // Remove event listener when mouse is not actively clicked anymore
+      if (!event.buttons) {
+        // TODO: Handle saving arrow
+        this.selecto!.rootContainer!.style.cursor = 'default';
+        this.selecto?.rootContainer?.removeEventListener('mousemove', arrowListener);
+      }
+    };
+
     let targets: Array<HTMLElement | SVGElement> = [];
     this.selecto!.on('dragStart', (event) => {
       const selectedTarget = event.inputEvent.target;
+
+      // If selected target is an arrow control, eject to handle arrow event
+      if (selectedTarget.className === 'arrowControl') {
+        this.selecto!.rootContainer!.style.cursor = 'crosshair';
+        this.selecto?.rootContainer?.addEventListener('mousemove', arrowListener);
+        event.stop();
+        return;
+      }
 
       const isTargetMoveableElement =
         this.moveable!.isMoveableElement(selectedTarget) ||
