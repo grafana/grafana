@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AccessoryButton, InputGroup, Select } from '@grafana/ui';
+import { AccessoryButton, InputGroup } from '@grafana/experimental';
+import { Select } from '@grafana/ui';
 
 import { QueryBuilderLabelFilter } from './types';
 
@@ -80,7 +81,7 @@ export function LabelFilterItem({
                 ...item,
                 op: item.op ?? defaultOp,
                 label: change.label,
-              } as any as QueryBuilderLabelFilter);
+              } as unknown as QueryBuilderLabelFilter);
             }
           }}
           invalid={invalidLabel}
@@ -93,7 +94,7 @@ export function LabelFilterItem({
           width="auto"
           onChange={(change) => {
             if (change.value != null) {
-              onChange({ ...item, op: change.value } as any as QueryBuilderLabelFilter);
+              onChange({ ...item, op: change.value } as unknown as QueryBuilderLabelFilter);
             }
           }}
         />
@@ -123,14 +124,18 @@ export function LabelFilterItem({
           options={getOptions()}
           onChange={(change) => {
             if (change.value) {
-              onChange({ ...item, value: change.value, op: item.op ?? defaultOp } as any as QueryBuilderLabelFilter);
+              onChange({
+                ...item,
+                value: change.value,
+                op: item.op ?? defaultOp,
+              } as unknown as QueryBuilderLabelFilter);
             } else {
               const changes = change
                 .map((change: any) => {
                   return change.label;
                 })
                 .join('|');
-              onChange({ ...item, value: changes, op: item.op ?? defaultOp } as any as QueryBuilderLabelFilter);
+              onChange({ ...item, value: changes, op: item.op ?? defaultOp } as unknown as QueryBuilderLabelFilter);
             }
           }}
           invalid={invalidValue}

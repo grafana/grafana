@@ -110,12 +110,12 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 }
 
 func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model LogQueryJson, query backend.DataQuery, pluginCtx backend.PluginContext) (*data.Frame, error) {
-	dsInfo, err := e.getDSInfo(pluginCtx)
+	instance, err := e.getInstance(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	region := dsInfo.region
+	region := instance.Settings.Region
 	if model.Region != "" {
 		region = model.Region
 	}
