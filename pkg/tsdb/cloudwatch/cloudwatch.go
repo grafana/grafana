@@ -34,23 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
-type datasourceInfo struct {
-	profile       string
-	region        string
-	authType      awsds.AuthType
-	assumeRoleARN string
-	externalID    string
-	namespace     string
-	endpoint      string
-
-	accessKey string
-	secretKey string
-
-	datasourceID int64
-
-	HTTPClient *http.Client
-}
-
 type DataQueryJson struct {
 	QueryType       string `json:"type,omitempty"`
 	QueryMode       string
@@ -63,6 +46,11 @@ type DataQueryJson struct {
 	Period          string
 	ActionPrefix    string
 	AlarmNamePrefix string
+}
+
+type DataSource struct {
+	Settings   *models.CloudWatchSettings
+	HTTPClient *http.Client
 }
 
 const (
@@ -120,11 +108,11 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions Ses
 func (e *cloudWatchExecutor) getClients(pluginCtx backend.PluginContext, region string) (models.Clients, error) {
 	r := region
 	if region == defaultRegion {
-		dsInfo, err := e.getDSInfo(pluginCtx)
+		instance, err := e.getInstance(pluginCtx)
 		if err != nil {
 			return models.Clients{}, err
 		}
-		r = dsInfo.region
+		r = instance.Settings.Region
 	}
 
 	sess, err := e.newSession(pluginCtx, r)
@@ -138,17 +126,7 @@ func (e *cloudWatchExecutor) getClients(pluginCtx backend.PluginContext, region 
 
 func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		jsonData := struct {
-			Profile       string `json:"profile"`
-			Region        string `json:"defaultRegion"`
-			AssumeRoleARN string `json:"assumeRoleArn"`
-			ExternalID    string `json:"externalId"`
-			Endpoint      string `json:"endpoint"`
-			Namespace     string `json:"customMetricsNamespaces"`
-			AuthType      string `json:"authType"`
-		}{}
-
-		err := json.Unmarshal(settings.JSONData, &jsonData)
+		instanceSettings, err := models.LoadCloudWatchSettings(settings)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
@@ -158,44 +136,10 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, fmt.Errorf("error creating http client: %w", err)
 		}
 
-		model := datasourceInfo{
-			profile:       jsonData.Profile,
-			region:        jsonData.Region,
-			assumeRoleARN: jsonData.AssumeRoleARN,
-			externalID:    jsonData.ExternalID,
-			endpoint:      jsonData.Endpoint,
-			namespace:     jsonData.Namespace,
-			datasourceID:  settings.ID,
-			HTTPClient:    httpClient,
-		}
-
-		at := awsds.AuthTypeDefault
-		switch jsonData.AuthType {
-		case "credentials":
-			at = awsds.AuthTypeSharedCreds
-		case "keys":
-			at = awsds.AuthTypeKeys
-		case "default":
-			at = awsds.AuthTypeDefault
-		case "ec2_iam_role":
-			at = awsds.AuthTypeEC2IAMRole
-		case "arn":
-			at = awsds.AuthTypeDefault
-			cwlog.Warn("Authentication type \"arn\" is deprecated, falling back to default")
-		default:
-			cwlog.Warn("Unrecognized AWS authentication type", "type", jsonData.AuthType)
-		}
-
-		model.authType = at
-
-		if model.profile == "" {
-			model.profile = settings.Database // legacy support
-		}
-
-		model.accessKey = settings.DecryptedSecureJSONData["accessKey"]
-		model.secretKey = settings.DecryptedSecureJSONData["secretKey"]
-
-		return model, nil
+		return DataSource{
+			Settings:   instanceSettings,
+			HTTPClient: httpClient,
+		}, nil
 	}
 }
 
@@ -257,28 +201,28 @@ func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.Check
 }
 
 func (e *cloudWatchExecutor) newSession(pluginCtx backend.PluginContext, region string) (*session.Session, error) {
-	dsInfo, err := e.getDSInfo(pluginCtx)
+	instance, err := e.getInstance(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
 
 	if region == defaultRegion {
-		region = dsInfo.region
+		region = instance.Settings.Region
 	}
 
 	return e.sessions.GetSession(awsds.SessionConfig{
 		// https://github.com/grafana/grafana/issues/46365
 		// HTTPClient: dsInfo.HTTPClient,
 		Settings: awsds.AWSDatasourceSettings{
-			Profile:       dsInfo.profile,
+			Profile:       instance.Settings.Profile,
 			Region:        region,
-			AuthType:      dsInfo.authType,
-			AssumeRoleARN: dsInfo.assumeRoleARN,
-			ExternalID:    dsInfo.externalID,
-			Endpoint:      dsInfo.endpoint,
-			DefaultRegion: dsInfo.region,
-			AccessKey:     dsInfo.accessKey,
-			SecretKey:     dsInfo.secretKey,
+			AuthType:      instance.Settings.AuthType,
+			AssumeRoleARN: instance.Settings.AssumeRoleARN,
+			ExternalID:    instance.Settings.ExternalID,
+			Endpoint:      instance.Settings.Endpoint,
+			DefaultRegion: instance.Settings.Region,
+			AccessKey:     instance.Settings.AccessKey,
+			SecretKey:     instance.Settings.SecretKey,
 		},
 		UserAgentName: aws.String("Cloudwatch"),
 	})
@@ -407,11 +351,11 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 
 		region := model.Region
 		if model.Region == "" || region == defaultRegion {
-			dsInfo, err := e.getDSInfo(req.PluginContext)
+			instance, err := e.getInstance(req.PluginContext)
 			if err != nil {
 				return nil, err
 			}
-			model.Region = dsInfo.region
+			model.Region = instance.Settings.Region
 		}
 
 		logsClient, err := e.getCWLogsClient(req.PluginContext, region)
@@ -447,13 +391,13 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 	return resp, nil
 }
 
-func (e *cloudWatchExecutor) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
+func (e *cloudWatchExecutor) getInstance(pluginCtx backend.PluginContext) (*DataSource, error) {
 	i, err := e.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	instance := i.(datasourceInfo)
+	instance := i.(DataSource)
 
 	return &instance, nil
 }

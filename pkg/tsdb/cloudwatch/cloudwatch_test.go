@@ -32,7 +32,7 @@ func TestNewInstanceSettings(t *testing.T) {
 	tests := []struct {
 		name       string
 		settings   backend.DataSourceInstanceSettings
-		expectedDS datasourceInfo
+		expectedDS DataSource
 		Err        require.ErrorAssertionFunc
 	}{
 		{
@@ -52,16 +52,20 @@ func TestNewInstanceSettings(t *testing.T) {
 					"secretKey": "secret",
 				},
 			},
-			expectedDS: datasourceInfo{
-				profile:       "foo",
-				region:        "us-east2",
-				assumeRoleARN: "role",
-				externalID:    "id",
-				endpoint:      "bar",
-				namespace:     "ns",
-				authType:      awsds.AuthTypeKeys,
-				accessKey:     "A123",
-				secretKey:     "secret",
+			expectedDS: DataSource{
+				Settings: &models.CloudWatchSettings{
+					AWSDatasourceSettings: awsds.AWSDatasourceSettings{
+						Profile:       "foo",
+						Region:        "us-east2",
+						AssumeRoleARN: "role",
+						ExternalID:    "id",
+						Endpoint:      "bar",
+						AuthType:      awsds.AuthTypeKeys,
+						AccessKey:     "A123",
+						SecretKey:     "secret",
+					},
+					Namespace: "ns",
+				},
 			},
 			Err: require.NoError,
 		},
@@ -72,19 +76,18 @@ func TestNewInstanceSettings(t *testing.T) {
 			f := NewInstanceSettings(httpclient.NewProvider())
 			model, err := f(tt.settings)
 			tt.Err(t, err)
-			datasourceComparer := cmp.Comparer(func(d1 datasourceInfo, d2 datasourceInfo) bool {
-				return d1.profile == d2.profile &&
-					d1.region == d2.region &&
-					d1.authType == d2.authType &&
-					d1.assumeRoleARN == d2.assumeRoleARN &&
-					d1.externalID == d2.externalID &&
-					d1.namespace == d2.namespace &&
-					d1.endpoint == d2.endpoint &&
-					d1.accessKey == d2.accessKey &&
-					d1.secretKey == d2.secretKey &&
-					d1.datasourceID == d2.datasourceID
+			datasourceComparer := cmp.Comparer(func(d1 DataSource, d2 DataSource) bool {
+				return d1.Settings.Profile == d2.Settings.Profile &&
+					d1.Settings.Region == d2.Settings.Region &&
+					d1.Settings.AuthType == d2.Settings.AuthType &&
+					d1.Settings.AssumeRoleARN == d2.Settings.AssumeRoleARN &&
+					d1.Settings.ExternalID == d2.Settings.ExternalID &&
+					d1.Settings.Namespace == d2.Settings.Namespace &&
+					d1.Settings.Endpoint == d2.Settings.Endpoint &&
+					d1.Settings.AccessKey == d2.Settings.AccessKey &&
+					d1.Settings.SecretKey == d2.Settings.SecretKey
 			})
-			if !cmp.Equal(model.(datasourceInfo), tt.expectedDS, datasourceComparer) {
+			if !cmp.Equal(model.(DataSource), tt.expectedDS, datasourceComparer) {
 				t.Errorf("Unexpected result. Expecting\n%v \nGot:\n%v", model, tt.expectedDS)
 			}
 		})
@@ -110,7 +113,7 @@ func Test_CheckHealth(t *testing.T) {
 	t.Run("successfully query metrics and logs", func(t *testing.T) {
 		client = fakeCheckHealthClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
+			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
@@ -131,7 +134,7 @@ func Test_CheckHealth(t *testing.T) {
 				return nil, fmt.Errorf("some logs query error")
 			}}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
+			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
@@ -152,7 +155,7 @@ func Test_CheckHealth(t *testing.T) {
 				return fmt.Errorf("some list metrics error")
 			}}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
+			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
@@ -170,7 +173,7 @@ func Test_CheckHealth(t *testing.T) {
 	t.Run("fail to get clients", func(t *testing.T) {
 		client = fakeCheckHealthClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
+			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
 			return nil, fmt.Errorf("some sessions error")
@@ -201,7 +204,7 @@ func Test_executeLogAlertQuery(t *testing.T) {
 	t.Run("getCWLogsClient is called with region from input JSON", func(t *testing.T) {
 		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
+			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 		})
 		sess := fakeSessionCache{}
 		executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
@@ -227,7 +230,7 @@ func Test_executeLogAlertQuery(t *testing.T) {
 	t.Run("getCWLogsClient is called with region from instance manager when region is default", func(t *testing.T) {
 		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{region: "instance manager's region"}, nil
+			return DataSource{Settings: &models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "instance manager's region"}}}, nil
 		})
 		sess := fakeSessionCache{}
 
@@ -264,7 +267,7 @@ func TestQuery_ResourceRequest_DescribeAllLogGroups(t *testing.T) {
 	}
 
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return datasourceInfo{}, nil
+		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 	})
 
 	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -343,7 +346,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups(t *testing.T) {
 	}
 
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return datasourceInfo{}, nil
+		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 	})
 
 	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -398,7 +401,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
+			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 		})
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -436,7 +439,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
+			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 		})
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -477,7 +480,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		return &api
 	}
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return datasourceInfo{}, nil
+		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 	})
 
 	t.Run("Should handle dimension value request and return values from the api", func(t *testing.T) {
