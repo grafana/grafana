@@ -65,7 +65,8 @@ func TestBulkOps(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	db := InitTestDB(t)
-	db.engine.Sync(new(bulkTestItem))
+	err := db.engine.Sync(new(bulkTestItem))
+	require.NoError(t, err)
 
 	t.Run("insert several records", func(t *testing.T) {
 		vals := make([]bulkTestItem, 45)
