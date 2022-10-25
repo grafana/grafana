@@ -181,8 +181,7 @@ func TestPushoverNotifier(t *testing.T) {
 					Settings:       settingsJSON,
 					SecureSettings: secureSettings,
 				},
-				ImageStore: images,
-				// TODO: allow changing the associated values for different tests.
+				ImageStore:          images,
 				NotificationService: webhookSender,
 				DecryptFunc:         decryptFn,
 				Template:            tmpl,

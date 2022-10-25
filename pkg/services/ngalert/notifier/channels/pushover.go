@@ -40,19 +40,18 @@ type PushoverNotifier struct {
 }
 
 type pushoverSettings struct {
-	*NotificationChannelConfig
-	UserKey          string `json:"userKey,omitempty" yaml:"userKey,omitempty"`
-	APIToken         string `json:"apiToken,omitempty" yaml:"apiToken,omitempty"`
+	userKey          string
+	apiToken         string
 	alertingPriority int
 	okPriority       int
 	retry            int
 	expire           int
-	Device           string `json:"device,omitempty" yaml:"device,omitempty"`
-	AlertingSound    string `json:"sound,omitempty" yaml:"sound,omitempty"`
-	OKSound          string `json:"okSound,omitempty" yaml:"okSound,omitempty"`
+	device           string
+	alertingSound    string
+	okSound          string
 	upload           bool
-	Title            string `json:"title,omitempty" yaml:"title,omitempty"`
-	Message          string `json:"message,omitempty" yaml:"message,omitempty"`
+	title            string
+	message          string
 }
 
 func PushoverFactory(fc FactoryConfig) (NotificationChannel, error) {
@@ -69,20 +68,12 @@ func PushoverFactory(fc FactoryConfig) (NotificationChannel, error) {
 // newPushoverNotifier is the constructor for the Pushover notifier
 func newPushoverNotifier(fc FactoryConfig) (*PushoverNotifier, error) {
 	decryptFunc := fc.DecryptFunc
-	var settings pushoverSettings
-	err := fc.Config.unmarshalSettings(&settings)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
-	}
-	// If we unmarshalled uploadImage and it was set to "omitempty" it would be defaulted to false.
-	settings.upload = fc.Config.Settings.Get("uploadImage").MustBool(true)
-
-	settings.UserKey = decryptFunc(context.Background(), fc.Config.SecureSettings, "userKey", settings.UserKey)
-	if settings.UserKey == "" {
+	uk := decryptFunc(context.Background(), fc.Config.SecureSettings, "userKey", fc.Config.Settings.Get("userKey").MustString())
+	if uk == "" {
 		return nil, errors.New("user key not found")
 	}
-	settings.APIToken = decryptFunc(context.Background(), fc.Config.SecureSettings, "apiToken", settings.APIToken)
-	if settings.APIToken == "" {
+	at := decryptFunc(context.Background(), fc.Config.SecureSettings, "apiToken", fc.Config.Settings.Get("apiToken").MustString())
+	if at == "" {
 		return nil, errors.New("API token not found")
 	}
 
@@ -90,24 +81,12 @@ func newPushoverNotifier(fc FactoryConfig) (*PushoverNotifier, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert alerting priority to integer: %w", err)
 	}
-	settings.alertingPriority = ap
 	okp, err := strconv.Atoi(fc.Config.Settings.Get("okPriority").MustString("0")) // default Normal
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert OK priority to integer: %w", err)
 	}
-	settings.okPriority = okp
 	r, _ := strconv.Atoi(fc.Config.Settings.Get("retry").MustString())
-	settings.retry = r
 	e, _ := strconv.Atoi(fc.Config.Settings.Get("expire").MustString())
-	settings.expire = e
-
-	if settings.Title == "" {
-		settings.Title = DefaultMessageTitleEmbed
-	}
-
-	if settings.Message == "" {
-		settings.Message = DefaultMessageEmbed
-	}
 
 	return &PushoverNotifier{
 		Base: NewBase(&models.AlertNotification{
@@ -118,11 +97,24 @@ func newPushoverNotifier(fc FactoryConfig) (*PushoverNotifier, error) {
 			Settings:              fc.Config.Settings,
 			SecureSettings:        fc.Config.SecureSettings,
 		}),
-		tmpl:     fc.Template,
-		log:      log.New("alerting.notifier.pushover"),
-		images:   fc.ImageStore,
-		ns:       fc.NotificationService,
-		settings: settings,
+		tmpl:   fc.Template,
+		log:    log.New("alerting.notifier.pushover"),
+		images: fc.ImageStore,
+		ns:     fc.NotificationService,
+		settings: pushoverSettings{
+			userKey:          uk,
+			apiToken:         at,
+			alertingPriority: ap,
+			okPriority:       okp,
+			retry:            r,
+			expire:           e,
+			device:           fc.Config.Settings.Get("device").MustString(),
+			alertingSound:    fc.Config.Settings.Get("sound").MustString(),
+			okSound:          fc.Config.Settings.Get("okSound").MustString(),
+			upload:           fc.Config.Settings.Get("uploadImage").MustBool(true),
+			title:            fc.Config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
+			message:          fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
+		},
 	}, nil
 }
 
@@ -167,11 +159,11 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, pn.tmpl, as, pn.log, &tmplErr)
 
-	if err := w.WriteField("user", tmpl(pn.settings.UserKey)); err != nil {
+	if err := w.WriteField("user", tmpl(pn.settings.userKey)); err != nil {
 		return nil, b, fmt.Errorf("failed to write the user: %w", err)
 	}
 
-	if err := w.WriteField("token", pn.settings.APIToken); err != nil {
+	if err := w.WriteField("token", pn.settings.apiToken); err != nil {
 		return nil, b, fmt.Errorf("failed to write the token: %w", err)
 	}
 
@@ -194,13 +186,13 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 		}
 	}
 
-	if pn.settings.Device != "" {
-		if err := w.WriteField("device", tmpl(pn.settings.Device)); err != nil {
+	if pn.settings.device != "" {
+		if err := w.WriteField("device", tmpl(pn.settings.device)); err != nil {
 			return nil, b, fmt.Errorf("failed to write the device: %w", err)
 		}
 	}
 
-	if err := w.WriteField("title", tmpl(pn.settings.Title)); err != nil {
+	if err := w.WriteField("title", tmpl(pn.settings.title)); err != nil {
 		return nil, b, fmt.Errorf("failed to write the title: %w", err)
 	}
 
@@ -213,7 +205,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 		return nil, b, fmt.Errorf("failed to write the URL title: %w", err)
 	}
 
-	if err := w.WriteField("message", tmpl(pn.settings.Message)); err != nil {
+	if err := w.WriteField("message", tmpl(pn.settings.message)); err != nil {
 		return nil, b, fmt.Errorf("failed write the message: %w", err)
 	}
 
@@ -253,9 +245,9 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 
 	var sound string
 	if status == model.AlertResolved {
-		sound = tmpl(pn.settings.OKSound)
+		sound = tmpl(pn.settings.okSound)
 	} else {
-		sound = tmpl(pn.settings.AlertingSound)
+		sound = tmpl(pn.settings.alertingSound)
 	}
 	if sound != "default" {
 		if err := w.WriteField("sound", sound); err != nil {
