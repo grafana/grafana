@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/datasources/add-a-data-source/
+  - /docs/grafana/latest/datasources/datasource_permissions/
   - /docs/grafana/latest/features/datasources/add-a-data-source/
   - /docs/grafana/latest/enterprise/datasource_permissions/
   - /docs/grafana/latest/permissions/datasource_permissions/
@@ -12,39 +13,50 @@ weight: 100
 
 # Data source management
 
-Grafana supports many different storage backends for your time series data (data source). Refer to [data sources]({{< relref "../../datasources/" >}}) for more information about using data sources in Grafana. Only users with the organization admin role can add data sources.
+Grafana supports many different storage backends for your time series data (data source).
+Refer to [data sources]({{< relref "../../datasources/" >}}) for more information about using data sources in Grafana.
+Only users with the organization admin role can add data sources.
 
 ## Add a data source
 
 Before you can create your first dashboard, you need to add your data source.
 
-> **Note:** Only users with the organization Admin role can add data sources.
+> **Note:** Only users with the organization admin role can add data sources.
 
-To add a data source:
+**To add a data source:**
 
-1. Move your cursor to the cog icon on the side menu which will show the configuration options.
+1. Select the cog icon on the side menu to show the configuration options.
 
    {{< figure src="/static/img/docs/v75/sidemenu-datasource-7-5.png" max-width="150px" class="docs-image--no-shadow">}}
 
-1. Click on **Data sources**. The data sources page opens showing a list of previously configured data sources for the Grafana instance.
+1. Select **Data sources**.
 
-1. Click **Add data source** to see a list of all supported data sources.
+   This opens the data sources page, which displays a list of previously configured data sources for the Grafana instance.
+
+1. Select **Add data source** to see a list of all supported data sources.
 
    {{< figure src="/static/img/docs/v75/add-data-source-7-5.png" max-width="600px" class="docs-image--no-shadow">}}
 
-1. Search for a specific data source by entering the name in the search dialog. Or you can scroll through supported data sources grouped into time series, logging, tracing and other categories.
+1. Enter the name of a specific data source in the search dialog.
+
+   You can also scroll through supported data sources grouped into time series, logging, tracing, and other categories.
 
 1. Move the cursor over the data source you want to add.
 
    {{< figure src="/static/img/docs/v75/select-data-source-7-5.png" max-width="700px" class="docs-image--no-shadow">}}
 
-1. Click **Select**. The data source configuration page opens.
+1. Select **Select**.
 
-1. Configure the data source following instructions specific to that data source. See [Data sources]({{< relref "../../datasources" >}}) for links to configuration instructions for all supported data sources.
+   This opens the data source configuration page.
+
+1. Configure the data source following instructions specific to that data source.
+
+   For links to data source-specific documentation, see [Data sources]({{< relref "../../datasources" >}}).
 
 ## Data source permissions
 
-Data source permissions allow you to restrict access for users to query a data source. For each data source there is a permission page that allows you to enable permissions and restrict query permissions to specific **Users** and **Teams**.
+You can configure data source permissions to allow or deny certain users the ability to query a data source.
+Each data source's configuration includes a permissions page where you can enable permissions and restrict query permissions to specific **Users** and **Teams**.
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/grafana-cloud" >}}).
 
@@ -98,3 +110,22 @@ Note that _all_ existing permissions created for the data source will be deleted
 1. On the Permissions tab, click **Disable Permissions**.
 
 <div class="clearfix"></div>
+
+## Add data source plugins
+
+Grafana ships with several [built-in data sources]({{< relref "../datasources/#built-in-core-data-sources" >}}).
+You can add additional data sources as plugins, which you can install or create yourself.
+
+### Find data source plugins in the plugin catalog
+
+To view available data source plugins, go to the [plugin catalog](/grafana/plugins/?type=datasource) and select the "Data sources" filter.
+For details about the plugin catalog, refer to [Plugin management]({{< relref "../administration/plugin-management/" >}}).
+
+You can further filter the plugin catalog's results for data sources provided by the Grafana community, Grafana Labs, and partners.
+If you use [Grafana Enterprise]{{< relref "../enterprise/" >}}, you can also filter by Enterprise-supported plugins.
+
+For more documentation on a specific data source plugin's features, including its query language and editor, refer to its plugin catalog page.
+
+### Create a data source plugin
+
+To build your own data source plugin, refer to the ["Build a data source plugin"](/tutorials/build-a-data-source-plugin/) tutorial and our documentation about [building a plugin](/developers/plugins/).
