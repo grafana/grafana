@@ -6,8 +6,8 @@ import { SceneFlexLayout } from '../components/SceneFlexLayout';
 import { SceneSubMenu } from '../components/SceneSubMenu';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { SceneTimeRange } from '../core/SceneTimeRange';
-import { QueryVariable } from '../variables/QueryVariable';
-import { SceneVariableManager } from '../variables/SceneVariableSet';
+import { SceneVariablesManager } from '../variables/SceneVariablesManager';
+import { TestVariable } from '../variables/TestVariable';
 import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
 
 export function getVariablesDemo(): Scene {
@@ -23,16 +23,16 @@ export function getVariablesDemo(): Scene {
         }),
       ],
     }),
-    $variables: new SceneVariableManager({
+    $variables: new SceneVariablesManager({
       variables: [
-        new QueryVariable({
+        new TestVariable({
           name: 'server',
           query: 'A.*',
           value: 'server-initial',
           text: '',
           options: [],
         }),
-        new QueryVariable({
+        new TestVariable({
           name: 'pod',
           query: 'A.$server.*',
           value: 'pod-initial',

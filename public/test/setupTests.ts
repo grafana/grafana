@@ -5,9 +5,10 @@ import { initReactI18next } from 'react-i18next';
 
 import { matchers } from './matchers';
 
-failOnConsole({
-  shouldFailOnLog: true,
-});
+// failOnConsole({
+//   shouldFailOnLog: true,
+// });
+
 expect.extend(matchers);
 
 i18next.use(initReactI18next).init({

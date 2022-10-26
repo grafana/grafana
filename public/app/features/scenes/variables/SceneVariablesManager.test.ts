@@ -7,4 +7,6 @@ interface TestSceneState extends SceneObjectStatePlain {
 
 class TestScene extends SceneObjectBase<TestSceneState> {}
 
-describe('SceneObject with variables', () => {});
+describe('SceneVariablesManager', () => {
+  it('test', () => {});
+});

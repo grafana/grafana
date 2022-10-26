@@ -1,13 +1,21 @@
 import { SceneObjectBase } from '../core/SceneObjectBase';
 
+import { VariableUpdateProcess } from './VariableUpdateProcess';
 import { SceneVariable, SceneVariableSet, SceneVariableSetState, SceneVariableState } from './types';
 
 export class TextBoxSceneVariable extends SceneObjectBase<SceneVariableState> implements SceneVariable {}
 
-export class SceneVariableManager extends SceneObjectBase<SceneVariableSetState> implements SceneVariableSet {
+export class SceneVariablesManager extends SceneObjectBase<SceneVariableSetState> implements SceneVariableSet {
   activate(): void {
     super.activate();
-    this.state.variables.forEach((x) => x.activate());
+
+    const updateProcess = new VariableUpdateProcess(this);
+
+    for (const variable of this.state.variables) {
+      if (variable.updateOptions) {
+        updateProcess.addVariable(variable);
+      }
+    }
   }
 
   getVariableByName(name: string): SceneVariable | undefined {

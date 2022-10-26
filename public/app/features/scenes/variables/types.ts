@@ -18,11 +18,12 @@ export interface SceneVariableState extends SceneObjectStatePlain {
 
 export interface SceneVariable extends SceneObject<SceneVariableState> {
   ValueSelectComponent?: SceneComponent<SceneVariable>;
+  getDependencies?(): string[];
   updateOptions?(context: VariableUpdateContext): Observable<number>;
 }
 
 export interface VariableUpdateContext {
-  sceneLocation: SceneObject;
+  sceneContext: SceneObject;
   searchFilter?: string;
 }
 

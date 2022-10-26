@@ -99,9 +99,14 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   activate() {
     this.isActive = true;
 
-    const { $data } = this.state;
+    const { $data, $variables } = this.state;
+
     if ($data && !$data.isActive) {
       $data.activate();
+    }
+
+    if ($variables && !$variables.isActive) {
+      $variables.activate();
     }
   }
 
