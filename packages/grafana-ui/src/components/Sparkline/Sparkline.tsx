@@ -148,7 +148,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
     for (let i = 0; i < data.fields.length; i++) {
       const field = data.fields[i];
-      const config = field.config as FieldConfig<GraphFieldConfig>;
+      const config: FieldConfig<GraphFieldConfig> = field.config;
       const customConfig: GraphFieldConfig = {
         ...defaultConfig,
         ...config.custom,

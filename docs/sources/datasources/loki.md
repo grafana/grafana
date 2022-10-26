@@ -147,7 +147,7 @@ There are two types of LogQL queries:
 
 ### Log queries
 
-Loki log queries return the contents of the log lines. Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore/" >}}), and with the [logs panel]({{< relref "../visualizations/logs-panel/" >}}) in dashboards. Select the Loki data source, and then enter a LogQL query to display your logs.F or more information about log queries and LogQL, refer to the [Loki log queries documentation](https://grafana.com/docs/loki/latest/logql/log_queries/)
+Loki log queries return the contents of the log lines. Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore/" >}}), and with the [logs panel]({{< relref "../panels-visualizations/visualizations/logs/" >}}) in dashboards. Select the Loki data source, and then enter a LogQL query to display your logs.F or more information about log queries and LogQL, refer to the [Loki log queries documentation](https://grafana.com/docs/loki/latest/logql/log_queries/).
 
 #### Log context
 

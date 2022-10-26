@@ -284,7 +284,7 @@ func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 			}
 
 			// For any other type of error, it is unexpected abort and return the whole JSON.
-			logger.Debug("failed to parse a query", "err", err)
+			logger.Debug("failed to parse a query", "error", err)
 			queryErr = err
 			break
 		}

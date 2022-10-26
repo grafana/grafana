@@ -6,7 +6,7 @@ import tinycolor from 'tinycolor2';
 import { InlineList } from './InlineList';
 import { List } from './List';
 
-export default {
+const meta: Meta = {
   title: 'Layout/List',
   component: List,
   parameters: {
@@ -26,7 +26,9 @@ export default {
       },
     },
   },
-} as Meta;
+};
+
+export default meta;
 
 const generateListItems = (numberOfItems: number) => {
   return [...new Array(numberOfItems)].map((item, i) => {

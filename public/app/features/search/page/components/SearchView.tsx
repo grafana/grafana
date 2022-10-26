@@ -200,7 +200,7 @@ export const SearchView = ({
   };
 
   const getStarredItems = useCallback(
-    (e) => {
+    (e: React.FormEvent<HTMLInputElement>) => {
       onStarredFilterChange(e);
     },
     [onStarredFilterChange]
@@ -337,6 +337,7 @@ export const SearchView = ({
           onTagFilterChange={onTagFilterChange}
           getTagOptions={getTagOptions}
           getSortOptions={getGrafanaSearcher().getSortOptions}
+          sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
           onDatasourceChange={onDatasourceChange}
           query={query}
           includePanels={includePanels!}

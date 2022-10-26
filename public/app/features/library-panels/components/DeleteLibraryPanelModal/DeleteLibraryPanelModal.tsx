@@ -51,9 +51,9 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
   );
 };
 
-const LoadingIndicator: FC = () => <span>Loading library panel...</span>;
+const LoadingIndicator = () => <span>Loading library panel...</span>;
 
-const Confirm: FC = () => {
+const Confirm = () => {
   const styles = useStyles(getModalStyles);
 
   return <div className={styles.modalText}>Do you want to delete this panel?</div>;

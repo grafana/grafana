@@ -18,7 +18,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -49,7 +48,7 @@ func TestWarmStateCache(t *testing.T) {
 		{
 			AlertRuleUID: rule.UID,
 			OrgID:        rule.OrgID,
-			CacheId:      `[["test1","testValue1"]]`,
+			CacheID:      `[["test1","testValue1"]]`,
 			Labels:       data.Labels{"test1": "testValue1"},
 			State:        eval.Normal,
 			Results: []state.Evaluation{
@@ -62,7 +61,7 @@ func TestWarmStateCache(t *testing.T) {
 		}, {
 			AlertRuleUID: rule.UID,
 			OrgID:        rule.OrgID,
-			CacheId:      `[["test2","testValue2"]]`,
+			CacheID:      `[["test2","testValue2"]]`,
 			Labels:       data.Labels{"test2": "testValue2"},
 			State:        eval.Alerting,
 			Results: []state.Evaluation{
@@ -107,26 +106,12 @@ func TestWarmStateCache(t *testing.T) {
 		Labels:            labels,
 	}
 	_ = dbstore.SaveAlertInstances(ctx, instance2)
-
-	cfg := setting.UnifiedAlertingSettings{
-		BaseInterval:            time.Second,
-		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
-	}
-
-	schedCfg := schedule.SchedulerCfg{
-		Cfg:       cfg,
-		C:         clock.NewMock(),
-		Logger:    log.New("ngalert cache warming test"),
-		RuleStore: dbstore,
-		Metrics:   testMetrics.GetSchedulerMetrics(),
-	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{})
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{})
 	st.Warm(ctx)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
 		for _, entry := range expectedEntries {
-			cacheEntry, err := st.Get(entry.OrgID, entry.AlertRuleUID, entry.CacheId)
-			require.NoError(t, err)
+			cacheEntry := st.Get(entry.OrgID, entry.AlertRuleUID, entry.CacheID)
 
 			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.State{}, "Results")); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -169,11 +154,10 @@ func TestAlertingTicker(t *testing.T) {
 			stopAppliedCh <- alertDefKey
 		},
 		RuleStore:   dbstore,
-		Logger:      log.New("ngalert schedule test"),
 		Metrics:     testMetrics.GetSchedulerMetrics(),
 		AlertSender: notifier,
 	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{})
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{})
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",

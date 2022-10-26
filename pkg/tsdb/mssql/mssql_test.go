@@ -10,13 +10,14 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
 // To run this test, set runMssqlTests=true
@@ -34,7 +35,7 @@ func TestMSSQL(t *testing.T) {
 	// change to true to run the MSSQL tests
 	const runMssqlTests = false
 
-	if !(sqlstore.IsTestDBMSSQL() || runMssqlTests) {
+	if !(db.IsTestDBMSSQL() || runMssqlTests) {
 		t.Skip()
 	}
 

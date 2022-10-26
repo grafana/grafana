@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import React, { useEffect, useMemo } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
+import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
   Alert,
   BigValue,
@@ -19,7 +21,7 @@ import alertDef from 'app/features/alerting/state/alertDef';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
 import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
-import { Annotation, RULE_LIST_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
+import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import {
   getAllRulesSourceNames,
   GRAFANA_DATASOURCE_NAME,
@@ -27,6 +29,7 @@ import {
 } from 'app/features/alerting/unified/utils/datasource';
 import { flattenRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { useDispatch, AccessControlAction } from 'app/types';
 import { PromRuleWithLocation } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -48,13 +51,19 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     props.options.stateFilter.inactive = undefined; // now disable inactive
   }, [props.options.stateFilter]);
 
+  let dashboard: DashboardModel | undefined = undefined;
+
+  useEffectOnce(() => {
+    dashboard = getDashboardSrv().getCurrent();
+  });
+
   useEffect(() => {
     dispatch(fetchAllPromRulesAction());
-    const interval = setInterval(() => dispatch(fetchAllPromRulesAction()), RULE_LIST_POLL_INTERVAL_MS);
+    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => dispatch(fetchAllPromRulesAction()));
     return () => {
-      clearInterval(interval);
+      sub?.unsubscribe();
     };
-  }, [dispatch]);
+  }, [dispatch, dashboard]);
 
   const promRulesRequests = useUnifiedAlertingSelector((state) => state.promRules);
 

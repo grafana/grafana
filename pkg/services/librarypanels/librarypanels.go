@@ -8,15 +8,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister,
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister,
 	libraryElementService libraryelements.Service) *LibraryPanelService {
 	return &LibraryPanelService{
 		Cfg:                   cfg,
@@ -43,7 +43,7 @@ type LibraryInfo struct {
 // LibraryPanelService is the service for the Panel Library feature.
 type LibraryPanelService struct {
 	Cfg                   *setting.Cfg
-	SQLStore              *sqlstore.SQLStore
+	SQLStore              db.DB
 	RouteRegister         routing.RouteRegister
 	LibraryElementService libraryelements.Service
 	log                   log.Logger

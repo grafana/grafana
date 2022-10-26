@@ -176,7 +176,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	if tmplErr != nil {
-		sn.log.Warn("failed to template sensugo message", "err", tmplErr.Error())
+		sn.log.Warn("failed to template sensugo message", "error", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsgType)
@@ -194,7 +194,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		},
 	}
 	if err := sn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		sn.log.Error("failed to send Sensu Go event", "err", err, "sensugo", sn.Name)
+		sn.log.Error("failed to send Sensu Go event", "error", err, "sensugo", sn.Name)
 		return false, err
 	}
 

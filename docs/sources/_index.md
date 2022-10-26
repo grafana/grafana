@@ -55,15 +55,15 @@ title: Grafana documentation
         <h4>Getting started</h4>
         <p>Learn the basics of using Grafana.</p>
     </a>
-    <a href="{{< relref "basics/" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>Grafana basics</h4>
+    <a href="{{< relref "fundamentals/" >}}" class="nav-cards__item nav-cards__item--guide">
+        <h4>Grafana fundamentals</h4>
         <p>Learn basic observability.</p>
     </a>
     <a href="{{< relref "setup-grafana/configure-grafana/" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Configure Grafana</h4>
         <p>Review the configuration and setup options.</p>
     </a>
-    <a href="{{< relref "basics/timeseries/" >}}" class="nav-cards__item nav-cards__item--guide">
+    <a href="{{< relref "fundamentals/timeseries/" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Intro to time series</h4>
         <p>Learn about time series data.</p>
     </a>

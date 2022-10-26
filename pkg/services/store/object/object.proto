@@ -38,15 +38,16 @@ message RawObject {
   // NOTE: currently managed by the dashboard+dashboard_version tables
   string version = 10;
 
-  // Location (path/repo/etc) that defines the canonocal form
-  //
+  // External location info
+  RawObjectSyncInfo sync = 11;
+}
+
+message RawObjectSyncInfo {
   // NOTE: currently managed by the dashboard_provisioning table
-  string sync_src = 11;
+  string source = 11;
 
   // Time in epoch milliseconds that the object was last synced with an external system (provisioning/git)
-  //
-  // NOTE: currently managed by the dashboard_provisioning table
-  int64 sync_time = 12;
+  int64 time = 12;
 }
 
 // Report error while working with objects
@@ -286,10 +287,10 @@ message ObjectSearchResult {
   map<string,string> labels = 9;
 
   // Optionally include extracted JSON
-  string fields_json = 10;
+  bytes fields_json = 10;
 
   // ObjectErrorInfo in json
-  string error_json = 11;
+  bytes error_json = 11;
 }
 
 message ObjectSearchResponse {

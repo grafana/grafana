@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func TestIntegrationSaveAndGetImage(t *testing.T) {
@@ -169,7 +169,7 @@ func TestIntegrationDeleteExpiredImages(t *testing.T) {
 	image2 := models.Image{URL: "https://example.com/example.png"}
 	require.NoError(t, dbstore.SaveImage(ctx, &image2))
 
-	err := dbstore.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := dbstore.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		// should return both images
 		var result1, result2 models.Image
 		ok, err := sess.Where("token = ?", image1.Token).Get(&result1)

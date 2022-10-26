@@ -63,7 +63,7 @@ func MapCUEImportToTS(path string) (string, error) {
 // Errors returned from [pfs.ParsePluginFS] are placed in the option map. Only
 // filesystem traversal and read errors will result in a non-nil second return
 // value.
-func ExtractPluginTrees(parent fs.FS, lib thema.Library) (map[string]PluginTreeOrErr, error) {
+func ExtractPluginTrees(parent fs.FS, rt *thema.Runtime) (map[string]PluginTreeOrErr, error) {
 	ents, err := fs.ReadDir(parent, ".")
 	if err != nil {
 		return nil, fmt.Errorf("error reading fs root directory: %w", err)
@@ -78,7 +78,7 @@ func ExtractPluginTrees(parent fs.FS, lib thema.Library) (map[string]PluginTreeO
 		}
 
 		var either PluginTreeOrErr
-		if ptree, err := pfs.ParsePluginFS(sub, lib); err == nil {
+		if ptree, err := pfs.ParsePluginFS(sub, rt); err == nil {
 			either.Tree = (*PluginTree)(ptree)
 		} else {
 			either.Err = err
@@ -235,7 +235,7 @@ func genGoTypes(plug pfs.PluginInfo, path, subpath, prefix string) (WriteDiffer,
 	wd := NewWriteDiffer()
 	for slotname, lin := range plug.SlotImplementations() {
 		lowslot := strings.ToLower(slotname)
-		lib := lin.Library()
+		rt := lin.Runtime()
 		sch := thema.SchemaP(lin, thema.LatestVersion(lin))
 
 		// FIXME gotta hack this out of thema in order to deal with our custom imports :scream:
@@ -244,7 +244,7 @@ func genGoTypes(plug pfs.PluginInfo, path, subpath, prefix string) (WriteDiffer,
 			return nil, fmt.Errorf("thema openapi generation failed: %w", err)
 		}
 
-		str, err := yaml.Marshal(lib.Context().BuildFile(f))
+		str, err := yaml.Marshal(rt.Context().BuildFile(f))
 		if err != nil {
 			return nil, fmt.Errorf("cue-yaml marshaling failed: %w", err)
 		}

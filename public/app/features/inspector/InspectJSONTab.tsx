@@ -1,4 +1,3 @@
-import { t } from '@lingui/macro';
 import { isEqual } from 'lodash';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -9,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { getPanelDataFrames } from '../dashboard/components/HelpWizard/utils';
@@ -25,27 +25,24 @@ enum ShowContent {
 
 const options: Array<SelectableValue<ShowContent>> = [
   {
-    label: t({ id: 'dashboard.inspect-json.panel-json-label', message: 'Panel JSON' }),
-    description: t({
-      id: 'dashboard.inspect-json.panel-json-description',
-      message: 'The model saved in the dashboard JSON that configures how everything works.',
-    }),
+    label: t('dashboard.inspect-json.panel-json-label', 'Panel JSON'),
+    description: t(
+      'dashboard.inspect-json.panel-json-description',
+      'The model saved in the dashboard JSON that configures how everything works.'
+    ),
     value: ShowContent.PanelJSON,
   },
   {
-    label: t({ id: 'dashboard.inspect-json.panel-data-label', message: 'Panel data' }),
-    description: t({
-      id: 'dashboard.inspect-json.panel-data-description',
-      message: 'The raw model passed to the panel visualization',
-    }),
+    label: t('dashboard.inspect-json.panel-data-label', 'Panel data'),
+    description: t('dashboard.inspect-json.panel-data-description', 'The raw model passed to the panel visualization'),
     value: ShowContent.PanelData,
   },
   {
-    label: t({ id: 'dashboard.inspect-json.dataframe-label', message: 'DataFrame JSON (from Query)' }),
-    description: t({
-      id: 'dashboard.inspect-json.dataframe-description',
-      message: 'Raw data without transformations and field config applied. ',
-    }),
+    label: t('dashboard.inspect-json.dataframe-label', 'DataFrame JSON (from Query)'),
+    description: t(
+      'dashboard.inspect-json.dataframe-description',
+      'Raw data without transformations and field config applied. '
+    ),
     value: ShowContent.DataFrames,
   },
 ];
@@ -120,7 +117,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
       return panel!.getSaveModel();
     }
 
-    return { note: t({ id: 'dashboard.inspect-json.unknown', message: `Unknown Object: ${show}` }) };
+    return { note: t('dashboard.inspect-json.unknown', 'Unknown Object: {{show}}', { show }) };
   }
 
   onApplyPanelModel = () => {
@@ -173,10 +170,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     return (
       <div className={styles.wrap}>
         <div className={styles.toolbar} aria-label={selectors.components.PanelInspector.Json.content}>
-          <Field
-            label={t({ id: 'dashboard.inspect-json.select-source', message: 'Select source' })}
-            className="flex-grow-1"
-          >
+          <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1">
             <Select
               inputId="select-source-dropdown"
               options={jsonOptions}
@@ -217,5 +211,18 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 }
 
 function getPrettyJSON(obj: any): string {
-  return JSON.stringify(obj, null, 2);
+  let r = '';
+  try {
+    r = JSON.stringify(obj, null, 2);
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.toString().includes('RangeError') || e.toString().includes('allocation size overflow'))
+    ) {
+      appEvents.emit(AppEvents.alertError, [e.toString(), 'Cannot display JSON, the object is too big.']);
+    } else {
+      appEvents.emit(AppEvents.alertError, [e instanceof Error ? e.toString() : e]);
+    }
+  }
+  return r;
 }

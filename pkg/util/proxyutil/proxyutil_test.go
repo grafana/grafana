@@ -49,7 +49,7 @@ func TestClearCookieHeader(t *testing.T) {
 		require.NoError(t, err)
 		req.AddCookie(&http.Cookie{Name: "cookie"})
 
-		ClearCookieHeader(req, nil)
+		ClearCookieHeader(req, nil, nil)
 		require.NotContains(t, req.Header, "Cookie")
 	})
 
@@ -60,8 +60,20 @@ func TestClearCookieHeader(t *testing.T) {
 		req.AddCookie(&http.Cookie{Name: "cookie2"})
 		req.AddCookie(&http.Cookie{Name: "cookie3"})
 
-		ClearCookieHeader(req, []string{"cookie1", "cookie3"})
+		ClearCookieHeader(req, []string{"cookie1", "cookie3"}, nil)
 		require.Contains(t, req.Header, "Cookie")
 		require.Equal(t, "cookie1=; cookie3=", req.Header.Get("Cookie"))
+	})
+
+	t.Run("Clear cookie header with cookies to keep and skip should clear Cookie header and keep cookies", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.AddCookie(&http.Cookie{Name: "cookie1"})
+		req.AddCookie(&http.Cookie{Name: "cookie2"})
+		req.AddCookie(&http.Cookie{Name: "cookie3"})
+
+		ClearCookieHeader(req, []string{"cookie1", "cookie3"}, []string{"cookie3"})
+		require.Contains(t, req.Header, "Cookie")
+		require.Equal(t, "cookie1=", req.Header.Get("Cookie"))
 	})
 }

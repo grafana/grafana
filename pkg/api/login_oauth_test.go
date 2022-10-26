@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 
 	"github.com/stretchr/testify/assert"
@@ -17,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -30,7 +30,7 @@ func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *web.Mux {
 	}
 	cfg.ErrTemplateName = "error-template"
 
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 
 	hs := &HTTPServer{
 		Cfg:            cfg,
