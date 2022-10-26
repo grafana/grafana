@@ -426,7 +426,7 @@ const definitions = getOperationDefinitions();
 
 /**
  * Given an operator, return the corresponding explain.
- * Conceibed for usage within the Query Editor.
+ * For usage within the Query Editor.
  */
 export function explainOperator(id: LokiOperationId | string): string {
   const definition = definitions.find((operation) => operation.id === id);
