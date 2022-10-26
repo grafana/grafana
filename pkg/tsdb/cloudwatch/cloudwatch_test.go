@@ -11,7 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/google/go-cmp/cmp"
@@ -95,15 +94,15 @@ func TestNewInstanceSettings(t *testing.T) {
 }
 
 func Test_CheckHealth(t *testing.T) {
-	origNewCWClient := NewCWClient
+	origNewMetricsAPI := NewMetricsAPI
 	origNewCWLogsClient := NewCWLogsClient
 	t.Cleanup(func() {
-		NewCWClient = origNewCWClient
+		NewMetricsAPI = origNewMetricsAPI
 		NewCWLogsClient = origNewCWLogsClient
 	})
 
 	var client fakeCheckHealthClient
-	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider {
 		return client
 	}
 	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {

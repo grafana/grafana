@@ -164,7 +164,13 @@ func (e *cloudWatchExecutor) checkHealthMetrics(pluginCtx backend.PluginContext)
 		Namespace:  &namespace,
 		MetricName: &metric,
 	}
-	_, err := e.listMetrics(pluginCtx, defaultRegion, params)
+
+	session, err := e.newSession(pluginCtx, defaultRegion)
+	if err != nil {
+		return err
+	}
+	metricClient := clients.NewMetricsClient(NewMetricsAPI(session), e.cfg)
+	_, err = metricClient.ListMetricsWithPageLimit(params)
 	return err
 }
 

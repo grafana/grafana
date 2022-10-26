@@ -93,7 +93,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Invalid Access Token", nil)
 	}
 
-	pubdash, dash, err := api.PublicDashboardService.GetPublicDashboardAndDashboard(
+	pubdash, dash, err := api.PublicDashboardService.FindPublicDashboardAndDashboardByAccessToken(
 		c.Req.Context(),
 		accessToken,
 	)
@@ -126,7 +126,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 // ListPublicDashboards Gets list of public dashboards for an org
 // GET /api/dashboards/public
 func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
-	resp, err := api.PublicDashboardService.ListPublicDashboards(c.Req.Context(), c.SignedInUser, c.OrgID)
+	resp, err := api.PublicDashboardService.FindAll(c.Req.Context(), c.SignedInUser, c.OrgID)
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "ListPublicDashboards: failed to list public dashboards", err)
 	}
@@ -136,7 +136,7 @@ func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
 // Delete a public dashboard
 // DELETE /api/dashboards/public/uid/:uid
 func (api *Api) DeletePublicDashboard(c *models.ReqContext) response.Response {
-	err := api.PublicDashboardService.DeletePublicDashboard(c.Req.Context(), c.SignedInUser.OrgID, web.Params(c.Req)[":uid"], web.Params(c.Req)[":publicDashboardUid"])
+	err := api.PublicDashboardService.Delete(c.Req.Context(), c.SignedInUser.OrgID, web.Params(c.Req)[":uid"], web.Params(c.Req)[":publicDashboardUid"])
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "DeletePublicDashboard: failed to delete public dashboard", err)
 	}
@@ -148,7 +148,7 @@ func (api *Api) DeletePublicDashboard(c *models.ReqContext) response.Response {
 // GetPublicDashboardConfig Gets public dashboard configuration for dashboard
 // GET /api/dashboards/uid/:uid/public-config
 func (api *Api) GetPublicDashboardConfig(c *models.ReqContext) response.Response {
-	pdc, err := api.PublicDashboardService.GetPublicDashboard(c.Req.Context(), c.OrgID, web.Params(c.Req)[":uid"])
+	pdc, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "GetPublicDashboardConfig: failed to get public dashboard config", err)
 	}
@@ -179,7 +179,7 @@ func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Respons
 	}
 
 	// Save the public dashboard
-	pubdash, err := api.PublicDashboardService.SavePublicDashboard(c.Req.Context(), c.SignedInUser, &dto)
+	pubdash, err := api.PublicDashboardService.Save(c.Req.Context(), c.SignedInUser, &dto)
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "SavePublicDashboardConfig: failed to save public dashboard configuration", err)
 	}
@@ -226,7 +226,7 @@ func (api *Api) GetAnnotations(c *models.ReqContext) response.Response {
 		To:   c.QueryInt64("to"),
 	}
 
-	annotations, err := api.PublicDashboardService.GetAnnotations(c.Req.Context(), reqDTO, accessToken)
+	annotations, err := api.PublicDashboardService.FindAnnotations(c.Req.Context(), reqDTO, accessToken)
 
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "error getting public dashboard annotations", err)

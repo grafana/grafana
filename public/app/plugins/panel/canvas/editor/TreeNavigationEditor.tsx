@@ -32,7 +32,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
   const globalCSS = getGlobalStyles(theme);
   const styles = useStyles2(getStyles);
 
-  const selectedBgColor = theme.v1.colors.formInputBorderActive;
+  const selectedBgColor = theme.colors.primary.border;
   const { settings } = item;
   const selection = useMemo(
     () => (settings?.selected ? settings.selected.map((v) => v?.getName()) : []),

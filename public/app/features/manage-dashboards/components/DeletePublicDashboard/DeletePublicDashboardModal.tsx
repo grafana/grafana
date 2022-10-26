@@ -1,15 +1,21 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { ConfirmModal } from '@grafana/ui/src';
+import { GrafanaTheme2 } from '@grafana/data/src';
+import { ConfirmModal, useStyles2 } from '@grafana/ui/src';
 
-const Body = ({ title }: { title?: string }) => (
-  <>
-    <p>Do you want to delete this public dashboard?</p>
-    <p>
-      Only &quot;<b>{title}</b>&quot; public dashboard will be deleted.
-    </p>
-  </>
-);
+const Body = ({ title }: { title?: string }) => {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <>
+      <p className={styles.title}>Do you want to delete this public dashboard?</p>
+      <p className={styles.description}>
+        Public dashboard configuration will be deleted, while &quot;<b>{title}</b>&quot; dashboard will remain private.
+      </p>
+    </>
+  );
+};
 
 export const DeletePublicDashboardModal = ({
   dashboardTitle,
@@ -30,3 +36,12 @@ export const DeletePublicDashboardModal = ({
     confirmText="Delete"
   />
 );
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  title: css`
+    margin-bottom: ${theme.spacing(1)};
+  `,
+  description: css`
+    font-size: ${theme.typography.bodySmall.fontSize};
+  `,
+});

@@ -26,8 +26,8 @@ export const DeletePublicDashboardButton = ({
       {({ showModal, hideModal }) => (
         <LinkButton
           fill="text"
-          aria-label="Delete public dashboard"
-          title="Delete public dashboard"
+          aria-label="Delete public dashboard configuration"
+          title="Delete public dashboard configuration"
           onClick={() =>
             showModal(DeletePublicDashboardModal, {
               dashboardTitle: publicDashboard.title,
