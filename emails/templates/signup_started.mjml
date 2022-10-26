@@ -18,10 +18,10 @@
         <mj-text>
           Copy and paste the email verification code in the sign up form <strong>or</strong> use the link below.
         </mj-text>
-        <mj-button align="left" background-color="transparent" border="1px solid #44474f" color="#ccccdd" font-size="22px" font-weight="bold">
+        <mj-button background-color="transparent" border="1px solid #44474f" color="#ccccdd" font-size="22px" font-weight="bold">
           {{ .Code }}
         </mj-button>
-        <mj-button align="left" href="{{ .SignUpUrl }}">
+        <mj-button href="{{ .SignUpUrl }}">
           Complete Sign Up
         </mj-button>
         <mj-text>
