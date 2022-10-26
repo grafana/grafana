@@ -12,22 +12,22 @@
     </mj-section>
     <mj-section background-color="#22252b" border="1px solid #2f3037">
       <mj-column>
-        <mj-text align="center">
+        <mj-text>
           <h2>Complete the signup</h2>
         </mj-text>
-        <mj-text align="center">
+        <mj-text>
           Copy and paste the email verification code in the sign up form <strong>or</strong> use the link below.
         </mj-text>
-        <mj-button background-color="transparent" border="1px solid #44474f" color="#ccccdd" font-size="22px" font-weight="bold">
+        <mj-button align="left" background-color="transparent" border="1px solid #44474f" color="#ccccdd" font-size="22px" font-weight="bold">
           {{ .Code }}
         </mj-button>
-        <mj-button href="{{ .SignUpUrl }}">
+        <mj-button align="left" href="{{ .SignUpUrl }}">
           Complete Sign Up
         </mj-button>
-        <mj-text align="center">
+        <mj-text>
           You can also copy and paste this link into your browser directly:
         </mj-text>
-        <mj-text align="center">
+        <mj-text>
           <a href="{{ .LinkUrl }}">{{ .SignUpUrl }}</a>
         </mj-text>
       </mj-column>
