@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestIntegrationDashboardDataAccess(t *testing.T) {
@@ -243,7 +244,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	t.Run("Should be able to delete dashboard and related public dashboard", func(t *testing.T) {
 		setup()
 
-		uid, _ := publicDashboardStore.GenerateNewPublicDashboardUid(context.Background())
+		uid := util.GenerateShortUID()
 		cmd := publicDashboardModels.SavePublicDashboardConfigCommand{
 			PublicDashboard: publicDashboardModels.PublicDashboard{
 				Uid:          uid,
@@ -256,9 +257,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 				AccessToken:  "an-access-token",
 			},
 		}
-		err := publicDashboardStore.SavePublicDashboardConfig(context.Background(), cmd)
+		err := publicDashboardStore.SavePublicDashboard(context.Background(), cmd)
 		require.NoError(t, err)
-		pubdashConfig, _, _ := publicDashboardStore.GetPublicDashboard(context.Background(), "an-access-token")
+		pubdashConfig, _, _ := publicDashboardStore.GetPublicDashboardAndDashboard(context.Background(), "an-access-token")
 		require.NotNil(t, pubdashConfig)
 
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedDash.Id, OrgId: savedDash.OrgId}
@@ -270,7 +271,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, getErr, dashboards.ErrDashboardNotFound)
 		assert.Nil(t, dash)
 
-		pubdashConfig, _, err = publicDashboardStore.GetPublicDashboard(context.Background(), "an-access-token")
+		pubdashConfig, _, err = publicDashboardStore.GetPublicDashboardAndDashboard(context.Background(), "an-access-token")
 		require.Equal(t, err, publicDashboardModels.ErrPublicDashboardNotFound)
 		require.Nil(t, pubdashConfig)
 	})
@@ -278,7 +279,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	t.Run("Should be able to delete a dashboard folder, with its dashboard and related public dashboard", func(t *testing.T) {
 		setup()
 
-		uid, _ := publicDashboardStore.GenerateNewPublicDashboardUid(context.Background())
+		uid := util.GenerateShortUID()
 		cmd := publicDashboardModels.SavePublicDashboardConfigCommand{
 			PublicDashboard: publicDashboardModels.PublicDashboard{
 				Uid:          uid,
@@ -291,9 +292,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 				AccessToken:  "an-access-token",
 			},
 		}
-		err := publicDashboardStore.SavePublicDashboardConfig(context.Background(), cmd)
+		err := publicDashboardStore.SavePublicDashboard(context.Background(), cmd)
 		require.NoError(t, err)
-		pubdashConfig, _, _ := publicDashboardStore.GetPublicDashboard(context.Background(), "an-access-token")
+		pubdashConfig, _, _ := publicDashboardStore.GetPublicDashboardAndDashboard(context.Background(), "an-access-token")
 		require.NotNil(t, pubdashConfig)
 
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: true}
@@ -307,7 +308,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, len(query.Result), 0)
 
-		pubdashConfig, _, err = publicDashboardStore.GetPublicDashboard(context.Background(), "an-access-token")
+		pubdashConfig, _, err = publicDashboardStore.GetPublicDashboardAndDashboard(context.Background(), "an-access-token")
 		require.Equal(t, err, publicDashboardModels.ErrPublicDashboardNotFound)
 		require.Nil(t, pubdashConfig)
 	})
