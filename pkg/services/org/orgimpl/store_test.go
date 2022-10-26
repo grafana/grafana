@@ -639,7 +639,7 @@ func hasWildcardScope(user *user.SignedInUser, action string) bool {
 	return false
 }
 
-func TestSQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
+func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -702,7 +702,7 @@ func TestSQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 	assert.Equal(t, true, actual.IsDisabled)
 }
 
-func TestSQLStore_SearchOrgUsers(t *testing.T) {
+func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -776,7 +776,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 	}
 }
 
-func TestIntegrationSQLStore_RemoveOrgUser(t *testing.T) {
+func TestIntegration_SQLStore_RemoveOrgUser(t *testing.T) {
 	store := db.InitTestDB(t)
 	orgUserStore := sqlStore{
 		db:      store,
