@@ -815,7 +815,7 @@ func Test_ParseMetricDataQueries_statistics_and_query_type_validation_and_MatchE
 		actual, err := ParseMetricDataQueries(
 			[]backend.DataQuery{
 				{
-					JSON:  []byte("{}"),
+					JSON: []byte("{}"),
 				},
 			}, time.Now(), time.Now(), false)
 		assert.Error(t, err)
