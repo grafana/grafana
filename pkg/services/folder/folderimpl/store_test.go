@@ -120,7 +120,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("creating a nested folder with the maximum nested folder depth should fail", func(t *testing.T) {
 		ancestorUIDs := []string{accesscontrol.GeneralFolderUID}
-		for i := 0; i < folder.MAXIMUM_DEPTH; i++ {
+		for i := 0; i < folder.MaxNestedFolderDepth; i++ {
 			parentUID := ancestorUIDs[len(ancestorUIDs)-1]
 			title := fmt.Sprintf("folder-%d", i)
 			f, err := store.Create(context.Background(), &folder.CreateFolderCommand{
@@ -217,14 +217,14 @@ func TestDelete(t *testing.T) {
 			require.Equal(t, ancestorUIDs, parentUIDs)
 		}
 
-		require.Len(t, ancestorUIDs, folder.MAXIMUM_DEPTH)
+		require.Len(t, ancestorUIDs, folder.MaxNestedFolderDepth)
 
 		err = store.Delete(context.Background(), ancestorUIDs[2], orgID)
 		require.NoError(t, err)
 
 		children, err := store.GetChildren(context.Background(), &folder.GetTreeCommand{
 			UID:   ancestorUIDs[0],
-			Depth: folder.MAXIMUM_DEPTH,
+			Depth: folder.MaxNestedFolderDepth,
 		})
 		require.NoError(t, err)
 
