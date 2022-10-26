@@ -18,14 +18,14 @@ func NamespacesHandler(pluginCtx backend.PluginContext, reqCtxFactory models.Req
 		return nil, models.NewHttpError("error in NamespacesHandler", http.StatusInternalServerError, err)
 	}
 
-	hardcodedNamespaces := services.GetHardCodedNamespaces()
-	result := reqCtx.Settings.Namespace
-	if result != "" {
-		hardcodedNamespaces = append(hardcodedNamespaces, strings.Split(result, ",")...)
+	result := services.GetHardCodedNamespaces()
+	customNamespace := reqCtx.Settings.Namespace
+	if customNamespace != "" {
+		result = append(result, strings.Split(customNamespace, ",")...)
 	}
-	sort.Strings(hardcodedNamespaces)
+	sort.Strings(result)
 
-	namespacesResponse, err := json.Marshal(hardcodedNamespaces)
+	namespacesResponse, err := json.Marshal(result)
 	if err != nil {
 		return nil, models.NewHttpError("error in NamespacesHandler", http.StatusInternalServerError, err)
 	}
