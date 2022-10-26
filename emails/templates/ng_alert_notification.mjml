@@ -6,7 +6,7 @@
     </mj-title>
     <mj-include path="./partials/layout/head.mjml" />
   </mj-head>
-  <mj-body background-color="#111217">
+  <mj-body>
     <mj-section>
       <mj-include path="./partials/layout/header.mjml" />
     </mj-section>
