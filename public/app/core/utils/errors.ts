@@ -13,5 +13,5 @@ export function getMessageFromError(err: string | (Error & { data?: any; statusT
     }
   }
 
-  return err as string;
+  return err;
 }

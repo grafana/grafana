@@ -234,7 +234,7 @@ describe('RuleList', () => {
 
     setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
     mocks.api.discoverFeatures.mockResolvedValue({
-      application: PromApplication.Lotex,
+      application: PromApplication.Cortex,
       features: {
         rulerApiEnabled: true,
       },
@@ -376,7 +376,7 @@ describe('RuleList', () => {
     setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
 
     mocks.api.discoverFeatures.mockResolvedValue({
-      application: PromApplication.Lotex,
+      application: PromApplication.Cortex,
       features: {
         rulerApiEnabled: true,
       },
@@ -524,7 +524,7 @@ describe('RuleList', () => {
         setDataSourceSrv(new MockDataSourceSrv(testDatasources));
 
         mocks.api.discoverFeatures.mockResolvedValue({
-          application: PromApplication.Lotex,
+          application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: true,
           },
@@ -710,7 +710,7 @@ describe('RuleList', () => {
         mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
         setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
         mocks.api.discoverFeatures.mockResolvedValue({
-          application: PromApplication.Lotex,
+          application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: true,
           },
@@ -737,7 +737,7 @@ describe('RuleList', () => {
         mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
         setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
         mocks.api.discoverFeatures.mockResolvedValue({
-          application: PromApplication.Lotex,
+          application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: true,
           },

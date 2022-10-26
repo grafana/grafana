@@ -19,7 +19,7 @@ func SetPublicDashboardOrgIdOnContext(publicDashboardService publicdashboards.Se
 		}
 
 		// Get public dashboard
-		orgId, err := publicDashboardService.GetPublicDashboardOrgId(c.Req.Context(), accessToken)
+		orgId, err := publicDashboardService.GetOrgIdByAccessToken(c.Req.Context(), accessToken)
 		if err != nil {
 			return
 		}
@@ -50,7 +50,7 @@ func RequiresExistingAccessToken(publicDashboardService publicdashboards.Service
 		}
 
 		// Check that the access token references an enabled public dashboard
-		exists, err := publicDashboardService.PublicDashboardEnabledExistsByAccessToken(c.Req.Context(), accessToken)
+		exists, err := publicDashboardService.ExistsEnabledByAccessToken(c.Req.Context(), accessToken)
 		if err != nil {
 			c.JsonApiErr(http.StatusInternalServerError, "Failed to query access token", nil)
 			return
