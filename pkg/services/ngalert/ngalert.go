@@ -164,7 +164,7 @@ func (ng *AlertNG) init() error {
 
 	appUrl, err := url.Parse(ng.Cfg.AppURL)
 	if err != nil {
-		ng.Log.Error("Failed to parse application URL. Continue without it.", "err", err)
+		ng.Log.Error("Failed to parse application URL. Continue without it.", "error", err)
 		appUrl = nil
 	}
 
@@ -183,15 +183,14 @@ func (ng *AlertNG) init() error {
 	schedCfg := schedule.SchedulerCfg{
 		Cfg:         ng.Cfg.UnifiedAlerting,
 		C:           clk,
-		Logger:      ng.Log,
 		Evaluator:   eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.ExpressionService),
 		RuleStore:   store,
 		Metrics:     ng.Metrics.GetSchedulerMetrics(),
 		AlertSender: alertsRouter,
 	}
 
-	historian := historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService, ng.Log)
-	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.imageService, clk, historian)
+	historian := historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService)
+	stateManager := state.NewManager(ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.imageService, clk, historian)
 	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
@@ -259,19 +258,19 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 	bus.AddEventListener(func(ctx context.Context, e *events.FolderTitleUpdated) error {
 		// do not block the upstream execution
 		go func(evt *events.FolderTitleUpdated) {
-			logger.Debug("Got folder title updated event. updating rules in the folder", "folder_uid", evt.UID)
+			logger.Info("Got folder title updated event. updating rules in the folder", "folderUID", evt.UID)
 			updated, err := dbStore.IncreaseVersionForAllRulesInNamespace(context.Background(), evt.OrgID, evt.UID)
 			if err != nil {
-				logger.Error("Failed to update alert rules in the folder after its title was changed", "err", err, "folder_uid", evt.UID, "folder", evt.Title)
+				logger.Error("Failed to update alert rules in the folder after its title was changed", "error", err, "folderUID", evt.UID, "folder", evt.Title)
 				return
 			}
 			if len(updated) > 0 {
-				logger.Debug("rules that belong to the folder have been updated successfully. clearing their status", "updated_rules", len(updated))
+				logger.Info("Rules that belong to the folder have been updated successfully. Clearing their status", "folderUID", evt.UID, "updatedRules", len(updated))
 				for _, key := range updated {
 					scheduler.UpdateAlertRule(key.AlertRuleKey, key.Version)
 				}
 			} else {
-				logger.Debug("no alert rules found in the folder. nothing to update", "folder_uid", evt.UID, "folder", evt.Title)
+				logger.Debug("No alert rules found in the folder. nothing to update", "folderUID", evt.UID, "folder", evt.Title)
 			}
 		}(e)
 		return nil
@@ -280,7 +279,7 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 
 // Run starts the scheduler and Alertmanager.
 func (ng *AlertNG) Run(ctx context.Context) error {
-	ng.Log.Debug("ngalert starting")
+	ng.Log.Debug("Starting")
 	ng.stateManager.Warm(ctx)
 
 	children, subCtx := errgroup.WithContext(ctx)

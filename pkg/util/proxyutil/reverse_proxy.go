@@ -10,6 +10,7 @@ import (
 	"time"
 
 	glog "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 )
 
 // StatusClientClosedRequest A non-standard status code introduced by nginx
@@ -66,6 +67,13 @@ func NewReverseProxy(logger glog.Logger, director func(*http.Request), opts ...R
 // wrapDirector wraps a director and adds additional functionality.
 func wrapDirector(d func(*http.Request)) func(req *http.Request) {
 	return func(req *http.Request) {
+		list := contexthandler.AuthHTTPHeaderListFromContext(req.Context())
+		if list != nil {
+			for _, name := range list.Items {
+				req.Header.Del(name)
+			}
+		}
+
 		d(req)
 		PrepareProxyRequest(req)
 

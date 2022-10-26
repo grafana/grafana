@@ -2,7 +2,7 @@ import { isEqual } from 'lodash';
 import React, { useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorList } from '@grafana/ui';
+import { EditorList } from '@grafana/experimental';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { Dimensions as DimensionsType, MetricStat } from '../../types';

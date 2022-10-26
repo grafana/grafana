@@ -93,7 +93,7 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		})
 	}
 
-	if hasAccess(ac.ReqSignedIn, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(dashboards.ActionDashboardsCreate))) {
+	if c.IsPublicDashboardView || hasAccess(ac.ReqSignedIn, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(dashboards.ActionDashboardsCreate))) {
 		dashboardChildLinks := s.buildDashboardNavLinks(c, hasEditPerm)
 
 		dashboardLink := &navtree.NavLink{
@@ -546,19 +546,11 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 	})
 
 	children = append(children, &navtree.NavLink{
-		Id:       baseId + "-plugins",
-		Text:     "Plugins",
+		Id:       baseId + "-connect-data",
+		Text:     "Connect Data",
 		Icon:     "plug",
-		SubTitle: "Manage plugins",
-		Url:      baseUrl + "/plugins",
-	})
-
-	children = append(children, &navtree.NavLink{
-		Id:       baseId + "-cloud-integrations",
-		Text:     "Cloud integrations",
-		Icon:     "bolt",
-		SubTitle: "Manage your cloud integrations",
-		Url:      baseUrl + "/cloud-integrations",
+		SubTitle: "Manage data sources",
+		Url:      baseUrl + "/connect-data",
 	})
 
 	navLink = &navtree.NavLink{

@@ -20,7 +20,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame, FieldType } from '@grafana/data';
+import { CoreApp, DataFrame, FieldType } from '@grafana/data';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
 import { TooltipData, SelectedView } from '../types';
@@ -31,6 +31,8 @@ import { getBarX, getRectDimensionsForLevel, renderRect } from './rendering';
 
 type Props = {
   data: DataFrame;
+  app: CoreApp;
+  flameGraphHeight?: number;
   levels: ItemWithStart[][];
   topLevelIndex: number;
   rangeMin: number;
@@ -45,6 +47,8 @@ type Props = {
 
 const FlameGraph = ({
   data,
+  app,
+  flameGraphHeight,
   levels,
   topLevelIndex,
   rangeMin,
@@ -55,7 +59,7 @@ const FlameGraph = ({
   setRangeMax,
   selectedView,
 }: Props) => {
-  const styles = getStyles(selectedView);
+  const styles = getStyles(selectedView, app, flameGraphHeight);
   const totalTicks = data.fields[1].values.get(0);
   const valueField =
     data.fields.find((f) => f.name === 'value') ?? data.fields.find((f) => f.type === FieldType.number);
@@ -135,7 +139,7 @@ const FlameGraph = ({
 
           if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
             tooltipRef.current.style.left = e.clientX + 10 + 'px';
-            tooltipRef.current.style.top = e.clientY + 40 + 'px';
+            tooltipRef.current.style.top = e.clientY + 'px';
 
             const bar = levels[levelIndex][barIndex];
             const tooltipData = getTooltipData(valueField!, bar.label, bar.value, totalTicks);
@@ -173,11 +177,15 @@ const FlameGraph = ({
   );
 };
 
-const getStyles = (selectedView: SelectedView) => ({
+const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: number | undefined) => ({
   graph: css`
     cursor: pointer;
     float: left;
+    overflow: scroll;
     width: ${selectedView === SelectedView.FlameGraph ? '100%' : '50%'};
+    ${app !== CoreApp.Explore
+      ? `height: calc(${flameGraphHeight}px - 44px)`
+      : ''}; // 44px to adjust for header pushing content down
   `,
 });
 

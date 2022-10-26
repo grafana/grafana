@@ -9,21 +9,21 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/routes"
 )
 
 func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/regions", handleResourceReq(e.handleGetRegions))
-	mux.HandleFunc("/namespaces", handleResourceReq(e.handleGetNamespaces))
-	mux.HandleFunc("/metrics", handleResourceReq(e.handleGetMetrics))
-	mux.HandleFunc("/all-metrics", handleResourceReq(e.handleGetAllMetrics))
-	mux.HandleFunc("/dimension-keys", handleResourceReq(e.handleGetDimensionKeys))
-	mux.HandleFunc("/dimension-values", handleResourceReq(e.handleGetDimensionValues))
 	mux.HandleFunc("/ebs-volume-ids", handleResourceReq(e.handleGetEbsVolumeIds))
 	mux.HandleFunc("/ec2-instance-attribute", handleResourceReq(e.handleGetEc2InstanceAttribute))
 	mux.HandleFunc("/resource-arns", handleResourceReq(e.handleGetResourceArns))
 	mux.HandleFunc("/log-groups", handleResourceReq(e.handleGetLogGroups))
 	mux.HandleFunc("/all-log-groups", handleResourceReq(e.handleGetAllLogGroups))
+	mux.HandleFunc("/metrics", routes.ResourceRequestMiddleware(routes.MetricsHandler, e.getRequestContext))
+	mux.HandleFunc("/dimension-values", routes.ResourceRequestMiddleware(routes.DimensionValuesHandler, e.getRequestContext))
+	mux.HandleFunc("/dimension-keys", routes.ResourceRequestMiddleware(routes.DimensionKeysHandler, e.getRequestContext))
+	mux.HandleFunc("/namespaces", routes.ResourceRequestMiddleware(routes.NamespacesHandler, e.getRequestContext))
 	return mux
 }
 

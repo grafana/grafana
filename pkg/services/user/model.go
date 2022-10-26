@@ -198,7 +198,7 @@ type SignedInUser struct {
 	OrgName            string
 	OrgRole            roletype.RoleType
 	ExternalAuthModule string
-	ExternalAuthID     string
+	ExternalAuthID     string `xorm:"external_auth_id"`
 	Login              string
 	Name               string
 	Email              string

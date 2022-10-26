@@ -76,7 +76,7 @@ func (s *Service) GetUsageStats(_ context.Context) map[string]interface{} {
 }
 
 var actionsToFetch = append(
-	ossaccesscontrol.TeamAdminActions, append(ossaccesscontrol.DashboardAdminActions, ossaccesscontrol.FolderAdminActions...)...,
+	ossaccesscontrol.TeamAdminActions, append(ossaccesscontrol.DashboardAdminActions, append(ossaccesscontrol.FolderAdminActions, ossaccesscontrol.ServiceAccountAdminActions...)...)...,
 )
 
 // GetUserPermissions returns user permissions based on built-in roles

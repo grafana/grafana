@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -52,7 +53,7 @@ func ProvideApi(
 	return api
 }
 
-// Registers Endpoints on Grafana Router
+// RegisterAPIEndpoints Registers Endpoints on Grafana Router
 func (api *Api) RegisterAPIEndpoints() {
 	auth := accesscontrol.Middleware(api.AccessControl)
 
@@ -79,16 +80,19 @@ func (api *Api) RegisterAPIEndpoints() {
 		routing.Wrap(api.SavePublicDashboardConfig))
 }
 
-// Gets public dashboard
+// GetPublicDashboard Gets public dashboard
 // GET /api/public/dashboards/:accessToken
 func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
 
-	pubdash, dash, err := api.PublicDashboardService.GetPublicDashboard(
+	if !tokens.IsValidAccessToken(accessToken) {
+		return response.Error(http.StatusBadRequest, "Invalid Access Token", nil)
+	}
+
+	pubdash, dash, err := api.PublicDashboardService.FindPublicDashboardAndDashboardByAccessToken(
 		c.Req.Context(),
 		accessToken,
 	)
-
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "GetPublicDashboard: failed to get public dashboard", err)
 	}
@@ -115,27 +119,27 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, dto)
 }
 
-// Gets list of public dashboards for an org
+// ListPublicDashboards Gets list of public dashboards for an org
 // GET /api/dashboards/public
 func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
-	resp, err := api.PublicDashboardService.ListPublicDashboards(c.Req.Context(), c.OrgID)
+	resp, err := api.PublicDashboardService.FindAll(c.Req.Context(), c.SignedInUser, c.OrgID)
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "ListPublicDashboards: failed to list public dashboards", err)
 	}
 	return response.JSON(http.StatusOK, resp)
 }
 
-// Gets public dashboard configuration for dashboard
+// GetPublicDashboardConfig Gets public dashboard configuration for dashboard
 // GET /api/dashboards/uid/:uid/public-config
 func (api *Api) GetPublicDashboardConfig(c *models.ReqContext) response.Response {
-	pdc, err := api.PublicDashboardService.GetPublicDashboardConfig(c.Req.Context(), c.OrgID, web.Params(c.Req)[":uid"])
+	pdc, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "GetPublicDashboardConfig: failed to get public dashboard config", err)
 	}
 	return response.JSON(http.StatusOK, pdc)
 }
 
-// Sets public dashboard configuration for dashboard
+// SavePublicDashboardConfig Sets public dashboard configuration for dashboard
 // POST /api/dashboards/uid/:uid/public-config
 func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
@@ -159,7 +163,7 @@ func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Respons
 	}
 
 	// Save the public dashboard
-	pubdash, err := api.PublicDashboardService.SavePublicDashboardConfig(c.Req.Context(), c.SignedInUser, &dto)
+	pubdash, err := api.PublicDashboardService.Save(c.Req.Context(), c.SignedInUser, &dto)
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "SavePublicDashboardConfig: failed to save public dashboard configuration", err)
 	}
@@ -170,6 +174,11 @@ func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Respons
 // QueryPublicDashboard returns all results for a given panel on a public dashboard
 // POST /api/public/dashboard/:accessToken/panels/:panelId/query
 func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
+	accessToken := web.Params(c.Req)[":accessToken"]
+	if !tokens.IsValidAccessToken(accessToken) {
+		return response.Error(http.StatusBadRequest, "Invalid Access Token", nil)
+	}
+
 	panelId, err := strconv.ParseInt(web.Params(c.Req)[":panelId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "QueryPublicDashboard: invalid panel ID", err)
@@ -180,7 +189,7 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "QueryPublicDashboard: bad request data", err)
 	}
 
-	resp, err := api.PublicDashboardService.GetQueryDataResponse(c.Req.Context(), c.SkipCache, reqDTO, panelId, web.Params(c.Req)[":accessToken"])
+	resp, err := api.PublicDashboardService.GetQueryDataResponse(c.Req.Context(), c.SkipCache, reqDTO, panelId, accessToken)
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "QueryPublicDashboard: error running public dashboard panel queries", err)
 	}
@@ -188,13 +197,20 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 	return toJsonStreamingResponse(api.Features, resp)
 }
 
+// GetAnnotations returns annotations for a public dashboard
+// GET /api/public/dashboards/:accessToken/annotations
 func (api *Api) GetAnnotations(c *models.ReqContext) response.Response {
+	accessToken := web.Params(c.Req)[":accessToken"]
+	if !tokens.IsValidAccessToken(accessToken) {
+		return response.Error(http.StatusBadRequest, "Invalid Access Token", nil)
+	}
+
 	reqDTO := AnnotationsQueryDTO{
 		From: c.QueryInt64("from"),
 		To:   c.QueryInt64("to"),
 	}
 
-	annotations, err := api.PublicDashboardService.GetAnnotations(c.Req.Context(), reqDTO, web.Params(c.Req)[":accessToken"])
+	annotations, err := api.PublicDashboardService.FindAnnotations(c.Req.Context(), reqDTO, accessToken)
 
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "error getting public dashboard annotations", err)

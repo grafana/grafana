@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -17,7 +18,7 @@ type Service struct {
 
 func ProvideService(db db.DB, cfg *setting.Cfg, bus bus.Bus, _ quota.Service) (apikey.Service, error) {
 	s := &Service{}
-	if cfg.IsFeatureToggleEnabled("newDBLibrary") {
+	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
 		s.store = &sqlxStore{
 			sess: db.GetSqlxSession(),
 			cfg:  cfg,

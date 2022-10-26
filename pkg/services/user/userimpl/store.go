@@ -173,27 +173,30 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 			return user.ErrUserNotFound
 		}
 
-		// Try and find the user by login first.
-		// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
-		where := "login=?"
-		if ss.cfg.CaseInsensitiveLogin {
-			where = "LOWER(login)=LOWER(?)"
-		}
+		var where string
+		var has bool
+		var err error
 
-		has, err := sess.Where(ss.notServiceAccountFilter()).Where(where, query.LoginOrEmail).Get(usr)
-		if err != nil {
-			return err
-		}
-
-		if !has && strings.Contains(query.LoginOrEmail, "@") {
-			// If the user wasn't found, and it contains an "@" fallback to finding the
-			// user by email.
-
+		// Since username can be an email address, attempt login with email address
+		// first if the login field has the "@" symbol.
+		if strings.Contains(query.LoginOrEmail, "@") {
 			where = "email=?"
 			if ss.cfg.CaseInsensitiveLogin {
 				where = "LOWER(email)=LOWER(?)"
 			}
-			usr = &user.User{}
+			has, err = sess.Where(ss.notServiceAccountFilter()).Where(where, query.LoginOrEmail).Get(usr)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		// Look for the login field instead of email
+		if !has {
+			where = "login=?"
+			if ss.cfg.CaseInsensitiveLogin {
+				where = "LOWER(login)=LOWER(?)"
+			}
 			has, err = sess.Where(ss.notServiceAccountFilter()).Where(where, query.LoginOrEmail).Get(usr)
 		}
 
@@ -202,7 +205,6 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 		} else if !has {
 			return user.ErrUserNotFound
 		}
-
 		if ss.cfg.CaseInsensitiveLogin {
 			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, usr.Login, usr.Email); err != nil {
 				return err
@@ -210,10 +212,8 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 		}
 		return nil
 	})
-	if err != nil {
-		return nil, err
-	}
-	return usr, nil
+
+	return usr, err
 }
 
 func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
