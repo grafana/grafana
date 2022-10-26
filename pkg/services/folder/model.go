@@ -2,7 +2,13 @@ package folder
 
 import (
 	"time"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
+
+const MAXIMUM_DEPTH = 8
+
+var ErrMaximumDepthReached = errutil.NewBase(errutil.StatusBadRequest, "folder.maximum-depth-reached", errutil.WithPublicMessage("Maximum nested folder depth reached"))
 
 type Folder struct {
 	ID          int64
