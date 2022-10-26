@@ -19,9 +19,7 @@ export function loadScript(url: string, async = false) {
     const script = document.createElement('script');
     script.onload = resolve;
     script.src = url;
-    if (async) {
-      script.async = true;
-    }
+    script.async = async;
     document.head.appendChild(script);
   });
 }

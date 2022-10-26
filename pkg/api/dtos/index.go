@@ -8,28 +8,28 @@ import (
 )
 
 type IndexViewData struct {
-	User                                      *CurrentUser
-	Settings                                  map[string]interface{}
-	AppUrl                                    string
-	AppSubUrl                                 string
-	GoogleAnalyticsId                         string
-	GoogleAnalytics4Id                        string
-	GoogleAnalytics4EnchancedTrackingIsActive bool
-	GoogleTagManagerId                        string
-	NavTree                                   *navtree.NavTreeRoot
-	BuildVersion                              string
-	BuildCommit                               string
-	Theme                                     string
-	NewGrafanaVersionExists                   bool
-	NewGrafanaVersion                         string
-	AppName                                   string
-	AppNameBodyClass                          string
-	FavIcon                                   template.URL
-	AppleTouchIcon                            template.URL
-	AppTitle                                  string
-	Sentry                                    *setting.Sentry
-	ContentDeliveryURL                        string
-	LoadingLogo                               template.URL
+	User                                       *CurrentUser
+	Settings                                   map[string]interface{}
+	AppUrl                                     string
+	AppSubUrl                                  string
+	GoogleAnalyticsId                          string
+	GoogleAnalytics4Id                         string
+	GoogleAnalytics4EnhancedMeasurementEnabled bool
+	GoogleTagManagerId                         string
+	NavTree                                    *navtree.NavTreeRoot
+	BuildVersion                               string
+	BuildCommit                                string
+	Theme                                      string
+	NewGrafanaVersionExists                    bool
+	NewGrafanaVersion                          string
+	AppName                                    string
+	AppNameBodyClass                           string
+	FavIcon                                    template.URL
+	AppleTouchIcon                             template.URL
+	AppTitle                                   string
+	Sentry                                     *setting.Sentry
+	ContentDeliveryURL                         string
+	LoadingLogo                                template.URL
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
 	Nonce string
 }
