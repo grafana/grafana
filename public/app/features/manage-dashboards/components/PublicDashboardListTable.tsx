@@ -14,11 +14,10 @@ import { isOrgAdmin } from '../../plugins/admin/permissions';
 
 import { DeletePublicDashboardButton } from './DeletePublicDashboard/DeletePublicDashboardButton';
 
-export const viewPublicDashboardUrl = (accessToken: string): string => {
-  return `${getConfig().appUrl}public-dashboards/${accessToken}`;
-};
+export const viewPublicDashboardUrl = (accessToken: string): string =>
+  `${getConfig().appUrl}public-dashboards/${accessToken}`;
 
-export const ListPublicDashboardTable = () => {
+export const PublicDashboardListTable = () => {
   const { width } = useWindowSize();
   const isMobile = width <= 480;
   const theme = useTheme2();
