@@ -141,7 +141,6 @@ func TestRequestParser(t *testing.T) {
 	t.Run("parseDimensions returns error for non-string type dimension value", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
-				RefID: "A",
 				JSON: json.RawMessage(`{
 				   "dimensions":{
 					  "InstanceId":3
@@ -154,7 +153,7 @@ func TestRequestParser(t *testing.T) {
 		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
 		require.Error(t, err)
 
-		assert.Equal(t, `error parsing query "A", failed to parse dimensions: unknown type as dimension value`, err.Error())
+		assert.Equal(t, `error parsing query "", failed to parse dimensions: unknown type as dimension value`, err.Error())
 	})
 }
 
@@ -317,7 +316,6 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 	t.Run("returns error if period is invalid duration", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
-				RefID: "A",
 				JSON: json.RawMessage(`{
 				   "statistic":"Average",
 				   "period":"invalid"
@@ -326,7 +324,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 		}
 		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
 		require.Error(t, err)
-		assert.Equal(t, `error parsing query "A", failed to parse period as duration: time: invalid duration "invalid"`, err.Error())
+		assert.Equal(t, `error parsing query "", failed to parse period as duration: time: invalid duration "invalid"`, err.Error())
 	})
 
 	t.Run("returns parsed duration in seconds", func(t *testing.T) {
@@ -817,12 +815,11 @@ func Test_ParseMetricDataQueries_statistics_and_query_type_validation_and_MatchE
 		actual, err := ParseMetricDataQueries(
 			[]backend.DataQuery{
 				{
-					RefID: "A",
 					JSON:  []byte("{}"),
 				},
 			}, time.Now(), time.Now(), false)
 		assert.Error(t, err)
-		assert.Equal(t, `error parsing query "A", query must have either statistic or statistics field`, err.Error())
+		assert.Equal(t, `error parsing query "", query must have either statistic or statistics field`, err.Error())
 
 		assert.Nil(t, actual)
 	})
