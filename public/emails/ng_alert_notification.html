@@ -116,9 +116,32 @@
   </style>
   <style type="text/css">
   </style>
+  {{ $numberOfFiringInstance := (len .Alerts.Firing) }}
+  {{ $numberOfResolvedAlerts := (len .Alerts.Resolved) }}
 </head>
 
 <body style="word-spacing:normal;background-color:#111217;">
+  <div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+    <mj-raw>
+      {{ if $numberOfFiringInstance }}
+    </mj-raw>
+    <strong>{{ $numberOfFiringInstance }} firing</strong> alert {{ $numberOfFiringInstance| plural "instance" "instances" }}
+    <mj-raw>
+      {{ end }}
+    </mj-raw>
+    <mj-raw>
+      {{ if and $numberOfFiringInstance $numberOfResolvedAlerts }}
+    </mj-raw> &nbsp;and&nbsp; <mj-raw>
+      {{ end }}
+    </mj-raw>
+    <mj-raw>
+      {{ if $numberOfResolvedAlerts }}
+    </mj-raw>
+    <strong>{{ $numberOfResolvedAlerts }} resolved</strong> alert {{ $numberOfResolvedAlerts| plural "instance" "instances" }}
+    <mj-raw>
+      {{ end }}
+    </mj-raw>
+  </div>
   <div style="background-color:#111217;">
     <!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
     <div style="margin:0px auto;max-width:600px;">
