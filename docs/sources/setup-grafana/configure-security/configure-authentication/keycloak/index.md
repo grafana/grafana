@@ -29,10 +29,10 @@ name = Keycloak-OAuth
 allow_sign_up = true
 client_id = YOUR_APP_CLIENT_ID
 client_secret = YOUR_APP_CLIENT_SECRET
-scopes = login email name offline_access roles
+scopes = openid email profile offline_access roles
 email_attribute_path = email
-login_attribute_path = login
-name_attribute_path = name
+login_attribute_path = username
+name_attribute_path = full_name
 auth_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/auth
 token_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/token
 api_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/userinfo
@@ -41,6 +41,9 @@ role_attribute_path = contains(roles[*], 'admin') && 'Admin' || contains(roles[*
 
 As an example, `<PROVIDER_DOMAIN>` can be `keycloak-demo.grafana.org`
 and `<REALM_NAME>` can be `grafana`.
+
+> **Note**: api_url is not required if the id_token contains all the necessary user information and can add latency to the login process.
+> It is useful as a fallback or if the user has too many group memberships.
 
 ## Keycloak configuration
 
@@ -62,15 +65,16 @@ and `<REALM_NAME>` can be `grafana`.
 As an example, `<grafana_root_url>` can be `https://play.grafana.org`.
 Non-listed configuration options can be left at their default values.
 
-2. In the client roles configuration _Assigned Default Client Scopes_ should match:
+2. In the client scopes configuration, _Assigned Default Client Scopes_ should match:
 
 ```
 email
-login
-name
 offline_access
+profile
 roles
 ```
+
+> **Warning**: these scopes do not add group claims to the id_token. Without group claims, teamsync will not work. Teamsync is covered further down in this document.
 
 3. For role mapping to work with the example configuration above,
    you need to create the following roles and assign them to users:
@@ -81,12 +85,44 @@ editor
 viewer
 ```
 
+## Teamsync
+
+Teamsync is a feature that allows you to map groups from your identity provider to Grafana teams. This is useful if you want to give your users access to specific dashboards or folders based on their group membership.
+
+To enable teamsync, you need to add a `groups` mapper to the client configuration in Keycloak.
+This will add the `groups` claim to the id_token. You can then use the `groups` claim to map groups to teams in Grafana.
+
+1. In the client configuration, head to `Mappers` and create a mapper with the following settings:
+
+- Name: `Group Mapper`
+- Mapper Type: `Group Membership`
+- Token Claim Name: `groups`
+- Full group path: `OFF`
+- Add to ID token: `ON`
+- Add to access token: `OFF`
+- Add to userinfo: `ON`
+
+2. In Grafana's configuration add the following option:
+
+```ini
+[auth.generic_oauth]
+group_attribute_path = groups
+```
+
 ## Enable Single Logout
+
+To enable Single Logout, you need to add the following option to the configuration of Grafana:
 
 ```ini
 [auth]
-signout_redirect_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/logout?redirect_uri=https%3A%2F%2<grafana_domain>ER_DOMAIN2Flogin
+signout_redirect_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/logout?redirect_uri=https%3A%2F%2<GRAFANA_DOMAIN>%2Flogin
 ```
+
+As an example, `<PROVIDER_DOMAIN>` can be `keycloak-demo.grafana.org`,
+`<REALM_NAME>` can be `grafana` and `<GRAFANA_DOMAIN>` can be `play.grafana.org`.
+
+> **Note**: Grafana does not support `id_token_hints`. From keycloak 18, it is necessary to disable `id_token_hints` enforcement in keycloak for
+> single logout to work. [Documentation reference](https://www.keycloak.org/2022/04/keycloak-1800-released#_openid_connect_logout).
 
 ## Allow assigning Grafana Admin
 
