@@ -4,16 +4,26 @@ import (
 	"time"
 )
 
+const (
+	GeneralFolderUID     = "general"
+	MaxNestedFolderDepth = 8
+)
+
 type Folder struct {
 	ID          int64
+	OrgID       int64
 	UID         string
+	ParentUID   string
 	Title       string
 	Description string
-	URL         string
+
+	// TODO: is URL relevant for folders?
+	URL string
 
 	Created time.Time
 	Updated time.Time
 
+	// TODO: are these next three relevant for folders?
 	UpdatedBy int64
 	CreatedBy int64
 	HasACL    bool
@@ -40,12 +50,12 @@ type CreateFolderCommand struct {
 }
 
 // UpdateFolderCommand captures the information required by the folder service
-// to update a folder.
+// to update a folder. Use Move to update a folder's parent folder.
 type UpdateFolderCommand struct {
-	Folder      *Folder `json:"folder"` // The extant folder
-	UID         string  `json:"uid"`
-	Title       string  `json:"title"`
-	Description string  `json:"description"`
+	Folder         *Folder `json:"folder"` // The extant folder
+	NewUID         *string `json:"uid"`
+	NewTitle       *string `json:"title"`
+	NewDescription *string `json:"description"`
 }
 
 // MoveFolderCommand captures the information required by the folder service

@@ -1,6 +1,7 @@
 package migrations
 
 import (
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -30,7 +31,7 @@ func folderv1() migrator.Table {
 			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "title", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "description", Type: migrator.DB_NVarchar, Length: 255, Nullable: true},
-			{Name: "parent_uid", Type: migrator.DB_NVarchar, Length: 40},
+			{Name: "parent_uid", Type: migrator.DB_NVarchar, Length: 40, Default: folder.GeneralFolderUID},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 		},
