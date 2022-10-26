@@ -36,26 +36,22 @@ var (
 	rawObjectVersion = 6
 )
 
-func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry) object.ObjectStoreServer {
+func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry) *dummyObjectServer {
 	objectServer := &dummyObjectServer{
 		collection:         persistentcollection.NewLocalFSPersistentCollection[*RawObjectWithHistory]("raw-object", cfg.DataPath, rawObjectVersion),
 		log:                log.New("in-memory-object-server"),
 		kinds:              kinds,
 		grpcServerProvider: grpcServerProvider,
 	}
-	objectServer.BasicService = services.NewIdleService(objectServer.start, nil)
-
-	// TODO: remove this
-	err := objectServer.StartAsync(context.Background())
-	if err != nil {
-		objectServer.log.Error("Failed to start object server", "error", err)
-	}
+	objectServer.BasicService = services.NewIdleService(nil, nil)
+	object.RegisterObjectStoreServer(grpcServerProvider.GetServer(), objectServer)
 
 	return objectServer
 }
 
 type dummyObjectServer struct {
 	*services.BasicService
+	object.ObjectStoreServer
 	log                log.Logger
 	collection         persistentcollection.PersistentCollection[*RawObjectWithHistory]
 	kinds              kind.KindRegistry
@@ -68,7 +64,6 @@ func namespaceFromUID(uid string) string {
 }
 
 func (i *dummyObjectServer) start(ctx context.Context) error {
-	object.RegisterObjectStoreServer(i.grpcServerProvider.GetServer(), i)
 	return nil
 }
 

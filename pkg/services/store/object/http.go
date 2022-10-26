@@ -21,12 +21,12 @@ type HTTPObjectStore interface {
 }
 
 type httpObjectStore struct {
-	store ObjectStoreServer
+	store ObjectStoreClient
 	log   log.Logger
 	kinds kind.KindRegistry
 }
 
-func ProvideHTTPObjectStore(store ObjectStoreServer, kinds kind.KindRegistry) HTTPObjectStore {
+func ProvideHTTPObjectStore(store ObjectStoreClient, kinds kind.KindRegistry) HTTPObjectStore {
 	return &httpObjectStore{
 		store: store,
 		log:   log.New("http-object-store"),

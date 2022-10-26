@@ -41,6 +41,7 @@ import (
 	managerStore "github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/server/modules"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -128,7 +129,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/object"
-	objectdummyserver "github.com/grafana/grafana/pkg/services/store/object/dummy"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/tag"
@@ -172,6 +172,7 @@ var wireBasicSet = wire.NewSet(
 	alerting.ProvideAlertStore,
 	alerting.ProvideAlertEngine,
 	wire.Bind(new(alerting.UsageStatsQuerier), new(*alerting.AlertEngine)),
+	modules.ProvideService,
 	setting.NewCfgFromArgs,
 	New,
 	api.ProvideHTTPServer,
@@ -355,16 +356,14 @@ var wireBasicSet = wire.NewSet(
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
 	grpccontext.ProvideContextHandler,
-	grpcserver.ProvideService,
-	grpcserver.ProvideHealthService,
-	grpcserver.ProvideReflectionService,
 	jwtgrpc.ProvidePluginAuthServer,
-	interceptors.ProvideAuthenticator,
 	kind.ProvideService, // The registry known kinds
-	objectdummyserver.ProvideDummyObjectServer,
 	resolver.ProvideObjectReferenceResolver,
+	grpcserver.ProvideService,
+	interceptors.ProvideAuthenticator,
 	object.ProvideHTTPObjectStore,
 	object.ProvideObjectStoreClient,
+	wire.Bind(new(object.ObjectStoreClient), new(*object.Client)),
 	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,
 	loginattemptimpl.ProvideService,
@@ -399,7 +398,6 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
-
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),

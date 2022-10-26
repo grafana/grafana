@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
+	"github.com/grafana/grafana/pkg/server/modules"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 
@@ -44,9 +45,10 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
 	userService user.Service, loginAttemptService loginattempt.Service,
+	moduleService *modules.Modules,
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
-	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, userService, loginAttemptService)
+	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, userService, loginAttemptService, moduleService)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +61,8 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 }
 
 func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
-	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry, userService user.Service, loginAttemptService loginattempt.Service,
+	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
+	userService user.Service, loginAttemptService loginattempt.Service, moduleService *modules.Modules,
 ) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
@@ -81,6 +84,7 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleR
 		backgroundServices:  backgroundServiceProvider.GetServices(),
 		userService:         userService,
 		loginAttemptService: loginAttemptService,
+		moduleService:       moduleService,
 	}
 
 	return s, nil
@@ -109,6 +113,7 @@ type Server struct {
 	provisioningService provisioning.ProvisioningService
 	userService         user.Service
 	loginAttemptService loginattempt.Service
+	moduleService       *modules.Modules
 }
 
 // init initializes the server and its services.
@@ -132,6 +137,7 @@ func (s *Server) init() error {
 	if err := s.roleRegistry.RegisterFixedRoles(s.context); err != nil {
 		return err
 	}
+	s.moduleService.Init()
 
 	return s.provisioningService.RunInitProvisioners(s.context)
 }
@@ -142,6 +148,10 @@ func (s *Server) Run() error {
 	defer close(s.shutdownFinished)
 
 	if err := s.init(); err != nil {
+		return err
+	}
+
+	if err := s.moduleService.Run(); err != nil {
 		return err
 	}
 

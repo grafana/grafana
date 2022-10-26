@@ -29,10 +29,10 @@ type objectStoreJob struct {
 
 	sess            *session.SessionDB
 	playlistService playlist.Service
-	store           object.ObjectStoreServer
+	store           object.ObjectStoreClient
 }
 
-func startObjectStoreJob(cfg ExportConfig, broadcaster statusBroadcaster, db db.DB, playlistService playlist.Service, store object.ObjectStoreServer) (Job, error) {
+func startObjectStoreJob(cfg ExportConfig, broadcaster statusBroadcaster, db db.DB, playlistService playlist.Service, store object.ObjectStoreClient) (Job, error) {
 	job := &objectStoreJob{
 		logger:      log.New("export_to_object_store_job"),
 		cfg:         cfg,

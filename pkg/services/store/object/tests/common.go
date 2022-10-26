@@ -12,8 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 func createServiceAccountAdminToken(t *testing.T, env *server.TestEnv) (string, *user.SignedInUser) {
@@ -64,17 +62,17 @@ func createTestContext(t *testing.T) testContext {
 
 	authToken, serviceAccountUser := createServiceAccountAdminToken(t, env)
 
-	conn, err := grpc.Dial(
-		env.GRPCServer.GetAddress(),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	require.NoError(t, err)
+	//conn, err := grpc.Dial(
+	//	env.GRPCServer.GetAddress(),
+	//	grpc.WithTransportCredentials(insecure.NewCredentials()),
+	//)
+	//require.NoError(t, err)
 
-	client := object.NewObjectStoreClient(conn)
+	//client := object.NewObjectStoreClient(conn)
 
 	return testContext{
 		authToken: authToken,
-		client:    client,
+		client:    nil,
 		user:      serviceAccountUser,
 	}
 }

@@ -192,6 +192,7 @@ func AddChangePasswordLink() bool {
 
 // TODO move all global vars to this struct
 type Cfg struct {
+	Target []string
 	Raw    *ini.File
 	Logger log.Logger
 
@@ -593,6 +594,16 @@ func applyEnvVariableOverrides(file *ini.File) error {
 	}
 
 	return nil
+}
+
+func (cfg *Cfg) ModuleEnabled(search string) bool {
+	for _, v := range cfg.Target {
+		if search == v {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
