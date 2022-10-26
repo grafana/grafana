@@ -654,17 +654,26 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 		dialect: store.GetDialect(),
 		cfg:     setting.NewCfg(),
 	}
-	_, err := store.CreateUser(context.Background(), user.CreateUserCommand{
+
+	id, err := orgUserStore.Insert(context.Background(),
+		&org.Org{
+			ID:      1,
+			Created: constNow,
+			Updated: constNow,
+		})
+	require.NoError(t, err)
+
+	_, err = store.CreateUser(context.Background(), user.CreateUserCommand{
 		Login: "Admin",
 		Email: "admin@localhost",
-		OrgID: 1,
+		OrgID: id,
 	})
 	require.NoError(t, err)
 
 	newUser, err := store.CreateUser(context.Background(), user.CreateUserCommand{
 		Login:      "Viewer",
 		Email:      "viewer@localhost",
-		OrgID:      1,
+		OrgID:      id,
 		IsDisabled: true,
 		Name:       "Viewer Localhost",
 	})
@@ -672,16 +681,17 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 
 	err = orgUserStore.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
 		Role:   "Viewer",
-		OrgID:  1,
+		OrgID:  id,
 		UserID: newUser.ID,
 	})
+	fmt.Println("ORGA ID ", id)
 	require.NoError(t, err)
 
 	query := &org.GetOrgUsersQuery{
-		OrgID:  1,
+		OrgID:  id,
 		UserID: newUser.ID,
 		User: &user.SignedInUser{
-			OrgID:       1,
+			OrgID:       id,
 			Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 		},
 	}
