@@ -30,7 +30,7 @@ describe('explainOperator', () => {
     }
   }
 
-  test('Resolvs operation definitions', () => {
+  test('Resolves operation definitions', () => {
     expect(definitions.length).toBeGreaterThan(0);
   });
 
