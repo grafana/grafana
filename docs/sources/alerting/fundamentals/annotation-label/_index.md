@@ -25,9 +25,3 @@ Annotations are key-value pairs that provide additional meta-information about a
 ## Labels
 
 Labels are key-value pairs that contain information about, and are used to uniquely identify an alert. The label set for an alert is generated and added to throughout the alerting evaluation and notification process.
-
-Before you begin using annotations and labels, familiarize yourself with:
-
-- [Labels in Grafana Alerting]({{< relref "how-to-use-labels/" >}})
-- [How label matching works]({{< relref "how-to-use-labels/" >}})
-- [How to template annotations and labels]({{< relref "variables-label-annotation/" >}})
