@@ -885,6 +885,11 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 			rows := make([]*dashboardQueryResult, len(slices))
 			var parsingErr error
 			for i := range slices {
+				if len(slices[i]) < 8 {
+					parsingErr = fmt.Errorf("expected the dashboard row at index %d to contain 8 elements, has %d. lastID: %d", i, len(slices[i]), lastID)
+					break
+				}
+
 				id, err := strconv.ParseInt(slices[i][0], 10, 64)
 				if err != nil {
 					parsingErr = err
@@ -1005,7 +1010,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	for {
 		res, ok := <-dashboardsChannel
 		if res != nil && res.err != nil {
-			l.logger.Error("Error when loading dashboards", "error", err, "orgID", orgID, "dashboardUID", dashboardUID)
+			l.logger.Error("Error when loading dashboards", "error", res.err, "orgID", orgID, "dashboardUID", dashboardUID)
 			break
 		}
 
