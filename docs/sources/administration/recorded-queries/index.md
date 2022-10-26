@@ -1,7 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/enterprise/recorded-queries/
-  - docs/grafana/latest/administration/recorded-queries/
+  - /docs/grafana/latest/administration/recorded-queries/
 description: Grafana Enterprise recorded queries
 keywords:
   - grafana
