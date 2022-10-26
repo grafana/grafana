@@ -297,7 +297,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onColorChange = (series: any, color: string) => {
-    series.setColor(config.theme.visualization.getColorByName(color));
+    series.setColor(config.theme2.visualization.getColorByName(color));
     this.panel.aliasColors[series.alias] = color;
     this.render();
   };

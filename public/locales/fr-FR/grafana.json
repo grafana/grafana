@@ -1,12 +1,8 @@
 {
-  "_comment": "",
+  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
   "common": {
     "locale": {
-      "default": "Par défaut",
-      "en-US": "Anglais",
-      "es-ES": "Espagnol",
-      "fr-FR": "Français",
-      "zh-Hans": "Chinois (simplifié)"
+      "default": "Par défaut"
     },
     "save": "Enregistrer"
   },
@@ -19,8 +15,8 @@
       "meta-tab": "Métadonnées",
       "query-tab": "Requête",
       "stats-tab": "Statistiques",
-      "subtitle": "{{queryCount}} requêtes avec un délai total de requête de {{formatted}}",
-      "title": "Inspecter : {{panelTitle}}"
+      "subtitle": "{{queryCount}} requêtes avec un délai total de requête de {{formatted}}",
+      "title": "Inspecter : {{panelTitle}}"
     },
     "inspect-data": {
       "data-options": "Options de données",
@@ -50,7 +46,7 @@
       "panel-json-description": "Le modèle enregistré dans le tableau de bord JSON qui configure comment tout fonctionne.",
       "panel-json-label": "Panneau JSON",
       "select-source": "Sélectionner la source",
-      "unknown": "Objet inconnu : {{show}}"
+      "unknown": "Objet inconnu : {{show}}"
     },
     "inspect-meta": {
       "no-inspector": "Pas d'inspecteur de métadonnées"
@@ -100,7 +96,7 @@
   },
   "library-panels": {
     "save": {
-      "error": "Erreur lors de l'enregistrement du panneau de bibliothèque : \"{{errorMsg}}\"",
+      "error": "Erreur lors de l'enregistrement du panneau de bibliothèque : \"{{errorMsg}}\"",
       "success": "Panneau de bibliothèque enregistré"
     }
   },
@@ -364,14 +360,14 @@
       "delete-button": "Supprimer l'instantané.",
       "deleted-message": "L'instantané a été supprimé. Si vous y avez déjà accédé une fois, cela peut prendre jusqu'à une heure avant qu'il ne soit supprimé des caches du navigateur ou des caches CDN.",
       "expire": "Expiration",
-      "expire-day": "1 jour",
-      "expire-hour": "1 heure",
+      "expire-day": "1 jour",
+      "expire-hour": "1 heure",
       "expire-never": "Jamais",
-      "expire-week": "7 jours",
+      "expire-week": "7 jours",
       "info-text-1": "Un instantané est un moyen instantané de partager publiquement un tableau de bord interactif. Lors de la création, nous supprimons les données sensibles telles que les requêtes (métrique, modèle et annotation) et les liens du panneau, pour ne laisser que les métriques visibles et les noms de séries intégrés dans votre tableau de bord.",
       "info-text-2": "N'oubliez pas que votre instantané <1>peut être consulté par une personne</1> qui dispose du lien et qui peut accéder à l'URL. Partagez judicieusement.",
       "local-button": "Instantané local",
-      "mistake-message": "Avez-vous commis une erreur ? ",
+      "mistake-message": "Avez-vous commis une erreur ? ",
       "name": "Nom de l'instantané",
       "timeout": "Délai d’expiration (secondes)",
       "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps."

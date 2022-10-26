@@ -14,32 +14,34 @@ import (
 
 //go:generate mockery --name Service --structname FakePublicDashboardService --inpackage --filename public_dashboard_service_mock.go
 type Service interface {
-	AccessTokenExists(ctx context.Context, accessToken string) (bool, error)
-	BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) *user.SignedInUser
-	GetAnnotations(ctx context.Context, reqDTO AnnotationsQueryDTO, accessToken string) ([]AnnotationEvent, error)
-	GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error)
+	FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error)
+	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
+	FindAnnotations(ctx context.Context, reqDTO AnnotationsQueryDTO, accessToken string) ([]AnnotationEvent, error)
+	FindDashboard(ctx context.Context, dashboardUid string, orgId int64) (*models.Dashboard, error)
+	FindAll(ctx context.Context, u *user.SignedInUser, orgId int64) ([]PublicDashboardListResponse, error)
+	Save(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error)
+
 	GetMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO PublicDashboardQueryDTO) (dtos.MetricRequest, error)
-	GetPublicDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error)
-	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
-	GetPublicDashboardOrgId(ctx context.Context, accessToken string) (int64, error)
 	GetQueryDataResponse(ctx context.Context, skipCache bool, reqDTO PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error)
-	ListPublicDashboards(ctx context.Context, u *user.SignedInUser, orgId int64) ([]PublicDashboardListResponse, error)
-	PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error)
-	SavePublicDashboardConfig(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error)
+	GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error)
+	NewPublicDashboardAccessToken(ctx context.Context) (string, error)
+	NewPublicDashboardUid(ctx context.Context) (string, error)
+
+	ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error)
+	ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error)
 }
 
 //go:generate mockery --name Store --structname FakePublicDashboardStore --inpackage --filename public_dashboard_store_mock.go
 type Store interface {
-	AccessTokenExists(ctx context.Context, accessToken string) (bool, error)
-	GenerateNewPublicDashboardUid(ctx context.Context) (string, error)
-	GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error)
-	GenerateNewPublicDashboardAccessToken(ctx context.Context) (string, error)
-	GetPublicDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error)
-	GetPublicDashboardByUid(ctx context.Context, uid string) (*PublicDashboard, error)
-	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
-	GetPublicDashboardOrgId(ctx context.Context, accessToken string) (int64, error)
-	ListPublicDashboards(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error)
-	PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error)
-	SavePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error
-	UpdatePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error
+	Find(ctx context.Context, uid string) (*PublicDashboard, error)
+	FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error)
+	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
+	FindDashboard(ctx context.Context, dashboardUid string, orgId int64) (*models.Dashboard, error)
+	FindAll(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error)
+	Save(ctx context.Context, cmd SavePublicDashboardConfigCommand) error
+	Update(ctx context.Context, cmd SavePublicDashboardConfigCommand) error
+
+	GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error)
+	ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error)
+	ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error)
 }

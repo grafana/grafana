@@ -494,8 +494,6 @@ steps:
 - commands:
   - apt-get update
   - apt-get install -yq zip
-  - ls -lah ./e2e
-  - find ./e2e -type f -name "*.mp4"
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
   - find ./e2e -type f -name "*spec.ts.mp4" | zip e2e/videos.zip -@
@@ -517,7 +515,8 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0
+  failure: ignore
+  image: google/cloud-sdk:406.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -1285,8 +1284,6 @@ steps:
 - commands:
   - apt-get update
   - apt-get install -yq zip
-  - ls -lah ./e2e
-  - find ./e2e -type f -name "*.mp4"
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
   - find ./e2e -type f -name "*spec.ts.mp4" | zip e2e/videos.zip -@
@@ -1308,7 +1305,8 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0
+  failure: ignore
+  image: google/cloud-sdk:406.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -2070,8 +2068,6 @@ steps:
 - commands:
   - apt-get update
   - apt-get install -yq zip
-  - ls -lah ./e2e
-  - find ./e2e -type f -name "*.mp4"
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
   - find ./e2e -type f -name "*spec.ts.mp4" | zip e2e/videos.zip -@
@@ -2093,7 +2089,8 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0
+  failure: ignore
+  image: google/cloud-sdk:406.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -2711,8 +2708,6 @@ steps:
 - commands:
   - apt-get update
   - apt-get install -yq zip
-  - ls -lah ./e2e
-  - find ./e2e -type f -name "*.mp4"
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
   - find ./e2e -type f -name "*spec.ts.mp4" | zip e2e/videos.zip -@
@@ -2734,7 +2729,8 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0
+  failure: ignore
+  image: google/cloud-sdk:406.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -4183,8 +4179,6 @@ steps:
 - commands:
   - apt-get update
   - apt-get install -yq zip
-  - ls -lah ./e2e
-  - find ./e2e -type f -name "*.mp4"
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
   - find ./e2e -type f -name "*spec.ts.mp4" | zip e2e/videos.zip -@
@@ -4206,7 +4200,8 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0
+  failure: ignore
+  image: google/cloud-sdk:406.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -4781,8 +4776,6 @@ steps:
 - commands:
   - apt-get update
   - apt-get install -yq zip
-  - ls -lah ./e2e
-  - find ./e2e -type f -name "*.mp4"
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
   - find ./e2e -type f -name "*spec.ts.mp4" | zip e2e/videos.zip -@
@@ -4804,7 +4797,8 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0
+  failure: ignore
+  image: google/cloud-sdk:406.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -5618,6 +5612,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 015389b7bbd46fbb8042817bd41a320c71744023710a1bdfb815b9cb28ddd7e3
+hmac: d3b06a42ab277a3f065d4fd6e0367cb67aac08c60d4bb20438d1ba5f64d369cc
 
 ...
