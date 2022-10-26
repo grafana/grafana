@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Tooltip, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { Annotation, annotationLabels } from '../utils/constants';
 
@@ -34,7 +34,7 @@ export const AnnotationDetailsField: FC<Props> = ({ annotationKey, value }) => {
 };
 
 const AnnotationValue: FC<Props> = ({ annotationKey, value }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const needsWell = wellableAnnotationKeys.includes(annotationKey);
   const needsLink = value && value.startsWith('http');
@@ -56,12 +56,12 @@ const AnnotationValue: FC<Props> = ({ annotationKey, value }) => {
   return <>{tokenizeValue}</>;
 };
 
-export const getStyles = (theme: GrafanaTheme) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   well: css`
     word-break: break-word;
   `,
   link: css`
     word-break: break-all;
-    color: ${theme.colors.textBlue};
+    color: ${theme.colors.primary.text};
   `,
 });
