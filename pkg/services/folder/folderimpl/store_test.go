@@ -186,7 +186,7 @@ func TestDelete(t *testing.T) {
 
 	t.Run("deleting folder should delete each children", func(t *testing.T) {
 		ancestorUIDs := []string{accesscontrol.GeneralFolderUID}
-		for i := 0; i < folder.MAXIMUM_DEPTH; i++ {
+		for i := 0; i < folder.MaxNestedFolderDepth; i++ {
 			parentUID := ancestorUIDs[len(ancestorUIDs)-1]
 			title := fmt.Sprintf("folder-%d", i)
 			f, err := store.Create(context.Background(), &folder.CreateFolderCommand{
