@@ -405,6 +405,18 @@
         "skipUrlSync": false,
         "sort": 0,
         "type": "query"
+      },
+      {
+        "datasource": {
+          "type": "loki",
+          "uid": "PDDA8E780A17E7EF1"
+        },
+        "filters": [],
+        "hide": 0,
+        "label": "Ad-hoc",
+        "name": "adhoc",
+        "skipUrlSync": false,
+        "type": "adhoc"
       }
     ]
   },
