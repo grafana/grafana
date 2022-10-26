@@ -227,8 +227,11 @@ This decreases load times for templated high-cardinality Prometheus instances.
 
 If you want to benefit from this endpoint you must first configure the Prometheus type and version in any Prometheus data sources' [configuration]({{< relref "../datasources/prometheus/" >}}).
 
-## Prometheus Streaming Parser
+## New Prometheus streaming parser
 
-In Grafana 9.2, the `prometheusStreamingJSONParser` [feature flag](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#feature_toggles) is available and provides a more performant client that uses less memory. This client will become the default client in Grafana 9.3.
+In Grafana v9.2, you can enable the `prometheusStreamingJSONParser` [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) to use a better-performing, memory-efficient streaming JSON client for Prometheus.
+We'll make this client the default in Grafana v9.3.
 
-With the new client, `NaN` values returned from prometheus will not be changed to the value `null` (or `0` in recent Grafana versions.) If you are using prometheus with Grafana Managed Alerts, there may be instances where alerts are triggered on NaN values. To avoid this, the "Drop non-numeric values" option can be chosen in the Reduce expression.
+When Prometheus returns `NaN` values, this new client doesn't change them, neither to the value `null` nor to `0` as in recent Grafana versions.
+If you use this new Prometheus streaming parser with Grafana Managed Alerts, this change in behavior might trigger alerts.
+To avoid this, select the "Drop non-numeric values" option in the Reduce expression to drop `NaN` values.
