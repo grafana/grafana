@@ -1,4 +1,4 @@
-package foldertest
+package folderimpl
 
 import (
 	"context"
@@ -12,7 +12,7 @@ type FakeStore struct {
 	ExpectedError   error
 }
 
-var _ folder.Store = (*FakeStore)(nil)
+var _ store = (*FakeStore)(nil)
 
 func (f *FakeStore) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	return f.ExpectedFolder, f.ExpectedError
@@ -30,14 +30,14 @@ func (f *FakeStore) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*f
 	return f.ExpectedFolder, f.ExpectedError
 }
 
-func (f *FakeStore) Get(ctx context.Context, cmd *folder.GetFolderCommand) (*folder.Folder, error) {
+func (f *FakeStore) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
 	return f.ExpectedFolder, f.ExpectedError
 }
 
-func (f *FakeStore) GetParents(ctx context.Context, cmd *folder.GetParentsCommand) ([]*folder.Folder, error) {
+func (f *FakeStore) GetParents(ctx context.Context, cmd *folder.GetParentsQuery) ([]*folder.Folder, error) {
 	return f.ExpectedFolders, f.ExpectedError
 }
 
-func (f *FakeStore) GetChildren(ctx context.Context, cmd *folder.GetTreeCommand) ([]*folder.Folder, error) {
+func (f *FakeStore) GetChildren(ctx context.Context, cmd *folder.GetTreeQuery) ([]*folder.Folder, error) {
 	return f.ExpectedFolders, f.ExpectedError
 }
