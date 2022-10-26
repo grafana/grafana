@@ -98,3 +98,23 @@ func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest
 
 	return callResponse, err
 }
+
+func (r *Resource) DetectVersion(ctx context.Context, req *backend.CallResourceRequest) (*backend.CallResourceResponse, error) {
+	newReq := &backend.CallResourceRequest{
+		PluginContext: req.PluginContext,
+		Path:          "/api/v1/status/buildinfo",
+	}
+
+	resp, err := r.Execute(ctx, newReq)
+
+	if err != nil {
+		return nil, err
+	}
+
+	callResponse := &backend.CallResourceResponse{
+		Status: 200,
+		Body:   resp.Body,
+	}
+
+	return callResponse, nil
+}
