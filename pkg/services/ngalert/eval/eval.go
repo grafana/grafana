@@ -22,6 +22,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+var logger = log.New("ngalert.eval")
+
 //go:generate mockery --name Evaluator --structname FakeEvaluator --inpackage --filename evaluator_mock.go --with-expecter
 type Evaluator interface {
 	// ConditionEval executes conditions and evaluates the result.
@@ -34,19 +36,16 @@ type Evaluator interface {
 
 type evaluatorImpl struct {
 	cfg               *setting.Cfg
-	log               log.Logger
 	dataSourceCache   datasources.CacheService
 	expressionService *expr.Service
 }
 
 func NewEvaluator(
 	cfg *setting.Cfg,
-	log log.Logger,
 	datasourceCache datasources.CacheService,
 	expressionService *expr.Service) Evaluator {
 	return &evaluatorImpl{
 		cfg:               cfg,
-		log:               log,
 		dataSourceCache:   datasourceCache,
 		expressionService: expressionService,
 	}
@@ -313,10 +312,10 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 	return result
 }
 
-func executeQueriesAndExpressions(ctx EvaluationContext, data []models.AlertQuery, exprService *expr.Service, dsCacheService datasources.CacheService, log log.Logger) (resp *backend.QueryDataResponse, err error) {
+func executeQueriesAndExpressions(ctx EvaluationContext, data []models.AlertQuery, exprService *expr.Service, dsCacheService datasources.CacheService) (resp *backend.QueryDataResponse, err error) {
 	defer func() {
 		if e := recover(); e != nil {
-			log.Error("alert rule panic", "error", e, "stack", string(debug.Stack()))
+			logger.FromContext(ctx.Ctx).Error("alert rule panic", "error", e, "stack", string(debug.Stack()))
 			panicErr := fmt.Errorf("alert rule panic; please check the logs for the full stack")
 			if err != nil {
 				err = fmt.Errorf("queries and expressions execution failed: %w; %v", err, panicErr.Error())
@@ -578,7 +577,7 @@ func (e *evaluatorImpl) QueriesAndExpressionsEval(ctx EvaluationContext, data []
 	timeoutCtx, cancelFn := ctx.WithTimeout(e.cfg.UnifiedAlerting.EvaluationTimeout)
 	defer cancelFn()
 
-	execResult, err := executeQueriesAndExpressions(timeoutCtx, data, e.expressionService, e.dataSourceCache, e.log)
+	execResult, err := executeQueriesAndExpressions(timeoutCtx, data, e.expressionService, e.dataSourceCache)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}
