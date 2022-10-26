@@ -123,7 +123,7 @@ If the time zone is set differently between your Grafana server and its remote i
 
 ### CSV export
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) 8+ with the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud Pro and Advanced]({{< ref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) 8+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
 You can attach a CSV file to the report email for each table panel on the selected dashboard, along with the PDF report. By default, CSVs larger than 10Mb are not sent which keeps email servers from rejecting the email. You can increase or decrease this limit in the [reporting configuration]({{< relref "#rendering-configuration" >}}).
 
