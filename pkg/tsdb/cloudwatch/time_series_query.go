@@ -31,13 +31,21 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 		return nil, fmt.Errorf("invalid time range: start time must be before end time")
 	}
 
-	requestQueriesByRegion, err := models.ParseQueries(req.Queries, startTime, endTime, e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels))
+	requestQueries, err := models.ParseMetricDataQueries(req.Queries, startTime, endTime, e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels))
 	if err != nil {
 		return nil, err
 	}
 
-	if len(requestQueriesByRegion) == 0 {
+	if len(requestQueries) == 0 {
 		return backend.NewQueryDataResponse(), nil
+	}
+
+	requestQueriesByRegion := make(map[string][]*models.CloudWatchQuery)
+	for _, query := range requestQueries {
+		if _, exist := requestQueriesByRegion[query.Region]; !exist {
+			requestQueriesByRegion[query.Region] = []*models.CloudWatchQuery{}
+		}
+		requestQueriesByRegion[query.Region] = append(requestQueriesByRegion[query.Region], query)
 	}
 
 	resultChan := make(chan *responseWrapper, len(req.Queries))

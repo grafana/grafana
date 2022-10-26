@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -420,6 +421,14 @@ func (r *ConflictResolver) BuildConflictBlocks(users ConflictingUsers, f Formatt
 	for _, user := range users {
 		// conflict blocks is how we identify a conflict in the user base.
 		var conflictBlock string
+		// sqlite   generates string : ""/true
+		// postgres generates string : false/true
+		if user.ConflictEmail == "false" {
+			user.ConflictEmail = ""
+		}
+		if user.ConflictLogin == "false" {
+			user.ConflictLogin = ""
+		}
 		if user.ConflictEmail != "" {
 			conflictBlock = f("conflict: %s", strings.ToLower(user.Email))
 		} else if user.ConflictLogin != "" {
@@ -609,7 +618,12 @@ func (c *ConflictingUser) Marshal(filerow string) error {
 func GetUsersWithConflictingEmailsOrLogins(ctx *cli.Context, s *sqlstore.SQLStore) (ConflictingUsers, error) {
 	queryUsers := make([]ConflictingUser, 0)
 	outerErr := s.WithDbSession(ctx.Context, func(dbSession *db.Session) error {
-		rawSQL := conflictingUserEntriesSQL(s)
+		var rawSQL string
+		if s.GetDialect().DriverName() == migrator.Postgres {
+			rawSQL = conflictUserEntriesSQLPostgres()
+		} else if s.GetDialect().DriverName() == migrator.SQLite {
+			rawSQL = conflictingUserEntriesSQL(s)
+		}
 		err := dbSession.SQL(rawSQL).Find(&queryUsers)
 		return err
 	})
@@ -648,6 +662,36 @@ func conflictingUserEntriesSQL(s *sqlstore.SQLStore) string {
 		OR conflict_login IS NOT NULL)
 		AND (u1.` + notServiceAccount(s) + `)
 	ORDER BY conflict_email, conflict_login, u1.id`
+	return sqlQuery
+}
+
+func conflictUserEntriesSQLPostgres() string {
+	sqlQuery := `
+SELECT DISTINCT
+	u1.id,
+	u1.email,
+	u1.login,
+	u1.last_seen_at,
+	ua.auth_module,
+	((LOWER(u1.email) = LOWER(u2.email))
+		AND(u1.email != u2.email)) AS conflict_email,
+	((LOWER(u1.login) = LOWER(u2.login))
+		AND(u1.login != u2.login)) AS conflict_login
+FROM
+	"user" AS u1,
+	"user" AS u2
+	LEFT JOIN user_auth AS ua ON ua.user_id = u2.id
+WHERE ((LOWER(u1.email) = LOWER(u2.email))
+	AND(u1.email != u2.email)) IS TRUE
+	OR((LOWER(u1.login) = LOWER(u2.login))
+	AND(u1.login != u2.login)) IS TRUE
+	AND(u1.is_service_account = FALSE)
+ORDER BY
+	conflict_email,
+	conflict_login,
+	u1.id;
+;
+	`
 	return sqlQuery
 }
 
