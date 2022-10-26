@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
@@ -34,10 +32,7 @@ func ProvideService(
 	cfg *setting.Cfg,
 	teamService team.Service,
 	cacheService *localcache.CacheService,
-	bus bus.Bus,
-	// add quota.Service as dependency to make sure that
-	// the listener has been added before publishing the reporter
-	_ quota.Service,
+	quotaService quota.Service,
 ) (user.Service, error) {
 	store := ProvideStore(db, cfg)
 	s := &Service{
@@ -53,7 +48,7 @@ func ProvideService(
 		return s, err
 	}
 
-	if err := bus.Publish(context.TODO(), &events.NewQuotaReporter{
+	if err := quotaService.AddReporter(context.TODO(), &quota.NewQuotaReporter{
 		TargetSrv:     quota.TargetSrv(user.QuotaTargetSrv),
 		DefaultLimits: defaultLimits,
 		Reporter:      s.Usage,

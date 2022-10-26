@@ -2,8 +2,6 @@ package events
 
 import (
 	"time"
-
-	"github.com/grafana/grafana/pkg/services/quota"
 )
 
 // Events can be passed to external systems via for example AMQP
@@ -79,10 +77,4 @@ type FolderTitleUpdated struct {
 	ID        int64     `json:"id"`
 	UID       string    `json:"uid"`
 	OrgID     int64     `json:"org_id"`
-}
-
-type NewQuotaReporter struct {
-	TargetSrv     quota.TargetSrv
-	DefaultLimits *quota.Map
-	Reporter      quota.UsageReporterFunc
 }

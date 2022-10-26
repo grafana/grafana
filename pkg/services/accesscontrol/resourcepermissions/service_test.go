@@ -8,9 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
@@ -228,8 +226,7 @@ func setupTestEnvironment(t *testing.T, permissions []accesscontrol.Permission, 
 	sql := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	teamSvc := teamimpl.ProvideService(sql, cfg)
-	b := bus.ProvideBus(tracing.InitializeTracerForTest())
-	userSvc, err := userimpl.ProvideService(sql, nil, cfg, teamimpl.ProvideService(sql, cfg), nil, b, quotatest.NewQuotaServiceFake(false, nil))
+	userSvc, err := userimpl.ProvideService(sql, nil, cfg, teamimpl.ProvideService(sql, cfg), nil, quotatest.NewQuotaServiceFake(false, nil))
 	require.NoError(t, err)
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()

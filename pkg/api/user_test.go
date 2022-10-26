@@ -13,10 +13,8 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -71,8 +69,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		}
 		user, err := sqlStore.CreateUser(context.Background(), createUserCmd)
 		require.Nil(t, err)
-		b := bus.ProvideBus(tracing.InitializeTracerForTest())
-		hs.userService, err = userimpl.ProvideService(sqlStore, nil, sc.cfg, nil, nil, b, quotatest.NewQuotaServiceFake(false, nil))
+		hs.userService, err = userimpl.ProvideService(sqlStore, nil, sc.cfg, nil, nil, quotatest.NewQuotaServiceFake(false, nil))
 		require.NoError(t, err)
 
 		sc.handlerFunc = hs.GetUserByID

@@ -3,8 +3,6 @@ package apikeyimpl
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -16,7 +14,7 @@ type Service struct {
 	store store
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, bus bus.Bus, _ quota.Service) (apikey.Service, error) {
+func ProvideService(db db.DB, cfg *setting.Cfg, quotaService quota.Service) (apikey.Service, error) {
 	s := &Service{}
 	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
 		s.store = &sqlxStore{
@@ -31,7 +29,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg, bus bus.Bus, _ quota.Service) (a
 		return s, err
 	}
 
-	if err := bus.Publish(context.TODO(), &events.NewQuotaReporter{
+	if err := quotaService.AddReporter(context.TODO(), &quota.NewQuotaReporter{
 		TargetSrv:     apikey.QuotaTargetSrv,
 		DefaultLimits: defaultLimits,
 		Reporter:      s.Usage,

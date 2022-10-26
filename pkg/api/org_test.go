@@ -9,8 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -107,8 +105,7 @@ func TestAPIEndpoint_PutCurrentOrg_LegacyAccessControl(t *testing.T) {
 	})
 
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
-	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
-	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, bus, quotatest.NewQuotaServiceFake(false, nil))
+	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.NewQuotaServiceFake(false, nil))
 	require.NoError(t, err)
 	t.Run("Admin can update current org", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPut, putCurrentOrgURL, input, t)
@@ -123,8 +120,7 @@ func TestAPIEndpoint_PutCurrentOrg_AccessControl(t *testing.T) {
 	_, err := sc.db.CreateOrgWithMember("TestOrg", sc.initCtx.UserID)
 	require.NoError(t, err)
 
-	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
-	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, bus, quotatest.NewQuotaServiceFake(false, nil))
+	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.NewQuotaServiceFake(false, nil))
 	require.NoError(t, err)
 
 	input := strings.NewReader(testUpdateOrgNameForm)
@@ -443,9 +439,8 @@ func TestAPIEndpoint_PutOrg_LegacyAccessControl(t *testing.T) {
 	cfg.RBACEnabled = false
 	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
-	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
 	var err error
-	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, bus, quotatest.NewQuotaServiceFake(false, nil))
+	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.NewQuotaServiceFake(false, nil))
 	require.NoError(t, err)
 	// Create two orgs, to update another one than the logged in one
 	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)
@@ -466,9 +461,8 @@ func TestAPIEndpoint_PutOrg_LegacyAccessControl(t *testing.T) {
 
 func TestAPIEndpoint_PutOrg_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true)
-	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	var err error
-	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, b, quotatest.NewQuotaServiceFake(false, nil))
+	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.NewQuotaServiceFake(false, nil))
 	require.NoError(t, err)
 	// Create two orgs, to update another one than the logged in one
 	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)

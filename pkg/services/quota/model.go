@@ -210,3 +210,9 @@ type UpdateQuotaCmd struct {
 	OrgId  int64  `json:"-"`
 	UserId int64  `json:"-"`
 }
+
+type NewQuotaReporter struct {
+	TargetSrv     TargetSrv
+	DefaultLimits *Map
+	Reporter      UsageReporterFunc
+}

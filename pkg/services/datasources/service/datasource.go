@@ -13,9 +13,7 @@ import (
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -55,10 +53,7 @@ type cachedRoundTripper struct {
 func ProvideService(
 	db db.DB, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
-	bus bus.Bus,
-	// add quota.Service as dependency to make sure that
-	// the listener has been added before publishing the reporter
-	_ quota.Service,
+	quotaService quota.Service,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
 	store := &SqlStore{db: db, logger: dslogger}
@@ -85,7 +80,7 @@ func ProvideService(
 		return nil, err
 	}
 
-	if err := bus.Publish(context.TODO(), &events.NewQuotaReporter{
+	if err := quotaService.AddReporter(context.TODO(), &quota.NewQuotaReporter{
 		TargetSrv:     datasources.QuotaTargetSrv,
 		DefaultLimits: defaultLimits,
 		Reporter:      s.Usage,

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -48,7 +46,11 @@ func (s *ServiceDisabled) DeleteByUser(ctx context.Context, userID int64) error 
 	return quota.ErrDisabled
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, bus bus.Bus) quota.Service {
+func (s *ServiceDisabled) AddReporter(_ context.Context, e *quota.NewQuotaReporter) error {
+	return nil
+}
+
+func ProvideService(db db.DB, cfg *setting.Cfg) quota.Service {
 	s := Service{
 		store:     &sqlStore{db: db},
 		Cfg:       cfg,
@@ -61,8 +63,6 @@ func ProvideService(db db.DB, cfg *setting.Cfg, bus bus.Bus) quota.Service {
 	}
 
 	s.defaultLimits = &quota.Map{}
-
-	bus.AddEventListener(s.addReporter)
 
 	return &s
 }
@@ -211,7 +211,7 @@ func (s *Service) DeleteByUser(ctx context.Context, userID int64) error {
 	return s.store.DeleteByUser(ctx, userID)
 }
 
-func (s *Service) addReporter(_ context.Context, e *events.NewQuotaReporter) error {
+func (s *Service) AddReporter(_ context.Context, e *quota.NewQuotaReporter) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 

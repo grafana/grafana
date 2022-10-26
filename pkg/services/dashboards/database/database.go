@@ -8,8 +8,6 @@ import (
 
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -46,12 +44,7 @@ type DashboardTag struct {
 // DashboardStore implements the Store interface
 var _ dashboards.Store = (*DashboardStore)(nil)
 
-func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service,
-	bus bus.Bus,
-	// add quota.Service as dependency to make sure that
-	// the listener has been added before publishing the reporter
-	_ quota.Service,
-) (*DashboardStore, error) {
+func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service, quotaService quota.Service) (*DashboardStore, error) {
 	s := &DashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -59,7 +52,7 @@ func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgm
 		return nil, err
 	}
 
-	if err := bus.Publish(context.TODO(), &events.NewQuotaReporter{
+	if err := quotaService.AddReporter(context.TODO(), &quota.NewQuotaReporter{
 		TargetSrv:     dashboards.QuotaTargetSrv,
 		DefaultLimits: defaultLimits,
 		Reporter:      s.Count,

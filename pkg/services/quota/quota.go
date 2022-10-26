@@ -12,6 +12,8 @@ type Service interface {
 	QuotaReached(c *models.ReqContext, target string) (bool, error)
 	CheckQuotaReached(ctx context.Context, target string, scopeParams *ScopeParameters) (bool, error)
 	DeleteByUser(ctx context.Context, userID int64) error
+
+	AddReporter(ctx context.Context, e *NewQuotaReporter) error
 }
 
 type UsageReporterFunc func(ctx context.Context, scopeParams *ScopeParameters) (*Map, error)

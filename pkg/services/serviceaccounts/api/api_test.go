@@ -15,11 +15,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -47,12 +45,11 @@ var (
 
 func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	store := db.InitTestDB(t)
-	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	quotaService := quotatest.NewQuotaServiceFake(false, nil)
-	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, b, quotaService)
+	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(store)
-	orgService, err := orgimpl.ProvideService(store, setting.NewCfg(), b, quotatest.NewQuotaServiceFake(false, nil))
+	orgService, err := orgimpl.ProvideService(store, setting.NewCfg(), quotaService)
 	require.NoError(t, err)
 	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, orgService)
 	svcmock := tests.ServiceAccountMock{}
@@ -219,9 +216,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 	store := db.InitTestDB(t)
 	kvStore := kvstore.ProvideService(store)
-	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	quotaService := quotatest.NewQuotaServiceFake(false, nil)
-	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, b, quotaService)
+	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(t, err)
 	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
 	svcmock := tests.ServiceAccountMock{}
@@ -295,8 +291,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	cfg := setting.NewCfg()
 	teamSvc := teamimpl.ProvideService(sqlStore, cfg)
 
-	b := bus.ProvideBus(tracing.InitializeTracerForTest())
-	userSvc, err := userimpl.ProvideService(sqlStore, nil, cfg, teamimpl.ProvideService(sqlStore, cfg), nil, b, quotatest.NewQuotaServiceFake(false, nil))
+	userSvc, err := userimpl.ProvideService(sqlStore, nil, cfg, teamimpl.ProvideService(sqlStore, cfg), nil, quotatest.NewQuotaServiceFake(false, nil))
 	require.NoError(t, err)
 	saPermissionService, err := ossaccesscontrol.ProvideServiceAccountPermissions(
 		cfg, routing.NewRouteRegister(), sqlStore, acmock, &licensing.OSSLicensingService{}, saStore, acmock, teamSvc, userSvc)
@@ -329,9 +324,8 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 
 func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 	store := db.InitTestDB(t)
-	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	quotaService := quotatest.NewQuotaServiceFake(false, nil)
-	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, b, quotaService)
+	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(store)
 	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
@@ -424,9 +418,8 @@ func newString(s string) *string {
 
 func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 	store := db.InitTestDB(t)
-	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	quotaService := quotatest.NewQuotaServiceFake(false, nil)
-	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, b, quotaService)
+	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(store)
 	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)

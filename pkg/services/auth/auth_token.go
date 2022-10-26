@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
@@ -45,7 +43,7 @@ type UserAuthTokenService struct {
 }
 
 type ActiveTokenService interface {
-	ActiveTokenCount(ctx context.Context, _ *quota.ScopeParameters) (map[quota.Tag]int64, error)
+	ActiveTokenCount(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error)
 }
 
 type ActiveAuthTokenService struct {
@@ -53,11 +51,7 @@ type ActiveAuthTokenService struct {
 	sqlStore db.DB
 }
 
-func ProvideActiveAuthTokenService(cfg *setting.Cfg, sqlStore db.DB, bus bus.Bus,
-	// add quota.Service as dependency to make sure that
-	// the listener has been added before publishing the reporter
-	_ quota.Service,
-) (*ActiveAuthTokenService, error) {
+func ProvideActiveAuthTokenService(cfg *setting.Cfg, sqlStore db.DB, quotaService quota.Service) (*ActiveAuthTokenService, error) {
 	s := &ActiveAuthTokenService{
 		cfg:      cfg,
 		sqlStore: sqlStore,
@@ -68,7 +62,7 @@ func ProvideActiveAuthTokenService(cfg *setting.Cfg, sqlStore db.DB, bus bus.Bus
 		return s, err
 	}
 
-	if err := bus.Publish(context.TODO(), &events.NewQuotaReporter{
+	if err := quotaService.AddReporter(context.TODO(), &quota.NewQuotaReporter{
 		TargetSrv:     QuotaTargetSrv,
 		DefaultLimits: defaultLimits,
 		Reporter:      s.ActiveTokenCount,

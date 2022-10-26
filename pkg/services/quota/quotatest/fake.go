@@ -36,6 +36,10 @@ func (f *FakeQuotaService) DeleteByUser(c context.Context, userID int64) error {
 	return f.err
 }
 
+func (f *FakeQuotaService) AddReporter(_ context.Context, e *quota.NewQuotaReporter) error {
+	return f.err
+}
+
 type FakeQuotaStore struct {
 	ExpectedError error
 }

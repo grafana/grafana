@@ -10,8 +10,6 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -104,7 +102,6 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	quotaService quota.Service,
-	bus bus.Bus,
 ) (StorageService, error) {
 	settings, err := LoadStorageConfig(cfg, features)
 	if err != nil {
@@ -273,7 +270,7 @@ func ProvideService(
 		return nil, err
 	}
 
-	if err := bus.Publish(context.TODO(), &events.NewQuotaReporter{
+	if err := quotaService.AddReporter(context.TODO(), &quota.NewQuotaReporter{
 		TargetSrv:     QuotaTargetSrv,
 		DefaultLimits: defaultLimits,
 		Reporter:      s.Usage,
@@ -285,14 +282,14 @@ func ProvideService(
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
-	if !cfg.Raw.HasSection("quota") {
-		return nil, nil
+	if cfg.Raw == nil || !cfg.Raw.HasSection("quota") {
+		return &quota.Map{}, nil
 	}
 
 	quotaSection := cfg.Raw.Section("quota")
 	globalQuotaTag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
 	if err != nil {
-		return nil, err
+		return &quota.Map{}, err
 	}
 
 	limits := &quota.Map{}
