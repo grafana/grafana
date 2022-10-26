@@ -227,4 +227,9 @@ export const Pages = {
       url: '/?search=open&layout=folders',
     },
   },
+  PublicDashboards: {
+    linkButton: 'link button',
+    configButton: 'configuration button',
+    trashcanButton: 'remove public dashboard button',
+  },
 };

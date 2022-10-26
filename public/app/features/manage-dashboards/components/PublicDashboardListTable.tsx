@@ -3,6 +3,7 @@ import React from 'react';
 import { useWindowSize } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Link, ButtonGroup, LinkButton, Icon, Tag, useStyles2, Tooltip, useTheme2, Spinner } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
@@ -25,6 +26,7 @@ export const PublicDashboardListTable = () => {
 
   const { data: publicDashboards, isLoading, isFetching } = useGetPublicDashboardsQuery();
 
+  const selectors = e2eSelectors.pages.PublicDashboards;
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const responsiveSize = isMobile ? 'sm' : 'md';
 
@@ -61,6 +63,7 @@ export const PublicDashboardListTable = () => {
                       title={pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled'}
                       target="_blank"
                       disabled={!pd.isEnabled}
+                      data-testid={selectors.linkButton}
                     >
                       <Icon size={responsiveSize} name="external-link-alt" />
                     </LinkButton>
@@ -69,6 +72,7 @@ export const PublicDashboardListTable = () => {
                       size={responsiveSize}
                       href={`/d/${pd.dashboardUid}?shareView=share`}
                       title="Configure public dashboard"
+                      data-testid={selectors.configButton}
                     >
                       <Icon size={responsiveSize} name="cog" />
                     </LinkButton>

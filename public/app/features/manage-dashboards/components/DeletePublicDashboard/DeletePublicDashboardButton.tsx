@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { ComponentSize, Icon, LinkButton, ModalsController, Spinner } from '@grafana/ui/src';
 
 import { useDeletePublicDashboardMutation } from '../../../dashboard/api/publicDashboardApi';
@@ -21,6 +22,8 @@ export const DeletePublicDashboardButton = ({
     onDelete();
   };
 
+  const selectors = e2eSelectors.pages.PublicDashboards;
+
   return (
     <ModalsController>
       {({ showModal, hideModal }) => (
@@ -35,6 +38,7 @@ export const DeletePublicDashboardButton = ({
               onDismiss: hideModal,
             })
           }
+          data-testid={selectors.trashcanButton}
           size={size}
         >
           {isLoading ? <Spinner /> : <Icon size={size} name="trash-alt" />}
