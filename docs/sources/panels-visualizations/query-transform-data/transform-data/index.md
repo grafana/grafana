@@ -521,7 +521,7 @@ This also requires you to know ahead of time which regions actually exist in the
 
 With the _Partition by values_ transformer, you can now issue a single query and split the results by unique values (often of the enum type) from one or more columns (`fields`) of your choosing. The following example uses `Region`.
 
-`SELECT Time, Region, Value FROM metrics WHERE Time > ‘2022-10-20’`
+`SELECT Time, Region, Value FROM metrics WHERE Time > '2022-10-20'`
 
 | Time                | Region | Value |
 | ------------------- | ------ | ----- |
