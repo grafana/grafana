@@ -175,20 +175,22 @@ func getLabel(query metricsDataQuery, dynamicLabelsEnabled bool) string {
 	if query.Label != nil {
 		return *query.Label
 	}
+	if query.Alias == "" {
+		return ""
+	}
+
 	var result string
 	if dynamicLabelsEnabled {
 		fullAliasField := query.Alias
-		if fullAliasField != "" {
-			matches := legacyAliasRegexp.FindAllStringSubmatch(query.Alias, -1)
+		matches := legacyAliasRegexp.FindAllStringSubmatch(query.Alias, -1)
 
-			for _, groups := range matches {
-				fullMatch := groups[0]
-				subgroup := groups[1]
-				if dynamicLabel, ok := aliasPatterns[subgroup]; ok {
-					fullAliasField = strings.ReplaceAll(fullAliasField, fullMatch, dynamicLabel)
-				} else {
-					fullAliasField = strings.ReplaceAll(fullAliasField, fullMatch, fmt.Sprintf(`${PROP('Dim.%s')}`, subgroup))
-				}
+		for _, groups := range matches {
+			fullMatch := groups[0]
+			subgroup := groups[1]
+			if dynamicLabel, ok := aliasPatterns[subgroup]; ok {
+				fullAliasField = strings.ReplaceAll(fullAliasField, fullMatch, dynamicLabel)
+			} else {
+				fullAliasField = strings.ReplaceAll(fullAliasField, fullMatch, fmt.Sprintf(`${PROP('Dim.%s')}`, subgroup))
 			}
 		}
 		result = fullAliasField
