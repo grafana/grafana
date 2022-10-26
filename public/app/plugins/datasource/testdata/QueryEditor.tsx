@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FormEvent, useMemo } from 'react';
+import React, { ChangeEvent, FormEvent, useMemo, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
@@ -172,6 +172,16 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
   );
   const showLabels = useMemo(() => showLabelsFor.includes(query.scenarioId ?? ''), [query]);
 
+  const selectedValue = options.find((item) => item.value === query.scenarioId);
+  useEffect(() => {
+    if (selectedValue) {
+      // This updates the panel model with the default scenario
+      onScenarioChange(selectedValue);
+    }
+    // Adding a dependency on onScenarioChange causes an infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedValue]);
+
   if (loading) {
     return null;
   }
@@ -183,7 +193,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
           <Select
             inputId={`test-data-scenario-select-${query.refId}`}
             options={options}
-            value={options.find((item) => item.value === query.scenarioId)}
+            value={selectedValue}
             onChange={onScenarioChange}
             width={32}
           />
