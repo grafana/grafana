@@ -1,4 +1,4 @@
-import { delay, Observable, of } from 'rxjs';
+import { delay, Observable, Subject } from 'rxjs';
 
 import { LoadingState, VariableOption } from '@grafana/data';
 import { queryMetricTree } from 'app/plugins/datasource/testdata/metricTree';
@@ -15,21 +15,22 @@ export interface TestVariableState extends SceneVariableState {
   query: string;
   options: VariableOption[];
   delayMs?: number;
-  completeUpdate?: Observable<number>;
+  issuedQuery?: string;
 }
 
 export class TestVariable extends SceneObjectBase<TestVariableState> implements SceneVariable {
   ValueSelectComponent = VariableValueSelect;
+  completeUpdate = new Subject<number>();
 
   updateOptions(ctx: VariableUpdateContext) {
-    const { delayMs = 0, completeUpdate } = this.state;
+    const { delayMs } = this.state;
 
     try {
       this.setState({ state: LoadingState.Loading });
 
       let obs = new Observable<number>((observer) => {
-        if (completeUpdate) {
-          completeUpdate.subscribe({
+        if (!delayMs) {
+          this.completeUpdate.subscribe({
             next: () => {
               setDummyOptions(this, ctx);
               observer.next(1);
@@ -41,7 +42,7 @@ export class TestVariable extends SceneObjectBase<TestVariableState> implements 
         }
 
         return () => {
-          console.log('Canceling QueryVariable query');
+          // console.log('Canceling QueryVariable query');
         };
       });
 
@@ -55,6 +56,10 @@ export class TestVariable extends SceneObjectBase<TestVariableState> implements 
       throw err;
     }
   }
+  /** Useful from tests */
+  signalUpdateCompleted() {
+    this.completeUpdate.next(1);
+  }
 
   getDependencies() {
     return getVariableDependencies(this.state.query);
@@ -63,15 +68,13 @@ export class TestVariable extends SceneObjectBase<TestVariableState> implements 
 
 function setDummyOptions(variable: TestVariable, ctx: VariableUpdateContext) {
   const interpolatedQuery = sceneTemplateInterpolator(variable.state.query, ctx.sceneContext);
-  console.log('interpolated query', interpolatedQuery);
-
-  const result = queryMetricTree(interpolatedQuery);
-  const options = result.map((x) => ({ text: x.name, value: x.name, selected: false }));
+  const options = queryMetricTree(interpolatedQuery).map((x) => ({ text: x.name, value: x.name, selected: false }));
 
   variable.setState({
+    issuedQuery: interpolatedQuery,
     options,
-    value: options[0].value,
-    text: options[0].text,
+    value: options.length > 0 ? options[0].value : '',
+    text: options.length > 0 ? options[0].text : '',
     state: LoadingState.Done,
   });
 }
