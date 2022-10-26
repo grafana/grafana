@@ -35,13 +35,19 @@ const FlameGraphContainer = (props: Props) => {
   // over the dataFrame rows.
   const levels = useMemo(() => {
     if (!props.data) {
-      return [];
+      return {
+        levels: [],
+        stats: {
+          minSelf: Infinity,
+          maxSelf: 0,
+        },
+      };
     }
     const dataView = new DataFrameView<Item>(props.data);
     return nestedSetToLevels(dataView);
   }, [props.data]);
 
-  const styles = useStyles2(() => getStyles(props.app, PIXELS_PER_LEVEL * levels.length));
+  const styles = useStyles2(() => getStyles(props.app, PIXELS_PER_LEVEL * levels.levels.length));
 
   // If user resizes window with both as the selected view
   useEffect(() => {
@@ -72,7 +78,7 @@ const FlameGraphContainer = (props: Props) => {
         <FlameGraphTopTableContainer
           data={props.data}
           app={props.app}
-          totalLevels={levels.length}
+          totalLevels={levels.levels.length}
           selectedView={selectedView}
           search={search}
           setSearch={setSearch}
@@ -87,10 +93,12 @@ const FlameGraphContainer = (props: Props) => {
           data={props.data}
           app={props.app}
           flameGraphHeight={props.flameGraphHeight}
-          levels={levels}
+          levels={levels.levels}
           topLevelIndex={topLevelIndex}
           rangeMin={rangeMin}
           rangeMax={rangeMax}
+          maxSelf={levels.stats.maxSelf}
+          minSelf={levels.stats.minSelf}
           search={search}
           setTopLevelIndex={setTopLevelIndex}
           setRangeMin={setRangeMin}

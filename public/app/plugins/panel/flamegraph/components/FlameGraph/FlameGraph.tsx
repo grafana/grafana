@@ -43,6 +43,8 @@ type Props = {
   setRangeMax: (range: number) => void;
   selectedView: SelectedView;
   style?: React.CSSProperties;
+  maxSelf: number;
+  minSelf: number;
 };
 
 const FlameGraph = ({
@@ -58,6 +60,8 @@ const FlameGraph = ({
   setRangeMin,
   setRangeMax,
   selectedView,
+  maxSelf,
+  minSelf,
 }: Props) => {
   const styles = getStyles(selectedView, app, flameGraphHeight);
   const totalTicks = data.fields[1].values.get(0);
@@ -103,14 +107,22 @@ const FlameGraph = ({
         const level = levels[levelIndex];
         // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
         // sometimes we collapse multiple bars into single rect.
-        const dimensions = getRectDimensionsForLevel(level, levelIndex, totalTicks, rangeMin, pixelsPerTick);
+        const dimensions = getRectDimensionsForLevel(
+          level,
+          levelIndex,
+          totalTicks,
+          rangeMin,
+          pixelsPerTick,
+          maxSelf,
+          minSelf
+        );
         for (const rect of dimensions) {
           // Render each rectangle based on the computed dimensions
           renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex);
         }
       }
     },
-    [levels, wrapperWidth, totalTicks, rangeMin, rangeMax, search, topLevelIndex]
+    [levels, wrapperWidth, totalTicks, rangeMin, rangeMax, search, topLevelIndex, maxSelf, minSelf]
   );
 
   useEffect(() => {

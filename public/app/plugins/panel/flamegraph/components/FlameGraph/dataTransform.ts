@@ -8,14 +8,30 @@ export type ItemWithStart = Item & { start: number };
  * rendering code.
  * @param dataView
  */
-export function nestedSetToLevels(dataView: DataFrameView<Item>): ItemWithStart[][] {
+export function nestedSetToLevels(dataView: DataFrameView<Item>): {
+  levels: ItemWithStart[][];
+  stats: {
+    minSelf: number;
+    maxSelf: number;
+  };
+} {
   const levels: ItemWithStart[][] = [];
   let offset = 0;
+  let minSelf = Infinity;
+  let maxSelf = 0;
 
   for (let i = 0; i < dataView.length; i++) {
     // We have to clone the items as .get(i) returns a changing pointer not the data themselves.
     const item = { ...dataView.get(i) };
     const prevItem = i > 0 ? { ...dataView.get(i - 1) } : undefined;
+
+    if (item.self > maxSelf) {
+      maxSelf = item.self;
+    }
+
+    if (item.self < minSelf) {
+      minSelf = item.self;
+    }
 
     levels[item.level] = levels[item.level] || [];
     if (prevItem && prevItem.level >= item.level) {
@@ -31,5 +47,12 @@ export function nestedSetToLevels(dataView: DataFrameView<Item>): ItemWithStart[
 
     levels[item.level].push(newItem);
   }
-  return levels;
+
+  return {
+    levels,
+    stats: {
+      maxSelf,
+      minSelf,
+    },
+  };
 }

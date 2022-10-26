@@ -1,3 +1,6 @@
+import * as d3 from 'd3';
+import tinycolor from 'tinycolor2';
+
 import { colors } from '@grafana/ui';
 
 import {
@@ -19,6 +22,8 @@ type RectData = {
   collapsed: boolean;
   ticks: number;
   label: string;
+  // Used for coloring. At this moment higher self value mean higher intensity.
+  intensity: number;
 };
 
 /**
@@ -35,7 +40,9 @@ export function getRectDimensionsForLevel(
   levelIndex: number,
   totalTicks: number,
   rangeMin: number,
-  pixelsPerTick: number
+  pixelsPerTick: number,
+  maxSelf: number,
+  minSelf: number
 ): RectData[] {
   const coordinatesLevel = [];
   for (let barIndex = 0; barIndex < level.length; barIndex += 1) {
@@ -64,7 +71,8 @@ export function getRectDimensionsForLevel(
       y: levelIndex * PIXELS_PER_LEVEL,
       collapsed,
       ticks: curBarTicks,
-      label: item.label,
+      label: item.self + ' ' + item.label,
+      intensity: (item.self - minSelf) / maxSelf,
     });
   }
   return coordinatesLevel;
@@ -87,10 +95,10 @@ export function renderRect(
   ctx.beginPath();
   ctx.rect(rect.x + (rect.collapsed ? 0 : BAR_BORDER_WIDTH), rect.y, rect.width, rect.height);
 
-  //  / (rangeMax - rangeMin) here so when you click a bar it will adjust the top (clicked)bar to the most 'intense' color
-  const intensity = Math.min(1, rect.ticks / totalTicks / (rangeMax - rangeMin));
-  const h = 50 - 50 * intensity;
-  const l = 65 + 7 * intensity;
+  const color = d3.interpolate('#FADE2A', '#E02F44')(rect.intensity);
+
+  // const h = 80 * rect.intensity;
+  // const l = 65 + 7 * rect.intensity;
 
   const name = rect.label;
   const queryResult = query && name.toLowerCase().includes(query.toLowerCase());
@@ -99,12 +107,12 @@ export function renderRect(
     ctx.stroke();
 
     if (query) {
-      ctx.fillStyle = queryResult ? getBarColor(h, l) : colors[55];
+      ctx.fillStyle = queryResult ? color : colors[55];
     } else {
-      ctx.fillStyle = levelIndex > topLevelIndex - 1 ? getBarColor(h, l) : getBarColor(h, l + 15);
+      ctx.fillStyle = levelIndex > topLevelIndex - 1 ? color : tinycolor(color).desaturate(30).toHexString();
     }
   } else {
-    ctx.fillStyle = queryResult ? getBarColor(h, l) : colors[55];
+    ctx.fillStyle = queryResult ? color : colors[55];
   }
   ctx.fill();
 
