@@ -3,6 +3,7 @@ aliases:
   - /docs/grafana/latest/alerting/notifications/
   - /docs/grafana/latest/alerting/old-alerting/notifications/
   - /docs/grafana/latest/alerting/unified-alerting/notifications/
+  - /docs/grafana/latest/alerting/manage-notifications/create-notification-policy/
 description: Notification policies
 keywords:
   - grafana
@@ -10,11 +11,11 @@ keywords:
   - guide
   - notification policies
   - routes
-title: Notification policies
-weight: 440
+title: Create notification policies
+weight: 300
 ---
 
-# Notification policies
+# Create notification policies
 
 Notification policies determine how alerts are routed to contact points. Policies have a tree structure, where each policy can have one or more child policies. Each policy, except for the root policy, can also match specific alert labels. Each alert is evaluated by the root policy and subsequently by each child policy. If you enable the `Continue matching subsequent sibling nodes` option is enabled for a specific policy, then evaluation continues even after one or more matches. A parent policy’s configuration settings and contact point information govern the behavior of an alert that does not match any of the child policies. A root policy governs any alert that does not match a specific policy.
 

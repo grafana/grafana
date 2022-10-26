@@ -11,7 +11,7 @@ keywords:
   - notification channel
   - create
 title: Contact points
-weight: 430
+weight: 410
 ---
 
 # Contact points

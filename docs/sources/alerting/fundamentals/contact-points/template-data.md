@@ -3,6 +3,7 @@ aliases:
   - /docs/grafana/latest/alerting/contact-points/message-templating/template-data/
   - /docs/grafana/latest/alerting/message-templating/template-data/
   - /docs/grafana/latest/alerting/unified-alerting/message-templating/template-data/
+  - /docs/grafana/latest/alerting/fundamentals/contact-points/template-data/
 keywords:
   - grafana
   - alerting
@@ -15,7 +16,7 @@ weight: 120
 
 # Template data
 
-Template data is passed on to [message templates]({{< relref "_index.md" >}}) as well as sent as payload to webhook pushes.
+Template data is passed on to message templates as well as sent as payload to webhook pushes.
 
 | Name              | Type     | Notes                                                                                                                |
 | ----------------- | -------- | -------------------------------------------------------------------------------------------------------------------- |

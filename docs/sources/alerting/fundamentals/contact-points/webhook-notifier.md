@@ -4,6 +4,7 @@ aliases:
   - /docs/grafana/latest/alerting/contact-points/notifiers/webhook-notifier/
   - /docs/grafana/latest/alerting/message-templating/
   - /docs/grafana/latest/alerting/unified-alerting/message-templating/
+  - /docs/grafana/latest/alerting/fundamentals/contact-points/webhook-notifier/
 keywords:
   - grafana
   - alerting
