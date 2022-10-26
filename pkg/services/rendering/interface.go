@@ -12,6 +12,7 @@ import (
 var ErrTimeout = errors.New("timeout error - you can set timeout in seconds with &timeout url parameter")
 var ErrConcurrentLimitReached = errors.New("rendering concurrent limit reached")
 var ErrRenderUnavailable = errors.New("rendering plugin not available")
+var ErrServerTimeout = errors.New("error trying to connect to image-renderer service")
 
 type RenderType string
 
