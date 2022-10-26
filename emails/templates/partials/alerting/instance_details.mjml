@@ -73,8 +73,8 @@
     </mj-text>
   </mj-column>
 </mj-section>
-<mj-section padding="0" text-align="left">
-  <mj-column padding="10px" background-color="#111217" border-bottom="1px solid #2f3037" border-top="1px solid #2f3037">
+<mj-section padding="0 25px" text-align="left">
+  <mj-column padding="10px" background-color="#111217" border="1px solid #2f3037">
     <mj-text>
       <mj-raw>
         {{ range $refID, $value := .Values }}
@@ -157,28 +157,28 @@
 <mj-section text-align="left" border-top="1px solid #2f3037" padding="15px 0px">
   <mj-raw>{{ if .SilenceURL }}</mj-raw>
   <mj-column>
-    <mj-button vertical-align="middle" href="{{ .SilenceURL }}" padding="0" inner-padding="5px 12px">
+    <mj-button align="center" vertical-align="middle" href="{{ .SilenceURL }}" padding="0" inner-padding="5px 12px">
       Silence
     </mj-button>
   </mj-column>
   <mj-raw>{{ end }}</mj-raw>
   <mj-raw>{{ if .Annotations.runbook_url }}</mj-raw>
   <mj-column>
-    <mj-button href="{{ .Annotations.runbook_url }}" padding="0" inner-padding="5px 12px">
+    <mj-button align="center" href="{{ .Annotations.runbook_url }}" padding="0" inner-padding="5px 12px">
       View runbook
     </mj-button>
   </mj-column>
   <mj-raw>{{ end }}</mj-raw>
   <mj-raw>{{ if .DashboardURL }}</mj-raw>
   <mj-column>
-    <mj-button href="{{ .DashboardURL }}" padding="0" inner-padding="5px 12px">
+    <mj-button align="center" href="{{ .DashboardURL }}" padding="0" inner-padding="5px 12px">
       View dashboard
     </mj-button>
   </mj-column>
   <mj-raw>{{ end }}</mj-raw>
   <mj-raw>{{ if .PanelURL }}</mj-raw>
   <mj-column>
-    <mj-button href="{{ .PanelURL }}" padding="0" inner-padding="5px 12px">
+    <mj-button align="center" href="{{ .PanelURL }}" padding="0" inner-padding="5px 12px">
       View panel
     </mj-button>
   </mj-column>
