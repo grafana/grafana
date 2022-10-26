@@ -22,6 +22,7 @@ export interface NavLinkDTO {
   children?: NavLinkDTO[];
   highlightText?: string;
   emptyMessageId?: string;
+  registeredByPluginId?: string;
 }
 
 export interface NavModelItem extends NavLinkDTO {

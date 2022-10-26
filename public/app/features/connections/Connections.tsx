@@ -37,50 +37,36 @@ export default function Connections() {
         <Route exact path={ROUTES.DataSourcesDetails} component={DataSourceDetailsPage} />
         <Route exact path={ROUTES.DataSourcesNew} component={NewDataSourcePage} />
         <Route exact path={ROUTES.DataSourcesEdit} component={EditDataSourcePage} />
+        {!isCloud && <Route path={ROUTES.ConnectData} component={ConnectDataPage} />}
 
-        {/* Connect Data  - serve from the core by default, unless the Cloud Onboarding app is available and enabled */}
-        {/* TODO: update the navIndex[] objects to contain the `pluginId` for any standalone plugin pages */}
-        <Route
-          path={ROUTES.ConnectData}
-          render={({ match }) =>
-            isCloud ? (
-              <AppRootPage
-                // @ts-ignore
-                route={{}}
-                match={{
-                  ...match,
-                  url: '/connections',
-                  params: { ...match.params, pluginId: 'grafana-easystart-app' },
-                }}
-                queryParams={{}}
-                location={location}
-              />
-            ) : (
-              <ConnectDataPage />
-            )
+        {/* 
+          Standalone plugin pages 
+          These pages are registered by plugins to show up under the connections section. 
+          As we would like to keep using the "/connections/..." URL format we need to add explicit routing for them here. 
+        */}
+        {pluginServedPageIds.map((navId) => {
+          const pluginId = navIndex[navId].registeredByPluginId;
+
+          if (!pluginId) {
+            return null;
           }
-        />
 
-        {/* Plugin routes - route any plugin registered page to the plugins */}
-        {pluginServedPageIds.map((navId) => (
-          <Route
-            key={navId}
-            path={navIndex[navId].url}
-            render={({ match }) => (
-              <AppRootPage
-                // @ts-ignore
-                route={{}}
-                match={{
-                  ...match,
-                  url: '/connections',
-                  params: { ...match.params, pluginId: 'grafana-easystart-app' },
-                }}
-                queryParams={{}}
-                location={location}
-              />
-            )}
-          />
-        ))}
+          return (
+            <Route
+              key={navId}
+              path={navIndex[navId].url}
+              render={({ match }) => (
+                <AppRootPage
+                  // @ts-ignore
+                  route={{}}
+                  match={{ ...match, url: '/connections', params: { ...match.params, pluginId } }}
+                  queryParams={{}}
+                  location={location}
+                />
+              )}
+            />
+          );
+        })}
 
         {/* Default page */}
         <Route component={DataSourcesListPage} />

@@ -66,11 +66,12 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqCo
 
 func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqContext, topNavEnabled bool, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	appLink := &navtree.NavLink{
-		Text:       plugin.Name,
-		Id:         "plugin-page-" + plugin.ID,
-		Img:        plugin.Info.Logos.Small,
-		Section:    navtree.NavSectionPlugin,
-		SortWeight: navtree.WeightPlugin,
+		Text:                 plugin.Name,
+		Id:                   "plugin-page-" + plugin.ID,
+		Img:                  plugin.Info.Logos.Small,
+		Section:              navtree.NavSectionPlugin,
+		SortWeight:           navtree.WeightPlugin,
+		RegisteredByPluginId: plugin.ID,
 	}
 
 	if topNavEnabled {
@@ -86,8 +87,9 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 
 		if include.Type == "page" && include.AddToNav {
 			link := &navtree.NavLink{
-				Text: include.Name,
-				Icon: include.Icon,
+				Text:                 include.Name,
+				Icon:                 include.Icon,
+				RegisteredByPluginId: plugin.ID,
 			}
 
 			if len(include.Path) > 0 {
@@ -99,24 +101,28 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 				link.Url = s.cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug
 			}
 
+			// Register standalone plugin pages to certain sections using the Grafana config
 			if pathConfig, ok := s.navigationAppPathConfig[include.Path]; ok {
 				if sectionForPage := treeRoot.FindById(pathConfig.SectionID); sectionForPage != nil {
 					link.Id = "standalone-plugin-page-" + include.Path
 					link.SortWeight = pathConfig.SortWeight
-					
-					found := false
-					// Check if there is an existing page with the same URL
+
+					// Check if the section already has a page with the same URL, and in that case override it
+					// (This only happens if it is explicitly set by `navigation.app_standalone_pages` in the INI config)
+					isOverridingCorePage := false
 					for _, child := range sectionForPage.Children {
 						if child.Url == link.Url {
 							child.Id = link.Id
 							child.SortWeight = link.SortWeight
+							child.RegisteredByPluginId = link.RegisteredByPluginId
 							child.Children = []*navtree.NavLink{}
-							found = true
+							isOverridingCorePage = true
 							break
-						} 
+						}
 					}
-				
-					if !found {
+
+					// Append the page to the section
+					if !isOverridingCorePage {
 						sectionForPage.Children = append(sectionForPage.Children, link)
 					}
 
@@ -130,8 +136,9 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 			dboardURL := include.DashboardURLPath()
 			if dboardURL != "" {
 				link := &navtree.NavLink{
-					Url:  path.Join(s.cfg.AppSubURL, dboardURL),
-					Text: include.Name,
+					Url:                  path.Join(s.cfg.AppSubURL, dboardURL),
+					Text:                 include.Name,
+					RegisteredByPluginId: plugin.ID,
 				}
 				appLink.Children = append(appLink.Children, link)
 			}
