@@ -521,7 +521,7 @@ Prior to v9.3, if you wanted to plot a red trendline for US and a blue one for E
 
 This also requires you to know ahead of time which regions actually exist in the metrics table.
 
-With the Partition by values transformer, you can now issue a single query and split the results by unique (enum) values from one or more columns (fields) of your choosing. In this case, Region.
+With the _Partition by values_ transformer, you can now issue a single query and split the results by unique (`enum`) values from one or more columns (`fields`) of your choosing. The following example uses `Region`.
 
 `SELECT Time, Region, Value FROM metrics WHERE Time > ‘2022-10-20’`
 
