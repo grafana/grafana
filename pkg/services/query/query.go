@@ -144,14 +144,14 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 			MaxDataPoints: pq.query.MaxDataPoints,
 			QueryType:     pq.query.QueryType,
 			DataSource:    pq.datasource,
-			TimeRange: expr.TimeRange{
+			TimeRange: expr.AbsoluteTimeRange{
 				From: pq.query.TimeRange.From,
 				To:   pq.query.TimeRange.To,
 			},
 		})
 	}
 
-	qdr, err := s.expressionService.TransformData(ctx, &exprReq)
+	qdr, err := s.expressionService.TransformData(ctx, time.Now(), &exprReq) // use time now because all queries have absolute time range
 	if err != nil {
 		return nil, fmt.Errorf("expression request error: %w", err)
 	}

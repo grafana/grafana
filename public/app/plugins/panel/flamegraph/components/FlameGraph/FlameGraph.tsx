@@ -148,7 +148,7 @@ const FlameGraph = ({
 
           if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
             tooltipRef.current.style.left = e.clientX + 10 + 'px';
-            tooltipRef.current.style.top = e.clientY + 40 + 'px';
+            tooltipRef.current.style.top = e.clientY + 'px';
 
             const bar = levels[levelIndex][barIndex];
             const tooltipData = getTooltipData(valueField!, bar.label, bar.value, totalTicks);
