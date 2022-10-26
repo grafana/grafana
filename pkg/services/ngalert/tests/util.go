@@ -24,6 +24,7 @@ import (
 	databasestore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert"
@@ -122,7 +123,7 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 		OrgRole:        org.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
-	folder, err := dbstore.FolderService.CreateFolder(ctx, user, orgID, "FOLDER-"+util.GenerateShortUID(), folderUID)
+	folder, err := dbstore.FolderService.CreateFolder(ctx, &folder.CreateFolderCommand{Title: "FOLDER-" + util.GenerateShortUID(), UID: folderUID})
 	if errors.Is(err, dashboards.ErrFolderWithSameUIDExists) || errors.Is(err, dashboards.ErrFolderVersionMismatch) {
 		folder, err = dbstore.FolderService.GetFolderByUID(ctx, user, orgID, folderUID)
 	}

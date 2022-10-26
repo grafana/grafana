@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/util"
@@ -118,7 +119,7 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	folder, err := hs.folderService.CreateFolder(c.Req.Context(), c.SignedInUser, c.OrgID, cmd.Title, cmd.Uid)
+	folder, err := hs.folderService.CreateFolder(c.Req.Context(), &folder.CreateFolderCommand{Title: cmd.Title, UID: cmd.Uid})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}

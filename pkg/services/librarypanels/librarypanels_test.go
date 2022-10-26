@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -1411,7 +1412,7 @@ func createFolderWithACL(t *testing.T, sqlStore db.DB, title string, user *user.
 	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, d, dashboardStore, features, folderPermissions, nil)
 
 	t.Logf("Creating folder with title and UID %q", title)
-	folder, err := s.CreateFolder(context.Background(), user, user.OrgID, title, title)
+	folder, err := s.CreateFolder(context.Background(), &folder.CreateFolderCommand{Title: title, UID: title})
 	require.NoError(t, err)
 
 	updateFolderACL(t, dashboardStore, folder.Id, items)

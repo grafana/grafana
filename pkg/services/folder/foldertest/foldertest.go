@@ -28,7 +28,7 @@ func (s *FakeService) GetFolderByUID(ctx context.Context, user *user.SignedInUse
 func (s *FakeService) GetFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*models.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
-func (s *FakeService) CreateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, title, uid string) (*models.Folder, error) {
+func (s *FakeService) CreateFolder(ctx context.Context, cmd *folder.CreateFolderCommand) (*models.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
 func (s *FakeService) UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {

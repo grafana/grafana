@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -141,11 +142,15 @@ func (s *Service) GetFolderByTitle(ctx context.Context, user *user.SignedInUser,
 	return dashFolder, nil
 }
 
-func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, title, uid string) (*models.Folder, error) {
-	dashFolder := models.NewDashboardFolder(title)
-	dashFolder.OrgId = orgID
+func (s *Service) CreateFolder(ctx context.Context, cmd *folder.CreateFolderCommand) (*models.Folder, error) {
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, toFolderError(err)
+	}
+	dashFolder := models.NewDashboardFolder(cmd.Title)
+	dashFolder.OrgId = user.OrgID
 
-	trimmedUID := strings.TrimSpace(uid)
+	trimmedUID := strings.TrimSpace(cmd.UID)
 	if trimmedUID == accesscontrol.GeneralFolderUID {
 		return nil, dashboards.ErrFolderInvalidUID
 	}
@@ -161,7 +166,7 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 
 	dto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
-		OrgId:     orgID,
+		OrgId:     user.OrgID,
 		User:      user,
 	}
 
@@ -176,7 +181,7 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 	}
 
 	var folder *models.Folder
-	folder, err = s.dashboardStore.GetFolderByID(ctx, orgID, dash.Id)
+	folder, err = s.dashboardStore.GetFolderByID(ctx, user.OrgID, dash.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -195,9 +200,9 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 			{BuiltinRole: string(org.RoleViewer), Permission: models.PERMISSION_VIEW.String()},
 		}...)
 
-		_, permissionErr = s.permissions.SetPermissions(ctx, orgID, folder.Uid, permissions...)
+		_, permissionErr = s.permissions.SetPermissions(ctx, user.OrgID, folder.Uid, permissions...)
 	} else if s.cfg.EditorsCanAdmin && user.IsRealUser() && !user.IsAnonymous {
-		permissionErr = s.MakeUserAdmin(ctx, orgID, userID, folder.Id, true)
+		permissionErr = s.MakeUserAdmin(ctx, user.OrgID, userID, folder.Id, true)
 	}
 
 	if permissionErr != nil {
