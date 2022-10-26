@@ -41,3 +41,12 @@ var GetAllHardCodedMetrics = func() []models.Metric {
 
 	return response
 }
+
+var GetHardCodedNamespaces = func() []string {
+	var namespaces []string
+	for key := range constants.NamespaceMetricsMap {
+		namespaces = append(namespaces, key)
+	}
+
+	return namespaces
+}
