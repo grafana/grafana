@@ -161,7 +161,6 @@ function inViewMode(pathname: string): boolean {
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
-    padding: ${theme.spacing(2)} 0;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -169,7 +168,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
   button: css`
     height: 24px;
-    margin-top: ${theme.spacing(1)};
     font-size: ${theme.typography.size.sm};
   `,
 });
