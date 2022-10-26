@@ -533,7 +533,7 @@ func TestIntegrationSQLStore_AddOrgUser(t *testing.T) {
 	require.Equal(t, saFound.OrgID, u.OrgID)
 }
 
-func TestSQLStore_GetOrgUsers(t *testing.T) {
+func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -670,28 +670,27 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	newUser, err := store.CreateUser(context.Background(), user.CreateUserCommand{
-		Login:      "Viewer",
-		Email:      "viewer@localhost",
-		OrgID:      id,
-		IsDisabled: true,
-		Name:       "Viewer Localhost",
-	})
-	require.NoError(t, err)
+	// newUser, err := store.CreateUser(context.Background(), user.CreateUserCommand{
+	// 	Login:      "Viewer",
+	// 	Email:      "viewer@localhost",
+	// 	OrgID:      id,
+	// 	IsDisabled: true,
+	// 	Name:       "Viewer Localhost",
+	// })
+	// require.NoError(t, err)
 
 	err = orgUserStore.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
 		Role:   "Viewer",
-		OrgID:  id,
-		UserID: newUser.ID,
+		OrgID:  1,
+		UserID: 1,
 	})
-	fmt.Println("ORGA ID ", id)
 	require.NoError(t, err)
 
 	query := &org.GetOrgUsersQuery{
-		OrgID:  id,
-		UserID: newUser.ID,
+		OrgID:  1,
+		UserID: 1,
 		User: &user.SignedInUser{
-			OrgID:       id,
+			OrgID:       1,
 			Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 		},
 	}
@@ -701,7 +700,7 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 
 	actual := result[0]
 	assert.Equal(t, int64(1), actual.OrgID)
-	assert.Equal(t, newUser.ID, actual.UserID)
+	assert.Equal(t, int64(1), actual.UserID)
 	assert.Equal(t, "viewer@localhost", actual.Email)
 	assert.Equal(t, "Viewer Localhost", actual.Name)
 	assert.Equal(t, "Viewer", actual.Login)
@@ -787,6 +786,9 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 }
 
 func TestIntegration_SQLStore_RemoveOrgUser(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	store := db.InitTestDB(t)
 	orgUserStore := sqlStore{
 		db:      store,
