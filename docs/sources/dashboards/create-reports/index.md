@@ -99,7 +99,7 @@ You can include dynamic dashboards with panels or rows, set to repeat by a varia
 
 ### Report time range
 
-> **Note:** You can set custom report time ranges in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) 7.2+ and [Grafana Cloud Pro and Advanced]({{< ref "/grafana-cloud" >}}).
+> **Note:** You can set custom report time ranges in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) 7.2+ and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
 By default, reports use the saved time range of the dashboard. You can change the time range of the report by:
 
