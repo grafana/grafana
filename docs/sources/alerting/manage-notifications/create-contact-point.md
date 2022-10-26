@@ -39,11 +39,15 @@ Complete the following steps to add a contact point.
 
 ## Edit a contact point
 
+Complete the following steps to edit a contact point.
+
 1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
 1. Find the contact point to edit, then click **Edit** (pen icon).
 1. Make any changes and click **Save contact point**.
 
 ## Delete a contact point
+
+Complete the following steps to delete a contact point.
 
 1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
 1. Find the contact point to delete, then click **Delete** (trash icon).
@@ -52,6 +56,8 @@ Complete the following steps to add a contact point.
 > **Note:** You cannot delete contact points that are in use by a notification policy. You will have to either delete the notification policy or update it to use another contact point.
 
 ## Test a contact point
+
+Complete the following steps to test a contact point.
 
 1. In the Grafana side bar, hover your cursor over the **Alerting** (bell) icon and then click **Contact** points.
 1. Find the contact point to test, then click **Edit** (pen icon). You can also create a new contact point if needed.
