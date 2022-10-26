@@ -42,12 +42,12 @@ type NestedFolderService interface {
 	// request. One of ID, UID, or Title must be included. If multiple values
 	// are included in the request, Grafana will select one in order of
 	// specificity (ID, UID, Title).
-	Get(ctx context.Context, cmd *GetFolderCommand) (*Folder, error)
+	Get(ctx context.Context, cmd *GetFolderQuery) (*Folder, error)
 
 	// GetParents returns an ordered list of parent folders for the given
 	// folder, starting with the root node and ending with the requested child
 	// node.
-	GetParents(ctx context.Context, cmd *GetParentsCommand) ([]*Folder, error)
+	GetParents(ctx context.Context, cmd *GetParentsQuery) ([]*Folder, error)
 
 	// GetTree returns an map containing all child folders starting from the
 	// given parent folder UID and descending to the requested depth. Use the
@@ -55,5 +55,5 @@ type NestedFolderService interface {
 	//
 	// The map keys are folder uids and the values are the list of child folders
 	// for that parent.
-	GetTree(ctx context.Context, cmd *GetTreeCommand) (map[string][]*Folder, error)
+	GetTree(ctx context.Context, cmd *GetTreeQuery) (map[string][]*Folder, error)
 }
