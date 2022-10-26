@@ -2,6 +2,7 @@
 aliases:
   - /docs/grafana/latest/alerting/notifications/mute-timings/
   - /docs/grafana/latest/alerting/unified-alerting/notifications/mute-timings/
+  - /docs/grafana/latest/alerting/manage-notifications/mute-timings/
 description: Mute timings
 keywords:
   - grafana
@@ -10,11 +11,11 @@ keywords:
   - mute
   - mute timings
   - mute time interval
-title: Mute timings
-weight: 450
+title: Create mute timings
+weight: 400
 ---
 
-# Mute timings
+# Create mute timings
 
 A mute timing is a recurring interval of time when no new notifications for a policy are generated or sent. Use them to prevent alerts from firing a specific and reoccurring period, for example, a regular maintenance period.
 

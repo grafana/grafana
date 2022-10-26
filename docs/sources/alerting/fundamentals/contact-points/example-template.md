@@ -4,6 +4,7 @@ aliases:
   - /docs/grafana/latest/alerting/contact-points/message-templating/example-template/
   - /docs/grafana/latest/alerting/message-templating/
   - /docs/grafana/latest/alerting/unified-alerting/message-templating/
+  - /docs/grafana/latest/alerting/fundamentals/contact-points/example-template/
 keywords:
   - grafana
   - alerting
