@@ -1971,10 +1971,9 @@ a8698f4f-5fa1-4baa-be05-87d03052af49	c61f5b19-c17e-49a1-91b8-a0296411b928	f
 805aebc8-9d01-42b6-bcce-6ce48ca63ef0	c61f5b19-c17e-49a1-91b8-a0296411b928	f
 09b79548-8426-4c0e-8e0b-7488467532c7	a1d5ab0b-6c06-4dc5-bdca-3fefe915f4f3	t
 09b79548-8426-4c0e-8e0b-7488467532c7	d6077ed7-b265-4f82-9336-24614967bd5d	t
-09b79548-8426-4c0e-8e0b-7488467532c7	0a7c7dde-23d7-4a93-bdee-4a8963aee9a4	t
 09b79548-8426-4c0e-8e0b-7488467532c7	96d521d3-facc-4b5a-a8b4-a879bae6be07	t
-09b79548-8426-4c0e-8e0b-7488467532c7	d4723cd4-f717-44b7-a9b0-6c32c5ecd23f	t
 09b79548-8426-4c0e-8e0b-7488467532c7	0e98d5f9-d3f7-4b1d-9791-d442524fc2ab	t
+09b79548-8426-4c0e-8e0b-7488467532c7	74daf2cd-40d4-4304-87a8-92cdca808512	t
 \.
 
 
@@ -2486,6 +2485,8 @@ COPY public.idp_mapper_config (idp_mapper_id, value, name) FROM stdin;
 --
 
 COPY public.keycloak_group (id, name, parent_group, realm_id) FROM stdin;
+5b3c4be0-f7cc-4da0-bc23-8133997459be	Group A	 	grafana
+550c4070-94fc-4a93-846e-2589b1bed11a	Group B	 	grafana
 \.
 
 
@@ -2671,6 +2672,7 @@ df78645e-c32b-4160-b79f-42e622d71982	locale	openid-connect	oidc-usermodel-attrib
 0108b99f-2f31-4e73-9597-cb29e0e8c486	username	openid-connect	oidc-usermodel-property-mapper	\N	f619a55a-d565-4cc0-8bf4-4dbaab5382fe
 70b0a264-a7c3-43ff-b24f-14ca4f5f118e	login	openid-connect	oidc-usermodel-property-mapper	\N	0a7c7dde-23d7-4a93-bdee-4a8963aee9a4
 2f8ee9af-b6dd-4790-9e7b-cce83a603566	name	openid-connect	oidc-full-name-mapper	\N	d4723cd4-f717-44b7-a9b0-6c32c5ecd23f
+9e3457fa-eba9-4dfd-aaae-7576c5d5a7f4	Group Mapper	openid-connect	oidc-group-membership-mapper	09b79548-8426-4c0e-8e0b-7488467532c7	\N
 \.
 
 
@@ -2975,6 +2977,11 @@ df78645e-c32b-4160-b79f-42e622d71982	String	jsonType.label
 2f8ee9af-b6dd-4790-9e7b-cce83a603566	true	access.token.claim
 2f8ee9af-b6dd-4790-9e7b-cce83a603566	true	userinfo.token.claim
 1fc8999a-04d9-421b-8557-e417a3750358	true	id.token.claim
+9e3457fa-eba9-4dfd-aaae-7576c5d5a7f4	true	id.token.claim
+9e3457fa-eba9-4dfd-aaae-7576c5d5a7f4	false	access.token.claim
+9e3457fa-eba9-4dfd-aaae-7576c5d5a7f4	groups	claim.name
+9e3457fa-eba9-4dfd-aaae-7576c5d5a7f4	true	userinfo.token.claim
+9e3457fa-eba9-4dfd-aaae-7576c5d5a7f4	false	full.path
 \.
 
 
@@ -2984,7 +2991,7 @@ df78645e-c32b-4160-b79f-42e622d71982	String	jsonType.label
 
 COPY public.realm (id, access_code_lifespan, user_action_lifespan, access_token_lifespan, account_theme, admin_theme, email_theme, enabled, events_enabled, events_expiration, login_theme, name, not_before, password_policy, registration_allowed, remember_me, reset_password_allowed, social, ssl_required, sso_idle_timeout, sso_max_lifespan, update_profile_on_soc_login, verify_email, master_admin_client, login_lifespan, internationalization_enabled, default_locale, reg_email_as_username, admin_events_enabled, admin_events_details_enabled, edit_username_allowed, otp_policy_counter, otp_policy_window, otp_policy_period, otp_policy_digits, otp_policy_alg, otp_policy_type, browser_flow, registration_flow, direct_grant_flow, reset_credentials_flow, client_auth_flow, offline_session_idle_timeout, revoke_refresh_token, access_token_life_implicit, login_with_email_allowed, duplicate_emails_allowed, docker_auth_flow, refresh_token_max_reuse, allow_user_managed_access, sso_max_lifespan_remember_me, sso_idle_timeout_remember_me) FROM stdin;
 master	60	300	60	\N	\N	\N	t	f	0	\N	master	1643820855	\N	f	f	f	f	EXTERNAL	1800	36000	f	f	3cd285ea-0f6e-43b6-ab5c-d021c33a551b	1800	f	\N	f	f	f	f	0	1	30	6	HmacSHA1	totp	ef998ef5-ca12-45db-a252-2e71b1419039	1695e7d2-ad80-4502-8479-8121a6e2a2f0	5f6f801e-0588-4a6e-860a-35483f5c1ec7	954b046d-2b24-405e-84ee-c44ffe603df2	023dc515-c259-42bb-88a8-2e8d84abca92	2592000	f	900	t	f	032b05cf-0007-44da-a370-b42039f6b762	0	f	0	0
-grafana	60	300	300	\N	\N	\N	t	f	0	\N	grafana	1666341855	\N	f	f	f	f	EXTERNAL	1800	36000	f	f	ef7f6eac-9fff-44aa-a86c-5125d52acc82	1800	f	\N	f	f	f	f	0	1	30	6	HmacSHA1	totp	a38aeb47-f27e-4e68-82ff-7cc7371a47a7	9d02badd-cb1c-4655-bf5e-f888861433ff	b478ecfb-db7e-4797-a245-8fc3b4dec884	3085fb68-fc1f-4e1c-a8be-33fb45194b04	cbb4b3ca-ced6-4046-8b59-f1c3959c7948	2592000	f	900	t	f	95e02703-f5bc-4e04-8bef-f6adc2d8173f	0	f	0	0
+grafana	60	300	300	\N	\N	\N	t	f	0	\N	grafana	1666795300	\N	f	f	f	f	EXTERNAL	1800	36000	f	f	ef7f6eac-9fff-44aa-a86c-5125d52acc82	1800	f	\N	f	f	f	f	0	1	30	6	HmacSHA1	totp	a38aeb47-f27e-4e68-82ff-7cc7371a47a7	9d02badd-cb1c-4655-bf5e-f888861433ff	b478ecfb-db7e-4797-a245-8fc3b4dec884	3085fb68-fc1f-4e1c-a8be-33fb45194b04	cbb4b3ca-ced6-4046-8b59-f1c3959c7948	2592000	f	900	t	f	95e02703-f5bc-4e04-8bef-f6adc2d8173f	0	f	0	0
 \.
 
 
@@ -3343,6 +3350,12 @@ COPY public.user_federation_provider (id, changed_sync_period, display_name, ful
 --
 
 COPY public.user_group_membership (group_id, user_id) FROM stdin;
+5b3c4be0-f7cc-4da0-bc23-8133997459be	c685749a-645e-4396-b9ee-6eedbfd89d5e
+550c4070-94fc-4a93-846e-2589b1bed11a	c685749a-645e-4396-b9ee-6eedbfd89d5e
+5b3c4be0-f7cc-4da0-bc23-8133997459be	56eff2b3-e36a-4e3e-84a1-361ad312667b
+5b3c4be0-f7cc-4da0-bc23-8133997459be	b8aada79-3fb4-45cd-95d0-c046f3a0113a
+550c4070-94fc-4a93-846e-2589b1bed11a	b8aada79-3fb4-45cd-95d0-c046f3a0113a
+550c4070-94fc-4a93-846e-2589b1bed11a	bdce2246-bb51-4f55-bb81-b7b8856225bc
 \.
 
 
