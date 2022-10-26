@@ -21,11 +21,12 @@ import { findField } from 'app/features/dimensions';
 // Configuration options for Circle overlays
 export interface PhotoConfig {
   kind: 'square' | 'circle' | 'anchored' | 'folio';
-  border?: number; // Sets border width around images
-  shadow?: boolean; // Renders drop shadow behind images
-  crop?: boolean; // Crops images to fill shape
+  border: number; // Sets border width around images
+  shadow: boolean; // Renders drop shadow behind images
+  crop: boolean; // Crops images to fill shape
   src?: string; // Image source field
-  radius?: number; // Image radius
+  radius: number; // Image radius
+  color: string; // Border color
 }
 
 const defaultOptions: PhotoConfig = {
@@ -34,6 +35,7 @@ const defaultOptions: PhotoConfig = {
   shadow: true,
   crop: true,
   radius: 20,
+  color: 'rgb(200, 200, 200)',
 };
 
 export const PHOTOS_LAYER_ID = 'photos';
@@ -100,7 +102,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
           shadow: config.shadow,
           stroke: new Stroke({
             width: config.border ?? 0,
-            color: '#000', // TODO set border color from theme?
+            color: theme.visualization.getColorByName(config.color),
           }),
           onload: () => {
             vectorLayer.changed(); // ensure vector layer is rendered properly after image load
@@ -183,6 +185,12 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
               max: 10,
             },
             defaultValue: defaultOptions.border,
+          })
+          .addColorPicker({
+            path: 'config.color',
+            name: 'Border color',
+            defaultValue: defaultOptions.color,
+            settings: [{ enableNamedColors: false }],
           })
           .addSliderInput({
             path: 'config.radius',
