@@ -339,7 +339,7 @@ func TestIntegrationFindByDashboardUid(t *testing.T) {
 
 	t.Run("returns error when public dashboard doesn't exist", func(t *testing.T) {
 		setup()
-		pubdash, err := publicdashboardStore.GetPublicDashboard(context.Background(), 9, "fake-dashboard-uid")
+		pubdash, err := publicdashboardStore.FindByDashboardUid(context.Background(), 9, "fake-dashboard-uid")
 		require.Error(t, err)
 		require.Nil(t, pubdash)
 		assert.Equal(t, ErrPublicDashboardNotFound, err)
