@@ -503,7 +503,7 @@ In the example below, I hid the value field and renamed Max and Min.
 
 ### Partition by values
 
-Available in experimental in Grafana Open Source, Enterprise, Cloud Pro, Cloud Advanced
+Available in experimental in Grafana Open Source, Enterprise, Cloud Pro, and Cloud Advanced.
 
 This transformation can help eliminate the need for multiple queries to the same datasource with different WHERE clauses when graphing multiple series. Consider a metrics SQL table with the following data:
 
