@@ -79,4 +79,5 @@ export interface FeatureToggles {
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
+  nestedFolders?: boolean;
 }
