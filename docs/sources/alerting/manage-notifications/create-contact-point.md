@@ -22,7 +22,7 @@ weight: 100
 
 Use contact points to define how your contacts are notified when an alert rule fires. You can create, edit, delete, and test a contact point.
 
-To add a contact point:
+## To add a contact point:
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. Click **Contact points** to open the page listing existing contact points.
@@ -35,13 +35,13 @@ To add a contact point:
 1. To add another contact point type, click **New contact point type** and repeat steps 6 through 8.
 1. Click **Save contact point** to save your changes.
 
-To edit a contact point:
+## To edit a contact point:
 
 1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
 1. Find the contact point to edit, then click **Edit** (pen icon).
 1. Make any changes and click **Save contact point**.
 
-To delete a contact point:
+## To delete a contact point:
 
 1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
 1. Find the contact point to delete, then click **Delete** (trash icon).
@@ -49,7 +49,7 @@ To delete a contact point:
 
 > **Note:** You cannot delete contact points that are in use by a notification policy. You will have to either delete the [notification policy]({{< relref "../notifications/" >}}) or update it to use another contact point.
 
-To test a contact point:
+## To test a contact point:
 
 1. In the Grafana side bar, hover your cursor over the **Alerting** (bell) icon and then click **Contact** points.
 1. Find the contact point to test, then click **Edit** (pen icon). You can also create a new contact point if needed.
