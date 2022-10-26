@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 103,
+  "id": 203,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -379,7 +379,7 @@
     "list": [
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "luna",
           "value": "luna"
         },
@@ -428,6 +428,6 @@
   "timezone": "",
   "title": "Datasource tests - Loki",
   "uid": "22mq9eSVz",
-  "version": 21,
+  "version": 1,
   "weekStart": ""
 }
