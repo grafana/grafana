@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginStore "github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -32,7 +31,7 @@ type ObjectReferenceResolver interface {
 	Resolve(ctx context.Context, ref *models.ObjectExternalReference) (ResolutionInfo, error)
 }
 
-func ProvideObjectReferenceResolver(ds datasources.DataSourceService, pluginStore pluginStore.Service) ObjectReferenceResolver {
+func ProvideObjectReferenceResolver(ds datasources.DataSourceService, pluginStore plugins.Store) ObjectReferenceResolver {
 	return &standardReferenceResolver{
 		pluginStore: pluginStore,
 		ds: dsCache{
@@ -43,7 +42,7 @@ func ProvideObjectReferenceResolver(ds datasources.DataSourceService, pluginStor
 }
 
 type standardReferenceResolver struct {
-	pluginStore pluginStore.Service
+	pluginStore plugins.Store
 	ds          dsCache
 }
 
