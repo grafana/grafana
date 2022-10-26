@@ -45,18 +45,18 @@ type metricsDataQuery struct {
 func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time, endTime time.Time, dynamicLabelsEnabled bool) ([]*CloudWatchQuery, error) {
 	var metricDataQueries = make(map[string]metricsDataQuery)
 	for _, query := range dataQueries {
-		var mdq metricsDataQuery
-		err := json.Unmarshal(query.JSON, &mdq)
+		var metricsDataQuery metricsDataQuery
+		err := json.Unmarshal(query.JSON, &metricsDataQuery)
 		if err != nil {
 			return nil, &QueryError{Err: err, RefID: query.RefID}
 		}
 
-		queryType := mdq.QueryType
+		queryType := metricsDataQuery.QueryType
 		if queryType != timeSeriesQuery && queryType != "" {
 			continue
 		}
 
-		metricDataQueries[query.RefID] = mdq
+		metricDataQueries[query.RefID] = metricsDataQuery
 	}
 
 	var result []*CloudWatchQuery
