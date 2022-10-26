@@ -116,27 +116,26 @@ async function getLabelNamesForCompletions(
   otherLabels: Label[],
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
+  const labels = new Set<string>();
+
   const labelNames = await dataProvider.getLabelNames(otherLabels);
-  const result: Completion[] = labelNames.map((text) => ({
+  labelNames.forEach((label) => {
+    labels.add(label);
+  });
+
+  if (addExtractedLabels) {
+    const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(otherLabels);
+    extractedLabelKeys.forEach((label) => {
+      labels.add(label);
+    });
+  }
+
+  return Array.from(labels).map((text) => ({
     type: 'LABEL_NAME',
     label: text,
     insertText: `${text}${suffix}`,
     triggerOnInsert,
   }));
-
-  if (addExtractedLabels) {
-    const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(otherLabels);
-    extractedLabelKeys.forEach((key) => {
-      result.push({
-        type: 'LABEL_NAME',
-        label: `${key}`,
-        insertText: `${key}${suffix}`,
-        triggerOnInsert,
-      });
-    });
-  }
-
-  return result;
 }
 
 async function getLabelNamesForSelectorCompletions(

@@ -29,7 +29,8 @@ const history = [
 
 const labelNames = ['place', 'source'];
 const labelValues = ['moon', 'luna', 'server\\1'];
-const extractedLabelKeys = ['extracted', 'label'];
+// Source is duplicated to test handling duplicated labels
+const extractedLabelKeys = ['extracted', 'label', 'source'];
 const otherLabels: Label[] = [
   {
     name: 'place',
@@ -104,6 +105,11 @@ const afterSelectorCompletions = [
   {
     insertText: '| unwrap label',
     label: 'unwrap label',
+    type: 'LINE_FILTER',
+  },
+  {
+    insertText: '| unwrap source',
+    label: 'unwrap source',
     type: 'LINE_FILTER',
   },
   {
