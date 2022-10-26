@@ -67,17 +67,21 @@ export const Reduce: FC<Props> = ({ labelWidth = 'auto', onChange, refIds, query
   };
 
   return (
-    <InlineFieldRow>
-      <InlineField label="Function" labelWidth={labelWidth}>
-        <Select options={reducerTypes} value={reducer} onChange={onSelectReducer} width={25} />
-      </InlineField>
-      <InlineField label="Input" labelWidth={labelWidth}>
-        <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
-      </InlineField>
-      <InlineField label="Mode" labelWidth={labelWidth}>
-        <Select onChange={onModeChanged} options={reducerMode} value={mode} width={25} />
-      </InlineField>
-      {replaceWithNumber()}
-    </InlineFieldRow>
+    <>
+      <InlineFieldRow>
+        <InlineField label="Function" labelWidth={labelWidth}>
+          <Select options={reducerTypes} value={reducer} onChange={onSelectReducer} width={20} />
+        </InlineField>
+        <InlineField label="Input" labelWidth={labelWidth}>
+          <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={'auto'} />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label="Mode" labelWidth={labelWidth}>
+          <Select onChange={onModeChanged} options={reducerMode} value={mode} width={25} />
+        </InlineField>
+        {replaceWithNumber()}
+      </InlineFieldRow>
+    </>
   );
 };
