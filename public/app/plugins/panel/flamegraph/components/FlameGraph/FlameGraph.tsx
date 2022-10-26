@@ -20,10 +20,10 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { CoreApp, DataFrame, Field, FieldType } from '@grafana/data';
+import { CoreApp, DataFrame, FieldType } from '@grafana/data';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { TooltipData, SelectedView, SampleUnit } from '../types';
+import { TooltipData, SelectedView } from '../types';
 
 import FlameGraphTooltip, { getTooltipData } from './FlameGraphTooltip';
 import { ItemWithStart } from './dataTransform';
@@ -41,6 +41,8 @@ type Props = {
   setTopLevelIndex: (level: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
+  xAxis: string[];
+  setAxisValues: (levelIndex: number, barIndex: number) => void;
   selectedView: SelectedView;
   style?: React.CSSProperties;
 };
@@ -57,6 +59,8 @@ const FlameGraph = ({
   setTopLevelIndex,
   setRangeMin,
   setRangeMax,
+  xAxis,
+  setAxisValues,
   selectedView,
 }: Props) => {
   const styles = getStyles(selectedView, app, flameGraphHeight);
@@ -114,6 +118,10 @@ const FlameGraph = ({
   );
 
   useEffect(() => {
+    setAxisValues(0, 0);
+  }, [setAxisValues]);
+
+  useEffect(() => {
     if (graphRef.current) {
       const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
       render(pixelsPerTick);
@@ -128,6 +136,7 @@ const FlameGraph = ({
           setTopLevelIndex(levelIndex);
           setRangeMin(levels[levelIndex][barIndex].start / totalTicks);
           setRangeMax((levels[levelIndex][barIndex].start + levels[levelIndex][barIndex].value) / totalTicks);
+          setAxisValues(levelIndex, barIndex);
         }
       };
 
@@ -167,28 +176,30 @@ const FlameGraph = ({
     setRangeMax,
     selectedView,
     valueField,
+    setAxisValues,
   ]);
 
   return (
     <>
-      <div className={styles.xAxis}>x-axis represents % of {getUnit(valueField!)}</div>
+      <div className={styles.xAxis}>
+        {xAxis?.length &&
+          xAxis.map((elem: string, idx: number) => {
+            return (
+              <div key={idx}>
+                {elem}
+                <div className={styles.tick} style={{ textAlign: idx === 0 ? 'left' : idx === 4 ? 'right' : 'center' }}>
+                  <span>|</span>
+                </div>
+              </div>
+            );
+          })}
+      </div>
       <div className={styles.graph} ref={sizeRef}>
         <canvas ref={graphRef} data-testid="flameGraph" />
         <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} showTooltip={showTooltip} />
       </div>
     </>
   );
-};
-
-const getUnit = (field: Field) => {
-  switch (field.config.unit) {
-    case SampleUnit.Bytes:
-      return 'RAM';
-    case SampleUnit.Nanoseconds:
-      return 'time';
-    default:
-      return 'count';
-  }
 };
 
 const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: number | undefined) => ({
@@ -203,7 +214,11 @@ const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: n
   `,
   xAxis: css`
     height: 30px;
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
+  `,
+  tick: css`
+    margin: -10px 0 0 0;
   `,
 });
 

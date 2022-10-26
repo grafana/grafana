@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame, DataFrameView, CoreApp } from '@grafana/data';
+import { DataFrame, DataFrameView, CoreApp, FieldType, getDisplayProcessor, createTheme } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH, PIXELS_PER_LEVEL } from '../constants';
@@ -27,8 +27,11 @@ const FlameGraphContainer = (props: Props) => {
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(1);
   const [search, setSearch] = useState('');
+  const [xAxis, setXAxis] = useState<string[]>([]);
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
+  const valueField =
+    props.data.fields.find((f) => f.name === 'value') ?? props.data.fields.find((f) => f.type === FieldType.number);
 
   // Transform dataFrame with nested set format to array of levels. Each level contains all the bars for a particular
   // level of the flame graph. We do this temporary as in the end we should be able to render directly by iterating
@@ -54,6 +57,25 @@ const FlameGraphContainer = (props: Props) => {
     }
   }, [selectedView, setSelectedView, containerWidth]);
 
+  const setAxisValues = useCallback(
+    (levelIndex: number, barIndex: number) => {
+      const processor = getDisplayProcessor({
+        field: valueField!,
+        theme: createTheme() /* theme does not matter for us here */,
+      });
+      const bar = levels[levelIndex][barIndex];
+      const barMultipliers = [0, 0.25, 0.5, 0.75, 1];
+      let axis = [];
+
+      for (let idx in barMultipliers) {
+        const displayValue = processor(bar.value * barMultipliers[idx]);
+        axis.push(displayValue.suffix ? `${displayValue.text} ${displayValue.suffix}` : displayValue.text);
+      }
+      setXAxis(axis);
+    },
+    [valueField, levels, setXAxis]
+  );
+
   return (
     <div ref={sizeRef} className={styles.container}>
       <FlameGraphHeader
@@ -66,6 +88,7 @@ const FlameGraphContainer = (props: Props) => {
         selectedView={selectedView}
         setSelectedView={setSelectedView}
         containerWidth={containerWidth}
+        setAxisValues={setAxisValues}
       />
 
       {selectedView !== SelectedView.FlameGraph && (
@@ -79,6 +102,7 @@ const FlameGraphContainer = (props: Props) => {
           setTopLevelIndex={setTopLevelIndex}
           setRangeMin={setRangeMin}
           setRangeMax={setRangeMax}
+          setAxisValues={setAxisValues}
         />
       )}
 
@@ -95,6 +119,8 @@ const FlameGraphContainer = (props: Props) => {
           setTopLevelIndex={setTopLevelIndex}
           setRangeMin={setRangeMin}
           setRangeMax={setRangeMax}
+          xAxis={xAxis}
+          setAxisValues={setAxisValues}
           selectedView={selectedView}
         />
       )}

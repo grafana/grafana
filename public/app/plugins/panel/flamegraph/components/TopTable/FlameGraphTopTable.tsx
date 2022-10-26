@@ -18,6 +18,7 @@ type Props = {
   setTopLevelIndex: (level: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
+  setAxisValues: (levelIndex: number, barIndex: number) => void;
 };
 
 const FlameGraphTopTable = ({
@@ -29,6 +30,7 @@ const FlameGraphTopTable = ({
   setTopLevelIndex,
   setRangeMin,
   setRangeMax,
+  setAxisValues,
 }: Props) => {
   const styles = useStyles2((theme) => getStyles(theme));
 
@@ -93,9 +95,10 @@ const FlameGraphTopTable = ({
         setTopLevelIndex(0);
         setRangeMin(0);
         setRangeMax(1);
+        setAxisValues(0, 0);
       }
     },
-    [search, setRangeMax, setRangeMin, setSearch, setTopLevelIndex]
+    [search, setAxisValues, setRangeMax, setRangeMin, setSearch, setTopLevelIndex]
   );
 
   const { headerGroups, rows, prepareRow } = useTable(options, useSortBy, useAbsoluteLayout);

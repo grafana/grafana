@@ -20,6 +20,7 @@ type Props = {
   setTopLevelIndex: (level: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
+  setAxisValues: (levelIndex: number, barIndex: number) => void;
 };
 
 const FlameGraphTopTableContainer = ({
@@ -32,6 +33,7 @@ const FlameGraphTopTableContainer = ({
   setTopLevelIndex,
   setRangeMin,
   setRangeMax,
+  setAxisValues,
 }: Props) => {
   const styles = useStyles2(() => getStyles(selectedView, app));
   const [topTable, setTopTable] = useState<TopTableData[]>();
@@ -115,6 +117,7 @@ const FlameGraphTopTableContainer = ({
                 setTopLevelIndex={setTopLevelIndex}
                 setRangeMin={setRangeMin}
                 setRangeMax={setRangeMax}
+                setAxisValues={setAxisValues}
               />
             )}
           </AutoSizer>
