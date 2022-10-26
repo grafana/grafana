@@ -141,6 +141,7 @@ func TestRequestParser(t *testing.T) {
 	t.Run("parseDimensions returns error for non-string type dimension value", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
+				RefID: "A",
 				JSON: json.RawMessage(`{
 				   "dimensions":{
 					  "InstanceId":3
@@ -153,7 +154,7 @@ func TestRequestParser(t *testing.T) {
 		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
 		require.Error(t, err)
 
-		assert.Equal(t, `failed to parse dimensions: unknown type as dimension value`, err.Error())
+		assert.Equal(t, `error parsing query "A", failed to parse dimensions: unknown type as dimension value`, err.Error())
 	})
 }
 
@@ -316,6 +317,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 	t.Run("returns error if period is invalid duration", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
+				RefID: "A",
 				JSON: json.RawMessage(`{
 				   "statistic":"Average",
 				   "period":"invalid"
@@ -324,7 +326,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 		}
 		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false)
 		require.Error(t, err)
-		assert.Equal(t, `failed to parse period as duration: time: invalid duration "invalid"`, err.Error())
+		assert.Equal(t, `error parsing query "A", failed to parse period as duration: time: invalid duration "invalid"`, err.Error())
 	})
 
 	t.Run("returns parsed duration in seconds", func(t *testing.T) {
@@ -594,32 +596,109 @@ func Test_ParseMetricDataQueries_ID(t *testing.T) {
 	})
 }
 
-func Test_ParseMetricDataQueries_sets_label_when_label_is_present_in_json_query(t *testing.T) {
-	query := []backend.DataQuery{
-		{
-			JSON: json.RawMessage(`{
+func Test_ParseMetricDataQueries_alias_migration_depends_on_label_presence_and_dynamicLabelsEnabled_boolean(t *testing.T) {
+	t.Run("when label already present and dynamicLabelsEnabled is false, then alias is not migrated and label is untouched", func(t *testing.T) {
+		query := []backend.DataQuery{
+			{
+				JSON: json.RawMessage(`{
 				   "refId":"A",
 				   "region":"us-east-1",
 				   "namespace":"ec2",
 				   "metricName":"CPUUtilization",
-				   "alias":"some alias",
+				   "alias":"{{period}} blah blah",
 				   "label":"some label",
 				   "dimensions":{"InstanceId":["test"]},
 				   "statistic":"Average",
 				   "period":"600",
 				   "hide":false
 				}`),
-		},
-	}
+			},
+		}
 
-	res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), true)
-	assert.NoError(t, err)
-	require.Len(t, res, 1)
-	require.NotNil(t, res[0])
-	assert.Equal(t, "some alias", res[0].Alias) // untouched
-	assert.Equal(t, "some label", res[0].Label)
+		res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), false)
+		assert.NoError(t, err)
+		require.Len(t, res, 1)
+		require.NotNil(t, res[0])
+		assert.Equal(t, "{{period}} blah blah", res[0].Alias)
+		assert.Equal(t, "some label", res[0].Label)
+	})
+
+	t.Run("when label not present and dynamicLabelsEnabled is false, then label is left blank", func(t *testing.T) {
+		query := []backend.DataQuery{
+			{
+				JSON: json.RawMessage(`{
+				   "refId":"A",
+				   "region":"us-east-1",
+				   "namespace":"ec2",
+				   "metricName":"CPUUtilization",
+				   "alias":"{{period}} blah blah",
+				   "dimensions":{"InstanceId":["test"]},
+				   "statistic":"Average",
+				   "period":"600",
+				   "hide":false
+				}`),
+			},
+		}
+
+		res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), false)
+		assert.NoError(t, err)
+		require.Len(t, res, 1)
+		require.NotNil(t, res[0])
+		assert.Equal(t, "{{period}} blah blah", res[0].Alias)
+		assert.Empty(t, res[0].Label)
+	})
+
+	t.Run("when label already present and dynamicLabelsEnabled is true, then alias is not migrated and label is untouched", func(t *testing.T) {
+		query := []backend.DataQuery{
+			{
+				JSON: json.RawMessage(`{
+				   "refId":"A",
+				   "region":"us-east-1",
+				   "namespace":"ec2",
+				   "metricName":"CPUUtilization",
+				   "alias":"{{period}} blah blah",
+				   "label":"some label",
+				   "dimensions":{"InstanceId":["test"]},
+				   "statistic":"Average",
+				   "period":"600",
+				   "hide":false
+				}`),
+			},
+		}
+
+		res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), true)
+		assert.NoError(t, err)
+		require.Len(t, res, 1)
+		require.NotNil(t, res[0])
+		assert.Equal(t, "{{period}} blah blah", res[0].Alias)
+		assert.Equal(t, "some label", res[0].Label)
+	})
+
+	t.Run("when label not present and dynamicLabelsEnabled is true, then alias is migrated to label", func(t *testing.T) {
+		query := []backend.DataQuery{
+			{
+				JSON: json.RawMessage(`{
+				   "refId":"A",
+				   "region":"us-east-1",
+				   "namespace":"ec2",
+				   "metricName":"CPUUtilization",
+				   "alias":"{{period}} blah blah",
+				   "dimensions":{"InstanceId":["test"]},
+				   "statistic":"Average",
+				   "period":"600",
+				   "hide":false
+				}`),
+			},
+		}
+
+		res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), true)
+		assert.NoError(t, err)
+		require.Len(t, res, 1)
+		require.NotNil(t, res[0])
+		assert.Equal(t, "{{period}} blah blah", res[0].Alias)
+		assert.Equal(t, "${PROP('Period')} blah blah", res[0].Label)
+	})
 }
-
 func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_creates_new_label(t *testing.T) {
 	testCases := map[string]struct {
 		inputAlias    string
@@ -815,11 +894,12 @@ func Test_ParseMetricDataQueries_statistics_and_query_type_validation_and_MatchE
 		actual, err := ParseMetricDataQueries(
 			[]backend.DataQuery{
 				{
-					JSON: []byte("{}"),
+					RefID: "A",
+					JSON:  []byte("{}"),
 				},
 			}, time.Now(), time.Now(), false)
 		assert.Error(t, err)
-		assert.Equal(t, "query must have either statistic or statistics field", err.Error())
+		assert.Equal(t, `error parsing query "A", query must have either statistic or statistics field`, err.Error())
 
 		assert.Nil(t, actual)
 	})

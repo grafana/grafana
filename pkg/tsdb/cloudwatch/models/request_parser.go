@@ -44,23 +44,24 @@ type metricsDataQuery struct {
 // The CloudWatchQuery has a 1 to 1 mapping to a query editor row
 func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time, endTime time.Time, dynamicLabelsEnabled bool) ([]*CloudWatchQuery, error) {
 	var metricDataQueries = make(map[string]metricsDataQuery)
-	for _, dataQuery := range dataQueries {
+	for _, query := range dataQueries {
 		var mdq metricsDataQuery
-		err := json.Unmarshal(dataQuery.JSON, &mdq)
+		err := json.Unmarshal(query.JSON, &mdq)
 		if err != nil {
-			return nil, &QueryError{Err: err, RefID: dataQuery.RefID}
+			return nil, &QueryError{Err: err, RefID: query.RefID}
 		}
 
-		if mdq.QueryType != timeSeriesQuery && mdq.QueryType != "" {
+		queryType := mdq.QueryType
+		if queryType != timeSeriesQuery && queryType != "" {
 			continue
 		}
 
-		metricDataQueries[dataQuery.RefID] = mdq
+		metricDataQueries[query.RefID] = mdq
 	}
 
-	var cloudWatchQueries []*CloudWatchQuery
+	var result []*CloudWatchQuery
 	for refId, mdq := range metricDataQueries {
-		cloudWatchQuery := CloudWatchQuery{
+		cwQuery := &CloudWatchQuery{
 			Alias:             mdq.Alias,
 			RefId:             refId,
 			Id:                mdq.Id,
@@ -73,16 +74,16 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 			Expression:        mdq.Expression,
 		}
 
-		if err := cloudWatchQuery.validateAndSetDefaults(refId, mdq, startTime, endTime); err != nil {
-			return nil, err
+		if err := cwQuery.validateAndSetDefaults(refId, mdq, startTime, endTime); err != nil {
+			return nil, &QueryError{Err: err, RefID: refId}
 		}
 
-		cloudWatchQuery.migrateStatisticsAndAlias(mdq, dynamicLabelsEnabled)
+		cwQuery.migrateStatisticsAndAlias(mdq, dynamicLabelsEnabled)
 
-		cloudWatchQueries = append(cloudWatchQueries, &cloudWatchQuery)
+		result = append(result, cwQuery)
 	}
 
-	return cloudWatchQueries, nil
+	return result, nil
 }
 
 func (q *CloudWatchQuery) migrateStatisticsAndAlias(query metricsDataQuery, dynamicLabelsEnabled bool) {
@@ -198,19 +199,6 @@ func getLabel(query metricsDataQuery, dynamicLabelsEnabled bool) string {
 	return result
 }
 
-func getRetainedPeriods(timeSince time.Duration) []int {
-	// See https://aws.amazon.com/about-aws/whats-new/2016/11/cloudwatch-extends-metrics-retention-and-new-user-interface/
-	if timeSince > time.Duration(455)*24*time.Hour {
-		return []int{21600, 86400}
-	} else if timeSince > time.Duration(63)*24*time.Hour {
-		return []int{3600, 21600, 86400}
-	} else if timeSince > time.Duration(15)*24*time.Hour {
-		return []int{300, 900, 3600, 21600, 86400}
-	} else {
-		return []int{60, 300, 900, 3600, 21600, 86400}
-	}
-}
-
 func getPeriod(query metricsDataQuery, startTime, endTime time.Time) (int, error) {
 	periodString := query.Period
 	var period int
@@ -237,6 +225,19 @@ func getPeriod(query metricsDataQuery, startTime, endTime time.Time) (int, error
 		}
 	}
 	return period, nil
+}
+
+func getRetainedPeriods(timeSince time.Duration) []int {
+	// See https://aws.amazon.com/about-aws/whats-new/2016/11/cloudwatch-extends-metrics-retention-and-new-user-interface/
+	if timeSince > time.Duration(455)*24*time.Hour {
+		return []int{21600, 86400}
+	} else if timeSince > time.Duration(63)*24*time.Hour {
+		return []int{3600, 21600, 86400}
+	} else if timeSince > time.Duration(15)*24*time.Hour {
+		return []int{300, 900, 3600, 21600, 86400}
+	} else {
+		return []int{60, 300, 900, 3600, 21600, 86400}
+	}
 }
 
 func parseDimensions(dimensions map[string]interface{}) (map[string][]string, error) {
