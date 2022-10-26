@@ -17,7 +17,7 @@ export function getVariablesDemo(): Scene {
       direction: 'row',
       children: [
         new SceneCanvasText({
-          text: 'Some text',
+          text: 'Some text with a variable: ${server} - ${pod}',
           fontSize: 40,
           align: 'center',
         }),
@@ -28,14 +28,14 @@ export function getVariablesDemo(): Scene {
         new QueryVariable({
           name: 'server',
           query: 'A.*',
-          value: '',
+          value: 'server-initial',
           text: '',
           options: [],
         }),
         new QueryVariable({
           name: 'pod',
           query: 'A.$server.*',
-          value: '',
+          value: 'pod-initial',
           text: '',
           options: [],
         }),
