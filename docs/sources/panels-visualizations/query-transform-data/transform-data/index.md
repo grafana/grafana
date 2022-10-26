@@ -514,9 +514,8 @@ This transformation can help eliminate the need for multiple queries to the same
 
 Prior to v9.3, if you wanted to plot a red trendline for US and a blue one for EU in the same TimeSeries panel, you would likely have to split this into two queries:
 
-`SELECT Time, Value FROM metrics WHERE Time > ‘2022-10-20’ AND Region=’US’`
-
-`SELECT Time, Value FROM metrics WHERE Time > ‘2022-10-20’ AND Region=’EU’`
+`SELECT Time, Value FROM metrics WHERE Time > '2022-10-20' AND Region='US'`<br>
+`SELECT Time, Value FROM metrics WHERE Time > '2022-10-20' AND Region='EU'`
 
 This also requires you to know ahead of time which regions actually exist in the metrics table.
 
