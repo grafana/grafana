@@ -37,7 +37,6 @@ type Store interface {
 	FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error)
 	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
 	FindDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error)
-	FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error)
 	FindAll(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error)
 	Save(ctx context.Context, cmd SavePublicDashboardConfigCommand) error
 	Update(ctx context.Context, cmd SavePublicDashboardConfigCommand) error

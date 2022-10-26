@@ -74,9 +74,9 @@ func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, dashboa
 
 // FindPublicDashboardAndDashboardByAccessToken Gets public dashboard via access token
 func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
-	pubdash, dash, err := pd.store.FindPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	ctxLogger := pd.log.FromContext(ctx)
 
+	pubdash, err := pd.store.FindByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -86,13 +86,18 @@ func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessTok
 		return nil, nil, ErrPublicDashboardNotFound
 	}
 
-	if dash == nil {
-		ctxLogger.Error("FindPublicDashboardAndDashboardByAccessToken: Dashboard not found", "accessToken", accessToken)
+	if !pubdash.IsEnabled {
+		ctxLogger.Error("FindPublicDashboardAndDashboardByAccessToken: Public dashboard is disabled", "accessToken", accessToken)
 		return nil, nil, ErrPublicDashboardNotFound
 	}
 
-	if !pubdash.IsEnabled {
-		ctxLogger.Error("FindPublicDashboardAndDashboardByAccessToken: Public dashboard is disabled", "accessToken", accessToken)
+	dash, err := pd.store.FindDashboard(ctx, pubdash.DashboardUid)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if dash == nil {
+		ctxLogger.Error("FindPublicDashboardAndDashboardByAccessToken: Dashboard not found", "accessToken", accessToken)
 		return nil, nil, ErrPublicDashboardNotFound
 	}
 
