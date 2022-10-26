@@ -1784,7 +1784,7 @@ describe('PrometheusDatasource2', () => {
       targets: [targetA, targetB],
       interval: '1s',
       panelId: '',
-    } as any as DataQueryRequest<PromQuery>;
+    } as unknown as DataQueryRequest<PromQuery>;
 
     const Aexemplars = ds.shouldRunExemplarQuery(targetA, request);
     const BExpemplars = ds.shouldRunExemplarQuery(targetB, request);
@@ -1938,7 +1938,7 @@ function getPrepareTargetsContext({
     panelId,
     app,
     ...queryOptions,
-  } as any as DataQueryRequest<PromQuery>;
+  } as unknown as DataQueryRequest<PromQuery>;
 
   const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
   if (languageProvider) {

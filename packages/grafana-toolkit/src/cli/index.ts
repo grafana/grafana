@@ -37,8 +37,15 @@ export const run = (includeInternalScripts = false) => {
 
     program
       .command('node-version-check')
-      .description('Verify node version')
-      .action(async (cmd) => {
+      .description('[deprecated] Verify node version')
+      .action(async () => {
+        chalk.yellow.bold(
+          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        );
+        console.log(
+          'if you were reliant on this command we recommend https://www.npmjs.com/package/check-node-version'
+        );
+
         await execTask(nodeVersionCheckerTask)({});
       });
 
@@ -59,8 +66,11 @@ export const run = (includeInternalScripts = false) => {
     program
       .command('searchTestData')
       .option('-c, --count <number_of_dashboards>', 'Specify number of dashboards')
-      .description('Setup test data for search')
+      .description('[deprecated] Setup test data for search')
       .action(async (cmd) => {
+        chalk.yellow.bold(
+          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        );
         await execTask(searchTestDataSetupTask)({ count: cmd.count });
       });
 

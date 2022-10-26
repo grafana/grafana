@@ -159,6 +159,10 @@ const (
 	// Run both old and streaming requests and log differences
 	FlagPrometheusStreamingJSONParserTest = "prometheusStreamingJSONParserTest"
 
+	// FlagNewDBLibrary
+	// Use jmoiron/sqlx rather than xorm for a few backend services
+	FlagNewDBLibrary = "newDBLibrary"
+
 	// FlagValidateDashboardsOnSave
 	// Validate dashboard JSON POSTed to api/dashboards/db
 	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
