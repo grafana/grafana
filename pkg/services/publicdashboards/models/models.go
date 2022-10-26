@@ -61,6 +61,10 @@ var (
 		Reason:     "bad Request",
 		StatusCode: 400,
 	}
+	ErrNoPanelQueriesFound = PublicDashboardErr{
+		Reason:     "failed to extract queries from panel",
+		StatusCode: 400,
+	}
 )
 
 type PublicDashboard struct {

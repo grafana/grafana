@@ -69,8 +69,11 @@ export const run = (includeInternalScripts = false) => {
     program
       .command('searchTestData')
       .option('-c, --count <number_of_dashboards>', 'Specify number of dashboards')
-      .description('Setup test data for search')
+      .description('[deprecated] Setup test data for search')
       .action(async (cmd) => {
+        chalk.yellow.bold(
+          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        );
         await execTask(searchTestDataSetupTask)({ count: cmd.count });
       });
 
