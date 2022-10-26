@@ -24,30 +24,72 @@ func ProvideStore(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureManage
 	return &sqlStore{db: db, log: log.New("folder-store"), cfg: cfg, fm: features}
 }
 
-func (s *sqlStore) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
+func (ss *sqlStore) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
+	// 	foldr := &folder.Folder{
+	// 		UID:         cmd.UID,
+	// 		Title:       cmd.Title,
+	// 		Description: cmd.Description,
+	// 	}
+	// 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+	// 		id, err := sess.Insert(foldr)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		foldr.ID = id
+	// 		return nil
+	// 	})
+	// 	return foldr, err
 	panic("not implemented")
 }
 
-func (s *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
+func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
+	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Exec("DELETE FROM dashboard WHERE folder_uid=? AND org_id=?", uid, orgID)
+		return err
+	})
+}
+
+func (ss *sqlStore) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		id, err := sess.ID(cmd.Folder.ID).AllCols().Update(cmd.Folder)
+		if err != nil {
+			return err
+		}
+		cmd.Folder.ID = id
+		return nil
+	})
+
+	return cmd.Folder, err
+}
+
+func (ss *sqlStore) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
 	panic("not implemented")
 }
 
-func (s *sqlStore) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
+func (ss *sqlStore) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
+	var foldr *folder.Folder
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		exists, err := sess.Where("uid=? OR id=? OR title=?", cmd.UID, cmd.ID, cmd.Title).Get(foldr)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return folder.ErrFolderNotFound
+		}
+		return nil
+	})
+	return foldr, err
+}
+
+func (ss *sqlStore) GetParents(ctx context.Context, cmd *folder.GetParentsQuery) ([]*folder.Folder, error) {
 	panic("not implemented")
 }
 
-func (s *sqlStore) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
-	panic("not implemented")
-}
-
-func (s *sqlStore) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
-	panic("not implemented")
-}
-
-func (s *sqlStore) GetParents(ctx context.Context, cmd *folder.GetParentsQuery) ([]*folder.Folder, error) {
-	panic("not implemented")
-}
-
-func (s *sqlStore) GetChildren(ctx context.Context, cmd *folder.GetTreeQuery) ([]*folder.Folder, error) {
-	panic("not implemented")
+func (ss *sqlStore) GetChildren(ctx context.Context, cmd *folder.GetTreeQuery) ([]*folder.Folder, error) {
+	var folders []*folder.Folder
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		err := sess.Where("parent_uid=?", cmd.UID).Find(folders)
+		return err
+	})
+	return folders, err
 }

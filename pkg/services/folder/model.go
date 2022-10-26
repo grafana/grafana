@@ -1,6 +1,7 @@
 package folder
 
 import (
+	"errors"
 	"time"
 )
 
@@ -8,6 +9,8 @@ const (
 	GeneralFolderUID     = "general"
 	MaxNestedFolderDepth = 8
 )
+
+var ErrFolderNotFound error = errors.New("folder not found")
 
 type Folder struct {
 	ID          int64
