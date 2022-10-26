@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azlog"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
 )
@@ -22,6 +22,7 @@ const escapeMultiExpr = `\$__escapeMulti\(('.*')\)`
 type kqlMacroEngine struct {
 	timeRange backend.TimeRange
 	query     backend.DataQuery
+	logger    log.Logger
 }
 
 //  Macros:
@@ -34,8 +35,10 @@ type kqlMacroEngine struct {
 //   - $__escapeMulti('\\vm\eth0\Total','\\vm\eth2\Total') -> @'\\vm\eth0\Total',@'\\vm\eth2\Total'
 
 // KqlInterpolate interpolates macros for Kusto Query Language (KQL) queries
-func KqlInterpolate(query backend.DataQuery, dsInfo types.DatasourceInfo, kql string, defaultTimeField ...string) (string, error) {
-	engine := kqlMacroEngine{}
+func KqlInterpolate(logger log.Logger, query backend.DataQuery, dsInfo types.DatasourceInfo, kql string, defaultTimeField ...string) (string, error) {
+	engine := kqlMacroEngine{
+		logger: logger,
+	}
 
 	defaultTimeFieldForAllDatasources := "timestamp"
 	if len(defaultTimeField) > 0 {
@@ -112,14 +115,14 @@ func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, arg
 			defaultInterval := time.Duration((to - from) / 60)
 			model, err := simplejson.NewJson(m.query.JSON)
 			if err != nil {
-				azlog.Warn("Unable to parse model from query", "JSON", m.query.JSON)
+				m.logger.Warn("Unable to parse model from query", "JSON", m.query.JSON)
 				it = defaultInterval
 			} else {
 				it, err = interval.GetIntervalFrom(&datasources.DataSource{
 					JsonData: simplejson.NewFromAny(dsInfo.JSONData),
 				}, model, defaultInterval)
 				if err != nil {
-					azlog.Warn("Unable to get interval from query", "model", model)
+					m.logger.Warn("Unable to get interval from query", "model", model)
 					it = defaultInterval
 				}
 			}

@@ -16,7 +16,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
@@ -25,8 +27,12 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
+var logger = log.New("tsdb.azuremonitor")
+
 func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, tracer tracing.Tracer) *Service {
-	proxy := &httpServiceProxy{}
+	proxy := &httpServiceProxy{
+		logger: logger,
+	}
 	executors := map[string]azDatasourceExecutor{
 		azureMonitor:       &metrics.AzureMonitorDatasource{Proxy: proxy},
 		azureLogAnalytics:  &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy},
@@ -159,7 +165,7 @@ func getAzureRoutes(cloud string, jsonData json.RawMessage) (map[string]types.Az
 }
 
 type azDatasourceExecutor interface {
-	ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error)
+	ExecuteTimeSeriesQuery(ctx context.Context, logger log.Logger, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error)
 	ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client)
 }
 
@@ -191,7 +197,7 @@ func (s *Service) newQueryMux() *datasource.QueryTypeMux {
 			if !ok {
 				return nil, fmt.Errorf("missing service for %s", dst)
 			}
-			return executor.ExecuteTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL, s.tracer)
+			return executor.ExecuteTimeSeriesQuery(ctx, logger, req.Queries, dsInfo, service.HTTPClient, service.URL, s.tracer)
 		})
 	}
 	return mux
