@@ -101,10 +101,10 @@ func TestGetPublicDashboard(t *testing.T) {
 				store: &fakeStore,
 			}
 
-			fakeStore.On("GetPublicDashboardAndDashboard", mock.Anything, mock.Anything).
+			fakeStore.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.Anything).
 				Return(test.StoreResp.pd, test.StoreResp.d, test.StoreResp.err)
 
-			pdc, dash, err := service.GetPublicDashboardAndDashboard(context.Background(), test.AccessToken)
+			pdc, dash, err := service.FindPublicDashboardAndDashboardByAccessToken(context.Background(), test.AccessToken)
 			if test.ErrResp != nil {
 				assert.Error(t, test.ErrResp, err)
 			} else {
@@ -146,10 +146,10 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
+		_, err := service.Save(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		pubdash, err := service.GetPublicDashboard(context.Background(), dashboard.OrgId, dashboard.Uid)
+		pubdash, err := service.FindByDashboardUid(context.Background(), dashboard.OrgId, dashboard.Uid)
 		require.NoError(t, err)
 
 		// DashboardUid/OrgId/CreatedBy set by the command, not parameters
@@ -157,7 +157,7 @@ func TestSavePublicDashboard(t *testing.T) {
 		assert.Equal(t, dashboard.OrgId, pubdash.OrgId)
 		assert.Equal(t, dto.UserId, pubdash.CreatedBy)
 		assert.Equal(t, dto.PublicDashboard.AnnotationsEnabled, pubdash.AnnotationsEnabled)
-		// IsEnabled set by parameters
+		// ExistsEnabledByDashboardUid set by parameters
 		assert.Equal(t, dto.PublicDashboard.IsEnabled, pubdash.IsEnabled)
 		// CreatedAt set to non-zero time
 		assert.NotEqual(t, &time.Time{}, pubdash.CreatedAt)
@@ -190,10 +190,10 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
+		_, err := service.Save(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		pubdash, err := service.GetPublicDashboard(context.Background(), dashboard.OrgId, dashboard.Uid)
+		pubdash, err := service.FindByDashboardUid(context.Background(), dashboard.OrgId, dashboard.Uid)
 		require.NoError(t, err)
 		assert.Equal(t, defaultPubdashTimeSettings, pubdash.TimeSettings)
 	})
@@ -221,7 +221,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
+		_, err := service.Save(context.Background(), SignedInUser, dto)
 		require.Error(t, err)
 	})
 
@@ -236,10 +236,10 @@ func TestSavePublicDashboard(t *testing.T) {
 		}
 
 		publicDashboardStore := &FakePublicDashboardStore{}
-		publicDashboardStore.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil)
-		publicDashboardStore.On("GetPublicDashboardByUid", mock.Anything, mock.Anything).Return(nil, nil)
-		publicDashboardStore.On("GetPublicDashboardByAccessToken", mock.Anything, mock.Anything).Return(pubdash, nil)
-		publicDashboardStore.On("GenerateNewPublicDashboardUid", mock.Anything).Return("an-uid", nil)
+		publicDashboardStore.On("FindDashboard", mock.Anything, mock.Anything).Return(dashboard, nil)
+		publicDashboardStore.On("Find", mock.Anything, mock.Anything).Return(nil, nil)
+		publicDashboardStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(pubdash, nil)
+		publicDashboardStore.On("NewPublicDashboardUid", mock.Anything).Return("an-uid", nil)
 
 		service := &PublicDashboardServiceImpl{
 			log:   log.New("test.logger"),
@@ -257,11 +257,11 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
+		_, err := service.Save(context.Background(), SignedInUser, dto)
 
 		require.Error(t, err)
 		require.Equal(t, err, ErrPublicDashboardFailedGenerateAccessToken)
-		publicDashboardStore.AssertNotCalled(t, "SavePublicDashboard")
+		publicDashboardStore.AssertNotCalled(t, "Save")
 	})
 }
 
@@ -288,7 +288,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		savedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
+		savedPubdash, err := service.Save(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
@@ -312,7 +312,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 		// Since the dto.PublicDashboard has a uid, this will call
 		// service.updatePublicDashboard
-		updatedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
+		updatedPubdash, err := service.Save(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// don't get updated
@@ -353,7 +353,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 		// Since the dto.PublicDashboard has a uid, this will call
 		// service.updatePublicDashboard
-		savedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
+		savedPubdash, err := service.Save(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
@@ -373,7 +373,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		updatedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
+		updatedPubdash, err := service.Save(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		assert.Equal(t, &TimeSettings{}, updatedPubdash.TimeSettings)
@@ -764,7 +764,7 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 	}
 
 	store := NewFakePublicDashboardStore(t)
-	store.On("ListPublicDashboards", mock.Anything, mock.Anything).
+	store.On("FindAll", mock.Anything, mock.Anything).
 		Return(mockedDashboards, nil)
 
 	ac := tests.SetupMockAccesscontrol(t,
@@ -784,16 +784,16 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ac.EvaluateFunc = tt.evaluateFunc
 
-			got, err := pd.ListPublicDashboards(tt.args.ctx, tt.args.u, tt.args.orgId)
-			if !tt.wantErr(t, err, fmt.Sprintf("ListPublicDashboards(%v, %v, %v)", tt.args.ctx, tt.args.u, tt.args.orgId)) {
+			got, err := pd.FindAll(tt.args.ctx, tt.args.u, tt.args.orgId)
+			if !tt.wantErr(t, err, fmt.Sprintf("FindAll(%v, %v, %v)", tt.args.ctx, tt.args.u, tt.args.orgId)) {
 				return
 			}
-			assert.Equalf(t, tt.want, got, "ListPublicDashboards(%v, %v, %v)", tt.args.ctx, tt.args.u, tt.args.orgId)
+			assert.Equalf(t, tt.want, got, "FindAll(%v, %v, %v)", tt.args.ctx, tt.args.u, tt.args.orgId)
 		})
 	}
 }
 
-func TestPublicDashboardServiceImpl_GenerateNewPublicDashboardUid(t *testing.T) {
+func TestPublicDashboardServiceImpl_NewPublicDashboardUid(t *testing.T) {
 	mockedDashboard := &PublicDashboard{
 		IsEnabled:          true,
 		AnnotationsEnabled: false,
@@ -835,29 +835,29 @@ func TestPublicDashboardServiceImpl_GenerateNewPublicDashboardUid(t *testing.T) 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			store := NewFakePublicDashboardStore(t)
-			store.On("GetPublicDashboardByUid", mock.Anything, mock.Anything).
+			store.On("Find", mock.Anything, mock.Anything).
 				Return(tt.mockStore.PublicDashboard, tt.mockStore.Err)
 
 			pd := &PublicDashboardServiceImpl{store: store}
 
-			got, err := pd.GenerateNewPublicDashboardUid(tt.args.ctx)
-			if !tt.wantErr(t, err, fmt.Sprintf("GenerateNewPublicDashboardUid(%v)", tt.args.ctx)) {
+			got, err := pd.NewPublicDashboardUid(tt.args.ctx)
+			if !tt.wantErr(t, err, fmt.Sprintf("NewPublicDashboardUid(%v)", tt.args.ctx)) {
 				return
 			}
 
 			if err == nil {
-				assert.NotEqual(t, got, tt.want, "GenerateNewPublicDashboardUid(%v)", tt.args.ctx)
-				assert.True(t, util.IsValidShortUID(got), "GenerateNewPublicDashboardUid(%v)", tt.args.ctx)
-				store.AssertNumberOfCalls(t, "GetPublicDashboardByUid", 1)
+				assert.NotEqual(t, got, tt.want, "NewPublicDashboardUid(%v)", tt.args.ctx)
+				assert.True(t, util.IsValidShortUID(got), "NewPublicDashboardUid(%v)", tt.args.ctx)
+				store.AssertNumberOfCalls(t, "Find", 1)
 			} else {
-				store.AssertNumberOfCalls(t, "GetPublicDashboardByUid", 3)
+				store.AssertNumberOfCalls(t, "Find", 3)
 				assert.True(t, errors.Is(err, ErrPublicDashboardFailedGenerateUniqueUid))
 			}
 		})
 	}
 }
 
-func TestPublicDashboardServiceImpl_GenerateNewPublicDashboardAccessToken(t *testing.T) {
+func TestPublicDashboardServiceImpl_NewPublicDashboardAccessToken(t *testing.T) {
 	mockedDashboard := &PublicDashboard{
 		IsEnabled:          true,
 		AnnotationsEnabled: false,
@@ -899,22 +899,22 @@ func TestPublicDashboardServiceImpl_GenerateNewPublicDashboardAccessToken(t *tes
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			store := NewFakePublicDashboardStore(t)
-			store.On("GetPublicDashboardByAccessToken", mock.Anything, mock.Anything).
+			store.On("FindByAccessToken", mock.Anything, mock.Anything).
 				Return(tt.mockStore.PublicDashboard, tt.mockStore.Err)
 
 			pd := &PublicDashboardServiceImpl{store: store}
 
-			got, err := pd.GenerateNewPublicDashboardAccessToken(tt.args.ctx)
-			if !tt.wantErr(t, err, fmt.Sprintf("GenerateNewPublicDashboardAccessToken(%v)", tt.args.ctx)) {
+			got, err := pd.NewPublicDashboardAccessToken(tt.args.ctx)
+			if !tt.wantErr(t, err, fmt.Sprintf("NewPublicDashboardAccessToken(%v)", tt.args.ctx)) {
 				return
 			}
 
 			if err == nil {
-				assert.NotEqual(t, got, tt.want, "GenerateNewPublicDashboardAccessToken(%v)", tt.args.ctx)
-				assert.True(t, tokens.IsValidAccessToken(got), "GenerateNewPublicDashboardAccessToken(%v)", tt.args.ctx)
-				store.AssertNumberOfCalls(t, "GetPublicDashboardByAccessToken", 1)
+				assert.NotEqual(t, got, tt.want, "NewPublicDashboardAccessToken(%v)", tt.args.ctx)
+				assert.True(t, tokens.IsValidAccessToken(got), "NewPublicDashboardAccessToken(%v)", tt.args.ctx)
+				store.AssertNumberOfCalls(t, "FindByAccessToken", 1)
 			} else {
-				store.AssertNumberOfCalls(t, "GetPublicDashboardByAccessToken", 3)
+				store.AssertNumberOfCalls(t, "FindByAccessToken", 3)
 				assert.True(t, errors.Is(err, ErrPublicDashboardFailedGenerateAccessToken))
 			}
 		})
