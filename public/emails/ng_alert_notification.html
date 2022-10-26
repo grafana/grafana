@@ -165,7 +165,7 @@
                     {{ if eq (.GroupLabels.SortedPairs.Names | join ",") "alertname,grafana_folder" }}
                     <tr>
                       <td align="left" style="font-size:0px;padding:0;word-break:break-word;">
-                        <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;">
+                        <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">
                           <h2>📁 {{ .GroupLabels.grafana_folder }} &rsaquo; {{ .GroupLabels.alertname }}</h2>
                         </div>
                       </td>
@@ -173,7 +173,7 @@
                     {{ else }}
                     <tr>
                       <td align="left" style="font-size:0px;padding:0;word-break:break-word;">
-                        <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;">
+                        <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">
                           <h2> 📁 Grouped by&nbsp; </h2>
                           <mj-raw>
                             {{ range .GroupLabels.SortedPairs }}
@@ -255,7 +255,7 @@
                   <tbody>
                     <tr>
                       <td align="left" style="font-size:0px;padding:0;word-break:break-word;">
-                        <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;">
+                        <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">
                           <h3>🔥 {{ .Alerts.Firing | len }} firing instances</h3>
                         </div>
                       </td>
@@ -309,7 +309,7 @@
                             <tbody>
                               <tr>
                                 <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
-                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:center;color:#FFFFFF;"><strong>{{ .Labels.alertname }}</strong></div>
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:center;color:#FFFFFF;"><strong>{{ .Labels.alertname }}</strong></div>
                                 </td>
                               </tr>
                             </tbody>
@@ -430,18 +430,18 @@
                               {{ if .Annotations.summary }}
                               <tr>
                                 <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;"><strong>Summary</strong></div>
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Summary</strong></div>
                                 </td>
                               </tr>
                               <tr>
                                 <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;">{{- .Annotations.summary -}}</div>
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">{{- .Annotations.summary -}}</div>
                                 </td>
                               </tr>
                               {{ end }}{{ if .Annotations.description }}
                               <tr>
                                 <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;"><strong>Description</strong></div>
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Description</strong></div>
                                 </td>
                               </tr>
                               <tr>
@@ -481,7 +481,7 @@
                             <tbody>
                               <tr>
                                 <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;"><strong>Values</strong></div>
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Values</strong></div>
                                 </td>
                               </tr>
                             </tbody>
@@ -509,7 +509,7 @@
                                     <tbody>
                                       <tr>
                                         <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                          <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;">
+                                          <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">
                                             <mj-raw>
                                               {{ range $refID, $value := .Values }}
                                             </mj-raw>
@@ -547,7 +547,7 @@
                               {{ if .Labels.SortedPairs }}
                               <tr>
                                 <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;"><strong>Labels</strong></div>
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Labels</strong></div>
                                 </td>
                               </tr>
                               <tr>
@@ -573,7 +573,7 @@
                               {{ end }}{{ if .Annotations.SortedPairs }}
                               <tr>
                                 <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;"><strong>Annotations</strong></div>
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Annotations</strong></div>
                                 </td>
                               </tr>
                               <tr>
@@ -720,7 +720,7 @@
                             <tbody>
                               <tr>
                                 <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#91929e;">Observed <strong>{{ ago .StartsAt }}</strong> before this notification was delivered, at <strong>{{ .StartsAt }}</strong></div>
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#91929e;">Observed <strong>{{ ago .StartsAt }}</strong> before this notification was delivered, at <strong>{{ .StartsAt }}</strong></div>
                                 </td>
                               </tr>
                             </tbody>
@@ -764,7 +764,7 @@
                   <tbody>
                     <tr>
                       <td align="left" style="font-size:0px;padding:0;word-break:break-word;">
-                        <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;">
+                        <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">
                           <h3>✅ {{ .Alerts.Resolved | len }} resolved instances</h3>
                         </div>
                       </td>
@@ -818,7 +818,7 @@
                             <tbody>
                               <tr>
                                 <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
-                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:center;color:#FFFFFF;"><strong>{{ .Labels.alertname }}</strong></div>
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:center;color:#FFFFFF;"><strong>{{ .Labels.alertname }}</strong></div>
                                 </td>
                               </tr>
                             </tbody>
@@ -939,18 +939,18 @@
                               {{ if .Annotations.summary }}
                               <tr>
                                 <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;"><strong>Summary</strong></div>
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Summary</strong></div>
                                 </td>
                               </tr>
                               <tr>
                                 <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;">{{- .Annotations.summary -}}</div>
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">{{- .Annotations.summary -}}</div>
                                 </td>
                               </tr>
                               {{ end }}{{ if .Annotations.description }}
                               <tr>
                                 <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;"><strong>Description</strong></div>
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Description</strong></div>
                                 </td>
                               </tr>
                               <tr>
@@ -990,7 +990,7 @@
                             <tbody>
                               <tr>
                                 <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;"><strong>Values</strong></div>
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Values</strong></div>
                                 </td>
                               </tr>
                             </tbody>
@@ -1018,7 +1018,7 @@
                                     <tbody>
                                       <tr>
                                         <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                          <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;">
+                                          <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">
                                             <mj-raw>
                                               {{ range $refID, $value := .Values }}
                                             </mj-raw>
@@ -1056,7 +1056,7 @@
                               {{ if .Labels.SortedPairs }}
                               <tr>
                                 <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;"><strong>Labels</strong></div>
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Labels</strong></div>
                                 </td>
                               </tr>
                               <tr>
@@ -1082,7 +1082,7 @@
                               {{ end }}{{ if .Annotations.SortedPairs }}
                               <tr>
                                 <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#FFFFFF;"><strong>Annotations</strong></div>
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Annotations</strong></div>
                                 </td>
                               </tr>
                               <tr>
@@ -1229,7 +1229,7 @@
                             <tbody>
                               <tr>
                                 <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#91929e;">Observed <strong>{{ ago .StartsAt }}</strong> before this notification was delivered, at <strong>{{ .StartsAt }}</strong></div>
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#91929e;">Observed <strong>{{ ago .StartsAt }}</strong> before this notification was delivered, at <strong>{{ .StartsAt }}</strong></div>
                                 </td>
                               </tr>
                             </tbody>
@@ -1273,7 +1273,7 @@
                   <tbody>
                     <tr>
                       <td align="center" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:center;color:#FFFFFF;">&copy; {{ now | date "2006" }} Grafana Labs. Sent by <a href="{{ .AppUrl }}" style="color: #6E9FFF;">Grafana v{{ .BuildVersion }}</a>.</div>
+                        <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:center;color:#FFFFFF;">&copy; {{ now | date "2006" }} Grafana Labs. Sent by <a href="{{ .AppUrl }}" style="color: #6E9FFF;">Grafana v{{ .BuildVersion }}</a>.</div>
                       </td>
                     </tr>
                   </tbody>

@@ -15,14 +15,14 @@
         <mj-text>
           <h2>Hi {{ .Name }},</h2>
         </mj-text>
-        <mj-text line-height="1.5">
+        <mj-text>
           Welcome! Ready to start building some beautiful metric and analytic dashboards?
         </mj-text>
         <mj-text>
           If you are new to Grafana, refer to the <a href="https://grafana.com/docs/grafana/latest/getting-started/getting-started/">Getting started with Grafana</a>
           guide.
         </mj-text>
-        <mj-button href="https://grafana.com/docs/grafana/latest/getting-started/getting-started/" background-color="#3D71D9">
+        <mj-button href="https://grafana.com/docs/grafana/latest/getting-started/getting-started/">
           Check out our getting started guide
         </mj-button>
         <mj-text>

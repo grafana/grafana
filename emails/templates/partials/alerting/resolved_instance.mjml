@@ -13,7 +13,7 @@
     {{ if gt (len .GeneratorURL) 0 }}
   </mj-raw>
   <mj-column vertical-align="middle">
-    <mj-button background-color="#3D71D9" href="{{ .GeneratorURL }}" padding="0" inner-padding="5px 12px">
+    <mj-button href="{{ .GeneratorURL }}" padding="0" inner-padding="5px 12px">
       View alert
     </mj-button>
   </mj-column>

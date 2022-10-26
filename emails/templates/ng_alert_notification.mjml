@@ -21,7 +21,7 @@
     <mj-wrapper background-color="#22252b" border="1px solid #2f3037" padding="0">
       <mj-section padding="0">
         <mj-column>
-          <mj-text align="left" line-height="1.5">
+          <mj-text align="left">
             <mj-raw>
               {{ range $line := (splitList "\n" .Message) }}
             </mj-raw>

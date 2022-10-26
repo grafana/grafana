@@ -15,10 +15,10 @@
         <mj-text>
           <h2>You're invited to join {{ .OrgName }}</h2>
         </mj-text>
-        <mj-text line-height="1.5">
+        <mj-text>
           You've been invited to join the <strong>{{ .OrgName }}</strong> organization by <strong>{{ .InvitedBy }}</strong>. To accept your invitation and join the team, please click the link below:
         </mj-text>
-        <mj-button align="left" background-color="#3D71D9" href="{{ .LinkUrl }}">
+        <mj-button align="left" href="{{ .LinkUrl }}">
           Accept Invitation
         </mj-button>
         <mj-text>

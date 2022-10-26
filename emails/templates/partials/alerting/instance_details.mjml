@@ -47,7 +47,7 @@
     <mj-text>
       <strong>Description</strong>
     </mj-text>
-    <mj-text line-height="1.5">
+    <mj-text>
       <mj-raw>
         {{ range $line := (splitList "\n" .Annotations.description) }}
       </mj-raw>
@@ -157,28 +157,28 @@
 <mj-section text-align="left" border-top="1px solid #2f3037" padding="15px 0px">
   <mj-raw>{{ if .SilenceURL }}</mj-raw>
   <mj-column>
-    <mj-button vertical-align="middle" background-color="#3D71D9" href="{{ .SilenceURL }}" padding="0" inner-padding="5px 12px">
+    <mj-button vertical-align="middle" href="{{ .SilenceURL }}" padding="0" inner-padding="5px 12px">
       Silence
     </mj-button>
   </mj-column>
   <mj-raw>{{ end }}</mj-raw>
   <mj-raw>{{ if .Annotations.runbook_url }}</mj-raw>
   <mj-column>
-    <mj-button background-color="#3D71D9" href="{{ .Annotations.runbook_url }}" padding="0" inner-padding="5px 12px">
+    <mj-button href="{{ .Annotations.runbook_url }}" padding="0" inner-padding="5px 12px">
       View runbook
     </mj-button>
   </mj-column>
   <mj-raw>{{ end }}</mj-raw>
   <mj-raw>{{ if .DashboardURL }}</mj-raw>
   <mj-column>
-    <mj-button background-color="#3D71D9" href="{{ .DashboardURL }}" padding="0" inner-padding="5px 12px">
+    <mj-button href="{{ .DashboardURL }}" padding="0" inner-padding="5px 12px">
       View dashboard
     </mj-button>
   </mj-column>
   <mj-raw>{{ end }}</mj-raw>
   <mj-raw>{{ if .PanelURL }}</mj-raw>
   <mj-column>
-    <mj-button background-color="#3D71D9" href="{{ .PanelURL }}" padding="0" inner-padding="5px 12px">
+    <mj-button href="{{ .PanelURL }}" padding="0" inner-padding="5px 12px">
       View panel
     </mj-button>
   </mj-column>
