@@ -103,7 +103,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
             color: '#000', // TODO set border color from theme?
           }),
           onload: () => {
-            map.render(); // ensure map is rendered properly after image load
+            vectorLayer.changed(); // ensure vector layer is rendered properly after image load
           },
         }),
       });
