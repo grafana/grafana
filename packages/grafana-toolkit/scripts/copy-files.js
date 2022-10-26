@@ -4,10 +4,11 @@ const path = require('path');
 function copyFiles(files, cwd, distDir) {
   for (const file of files) {
     const basedir = path.dirname(`${distDir}/${file}`);
+    const name = file.replace('.generated', '');
     if (!fs.existsSync(basedir)) {
       fs.mkdirSync(basedir, { recursive: true });
     }
-    fs.copyFileSync(`${cwd}/${file}`, `${distDir}/${file}`);
+    fs.copyFileSync(`${cwd}/${file}`, `${distDir}/${name}`);
   }
 }
 const configFilesToCopy = [
