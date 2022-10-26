@@ -25,20 +25,6 @@ func ProvideStore(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureManage
 }
 
 func (ss *sqlStore) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
-	// 	foldr := &folder.Folder{
-	// 		UID:         cmd.UID,
-	// 		Title:       cmd.Title,
-	// 		Description: cmd.Description,
-	// 	}
-	// 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-	// 		id, err := sess.Insert(foldr)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		foldr.ID = id
-	// 		return nil
-	// 	})
-	// 	return foldr, err
 	panic("not implemented")
 }
 
@@ -51,19 +37,20 @@ func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
 
 func (ss *sqlStore) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		id, err := sess.ID(cmd.Folder.ID).AllCols().Update(cmd.Folder)
-		if err != nil {
-			return err
-		}
-		cmd.Folder.ID = id
-		return nil
+		_, err := sess.ID(cmd.Folder.ID).AllCols().Update(cmd.Folder)
+		return err
 	})
 
 	return cmd.Folder, err
 }
 
 func (ss *sqlStore) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
-	panic("not implemented")
+	cmd.Folder.ParentUID = cmd.NewParentUID
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.ID(cmd.Folder.ID).Update(cmd.Folder)
+		return err
+	})
+	return cmd.Folder, err
 }
 
 func (ss *sqlStore) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {

@@ -64,8 +64,9 @@ type UpdateFolderCommand struct {
 // MoveFolderCommand captures the information required by the folder service
 // to move a folder.
 type MoveFolderCommand struct {
-	UID          string `json:"uid"`
-	NewParentUID string `json:"new_parent_uid"`
+	Folder       *Folder `json:"folder"`
+	UID          string  `json:"uid"`
+	NewParentUID string  `json:"new_parent_uid"`
 }
 
 // DeleteFolderCommand captures the information required by the folder service
