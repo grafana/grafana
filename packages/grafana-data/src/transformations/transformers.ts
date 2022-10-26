@@ -6,6 +6,7 @@ import { filterFieldsTransformer, filterFramesTransformer } from './transformers
 import { filterFieldsByNameTransformer } from './transformers/filterByName';
 import { filterFramesByRefIdTransformer } from './transformers/filterByRefId';
 import { filterByValueTransformer } from './transformers/filterByValue';
+import { filterFieldsByValuesTransformer } from './transformers/filterFieldByValue';
 import { groupByTransformer } from './transformers/groupBy';
 import { groupingToMatrixTransformer } from './transformers/groupingToMatrix';
 import { histogramTransformer } from './transformers/histogram';
@@ -26,6 +27,7 @@ export const standardTransformers = {
   noopTransformer,
   filterFieldsTransformer,
   filterFieldsByNameTransformer,
+  filterFieldsByValuesTransformer,
   filterFramesTransformer,
   filterFramesByRefIdTransformer,
   filterByValueTransformer,

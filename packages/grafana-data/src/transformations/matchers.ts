@@ -11,6 +11,7 @@ import {
 import { Registry } from '../utils/Registry';
 
 import { getFieldTypeMatchers } from './matchers/fieldTypeMatcher';
+import { getFieldValuesMatchers } from './matchers/fieldValuesMatcher';
 import { getFieldNameMatchers, getFrameNameMatchers } from './matchers/nameMatcher';
 import { getFieldPredicateMatchers, getFramePredicateMatchers } from './matchers/predicates';
 import { getRefIdMatchers } from './matchers/refIdMatcher';
@@ -31,6 +32,7 @@ export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
     ...getFieldTypeMatchers(), // by type
     ...getFieldNameMatchers(), // by name
     ...getSimpleFieldMatchers(), // first
+    ...getFieldValuesMatchers(), //All values satisfy predicate
   ];
 });
 

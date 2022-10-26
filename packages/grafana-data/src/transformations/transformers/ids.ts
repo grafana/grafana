@@ -14,6 +14,7 @@ export enum DataTransformerID {
   labelsToFields = 'labelsToFields',
   filterFields = 'filterFields',
   filterFieldsByName = 'filterFieldsByName',
+  filterFieldsByValue = 'filterFieldsByValue',
   filterFrames = 'filterFrames',
   filterByRefId = 'filterByRefId',
   renameByRegex = 'renameByRegex',

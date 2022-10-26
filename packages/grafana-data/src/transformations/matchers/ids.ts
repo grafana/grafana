@@ -26,6 +26,7 @@ export enum FieldMatcherID {
   byFrameRefID = 'byFrameRefID',
   // byIndex = 'byIndex',
   // byLabel = 'byLabel',
+  allValues = 'allValues',
 }
 
 /**
