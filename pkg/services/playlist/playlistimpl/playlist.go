@@ -19,7 +19,7 @@ func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver obje
 	var sqlstore store
 
 	// 🐢🐢🐢 pick the store
-	if toggles.IsEnabled("newDBLibrary") { // hymmm not a registered feature flag
+	if toggles.IsEnabled(featuremgmt.FlagNewDBLibrary) { // hymmm not a registered feature flag
 		sqlstore = &sqlxStore{
 			sess: db.GetSqlxSession(),
 		}

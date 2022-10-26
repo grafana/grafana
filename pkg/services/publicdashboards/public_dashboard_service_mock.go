@@ -23,8 +23,8 @@ type FakePublicDashboardService struct {
 	mock.Mock
 }
 
-// GenerateNewPublicDashboardAccessToken provides a mock function with given fields: ctx
-func (_m *FakePublicDashboardService) GenerateNewPublicDashboardAccessToken(ctx context.Context) (string, error) {
+// NewPublicDashboardAccessToken provides a mock function with given fields: ctx
+func (_m *FakePublicDashboardService) NewPublicDashboardAccessToken(ctx context.Context) (string, error) {
 	ret := _m.Called(ctx)
 
 	var r0 string
@@ -45,7 +45,7 @@ func (_m *FakePublicDashboardService) GenerateNewPublicDashboardAccessToken(ctx 
 }
 
 // GenerateNewPublicDashboardUid provides a mock function with given fields: ctx
-func (_m *FakePublicDashboardService) GenerateNewPublicDashboardUid(ctx context.Context) (string, error) {
+func (_m *FakePublicDashboardService) NewPublicDashboardUid(ctx context.Context) (string, error) {
 	ret := _m.Called(ctx)
 
 	var r0 string
@@ -66,7 +66,7 @@ func (_m *FakePublicDashboardService) GenerateNewPublicDashboardUid(ctx context.
 }
 
 // GetAnnotations provides a mock function with given fields: ctx, reqDTO, accessToken
-func (_m *FakePublicDashboardService) GetAnnotations(ctx context.Context, reqDTO models.AnnotationsQueryDTO, accessToken string) ([]models.AnnotationEvent, error) {
+func (_m *FakePublicDashboardService) FindAnnotations(ctx context.Context, reqDTO models.AnnotationsQueryDTO, accessToken string) ([]models.AnnotationEvent, error) {
 	ret := _m.Called(ctx, reqDTO, accessToken)
 
 	var r0 []models.AnnotationEvent
@@ -88,8 +88,8 @@ func (_m *FakePublicDashboardService) GetAnnotations(ctx context.Context, reqDTO
 	return r0, r1
 }
 
-// GetDashboard provides a mock function with given fields: ctx, dashboardUid
-func (_m *FakePublicDashboardService) GetDashboard(ctx context.Context, dashboardUid string) (*pkgmodels.Dashboard, error) {
+// FindDashboard provides a mock function with given fields: ctx, dashboardUid
+func (_m *FakePublicDashboardService) FindDashboard(ctx context.Context, dashboardUid string) (*pkgmodels.Dashboard, error) {
 	ret := _m.Called(ctx, dashboardUid)
 
 	var r0 *pkgmodels.Dashboard
@@ -132,8 +132,8 @@ func (_m *FakePublicDashboardService) GetMetricRequest(ctx context.Context, dash
 	return r0, r1
 }
 
-// GetPublicDashboard provides a mock function with given fields: ctx, orgId, dashboardUid
-func (_m *FakePublicDashboardService) GetPublicDashboard(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error) {
+// FindByDashboardUid provides a mock function with given fields: ctx, orgId, dashboardUid
+func (_m *FakePublicDashboardService) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error) {
 	ret := _m.Called(ctx, orgId, dashboardUid)
 
 	var r0 *models.PublicDashboard
@@ -155,8 +155,8 @@ func (_m *FakePublicDashboardService) GetPublicDashboard(ctx context.Context, or
 	return r0, r1
 }
 
-// GetPublicDashboardAndDashboard provides a mock function with given fields: ctx, accessToken
-func (_m *FakePublicDashboardService) GetPublicDashboardAndDashboard(ctx context.Context, accessToken string) (*models.PublicDashboard, *pkgmodels.Dashboard, error) {
+// FindPublicDashboardAndDashboardByAccessToken provides a mock function with given fields: ctx, accessToken
+func (_m *FakePublicDashboardService) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*models.PublicDashboard, *pkgmodels.Dashboard, error) {
 	ret := _m.Called(ctx, accessToken)
 
 	var r0 *models.PublicDashboard
@@ -187,8 +187,8 @@ func (_m *FakePublicDashboardService) GetPublicDashboardAndDashboard(ctx context
 	return r0, r1, r2
 }
 
-// GetPublicDashboardOrgId provides a mock function with given fields: ctx, accessToken
-func (_m *FakePublicDashboardService) GetPublicDashboardOrgId(ctx context.Context, accessToken string) (int64, error) {
+// GetOrgIdByAccessToken provides a mock function with given fields: ctx, accessToken
+func (_m *FakePublicDashboardService) GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error) {
 	ret := _m.Called(ctx, accessToken)
 
 	var r0 int64
@@ -231,8 +231,8 @@ func (_m *FakePublicDashboardService) GetQueryDataResponse(ctx context.Context, 
 	return r0, r1
 }
 
-// ListPublicDashboards provides a mock function with given fields: ctx, u, orgId
-func (_m *FakePublicDashboardService) ListPublicDashboards(ctx context.Context, u *user.SignedInUser, orgId int64) ([]models.PublicDashboardListResponse, error) {
+// FindAll provides a mock function with given fields: ctx, u, orgId
+func (_m *FakePublicDashboardService) FindAll(ctx context.Context, u *user.SignedInUser, orgId int64) ([]models.PublicDashboardListResponse, error) {
 	ret := _m.Called(ctx, u, orgId)
 
 	var r0 []models.PublicDashboardListResponse
@@ -254,8 +254,8 @@ func (_m *FakePublicDashboardService) ListPublicDashboards(ctx context.Context, 
 	return r0, r1
 }
 
-// PublicDashboardEnabledExistsByAccessToken provides a mock function with given fields: ctx, accessToken
-func (_m *FakePublicDashboardService) PublicDashboardEnabledExistsByAccessToken(ctx context.Context, accessToken string) (bool, error) {
+// ExistsEnabledByAccessToken provides a mock function with given fields: ctx, accessToken
+func (_m *FakePublicDashboardService) ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error) {
 	ret := _m.Called(ctx, accessToken)
 
 	var r0 bool
@@ -276,7 +276,7 @@ func (_m *FakePublicDashboardService) PublicDashboardEnabledExistsByAccessToken(
 }
 
 // PublicDashboardIsEnabled provides a mock function with given fields: ctx, dashboardUid
-func (_m *FakePublicDashboardService) PublicDashboardIsEnabled(ctx context.Context, dashboardUid string) (bool, error) {
+func (_m *FakePublicDashboardService) ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error) {
 	ret := _m.Called(ctx, dashboardUid)
 
 	var r0 bool
@@ -296,8 +296,8 @@ func (_m *FakePublicDashboardService) PublicDashboardIsEnabled(ctx context.Conte
 	return r0, r1
 }
 
-// SavePublicDashboard provides a mock function with given fields: ctx, u, dto
-func (_m *FakePublicDashboardService) SavePublicDashboard(ctx context.Context, u *user.SignedInUser, dto *models.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
+// Save provides a mock function with given fields: ctx, u, dto
+func (_m *FakePublicDashboardService) Save(ctx context.Context, u *user.SignedInUser, dto *models.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
 	ret := _m.Called(ctx, u, dto)
 
 	var r0 *models.PublicDashboard

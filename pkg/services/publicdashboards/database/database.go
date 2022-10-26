@@ -34,7 +34,7 @@ func ProvideStore(sqlStore db.DB) *PublicDashboardStoreImpl {
 }
 
 // Gets list of public dashboards by orgId
-func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
+func (d *PublicDashboardStoreImpl) FindAll(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
 	resp := make([]PublicDashboardListResponse, 0)
 
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -55,7 +55,7 @@ func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, org
 	return resp, nil
 }
 
-func (d *PublicDashboardStoreImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
+func (d *PublicDashboardStoreImpl) FindDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
 	dashboard := &models.Dashboard{Uid: dashboardUid}
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.Get(dashboard)
@@ -71,9 +71,9 @@ func (d *PublicDashboardStoreImpl) GetDashboard(ctx context.Context, dashboardUi
 	return dashboard, err
 }
 
-// GetPublicDashboardAndDashboard Retrieves public dashboard. This method makes 2 queries to the db so that in the
+// FindPublicDashboardAndDashboardByAccessToken Retrieves public dashboard. This method makes 2 queries to the db so that in the
 // even that the underlying dashboard is missing it will return a 404.
-func (d *PublicDashboardStoreImpl) GetPublicDashboardAndDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
+func (d *PublicDashboardStoreImpl) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
 	if accessToken == "" {
 		return nil, nil, ErrPublicDashboardIdentifierNotSet
 	}
@@ -96,7 +96,7 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardAndDashboard(ctx context.Co
 	}
 
 	// find dashboard
-	dashRes, err := d.GetDashboard(ctx, pdRes.DashboardUid)
+	dashRes, err := d.FindDashboard(ctx, pdRes.DashboardUid)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -104,8 +104,8 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardAndDashboard(ctx context.Co
 	return pdRes, dashRes, err
 }
 
-// GetPublicDashboardByUid Returns public dashboard configuration by Uid or nil if not found
-func (d *PublicDashboardStoreImpl) GetPublicDashboardByUid(ctx context.Context, uid string) (*PublicDashboard, error) {
+// Find Returns public dashboard configuration by Uid or nil if not found
+func (d *PublicDashboardStoreImpl) Find(ctx context.Context, uid string) (*PublicDashboard, error) {
 	if uid == "" {
 		return nil, nil
 	}
@@ -130,7 +130,7 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardByUid(ctx context.Context, 
 }
 
 // GetPublicDashboardByAccessToken Returns public dashboard by access token or nil if not found
-func (d *PublicDashboardStoreImpl) GetPublicDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error) {
+func (d *PublicDashboardStoreImpl) FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error) {
 	if accessToken == "" {
 		return nil, ErrPublicDashboardIdentifierNotSet
 	}
@@ -154,8 +154,8 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardByAccessToken(ctx context.C
 	return pdRes, err
 }
 
-// Retrieves public dashboard configuration
-func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
+// FindByDashboardUid Retrieves public dashboard configuration by dashboard uid
+func (d *PublicDashboardStoreImpl) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
 	if dashboardUid == "" {
 		return nil, dashboards.ErrDashboardIdentifierNotSet
 	}
@@ -179,7 +179,7 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, orgId
 }
 
 // Persists public dashboard configuration
-func (d *PublicDashboardStoreImpl) SavePublicDashboard(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
+func (d *PublicDashboardStoreImpl) Save(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
 	if cmd.PublicDashboard.DashboardUid == "" {
 		return dashboards.ErrDashboardIdentifierNotSet
 	}
@@ -196,8 +196,8 @@ func (d *PublicDashboardStoreImpl) SavePublicDashboard(ctx context.Context, cmd 
 	return err
 }
 
-// Updates existing public dashboard configuration
-func (d *PublicDashboardStoreImpl) UpdatePublicDashboard(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
+// Update updates existing public dashboard configuration
+func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		timeSettingsJSON, err := json.Marshal(cmd.PublicDashboard.TimeSettings)
 		if err != nil {
@@ -222,8 +222,8 @@ func (d *PublicDashboardStoreImpl) UpdatePublicDashboard(ctx context.Context, cm
 	return err
 }
 
-// EnabledPublicDashboardExistsByDashboardUid Responds true if there is an enabled public dashboard for a dashboard uid
-func (d *PublicDashboardStoreImpl) PublicDashboardEnabledExistsByDashboardUid(ctx context.Context, dashboardUid string) (bool, error) {
+// ExistsEnabledByDashboardUid Responds true if there is an enabled public dashboard for a dashboard uid
+func (d *PublicDashboardStoreImpl) ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error) {
 	hasPublicDashboard := false
 	err := d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sql := "SELECT COUNT(*) FROM dashboard_public WHERE dashboard_uid=? AND is_enabled=true"
@@ -240,8 +240,8 @@ func (d *PublicDashboardStoreImpl) PublicDashboardEnabledExistsByDashboardUid(ct
 	return hasPublicDashboard, err
 }
 
-// EnabledPublicDashboardExistsByAccessToken Responds true if accessToken exists and isEnabled
-func (d *PublicDashboardStoreImpl) PublicDashboardEnabledExistsByAccessToken(ctx context.Context, accessToken string) (bool, error) {
+// ExistsEnabledByAccessToken Responds true if the accessToken exists and the public dashboard is enabled
+func (d *PublicDashboardStoreImpl) ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error) {
 	hasPublicDashboard := false
 	err := d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sql := "SELECT COUNT(*) FROM dashboard_public WHERE access_token=? AND is_enabled=true"
@@ -258,8 +258,8 @@ func (d *PublicDashboardStoreImpl) PublicDashboardEnabledExistsByAccessToken(ctx
 	return hasPublicDashboard, err
 }
 
-// Responds with OrgId from if exists and isEnabled.
-func (d *PublicDashboardStoreImpl) GetPublicDashboardOrgId(ctx context.Context, accessToken string) (int64, error) {
+// GetOrgIdByAccessToken Returns the public dashboard OrgId if exists and is enabled.
+func (d *PublicDashboardStoreImpl) GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error) {
 	var orgId int64
 	err := d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sql := "SELECT org_id FROM dashboard_public WHERE access_token=? AND is_enabled=true"
