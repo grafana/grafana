@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
@@ -36,7 +37,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *bac
 	return ""
 }
 
-func doRequestQueryPage(requestBody map[string]interface{}, r *http.Request, dsInfo datasourceInfo) (cloudMonitoringResponse, error) {
+func doRequestQueryPage(log log.Logger, requestBody map[string]interface{}, r *http.Request, dsInfo datasourceInfo) (cloudMonitoringResponse, error) {
 	buf, err := json.Marshal(requestBody)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
@@ -47,7 +48,7 @@ func doRequestQueryPage(requestBody map[string]interface{}, r *http.Request, dsI
 		return cloudMonitoringResponse{}, err
 	}
 
-	dnext, err := unmarshalResponse(res)
+	dnext, err := unmarshalResponse(log, res)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}
@@ -66,7 +67,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 			dr.Error = err
 			return dr, cloudMonitoringResponse{}, "", nil
 		}
-		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
+		timeSeriesQuery.logger.Info("No project name set on query, using project name from datasource", "projectName", projectName)
 	}
 
 	timeSeriesQuery.Query += timeSeriesQuery.appendGraphPeriod(req)
@@ -85,7 +86,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	requestBody := map[string]interface{}{
 		"query": timeSeriesQuery.Query,
 	}
-	r, err := s.createRequest(ctx, &dsInfo, p, bytes.NewBuffer([]byte{}))
+	r, err := s.createRequest(timeSeriesQuery.logger, &dsInfo, p, bytes.NewBuffer([]byte{}))
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
@@ -93,7 +94,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	tracer.Inject(ctx, r.Header, span)
 	r = r.WithContext(ctx)
 
-	d, err := doRequestQueryPage(requestBody, r, dsInfo)
+	d, err := doRequestQueryPage(timeSeriesQuery.logger, requestBody, r, dsInfo)
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
@@ -103,7 +104,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 			"query":     timeSeriesQuery.Query,
 			"pageToken": d.NextPageToken,
 		}
-		nextPage, err := doRequestQueryPage(requestBody, r, dsInfo)
+		nextPage, err := doRequestQueryPage(timeSeriesQuery.logger, requestBody, r, dsInfo)
 		if err != nil {
 			dr.Error = err
 			return dr, cloudMonitoringResponse{}, "", nil
@@ -185,7 +186,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 
 				metricName := formatLegendKeys(d.Key, defaultMetricName, seriesLabels, nil,
 					&cloudMonitoringTimeSeriesFilter{
-						ProjectName: timeSeriesQuery.ProjectName, AliasBy: timeSeriesQuery.AliasBy,
+						ProjectName: timeSeriesQuery.ProjectName, AliasBy: timeSeriesQuery.AliasBy, logger: timeSeriesQuery.logger,
 					})
 				dataField := frame.Fields[1]
 				dataField.Name = metricName
@@ -219,7 +220,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 						timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{})
 						valueField := data.NewField(data.TimeSeriesValueFieldName, nil, []float64{})
 
-						frameName := formatLegendKeys(d.Key, defaultMetricName, nil, additionalLabels, &cloudMonitoringTimeSeriesFilter{ProjectName: timeSeriesQuery.ProjectName, AliasBy: timeSeriesQuery.AliasBy})
+						frameName := formatLegendKeys(d.Key, defaultMetricName, nil, additionalLabels, &cloudMonitoringTimeSeriesFilter{ProjectName: timeSeriesQuery.ProjectName, AliasBy: timeSeriesQuery.AliasBy, logger: timeSeriesQuery.logger})
 						valueField.Name = frameName
 						valueField.Labels = seriesLabels
 						setDisplayNameAsFieldName(valueField)
@@ -247,7 +248,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 						additionalLabels := data.Labels{"bucket": bucketBound}
 						timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{})
 						valueField := data.NewField(data.TimeSeriesValueFieldName, nil, []float64{})
-						frameName := formatLegendKeys(d.Key, defaultMetricName, seriesLabels, additionalLabels, &cloudMonitoringTimeSeriesFilter{ProjectName: timeSeriesQuery.ProjectName, AliasBy: timeSeriesQuery.AliasBy})
+						frameName := formatLegendKeys(d.Key, defaultMetricName, seriesLabels, additionalLabels, &cloudMonitoringTimeSeriesFilter{ProjectName: timeSeriesQuery.ProjectName, AliasBy: timeSeriesQuery.AliasBy, logger: timeSeriesQuery.logger})
 						valueField.Name = frameName
 						valueField.Labels = seriesLabels
 						setDisplayNameAsFieldName(valueField)
@@ -341,7 +342,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRe
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
 	u, err := url.Parse("https://console.cloud.google.com/monitoring/metrics-explorer")
 	if err != nil {
-		slog.Error("Failed to generate deep link: unable to parse metrics explorer URL", "projectName", timeSeriesQuery.ProjectName, "query", timeSeriesQuery.RefID)
+		timeSeriesQuery.logger.Error("Failed to generate deep link: unable to parse metrics explorer URL", "projectName", timeSeriesQuery.ProjectName, "query", timeSeriesQuery.RefID)
 		return ""
 	}
 
@@ -374,7 +375,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
 
 	blob, err := json.Marshal(pageState)
 	if err != nil {
-		slog.Error("Failed to generate deep link", "pageState", pageState, "ProjectName", timeSeriesQuery.ProjectName, "query", timeSeriesQuery.RefID)
+		timeSeriesQuery.logger.Error("Failed to generate deep link", "pageState", pageState, "ProjectName", timeSeriesQuery.ProjectName, "query", timeSeriesQuery.RefID)
 		return ""
 	}
 
@@ -383,7 +384,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
 
 	accountChooserURL, err := url.Parse("https://accounts.google.com/AccountChooser")
 	if err != nil {
-		slog.Error("Failed to generate deep link: unable to parse account chooser URL", "ProjectName", timeSeriesQuery.ProjectName, "query", timeSeriesQuery.RefID)
+		timeSeriesQuery.logger.Error("Failed to generate deep link: unable to parse account chooser URL", "ProjectName", timeSeriesQuery.ProjectName, "query", timeSeriesQuery.RefID)
 		return ""
 	}
 	accountChooserQuery := accountChooserURL.Query()

@@ -26,7 +26,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) doRequestFilterPage(ctx
 		return cloudMonitoringResponse{}, err
 	}
 
-	dnext, err := unmarshalResponse(res)
+	dnext, err := unmarshalResponse(timeSeriesFilter.logger, res)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}
@@ -45,9 +45,9 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 			dr.Error = err
 			return dr, cloudMonitoringResponse{}, "", nil
 		}
-		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
+		timeSeriesFilter.logger.Info("No project name set on query, using project name from datasource", "projectName", projectName)
 	}
-	r, err := s.createRequest(ctx, &dsInfo, path.Join("/v3/projects", projectName, "timeSeries"), nil)
+	r, err := s.createRequest(timeSeriesFilter.logger, &dsInfo, path.Join("/v3/projects", projectName, "timeSeries"), nil)
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
