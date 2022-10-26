@@ -16,6 +16,8 @@ export class SceneVariablesManager extends SceneObjectBase<SceneVariableSetState
         updateProcess.addVariable(variable);
       }
     }
+
+    updateProcess.updateTick();
   }
 
   getVariableByName(name: string): SceneVariable | undefined {

@@ -20,7 +20,7 @@ export class VariableUpdateProcess {
     this.sceneContext = sceneContext;
   }
 
-  tick() {
+  updateTick() {
     for (const [key, variable] of this.variablesToUpdate) {
       if (!variable.updateOptions) {
         continue;
@@ -48,7 +48,7 @@ export class VariableUpdateProcess {
     this.updating.delete(key);
     this.dependencies.delete(key);
     this.variablesToUpdate.delete(key);
-    this.tick();
+    this.updateTick();
   }
 
   private hasDependendencyThatNeedsUpdating(variable: SceneVariable) {

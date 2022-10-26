@@ -29,7 +29,7 @@ describe('VariableUpdateProcess', () => {
     const updateProcess = new VariableUpdateProcess(scene);
 
     updateProcess.addVariable(server, pod);
-    updateProcess.tick();
+    updateProcess.updateTick();
 
     expect(server.state.state).toBe(LoadingState.Loading);
     expect(pod.state.state).toBe(undefined);
@@ -60,7 +60,7 @@ describe('VariableUpdateProcess', () => {
     const updateProcess = new VariableUpdateProcess(scene);
 
     updateProcess.addVariable(A, B, C);
-    updateProcess.tick();
+    updateProcess.updateTick();
 
     expect(A.state.state).toBe(LoadingState.Loading);
     expect(B.state.state).toBe(LoadingState.Loading);

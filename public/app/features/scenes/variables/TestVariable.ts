@@ -1,4 +1,4 @@
-import { delay, Observable, Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 
 import { LoadingState, VariableOption } from '@grafana/data';
 import { queryMetricTree } from 'app/plugins/datasource/testdata/metricTree';
@@ -28,29 +28,25 @@ export class TestVariable extends SceneObjectBase<TestVariableState> implements 
     try {
       this.setState({ state: LoadingState.Loading });
 
-      let obs = new Observable<number>((observer) => {
-        if (!delayMs) {
-          this.completeUpdate.subscribe({
-            next: () => {
-              setDummyOptions(this, ctx);
-              observer.next(1);
-            },
-          });
-        } else {
-          setDummyOptions(this, ctx);
-          observer.next(1);
+      return new Observable<number>((observer) => {
+        this.completeUpdate.subscribe({
+          next: () => {
+            setDummyOptions(this, ctx);
+            observer.next(1);
+          },
+        });
+
+        let timeout: NodeJS.Timeout | undefined;
+
+        if (delayMs) {
+          timeout = setTimeout(() => this.signalUpdateCompleted(), delayMs);
         }
 
         return () => {
+          clearTimeout(timeout);
           // console.log('Canceling QueryVariable query');
         };
       });
-
-      if (delayMs) {
-        obs = obs.pipe(delay(delayMs));
-      }
-
-      return obs;
     } catch (err) {
       this.setState({ error: err, state: LoadingState.Error });
       throw err;
