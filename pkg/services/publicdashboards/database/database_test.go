@@ -81,7 +81,7 @@ func TestIntegrationFindDashboard(t *testing.T) {
 	t.Run("FindDashboard can get original dashboard by uid", func(t *testing.T) {
 		setup()
 
-		dashboard, err := publicdashboardStore.FindDashboard(context.Background(), savedDashboard.Uid)
+		dashboard, err := publicdashboardStore.FindDashboard(context.Background(), savedDashboard.Uid, savedDashboard.OrgId)
 
 		require.NoError(t, err)
 		require.Equal(t, savedDashboard.Uid, dashboard.Uid)
