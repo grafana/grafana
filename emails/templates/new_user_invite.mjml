@@ -18,11 +18,9 @@
         <mj-text>
           You've been invited to join the <strong>{{ .OrgName }}</strong> organization by <strong>{{ .InvitedBy }}</strong>. To accept your invitation and join the team, please click the link below:
         </mj-text>
-        <mj-button align="left" href="{{ .LinkUrl }}">
+        <mj-button href="{{ .LinkUrl }}">
           Accept Invitation
         </mj-button>
-        <mj-text>
-        </mj-text>
         <mj-text>
           You can also copy and paste this link into your browser directly:
         </mj-text>
