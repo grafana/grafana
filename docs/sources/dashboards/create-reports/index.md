@@ -183,7 +183,7 @@ You can add more than one dashboard to a report. Additional dashboards will be r
 
 ### Embed a dashboard as an image into a report
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 9.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 9.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
 You can send a report email with an image of the dashboard embedded in the email instead of attached as a PDF. In this case, the email recipients can see the dashboard at a glance instead of having to open the PDF.
 
