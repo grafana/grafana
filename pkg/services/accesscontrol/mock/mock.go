@@ -24,6 +24,7 @@ type Calls struct {
 	RegisterFixedRoles             []interface{}
 	RegisterAttributeScopeResolver []interface{}
 	DeleteUserPermissions          []interface{}
+	GetSimplifiedUsersPermissions  []interface{}
 }
 
 type Mock struct {
@@ -46,6 +47,7 @@ type Mock struct {
 	RegisterFixedRolesFunc             func() error
 	RegisterScopeAttributeResolverFunc func(string, accesscontrol.ScopeAttributeResolver)
 	DeleteUserPermissionsFunc          func(context.Context, int64) error
+	GetSimplifiedUsersPermissionsFunc  func(context.Context, *user.SignedInUser, int64, string) (map[int64][]accesscontrol.SimplifiedUserPermissionDTO, error)
 
 	scopeResolvers accesscontrol.Resolvers
 }
@@ -185,4 +187,14 @@ func (m *Mock) DeleteUserPermissions(ctx context.Context, orgID, userID int64) e
 		return m.DeleteUserPermissionsFunc(ctx, userID)
 	}
 	return nil
+}
+
+// GetSimplifiedUsersPermissions returns all users' permissions filtered by an action prefix
+func (m *Mock) GetSimplifiedUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64, actionPrefix string) (map[int64][]accesscontrol.SimplifiedUserPermissionDTO, error) {
+	m.Calls.GetSimplifiedUsersPermissions = append(m.Calls.GetSimplifiedUsersPermissions, []interface{}{ctx, user, orgID, actionPrefix})
+	// Use override if provided
+	if m.GetSimplifiedUsersPermissionsFunc != nil {
+		return m.GetSimplifiedUsersPermissionsFunc(ctx, user, orgID, actionPrefix)
+	}
+	return nil, nil
 }
