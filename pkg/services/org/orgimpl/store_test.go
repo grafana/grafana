@@ -663,13 +663,6 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 		})
 	require.NoError(t, err)
 
-	// _, err = store.CreateUser(context.Background(), user.CreateUserCommand{
-	// 	Login: "Admin",
-	// 	Email: "admin@localhost",
-	// 	OrgID: id,
-	// })
-	// require.NoError(t, err)
-
 	newUser, err := store.CreateUser(context.Background(), user.CreateUserCommand{
 		Login:      "Viewer",
 		Email:      "viewer@localhost",
