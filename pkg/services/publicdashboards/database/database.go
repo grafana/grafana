@@ -33,7 +33,7 @@ func ProvideStore(sqlStore db.DB) *PublicDashboardStoreImpl {
 	}
 }
 
-// Gets list of public dashboards by orgId
+// FindAll Returns a list of public dashboards by orgId
 func (d *PublicDashboardStoreImpl) FindAll(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
 	resp := make([]PublicDashboardListResponse, 0)
 
@@ -55,8 +55,8 @@ func (d *PublicDashboardStoreImpl) FindAll(ctx context.Context, orgId int64) ([]
 	return resp, nil
 }
 
-func (d *PublicDashboardStoreImpl) FindDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
-	dashboard := &models.Dashboard{Uid: dashboardUid}
+func (d *PublicDashboardStoreImpl) FindDashboard(ctx context.Context, dashboardUid string, orgId int64) (*models.Dashboard, error) {
+	dashboard := &models.Dashboard{Uid: dashboardUid, OrgId: orgId}
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.Get(dashboard)
 		if err != nil {
