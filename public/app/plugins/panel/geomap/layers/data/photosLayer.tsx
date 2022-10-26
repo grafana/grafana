@@ -51,8 +51,10 @@ export const defaultPhotosConfig: MapLayerOptions<PhotoConfig> = {
   tooltip: true,
 };
 
-// TODO, should be a question mark or missing or something? - let's embed a simple base64 image?
-const unknownImage = 'https://cdn.iconscout.com/icon/free/png-256/question-mark-1768084-1502257.png';
+// TODO Find a way to use SVG scaled to behave like a png, currently using base64 conversion
+//const unknownImage = '../../../../../public/img/icons/unicons/question-circle.svg';
+const unknownImage =
+  'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBjbGFzcz0iY3NzLWV5eDRkbyI+PHBhdGggZD0iTTExLjI5LDE1LjI5YTEuNTgsMS41OCwwLDAsMC0uMTIuMTUuNzYuNzYsMCwwLDAtLjA5LjE4LjY0LjY0LDAsMCwwLS4wNi4xOCwxLjM2LDEuMzYsMCwwLDAsMCwuMi44NC44NCwwLDAsMCwuMDguMzguOS45LDAsMCwwLC41NC41NC45NC45NCwwLDAsMCwuNzYsMCwuOS45LDAsMCwwLC41NC0uNTRBMSwxLDAsMCwwLDEzLDE2YTEsMSwwLDAsMC0uMjktLjcxQTEsMSwwLDAsMCwxMS4yOSwxNS4yOVpNMTIsMkExMCwxMCwwLDEsMCwyMiwxMiwxMCwxMCwwLDAsMCwxMiwyWm0wLDE4YTgsOCwwLDEsMSw4LThBOCw4LDAsMCwxLDEyLDIwWk0xMiw3QTMsMywwLDAsMCw5LjQsOC41YTEsMSwwLDEsMCwxLjczLDFBMSwxLDAsMCwxLDEyLDlhMSwxLDAsMCwxLDAsMiwxLDEsMCwwLDAtMSwxdjFhMSwxLDAsMCwwLDIsMHYtLjE4QTMsMywwLDAsMCwxMiw3WiI+PC9wYXRoPjwvc3ZnPgo=';
 
 /**
  * Map layer configuration for circle overlay
