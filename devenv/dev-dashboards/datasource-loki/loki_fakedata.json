@@ -217,14 +217,14 @@
             "uid": "PDDA8E780A17E7EF1"
           },
           "editorMode": "builder",
-          "expr": "count_over_time({place=\"$place\"} [5s])",
+          "expr": "count_over_time({place=\"$place\"} [5m])",
           "legendFormat": "{{place}}",
           "maxLines": 60,
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "(Variable) No. of $place logs over the last 5s",
+      "title": "(Variable) No. of $place logs over the last 5m",
       "type": "timeseries"
     },
     {
