@@ -29,6 +29,7 @@ describe('FlameGraphTopTableContainer', () => {
         setTopLevelIndex={jest.fn()}
         setRangeMin={jest.fn()}
         setRangeMax={jest.fn()}
+        setAxisValues={jest.fn()}
       />
     );
   };

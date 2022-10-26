@@ -21,6 +21,7 @@ describe('FlameGraphHeader', () => {
         setTopLevelIndex={jest.fn()}
         setRangeMin={jest.fn()}
         setRangeMax={jest.fn()}
+        setAxisValues={jest.fn()}
         selectedView={selectedView}
         setSelectedView={setSelectedView}
         containerWidth={1600}

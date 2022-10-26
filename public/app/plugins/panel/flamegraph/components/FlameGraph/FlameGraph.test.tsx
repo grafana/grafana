@@ -24,6 +24,7 @@ describe('FlameGraph', () => {
     const [rangeMin, setRangeMin] = useState(0);
     const [rangeMax, setRangeMax] = useState(1);
     const [search] = useState('');
+    const [xAxis, __] = useState<string[]>([]);
     const [selectedView, _] = useState(SelectedView.Both);
 
     const flameGraphData = new MutableDataFrame(data);
@@ -42,6 +43,8 @@ describe('FlameGraph', () => {
         setTopLevelIndex={setTopLevelIndex}
         setRangeMin={setRangeMin}
         setRangeMax={setRangeMax}
+        xAxis={xAxis}
+        setAxisValues={jest.fn()}
         selectedView={selectedView}
       />
     );
