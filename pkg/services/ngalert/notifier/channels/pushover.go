@@ -68,25 +68,25 @@ func PushoverFactory(fc FactoryConfig) (NotificationChannel, error) {
 // newPushoverNotifier is the constructor for the Pushover notifier
 func newPushoverNotifier(fc FactoryConfig) (*PushoverNotifier, error) {
 	decryptFunc := fc.DecryptFunc
-	uk := decryptFunc(context.Background(), fc.Config.SecureSettings, "userKey", fc.Config.Settings.Get("userKey").MustString())
-	if uk == "" {
+	userKey := decryptFunc(context.Background(), fc.Config.SecureSettings, "userKey", fc.Config.Settings.Get("userKey").MustString())
+	if userKey == "" {
 		return nil, errors.New("user key not found")
 	}
-	at := decryptFunc(context.Background(), fc.Config.SecureSettings, "apiToken", fc.Config.Settings.Get("apiToken").MustString())
-	if at == "" {
+	apiToken := decryptFunc(context.Background(), fc.Config.SecureSettings, "apiToken", fc.Config.Settings.Get("apiToken").MustString())
+	if apiToken == "" {
 		return nil, errors.New("API token not found")
 	}
 
-	ap, err := strconv.Atoi(fc.Config.Settings.Get("priority").MustString("0")) // default Normal
+	alertingPriority, err := strconv.Atoi(fc.Config.Settings.Get("priority").MustString("0")) // default Normal
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert alerting priority to integer: %w", err)
 	}
-	okp, err := strconv.Atoi(fc.Config.Settings.Get("okPriority").MustString("0")) // default Normal
+	okPriority, err := strconv.Atoi(fc.Config.Settings.Get("okPriority").MustString("0")) // default Normal
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert OK priority to integer: %w", err)
 	}
-	r, _ := strconv.Atoi(fc.Config.Settings.Get("retry").MustString())
-	e, _ := strconv.Atoi(fc.Config.Settings.Get("expire").MustString())
+	retry, _ := strconv.Atoi(fc.Config.Settings.Get("retry").MustString())
+	expire, _ := strconv.Atoi(fc.Config.Settings.Get("expire").MustString())
 
 	return &PushoverNotifier{
 		Base: NewBase(&models.AlertNotification{
@@ -102,12 +102,12 @@ func newPushoverNotifier(fc FactoryConfig) (*PushoverNotifier, error) {
 		images: fc.ImageStore,
 		ns:     fc.NotificationService,
 		settings: pushoverSettings{
-			userKey:          uk,
-			apiToken:         at,
-			alertingPriority: ap,
-			okPriority:       okp,
-			retry:            r,
-			expire:           e,
+			userKey:          userKey,
+			apiToken:         apiToken,
+			alertingPriority: alertingPriority,
+			okPriority:       okPriority,
+			retry:            retry,
+			expire:           expire,
 			device:           fc.Config.Settings.Get("device").MustString(),
 			alertingSound:    fc.Config.Settings.Get("sound").MustString(),
 			okSound:          fc.Config.Settings.Get("okSound").MustString(),
