@@ -58,8 +58,11 @@ export const run = (includeInternalScripts = false) => {
 
     program
       .command('toolkit:build')
-      .description('Prepares grafana/toolkit dist package')
+      .description('[Deprecated] Prepares grafana/toolkit dist package')
       .action(async (cmd) => {
+        chalk.yellow.bold(
+          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        );
         await execTask(toolkitBuildTask)({});
       });
 
