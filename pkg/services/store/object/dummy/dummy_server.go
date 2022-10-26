@@ -58,7 +58,7 @@ func namespaceFromGRN(grnstr string) string {
 	return "orgId-1"
 }
 
-func (i dummyObjectServer) findObject(ctx context.Context, grnstr string, version string) (*RawObjectWithHistory, *object.RawObject, error) {
+func (i *dummyObjectServer) findObject(ctx context.Context, grnstr string, version string) (*RawObjectWithHistory, *object.RawObject, error) {
 	if grnstr == "" {
 		return nil, nil, errors.New("UID must not be empty")
 	}
@@ -104,7 +104,7 @@ func (i dummyObjectServer) findObject(ctx context.Context, grnstr string, versio
 	return obj, nil, nil
 }
 
-func (i dummyObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
+func (i *dummyObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
 	_, objVersion, err := i.findObject(ctx, r.GRN, r.Version)
 	if err != nil {
 		return nil, err
@@ -134,7 +134,7 @@ func (i dummyObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest
 	return rsp, err
 }
 
-func (i dummyObjectServer) BatchRead(ctx context.Context, batchR *object.BatchReadObjectRequest) (*object.BatchReadObjectResponse, error) {
+func (i *dummyObjectServer) BatchRead(ctx context.Context, batchR *object.BatchReadObjectRequest) (*object.BatchReadObjectResponse, error) {
 	results := make([]*object.ReadObjectResponse, 0)
 	for _, r := range batchR.Batch {
 		resp, err := i.Read(ctx, r)
@@ -152,7 +152,7 @@ func createContentsHash(contents []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
+func (i *dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
 	grn, err := grn.ParseStr(r.GRN)
 	if err != nil {
 		return nil, err
@@ -232,7 +232,7 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 	return rsp, nil
 }
 
-func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
+func (i *dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
 	grn, err := grn.ParseStr(r.GRN)
 	if err != nil {
 		return nil, err
@@ -282,7 +282,7 @@ func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequ
 	}, nil
 }
 
-func (i dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
+func (i *dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
 	namespace := namespaceFromGRN(r.GRN)
 	obj, err := i.collection.FindFirst(ctx, namespace, func(i *RawObjectWithHistory) (bool, error) {
 		if i == nil || r == nil {
@@ -301,7 +301,7 @@ func (i dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectReque
 	return i.update(ctx, r, namespace)
 }
 
-func (i dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
+func (i *dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
 	_, err := i.collection.Delete(ctx, namespaceFromGRN(r.GRN), func(i *RawObjectWithHistory) (bool, error) {
 		if i.GRN == r.GRN {
 			if r.PreviousVersion != "" && i.Object.Version != r.PreviousVersion {
@@ -323,7 +323,7 @@ func (i dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectReq
 	}, nil
 }
 
-func (i dummyObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
+func (i *dummyObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
 	obj, _, err := i.findObject(ctx, r.GRN, "")
 	if err != nil {
 		return nil, err
@@ -340,7 +340,7 @@ func (i dummyObjectServer) History(ctx context.Context, r *object.ObjectHistoryR
 	return rsp, nil
 }
 
-func (i dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
+func (i *dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
 	var kindMap map[string]bool
 	if len(r.Kind) != 0 {
 		kindMap = make(map[string]bool)
