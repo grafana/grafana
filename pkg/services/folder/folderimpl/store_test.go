@@ -28,10 +28,12 @@ func TestCreate(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("creating a 1st level folder should succeed", func(t *testing.T) {
+	t.Run("creating a 1st level folder without providing a parent should default to the root folder", func(t *testing.T) {
 		title := "folder1"
+		desc := "folder desc"
 		f, err := store.Create(context.Background(), &folder.CreateFolderCommand{
-			Title: title,
+			Title:       title,
+			Description: desc,
 			// OrgID: orgID,
 		})
 		require.NoError(t, err)
@@ -41,6 +43,7 @@ func TestCreate(t *testing.T) {
 		})
 
 		assert.Equal(t, title, f.Title)
+		assert.Equal(t, desc, f.Description)
 		assert.NotEmpty(t, f.ID)
 		assert.NotEmpty(t, f.UID)
 
@@ -49,25 +52,29 @@ func TestCreate(t *testing.T) {
 		})
 		require.NoError(t, err)
 		assert.Len(t, parents, 1)
-		assert.Equal(t, accesscontrol.GeneralFolderUID, parents[0].UID)
+		assert.Equal(t, folder.GeneralFolderUID, parents[0].UID)
 
-		_, err = store.Get(context.Background(), &folder.GetFolderCommand{
+		ff, err := store.Get(context.Background(), &folder.GetFolderCommand{
 			UID: &f.UID,
 		})
 		assert.NoError(t, err)
+		assert.Equal(t, title, ff.Title)
+		assert.Equal(t, desc, ff.Description)
 	})
 
 	t.Run("creating a folder with unknown parent should fail", func(t *testing.T) {
 		title := "folder1"
+		desc := "folder desc"
 		_, err := store.Create(context.Background(), &folder.CreateFolderCommand{
 			Title: title,
 			// OrgID: orgID,
-			ParentUID: "unknown",
+			ParentUID:   "unknown",
+			Description: desc,
 		})
 		require.Error(t, err)
 	})
 
-	t.Run("creating a folder with known parent should succeed", func(t *testing.T) {
+	t.Run("creating a folder with a known parent should succeed", func(t *testing.T) {
 		title := "folder1"
 		parent, err := store.Create(context.Background(), &folder.CreateFolderCommand{
 			Title: title,
@@ -86,13 +93,15 @@ func TestCreate(t *testing.T) {
 		})
 		require.NoError(t, err)
 		assert.Len(t, ancestors, 1)
-		assert.Equal(t, accesscontrol.GeneralFolderUID, ancestors[0])
+		assert.Equal(t, folder.GeneralFolderUID, ancestors[0])
 
 		title = "folder2"
+		desc := "folder desc"
 		f, err := store.Create(context.Background(), &folder.CreateFolderCommand{
 			Title: title,
 			// OrgID: orgID,
-			ParentUID: parent.UID,
+			ParentUID:   parent.UID,
+			Description: desc,
 		})
 		require.NoError(t, err)
 		t.Cleanup(func() {
@@ -101,6 +110,7 @@ func TestCreate(t *testing.T) {
 		})
 
 		assert.Equal(t, title, f.Title)
+		assert.Equal(t, desc, f.Description)
 		assert.NotEmpty(t, f.ID)
 		assert.NotEmpty(t, f.UID)
 
@@ -112,10 +122,12 @@ func TestCreate(t *testing.T) {
 		assert.Equal(t, accesscontrol.GeneralFolderUID, ancestors[0].UID)
 		assert.Equal(t, parent.UID, ancestors[1].UID)
 
-		_, err = store.Get(context.Background(), &folder.GetFolderCommand{
+		ff, err := store.Get(context.Background(), &folder.GetFolderCommand{
 			UID: &f.UID,
 		})
 		assert.NoError(t, err)
+		assert.Equal(t, title, ff.Title)
+		assert.Equal(t, desc, ff.Description)
 	})
 
 	t.Run("creating a nested folder with the maximum nested folder depth should fail", func(t *testing.T) {
@@ -175,66 +187,153 @@ func TestDelete(t *testing.T) {
 	})
 
 	t.Run("attempt to delete root folder should fail", func(t *testing.T) {
-		err := store.Delete(context.Background(), accesscontrol.GeneralFolderUID, orgID)
+		err := store.Delete(context.Background(), folder.GeneralFolderUID, orgID)
 		assert.Error(t, err)
 	})
 
-	t.Run("attempt to delete uknown folder should fail", func(t *testing.T) {
+	t.Run("attempt to delete unknown folder should fail", func(t *testing.T) {
 		err := store.Delete(context.Background(), "unknown", orgID)
 		assert.Error(t, err)
 	})
 
-	t.Run("deleting folder should delete each children", func(t *testing.T) {
-		ancestorUIDs := []string{accesscontrol.GeneralFolderUID}
-		for i := 0; i < folder.MaxNestedFolderDepth; i++ {
-			parentUID := ancestorUIDs[len(ancestorUIDs)-1]
-			title := fmt.Sprintf("folder-%d", i)
-			f, err := store.Create(context.Background(), &folder.CreateFolderCommand{
-				Title: title,
-				// OrgID: orgID,
-				ParentUID: parentUID,
-			})
+	ancestorUIDs := []string{folder.GeneralFolderUID}
+	for i := 0; i < folder.MaxNestedFolderDepth; i++ {
+		parentUID := ancestorUIDs[len(ancestorUIDs)-1]
+		title := fmt.Sprintf("folder-%d", i)
+		f, err := store.Create(context.Background(), &folder.CreateFolderCommand{
+			Title: title,
+			// OrgID: orgID,
+			ParentUID: parentUID,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := store.Delete(context.Background(), f.UID, orgID)
 			require.NoError(t, err)
-			t.Cleanup(func() {
-				err := store.Delete(context.Background(), f.UID, orgID)
-				require.NoError(t, err)
-			})
+		})
 
-			require.Equal(t, title, f.Title)
-			require.NotEmpty(t, f.ID)
-			require.NotEmpty(t, f.UID)
+		require.Equal(t, title, f.Title)
+		require.NotEmpty(t, f.ID)
+		require.NotEmpty(t, f.UID)
 
-			ancestorUIDs = append(ancestorUIDs, f.UID)
+		ancestorUIDs = append(ancestorUIDs, f.UID)
 
-			parents, err := store.GetParents(context.Background(), &folder.GetParentsCommand{
-				UID: f.UID,
-			})
-			require.NoError(t, err)
-			parentUIDs := make([]string, len(ancestorUIDs))
-			for _, p := range parents {
-				parentUIDs = append(parentUIDs, p.UID)
-			}
-			require.Equal(t, ancestorUIDs, parentUIDs)
+		parents, err := store.GetParents(context.Background(), &folder.GetParentsCommand{
+			UID: f.UID,
+		})
+		require.NoError(t, err)
+		parentUIDs := make([]string, len(ancestorUIDs))
+		for _, p := range parents {
+			parentUIDs = append(parentUIDs, p.UID)
 		}
+		require.Equal(t, ancestorUIDs, parentUIDs)
+	}
 
-		require.Len(t, ancestorUIDs, folder.MaxNestedFolderDepth)
+	require.Len(t, ancestorUIDs, folder.MaxNestedFolderDepth)
 
+	t.Run("deleting folder with children should fail", func(t *testing.T) {
 		err = store.Delete(context.Background(), ancestorUIDs[2], orgID)
+		require.Error(t, err)
+	})
+
+	t.Run("deleting a leaf folder should succeed", func(t *testing.T) {
+		err = store.Delete(context.Background(), ancestorUIDs[len(ancestorUIDs)-1], orgID)
 		require.NoError(t, err)
 
 		children, err := store.GetChildren(context.Background(), &folder.GetTreeCommand{
-			UID:   ancestorUIDs[0],
+			UID:   ancestorUIDs[len(ancestorUIDs)-2],
 			Depth: folder.MaxNestedFolderDepth,
 		})
 		require.NoError(t, err)
-
-		assert.Len(t, children, 1)
-		assert.Equal(t, ancestorUIDs[1], children[0].UID)
+		assert.Len(t, children, 0)
 	})
-
 }
 
-func TestUpdate(t *testing.T) {}
+func TestUpdate(t *testing.T) {
+	db := sqlstore.InitTestDB(t)
+	store := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
+
+	// create an org
+	orgService := orgimpl.ProvideService(db, db.Cfg)
+	orgID, err := orgService.GetOrCreate(context.Background(), "test-org")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		err = orgService.Delete(context.Background(), &org.DeleteOrgCommand{ID: orgID})
+		require.NoError(t, err)
+	})
+
+	// create folder
+	origTitle := "folder1"
+	origDesc := "folder desc"
+	f, err := store.Create(context.Background(), &folder.CreateFolderCommand{
+		Title:       origTitle,
+		Description: origDesc,
+		// OrgID: orgID,
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		err := store.Delete(context.Background(), f.UID, orgID)
+		require.NoError(t, err)
+	})
+
+	t.Run("updating an unknown folder should fail", func(t *testing.T) {
+		newTitle := "new title"
+		newDesc := "new desc"
+		_, err := store.Update(context.Background(), &folder.UpdateFolderCommand{
+			Folder:         f,
+			NewTitle:       &newTitle,
+			NewDescription: &newDesc,
+		})
+		require.NoError(t, err)
+
+		ff, err := store.Get(context.Background(), &folder.GetFolderCommand{
+			UID: &f.UID,
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, origTitle, ff.Title)
+		assert.Equal(t, origDesc, ff.Description)
+	})
+
+	t.Run("updating a folder should succeed", func(t *testing.T) {
+		newTitle := "new title"
+		newDesc := "new desc"
+		updated, err := store.Update(context.Background(), &folder.UpdateFolderCommand{
+			Folder:         f,
+			NewTitle:       &newTitle,
+			NewDescription: &newDesc,
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, f.UID, updated.UID)
+		assert.Equal(t, newTitle, updated.Title)
+		assert.Equal(t, newDesc, updated.Description)
+
+		updated, err = store.Get(context.Background(), &folder.GetFolderCommand{
+			UID: &updated.UID,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, newTitle, updated.Title)
+		assert.Equal(t, newDesc, updated.Description)
+	})
+
+	t.Run("updating folder UID should succeed", func(t *testing.T) {
+		newUID := "new"
+		updated, err := store.Update(context.Background(), &folder.UpdateFolderCommand{
+			Folder: f,
+			NewUID: &newUID,
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, newUID, updated.UID)
+
+		updated, err = store.Get(context.Background(), &folder.GetFolderCommand{
+			UID: &updated.UID,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, origTitle, updated.Title)
+		assert.Equal(t, origDesc, updated.Description)
+	})
+}
 
 func TestMove(t *testing.T) {}
 
