@@ -503,8 +503,6 @@ In the example below, I hid the value field and renamed Max and Min.
 
 ### Partition by values
 
-Available in experimental in Grafana Open Source, Enterprise, Cloud Pro, and Cloud Advanced.
-
 This transformation can help eliminate the need for multiple queries to the same datasource with different `WHERE` clauses when graphing multiple series. Consider a metrics SQL table with the following data:
 
 | Time                | Region | Value |
@@ -517,11 +515,12 @@ This transformation can help eliminate the need for multiple queries to the same
 Prior to v9.3, if you wanted to plot a red trendline for US and a blue one for EU in the same TimeSeries panel, you would likely have to split this into two queries:
 
 `SELECT Time, Value FROM metrics WHERE Time > ‘2022-10-20’ AND Region=’US’`
+
 `SELECT Time, Value FROM metrics WHERE Time > ‘2022-10-20’ AND Region=’EU’`
 
 This also requires you to know ahead of time which regions actually exist in the metrics table.
 
-With the _Partition by values_ transformer, you can now issue a single query and split the results by unique (`enum`) values from one or more columns (`fields`) of your choosing. The following example uses `Region`.
+With the _Partition by values_ transformer, you can now issue a single query and split the results by unique values (possibly of the enum type) from one or more columns (`fields`) of your choosing. The following example uses `Region`.
 
 `SELECT Time, Region, Value FROM metrics WHERE Time > ‘2022-10-20’`
 
