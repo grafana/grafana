@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -67,7 +68,7 @@ func (cmd *ConditionsCmd) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (cmd *ConditionsCmd) Execute(_ context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (cmd *ConditionsCmd) Execute(_ context.Context, _ time.Time, vars mathexp.Vars) (mathexp.Results, error) {
 	firing := true
 	newRes := mathexp.Results{}
 	noDataFound := true

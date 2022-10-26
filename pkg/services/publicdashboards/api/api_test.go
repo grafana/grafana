@@ -99,7 +99,7 @@ func TestAPIGetAnnotations(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
 
 			if test.ExpectedServiceCalled {
-				service.On("GetAnnotations", mock.Anything, mock.Anything, mock.AnythingOfType("string")).
+				service.On("FindAnnotations", mock.Anything, mock.Anything, mock.AnythingOfType("string")).
 					Return(test.Annotations, test.ServiceError).Once()
 			}
 
@@ -209,7 +209,7 @@ func TestAPIListPublicDashboard(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			service.On("ListPublicDashboards", mock.Anything, mock.Anything, mock.Anything).
+			service.On("FindAll", mock.Anything, mock.Anything, mock.Anything).
 				Return(test.Response, test.ResponseErr).Maybe()
 
 			cfg := setting.NewCfg()
@@ -232,7 +232,7 @@ func TestAPIListPublicDashboard(t *testing.T) {
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
 				assert.Equal(t, "error, service broken", errResp.Error)
-				service.AssertNotCalled(t, "ListPublicDashboards")
+				service.AssertNotCalled(t, "FindAll")
 			}
 		})
 	}
@@ -282,7 +282,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			service.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
+			service.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).
 				Return(&PublicDashboard{}, test.DashboardResult, test.Err).Maybe()
 
 			cfg := setting.NewCfg()
@@ -396,7 +396,7 @@ func TestAPIGetPublicDashboardConfig(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
 
 			if test.ShouldCallService {
-				service.On("GetPublicDashboardConfig", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+				service.On("FindByDashboardUid", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
 					Return(test.PublicDashboardResult, test.PublicDashboardErr)
 			}
 
@@ -507,7 +507,7 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 
 			// this is to avoid AssertExpectations fail at t.Cleanup when the middleware returns before calling the service
 			if test.ShouldCallService {
-				service.On("SavePublicDashboardConfig", mock.Anything, mock.Anything, mock.AnythingOfType("*models.SavePublicDashboardConfigDTO")).
+				service.On("Save", mock.Anything, mock.Anything, mock.AnythingOfType("*models.SavePublicDashboardConfigDTO")).
 					Return(&PublicDashboard{IsEnabled: true}, test.SaveDashboardErr)
 			}
 
@@ -732,7 +732,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	ac := acmock.New()
 	cfg.RBACEnabled = false
 	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac)
-	pubdash, err := service.SavePublicDashboardConfig(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
+	pubdash, err := service.Save(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 
 	// setup test server

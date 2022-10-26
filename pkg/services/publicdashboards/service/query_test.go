@@ -399,7 +399,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 				TimeSettings: timeSettings,
 			},
 		}
-		pubdashDto, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		pubdashDto, err := service.Save(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		resp, _ := service.GetQueryDataResponse(context.Background(), true, publicDashboardQueryDTO, 1, pubdashDto.AccessToken)
@@ -421,15 +421,18 @@ func TestGetAnnotations(t *testing.T) {
 			store:           &fakeStore,
 			AnnotationsRepo: annotationsRepo,
 		}
-		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
-			Return(&PublicDashboard{Uid: "uid1", IsEnabled: true}, grafanamodels.NewDashboard("dash1"), nil)
+		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).
+			Return(&PublicDashboard{Uid: "uid1", IsEnabled: true}, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).
+			Return(grafanamodels.NewDashboard("dash1"), nil)
+
 		reqDTO := AnnotationsQueryDTO{
 			From: 1,
 			To:   2,
 		}
 		dash := grafanamodels.NewDashboard("testDashboard")
 
-		items, _ := service.GetAnnotations(context.Background(), reqDTO, "abc123")
+		items, _ := service.FindAnnotations(context.Background(), reqDTO, "abc123")
 		anonUser := buildAnonymousUser(context.Background(), dash)
 
 		assert.Equal(t, "dashboards:*", anonUser.Permissions[0]["dashboards:read"][0])
@@ -474,7 +477,10 @@ func TestGetAnnotations(t *testing.T) {
 			AnnotationsRepo: &annotationsRepo,
 		}
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: true}
-		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+
+		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dashboard, nil)
+
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
 				Id:          1,
@@ -487,7 +493,7 @@ func TestGetAnnotations(t *testing.T) {
 			},
 		}, nil).Maybe()
 
-		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
 		expected := AnnotationEvent{
 			Id:          1,
@@ -531,7 +537,10 @@ func TestGetAnnotations(t *testing.T) {
 			AnnotationsRepo: &annotationsRepo,
 		}
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: true}
-		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+
+		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dashboard, nil)
+
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
 				Id:          1,
@@ -544,7 +553,7 @@ func TestGetAnnotations(t *testing.T) {
 			},
 		}, nil).Maybe()
 
-		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
 		expected := AnnotationEvent{
 			Id:          1,
@@ -600,7 +609,10 @@ func TestGetAnnotations(t *testing.T) {
 			AnnotationsRepo: &annotationsRepo,
 		}
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: true}
-		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+
+		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dashboard, nil)
+
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
 				Id:          1,
@@ -613,7 +625,7 @@ func TestGetAnnotations(t *testing.T) {
 			},
 		}, nil).Maybe()
 
-		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
 		expected := AnnotationEvent{
 			Id:          1,
@@ -642,9 +654,11 @@ func TestGetAnnotations(t *testing.T) {
 		}
 		dashboard := grafanamodels.NewDashboard("dashWithNoAnnotations")
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: true}
-		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
 
-		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dashboard, nil)
+
+		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
 		require.NoError(t, err)
 		assert.Empty(t, items)
@@ -675,9 +689,11 @@ func TestGetAnnotations(t *testing.T) {
 		annos := []DashAnnotation{grafanaAnnotation}
 		dashboard := AddAnnotationsToDashboard(t, dash, annos)
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: false}
-		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
 
-		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dashboard, nil)
+
+		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
 		require.NoError(t, err)
 		assert.Empty(t, items)
@@ -707,10 +723,13 @@ func TestGetAnnotations(t *testing.T) {
 		annos := []DashAnnotation{grafanaAnnotation}
 		dash = AddAnnotationsToDashboard(t, dash, annos)
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dash.Uid, AnnotationsEnabled: true}
-		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dash, nil)
+
+		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dash, nil)
+
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return(nil, errors.New("failed")).Maybe()
 
-		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
 		require.Error(t, err)
 		require.Nil(t, items)
@@ -821,7 +840,7 @@ func TestBuildMetricRequest(t *testing.T) {
 		},
 	}
 
-	publicDashboardPD, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+	publicDashboardPD, err := service.Save(context.Background(), SignedInUser, dto)
 	require.NoError(t, err)
 
 	nonPublicDto := &SavePublicDashboardConfigDTO{
@@ -835,7 +854,7 @@ func TestBuildMetricRequest(t *testing.T) {
 		},
 	}
 
-	_, err = service.SavePublicDashboardConfig(context.Background(), SignedInUser, nonPublicDto)
+	_, err = service.Save(context.Background(), SignedInUser, nonPublicDto)
 	require.NoError(t, err)
 
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {

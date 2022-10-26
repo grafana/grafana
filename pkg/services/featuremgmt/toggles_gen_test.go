@@ -11,8 +11,9 @@ import (
 	"unicode"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
 )
 
 func TestFeatureToggleFiles(t *testing.T) {
