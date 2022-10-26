@@ -88,7 +88,7 @@ func (e *objectStoreJob) start() {
 		OrgID:  0, // gets filled in from each row
 		UserID: 0,
 	}
-	ctx := xctx.ContextWithUser(context.Background(), rowUser)
+	ctx := context.Background()
 
 	what := models.StandardKindDashboard
 	e.status.Count[what] = 0
@@ -107,6 +107,7 @@ func (e *objectStoreJob) start() {
 		if dash.UpdatedBy < 0 {
 			rowUser.UserID = 0 // avoid Uint64Val issue????
 		}
+		ctx := xctx.ContextWithUser(ctx, rowUser)
 
 		_, err = e.store.Write(ctx, &object.WriteObjectRequest{
 			UID:     fmt.Sprintf("export/%s", dash.UID),
@@ -128,8 +129,11 @@ func (e *objectStoreJob) start() {
 	// Playlists
 	what = models.StandardKindPlaylist
 	e.status.Count[what] = 0
+
 	rowUser.OrgID = 1
 	rowUser.UserID = 1
+	ctx = xctx.ContextWithUser(ctx, rowUser)
+
 	res, err := e.playlistService.Search(ctx, &playlist.GetPlaylistsQuery{
 		OrgId: rowUser.OrgID, // TODO... all or orgs
 		Limit: 5000,
