@@ -42,7 +42,7 @@ export const useNamespaces = (datasource: CloudWatchDatasource) => {
 export const useMetrics = (datasource: CloudWatchDatasource, region: string, namespace: string | undefined) => {
   const [metrics, setMetrics] = useState<Array<SelectableValue<string>>>([]);
   useEffect(() => {
-    datasource.api.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
+    datasource.api.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
       setMetrics(appendTemplateVariables(datasource, result));
     });
   }, [datasource, region, namespace]);

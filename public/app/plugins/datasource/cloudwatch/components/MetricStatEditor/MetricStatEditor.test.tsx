@@ -148,15 +148,13 @@ describe('MetricStatEditor', () => {
     });
 
     it('should remove metricName from metricStat if it does not exist in new namespace', async () => {
-      propsNamespaceMetrics.datasource.api.getMetrics = jest
-        .fn()
-        .mockImplementation((namespace: string, region: string) => {
-          let mockMetrics =
-            namespace === 'n1' && region === props.metricStat.region
-              ? metrics
-              : [{ value: 'oldNamespaceMetric', label: 'oldNamespaceMetric', text: 'oldNamespaceMetric' }];
-          return Promise.resolve(mockMetrics);
-        });
+      propsNamespaceMetrics.datasource.api.getMetrics = jest.fn().mockImplementation(({ namespace, region }) => {
+        let mockMetrics =
+          namespace === 'n1' && region === props.metricStat.region
+            ? metrics
+            : [{ value: 'oldNamespaceMetric', label: 'oldNamespaceMetric', text: 'oldNamespaceMetric' }];
+        return Promise.resolve(mockMetrics);
+      });
       propsNamespaceMetrics.metricStat.metricName = 'oldNamespaceMetric';
       propsNamespaceMetrics.metricStat.namespace = 'n2';
 

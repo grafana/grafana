@@ -105,22 +105,23 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions Ses
 	return e
 }
 
-func (e *cloudWatchExecutor) getClients(pluginCtx backend.PluginContext, region string) (models.Clients, error) {
+func (e *cloudWatchExecutor) getRequestContext(pluginCtx backend.PluginContext, region string) (models.RequestContext, error) {
 	r := region
+	instance, err := e.getInstance(pluginCtx)
 	if region == defaultRegion {
-		instance, err := e.getInstance(pluginCtx)
 		if err != nil {
-			return models.Clients{}, err
+			return models.RequestContext{}, err
 		}
 		r = instance.Settings.Region
 	}
 
 	sess, err := e.newSession(pluginCtx, r)
 	if err != nil {
-		return models.Clients{}, err
+		return models.RequestContext{}, err
 	}
-	return models.Clients{
+	return models.RequestContext{
 		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), e.cfg),
+		Settings:              instance.Settings,
 	}, nil
 }
 
