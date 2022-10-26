@@ -151,9 +151,11 @@ func (s *Server) Run() error {
 		return err
 	}
 
-	if err := s.moduleService.Run(); err != nil {
-		return err
-	}
+	go func() {
+		if err := s.moduleService.Run(); err != nil {
+			s.log.Error("Module services exited with an error", "error", err)
+		}
+	}()
 
 	services := s.backgroundServices
 

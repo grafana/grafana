@@ -55,11 +55,9 @@ func (m *Modules) Init() error {
 	mm.RegisterModule(All, nil)
 
 	deps := map[string][]string{
-		GRPCServer:            {},
-		GRPCServerHealthCheck: {GRPCServer},
-		GRPCServerReflection:  {GRPCServer},
-		ObjectStore:           {GRPCServer},
-		All:                   {ObjectStore},
+		GRPCServer:  {GRPCServerHealthCheck, GRPCServerReflection},
+		ObjectStore: {GRPCServer},
+		All:         {ObjectStore},
 	}
 
 	for mod, targets := range deps {
@@ -85,6 +83,8 @@ func (m *Modules) Run() error {
 	for _, s := range serviceMap {
 		servs = append(servs, s)
 	}
+
+	m.log.Info("starting services", "services", servs)
 
 	sm, err := services.NewManager(servs...)
 	if err != nil {
@@ -131,7 +131,7 @@ func (m *Modules) initGRPCServerHealthCheck() (services.Service, error) {
 }
 
 func (m *Modules) initGRPCServerReflection() (services.Service, error) {
-	return grpcserver.ProvideHealthService(m.cfg, m.grpcServer)
+	return grpcserver.ProvideReflectionService(m.cfg, m.grpcServer)
 }
 
 func (m *Modules) initObjectStore() (services.Service, error) {
