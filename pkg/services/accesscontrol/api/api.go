@@ -8,13 +8,16 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service) *AccessControlAPI {
+func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service,
+	features *featuremgmt.FeatureManager) *AccessControlAPI {
 	return &AccessControlAPI{
 		RouteRegister: router,
 		Service:       service,
 		AccessControl: accesscontrol,
+		features:      features,
 	}
 }
 
@@ -22,6 +25,7 @@ type AccessControlAPI struct {
 	Service       ac.Service
 	AccessControl ac.AccessControl
 	RouteRegister routing.RouteRegister
+	features      *featuremgmt.FeatureManager
 }
 
 func (api *AccessControlAPI) RegisterAPIEndpoints() {
@@ -30,8 +34,10 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 	api.RouteRegister.Group("/api/access-control", func(rr routing.RouteRegister) {
 		rr.Get("/user/actions", middleware.ReqSignedIn, routing.Wrap(api.getUserActions))
 		rr.Get("/user/permissions", middleware.ReqSignedIn, routing.Wrap(api.getUserPermissions))
-		rr.Get("/users/permissions", authorize(middleware.ReqSignedIn,
-			ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.getSimpliedUsersPermissions))
+		if api.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) {
+			rr.Get("/users/permissions", authorize(middleware.ReqSignedIn,
+				ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.getSimpliedUsersPermissions))
+		}
 	})
 }
 

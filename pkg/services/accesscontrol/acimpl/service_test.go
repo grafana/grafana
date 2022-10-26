@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -65,6 +66,7 @@ func TestUsageMetrics(t *testing.T) {
 				routing.NewRouteRegister(),
 				localcache.ProvideService(),
 				actest.FakeAccessControl{},
+				featuremgmt.WithFeatures(),
 			)
 			require.NoError(t, errInitAc)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])

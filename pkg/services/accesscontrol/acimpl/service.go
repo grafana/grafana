@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -26,11 +27,12 @@ const (
 	cacheTTL = 10 * time.Second
 )
 
-func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService, accessControl accesscontrol.AccessControl) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
+	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {
 	service := ProvideOSSService(cfg, database.ProvideService(store), cache)
 
 	if !accesscontrol.IsDisabled(cfg) {
-		api.NewAccessControlAPI(routeRegister, accessControl, service).RegisterAPIEndpoints()
+		api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
 		if err := accesscontrol.DeclareFixedRoles(service); err != nil {
 			return nil, err
 		}
