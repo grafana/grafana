@@ -129,7 +129,7 @@ async function getLabelNamesForCompletions(
     extractedLabelKeys.forEach((key) => {
       result.push({
         type: 'LABEL_NAME',
-        label: `${key} (extracted)`,
+        label: `${key}`,
         insertText: `${key}${suffix}`,
         triggerOnInsert,
       });
@@ -204,7 +204,7 @@ async function getAfterSelectorCompletions(
   extractedLabelKeys.forEach((key) => {
     completions.push({
       type: 'LINE_FILTER',
-      label: `unwrap ${key} (detected)`,
+      label: `unwrap ${key}`,
       insertText: `${prefix}unwrap ${key}`,
     });
   });
