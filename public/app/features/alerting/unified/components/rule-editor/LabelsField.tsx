@@ -4,7 +4,8 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Field, InlineLabel, Label, useStyles2, Stack, Tooltip, Icon } from '@grafana/ui';
+import { Button, Field, InlineLabel, Label, useStyles2, Tooltip, Icon } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
 import { useDispatch } from 'app/types';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
