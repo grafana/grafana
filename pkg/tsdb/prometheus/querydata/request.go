@@ -8,6 +8,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -16,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
 	"github.com/grafana/grafana/pkg/util/maputil"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 const legendFormatAuto = "__auto"
@@ -90,7 +91,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 			return &result, err
 		}
 		if r == nil {
-			s.log.Debug("Received nilresponse from runQuery", "query", query.Expr)
+			s.log.FromContext(ctx).Debug("Received nilresponse from runQuery", "query", query.Expr)
 			continue
 		}
 		result.Responses[q.RefID] = *r
@@ -100,10 +101,11 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.Query, headers map[string]string) (*backend.DataResponse, error) {
-	s.log.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr)
-
 	traceCtx, end := s.trace(ctx, q)
 	defer end()
+
+	logger := s.log.FromContext(traceCtx)
+	logger.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr)
 
 	response := &backend.DataResponse{
 		Frames: data.Frames{},
@@ -131,7 +133,7 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 		if err != nil {
 			// If exemplar query returns error, we want to only log it and
 			// continue with other results processing
-			s.log.Error("Exemplar query failed", "query", q.Expr, "err", err)
+			logger.Error("Exemplar query failed", "query", q.Expr, "err", err)
 		}
 		if res != nil {
 			response.Frames = append(response.Frames, res.Frames...)

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, Link, useStyles2, useTheme2 } from '@grafana/ui';
@@ -7,7 +7,7 @@ import { Card, Link, useStyles2, useTheme2 } from '@grafana/ui';
 import LabelsField from './LabelsField';
 import { RuleEditorSection } from './RuleEditorSection';
 
-export const NotificationsStep: FC = () => {
+export const NotificationsStep = () => {
   const [hideFlowChart, setHideFlowChart] = useState(false);
   const styles = useStyles2(getStyles);
   const theme = useTheme2();

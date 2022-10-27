@@ -20075,6 +20075,17 @@
       "schema": {
         "$ref": "#/definitions/UserProfileDTO"
       }
+    },
+    "validateDashboardResponse": {
+      "description": "(empty)",
+      "headers": {
+        "isValid": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
     }
   },
   "securityDefinitions": {

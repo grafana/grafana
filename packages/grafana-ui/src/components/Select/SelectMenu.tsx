@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { max } from 'lodash';
-import React, { FC, RefCallback } from 'react';
+import React, { RefCallback } from 'react';
 import { MenuListProps } from 'react-select';
 import { FixedSizeList as List } from 'react-window';
 
@@ -18,7 +18,7 @@ interface SelectMenuProps {
   innerProps: {};
 }
 
-export const SelectMenu: FC<SelectMenuProps> = ({ children, maxHeight, innerRef, innerProps }) => {
+export const SelectMenu = ({ children, maxHeight, innerRef, innerProps }: React.PropsWithChildren<SelectMenuProps>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
@@ -44,12 +44,7 @@ const VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER = 7;
 //
 // VIRTUAL_LIST_ITEM_HEIGHT and WIDTH_ESTIMATE_MULTIPLIER are both magic numbers.
 // Some characters (such as emojis and other unicode characters) may consist of multiple code points in which case the width would be inaccurate (but larger than needed).
-export const VirtualizedSelectMenu: FC<MenuListProps<SelectableValue>> = ({
-  children,
-  maxHeight,
-  options,
-  getValue,
-}) => {
+export const VirtualizedSelectMenu = ({ children, maxHeight, options, getValue }: MenuListProps<SelectableValue>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const [value] = getValue();
@@ -63,11 +58,12 @@ export const VirtualizedSelectMenu: FC<MenuListProps<SelectableValue>> = ({
 
   const longestOption = max(options.map((option) => option.label?.length)) ?? 0;
   const widthEstimate = longestOption * VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER;
+  const heightEstimate = Math.min(options.length * VIRTUAL_LIST_ITEM_HEIGHT, maxHeight);
 
   return (
     <List
       className={styles.menu}
-      height={maxHeight}
+      height={heightEstimate}
       width={widthEstimate}
       aria-label="Select options menu"
       itemCount={children.length}
@@ -91,7 +87,7 @@ interface SelectMenuOptionProps<T> {
   data: SelectableValue<T>;
 }
 
-export const SelectMenuOptions: FC<SelectMenuOptionProps<any>> = ({
+export const SelectMenuOptions = ({
   children,
   data,
   innerProps,
@@ -99,7 +95,7 @@ export const SelectMenuOptions: FC<SelectMenuOptionProps<any>> = ({
   isFocused,
   isSelected,
   renderOptionLabel,
-}) => {
+}: React.PropsWithChildren<SelectMenuOptionProps<any>>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const icon = data.icon ? toIconName(data.icon) : undefined;

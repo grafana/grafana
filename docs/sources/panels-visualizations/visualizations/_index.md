@@ -60,7 +60,7 @@ For categorical data use the [Bar chart]({{< relref "bar-chart/" >}}) visualizat
 
 ### Big numbers & stats
 
-The [Stat](stat-panel/) visualization shows one large stat value with an optional graph sparkline. You can control the background or value color using thresholds or color scales.
+The [Stat]({{< relref "stat/" >}}) visualization shows one large stat value with an optional graph sparkline. You can control the background or value color using thresholds or color scales.
 
 {{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat panel" >}}
 

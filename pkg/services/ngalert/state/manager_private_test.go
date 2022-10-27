@@ -11,7 +11,6 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -91,7 +90,7 @@ func Test_maybeNewImage(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
 			imageService := &CountingImageService{}
-			mgr := NewManager(log.NewNopLogger(), &metrics.State{}, nil,
+			mgr := NewManager(&metrics.State{}, nil,
 				&FakeRuleReader{}, &FakeInstanceStore{},
 				imageService, clock.NewMock(), &FakeHistorian{})
 			err := mgr.maybeTakeScreenshot(context.Background(), &ngmodels.AlertRule{}, test.state, test.oldState)

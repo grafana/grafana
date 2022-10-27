@@ -13,7 +13,7 @@ import {
   SilenceCreatePayload,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
-import { ContactPointsState, FolderDTO, NotifierDTO, StoreState, ThunkResult } from 'app/types';
+import { FolderDTO, NotifierDTO, StoreState, ThunkResult } from 'app/types';
 import {
   CombinedRuleGroup,
   CombinedRuleNamespace,
@@ -51,7 +51,7 @@ import {
 import { fetchAnnotations } from '../api/annotations';
 import { discoverFeatures } from '../api/buildInfo';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { fetchContactPointsState, fetchNotifiers } from '../api/grafana';
+import { fetchNotifiers } from '../api/grafana';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import {
   deleteNamespace,
@@ -266,7 +266,7 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
         const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerApiEnabled
           ? {
               dataSourceName: name,
-              apiVersion: buildInfo.application === PromApplication.Lotex ? 'legacy' : 'config',
+              apiVersion: buildInfo.application === PromApplication.Cortex ? 'legacy' : 'config',
             }
           : undefined;
 
@@ -457,12 +457,6 @@ export const saveRuleFormAction = createAsyncThunk(
 export const fetchGrafanaNotifiersAction = createAsyncThunk(
   'unifiedalerting/fetchGrafanaNotifiers',
   (): Promise<NotifierDTO[]> => withSerializedError(fetchNotifiers())
-);
-
-export const fetchContactPointsStateAction = createAsyncThunk(
-  'unifiedalerting/fetchContactPointsState',
-  (alertManagerSourceName: string): Promise<ContactPointsState> =>
-    withSerializedError(fetchContactPointsState(alertManagerSourceName))
 );
 
 export const fetchGrafanaAnnotationsAction = createAsyncThunk(

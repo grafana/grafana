@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -456,4 +457,15 @@ func (g RulesGroup) SortByGroupIndex() {
 		}
 		return g[i].RuleGroupIndex < g[j].RuleGroupIndex
 	})
+}
+
+type ruleKeyContextKey struct{}
+
+func WithRuleKey(ctx context.Context, ruleKey AlertRuleKey) context.Context {
+	return context.WithValue(ctx, ruleKeyContextKey{}, ruleKey)
+}
+
+func RuleKeyFromContext(ctx context.Context) (AlertRuleKey, bool) {
+	key, ok := ctx.Value(ruleKeyContextKey{}).(AlertRuleKey)
+	return key, ok
 }

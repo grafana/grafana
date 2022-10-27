@@ -3,6 +3,9 @@ package ualert
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
@@ -13,18 +16,14 @@ import (
 func TestFilterReceiversForAlert(t *testing.T) {
 	tc := []struct {
 		name             string
-		da               dashAlert
+		channelIds       []uidOrID
 		receivers        map[uidOrID]*PostableApiReceiver
 		defaultReceivers map[string]struct{}
 		expected         map[string]interface{}
 	}{
 		{
-			name: "when an alert has multiple channels, each should filter for the correct receiver",
-			da: dashAlert{
-				ParsedSettings: &dashAlertSettings{
-					Notifications: []dashAlertNot{{UID: "uid1"}, {UID: "uid2"}},
-				},
-			},
+			name:       "when an alert has multiple channels, each should filter for the correct receiver",
+			channelIds: []uidOrID{"uid1", "uid2"},
 			receivers: map[uidOrID]*PostableApiReceiver{
 				"uid1": {
 					Name:                    "recv1",
@@ -46,12 +45,8 @@ func TestFilterReceiversForAlert(t *testing.T) {
 			},
 		},
 		{
-			name: "when default receivers exist, they should be added to an alert's filtered receivers",
-			da: dashAlert{
-				ParsedSettings: &dashAlertSettings{
-					Notifications: []dashAlertNot{{UID: "uid1"}},
-				},
-			},
+			name:       "when default receivers exist, they should be added to an alert's filtered receivers",
+			channelIds: []uidOrID{"uid1"},
 			receivers: map[uidOrID]*PostableApiReceiver{
 				"uid1": {
 					Name:                    "recv1",
@@ -75,12 +70,8 @@ func TestFilterReceiversForAlert(t *testing.T) {
 			},
 		},
 		{
-			name: "when an alert has a channels associated by ID instead of UID, it should be included",
-			da: dashAlert{
-				ParsedSettings: &dashAlertSettings{
-					Notifications: []dashAlertNot{{ID: int64(42)}},
-				},
-			},
+			name:       "when an alert has a channels associated by ID instead of UID, it should be included",
+			channelIds: []uidOrID{int64(42)},
 			receivers: map[uidOrID]*PostableApiReceiver{
 				int64(42): {
 					Name:                    "recv1",
@@ -93,12 +84,8 @@ func TestFilterReceiversForAlert(t *testing.T) {
 			},
 		},
 		{
-			name: "when an alert's receivers are covered by the defaults, return nil to use default receiver downstream",
-			da: dashAlert{
-				ParsedSettings: &dashAlertSettings{
-					Notifications: []dashAlertNot{{UID: "uid1"}},
-				},
-			},
+			name:       "when an alert's receivers are covered by the defaults, return nil to use default receiver downstream",
+			channelIds: []uidOrID{"uid1"},
 			receivers: map[uidOrID]*PostableApiReceiver{
 				"uid1": {
 					Name:                    "recv1",
@@ -124,7 +111,7 @@ func TestFilterReceiversForAlert(t *testing.T) {
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
 			m := newTestMigration(t)
-			res := m.filterReceiversForAlert(tt.da, tt.receivers, tt.defaultReceivers)
+			res := m.filterReceiversForAlert("", tt.channelIds, tt.receivers, tt.defaultReceivers)
 
 			require.Equal(t, tt.expected, res)
 		})
@@ -133,77 +120,57 @@ func TestFilterReceiversForAlert(t *testing.T) {
 
 func TestCreateRoute(t *testing.T) {
 	tc := []struct {
-		name                  string
-		ruleUID               string
-		filteredReceiverNames map[string]interface{}
-		expected              *Route
-		expErr                error
+		name     string
+		recv     *PostableApiReceiver
+		expected *Route
 	}{
 		{
-			name:    "when a single receiver is passed in, the route should be simple and not nested",
-			ruleUID: "r_uid1",
-			filteredReceiverNames: map[string]interface{}{
-				"recv1": struct{}{},
+			name: "when a receiver is passed in, the route should regex match based on quoted name with continue=true",
+			recv: &PostableApiReceiver{
+				Name: "recv1",
 			},
 			expected: &Route{
-				Receiver:   "recv1",
-				Matchers:   Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
-				Routes:     nil,
-				Continue:   false,
-				GroupByStr: nil,
+				Receiver:       "recv1",
+				ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
+				Routes:         nil,
+				Continue:       true,
+				GroupByStr:     nil,
 			},
 		},
 		{
-			name:    "when multiple receivers are passed in, the route should be nested with continue=true",
-			ruleUID: "r_uid1",
-			filteredReceiverNames: map[string]interface{}{
-				"recv1": struct{}{},
-				"recv2": struct{}{},
+			name: "notification channel should be escaped for regex in the matcher",
+			recv: &PostableApiReceiver{
+				Name: `. ^ $ * + - ? ( ) [ ] { } \ |`,
 			},
 			expected: &Route{
-				Receiver: "",
-				Matchers: Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
-				Routes: []*Route{
-					{
-						Receiver:   "recv1",
-						Matchers:   Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
-						Routes:     nil,
-						Continue:   true,
-						GroupByStr: nil,
-					},
-					{
-						Receiver:   "recv2",
-						Matchers:   Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
-						Routes:     nil,
-						Continue:   true,
-						GroupByStr: nil,
-					},
-				},
-				Continue:   false,
-				GroupByStr: nil,
+				Receiver:       `. ^ $ * + - ? ( ) [ ] { } \ |`,
+				ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"\. \^ \$ \* \+ - \? \( \) \[ \] \{ \} \\ \|".*`}},
+				Routes:         nil,
+				Continue:       true,
+				GroupByStr:     nil,
 			},
 		},
 	}
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := createRoute(tt.ruleUID, tt.filteredReceiverNames)
-			if tt.expErr != nil {
-				require.Error(t, err)
-				require.EqualError(t, err, tt.expErr.Error())
-				return
-			}
-
+			res, err := createRoute(tt.recv)
 			require.NoError(t, err)
 
-			// Compare route slice separately since order is not guaranteed
-			expRoutes := tt.expected.Routes
-			tt.expected.Routes = nil
-			actRoutes := res.Routes
-			res.Routes = nil
+			// Order of nested routes is not guaranteed.
+			cOpt := []cmp.Option{
+				cmpopts.SortSlices(func(a, b *Route) bool {
+					if a.Receiver != b.Receiver {
+						return a.Receiver < b.Receiver
+					}
+					return a.ObjectMatchers[0].Value < b.ObjectMatchers[0].Value
+				}),
+				cmpopts.IgnoreUnexported(Route{}, labels.Matcher{}),
+			}
 
-			require.Equal(t, tt.expected, res)
-			require.ElementsMatch(t, expRoutes, actRoutes)
+			if !cmp.Equal(tt.expected, res, cOpt...) {
+				t.Errorf("Unexpected Route: %v", cmp.Diff(tt.expected, res, cOpt...))
+			}
 		})
 	}
 }
@@ -251,6 +218,58 @@ func TestCreateReceivers(t *testing.T) {
 				{
 					Name:                    "name2",
 					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name2"}},
+				},
+			},
+		},
+		{
+			name:        "when given notification channel contains double quote sanitize with underscore",
+			allChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name\"1")},
+			expRecvMap: map[uidOrID]*PostableApiReceiver{
+				"uid1": {
+					Name:                    "name_1",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+				},
+				int64(1): {
+					Name:                    "name_1",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+				},
+			},
+			expRecv: []*PostableApiReceiver{
+				{
+					Name:                    "name_1",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+				},
+			},
+		},
+		{
+			name:        "when given notification channels collide after sanitization add short hash to end",
+			allChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name\"1"), createNotChannel(t, "uid2", int64(2), "name_1")},
+			expRecvMap: map[uidOrID]*PostableApiReceiver{
+				"uid1": {
+					Name:                    "name_1",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+				},
+				"uid2": {
+					Name:                    "name_1_dba13d",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1_dba13d"}},
+				},
+				int64(1): {
+					Name:                    "name_1",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+				},
+				int64(2): {
+					Name:                    "name_1_dba13d",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1_dba13d"}},
+				},
+			},
+			expRecv: []*PostableApiReceiver{
+				{
+					Name:                    "name_1",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+				},
+				{
+					Name:                    "name_1_dba13d",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1_dba13d"}},
 				},
 			},
 		},

@@ -441,8 +441,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/img/icn-panel.svg",
-        "large": "public/img/icn-panel.svg"
+        "small": "public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg",
+        "large": "public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg"
       },
       "build": {},
       "screenshots": null,

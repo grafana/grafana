@@ -126,7 +126,7 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 			password: n.basicAuthPassword,
 			body:     body,
 		}, n.logger); err != nil {
-			n.logger.Warn("failed to send to Alertmanager", "err", err, "alertmanager", n.Name, "url", u.String())
+			n.logger.Warn("failed to send to Alertmanager", "error", err, "alertmanager", n.Name, "url", u.String())
 			lastErr = err
 			numErrs++
 		}

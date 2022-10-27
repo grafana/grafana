@@ -97,7 +97,7 @@ func buildWebhookNotifier(factoryConfig FactoryConfig) (*WebhookNotifier, error)
 		case string:
 			maxAlerts, err = strconv.Atoi(value)
 			if err != nil {
-				logger.Warn("failed to convert setting maxAlerts to integer. Using default", "err", err, "original", value)
+				logger.Warn("failed to convert setting maxAlerts to integer. Using default", "error", err, "original", value)
 				maxAlerts = 0
 			}
 		default:
@@ -177,7 +177,8 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	if tmplErr != nil {
-		wn.log.Warn("failed to template webhook message", "err", tmplErr.Error())
+		wn.log.Warn("failed to template webhook message", "error", tmplErr.Error())
+		tmplErr = nil
 	}
 
 	body, err := json.Marshal(msg)
@@ -190,8 +191,13 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		headers["Authorization"] = fmt.Sprintf("%s %s", wn.settings.AuthorizationScheme, wn.settings.AuthorizationCredentials)
 	}
 
+	parsedURL := tmpl(wn.settings.URL)
+	if tmplErr != nil {
+		return false, tmplErr
+	}
+
 	cmd := &models.SendWebhookSync{
-		Url:        wn.settings.URL,
+		Url:        parsedURL,
 		User:       wn.settings.User,
 		Password:   wn.settings.Password,
 		Body:       string(body),

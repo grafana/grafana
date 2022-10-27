@@ -159,6 +159,10 @@ const (
 	// Run both old and streaming requests and log differences
 	FlagPrometheusStreamingJSONParserTest = "prometheusStreamingJSONParserTest"
 
+	// FlagNewDBLibrary
+	// Use jmoiron/sqlx rather than xorm for a few backend services
+	FlagNewDBLibrary = "newDBLibrary"
+
 	// FlagValidateDashboardsOnSave
 	// Validate dashboard JSON POSTed to api/dashboards/db
 	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
@@ -231,6 +235,10 @@ const (
 	// Enable more in memory caching for database queries
 	FlagIncreaseInMemDatabaseQueryCache = "increaseInMemDatabaseQueryCache"
 
+	// FlagInterFont
+	// Switch to inter font
+	FlagInterFont = "interFont"
+
 	// FlagNewPanelChromeUI
 	// Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu
 	FlagNewPanelChromeUI = "newPanelChromeUI"
@@ -239,7 +247,19 @@ const (
 	// Reusable query library
 	FlagQueryLibrary = "queryLibrary"
 
+	// FlagShowDashboardValidationWarnings
+	// Show warnings when Dashboards do not validate against the schema
+	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
+
 	// FlagMysqlAnsiQuotes
 	// Use double quote to escape keyword in Mysql query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
+
+	// FlagAccessControlOnCall
+	// Access control primitives for OnCall
+	FlagAccessControlOnCall = "accessControlOnCall"
+
+	// FlagNestedFolders
+	// Enable folder nesting
+	FlagNestedFolders = "nestedFolders"
 )

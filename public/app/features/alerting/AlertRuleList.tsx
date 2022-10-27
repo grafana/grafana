@@ -130,10 +130,10 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
             {alertRules.map((rule) => {
               return (
                 <AlertRuleItem
-                  rule={rule as AlertRule}
+                  rule={rule}
                   key={rule.id}
                   search={search}
-                  onTogglePause={() => this.onTogglePause(rule as AlertRule)}
+                  onTogglePause={() => this.onTogglePause(rule)}
                 />
               );
             })}
