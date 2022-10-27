@@ -17,6 +17,9 @@ export interface TestVariableState extends SceneVariableState {
   issuedQuery?: string;
 }
 
+/**
+ * This variable is only designed for unit tests and potentially e2e tests.
+ */
 export class TestVariable extends SceneVariableBase<TestVariableState> {
   ValueSelectComponent = VariableValueSelect;
   completeUpdate = new Subject<number>();
