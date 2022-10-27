@@ -37,7 +37,7 @@ type SQLMacroEngine interface {
 // SqlQueryResultTransformer transforms a query result row to RowValues with proper types.
 type SqlQueryResultTransformer interface {
 	// TransformQueryError transforms a query error.
-	TransformQueryError(err error) error
+	TransformQueryError(logger log.Logger, err error) error
 	GetConverterList() []sqlutil.StringConverter
 }
 
@@ -116,7 +116,7 @@ func (e *DataSourceHandler) transformQueryError(logger log.Logger, err error) er
 		return ErrConnectionFailed
 	}
 
-	return e.queryResultTransformer.TransformQueryError(err)
+	return e.queryResultTransformer.TransformQueryError(logger, err)
 }
 
 func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,

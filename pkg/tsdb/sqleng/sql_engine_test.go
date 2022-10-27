@@ -418,7 +418,7 @@ type testQueryResultTransformer struct {
 	transformQueryErrorWasCalled bool
 }
 
-func (t *testQueryResultTransformer) TransformQueryError(err error) error {
+func (t *testQueryResultTransformer) TransformQueryError(_ log.Logger, err error) error {
 	t.transformQueryErrorWasCalled = true
 	return err
 }
