@@ -139,17 +139,17 @@ func TestAPIFeatureFlag(t *testing.T) {
 		{
 			Name:   "API: List Dashboards",
 			Method: http.MethodGet,
-			Path:   "/api/dashboards/public",
+			Path:   "/api/dashboards/public-dashboards",
 		},
 		{
 			Name:   "API: Get Public Dashboard Config",
 			Method: http.MethodPost,
-			Path:   "/api/dashboards/uid/abc123/public-config",
+			Path:   "/api/dashboards/uid/abc123/public-dashboards",
 		},
 		{
-			Name:   "API: Upate Public Dashboard",
+			Name:   "API: Save Public Dashboard",
 			Method: http.MethodPost,
-			Path:   "/api/dashboards/uid/abc123/public-config",
+			Path:   "/api/dashboards/uid/abc123/public-dashboards",
 		},
 	}
 
@@ -217,7 +217,7 @@ func TestAPIListPublicDashboard(t *testing.T) {
 			features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
 			testServer := setupTestServer(t, cfg, features, service, nil, test.User)
 
-			response := callAPI(testServer, http.MethodGet, "/api/dashboards/public", nil, t)
+			response := callAPI(testServer, http.MethodGet, "/api/dashboards/public-dashboards", nil, t)
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
 			if test.ExpectedHttpResponse == http.StatusOK {
@@ -415,7 +415,7 @@ func TestAPIGetPublicDashboardConfig(t *testing.T) {
 			response := callAPI(
 				testServer,
 				http.MethodGet,
-				"/api/dashboards/uid/1/public-config",
+				"/api/dashboards/uid/1/public-dashboard",
 				nil,
 				t,
 			)
@@ -526,7 +526,7 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 			response := callAPI(
 				testServer,
 				http.MethodPost,
-				"/api/dashboards/uid/1/public-config",
+				"/api/dashboards/uid/1/public-dashboard",
 				strings.NewReader(`{ "isPublic": true }`),
 				t,
 			)
