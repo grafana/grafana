@@ -39,6 +39,7 @@ export interface EditorProps {
 export type Props = QueryEditorProps<TestDataDataSource, TestDataQuery>;
 
 export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) => {
+  const origQuery = query;
   query = { ...defaultQuery, ...query };
 
   const { loading, value: scenarioList } = useAsync(async () => {
@@ -75,11 +76,11 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
   );
   const scenarioId = currentScenario?.id;
   const description = currentScenario?.description;
-
   const onScenarioChange = (item: SelectableValue<string>) => {
     const scenario = scenarioList?.find((sc) => sc.id === item.value);
 
-    if (!scenario) {
+    // only fire this is the scenario has actually changed
+    if (!scenario || origQuery.scenarioId === scenario.id) {
       return;
     }
 
