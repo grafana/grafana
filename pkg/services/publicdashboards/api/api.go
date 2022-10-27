@@ -116,7 +116,7 @@ func (api *Api) SavePublicDashboard(c *models.ReqContext) response.Response {
 
 	// Always set the orgID and userID from the session
 	pubdash.OrgId = c.OrgID
-	dto := SavePublicDashboardConfigDTO{
+	dto := SavePublicDashboardDTO{
 		UserId:          c.UserID,
 		OrgId:           c.OrgID,
 		DashboardUid:    dashboardUid,
