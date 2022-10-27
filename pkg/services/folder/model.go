@@ -1,8 +1,9 @@
 package folder
 
 import (
-	"errors"
 	"time"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -10,7 +11,7 @@ const (
 	MaxNestedFolderDepth = 8
 )
 
-var ErrFolderNotFound error = errors.New("folder not found")
+var ErrFolderNotFound error = errutil.NewBase(errutil.StatusNotFound, "folder.notFound")
 
 type Folder struct {
 	ID          int64
@@ -95,6 +96,7 @@ type GetParentsQuery struct {
 
 type GetTreeQuery struct {
 	UID   string
+	OrgID int64
 	Depth int64
 
 	// Pagination options
