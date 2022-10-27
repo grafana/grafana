@@ -1,16 +1,35 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback } from 'react';
+import { debounce } from 'lodash';
+import React, { CSSProperties, useCallback, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
+import { useDebounce, useToggle } from 'react-use';
+import { FixedSizeList } from 'react-window';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Button, Field, Input, InputControl, Label, TextArea, useStyles } from '@grafana/ui';
+import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
+import {
+  Button,
+  Field,
+  FilterInput,
+  Input,
+  InputControl,
+  Label,
+  LoadingPlaceholder,
+  Modal,
+  TextArea,
+  useStyles,
+  useStyles2,
+} from '@grafana/ui';
 
+import { dashboardApi } from '../../api/alertingApi';
 import { RuleFormValues } from '../../types/rule-form';
 
 import { AnnotationKeyInput } from './AnnotationKeyInput';
 
 const AnnotationsField = () => {
   const styles = useStyles(getStyles);
+  const [showPanelSelector, setShowPanelSelector] = useToggle(false);
+
   const {
     control,
     register,
@@ -92,10 +111,83 @@ const AnnotationsField = () => {
         >
           Add info
         </Button>
+        <Button type="button" variant="secondary" onClick={setShowPanelSelector}>
+          Set panel and dashboard
+        </Button>
+        <Modal
+          title="Select dashboard and panel"
+          closeOnEscape
+          isOpen={showPanelSelector}
+          onDismiss={setShowPanelSelector}
+        >
+          DASHBOARD AND PANEL PICKER
+          <DashboardPicker />
+        </Modal>
       </div>
     </>
   );
 };
+
+const DashboardPicker = () => {
+  const styles = useStyles2(getPickerStyles);
+
+  const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+
+  const { useSearchQuery, useLazyDashboardQuery } = dashboardApi;
+
+  const { data: searchResults } = useSearchQuery({ query: debouncedQuery });
+  const [triggerDashboard, dashboardResult] = useLazyDashboardQuery();
+
+  useDebounce(
+    () => {
+      setDebouncedQuery(query);
+    },
+    500,
+    [query]
+  );
+
+  if (!searchResults) {
+    return null;
+  }
+
+  const DashboardRow = ({ index, style }: { index: number; style: CSSProperties }) => {
+    const dashboard = searchResults[index];
+
+    return (
+      <div style={style} className={styles.row} onClick={() => triggerDashboard({ uid: dashboard.uid })}>
+        {dashboard.title}
+      </div>
+    );
+  };
+
+  return (
+    <Stack direction="row">
+      <div style={{ flex: 1 }}>
+        <FilterInput value={query} onChange={setQuery} title="Search dashboard" />
+        <FixedSizeList itemSize={40} height={600} itemCount={searchResults.length} width="100%">
+          {DashboardRow}
+        </FixedSizeList>
+      </div>
+      <div style={{ flex: 1 }}>
+        {dashboardResult?.currentData && (
+          <ul>
+            {dashboardResult?.currentData?.dashboard?.panels?.map((panel) => (
+              <li key={panel.id}>{panel.title}</li>
+            ))}
+          </ul>
+        )}
+        {dashboardResult.isLoading && <LoadingPlaceholder text="Loading dashboard" />}
+      </div>
+    </Stack>
+  );
+};
+
+const getPickerStyles = (theme: GrafanaTheme2) => ({
+  row: css`
+    padding: ${theme.spacing(1)};
+  `,
+});
 
 const getStyles = (theme: GrafanaTheme) => ({
   annotationValueInput: css`
