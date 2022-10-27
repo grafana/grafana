@@ -247,10 +247,6 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 	return ErrResp(http.StatusInternalServerError, err, "")
 }
 
-func (srv AlertmanagerSrv) RoutePostAMAlerts(_ *models.ReqContext, _ apimodels.PostableAlerts) response.Response {
-	return NotImplementedResp
-}
-
 func (srv AlertmanagerSrv) RouteGetReceivers(c *models.ReqContext) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
