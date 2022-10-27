@@ -1,20 +1,27 @@
 ---
 aliases:
+  - /docs/grafana/latest/alerting/contact-points/
+  - /docs/grafana/latest/alerting/unified-alerting/contact-points/
   - /docs/grafana/latest/alerting/fundamentals/contact-points/contact-point-types/
-  - /docs/grafana/latest/alerting/contact-points/notifiers/
-  - /docs/grafana/latest/alerting/message-templating/
-  - /docs/grafana/latest/alerting/unified-alerting/message-templating/
+description: Create or edit contact point
 keywords:
   - grafana
   - alerting
   - guide
   - contact point
-  - templating
-title: List of contact point types
-weight: 130
+  - notification channel
+  - create
+title: Contact points
+weight: 410
 ---
 
-# List of supported contact point types
+# Contact points
+
+Use contact points to define how your contacts are notified when an alert rule fires. A contact point can have one or more contact point types, for example, email, slack, webhook, and so on. When an alert rule fires, a notification is sent to all contact point types listed for a contact point. Contact points can be configured for the Grafana Alertmanager as well as external alertmanagers.
+
+You can also use message templating to customize notification messages for contact point types.
+
+## Supported contact point types
 
 The following table lists the contact point types supported by Grafana.
 
@@ -40,3 +47,9 @@ The following table lists the contact point types supported by Grafana.
 | [Webhook](#webhook)                              | `webhook`                 | Supported            | Supported ([different format](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config)) |
 | [WeCom](#wecom)                                  | `wecom`                   | Supported            | N/A                                                                                                      |
 | [Zenduty](https://www.zenduty.com/)              | `webhook`                 | Supported            | N/A                                                                                                      |
+
+## Useful links
+
+[Manage contact points](https://grafana.com/docs/grafana/next/alerting/manage-notifications/create-contact-point/)
+
+[Create and edit message templates](https://grafana.com/docs/grafana/next/alerting/manage-notifications/create-message-template/)
