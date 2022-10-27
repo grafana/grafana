@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -128,7 +127,7 @@ type JSONData struct {
 	Routes       []*Route     `json:"routes"`
 
 	// AccessControl settings
-	Roles []ac.RoleRegistration `json:"roles,omitempty"`
+	Roles []RoleRegistration `json:"roles,omitempty"`
 
 	// Panel settings
 	SkipDataQuery bool `json:"skipDataQuery"`

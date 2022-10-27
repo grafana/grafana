@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"context"
+	"io"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -73,4 +74,8 @@ type ErrorResolver interface {
 type PluginLoaderAuthorizer interface {
 	// CanLoadPlugin confirms if a plugin is authorized to load
 	CanLoadPlugin(plugin *Plugin) bool
+}
+
+type RoleRegistry interface {
+	DeclarePluginRoles(ctx context.Context, raw io.ReadCloser) error
 }

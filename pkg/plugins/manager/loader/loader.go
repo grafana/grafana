@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/storage"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
@@ -44,26 +43,26 @@ type Loader struct {
 	pluginFinder       finder.Finder
 	processManager     process.Service
 	pluginRegistry     registry.Service
+	roleRegistry       plugins.RoleRegistry
 	pluginInitializer  initializer.Initializer
 	signatureValidator signature.Validator
 	pluginStorage      storage.Manager
 	log                log.Logger
-	acService          ac.Service
 	features           *featuremgmt.FeatureManager
 
 	errs map[string]*plugins.SignatureError
 }
 
 func ProvideService(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, acService ac.Service,
+	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, roleRegistry plugins.RoleRegistry,
 	features *featuremgmt.FeatureManager) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath), acService, features)
+		storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath), roleRegistry, features)
 }
 
 func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
-	processManager process.Service, pluginStorage storage.Manager, acService ac.Service,
+	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry,
 	features *featuremgmt.FeatureManager) *Loader {
 	return &Loader{
 		pluginFinder:       finder.New(),
@@ -74,7 +73,7 @@ func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoa
 		pluginStorage:      pluginStorage,
 		errs:               make(map[string]*plugins.SignatureError),
 		log:                log.New("plugin.loader"),
-		acService:          acService,
+		roleRegistry:       roleRegistry,
 		features:           features,
 	}
 }
@@ -90,6 +89,7 @@ func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string) 
 
 func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSONPaths []string) ([]*plugins.Plugin, error) {
 	var foundPlugins = foundPlugins{}
+	var foundPluginsJSONPath = map[string]string{}
 
 	// load plugin.json files and map directory to JSON data
 	for _, pluginJSONPath := range pluginJSONPaths {
@@ -110,6 +110,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 			continue
 		}
 		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
+		foundPluginsJSONPath[plugin.ID] = pluginJSONAbsPath
 	}
 
 	// get all registered plugins
@@ -204,13 +205,24 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		}
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 
-		if l.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) && len(p.JSONData.Roles) > 0 {
-			if errDeclareRoles := l.acService.DeclarePluginRoles(p.ID, p.JSONData.Roles...); errDeclareRoles != nil {
-				l.log.Warn("Declare plugin roles failed",
-					"pluginID", p.ID,
-					"warning", "Make sure the role declaration is correct.",
-					"path", p.PluginDir+"/plugin.json",
-					"error", errDeclareRoles)
+		if l.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) {
+			if pluginJSONPath, ok := foundPluginsJSONPath[p.ID]; ok {
+				// nolint:gosec
+				// We can ignore the gosec G304 warning on this one because `currentPath` is based
+				// on plugin the folder structure on disk and not user input.
+				// Q? Is it ok to read it twice
+				reader, err := os.Open(pluginJSONPath)
+				if err != nil {
+					continue
+				}
+
+				if errDeclareRoles := l.roleRegistry.DeclarePluginRoles(ctx, reader); errDeclareRoles != nil {
+					l.log.Warn("Declare plugin roles failed",
+						"pluginID", p.ID,
+						"warning", "Make sure the role declaration is correct.",
+						"path", p.PluginDir+"/plugin.json",
+						"error", errDeclareRoles)
+				}
 			}
 		}
 	}

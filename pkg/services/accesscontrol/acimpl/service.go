@@ -2,7 +2,9 @@ package acimpl
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -205,7 +207,9 @@ func permissionCacheKey(user *user.SignedInUser) (string, error) {
 
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
-func (s *Service) DeclarePluginRoles(pluginID string, registrations ...accesscontrol.RoleRegistration) error {
+func (s *Service) DeclarePluginRoles(_ context.Context, raw io.ReadCloser) error {
+	defer func() { _ = raw.Close() }()
+
 	// If accesscontrol is disabled no need to register roles
 	if accesscontrol.IsDisabled(s.cfg) {
 		return nil
@@ -216,8 +220,17 @@ func (s *Service) DeclarePluginRoles(pluginID string, registrations ...accesscon
 		return nil
 	}
 
-	for _, r := range registrations {
-		err := accesscontrol.ValidatePluginRole(pluginID, r.Role)
+	plugin := accesscontrol.PluginJSON{}
+	if errReadJSON := json.NewDecoder(raw).Decode(&plugin); errReadJSON != nil {
+		s.log.Warn("Declare plugin roles failed",
+			"pluginID", plugin.ID,
+			"warning", "Could not parse plugin.json file content.",
+			"error", errReadJSON)
+		return errReadJSON
+	}
+
+	for _, r := range plugin.Roles {
+		err := accesscontrol.ValidatePluginRole(plugin.ID, r.Role)
 		if err != nil {
 			return err
 		}

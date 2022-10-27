@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -648,14 +647,14 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 								Plugins:           []plugins.Dependency{},
 							},
 							Includes: []*plugins.Includes{},
-							Roles: []accesscontrol.RoleRegistration{
+							Roles: []plugins.RoleRegistration{
 								{
-									Role: accesscontrol.RoleDTO{
+									Role: plugins.Role{
 										Name:        "plugins.app:test-app:reader",
 										DisplayName: "test-app reader",
 										Description: "View everything in the test-app plugin",
 										Group:       "Plugins",
-										Permissions: []accesscontrol.Permission{
+										Permissions: []plugins.Permission{
 											{Action: "plugins.app:access", Scope: "plugins.app:id:test-app"},
 											{Action: "test-app.resource:read", Scope: "resources:*"},
 											{Action: "test-app.otherresource:toggle"},
@@ -1331,6 +1330,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 }
 
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
+	// Is it ok in the test that I use some external fake?
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
 		actest.FakeService{}, featuremgmt.WithFeatures())
