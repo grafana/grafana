@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/oam"
@@ -52,8 +53,9 @@ func (a *AccountsService) GetAccountsForCurrentUserOrRole() ([]*models.Account, 
 
 	sinkIdentifier := sinks[0].Arn
 	result := []*models.Account{{
+		Id:                  getAccountId(*sinkIdentifier),
 		Label:               *sinks[0].Name,
-		Arn:                 *sinks[0].Arn,
+		Arn:                 *sinkIdentifier,
 		IsMonitoringAccount: true,
 	}}
 
@@ -68,9 +70,11 @@ func (a *AccountsService) GetAccountsForCurrentUserOrRole() ([]*models.Account, 
 		}
 
 		for _, link := range links.Items {
+			arn := *link.LinkArn
 			result = append(result, &models.Account{
+				Id:                  getAccountId(arn),
 				Label:               *link.Label,
-				Arn:                 *link.LinkArn,
+				Arn:                 arn,
 				IsMonitoringAccount: false,
 			})
 		}
@@ -82,4 +86,15 @@ func (a *AccountsService) GetAccountsForCurrentUserOrRole() ([]*models.Account, 
 	}
 
 	return result, nil
+}
+
+func getAccountId(arn string) string {
+	// format: arn:partition:service:region:account-id:resource-id
+	parts := strings.Split(arn, ":")
+
+	if len(parts) >= 4 {
+		return parts[4]
+	}
+
+	return ""
 }

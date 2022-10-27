@@ -5,6 +5,7 @@ import (
 )
 
 type Account struct {
+	Id                  string `json:"id"`
 	Arn                 string `json:"arn"`
 	Label               string `json:"label"`
 	IsMonitoringAccount bool   `json:"isMonitoringAccount"`

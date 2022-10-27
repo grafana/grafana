@@ -22,6 +22,7 @@ func Test_accounts_route(t *testing.T) {
 	t.Run("successfully returns array of accounts json", func(t *testing.T) {
 		mockAccountsService := mocks.AccountsServiceMock{}
 		mockAccountsService.On("GetAccountsForCurrentUserOrRole").Return([]*models.Account{{
+			Id:                  "123456789012",
 			Arn:                 "some arn",
 			Label:               "some label",
 			IsMonitoringAccount: true,
@@ -36,7 +37,7 @@ func Test_accounts_route(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
-		assert.JSONEq(t, `[{"arn":"some arn", "isMonitoringAccount":true, "label":"some label"}]`, rr.Body.String())
+		assert.JSONEq(t, `[{"id":"123456789012", "arn":"some arn", "isMonitoringAccount":true, "label":"some label"}]`, rr.Body.String())
 	})
 
 	t.Run("rejects POST method", func(t *testing.T) {
