@@ -13,7 +13,9 @@ import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
+import AppRootPage from 'app/features/plugins/components/AppRootPage';
 import { getProfileRoutes } from 'app/features/profile/routes';
+import { store } from 'app/store/store';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
@@ -48,6 +50,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     : [];
 
   return [
+    // Based on the Grafana configuration standalone plugin pages can even override and extend existing core pages, or they can register new routes under existing ones.
+    // In order to make it possible we need to register them first due to how `<Switch>` is evaluating routes. (This will be unnecessary once/when we upgrade to React Router v6 and start using `<Routes>` instead.)
+    ...getStandalonePluginPageRoutes(),
     {
       path: '/',
       pageClass: 'page-dashboard',
@@ -539,4 +544,37 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
       component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/ScenePage')),
     },
   ];
+}
+
+// Standalone plugin pages
+// These pages are registered by plugins and are showing up under different sections based on the Grafana configuration.
+function getStandalonePluginPageRoutes(): RouteDescriptor[] {
+  const state = store.getState();
+  const { navIndex } = state;
+  const isStandalonePage = (id: string) => id.includes('standalone-plugin-page-/');
+  const isDefaultAppRoute = (id: string) => id.includes('standalone-plugin-page-/a/'); // any page that is still served under "/a/:pluginId/*"
+  const standalonePageNavIds = Object.keys(navIndex).filter((id) => isStandalonePage(id) && !isDefaultAppRoute(id));
+
+  if (!standalonePageNavIds.length) {
+    return [];
+  }
+
+  return standalonePageNavIds.map((navId) => {
+    const { pluginId } = navIndex[navId];
+    const baseUrl = '';
+
+    return {
+      path: navIndex[navId].url || '',
+      exact: false,
+      component: ({ match, location, route, history, queryParams }) => (
+        <AppRootPage
+          route={route}
+          match={{ ...match, url: baseUrl, params: { ...match.params, pluginId } }}
+          queryParams={queryParams}
+          history={history}
+          location={location}
+        />
+      ),
+    };
+  });
 }

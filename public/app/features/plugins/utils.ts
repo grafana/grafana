@@ -92,9 +92,19 @@ export function buildPluginSectionNav(
 // TODO make work for sub pages
 export function getPluginSection(location: HistoryLocation, navIndex: NavIndex, pluginId: string): NavModelItem {
   // First check if this page exist in navIndex using path, some plugin pages are not under their own section
-  const byPath = navIndex[`standalone-plugin-page-${location.pathname}`];
-  if (byPath) {
-    return getRootSectionForNode(byPath);
+  // (removing the trailing slash so it works even if there is a "/" at the end of the url)
+  const pathWithoutTrailingSlash = location.pathname.replace(/\/+$/, '');
+  const byStandalonePath = navIndex[`standalone-plugin-page-${pathWithoutTrailingSlash}`];
+  if (byStandalonePath) {
+    return getRootSectionForNode(byStandalonePath);
+  }
+
+  // Try to find parent item by URL
+  // - skip if we are under the app plugins URL (/a/...)
+  const parentUrl = pathWithoutTrailingSlash.substring(0, pathWithoutTrailingSlash.lastIndexOf('/'));
+  const parentNavItem = navIndex[`standalone-plugin-page-${parentUrl}`];
+  if (parentNavItem) {
+    return getRootSectionForNode(parentNavItem);
   }
 
   // Some plugins like cloud home don't have any precense in the navtree so we need to allow those
