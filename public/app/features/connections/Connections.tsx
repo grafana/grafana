@@ -16,7 +16,7 @@ import {
 
 export default function Connections() {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
-  const isCloud = Boolean(navIndex['standalone-plugin-page-/connections/connect-data']);
+  const isConnectDataPageOverriden = Boolean(navIndex['standalone-plugin-page-/connections/connect-data']);
   const pluginServedPageIds = Object.keys(navIndex).filter((id) => id.includes('standalone-plugin-page-/connections'));
   const location = useLocation();
 
@@ -37,7 +37,7 @@ export default function Connections() {
         <Route exact path={ROUTES.DataSourcesDetails} component={DataSourceDetailsPage} />
         <Route exact path={ROUTES.DataSourcesNew} component={NewDataSourcePage} />
         <Route exact path={ROUTES.DataSourcesEdit} component={EditDataSourcePage} />
-        {!isCloud && <Route path={ROUTES.ConnectData} component={ConnectDataPage} />}
+        {!isConnectDataPageOverriden && <Route path={ROUTES.ConnectData} component={ConnectDataPage} />}
 
         {/* 
           Standalone plugin pages 
