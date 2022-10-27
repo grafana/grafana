@@ -63,7 +63,7 @@ export const PublicDashboardListTable = () => {
                       title={pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled'}
                       target="_blank"
                       disabled={!pd.isEnabled}
-                      data-testid={selectors.linkButton}
+                      data-testid={selectors.ListItem.linkButton}
                     >
                       <Icon size={responsiveSize} name="external-link-alt" />
                     </LinkButton>
@@ -72,7 +72,7 @@ export const PublicDashboardListTable = () => {
                       size={responsiveSize}
                       href={`/d/${pd.dashboardUid}?shareView=share`}
                       title="Configure public dashboard"
-                      data-testid={selectors.configButton}
+                      data-testid={selectors.ListItem.configButton}
                     >
                       <Icon size={responsiveSize} name="cog" />
                     </LinkButton>

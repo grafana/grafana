@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
+import { render, screen, waitForElementToBeRemoved, within } from '@testing-library/react';
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
 import React from 'react';
@@ -113,7 +113,7 @@ describe('Show table', () => {
     publicDashboardListResponse.forEach((pd, idx) => {
       const tableRow = tableRows[idx];
       const rowDataCells = within(tableRow).getAllByRole('cell');
-      expect(within(rowDataCells[2]).queryByTestId(selectors.trashcanButton)).toBeNull();
+      expect(within(rowDataCells[2]).queryByTestId(selectors.ListItem.trashcanButton)).toBeNull();
     });
   });
   it('renders public dashboards in a good way with trashcan', async () => {
@@ -126,7 +126,7 @@ describe('Show table', () => {
     publicDashboardListResponse.forEach((pd, idx) => {
       const tableRow = tableRows[idx];
       const rowDataCells = within(tableRow).getAllByRole('cell');
-      expect(within(rowDataCells[2]).getByTestId(selectors.trashcanButton));
+      expect(within(rowDataCells[2]).getByTestId(selectors.ListItem.trashcanButton));
     });
   });
 });
@@ -137,25 +137,16 @@ describe('Delete public dashboard', () => {
     await renderPublicDashboardTable(true);
 
     const tableBody = screen.getAllByRole('rowgroup')[1];
-    expect(within(tableBody).queryAllByTestId(selectors.trashcanButton)).toHaveLength(0);
+    expect(within(tableBody).queryAllByTestId(selectors.ListItem.trashcanButton)).toHaveLength(0);
   });
   it('when user has public dashboard write permissions, then dashboards are listed with delete button ', async () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
     await renderPublicDashboardTable(true);
 
     const tableBody = screen.getAllByRole('rowgroup')[1];
-    expect(within(tableBody).getAllByTestId(selectors.trashcanButton)).toHaveLength(publicDashboardListResponse.length);
-  });
-  it('user deletes a public dashboard successfully', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
-    await renderPublicDashboardTable(true);
-
-    const tableBody = screen.getAllByRole('rowgroup')[1];
-    const trashButton = within(tableBody).getAllByTestId(selectors.trashcanButton)[1];
-    fireEvent.click(trashButton);
-    await waitFor(() => screen.getByText('Do you want to delete this public dashboard?'));
-    // const deleteButton = await screen.queryByTestId('sarazaa', {timeout: 5000});
-    expect(screen.getByText('Do you want to delete this public dashboard?')).toBeInTheDocument();
+    expect(within(tableBody).getAllByTestId(selectors.ListItem.trashcanButton)).toHaveLength(
+      publicDashboardListResponse.length
+    );
   });
 });
 
@@ -172,7 +163,7 @@ const renderPublicDashboardItems = async () => {
 
     expect(within(rowDataCells[0]).getByText(pd.title));
     expect(within(rowDataCells[1]).getByText(pd.isEnabled ? 'enabled' : 'disabled'));
-    expect(within(rowDataCells[2]).getByTestId(selectors.linkButton));
-    expect(within(rowDataCells[2]).getByTestId(selectors.configButton));
+    expect(within(rowDataCells[2]).getByTestId(selectors.ListItem.linkButton));
+    expect(within(rowDataCells[2]).getByTestId(selectors.ListItem.configButton));
   });
 };

@@ -38,7 +38,7 @@ export const DeletePublicDashboardButton = ({
               onDismiss: hideModal,
             })
           }
-          data-testid={selectors.trashcanButton}
+          data-testid={selectors.ListItem.trashcanButton}
           size={size}
         >
           {isLoading ? <Spinner /> : <Icon size={size} name="trash-alt" />}
