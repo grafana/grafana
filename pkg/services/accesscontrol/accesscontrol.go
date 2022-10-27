@@ -35,7 +35,7 @@ type Service interface {
 	DeclareFixedRoles(registrations ...RoleRegistration) error
 	// DeclarePluginRoles allows the caller to declare, to the service, plugins roles and their
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
-	DeclarePluginRoles(ctx context.Context, registrations io.ReadCloser) error
+	DeclarePluginRoles(rawJSON io.ReadCloser) error
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
 }

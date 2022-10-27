@@ -207,8 +207,8 @@ func permissionCacheKey(user *user.SignedInUser) (string, error) {
 
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
-func (s *Service) DeclarePluginRoles(_ context.Context, raw io.ReadCloser) error {
-	defer func() { _ = raw.Close() }()
+func (s *Service) DeclarePluginRoles(rawJSON io.ReadCloser) error {
+	defer func() { _ = rawJSON.Close() }()
 
 	// If accesscontrol is disabled no need to register roles
 	if accesscontrol.IsDisabled(s.cfg) {
@@ -221,7 +221,7 @@ func (s *Service) DeclarePluginRoles(_ context.Context, raw io.ReadCloser) error
 	}
 
 	plugin := accesscontrol.PluginJSON{}
-	if errReadJSON := json.NewDecoder(raw).Decode(&plugin); errReadJSON != nil {
+	if errReadJSON := json.NewDecoder(rawJSON).Decode(&plugin); errReadJSON != nil {
 		s.log.Warn("Declare plugin roles failed",
 			"pluginID", plugin.ID,
 			"warning", "Could not parse plugin.json file content.",

@@ -1,7 +1,10 @@
 package acimpl
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -262,22 +265,29 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 			// Reset the registations
 			ac.registrations = accesscontrol.RegistrationList{}
 
-			// Test
-			// err := ac.DeclarePluginRoles(tt.pluginID, tt.registrations...)
-			// if tt.wantErr {
-			// 	require.Error(t, err)
-			// 	assert.ErrorIs(t, err, tt.err)
-			// 	return
-			// }
-			// require.NoError(t, err)
+			rawJSON, err := json.Marshal(accesscontrol.PluginJSON{
+				ID:    tt.pluginID,
+				Roles: tt.registrations,
+			})
+			require.NoError(t, err)
+			reader := io.NopCloser(bytes.NewReader(rawJSON))
 
-			// registrationCnt := 0
-			// ac.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
-			// 	registrationCnt++
-			// 	return true
-			// })
-			// assert.Equal(t, len(tt.registrations), registrationCnt,
-			//     "expected service registration list to contain all test registrations")
+			// Test
+			err = ac.DeclarePluginRoles(reader)
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.ErrorIs(t, err, tt.err)
+				return
+			}
+			require.NoError(t, err)
+
+			registrationCnt := 0
+			ac.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
+				registrationCnt++
+				return true
+			})
+			assert.Equal(t, len(tt.registrations), registrationCnt,
+				"expected service registration list to contain all test registrations")
 		})
 	}
 }

@@ -33,7 +33,7 @@ func (f FakeService) DeclareFixedRoles(registrations ...accesscontrol.RoleRegist
 	return f.ExpectedErr
 }
 
-func (f FakeService) DeclarePluginRoles(_ context.Context, _ io.ReadCloser) error {
+func (f FakeService) DeclarePluginRoles(_ io.ReadCloser) error {
 	return f.ExpectedErr
 }
 

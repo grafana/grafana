@@ -77,5 +77,5 @@ type PluginLoaderAuthorizer interface {
 }
 
 type RoleRegistry interface {
-	DeclarePluginRoles(ctx context.Context, raw io.ReadCloser) error
+	DeclarePluginRoles(rawJSON io.ReadCloser) error
 }
