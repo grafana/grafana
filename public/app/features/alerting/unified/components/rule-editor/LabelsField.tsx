@@ -4,7 +4,7 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Field, InlineLabel, Label, useStyles2 } from '@grafana/ui';
+import { Button, Field, InlineLabel, Label, useStyles2, Stack, Tooltip, Icon } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -100,7 +100,21 @@ const LabelsField: FC<Props> = ({ className }) => {
 
   return (
     <div className={cx(className, styles.wrapper)}>
-      <Label>Custom Labels</Label>
+      <Label>
+        <Stack gap={0.5}>
+          <span>Custom Labels</span>
+          <Tooltip
+            content={
+              <div>
+                Labels shown as suggestions in the dropdowns come from previously entered labels in other alert rules.
+                They do not represent the full set of labels for the alert.
+              </div>
+            }
+          >
+            <Icon className={styles.icon} name="info-circle" size="sm" />
+          </Tooltip>
+        </Stack>
+      </Label>
       <>
         <div className={styles.flexRow}>
           <InlineLabel width={18}>Labels</InlineLabel>
@@ -185,6 +199,9 @@ const LabelsField: FC<Props> = ({ className }) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    icon: css`
+      margin-right: ${theme.spacing.xs};
+    `,
     wrapper: css`
       margin-bottom: ${theme.spacing(4)};
     `,
