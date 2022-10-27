@@ -55,27 +55,29 @@ func ProvideApi(
 
 // RegisterAPIEndpoints Registers Endpoints on Grafana Router
 func (api *Api) RegisterAPIEndpoints() {
-	auth := accesscontrol.Middleware(api.AccessControl)
-
+	// Public endpoints
 	// Anonymous access to public dashboard route is configured in pkg/api/api.go
 	// because it is deeply dependent on the HTTPServer.Index() method and would result in a
 	// circular dependency
 
-	// public endpoints
 	api.RouteRegister.Get("/api/public/dashboards/:accessToken", routing.Wrap(api.GetPublicDashboard))
 	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
 	api.RouteRegister.Get("/api/public/dashboards/:accessToken/annotations", routing.Wrap(api.GetAnnotations))
 
-	// List Public Dashboards
-	api.RouteRegister.Get("/api/dashboards/public", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
+	// Auth endpoints
+	auth := accesscontrol.Middleware(api.AccessControl)
+	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":dashboardUid"))
 
-	// Create/Update Public Dashboard
-	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
-	api.RouteRegister.Get("/api/dashboards/uid/:uid/public-config",
+	// List public dashboards for org
+	api.RouteRegister.Get("/api/dashboards/public-dashboards", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
+
+	// Get public dashboard
+	api.RouteRegister.Get("/api/dashboards/uid/:dashboardUid/public-dashboards",
 		auth(middleware.ReqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, uidScope)),
 		routing.Wrap(api.GetPublicDashboardConfig))
 
-	api.RouteRegister.Post("/api/dashboards/uid/:uid/public-config",
+	// Create/Update Public Dashboard
+	api.RouteRegister.Post("/api/dashboards/uid/:dashboardUid/public-dashboards",
 		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.SavePublicDashboardConfig))
 }
@@ -132,7 +134,7 @@ func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
 // GetPublicDashboardConfig Gets public dashboard configuration for dashboard
 // GET /api/dashboards/uid/:uid/public-config
 func (api *Api) GetPublicDashboardConfig(c *models.ReqContext) response.Response {
-	pdc, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, web.Params(c.Req)[":uid"])
+	pdc, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, web.Params(c.Req)[":dashboardUid"])
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "GetPublicDashboardConfig: failed to get public dashboard config", err)
 	}
@@ -143,7 +145,7 @@ func (api *Api) GetPublicDashboardConfig(c *models.ReqContext) response.Response
 // POST /api/dashboards/uid/:uid/public-config
 func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
-	dashboardUid := web.Params(c.Req)[":uid"]
+	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
 		api.handleError(c.Req.Context(), http.StatusBadRequest, "SavePublicDashboardConfig: no dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
 	}
