@@ -1,7 +1,6 @@
 package object_server_tests
 
 import (
-	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -111,16 +110,16 @@ func TestObjectServer(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ctx := context.Background()
 	testCtx := createTestContext(t)
-	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", fmt.Sprintf("Bearer %s", testCtx.authToken))
+	ctx := metadata.AppendToOutgoingContext(testCtx.ctx, "authorization", fmt.Sprintf("Bearer %s", testCtx.authToken))
 
 	fakeUser := fmt.Sprintf("user:%d:%s", testCtx.user.UserID, testCtx.user.Login)
 	firstVersion := "1"
 	kind := "dummy"
 	grn := &object.GRN{
-		Kind: kind,
-		UID:  "my-test-entity",
+		Kind:  kind,
+		UID:   "my-test-entity",
+		Scope: "entity",
 	}
 	body := []byte("{\"name\":\"John\"}")
 
@@ -159,6 +158,13 @@ func TestObjectServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, readResp.SummaryJson)
+
+		foundGRN := readResp.Object.GRN
+		require.NotNil(t, foundGRN)
+		require.NotEqual(t, testCtx.user.OrgID, foundGRN.TenantId) // orgId becomes the tenant id when not set
+		require.Equal(t, grn.Scope, foundGRN.Scope)
+		require.Equal(t, grn.Kind, foundGRN.Kind)
+		require.Equal(t, grn.UID, foundGRN.UID)
 
 		objectMatcher := rawObjectMatcher{
 			grn:          grn,
