@@ -144,7 +144,6 @@ func (api *Api) DeletePublicDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, nil)
 }
 
-// Gets public dashboard configuration for dashboard
 // GetPublicDashboardConfig Gets public dashboard configuration for dashboard
 // GET /api/dashboards/uid/:uid/public-config
 func (api *Api) GetPublicDashboardConfig(c *models.ReqContext) response.Response {
