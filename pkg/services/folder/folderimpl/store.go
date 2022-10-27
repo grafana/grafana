@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
+// store is the interface which a folder store must implement.
 type store interface {
 	// Create creates a folder and returns the newly-created folder.
 	Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error)

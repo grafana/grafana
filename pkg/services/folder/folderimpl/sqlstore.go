@@ -30,7 +30,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd *folder.CreateFolderCommand)
 
 func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec("DELETE FROM dashboard WHERE folder_uid=? AND org_id=?", uid, orgID)
+		_, err := sess.Exec("DELETE FROM folder WHERE folder_uid=? AND org_id=?", uid, orgID)
 		return err
 	})
 }
