@@ -708,6 +708,11 @@ export function createTableFrameFromTraceQlQuery(
         },
       },
       {
+        name: 'spanName',
+        type: FieldType.string,
+        config: { custom: { subcol: true }, displayNameFromDS: 'Name' },
+      },
+      {
         name: 'spanStartTime',
         type: FieldType.string,
         config: { custom: { subcol: true }, displayNameFromDS: 'Start time' },
@@ -752,6 +757,7 @@ interface TraceTableData {
   traceID?: string;
   spanID?: string;
   startTime?: string;
+  name?: string;
   traceDuration?: string;
 }
 
@@ -771,6 +777,7 @@ function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
     spanID: span.spanID,
     spanStartTime: spanStartTime,
     duration: parseInt(span.durationNanos, 10),
+    spanName: span.name,
   };
 
   span.attributes?.forEach((attr) => {
