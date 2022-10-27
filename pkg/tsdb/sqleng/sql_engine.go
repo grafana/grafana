@@ -112,7 +112,7 @@ func (e *DataSourceHandler) transformQueryError(logger log.Logger, err error) er
 	// for security purposes.
 	var opErr *net.OpError
 	if errors.As(err, &opErr) {
-		logger.Error("query error", "err", err)
+		logger.Error("Query error", "err", err)
 		return ErrConnectionFailed
 	}
 
@@ -217,7 +217,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	defer func() {
 		if r := recover(); r != nil {
-			logger.Error("executeQuery panic", "error", r, "stack", log.Stack(1))
+			logger.Error("ExecuteQuery panic", "error", r, "stack", log.Stack(1))
 			if theErr, ok := r.(error); ok {
 				queryResult.dataResponse.Error = theErr
 			} else if theErrString, ok := r.(string); ok {
