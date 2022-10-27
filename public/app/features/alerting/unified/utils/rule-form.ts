@@ -14,8 +14,10 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
+  AlertDataQuery,
   AlertQuery,
   Annotations,
   GrafanaAlertStateDecision,
@@ -101,7 +103,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         condition,
         no_data_state: noDataState,
         exec_err_state: execErrState,
-        data: queries,
+        data: queries.map(fixBothInstantAndRangeQuery),
       },
       for: evaluateFor,
       annotations: arrayToRecord(values.annotations || []),
@@ -381,4 +383,23 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
   }
 
   return rangeUtil.calculateInterval(range, resolution, lowLimit);
+}
+
+export function fixBothInstantAndRangeQuery(query: AlertQuery) {
+  const model = query.model;
+
+  if (!isPromQuery(model)) {
+    return query;
+  }
+
+  const isBothInstantAndRange = model.instant && model.range;
+  if (isBothInstantAndRange) {
+    return { ...query, model: { ...model, range: true, instant: false } };
+  }
+
+  return query;
+}
+
+function isPromQuery(model: AlertDataQuery): model is PromQuery {
+  return 'expr' in model && 'instant' in model && 'range' in model;
 }
