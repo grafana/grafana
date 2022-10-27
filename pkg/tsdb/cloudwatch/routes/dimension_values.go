@@ -10,13 +10,13 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/request"
 )
 
-func DimensionValuesHandler(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
+func DimensionValuesHandler(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
 	dimensionValuesRequest, err := request.GetDimensionValuesRequest(parameters)
 	if err != nil {
 		return nil, models.NewHttpError("error in DimensionValuesHandler", http.StatusBadRequest, err)
 	}
 
-	service, err := newListMetricsService(pluginCtx, clientFactory, dimensionValuesRequest.Region)
+	service, err := newListMetricsService(pluginCtx, reqCtxFactory, dimensionValuesRequest.Region)
 	if err != nil {
 		return nil, models.NewHttpError("error in DimensionValuesHandler", http.StatusInternalServerError, err)
 	}

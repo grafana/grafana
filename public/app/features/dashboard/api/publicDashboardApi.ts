@@ -3,22 +3,33 @@ import { lastValueFrom } from 'rxjs';
 
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime/src';
 import { notifyApp } from 'app/core/actions';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardModel } from 'app/features/dashboard/state';
 
+type ReqOptions = {
+  manageError?: (err: unknown) => { error: unknown };
+  showErrorAlert?: boolean;
+};
+
 const backendSrvBaseQuery =
-  ({ baseUrl }: { baseUrl: string } = { baseUrl: '' }): BaseQueryFn<BackendSrvRequest> =>
+  ({ baseUrl }: { baseUrl: string }): BaseQueryFn<BackendSrvRequest & ReqOptions> =>
   async (requestOptions) => {
     try {
       const { data: responseData, ...meta } = await lastValueFrom(
-        getBackendSrv().fetch({ ...requestOptions, url: baseUrl + requestOptions.url })
+        getBackendSrv().fetch({
+          ...requestOptions,
+          url: baseUrl + requestOptions.url,
+          showErrorAlert: requestOptions.showErrorAlert,
+        })
       );
       return { data: responseData, meta };
     } catch (error) {
-      return { error };
+      return requestOptions.manageError ? requestOptions.manageError(error) : { error };
     }
   };
+
+const getConfigError = (err: { status: number }) => ({ error: err.status !== 404 ? err : null });
 
 export const publicDashboardApi = createApi({
   reducerPath: 'publicDashboardApi',
@@ -29,7 +40,18 @@ export const publicDashboardApi = createApi({
     getConfig: builder.query<PublicDashboard, string>({
       query: (dashboardUid) => ({
         url: `/uid/${dashboardUid}/public-config`,
+        manageError: getConfigError,
+        showErrorAlert: false,
       }),
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+        } catch (e) {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const customError = e as { error: { data: { message: string } } };
+          dispatch(notifyApp(createErrorNotification(customError?.error?.data?.message)));
+        }
+      },
       providesTags: ['Config'],
     }),
     saveConfig: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({

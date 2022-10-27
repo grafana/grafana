@@ -84,7 +84,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
   }
 
   async handleMetricsQuery({ namespace, region }: VariableQuery) {
-    const metrics = await this.api.getMetrics(namespace, region);
+    const metrics = await this.api.getMetrics({ namespace, region });
     return metrics.map((s) => ({
       text: s.label,
       value: s.value,
