@@ -75,26 +75,26 @@ type DeleteFolderCommand struct {
 	UID string `json:"uid"`
 }
 
-// GetFolderCommand is used for all folder Get requests. Only one of UID, ID, or
+// GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
 // Title should be set; if multilpe fields are set by the caller the dashboard
 // service will select the field with the most specificity, in order: ID, UID,
 // Title.
-type GetFolderCommand struct {
+type GetFolderQuery struct {
 	UID   *string
 	ID    *int
 	Title *string
 }
 
-// GetParentsCommand captures the information required by the folder service to
+// GetParentsQuery captures the information required by the folder service to
 // return a list of all parent folders of a given folder.
-type GetParentsCommand struct {
+type GetParentsQuery struct {
 	UID string
 }
 
 // GetTreeCommand captures the information required by the folder service to
 // return a list of child folders of the given folder.
 
-type GetTreeCommand struct {
+type GetTreeQuery struct {
 	UID   string
 	Depth int64
 

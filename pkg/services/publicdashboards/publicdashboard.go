@@ -17,7 +17,7 @@ type Service interface {
 	FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error)
 	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
 	FindAnnotations(ctx context.Context, reqDTO AnnotationsQueryDTO, accessToken string) ([]AnnotationEvent, error)
-	FindDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error)
+	FindDashboard(ctx context.Context, dashboardUid string, orgId int64) (*models.Dashboard, error)
 	FindAll(ctx context.Context, u *user.SignedInUser, orgId int64) ([]PublicDashboardListResponse, error)
 	Save(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error)
 
@@ -36,8 +36,7 @@ type Store interface {
 	Find(ctx context.Context, uid string) (*PublicDashboard, error)
 	FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error)
 	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
-	FindDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error)
-	FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error)
+	FindDashboard(ctx context.Context, dashboardUid string, orgId int64) (*models.Dashboard, error)
 	FindAll(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error)
 	Save(ctx context.Context, cmd SavePublicDashboardConfigCommand) error
 	Update(ctx context.Context, cmd SavePublicDashboardConfigCommand) error
