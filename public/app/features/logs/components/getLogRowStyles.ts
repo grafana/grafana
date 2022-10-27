@@ -102,7 +102,7 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
     logsRowToggleDetails: css`
       label: logs-row-toggle-details__level;
       font-size: 9px;
-      padding-top: 5px;
+      padding-top: ${theme.spacing(0.625)};
       max-width: 15px;
     `,
     logsRowLocalTime: css`
@@ -116,7 +116,7 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
 
       /* This is to make the labels vertical align */
       > span {
-        margin-top: 0.75px;
+        margin-top: ${theme.spacing(0.094)};
       }
     `,
     logsRowMessage: css`
@@ -131,7 +131,7 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       border: 1px solid ${theme.colors.border.medium};
       padding: 0 ${theme.spacing(1)} ${theme.spacing(1)};
       border-radius: 3px;
-      margin: 20px 8px 20px 16px;
+      margin: ${theme.spacing(2.5)} ${theme.spacing(1)} ${theme.spacing(2.5)} ${theme.spacing(2)};
       cursor: default;
     `,
     logDetailsTable: css`
@@ -146,8 +146,8 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       label: logs-row-details__icon;
       position: relative;
       color: ${theme.v1.palette.gray3};
-      padding-top: 6px;
-      padding-left: 6px;
+      padding-top: ${theme.spacing(0.75)};
+      padding-left: ${theme.spacing(0.75)};
     `,
     logDetailsLabel: css`
       label: logs-row-details__label;
