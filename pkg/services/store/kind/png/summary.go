@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"context"
 	"image/png"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/store"
 )
 
 func GetObjectKindInfo() models.ObjectKindInfo {
@@ -31,7 +31,7 @@ func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
 		size := img.Bounds().Size()
 		summary := &models.ObjectSummary{
 			Kind: models.StandardKindSVG,
-			Name: guessNameFromUID(uid),
+			Name: store.GuessNameFromUID(uid),
 			UID:  uid,
 			Fields: map[string]interface{}{
 				"width":  int64(size.X),
@@ -40,16 +40,4 @@ func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
 		}
 		return summary, body, nil
 	}
-}
-
-func guessNameFromUID(uid string) string {
-	sidx := strings.LastIndex(uid, "/") + 1
-	didx := strings.LastIndex(uid, ".")
-	if didx > sidx && didx != sidx {
-		return uid[sidx:didx]
-	}
-	if sidx > 0 {
-		return uid[sidx:]
-	}
-	return uid
 }

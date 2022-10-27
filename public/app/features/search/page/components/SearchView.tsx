@@ -200,7 +200,7 @@ export const SearchView = ({
   };
 
   const getStarredItems = useCallback(
-    (e) => {
+    (e: React.FormEvent<HTMLInputElement>) => {
       onStarredFilterChange(e);
     },
     [onStarredFilterChange]

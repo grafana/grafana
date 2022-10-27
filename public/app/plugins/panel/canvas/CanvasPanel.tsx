@@ -35,6 +35,7 @@ let isInlineEditOpen = false;
 export const activePanelSubject = new ReplaySubject<SelectionAction>(1);
 
 export class CanvasPanel extends Component<Props, State> {
+  declare context: React.ContextType<typeof PanelContextRoot>;
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
 

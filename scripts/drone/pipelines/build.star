@@ -53,9 +53,8 @@ def build_e2e(trigger, ver_mode, edition):
         yarn_install_step(),
     ]
     build_steps = []
-    if ver_mode == 'main' or ver_mode == 'pr':
-        build_steps.extend([trigger_test_release()])
     if ver_mode == 'pr':
+        build_steps.extend([trigger_test_release()])
         build_steps.extend([enterprise_downstream_step(edition=edition, ver_mode=ver_mode)])
     build_steps.extend([
         build_backend_step(edition=edition, ver_mode=ver_mode),
