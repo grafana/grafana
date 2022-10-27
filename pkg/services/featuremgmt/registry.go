@@ -362,5 +362,10 @@ var (
 			Description: "Use Elasticsearch as backend data source",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "alertingBacktesting",
+			Description: "Rule backtesting API for alerting",
+			State:       FeatureStateAlpha,
+		},
 	}
 )

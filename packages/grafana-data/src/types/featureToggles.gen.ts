@@ -81,4 +81,5 @@ export interface FeatureToggles {
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   elasticsearchBackendMigration?: boolean;
+  alertingBacktesting?: boolean;
 }

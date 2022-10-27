@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/backtesting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -31,6 +32,7 @@ type TestingApiSrv struct {
 	evaluator       eval.EvaluatorFactory
 	cfg             *setting.UnifiedAlertingSettings
 	backtesting     *backtesting.Engine
+	featureManager  featuremgmt.FeatureToggles
 }
 
 func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
@@ -144,7 +146,10 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 }
 
 func (srv TestingApiSrv) BacktestAlertRule(c *models.ReqContext, cmd apimodels.BacktestConfig) response.Response {
-	// TODO Better error handling
+	if !srv.featureManager.IsEnabled(featuremgmt.FlagAlertingBacktesting) {
+		return ErrResp(http.StatusNotFound, nil, "Backgtesting API is not enabled")
+	}
+
 	if cmd.From.After(cmd.To) {
 		return ErrResp(400, nil, "From cannot be greater than To")
 	}
