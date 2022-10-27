@@ -64,7 +64,7 @@
     "@grafana/e2e-selectors": "9.3.0-pre",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@mochajs/json-file-reporter": "^1.2.0",
-    "babel-loader": "8.2.5",
+    "babel-loader": "9.0.0",
     "blink-diff": "1.0.13",
     "chrome-remote-interface": "0.31.3",
     "commander": "8.3.0",
