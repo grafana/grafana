@@ -9,7 +9,11 @@ export interface VariableUpdateInProgress {
   subscription: Unsubscribable;
 }
 
-export class VariableUpdateProcess {
+/**
+ * This is really an internal implementation detail of SceneVariableList (the unit tests for the logic in this class are in SceneVariableList.test.ts)
+ * Should the file content be moved to SceneVariableList?
+ */
+export class VariableUpdateManager {
   variablesThatHaveChanged = new Map<string, SceneVariable>();
   variablesToUpdate = new Map<string, SceneVariable>();
   subs: Subscription = new Subscription();
