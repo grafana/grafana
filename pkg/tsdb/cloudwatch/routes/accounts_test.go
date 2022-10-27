@@ -26,7 +26,7 @@ func Test_accounts_route(t *testing.T) {
 			Label:               "some label",
 			IsMonitoringAccount: true,
 		}}, nil)
-		newAccountsService = func(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, region string) (models.AccountsProvider, error) {
+		newAccountsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.AccountsProvider, error) {
 			return &mockAccountsService, nil
 		}
 
@@ -59,7 +59,7 @@ func Test_accounts_route(t *testing.T) {
 		mockAccountsService := mocks.AccountsServiceMock{}
 		mockAccountsService.On("GetAccountsForCurrentUserOrRole").Return([]*models.Account(nil),
 			fmt.Errorf("%w: %s", services.ErrAccessDeniedException, "some AWS message"))
-		newAccountsService = func(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, region string) (models.AccountsProvider, error) {
+		newAccountsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.AccountsProvider, error) {
 			return &mockAccountsService, nil
 		}
 
@@ -77,7 +77,7 @@ func Test_accounts_route(t *testing.T) {
 	t.Run("returns 500 when accounts service returns unknown error", func(t *testing.T) {
 		mockAccountsService := mocks.AccountsServiceMock{}
 		mockAccountsService.On("GetAccountsForCurrentUserOrRole").Return([]*models.Account(nil), fmt.Errorf("some error"))
-		newAccountsService = func(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, region string) (models.AccountsProvider, error) {
+		newAccountsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.AccountsProvider, error) {
 			return &mockAccountsService, nil
 		}
 

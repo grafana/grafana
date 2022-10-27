@@ -45,8 +45,8 @@ func AccountsHandler(pluginCtx backend.PluginContext, reqCtxFactory models.Reque
 // newAccountService is an account service factory.
 //
 // Stubbable by tests.
-var newAccountsService = func(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, region string) (models.AccountsProvider, error) {
-	oamClient, err := clientFactory(pluginCtx, region)
+var newAccountsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.AccountsProvider, error) {
+	oamClient, err := reqCtxFactory(pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}

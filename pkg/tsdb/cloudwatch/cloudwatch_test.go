@@ -546,6 +546,15 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider {
 		return &api
 	}
+
+	origNewOAMAPI := NewOAMAPI
+	t.Cleanup(func() {
+		NewOAMAPI = origNewOAMAPI
+	})
+	NewOAMAPI = func(sess *session.Session) models.OAMClientProvider {
+		return nil
+	}
+
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
@@ -585,14 +594,6 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		require.Nil(t, err)
 		assert.Equal(t, []string{"Value1", "Value2", "Value7"}, res)
 	})
-
-	origNewOAMAPI := NewOAMAPI
-	t.Cleanup(func() {
-		NewOAMAPI = origNewOAMAPI
-	})
-	NewOAMAPI = func(sess *session.Session) models.OAMClientProvider {
-		return nil
-	}
 
 	t.Run("Should handle dimension key filter query and return keys from the api", func(t *testing.T) {
 		pageLimit := 3
