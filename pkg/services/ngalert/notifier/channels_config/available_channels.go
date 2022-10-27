@@ -410,6 +410,13 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					SelectOptions: pushoverSoundOptions,
 					PropertyName:  "okSound",
 				},
+				{ // New in 9.3.
+					Label:        "Title",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  channels.DefaultMessageTitleEmbed,
+					PropertyName: "title",
+				},
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
