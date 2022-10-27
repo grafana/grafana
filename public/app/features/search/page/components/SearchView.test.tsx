@@ -9,7 +9,7 @@ import { ArrayVector, DataFrame, DataFrameView, FieldType } from '@grafana/data'
 import { config } from '@grafana/runtime';
 import { StoreState } from 'app/types';
 
-import { defaultQuery } from '../../reducers/searchQueryReducer';
+import { initialState } from '../../reducers/searchQueryReducer';
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service';
 import { DashboardSearchItemType, SearchLayout } from '../../types';
 
@@ -39,7 +39,7 @@ const setup = (propOverrides?: Partial<SearchViewProps>, storeOverrides?: Partia
   };
 
   const mockStore = configureMockStore();
-  const store = mockStore({ searchQuery: defaultQuery, ...storeOverrides });
+  const store = mockStore({ searchQuery: initialState, ...storeOverrides });
   render(
     <Provider store={store}>
       <SearchView {...props} />
@@ -75,7 +75,7 @@ describe('SearchView', () => {
 
   beforeEach(() => {
     config.featureToggles.panelTitleSearch = false;
-    defaultQuery.layout = SearchLayout.Folders;
+    initialState.layout = SearchLayout.Folders;
   });
 
   it('does not show checkboxes or manage actions if showManage is false', async () => {
@@ -104,7 +104,7 @@ describe('SearchView', () => {
     });
     setup(undefined, {
       searchQuery: {
-        ...defaultQuery,
+        ...initialState,
         query: 'asdfasdfasdf',
       },
     });
@@ -115,7 +115,7 @@ describe('SearchView', () => {
   describe('include panels', () => {
     it('should be enabled when layout is list', async () => {
       config.featureToggles.panelTitleSearch = true;
-      defaultQuery.layout = SearchLayout.List;
+      initialState.layout = SearchLayout.List;
       setup();
 
       await waitFor(() => expect(screen.getByLabelText(/include panels/i)).toBeInTheDocument());
