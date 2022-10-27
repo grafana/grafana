@@ -57,6 +57,7 @@ export class Scene {
   selecto?: Selecto;
   moveable?: Moveable;
   div?: HTMLDivElement;
+  arrowAnchorDiv?: HTMLDivElement;
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   shouldShowAdvancedTypes?: boolean;
@@ -290,6 +291,10 @@ export class Scene {
     this.div = sceneContainer;
   };
 
+  setArrowAnchorRef = (anchorElement: HTMLDivElement) => {
+    this.arrowAnchorDiv = anchorElement;
+  };
+
   select = (selection: SelectionParams) => {
     if (this.selecto) {
       this.selecto.setSelectedTargets(selection.targets);
@@ -468,7 +473,7 @@ export class Scene {
       const selectedTarget = event.inputEvent.target;
 
       // If selected target is an arrow control, eject to handle arrow event
-      if (selectedTarget.className === 'arrowControl') {
+      if (selectedTarget.id === 'arrowControl') {
         this.selecto!.rootContainer!.style.cursor = 'crosshair';
         this.selecto?.rootContainer?.addEventListener('mousemove', arrowListener);
         event.stop();
@@ -579,6 +584,27 @@ export class Scene {
     dest.reinitializeMoveable();
   };
 
+  handleMouseEnter = (event: MouseEvent) => {
+    const element = event.target as HTMLElement;
+    const elementBoundingRect = element!.getBoundingClientRect();
+    const parentBoundingRect = this.div?.getBoundingClientRect();
+    let parentBorderWidth = parseFloat(getComputedStyle(this.div!).borderWidth);
+
+    // TODO: Figure out glitchy re-render of box (smaller / larger) when hovering over element
+    const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0) - parentBorderWidth;
+    const relativeLeft = elementBoundingRect.left - (parentBoundingRect?.left ?? 0) - parentBorderWidth;
+
+    this.arrowAnchorDiv!.style.display = 'block';
+    this.arrowAnchorDiv!.style.top = `${relativeTop}px`;
+    this.arrowAnchorDiv!.style.left = `${relativeLeft}px`;
+    this.arrowAnchorDiv!.style.height = `${elementBoundingRect.height}px`;
+    this.arrowAnchorDiv!.style.width = `${elementBoundingRect.width}px`;
+  };
+
+  handleMouseLeave = (event: MouseEvent) => {
+    this.arrowAnchorDiv!.style.display = 'none';
+  };
+
   render() {
     const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
 
@@ -590,6 +616,14 @@ export class Scene {
             <CanvasContextMenu scene={this} />
           </Portal>
         )}
+        <div
+          style={{
+            border: '10px solid red',
+            position: 'absolute',
+            // display: 'none',
+          }}
+          ref={this.setArrowAnchorRef}
+        ></div>
       </div>
     );
   }

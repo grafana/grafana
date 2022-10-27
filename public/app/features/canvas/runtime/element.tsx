@@ -451,7 +451,12 @@ export class ElementState implements LayerElement {
     const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);
 
     return (
-      <div key={this.UID} ref={this.initElement}>
+      <div
+        key={this.UID}
+        ref={this.initElement}
+        onMouseEnter={scene?.handleMouseEnter}
+        onMouseLeave={scene?.handleMouseLeave}
+      >
         <item.display
           key={`${this.UID}/${this.revId}`}
           config={this.options.config}

@@ -3176,7 +3176,8 @@ exports[`better eslint`] = {
     ],
     "public/app/features/canvas/runtime/scene.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "public/app/features/comments/CommentView.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]

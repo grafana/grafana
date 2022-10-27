@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { MoveableManagerInterface, Renderer } from 'moveable';
 
 import { HorizontalConstraint, VerticalConstraint } from '../types';
@@ -84,21 +85,29 @@ export const arrowViewable = {
   render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
     const rect = moveable.getRect();
 
+    const arrowControlStyles = {
+      position: 'absolute',
+      zIndex: 100,
+      cursor: 'pointer',
+      width: '25px',
+    };
+
+    const hoverStyle = css`
+      &:hover {
+        background: rgba(0, 0, 0, 0.5);
+      }
+    `;
+
     const top = React.createElement(
       'div',
       {
         style: {
-          position: 'absolute',
+          ...arrowControlStyles,
           left: `${(rect.width - 12.5) / 2}px`,
           bottom: '50px',
-          zIndex: 100,
-          cursor: 'pointer',
-          width: '25px',
         },
-        onclick: () => {
-          console.log('top clicked');
-        },
-        class: 'arrowControl',
+        class: hoverStyle,
+        id: 'arrowControl',
       },
       ['⬆️']
     );
@@ -107,17 +116,12 @@ export const arrowViewable = {
       'div',
       {
         style: {
-          position: 'absolute',
+          ...arrowControlStyles,
           left: `${(rect.width - 12.5) / 2}px`,
           top: `${rect.height + 50}px`,
-          zIndex: 100,
-          cursor: 'pointer',
-          width: '25px',
         },
-        onclick: () => {
-          console.log('bottom clicked');
-        },
-        class: 'arrowControl',
+        class: hoverStyle,
+        id: 'arrowControl',
       },
       ['⬇️']
     );
@@ -126,17 +130,12 @@ export const arrowViewable = {
       'div',
       {
         style: {
-          position: 'absolute',
+          ...arrowControlStyles,
           right: `${50}px`,
           top: `${(rect.height - 12.5) / 2}px`,
-          zIndex: 100,
-          cursor: 'pointer',
-          width: '25px',
         },
-        onclick: () => {
-          console.log('left clicked');
-        },
-        class: 'arrowControl',
+        class: hoverStyle,
+        id: 'arrowControl',
       },
       ['⬅️']
     );
@@ -145,17 +144,12 @@ export const arrowViewable = {
       'div',
       {
         style: {
-          position: 'absolute',
+          ...arrowControlStyles,
           left: `${rect.width + 50}px`,
           top: `${(rect.height - 12.5) / 2}px`,
-          zIndex: 100,
-          cursor: 'pointer',
-          width: '25px',
         },
-        onclick: () => {
-          console.log('right clicked');
-        },
-        class: 'arrowControl',
+        class: hoverStyle,
+        id: 'arrowControl',
       },
       ['➡️']
     );
