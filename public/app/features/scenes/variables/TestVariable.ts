@@ -1,6 +1,6 @@
 import { Observable, Subject } from 'rxjs';
 
-import { LoadingState, VariableOption } from '@grafana/data';
+import { LoadingState, SelectableValue, VariableOption } from '@grafana/data';
 import { queryMetricTree } from 'app/plugins/datasource/testdata/metricTree';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
@@ -18,7 +18,7 @@ export interface TestVariableState extends SceneVariableState {
   issuedQuery?: string;
 }
 
-export class TestVariable extends SceneObjectBase<TestVariableState> implements SceneVariable {
+export class TestVariable extends SceneObjectBase<TestVariableState> implements SceneVariable<TestVariableState> {
   ValueSelectComponent = VariableValueSelect;
   completeUpdate = new Subject<number>();
 
@@ -52,6 +52,11 @@ export class TestVariable extends SceneObjectBase<TestVariableState> implements 
       throw err;
     }
   }
+
+  onValueChange = (value: SelectableValue<string>) => {
+    this.setState({ value: value.value });
+  };
+
   /** Useful from tests */
   signalUpdateCompleted() {
     this.completeUpdate.next(1);

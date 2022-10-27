@@ -16,7 +16,7 @@ export interface SceneVariableState extends SceneObjectStatePlain {
   value: string | string[]; // old current.value
 }
 
-export interface SceneVariable extends SceneObject<SceneVariableState> {
+export interface SceneVariable<T extends SceneVariableState = SceneVariableState> extends SceneObject<T> {
   ValueSelectComponent?: SceneComponent<SceneVariable>;
   getDependencies?(): string[];
   updateOptions?(context: VariableUpdateContext): Observable<number>;
