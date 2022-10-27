@@ -4,11 +4,11 @@ aliases:
   - /docs/grafana/latest/alerting/old-alerting/create-alerts/
   - /docs/grafana/latest/alerting/rules/
   - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/
-title: Create alert rules
+title: Manage your alert rules
 weight: 130
 ---
 
-# Create alert rules
+# Manage your alert rules
 
 An alert rule is a set of evaluation criteria that determines whether an alert will fire. The alert rule consists of one or more queries and expressions, a condition, the frequency of evaluation, and optionally, the duration over which the condition is met.
 
