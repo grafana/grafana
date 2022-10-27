@@ -91,6 +91,9 @@ func (ss *sqlStore) getUserScopeQuota(ctx context.Context, userID int64) (*quota
 
 		for _, q := range quotas {
 			srv := quota.TargetSrv(q.Target)
+			if q.Target == org.OrgUserQuotaTarget {
+				srv = quota.TargetSrv(org.QuotaTargetSrv)
+			}
 			tag, err := quota.NewTag(srv, quota.Target(q.Target), quota.UserScope)
 			if err != nil {
 				return err

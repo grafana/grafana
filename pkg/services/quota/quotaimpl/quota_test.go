@@ -11,10 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	dsservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
@@ -57,7 +59,30 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	sqlStore.Cfg.QuotaEnabled = true
+	sqlStore.Cfg.Quota = setting.QuotaSettings{
+		Enabled: true,
+
+		Org: setting.OrgQuota{
+			User:       2,
+			Dashboard:  3,
+			DataSource: 4,
+			ApiKey:     5,
+			AlertRule:  6,
+		},
+		User: setting.UserQuota{
+			Org: 7,
+		},
+		Global: setting.GlobalQuota{
+			Org:        8,
+			User:       9,
+			Dashboard:  10,
+			DataSource: 11,
+			ApiKey:     12,
+			Session:    13,
+			AlertRule:  14,
+			File:       15,
+		},
+	}
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	quotaService := ProvideService(sqlStore, sqlStore.Cfg)
@@ -82,38 +107,83 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	// fetch global default limit/usage
 	defaultGlobalLimits := make(map[quota.Tag]int64)
 	existingGlobalUsage := make(map[quota.Tag]int64)
-	result, err := quotaService.Get(context.Background(), string(quota.OrgScope), o.ID)
+	scope := quota.GlobalScope
+	result, err := quotaService.Get(context.Background(), string(scope), 0)
 	require.NoError(t, err)
 	for _, r := range result {
-		tag, err := quota.NewTag(quota.TargetSrv(r.Service), quota.Target(r.Target), quota.OrgScope)
+		tag, err := r.Tag()
 		require.NoError(t, err)
 		defaultGlobalLimits[tag] = r.Limit
 		existingGlobalUsage[tag] = r.Used
 	}
+	tag, err := quota.NewTag(quota.TargetSrv(org.QuotaTargetSrv), quota.Target(org.OrgQuotaTarget), scope)
+	require.NoError(t, err)
+	require.Equal(t, sqlStore.Cfg.Quota.Global.Org, defaultGlobalLimits[tag])
+	tag, err = quota.NewTag(quota.TargetSrv(user.QuotaTargetSrv), quota.Target(user.QuotaTarget), scope)
+	require.NoError(t, err)
+	require.Equal(t, sqlStore.Cfg.Quota.Global.User, defaultGlobalLimits[tag])
+	tag, err = quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, scope)
+	require.NoError(t, err)
+	require.Equal(t, sqlStore.Cfg.Quota.Global.Dashboard, defaultGlobalLimits[tag])
+	tag, err = quota.NewTag(datasources.QuotaTargetSrv, datasources.QuotaTarget, scope)
+	require.NoError(t, err)
+	require.Equal(t, sqlStore.Cfg.Quota.Global.DataSource, defaultGlobalLimits[tag])
+	tag, err = quota.NewTag(apikey.QuotaTargetSrv, apikey.QuotaTarget, scope)
+	require.NoError(t, err)
+	require.Equal(t, sqlStore.Cfg.Quota.Global.ApiKey, defaultGlobalLimits[tag])
+	tag, err = quota.NewTag(auth.QuotaTargetSrv, auth.QuotaTarget, scope)
+	require.NoError(t, err)
+	require.Equal(t, sqlStore.Cfg.Quota.Global.Session, defaultGlobalLimits[tag])
+	tag, err = quota.NewTag(ngalertmodels.QuotaTargetSrv, ngalertmodels.QuotaTarget, scope)
+	require.NoError(t, err)
+	require.Equal(t, sqlStore.Cfg.Quota.Global.AlertRule, defaultGlobalLimits[tag])
+	tag, err = quota.NewTag(storesrv.QuotaTargetSrv, storesrv.QuotaTarget, scope)
+	require.NoError(t, err)
+	require.Equal(t, sqlStore.Cfg.Quota.Global.File, defaultGlobalLimits[tag])
 
 	// fetch default limit/usage for org
 	defaultOrgLimits := make(map[quota.Tag]int64)
 	existingOrgUsage := make(map[quota.Tag]int64)
-	result, err = quotaService.Get(context.Background(), string(quota.OrgScope), o.ID)
+	scope = quota.OrgScope
+	result, err = quotaService.Get(context.Background(), string(scope), o.ID)
 	require.NoError(t, err)
 	for _, r := range result {
-		tag, err := quota.NewTag(quota.TargetSrv(r.Service), quota.Target(r.Target), quota.OrgScope)
+		tag, err := r.Tag()
 		require.NoError(t, err)
 		defaultOrgLimits[tag] = r.Limit
 		existingOrgUsage[tag] = r.Used
 	}
+	tag, err = quota.NewTag(quota.TargetSrv(org.QuotaTargetSrv), quota.Target(org.OrgUserQuotaTarget), scope)
+	require.NoError(t, err)
+	require.Equal(t, sqlStore.Cfg.Quota.Org.User, defaultOrgLimits[tag])
+	tag, err = quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, scope)
+	require.NoError(t, err)
+	require.Equal(t, sqlStore.Cfg.Quota.Org.Dashboard, defaultOrgLimits[tag])
+	tag, err = quota.NewTag(datasources.QuotaTargetSrv, datasources.QuotaTarget, scope)
+	require.NoError(t, err)
+	require.Equal(t, sqlStore.Cfg.Quota.Org.DataSource, defaultOrgLimits[tag])
+	tag, err = quota.NewTag(apikey.QuotaTargetSrv, apikey.QuotaTarget, scope)
+	require.NoError(t, err)
+	require.Equal(t, sqlStore.Cfg.Quota.Org.ApiKey, defaultOrgLimits[tag])
+	tag, err = quota.NewTag(ngalertmodels.QuotaTargetSrv, ngalertmodels.QuotaTarget, scope)
+	require.NoError(t, err)
+	require.Equal(t, sqlStore.Cfg.Quota.Org.AlertRule, defaultOrgLimits[tag])
 
 	// fetch default limit/usage for user
 	defaultUserLimits := make(map[quota.Tag]int64)
 	existingUserUsage := make(map[quota.Tag]int64)
-	result, err = quotaService.Get(context.Background(), string(quota.UserScope), o.ID)
+	scope = quota.UserScope
+	result, err = quotaService.Get(context.Background(), string(scope), u.ID)
 	require.NoError(t, err)
 	for _, r := range result {
-		tag, err := quota.NewTag(quota.TargetSrv(r.Service), quota.Target(r.Target), quota.OrgScope)
+		tag, err := r.Tag()
 		require.NoError(t, err)
 		defaultUserLimits[tag] = r.Limit
 		existingUserUsage[tag] = r.Used
 	}
+	tag, err = quota.NewTag(quota.TargetSrv(org.QuotaTargetSrv), quota.Target(org.OrgUserQuotaTarget), scope)
+	require.NoError(t, err)
+	require.Equal(t, sqlStore.Cfg.Quota.User.Org, defaultUserLimits[tag])
 
 	t.Run("Given saved org quota for users", func(t *testing.T) {
 		// update quota for the created org and limit users to 1
@@ -139,7 +209,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 			q, err := getQuotaBySrvTargetScope(t, quotaService, quota.TargetSrv(org.QuotaTargetSrv), quota.Target(org.OrgUserQuotaTarget), quota.OrgScope, &quota.ScopeParameters{OrgID: int64(unknownOrgID)})
 			require.NoError(t, err)
 
-			tag, err := quota.NewTag(quota.TargetSrv(q.Service), quota.Target(q.Target), quota.Scope(q.Scope))
+			tag, err := q.Tag()
 			require.NoError(t, err)
 			require.Equal(t, defaultOrgLimits[tag], q.Limit)
 			require.Equal(t, int64(0), q.Used)
@@ -160,12 +230,11 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 		t.Run("Should be able to quota list for org", func(t *testing.T) {
 			result, err := quotaService.Get(context.Background(), string(quota.OrgScope), o.ID)
 			require.NoError(t, err)
-			//require.Len(t, result, 5)
-			require.Len(t, result, 4)
+			require.Len(t, result, 5)
 
 			require.NoError(t, err)
 			for _, res := range result {
-				tag, err := quota.NewTag(quota.TargetSrv(res.Service), quota.Target(res.Target), quota.Scope(res.Scope))
+				tag, err := res.Tag()
 				require.NoError(t, err)
 				limit := defaultOrgLimits[tag]
 				used := existingOrgUsage[tag]
@@ -194,7 +263,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 			q, err := getQuotaBySrvTargetScope(t, quotaService, dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.OrgScope, &quota.ScopeParameters{OrgID: o.ID})
 			require.NoError(t, err)
 
-			tag, err := quota.NewTag(quota.TargetSrv(q.Service), quota.Target(q.Target), quota.Scope(q.Scope))
+			tag, err := q.Tag()
 			require.NoError(t, err)
 			require.Equal(t, customOrgDashboardLimit, q.Limit)
 			require.Equal(t, existingOrgUsage[tag], q.Used)
@@ -225,7 +294,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 			q, err := getQuotaBySrvTargetScope(t, quotaService, quota.TargetSrv(org.QuotaTargetSrv), quota.Target(org.OrgUserQuotaTarget), quota.UserScope, &quota.ScopeParameters{UserID: unknownUserID})
 			require.NoError(t, err)
 
-			tag, err := quota.NewTag(quota.TargetSrv(q.Service), quota.Target(q.Target), quota.Scope(q.Scope))
+			tag, err := q.Tag()
 			require.NoError(t, err)
 			require.Equal(t, defaultUserLimits[tag], q.Limit)
 			require.Equal(t, int64(0), q.Used)
@@ -234,12 +303,9 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 		t.Run("Should be able to quota list for user", func(t *testing.T) {
 			result, err = quotaService.Get(context.Background(), string(quota.UserScope), u.ID)
 			require.NoError(t, err)
-
-			result, err := quotaService.Get(context.Background(), string(quota.OrgScope), o.ID)
-			require.NoError(t, err)
-			require.Len(t, result, 5)
+			require.Len(t, result, 1)
 			for _, res := range result {
-				tag, err := quota.NewTag(quota.TargetSrv(res.Service), quota.Target(res.Target), quota.Scope(res.Scope))
+				tag, err := res.Tag()
 				require.NoError(t, err)
 				limit := defaultUserLimits[tag]
 				used := existingUserUsage[tag]
@@ -257,9 +323,9 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 		q, err := getQuotaBySrvTargetScope(t, quotaService, quota.TargetSrv(user.QuotaTargetSrv), quota.Target(user.QuotaTarget), quota.GlobalScope, &quota.ScopeParameters{})
 		require.NoError(t, err)
 
-		tag, err := quota.NewTag(quota.TargetSrv(q.Service), quota.Target(q.Target), quota.Scope(q.Scope))
+		tag, err := q.Tag()
 		require.NoError(t, err)
-		require.Equal(t, defaultUserLimits[tag], q.Limit)
+		require.Equal(t, defaultGlobalLimits[tag], q.Limit)
 		require.Equal(t, int64(1), q.Used)
 	})
 
@@ -267,7 +333,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 		q, err := getQuotaBySrvTargetScope(t, quotaService, quota.TargetSrv(org.QuotaTargetSrv), quota.Target(org.OrgQuotaTarget), quota.GlobalScope, &quota.ScopeParameters{})
 		require.NoError(t, err)
 
-		tag, err := quota.NewTag(quota.TargetSrv(q.Service), quota.Target(q.Target), quota.Scope(q.Scope))
+		tag, err := q.Tag()
 		require.NoError(t, err)
 		require.Equal(t, defaultGlobalLimits[tag], q.Limit)
 		require.Equal(t, int64(1), q.Used)
@@ -277,7 +343,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 		q, err := getQuotaBySrvTargetScope(t, quotaService, ngalertmodels.QuotaTargetSrv, ngalertmodels.QuotaTarget, quota.GlobalScope, &quota.ScopeParameters{})
 		require.NoError(t, err)
 
-		tag, err := quota.NewTag(quota.TargetSrv(q.Service), quota.Target(q.Target), quota.Scope(q.Scope))
+		tag, err := q.Tag()
 		require.NoError(t, err)
 		require.Equal(t, defaultGlobalLimits[tag], q.Limit)
 		require.Equal(t, int64(0), q.Used)
@@ -287,7 +353,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 		q, err := getQuotaBySrvTargetScope(t, quotaService, dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.GlobalScope, &quota.ScopeParameters{})
 		require.NoError(t, err)
 
-		tag, err := quota.NewTag(quota.TargetSrv(q.Service), quota.Target(q.Target), quota.Scope(q.Scope))
+		tag, err := q.Tag()
 		require.NoError(t, err)
 		require.Equal(t, defaultGlobalLimits[tag], q.Limit)
 		require.Equal(t, int64(0), q.Used)
@@ -379,6 +445,15 @@ func getQuotaBySrvTargetScope(t *testing.T, quotaService quota.Service, srv quot
 		if r.Target != string(target) {
 			continue
 		}
+
+		if r.Service != string(srv) {
+			continue
+		}
+
+		if r.Scope != string(scope) {
+			continue
+		}
+
 		require.Equal(t, r.OrgId, scopeParams.OrgID)
 		require.Equal(t, r.UserId, scopeParams.UserID)
 		return r, nil

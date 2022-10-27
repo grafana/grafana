@@ -1080,13 +1080,10 @@ func (d *DashboardStore) GetDashboardTags(ctx context.Context, query *models.Get
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
-	if cfg.Raw == nil || !cfg.Raw.HasSection("quota") {
-		return &quota.Map{}, nil
-	}
+	limits := &quota.Map{}
 
-	quotaSection := cfg.Raw.Section("quota")
-	if quotaSection == nil {
-		return &quota.Map{}, nil
+	if cfg == nil {
+		return limits, nil
 	}
 
 	globalQuotaTag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.GlobalScope)
@@ -1098,8 +1095,7 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 		return &quota.Map{}, err
 	}
 
-	m := &quota.Map{}
-	m.Set(globalQuotaTag, quotaSection.Key("global_dashboard").MustInt64(-1))
-	m.Set(orgQuotaTag, quotaSection.Key("org_dashboard").MustInt64(10))
-	return m, nil
+	limits.Set(globalQuotaTag, cfg.Quota.Global.Dashboard)
+	limits.Set(orgQuotaTag, cfg.Quota.Org.Dashboard)
+	return limits, nil
 }

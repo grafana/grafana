@@ -74,6 +74,6 @@ func (uat *userAuthToken) toUserToken(ut *models.UserToken) error {
 }
 
 const (
-	QuotaTargetSrv quota.TargetSrv = "auth"
+	QuotaTargetSrv quota.TargetSrv = "session"
 	QuotaTarget    quota.Target    = "session"
 )

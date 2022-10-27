@@ -413,7 +413,7 @@ func setupHTTPServerWithCfgDb(
 		Cfg:                    cfg,
 		Features:               features,
 		Live:                   newTestLive(t, db),
-		QuotaService:           &quotaimpl.Service{Cfg: cfg},
+		QuotaService:           quotaimpl.ProvideService(db, db.Cfg),
 		RouteRegister:          routeRegister,
 		SQLStore:               store,
 		License:                &licensing.OSSLicensingService{},

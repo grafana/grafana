@@ -199,30 +199,29 @@ func (s *Service) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQ
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
-	if cfg.Raw == nil || !cfg.Raw.HasSection("quota") {
-		return &quota.Map{}, nil
-	}
+	limits := &quota.Map{}
 
-	quotaSection := cfg.Raw.Section("quota")
+	if cfg == nil {
+		return limits, nil
+	}
 
 	globalQuotaTag, err := quota.NewTag(quota.TargetSrv(org.QuotaTargetSrv), quota.Target(org.OrgQuotaTarget), quota.GlobalScope)
 	if err != nil {
-		return &quota.Map{}, err
+		return limits, err
 	}
 	orgQuotaTag, err := quota.NewTag(quota.TargetSrv(org.QuotaTargetSrv), quota.Target(org.OrgUserQuotaTarget), quota.OrgScope)
 	if err != nil {
-		return &quota.Map{}, err
+		return limits, err
 	}
 	userTag, err := quota.NewTag(quota.TargetSrv(org.QuotaTargetSrv), quota.Target(org.OrgUserQuotaTarget), quota.UserScope)
 	if err != nil {
-		return &quota.Map{}, err
+		return limits, err
 	}
 
-	limits := &quota.Map{}
-	limits.Set(globalQuotaTag, quotaSection.Key("global_org").MustInt64(-1))
+	limits.Set(globalQuotaTag, cfg.Quota.Global.Org)
 	// users per org
-	limits.Set(orgQuotaTag, quotaSection.Key("org_user").MustInt64(10))
+	limits.Set(orgQuotaTag, cfg.Quota.Org.User)
 	// orgs per user
-	limits.Set(userTag, quotaSection.Key("user_org").MustInt64(10))
+	limits.Set(userTag, cfg.Quota.User.Org)
 	return limits, nil
 }

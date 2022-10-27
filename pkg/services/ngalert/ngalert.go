@@ -308,29 +308,29 @@ func (ng *AlertNG) IsDisabled() bool {
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
-	if cfg.Raw == nil || !cfg.Raw.HasSection("quota") {
-		return &quota.Map{}, nil
+	limits := &quota.Map{}
+
+	if cfg == nil {
+		return limits, nil
 	}
 
 	var alertOrgQuota int64
 	var alertGlobalQuota int64
-	quotaSection := cfg.Raw.Section("quota")
 
 	if cfg.UnifiedAlerting.IsEnabled() {
-		alertOrgQuota = quotaSection.Key("org_alert_rule").MustInt64(100)
-		alertGlobalQuota = quotaSection.Key("global_alert_rule").MustInt64(-1)
+		alertOrgQuota = cfg.Quota.Org.AlertRule
+		alertGlobalQuota = cfg.Quota.Global.AlertRule
 	}
 
-	globalQuotaTag, err := quota.NewTag(datasources.QuotaTargetSrv, datasources.QuotaTarget, quota.GlobalScope)
+	globalQuotaTag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)
 	if err != nil {
-		return &quota.Map{}, err
+		return limits, err
 	}
-	orgQuotaTag, err := quota.NewTag(datasources.QuotaTargetSrv, datasources.QuotaTarget, quota.OrgScope)
+	orgQuotaTag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
 	if err != nil {
-		return &quota.Map{}, err
+		return limits, err
 	}
 
-	limits := &quota.Map{}
 	limits.Set(globalQuotaTag, alertGlobalQuota)
 	limits.Set(orgQuotaTag, alertOrgQuota)
 	return limits, nil

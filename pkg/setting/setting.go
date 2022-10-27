@@ -420,7 +420,7 @@ type Cfg struct {
 	DefaultLocale string
 	HomePage      string
 
-	QuotaEnabled bool
+	Quota QuotaSettings
 
 	AutoAssignOrg              bool
 	AutoAssignOrgId            int
@@ -1051,8 +1051,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		return err
 	}
 
-	quota := cfg.Raw.Section("quota")
-	cfg.QuotaEnabled = quota.Key("enabled").MustBool(false)
+	cfg.readQuotaSettings()
 
 	cfg.readExpressionsSettings()
 	if err := cfg.readGrafanaEnvironmentMetrics(); err != nil {

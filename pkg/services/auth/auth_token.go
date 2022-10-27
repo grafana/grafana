@@ -501,17 +501,17 @@ func hashToken(token string) string {
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
-	if cfg.Raw == nil || !cfg.Raw.HasSection("quota") {
-		return &quota.Map{}, nil
+	limits := &quota.Map{}
+
+	if cfg == nil {
+		return limits, nil
 	}
 
-	quotaSection := cfg.Raw.Section("quota")
 	globalQuotaTag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
 	if err != nil {
-		return &quota.Map{}, err
+		return limits, err
 	}
 
-	limits := &quota.Map{}
-	limits.Set(globalQuotaTag, quotaSection.Key("global_session").MustInt64(-1))
+	limits.Set(globalQuotaTag, cfg.Quota.Global.Session)
 	return limits, nil
 }

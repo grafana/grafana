@@ -611,22 +611,22 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
-	if cfg.Raw == nil || !cfg.Raw.HasSection("quota") {
-		return &quota.Map{}, nil
+	limits := &quota.Map{}
+
+	if cfg == nil {
+		return limits, nil
 	}
 
-	quotaSection := cfg.Raw.Section("quota")
 	globalQuotaTag, err := quota.NewTag(datasources.QuotaTargetSrv, datasources.QuotaTarget, quota.GlobalScope)
 	if err != nil {
-		return &quota.Map{}, err
+		return limits, err
 	}
 	orgQuotaTag, err := quota.NewTag(datasources.QuotaTargetSrv, datasources.QuotaTarget, quota.OrgScope)
 	if err != nil {
-		return &quota.Map{}, err
+		return limits, err
 	}
 
-	limits := &quota.Map{}
-	limits.Set(globalQuotaTag, quotaSection.Key("global_data_source").MustInt64(-1))
-	limits.Set(orgQuotaTag, quotaSection.Key("org_data_source").MustInt64(10))
+	limits.Set(globalQuotaTag, cfg.Quota.Global.DataSource)
+	limits.Set(orgQuotaTag, cfg.Quota.Org.DataSource)
 	return limits, nil
 }

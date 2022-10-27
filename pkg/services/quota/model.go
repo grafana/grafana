@@ -204,6 +204,10 @@ type QuotaDTO struct {
 	Scope   string `json:"-"`
 }
 
+func (dto QuotaDTO) Tag() (Tag, error) {
+	return NewTag(TargetSrv(dto.Service), Target(dto.Target), Scope(dto.Scope))
+}
+
 type UpdateQuotaCmd struct {
 	Target string `json:"target"`
 	Limit  int64  `json:"limit"`

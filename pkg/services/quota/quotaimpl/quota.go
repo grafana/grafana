@@ -52,23 +52,22 @@ func (s *ServiceDisabled) AddReporter(_ context.Context, e *quota.NewQuotaReport
 
 func ProvideService(db db.DB, cfg *setting.Cfg) quota.Service {
 	s := Service{
-		store:     &sqlStore{db: db},
-		Cfg:       cfg,
-		Logger:    log.New("quota_service"),
-		reporters: make(map[quota.TargetSrv]quota.UsageReporterFunc),
+		store:         &sqlStore{db: db},
+		Cfg:           cfg,
+		Logger:        log.New("quota_service"),
+		reporters:     make(map[quota.TargetSrv]quota.UsageReporterFunc),
+		defaultLimits: &quota.Map{},
 	}
 
 	if s.IsDisabled() {
 		return &ServiceDisabled{}
 	}
 
-	s.defaultLimits = &quota.Map{}
-
 	return &s
 }
 
 func (s *Service) IsDisabled() bool {
-	return !s.Cfg.QuotaEnabled
+	return !s.Cfg.Quota.Enabled
 }
 
 // QuotaReached checks that quota is reached for a target. Runs CheckQuotaReached and take context and scope parameters from the request context
@@ -114,7 +113,7 @@ func (s *Service) Get(ctx context.Context, scope string, id int64) ([]quota.Quot
 	}
 
 	for item := range s.defaultLimits.Iter() {
-		var limit int64
+		limit := item.Value
 
 		scp, err := item.Tag.GetScope()
 		if err != nil {

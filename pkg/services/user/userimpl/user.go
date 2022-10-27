@@ -310,17 +310,17 @@ func (s *Service) GetProfile(ctx context.Context, query *user.GetUserProfileQuer
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
-	if cfg.Raw == nil || !cfg.Raw.HasSection("quota") {
-		return &quota.Map{}, nil
+	limits := &quota.Map{}
+
+	if cfg == nil {
+		return limits, nil
 	}
 
-	quotaSection := cfg.Raw.Section("quota")
 	globalQuotaTag, err := quota.NewTag(quota.TargetSrv(user.QuotaTargetSrv), quota.Target(user.QuotaTarget), quota.GlobalScope)
 	if err != nil {
-		return &quota.Map{}, err
+		return limits, err
 	}
 
-	limits := &quota.Map{}
-	limits.Set(globalQuotaTag, quotaSection.Key("global_user").MustInt64(-1))
+	limits.Set(globalQuotaTag, cfg.Quota.Global.User)
 	return limits, nil
 }

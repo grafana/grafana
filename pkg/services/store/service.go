@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -59,7 +60,7 @@ type CreateFolderCmd struct {
 }
 
 const (
-	QuotaTargetSrv quota.TargetSrv = "file_store"
+	QuotaTargetSrv quota.TargetSrv = "file"
 	QuotaTarget    quota.Target    = "file"
 )
 
@@ -282,18 +283,18 @@ func ProvideService(
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
-	if cfg.Raw == nil || !cfg.Raw.HasSection("quota") {
-		return &quota.Map{}, nil
+	limits := &quota.Map{}
+
+	if cfg == nil {
+		return limits, nil
 	}
 
-	quotaSection := cfg.Raw.Section("quota")
 	globalQuotaTag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
 	if err != nil {
-		return &quota.Map{}, err
+		return limits, err
 	}
 
-	limits := &quota.Map{}
-	limits.Set(globalQuotaTag, quotaSection.Key("global_file").MustInt64(-1))
+	limits.Set(globalQuotaTag, cfg.Quota.Global.File)
 	return limits, nil
 }
 
@@ -367,24 +368,27 @@ func (s *standardStorageService) Read(ctx context.Context, user *user.SignedInUs
 func (s *standardStorageService) Usage(ctx context.Context, ScopeParameters *quota.ScopeParameters) (*quota.Map, error) {
 	u := &quota.Map{}
 
-	/*
-		// fetch tree for all organisations
-		root, storagePath := s.tree.getRoot(ac.GlobalOrgID, "/")
-		if root == nil {
-			return u, ErrStorageNotFound
+	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		type result struct {
+			Count int64
+		}
+		r := result{}
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM file WHERE path NOT LIKE '%s'", "%/")
+
+		if _, err := sess.SQL(rawSQL).Get(&r); err != nil {
+			return err
 		}
 
-		if resp, err := root.Store().List(ctx, storagePath, nil, &filestorage.ListOptions{WithFiles: true}); err != nil {
-			return u, err
-		} else {
-			tag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
-			if err != nil {
-				return u, err
-			}
-			u.Set(tag, int64(len(resp.Files)))
+		tag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+		if err != nil {
+			return err
 		}
-	*/
-	return u, nil
+		u.Set(tag, r.Count)
+
+		return nil
+	})
+
+	return u, err
 }
 
 type UploadRequest struct {
