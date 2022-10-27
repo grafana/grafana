@@ -45,7 +45,6 @@ export const publicDashboardApi = createApi({
         manageError: getConfigError,
         showErrorAlert: false,
       }),
-      extraOptions: { maxRetries: 3 },
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;

@@ -214,12 +214,6 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// make sure db version is in sync with json model version
 	dash.Data.Set("version", dash.Version)
 
-	// load library panels JSON for this dashboard
-	err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(c.Req.Context(), dash)
-	if err != nil {
-		return response.Error(500, "Error while loading library panels", err)
-	}
-
 	if hs.QueryLibraryService != nil && !hs.QueryLibraryService.IsDisabled() {
 		if err := hs.QueryLibraryService.UpdateDashboardQueries(c.Req.Context(), c.SignedInUser, dash); err != nil {
 			return response.Error(500, "Error while loading saved queries", err)
@@ -429,12 +423,6 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	allowUiUpdate := true
 	if provisioningData != nil {
 		allowUiUpdate = hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
-	}
-
-	// clean up all unnecessary library panels JSON properties so we store a minimum JSON
-	err = hs.LibraryPanelService.CleanLibraryPanelsForDashboard(dash)
-	if err != nil {
-		return response.Error(500, "Error while cleaning library panels", err)
 	}
 
 	dashItem := &dashboards.SaveDashboardDTO{

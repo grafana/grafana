@@ -258,4 +258,8 @@ const (
 	// FlagAccessControlOnCall
 	// Access control primitives for OnCall
 	FlagAccessControlOnCall = "accessControlOnCall"
+
+	// FlagNestedFolders
+	// Enable folder nesting
+	FlagNestedFolders = "nestedFolders"
 )

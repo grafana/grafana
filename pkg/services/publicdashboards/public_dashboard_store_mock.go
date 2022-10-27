@@ -164,13 +164,13 @@ func (_m *FakePublicDashboardStore) FindByDashboardUid(ctx context.Context, orgI
 	return r0, r1
 }
 
-// FindDashboard provides a mock function with given fields: ctx, dashboardUid
-func (_m *FakePublicDashboardStore) FindDashboard(ctx context.Context, dashboardUid string) (*pkgmodels.Dashboard, error) {
-	ret := _m.Called(ctx, dashboardUid)
+// FindDashboard provides a mock function with given fields: ctx, dashboardUid, orgId
+func (_m *FakePublicDashboardStore) FindDashboard(ctx context.Context, dashboardUid string, orgId int64) (*pkgmodels.Dashboard, error) {
+	ret := _m.Called(ctx, dashboardUid, orgId)
 
 	var r0 *pkgmodels.Dashboard
-	if rf, ok := ret.Get(0).(func(context.Context, string) *pkgmodels.Dashboard); ok {
-		r0 = rf(ctx, dashboardUid)
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64) *pkgmodels.Dashboard); ok {
+		r0 = rf(ctx, dashboardUid, orgId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*pkgmodels.Dashboard)
@@ -178,45 +178,13 @@ func (_m *FakePublicDashboardStore) FindDashboard(ctx context.Context, dashboard
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, dashboardUid)
+	if rf, ok := ret.Get(1).(func(context.Context, string, int64) error); ok {
+		r1 = rf(ctx, dashboardUid, orgId)
 	} else {
 		r1 = ret.Error(1)
 	}
 
 	return r0, r1
-}
-
-// FindPublicDashboardAndDashboardByAccessToken provides a mock function with given fields: ctx, accessToken
-func (_m *FakePublicDashboardStore) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*models.PublicDashboard, *pkgmodels.Dashboard, error) {
-	ret := _m.Called(ctx, accessToken)
-
-	var r0 *models.PublicDashboard
-	if rf, ok := ret.Get(0).(func(context.Context, string) *models.PublicDashboard); ok {
-		r0 = rf(ctx, accessToken)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.PublicDashboard)
-		}
-	}
-
-	var r1 *pkgmodels.Dashboard
-	if rf, ok := ret.Get(1).(func(context.Context, string) *pkgmodels.Dashboard); ok {
-		r1 = rf(ctx, accessToken)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*pkgmodels.Dashboard)
-		}
-	}
-
-	var r2 error
-	if rf, ok := ret.Get(2).(func(context.Context, string) error); ok {
-		r2 = rf(ctx, accessToken)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
 }
 
 // GetOrgIdByAccessToken provides a mock function with given fields: ctx, accessToken
@@ -245,7 +213,7 @@ func (_m *FakePublicDashboardStore) Save(ctx context.Context, cmd models.SavePub
 	ret := _m.Called(ctx, cmd)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, models.SavePublicDashboardConfigCommand) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, publicdashboardsmodels.SavePublicDashboardConfigCommand) error); ok {
 		r0 = rf(ctx, cmd)
 	} else {
 		r0 = ret.Error(0)
@@ -254,8 +222,8 @@ func (_m *FakePublicDashboardStore) Save(ctx context.Context, cmd models.SavePub
 	return r0
 }
 
-// Update provides a mock function with given fields: ctx, cmd
-func (_m *FakePublicDashboardStore) Update(ctx context.Context, cmd models.SavePublicDashboardConfigCommand) error {
+// UpdatePublicDashboard provides a mock function with given fields: ctx, cmd
+func (_m *FakePublicDashboardStore) Update(ctx context.Context, cmd publicdashboardsmodels.SavePublicDashboardConfigCommand) error {
 	ret := _m.Called(ctx, cmd)
 
 	var r0 error

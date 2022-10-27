@@ -259,6 +259,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.6.3
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.6.3
 	gocloud.dev v0.25.0
+	gotest.tools v2.2.0+incompatible
 )
 
 require (
