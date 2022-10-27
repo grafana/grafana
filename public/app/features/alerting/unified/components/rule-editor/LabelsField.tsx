@@ -1,15 +1,62 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useMemo } from 'react';
-import { FieldArrayWithId, useFieldArray, useFormContext } from 'react-hook-form';
+import { flattenDeep, compact } from 'lodash';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Field, InlineLabel, Label, useStyles2 } from '@grafana/ui';
+import { useDispatch } from 'app/types';
+import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
+import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { fetchRulerRulesIfNotFetchedYet } from '../../state/actions';
 import { RuleFormValues } from '../../types/rule-form';
-import AlertLabelDropdown, { AlertLabelDropdownProps } from '../AlertLabelDropdown';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import AlertLabelDropdown from '../AlertLabelDropdown';
 
 interface Props {
   className?: string;
+}
+
+const useGetCustomLabels = () => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchRulerRulesIfNotFetchedYet(GRAFANA_RULES_SOURCE_NAME));
+  }, [dispatch]);
+
+  const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
+
+  const rulerRequest = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
+
+  if (!rulerRequest || rulerRequest.loading) {
+    return;
+  }
+
+  const result = rulerRequest.result || {};
+
+  //store all labels in a flat array and remove empty values
+  const labels = compact(
+    flattenDeep(
+      Object.keys(result).map((ruleGroupKey) =>
+        result[ruleGroupKey].map((ruleItem: RulerRuleGroupDTO) => ruleItem.rules.map((item) => item.labels))
+      )
+    )
+  );
+
+  const labelsByKey: Record<string, string[]> = {};
+
+  labels.forEach((label: Record<string, string>) => {
+    Object.entries(label).forEach(([key, value]) => {
+      labelsByKey[key] = [...(labelsByKey[key] || []), value];
+    });
+  });
+
+  return labelsByKey;
+};
+
+function mapLabelsToOptions(items: string[] = []): Array<SelectableValue<string>> {
+  return items.map((item) => ({ label: item, value: item }));
 }
 
 const LabelsField: FC<Props> = ({ className }) => {
@@ -25,21 +72,31 @@ const LabelsField: FC<Props> = ({ className }) => {
   const labels = watch('labels');
   const { fields, append, remove } = useFieldArray({ control, name: 'labels' });
 
-  const getDistinctDropdownOptions = (
-    fields: Array<FieldArrayWithId<RuleFormValues, 'labels', 'id'>>,
-    type: AlertLabelDropdownProps['type']
-  ) =>
-    [...new Set(fields.map((field) => field[type]))]
-      .filter((field) => Boolean(field))
-      .map((field) => ({ label: field, value: field }));
+  const labelsByKey = useGetCustomLabels();
+
+  const [selectedKey, setSelectedKey] = useState('');
 
   const keys = useMemo(() => {
-    return getDistinctDropdownOptions(fields, 'key');
-  }, [fields]);
+    if (!labelsByKey) {
+      return [];
+    }
+    return mapLabelsToOptions(Object.keys(labelsByKey));
+  }, [labelsByKey]);
+
+  const getValuesForLabel = useCallback(
+    (key: string) => {
+      if (!labelsByKey || !key) {
+        return [];
+      }
+
+      return mapLabelsToOptions(labelsByKey[key]);
+    },
+    [labelsByKey]
+  );
 
   const values = useMemo(() => {
-    return getDistinctDropdownOptions(fields, 'value');
-  }, [fields]);
+    return getValuesForLabel(selectedKey);
+  }, [selectedKey, getValuesForLabel]);
 
   return (
     <div className={cx(className, styles.wrapper)}>
@@ -64,7 +121,10 @@ const LabelsField: FC<Props> = ({ className }) => {
                         })}
                         defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
                         options={keys}
-                        onChange={(newValue: SelectableValue) => setValue(`labels.${index}.key`, newValue.value)}
+                        onChange={(newValue: SelectableValue) => {
+                          setValue(`labels.${index}.key`, newValue.value);
+                          setSelectedKey(newValue.value);
+                        }}
                         type="key"
                       />
                     </Field>
@@ -81,7 +141,12 @@ const LabelsField: FC<Props> = ({ className }) => {
                         })}
                         defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
                         options={values}
-                        onChange={(newValue: SelectableValue) => setValue(`labels.${index}.value`, newValue.value)}
+                        onChange={(newValue: SelectableValue) => {
+                          setValue(`labels.${index}.value`, newValue.value);
+                        }}
+                        onOpenMenu={() => {
+                          setSelectedKey(labels[index].key);
+                        }}
                         type="value"
                       />
                     </Field>

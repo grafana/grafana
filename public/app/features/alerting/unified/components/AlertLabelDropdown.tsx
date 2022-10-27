@@ -5,13 +5,14 @@ import { Select, Field } from '@grafana/ui';
 
 export interface AlertLabelDropdownProps {
   onChange: (newValue: SelectableValue<string>) => void;
+  onOpenMenu?: () => void;
   options: SelectableValue[];
   defaultValue?: SelectableValue;
   type: 'key' | 'value';
 }
 
 const AlertLabelDropdown: FC<AlertLabelDropdownProps> = React.forwardRef<HTMLDivElement, AlertLabelDropdownProps>(
-  function labelPicker({ onChange, options, defaultValue, type }, ref) {
+  function labelPicker({ onChange, options, defaultValue, type, onOpenMenu = () => {} }, ref) {
     return (
       <div ref={ref}>
         <Field disabled={false} data-testid={`alertlabel-${type}-picker`}>
@@ -21,6 +22,7 @@ const AlertLabelDropdown: FC<AlertLabelDropdownProps> = React.forwardRef<HTMLDiv
             className="ds-picker select-container"
             backspaceRemovesValue={false}
             onChange={onChange}
+            onOpenMenu={onOpenMenu}
             options={options}
             maxMenuHeight={500}
             noOptionsMessage="No labels found"
