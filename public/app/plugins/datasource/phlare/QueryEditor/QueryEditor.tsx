@@ -36,6 +36,11 @@ export function QueryEditor(props: Props) {
     props.onChange({ ...props.query, labelSelector: value });
   }
 
+  function handleRunQuery(value: string) {
+    props.onChange({ ...props.query, labelSelector: value });
+    props.onRunQuery();
+  }
+
   const seriesResult = useAsync(() => {
     return props.datasource.getSeries();
   }, [props.datasource]);
@@ -53,7 +58,7 @@ export function QueryEditor(props: Props) {
         <LabelsEditor
           value={query.labelSelector}
           onChange={onLabelSelectorChange}
-          onRunQuery={props.onRunQuery}
+          onRunQuery={handleRunQuery}
           series={seriesResult.value}
         />
       </EditorRow>

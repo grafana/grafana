@@ -33,6 +33,11 @@ export function QueryEditor(props: Props) {
     props.onChange({ ...props.query, labelSelector: value });
   }
 
+  function handleRunQuery(value: string) {
+    props.onChange({ ...props.query, labelSelector: value });
+    props.onRunQuery();
+  }
+
   useMount(async () => {
     const profileTypes = await props.datasource.getProfileTypes();
     setProfileTypes(profileTypes);
@@ -82,7 +87,7 @@ export function QueryEditor(props: Props) {
           value={query.labelSelector}
           onChange={onLabelSelectorChange}
           datasource={props.datasource}
-          onRunQuery={props.onRunQuery}
+          onRunQuery={handleRunQuery}
         />
       </EditorRow>
       <EditorRow>
