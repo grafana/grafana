@@ -76,8 +76,9 @@ func (s *objectStoreImpl) Create(ctx context.Context, cmd *playlist.CreatePlayli
 		}
 		_, err = s.objectstore.Write(ctx, &object.WriteObjectRequest{
 			GRN: &object.GRN{
-				UID:  rsp.UID,
-				Kind: models.StandardKindPlaylist,
+				Scope: models.ObjectStoreScopeEntity,
+				Kind:  models.StandardKindPlaylist,
+				UID:   rsp.UID,
 			},
 			Body: body,
 		})
