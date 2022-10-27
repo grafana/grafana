@@ -2,6 +2,7 @@ import { cloneDeep, defaultsDeep, isArray, isEqual, keys } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
+  CoreApp,
   DataConfigSource,
   DataFrameDTO,
   DataLink,
@@ -17,7 +18,7 @@ import {
   PanelModel as IPanelModel,
   DataSourceRef,
 } from '@grafana/data';
-import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
+import { getTemplateSrv, getDataSourceSrv, RefreshEvent } from '@grafana/runtime';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
@@ -269,6 +270,33 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     }
   }
 
+  // Attempts to populate each panel target with a well-formed query definition
+  async ensureWellFormedQueries() {
+    if (this.targets && isArray(this.targets)) {
+      // If we modified any targets, publish one update event
+      let shouldPublish = false;
+      for (let i = 0; i < this.targets.length; i++) {
+        const query = this.targets[i];
+        if (!query.datasource && this.datasource) {
+          query.datasource = this.datasource;
+        }
+        if (Object.keys(query).length === 2) {
+          // If query has only refId and datasource, try to set the default query for its datasource
+          const datasourceInstance = await getDataSourceSrv().get(query.datasource);
+          const defaultQuery = datasourceInstance.getDefaultQuery?.(CoreApp.PanelEditor);
+          if (defaultQuery) {
+            this.targets[i] = { ...defaultQuery, ...query };
+            shouldPublish = true;
+          }
+        }
+      }
+      if (shouldPublish) {
+        this.configRev++;
+        this.events.publish(new PanelQueriesChangedEvent());
+      }
+    }
+  }
+
   getOptions() {
     return this.options;
   }
@@ -342,21 +370,23 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     width,
     publicDashboardAccessToken,
   }: RunPanelQueryOptions) {
-    this.getQueryRunner().run({
-      datasource: this.datasource,
-      queries: this.targets,
-      panelId: this.id,
-      dashboardId: dashboardId,
-      dashboardUID: dashboardUID,
-      publicDashboardAccessToken,
-      timezone: dashboardTimezone,
-      timeRange: timeData.timeRange,
-      timeInfo: timeData.timeInfo,
-      maxDataPoints: this.maxDataPoints || Math.floor(width),
-      minInterval: this.interval,
-      scopedVars: this.scopedVars,
-      cacheTimeout: this.cacheTimeout,
-      transformations: this.transformations,
+    this.ensureWellFormedQueries().then(() => {
+      this.getQueryRunner().run({
+        datasource: this.datasource,
+        queries: this.targets,
+        panelId: this.id,
+        dashboardId: dashboardId,
+        dashboardUID: dashboardUID,
+        publicDashboardAccessToken,
+        timezone: dashboardTimezone,
+        timeRange: timeData.timeRange,
+        timeInfo: timeData.timeInfo,
+        maxDataPoints: this.maxDataPoints || Math.floor(width),
+        minInterval: this.interval,
+        scopedVars: this.scopedVars,
+        cacheTimeout: this.cacheTimeout,
+        transformations: this.transformations,
+      });
     });
   }
 

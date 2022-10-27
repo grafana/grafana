@@ -4,6 +4,7 @@ import { delay } from 'rxjs/operators';
 import {
   AnnotationEvent,
   ArrayDataFrame,
+  CoreApp,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
@@ -18,6 +19,7 @@ import {
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 
+import { defaultQuery } from './constants';
 import { queryMetricTree } from './metricTree';
 import { generateRandomNodes, savedNodesResponse } from './nodeGraphUtils';
 import { runStream } from './runStreams';
@@ -257,6 +259,21 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
     }
 
     return null;
+  }
+
+  getDefaultQuery(app: CoreApp): TestDataQuery {
+    switch (app) {
+      // Ignore the app input for now, always use the same default query
+      case CoreApp.CloudAlerting:
+      case CoreApp.UnifiedAlerting:
+      case CoreApp.Dashboard:
+      case CoreApp.Explore:
+      case CoreApp.PanelEditor:
+      case CoreApp.PanelViewer:
+      case CoreApp.Unknown:
+      default:
+        return defaultQuery;
+    }
   }
 }
 
