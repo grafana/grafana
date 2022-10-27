@@ -2,7 +2,6 @@ package folderimpl
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -53,7 +52,7 @@ func (ss *sqlStore) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folde
 			return err
 		}
 		if !exists {
-			return fmt.Errorf("folder not found: %v", folder.ErrFolderNotFound)
+			return folder.ErrFolderNotFound.Errorf("folder not found")
 		}
 		return nil
 	})

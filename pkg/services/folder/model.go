@@ -11,7 +11,7 @@ const (
 	MaxNestedFolderDepth = 8
 )
 
-var ErrFolderNotFound error = errutil.NewBase(errutil.StatusNotFound, "folder.notFound")
+var ErrFolderNotFound = errutil.NewBase(errutil.StatusNotFound, "folder.notFound")
 
 type Folder struct {
 	ID          int64
