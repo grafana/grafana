@@ -1,3 +1,4 @@
+import { TableIdentifier } from '@grafana/experimental';
 import { AGGREGATE_FNS, OPERATORS } from 'app/features/plugins/sql/constants';
 import {
   ColumnDefinition,
@@ -24,8 +25,8 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
       },
     },
     columns: {
-      resolve: async (t: string) => {
-        return await getColumns.current({ table: t, refId: 'A' });
+      resolve: async (t?: TableIdentifier) => {
+        return await getColumns.current({ table: t?.table, refId: 'A' });
       },
     },
     supportedFunctions: () => [...AGGREGATE_FNS, ...FUNCTIONS],
