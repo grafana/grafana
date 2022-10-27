@@ -37,7 +37,15 @@ describe('Account', () => {
     dimensions: {},
     statistic: '',
     matchExact: true,
-    accountArn: 'arn:aws:iam::123456789012:root',
+    accountInfo: {
+      crossAccount: false,
+      account: {
+        arn: 'arn:aws:iam::123456789012:root',
+        id: '123456789012',
+        label: 'test-account',
+        isMonitoringAccount: true,
+      },
+    },
   };
 
   const props = {
@@ -107,7 +115,18 @@ describe('Account', () => {
         const { container } = render(
           <Account
             onChange={onChange}
-            query={{ ...props.metricStat, accountArn: 'arn:aws:iam::58356789012:root' }}
+            query={{
+              ...props.metricStat,
+              accountInfo: {
+                crossAccount: false,
+                account: {
+                  arn: 'arn:aws:iam::58356789012:root',
+                  id: '58356789012',
+                  label: 'some label',
+                  isMonitoringAccount: true,
+                },
+              },
+            }}
             api={mock.api}
           />
         );
@@ -124,12 +143,45 @@ describe('Account', () => {
         render(
           <Account
             onChange={onChange}
-            query={{ ...props.metricStat, accountArn: 'arn:aws:iam::58356789012:root' }}
+            query={{
+              ...props.metricStat,
+              accountInfo: {
+                crossAccount: false,
+                account: {
+                  arn: 'arn:aws:iam::58356789012:root',
+                  label: '',
+                  id: '58356789012',
+                  isMonitoringAccount: true,
+                },
+              },
+            }}
             api={api}
           />
         );
       });
-      expect(onChange).toHaveBeenCalledWith('all');
+      expect(onChange).toHaveBeenCalledWith({ crossAccount: true });
+    });
+
+    it('should render "all" if crossAccount is stored in the query model', async () => {
+      const api = setupMockedAPI().api;
+      api.getAccounts = jest.fn().mockResolvedValue(accounts);
+      const onChange = jest.fn();
+      await act(async () => {
+        render(
+          <Account
+            onChange={onChange}
+            query={{
+              ...props.metricStat,
+              accountInfo: {
+                crossAccount: true,
+              },
+            }}
+            api={api}
+          />
+        );
+      });
+      expect(onChange).not.toHaveBeenCalledWith();
+      expect(await screen.getByText('All')).toBeInTheDocument();
     });
 
     it('should not unset accountArn if the current value is in the loaded list of accounts', async () => {
@@ -140,7 +192,18 @@ describe('Account', () => {
         render(
           <Account
             onChange={onChange}
-            query={{ ...props.metricStat, accountArn: 'arn:aws:iam::432156789012:root' }}
+            query={{
+              ...props.metricStat,
+              accountInfo: {
+                crossAccount: false,
+                account: {
+                  arn: 'arn:aws:iam::432156789012:root',
+                  label: '',
+                  id: '432156789012',
+                  isMonitoringAccount: true,
+                },
+              },
+            }}
             api={api}
           />
         );

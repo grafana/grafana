@@ -8,7 +8,7 @@ import { Dimensions } from '..';
 import { CloudWatchDatasource } from '../../datasource';
 import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
 import { standardStatistics } from '../../standardStatistics';
-import { MetricStat } from '../../types';
+import { MetricStat, AccountInfo } from '../../types';
 import { appendTemplateVariables, toOption } from '../../utils/utils';
 import { Account } from '../Account';
 
@@ -118,7 +118,7 @@ export function MetricStatEditor({
         {!disableExpressions && (
           <Account
             query={metricStat}
-            onChange={(accountArn?: string) => onMetricStatChange({ ...metricStat, accountArn })}
+            onChange={(accountInfo?: AccountInfo) => onMetricStatChange({ ...metricStat, accountInfo })}
             api={datasource.api}
           ></Account>
         )}

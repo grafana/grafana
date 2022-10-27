@@ -57,6 +57,11 @@ export interface CloudWatchMetricsQuery extends MetricStat, DataQuery {
   sql?: SQLExpression;
 }
 
+export interface AccountInfo {
+  crossAccount: boolean;
+  account?: Account;
+}
+
 export interface MetricStat {
   region: string;
   namespace: string;
@@ -64,7 +69,7 @@ export interface MetricStat {
   dimensions?: Dimensions;
   matchExact?: boolean;
   period?: string;
-  accountArn?: string;
+  accountInfo?: AccountInfo;
   statistic?: string;
   /**
    * @deprecated use statistic
@@ -480,7 +485,7 @@ export interface GetMetricsRequest extends ResourceRequest {
 
 export interface Account {
   arn: string;
-  accountId: string;
+  id: string;
   label: string;
   isMonitoringAccount: boolean;
 }
