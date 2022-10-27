@@ -235,7 +235,7 @@ export const run = (includeInternalScripts = false) => {
     .action(async (cmd) => {
       chalk.yellow.bold(`⚠️ This command is deprecated and will be removed . No further support will be provided. ⚠️`);
       console.log(
-        'We recommend using github actions directly for plugin releasing. You can find an example here:  https://github.com/grafana/plugin-workflows'
+        'We recommend using github actions directly for plugin releasing. You can find an example here:  https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin/templates/github/ci/.github/workflows'
       );
       await execTask(githubPublishTask)({
         dryrun: cmd.dryrun,
