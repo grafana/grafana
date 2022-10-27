@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/grafana/grafana/pkg/util"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -21,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // PublicDashboardServiceImpl Define the Service Implementation. We're generating mock implementation

@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -73,7 +74,10 @@ func (d *PublicDashboardStoreImpl) FindDashboard(ctx context.Context, dashboardU
 func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, userOrgId int64, dashboardUid string, uid string) error {
 	dashboard := &PublicDashboard{OrgId: userOrgId, DashboardUid: dashboardUid, Uid: uid}
 	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Delete(dashboard)
+		deletedCount, err := sess.Delete(dashboard)
+		if deletedCount == 0 {
+			return ErrPublicDashboardNotFound
+		}
 		if err != nil {
 			return err
 		}
