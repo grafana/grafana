@@ -22,7 +22,8 @@ export interface NavLinkDTO {
   children?: NavLinkDTO[];
   highlightText?: string;
   emptyMessageId?: string;
-  registeredByPluginId?: string;
+  // In case it is a (standalone) plugin page, the ID of the plugin which registered it.
+  pluginId?: string;
 }
 
 export interface NavModelItem extends NavLinkDTO {

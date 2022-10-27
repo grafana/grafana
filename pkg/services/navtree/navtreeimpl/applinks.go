@@ -66,12 +66,12 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqCo
 
 func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqContext, topNavEnabled bool, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	appLink := &navtree.NavLink{
-		Text:                 plugin.Name,
-		Id:                   "plugin-page-" + plugin.ID,
-		Img:                  plugin.Info.Logos.Small,
-		Section:              navtree.NavSectionPlugin,
-		SortWeight:           navtree.WeightPlugin,
-		RegisteredByPluginId: plugin.ID,
+		Text:       plugin.Name,
+		Id:         "plugin-page-" + plugin.ID,
+		Img:        plugin.Info.Logos.Small,
+		Section:    navtree.NavSectionPlugin,
+		SortWeight: navtree.WeightPlugin,
+		PluginId:   plugin.ID,
 	}
 
 	if topNavEnabled {
@@ -87,9 +87,9 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 
 		if include.Type == "page" && include.AddToNav {
 			link := &navtree.NavLink{
-				Text:                 include.Name,
-				Icon:                 include.Icon,
-				RegisteredByPluginId: plugin.ID,
+				Text:     include.Name,
+				Icon:     include.Icon,
+				PluginId: plugin.ID,
 			}
 
 			if len(include.Path) > 0 {
@@ -114,7 +114,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 						if child.Url == link.Url {
 							child.Id = link.Id
 							child.SortWeight = link.SortWeight
-							child.RegisteredByPluginId = link.RegisteredByPluginId
+							child.PluginId = link.PluginId
 							child.Children = []*navtree.NavLink{}
 							isOverridingCorePage = true
 							break
@@ -136,9 +136,9 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 			dboardURL := include.DashboardURLPath()
 			if dboardURL != "" {
 				link := &navtree.NavLink{
-					Url:                  path.Join(s.cfg.AppSubURL, dboardURL),
-					Text:                 include.Name,
-					RegisteredByPluginId: plugin.ID,
+					Url:      path.Join(s.cfg.AppSubURL, dboardURL),
+					Text:     include.Name,
+					PluginId: plugin.ID,
 				}
 				appLink.Children = append(appLink.Children, link)
 			}
