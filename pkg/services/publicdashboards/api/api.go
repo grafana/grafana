@@ -55,7 +55,6 @@ func ProvideApi(
 
 // RegisterAPIEndpoints Registers Endpoints on Grafana Router
 func (api *Api) RegisterAPIEndpoints() {
-
 	// Public endpoints
 	// Anonymous access to public dashboard route is configured in pkg/api/api.go
 	// because it is deeply dependent on the HTTPServer.Index() method and would result in a
