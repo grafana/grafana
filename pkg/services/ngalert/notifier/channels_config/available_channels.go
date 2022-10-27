@@ -162,6 +162,21 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "kafkaTopic",
 					Required:     true,
 				},
+				{
+					Label:        "Description",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Templated description of the Kafka message",
+					PropertyName: "description",
+					Placeholder:  channels.DefaultMessageTitleEmbed,
+				},
+				{
+					Label:        "Details",
+					Element:      ElementTypeTextArea,
+					Description:  "Custom details to include with the message. You can use template variables.",
+					PropertyName: "details",
+					Placeholder:  channels.DefaultMessageEmbed,
+				},
 			},
 		},
 		{
@@ -195,7 +210,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Description:  "Templated subject of the email",
 					PropertyName: "subject",
-					Placeholder:  `{{ template "default.title" . }}`,
+					Placeholder:  channels.DefaultMessageTitleEmbed,
 				},
 			},
 		},
@@ -575,7 +590,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Description:  "Templated title of the Teams message.",
 					PropertyName: "title",
-					Placeholder:  `{{ template "default.title" . }}`,
+					Placeholder:  channels.DefaultMessageTitleEmbed,
 				},
 				{
 					Label:        "Section Title",
@@ -766,7 +781,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Description:  "Templated title of the message",
 					PropertyName: "title",
-					Placeholder:  `{{ template "default.title" . }}`,
+					Placeholder:  channels.DefaultMessageTitleEmbed,
 				},
 				{
 					Label:        "To User",
@@ -947,7 +962,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "Alert text limited to 130 characters.",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  `{{ template "default.title" . }}`,
+					Placeholder:  channels.DefaultMessageTitleEmbed,
 					PropertyName: "message",
 				},
 				{
