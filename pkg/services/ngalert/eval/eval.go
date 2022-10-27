@@ -223,8 +223,9 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
 		"X-Cache-Skip": "true",
 	}
 
-	if ctx.RuleUID != "" {
-		headers["X-Rule-Uid"] = ctx.RuleUID
+	key, ok := models.RuleKeyFromContext(ctx.Ctx)
+	if ok {
+		headers["X-Rule-Uid"] = key.UID
 	}
 
 	return headers
