@@ -1,16 +1,18 @@
 ---
 aliases:
-- /docs/grafana/latest/administration/roles-and-permissions/access-control/rbac-provisioning/rbac-grafana-provisioning
-  description: Learn about RBAC Grafana provisioning and view an example YAML provisioning file
+  - /docs/grafana/latest/enterprise/access-control/rbac-provisioning/
+  - /docs/grafana/latest/administration/roles-and-permissions/access-control/rbac-provisioning/
+  - /docs/grafana/latest/administration/roles-and-permissions/access-control/rbac-grafana-provisioning
+description: Learn about RBAC Grafana provisioning and view an example YAML provisioning file
   that configures Grafana role assignments.
-  menuTitle: Grafana RBAC provisioning
-  title: Grafana RBAC provisioning
-  weight: 30
+menuTitle: Provisioning RBAC with Grafana
+title: Provisioning RBAC with Grafana
+weight: 60
 ---
 
 # Grafana RBAC provisioning
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 You can create, change or remove [Custom roles]({{< relref "./manage-rbac-roles/#create-custom-roles-using-provisioning" >}}) and create or remove [basic role assignments]({{< relref "./assign-rbac-roles/#assign-a-fixed-role-to-a-basic-role-using-provisioning" >}}), by adding one or more YAML configuration files in the `provisioning/access-control/` directory.
 
@@ -116,3 +118,9 @@ teams:
         # <string> state of the assignment. Defaults to 'present'. If 'absent', the assignment will be revoked.
         state: absent
 ```
+
+## Useful Links
+
+[Provisioning RBAC setup with Terraform]({{< relref "./rbac-terraform-provisioning">}})
+
+[Grafana provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/)
