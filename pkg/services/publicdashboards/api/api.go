@@ -138,10 +138,6 @@ func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
 func (api *Api) DeletePublicDashboard(c *models.ReqContext) response.Response {
 	err := api.PublicDashboardService.Delete(c.Req.Context(), c.SignedInUser.OrgID, web.Params(c.Req)[":uid"], web.Params(c.Req)[":publicDashboardUid"])
 	if err != nil {
-		var publicDashboardErr PublicDashboardErr
-		if ok := errors.As(err, &publicDashboardErr); ok {
-			return api.handleError(c.Req.Context(), publicDashboardErr.StatusCode, "DeletePublicDashboard: failed to delete public dashboard", err)
-		}
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "DeletePublicDashboard: failed to delete public dashboard", err)
 	}
 
