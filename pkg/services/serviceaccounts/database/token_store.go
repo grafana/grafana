@@ -3,8 +3,6 @@ package database
 import (
 	"context"
 	"fmt"
-	"strconv"
-	"time"
 
 	"github.com/pkg/errors"
 
@@ -31,10 +29,6 @@ func (s *ServiceAccountsStoreImpl) ListTokens(
 
 		if query.ServiceAccountID != nil {
 			sess = sess.Where("api_key.service_account_id=?", *query.ServiceAccountID)
-		}
-
-		if query.TokenExpirationDate != nil {
-			sess = sess.Where("api_key.expires - CAST(strftime('%s', api_key.created) AS INT) > ? * 24  * 60 * 60", *query.TokenExpirationDate)
 		}
 
 		sess = sess.Join("inner", quotedUser, quotedUser+".id = api_key.service_account_id").
@@ -155,33 +149,23 @@ func (s *ServiceAccountsStoreImpl) detachApiKeyFromServiceAccount(sess *db.Sessi
 }
 
 func (s *ServiceAccountsStoreImpl) UpdateAPIKeysExpiryDate(ctx context.Context, expiryDaysLimit int) error {
-	tokenQuery := serviceaccounts.GetSATokensQuery{}
-	if expiryDaysLimit > 0 {
-		tokenQuery.TokenExpirationDate = &expiryDaysLimit
-	}
-	saTokens, err := s.ListTokens(ctx, &tokenQuery)
-
-	if err != nil {
-		s.log.Error("The following error has been encountered while reading the service access tokens from database.", "err", err)
-	}
-
-	err = s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		for _, token := range saTokens {
-			newExpiryTime := token.Created.Add(time.Duration(expiryDaysLimit+1) * time.Hour * 24).Truncate(24 * time.Hour).Unix()
-			if token.Expires == nil || *token.Expires > newExpiryTime {
-				token.Expires = &newExpiryTime
-				s.log.Info(fmt.Sprintf("The expiration date of token %s will be updated", strconv.Itoa(int(token.Id))))
-
-				rawSQL := "UPDATE api_key SET expires = ? WHERE id=?"
-				if _, err := sess.Exec(rawSQL, *token.Expires, token.Id); err != nil {
-					s.log.Error("Could not update api key", "err", err)
-					return err
-				}
-			}
-		}
-
+	if 1 > expiryDaysLimit {
 		return nil
+	}
+	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		rawSQL := `UPDATE api_key
+							 SET expires = CAST(strftime('%s', created) AS INT) - (CAST(strftime('%s', created) AS INT) % 86400) + ((? + 1) * 86400),
+							 updated = strftime('%s', 'now')
+							 WHERE expires IS NULL OR expires - CAST(strftime('%s', created) AS INT) - (CAST(strftime('%s', created) AS INT) % 86400) > (? + 1) * 86400
+							 AND service_account_id IS NOT NULL;`
+		result, err := sess.Exec(rawSQL, expiryDaysLimit, expiryDaysLimit)
+		if err != nil {
+			s.log.Error("Could not update api keys", "err", err)
+		}
+		if rowsAffected, _ := result.RowsAffected(); rowsAffected > 0 {
+			s.log.Info(fmt.Sprintf("%d API keys where affected because of a new configuration value at service_accounts.token_expiration_day_limit", rowsAffected))
+		}
+		return err
 	})
-
 	return err
 }

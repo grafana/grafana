@@ -65,9 +65,8 @@ type ServiceAccountDTO struct {
 }
 
 type GetSATokensQuery struct {
-	OrgID               *int64 // optional filtering by org ID
-	ServiceAccountID    *int64 // optional filtering by service account ID
-	TokenExpirationDate *int   // optional filtering by tokens that expiry date exceeds the configuration setting
+	OrgID            *int64 // optional filtering by org ID
+	ServiceAccountID *int64 // optional filtering by service account ID
 }
 
 type AddServiceAccountTokenCommand struct {
