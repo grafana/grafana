@@ -1,13 +1,19 @@
 import React from 'react';
 
-import { NavModelItem, PageLayoutType } from '@grafana/data';
+import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 
 export interface PluginPageProps {
-  /** Shown under main heading */
+  /** Secondary title shown under the main title */
   subTitle?: React.ReactNode;
+  /** Sets the currently active navigation item by using its ID. Overrides the `navModel` prop if used. (Only for customisation, Grafana should figure it out automatically.) */
+  navId?: string;
+  /** Sets the navigation model for the side-menu and for the breadcumbs manually. (Only for customisation, Grafana should figure it out automatically..) */
+  navModel?: NavModel;
+  /** Sets meta-information for the currently active page. Needed when the page itself is not part of the navigation tree (e.g. a parameterized route "items/:id" ) */
   pageNav?: NavModelItem;
-  children: React.ReactNode;
+  /** The layout of the page */
   layout?: PageLayoutType;
+  children: React.ReactNode;
 }
 
 export type PluginPageType = React.ComponentType<PluginPageProps>;

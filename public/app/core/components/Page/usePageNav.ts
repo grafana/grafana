@@ -1,5 +1,3 @@
-import { createSelector } from 'reselect';
-
 import { NavModel } from '@grafana/data';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { store } from 'app/store/store';
@@ -20,9 +18,5 @@ export function usePageNav(navId?: string, oldProp?: NavModel): NavModel | undef
   }
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  return useSelector(createSelector(getNavIndex, (navIndex) => getNavModel(navIndex, navId ?? 'home')));
-}
-
-function getNavIndex(store: StoreState) {
-  return store.navIndex;
+  return useSelector((state: StoreState) => getNavModel(state.navIndex, navId ?? 'home'));
 }

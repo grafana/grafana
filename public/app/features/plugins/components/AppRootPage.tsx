@@ -33,12 +33,18 @@ interface State {
 
 const initialState: State = { loading: true, pluginNav: null, plugin: null };
 
+const selectNavIndex = createSelector(
+  (store: StoreState) => store.navIndex,
+  (navIndex) => navIndex
+);
+
 export function AppRootPage({ match, queryParams, location }: Props) {
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const portalNode = useMemo(() => createHtmlPortalNode(), []);
   const { plugin, loading, pluginNav } = state;
+  const navIndex = useSelector(selectNavIndex);
   const sectionNav = useSelector(
-    createSelector(getNavIndex, (navIndex) =>
+    createSelector(selectNavIndex, (navIndex) =>
       buildPluginSectionNav(location, pluginNav, navIndex, match.params.pluginId)
     )
   );
@@ -53,7 +59,7 @@ export function AppRootPage({ match, queryParams, location }: Props) {
     []
   );
 
-  if (!plugin || match.params.pluginId !== plugin.meta.id) {
+  if (!plugin || match.params.pluginId !== plugin.meta.id || !navIndex) {
     return <Page navModel={sectionNav}>{loading && <PageLoader />}</Page>;
   }
 
@@ -144,10 +150,6 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
       })
     );
   }
-}
-
-function getNavIndex(store: StoreState) {
-  return store.navIndex;
 }
 
 export function getAppPluginPageError(meta: AppPluginMeta) {

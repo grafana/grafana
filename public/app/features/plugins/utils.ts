@@ -99,11 +99,13 @@ export function getPluginSection(location: HistoryLocation, navIndex: NavIndex, 
     return getRootSectionForNode(byStandalonePath);
   }
 
-  // TODO: only use this as a plan B
-  // const byPath = Object.values(navIndex).find(({ url }) => url === pathWithoutTrailingSlash);
-  // if (byPath) {
-  //   return getRootSectionForNode(byPath);
-  // }
+  // Try to find parent item by URL
+  // - skip if we are under the app plugins URL (/a/...)
+  const parentUrl = pathWithoutTrailingSlash.substring(0, pathWithoutTrailingSlash.lastIndexOf('/'));
+  const parentNavItem = navIndex[`standalone-plugin-page-${parentUrl}`];
+  if (parentNavItem) {
+    return getRootSectionForNode(parentNavItem);
+  }
 
   // Some plugins like cloud home don't have any precense in the navtree so we need to allow those
   const navTreeNodeForPlugin = navIndex[`plugin-page-${pluginId}`];
