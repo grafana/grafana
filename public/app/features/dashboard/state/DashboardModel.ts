@@ -1134,6 +1134,11 @@ export class DashboardModel implements TimeModel {
       return false;
     }
 
+    // Disable 'Add annotation' popover when the device cannot hover, and must "click" to trigger tooltip
+    if (window.matchMedia('(hover: none)').matches) {
+      return false;
+    }
+
     // If RBAC is enabled there are additional conditions to check.
     return !contextSrv.accessControlEnabled() || Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
   }
