@@ -7,6 +7,8 @@ import (
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	objectdummyserver "github.com/grafana/grafana/pkg/services/store/object/dummy"
@@ -18,6 +20,7 @@ const (
 	GRPCServer            string = "grpc-server"
 	GRPCServerHealthCheck string = "grpc-server-health-check"
 	GRPCServerReflection  string = "grpc-server-reflection"
+	Microservices         string = "microservices"
 	ObjectStore           string = "object-store"
 )
 
@@ -25,23 +28,27 @@ type Modules struct {
 	cfg *setting.Cfg
 	log log.Logger
 
-	// services
-	grpcServer   grpcserver.Provider
-	kindRegistry kind.KindRegistry
+	grpcServer                grpcserver.Provider
+	kindRegistry              kind.KindRegistry
+	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry
 
-	// dskit modules
-	ModuleManager *modules.Manager
-	serviceMap    map[string]services.Service
-	deps          map[string][]string
+	ModuleManager  *modules.Manager
+	ServiceManager *services.Manager
+	serviceMap     map[string]services.Service
+	deps           map[string][]string
 }
 
-func ProvideService(cfg *setting.Cfg, server grpcserver.Provider, kindRegistry kind.KindRegistry) *Modules {
+func ProvideService(cfg *setting.Cfg, server grpcserver.Provider, kindRegistry kind.KindRegistry, backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry, roleRegistry accesscontrol.RoleRegistry) *Modules {
 	m := &Modules{
 		cfg: cfg,
 		log: log.New("modules"),
 
-		grpcServer:   server,
-		kindRegistry: kindRegistry,
+		grpcServer:                server,
+		kindRegistry:              kindRegistry,
+		backgroundServiceRegistry: backgroundServiceRegistry,
+	}
+	if err := roleRegistry.RegisterFixedRoles(context.Background()); err != nil {
+		panic(err)
 	}
 	return m
 }
@@ -52,12 +59,14 @@ func (m *Modules) Init() error {
 	mm.RegisterModule(GRPCServerHealthCheck, m.initGRPCServerHealthCheck, modules.UserInvisibleModule)
 	mm.RegisterModule(GRPCServerReflection, m.initGRPCServerReflection, modules.UserInvisibleModule)
 	mm.RegisterModule(ObjectStore, m.initObjectStore)
+	mm.RegisterModule(Microservices, m.initBackgroundServices)
 	mm.RegisterModule(All, nil)
 
 	deps := map[string][]string{
-		GRPCServer:  {GRPCServerHealthCheck, GRPCServerReflection},
-		ObjectStore: {GRPCServer},
-		All:         {ObjectStore},
+		GRPCServer:    {GRPCServerHealthCheck, GRPCServerReflection},
+		ObjectStore:   {GRPCServer},
+		Microservices: {},
+		All:           {Microservices, ObjectStore},
 	}
 
 	for mod, targets := range deps {
@@ -73,23 +82,26 @@ func (m *Modules) Init() error {
 }
 
 func (m *Modules) Run() error {
-	serviceMap, err := m.ModuleManager.InitModuleServices(All) // m.cfg.Target...
+	serviceMap, err := m.ModuleManager.InitModuleServices(m.cfg.Target...)
 	if err != nil {
 		return err
 	}
 	m.serviceMap = serviceMap
 
 	var servs []services.Service
-	for _, s := range serviceMap {
+	var keys []string
+	for key, s := range serviceMap {
+		keys = append(keys, key)
 		servs = append(servs, s)
 	}
 
-	m.log.Info("starting services", "services", servs)
-
+	m.log.Info("starting services", "services", keys)
 	sm, err := services.NewManager(servs...)
 	if err != nil {
 		return err
 	}
+
+	m.ServiceManager = sm
 
 	healthy := func() { level.Info(m.log).Log("msg", "Modules started") }
 	stopped := func() { level.Info(m.log).Log("msg", "Modules stopped") }
@@ -120,6 +132,18 @@ func (m *Modules) Run() error {
 	}
 
 	return nil
+}
+
+func (m *Modules) Stop() error {
+	if m.ServiceManager != nil {
+		m.ServiceManager.StopAsync()
+		return m.ServiceManager.AwaitStopped(context.Background())
+	}
+	return nil
+}
+
+func (m *Modules) initBackgroundServices() (services.Service, error) {
+	return m.backgroundServiceRegistry, nil
 }
 
 func (m *Modules) initGRPCServer() (services.Service, error) {

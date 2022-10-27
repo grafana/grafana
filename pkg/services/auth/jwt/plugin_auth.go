@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -134,9 +133,12 @@ func (s *pluginAuthService) getPrivateKey(ctx context.Context) (privKey *jose.JS
 		return nil, err
 	}
 
+	var key jose.JSONWebKey
 	if ok {
-		if err = json.Unmarshal([]byte(raw), privKey); err != nil {
+		if err := key.UnmarshalJSON([]byte(raw)); err != nil {
 			s.log.Debug("Failed to unmarshal private key from KV store", "err", err)
+		} else {
+			privKey = &key
 		}
 	}
 
@@ -144,7 +146,7 @@ func (s *pluginAuthService) getPrivateKey(ctx context.Context) (privKey *jose.JS
 		if privKey, err = generateJWK(); err != nil {
 			return nil, err
 		}
-		keyJson, err := json.Marshal(privKey)
+		keyJson, err := privKey.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
