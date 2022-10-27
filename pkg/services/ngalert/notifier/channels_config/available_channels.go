@@ -132,9 +132,18 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 						},
 					},
 				},
+				{ // New in 9.3.
+					Label:        "Title",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Templated title of the message",
+					Placeholder:  channels.DefaultMessageTitleEmbed,
+					PropertyName: "title",
+				},
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
+					Description:  "Custom DingDing message. You can use template variables.",
 					Placeholder:  channels.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
