@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { MoveableManagerInterface, Renderer } from 'moveable';
 
 import { HorizontalConstraint, VerticalConstraint } from '../types';
@@ -75,88 +74,6 @@ export const dimensionViewable = {
         {Math.round(rect.offsetWidth)} x {Math.round(rect.offsetHeight)}
       </div>
     );
-  },
-};
-
-export const arrowViewable = {
-  name: 'arrowViewable',
-  props: {},
-  events: {},
-  render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
-    const rect = moveable.getRect();
-
-    const arrowControlStyles = {
-      position: 'absolute',
-      zIndex: 100,
-      cursor: 'pointer',
-      width: '25px',
-    };
-
-    const hoverStyle = css`
-      &:hover {
-        background: rgba(0, 0, 0, 0.5);
-      }
-    `;
-
-    const top = React.createElement(
-      'div',
-      {
-        style: {
-          ...arrowControlStyles,
-          left: `${(rect.width - 12.5) / 2}px`,
-          bottom: '50px',
-        },
-        class: hoverStyle,
-        id: 'arrowControl',
-      },
-      ['⬆️']
-    );
-
-    const bottom = React.createElement(
-      'div',
-      {
-        style: {
-          ...arrowControlStyles,
-          left: `${(rect.width - 12.5) / 2}px`,
-          top: `${rect.height + 50}px`,
-        },
-        class: hoverStyle,
-        id: 'arrowControl',
-      },
-      ['⬇️']
-    );
-
-    const left = React.createElement(
-      'div',
-      {
-        style: {
-          ...arrowControlStyles,
-          right: `${50}px`,
-          top: `${(rect.height - 12.5) / 2}px`,
-        },
-        class: hoverStyle,
-        id: 'arrowControl',
-      },
-      ['⬅️']
-    );
-
-    const right = React.createElement(
-      'div',
-      {
-        style: {
-          ...arrowControlStyles,
-          left: `${rect.width + 50}px`,
-          top: `${(rect.height - 12.5) / 2}px`,
-        },
-        class: hoverStyle,
-        id: 'arrowControl',
-      },
-      ['➡️']
-    );
-
-    const arrowVisualization = React.createElement('div', {}, [top, bottom, left, right]);
-
-    return arrowVisualization;
   },
 };
 

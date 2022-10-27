@@ -30,7 +30,7 @@ import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
-import { arrowViewable, constraintViewable, dimensionViewable, settingsViewable } from './ables';
+import { constraintViewable, dimensionViewable, settingsViewable } from './ables';
 import { ElementState } from './element';
 import { FrameState } from './frame';
 import { RootElement } from './root';
@@ -357,12 +357,11 @@ export class Scene {
     this.moveable = new Moveable(this.div!, {
       draggable: allowChanges && !this.editModeEnabled.getValue(),
       resizable: allowChanges,
-      ables: [dimensionViewable, arrowViewable, constraintViewable(this), settingsViewable(this)],
+      ables: [dimensionViewable, constraintViewable(this), settingsViewable(this)],
       props: {
         dimensionViewable: allowChanges,
         constraintViewable: allowChanges,
         settingsViewable: allowChanges,
-        arrowViewable: allowChanges,
       },
       origin: false,
       className: this.styles.selected,
@@ -620,7 +619,7 @@ export class Scene {
           style={{
             border: '10px solid red',
             position: 'absolute',
-            // display: 'none',
+            display: 'none',
           }}
           ref={this.setArrowAnchorRef}
         ></div>
