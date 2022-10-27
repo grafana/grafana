@@ -28,7 +28,19 @@ func TestRawEncoders(t *testing.T) {
 	require.NoError(t, err)
 
 	str := string(b)
-	require.JSONEq(t, `{"UID":"a","kind":"b","version":"c","body":{"field":1.23,"hello":"world"},"etag":"d"}`, str)
+
+	require.JSONEq(t, `{
+		"GRN": {
+		  "kind": "b",
+		  "UID": "a"
+		},
+		"version": "c",
+		"body": {
+		  "field": 1.23,
+		  "hello": "world"
+		},
+		"etag": "d"
+	  }`, str)
 
 	copy := &RawObject{}
 	err = json.Unmarshal(b, copy)
