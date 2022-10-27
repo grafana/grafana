@@ -96,6 +96,33 @@ func TestStore_AddServiceAccountToken_WrongServiceAccount(t *testing.T) {
 	require.Error(t, err, "It should not be possible to add token to non-existing service account")
 }
 
+func TestIntegrationStore_UpdateAPIKeysExpiryDate(t *testing.T) {
+	saToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
+	db, store := setupTestDatabase(t)
+	sa := tests.SetupUserServiceAccount(t, db, saToCreate)
+
+	keyName := t.Name()
+	key, err := apikeygen.New(sa.OrgID, keyName)
+	require.NoError(t, err, "An error has occurred when greating a service account token")
+
+	cmd := serviceaccounts.AddServiceAccountTokenCommand{
+		Name:          keyName,
+		OrgId:         sa.OrgID,
+		Key:           key.HashedKey,
+		SecondsToLive: 0,
+		Result:        &apikey.APIKey{},
+	}
+	err = store.AddServiceAccountToken(context.Background(), sa.ID, &cmd)
+	require.NoError(t, err, "An error has occurred when adding an access token to  a service account")
+	err = store.UpdateAPIKeysExpiryDate(context.Background(), 7)
+	require.NoError(t, err, "An error has occurred when updating the Expiry dates")
+
+	tokens, err := store.ListTokens(context.Background(), &serviceaccounts.GetSATokensQuery{})
+	require.NoError(t, err, "An error has occurred when listing tokens")
+	require.Equal(t, len(tokens), 1, "There should only be one token created")
+	require.NotNil(t, tokens[0].Expires, "The only token created should have a modified expiry date")
+}
+
 func TestStore_RevokeServiceAccountToken(t *testing.T) {
 	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
