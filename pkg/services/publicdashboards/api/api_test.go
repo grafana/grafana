@@ -303,7 +303,7 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 			features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
 			testServer := setupTestServer(t, cfg, features, service, nil, test.User)
 
-			response := callAPI(testServer, http.MethodDelete, fmt.Sprintf("/api/dashboards/%s/public/%s", dashboardUid, publicDashboardUid), nil, t)
+			response := callAPI(testServer, http.MethodDelete, fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards/%s", dashboardUid, publicDashboardUid), nil, t)
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
 			if test.ExpectedHttpResponse == http.StatusOK {

@@ -34,7 +34,7 @@ const publicDashboardListResponse: ListPublicDashboardResponse[] = [
 
 const server = setupServer(
   rest.get('/api/dashboards/public', (_, res, ctx) => res(ctx.status(200), ctx.json(publicDashboardListResponse))),
-  rest.delete('/api/dashboards/:dashboardUid/public-dashboards/:uid', (_, res, ctx) => res(ctx.status(200)))
+  rest.delete('/api/dashboards/uid/:dashboardUid/public-dashboards/:uid', (_, res, ctx) => res(ctx.status(200)))
 );
 
 jest.mock('@grafana/runtime', () => ({

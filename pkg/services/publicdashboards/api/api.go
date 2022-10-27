@@ -70,7 +70,7 @@ func (api *Api) RegisterAPIEndpoints() {
 	// List Public Dashboards
 	api.RouteRegister.Get("/api/dashboards/public", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
 	// Delete Public dashboard
-	api.RouteRegister.Delete("/api/dashboards/:uid/public-dashboards/:publicDashboardUid",
+	api.RouteRegister.Delete("/api/dashboards/uid/:uid/public-dashboards/:publicDashboardUid",
 		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.DeletePublicDashboard))
 
