@@ -516,12 +516,11 @@ func TestIntegrationDelete(t *testing.T) {
 		require.Nil(t, deletedDashboard)
 	})
 
-	t.Run("Non-existent public dashboard deletion throws an error", func(t *testing.T) {
+	t.Run("Non-existent public dashboard deletion doesn't throw an error", func(t *testing.T) {
 		setup()
 
 		err := publicdashboardStore.Delete(context.Background(), 15, "non-existent-dashboard-uid", "non-existent-uid")
-		require.Error(t, err)
-		require.Equal(t, ErrPublicDashboardNotFound, err)
+		require.NoError(t, err)
 	})
 }
 

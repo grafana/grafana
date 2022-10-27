@@ -74,10 +74,7 @@ func (d *PublicDashboardStoreImpl) FindDashboard(ctx context.Context, dashboardU
 func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, userOrgId int64, dashboardUid string, uid string) error {
 	dashboard := &PublicDashboard{OrgId: userOrgId, DashboardUid: dashboardUid, Uid: uid}
 	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		deletedCount, err := sess.Delete(dashboard)
-		if deletedCount == 0 {
-			return ErrPublicDashboardNotFound
-		}
+		_, err := sess.Delete(dashboard)
 		if err != nil {
 			return err
 		}
