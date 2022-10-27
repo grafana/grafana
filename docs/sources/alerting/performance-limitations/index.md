@@ -8,7 +8,7 @@ keywords:
   - alerting
   - performance
   - limitations
-title: Performance considerations and limititions
+title: Performance considerations and limitations
 weight: 450
 ---
 
