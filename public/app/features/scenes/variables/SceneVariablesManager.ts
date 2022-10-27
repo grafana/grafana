@@ -1,27 +1,33 @@
-import { SceneObjectBase } from '../core/SceneObjectBase';
+// import { Subscription, Unsubscribable } from 'rxjs';
+// import { SceneObjectActivedEvent } from '../core/events';
+// import { SceneObject } from '../core/types';
 
-import { VariableUpdateProcess } from './VariableUpdateProcess';
-import { SceneVariable, SceneVariableSet, SceneVariableSetState, SceneVariableState } from './types';
+// export class SceneVariablesManager {
+//   private subs: Subscription;
 
-export class TextBoxSceneVariable extends SceneObjectBase<SceneVariableState> implements SceneVariable {}
+//   constructor(sceneRoot: SceneObject) {
+//     this.subs.add(sceneRoot.events.subscribe(SceneObjectActivedEvent, this.onObjectActivated));
+//   }
 
-export class SceneVariablesManager extends SceneObjectBase<SceneVariableSetState> implements SceneVariableSet {
-  activate(): void {
-    super.activate();
+//   onObjectActivated = (event: SceneObjectActivedEvent) {
 
-    const updateProcess = new VariableUpdateProcess(this);
+//   }
 
-    for (const variable of this.state.variables) {
-      if (variable.updateOptions) {
-        updateProcess.addVariable(variable);
-      }
-    }
+//   onLocationUpdate = (location: Location) => {
+//     // TODO: find any scene object whose state we need to update
+//   };
 
-    updateProcess.updateTick();
-  }
+//   onStateChanged = ({ payload }: SceneObjectStateChangedEvent) => {
+//     const changedObject = payload.changedObject;
 
-  getByName(name: string): SceneVariable | undefined {
-    // TODO: Replace with index
-    return this.state.variables.find((x) => x.state.name === name);
-  }
-}
+//     if ('getUrlState' in changedObject) {
+//       const urlUpdate = changedObject.getUrlState();
+//       locationService.partial(urlUpdate, true);
+//     }
+//   };
+
+//   cleanUp() {
+//     this.stateChangeSub.unsubscribe();
+//     this.locationListenerUnsub();
+//   }
+// }

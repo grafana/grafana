@@ -1,12 +1,9 @@
-import { M } from 'msw/lib/glossary-dc3fd077';
-import { Subject } from 'rxjs';
-
 import { LoadingState } from '@grafana/data';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneObjectStatePlain } from '../core/types';
 
-import { SceneVariablesManager } from './SceneVariablesManager';
+import { SceneVariableList } from './SceneVariableList';
 import { TestVariable } from './TestVariable';
 import { VariableUpdateProcess } from './VariableUpdateProcess';
 
@@ -21,11 +18,10 @@ describe('VariableUpdateProcess', () => {
     const server = new TestVariable({ name: 'server', query: 'A.*', value: 'server-initial', text: '', options: [] });
     const pod = new TestVariable({ name: 'pod', query: 'A.$server.*', value: 'pod-initial', text: '', options: [] });
 
-    const variables = new SceneVariablesManager({
-      variables: [server, pod],
+    const scene = new TestScene({
+      $variables: new SceneVariableList({ variables: [server, pod] }),
     });
 
-    const scene = new TestScene({ $variables: variables });
     const updateProcess = new VariableUpdateProcess(scene);
 
     updateProcess.addVariable(server, pod);
@@ -52,11 +48,9 @@ describe('VariableUpdateProcess', () => {
     const B = new TestVariable({ name: 'B', query: 'B.*', value: '', text: '', options: [] });
     const C = new TestVariable({ name: 'C', query: '$A.$B.*', value: '', text: '', options: [] });
 
-    const variables = new SceneVariablesManager({
-      variables: [C, B, A],
+    const scene = new TestScene({
+      $variables: new SceneVariableList({ variables: [C, B, A] }),
     });
-
-    const scene = new TestScene({ $variables: variables });
     const updateProcess = new VariableUpdateProcess(scene);
 
     updateProcess.addVariable(A, B, C);

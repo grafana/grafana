@@ -6,7 +6,7 @@ import { SceneFlexLayout } from '../components/SceneFlexLayout';
 import { SceneSubMenu } from '../components/SceneSubMenu';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { SceneTimeRange } from '../core/SceneTimeRange';
-import { SceneVariablesManager } from '../variables/SceneVariablesManager';
+import { SceneVariableList } from '../variables/SceneVariableList';
 import { TestVariable } from '../variables/TestVariable';
 import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
 
@@ -23,7 +23,7 @@ export function getVariablesDemo(): Scene {
         }),
       ],
     }),
-    $variables: new SceneVariablesManager({
+    $variables: new SceneVariableList({
       variables: [
         new TestVariable({
           name: 'server',
