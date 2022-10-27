@@ -213,7 +213,7 @@ func (_m *FakePublicDashboardStore) Save(ctx context.Context, cmd models.SavePub
 	ret := _m.Called(ctx, cmd)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, publicdashboardsmodels.SavePublicDashboardConfigCommand) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, models.SavePublicDashboardConfigCommand) error); ok {
 		r0 = rf(ctx, cmd)
 	} else {
 		r0 = ret.Error(0)
@@ -222,8 +222,8 @@ func (_m *FakePublicDashboardStore) Save(ctx context.Context, cmd models.SavePub
 	return r0
 }
 
-// UpdatePublicDashboard provides a mock function with given fields: ctx, cmd
-func (_m *FakePublicDashboardStore) Update(ctx context.Context, cmd publicdashboardsmodels.SavePublicDashboardConfigCommand) error {
+// Update provides a mock function with given fields: ctx, cmd
+func (_m *FakePublicDashboardStore) Update(ctx context.Context, cmd models.SavePublicDashboardConfigCommand) error {
 	ret := _m.Called(ctx, cmd)
 
 	var r0 error
