@@ -28,7 +28,7 @@
           You can also copy and paste this link into your browser directly:
         </mj-text>
         <mj-text>
-          <a href="{{ .LinkUrl }}">{{ .SignUpUrl }}</a>
+          <a rel="noopener" href="{{ .LinkUrl }}">{{ .SignUpUrl }}</a>
         </mj-text>
       </mj-column>
     </mj-section>

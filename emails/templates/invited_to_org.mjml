@@ -29,7 +29,7 @@
           You can also copy and paste this link into your browser directly:
         </mj-text>
         <mj-text>
-          <a href="{{ .AppUrl }}">{{ .AppUrl }}</a>
+          <a rel="noopener" href="{{ .AppUrl }}">{{ .AppUrl }}</a>
         </mj-text>
       </mj-column>
     </mj-section>

@@ -25,7 +25,7 @@
           You can also copy and paste this link into your browser directly:
         </mj-text>
         <mj-text>
-          <a href="{{ .LinkUrl }}">{{ .LinkUrl }}</a>
+          <a rel="noopener" href="{{ .LinkUrl }}">{{ .LinkUrl }}</a>
         </mj-text>
       </mj-column>
     </mj-section>
