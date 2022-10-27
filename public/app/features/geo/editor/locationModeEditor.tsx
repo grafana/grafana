@@ -1,9 +1,10 @@
-import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { StandardEditorProps, GrafanaTheme2, FrameGeometrySourceMode } from '@grafana/data';
+import { StandardEditorProps, FrameGeometrySourceMode, DataFrame, FrameGeometrySource } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { RadioButtonGroup, stylesFactory, useTheme2 } from '@grafana/ui';
+import { Alert, HorizontalGroup, RadioButtonGroup } from '@grafana/ui';
+
+import { FrameGeometryField, getGeometryField, getLocationMatchers } from '../utils/location';
 
 const MODE_OPTIONS = [
   {
@@ -28,17 +29,41 @@ const MODE_OPTIONS = [
   },
 ];
 
+interface ModeEditorSettings {
+  data?: DataFrame[];
+  source?: FrameGeometrySource;
+}
+
 export const LocationModeEditor = ({
   value,
   onChange,
   context,
   item,
-}: StandardEditorProps<string, unknown, unknown, unknown>) => {
-  const styles = getStyles(useTheme2());
+}: StandardEditorProps<string, ModeEditorSettings, unknown, unknown>) => {
+  const [info, setInfo] = useState<FrameGeometryField>();
+
+  useEffect(() => {
+    if (item.settings?.source && item.settings?.data?.length && item.settings.data[0]) {
+      getLocationMatchers(item.settings.source).then((location) => {
+        if (item.settings && item.settings.data) {
+          setInfo(getGeometryField(item.settings.data[0], location));
+        }
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.settings]);
+
+  // TODO extend for other cases, for example auto when it's happy
+  const dataValidation = () => {
+    if (info && info.warning) {
+      return <Alert title={info.warning} severity="warning" />;
+    } else {
+      return null;
+    }
+  };
 
   return (
     <>
-      <div>test</div>
       <RadioButtonGroup
         value={value}
         options={MODE_OPTIONS}
@@ -46,21 +71,7 @@ export const LocationModeEditor = ({
           onChange(v);
         }}
       />
+      <HorizontalGroup>{dataValidation()}</HorizontalGroup>
     </>
   );
 };
-
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    keys: css`
-      margin-top: 4px;
-      text-overflow: ellipsis;
-      overflow: hidden;
-      white-space: nowrap;
-
-      > span {
-        margin-left: 4px;
-      }
-    `,
-  };
-});

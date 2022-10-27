@@ -8,8 +8,6 @@ import {
 } from '@grafana/data';
 import { GazetteerPathEditor } from 'app/features/geo/editor/GazetteerPathEditor';
 
-import { getGeometryField, getLocationMatchers } from '../utils/location';
-
 import { LocationModeEditor } from './locationModeEditor';
 
 export function addLocationFields<TOptions>(
@@ -19,21 +17,13 @@ export function addLocationFields<TOptions>(
   source?: FrameGeometrySource,
   data?: DataFrame[]
 ) {
-  if (source && data?.length) {
-    // TODO... equivolent in the custom component
-    // TODO show errors but also current state if auto (for transparency)
-    getLocationMatchers(source).then((location) => {
-      const info = getGeometryField(data[0], location);
-      console.log('LOCATION', info);
-    });
-  }
-
   // TODO replace radio with custom component
   builder.addCustomEditor({
     id: 'modeEditor',
     path: `${prefix}mode`,
     name: 'Location',
     editor: LocationModeEditor,
+    settings: { data, source },
   });
 
   // TODO apply data filter to field pickers
