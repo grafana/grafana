@@ -15,6 +15,7 @@ import {
   TraceSpanReference,
   TraceSpanRow,
   dateTimeFormat,
+  FieldDTO,
 } from '@grafana/data';
 
 import { createGraphFrames } from './graphTransform';
@@ -577,7 +578,7 @@ export function createTableFrameFromSearch(data: TraceSearchMetadata[], instance
       },
       { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' } },
       { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
-      { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ns' } },
+      { name: 'traceDuration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
     ],
     meta: {
       preferredVisualisationType: 'table',
@@ -621,7 +622,7 @@ function transformToTraceData(data: TraceSearchMetadata) {
   return {
     traceID: data.traceID,
     startTime: startTime,
-    duration: data.durationMs?.toString(),
+    traceDuration: data.durationMs?.toString(),
     traceName,
   };
 }
@@ -630,6 +631,20 @@ export function createTableFrameFromTraceQlQuery(
   data: TraceSearchMetadata[],
   instanceSettings: DataSourceInstanceSettings
 ) {
+  const spanDynamicAttrs: Record<string, FieldDTO> = {};
+
+  data.forEach((trace) => {
+    trace.spanSet?.spans.forEach((span) => {
+      span.attributes?.forEach((attr) => {
+        spanDynamicAttrs[attr.key] = {
+          name: attr.key,
+          type: FieldType.string,
+          config: { displayNameFromDS: attr.key, custom: { subcol: true } },
+        };
+      });
+    });
+  });
+
   const frame = new MutableDataFrame({
     fields: [
       {
@@ -656,7 +671,7 @@ export function createTableFrameFromTraceQlQuery(
       },
       { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Name' } },
       { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
-      { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
+      { name: 'traceDuration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
 
       {
         name: 'traceIdHidden',
@@ -697,8 +712,9 @@ export function createTableFrameFromTraceQlQuery(
         type: FieldType.string,
         config: { custom: { subcol: true }, displayNameFromDS: 'Start time' },
       },
+      ...Object.values(spanDynamicAttrs),
       {
-        name: 'spanDuration',
+        name: 'duration',
         type: FieldType.number,
         config: { custom: { subcol: true }, displayNameFromDS: 'Duration', unit: 'ns' },
       },
@@ -707,26 +723,10 @@ export function createTableFrameFromTraceQlQuery(
       preferredVisualisationType: 'table',
     },
   });
+
   if (!data?.length) {
     return frame;
   }
-
-  const attributesAdded: string[] = [];
-
-  data.forEach((trace) => {
-    trace.spanSet?.spans.forEach((span) => {
-      span.attributes?.forEach((attr) => {
-        if (!attributesAdded.includes(attr.key)) {
-          frame.addField({
-            name: attr.key,
-            type: FieldType.string,
-            config: { displayNameFromDS: attr.key, custom: { subcol: true } },
-          });
-          attributesAdded.push(attr.key);
-        }
-      });
-    });
-  });
 
   const tableRows = data
     // Show the most recent traces
@@ -748,11 +748,11 @@ export function createTableFrameFromTraceQlQuery(
 }
 
 interface TraceTableData {
-  [key: string]: string | number | undefined; // dynamic attribute name
+  [key: string]: string | number | boolean | undefined; // dynamic attribute name
   traceID?: string;
   spanID?: string;
   startTime?: string;
-  duration?: string;
+  traceDuration?: string;
 }
 
 function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
@@ -770,11 +770,22 @@ function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
     traceIdHidden: traceID,
     spanID: span.spanID,
     spanStartTime: spanStartTime,
-    spanDuration: span.durationNanos,
+    duration: parseInt(span.durationNanos, 10),
   };
 
   span.attributes?.forEach((attr) => {
-    data[attr.key] = attr.value.stringValue;
+    if (attr.value.boolValue) {
+      data[attr.key] = attr.value.boolValue;
+    }
+    if (attr.value.doubleValue) {
+      data[attr.key] = attr.value.doubleValue;
+    }
+    if (attr.value.intValue) {
+      data[attr.key] = attr.value.intValue;
+    }
+    if (attr.value.stringValue) {
+      data[attr.key] = attr.value.stringValue;
+    }
   });
 
   return data;

@@ -89,7 +89,14 @@ export function getColumns(
             // to build the expander.
             return (
               <span
-                style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}
+                {...props}
+                style={{
+                  ...props.style,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  height: '100%',
+                }}
                 onClick={() => {
                   // To prevent expanding the wrong row, due to indexes changing when expanding/collapsing rows,
                   // we must subtract the amount of blank (hidden) rows from the row index when expanding a row under a previously expanded row
