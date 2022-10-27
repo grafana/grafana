@@ -3,6 +3,9 @@ package historian
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -30,19 +33,18 @@ func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashb
 	}
 }
 
-func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmodels.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData state.InstanceStateAndReason) {
+func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmodels.AlertRule, labels data.Labels, result *eval.Result, evaluatedAt time.Time, currentData, previousData state.InstanceStateAndReason) {
 	logger := h.log.New(rule.GetKey().LogContext()...)
 	logger.Debug("Alert state changed creating annotation", "newState", currentData.String(), "oldState", previousData.String())
 
-	labels = removePrivateLabels(labels)
-	annotationText := fmt.Sprintf("%s {%s} - %s", rule.Title, labels.String(), currentData.String())
-
+	annotationText, annotationData := buildAnnotationTextAndData(rule, labels, result)
 	item := &annotations.Item{
 		AlertId:   rule.ID,
 		OrgId:     rule.OrgID,
 		PrevState: previousData.String(),
 		NewState:  currentData.String(),
 		Text:      annotationText,
+		Data:      annotationData,
 		Epoch:     evaluatedAt.UnixNano() / int64(time.Millisecond),
 	}
 
@@ -70,6 +72,42 @@ func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmode
 		logger.Error("Error saving alert annotation", "error", err)
 		return
 	}
+}
+
+func buildAnnotationTextAndData(rule *ngmodels.AlertRule, labels data.Labels, result *eval.Result) (string, *simplejson.Json) {
+	jsonData := simplejson.New()
+	var value string
+
+	switch result.State {
+	case eval.Error:
+		if result.Error == nil {
+			jsonData.Set("error", nil)
+		} else {
+			jsonData.Set("error", result.Error.Error())
+		}
+		value = "Error"
+	case eval.NoData:
+		jsonData.Set("noData", true)
+		value = "No data"
+	default:
+		keys := make([]string, 0, len(result.Values))
+		for k := range result.Values {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		values := map[string]float64{}
+		var strValues []string
+		for _, k := range keys {
+			values[k] = *result.Values[k].Value
+			strValues = append(strValues, fmt.Sprintf("%s=%f", k, *result.Values[k].Value))
+		}
+		jsonData.Set("values", simplejson.NewFromAny(values))
+		value = strings.Join(strValues, ", ")
+	}
+
+	labels = removePrivateLabels(labels)
+	return fmt.Sprintf("%s {%s} - %s", rule.Title, labels.String(), value), jsonData
 }
 
 func removePrivateLabels(labels data.Labels) data.Labels {
