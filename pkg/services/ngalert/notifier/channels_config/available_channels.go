@@ -853,6 +853,14 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 			Description: "Sends notifications to Discord",
 			Options: []NotifierOption{
 				{
+					Label:        "Title",
+					Description:  "Templated title of the message",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  channels.DefaultMessageTitleEmbed,
+					PropertyName: "title",
+				},
+				{
 					Label:        "Message Content",
 					Description:  "Mention a group using @ or a user using <@ID> when notifying in a channel",
 					Element:      ElementTypeInput,
