@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -47,7 +47,7 @@ type dashboardGuardianImpl struct {
 	teams            []*models.TeamDTO
 	log              log.Logger
 	ctx              context.Context
-	store            sqlstore.Store
+	store            db.DB
 	dashboardService dashboards.DashboardService
 	teamService      team.Service
 }
@@ -58,7 +58,7 @@ var New = func(ctx context.Context, dashId int64, orgId int64, user *user.Signed
 	panic("no guardian factory implementation provided")
 }
 
-func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *user.SignedInUser, store sqlstore.Store, dashSvc dashboards.DashboardService, teamSvc team.Service) *dashboardGuardianImpl {
+func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) *dashboardGuardianImpl {
 	return &dashboardGuardianImpl{
 		user:             user,
 		dashId:           dashId,

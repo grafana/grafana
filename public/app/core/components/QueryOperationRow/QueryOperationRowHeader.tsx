@@ -15,6 +15,7 @@ interface QueryOperationRowHeaderProps {
   onRowToggle: () => void;
   reportDragMousePosition: MouseEventHandler<HTMLDivElement>;
   titleElement?: React.ReactNode;
+  id: string;
 }
 
 export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = ({
@@ -27,6 +28,7 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
   onRowToggle,
   reportDragMousePosition,
   titleElement,
+  id,
 }: QueryOperationRowHeaderProps) => {
   const styles = useStyles2(getStyles);
 
@@ -40,6 +42,8 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
           className={styles.collapseIcon}
           onClick={onRowToggle}
           type="button"
+          aria-expanded={isContentVisible}
+          aria-controls={id}
         />
         {titleElement && (
           <div className={styles.titleWrapper} onClick={onRowToggle} aria-label="Query operation row title">

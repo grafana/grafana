@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
@@ -18,7 +18,7 @@ const paragraphStyles = (theme: GrafanaTheme) => css`
   display: block;
 `;
 
-export const ForgottenPassword: FC = () => {
+export const ForgottenPassword = () => {
   const [emailSent, setEmailSent] = useState(false);
   const styles = useStyles(paragraphStyles);
   const loginHref = `${config.appSubUrl}/login`;

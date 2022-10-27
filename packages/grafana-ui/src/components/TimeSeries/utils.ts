@@ -173,13 +173,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
 
-    const config = {
+    const config: FieldConfig<GraphFieldConfig> = {
       ...field.config,
       custom: {
         ...defaultConfig,
         ...field.config.custom,
       },
-    } as FieldConfig<GraphFieldConfig>;
+    };
 
     const customConfig: GraphFieldConfig = config.custom!;
 
@@ -223,7 +223,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
           centeredZero: customConfig.axisCenteredZero,
-          range: customConfig.stacking?.mode === StackingMode.Percent ? [0, 1] : undefined,
+          range:
+            customConfig.stacking?.mode === StackingMode.Percent
+              ? (u: uPlot, dataMin: number, dataMax: number) => {
+                  dataMin = dataMin < 0 ? -1 : 0;
+                  dataMax = dataMax > 0 ? 1 : 0;
+                  return [dataMin, dataMax];
+                }
+              : undefined,
           decimals: field.config.decimals,
         },
         field
@@ -272,10 +279,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             label: customConfig.axisLabel,
             size: customConfig.axisWidth,
             placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-            formatValue: (v, decimals) => formattedValueToString(fmt(v, config.decimals ?? decimals)),
+            formatValue: (v, decimals) => formattedValueToString(fmt(v, decimals)),
             theme,
             grid: { show: customConfig.axisGridShow },
             decimals: field.config.decimals,
+            distr: customConfig.scaleDistribution?.type,
             ...axisColorOpts,
           },
           field

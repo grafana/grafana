@@ -3,6 +3,7 @@ import React, { useMemo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { PanelPlugin, GrafanaTheme2, FeatureState } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import {
   Drawer,
@@ -19,7 +20,6 @@ import {
   FeatureBadge,
   Select,
   ClipboardButton,
-  Stack,
   Icon,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -202,6 +202,7 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
             {({ height }) => (
               <>
                 <iframe
+                  title="Support snapshot preview"
                   src={`${config.appUrl}dashboard/new?orgId=${contextSrv.user.orgId}&kiosk&${snapshotUpdate}`}
                   width="100%"
                   height={height - 100}

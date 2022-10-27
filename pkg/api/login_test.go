@@ -44,7 +44,7 @@ func fakeSetIndexViewData(t *testing.T) {
 		data := &dtos.IndexViewData{
 			User:     &dtos.CurrentUser{},
 			Settings: map[string]interface{}{},
-			NavTree:  []*navtree.NavLink{},
+			NavTree:  &navtree.NavTreeRoot{},
 		}
 		return data, nil
 	}

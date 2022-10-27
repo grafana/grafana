@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -175,10 +176,8 @@ func Test_GetPluginAssets(t *testing.T) {
 				requestedFile: {},
 			},
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: p,
-			},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{p},
 		}
 		l := &logtest.Fake{}
 
@@ -200,10 +199,8 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: p,
-			},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{p},
 		}
 		l := &logtest.Fake{}
 
@@ -223,10 +220,8 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: p,
-			},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{p},
 		}
 		l := &logtest.Fake{}
 
@@ -248,10 +243,8 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: p,
-			},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{p},
 		}
 		l := &logtest.Fake{}
 
@@ -271,8 +264,8 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin", func(t *testing.T) {
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{},
 		}
 		l := &logtest.Fake{}
 
@@ -292,10 +285,11 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for a core plugin's file", func(t *testing.T) {
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: {
-					Class: plugins.Core,
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{
+				{
+					JSONData: plugins.JSONData{ID: pluginID},
+					Class:    plugins.Core,
 				},
 			},
 		}
@@ -320,6 +314,12 @@ func TestMakePluginResourceRequest(t *testing.T) {
 		pluginClient: &fakePluginClient{},
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	const customHeader = "X-CUSTOM"
+	req.Header.Set(customHeader, "val")
+	ctx := contexthandler.WithAuthHTTPHeader(req.Context(), customHeader)
+	req = req.WithContext(ctx)
+
 	resp := httptest.NewRecorder()
 	pCtx := backend.PluginContext{}
 	err := hs.makePluginResourceRequest(resp, req, pCtx)
@@ -332,6 +332,7 @@ func TestMakePluginResourceRequest(t *testing.T) {
 	}
 
 	require.Equal(t, "sandbox", resp.Header().Get("Content-Security-Policy"))
+	require.Empty(t, req.Header.Get(customHeader))
 }
 
 func callGetPluginAsset(sc *scenarioContext) {
@@ -392,8 +393,8 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 }
 
 func Test_PluginsList_AccessControl(t *testing.T) {
-	pluginStore := fakePluginStore{plugins: map[string]plugins.PluginDTO{
-		"test-app": {
+	pluginStore := plugins.FakePluginStore{PluginList: []plugins.PluginDTO{
+		{
 			PluginDir:     "/grafana/plugins/test-app/dist",
 			Class:         "external",
 			DefaultNavURL: "/plugins/test-app/page/test",
@@ -410,7 +411,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 				},
 			},
 		},
-		"mysql": {
+		{
 			PluginDir: "/grafana/public/app/plugins/datasource/mysql",
 			Class:     "core",
 			Pinned:    false,
@@ -428,7 +429,8 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 			},
 		},
 	}}
-	pluginSettings := fakePluginSettings{plugins: map[string]*pluginsettings.DTO{
+
+	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
 		"test-app": {ID: 0, OrgID: 1, PluginID: "test-app", PluginVersion: "1.0.0", Enabled: true},
 		"mysql":    {ID: 0, OrgID: 1, PluginID: "mysql", PluginVersion: "", Enabled: true}},
 	}

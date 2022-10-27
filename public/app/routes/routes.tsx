@@ -9,19 +9,16 @@ import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
-import { getRoutes as getDataConnectionsRoutes } from 'app/features/data-connections/routes';
+import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
-import { ServiceAccountPage } from 'app/features/serviceaccounts/ServiceAccountPage';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
-
-import { pluginHasRootPage } from './utils';
 
 export const extraRoutes: RouteDescriptor[] = [];
 
@@ -33,20 +30,19 @@ export function getAppRoutes(): RouteDescriptor[] {
           component: () => <NavLandingPage navId="apps" />,
         },
         {
+          path: '/alerts-and-incidents',
+          component: () => <NavLandingPage navId="alerts-and-incidents" />,
+        },
+        {
+          path: '/monitoring',
+          component: () => <NavLandingPage navId="monitoring" />,
+        },
+        {
           path: '/a/:pluginId',
           exact: true,
-          component: (props) => {
-            const hasRoot = pluginHasRootPage(props.match.params.pluginId, config.bootData.navTree);
-            const hasQueryParams = Object.keys(props.queryParams).length > 0;
-            if (hasRoot || hasQueryParams) {
-              const AppRootPage = SafeDynamicImport(
-                () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/components/AppRootPage')
-              );
-              return <AppRootPage {...props} />;
-            } else {
-              return <NavLandingPage navId={`plugin-page-${props.match.params.pluginId}`} />;
-            }
-          },
+          component: SafeDynamicImport(
+            () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/components/AppRootPage')
+          ),
         },
       ]
     : [];
@@ -272,7 +268,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/serviceaccounts/:id',
-      component: ServiceAccountPage,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ServiceAccountPage" */ 'app/features/serviceaccounts/ServiceAccountPage')
+      ),
     },
     {
       path: '/org/teams',

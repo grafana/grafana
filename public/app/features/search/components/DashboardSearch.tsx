@@ -29,7 +29,7 @@ export function DashboardSearch({}: Props) {
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
   return (
-    <div tabIndex={0} className={styles.overlay}>
+    <div className={styles.overlay}>
       <div className={styles.container}>
         <div className={styles.searchField}>
           <div>
@@ -39,10 +39,8 @@ export function DashboardSearch({}: Props) {
               value={query.query ?? ''}
               onChange={onSearchQueryChange}
               onKeyDown={onKeyDown}
-              tabIndex={0}
               spellCheck={false}
               className={styles.input}
-              autoFocus
             />
           </div>
 

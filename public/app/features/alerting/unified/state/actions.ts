@@ -1,7 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
-import { locationService } from '@grafana/runtime';
+import { locationService, logInfo } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -32,6 +32,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
+import { LogMessages } from '../Analytics';
 import {
   addAlertManagers,
   createOrUpdateSilence,
@@ -265,7 +266,7 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
         const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerApiEnabled
           ? {
               dataSourceName: name,
-              apiVersion: buildInfo.application === PromApplication.Lotex ? 'legacy' : 'config',
+              apiVersion: buildInfo.application === PromApplication.Cortex ? 'legacy' : 'config',
             }
           : undefined;
 
@@ -289,9 +290,9 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
   }
 );
 
-export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void> {
+export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
-    return Promise.all(
+    await Promise.allSettled(
       getAllRulesSourceNames().map(async (rulesSourceName) => {
         await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
 
@@ -302,12 +303,13 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void
           return;
         }
 
-        if (force || !promRules[rulesSourceName]?.loading) {
-          dispatch(fetchPromRulesAction({ rulesSourceName }));
-        }
-        if ((force || !rulerRules[rulesSourceName]?.loading) && dataSourceConfig.rulerConfig) {
-          dispatch(fetchRulerRulesAction({ rulesSourceName }));
-        }
+        const shouldLoadProm = force || !promRules[rulesSourceName]?.loading;
+        const shouldLoadRuler = (force || !rulerRules[rulesSourceName]?.loading) && dataSourceConfig.rulerConfig;
+
+        await Promise.allSettled([
+          shouldLoadProm && dispatch(fetchPromRulesAction({ rulesSourceName })),
+          shouldLoadRuler && dispatch(fetchRulerRulesAction({ rulesSourceName })),
+        ]);
       })
     );
   };
@@ -422,6 +424,9 @@ export const saveRuleFormAction = createAsyncThunk(
           } else {
             throw new Error('Unexpected rule form type');
           }
+
+          logInfo(LogMessages.successSavingAlertRule);
+
           if (redirectOnSave) {
             locationService.push(redirectOnSave);
           } else {

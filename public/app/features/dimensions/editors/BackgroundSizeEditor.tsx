@@ -18,7 +18,7 @@ export const BackgroundSizeEditor: FC<StandardEditorProps<string, undefined, und
   const imageSize = value ?? BackgroundImageSize.Cover;
 
   const onImageSizeChange = useCallback(
-    (size) => {
+    (size: string) => {
       onChange(size);
     },
     [onChange]

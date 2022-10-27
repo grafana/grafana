@@ -123,7 +123,7 @@ HideableFieldConfig: {
 } @cuetsy(kind="interface")
 
 // TODO docs
-GraphTresholdsStyleMode: "off" | "line" | "area" | "line+area" | "series" @cuetsy(kind="enum",memberNames="Off|Line|Area|LineAndArea|Series")
+GraphTresholdsStyleMode: "off" | "line" | "dashed" | "area" | "line+area" | "dashed+area" | "series" @cuetsy(kind="enum",memberNames="Off|Line|Dashed|Area|LineAndArea|DashedAndArea|Series")
 
 // TODO docs
 GraphThresholdsStyleConfig: {
@@ -240,9 +240,9 @@ VizLegendOptions: {
 	showLegend: 	bool
 	asTable?:     bool
 	isVisible?:   bool
-  sortBy?:      string
-  sortDesc?:    bool
-  width?:       number
+	sortBy?:      string
+	sortDesc?:    bool
+	width?:       number
 	calcs:        [...string]
 } @cuetsy(kind="interface")
 

@@ -836,7 +836,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, "Value", res[0].Fields[1].Name)
-		require.Equal(t, float64(0), res[0].Fields[1].At(0))
+		require.True(t, math.IsNaN(res[0].Fields[1].At(0).(float64)))
 	})
 
 	t.Run("vector response should be parsed normally", func(t *testing.T) {

@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/e2e-selectors",
-  "version": "9.2.0-pre",
+  "version": "9.3.0-pre",
   "description": "Grafana End-to-End Test Selectors Library",
   "keywords": [
     "cli",
@@ -26,7 +26,8 @@
   },
   "files": [
     "dist",
-    "CHANGELOG.md",
+    "./README.md",
+    "./CHANGELOG.md",
     "LICENSE_APACHE2"
   ],
   "scripts": {
@@ -41,9 +42,9 @@
     "@types/node": "16.11.45",
     "esbuild": "0.15.7",
     "rimraf": "3.0.2",
-    "rollup": "2.77.2",
+    "rollup": "2.79.1",
     "rollup-plugin-dts": "^4.2.2",
-    "rollup-plugin-esbuild": "^4.9.1",
+    "rollup-plugin-esbuild": "4.10.1",
     "rollup-plugin-node-externals": "^4.1.0"
   },
   "dependencies": {

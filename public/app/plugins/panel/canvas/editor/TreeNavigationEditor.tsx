@@ -1,10 +1,11 @@
+import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
-import Tree from 'rc-tree';
+import Tree, { TreeNodeProps } from 'rc-tree';
 import React, { Key, useEffect, useMemo, useState } from 'react';
 
-import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, HorizontalGroup, Icon, useTheme2 } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, useStyles2, useTheme2 } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
 
 import { AddLayerButton } from '../../../../core/components/Layers/AddLayerButton';
@@ -29,16 +30,17 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
 
   const theme = useTheme2();
   const globalCSS = getGlobalStyles(theme);
+  const styles = useStyles2(getStyles);
 
-  const selectedBgColor = theme.v1.colors.formInputBorderActive;
+  const selectedBgColor = theme.colors.primary.border;
   const { settings } = item;
   const selection = useMemo(
-    () => (settings?.selected ? settings.selected.map((v) => v.getName()) : []),
+    () => (settings?.selected ? settings.selected.map((v) => v?.getName()) : []),
     [settings?.selected]
   );
 
   const selectionByUID = useMemo(
-    () => (settings?.selected ? settings.selected.map((v) => v.UID) : []),
+    () => (settings?.selected ? settings.selected.map((v) => v?.UID) : []),
     [settings?.selected]
   );
 
@@ -85,7 +87,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     setAutoExpandParent(false);
   };
 
-  const switcherIcon = (obj: { isLeaf: boolean; expanded: boolean }) => {
+  const switcherIcon = (obj: TreeNodeProps) => {
     if (obj.isLeaf) {
       // TODO: Implement element specific icons
       return <></>;
@@ -139,7 +141,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     }
   };
 
-  const typeOptions = getElementTypes(settings.scene.shouldShowAdvancedTypes);
+  const typeOptions = getElementTypes(settings.scene.shouldShowAdvancedTypes).options;
 
   return (
     <>
@@ -162,8 +164,8 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
         multiple={true}
       />
 
-      <HorizontalGroup>
-        <div style={{ marginLeft: '18px' }}>
+      <HorizontalGroup justify="space-between">
+        <div className={styles.addLayerButton}>
           <AddLayerButton onChange={onAddItem} options={typeOptions} label={'Add item'} />
         </div>
         {selection.length > 0 && (
@@ -180,3 +182,10 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     </>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  addLayerButton: css`
+    margin-left: 18px;
+    min-width: 150px;
+  `,
+});

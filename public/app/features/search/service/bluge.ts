@@ -1,6 +1,7 @@
 import {
   ArrayVector,
   DataFrame,
+  DataFrameJSON,
   DataFrameView,
   getDisplayProcessor,
   SelectableValue,
@@ -18,6 +19,12 @@ import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, Sear
 const loadingFrameName = 'Loading';
 
 const searchURI = 'api/search-v2';
+
+type SearchAPIResponse = {
+  frames: DataFrameJSON[];
+};
+
+const folderViewSort = 'name_sort';
 
 export class BlugeSearcher implements GrafanaSearcher {
   constructor(private fallbackSearcher: GrafanaSearcher) {}
@@ -51,22 +58,26 @@ export class BlugeSearcher implements GrafanaSearcher {
       limit: 1, // 0 would be better, but is ignored by the backend
     };
 
-    const frame = toDataFrame(await getBackendSrv().post(searchURI, req));
+    const resp = await getBackendSrv().post<SearchAPIResponse>(searchURI, req);
+    const frames = resp.frames.map((f) => toDataFrame(f));
 
-    if (frame?.name === loadingFrameName) {
+    if (frames[0]?.name === loadingFrameName) {
       return this.fallbackSearcher.tags(query);
     }
 
-    if (frame.fields[0].name === 'tag') {
-      return getTermCountsFrom(frame);
+    for (const frame of frames) {
+      if (frame.fields[0].name === 'tag') {
+        return getTermCountsFrom(frame);
+      }
     }
+
     return [];
   }
 
   // This should eventually be filled by an API call, but hardcoded is a good start
   getSortOptions(): Promise<SelectableValue[]> {
     const opts: SelectableValue[] = [
-      { value: 'name_sort', label: 'Alphabetically (A-Z)' },
+      { value: folderViewSort, label: 'Alphabetically (A-Z)' },
       { value: '-name_sort', label: 'Alphabetically (Z-A)' },
     ];
 
@@ -92,9 +103,10 @@ export class BlugeSearcher implements GrafanaSearcher {
       limit: query.limit ?? firstPageSize,
     };
 
-    const rsp = await getBackendSrv().post(searchURI, req);
+    const rsp = await getBackendSrv().post<SearchAPIResponse>(searchURI, req);
+    const frames = rsp.frames.map((f) => toDataFrame(f));
 
-    const first = rsp ? toDataFrame(rsp) : { fields: [], length: 0 };
+    const first = frames.length ? toDataFrame(frames[0]) : { fields: [], length: 0 };
 
     if (first.name === loadingFrameName) {
       return this.fallbackSearcher.search(query);
@@ -138,13 +150,12 @@ export class BlugeSearcher implements GrafanaSearcher {
         if (from >= meta.count) {
           return;
         }
-        const frame = toDataFrame(
-          await getBackendSrv().post(searchURI, {
-            ...(req ?? {}),
-            from,
-            limit: nextPageSizes,
-          })
-        );
+        const resp = await getBackendSrv().post<SearchAPIResponse>(searchURI, {
+          ...(req ?? {}),
+          from,
+          limit: nextPageSizes,
+        });
+        const frame = toDataFrame(resp.frames[0]);
 
         if (!frame) {
           console.log('no results', frame);
@@ -189,6 +200,10 @@ export class BlugeSearcher implements GrafanaSearcher {
         return index < view.dataFrame.length;
       },
     };
+  }
+
+  getFolderViewSort(): string {
+    return 'name_sort';
   }
 }
 

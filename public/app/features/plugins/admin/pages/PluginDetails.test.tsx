@@ -806,7 +806,7 @@ describe('Plugin details page', () => {
       });
     });
 
-    it('should not display the data source post intallation step', async () => {
+    it('should not display the data source post installation step', async () => {
       const name = 'Akumuli';
       const { queryByText } = renderPluginDetails({
         name,

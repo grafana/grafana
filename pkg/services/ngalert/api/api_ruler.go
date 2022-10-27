@@ -10,10 +10,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/prometheus/common/model"
@@ -30,13 +30,13 @@ import (
 
 type ConditionValidator interface {
 	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
-	Validate(ctx context.Context, user *user.SignedInUser, condition ngmodels.Condition) error
+	Validate(ctx eval.EvaluationContext, condition ngmodels.Condition) error
 }
 
 type RulerSrv struct {
 	xactManager        provisioning.TransactionManager
 	provenanceStore    provisioning.ProvisioningStore
-	store              store.RuleStore
+	store              RuleStore
 	QuotaService       quota.Service
 	scheduleService    schedule.ScheduleService
 	log                log.Logger
@@ -308,7 +308,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	}
 
 	rules, err := validateRuleGroup(&ruleGroupConfig, c.SignedInUser.OrgID, namespace, func(condition ngmodels.Condition) error {
-		return srv.conditionValidator.Validate(c.Req.Context(), c.SignedInUser, condition)
+		return srv.conditionValidator.Validate(eval.Context(c.Req.Context(), c.SignedInUser), condition)
 	}, srv.cfg)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
@@ -359,11 +359,11 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 		logger.Debug("updating database with the authorized changes", "add", len(finalChanges.New), "update", len(finalChanges.New), "delete", len(finalChanges.Delete))
 
 		if len(finalChanges.Update) > 0 || len(finalChanges.New) > 0 {
-			updates := make([]store.UpdateRule, 0, len(finalChanges.Update))
+			updates := make([]ngmodels.UpdateRule, 0, len(finalChanges.Update))
 			inserts := make([]ngmodels.AlertRule, 0, len(finalChanges.New))
 			for _, update := range finalChanges.Update {
 				logger.Debug("updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
-				updates = append(updates, store.UpdateRule{
+				updates = append(updates, ngmodels.UpdateRule{
 					Existing: update.Existing,
 					New:      *update.New,
 				})

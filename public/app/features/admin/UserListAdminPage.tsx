@@ -24,7 +24,7 @@ import { changeFilter, changePage, changeQuery, fetchUsers } from './state/actio
 
 export interface FilterProps {
   filters: UserFilter[];
-  onChange: (filter: any) => void;
+  onChange: (filter: UserFilter) => void;
   className?: string;
 }
 const extraFilters: Array<ComponentType<FilterProps>> = [];

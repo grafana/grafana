@@ -14,6 +14,7 @@ import { setOptionImmutably } from 'app/features/dashboard/components/PanelEdito
 import { activePanelSubject, InstanceState } from './CanvasPanel';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
+import { addStandardCanvasEditorOptions } from './module';
 
 export function InlineEditBody() {
   const activePanel = useObservable(activePanelSubject);
@@ -31,7 +32,7 @@ export function InlineEditBody() {
       const selection = state.selected;
       if (selection?.length === 1) {
         const element = selection[0];
-        if (!(element instanceof FrameState)) {
+        if (element && !(element instanceof FrameState)) {
           builder.addNestedOptions(
             getElementEditor({
               category: [`Selected element (${element.options.name})`],
@@ -41,6 +42,8 @@ export function InlineEditBody() {
           );
         }
       }
+
+      addStandardCanvasEditorOptions(builder);
     };
 
     return getOptionsPaneCategoryDescriptor(
@@ -53,7 +56,17 @@ export function InlineEditBody() {
     );
   }, [instanceState, activePanel]);
 
-  return <>{pane.categories.map((p) => renderOptionsPaneCategoryDescriptor(p))}</>;
+  const topLevelItemsContainerStyle = {
+    marginLeft: 15,
+    marginTop: 10,
+  };
+
+  return (
+    <>
+      {pane.categories.map((p) => renderOptionsPaneCategoryDescriptor(p))}
+      <div style={topLevelItemsContainerStyle}>{pane.items.map((item) => item.render())}</div>
+    </>
+  );
 }
 
 // Recursively render options

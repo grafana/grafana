@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -17,19 +16,19 @@ type Service struct {
 	store store
 	cfg   *setting.Cfg
 	log   log.Logger
-	// TODO remove sqlstore and use db.DB
-	sqlStore sqlstore.Store
 }
 
-func ProvideService(db sqlstore.Store, cfg *setting.Cfg) org.Service {
+func ProvideService(db db.DB, cfg *setting.Cfg) org.Service {
+	log := log.New("org service")
 	return &Service{
 		store: &sqlStore{
 			db:      db,
 			dialect: db.GetDialect(),
+			log:     log,
+			cfg:     cfg,
 		},
-		cfg:      cfg,
-		log:      log.New("org service"),
-		sqlStore: db,
+		cfg: cfg,
+		log: log,
 	}
 }
 
@@ -100,69 +99,12 @@ func (s *Service) Search(ctx context.Context, query *org.SearchOrgsQuery) ([]*or
 	return s.store.Search(ctx, query)
 }
 
-// TODO: remove wrapper around sqlstore
 func (s *Service) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) (*org.Org, error) {
-	q := &models.GetOrgByIdQuery{Id: query.ID}
-	err := s.sqlStore.GetOrgById(ctx, q)
-	if err != nil {
-		return nil, err
-	}
-	return &org.Org{
-		ID:       q.Result.Id,
-		Version:  q.Result.Version,
-		Name:     q.Result.Name,
-		Address1: q.Result.Address1,
-		Address2: q.Result.Address2,
-		City:     q.Result.City,
-		ZipCode:  q.Result.ZipCode,
-		State:    q.Result.State,
-		Country:  q.Result.Country,
-		Created:  q.Result.Created,
-		Updated:  q.Result.Updated,
-	}, nil
+	return s.store.GetByID(ctx, query)
 }
 
-// TODO: remove wrapper around sqlstore
-func (s *Service) GetByNameHandler(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
-	q := &models.GetOrgByNameQuery{Name: query.Name}
-	err := s.sqlStore.GetOrgByNameHandler(ctx, q)
-	if err != nil {
-		return nil, err
-	}
-	return &org.Org{
-		ID:       q.Result.Id,
-		Version:  q.Result.Version,
-		Name:     q.Result.Name,
-		Address1: q.Result.Address1,
-		Address2: q.Result.Address2,
-		City:     q.Result.City,
-		ZipCode:  q.Result.ZipCode,
-		State:    q.Result.State,
-		Country:  q.Result.Country,
-		Created:  q.Result.Created,
-		Updated:  q.Result.Updated,
-	}, nil
-}
-
-// TODO: remove wrapper around sqlstore
-func (s *Service) GetByName(name string) (*org.Org, error) {
-	orga, err := s.sqlStore.GetOrgByName(name)
-	if err != nil {
-		return nil, err
-	}
-	return &org.Org{
-		ID:       orga.Id,
-		Version:  orga.Version,
-		Name:     orga.Name,
-		Address1: orga.Address1,
-		Address2: orga.Address2,
-		City:     orga.City,
-		ZipCode:  orga.ZipCode,
-		State:    orga.State,
-		Country:  orga.Country,
-		Created:  orga.Created,
-		Updated:  orga.Updated,
-	}, nil
+func (s *Service) GetByName(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
+	return s.store.GetByName(ctx, query)
 }
 
 // TODO: refactor service to call store CRUD method
@@ -212,112 +154,27 @@ func (s *Service) GetOrCreate(ctx context.Context, orgName string) (int64, error
 	return orga.ID, nil
 }
 
-// TODO: remove wrapper around sqlstore
+// TODO: refactor service to call store CRUD method
 func (s *Service) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) error {
-	c := &models.AddOrgUserCommand{
-		LoginOrEmail:              cmd.LoginOrEmail,
-		OrgId:                     cmd.OrgID,
-		UserId:                    cmd.UserID,
-		Role:                      cmd.Role,
-		AllowAddingServiceAccount: cmd.AllowAddingServiceAccount,
-	}
-	return s.sqlStore.AddOrgUser(ctx, c)
+	return s.store.AddOrgUser(ctx, cmd)
 }
 
-// TODO: remove wrapper around sqlstore
+// TODO: refactor service to call store CRUD method
 func (s *Service) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserCommand) error {
-	c := &models.UpdateOrgUserCommand{
-		UserId: cmd.UserID,
-		OrgId:  cmd.OrgID,
-		Role:   cmd.Role,
-	}
-	return s.sqlStore.UpdateOrgUser(ctx, c)
+	return s.store.UpdateOrgUser(ctx, cmd)
 }
 
-// TODO: remove wrapper around sqlstore
+// TODO: refactor service to call store CRUD method
 func (s *Service) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
-	c := &models.RemoveOrgUserCommand{
-		UserId:                   cmd.UserID,
-		OrgId:                    cmd.OrgID,
-		ShouldDeleteOrphanedUser: cmd.ShouldDeleteOrphanedUser,
-		UserWasDeleted:           cmd.UserWasDeleted,
-	}
-	return s.sqlStore.RemoveOrgUser(ctx, c)
+	return s.store.RemoveOrgUser(ctx, cmd)
 }
 
-// TODO: remove wrapper around sqlstore
+// TODO: refactor service to call store CRUD method
 func (s *Service) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
-	q := &models.GetOrgUsersQuery{
-		UserID:                   query.UserID,
-		OrgId:                    query.OrgID,
-		Query:                    query.Query,
-		Limit:                    query.Limit,
-		DontEnforceAccessControl: query.DontEnforceAccessControl,
-		User:                     query.User,
-	}
-	err := s.sqlStore.GetOrgUsers(ctx, q)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([]*org.OrgUserDTO, 0)
-	for _, user := range q.Result {
-		result = append(result, &org.OrgUserDTO{
-			OrgID:         user.OrgId,
-			UserID:        user.UserId,
-			Login:         user.Login,
-			Email:         user.Email,
-			Name:          user.Name,
-			AvatarURL:     user.AvatarUrl,
-			Role:          user.Role,
-			LastSeenAt:    user.LastSeenAt,
-			LastSeenAtAge: user.LastSeenAtAge,
-			Updated:       user.Updated,
-			Created:       user.Created,
-			AccessControl: user.AccessControl,
-			IsDisabled:    user.IsDisabled,
-		})
-	}
-	return result, nil
+	return s.store.GetOrgUsers(ctx, query)
 }
 
-// TODO: remove wrapper around sqlstore
+// TODO: refactor service to call store CRUD method
 func (s *Service) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
-	q := &models.SearchOrgUsersQuery{
-		OrgID: query.OrgID,
-		Query: query.Query,
-		Page:  query.Page,
-		Limit: query.Limit,
-		User:  query.User,
-	}
-	err := s.sqlStore.SearchOrgUsers(ctx, q)
-	if err != nil {
-		return nil, err
-	}
-
-	result := &org.SearchOrgUsersQueryResult{
-		TotalCount: q.Result.TotalCount,
-		OrgUsers:   make([]*org.OrgUserDTO, 0),
-		Page:       q.Result.Page,
-		PerPage:    q.Result.PerPage,
-	}
-
-	for _, user := range q.Result.OrgUsers {
-		result.OrgUsers = append(result.OrgUsers, &org.OrgUserDTO{
-			OrgID:         user.OrgId,
-			UserID:        user.UserId,
-			Login:         user.Login,
-			Email:         user.Email,
-			Name:          user.Name,
-			AvatarURL:     user.AvatarUrl,
-			Role:          user.Role,
-			LastSeenAt:    user.LastSeenAt,
-			LastSeenAtAge: user.LastSeenAtAge,
-			Updated:       user.Updated,
-			Created:       user.Created,
-			AccessControl: user.AccessControl,
-			IsDisabled:    user.IsDisabled,
-		})
-	}
-	return result, nil
+	return s.store.SearchOrgUsers(ctx, query)
 }

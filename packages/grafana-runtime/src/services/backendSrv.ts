@@ -143,15 +143,16 @@ export function isFetchError(e: unknown): e is FetchError {
  * @public
  */
 export interface BackendSrv {
-  get<T = any>(url: string, params?: any, requestId?: string): Promise<T>;
-  delete<T = any>(url: string, data?: any): Promise<T>;
-  post<T = any>(url: string, data?: any): Promise<T>;
-  patch<T = any>(url: string, data?: any): Promise<T>;
-  put<T = any>(url: string, data?: any): Promise<T>;
+  get<T = any>(url: string, params?: any, requestId?: string, options?: Partial<BackendSrvRequest>): Promise<T>;
+  delete<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>): Promise<T>;
+  post<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>): Promise<T>;
+  patch<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>): Promise<T>;
+  put<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>): Promise<T>;
 
   /**
-   * @deprecated Use the fetch function instead. If you prefer to work with a promise
-   * wrap the Observable returned by fetch with the lastValueFrom function.
+   * @deprecated Use the `.fetch()` function instead. If you prefer to work with a promise
+   * wrap the Observable returned by fetch with the lastValueFrom function, or use the get|delete|post|patch|put methods.
+   * This method is going to be private from Grafana 10.
    */
   request<T = any>(options: BackendSrvRequest): Promise<T>;
 

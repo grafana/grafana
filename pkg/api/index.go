@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -150,9 +149,9 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
-	sort.SliceStable(data.NavTree, func(i, j int) bool {
-		return data.NavTree[i].SortWeight < data.NavTree[j].SortWeight
-	})
+	// This will remove empty cfg or admin sections and move sections around if topnav is enabled
+	data.NavTree.RemoveEmptySectionsAndApplyNewInformationArchitecture(hs.Features.IsEnabled(featuremgmt.FlagTopnav))
+	data.NavTree.Sort()
 
 	return &data, nil
 }

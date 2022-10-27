@@ -57,7 +57,7 @@ describe('VersionSettings', () => {
     // Need to use delay: null here to work with fakeTimers
     // see https://github.com/testing-library/user-event/issues/833
     user = userEvent.setup({ delay: null });
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     jest.useFakeTimers();
   });
 
@@ -103,7 +103,7 @@ describe('VersionSettings', () => {
     historySrv.getHistoryList.mockResolvedValue(versions.slice(0, VERSIONS_FETCH_LIMIT - 5));
     setup();
 
-    expect(screen.queryByRole('button', { name: /show more versions|/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /compare versions/i })).not.toBeInTheDocument();
 
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());

@@ -39,12 +39,12 @@ func (s *sqlxStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComm
 
 		if len(cmd.Items) > 0 {
 			playlistItems := make([]playlist.PlaylistItem, 0)
-			for _, item := range cmd.Items {
+			for order, item := range cmd.Items {
 				playlistItems = append(playlistItems, playlist.PlaylistItem{
 					PlaylistId: p.Id,
 					Type:       item.Type,
 					Value:      item.Value,
-					Order:      item.Order,
+					Order:      order + 1,
 					Title:      item.Title,
 				})
 			}
@@ -197,5 +197,5 @@ func newGenerateAndValidateNewPlaylistUid(ctx context.Context, sess *session.Ses
 		}
 	}
 
-	return "", models.ErrPlaylistFailedGenerateUniqueUid
+	return "", playlist.ErrPlaylistFailedGenerateUniqueUid
 }

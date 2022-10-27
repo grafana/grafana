@@ -21,7 +21,6 @@ import {
   FieldCache,
   AbstractQuery,
   FieldType,
-  getLogLevelFromKey,
   Labels,
   LoadingState,
   LogLevel,
@@ -42,6 +41,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 
 import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
+import { getLogLevelFromKey } from '../../../features/logs/utils';
 import { renderLegendFormat } from '../prometheus/legend';
 import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
@@ -49,7 +49,7 @@ import LanguageProvider from './LanguageProvider';
 import { LiveStreams, LokiLiveTarget } from './LiveStreams';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
-import { escapeLabelValueInSelector } from './languageUtils';
+import { escapeLabelValueInExactSelector, escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
   addLabelFormatToQuery,
@@ -256,7 +256,7 @@ export class LokiDatasource
     );
   };
 
-  getRangeScopedVars(range: TimeRange = this.timeSrv.timeRange()) {
+  getRangeScopedVars(range: TimeRange = this.getTimeRange()) {
     const msRange = range.to.diff(range.from);
     const sRange = Math.round(msRange / 1000);
     return {
@@ -272,7 +272,7 @@ export class LokiDatasource
       expandedQueries = queries.map((query) => ({
         ...query,
         datasource: this.getRef(),
-        expr: this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
+        expr: this.addAdHocFilters(this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr)),
       }));
     }
 
@@ -283,8 +283,12 @@ export class LokiDatasource
     return query.expr;
   }
 
+  getTimeRange() {
+    return this.timeSrv.timeRange();
+  }
+
   getTimeRangeParams() {
-    const timeRange = this.timeSrv.timeRange();
+    const timeRange = this.getTimeRange();
     return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
   }
 
@@ -452,13 +456,15 @@ export class LokiDatasource
     switch (action.type) {
       case 'ADD_FILTER': {
         if (action.options?.key && action.options?.value) {
-          expression = this.addLabelToQuery(expression, action.options.key, '=', action.options.value);
+          const value = escapeLabelValueInSelector(action.options.value);
+          expression = addLabelToQuery(expression, action.options.key, '=', value);
         }
         break;
       }
       case 'ADD_FILTER_OUT': {
         if (action.options?.key && action.options?.value) {
-          expression = this.addLabelToQuery(expression, action.options.key, '!=', action.options.value);
+          const value = escapeLabelValueInSelector(action.options.value);
+          expression = addLabelToQuery(expression, action.options.key, '!=', value);
         }
         break;
       }
@@ -575,7 +581,7 @@ export class LokiDatasource
       .map((label: string) => {
         if (labels.includes(label)) {
           // escape backslashes in label as users can't escape them by themselves
-          return `${label}="${row.labels[label].replace(/\\/g, '\\\\')}"`;
+          return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
         }
         return '';
       })
@@ -590,7 +596,7 @@ export class LokiDatasource
     const query: LokiQuery = {
       expr: `{${expr}}`,
       queryType: LokiQueryType.Range,
-      refId: '',
+      refId: row.dataFrame.refId ?? '',
       maxLines: limit,
       direction: queryDirection,
     };
@@ -743,16 +749,21 @@ export class LokiDatasource
     let expr = replaceVariables(queryExpr);
 
     expr = adhocFilters.reduce((acc: string, filter: { key: string; operator: string; value: string }) => {
-      const { key, operator, value } = filter;
-      return this.addLabelToQuery(acc, key, operator, value);
+      const { key, operator } = filter;
+      let { value } = filter;
+      if (isRegexSelector(operator)) {
+        // Adhoc filters don't support multiselect, therefore if user selects regex operator
+        // we are going to consider value to be regex filter and use lokiRegularEscape
+        // that does not escape regex special characters (e.g. .*test.* => .*test.*)
+        value = lokiRegularEscape(value);
+      } else {
+        // Otherwise, we want to escape special characters in value
+        value = escapeLabelValueInSelector(value, operator);
+      }
+      return addLabelToQuery(acc, key, operator, value);
     }, expr);
 
     return returnVariables(expr);
-  }
-
-  addLabelToQuery(queryExpr: string, key: string, operator: string, value: string) {
-    const escapedValue = escapeLabelValueInSelector(value, operator);
-    return addLabelToQuery(queryExpr, key, operator, escapedValue);
   }
 
   // Used when running queries through backend
@@ -790,6 +801,9 @@ export class LokiDatasource
   }
 }
 
+// NOTE: these two functions are very similar to the escapeLabelValueIn* functions
+// in language_utils.ts, but they are not exactly the same algorithm, and we found
+// no way to reuse one in the another or vice versa.
 export function lokiRegularEscape(value: any) {
   if (typeof value === 'string') {
     return value.replace(/'/g, "\\\\'");

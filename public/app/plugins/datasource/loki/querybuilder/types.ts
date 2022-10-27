@@ -41,6 +41,7 @@ export enum LokiOperationId {
   LineFormat = 'line_format',
   LabelFormat = 'label_format',
   Rate = 'rate',
+  RateCounter = 'rate_counter',
   CountOverTime = 'count_over_time',
   SumOverTime = 'sum_over_time',
   AvgOverTime = 'avg_over_time',

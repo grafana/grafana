@@ -112,8 +112,16 @@ func TestThreemaNotifier(t *testing.T) {
 
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
-			cfg, err := NewThreemaConfig(m, decryptFn)
+
+			fc := FactoryConfig{
+				Config:              m,
+				NotificationService: webhookSender,
+				ImageStore:          images,
+				Template:            tmpl,
+				DecryptFunc:         secretsService.GetDecryptedValue,
+			}
+
+			pn, err := NewThreemaNotifier(fc)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -123,7 +131,6 @@ func TestThreemaNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewThreemaNotifier(cfg, images, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

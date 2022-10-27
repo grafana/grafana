@@ -1,8 +1,9 @@
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, LoadingState } from '@grafana/data';
+import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal, EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/ui';
+import { ConfirmModal, Button } from '@grafana/ui';
 
 import { PromQueryEditorProps } from '../../components/types';
 import { PromQuery } from '../../types';

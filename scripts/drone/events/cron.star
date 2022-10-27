@@ -1,13 +1,20 @@
-load('scripts/drone/vault.star', 'from_secret')
+load('scripts/drone/vault.star', 'from_secret', 'pull_secret')
+load('scripts/drone/steps/lib.star', 'publish_image', 'compile_build_cmd')
 
 aquasec_trivy_image = 'aquasec/trivy:0.21.0'
 
 def cronjobs(edition):
+    grafana_com_nightly_pipeline = cron_job_pipeline(
+        cronName='grafana-com-nightly',
+        name='grafana-com-nightly',
+        steps=[compile_build_cmd(),post_to_grafana_com_step()]
+    )
     return [
         scan_docker_image_pipeline(edition, 'latest'),
         scan_docker_image_pipeline(edition, 'main'),
         scan_docker_image_pipeline(edition, 'latest-ubuntu'),
         scan_docker_image_pipeline(edition, 'main-ubuntu'),
+        grafana_com_nightly_pipeline,
     ]
 
 def cron_job_pipeline(cronName, name, steps):
@@ -77,3 +84,16 @@ def slack_job_failed_step(channel, image):
             'status': 'failure'
         }
     }
+
+def post_to_grafana_com_step():
+    return {
+            'name': 'post-to-grafana-com',
+            'image': publish_image,
+            'environment': {
+                'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
+                'GCP_KEY': from_secret('gcp_key'),
+            },
+            'depends_on': ['compile-build-cmd'],
+            'commands': ['./bin/build publish grafana-com --edition oss'],
+        }
+

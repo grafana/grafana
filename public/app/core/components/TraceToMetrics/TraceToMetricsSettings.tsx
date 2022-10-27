@@ -17,6 +17,8 @@ export interface TraceToMetricsOptions {
   datasourceUid?: string;
   tags?: Array<KeyValue<string>>;
   queries: TraceToMetricQuery[];
+  spanStartTimeShift?: string;
+  spanEndTimeShift?: string;
 }
 
 export interface TraceToMetricQuery {
@@ -86,6 +88,50 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
                 tags: v,
               })
             }
+          />
+        </InlineField>
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <InlineField
+          label="Span start time shift"
+          labelWidth={26}
+          grow
+          tooltip="Shifts the start time of the span. Default 0 (Time units can be used here, for example: 5s, 1m, 3h)"
+        >
+          <Input
+            type="text"
+            placeholder="-1h"
+            width={40}
+            onChange={(v) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+                ...options.jsonData.tracesToMetrics,
+                spanStartTimeShift: v.currentTarget.value,
+              })
+            }
+            value={options.jsonData.tracesToMetrics?.spanStartTimeShift || ''}
+          />
+        </InlineField>
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <InlineField
+          label="Span end time shift"
+          labelWidth={26}
+          grow
+          tooltip="Shifts the end time of the span. Default 0 Time units can be used here, for example: 5s, 1m, 3h"
+        >
+          <Input
+            type="text"
+            placeholder="1h"
+            width={40}
+            onChange={(v) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+                ...options.jsonData.tracesToMetrics,
+                spanEndTimeShift: v.currentTarget.value,
+              })
+            }
+            value={options.jsonData.tracesToMetrics?.spanEndTimeShift || ''}
           />
         </InlineField>
       </InlineFieldRow>

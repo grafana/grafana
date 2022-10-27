@@ -4,13 +4,15 @@ import { FormProvider, useForm, UseFormWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, ConfirmModal, CustomScrollbar, PageToolbar, Spinner, useStyles2 } from '@grafana/ui';
+import { logInfo } from '@grafana/runtime';
+import { Button, ConfirmModal, CustomScrollbar, Spinner, useStyles2, HorizontalGroup } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
+import { LogMessages } from '../../Analytics';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
@@ -23,7 +25,7 @@ import { DetailsStep } from './DetailsStep';
 import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
 import { NotificationsStep } from './NotificationsStep';
 import { RuleInspector } from './RuleInspector';
-import { QueryAndAlertConditionStep } from './query-and-alert-condition/QueryAndAlertConditionStep';
+import { QueryAndExpressionsStep } from './query-and-alert-condition/QueryAndExpressionsStep';
 
 type Props = {
   existing?: RuleWithLocation;
@@ -46,6 +48,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     return {
       ...getDefaultFormValues(),
       queries: getDefaultQueries(),
+      condition: 'C',
       ...(queryParams['defaults'] ? JSON.parse(queryParams['defaults'] as string) : {}),
       type: RuleFormType.grafana,
     };
@@ -108,9 +111,15 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   return (
     <FormProvider {...formAPI}>
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
-        <PageToolbar title={`${existing ? 'Edit' : 'Create'} alert rule`} pageIcon="bell">
+        <HorizontalGroup height="auto" justify="flex-end">
           <Link to={returnTo}>
-            <Button variant="secondary" disabled={submitState.loading} type="button" fill="outline">
+            <Button
+              variant="secondary"
+              disabled={submitState.loading}
+              type="button"
+              fill="outline"
+              onClick={() => logInfo(LogMessages.cancelSavingAlertRule)}
+            >
               Cancel
             </Button>
           </Link>
@@ -147,11 +156,11 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
             {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
             Save and exit
           </Button>
-        </PageToolbar>
+        </HorizontalGroup>
         <div className={styles.contentOuter}>
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
-              <QueryAndAlertConditionStep editingExistingRule={!!existing} />
+              <QueryAndExpressionsStep editingExistingRule={!!existing} />
               {showStep2 && (
                 <>
                   {type === RuleFormType.grafana ? <GrafanaEvaluationBehavior /> : <CloudEvaluationBehavior />}
@@ -204,9 +213,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: ${theme.colors.background.primary};
       border: 1px solid ${theme.colors.border.weak};
       border-radius: ${theme.shape.borderRadius()};
-      margin: ${theme.spacing(0, 2, 2)};
       overflow: hidden;
       flex: 1;
+      margin-top: ${theme.spacing(1)};
     `,
     flexRow: css`
       display: flex;

@@ -22,6 +22,7 @@ import {
   LoadingState,
   SplitOpen,
   DataQueryResponse,
+  CoreApp,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
@@ -65,6 +66,7 @@ interface Props extends Themeable2 {
   datasourceType?: string;
   logsVolumeEnabled: boolean;
   logsVolumeData: DataQueryResponse | undefined;
+  scrollElement?: HTMLDivElement;
   onSetLogsVolumeEnabled: (enabled: boolean) => void;
   loadLogsVolumeData: (exploreId: ExploreId) => void;
   showContextToggle?: (row?: LogRowModel) => boolean;
@@ -317,6 +319,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       clearCache,
       addResultsToCache,
       exploreId,
+      scrollElement,
     } = this.props;
 
     const {
@@ -475,6 +478,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 showDetectedFields={showDetectedFields}
                 onClickShowDetectedField={this.showDetectedField}
                 onClickHideDetectedField={this.hideDetectedField}
+                app={CoreApp.Explore}
+                scrollElement={scrollElement}
               />
             </div>
             <LogsNavigation

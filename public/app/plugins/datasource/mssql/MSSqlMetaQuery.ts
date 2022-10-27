@@ -3,13 +3,15 @@ export function showDatabases() {
   return `SELECT name FROM sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb');`;
 }
 
-export function showTables(dataset?: string) {
-  return `SELECT TABLE_NAME as name
-    FROM [${dataset}].INFORMATION_SCHEMA.TABLES
+export function getSchemaAndName(database?: string) {
+  return `SELECT TABLE_SCHEMA + '.' + TABLE_NAME as schemaAndName
+    FROM [${database}].INFORMATION_SCHEMA.TABLES
     WHERE TABLE_TYPE = 'BASE TABLE'`;
 }
 
-export function getSchema(table?: string) {
-  return `SELECT COLUMN_NAME as 'column',DATA_TYPE as 'type'
+export function getSchema(database?: string, table?: string) {
+  return `
+   USE ${database}
+   SELECT COLUMN_NAME as 'column',DATA_TYPE as 'type'
    FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='${table}';`;
 }

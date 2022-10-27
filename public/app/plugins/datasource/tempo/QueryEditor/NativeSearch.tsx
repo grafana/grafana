@@ -23,7 +23,7 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 
-import { TempoDatasource } from '../datasource';
+import { DEFAULT_LIMIT, TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { tokenizer } from '../syntax';
 import { TempoQuery } from '../types';
@@ -284,6 +284,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
             <Input
               id="limit"
               value={query.limit || ''}
+              placeholder={`Default: ${DEFAULT_LIMIT}`}
               type="number"
               onChange={(v) => {
                 let limit = v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined;

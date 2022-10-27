@@ -49,7 +49,8 @@ type Alertmanager interface {
 	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
 	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
 
-	// Testing
+	// Receivers
+	GetReceivers(ctx context.Context) []apimodels.Receiver
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
 }
 
@@ -68,7 +69,7 @@ type API struct {
 	Schedule             schedule.ScheduleService
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
-	RuleStore            store.RuleStore
+	RuleStore            RuleStore
 	AlertingStore        AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
@@ -91,7 +92,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		ac:        api.AccessControl,
 	}
 
-	evaluator := eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.ExpressionService)
+	evaluator := eval.NewEvaluator(api.Cfg, api.DatasourceCache, api.ExpressionService)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(

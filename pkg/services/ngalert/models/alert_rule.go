@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -101,6 +102,9 @@ const (
 
 	// StateReasonAnnotation is the name of the annotation that explains the difference between evaluation state and alert state (i.e. changing state when NoData or Error).
 	StateReasonAnnotation = GrafanaReservedLabelPrefix + "state_reason"
+
+	ValuesAnnotation      = "__values__"
+	ValueStringAnnotation = "__value_string__"
 )
 
 var (
@@ -365,12 +369,6 @@ type ListNamespaceAlertRulesQuery struct {
 	Result []*AlertRule
 }
 
-// ListRuleGroupsQuery is the query for listing unique rule groups
-// across all organizations
-type ListRuleGroupsQuery struct {
-	Result []string
-}
-
 // ListOrgRuleGroupsQuery is the query for listing unique rule groups
 // for an organization
 type ListOrgRuleGroupsQuery struct {
@@ -383,6 +381,11 @@ type ListOrgRuleGroupsQuery struct {
 	PanelID      int64
 
 	Result [][]string
+}
+
+type UpdateRule struct {
+	Existing *AlertRule
+	New      AlertRule
 }
 
 // Condition contains backend expressions and queries and the RefID
@@ -454,4 +457,15 @@ func (g RulesGroup) SortByGroupIndex() {
 		}
 		return g[i].RuleGroupIndex < g[j].RuleGroupIndex
 	})
+}
+
+type ruleKeyContextKey struct{}
+
+func WithRuleKey(ctx context.Context, ruleKey AlertRuleKey) context.Context {
+	return context.WithValue(ctx, ruleKeyContextKey{}, ruleKey)
+}
+
+func RuleKeyFromContext(ctx context.Context) (AlertRuleKey, bool) {
+	key, ok := ctx.Value(ruleKeyContextKey{}).(AlertRuleKey)
+	return key, ok
 }

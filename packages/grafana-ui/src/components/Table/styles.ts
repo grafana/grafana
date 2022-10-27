@@ -2,8 +2,6 @@ import { css, CSSObject } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { getScrollbarWidth } from '../../utils';
-
 export const getTableStyles = (theme: GrafanaTheme2) => {
   const { colors } = theme;
   const headerBg = theme.colors.background.secondary;
@@ -14,7 +12,6 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
   const bodyFontSize = 14;
   const cellHeight = cellPadding * 2 + bodyFontSize * lineHeight;
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
-  const lastChildExtraPadding = Math.max(getScrollbarWidth(), cellPadding);
 
   const buildCellContainerStyle = (color?: string, background?: string, overflowOnHover?: boolean) => {
     const cellActionsOverflow: CSSObject = {
@@ -50,7 +47,6 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
 
       &:last-child:not(:only-child) {
         border-right: none;
-        padding-right: ${lastChildExtraPadding}px;
       }
 
       &:hover {
@@ -98,7 +94,6 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
     cellHeight,
     buildCellContainerStyle,
     cellPadding,
-    lastChildExtraPadding,
     cellHeightInner: bodyFontSize * lineHeight,
     rowHeight: cellHeight + 2,
     table: css`
@@ -169,8 +164,10 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       height: 100%;
     `,
     headerFilter: css`
+      background: transparent;
+      border: none;
       label: headerFilter;
-      cursor: pointer;
+      padding: 0;
     `,
     paginationWrapper: css`
       display: flex;

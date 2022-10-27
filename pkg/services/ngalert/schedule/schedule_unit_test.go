@@ -20,16 +20,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -38,8 +34,8 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
 		senderMock *AlertsSenderMock,
-	) (*schedule, *store.FakeRuleStore, *state.FakeInstanceStore, prometheus.Gatherer) {
-		ruleStore := store.NewFakeRuleStore(t)
+	) (*schedule, *fakeRulesStore, *state.FakeInstanceStore, prometheus.Gatherer) {
+		ruleStore := newFakeRulesStore()
 		instanceStore := &state.FakeInstanceStore{}
 
 		registry := prometheus.NewPedanticRegistry()
@@ -63,7 +59,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			rule := models.AlertRuleGen(withQueryForState(t, evalState))()
 			ruleStore.PutRule(context.Background(), rule)
-			folder, _ := ruleStore.GetNamespaceByUID(context.Background(), rule.NamespaceUID, rule.OrgID, nil)
+			folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 			go func() {
 				ctx, cancel := context.WithCancel(context.Background())
 				t.Cleanup(cancel)
@@ -75,7 +71,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			evalChan <- &evaluation{
 				scheduledAt: expectedTime,
 				rule:        rule,
-				folderTitle: folder.Title,
+				folderTitle: folderTitle,
 			}
 
 			actualTime := waitForTimeChannel(t, evalAppliedChan)
@@ -87,7 +83,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 					assert.Equal(t, rule.UID, s.Labels[models.RuleUIDLabel])
 					assert.Equal(t, rule.NamespaceUID, s.Labels[models.NamespaceUIDLabel])
 					assert.Equal(t, rule.Title, s.Labels[prometheusModel.AlertNameLabel])
-					assert.Equal(t, folder.Title, s.Labels[models.FolderTitleLabel])
+					assert.Equal(t, folderTitle, s.Labels[models.FolderTitleLabel])
 				}
 			})
 
@@ -111,10 +107,10 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				require.Len(t, states, 1)
 				s := states[0]
 
-				var cmd *models.SaveAlertInstanceCommand
+				var cmd *models.AlertInstance
 				for _, op := range instanceStore.RecordedOps {
 					switch q := op.(type) {
-					case models.SaveAlertInstanceCommand:
+					case models.AlertInstance:
 						cmd = &q
 					}
 					if cmd != nil {
@@ -123,11 +119,11 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				}
 
 				require.NotNil(t, cmd)
-				t.Logf("Saved alert instance: %v", cmd)
+				t.Logf("Saved alert instances: %v", cmd)
 				require.Equal(t, rule.OrgID, cmd.RuleOrgID)
 				require.Equal(t, expectedTime, cmd.LastEvalTime)
-				require.Equal(t, cmd.RuleUID, cmd.RuleUID)
-				require.Equal(t, evalState.String(), string(cmd.State))
+				require.Equal(t, rule.UID, cmd.RuleUID)
+				require.Equal(t, evalState.String(), string(cmd.CurrentState))
 				require.Equal(t, s.Labels, data.Labels(cmd.Labels))
 			})
 
@@ -243,7 +239,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			for i := 0; i < 2; i++ {
 				states = append(states, &state.State{
 					AlertRuleUID: rule.UID,
-					CacheId:      util.GenerateShortUID(),
+					CacheID:      util.GenerateShortUID(),
 					OrgID:        rule.OrgID,
 					State:        s,
 					StartsAt:     sch.clock.Now(),
@@ -481,14 +477,13 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 	})
 }
 
-func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock, evalMock *eval.FakeEvaluator) *schedule {
+func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock, evalMock *eval.FakeEvaluator) *schedule {
 	t.Helper()
 
 	mockedClock := clock.NewMock()
-	logger := log.New("ngalert schedule test")
 
 	if rs == nil {
-		rs = store.NewFakeRuleStore(t)
+		rs = newFakeRulesStore()
 	}
 
 	if is == nil {
@@ -497,7 +492,7 @@ func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *state.FakeInstanc
 
 	var evaluator eval.Evaluator = evalMock
 	if evalMock == nil {
-		evaluator = eval.NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, logger, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil))
+		evaluator = eval.NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil))
 	}
 
 	if registry == nil {
@@ -525,11 +520,12 @@ func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *state.FakeInstanc
 		C:           mockedClock,
 		Evaluator:   evaluator,
 		RuleStore:   rs,
-		Logger:      logger,
 		Metrics:     m.GetSchedulerMetrics(),
 		AlertSender: senderMock,
 	}
-	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, mockedClock, annotationstest.NewFakeAnnotationsRepo())
+
+	stateRs := state.FakeRuleReader{}
+	st := state.NewManager(m.GetStateMetrics(), nil, &stateRs, is, &image.NoopImageService{}, mockedClock, &state.FakeHistorian{})
 	return NewScheduler(schedCfg, appUrl, st)
 }
 

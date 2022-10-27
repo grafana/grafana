@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -193,12 +194,12 @@ func TestAPIEndpoint_PutCurrentOrgAddress_AccessControl(t *testing.T) {
 // `/api/orgs/` endpoints test
 
 // setupOrgsDBForAccessControlTests creates orgs up until orgID and fake user as member of org
-func setupOrgsDBForAccessControlTests(t *testing.T, db sqlstore.Store, c accessControlScenarioContext, orgID int64) {
+func setupOrgsDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore, c accessControlScenarioContext, orgID int64) {
 	t.Helper()
 	setInitCtxSignedInViewer(c.initCtx)
 	u := *c.initCtx.SignedInUser
 	u.OrgID = orgID
-	c.usermock.ExpectedSignedInUser = &u
+	c.userService.(*usertest.FakeUserService).ExpectedSignedInUser = &u
 
 	// Create `orgsCount` orgs
 	for i := 1; i <= int(orgID); i++ {

@@ -6,12 +6,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import { CustomScrollbar, Icon, IconButton, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { TOP_BAR_LEVEL_HEIGHT } from '../AppChrome/types';
-import { NavBarToggle } from '../NavBar/NavBarToggle';
 
 import { NavBarMenuItemWrapper } from './NavBarMenuItemWrapper';
 
@@ -75,14 +73,6 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
                 variant="secondary"
               />
             </div>
-            <NavBarToggle
-              className={styles.menuCollapseIcon}
-              isExpanded={true}
-              onClick={() => {
-                reportInteraction('grafana_navigation_collapsed');
-                onMenuClose();
-              }}
-            />
             <nav className={styles.content}>
               <CustomScrollbar showScrollIndicators hideHorizontalTrack>
                 <ul className={styles.itemList}>
@@ -121,8 +111,12 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       left: 0,
       position: 'fixed',
       right: 0,
-      top: topPosition,
+      top: searchBarHidden ? 0 : TOP_BAR_LEVEL_HEIGHT,
       zIndex: theme.zIndex.modalBackdrop,
+
+      [theme.breakpoints.up('md')]: {
+        top: topPosition,
+      },
     }),
     container: css({
       display: 'flex',
@@ -134,12 +128,13 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       // Needs to below navbar should we change the navbarFixed? add add a new level?
       zIndex: theme.zIndex.modal,
       position: 'fixed',
-      top: topPosition,
+      top: searchBarHidden ? 0 : TOP_BAR_LEVEL_HEIGHT,
       backgroundColor: theme.colors.background.primary,
       boxSizing: 'content-box',
       [theme.breakpoints.up('md')]: {
         borderRight: `1px solid ${theme.colors.border.weak}`,
         right: 'unset',
+        top: topPosition,
       },
     }),
     content: css({
@@ -148,7 +143,6 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       overflow: 'auto',
     }),
     mobileHeader: css({
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       justifyContent: 'space-between',
       padding: theme.spacing(1, 2),
@@ -161,12 +155,6 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
       gridTemplateColumns: `minmax(${MENU_WIDTH}, auto)`,
       minWidth: MENU_WIDTH,
-    }),
-    menuCollapseIcon: css({
-      position: 'absolute',
-      top: '20px',
-      right: '0px',
-      transform: `translateX(50%)`,
     }),
   };
 };
@@ -195,9 +183,9 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   };
 
   const overlayOpen = {
-    boxShadow: theme.shadows.z3,
     width: '100%',
     [theme.breakpoints.up('md')]: {
+      boxShadow: theme.shadows.z3,
       width: MENU_WIDTH,
     },
   };

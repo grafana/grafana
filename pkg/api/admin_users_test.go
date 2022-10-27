@@ -37,14 +37,12 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		updateCmd := dtos.AdminUpdateUserPermissionsForm{
 			IsGrafanaAdmin: false,
 		}
-		mock := &mockstore.SQLStoreMock{
-			ExpectedError: user.ErrLastGrafanaAdmin,
-		}
+		userService := usertest.FakeUserService{ExpectedError: user.ErrLastGrafanaAdmin}
 		putAdminScenario(t, "When calling PUT on", "/api/admin/users/1/permissions",
 			"/api/admin/users/:id/permissions", role, updateCmd, func(sc *scenarioContext) {
 				sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 400, sc.resp.Code)
-			}, mock)
+			}, nil, &userService)
 	})
 
 	t.Run("When a server admin attempts to logout himself from all devices", func(t *testing.T) {
@@ -235,12 +233,13 @@ func TestAdminAPIEndpoint(t *testing.T) {
 }
 
 func putAdminScenario(t *testing.T, desc string, url string, routePattern string, role org.RoleType,
-	cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc, sqlStore sqlstore.Store) {
+	cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc, sqlStore sqlstore.Store, userSvc user.Service) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := &HTTPServer{
 			Cfg:             setting.NewCfg(),
 			SQLStore:        sqlStore,
 			authInfoService: &logintest.AuthInfoServiceFake{},
+			userService:     userSvc,
 		}
 
 		sc := setupScenarioContext(t, url)

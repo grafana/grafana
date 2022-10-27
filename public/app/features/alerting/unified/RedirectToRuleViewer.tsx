@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import React from 'react';
 import { Redirect } from 'react-router-dom';
+import { useLocation } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Card, Icon, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { AlertLabels } from './components/AlertLabels';
 import { RuleViewerLayout } from './components/rule-viewer/RuleViewerLayout';
@@ -12,12 +12,28 @@ import { useCombinedRulesMatching } from './hooks/useCombinedRule';
 import { getRulesSourceByName } from './utils/datasource';
 import { createViewLink } from './utils/misc';
 
-type RedirectToRuleViewerProps = GrafanaRouteComponentProps<{ name?: string; sourceName?: string }>;
-const pageTitle = 'Alerting / Find rule';
+const pageTitle = 'Find rule';
 
-export function RedirectToRuleViewer(props: RedirectToRuleViewerProps): JSX.Element | null {
-  const { name, sourceName } = props.match.params;
+function useRuleFindParams() {
+  // DO NOT USE REACT-ROUTER HOOKS FOR THIS CODE
+  // React-router's useLocation/useParams/props.match are broken and don't preserve original param values when parsing location
+  // so, they cannot be used to parse name and sourceName path params
+  // React-router messes the pathname up resulting in a string that is neither encoded nor decoded
+  // Relevant issue: https://github.com/remix-run/history/issues/505#issuecomment-453175833
+  // It was probably fixed in React-Router v6
+  const location = useLocation();
+  const segments = location.pathname?.split('/') ?? []; // ["", "alerting", "{sourceName}", "{name}]
+
+  const name = decodeURIComponent(segments[3]);
+  const sourceName = decodeURIComponent(segments[2]);
+
+  return { name, sourceName };
+}
+
+export function RedirectToRuleViewer(): JSX.Element | null {
   const styles = useStyles2(getStyles);
+
+  const { name, sourceName } = useRuleFindParams();
   const { error, loading, result: rules, dispatched } = useCombinedRulesMatching(name, sourceName);
 
   if (error) {

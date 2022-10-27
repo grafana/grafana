@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/go-kit/log/level"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"go.etcd.io/etcd/api/v3/version"
 	jaegerpropagator "go.opentelemetry.io/contrib/propagators/jaeger"
 	"go.opentelemetry.io/otel"
@@ -23,6 +21,9 @@ import (
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	trace "go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -33,21 +34,6 @@ const (
 	jaegerPropagator string = "jaeger"
 	w3cPropagator    string = "w3c"
 )
-
-type Tracer interface {
-	Run(context.Context) error
-	Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span)
-	Inject(context.Context, http.Header, Span)
-}
-
-type Span interface {
-	End()
-	SetAttributes(key string, value interface{}, kv attribute.KeyValue)
-	SetName(name string)
-	SetStatus(code codes.Code, description string)
-	RecordError(err error, options ...trace.EventOption)
-	AddEvents(keys []string, values []EventValue)
-}
 
 type Opentelemetry struct {
 	enabled       string
@@ -307,9 +293,7 @@ func (s OpentelemetrySpan) SetStatus(code codes.Code, description string) {
 }
 
 func (s OpentelemetrySpan) RecordError(err error, options ...trace.EventOption) {
-	for _, o := range options {
-		s.span.RecordError(err, o)
-	}
+	s.span.RecordError(err, options...)
 }
 
 func (s OpentelemetrySpan) AddEvents(keys []string, values []EventValue) {

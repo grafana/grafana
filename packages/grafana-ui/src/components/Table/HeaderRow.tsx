@@ -51,7 +51,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?:
   }
 
   headerProps.style.position = 'absolute';
-  headerProps.style.justifyContent = (column as any).justifyContent;
+  headerProps.style.justifyContent = column.justifyContent;
 
   return (
     <div className={tableStyles.headerCell} {...headerProps} role="columnheader">

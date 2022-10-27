@@ -11,11 +11,11 @@ keywords:
   - rules
   - recording rules
   - create
-title: Create Grafana Mimir or Loki managed recording rule
+title: Create Grafana Mimir or Loki managed recording rules
 weight: 400
 ---
 
-# Create a Grafana Mimir or Loki managed recording rule
+# Create Grafana Mimir or Loki managed recording rules
 
 You can create and manage recording rules for an external Grafana Mimir or Loki instance. Recording rules calculate frequently needed expressions or computationally expensive expressions in advance and save the result as a new set of time series. Querying this new time series is faster, especially for dashboards since they query the same expression every time the dashboards refresh.
 

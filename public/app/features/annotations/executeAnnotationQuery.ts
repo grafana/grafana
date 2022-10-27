@@ -53,6 +53,7 @@ export function executeAnnotationQuery(
     scopedVars,
     ...interval,
     app: CoreApp.Dashboard,
+    publicDashboardAccessToken: options.dashboard.meta.publicDashboardAccessToken,
 
     timezone: options.dashboard.timezone,
 

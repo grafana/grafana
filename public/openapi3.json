@@ -942,7 +942,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/PlaylistItemDTO"
+                "$ref": "#/components/schemas/PlaylistItem"
               },
               "type": "array"
             }
@@ -954,7 +954,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/PlaylistDTO"
+              "$ref": "#/components/schemas/Model"
             }
           }
         },
@@ -1691,7 +1691,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/PlaylistDTO"
+              "$ref": "#/components/schemas/Model"
             }
           }
         },
@@ -1731,6 +1731,21 @@
           }
         },
         "description": "(empty)"
+      },
+      "validateDashboardResponse": {
+        "description": "(empty)",
+        "headers": {
+          "isValid": {
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          "message": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
       }
     },
     "schemas": {
@@ -1769,27 +1784,6 @@
           "active_viewers": {
             "format": "int64",
             "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "AddBuiltInRoleCommand": {
-        "properties": {
-          "builtInRole": {
-            "enum": [
-              "Viewer",
-              " Editor",
-              " Admin",
-              " Grafana Admin"
-            ],
-            "type": "string"
-          },
-          "global": {
-            "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to create organization local assignment. Refer to the Built-in role assignments for more information.",
-            "type": "boolean"
-          },
-          "roleUid": {
-            "type": "string"
           }
         },
         "type": "object"
@@ -2612,7 +2606,7 @@
             "type": "string"
           },
           "for": {
-            "$ref": "#/components/schemas/Duration"
+            "type": "string"
           },
           "labels": {
             "additionalProperties": {
@@ -2825,6 +2819,9 @@
       "Correlation": {
         "description": "Correlation is the model for correlations definitions",
         "properties": {
+          "config": {
+            "$ref": "#/components/schemas/CorrelationConfig"
+          },
           "description": {
             "description": "Description of the correlation",
             "example": "Logs to Traces",
@@ -2849,6 +2846,56 @@
             "description": "Unique identifier of the correlation",
             "example": "50xhMlg9k",
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CorrelationConfig": {
+        "properties": {
+          "field": {
+            "description": "Field used to attach the correlation link",
+            "example": "message",
+            "type": "string"
+          },
+          "target": {
+            "additionalProperties": false,
+            "description": "Target data query",
+            "example": {
+              "expr": "job=app"
+            },
+            "type": "object"
+          },
+          "type": {
+            "$ref": "#/components/schemas/CorrelationConfigType"
+          }
+        },
+        "required": [
+          "field",
+          "type",
+          "target"
+        ],
+        "type": "object"
+      },
+      "CorrelationConfigType": {
+        "type": "string"
+      },
+      "CorrelationConfigUpdateDTO": {
+        "properties": {
+          "field": {
+            "description": "Field used to attach the correlation link",
+            "example": "message",
+            "type": "string"
+          },
+          "target": {
+            "additionalProperties": false,
+            "description": "Target data query",
+            "example": {
+              "expr": "job=app"
+            },
+            "type": "object"
+          },
+          "type": {
+            "$ref": "#/components/schemas/CorrelationConfigType"
           }
         },
         "type": "object"
@@ -2891,6 +2938,9 @@
       "CreateCorrelationCommand": {
         "description": "CreateCorrelationCommand is the command for creating a correlation",
         "properties": {
+          "config": {
+            "$ref": "#/components/schemas/CorrelationConfig"
+          },
           "description": {
             "description": "Optional description of the correlation",
             "example": "Logs to Traces",
@@ -2902,7 +2952,7 @@
             "type": "string"
           },
           "targetUID": {
-            "description": "Target data source UID to which the correlation is created",
+            "description": "Target data source UID to which the correlation is created. required if config.type = query",
             "example": "PE1C5CBDA0504A6A3",
             "type": "string"
           }
@@ -3074,7 +3124,7 @@
           },
           "items": {
             "items": {
-              "$ref": "#/components/schemas/PlaylistItemDTO"
+              "$ref": "#/components/schemas/PlaylistItem"
             },
             "type": "array"
           },
@@ -3393,9 +3443,6 @@
             "type": "boolean"
           },
           "isFolder": {
-            "type": "boolean"
-          },
-          "isHome": {
             "type": "boolean"
           },
           "isSnapshot": {
@@ -3893,25 +3940,6 @@
       "DataTopic": {
         "title": "DataTopic is used to identify which topic the frame should be assigned to.",
         "type": "string"
-      },
-      "DateTime": {
-        "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
-        "format": "date-time",
-        "type": "string"
-      },
-      "DayOfMonthRange": {
-        "properties": {
-          "Begin": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "End": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "title": "A DayOfMonthRange is an inclusive range that may have negative Beginning/End values that represent distance from the End of the month Beginning at -1.",
-        "type": "object"
       },
       "DeleteCorrelationResponseBody": {
         "properties": {
@@ -4636,7 +4664,7 @@
             "type": "string"
           },
           "for": {
-            "$ref": "#/components/schemas/Duration"
+            "type": "string"
           },
           "grafana_alert": {
             "$ref": "#/components/schemas/GettableGrafanaRule"
@@ -4936,6 +4964,10 @@
             "description": "The bearer token file for the targets. Deprecated in favour of\nAuthorization.CredentialsFile.",
             "type": "string"
           },
+          "enable_http2": {
+            "description": "EnableHTTP2 specifies whether the client should configure HTTP2.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
+            "type": "boolean"
+          },
           "follow_redirects": {
             "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
             "type": "boolean"
@@ -5129,20 +5161,6 @@
           }
         },
         "title": "ImportDashboardResponse response object returned when importing a dashboard.",
-        "type": "object"
-      },
-      "InclusiveRange": {
-        "properties": {
-          "Begin": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "End": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "title": "InclusiveRange is used to hold the Beginning and End values of many time interval components.",
         "type": "object"
       },
       "InhibitRule": {
@@ -5702,18 +5720,30 @@
         },
         "type": "object"
       },
-      "MonthRange": {
+      "Model": {
+        "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
         "properties": {
-          "Begin": {
-            "format": "int64",
-            "type": "integer"
+          "interval": {
+            "description": "Interval sets the time between switching views in a playlist.\nFIXME: Is this based on a standardized format or what options are available? Can datemath be used?",
+            "type": "string"
           },
-          "End": {
-            "format": "int64",
-            "type": "integer"
+          "items": {
+            "description": "The ordered list of items that the playlist will iterate over.\nFIXME! This should not be optional, but changing it makes the godegen awkward",
+            "items": {
+              "$ref": "#/components/schemas/PlaylistItem"
+            },
+            "type": "array"
+          },
+          "name": {
+            "description": "Name of the playlist.",
+            "type": "string"
+          },
+          "uid": {
+            "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
+            "type": "string"
           }
         },
-        "title": "A MonthRange is an inclusive range between [1, 12] where 1 = January.",
+        "title": "Model is the Go representation of a playlist.",
         "type": "object"
       },
       "MultiStatus": {
@@ -5884,6 +5914,9 @@
               "type": "string"
             },
             "type": "object"
+          },
+          "proxy_url": {
+            "$ref": "#/components/schemas/URL"
           },
           "scopes": {
             "items": {
@@ -6320,30 +6353,6 @@
         },
         "type": "object"
       },
-      "PlaylistDTO": {
-        "properties": {
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "interval": {
-            "type": "string"
-          },
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/PlaylistItemDTO"
-            },
-            "type": "array"
-          },
-          "name": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "PlaylistDashboard": {
         "properties": {
           "id": {
@@ -6375,31 +6384,28 @@
         },
         "type": "array"
       },
-      "PlaylistItemDTO": {
+      "PlaylistItem": {
+        "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
         "properties": {
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "order": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "playlistid": {
-            "format": "int64",
-            "type": "integer"
-          },
           "title": {
+            "description": "Title is an unused property -- it will be removed in the future",
             "type": "string"
           },
           "type": {
-            "type": "string"
+            "$ref": "#/components/schemas/PlaylistItemType"
           },
           "value": {
+            "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
             "type": "string"
           }
         },
+        "title": "PlaylistItem is the Go representation of a playlist.Item.",
         "type": "object"
+      },
+      "PlaylistItemType": {
+        "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
+        "title": "Type of the item.",
+        "type": "string"
       },
       "Playlists": {
         "items": {
@@ -6602,7 +6608,7 @@
             "type": "string"
           },
           "for": {
-            "$ref": "#/components/schemas/Duration"
+            "type": "string"
           },
           "grafana_alert": {
             "$ref": "#/components/schemas/PostableGrafanaRule"
@@ -6935,7 +6941,7 @@
       "PushoverConfig": {
         "properties": {
           "expire": {
-            "$ref": "#/components/schemas/duration"
+            "type": "string"
           },
           "html": {
             "type": "boolean"
@@ -6950,7 +6956,7 @@
             "type": "string"
           },
           "retry": {
-            "$ref": "#/components/schemas/duration"
+            "type": "string"
           },
           "send_resolved": {
             "type": "boolean"
@@ -7480,10 +7486,10 @@
             "type": "array"
           },
           "group_interval": {
-            "$ref": "#/components/schemas/Duration"
+            "type": "string"
           },
           "group_wait": {
-            "$ref": "#/components/schemas/Duration"
+            "type": "string"
           },
           "match": {
             "additionalProperties": {
@@ -7514,7 +7520,7 @@
             "type": "string"
           },
           "repeat_interval": {
-            "$ref": "#/components/schemas/Duration"
+            "type": "string"
           },
           "routes": {
             "items": {
@@ -8297,6 +8303,9 @@
             "description": "The client key file for the targets.",
             "type": "string"
           },
+          "min_version": {
+            "$ref": "#/components/schemas/TLSVersion"
+          },
           "server_name": {
             "description": "Used to verify the hostname for the targets.",
             "type": "string"
@@ -8304,6 +8313,10 @@
         },
         "title": "TLSConfig configures the options for TLS connections.",
         "type": "object"
+      },
+      "TLSVersion": {
+        "format": "uint16",
+        "type": "integer"
       },
       "TagsDTO": {
         "properties": {
@@ -8645,13 +8658,13 @@
         "properties": {
           "days_of_month": {
             "items": {
-              "$ref": "#/components/schemas/DayOfMonthRange"
+              "type": "string"
             },
             "type": "array"
           },
           "months": {
             "items": {
-              "$ref": "#/components/schemas/MonthRange"
+              "type": "string"
             },
             "type": "array"
           },
@@ -8663,13 +8676,13 @@
           },
           "weekdays": {
             "items": {
-              "$ref": "#/components/schemas/WeekdayRange"
+              "type": "string"
             },
             "type": "array"
           },
           "years": {
             "items": {
-              "$ref": "#/components/schemas/YearRange"
+              "type": "string"
             },
             "type": "array"
           }
@@ -8861,7 +8874,6 @@
         "type": "string"
       },
       "URL": {
-        "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
         "properties": {
           "ForceQuery": {
             "type": "boolean"
@@ -8871,6 +8883,9 @@
           },
           "Host": {
             "type": "string"
+          },
+          "OmitHost": {
+            "type": "boolean"
           },
           "Opaque": {
             "type": "string"
@@ -8894,7 +8909,7 @@
             "$ref": "#/components/schemas/Userinfo"
           }
         },
-        "title": "A URL represents a parsed URL (technically, a URI reference).",
+        "title": "URL is a custom URL type that allows validation at configuration load time.",
         "type": "object"
       },
       "UpdateAlertNotificationCommand": {
@@ -9000,6 +9015,9 @@
       "UpdateCorrelationCommand": {
         "description": "UpdateCorrelationCommand is the command for updating a correlation",
         "properties": {
+          "config": {
+            "$ref": "#/components/schemas/CorrelationConfigUpdateDTO"
+          },
           "description": {
             "description": "Optional description of the correlation",
             "example": "Logs to Traces",
@@ -9169,7 +9187,7 @@
           },
           "items": {
             "items": {
-              "$ref": "#/components/schemas/PlaylistItemDTO"
+              "$ref": "#/components/schemas/PlaylistItem"
             },
             "type": "array"
           },
@@ -9677,34 +9695,6 @@
         "title": "WechatConfig configures notifications via Wechat.",
         "type": "object"
       },
-      "WeekdayRange": {
-        "properties": {
-          "Begin": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "End": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "title": "A WeekdayRange is an inclusive range between [0, 6] where 0 = Sunday.",
-        "type": "object"
-      },
-      "YearRange": {
-        "properties": {
-          "Begin": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "End": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "title": "A YearRange is a positive inclusive range.",
-        "type": "object"
-      },
       "alert": {
         "description": "Alert alert",
         "properties": {
@@ -9747,6 +9737,7 @@
         "type": "object"
       },
       "alertGroups": {
+        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -9850,10 +9841,8 @@
         ],
         "type": "object"
       },
-      "duration": {
-        "$ref": "#/components/schemas/Duration"
-      },
       "gettableAlert": {
+        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -9916,6 +9905,7 @@
         "type": "array"
       },
       "gettableSilence": {
+        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -9964,10 +9954,41 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
+      },
+      "integration": {
+        "properties": {
+          "lastNotifyAttempt": {
+            "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
+            "format": "date-time",
+            "type": "string"
+          },
+          "lastNotifyAttemptDuration": {
+            "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
+            "type": "string"
+          },
+          "lastNotifyAttemptError": {
+            "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
+            "type": "string"
+          },
+          "name": {
+            "description": "name",
+            "type": "string"
+          },
+          "sendResolved": {
+            "description": "send resolved",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "sendResolved"
+        ],
+        "type": "object"
       },
       "labelSet": {
         "additionalProperties": {
@@ -10074,6 +10095,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -10111,14 +10133,26 @@
         "type": "object"
       },
       "receiver": {
-        "description": "Receiver receiver",
         "properties": {
+          "active": {
+            "description": "active",
+            "type": "boolean"
+          },
+          "integrations": {
+            "description": "integrations",
+            "items": {
+              "$ref": "#/components/schemas/integration"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "name",
             "type": "string"
           }
         },
         "required": [
+          "active",
+          "integrations",
           "name"
         ],
         "type": "object"
@@ -10231,10 +10265,6 @@
       "url": "https://grafana.com"
     },
     "description": "The Grafana backend exposes an HTTP API, the same API is used by the frontend to do\neverything from saving dashboards, creating users and updating data sources.",
-    "license": {
-      "name": "GNU Affero General Public License v3.0",
-      "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
-    },
     "title": "Grafana HTTP API.",
     "version": "0.0.1"
   },
@@ -20902,6 +20932,78 @@
           }
         },
         "summary": "Revoke an auth token of the actual User.",
+        "tags": [
+          "signed_in_user"
+        ]
+      }
+    },
+    "/user/stars/dashboard/uid/{dashboard_uid}": {
+      "delete": {
+        "description": "Deletes the starring of the given Dashboard for the actual user.",
+        "operationId": "unstarDashboardByUID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dashboard_uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Unstar a dashboard.",
+        "tags": [
+          "signed_in_user"
+        ]
+      },
+      "post": {
+        "description": "Stars the given Dashboard for the actual user.",
+        "operationId": "starDashboardByUID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dashboard_uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Star a dashboard.",
         "tags": [
           "signed_in_user"
         ]
