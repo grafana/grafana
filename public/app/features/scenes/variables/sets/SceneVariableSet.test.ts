@@ -1,10 +1,10 @@
 import { LoadingState } from '@grafana/data';
 
-import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneObjectStatePlain } from '../core/types';
+import { SceneObjectBase } from '../../core/SceneObjectBase';
+import { SceneObjectStatePlain } from '../../core/types';
+import { TestVariable } from '../variants/TestVariable';
 
-import { SceneVariableList } from './SceneVariableList';
-import { TestVariable } from './TestVariable';
+import { SceneVariableSet } from './SceneVariableSet';
 
 interface TestSceneState extends SceneObjectStatePlain {
   nested?: TestScene;
@@ -20,7 +20,7 @@ describe('SceneVariableList', () => {
       const C = new TestVariable({ name: 'C', query: 'A.$A.$B.*', value: '', text: '', options: [] });
 
       const scene = new TestScene({
-        $variables: new SceneVariableList({ variables: [C, B, A] }),
+        $variables: new SceneVariableSet({ variables: [C, B, A] }),
       });
 
       scene.activate();
@@ -58,7 +58,7 @@ describe('SceneVariableList', () => {
       const C = new TestVariable({ name: 'C', query: 'A.$A.$B.*', value: '', text: '', options: [] });
 
       const scene = new TestScene({
-        $variables: new SceneVariableList({ variables: [C, B, A] }),
+        $variables: new SceneVariableSet({ variables: [C, B, A] }),
       });
 
       scene.activate();

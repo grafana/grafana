@@ -2,7 +2,7 @@ import React from 'react';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { SceneComponentProps, SceneObject, SceneObjectStatePlain } from '../../core/types';
-import { SceneVariableSetInterface } from '../types';
+import { SceneVariables } from '../types';
 
 export class VariableValueSelectors extends SceneObjectBase<SceneObjectStatePlain> {
   static Component = VariableValueSelectorsRenderer;
@@ -20,7 +20,7 @@ function VariableValueSelectorsRenderer({ model }: SceneComponentProps<VariableV
   );
 }
 
-function getVariables(model: SceneObject): SceneVariableSetInterface {
+function getVariables(model: SceneObject): SceneVariables {
   if (model.state.$variables) {
     return model.state.$variables;
   }

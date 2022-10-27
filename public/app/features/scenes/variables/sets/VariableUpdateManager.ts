@@ -1,8 +1,7 @@
 import { Subscription, Unsubscribable } from 'rxjs';
 
-import { SceneObject } from '../core/types';
-
-import { SceneVariable } from './types';
+import { SceneObject } from '../../core/types';
+import { SceneVariable } from '../types';
 
 export interface VariableUpdateInProgress {
   variable: SceneVariable;
@@ -13,7 +12,7 @@ export interface VariableUpdateInProgress {
  * This is really an internal implementation detail of SceneVariableList (the unit tests for the logic in this class are in SceneVariableList.test.ts)
  * Should the file content be moved to SceneVariableList?
  */
-export class VariableUpdateManager {
+export class VariablesUpdateManager {
   variablesThatHaveChanged = new Map<string, SceneVariable>();
   variablesToUpdate = new Map<string, SceneVariable>();
   subs: Subscription = new Subscription();

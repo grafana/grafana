@@ -4,8 +4,8 @@ import { LoadingState } from '@grafana/data';
 import { InlineFormLabel, Select } from '@grafana/ui';
 
 import { SceneComponentProps } from '../../core/types';
-import { TestVariable } from '../TestVariable';
 import { SceneVariable } from '../types';
+import { TestVariable } from '../variants/TestVariable';
 
 export function VariableValueSelect({ model }: SceneComponentProps<SceneVariable>) {
   // temp solution, was unable to get the generics right

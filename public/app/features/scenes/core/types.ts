@@ -3,14 +3,14 @@ import { Subscribable } from 'rxjs';
 
 import { EventBus, PanelData, TimeRange, TimeZone, UrlQueryMap } from '@grafana/data';
 
-import { SceneVariableSetInterface } from '../variables/types';
+import { SceneVariables } from '../variables/types';
 
 export interface SceneObjectStatePlain {
   key?: string;
   $timeRange?: SceneTimeRange;
   $data?: SceneObject<SceneDataState>;
   $editor?: SceneEditor;
-  $variables?: SceneVariableSetInterface;
+  $variables?: SceneVariables;
 }
 
 export interface SceneLayoutChildState extends SceneObjectStatePlain {
