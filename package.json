@@ -46,7 +46,7 @@
     "storybook:build": "yarn workspace @grafana/ui storybook:build",
     "themes:generate": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
-    "plugins:build-bundled": "grafana-toolkit plugin:bundle-managed",
+    "plugins:build-bundled": "find plugins-bundled -name package.json -not -path '*/node_modules/*' -execdir yarn build \\;",
     "watch": "yarn start -d watch,start core:start --watchTheme",
     "ci:test-frontend": "yarn run test:ci",
     "postinstall": "husky install",
