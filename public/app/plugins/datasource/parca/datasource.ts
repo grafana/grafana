@@ -3,10 +3,10 @@ import { Observable, of } from 'rxjs';
 import { DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
 
-import { MyDataSourceOptions, Query, ProfileTypeMessage } from './types';
+import { ParcaDataSourceOptions, Query, ProfileTypeMessage } from './types';
 
-export class ParcaDataSource extends DataSourceWithBackend<Query, MyDataSourceOptions> {
-  constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
+export class ParcaDataSource extends DataSourceWithBackend<Query, ParcaDataSourceOptions> {
+  constructor(instanceSettings: DataSourceInstanceSettings<ParcaDataSourceOptions>) {
     super(instanceSettings);
   }
 

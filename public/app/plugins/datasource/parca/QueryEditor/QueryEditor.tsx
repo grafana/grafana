@@ -6,14 +6,14 @@ import { CoreApp, QueryEditorProps } from '@grafana/data';
 import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
 import { ParcaDataSource } from '../datasource';
-import { defaultQuery, MyDataSourceOptions, ProfileTypeMessage, Query } from '../types';
+import { defaultQuery, ParcaDataSourceOptions, ProfileTypeMessage, Query } from '../types';
 
 import { EditorRow } from './EditorRow';
 import { EditorRows } from './EditorRows';
 import { LabelsEditor } from './LabelsEditor';
 import { QueryOptions } from './QueryOptions';
 
-export type Props = QueryEditorProps<ParcaDataSource, Query, MyDataSourceOptions>;
+export type Props = QueryEditorProps<ParcaDataSource, Query, ParcaDataSourceOptions>;
 
 export function QueryEditor(props: Props) {
   const [profileTypes, setProfileTypes] = useState<ProfileTypeMessage[]>([]);

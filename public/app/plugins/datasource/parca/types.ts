@@ -23,4 +23,4 @@ export const defaultQuery: Partial<Query> = {
 /**
  * These are options configured for each DataSource instance.
  */
-export interface MyDataSourceOptions extends DataSourceJsonData {}
+export interface ParcaDataSourceOptions extends DataSourceJsonData {}
