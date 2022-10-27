@@ -1,4 +1,4 @@
 <!-- TODO make this a higher resolution for HiDPI displays -->
 <mj-column background-color="transparent">
-  <mj-image width="200px" src="https://grafana.com/assets/img/logo_new_transparent_200x48.png" align="left" />
+  <mj-image padding="0" width="200px" src="https://grafana.com/assets/img/logo_new_transparent_200x48.png" align="left" />
 </mj-column>
