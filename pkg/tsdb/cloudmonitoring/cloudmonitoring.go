@@ -663,7 +663,7 @@ func unmarshalResponse(res *http.Response) (cloudMonitoringResponse, error) {
 	return data, nil
 }
 
-func addConfigData(frames data.Frames, dl string, unit string) data.Frames {
+func addConfigData(frames data.Frames, dl string, unit string, period string) data.Frames {
 	for i := range frames {
 		if frames[i].Fields[1].Config == nil {
 			frames[i].Fields[1].Config = &data.FieldConfig{}
@@ -680,6 +680,12 @@ func addConfigData(frames data.Frames, dl string, unit string) data.Frames {
 			if val, ok := cloudMonitoringUnitMappings[unit]; ok {
 				frames[i].Fields[1].Config.Unit = val
 			}
+		}
+		if frames[i].Fields[0].Config == nil {
+			frames[i].Fields[0].Config = &data.FieldConfig{}
+		}
+		if period != "" {
+			addInterval(period, frames[i].Fields[0])
 		}
 	}
 	return frames
