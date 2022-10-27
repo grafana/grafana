@@ -52,7 +52,7 @@ describe('SceneVariableList', () => {
   });
 
   describe('When variable changes value', () => {
-    it('When variable changes value', async () => {
+    it('Should start update process', async () => {
       const A = new TestVariable({ name: 'A', query: 'A.*', value: '', text: '', options: [] });
       const B = new TestVariable({ name: 'B', query: 'A.$A.*', value: '', text: '', options: [] });
       const C = new TestVariable({ name: 'C', query: 'A.$A.$B.*', value: '', text: '', options: [] });
