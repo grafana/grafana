@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
@@ -106,7 +107,9 @@ func TestIntegrationFolderService(t *testing.T) {
 					folder.Result = models.NewDashboard("dashboard-test")
 					folder.Result.IsFolder = true
 				}).Return(&models.Dashboard{}, nil)
-				err := service.UpdateFolder(context.Background(), usr, orgID, folderUID, &models.UpdateFolderCommand{
+				ctx := context.Background()
+				ctx = appcontext.WithUser(ctx, &usr)
+				err := service.UpdateFolder(context.Background(), &folder.UpdateFolderCommand{
 					Uid:   folderUID,
 					Title: "Folder-TEST",
 				})

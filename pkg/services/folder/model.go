@@ -56,6 +56,7 @@ type UpdateFolderCommand struct {
 	NewUID         *string `json:"uid"`
 	NewTitle       *string `json:"title"`
 	NewDescription *string `json:"description"`
+	ExistingUid    string  `json:"existinguid"`
 }
 
 // MoveFolderCommand captures the information required by the folder service

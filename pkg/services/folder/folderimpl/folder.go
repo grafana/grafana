@@ -212,8 +212,9 @@ func (s *Service) CreateFolder(ctx context.Context, cmd *folder.CreateFolderComm
 	return folder, nil
 }
 
-func (s *Service) UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
-	query := models.GetDashboardQuery{OrgId: orgID, Uid: existingUid}
+func (s *Service) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderCommand) error {
+	user, err := appcontext.User(ctx)
+	query := models.GetDashboardQuery{OrgId: user.OrgID, Uid: cmd.existingUid}
 	if _, err := s.dashboardStore.GetDashboard(ctx, &query); err != nil {
 		return toFolderError(err)
 	}
@@ -225,11 +226,11 @@ func (s *Service) UpdateFolder(ctx context.Context, user *user.SignedInUser, org
 		return dashboards.ErrFolderNotFound
 	}
 
-	cmd.UpdateDashboardModel(dashFolder, orgID, user.UserID)
+	cmd.UpdateDashboardModel(dashFolder, user.OrgID, user.UserID)
 
 	dto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
-		OrgId:     orgID,
+		OrgId:     user.OrgID,
 		User:      user,
 		Overwrite: cmd.Overwrite,
 	}
