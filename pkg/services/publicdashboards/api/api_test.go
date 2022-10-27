@@ -287,6 +287,27 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 			ExpectedHttpResponse: http.StatusInternalServerError,
 			ShouldCallService:    true,
 		},
+		{
+			Name:                 "Internal server error returns an error",
+			User:                 userEditorPublicDashboard,
+			ResponseErr:          errors.New("server error"),
+			ExpectedHttpResponse: http.StatusInternalServerError,
+			ShouldCallService:    true,
+		},
+		{
+			Name:                 "Dashboard error in service returns correct status code instead of 500",
+			User:                 userEditorPublicDashboard,
+			ResponseErr:          dashboards.ErrDashboardIdentifierNotSet,
+			ExpectedHttpResponse: dashboards.ErrDashboardIdentifierNotSet.StatusCode,
+			ShouldCallService:    true,
+		},
+		{
+			Name:                 "PublicDashboard error in service returns correct status code instead of 500",
+			User:                 userEditorPublicDashboard,
+			ResponseErr:          ErrPublicDashboardIdentifierNotSet,
+			ExpectedHttpResponse: ErrPublicDashboardIdentifierNotSet.StatusCode,
+			ShouldCallService:    true,
+		},
 	}
 
 	for _, test := range testCases {
