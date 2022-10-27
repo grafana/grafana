@@ -287,6 +287,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
           if (defaultQuery) {
             this.targets[i] = { ...defaultQuery, ...query };
             shouldPublish = true;
+          } else {
+            console.warn(`panel "${this.title}" (id: ${this.id}) has queries that are not well-formed`);
           }
         }
       }
