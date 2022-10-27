@@ -46,7 +46,7 @@ func requireObjectMatch(t *testing.T, obj *object.RawObject, m rawObjectMatcher)
 	require.NotNil(t, obj)
 
 	mismatches := ""
-	if m.grn != nil && !object.SameObject(m.grn, obj.GRN) {
+	if m.grn != nil && !obj.GRN.Equals(m.grn) {
 		mismatches += fmt.Sprintf("expected: %v, actual: %v\n", m.grn, obj.GRN)
 	}
 

@@ -62,7 +62,7 @@ func (i *dummyObjectServer) findObject(ctx context.Context, grn *object.GRN, ver
 	}
 
 	obj, err := i.collection.FindFirst(ctx, namespaceFromUID(grn), func(i *RawObjectWithHistory) (bool, error) {
-		return object.SameObject(i.Object.GRN, grn), nil
+		return grn.Equals(i.Object.GRN), nil
 	})
 
 	if err != nil {
@@ -156,7 +156,7 @@ func (i *dummyObjectServer) update(ctx context.Context, r *object.WriteObjectReq
 	rsp := &object.WriteObjectResponse{}
 
 	updatedCount, err := i.collection.Update(ctx, namespace, func(i *RawObjectWithHistory) (bool, *RawObjectWithHistory, error) {
-		if !object.SameObject(i.Object.GRN, r.GRN) {
+		if !r.GRN.Equals(i.Object.GRN) {
 			return false, nil, nil
 		}
 
@@ -270,7 +270,7 @@ func (i *dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequ
 		if i == nil || r == nil {
 			return false, nil
 		}
-		return object.SameObject(i.Object.GRN, r.GRN), nil
+		return r.GRN.Equals(i.Object.GRN), nil
 	})
 	if err != nil {
 		return nil, err
@@ -285,7 +285,7 @@ func (i *dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequ
 
 func (i *dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
 	_, err := i.collection.Delete(ctx, namespaceFromUID(r.GRN), func(i *RawObjectWithHistory) (bool, error) {
-		if object.SameObject(i.Object.GRN, r.GRN) {
+		if r.GRN.Equals(i.Object.GRN) {
 			if r.PreviousVersion != "" && i.Object.Version != r.PreviousVersion {
 				return false, fmt.Errorf("expected the previous version to be %s, but was %s", r.PreviousVersion, i.Object.Version)
 			}
