@@ -9,7 +9,7 @@ import {
   AppEvents,
   dateTime,
   DurationUnit,
-  GrafanaTheme,
+  GrafanaTheme2,
   locationUtil,
   PanelProps,
 } from '@grafana/data';
@@ -37,7 +37,7 @@ interface State {
   queryTags: string[];
 }
 export class AnnoListPanel extends PureComponent<Props, State> {
-  style = getStyles(config.theme);
+  style = getStyles(config.theme2);
   subs = new Subscription();
   tagListRef = React.createRef<HTMLUListElement>();
 
@@ -290,7 +290,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   noneFound: css`
     display: flex;
     align-items: center;
@@ -300,9 +300,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   filter: css({
     display: 'flex',
-    padding: `0px ${theme.spacing.xs}`,
+    padding: `0px ${theme.spacing(0.5)}`,
     b: {
-      paddingRight: theme.spacing.sm,
+      paddingRight: theme.spacing(1),
     },
   }),
   tagList: css({

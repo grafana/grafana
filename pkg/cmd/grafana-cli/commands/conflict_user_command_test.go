@@ -11,14 +11,14 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
-const ignoredDatabase = "mysql"
+const ignoredDatabase = migrator.MySQL
 
 func TestBuildConflictBlock(t *testing.T) {
 	type testBuildConflictBlock struct {
@@ -628,11 +628,6 @@ func TestMergeUser(t *testing.T) {
 			// test starts here
 			err = r.MergeConflictingUsers(context.Background())
 			require.NoError(t, err)
-
-			// user with uppercaseemail should not exist
-			query := &models.GetUserByIdQuery{Id: userWithUpperCase.ID}
-			err = sqlStore.GetUserById(context.Background(), query)
-			require.Error(t, user.ErrUserNotFound, err)
 		}
 	})
 }
