@@ -48,7 +48,6 @@ type Loader struct {
 	signatureValidator signature.Validator
 	pluginStorage      storage.Manager
 	log                log.Logger
-	features           *featuremgmt.FeatureManager
 
 	errs map[string]*plugins.SignatureError
 }
@@ -57,13 +56,12 @@ func ProvideService(cfg *config.Cfg, license models.Licensing, authorizer plugin
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, roleRegistry plugins.RoleRegistry,
 	features *featuremgmt.FeatureManager) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath), roleRegistry, features)
+		storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath), roleRegistry)
 }
 
 func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
-	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry,
-	features *featuremgmt.FeatureManager) *Loader {
+	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry) *Loader {
 	return &Loader{
 		pluginFinder:       finder.New(),
 		pluginRegistry:     pluginRegistry,
@@ -74,7 +72,6 @@ func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoa
 		errs:               make(map[string]*plugins.SignatureError),
 		log:                log.New("plugin.loader"),
 		roleRegistry:       roleRegistry,
-		features:           features,
 	}
 }
 
@@ -205,24 +202,22 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		}
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 
-		if l.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) {
-			if pluginJSONPath, ok := foundPluginsJSONPath[p.ID]; ok {
-				// nolint:gosec
-				// We can ignore the gosec G304 warning on this one because `currentPath` is based
-				// on plugin the folder structure on disk and not user input.
-				// Q? Is it ok to read it twice
-				reader, err := os.Open(pluginJSONPath)
-				if err != nil {
-					continue
-				}
+		if pluginJSONPath, ok := foundPluginsJSONPath[p.ID]; ok {
+			// nolint:gosec
+			// We can ignore the gosec G304 warning on this one because `currentPath` is based
+			// on plugin the folder structure on disk and not user input.
+			// Q? Is it ok to read it twice
+			reader, err := os.Open(pluginJSONPath)
+			if err != nil {
+				continue
+			}
 
-				if errDeclareRoles := l.roleRegistry.DeclarePluginRoles(reader); errDeclareRoles != nil {
-					l.log.Warn("Declare plugin roles failed",
-						"pluginID", p.ID,
-						"warning", "Make sure the role declaration is correct.",
-						"path", p.PluginDir+"/plugin.json",
-						"error", errDeclareRoles)
-				}
+			if errDeclareRoles := l.roleRegistry.DeclarePluginRoles(reader); errDeclareRoles != nil {
+				l.log.Warn("Declare plugin roles failed",
+					"pluginID", p.ID,
+					"warning", "Make sure the role declaration is correct.",
+					"path", p.PluginDir+"/plugin.json",
+					"error", errDeclareRoles)
 			}
 		}
 	}

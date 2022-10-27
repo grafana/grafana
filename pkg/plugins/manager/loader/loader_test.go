@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -693,7 +692,6 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 				l.processManager = procMgr
 				l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService())
 			})
-			l.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
 
 			got, err := l.Load(context.Background(), plugins.External, tt.pluginPaths)
 			require.NoError(t, err)
@@ -1333,7 +1331,7 @@ func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	// Is it ok in the test that I use some external fake?
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
-		actest.FakeService{}, featuremgmt.WithFeatures())
+		actest.FakeService{})
 
 	for _, cb := range cbs {
 		cb(l)
