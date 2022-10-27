@@ -6,6 +6,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -15,7 +18,7 @@ type responseWrapper struct {
 }
 
 func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	plog.Debug("Executing time series query")
+	cwlog.Debug("Executing time series query")
 	resp := backend.NewQueryDataResponse()
 
 	if len(req.Queries) == 0 {
@@ -28,13 +31,21 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 		return nil, fmt.Errorf("invalid time range: start time must be before end time")
 	}
 
-	requestQueriesByRegion, err := e.parseQueries(req.Queries, startTime, endTime)
+	requestQueries, err := models.ParseMetricDataQueries(req.Queries, startTime, endTime, e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels))
 	if err != nil {
 		return nil, err
 	}
 
-	if len(requestQueriesByRegion) == 0 {
+	if len(requestQueries) == 0 {
 		return backend.NewQueryDataResponse(), nil
+	}
+
+	requestQueriesByRegion := make(map[string][]*models.CloudWatchQuery)
+	for _, query := range requestQueries {
+		if _, exist := requestQueriesByRegion[query.Region]; !exist {
+			requestQueriesByRegion[query.Region] = []*models.CloudWatchQuery{}
+		}
+		requestQueriesByRegion[query.Region] = append(requestQueriesByRegion[query.Region], query)
 	}
 
 	resultChan := make(chan *responseWrapper, len(req.Queries))
@@ -45,7 +56,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 		eg.Go(func() error {
 			defer func() {
 				if err := recover(); err != nil {
-					plog.Error("Execute Get Metric Data Query Panic", "error", err, "stack", log.Stack(1))
+					cwlog.Error("Execute Get Metric Data Query Panic", "error", err, "stack", log.Stack(1))
 					if theErr, ok := err.(error); ok {
 						resultChan <- &responseWrapper{
 							DataResponse: &backend.DataResponse{

@@ -24,7 +24,6 @@ export interface Props {
   className?: string;
   isFullscreen?: boolean;
   'aria-label'?: string;
-  buttonOverflowAlignment?: 'left' | 'right';
 }
 
 /** @alpha */
@@ -43,7 +42,6 @@ export const PageToolbar: FC<Props> = React.memo(
     className,
     /** main nav-container aria-label **/
     'aria-label': ariaLabel,
-    buttonOverflowAlignment = 'right',
   }) => {
     const styles = useStyles2(getStyles);
 
@@ -107,7 +105,7 @@ export const PageToolbar: FC<Props> = React.memo(
               </>
             )}
 
-            {(title || leftItems?.length) && (
+            {(title || Boolean(leftItems?.length)) && (
               <div className={styles.titleWrapper}>
                 {title && (
                   <h1 className={styles.h1Styles}>
@@ -134,9 +132,7 @@ export const PageToolbar: FC<Props> = React.memo(
             )}
           </nav>
         </div>
-        <ToolbarButtonRow alignment={buttonOverflowAlignment}>
-          {React.Children.toArray(children).filter(Boolean)}
-        </ToolbarButtonRow>
+        <ToolbarButtonRow alignment="right">{React.Children.toArray(children).filter(Boolean)}</ToolbarButtonRow>
       </nav>
     );
   }

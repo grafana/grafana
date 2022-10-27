@@ -31,7 +31,11 @@ export const CanvasContextMenu = ({ scene }: Props) => {
   const selectedElements = scene.selecto?.getSelectedTargets();
 
   const handleContextMenu = useCallback(
-    (event) => {
+    (event: Event) => {
+      if (!(event instanceof MouseEvent)) {
+        return;
+      }
+
       event.preventDefault();
       const shouldSelectElement = event.currentTarget !== scene.div;
       if (shouldSelectElement) {

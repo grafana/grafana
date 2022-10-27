@@ -159,7 +159,7 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	err = hs.userService.UpdatePermissions(userID, form.IsGrafanaAdmin)
+	err = hs.userService.UpdatePermissions(c.Req.Context(), userID, form.IsGrafanaAdmin)
 	if err != nil {
 		if errors.Is(err, user.ErrLastGrafanaAdmin) {
 			return response.Error(400, user.ErrLastGrafanaAdmin.Error(), nil)

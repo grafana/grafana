@@ -100,6 +100,7 @@ type (
 		TimeSeriesDescriptor timeSeriesDescriptor `json:"timeSeriesDescriptor"`
 		TimeSeriesData       timeSeriesData       `json:"timeSeriesData"`
 		Unit                 string               `json:"unit"`
+		NextPageToken        string               `json:"nextPageToken"`
 	}
 )
 

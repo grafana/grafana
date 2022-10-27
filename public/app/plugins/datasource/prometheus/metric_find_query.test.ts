@@ -221,7 +221,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `proxied/api/v1/query?query=metric&time=${raw.to.unix()}`,
+        url: `/api/datasources/1/resources/api/v1/query?query=metric&time=${raw.to.unix()}`,
         requestId: undefined,
         headers: {},
       });
@@ -243,7 +243,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `proxied/api/v1/query?query=1%2B1&time=${raw.to.unix()}`,
+        url: `/api/datasources/1/resources/api/v1/query?query=1%2B1&time=${raw.to.unix()}`,
         requestId: undefined,
         headers: {},
       });

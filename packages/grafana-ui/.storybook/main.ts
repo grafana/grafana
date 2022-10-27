@@ -1,4 +1,7 @@
-const path = require('path');
+import path from 'path';
+import type { StorybookConfig } from '@storybook/react/types';
+import { getAvailableIcons, IconName } from '../src/types/icon';
+import { getIconSubDir } from '../src/components/Icon/utils';
 
 const stories = ['../src/**/*.story.@(tsx|mdx)'];
 
@@ -6,7 +9,19 @@ if (process.env.NODE_ENV !== 'production') {
   stories.push('../src/**/*.story.internal.@(tsx|mdx)');
 }
 
-const mainConfig = {
+// We limit icon paths to only the available icons so publishing
+// doesn't require uploading 1000s of unused assets.
+const iconPaths = getAvailableIcons()
+  .filter((iconName) => !iconName.includes('fa'))
+  .map((iconName) => {
+    const subDir = getIconSubDir(iconName as IconName, 'default');
+    return {
+      from: `../../../public/img/icons/${subDir}/${iconName}.svg`,
+      to: `/public/img/icons/${subDir}/${iconName}.svg`,
+    };
+  });
+
+const mainConfig: StorybookConfig = {
   stories,
   addons: [
     {
@@ -67,9 +82,12 @@ const mainConfig = {
     fastRefresh: true,
   },
   staticDirs: [
-    { from: '../../../public/fonts', to: '/fonts' },
-    { from: '../../../public/img', to: '/public/img' },
+    { from: '../../../public/fonts', to: '/public/fonts' },
+    { from: '../../../public/img/grafana_text_logo-dark.svg', to: '/public/img/grafana_text_logo-dark.svg' },
+    { from: '../../../public/img/grafana_text_logo-light.svg', to: '/public/img/grafana_text_logo-light.svg' },
+    { from: '../../../public/img/fav32.png', to: '/public/img/fav32.png' },
     { from: '../../../public/lib', to: '/public/lib' },
+    ...iconPaths,
   ],
   typescript: {
     check: true,
@@ -82,9 +100,9 @@ const mainConfig = {
       savePropValueAsString: true,
     },
   },
-  webpackFinal: async (config: any) => {
+  webpackFinal: async (config) => {
     // expose jquery as a global so jquery plugins don't break at runtime.
-    config.module.rules.push({
+    config.module?.rules?.push({
       test: require.resolve('jquery'),
       loader: 'expose-loader',
       options: {
@@ -92,8 +110,8 @@ const mainConfig = {
       },
     });
 
-    // use the raw-loader for SVGS for compatibility with grafana/ui Icon component.
-    config.module.rules.push({
+    // use the asset module for SVGS for compatibility with grafana/ui Icon component.
+    config.module?.rules?.push({
       test: /(unicons|mono|custom)[\\/].*\.svg$/,
       type: 'asset/source',
     });

@@ -15,15 +15,16 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkHTTPClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/common/model"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/middleware"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
 	"github.com/grafana/grafana/pkg/util/maputil"
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/prometheus/common/model"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 // Internal interval and range variables
@@ -120,16 +121,16 @@ func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
-
 	for _, query := range queries {
-		b.log.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
-
 		ctx, endSpan := utils.StartTrace(ctx, b.tracer, "datasource.prometheus", []utils.Attribute{
 			{Key: "expr", Value: query.Expr, Kv: attribute.Key("expr").String(query.Expr)},
 			{Key: "start_unixnano", Value: query.Start, Kv: attribute.Key("start_unixnano").Int64(query.Start.UnixNano())},
 			{Key: "stop_unixnano", Value: query.End, Kv: attribute.Key("stop_unixnano").Int64(query.End.UnixNano())},
 		})
 		defer endSpan()
+
+		logger := b.log.FromContext(ctx) // read trace-id and other info from the context
+		logger.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
 
 		response := make(map[TimeSeriesQueryType]interface{})
 
@@ -143,7 +144,7 @@ func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (
 		if query.RangeQuery {
 			rangeResponse, _, err := b.client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
-				b.log.Error("Range query failed", "query", query.Expr, "err", err)
+				logger.Error("Range query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
 				continue
 			}
@@ -153,7 +154,7 @@ func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (
 		if query.InstantQuery {
 			instantResponse, _, err := b.client.Query(ctx, query.Expr, query.End)
 			if err != nil {
-				b.log.Error("Instant query failed", "query", query.Expr, "err", err)
+				logger.Error("Instant query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
 				continue
 			}
@@ -165,7 +166,7 @@ func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (
 		if query.ExemplarQuery {
 			exemplarResponse, err := b.client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 			if err != nil {
-				b.log.Error("Exemplar query failed", "query", query.Expr, "err", err)
+				logger.Error("Exemplar query failed", "query", query.Expr, "err", err)
 			} else {
 				response[ExemplarQueryType] = exemplarResponse
 			}
@@ -563,6 +564,10 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 			}
 		}
 	}
+
+	sort.SliceStable(sampleExemplars, func(i, j int) bool {
+		return sampleExemplars[i].Time.Before(sampleExemplars[j].Time)
+	})
 
 	// Create DF from sampled exemplars
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(sampleExemplars))

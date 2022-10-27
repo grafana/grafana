@@ -115,7 +115,7 @@ export const ManualEditor = ({
                 value={value[selected].pointSize!}
                 context={context}
                 onChange={(field) => onFieldChange(field, selected, 'pointSize')}
-                item={{ settings: { min: 1, max: 50 } } as any}
+                item={{ settings: { min: 1, max: 100 } } as any}
               />
             </Field>
           </div>

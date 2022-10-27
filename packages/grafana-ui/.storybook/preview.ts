@@ -11,9 +11,9 @@ import '../../../public/vendor/flot/jquery.flot.gauge';
 import { withTheme } from '../src/utils/storybook/withTheme';
 import { ThemedDocsContainer } from '../src/utils/storybook/ThemedDocsContainer';
 // @ts-ignore
-import lightTheme from '../../../public/sass/grafana.light.scss';
+import lightTheme from './grafana.light.scss';
 // @ts-ignore
-import darkTheme from '../../../public/sass/grafana.dark.scss';
+import darkTheme from './grafana.dark.scss';
 import { GrafanaLight, GrafanaDark } from './storybookTheme';
 
 const handleThemeChange = (theme: any) => {

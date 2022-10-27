@@ -365,6 +365,14 @@ will be stored.
 For "sqlite3" only. [Shared cache](https://www.sqlite.org/sharedcache.html) setting used for connecting to the database. (private, shared)
 Defaults to `private`.
 
+### query_retries
+
+This setting applies to `sqlite` only and controls the number of times the system retries a query when the database is locked. The default value is `0` (disabled).
+
+### transaction_retries
+
+This setting applies to `sqlite` only and controls the number of times the system retries a transaction when the database is locked. The default value is `5`.
+
 <hr />
 
 ## [remote_cache]
@@ -533,6 +541,10 @@ Default is `admin`.
 ### admin_password
 
 The password of the default Grafana Admin. Set once on first-run. Default is `admin`.
+
+# admin_email
+
+The email of the default Grafana Admin, created on startup. Default is `admin@localhost`.
 
 ### secret_key
 
@@ -2054,7 +2066,7 @@ Maximum duration of a single crawl. Default is 1h.
 
 Minimum interval between two subsequent scheduler runs. Default is 12h.
 
-Refer to the [dashboards previews]({{< relref "../../dashboards/previews/" >}}) documentation for detailed instructions.
+Refer to the [dashboards previews]({{< relref "../../search/dashboard-previews/" >}}) documentation for detailed instructions.
 
 ## [rbac]
 

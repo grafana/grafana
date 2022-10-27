@@ -60,9 +60,9 @@ export class ContextSrv {
   pinned: any;
   version: any;
   user: User;
-  isSignedIn: any;
-  isGrafanaAdmin: any;
-  isEditor: any;
+  isSignedIn: boolean;
+  isGrafanaAdmin: boolean;
+  isEditor: boolean;
   sidemenuSmallBreakpoint = false;
   hasEditPermissionInFolders: boolean;
   minRefreshInterval: string;
@@ -157,7 +157,7 @@ export class ContextSrv {
 
   hasAccessToExplore() {
     if (this.accessControlEnabled()) {
-      return this.hasPermission(AccessControlAction.DataSourcesExplore);
+      return this.hasPermission(AccessControlAction.DataSourcesExplore) && config.exploreEnabled;
     }
     return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
   }

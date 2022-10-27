@@ -1,0 +1,119 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PanelAlertTabContent Will render alerts belonging to panel and a button to create alert from panel queries 1`] = `
+Object {
+  "annotations": Array [
+    Object {
+      "key": "__dashboardUid__",
+      "value": "12",
+    },
+    Object {
+      "key": "__panelId__",
+      "value": "34",
+    },
+  ],
+  "condition": "C",
+  "folder": Object {
+    "id": 1,
+    "title": "super folder",
+  },
+  "name": "mypanel",
+  "queries": Array [
+    Object {
+      "datasourceUid": "mock-ds-2",
+      "model": Object {
+        "datasource": Object {
+          "type": "prometheus",
+          "uid": "mock-ds-2",
+        },
+        "expr": "sum(some_metric [15s])) by (app)",
+        "interval": "",
+        "intervalMs": 15000,
+        "refId": "A",
+      },
+      "queryType": "",
+      "refId": "A",
+      "relativeTimeRange": Object {
+        "from": 21600,
+        "to": 0,
+      },
+    },
+    Object {
+      "datasourceUid": "-100",
+      "model": Object {
+        "conditions": Array [
+          Object {
+            "evaluator": Object {
+              "params": Array [],
+              "type": "gt",
+            },
+            "operator": Object {
+              "type": "and",
+            },
+            "query": Object {
+              "params": Array [
+                "B",
+              ],
+            },
+            "reducer": Object {
+              "params": Array [],
+              "type": "last",
+            },
+            "type": "query",
+          },
+        ],
+        "datasource": Object {
+          "type": "__expr__",
+          "uid": "-100",
+        },
+        "expression": "A",
+        "hide": false,
+        "reducer": "last",
+        "refId": "B",
+        "type": "reduce",
+      },
+      "queryType": "",
+      "refId": "B",
+    },
+    Object {
+      "datasourceUid": "-100",
+      "model": Object {
+        "conditions": Array [
+          Object {
+            "evaluator": Object {
+              "params": Array [
+                0,
+              ],
+              "type": "gt",
+            },
+            "operator": Object {
+              "type": "and",
+            },
+            "query": Object {
+              "params": Array [
+                "C",
+              ],
+            },
+            "reducer": Object {
+              "params": Array [],
+              "type": "last",
+            },
+            "type": "query",
+          },
+        ],
+        "datasource": Object {
+          "type": "__expr__",
+          "uid": "-100",
+        },
+        "expression": "B",
+        "hide": false,
+        "refId": "C",
+        "type": "threshold",
+      },
+      "queryType": "",
+      "refId": "C",
+    },
+  ],
+  "type": "grafana",
+}
+`;

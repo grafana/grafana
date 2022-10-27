@@ -2,6 +2,8 @@ import { Location as HistoryLocation } from 'history';
 
 import { GrafanaPlugin, NavIndex, NavModel, NavModelItem, PanelPluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { getRootSectionForNode } from 'app/core/selectors/navModel';
 
 import { importPanelPluginFromMeta } from './importPanelPlugin';
 import { getPluginSettings } from './pluginSettings';
@@ -76,7 +78,7 @@ export function buildPluginSectionNav(
   section.children = (section?.children ?? []).map((child) => {
     if (child.children) {
       return {
-        ...child,
+        ...setPageToActive(child, currentUrl),
         children: child.children.map((pluginPage) => setPageToActive(pluginPage, currentUrl)),
       };
     }
@@ -92,15 +94,13 @@ export function getPluginSection(location: HistoryLocation, navIndex: NavIndex, 
   // First check if this page exist in navIndex using path, some plugin pages are not under their own section
   const byPath = navIndex[`standalone-plugin-page-${location.pathname}`];
   if (byPath) {
-    const parent = byPath.parentItem!;
-    // in case the standalone page is in nested section
-    return parent.parentItem ?? parent;
+    return getRootSectionForNode(byPath);
   }
 
   // Some plugins like cloud home don't have any precense in the navtree so we need to allow those
   const navTreeNodeForPlugin = navIndex[`plugin-page-${pluginId}`];
   if (!navTreeNodeForPlugin) {
-    return { id: 'root-plugin-page', text: 'Root plugin page', hideFromBreadcrumbs: true };
+    return navIndex[HOME_NAV_ID];
   }
 
   if (!navTreeNodeForPlugin.parentItem) {

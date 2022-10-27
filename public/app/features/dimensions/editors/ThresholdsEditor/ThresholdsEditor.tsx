@@ -14,12 +14,12 @@ import {
   Input,
   colors,
   ColorPicker,
-  Icon,
   ThemeContext,
   Button,
   Label,
   RadioButtonGroup,
   stylesFactory,
+  IconButton,
 } from '@grafana/ui';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
@@ -198,7 +198,12 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
           </div>
         }
         suffix={
-          <Icon className={styles.trashIcon} name="trash-alt" onClick={() => this.onRemoveThreshold(threshold)} />
+          <IconButton
+            aria-label={`Remove ${ariaLabel}`}
+            className={styles.trashIcon}
+            name="trash-alt"
+            onClick={() => this.onRemoveThreshold(threshold)}
+          />
         }
       />
     );
@@ -326,6 +331,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme): ThresholdStyles => {
     trashIcon: css`
       color: ${theme.colors.textWeak};
       cursor: pointer;
+      margin-right: 0;
 
       &:hover {
         color: ${theme.colors.text};

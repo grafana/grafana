@@ -1,8 +1,6 @@
 import chalk from 'chalk';
 import { program } from 'commander';
 
-import { changelogTask } from './tasks/changelog';
-import { closeMilestoneTask } from './tasks/closeMilestone';
 import { componentCreateTask } from './tasks/component.create';
 import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
 import { buildPackageTask } from './tasks/package.build';
@@ -38,25 +36,16 @@ export const run = (includeInternalScripts = false) => {
       });
 
     program
-      .command('changelog')
-      .option('-m, --milestone <milestone>', 'Specify milestone')
-      .description('Builds changelog markdown')
-      .action(async (cmd) => {
-        if (!cmd.milestone) {
-          console.log('Please specify milestone, example: -m <milestone id from github milestone URL>');
-          return;
-        }
-
-        await execTask(changelogTask)({
-          milestone: cmd.milestone,
-          silent: true,
-        });
-      });
-
-    program
       .command('node-version-check')
-      .description('Verify node version')
-      .action(async (cmd) => {
+      .description('[deprecated] Verify node version')
+      .action(async () => {
+        chalk.yellow.bold(
+          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        );
+        console.log(
+          'if you were reliant on this command we recommend https://www.npmjs.com/package/check-node-version'
+        );
+
         await execTask(nodeVersionCheckerTask)({});
       });
 
@@ -69,43 +58,38 @@ export const run = (includeInternalScripts = false) => {
 
     program
       .command('toolkit:build')
-      .description('Prepares grafana/toolkit dist package')
+      .description('[Deprecated] Prepares grafana/toolkit dist package')
       .action(async (cmd) => {
+        chalk.yellow.bold(
+          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        );
         await execTask(toolkitBuildTask)({});
       });
 
     program
       .command('searchTestData')
       .option('-c, --count <number_of_dashboards>', 'Specify number of dashboards')
-      .description('Setup test data for search')
+      .description('[deprecated] Setup test data for search')
       .action(async (cmd) => {
+        chalk.yellow.bold(
+          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        );
         await execTask(searchTestDataSetupTask)({ count: cmd.count });
-      });
-
-    program
-      .command('close-milestone')
-      .option('-m, --milestone <milestone>', 'Specify milestone')
-      .option('--dryRun', 'Only simulate actions')
-      .description('Helps ends a milestone by removing the cherry-pick label and closing it')
-      .action(async (cmd) => {
-        if (!cmd.milestone) {
-          console.log('Please specify milestone, example: -m <milestone id from github milestone URL>');
-          return;
-        }
-
-        await execTask(closeMilestoneTask)({
-          milestone: cmd.milestone,
-          dryRun: !!cmd.dryRun,
-        });
       });
 
     // React generator
     program
       .command('component:create')
       .description(
-        'Scaffold React components. Optionally add test, story and .mdx files. The components are created in the same dir the script is run from.'
+        '[deprecated] Scaffold React components. Optionally add test, story and .mdx files. The components are created in the same dir the script is run from.'
       )
       .action(async () => {
+        chalk.yellow.bold(
+          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        );
+        console.log(
+          'if you were reliant on this command we recommend https://www.npmjs.com/package/react-gen-component'
+        );
         await execTask(componentCreateTask)({});
       });
   }
@@ -239,6 +223,9 @@ export const run = (includeInternalScripts = false) => {
     .command('plugin:bundle-managed')
     .description('Builds managed plugins')
     .action(async (cmd) => {
+      chalk.yellow.bold(
+        `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+      );
       await execTask(bundleManagedTask)({});
     });
 
@@ -260,6 +247,9 @@ export const run = (includeInternalScripts = false) => {
     .command('plugin:update-circleci')
     .description('Update plugin')
     .action(async (cmd) => {
+      chalk.yellow.bold(
+        `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+      );
       await execTask(pluginUpdateTask)({});
     });
 

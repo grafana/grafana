@@ -17,6 +17,8 @@ A user can be a Member or an Administrator for a given team. Members of a team i
 
 For more information about teams, refer to [Teams and permissions]({{< relref "../roles-and-permissions/#teams-and-permissions" >}}).
 
+For information about how to optimize your teams, refer to [How to best organize your teams and resources in Grafana](https://grafana.com/blog/2022/03/14/how-to-best-organize-your-teams-and-resources-in-grafana/).
+
 ## Create a team
 
 A team is a group of users within an organization that have common dashboard and data source permission needs. Use teams to help make user-permission management more efficient.

@@ -76,7 +76,10 @@ export {
 } from './veneer/dashboard.types';
 
 // Raw generated types from playlist entity type.
-export type { Playlist } from './raw/playlist/x/playlist.gen';
+export type {
+  Playlist,
+  PlaylistItem
+} from './raw/playlist/x/playlist.gen';
 
 // Raw generated default consts from playlist entity type.
 export { defaultPlaylist } from './raw/playlist/x/playlist.gen';

@@ -25,6 +25,7 @@ aliases:
   - /docs/grafana/latest/variables/formatting-multi-value-variables/
   - /docs/grafana/latest/reference/templating/
   - /docs/grafana/latest/variables/manage-variable/
+  - /docs/grafana/latest/dashboards/variables/add-template-variables/
 title: Add and manage variables
 menuTitle: Manage variables
 weight: 100
@@ -112,6 +113,8 @@ For example, if you have server names or region names that never change, then yo
 ## Add a text box variable
 
 _Text box_ variables display a free text input field with an optional default value. This is the most flexible variable, because you can enter any value. Use this type of variable if you have metrics with high cardinality or if you want to update multiple panels in a dashboard at the same time.
+
+For more information about cardinality, refer to [What are cardinality spikes and why do they matter?](https://grafana.com/blog/2022/02/15/what-are-cardinality-spikes-and-why-do-they-matter/)
 
 1. [Enter general options](#enter-general-options).
 1. (Optional) In the **Default value** field, select the default value for the variable. If you do not enter anything in this field, then Grafana displays an empty text box for users to type text into.

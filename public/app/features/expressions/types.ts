@@ -11,11 +11,34 @@ export enum ExpressionQueryType {
 }
 
 export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [
-  { value: ExpressionQueryType.math, label: 'Math' },
-  { value: ExpressionQueryType.reduce, label: 'Reduce' },
-  { value: ExpressionQueryType.resample, label: 'Resample' },
-  { value: ExpressionQueryType.classic, label: 'Classic condition' },
-  { value: ExpressionQueryType.threshold, label: 'Threshold' },
+  {
+    value: ExpressionQueryType.math,
+    label: 'Math',
+    description: 'Free-form math formulas on time series or number data.',
+  },
+  {
+    value: ExpressionQueryType.reduce,
+    label: 'Reduce',
+    description:
+      'Takes one or more time series returned from a query or an expression and turns each series into a single number.',
+  },
+  {
+    value: ExpressionQueryType.resample,
+    label: 'Resample',
+    description: 'Changes the time stamps in each time series to have a consistent time interval.',
+  },
+  {
+    value: ExpressionQueryType.classic,
+    label: 'Classic condition',
+    description:
+      'Takes one or more time series returned from a query or an expression and checks if any of the series match the condition.',
+  },
+  {
+    value: ExpressionQueryType.threshold,
+    label: 'Threshold',
+    description:
+      'Takes one or more time series returned from a query or an expression and checks if any of the series match the threshold condition.',
+  },
 ];
 
 export const reducerTypes: Array<SelectableValue<string>> = [
@@ -52,6 +75,7 @@ export const reducerMode: Array<SelectableValue<ReducerMode>> = [
 ];
 
 export const downsamplingTypes: Array<SelectableValue<string>> = [
+  { value: ReducerID.last, label: 'Last', description: 'Fill with the last value' },
   { value: ReducerID.min, label: 'Min', description: 'Fill with the minimum value' },
   { value: ReducerID.max, label: 'Max', description: 'Fill with the maximum value' },
   { value: ReducerID.mean, label: 'Mean', description: 'Fill with the average value' },

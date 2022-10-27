@@ -1,4 +1,4 @@
-import { InternalTimeZones } from '@grafana/data';
+import { AdHocVariableFilter, InternalTimeZones } from '@grafana/data';
 
 import {
   Filters,
@@ -200,7 +200,7 @@ export class ElasticQueryBuilder {
     }
   }
 
-  build(target: ElasticsearchQuery, adhocFilters?: any) {
+  build(target: ElasticsearchQuery, adhocFilters?: AdHocVariableFilter[]) {
     // make sure query has defaults;
     target.metrics = target.metrics || [defaultMetricAgg()];
     target.bucketAggs = target.bucketAggs || [defaultBucketAgg()];
@@ -478,7 +478,7 @@ export class ElasticQueryBuilder {
     return query;
   }
 
-  getLogsQuery(target: ElasticsearchQuery, limit: number, adhocFilters?: any) {
+  getLogsQuery(target: ElasticsearchQuery, limit: number, adhocFilters?: AdHocVariableFilter[]) {
     let query: any = {
       size: 0,
       query: {
@@ -503,7 +503,7 @@ export class ElasticQueryBuilder {
 
     return {
       ...query,
-      aggs: this.build(target, null).aggs,
+      aggs: this.build(target).aggs,
       highlight: {
         fields: {
           '*': {},

@@ -8,6 +8,11 @@ import { createLogRow } from './__mocks__/logRow';
 
 const row = createLogRow({ entry: '4', timeEpochMs: 4 });
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
 describe('getRowContexts', () => {
   describe('when called with a DataFrame and results are returned', () => {
     it('then the result should be in correct format and filtered', async () => {

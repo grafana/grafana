@@ -20,10 +20,9 @@ import (
 	"github.com/grafana/cuetsy/ts"
 	"github.com/grafana/cuetsy/ts/ast"
 	gcgen "github.com/grafana/grafana/pkg/codegen"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema"
 )
-
-var lib = thema.NewLibrary(cuecontext.New())
 
 const sep = string(filepath.Separator)
 
@@ -46,6 +45,7 @@ func init() {
 // Generate Go and Typescript implementations for all coremodels, and populate the
 // coremodel static registry.
 func main() {
+	rt := cuectx.GrafanaThemaRuntime()
 	if len(os.Args) > 1 {
 		fmt.Fprintf(os.Stderr, "coremodel code generator does not currently accept any arguments\n, got %q", os.Args)
 		os.Exit(1)
@@ -60,7 +60,7 @@ func main() {
 	var lins []*gcgen.CoremodelDeclaration
 	for _, item := range items {
 		if item.IsDir() {
-			lin, err := gcgen.ExtractLineage(filepath.Join(cmroot, item.Name(), "coremodel.cue"), lib)
+			lin, err := gcgen.ExtractLineage(filepath.Join(cmroot, item.Name(), "coremodel.cue"), rt)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "could not process coremodel dir %s: %s\n", filepath.Join(cmroot, item.Name()), err)
 				os.Exit(1)

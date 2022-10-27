@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo } from 'react';
 
-import { isValidGoDuration } from '@grafana/data';
 import { Modal, Button, Form, Field, Input, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useDispatch } from 'app/types';
@@ -12,8 +11,8 @@ import { updateLotexNamespaceAndGroupAction } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { getRulesSourceName } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { durationValidationPattern } from '../../utils/time';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
+import { evaluateEveryValidationOptions } from '../rule-editor/GrafanaEvaluationBehavior';
 
 interface ModalProps {
   namespace: CombinedRuleNamespace;
@@ -100,22 +99,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               <Input
                 id="groupInterval"
                 placeholder="1m"
-                {...register('groupInterval', {
-                  pattern: durationValidationPattern,
-                  validate: (input) => {
-                    const validDuration = isValidGoDuration(input);
-                    if (!validDuration) {
-                      return 'Invalid duration. Valid example: 1m (Available units: h, m, s)';
-                    }
-
-                    const limitExceeded = !checkEvaluationIntervalGlobalLimit(input).exceedsLimit;
-                    if (limitExceeded) {
-                      return true;
-                    }
-
-                    return false;
-                  },
-                })}
+                {...register('groupInterval', evaluateEveryValidationOptions)}
               />
             </Field>
             {checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (

@@ -9,12 +9,11 @@ import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
-import { getRoutes as getDataConnectionsRoutes } from 'app/features/data-connections/routes';
+import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
-import { ServiceAccountPage } from 'app/features/serviceaccounts/ServiceAccountPage';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
@@ -269,7 +268,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/serviceaccounts/:id',
-      component: ServiceAccountPage,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ServiceAccountPage" */ 'app/features/serviceaccounts/ServiceAccountPage')
+      ),
     },
     {
       path: '/org/teams',

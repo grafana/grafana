@@ -462,7 +462,7 @@ export function ChangeOrgButton({
   );
 }
 
-const ExternalUserTooltip: React.FC = () => {
+const ExternalUserTooltip = () => {
   const theme = useTheme();
   const styles = getTooltipStyles(theme);
 

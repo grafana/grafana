@@ -8,7 +8,7 @@ import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ClassicCondition, ExpressionQuery, thresholdFunctions } from '../types';
 
 interface Props {
-  labelWidth: number;
+  labelWidth: number | 'auto';
   refIds: Array<SelectableValue<string>>;
   query: ExpressionQuery;
   onChange: (query: ExpressionQuery) => void;

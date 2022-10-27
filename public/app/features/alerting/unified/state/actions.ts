@@ -266,7 +266,7 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
         const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerApiEnabled
           ? {
               dataSourceName: name,
-              apiVersion: buildInfo.application === PromApplication.Lotex ? 'legacy' : 'config',
+              apiVersion: buildInfo.application === PromApplication.Cortex ? 'legacy' : 'config',
             }
           : undefined;
 
@@ -290,9 +290,9 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
   }
 );
 
-export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void> {
+export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
-    return Promise.all(
+    await Promise.allSettled(
       getAllRulesSourceNames().map(async (rulesSourceName) => {
         await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
 
@@ -303,12 +303,13 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void
           return;
         }
 
-        if (force || !promRules[rulesSourceName]?.loading) {
-          dispatch(fetchPromRulesAction({ rulesSourceName }));
-        }
-        if ((force || !rulerRules[rulesSourceName]?.loading) && dataSourceConfig.rulerConfig) {
-          dispatch(fetchRulerRulesAction({ rulesSourceName }));
-        }
+        const shouldLoadProm = force || !promRules[rulesSourceName]?.loading;
+        const shouldLoadRuler = (force || !rulerRules[rulesSourceName]?.loading) && dataSourceConfig.rulerConfig;
+
+        await Promise.allSettled([
+          shouldLoadProm && dispatch(fetchPromRulesAction({ rulesSourceName })),
+          shouldLoadRuler && dispatch(fetchRulerRulesAction({ rulesSourceName })),
+        ]);
       })
     );
   };

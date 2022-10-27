@@ -22,6 +22,7 @@ export interface DashboardInfo {
 export interface DataRequestInfo extends Partial<DashboardInfo> {
   datasourceName: string;
   datasourceId: number;
+  datasourceUid: string;
   datasourceType: string;
   panelId?: number;
   panelName?: string;

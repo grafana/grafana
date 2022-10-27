@@ -220,6 +220,11 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 			return resp
 		}
 
+		if errors.Is(err, login.ErrNoAuthProvider) {
+			resp = response.Error(http.StatusInternalServerError, "No authorization providers enabled", err)
+			return resp
+		}
+
 		// Do not expose disabled status,
 		// just show incorrect user credentials error (see #17947)
 		if errors.Is(err, login.ErrUserDisabled) {
@@ -296,6 +301,13 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 				c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
 				return
 			}
+		}
+	}
+
+	// Invalidate the OAuth tokens in case the User logged in with OAuth or the last external AuthEntry is an OAuth one
+	if entry, exists, _ := hs.oauthTokenService.HasOAuthEntry(c.Req.Context(), c.SignedInUser); exists {
+		if err := hs.oauthTokenService.InvalidateOAuthTokens(c.Req.Context(), entry); err != nil {
+			hs.log.Warn("failed to invalidate oauth tokens for user", "userId", c.UserID, "error", err)
 		}
 	}
 

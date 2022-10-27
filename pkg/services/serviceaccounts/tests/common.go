@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -12,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/require"
 )
 
 type TestUser struct {
@@ -73,7 +75,7 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 	require.NoError(t, err)
 
 	if testKey.IsExpired {
-		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
 			// Force setting expires to time before now to make key expired
 			var expires int64 = 1
 			key := apikey.APIKey{Expires: &expires}

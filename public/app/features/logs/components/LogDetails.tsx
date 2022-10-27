@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 
-import { Field, LinkModel, LogRowModel, GrafanaTheme2 } from '@grafana/data';
+import { Field, LinkModel, LogRowModel, GrafanaTheme2, CoreApp } from '@grafana/data';
 import { withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
 
 import { calculateFieldStats, calculateLogsLabelStats, calculateStats, getParser } from '../utils';
@@ -20,6 +20,7 @@ export interface Props extends Themeable2 {
   wrapLogMessage: boolean;
   className?: string;
   hasError?: boolean;
+  app?: CoreApp;
 
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -58,6 +59,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
 
   render() {
     const {
+      app,
       row,
       theme,
       hasError,
@@ -109,6 +111,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
                         getStats={() => calculateLogsLabelStats(getRows(), key)}
                         onClickFilterOutLabel={onClickFilterOutLabel}
                         onClickFilterLabel={onClickFilterLabel}
+                        row={row}
+                        app={app}
                       />
                     );
                   })}
@@ -146,6 +150,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       }
                       showDetectedFields={showDetectedFields}
                       wrapLogMessage={wrapLogMessage}
+                      row={row}
+                      app={app}
                     />
                   );
                 })}

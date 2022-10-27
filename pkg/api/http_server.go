@@ -15,7 +15,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/searchV2"
+	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/userauth"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -140,7 +144,10 @@ type HTTPServer struct {
 	ThumbService                 thumbs.Service
 	ExportService                export.ExportService
 	StorageService               store.StorageService
+	httpObjectStore              object.HTTPObjectStore
 	SearchV2HTTPService          searchV2.SearchHTTPService
+	QueryLibraryHTTPService      querylibrary.HTTPService
+	QueryLibraryService          querylibrary.Service
 	ContextHandler               *contexthandler.ContextHandler
 	SQLStore                     sqlstore.Store
 	AlertEngine                  *alerting.AlertEngine
@@ -171,7 +178,7 @@ type HTTPServer struct {
 	NotificationService          *notifications.NotificationService
 	DashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
-	folderService                dashboards.FolderService
+	folderService                folder.Service
 	DatasourcePermissionsService permissions.DatasourcePermissionsService
 	commentsService              *comments.Service
 	AlertNotificationService     *alerting.AlertNotificationService
@@ -200,6 +207,7 @@ type HTTPServer struct {
 	annotationsRepo        annotations.Repository
 	tagService             tag.Service
 	userAuthService        userauth.Service
+	oauthTokenService      oauthtoken.OAuthTokenService
 }
 
 type ServerOptions struct {
@@ -225,9 +233,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, queryDataService *query.Service,
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
-	authInfoService login.AuthInfoService, storageService store.StorageService,
+	authInfoService login.AuthInfoService, storageService store.StorageService, httpObjectStore object.HTTPObjectStore,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
-	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
+	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
 	dashboardsnapshotsService dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
@@ -241,7 +249,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
 	accesscontrolService accesscontrol.Service, dashboardThumbsService thumbs.DashboardThumbService, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
-	userAuthService userauth.Service,
+	userAuthService userauth.Service, queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service,
+	oauthTokenService oauthtoken.OAuthTokenService,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -302,6 +311,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		secretsMigrator:              secretsMigrator,
 		secretsPluginMigrator:        secretsPluginMigrator,
 		secretsStore:                 secretsStore,
+		httpObjectStore:              httpObjectStore,
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,
 		ldapGroups:                   ldapGroups,
@@ -343,6 +353,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		annotationsRepo:              annotationRepo,
 		tagService:                   tagService,
 		userAuthService:              userAuthService,
+		QueryLibraryHTTPService:      queryLibraryHTTPService,
+		QueryLibraryService:          queryLibraryService,
+		oauthTokenService:            oauthTokenService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

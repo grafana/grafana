@@ -19,23 +19,24 @@ import (
 	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 var update = true
 
-func TestMatrixResponses(t *testing.T) {
+func TestResponses(t *testing.T) {
 	tt := []struct {
 		name     string
 		filepath string
 	}{
 		{name: "parse a simple matrix response", filepath: "range_simple"},
 		{name: "parse a simple matrix response with value missing steps", filepath: "range_missing"},
-		{name: "parse a response with Infinity", filepath: "range_infinity"},
-		{name: "parse a response with NaN", filepath: "range_nan"},
+		{name: "parse a matrix response with Infinity", filepath: "range_infinity"},
+		{name: "parse a matrix response with NaN", filepath: "range_nan"},
 		{name: "parse a response with legendFormat __auto", filepath: "range_auto"},
+		{name: "parse an exemplar response", filepath: "exemplar"},
 	}
 
 	for _, test := range tt {
@@ -96,13 +97,14 @@ func makeMockedApi(responseBytes []byte) (apiv1.API, error) {
 // struct here, because it has `time.time` and `time.duration` fields that
 // cannot be unmarshalled from JSON automatically.
 type storedPrometheusQuery struct {
-	RefId        string
-	RangeQuery   bool
-	Start        int64
-	End          int64
-	Step         int64
-	Expr         string
-	LegendFormat string
+	RefId         string
+	RangeQuery    bool
+	ExemplarQuery bool
+	Start         int64
+	End           int64
+	Step          int64
+	Expr          string
+	LegendFormat  string
 }
 
 func loadStoredPrometheusQuery(fileName string) (storedPrometheusQuery, error) {
@@ -126,18 +128,19 @@ func runQuery(response []byte, sq storedPrometheusQuery) (*backend.QueryDataResp
 	tracer := tracing.InitializeTracerForTest()
 
 	qm := QueryModel{
-		RangeQuery:   sq.RangeQuery,
-		Expr:         sq.Expr,
-		Interval:     fmt.Sprintf("%ds", sq.Step),
-		IntervalMS:   sq.Step * 1000,
-		LegendFormat: sq.LegendFormat,
+		RangeQuery:    sq.RangeQuery,
+		ExemplarQuery: sq.ExemplarQuery,
+		Expr:          sq.Expr,
+		Interval:      fmt.Sprintf("%ds", sq.Step),
+		IntervalMS:    sq.Step * 1000,
+		LegendFormat:  sq.LegendFormat,
 	}
 
 	b := Buffered{
 		intervalCalculator: intervalv2.NewCalculator(),
 		tracer:             tracer,
 		TimeInterval:       "15s",
-		log:                &fakeLogger{},
+		log:                &logtest.Fake{},
 		client:             api,
 	}
 
@@ -165,14 +168,13 @@ func runQuery(response []byte, sq storedPrometheusQuery) (*backend.QueryDataResp
 		return nil, err
 	}
 
+	// parseTimeSeriesQuery forces range queries if the only query is an exemplar query
+	// so we need to set it back to false
+	if qm.ExemplarQuery {
+		for i := range queries {
+			queries[i].RangeQuery = false
+		}
+	}
+
 	return b.runQueries(context.Background(), queries)
 }
-
-type fakeLogger struct {
-	log.Logger
-}
-
-func (fl *fakeLogger) Debug(testMessage string, ctx ...interface{}) {}
-func (fl *fakeLogger) Info(testMessage string, ctx ...interface{})  {}
-func (fl *fakeLogger) Warn(testMessage string, ctx ...interface{})  {}
-func (fl *fakeLogger) Error(testMessage string, ctx ...interface{}) {}
