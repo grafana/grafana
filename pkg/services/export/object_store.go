@@ -9,9 +9,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/kind/snapshot"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -26,16 +28,26 @@ type objectStoreJob struct {
 	cfg           ExportConfig
 	broadcaster   statusBroadcaster
 	stopRequested bool
+	user          *user.SignedInUser
 
-	sess            *session.SessionDB
-	playlistService playlist.Service
-	store           object.ObjectStoreServer
+	sess               *session.SessionDB
+	playlistService    playlist.Service
+	store              object.ObjectStoreServer
+	dashboardsnapshots dashboardsnapshots.Service
 }
 
-func startObjectStoreJob(cfg ExportConfig, broadcaster statusBroadcaster, db db.DB, playlistService playlist.Service, store object.ObjectStoreServer) (Job, error) {
+func startObjectStoreJob(user *user.SignedInUser,
+	cfg ExportConfig,
+	broadcaster statusBroadcaster,
+	db db.DB,
+	playlistService playlist.Service,
+	store object.ObjectStoreServer,
+	dashboardsnapshots dashboardsnapshots.Service,
+) (Job, error) {
 	job := &objectStoreJob{
 		logger:      log.New("export_to_object_store_job"),
 		cfg:         cfg,
+		user:        user,
 		broadcaster: broadcaster,
 		status: ExportStatus{
 			Running: true,
@@ -44,9 +56,10 @@ func startObjectStoreJob(cfg ExportConfig, broadcaster statusBroadcaster, db db.
 			Count:   make(map[string]int, 10),
 			Index:   0,
 		},
-		sess:            db.GetSqlxSession(),
-		playlistService: playlistService,
-		store:           store,
+		sess:               db.GetSqlxSession(),
+		playlistService:    playlistService,
+		store:              store,
+		dashboardsnapshots: dashboardsnapshots,
 	}
 
 	broadcaster(job.status)
@@ -93,77 +106,141 @@ func (e *objectStoreJob) start() {
 	what := models.StandardKindDashboard
 	e.status.Count[what] = 0
 
-	// TODO paging etc
-	// NOTE: doing work inside rows.Next() leads to database locked
-	dashInfo, err := e.getDashboards(ctx)
-	if err != nil {
-		e.status.Status = "error: " + err.Error()
-		return
-	}
-
-	for _, dash := range dashInfo {
-		rowUser.OrgID = dash.OrgID
-		rowUser.UserID = dash.UpdatedBy
-		if dash.UpdatedBy < 0 {
-			rowUser.UserID = 0 // avoid Uint64Val issue????
-		}
-
-		_, err = e.store.Write(ctx, &object.WriteObjectRequest{
-			UID:     fmt.Sprintf("export/%s", dash.UID),
-			Kind:    models.StandardKindDashboard,
-			Body:    dash.Body,
-			Comment: "export from dashboard table",
-		})
-		if err != nil {
-			e.status.Status = "error: " + err.Error()
-			return
-		}
-		e.status.Changed = time.Now().UnixMilli()
-		e.status.Index++
-		e.status.Count[what] += 1
-		e.status.Last = fmt.Sprintf("ITEM: %s", dash.UID)
-		e.broadcaster(e.status)
-	}
-
-	// Playlists
-	what = models.StandardKindPlaylist
-	e.status.Count[what] = 0
-	rowUser.OrgID = 1
-	rowUser.UserID = 1
-	res, err := e.playlistService.Search(ctx, &playlist.GetPlaylistsQuery{
-		OrgId: rowUser.OrgID, // TODO... all or orgs
-		Limit: 5000,
-	})
-	if err != nil {
-		e.status.Status = "error: " + err.Error()
-		return
-	}
-	for _, item := range res {
-		playlist, err := e.playlistService.Get(ctx, &playlist.GetPlaylistByUidQuery{
-			UID:   item.UID,
-			OrgId: rowUser.OrgID,
-		})
+	if false {
+		// TODO paging etc
+		// NOTE: doing work inside rows.Next() leads to database locked
+		dashInfo, err := e.getDashboards(ctx)
 		if err != nil {
 			e.status.Status = "error: " + err.Error()
 			return
 		}
 
-		_, err = e.store.Write(ctx, &object.WriteObjectRequest{
-			UID:     fmt.Sprintf("export/%s", playlist.Uid),
-			Kind:    models.StandardKindPlaylist,
-			Body:    prettyJSON(playlist),
-			Comment: "export from playlists",
+		for _, dash := range dashInfo {
+			rowUser.OrgID = dash.OrgID
+			rowUser.UserID = dash.UpdatedBy
+			if dash.UpdatedBy < 0 {
+				rowUser.UserID = 0 // avoid Uint64Val issue????
+			}
+
+			_, err = e.store.Write(ctx, &object.WriteObjectRequest{
+				UID:     fmt.Sprintf("export/%s", dash.UID),
+				Kind:    models.StandardKindDashboard,
+				Body:    dash.Body,
+				Comment: "export from dashboard table",
+			})
+			if err != nil {
+				e.status.Status = "error: " + err.Error()
+				return
+			}
+			e.status.Changed = time.Now().UnixMilli()
+			e.status.Index++
+			e.status.Count[what] += 1
+			e.status.Last = fmt.Sprintf("ITEM: %s", dash.UID)
+			e.broadcaster(e.status)
+		}
+
+		// Playlists
+		what = models.StandardKindPlaylist
+		e.status.Count[what] = 0
+		rowUser.OrgID = 1
+		rowUser.UserID = 1
+		res, err := e.playlistService.Search(ctx, &playlist.GetPlaylistsQuery{
+			OrgId: rowUser.OrgID, // TODO... all or orgs
+			Limit: 5000,
 		})
 		if err != nil {
 			e.status.Status = "error: " + err.Error()
 			return
 		}
-		e.status.Changed = time.Now().UnixMilli()
-		e.status.Index++
-		e.status.Count[what] += 1
-		e.status.Last = fmt.Sprintf("ITEM: %s", playlist.Uid)
-		e.broadcaster(e.status)
+		for _, item := range res {
+			playlist, err := e.playlistService.Get(ctx, &playlist.GetPlaylistByUidQuery{
+				UID:   item.UID,
+				OrgId: rowUser.OrgID,
+			})
+			if err != nil {
+				e.status.Status = "error: " + err.Error()
+				return
+			}
+
+			_, err = e.store.Write(ctx, &object.WriteObjectRequest{
+				UID:     fmt.Sprintf("export/%s", playlist.Uid),
+				Kind:    models.StandardKindPlaylist,
+				Body:    prettyJSON(playlist),
+				Comment: "export from playlists",
+			})
+			if err != nil {
+				e.status.Status = "error: " + err.Error()
+				return
+			}
+			e.status.Changed = time.Now().UnixMilli()
+			e.status.Index++
+			e.status.Count[what] += 1
+			e.status.Last = fmt.Sprintf("ITEM: %s", playlist.Uid)
+			e.broadcaster(e.status)
+		}
 	}
+
+	// TODO.. query lookup
+	orgIDs := []int64{1}
+	what = "snapshot"
+	for _, orgId := range orgIDs {
+		cmd := &dashboardsnapshots.GetDashboardSnapshotsQuery{
+			OrgId:        orgId,
+			Limit:        500000,
+			SignedInUser: e.user,
+		}
+
+		err := e.dashboardsnapshots.SearchDashboardSnapshots(ctx, cmd)
+		if err != nil {
+			e.status.Status = "error: " + err.Error()
+			return
+		}
+
+		for _, dto := range cmd.Result {
+			m := snapshot.Model{
+				Name:        dto.Name,
+				ExternalURL: dto.ExternalUrl,
+				Expires:     dto.Expires.UnixMilli(),
+			}
+			rowUser.OrgID = dto.OrgId
+			rowUser.UserID = dto.UserId
+
+			snapcmd := &dashboardsnapshots.GetDashboardSnapshotQuery{
+				Key: dto.Key,
+			}
+			err = e.dashboardsnapshots.GetDashboardSnapshot(ctx, snapcmd)
+			if err == nil {
+				res := snapcmd.Result
+				m.DeleteKey = res.DeleteKey
+				m.ExternalURL = res.ExternalUrl
+
+				snap := res.Dashboard
+				m.DashboardUID = snap.Get("uid").MustString("")
+				snap.Del("uid")
+				snap.Del("id")
+
+				b, _ := snap.MarshalJSON()
+				m.Snapshot = b
+			}
+
+			_, err = e.store.Write(ctx, &object.WriteObjectRequest{
+				UID:     dto.Key,
+				Kind:    models.StandardKindSnapshot,
+				Body:    prettyJSON(m),
+				Comment: "export from snapshtts",
+			})
+			if err != nil {
+				e.status.Status = "error: " + err.Error()
+				return
+			}
+			e.status.Changed = time.Now().UnixMilli()
+			e.status.Index++
+			e.status.Count[what] += 1
+			e.status.Last = fmt.Sprintf("ITEM: %s", dto.Name)
+			e.broadcaster(e.status)
+		}
+	}
+
 }
 
 type dashInfo struct {

@@ -9,6 +9,7 @@ import "context"
 const (
 	StandardKindDashboard = "dashboard"
 	StandardKindPlaylist  = "playlist"
+	StandardKindSnapshot  = "snapshot"
 	StandardKindFolder    = "folder"
 
 	// StandardKindDataSource: not a real kind yet, but used to define references from dashboards

@@ -28,6 +28,7 @@ func TestKindRegistry(t *testing.T) {
 		"kind3",
 		"playlist",
 		"png",
+		"snapshot",
 		"test",
 	}, ids)
 
