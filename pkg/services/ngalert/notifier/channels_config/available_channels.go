@@ -311,6 +311,22 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 						},
 					},
 				},
+				{ // New in 9.3.
+					Label:        "Title",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Templated title to display",
+					PropertyName: "title",
+					Placeholder:  channels.DefaultMessageTitleEmbed,
+				},
+				{ // New in 9.3.
+					Label:        "Description",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Templated description of the message",
+					PropertyName: "description",
+					Placeholder:  channels.DefaultMessageEmbed,
+				},
 			},
 		},
 		{
