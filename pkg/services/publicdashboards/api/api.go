@@ -64,18 +64,18 @@ func (api *Api) RegisterAPIEndpoints() {
 
 	// Auth endpoints
 	auth := accesscontrol.Middleware(api.AccessControl)
-	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
+	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":dashboardUid"))
 
 	// List public dashboards for org
 	api.RouteRegister.Get("/api/dashboards/public-dashboards", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
 
 	// Get public dashboard
-	api.RouteRegister.Get("/api/dashboards/uid/:dashboardUid/public-dashboard",
+	api.RouteRegister.Get("/api/dashboards/uid/:dashboardUid/public-dashboards",
 		auth(middleware.ReqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, uidScope)),
 		routing.Wrap(api.GetPublicDashboard))
 
 	// Create/Update Public Dashboard
-	api.RouteRegister.Post("/api/dashboards/uid/:dashboardUid/public-dashboard",
+	api.RouteRegister.Post("/api/dashboards/uid/:dashboardUid/public-dashboards",
 		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.SavePublicDashboard))
 }

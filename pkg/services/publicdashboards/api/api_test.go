@@ -236,7 +236,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			response := callAPI(
 				testServer,
 				http.MethodGet,
-				"/api/dashboards/uid/1/public-dashboard",
+				"/api/dashboards/uid/1/public-dashboards",
 				nil,
 				t,
 			)
@@ -347,7 +347,7 @@ func TestApiSavePublicDashboard(t *testing.T) {
 			response := callAPI(
 				testServer,
 				http.MethodPost,
-				"/api/dashboards/uid/1/public-dashboard",
+				"/api/dashboards/uid/1/public-dashboards",
 				strings.NewReader(`{ "isPublic": true }`),
 				t,
 			)
