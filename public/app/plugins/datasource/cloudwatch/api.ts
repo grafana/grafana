@@ -10,6 +10,8 @@ import {
   DescribeLogGroupsRequest,
   GetDimensionKeysRequest,
   GetDimensionValuesRequest,
+  GetMetricsRequest,
+  MetricResponse,
   MultiFilters,
 } from './types';
 
@@ -39,7 +41,9 @@ export class CloudWatchAPI extends CloudWatchRequest {
   }
 
   getNamespaces() {
-    return this.memoizedGetRequest<SelectableResourceValue[]>('namespaces');
+    return this.memoizedGetRequest<string[]>('namespaces').then((namespaces) =>
+      namespaces.map((n) => ({ label: n, value: n }))
+    );
   }
 
   async describeLogGroups(params: DescribeLogGroupsRequest) {
@@ -56,23 +60,21 @@ export class CloudWatchAPI extends CloudWatchRequest {
     });
   }
 
-  async getMetrics(namespace: string | undefined, region?: string) {
+  async getMetrics({ region, namespace }: GetMetricsRequest): Promise<Array<SelectableValue<string>>> {
     if (!namespace) {
       return [];
     }
 
-    return this.memoizedGetRequest<SelectableResourceValue[]>('metrics', {
+    return this.memoizedGetRequest<MetricResponse[]>('metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
-    });
+    }).then((metrics) => metrics.map((m) => ({ label: m.name, value: m.name })));
   }
 
-  async getAllMetrics(region: string): Promise<Array<{ metricName?: string; namespace: string }>> {
-    const values = await this.memoizedGetRequest<SelectableResourceValue[]>('all-metrics', {
+  async getAllMetrics({ region }: GetMetricsRequest): Promise<Array<{ metricName?: string; namespace: string }>> {
+    return this.memoizedGetRequest<MetricResponse[]>('metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
-    });
-
-    return values.map((v) => ({ metricName: v.value, namespace: v.text }));
+    }).then((metrics) => metrics.map((m) => ({ metricName: m.name, namespace: m.namespace })));
   }
 
   async getDimensionKeys({

@@ -9,10 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-const (
-	globalOrgID = 0
-)
-
 func ProvideService(sql db.DB) *AccessControlStore {
 	return &AccessControlStore{sql}
 }
@@ -29,7 +25,7 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 			return nil
 		}
 
-		filter, params := userRolesFilter(query.OrgID, query.UserID, query.TeamIDs, query.Roles)
+		filter, params := accesscontrol.UserRolesFilter(query.OrgID, query.UserID, query.TeamIDs, query.Roles)
 
 		q := `
 		SELECT
@@ -57,57 +53,6 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	})
 
 	return result, err
-}
-
-func userRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (string, []interface{}) {
-	var params []interface{}
-	builder := strings.Builder{}
-
-	// This is an additional security. We should never have permissions granted to userID 0.
-	// Only allow real users to get user/team permissions (anonymous/apikeys)
-	if userID > 0 {
-		builder.WriteString(`
-			SELECT ur.role_id
-			FROM user_role AS ur
-			WHERE ur.user_id = ?
-			AND (ur.org_id = ? OR ur.org_id = ?)
-		`)
-		params = []interface{}{userID, orgID, globalOrgID}
-	}
-
-	if len(teamIDs) > 0 {
-		if builder.Len() > 0 {
-			builder.WriteString("UNION")
-		}
-		builder.WriteString(`
-			SELECT tr.role_id FROM team_role as tr
-			WHERE tr.team_id IN(?` + strings.Repeat(", ?", len(teamIDs)-1) + `)
-			AND tr.org_id = ?
-		`)
-		for _, id := range teamIDs {
-			params = append(params, id)
-		}
-		params = append(params, orgID)
-	}
-
-	if len(roles) != 0 {
-		if builder.Len() > 0 {
-			builder.WriteString("UNION")
-		}
-
-		builder.WriteString(`
-			SELECT br.role_id FROM builtin_role AS br
-			WHERE br.role IN (?` + strings.Repeat(", ?", len(roles)-1) + `)
-			AND (br.org_id = ? OR br.org_id = ?)
-		`)
-		for _, role := range roles {
-			params = append(params, role)
-		}
-
-		params = append(params, orgID, globalOrgID)
-	}
-
-	return "INNER JOIN (" + builder.String() + ") as all_role ON role.id = all_role.role_id", params
 }
 
 func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {

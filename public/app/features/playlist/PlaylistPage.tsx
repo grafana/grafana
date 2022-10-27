@@ -56,7 +56,7 @@ export const PlaylistPage = () => {
         {showSearch && (
           <PageActionBar
             searchQuery={searchQuery}
-            linkButton={contextSrv.isEditor && { title: 'New playlist', href: '/playlists/new' }}
+            linkButton={contextSrv.isEditor ? { title: 'New playlist', href: '/playlists/new' } : undefined}
             setSearchQuery={setSearchQuery}
           />
         )}
