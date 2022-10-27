@@ -31,7 +31,6 @@ require (
 	github.com/centrifugal/centrifuge v0.25.0
 	github.com/cortexproject/cortex v1.10.1-0.20211014125347-85c378182d0d
 	github.com/crewjam/saml v0.4.8
-	github.com/davecgh/go-spew v1.1.1
 	github.com/denisenkom/go-mssqldb v0.12.0
 	github.com/dop251/goja v0.0.0-20210804101310-32956a348b49
 	github.com/fatih/color v1.13.0
@@ -45,7 +44,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/go-stack/stack v1.8.1
 	github.com/gobwas/glob v0.2.3
-	github.com/gofrs/uuid v4.3.0+incompatible // indirect
+	github.com/gofrs/uuid v4.3.0+incompatible
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
 	github.com/golang/snappy v0.0.4
@@ -268,6 +267,7 @@ require (
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/drone/drone-yaml v0.0.0-20190729072335-70fa398b3560 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect

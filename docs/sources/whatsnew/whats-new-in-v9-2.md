@@ -226,3 +226,12 @@ Prometheus users running Prometheus v2.24 and higher can use the [labels endpoin
 This decreases load times for templated high-cardinality Prometheus instances.
 
 If you want to benefit from this endpoint you must first configure the Prometheus type and version in any Prometheus data sources' [configuration]({{< relref "../datasources/prometheus/" >}}).
+
+## New Prometheus streaming parser
+
+In Grafana v9.2, you can enable the `prometheusStreamingJSONParser` [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) to use a better-performing, memory-efficient streaming JSON client for Prometheus.
+We'll make this client the default in Grafana v9.3.
+
+When Prometheus returns `NaN` values, this new client doesn't change them, neither to the value `null` nor to `0` as in recent Grafana versions.
+If you use this new Prometheus streaming parser with Grafana Managed Alerts, this change in behavior might trigger alerts.
+To avoid this, select the "Drop non-numeric values" option in the Reduce expression to drop `NaN` values.
