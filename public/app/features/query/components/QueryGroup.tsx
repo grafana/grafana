@@ -82,8 +82,25 @@ export class QueryGroup extends PureComponent<Props, State> {
       const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource);
       const defaultDataSource = await this.dataSourceSrv.get();
       const datasource = ds.getRef();
-      const queries = options.queries.map((q) => (q.datasource ? q : { ...q, datasource }));
+      let changedQueries = false;
+      const queries = await Promise.all(options.queries.map(async (q) => {
+        if (!q.datasource) {
+          q = { ...q, datasource };
+          changedQueries = true;
+        }
+        if (Object.keys(q).length === 2) {
+          // If query has only refId and datasource, try to set the default query for its datasource
+          q = {...this.newQuery(await this.dataSourceSrv.get(q.datasource), dsSettings), ...q};
+          changedQueries = true;
+        }
+        return q;
+      }));
       this.setState({ queries, dataSource: ds, dsSettings, defaultDataSource });
+      if (changedQueries) {
+        this.onChange({
+          queries
+        });
+      }
     } catch (error) {
       console.log('failed to load data source', error);
     }
@@ -107,6 +124,9 @@ export class QueryGroup extends PureComponent<Props, State> {
 
     // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value
     const queries = await updateQueries(nextDS, newSettings.uid, this.state.queries, currentDS);
+    if (queries.length === 0) {
+      queries.push(this.newQuery(nextDS, newSettings) as DataQuery);
+    }
 
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
     this.onChange({
@@ -132,13 +152,18 @@ export class QueryGroup extends PureComponent<Props, State> {
     this.onScrollBottom();
   };
 
-  newQuery(): Partial<DataQuery> {
-    const { dsSettings, defaultDataSource } = this.state;
+  newQuery(newDs?: DataSourceApi, newSettings?: DataSourceInstanceSettings): Partial<DataQuery> {
+    const { defaultDataSource } = this.state;
+    const dsSettings = newSettings || this.state.dsSettings;
 
     const ds = !dsSettings?.meta.mixed ? dsSettings : defaultDataSource;
 
+    let defaultQuery = (newDs || this.state.dataSource)?.getDefaultQuery?.(CoreApp.PanelEditor);
+    if (!defaultQuery) {
+      defaultQuery = { refId: 'A' };
+    }
     return {
-      ...this.state.dataSource?.getDefaultQuery?.(CoreApp.PanelEditor),
+      ...defaultQuery,
       datasource: { uid: ds?.uid, type: ds?.type },
     };
   }

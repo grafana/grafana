@@ -27,12 +27,12 @@ export async function updateQueries(
     }
     // Otherwise clear queries
     else {
-      return [{ refId: 'A', datasource }];
+      return [];
     }
   }
 
   if (nextQueries.length === 0) {
-    return [{ refId: 'A', datasource }];
+    return [];
   }
 
   // Set data source on all queries except expression queries
