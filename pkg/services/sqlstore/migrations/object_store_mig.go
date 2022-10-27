@@ -14,11 +14,10 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 		Name: "object",
 		Columns: []*migrator.Column{
 			// Object key contains everything required to make it unique across all instances
-			// orgId+kind+uid+scope?
+			// orgId+scope+kind+uid
 			{Name: "key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false, IsPrimaryKey: true},
 
-			// If objects are organized into folders (ie '/' exists in the uid),
-			// this will optimize the common use case of listing all files in a folder
+			// This is an optimization for listing everything at the same level in the object store
 			{Name: "parent_folder_key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
 
 			// The object type
@@ -30,11 +29,11 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false}, // md5(body)
 			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
 
-			// Who changed what when
+			// Who changed what when -- We should avoid JOINs with other tables in the database
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
-			{Name: "updated_by", Type: migrator.DB_Int, Nullable: false}, // joined to user table
-			{Name: "created_by", Type: migrator.DB_Int, Nullable: false}, // joined to user table
+			{Name: "updated_by", Type: migrator.DB_Int, Nullable: false},
+			{Name: "created_by", Type: migrator.DB_Int, Nullable: false},
 
 			// For objects that are synchronized from an external source (ie provisioning or git)
 			{Name: "sync_src", Type: migrator.DB_Text, Nullable: true},
@@ -121,8 +120,10 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 		return
 	}
 
-	// Migration cleanup hoops -- NOTE dev only feature toggle
-	suffix := " [v0]" // change this when we want to wipe and reset the object tables
+	// Migration cleanups: given that this is a complex setup
+	// that requries a lot of testing before we are ready to push out of dev
+	// this script lets us easy wipe previous changes and initalize clean tables
+	suffix := " (v0)" // change this when we want to wipe and reset the object tables
 	mg.AddMigration("ObjectStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
 		DELETE FROM migration_log WHERE migration_id LIKE 'ObjectStore init%';
 		DROP table if exists "object"; 
