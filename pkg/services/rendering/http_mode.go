@@ -155,9 +155,11 @@ func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers m
 	resp, err := netClient.Do(req)
 	if err != nil {
 		rs.log.Error("Failed to send request to remote rendering service", "error", err)
-		e, ok := err.(*url.Error)
-		if ok && e.Timeout() {
-			return nil, ErrServerTimeout
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) {
+			if urlErr.Timeout() {
+				return nil, ErrServerTimeout
+			}
 		}
 		return nil, fmt.Errorf("failed to send request to remote rendering service: %w", err)
 	}
