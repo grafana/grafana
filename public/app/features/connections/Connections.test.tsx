@@ -10,7 +10,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import { getPluginsStateMock } from '../plugins/admin/__mocks__';
 
-import ConnectionsPage from './ConnectionsPage';
+import Connections from './Connections';
 import { navIndex } from './__mocks__/store.navIndex.mock';
 import { ROUTE_BASE_ID, ROUTES } from './constants';
 
@@ -24,13 +24,13 @@ const renderPage = (path = `/${ROUTE_BASE_ID}`): RenderResult => {
   return render(
     <Provider store={store}>
       <Router history={locationService.getHistory()}>
-        <ConnectionsPage />
+        <Connections />
       </Router>
     </Provider>
   );
 };
 
-describe('Connections Page', () => {
+describe('Connections', () => {
   const mockDatasources = getMockDataSources(3);
 
   beforeEach(() => {
