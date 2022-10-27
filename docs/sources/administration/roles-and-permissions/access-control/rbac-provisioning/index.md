@@ -2,118 +2,32 @@
 aliases:
   - /docs/grafana/latest/enterprise/access-control/rbac-provisioning/
   - /docs/grafana/latest/administration/roles-and-permissions/access-control/rbac-provisioning/
-description: Learn about RBAC provisioning and view an example YAML provisioning file
-  that configures Grafana role assignments.
+description: Learn about RBAC provisioning
 menuTitle: RBAC provisioning
-title: Grafana RBAC provisioning
+title: RBAC provisioning
 weight: 60
 ---
 
-# Grafana RBAC provisioning
+# Provision RBAC resources
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
+Role-based access control provisioning provides a way to manage your access control setup without having to make manual changes through the UI or APIs.
+You can provision custom roles as well as role assignments.
 
-You can create, change or remove [Custom roles]({{< relref "./manage-rbac-roles/#create-custom-roles-using-provisioning" >}}) and create or remove [basic role assignments]({{< relref "./assign-rbac-roles/#assign-a-fixed-role-to-a-basic-role-using-provisioning" >}}), by adding one or more YAML configuration files in the `provisioning/access-control/` directory.
+There are two options to choose from:
 
-Grafana performs provisioning during startup. After you make a change to the configuration file, you can reload it during runtime. You do not need to restart the Grafana server for your changes to take effect.
+1. Provision your RBAC setup using Terraform.
 
-**Before you begin:**
+1. Use Grafana file provisioning to provision your RBAC setup through yaml configuration files.
 
-- Ensure that you have access to files on the server where Grafana is running.
+**Note:**
 
-**To manage and assign RBAC roles using provisioning:**
+Currently, provisioning for Grafana Alerting supports alert rules, contact points, mute timings, and templates. Provisioned alerting resources can only be edited in the source that created them and not from within Grafana or any other source. For example, if you provision your alerting resources using files from disk, you cannot edit the data in Terraform or from within Grafana.
 
-1. Sign in to the Grafana server.
+**Useful Links:**
 
-2. Locate the Grafana provisioning folder.
+[Grafana provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/)
 
-3. Create a new YAML in the following folder: **provisioning/access-control**. For example, `provisioning/access-control/custom-roles.yml`
+[Grafana Cloud provisioning](https://grafana.com/docs/grafana-cloud/infrastructure-as-code/terraform/)
 
-4. Add RBAC provisioning details to the configuration file. See [manage RBAC roles]({{< relref "./manage-rbac-roles/" >}}) and [assign RBAC roles]({{< relref "./assign-rbac-roles/" >}}) for instructions, and see this [example role provisioning file]({{< relref "./rbac-provisioning/#example" >}}) for a complete example of a provisioning file.
-
-5. Reload the provisioning configuration file.
-
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../../developers/http_api/admin/#reload-provisioning-configurations" >}}).
-
-## Example role configuration file using Grafana provisioning
-
-The following example shows a complete YAML configuration file that:
-
-- Create custom roles
-- Delete custom roles
-- Update basic roles permissions
-- Assign roles to teams
-- Revoke assignments of roles to teams
-
-## Example
-
-```yaml
----
-# config file version
-apiVersion: 2
-
-# <list> list of roles to insert/update/delete
-roles:
-  # <string, required> name of the role you want to create or update. Required.
-  - name: 'custom:users:writer'
-    # <string> uid of the role. Has to be unique for all orgs.
-    uid: customuserswriter1
-    # <string> description of the role, informative purpose only.
-    description: 'Create, read, write users'
-    # <int> version of the role, Grafana will update the role when increased.
-    version: 2
-    # <int> org id. Defaults to Grafana's default if not specified.
-    orgId: 1
-    # <list> list of the permissions granted by this role.
-    permissions:
-      # <string, required> action allowed.
-      - action: 'users:read'
-        #<string> scope it applies to.
-        scope: 'users:*'
-      - action: 'users:write'
-        scope: 'users:*'
-      - action: 'users:create'
-  - name: 'custom:global:users:reader'
-    # <bool> overwrite org id and creates a global role.
-    global: true
-    # <string> state of the role. Defaults to 'present'. If 'absent', role will be deleted.
-    state: 'absent'
-    # <bool> force deletion revoking all grants of the role.
-    force: true
-  - uid: 'basic_editor'
-    version: 2
-    global: true
-    # <list> list of roles to copy permissions from.
-    from:
-      - uid: 'basic_editor'
-        global: true
-      - name: 'fixed:users:writer'
-        global: true
-    # <list> list of the permissions to add/remove on top of the copied ones.
-    permissions:
-      - action: 'users:read'
-        scope: 'users:*'
-      - action: 'users:write'
-        scope: 'users:*'
-        # <string> state of the permission. Defaults to 'present'. If 'absent', the permission will be removed.
-        state: absent
-
-# <list> list role assignments to teams to create or remove.
-teams:
-  # <string, required> name of the team you want to assign roles to. Required.
-  - name: 'Users writers'
-    # <int> org id. Will default to Grafana's default if not specified.
-    orgId: 1
-    # <list> list of roles to assign to the team
-    roles:
-      # <string> uid of the role you want to assign to the team.
-      - uid: 'customuserswriter1'
-        # <int> org id. Will default to Grafana's default if not specified.
-        orgId: 1
-      # <string> name of the role you want to assign to the team.
-      - name: 'fixed:users:writer'
-        # <bool> overwrite org id to specify the role is global.
-        global: true
-        # <string> state of the assignment. Defaults to 'present'. If 'absent', the assignment will be revoked.
-        state: absent
-```
+// TODO update the link
+[Grafana RBAC provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/rbac_provisioning)
