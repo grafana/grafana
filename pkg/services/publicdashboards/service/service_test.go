@@ -498,7 +498,6 @@ func TestDeletePublicDashboard(t *testing.T) {
 			} else {
 				assert.Equal(t, ErrPublicDashboardIdentifierNotSet, deletedError)
 			}
-
 		})
 	}
 }
