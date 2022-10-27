@@ -102,7 +102,7 @@ func TestGetPublicDashboard(t *testing.T) {
 			}
 
 			fakeStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(test.StoreResp.pd, test.StoreResp.err)
-			fakeStore.On("FindDashboard", mock.Anything, mock.Anything).Return(test.StoreResp.d, test.StoreResp.err)
+			fakeStore.On("FindDashboard", mock.Anything, mock.Anything, mock.Anything).Return(test.StoreResp.d, test.StoreResp.err)
 
 			pdc, dash, err := service.FindPublicDashboardAndDashboardByAccessToken(context.Background(), test.AccessToken)
 			if test.ErrResp != nil {
@@ -236,7 +236,7 @@ func TestSavePublicDashboard(t *testing.T) {
 		}
 
 		publicDashboardStore := &FakePublicDashboardStore{}
-		publicDashboardStore.On("FindDashboard", mock.Anything, mock.Anything).Return(dashboard, nil)
+		publicDashboardStore.On("FindDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 		publicDashboardStore.On("Find", mock.Anything, mock.Anything).Return(nil, nil)
 		publicDashboardStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(pubdash, nil)
 		publicDashboardStore.On("NewPublicDashboardUid", mock.Anything).Return("an-uid", nil)
