@@ -38,9 +38,8 @@ export function AppRootPage({ match, queryParams, location }: Props) {
   const portalNode = useMemo(() => createHtmlPortalNode(), []);
   const { plugin, loading, pluginNav } = state;
   const sectionNav = useSelector(
-    createSelector(
-      getNavIndex,
-      (navIndex) => buildPluginSectionNav(location, pluginNav, navIndex, match.params.pluginId) // /a/:pluginId
+    createSelector(getNavIndex, (navIndex) =>
+      buildPluginSectionNav(location, pluginNav, navIndex, match.params.pluginId)
     )
   );
   const context = useMemo(() => buildPluginPageContext(sectionNav), [sectionNav]);
@@ -76,14 +75,10 @@ export function AppRootPage({ match, queryParams, location }: Props) {
     />
   );
 
-  // If TopNav
-  // - why do we not need the InPortal solution here?
-  // - why is it a problem to share the context with the plugin if there is a custom `pluginNav` set (using onNavChanged())?
   if (config.featureToggles.topnav && !pluginNav) {
     return <PluginPageContext.Provider value={context}>{pluginRoot}</PluginPageContext.Provider>;
   }
 
-  // Why do we need the portals in the legacy navigation?
   return (
     <>
       <InPortal node={portalNode}>{pluginRoot}</InPortal>
