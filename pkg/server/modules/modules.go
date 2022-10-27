@@ -3,7 +3,6 @@ package modules
 import (
 	"context"
 
-	"github.com/go-kit/log/level"
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,7 +19,7 @@ const (
 	GRPCServer            string = "grpc-server"
 	GRPCServerHealthCheck string = "grpc-server-health-check"
 	GRPCServerReflection  string = "grpc-server-reflection"
-	Microservices         string = "microservices"
+	Core                  string = "core"
 	ObjectStore           string = "object-store"
 )
 
@@ -59,14 +58,14 @@ func (m *Modules) Init() error {
 	mm.RegisterModule(GRPCServerHealthCheck, m.initGRPCServerHealthCheck, modules.UserInvisibleModule)
 	mm.RegisterModule(GRPCServerReflection, m.initGRPCServerReflection, modules.UserInvisibleModule)
 	mm.RegisterModule(ObjectStore, m.initObjectStore)
-	mm.RegisterModule(Microservices, m.initBackgroundServices)
+	mm.RegisterModule(Core, m.initBackgroundServices)
 	mm.RegisterModule(All, nil)
 
 	deps := map[string][]string{
-		GRPCServer:    {GRPCServerHealthCheck, GRPCServerReflection},
-		ObjectStore:   {GRPCServer},
-		Microservices: {},
-		All:           {Microservices, ObjectStore},
+		GRPCServer:  {GRPCServerHealthCheck, GRPCServerReflection},
+		ObjectStore: {GRPCServer},
+		Core:        {},
+		All:         {Core, ObjectStore},
 	}
 
 	for mod, targets := range deps {
@@ -103,35 +102,36 @@ func (m *Modules) Run() error {
 
 	m.ServiceManager = sm
 
-	healthy := func() { level.Info(m.log).Log("msg", "Modules started") }
-	stopped := func() { level.Info(m.log).Log("msg", "Modules stopped") }
+	healthy := func() { m.log.Info("msg", "Modules started") }
+	stopped := func() { m.log.Info("msg", "Modules stopped") }
 	serviceFailed := func(service services.Service) {
 		// if any service fails, stop all services
 		sm.StopAsync()
 
-		// let's find out which module failed
+		// log which module failed
 		for module, s := range serviceMap {
 			if s == service {
 				if service.FailureCase() == modules.ErrStopProcess {
-					level.Info(m.log).Log("msg", "received stop signal via return error", "module", module, "error", service.FailureCase())
+					m.log.Info("msg", "received stop signal via return error", "module", module, "error", service.FailureCase())
 				} else {
-					level.Error(m.log).Log("msg", "module failed", "module", module, "error", service.FailureCase())
+					m.log.Error("msg", "module failed", "module", module, "error", service.FailureCase())
 				}
 				return
 			}
 		}
 
-		level.Error(m.log).Log("msg", "module failed", "module", "unknown", "error", service.FailureCase())
+		m.log.Error("msg", "module failed", "module", "unknown", "error", service.FailureCase())
 	}
 
 	sm.AddListener(services.NewManagerListener(healthy, stopped, serviceFailed))
 
 	// wait until a service fails or we receive a stop signal
-	if err = sm.StartAsync(context.Background()); err == nil {
-		err = sm.AwaitStopped(context.Background())
+	err = sm.StartAsync(context.Background())
+	if err == nil {
+		return sm.AwaitStopped(context.Background())
 	}
 
-	return nil
+	return err
 }
 
 func (m *Modules) Stop() error {
