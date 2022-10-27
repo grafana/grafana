@@ -10,6 +10,7 @@ export interface VariableUpdateInProgress {
 }
 
 export class VariableUpdateProcess {
+  variablesThatHaveChanged = new Map<string, SceneVariable>();
   variablesToUpdate = new Map<string, SceneVariable>();
   subs: Subscription = new Subscription();
   dependencies = new Map<string, string[]>();
@@ -46,7 +47,7 @@ export class VariableUpdateProcess {
   }
 
   /**
-   * A variable has completed the it's update process.
+   * A variable has completed it's update process.
    * This could mean that variables that depend on it can now be updated in turn.
    */
   private variableUpdateCompleted(name: string, variable: SceneVariable, err?: Error) {
@@ -112,6 +113,9 @@ export class VariableUpdateProcess {
 
   /** Updates dependencies */
   variableValueChanged(variable: SceneVariable) {
+    // flag as changed
+    this.variablesThatHaveChanged.set(variable.state.name, variable);
+
     // Ignore this change if it is currently updating
     if (this.updating.has(variable.state.name)) {
       return;

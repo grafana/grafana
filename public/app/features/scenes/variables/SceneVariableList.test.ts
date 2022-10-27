@@ -67,7 +67,7 @@ describe('SceneVariableList', () => {
       B.signalUpdateCompleted();
       C.signalUpdateCompleted();
 
-      // When changing A should start dependent B to loading but not C
+      // When changing A should start B but not C (yet)
       A.setState({ value: 'AB' });
       expect(B.state.state).toBe(LoadingState.Loading);
       expect(C.state.state).toBe(LoadingState.Done);
