@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -36,20 +35,17 @@ func TestResolver(t *testing.T) {
 		},
 	}
 
-	p1 := &plugins.Plugin{}
-	p2 := &plugins.Plugin{}
-	p3 := &plugins.Plugin{}
+	p1 := plugins.PluginDTO{}
+	p2 := plugins.PluginDTO{}
+	p3 := plugins.PluginDTO{}
 
 	p1.ID = "influx"
 	p2.ID = "heatmap"
 	p3.ID = "xyz"
-
-	pluginRegistry := registry.ProvideService()
-	_ = pluginRegistry.Add(ctxOrg1, p1)
-	_ = pluginRegistry.Add(ctxOrg1, p2)
-	_ = pluginRegistry.Add(ctxOrg1, p3)
-
-	provider := ProvideObjectReferenceResolver(ds, pluginRegistry)
+	pluginStore := plugins.FakePluginStore{
+		PluginList: []plugins.PluginDTO{p1, p2, p3},
+	}
+	provider := ProvideObjectReferenceResolver(ds, pluginStore)
 
 	scenarios := []struct {
 		name   string
