@@ -223,6 +223,9 @@ export const run = (includeInternalScripts = false) => {
     .command('plugin:bundle-managed')
     .description('Builds managed plugins')
     .action(async (cmd) => {
+      chalk.yellow.bold(
+        `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+      );
       await execTask(bundleManagedTask)({});
     });
 
@@ -244,6 +247,9 @@ export const run = (includeInternalScripts = false) => {
     .command('plugin:update-circleci')
     .description('Update plugin')
     .action(async (cmd) => {
+      chalk.yellow.bold(
+        `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+      );
       await execTask(pluginUpdateTask)({});
     });
 

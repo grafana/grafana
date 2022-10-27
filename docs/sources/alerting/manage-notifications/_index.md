@@ -6,11 +6,11 @@ keywords:
   - grafana
   - alert
   - notifications
-title: Manage alert notifications
+title: Manage your alert notifications
 weight: 160
 ---
 
-# Manage alert notifications
+# Manage your alert notifications
 
 Choosing how, when, and where to send your alert notifications is an important part of setting up your alerting system. These decisions will have a direct impact on your ability to resolve issues quickly and not miss anything important.
 
