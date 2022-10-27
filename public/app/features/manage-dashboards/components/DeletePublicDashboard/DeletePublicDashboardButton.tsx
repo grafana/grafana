@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { ComponentSize, Icon, LinkButton, ModalsController, Spinner } from '@grafana/ui/src';
+import { Button, ComponentSize, Icon, ModalsController, Spinner } from '@grafana/ui/src';
 
 import { useDeletePublicDashboardMutation } from '../../../dashboard/api/publicDashboardApi';
 import { ListPublicDashboardResponse } from '../../types';
@@ -27,7 +27,7 @@ export const DeletePublicDashboardButton = ({
   return (
     <ModalsController>
       {({ showModal, hideModal }) => (
-        <LinkButton
+        <Button
           fill="text"
           aria-label="Delete public dashboard configuration"
           title="Delete public dashboard configuration"
@@ -42,7 +42,7 @@ export const DeletePublicDashboardButton = ({
           size={size}
         >
           {isLoading ? <Spinner /> : <Icon size={size} name="trash-alt" />}
-        </LinkButton>
+        </Button>
       )}
     </ModalsController>
   );

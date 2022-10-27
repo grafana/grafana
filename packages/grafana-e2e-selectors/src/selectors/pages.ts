@@ -228,8 +228,8 @@ export const Pages = {
     },
   },
   PublicDashboards: {
-    linkButton: 'link button',
-    configButton: 'configuration button',
-    trashcanButton: 'remove public dashboard button',
+    linkButton: 'public-dashboard-link-button',
+    configButton: 'public-dashboard-configuration-button',
+    trashcanButton: 'public-dashboard-remove-button',
   },
 };

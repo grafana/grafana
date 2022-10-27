@@ -1,4 +1,4 @@
-import { render, screen, waitForElementToBeRemoved, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
 import React from 'react';
@@ -150,10 +150,12 @@ describe('Delete public dashboard', () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
     await renderPublicDashboardTable(true);
 
-    // fireEvent.click(screen.findAllByTestId('Public dashboard'));
-
-    // const tableBody = screen.getAllByRole('rowgroup')[1];
-    // expect(within(tableBody).queryAllByTestId(selectors.trashcanButton)).toHaveLength(2);
+    const tableBody = screen.getAllByRole('rowgroup')[1];
+    const trashButton = within(tableBody).getAllByTestId(selectors.trashcanButton)[1];
+    fireEvent.click(trashButton);
+    await waitFor(() => screen.getByText('Do you want to delete this public dashboard?'));
+    // const deleteButton = await screen.queryByTestId('sarazaa', {timeout: 5000});
+    expect(screen.getByText('Do you want to delete this public dashboard?')).toBeInTheDocument();
   });
 });
 
