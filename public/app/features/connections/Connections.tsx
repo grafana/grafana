@@ -29,7 +29,6 @@ export default function Connections() {
       <Switch>
         <Route exact path={ROUTES.Base} component={DataSourcesListPage} />
         <Route exact path={ROUTES.YourConnections} component={DataSourcesListPage} />
-
         <Route exact path={ROUTES.DataSources} component={DataSourcesListPage} />
         <Route exact path={ROUTES.DataSourcesDetails} component={DataSourceDetailsPage} />
         <Route exact path={ROUTES.DataSourcesNew} component={NewDataSourcePage} />
