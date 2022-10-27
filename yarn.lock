@@ -5816,6 +5816,7 @@ __metadata:
     postcss-loader: 7.0.1
     prismjs: 1.29.0
     process: ^0.11.10
+    raw-loader: 4.0.2
     rc-cascader: 3.6.1
     rc-drawer: 4.4.3
     rc-slider: 9.7.5
@@ -30914,7 +30915,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"raw-loader@npm:^4.0.2":
+"raw-loader@npm:4.0.2, raw-loader@npm:^4.0.2":
   version: 4.0.2
   resolution: "raw-loader@npm:4.0.2"
   dependencies:
