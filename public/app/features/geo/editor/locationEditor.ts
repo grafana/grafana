@@ -6,10 +6,11 @@ import {
   PanelOptionsEditorBuilder,
   DataFrame,
 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors/src';
 import { GazetteerPathEditor } from 'app/features/geo/editor/GazetteerPathEditor';
 
 import { getGeometryField, getLocationMatchers } from '../utils/location';
+
+import { LocationModeEditor } from './locationModeEditor';
 
 export function addLocationFields<TOptions>(
   title: string,
@@ -20,6 +21,7 @@ export function addLocationFields<TOptions>(
 ) {
   if (source && data?.length) {
     // TODO... equivolent in the custom component
+    // TODO show errors but also current state if auto (for transparency)
     getLocationMatchers(source).then((location) => {
       const info = getGeometryField(data[0], location);
       console.log('LOCATION', info);
@@ -27,37 +29,14 @@ export function addLocationFields<TOptions>(
   }
 
   // TODO replace radio with custom component
-  builder.addRadio({
+  builder.addCustomEditor({
+    id: 'modeEditor',
     path: `${prefix}mode`,
-    name: title,
-    description: '',
-    defaultValue: FrameGeometrySourceMode.Auto,
-    settings: {
-      options: [
-        {
-          value: FrameGeometrySourceMode.Auto,
-          label: 'Auto',
-          ariaLabel: selectors.components.Transforms.SpatialOperations.location.autoOption,
-        },
-        {
-          value: FrameGeometrySourceMode.Coords,
-          label: 'Coords',
-          ariaLabel: selectors.components.Transforms.SpatialOperations.location.coords.option,
-        },
-        {
-          value: FrameGeometrySourceMode.Geohash,
-          label: 'Geohash',
-          ariaLabel: selectors.components.Transforms.SpatialOperations.location.geohash.option,
-        },
-        {
-          value: FrameGeometrySourceMode.Lookup,
-          label: 'Lookup',
-          ariaLabel: selectors.components.Transforms.SpatialOperations.location.lookup.option,
-        },
-      ],
-    },
+    name: 'Location',
+    editor: LocationModeEditor,
   });
 
+  // TODO apply data filter to field pickers
   switch (source?.mode) {
     case FrameGeometrySourceMode.Coords:
       builder
