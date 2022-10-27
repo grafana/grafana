@@ -20,8 +20,6 @@ You can:
 - [Create Grafana Mimir or Loki managed recording rules]({{< relref "create-mimir-loki-managed-recording-rule/" >}})
 - [Edit Grafana Mimir or Loki rule groups and namespaces]({{< relref "edit-mimir-loki-namespace-group/" >}})
 - [Create Grafana managed alert rules]({{< relref "create-grafana-managed-rule/" >}})
-- [View the state and health of alert rules]({{< relref "../view-state-health/" >}})
-- [View and filter alert rules]({{< relref "../view-alert-rules/" >}})
 
 **Note:**
 Grafana managed alert rules can only be edited or deleted by users with Edit permissions for the folder storing the rules.
