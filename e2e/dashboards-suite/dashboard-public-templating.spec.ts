@@ -14,7 +14,7 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.shareButton().click();
 
     // Select public dashboards tab
-    e2e().intercept('GET', '/api/dashboards/uid/HYaGDGIMk/public-dashboard').as('query-public-config');
+    e2e().intercept('GET', '/api/dashboards/uid/HYaGDGIMk/public-dashboards').as('query-public-config');
     e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
     e2e().wait('@query-public-config');
 
