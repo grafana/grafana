@@ -202,21 +202,11 @@ func ProvideService(
 		}
 
 		if storageName == RootSystem {
-			if user == SystemReportsReader {
-				return map[string]filestorage.PathFilter{
-					ActionFilesRead:   createSystemReportsPathFilter(),
-					ActionFilesWrite:  denyAllPathFilter,
-					ActionFilesDelete: denyAllPathFilter,
-				}
-			}
-
-			if user == SystemReportsAdmin {
-				systemReportsFilter := createSystemReportsPathFilter()
-				return map[string]filestorage.PathFilter{
-					ActionFilesRead:   systemReportsFilter,
-					ActionFilesWrite:  systemReportsFilter,
-					ActionFilesDelete: systemReportsFilter,
-				}
+			systemReportsFilter := createSystemReportsPathFilter()
+			return map[string]filestorage.PathFilter{
+				ActionFilesRead:   systemReportsFilter,
+				ActionFilesWrite:  systemReportsFilter,
+				ActionFilesDelete: systemReportsFilter,
 			}
 		}
 
@@ -264,8 +254,8 @@ func ProvideService(
 
 func createSystemReportsPathFilter() filestorage.PathFilter {
 	return filestorage.NewPathFilter(
-		[]string{filestorage.Delimiter + reportsStorage + filestorage.Delimiter}, // access to all folders and files inside `/branding/`
-		[]string{filestorage.Delimiter + reportsStorage},                         // access to the `/branding` folder itself, but not to any other sibling folder
+		[]string{filestorage.Delimiter + reportsStorage + filestorage.Delimiter}, // access to all folders and files inside `/reports/`
+		[]string{filestorage.Delimiter + reportsStorage},                         // access to the `/reports` folder itself, but not to any other sibling folder
 		nil,
 		nil)
 }
