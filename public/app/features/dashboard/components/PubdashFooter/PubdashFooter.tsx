@@ -4,18 +4,38 @@ import React from 'react';
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
+export interface PublicDashboardFooter {
+  disable: boolean;
+  text: string;
+  logo: string;
+  link: string;
+}
+
 export const PubdashFooter = function () {
   const styles = useStyles2(getStyles);
+  const conf = getPubdashFooterConfig();
 
-  return (
+  return conf.disable ? null : (
     <div className={styles.footer}>
       <span className={styles.logoText}>
-        <a href="https://grafana.com/" target="_blank" rel="noreferrer noopener">
-          powered by Grafana <img className={styles.logoImg} alt="" src="public/img/grafana_icon.svg"></img>
+        <a href={conf.link} target="_blank" rel="noreferrer noopener">
+          {conf.text} <img className={styles.logoImg} alt="" src={conf.logo}></img>
         </a>
       </span>
     </div>
   );
+};
+
+export function setPubdashFooterConfigFn(fn: typeof getPubdashFooterConfig) {
+  getPubdashFooterConfig = fn;
+}
+export let getPubdashFooterConfig = (): PublicDashboardFooter => {
+  return {
+    disable: false,
+    text: 'powered by Grafana',
+    logo: 'public/img/grafana_icon.svg',
+    link: 'https://grafana.com/',
+  };
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
