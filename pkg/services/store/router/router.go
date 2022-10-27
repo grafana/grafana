@@ -11,35 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/object"
 )
 
-type UpstreamResourceSync struct {
-	// Config ID
-	StorageID string
-
-	// git/s3/gcs/etc
-	StorageKiind string
-
-	// The storage key -- absolute includeing the orgID
-	KeyPrefix string
-}
-
 type ResourceRouteInfo struct {
-	// Resource identifier
+	// The resource identifier
 	GRN *object.GRN
 
-	// The storage key -- absolute includeing the orgID
+	// Raw key used in storage engine
 	Key string
-
-	// The maximum size for the requested resource
-	MaxSize int64
-
-	// Upstream storage sync info
-	Upstream *UpstreamResourceSync
 }
-
-// STORE
-//  - kind/{kind}/{uid}
-//  - drive/{uid}.{kind}
-//  - public/{uid}.{kind} // no authentication
 
 type ObjectStoreRouter interface {
 	// This will throw exceptions for unsupported
@@ -73,23 +51,26 @@ func (r *standardStoreRouter) Route(ctx context.Context, grn *object.GRN) (Resou
 		return info, fmt.Errorf("missing TenantId")
 	}
 	if grn.Kind == "" {
-		return info, fmt.Errorf("missing ResourceKind")
+		return info, fmt.Errorf("missing Kind")
 	}
 	if grn.UID == "" {
-		return info, fmt.Errorf("missing ResourceIdentifier")
+		return info, fmt.Errorf("missing UID")
 	}
 
 	kind, err := r.kinds.GetInfo(grn.Kind)
 	if err != nil {
-		return info, fmt.Errorf("unknown kind")
+		return info, fmt.Errorf("unknown Kind")
 	}
 
 	if grn.Scope == "" {
-		return info, fmt.Errorf("missing scope")
+		return info, fmt.Errorf("missing Scope")
 	}
 
-	// Human readable file system
 	switch grn.Scope {
+	case models.ObjectStoreScopeEntity:
+		{
+			info.Key = fmt.Sprintf("%d/%s/%s/%s", grn.TenantId, grn.Scope, grn.Kind, grn.UID)
+		}
 	case models.ObjectStoreScopeDrive:
 		{
 			// Special folder handling in drive
@@ -103,12 +84,8 @@ func (r *standardStoreRouter) Route(ctx context.Context, grn *object.GRN) (Resou
 				info.Key = fmt.Sprintf("%d/%s/%s-%s.json", grn.TenantId, grn.Scope, grn.UID, grn.Kind)
 			}
 		}
-	case models.ObjectStoreScopeEntity:
-		{
-			info.Key = fmt.Sprintf("%d/%s/%s/%s", grn.TenantId, grn.Scope, grn.Kind, grn.UID)
-		}
 	default:
-		return info, fmt.Errorf("unsupportes scope")
+		return info, fmt.Errorf("unsupported scope")
 	}
 
 	return info, nil
