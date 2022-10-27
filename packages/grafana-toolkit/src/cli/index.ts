@@ -233,6 +233,11 @@ export const run = (includeInternalScripts = false) => {
     .option('--commitHash <hashKey>', 'Specify the commit hash')
     .description('Publish to github')
     .action(async (cmd) => {
+      chalk.yellow.bold(`⚠️ This command is deprecated and will be removed . No further support will be provided. ⚠️`);
+      console.log(
+        'We recommend using github actions directly for plugin releasing. You can find an example here:  https://github.com/grafana/plugin-workflows'
+      );
+      console.log('if you were reliant on this command we recommend https://www.npmjs.com/package/react-gen-component');
       await execTask(githubPublishTask)({
         dryrun: cmd.dryrun,
         verbose: cmd.verbose,
