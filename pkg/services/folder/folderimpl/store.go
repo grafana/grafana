@@ -18,9 +18,6 @@ type store interface {
 	// Use Move to change a dashboard's parent ID.
 	Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error)
 
-	// Move changes the given folder's parent folder uid and applies any necessary permissions changes.
-	Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error)
-
 	// Get returns a folder.
 	Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error)
 

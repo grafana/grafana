@@ -44,15 +44,6 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *folder.UpdateFolderCommand)
 	return cmd.Folder, err
 }
 
-func (ss *sqlStore) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
-	cmd.Folder.ParentUID = cmd.NewParentUID
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.ID(cmd.Folder.ID).Update(cmd.Folder)
-		return err
-	})
-	return cmd.Folder, err
-}
-
 func (ss *sqlStore) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
 	var foldr *folder.Folder
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
