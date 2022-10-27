@@ -143,7 +143,7 @@ You can assign on of the following permissions to a specific user or a team:
 1. Click the service account for which you want to update team permissions a role.
 1. In the **Permissions** section at the bottom, click **Add permission**.
 1. Choose **Team** in the dropdown and select your desired team.
-1. Choose **View**, **Edit** or **Admin** role in the dropdown and click **Save**.
+1. Choose **Edit** or **Admin** role in the dropdown and click **Save**.
 
 ### To update user permissions for a service account
 
@@ -152,4 +152,4 @@ You can assign on of the following permissions to a specific user or a team:
 1. Click the service account for which you want to update team permissions a role.
 1. In the **Permissions** section at the bottom, click **Add permission**.
 1. Choose **User** in the dropdown and select your desired user.
-1. Choose **View**, **Edit** or **Admin** role in the dropdown and click **Save**.
+1. Choose **Edit** or **Admin** role in the dropdown and click **Save**.
