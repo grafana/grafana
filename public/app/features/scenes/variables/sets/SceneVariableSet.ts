@@ -5,7 +5,7 @@ import { SceneVariable, SceneVariables, SceneVariableSetState, SceneVariableStat
 import { VariablesUpdateManager } from './VariableUpdateManager';
 
 export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> implements SceneVariables {
-  updateProcess?: VariablesUpdateManager;
+  updateManager?: VariablesUpdateManager;
 
   constructor(state: SceneVariableSetState) {
     super(state);
@@ -14,11 +14,11 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
   activate(): void {
     super.activate();
 
-    this.updateProcess = new VariablesUpdateManager(this.parent!);
+    this.updateManager = new VariablesUpdateManager(this.parent!);
 
     // Subscribe to changes to child variables
     this.subs.add(this.events.subscribe(SceneObjectStateChangedEvent, this.onVariableStateChanged));
-    this.updateProcess.updateAll();
+    this.updateManager.updateAll();
   }
 
   onVariableStateChanged = (event: SceneObjectStateChangedEvent) => {
@@ -27,7 +27,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
     const variable = event.payload.changedObject as SceneVariable;
 
     if (newState.value !== oldState.value) {
-      this.updateProcess!.variableValueChanged(variable);
+      this.updateManager!.variableValueChanged(variable);
     }
   };
 
