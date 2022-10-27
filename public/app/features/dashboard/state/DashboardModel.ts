@@ -278,6 +278,20 @@ export class DashboardModel implements TimeModel {
           this.isSnapshotTruthy() || !(panel.type === 'add-panel' || panel.repeatPanelId || panel.repeatedByRow)
       )
       .map((panel) => {
+        // Clean libarary panels on save
+        if (panel.libraryPanel) {
+          const { id, title, libraryPanel, gridPos } = panel;
+          return {
+            id,
+            title,
+            gridPos,
+            libraryPanel: {
+              uid: libraryPanel.uid,
+              name: libraryPanel.name,
+            },
+          };
+        }
+
         // If we save while editing we should include the panel in edit mode instead of the
         // unmodified source panel
         if (this.panelInEdit && this.panelInEdit.id === panel.id) {

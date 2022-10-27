@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-// Service is responsible for the storing and retrieval of plugins.
+// Service is responsible for the internal storing and retrieval of plugins.
 type Service interface {
 	// Plugin finds a plugin by its ID.
 	Plugin(ctx context.Context, id string) (*plugins.Plugin, bool)
