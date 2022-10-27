@@ -35,7 +35,7 @@ function lookupSceneVariable(name: string, sceneObject: SceneObject): SceneVaria
     }
   }
 
-  const found = variables.getVariableByName(name);
+  const found = variables.getByName(name);
   if (found) {
     return found;
   } else if (sceneObject.parent) {
