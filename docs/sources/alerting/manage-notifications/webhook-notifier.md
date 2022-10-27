@@ -11,13 +11,11 @@ keywords:
   - guide
   - contact point
   - templating
-title: Webhook notifier
-weight: 105
+title: Configure the webhook notifier
+weight: 115
 ---
 
-### Webhook
-
-This topic helps you configure the Webhook notifier. It also discusses that [WeCom]({{< relref "webhook-notifier/#wecom" >}}) contact points need a Webhook URL.
+### Configure the webhook notifier
 
 Example JSON body:
 
