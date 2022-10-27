@@ -134,7 +134,7 @@ func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
 }
 
 // Delete a public dashboard
-// DELETE /api/dashboards/public/uid/:uid
+// DELETE /api/dashboards/:uid/public/:publicDashboardUid
 func (api *Api) DeletePublicDashboard(c *models.ReqContext) response.Response {
 	err := api.PublicDashboardService.Delete(c.Req.Context(), c.SignedInUser.OrgID, web.Params(c.Req)[":uid"], web.Params(c.Req)[":publicDashboardUid"])
 	if err != nil {
