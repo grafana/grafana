@@ -28,7 +28,7 @@ export function getVariablesDemo(): Scene {
         new TestVariable({
           name: 'server',
           query: 'A.*',
-          value: 'server-initial',
+          value: 'server',
           text: '',
           delayMs: 3000,
           options: [],
@@ -36,7 +36,15 @@ export function getVariablesDemo(): Scene {
         new TestVariable({
           name: 'pod',
           query: 'A.$server.*',
-          value: 'pod-initial',
+          value: 'pod',
+          delayMs: 2000,
+          text: '',
+          options: [],
+        }),
+        new TestVariable({
+          name: 'handler',
+          query: 'A.$server.$pod.*',
+          value: 'handler',
           delayMs: 2000,
           text: '',
           options: [],

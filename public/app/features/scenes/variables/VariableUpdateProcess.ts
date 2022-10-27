@@ -20,8 +20,12 @@ export class VariableUpdateProcess {
     this.sceneContext = sceneContext;
   }
 
-  updateTick() {
-    for (const [key, variable] of this.variablesToUpdate) {
+  /**
+   * This loops through variablesToUpdate and update all that that can.
+   * If one has a dependency that is currently in variablesToUpdate it will be skipped for now.
+   */
+  updateNextBatch() {
+    for (const [name, variable] of this.variablesToUpdate) {
       if (!variable.updateOptions) {
         continue;
       }
@@ -31,28 +35,34 @@ export class VariableUpdateProcess {
         continue;
       }
 
-      this.updating.set(key, {
+      this.updating.set(name, {
         variable,
         subscription: variable.updateOptions(this).subscribe({
-          next: () => this.variableProcessed(key, variable),
-          error: (err) => this.variableProcessed(key, variable, err),
+          next: () => this.variableUpdateCompleted(name, variable),
+          error: (err) => this.variableUpdateCompleted(name, variable, err),
         }),
       });
     }
   }
 
-  private variableProcessed(key: string, variable: SceneVariable, err?: Error) {
-    const update = this.updating.get(key);
+  /**
+   * A variable has completed the it's update process.
+   * This could mean that variables that depend on it can now be updated in turn.
+   */
+  private variableUpdateCompleted(name: string, variable: SceneVariable, err?: Error) {
+    const update = this.updating.get(name);
     update?.subscription.unsubscribe();
 
-    this.updating.delete(key);
-    this.dependencies.delete(key);
-    this.variablesToUpdate.delete(key);
-    this.updateTick();
+    this.updating.delete(name);
+    this.variablesToUpdate.delete(name);
+    this.updateNextBatch();
   }
 
+  /**
+   * Checks if the variable has any dependencies that is currently in variablesToUpdate
+   */
   private hasDependendencyThatNeedsUpdating(variable: SceneVariable) {
-    const dependencies = this.dependencies.get(variable.state.key!);
+    const dependencies = this.dependencies.get(variable.state.name);
 
     if (dependencies) {
       for (const dep of dependencies) {
@@ -67,13 +77,55 @@ export class VariableUpdateProcess {
     return false;
   }
 
-  addVariable(...variables: SceneVariable[]) {
-    for (const variable of variables) {
-      this.variablesToUpdate.set(variable.state.key!, variable);
+  /**
+   * Extract dependencies from all variables and add those that needs update to the variablesToUpdate map
+   * Then it will start the update process.
+   */
+  updateAll() {
+    for (const variable of this.getVariables().state.variables) {
+      if (variable.updateOptions) {
+        this.variablesToUpdate.set(variable.state.name, variable);
+      }
 
       if (variable.getDependencies) {
-        this.dependencies.set(variable.state.key!, variable.getDependencies());
+        this.dependencies.set(variable.state.name, variable.getDependencies());
       }
     }
+
+    this.updateNextBatch();
+  }
+
+  getVariables() {
+    const variables = this.sceneContext.state.$variables;
+    if (!variables) {
+      throw new Error('No variables attached to scene context');
+    }
+
+    return variables;
+  }
+
+  variableStateChanged(variable: SceneVariable) {
+    if (variable.getDependencies) {
+      this.dependencies.set(variable.state.name, variable.getDependencies());
+    }
+  }
+
+  /** Updates dependencies */
+  variableValueChanged(variable: SceneVariable) {
+    // Ignore this change if it is currently updating
+    if (this.updating.has(variable.state.name)) {
+      return;
+    }
+
+    for (const [name, deps] of this.dependencies) {
+      if (deps.includes(variable.state.name)) {
+        const otherVariable = this.getVariables().getByName(name);
+        if (otherVariable) {
+          this.variablesToUpdate.set(name, otherVariable);
+        }
+      }
+    }
+
+    this.updateNextBatch();
   }
 }

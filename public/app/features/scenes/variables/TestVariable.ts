@@ -3,12 +3,11 @@ import { Observable, Subject } from 'rxjs';
 import { LoadingState, SelectableValue, VariableOption } from '@grafana/data';
 import { queryMetricTree } from 'app/plugins/datasource/testdata/metricTree';
 
-import { SceneObjectBase } from '../core/SceneObjectBase';
-
+import { SceneVariableBase } from './SceneVariableBase';
 import { VariableValueSelect } from './components/VariableValueSelect';
 import { getVariableDependencies } from './getVariableDependencies';
 import { sceneTemplateInterpolator } from './sceneTemplateInterpolator';
-import { SceneVariable, SceneVariableState, VariableUpdateContext } from './types';
+import { SceneVariableState, VariableUpdateContext } from './types';
 
 export interface TestVariableState extends SceneVariableState {
   //query: DataQuery;
@@ -18,7 +17,7 @@ export interface TestVariableState extends SceneVariableState {
   issuedQuery?: string;
 }
 
-export class TestVariable extends SceneObjectBase<TestVariableState> implements SceneVariable<TestVariableState> {
+export class TestVariable extends SceneVariableBase<TestVariableState> {
   ValueSelectComponent = VariableValueSelect;
   completeUpdate = new Subject<number>();
 

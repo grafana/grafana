@@ -5,7 +5,6 @@ import { SceneObjectStatePlain } from '../core/types';
 
 import { SceneVariableList } from './SceneVariableList';
 import { TestVariable } from './TestVariable';
-import { VariableUpdateProcess } from './VariableUpdateProcess';
 
 interface TestSceneState extends SceneObjectStatePlain {
   nested?: TestScene;
@@ -13,7 +12,7 @@ interface TestSceneState extends SceneObjectStatePlain {
 
 class TestScene extends SceneObjectBase<TestSceneState> {}
 
-describe('VariableUpdateProcess', () => {
+describe('SceneVariableList', () => {
   it('should figure out dependencies and update in order', async () => {
     const server = new TestVariable({ name: 'server', query: 'A.*', value: 'server-initial', text: '', options: [] });
     const pod = new TestVariable({ name: 'pod', query: 'A.$server.*', value: 'pod-initial', text: '', options: [] });
@@ -22,10 +21,7 @@ describe('VariableUpdateProcess', () => {
       $variables: new SceneVariableList({ variables: [server, pod] }),
     });
 
-    const updateProcess = new VariableUpdateProcess(scene);
-
-    updateProcess.addVariable(server, pod);
-    updateProcess.updateTick();
+    scene.activate();
 
     expect(server.state.state).toBe(LoadingState.Loading);
     expect(pod.state.state).toBe(undefined);
@@ -51,16 +47,15 @@ describe('VariableUpdateProcess', () => {
     const scene = new TestScene({
       $variables: new SceneVariableList({ variables: [C, B, A] }),
     });
-    const updateProcess = new VariableUpdateProcess(scene);
 
-    updateProcess.addVariable(A, B, C);
-    updateProcess.updateTick();
+    scene.activate();
 
     expect(A.state.state).toBe(LoadingState.Loading);
     expect(B.state.state).toBe(LoadingState.Loading);
     expect(C.state.state).toBe(undefined);
 
     A.signalUpdateCompleted();
+    expect(A.state.state).toBe(LoadingState.Done);
     expect(C.state.state).toBe(undefined);
 
     B.signalUpdateCompleted();
@@ -68,5 +63,32 @@ describe('VariableUpdateProcess', () => {
 
     C.signalUpdateCompleted();
     expect(C.state.issuedQuery).toBe('AA.BA.*');
+  });
+
+  describe('When variable changes value', () => {
+    it('When variable changes value', async () => {
+      const A = new TestVariable({ name: 'A', query: 'A.*', value: '', text: '', options: [] });
+      const B = new TestVariable({ name: 'B', query: 'A.$A', value: '', text: '', options: [] });
+      const C = new TestVariable({ name: 'C', query: 'A.$A.$B', value: '', text: '', options: [] });
+
+      const scene = new TestScene({
+        $variables: new SceneVariableList({ variables: [C, B, A] }),
+      });
+
+      scene.activate();
+
+      A.signalUpdateCompleted();
+      B.signalUpdateCompleted();
+      C.signalUpdateCompleted();
+
+      A.setState({ value: 'AB' });
+
+      expect(B.state.state).toBe(LoadingState.Loading);
+
+      B.signalUpdateCompleted();
+      expect(B.state.value).toBe('ABA');
+
+      expect(C.state.state).toBe(LoadingState.Loading);
+    });
   });
 });

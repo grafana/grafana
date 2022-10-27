@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Observer, Subject, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { EventBusSrv } from '@grafana/data';
+import { BusEvent, EventBusSrv } from '@grafana/data';
 import { useForceUpdate } from '@grafana/ui';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
@@ -81,8 +81,8 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     this.setParent();
     this.subject.next(this.state);
 
-    // broadcast state change. This is event is subscribed to by UrlSyncManager and UndoManager
-    this.getRoot().events.publish(
+    // Bubble state change event. This is event is subscribed to by UrlSyncManager and UndoManager
+    this.publishEvent(
       new SceneObjectStateChangedEvent({
         prevState,
         newState: this.state,
@@ -90,6 +90,18 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
         changedObject: this,
       })
     );
+  }
+
+  /**
+   * Feel that having subscribe (via rxjs Subscribable) and .events (on SceneObject interface) and now this publishEvent might be a bit confusing and in need of some rename/clarity
+   * Bubble event up the scene object graph
+   * */
+  protected publishEvent(event: BusEvent) {
+    this.events.publish(event);
+
+    if (this.parent) {
+      this.parent.publishEvent(event);
+    }
   }
 
   protected getRoot(): SceneObject {

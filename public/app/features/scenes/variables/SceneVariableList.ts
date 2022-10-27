@@ -1,24 +1,35 @@
 import { SceneObjectBase } from '../core/SceneObjectBase';
+import { SceneObjectStateChangedEvent } from '../core/events';
 
 import { VariableUpdateProcess } from './VariableUpdateProcess';
-import { SceneVariable, SceneVariableSetInterface, SceneVariableSetState } from './types';
+import { SceneVariable, SceneVariableSetInterface, SceneVariableSetState, SceneVariableState } from './types';
 
 export class SceneVariableList extends SceneObjectBase<SceneVariableSetState> implements SceneVariableSetInterface {
   updateProcess?: VariableUpdateProcess;
 
+  constructor(state: SceneVariableSetState) {
+    super(state);
+  }
+
   activate(): void {
     super.activate();
 
-    this.updateProcess = new VariableUpdateProcess(this);
+    this.updateProcess = new VariableUpdateProcess(this.parent!);
 
-    for (const variable of this.state.variables) {
-      if (variable.updateOptions) {
-        this.updateProcess.addVariable(variable);
-      }
-    }
-
-    this.updateProcess.updateTick();
+    // Subscribe to changes to child variables
+    this.subs.add(this.events.subscribe(SceneObjectStateChangedEvent, this.onVariableStateChanged));
+    this.updateProcess.updateAll();
   }
+
+  onVariableStateChanged = (event: SceneObjectStateChangedEvent) => {
+    const newState = event.payload.newState as SceneVariableState;
+    const oldState = event.payload.prevState as SceneVariableState;
+    const variable = event.payload.changedObject as SceneVariable;
+
+    if (newState.value !== oldState.value) {
+      this.updateProcess!.variableValueChanged(variable);
+    }
+  };
 
   getByName(name: string): SceneVariable | undefined {
     // TODO: Replace with index
