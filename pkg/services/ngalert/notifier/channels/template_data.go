@@ -104,18 +104,9 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 
 		orgId := alert.Annotations[ngmodels.OrgIDAnnotation]
 		if len(orgId) > 0 {
-			orgIdParam := "orgId=" + orgId
-
-			dashboardUrl.RawQuery = orgIdParam
-			extended.DashboardURL = dashboardUrl.String()
-
-			q := u.Query()
-			q.Add("orgId", orgId)
-			u.RawQuery = q.Encode()
-			extended.PanelURL = u.String()
-
-			generatorUrl.RawQuery = orgIdParam
-			extended.GeneratorURL = generatorUrl.String()
+			extended.DashboardURL = setOrgIdQueryParam(dashboardUrl, orgId)
+			extended.PanelURL = setOrgIdQueryParam(u, orgId)
+			extended.GeneratorURL = setOrgIdQueryParam(generatorUrl, orgId)
 		}
 	}
 
@@ -149,6 +140,14 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 	extended.SilenceURL = u.String()
 
 	return extended
+}
+
+func setOrgIdQueryParam(url *url.URL, orgId string) string {
+	q := url.Query()
+	q.Set("orgId", orgId)
+	url.RawQuery = q.Encode()
+
+	return url.String()
 }
 
 func ExtendData(data *template.Data, logger log.Logger) *ExtendedData {
