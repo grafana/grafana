@@ -11,7 +11,7 @@ keywords:
   - state
   - health
 title: View the state and health of alert rules
-weight: 150
+weight: 420
 ---
 
 # View the state and health of alert rules

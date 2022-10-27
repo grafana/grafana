@@ -1,11 +1,18 @@
-+++
-title = "Performance considerations"
-description = "Understanding alerting performance"
-keywords = ["grafana", "alerting", "performance"]
-weight = 555
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/alerting-limitations/
+  - /docs/grafana/latest/alerting/performance-limitations/
+description: Performance considerations and limitations
+keywords:
+  - grafana
+  - alerting
+  - performance
+  - limitations
+title: Performance considerations and limitations
+weight: 450
+---
 
-# Alerting performance considerations
+# Performance considerations and limitations
 
 Grafana Alerting supports multi-dimensional alerting, where one alert rule can generate many alerts. For example, you can configure an alert rule to fire an alert every time the CPU of individual VMs max out. This topic discusses performance considerations resulting from multi-dimensional alerting.
 
@@ -22,3 +29,23 @@ Each evaluation of an alert rule generates a set of alert instances; one for eac
 Grafana Alerting exposes a metric, `grafana_alerting_rule_evaluations_total` that counts the number of alert rule evaluations. To get a feel for the influence of rule evaluations on your Grafana instance, you can observe the rate of evaluations and compare it with resource consumption. In a Prometheus-compatible database, you can use the query `rate(grafana_alerting_rule_evaluations_total[5m])` to compute the rate over 5 minute windows of time. It's important to remember that this isn't the full picture of rule evaluation. For example, the load will be unevenly distributed if you have some rules that evaluate every 10 seconds, and others every 30 minutes.
 
 These factors all affect the load on the Grafana instance, but you should also be aware of the performance impact that evaluating these rules has on your data sources. Alerting queries are often the vast majority of queries handled by monitoring databases, so the same load factors that affect the Grafana instance affect them as well.
+
+## Limited rule sources support
+
+Grafana Alerting can retrieve alerting and recording rules **stored** in most available Prometheus, Loki, Mimir, and Alertmanager compatible data sources.
+
+It does not support reading or writing alerting rules from any other data sources but the ones previously mentioned at this time.
+
+## Prometheus version support
+
+We support the latest two minor versions of both Prometheus and Alertmanager. We cannot guarantee that older versions will work.
+
+As an example, if the current Prometheus version is `2.31.1`, we support >= `2.29.0`.
+
+## Grafana is not an alert receiver
+
+Grafana is not an alert receiver; it is an alert generator. This means that Grafana cannot receive alerts from anything other than its internal alert generator.
+
+Receiving alerts from Prometheus (or anything else) is not supported at the time.
+
+For more information, refer to [this GitHub discussion](https://github.com/grafana/grafana/discussions/45773).
