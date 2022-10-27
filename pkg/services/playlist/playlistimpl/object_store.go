@@ -58,8 +58,10 @@ func (s *objectStoreImpl) sync() {
 		}
 		body, _ := json.Marshal(dto)
 		_, _ = s.objectstore.Write(ctx, &object.WriteObjectRequest{
-			UID:  uid,
-			Kind: models.StandardKindPlaylist,
+			GRN: &object.GRN{
+				UID:  uid,
+				Kind: models.StandardKindPlaylist,
+			},
 			Body: body,
 		})
 	}
@@ -73,8 +75,10 @@ func (s *objectStoreImpl) Create(ctx context.Context, cmd *playlist.CreatePlayli
 			return rsp, fmt.Errorf("unable to write playlist to store")
 		}
 		_, err = s.objectstore.Write(ctx, &object.WriteObjectRequest{
-			UID:  rsp.UID,
-			Kind: models.StandardKindPlaylist,
+			GRN: &object.GRN{
+				UID:  rsp.UID,
+				Kind: models.StandardKindPlaylist,
+			},
 			Body: body,
 		})
 		if err != nil {
@@ -92,8 +96,10 @@ func (s *objectStoreImpl) Update(ctx context.Context, cmd *playlist.UpdatePlayli
 			return rsp, fmt.Errorf("unable to write playlist to store")
 		}
 		_, err = s.objectstore.Write(ctx, &object.WriteObjectRequest{
-			UID:  rsp.Uid,
-			Kind: models.StandardKindPlaylist,
+			GRN: &object.GRN{
+				UID:  rsp.Uid,
+				Kind: models.StandardKindPlaylist,
+			},
 			Body: body,
 		})
 		if err != nil {
@@ -107,8 +113,10 @@ func (s *objectStoreImpl) Delete(ctx context.Context, cmd *playlist.DeletePlayli
 	err := s.sqlimpl.store.Delete(ctx, cmd)
 	if err == nil {
 		_, err = s.objectstore.Delete(ctx, &object.DeleteObjectRequest{
-			UID:  cmd.UID,
-			Kind: models.StandardKindPlaylist,
+			GRN: &object.GRN{
+				UID:  cmd.UID,
+				Kind: models.StandardKindPlaylist,
+			},
 		})
 		if err != nil {
 			return fmt.Errorf("unable to delete playlist to store")
@@ -136,8 +144,10 @@ func (s *objectStoreImpl) GetWithoutItems(ctx context.Context, q *playlist.GetPl
 
 func (s *objectStoreImpl) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.PlaylistDTO, error) {
 	rsp, err := s.objectstore.Read(ctx, &object.ReadObjectRequest{
-		UID:      q.UID,
-		Kind:     models.StandardKindPlaylist,
+		GRN: &object.GRN{
+			UID:  q.UID,
+			Kind: models.StandardKindPlaylist,
+		},
 		WithBody: true,
 	})
 	if err != nil {
@@ -170,7 +180,7 @@ func (s *objectStoreImpl) Search(ctx context.Context, q *playlist.GetPlaylistsQu
 			err = json.Unmarshal(res.Body, found)
 		}
 		playlists = append(playlists, &playlist.Playlist{
-			UID:      res.UID,
+			UID:      res.GRN.UID,
 			Name:     res.Name,
 			Interval: found.Interval,
 		})

@@ -20,8 +20,7 @@ func createContentsHash(contents []byte) string {
 }
 
 type rawObjectMatcher struct {
-	uid          *string
-	kind         *string
+	grn          *object.GRN
 	createdRange []time.Time
 	updatedRange []time.Time
 	createdBy    string
@@ -47,12 +46,8 @@ func requireObjectMatch(t *testing.T, obj *object.RawObject, m rawObjectMatcher)
 	require.NotNil(t, obj)
 
 	mismatches := ""
-	if m.uid != nil && *m.uid != obj.UID {
-		mismatches += fmt.Sprintf("expected UID: %s, actual UID: %s\n", *m.uid, obj.UID)
-	}
-
-	if m.kind != nil && *m.kind != obj.Kind {
-		mismatches += fmt.Sprintf("expected kind: %s, actual kind: %s\n", *m.kind, obj.Kind)
+	if m.grn != nil && !object.SameObject(m.grn, obj.GRN) {
+		mismatches += fmt.Sprintf("expected: %v, actual: %v\n", m.grn, obj.GRN)
 	}
 
 	if len(m.createdRange) == 2 && !timestampInRange(obj.Created, m.createdRange) {
@@ -123,13 +118,15 @@ func TestObjectServer(t *testing.T) {
 	fakeUser := fmt.Sprintf("user:%d:%s", testCtx.user.UserID, testCtx.user.Login)
 	firstVersion := "1"
 	kind := "dummy"
-	uid := "my-test-entity"
+	grn := &object.GRN{
+		Kind: kind,
+		UID:  "my-test-entity",
+	}
 	body := []byte("{\"name\":\"John\"}")
 
 	t.Run("should not retrieve non-existent objects", func(t *testing.T) {
 		resp, err := testCtx.client.Read(ctx, &object.ReadObjectRequest{
-			UID:  uid,
-			Kind: kind,
+			GRN: grn,
 		})
 		require.NoError(t, err)
 
@@ -140,8 +137,7 @@ func TestObjectServer(t *testing.T) {
 	t.Run("should be able to read persisted objects", func(t *testing.T) {
 		before := time.Now()
 		writeReq := &object.WriteObjectRequest{
-			UID:     uid,
-			Kind:    kind,
+			GRN:     grn,
 			Body:    body,
 			Comment: "first entity!",
 		}
@@ -157,8 +153,7 @@ func TestObjectServer(t *testing.T) {
 		requireVersionMatch(t, writeResp.Object, versionMatcher)
 
 		readResp, err := testCtx.client.Read(ctx, &object.ReadObjectRequest{
-			UID:      uid,
-			Kind:     kind,
+			GRN:      grn,
 			Version:  "",
 			WithBody: true,
 		})
@@ -166,8 +161,7 @@ func TestObjectServer(t *testing.T) {
 		require.Nil(t, readResp.SummaryJson)
 
 		objectMatcher := rawObjectMatcher{
-			uid:          &uid,
-			kind:         &kind,
+			grn:          grn,
 			createdRange: []time.Time{before, time.Now()},
 			updatedRange: []time.Time{before, time.Now()},
 			createdBy:    fakeUser,
@@ -178,16 +172,14 @@ func TestObjectServer(t *testing.T) {
 		requireObjectMatch(t, readResp.Object, objectMatcher)
 
 		deleteResp, err := testCtx.client.Delete(ctx, &object.DeleteObjectRequest{
-			UID:             uid,
-			Kind:            kind,
+			GRN:             grn,
 			PreviousVersion: writeResp.Object.Version,
 		})
 		require.NoError(t, err)
 		require.True(t, deleteResp.OK)
 
 		readRespAfterDelete, err := testCtx.client.Read(ctx, &object.ReadObjectRequest{
-			UID:      uid,
-			Kind:     kind,
+			GRN:      grn,
 			Version:  "",
 			WithBody: true,
 		})
@@ -198,8 +190,7 @@ func TestObjectServer(t *testing.T) {
 	t.Run("should be able to update an object", func(t *testing.T) {
 		before := time.Now()
 		writeReq1 := &object.WriteObjectRequest{
-			UID:     uid,
-			Kind:    kind,
+			GRN:     grn,
 			Body:    body,
 			Comment: "first entity!",
 		}
@@ -210,8 +201,7 @@ func TestObjectServer(t *testing.T) {
 		body2 := []byte("{\"name\":\"John2\"}")
 
 		writeReq2 := &object.WriteObjectRequest{
-			UID:     uid,
-			Kind:    kind,
+			GRN:     grn,
 			Body:    body2,
 			Comment: "update1",
 		}
@@ -229,8 +219,7 @@ func TestObjectServer(t *testing.T) {
 
 		body3 := []byte("{\"name\":\"John3\"}")
 		writeReq3 := &object.WriteObjectRequest{
-			UID:     uid,
-			Kind:    kind,
+			GRN:     grn,
 			Body:    body3,
 			Comment: "update3",
 		}
@@ -239,8 +228,7 @@ func TestObjectServer(t *testing.T) {
 		require.NotEqual(t, writeResp3.Object.Version, writeResp2.Object.Version)
 
 		latestMatcher := rawObjectMatcher{
-			uid:          &uid,
-			kind:         &kind,
+			grn:          grn,
 			createdRange: []time.Time{before, time.Now()},
 			updatedRange: []time.Time{before, time.Now()},
 			createdBy:    fakeUser,
@@ -249,8 +237,7 @@ func TestObjectServer(t *testing.T) {
 			version:      &writeResp3.Object.Version,
 		}
 		readRespLatest, err := testCtx.client.Read(ctx, &object.ReadObjectRequest{
-			UID:      uid,
-			Kind:     kind,
+			GRN:      grn,
 			Version:  "", // latest
 			WithBody: true,
 		})
@@ -259,8 +246,7 @@ func TestObjectServer(t *testing.T) {
 		requireObjectMatch(t, readRespLatest.Object, latestMatcher)
 
 		readRespFirstVer, err := testCtx.client.Read(ctx, &object.ReadObjectRequest{
-			UID:      uid,
-			Kind:     kind,
+			GRN:      grn,
 			Version:  writeResp1.Object.Version,
 			WithBody: true,
 		})
@@ -269,8 +255,7 @@ func TestObjectServer(t *testing.T) {
 		require.Nil(t, readRespFirstVer.SummaryJson)
 		require.NotNil(t, readRespFirstVer.Object)
 		requireObjectMatch(t, readRespFirstVer.Object, rawObjectMatcher{
-			uid:          &uid,
-			kind:         &kind,
+			grn:          grn,
 			createdRange: []time.Time{before, time.Now()},
 			updatedRange: []time.Time{before, time.Now()},
 			createdBy:    fakeUser,
@@ -280,8 +265,7 @@ func TestObjectServer(t *testing.T) {
 		})
 
 		history, err := testCtx.client.History(ctx, &object.ObjectHistoryRequest{
-			UID:  uid,
-			Kind: kind,
+			GRN: grn,
 		})
 		require.NoError(t, err)
 		require.Equal(t, []*object.ObjectVersionInfo{
@@ -291,8 +275,7 @@ func TestObjectServer(t *testing.T) {
 		}, history.Versions)
 
 		deleteResp, err := testCtx.client.Delete(ctx, &object.DeleteObjectRequest{
-			UID:             uid,
-			Kind:            kind,
+			GRN:             grn,
 			PreviousVersion: writeResp3.Object.Version,
 		})
 		require.NoError(t, err)
@@ -305,29 +288,34 @@ func TestObjectServer(t *testing.T) {
 		uid4 := "uid4"
 		kind2 := "kind2"
 		w1, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
-			UID:  uid,
-			Kind: kind,
+			GRN:  grn,
 			Body: body,
 		})
 		require.NoError(t, err)
 
 		w2, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
-			UID:  uid2,
-			Kind: kind,
+			GRN: &object.GRN{
+				UID:  uid2,
+				Kind: kind,
+			},
 			Body: body,
 		})
 		require.NoError(t, err)
 
 		w3, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
-			UID:  uid3,
-			Kind: kind2,
+			GRN: &object.GRN{
+				UID:  uid3,
+				Kind: kind2,
+			},
 			Body: body,
 		})
 		require.NoError(t, err)
 
 		w4, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
-			UID:  uid4,
-			Kind: kind2,
+			GRN: &object.GRN{
+				UID:  uid4,
+				Kind: kind2,
+			},
 			Body: body,
 		})
 		require.NoError(t, err)
@@ -343,8 +331,8 @@ func TestObjectServer(t *testing.T) {
 		kinds := make([]string, 0, len(search.Results))
 		version := make([]string, 0, len(search.Results))
 		for _, res := range search.Results {
-			uids = append(uids, res.UID)
-			kinds = append(kinds, res.Kind)
+			uids = append(uids, res.GRN.UID)
+			kinds = append(kinds, res.GRN.Kind)
 			version = append(version, res.Version)
 		}
 		require.Equal(t, []string{"my-test-entity", "uid2", "uid3", "uid4"}, uids)
@@ -365,8 +353,8 @@ func TestObjectServer(t *testing.T) {
 		kinds = make([]string, 0, len(searchKind1.Results))
 		version = make([]string, 0, len(searchKind1.Results))
 		for _, res := range searchKind1.Results {
-			uids = append(uids, res.UID)
-			kinds = append(kinds, res.Kind)
+			uids = append(uids, res.GRN.UID)
+			kinds = append(kinds, res.GRN.Kind)
 			version = append(version, res.Version)
 		}
 		require.Equal(t, []string{"my-test-entity", "uid2"}, uids)

@@ -109,8 +109,10 @@ func (e *objectStoreJob) start() {
 		}
 
 		_, err = e.store.Write(ctx, &object.WriteObjectRequest{
-			UID:     fmt.Sprintf("export/%s", dash.UID),
-			Kind:    models.StandardKindDashboard,
+			GRN: &object.GRN{
+				UID:  fmt.Sprintf("export/%s", dash.UID),
+				Kind: models.StandardKindDashboard,
+			},
 			Body:    dash.Body,
 			Comment: "export from dashboard table",
 		})
@@ -149,8 +151,10 @@ func (e *objectStoreJob) start() {
 		}
 
 		_, err = e.store.Write(ctx, &object.WriteObjectRequest{
-			UID:     fmt.Sprintf("export/%s", playlist.Uid),
-			Kind:    models.StandardKindPlaylist,
+			GRN: &object.GRN{
+				UID:  fmt.Sprintf("export/%s", playlist.Uid),
+				Kind: models.StandardKindPlaylist,
+			},
 			Body:    prettyJSON(playlist),
 			Comment: "export from playlists",
 		})

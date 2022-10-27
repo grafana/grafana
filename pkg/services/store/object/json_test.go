@@ -15,8 +15,10 @@ func TestRawEncoders(t *testing.T) {
 	require.NoError(t, err)
 
 	raw := &RawObject{
-		UID:     "a",
-		Kind:    "b",
+		GRN: &GRN{
+			UID:  "a",
+			Kind: "b",
+		},
 		Version: "c",
 		ETag:    "d",
 		Body:    body,
