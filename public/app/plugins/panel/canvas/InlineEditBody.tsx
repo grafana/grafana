@@ -107,6 +107,9 @@ export function InlineEditBody() {
     }
   };
 
+  const noElementSelected =
+    instanceState && activeTab === InlineEditTabs.SelectedElement && instanceState.selected.length === 0;
+
   return (
     <>
       <div style={topLevelItemsContainerStyle}>{pane.items.map((item) => item.render())}</div>
@@ -115,21 +118,15 @@ export function InlineEditBody() {
       </div>
       <div style={topLevelItemsContainerStyle}>
         <TabsEditor onTabChange={onTabChange} />
-        {pane.categories.map((p) => renderOptionsPaneCategoryDescriptor(p, activeTab))}
-        {instanceState && activeTab === InlineEditTabs.SelectedElement && instanceState.selected.length === 0 && (
-          <div className={styles.selectElement}>Please select an element</div>
-        )}
+        {pane.categories.map((p) => renderOptionsPaneCategoryDescriptor(p))}
+        {noElementSelected && <div className={styles.selectElement}>Please select an element</div>}
       </div>
     </>
   );
 }
 
 // Recursively render options
-function renderOptionsPaneCategoryDescriptor(
-  pane: OptionsPaneCategoryDescriptor,
-  activeTab?: string,
-  instanceState?: InstanceState
-) {
+function renderOptionsPaneCategoryDescriptor(pane: OptionsPaneCategoryDescriptor) {
   return (
     <OptionsPaneCategory {...pane.props} key={pane.props.id}>
       <div>{pane.items.map((v) => v.render())}</div>
