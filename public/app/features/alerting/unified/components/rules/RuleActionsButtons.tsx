@@ -4,8 +4,18 @@ import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, ClipboardButton, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  ClipboardButton,
+  ConfirmModal,
+  HorizontalGroup,
+  LinkButton,
+  Tooltip,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { useDispatch } from 'app/types';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
@@ -16,9 +26,29 @@ import { createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 
+export const matchesWidth = (width: number) => window.matchMedia(`(max-width: ${width}px)`).matches;
+
 interface Props {
   rule: CombinedRule;
   rulesSource: RulesSource;
+}
+function DontShowIfSmallDevice({ children }: { children: JSX.Element | string }) {
+  const theme = useTheme2();
+  const smBreakpoint = theme.breakpoints.values.xxl;
+  const [isSmallScreen, setIsSmallScreen] = useState(matchesWidth(smBreakpoint));
+
+  useMediaQueryChange({
+    breakpoint: smBreakpoint,
+    onChange: (e) => {
+      setIsSmallScreen(e.matches);
+    },
+  });
+
+  if (isSmallScreen) {
+    return null;
+  } else {
+    return <>{children}</>;
+  }
 }
 
 export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
@@ -67,16 +97,18 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
 
   if (!isViewMode) {
     buttons.push(
-      <LinkButton
-        className={style.button}
-        size="xs"
-        key="view"
-        variant="secondary"
-        icon="eye"
-        href={createViewLink(rulesSource, rule, returnTo)}
-      >
-        View
-      </LinkButton>
+      <Tooltip placement="top" content={'View'}>
+        <LinkButton
+          className={style.button}
+          size="xs"
+          key="view"
+          variant="secondary"
+          icon="eye"
+          href={createViewLink(rulesSource, rule, returnTo)}
+        >
+          <DontShowIfSmallDevice>View</DontShowIfSmallDevice>
+        </LinkButton>
+      </Tooltip>
     );
   }
 
@@ -109,25 +141,29 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
     }
 
     buttons.push(
-      <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
-        Edit
-      </LinkButton>
+      <Tooltip placement="top" content={'Edit'}>
+        <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
+          <DontShowIfSmallDevice>Edit</DontShowIfSmallDevice>
+        </LinkButton>
+      </Tooltip>
     );
   }
 
   if (isRemovable && rulerRule && !isFederated && !isProvisioned) {
     buttons.push(
-      <Button
-        className={style.button}
-        size="xs"
-        type="button"
-        key="delete"
-        variant="secondary"
-        icon="trash-alt"
-        onClick={() => setRuleToDelete(rule)}
-      >
-        Delete
-      </Button>
+      <Tooltip placement="top" content={'Delete'}>
+        <Button
+          className={style.button}
+          size="xs"
+          type="button"
+          key="delete"
+          variant="secondary"
+          icon="trash-alt"
+          onClick={() => setRuleToDelete(rule)}
+        >
+          <DontShowIfSmallDevice>Delete</DontShowIfSmallDevice>
+        </Button>
+      </Tooltip>
     );
   }
 
@@ -135,7 +171,9 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
     return (
       <>
         <div className={style.wrapper}>
-          <HorizontalGroup width="auto">{buttons.length ? buttons : <div />}</HorizontalGroup>
+          <HorizontalGroup width="auto">
+            {buttons.length ? buttons.map((button, index) => <div key={index}>{button}</div>) : <div />}
+          </HorizontalGroup>
         </div>
         {!!ruleToDelete && (
           <ConfirmModal
