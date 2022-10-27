@@ -560,7 +560,7 @@ function getStandalonePluginPageRoutes(): RouteDescriptor[] {
   }
 
   return standalonePageNavIds.map((navId) => {
-    const pluginId = navIndex[navId].pluginId;
+    const { pluginId } = navIndex[navId];
     const baseUrl = '';
 
     return {
