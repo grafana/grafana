@@ -7,6 +7,8 @@ import config from 'app/core/config';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { CommentManager } from 'app/features/comments/CommentManager';
 
+import { AnnotationsDataFrameViewDTO } from '../types';
+
 interface AnnotationTooltipProps {
   annotation: AnnotationsDataFrameViewDTO;
   timeFormatter: (v: number) => string;

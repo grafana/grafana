@@ -659,7 +659,7 @@ export class HeatmapRenderer {
 
   getCardColor(d: { count: any }) {
     if (this.panel.color.mode === 'opacity') {
-      return config.theme.visualization.getColorByName(this.panel.color.cardColor);
+      return config.theme2.visualization.getColorByName(this.panel.color.cardColor);
     } else {
       return this.colorScale(d.count);
     }

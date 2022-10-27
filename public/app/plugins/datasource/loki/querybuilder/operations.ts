@@ -420,3 +420,19 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
 
   return list;
 }
+
+// Keeping a local copy as an optimization measure.
+const definitions = getOperationDefinitions();
+
+/**
+ * Given an operator, return the corresponding explain.
+ * For usage within the Query Editor.
+ */
+export function explainOperator(id: LokiOperationId | string): string {
+  const definition = definitions.find((operation) => operation.id === id);
+
+  const explain = definition?.explainHandler?.({ id: '', params: ['<value>'] }) || '';
+
+  // Strip markdown links
+  return explain.replace(/\[(.*)\]\(.*\)/g, '$1');
+}

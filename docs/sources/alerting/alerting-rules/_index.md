@@ -4,11 +4,11 @@ aliases:
   - /docs/grafana/latest/alerting/old-alerting/create-alerts/
   - /docs/grafana/latest/alerting/rules/
   - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/
-title: Create alert rules
+title: Manage your alert rules
 weight: 130
 ---
 
-# Create alert rules
+# Manage your alert rules
 
 An alert rule is a set of evaluation criteria that determines whether an alert will fire. The alert rule consists of one or more queries and expressions, a condition, the frequency of evaluation, and optionally, the duration over which the condition is met.
 
@@ -20,8 +20,6 @@ You can:
 - [Create Grafana Mimir or Loki managed recording rules]({{< relref "create-mimir-loki-managed-recording-rule/" >}})
 - [Edit Grafana Mimir or Loki rule groups and namespaces]({{< relref "edit-mimir-loki-namespace-group/" >}})
 - [Create Grafana managed alert rules]({{< relref "create-grafana-managed-rule/" >}})
-- [View the state and health of alert rules]({{< relref "../view-state-health/" >}})
-- [View and filter alert rules]({{< relref "../view-alert-rules/" >}})
 
 **Note:**
 Grafana managed alert rules can only be edited or deleted by users with Edit permissions for the folder storing the rules.
