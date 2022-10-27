@@ -47,8 +47,19 @@ e2e.scenario({
     // Both queries above should have been run and be shown in the query history
     e2e.components.QueryTab.queryHistoryButton().should('be.visible').click();
     e2e.components.QueryHistory.queryText()
-      .should('have.length', 3)
+      .should('have.length.gte', 3)
       .should('contain', 'csv_metric_values')
       .should('contain', 'random_walk');
+    // Latest three queries should be [csv_metric_values, csv_metric_values, random_walk]
+    e2e.components.QueryHistory.queryText().each(($el, i) => {
+      if (i === 0 || i === 1) {
+        expect($el.text()).to.equal('csv_metric_values');
+      } else if (i === 2) {
+        expect($el.text()).to.equal('random_walk');
+      } else {
+        return false;
+      }
+      return true;
+    });
   },
 });
