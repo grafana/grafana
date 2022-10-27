@@ -67,7 +67,7 @@ func (api *Api) RegisterAPIEndpoints() {
 
 	// Auth endpoints
 	auth := accesscontrol.Middleware(api.AccessControl)
-	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
+	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":dashboardUid"))
 
 	// List public dashboards for org
 	api.RouteRegister.Get("/api/dashboards/public-dashboards", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
