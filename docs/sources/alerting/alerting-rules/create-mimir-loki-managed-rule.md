@@ -51,4 +51,4 @@ Watch this video to learn more about how to create a Mimir managed alert rule: {
    - Add Runbook URL, panel, dashboard, and alert IDs.
    - Add custom labels.
 1. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.
-1. Next, create a [notification]({{< relref "../notifications/" >}}) for the rule.
+1. Next, create a notification for the rule.

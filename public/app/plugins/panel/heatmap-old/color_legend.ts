@@ -273,7 +273,7 @@ function drawSimpleOpacityLegend(elem: JQuery, options: { colorScale: string; ex
         .attr('width', rangeStep)
         .attr('height', legendHeight)
         .attr('stroke-width', 0)
-        .attr('fill', config.theme.visualization.getColorByName(options.cardColor))
+        .attr('fill', config.theme2.visualization.getColorByName(options.cardColor))
         .style('opacity', (d) => legendOpacityScale(d));
     }
   }
