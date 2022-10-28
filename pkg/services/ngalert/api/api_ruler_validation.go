@@ -130,7 +130,7 @@ func validateInterval(cfg *setting.UnifiedAlertingSettings, interval time.Durati
 		return 0, fmt.Errorf("rule evaluation interval %d should be multiple of the base interval of %d seconds", int64(interval.Seconds()), baseIntervalSeconds)
 	}
 
-	return baseIntervalSeconds, nil
+	return intervalSeconds, nil
 }
 
 // validateForInterval validates ApiRuleNode.For and converts it to time.Duration. If the field is not specified returns 0 if GrafanaManagedAlert.UID is empty and -1 if it is not.
