@@ -229,7 +229,7 @@ require (
 	go.uber.org/atomic v1.9.0
 	go.uber.org/goleak v1.1.12 // indirect
 	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
-	golang.org/x/text v0.3.8
+	golang.org/x/text v0.4.0
 	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
