@@ -633,7 +633,7 @@ export function createTableFrameFromTraceQlQuery(
 ) {
   const spanDynamicAttrs: Record<string, FieldDTO> = {};
 
-  data.forEach((trace) => {
+  data?.forEach((trace) => {
     trace.spanSet?.spans.forEach((span) => {
       span.attributes?.forEach((attr) => {
         spanDynamicAttrs[attr.key] = {
