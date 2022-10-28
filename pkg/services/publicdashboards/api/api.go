@@ -111,7 +111,7 @@ func (api *Api) SavePublicDashboard(c *models.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
-		api.handleError(c.Req.Context(), http.StatusBadRequest, "SavePublicDashboard: no valid dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
+		api.handleError(c.Req.Context(), http.StatusBadRequest, "SavePublicDashboard: invalid dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
 	}
 
 	pubdash := &PublicDashboard{}
