@@ -2,18 +2,18 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { useWindowSize } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { Link, ButtonGroup, LinkButton, Icon, Tag, useStyles2, Tooltip, useTheme2, Spinner } from '@grafana/ui';
+import { Link, ButtonGroup, LinkButton, Icon, Tag, useStyles2, Tooltip, useTheme2, Spinner } from '@grafana/ui/src';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
 
-import { contextSrv } from '../../../core/services/context_srv';
-import { AccessControlAction } from '../../../types';
-import { useGetPublicDashboardsQuery } from '../../dashboard/api/publicDashboardApi';
-import { isOrgAdmin } from '../../plugins/admin/permissions';
+import { contextSrv } from '../../../../core/services/context_srv';
+import { AccessControlAction } from '../../../../types';
+import { useGetPublicDashboardsQuery } from '../../../dashboard/api/publicDashboardApi';
+import { isOrgAdmin } from '../../../plugins/admin/permissions';
 
-import { DeletePublicDashboardButton } from './DeletePublicDashboard/DeletePublicDashboardButton';
+import { DeletePublicDashboardButton } from './DeletePublicDashboardButton';
 
 export const viewPublicDashboardUrl = (accessToken: string): string =>
   `${getConfig().appUrl}public-dashboards/${accessToken}`;

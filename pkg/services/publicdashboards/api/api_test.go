@@ -205,13 +205,6 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 			ShouldCallService:    true,
 		},
 		{
-			Name:                 "Dashboard error in service returns correct status code instead of 500",
-			User:                 userEditorPublicDashboard,
-			ResponseErr:          dashboards.ErrDashboardIdentifierNotSet,
-			ExpectedHttpResponse: dashboards.ErrDashboardIdentifierNotSet.StatusCode,
-			ShouldCallService:    true,
-		},
-		{
 			Name:                 "PublicDashboard error in service returns correct status code instead of 500",
 			User:                 userEditorPublicDashboard,
 			ResponseErr:          ErrPublicDashboardIdentifierNotSet,
@@ -225,7 +218,7 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
 
 			if test.ShouldCallService {
-				service.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				service.On("Delete", mock.Anything, mock.Anything).
 					Return(test.ResponseErr)
 			}
 

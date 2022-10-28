@@ -192,8 +192,8 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 	return err
 }
 
-func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, userOrgId int64, dashboardUid string, uid string) error {
-	dashboard := &PublicDashboard{OrgId: userOrgId, DashboardUid: dashboardUid, Uid: uid}
+func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, orgId int64, uid string) error {
+	dashboard := &PublicDashboard{OrgId: orgId, Uid: uid}
 	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Delete(dashboard)
 		if err != nil {

@@ -265,15 +265,12 @@ func (pd *PublicDashboardServiceImpl) GetOrgIdByAccessToken(ctx context.Context,
 	return pd.store.GetOrgIdByAccessToken(ctx, accessToken)
 }
 
-func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, userOrgId int64, dashboardUid string, uid string) error {
-	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
-		return dashboards.ErrDashboardIdentifierNotSet
-	}
+func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, orgId int64, uid string) error {
 	if uid == "" || !util.IsValidShortUID(uid) {
 		return ErrPublicDashboardIdentifierNotSet
 	}
 
-	return pd.store.Delete(ctx, userOrgId, dashboardUid, uid)
+	return pd.store.Delete(ctx, orgId, uid)
 }
 
 // intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards

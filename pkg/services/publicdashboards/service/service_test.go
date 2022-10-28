@@ -387,18 +387,6 @@ func TestDeletePublicDashboard(t *testing.T) {
 		CheckErrorOn       string
 	}{
 		{
-			Name:               "Empty dashboardUid throws an error",
-			DashboardUid:       "",
-			PublicDashboardUid: "79lE9IH4z",
-			CheckErrorOn:       "dashboardUid",
-		},
-		{
-			Name:               "Invalid dashboardUid throws an error",
-			DashboardUid:       "inv@lid-d@shboard-uid!",
-			PublicDashboardUid: "79lE9IH4z",
-			CheckErrorOn:       "dashboardUid",
-		},
-		{
 			Name:               "Empty publicDashboardUid throws an error",
 			DashboardUid:       "79lE9IH4z",
 			PublicDashboardUid: "",
@@ -441,7 +429,7 @@ func TestDeletePublicDashboard(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, pubdash, savedPubdash)
 
-		deletedError := service.Delete(context.Background(), dashboard.OrgId, dashboard.Uid, savedPubdash.Uid)
+		deletedError := service.Delete(context.Background(), dashboard.OrgId, savedPubdash.Uid)
 		require.NoError(t, deletedError)
 
 		pubdash, err = service.FindByDashboardUid(context.Background(), savedPubdash.OrgId, savedPubdash.DashboardUid)
@@ -460,7 +448,7 @@ func TestDeletePublicDashboard(t *testing.T) {
 			store: store,
 		}
 
-		err := service.Delete(context.Background(), 13, "dashboard-uid", "uid")
+		err := service.Delete(context.Background(), 13, "uid")
 		require.Error(t, err)
 	})
 
@@ -490,7 +478,7 @@ func TestDeletePublicDashboard(t *testing.T) {
 			_, err := service.Save(context.Background(), SignedInUser, dto)
 			require.NoError(t, err)
 
-			deletedError := service.Delete(context.Background(), dashboard.OrgId, test.DashboardUid, test.PublicDashboardUid)
+			deletedError := service.Delete(context.Background(), dashboard.OrgId, test.PublicDashboardUid)
 			require.Error(t, deletedError)
 
 			if test.CheckErrorOn == "dashboardUid" {

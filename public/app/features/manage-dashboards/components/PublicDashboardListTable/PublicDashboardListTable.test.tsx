@@ -11,7 +11,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 
-import { ListPublicDashboardResponse } from '../types';
+import { ListPublicDashboardResponse } from '../../types';
 
 import { PublicDashboardListTable, viewPublicDashboardUrl } from './PublicDashboardListTable';
 
