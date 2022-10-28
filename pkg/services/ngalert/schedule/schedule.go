@@ -306,7 +306,8 @@ func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 }
 
 func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan ruleVersion) error {
-	logger := sch.log.New(key.LogContext()...)
+	grafanaCtx = ngmodels.WithRuleKey(grafanaCtx, key)
+	logger := sch.log.FromContext(grafanaCtx)
 	logger.Debug("Alert rule routine started")
 
 	orgID := fmt.Sprint(key.OrgID)
