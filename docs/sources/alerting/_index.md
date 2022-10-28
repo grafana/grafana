@@ -7,7 +7,7 @@ title: Alerting
 weight: 114
 ---
 
-# Grafana Alerting
+# Alerting
 
 Grafana Alerting allows you to learn about problems in your systems moments after they occur. Create, manage, and take action on your alerts in a single, consolidated view, and improve your team’s ability to identify and resolve issues quickly.
 

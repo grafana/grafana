@@ -7,7 +7,7 @@ title: Explore Grafana Alerting
 weight: 105
 ---
 
-# Explore Grafana Alerting
+# Explore Alerting
 
 Learn about the key concepts and features that help you create, manage, and take action on your alerts and improve your team's ability to resolve issues quickly.
 
