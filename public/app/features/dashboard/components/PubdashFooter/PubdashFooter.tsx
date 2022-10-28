@@ -5,7 +5,7 @@ import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 export interface PublicDashboardFooter {
-  disable: boolean;
+  hide: boolean;
   text: string;
   logo: string;
   link: string;
@@ -15,14 +15,16 @@ export const PubdashFooter = function () {
   const styles = useStyles2(getStyles);
   const conf = getPubdashFooterConfig();
 
-  return !conf.disable && (
-    <div className={styles.footer}>
-      <span className={styles.logoText}>
-        <a href={conf.link} target="_blank" rel="noreferrer noopener">
-          {conf.text} <img className={styles.logoImg} alt="" src={conf.logo}></img>
-        </a>
-      </span>
-    </div>
+  return (
+    !conf.hide && (
+      <div className={styles.footer}>
+        <span className={styles.logoText}>
+          <a href={conf.link} target="_blank" rel="noreferrer noopener">
+            {conf.text} <img className={styles.logoImg} alt="" src={conf.logo}></img>
+          </a>
+        </span>
+      </div>
+    )
   );
 };
 
@@ -30,12 +32,11 @@ export function setPubdashFooterConfigFn(fn: typeof getPubdashFooterConfig) {
   getPubdashFooterConfig = fn;
 }
 export let getPubdashFooterConfig = (): PublicDashboardFooter => ({
-    disable: false,
-    text: 'powered by Grafana',
-    logo: 'public/img/grafana_icon.svg',
-    link: 'https://grafana.com/',
-  });
-
+  hide: false,
+  text: 'powered by Grafana',
+  logo: 'public/img/grafana_icon.svg',
+  link: 'https://grafana.com/',
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   footer: css`
