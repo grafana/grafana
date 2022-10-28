@@ -9,13 +9,13 @@ keywords:
   - tutorials
   - ha
   - high availability
-title: ' Alerting high availability'
-weight: 450
+title: Alerting high availability
+weight: 430
 ---
 
-# About alerting high availability
+# Alerting high availability
 
-The Grafana Alerting system has two main components: a `Scheduler` and an internal `Alertmanager`. The `Scheduler` evaluates your [alert rules]({{< relref "../fundamentals/evaluate-grafana-alerts/" >}}), while the internal Alertmanager manages **routing** and **grouping**.
+The Grafana Alerting system has two main components: a `Scheduler` and an internal `Alertmanager`. The `Scheduler` evaluates your alert rules, while the internal Alertmanager manages **routing** and **grouping**.
 
 When running Grafana Alerting in high availability, the operational mode of the scheduler remains unaffected, and each Grafana instance evaluates all alerts. The operational change happens in the Alertmanager when it deduplicates alert notifications across Grafana instances.
 
@@ -30,4 +30,6 @@ The two types of messages gossiped between Grafana instances are:
 
 The notification logs and silences are persisted in the database periodically and during a graceful Grafana shut down.
 
-For configuration instructions, refer to [enable alerting high availability]({{< relref "enable-alerting-ha/" >}}).
+## Useful links
+
+[Configure alerting high availability](https://grafana.com/docs/grafana/next/alerting/set-up/configure-high-availability)
