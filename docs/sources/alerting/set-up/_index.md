@@ -3,11 +3,11 @@ aliases:
   - /docs/grafana/latest/alerting/set-up/
   - /docs/grafana/latest/alerting/set-up/
   - /docs/grafana/latest/alerting/unified-alerting/set-up/
-title: Set up Grafana Alerting
+title: Set up Alerting
 weight: 107
 ---
 
-# Set up Grafana Alerting
+# Set up Alerting
 
 Configure the features and integrations that you need to create and manage your alerts.
 

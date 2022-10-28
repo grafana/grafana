@@ -29,8 +29,7 @@ longer supported. We refer to these as [Differences]({{< relref "#differences" >
 
 4. Notification channels are migrated to an Alertmanager configuration with the appropriate routes and receivers. Default notification channels are added as contact points to the default route. Notification channels not associated with any Dashboard alert go to the `autogen-unlinked-channel-recv` route.
 
-5. Unlike legacy dashboard alerts where images in notifications are enabled per contact point, images in notifications for Grafana Alerting must be enabled in the Grafana configuration, either in the configuration file or environment variables, and are enabled for either all or no contact points. Please refer to the [documentation for images in notifications]({{< relref "../images-in-notifications" >}}).
-
+5. Unlike legacy dashboard alerts where images in notifications are enabled per contact point, images in notifications for Grafana Alerting must be enabled in the Grafana configuration, either in the configuration file or environment variables, and are enabled for either all or no contact points. Refer to [images in notifications](https://grafana.com/docs/grafana/latest/alerting/manage-notifications/images-in-notifications/).
 6. Grafana Alerting does not support pausing the evaluation of alert rules. After migration, all paused alert rules will become active, which may cause unexpected notifications to be sent.
 
 ## Limitations
