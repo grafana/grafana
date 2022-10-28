@@ -172,10 +172,10 @@ To list your token's permissions, use the `/api/access-control/user/permissions`
 #### Example
 
 > **Note:** The following command output is shortened to show only the relevant content.
-Authorize your request with the token whose permissions you want to check.
+> Authorize your request with the token whose permissions you want to check.
 
 ```bash
-curl -H "Authorization: Bearer glsa_HOruNAb7SOiCdshU9algkrq7FDsNSLAa_54e2f8be" -X GET '<grafana_url>/api/access-control/user/permissions?scoped=true' | jq
+curl -H "Authorization: Bearer glsa_HOruNAb7SOiCdshU9algkrq7FDsNSLAa_54e2f8be" -X GET '<grafana_url>/api/access-control/user/permissions' | jq
 ```
 
 The output lists the token's permissions:
@@ -200,7 +200,7 @@ To list which dashboards a token can view, you can filter the `/api/access-contr
 #### Example
 
 ```bash
-curl -H "Authorization: Bearer glsa_HOruNAb7SOiCdshU9algkrq7FDsNSLAa_54e2f8be" -X GET '<grafana_url>/api/access-control/user/permissions?scoped=true' | jq '."dashboards:read"'
+curl -H "Authorization: Bearer glsa_HOruNAb7SOiCdshU9algkrq7FDsNSLAa_54e2f8be" -X GET '<grafana_url>/api/access-control/user/permissions' | jq '."dashboards:read"'
 ```
 
 The output lists the token's viewable dashboards by their unique identifiers (`uid`):

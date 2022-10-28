@@ -537,16 +537,10 @@ Lists the permissions of the signed in user.
 
 No permission is required.
 
-#### Query parameters
-
-| Param  | Type    | Required | Description                                                                                        |
-| ------ | ------- | -------- | -------------------------------------------------------------------------------------------------- |
-| scoped | boolean | No       | A flag indicating if we want the scopes of the permissions on top of the user's available actions. |
-
 #### Example request
 
 ```http
-GET /api/access-control/user/permissions?scoped=true
+GET /api/access-control/user/permissions
 Accept: application/json
 ```
 
