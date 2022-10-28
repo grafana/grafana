@@ -1327,7 +1327,6 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 }
 
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
-	// Is it ok in the test that I use some external fake?
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
 		fakes.NewFakeRoleRegistry())
