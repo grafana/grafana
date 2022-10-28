@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	ErrIDTokenNotFound  = errors.New("id_token not found")
-	ErrEmailNotFound    = errors.New("error getting user info: no email found in access token")
+	ErrIDTokenNotFound = errors.New("id_token not found")
+	ErrEmailNotFound   = errors.New("error getting user info: no email found in access token")
 )
 
 type InvalidBasicRoleError struct {
@@ -18,9 +18,13 @@ type InvalidBasicRoleError struct {
 }
 
 func (e *InvalidBasicRoleError) Error() string {
-	return fmt.Sprintf("integration requires a valid org role assigned in idP. Assigned role: %s", e.assignedRole)
+	role := e.assignedRole
+	if role == "" {
+		role = "<Empty>"
+	}
+	return fmt.Sprintf("integration requires a valid org role assigned in idP. Assigned role: %s", role)
 }
 
 func (e *InvalidBasicRoleError) Unwrap() error {
-	return Error{cases.Title(language.Und).String(e.Error())}
+	return &Error{cases.Title(language.Und).String(e.Error())}
 }
