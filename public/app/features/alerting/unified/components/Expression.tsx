@@ -34,6 +34,7 @@ export const HighlightedQuery: FC<{ language: 'promql' | 'logql'; expr: string }
 
   const slateValue = useMemo(() => makeValue(expr), [expr]);
 
+  //We don't want to set readOnly={true} to the Editor to prevent unwanted charaters in the copied text. See https://github.com/grafana/grafana/pull/57839
   return <Editor data-testid={'expression-editor'} plugins={plugins} value={slateValue} />;
 };
 
