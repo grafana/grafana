@@ -15,37 +15,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAPI_getUserPermissions(t *testing.T) {
+func TestAPI_getUserActions(t *testing.T) {
 	type testCase struct {
 		desc           string
 		permissions    []ac.Permission
-		scoped         bool
 		expectedOutput util.DynMap
 		expectedCode   int
 	}
 
 	tests := []testCase{
 		{
-			desc: "Should be able to get permissions with scope",
-			permissions: []ac.Permission{
-				{Action: datasources.ActionRead, Scope: datasources.ScopeAll},
-				{Action: datasources.ActionRead, Scope: datasources.ScopeProvider.GetResourceScope("aabbccdd")},
-			},
-			scoped: true,
-			expectedOutput: util.DynMap{
-				datasources.ActionRead: []interface{}{
-					datasources.ScopeAll,
-					datasources.ScopeProvider.GetResourceScope("aabbccdd"),
-				}},
-			expectedCode: http.StatusOK,
-		},
-		{
 			desc: "Should be able to get actions",
 			permissions: []ac.Permission{
 				{Action: datasources.ActionRead, Scope: datasources.ScopeAll},
 				{Action: datasources.ActionRead, Scope: datasources.ScopeProvider.GetResourceScope("aabbccdd")},
 			},
-			scoped:         false,
 			expectedOutput: util.DynMap{datasources.ActionRead: true},
 			expectedCode:   http.StatusOK,
 		},
@@ -58,10 +42,60 @@ func TestAPI_getUserPermissions(t *testing.T) {
 			api.RegisterAPIEndpoints()
 
 			server := webtest.NewServer(t, api.RouteRegister)
-			url := "/api/access-control/user/permissions"
-			if tt.scoped {
-				url += "?scoped=true"
+			url := "/api/access-control/user/actions"
+
+			req := server.NewGetRequest(url)
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+				OrgID:       1,
+				Permissions: map[int64]map[string][]string{},
+			})
+			res, err := server.Send(req)
+			defer func() { require.NoError(t, res.Body.Close()) }()
+			require.NoError(t, err)
+			require.Equal(t, tt.expectedCode, res.StatusCode)
+
+			if tt.expectedCode == http.StatusOK {
+				var output util.DynMap
+				err := json.NewDecoder(res.Body).Decode(&output)
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedOutput, output)
 			}
+		})
+	}
+}
+
+func TestAPI_getUserPermissions(t *testing.T) {
+	type testCase struct {
+		desc           string
+		permissions    []ac.Permission
+		expectedOutput util.DynMap
+		expectedCode   int
+	}
+
+	tests := []testCase{
+		{
+			desc: "Should be able to get permissions with scope",
+			permissions: []ac.Permission{
+				{Action: datasources.ActionRead, Scope: datasources.ScopeAll},
+				{Action: datasources.ActionRead, Scope: datasources.ScopeProvider.GetResourceScope("aabbccdd")},
+			},
+			expectedOutput: util.DynMap{
+				datasources.ActionRead: []interface{}{
+					datasources.ScopeAll,
+					datasources.ScopeProvider.GetResourceScope("aabbccdd"),
+				}},
+			expectedCode: http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			acSvc := actest.FakeService{ExpectedPermissions: tt.permissions}
+			api := NewAccessControlAPI(routing.NewRouteRegister(), acSvc)
+			api.RegisterAPIEndpoints()
+
+			server := webtest.NewServer(t, api.RouteRegister)
+			url := "/api/access-control/user/permissions"
 
 			req := server.NewGetRequest(url)
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
