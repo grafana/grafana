@@ -380,26 +380,6 @@ func TestUpdatePublicDashboard(t *testing.T) {
 }
 
 func TestDeletePublicDashboard(t *testing.T) {
-	testCases := []struct {
-		Name               string
-		DashboardUid       string
-		PublicDashboardUid string
-		CheckErrorOn       string
-	}{
-		{
-			Name:               "Empty publicDashboardUid throws an error",
-			DashboardUid:       "79lE9IH4z",
-			PublicDashboardUid: "",
-			CheckErrorOn:       "publicDashboardUid",
-		},
-		{
-			Name:               "Invalid publicDashboardUid throws an error",
-			DashboardUid:       "79lE9IH4z",
-			PublicDashboardUid: "inv@lid-publicd@shboard-uid!",
-			CheckErrorOn:       "publicDashboardUid",
-		},
-	}
-
 	t.Run("When public dashboard is deleted, then find public dashboard throws an error", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
@@ -451,43 +431,6 @@ func TestDeletePublicDashboard(t *testing.T) {
 		err := service.Delete(context.Background(), 13, "uid")
 		require.Error(t, err)
 	})
-
-	for _, test := range testCases {
-		t.Run(test.Name, func(t *testing.T) {
-			sqlStore := db.InitTestDB(t)
-			dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
-			publicDashboardStore := database.ProvideStore(sqlStore)
-			dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
-
-			service := &PublicDashboardServiceImpl{
-				log:   log.New("test.logger"),
-				store: publicDashboardStore,
-			}
-
-			dto := &SavePublicDashboardDTO{
-				DashboardUid: dashboard.Uid,
-				OrgId:        dashboard.OrgId,
-				UserId:       7,
-				PublicDashboard: &PublicDashboard{
-					AnnotationsEnabled: false,
-					IsEnabled:          true,
-					TimeSettings:       timeSettings,
-				},
-			}
-
-			_, err := service.Save(context.Background(), SignedInUser, dto)
-			require.NoError(t, err)
-
-			deletedError := service.Delete(context.Background(), dashboard.OrgId, test.PublicDashboardUid)
-			require.Error(t, deletedError)
-
-			if test.CheckErrorOn == "dashboardUid" {
-				assert.Equal(t, dashboards.ErrDashboardIdentifierNotSet, deletedError)
-			} else {
-				assert.Equal(t, ErrPublicDashboardIdentifierNotSet, deletedError)
-			}
-		})
-	}
 }
 
 func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,

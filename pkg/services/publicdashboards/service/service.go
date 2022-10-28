@@ -266,10 +266,6 @@ func (pd *PublicDashboardServiceImpl) GetOrgIdByAccessToken(ctx context.Context,
 }
 
 func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, orgId int64, uid string) error {
-	if uid == "" || !util.IsValidShortUID(uid) {
-		return ErrPublicDashboardIdentifierNotSet
-	}
-
 	return pd.store.Delete(ctx, orgId, uid)
 }
 

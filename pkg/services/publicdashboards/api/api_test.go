@@ -158,6 +158,8 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 	testCases := []struct {
 		Name                 string
 		User                 *user.SignedInUser
+		DashboardUid         string
+		PublicDashboardUid   string
 		ResponseErr          error
 		ExpectedHttpResponse int
 		ShouldCallService    bool
@@ -165,6 +167,8 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 		{
 			Name:                 "User viewer cannot delete public dashboard",
 			User:                 userViewer,
+			DashboardUid:         dashboardUid,
+			PublicDashboardUid:   publicDashboardUid,
 			ResponseErr:          nil,
 			ExpectedHttpResponse: http.StatusForbidden,
 			ShouldCallService:    false,
@@ -172,6 +176,8 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 		{
 			Name:                 "User editor without specific dashboard access cannot delete public dashboard",
 			User:                 userEditorAnotherPublicDashboard,
+			DashboardUid:         dashboardUid,
+			PublicDashboardUid:   publicDashboardUid,
 			ResponseErr:          nil,
 			ExpectedHttpResponse: http.StatusForbidden,
 			ShouldCallService:    false,
@@ -179,6 +185,8 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 		{
 			Name:                 "User editor with all dashboard accesses can delete public dashboard",
 			User:                 userEditorAllPublicDashboard,
+			DashboardUid:         dashboardUid,
+			PublicDashboardUid:   publicDashboardUid,
 			ResponseErr:          nil,
 			ExpectedHttpResponse: http.StatusOK,
 			ShouldCallService:    true,
@@ -186,6 +194,8 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 		{
 			Name:                 "User editor with dashboard access can delete public dashboard",
 			User:                 userEditorPublicDashboard,
+			DashboardUid:         dashboardUid,
+			PublicDashboardUid:   publicDashboardUid,
 			ResponseErr:          nil,
 			ExpectedHttpResponse: http.StatusOK,
 			ShouldCallService:    true,
@@ -193,23 +203,29 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 		{
 			Name:                 "Internal server error returns an error",
 			User:                 userEditorPublicDashboard,
+			DashboardUid:         dashboardUid,
+			PublicDashboardUid:   publicDashboardUid,
 			ResponseErr:          errors.New("server error"),
 			ExpectedHttpResponse: http.StatusInternalServerError,
 			ShouldCallService:    true,
 		},
 		{
-			Name:                 "Internal server error returns an error",
+			Name:                 "PublicDashboard error returns correct status code instead of 500",
 			User:                 userEditorPublicDashboard,
-			ResponseErr:          errors.New("server error"),
-			ExpectedHttpResponse: http.StatusInternalServerError,
-			ShouldCallService:    true,
-		},
-		{
-			Name:                 "PublicDashboard error in service returns correct status code instead of 500",
-			User:                 userEditorPublicDashboard,
+			DashboardUid:         dashboardUid,
+			PublicDashboardUid:   publicDashboardUid,
 			ResponseErr:          ErrPublicDashboardIdentifierNotSet,
 			ExpectedHttpResponse: ErrPublicDashboardIdentifierNotSet.StatusCode,
 			ShouldCallService:    true,
+		},
+		{
+			Name:                 "Invalid publicDashboardUid throws an error",
+			User:                 userEditorPublicDashboard,
+			DashboardUid:         dashboardUid,
+			PublicDashboardUid:   "inv@lid-publicd@shboard-uid!",
+			ResponseErr:          nil,
+			ExpectedHttpResponse: ErrPublicDashboardIdentifierNotSet.StatusCode,
+			ShouldCallService:    false,
 		},
 	}
 
@@ -218,7 +234,7 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
 
 			if test.ShouldCallService {
-				service.On("Delete", mock.Anything, mock.Anything).
+				service.On("Delete", mock.Anything, mock.Anything, mock.Anything).
 					Return(test.ResponseErr)
 			}
 
@@ -227,7 +243,7 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 			features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
 			testServer := setupTestServer(t, cfg, features, service, nil, test.User)
 
-			response := callAPI(testServer, http.MethodDelete, fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards/%s", dashboardUid, publicDashboardUid), nil, t)
+			response := callAPI(testServer, http.MethodDelete, fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards/%s", test.DashboardUid, test.PublicDashboardUid), nil, t)
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
 			if test.ExpectedHttpResponse == http.StatusOK {

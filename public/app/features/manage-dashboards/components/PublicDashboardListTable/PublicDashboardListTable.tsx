@@ -7,11 +7,10 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Link, ButtonGroup, LinkButton, Icon, Tag, useStyles2, Tooltip, useTheme2, Spinner } from '@grafana/ui/src';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
-
-import { contextSrv } from '../../../../core/services/context_srv';
-import { AccessControlAction } from '../../../../types';
-import { useGetPublicDashboardsQuery } from '../../../dashboard/api/publicDashboardApi';
-import { isOrgAdmin } from '../../../plugins/admin/permissions';
+import { contextSrv } from 'app/core/services/context_srv';
+import { useListPublicDashboardsQuery } from 'app/features/dashboard/api/publicDashboardApi';
+import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
+import { AccessControlAction } from 'app/types';
 
 import { DeletePublicDashboardButton } from './DeletePublicDashboardButton';
 
@@ -24,7 +23,7 @@ export const PublicDashboardListTable = () => {
   const theme = useTheme2();
   const styles = useStyles2(() => getStyles(theme, isMobile));
 
-  const { data: publicDashboards, isLoading, isFetching } = useGetPublicDashboardsQuery();
+  const { data: publicDashboards, isLoading, isFetching } = useListPublicDashboardsQuery();
 
   const selectors = e2eSelectors.pages.PublicDashboards;
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());

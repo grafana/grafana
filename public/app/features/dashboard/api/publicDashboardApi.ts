@@ -74,7 +74,7 @@ export const publicDashboardApi = createApi({
       },
       invalidatesTags: ['Config'],
     }),
-    getPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
+    listPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
       query: () => ({
         url: '/public-dashboards',
       }),
@@ -107,5 +107,5 @@ export const {
   useGetConfigQuery,
   useSaveConfigMutation,
   useDeletePublicDashboardMutation,
-  useGetPublicDashboardsQuery,
+  useListPublicDashboardsQuery,
 } = publicDashboardApi;
