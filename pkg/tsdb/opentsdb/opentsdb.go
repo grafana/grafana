@@ -130,7 +130,6 @@ func (s *Service) createRequest(ctx context.Context, logger log.Logger, dsInfo *
 }
 
 func (s *Service) parseResponse(logger log.Logger, res *http.Response) (*backend.QueryDataResponse, error) {
-
 	resp := backend.NewQueryDataResponse()
 
 	body, err := io.ReadAll(res.Body)
