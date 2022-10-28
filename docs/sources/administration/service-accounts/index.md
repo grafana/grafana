@@ -193,7 +193,7 @@ output:
 
 ### Check which dashboards a token is allowed to see
 
-To see which dashboards a token is allowed to see, you can target the `/api/access-control/user/permissions` permissions.
+To list which dashboards a token can view, you can filter the `/api/access-control/user/permissions` endpoint's response for the `dashboards:read` permission key.
 
 #### Example
 
