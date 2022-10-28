@@ -15,7 +15,7 @@ export const PubdashFooter = function () {
   const styles = useStyles2(getStyles);
   const conf = getPubdashFooterConfig();
 
-  return conf.disable ? null : (
+  return !conf.disable && (
     <div className={styles.footer}>
       <span className={styles.logoText}>
         <a href={conf.link} target="_blank" rel="noreferrer noopener">
