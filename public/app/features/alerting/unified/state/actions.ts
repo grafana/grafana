@@ -1,6 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
+import { durationToMilliseconds, parseDuration } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
@@ -28,6 +29,7 @@ import {
   PostableRulerRuleGroupDTO,
   PromApplication,
   RulerRuleDTO,
+  RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
@@ -60,6 +62,7 @@ import {
   FetchRulerRulesFilter,
   setRulerRuleGroup,
 } from '../api/ruler';
+import { getAlertInfo } from '../components/rules/EditRuleGroupModal';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
@@ -751,6 +754,31 @@ interface UpdateNamespaceAndGroupOptions {
   newGroupName: string;
   groupInterval?: string;
 }
+// This method was introduced for making betterer happy (it was complaining about using as StoreState)
+const isStoreState = (something: unknown): something is StoreState => {
+  if (typeof something === 'object') {
+    return something ? 'unifiedAlerting' in something : false;
+  } else {
+    return false;
+  }
+};
+
+const rulesInSameGroupHaveInvalidFor = (
+  rulerRules: RulerRulesConfigDTO | null | undefined,
+  group: string,
+  folder_: string,
+  everyDuration: number
+) => {
+  const folderObj: RulerRuleGroupDTO[] = (rulerRules && rulerRules[folder_]) ?? [];
+  const groupObj = folderObj?.find((ruleGroup) => ruleGroup.name === group);
+
+  const rulesSameGroup: RulerRuleDTO[] = groupObj?.rules ?? [];
+
+  return rulesSameGroup.filter((rule: RulerRuleDTO) => {
+    const { forDuration } = getAlertInfo(rule);
+    return durationToMilliseconds(parseDuration(forDuration)) < everyDuration;
+  });
+};
 
 // allows renaming namespace, renaming group and changing group interval, all in one go
 export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
@@ -790,7 +818,29 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
           ) {
             throw new Error('Nothing changed.');
           }
-
+          // validation for new groupInterval
+          if (groupInterval !== existingGroup.interval) {
+            const storeState = thunkAPI.getState();
+            const groupfoldersForGrafana = isStoreState(storeState)
+              ? storeState?.unifiedAlerting.rulerRules[GRAFANA_RULES_SOURCE_NAME]
+              : null;
+            const notValidRules = rulesInSameGroupHaveInvalidFor(
+              groupfoldersForGrafana?.result,
+              groupName,
+              namespaceName,
+              durationToMilliseconds(parseDuration(groupInterval ?? ''))
+            );
+            if (notValidRules.length > 0) {
+              throw new Error(
+                `These alerts belonging to this group would have an invalid For value: ${notValidRules
+                  .map((rule) => {
+                    const { alertName } = getAlertInfo(rule);
+                    return alertName;
+                  })
+                  .join(',')}`
+              );
+            }
+          }
           // if renaming namespace - make new copies of all groups, then delete old namespace
           if (newNamespaceName !== namespaceName) {
             for (const group of rulesResult[namespaceName]) {
