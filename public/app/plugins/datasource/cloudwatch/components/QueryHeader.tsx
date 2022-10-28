@@ -3,6 +3,7 @@ import React from 'react';
 
 import { SelectableValue, ExploreMode } from '@grafana/data';
 import { EditorHeader, InlineSelect, FlexItem } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { Badge } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../datasource';
@@ -48,6 +49,9 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, 
       });
   };
 
+  const shouldDisplayMonitoringBadge =
+    queryMode === 'Logs' && isMonitoringAccount && config.featureToggles.cloudwatchCrossAccountQuerying;
+
   return (
     <EditorHeader>
       <InlineSelect
@@ -62,7 +66,7 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, 
 
       <InlineSelect aria-label="Query mode" value={queryMode} options={apiModes} onChange={onQueryModeChange} />
 
-      {queryMode === 'Logs' && isMonitoringAccount && (
+      {shouldDisplayMonitoringBadge && (
         <>
           <FlexItem grow={1} />
           <Badge text="Monitoring account" color="blue"></Badge>

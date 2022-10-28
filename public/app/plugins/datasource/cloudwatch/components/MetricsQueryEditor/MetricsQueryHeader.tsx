@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { FlexItem, InlineSelect } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { Badge, Button, ConfirmModal, RadioButtonGroup } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
@@ -51,6 +52,11 @@ const MetricsQueryHeader: React.FC<MetricsQueryHeaderProps> = ({
     [setShowConfirm, onChange, sqlCodeEditorIsDirty, query, metricEditorMode, metricQueryType]
   );
 
+  const shouldDisplayMonitoringBadge =
+    query.metricQueryType === MetricQueryType.Search &&
+    isMonitoringAccount &&
+    config.featureToggles.cloudwatchCrossAccountQuerying;
+
   return (
     <>
       <InlineSelect
@@ -63,9 +69,7 @@ const MetricsQueryHeader: React.FC<MetricsQueryHeaderProps> = ({
       />
       <FlexItem grow={1} />
 
-      {query.metricQueryType === MetricQueryType.Search && isMonitoringAccount && (
-        <Badge text="Monitoring account" color="blue"></Badge>
-      )}
+      {shouldDisplayMonitoringBadge && <Badge text="Monitoring account" color="blue"></Badge>}
 
       <RadioButtonGroup options={editorModes} size="sm" value={metricEditorMode} onChange={onEditorModeChange} />
 
