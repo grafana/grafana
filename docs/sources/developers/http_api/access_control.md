@@ -531,7 +531,7 @@ Content-Type: application/json; charset=UTF-8
 
 `GET /api/access-control/users/permissions`
 
-Lists the permissions of the signed in user.
+Lists the permissions granted to the signed in user.
 
 #### Required permissions
 
