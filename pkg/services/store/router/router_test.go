@@ -31,7 +31,7 @@ func TestSimpleRouter(t *testing.T) {
 		Error: "missing TenantId",
 		GRN:   &object.GRN{Scope: "x"},
 	}, {
-		Error: "unknown Kind",
+		Error: "unknown Kind: xyz",
 		GRN: &object.GRN{
 			TenantId: 11,
 			Scope:    models.ObjectStoreScopeDrive,

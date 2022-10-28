@@ -59,7 +59,7 @@ func (r *standardStoreRouter) Route(ctx context.Context, grn *object.GRN) (Resou
 
 	kind, err := r.kinds.GetInfo(grn.Kind)
 	if err != nil {
-		return info, fmt.Errorf("unknown Kind")
+		return info, fmt.Errorf("unknown Kind: " + grn.Kind)
 	}
 
 	if grn.Scope == "" {
@@ -85,7 +85,7 @@ func (r *standardStoreRouter) Route(ctx context.Context, grn *object.GRN) (Resou
 			}
 		}
 	default:
-		return info, fmt.Errorf("unsupported scope")
+		return info, fmt.Errorf("unsupported scope: " + grn.Scope)
 	}
 
 	return info, nil
