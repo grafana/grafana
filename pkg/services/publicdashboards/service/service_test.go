@@ -133,7 +133,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -179,7 +179,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -210,7 +210,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -246,7 +246,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			store: publicDashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: "an-id",
 			OrgId:        8,
 			UserId:       7,
@@ -277,7 +277,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -292,7 +292,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
-		dto = &SavePublicDashboardConfigDTO{
+		dto = &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       8,
@@ -341,7 +341,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -357,7 +357,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
-		dto = &SavePublicDashboardConfigDTO{
+		dto = &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       8,
