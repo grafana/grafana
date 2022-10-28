@@ -12,6 +12,7 @@ import (
 
 // These are the api contracts. The API should match the underlying service and store
 
+//go:generate go run ./commands/generate_datasources/main.go
 //go:generate mockery --name Service --structname FakePublicDashboardService --inpackage --filename public_dashboard_service_mock.go
 type Service interface {
 	FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error)
