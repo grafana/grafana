@@ -8,12 +8,10 @@ import (
 	"sync"
 )
 
-type datasourceMeta struct {
-	Slug string `json:"slug"`
-}
-
 type listPluginResponse struct {
-	Items []datasourceMeta `json:"items"`
+	Items []struct {
+		Slug string `json:"slug"`
+	} `json:"items"`
 }
 
 type datasourceDetails struct {
