@@ -560,6 +560,22 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, len(res), 1)
 		require.Equal(t, res[0].Title, "starred dash")
 	})
+
+	t.Run("Can count dashboards by parent folder", func(t *testing.T) {
+		setup()
+		// setup() saves one dashboard in the general folder and two in the "savedFolder".
+		count, err := dashboardStore.CountDashboardsInFolder(
+			context.Background(),
+			&dashboards.CountDashboardsInFolderRequest{FolderID: dashboards.GeneralFolderID, OrgID: 1})
+		require.NoError(t, err)
+		require.Equal(t, int64(1), count)
+
+		count, err = dashboardStore.CountDashboardsInFolder(
+			context.Background(),
+			&dashboards.CountDashboardsInFolderRequest{FolderID: savedFolder.Id, OrgID: 1})
+		require.NoError(t, err)
+		require.Equal(t, int64(2), count)
+	})
 }
 
 func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {

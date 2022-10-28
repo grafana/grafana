@@ -26,6 +26,7 @@ type DashboardService interface {
 	SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardACL) error
 	DeleteACLByUser(ctx context.Context, userID int64) error
+	CountDashboardsInFolder(ctx context.Context, query *CountDashboardsInFolderQuery) (int64, error)
 }
 
 // PluginService is a service for operating on plugin dashboards.
@@ -75,6 +76,12 @@ type Store interface {
 	// ValidateDashboardBeforeSave validates a dashboard before save.
 	ValidateDashboardBeforeSave(ctx context.Context, dashboard *models.Dashboard, overwrite bool) (bool, error)
 	DeleteACLByUser(context.Context, int64) error
+
+	// CountDashboardsInFolder returns the number of dashboards associated with
+	// the given parent folder ID. Note that this will be refactored to take the
+	// same CountDashboardsInFolderQuery struct and lookup by parent folder UID
+	// when folder ID is removed from the dashboard model.
+	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
 
 	FolderStore
 }

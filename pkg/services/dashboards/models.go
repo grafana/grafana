@@ -7,6 +7,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+// This is a temporary const that will be removed when the nested dashboard
+// feature is enabled. Until then, all dashboards' parent folder ID is "0",
+// which is the "general" folder.
+const GeneralFolderID int64 = 0
+
 type SaveDashboardDTO struct {
 	OrgId     int64
 	UpdatedAt time.Time
@@ -28,4 +33,14 @@ type DashboardSearchProjection struct {
 	FolderSlug  string
 	FolderTitle string
 	SortMeta    int64
+}
+
+type CountDashboardsInFolderQuery struct {
+	FolderUID string
+}
+
+// Note for reviewers: I wasn't sure what to name this. It's not actually a DTO
+type CountDashboardsInFolderRequest struct {
+	FolderID int64
+	OrgID    int64
 }
