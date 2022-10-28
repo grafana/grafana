@@ -214,16 +214,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                   <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
                 </button>
                 <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
-                  {config.featureToggles.lokiMonacoEditor ? (
-                    <MonacoQueryFieldWrapper
-                      runQueryOnBlur={app !== CoreApp.Explore}
-                      languageProvider={datasource.languageProvider}
-                      history={history ?? []}
-                      onChange={this.onChangeQuery}
-                      onRunQuery={onRunQuery}
-                      initialValue={query.expr ?? ''}
-                    />
-                  ) : (
+                  {config.featureToggles.disableLokiMonacoEditor ? (
                     <QueryField
                       additionalPlugins={this.plugins}
                       cleanText={datasource.languageProvider.cleanText}
@@ -235,6 +226,15 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                       onRunQuery={onRunQuery}
                       placeholder={placeholder}
                       portalOrigin="loki"
+                    />
+                  ) : (
+                    <MonacoQueryFieldWrapper
+                      runQueryOnBlur={app !== CoreApp.Explore}
+                      languageProvider={datasource.languageProvider}
+                      history={history ?? []}
+                      onChange={this.onChangeQuery}
+                      onRunQuery={onRunQuery}
+                      initialValue={query.expr ?? ''}
                     />
                   )}
                 </div>
