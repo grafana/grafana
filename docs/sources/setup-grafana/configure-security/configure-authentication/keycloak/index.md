@@ -45,7 +45,7 @@ As an example, `<PROVIDER_DOMAIN>` can be `keycloak-demo.grafana.org`
 and `<REALM_NAME>` can be `grafana`.
 
 > **Note**: api_url is not required if the id_token contains all the necessary user information and can add latency to the login process.
-> It is useful as a fallback or if the user has too many group memberships.
+> It is useful as a fallback or if the user has more than 150 group memberships.
 
 ## Keycloak configuration
 
