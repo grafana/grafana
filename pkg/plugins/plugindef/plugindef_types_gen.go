@@ -362,6 +362,9 @@ type Header struct {
 
 // A resource to be included in a plugin.
 type Include struct {
+	// RBAC action the user must have to access the route
+	Action *string `json:"action,omitempty"`
+
 	// Add the include to the side menu.
 	AddToNav *bool `json:"addToNav,omitempty"`
 

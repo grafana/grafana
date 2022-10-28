@@ -88,6 +88,9 @@ seqs: [
 					component?: string
 					role?:      "Admin" | "Editor" | "Viewer"
 
+					// RBAC action the user must have to access the route
+					action?: string
+
 					// Used for app plugins.
 					path?: string
 
