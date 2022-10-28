@@ -65,9 +65,27 @@ func TestAddAppLinks(t *testing.T) {
 		},
 	}
 
+	testApp3 := plugins.PluginDTO{
+		JSONData: plugins.JSONData{
+			ID:   "test-app3",
+			Name: "Test app3 name",
+			Type: plugins.App,
+			Includes: []*plugins.Includes{
+				{
+					Name:       "Hello",
+					Path:       "/connections/connect-data",
+					Type:       "page",
+					AddToNav:   true,
+					DefaultNav: true,
+				},
+			},
+		},
+	}
+
 	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
 		testApp1.ID: {ID: 0, OrgID: 1, PluginID: testApp1.ID, PluginVersion: "1.0.0", Enabled: true},
 		testApp2.ID: {ID: 0, OrgID: 1, PluginID: testApp2.ID, PluginVersion: "1.0.0", Enabled: true},
+		testApp3.ID: {ID: 0, OrgID: 1, PluginID: testApp3.ID, PluginVersion: "1.0.0", Enabled: true},
 	}}
 
 	service := ServiceImpl{
@@ -77,7 +95,7 @@ func TestAddAppLinks(t *testing.T) {
 		pluginSettings: &pluginSettings,
 		features:       featuremgmt.WithFeatures(),
 		pluginStore: plugins.FakePluginStore{
-			PluginList: []plugins.PluginDTO{testApp1, testApp2},
+			PluginList: []plugins.PluginDTO{testApp1, testApp2, testApp3},
 		},
 	}
 
@@ -171,6 +189,27 @@ func TestAddAppLinks(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "Test app2 name", treeRoot.Children[0].Children[0].Text)
 		require.Equal(t, "Test app1 name", treeRoot.Children[0].Children[1].Text)
+	})
+
+	t.Run("Should replace page from plugin", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav, featuremgmt.FlagDataConnectionsConsole)
+		service.navigationAppPathConfig = map[string]NavigationAppConfig{
+			"/connections/connect-data": {SectionID: "connections"},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx))
+		require.Equal(t, "Connections", treeRoot.Children[0].Text)
+		require.Equal(t, "Connect Data", treeRoot.Children[0].Children[1].Text)
+		require.Equal(t, "connections-connect-data", treeRoot.Children[0].Children[1].Id)	
+		require.Equal(t, "", treeRoot.Children[0].Children[1].PluginId)	
+
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		require.Equal(t, "Connections", treeRoot.Children[0].Text)
+		require.Equal(t, "Connect Data", treeRoot.Children[0].Children[1].Text)	
+		require.Equal(t, "standalone-plugin-page-/connections/connect-data", treeRoot.Children[0].Children[1].Id)	
+		require.Equal(t, "test-app3", treeRoot.Children[0].Children[1].PluginId)	
 	})
 }
 
