@@ -147,7 +147,7 @@ For details on managing teams, see [Team management]({{< relref "../team-managem
 
 While Grafana OSS includes a robust set of permissions and settings that you can use to manage user access to server and organization resources, you might find that you require additional capabilities.
 
-[Grafana Enterprise]({{< relref "../../enterprise/">}}) provides the following permissions-related features:
+[Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise">}}) provides the following permissions-related features:
 
 - Data source permissions
 - Role-based access control (RBAC)
