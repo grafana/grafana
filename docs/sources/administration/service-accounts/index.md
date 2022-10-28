@@ -170,7 +170,7 @@ To list your token's permissions, use the `/api/access-control/user/permissions`
 
 #### Example
 
-> note that the following command output is shortened
+> **Note:** The following command output is shortened to show only the relevant content.
 
 ```bash
 curl -H "Authorization: Bearer glsa_HOruNAb7SOiCdshU9algkrq7FDsNSLAa_54e2f8be" -X GET '<grafana_url>/api/access-control/user/permissions?scoped=true' | jq
