@@ -14,15 +14,18 @@ var (
 )
 
 type InvalidBasicRoleError struct {
+	idP          string
 	assignedRole string
 }
 
 func (e *InvalidBasicRoleError) Error() string {
-	role := e.assignedRole
-	if role == "" {
-		role = "<Empty>"
+	withFallback := func(v, fallback string) string {
+		if v == "" {
+			return fallback
+		}
+		return v
 	}
-	return fmt.Sprintf("integration requires a valid org role assigned in idP. Assigned role: %s", role)
+	return fmt.Sprintf("integration requires a valid org role assigned in %s. Assigned role: %s", withFallback(e.idP, "idP"), withFallback(e.assignedRole, "<empty>"))
 }
 
 func (e *InvalidBasicRoleError) Unwrap() error {
