@@ -12,7 +12,7 @@ weight: 850
 
 # Flame graph panel
 
-> **Note:** This panel is currently in beta. Please use the `flameGraph` feature flag to enable it.
+> **Note:** This panel is currently in beta & behind the `flameGraph` feature toggle.
 
 ## Flame graph
 
