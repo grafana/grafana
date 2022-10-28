@@ -1,8 +1,9 @@
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneObjectStatePlain } from '../core/types';
 
-import { SceneVariablesManager as SceneVariablesManager, TextBoxSceneVariable } from './SceneVariablesManager';
 import { sceneTemplateInterpolator } from './sceneTemplateInterpolator';
+import { SceneVariableSet } from './sets/SceneVariableSet';
+import { ConstantVariable } from './variants/ConstantVariable';
 
 interface TestSceneState extends SceneObjectStatePlain {
   nested?: TestScene;
@@ -13,14 +14,14 @@ class TestScene extends SceneObjectBase<TestSceneState> {}
 describe('sceneTemplateInterpolator', () => {
   it('Should be interpolate and use closest variable', () => {
     const scene = new TestScene({
-      $variables: new SceneVariablesManager({
+      $variables: new SceneVariableSet({
         variables: [
-          new TextBoxSceneVariable({
+          new ConstantVariable({
             name: 'test',
             value: 'hello',
             text: 'hello',
           }),
-          new TextBoxSceneVariable({
+          new ConstantVariable({
             name: 'atRootOnly',
             value: 'RootValue',
             text: 'RootValue',
@@ -28,9 +29,9 @@ describe('sceneTemplateInterpolator', () => {
         ],
       }),
       nested: new TestScene({
-        $variables: new SceneVariablesManager({
+        $variables: new SceneVariableSet({
           variables: [
-            new TextBoxSceneVariable({
+            new ConstantVariable({
               name: 'test',
               value: 'nestedValue',
               text: 'nestedValue',

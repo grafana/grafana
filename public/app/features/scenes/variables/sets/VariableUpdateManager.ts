@@ -108,17 +108,19 @@ export class VariablesUpdateManager {
     return variables;
   }
 
+  /**
+   * Updates dependencies in case they changed
+   * */
   variableStateChanged(variable: SceneVariable) {
     if (variable.getDependencies) {
       this.dependencies.set(variable.state.name, variable.getDependencies());
     }
   }
 
-  /** Updates dependencies */
+  /**
+   * This will trigger an update of all variables that depend on it.
+   * */
   variableValueChanged(variable: SceneVariable) {
-    // flag as changed
-    this.variablesThatHaveChanged.set(variable.state.name, variable);
-
     // Ignore this change if it is currently updating
     if (this.updating.has(variable.state.name)) {
       return;
