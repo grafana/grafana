@@ -537,6 +537,12 @@ Lists the permissions of the signed in user.
 
 No permission is required.
 
+#### Query parameters
+
+| Param       | Type    | Required | Description                                                           |
+| ----------- | ------- | -------- | --------------------------------------------------------------------- |
+| reloadcache | boolean | No       | A flag to get permissions from store and reload the permission cache. |
+
 #### Example request
 
 ```http
