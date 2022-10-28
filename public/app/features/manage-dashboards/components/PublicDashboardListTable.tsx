@@ -15,7 +15,7 @@ export interface ListPublicDashboardResponse {
   isEnabled: boolean;
 }
 
-export const LIST_PUBLIC_DASHBOARD_URL = `/api/dashboards/public`;
+export const LIST_PUBLIC_DASHBOARD_URL = `/api/dashboards/public-dashboards`;
 export const getPublicDashboards = async (): Promise<ListPublicDashboardResponse[]> => {
   return getBackendSrv().get(LIST_PUBLIC_DASHBOARD_URL);
 };
