@@ -3,7 +3,8 @@ import React, { useEffect, useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { durationToMilliseconds, GrafanaTheme2, parseDuration } from '@grafana/data';
-import { Modal, Button, Field, Input, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Modal, Button, Field, Input, useStyles2, Label, Icon, Tooltip } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useDispatch } from 'app/types';
@@ -139,6 +140,14 @@ interface FormValues {
   groupInterval: string;
 }
 
+function InfoIcon({ text }: { text: string }) {
+  return (
+    <Tooltip placement="top" content={<div>{text}</div>}>
+      <Icon name="info-circle" size="xs" />
+    </Tooltip>
+  );
+}
+
 export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   const { namespace, group, onClose } = props;
   const styles = useStyles2(getStyles);
@@ -208,7 +217,18 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
       <FormProvider {...formAPI}>
         <form onSubmit={(e) => e.preventDefault()} key={JSON.stringify(defaultValues)}>
           <>
-            <Field label="Namespace" invalid={!!errors.namespaceName} error={errors.namespaceName?.message}>
+            <Field
+              label={
+                <Label htmlFor="namespaceName">
+                  <Stack gap={0.5}>
+                    NameSpace
+                    <InfoIcon text={'You can update name space'} />
+                  </Stack>
+                </Label>
+              }
+              invalid={!!errors.namespaceName}
+              error={errors.namespaceName?.message}
+            >
               <Input
                 id="namespaceName"
                 {...register('namespaceName', {
@@ -216,7 +236,18 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 })}
               />
             </Field>
-            <Field label="Rule group" invalid={!!errors.groupName} error={errors.groupName?.message}>
+            <Field
+              label={
+                <Label htmlFor="groupName">
+                  <Stack gap={0.5}>
+                    Rule group
+                    <InfoIcon text={'You can update group name'} />
+                  </Stack>
+                </Label>
+              }
+              invalid={!!errors.groupName}
+              error={errors.groupName?.message}
+            >
               <Input
                 id="groupName"
                 {...register('groupName', {
@@ -225,7 +256,17 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               />
             </Field>
             <Field
-              label="Rule group evaluation interval"
+              label={
+                <Label
+                  htmlFor="groupInterval"
+                  description="Evaluation interval should be smaller or equal than For values for existing rules in this group."
+                >
+                  <Stack gap={0.5}>
+                    Rule group evaluation interval
+                    <InfoIcon text={'You can update evaluation interval'} />
+                  </Stack>
+                </Label>
+              }
               invalid={!!errors.groupInterval}
               error={errors.groupInterval?.message}
             >
@@ -288,5 +329,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tableWrapper: css`
     margin-top: ${theme.spacing(2)};
     margin-bottom: ${theme.spacing(2)};
+    height: 225px;
+    overflow: auto;
   `,
 });

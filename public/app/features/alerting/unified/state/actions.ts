@@ -821,11 +821,11 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
           // validation for new groupInterval
           if (groupInterval !== existingGroup.interval) {
             const storeState = thunkAPI.getState();
-            const groupfoldersForGrafana = isStoreState(storeState)
-              ? storeState?.unifiedAlerting.rulerRules[GRAFANA_RULES_SOURCE_NAME]
+            const groupfoldersForSource = isStoreState(storeState)
+              ? storeState?.unifiedAlerting.rulerRules[rulesSourceName]
               : null;
             const notValidRules = rulesInSameGroupHaveInvalidFor(
-              groupfoldersForGrafana?.result,
+              groupfoldersForSource?.result,
               groupName,
               namespaceName,
               durationToMilliseconds(safeParseDurationstr(groupInterval ?? ''))
