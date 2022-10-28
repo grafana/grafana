@@ -29,14 +29,13 @@ export const PubdashFooter = function () {
 export function setPubdashFooterConfigFn(fn: typeof getPubdashFooterConfig) {
   getPubdashFooterConfig = fn;
 }
-export let getPubdashFooterConfig = (): PublicDashboardFooter => {
-  return {
+export let getPubdashFooterConfig = (): PublicDashboardFooter => ({
     disable: false,
     text: 'powered by Grafana',
     logo: 'public/img/grafana_icon.svg',
     link: 'https://grafana.com/',
-  };
-};
+  });
+
 
 const getStyles = (theme: GrafanaTheme2) => ({
   footer: css`
