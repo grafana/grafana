@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 
@@ -948,8 +949,11 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 
 		res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), true)
 		assert.NoError(t, err)
-
 		require.Len(t, res, 2)
+
+		sort.Slice(res, func(i, j int) bool {
+			return res[i].RefId < res[j].RefId
+		})
 
 		require.NotNil(t, res[0])
 		assert.Equal(t, "{{period}} {{any_other_word}}", res[0].Alias)
