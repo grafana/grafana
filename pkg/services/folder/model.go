@@ -2,12 +2,16 @@ package folder
 
 import (
 	"time"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
 	GeneralFolderUID     = "general"
 	MaxNestedFolderDepth = 8
 )
+
+var ErrFolderNotFound = errutil.NewBase(errutil.StatusNotFound, "folder.notFound")
 
 type Folder struct {
 	ID          int64
@@ -17,16 +21,11 @@ type Folder struct {
 	Title       string
 	Description string
 
-	// TODO: is URL relevant for folders?
-	URL string
-
 	Created time.Time
 	Updated time.Time
 
-	// TODO: are these next three relevant for folders?
+	// TODO: validate if this field is required/relevant to folders.
 	UpdatedBy int64
-	CreatedBy int64
-	HasACL    bool
 }
 
 // NewFolder tales a title and returns a Folder with the Created and Updated
@@ -92,6 +91,7 @@ type GetParentsQuery struct {
 
 type GetTreeQuery struct {
 	UID   string
+	OrgID int64
 	Depth int64
 
 	// Pagination options
