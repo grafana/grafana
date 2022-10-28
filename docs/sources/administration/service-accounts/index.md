@@ -161,8 +161,9 @@ This can help you diagnose permissions-related issues with token authorization.
 
 ### Before you begin
 
-Make sure to read the section to [add a token to a service account]({{< relref "#add-a-token-to-a-service-account-in-grafana" >}})
-as we will need to use the token to authenticate against Grafana.
+These endpoints provide details on a service account's token.
+If you haven't added a token to a service account, do so before proceeding.
+For details, refer to [Add a token to a service account]({{< relref "#add-a-token-to-a-service-account-in-grafana" >}}).
 
 ### List a service account token's permissions
 
