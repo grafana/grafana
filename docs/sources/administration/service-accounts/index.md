@@ -201,7 +201,7 @@ To list which dashboards a token can view, you can filter the `/api/access-contr
 curl -H "Authorization: Bearer glsa_HOruNAb7SOiCdshU9algkrq7FDsNSLAa_54e2f8be" -X GET '<grafana_url>/api/access-control/user/permissions?scoped=true' | jq '."dashboards:read"'
 ```
 
-output:
+The output lists the token's viewable dashboards by their unique identifiers (`uid`):
 
 ```json
 [
