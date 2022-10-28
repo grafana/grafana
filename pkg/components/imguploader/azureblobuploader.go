@@ -19,6 +19,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -93,11 +94,54 @@ func (az *AzureBlobUploader) Upload(ctx context.Context, imageDiskPath string) (
 	}
 
 	url := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", az.account_name, az.container_name, randomFileName)
-	// Attach SAS token if value is not empty string
-	if az.sas_token != "" {
-		url = fmt.Sprintf("%s?%s", url, az.sas_token)
+
+	if az.sas_token_expiration != "" {
+
+		sasTokenExpiration, err := strconv.Atoi(az.sas_token_expiration)
+		if err != nil {
+			logger.Warn("Variable 'sas_token_expiration' is not in corect format. Must be number", "err", err)
+			return "", err
+		}
+
+		url, err = blob.GetBlobSasUrl(ctx, az.container_name, randomFileName, sasTokenExpiration)
+		if err != nil {
+			return "", err
+		}
 	}
 	return url, nil
+}
+
+// SignWithSharedKey uses an account's SharedKeyCredential to sign this signature values to produce the proper SAS query parameters.
+func (c *StorageClient) GetBlobSasUrl(ctx context.Context, containerName, blobName string, sasTokenExpiration int) (string, error) {
+	if c.Auth == nil {
+		return "", fmt.Errorf("cannot sign SAS query without Shared Key Credential")
+	}
+
+	// create source blob SAS url
+	credential, err := azblob.NewSharedKeyCredential(c.Auth.Account, c.Auth.Key)
+	if err != nil {
+		return "", err
+	}
+
+	// Set the desired SAS signature values and sign them with the shared key credentials to get the SAS query parameters.
+	sasQueryParams, err := azblob.BlobSASSignatureValues{
+		Protocol:      azblob.SASProtocolHTTPS,                            // Users MUST use HTTPS (not HTTP)
+		ExpiryTime:    time.Now().UTC().AddDate(0, 0, sasTokenExpiration), // Expiration time
+		ContainerName: containerName,
+		BlobName:      blobName,
+		Permissions:   azblob.BlobSASPermissions{Add: false, Read: true, Write: false}.String(), // Read only permissions
+	}.NewSASQueryParameters(credential)
+	if err != nil {
+		return "", err
+	}
+
+	// Create the URL of the resource you wish to access and append the SAS query parameters.
+	// Since this is a blob SAS, the URL is to the Azure storage blob.
+	qp := sasQueryParams.Encode()
+	blobSasUrl := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s?%s", c.Auth.Account, containerName, blobName, qp)
+
+	// Return Blob SAS token URL
+	return blobSasUrl, nil
 }
 
 // --- AZURE LIBRARY

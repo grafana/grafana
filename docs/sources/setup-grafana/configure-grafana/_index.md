@@ -1747,9 +1747,9 @@ Storage account key
 
 Container name where to store "Blob" images with random names. Creating the blob container beforehand is required. Only public containers are supported.
 
-### sas_token
+### sas_token_expiration
 
-SAS token attached to image URL. Allow storing images in private containers. SAS key rotation can be automated by environment variable rotation.
+Number of days for SAS token validity. If specified SAS token will be attached to image URL. Allow storing images in private containers.
 
 <hr>
 
