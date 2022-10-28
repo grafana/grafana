@@ -7,6 +7,7 @@ aliases:
   - /docs/grafana/latest/alerting/alert-groups/
   - /docs/grafana/latest/alerting/alert-groups/view-alert-grouping/
   - /docs/grafana/latest/alerting/unified-alerting/alert-groups/
+  - -docs/grafana/latest/alerting/manage-notifications/view-alert-groups/
 description: Alert groups
 keywords:
   - grafana
@@ -14,7 +15,7 @@ keywords:
   - alerts
   - groups
 title: View and filter by alert groups
-weight: 445
+weight: 455
 ---
 
 # View and filter by alert groups
