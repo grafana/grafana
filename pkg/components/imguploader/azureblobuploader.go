@@ -25,20 +25,20 @@ import (
 )
 
 type AzureBlobUploader struct {
-	account_name         string
-	account_key          string
-	container_name       string
-	sas_token_expiration string
-	log                  log.Logger
+	account_name   string
+	account_key    string
+	container_name string
+	sas_token      string
+	log            log.Logger
 }
 
-func NewAzureBlobUploader(account_name string, account_key string, container_name string, sas_token_expiration string) *AzureBlobUploader {
+func NewAzureBlobUploader(account_name string, account_key string, container_name string, sas_token string) *AzureBlobUploader {
 	return &AzureBlobUploader{
-		account_name:         account_name,
-		account_key:          account_key,
-		container_name:       container_name,
-		sas_token_expiration: sas_token_expiration,
-		log:                  log.New("azureBlobUploader"),
+		account_name:   account_name,
+		account_key:    account_key,
+		container_name: container_name,
+		sas_token:      sas_token,
+		log:            log.New("azureBlobUploader"),
 	}
 }
 

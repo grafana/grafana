@@ -113,6 +113,7 @@ func NewImageUploader() (ImageUploader, error) {
 		sas_token_expiration := azureBlobSec.Key("sas_token_expiration").MustString("")
 
 		return NewAzureBlobUploader(account_name, account_key, container_name, sas_token_expiration), nil
+
 	case "local":
 		return NewLocalImageUploader()
 	}
