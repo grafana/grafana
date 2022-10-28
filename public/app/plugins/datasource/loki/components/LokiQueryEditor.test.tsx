@@ -3,10 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { cloneDeep, defaultsDeep } from 'lodash';
 import React from 'react';
 
-import { DataSourcePluginMeta } from '@grafana/data';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
-import { LokiDatasource } from '../datasource';
+import { createLokiDatasource } from '../mocks';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from '../querybuilder/components/LokiQueryBuilderExplained';
 import { LokiQuery, LokiQueryType } from '../types';
 
@@ -36,24 +35,10 @@ const defaultQuery = {
   expr: '{label1="foo", label2="bar"}',
 };
 
-const datasource = new LokiDatasource(
-  {
-    id: 1,
-    uid: '',
-    type: 'loki',
-    name: 'loki-test',
-    access: 'proxy',
-    url: '',
-    jsonData: {},
-    meta: {} as DataSourcePluginMeta,
-    readOnly: false,
-  },
-  undefined,
-  undefined
-);
+const datasource = createLokiDatasource();
 
-datasource.languageProvider.fetchLabels = jest.fn().mockResolvedValue([]);
-datasource.getDataSamples = jest.fn().mockResolvedValue([]);
+jest.spyOn(datasource.languageProvider, 'fetchLabels').mockResolvedValue([]);
+jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([]);
 
 const defaultProps = {
   datasource,
