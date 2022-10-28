@@ -6,7 +6,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/request"
 )
@@ -17,15 +16,6 @@ type ListMetricsService struct {
 
 func NewListMetricsService(metricsClient models.MetricsClientProvider) models.ListMetricsProvider {
 	return &ListMetricsService{metricsClient}
-}
-
-func (*ListMetricsService) GetHardCodedDimensionKeysByNamespace(namespace string) ([]string, error) {
-	var dimensionKeys []string
-	exists := false
-	if dimensionKeys, exists = constants.NamespaceDimensionKeysMap[namespace]; !exists {
-		return nil, fmt.Errorf("unable to find dimensions for namespace '%q'", namespace)
-	}
-	return dimensionKeys, nil
 }
 
 func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(r *request.DimensionKeysRequest) ([]string, error) {
@@ -124,6 +114,25 @@ func (l *ListMetricsService) GetDimensionKeysByNamespace(namespace string) ([]st
 	}
 
 	return dimensionKeys, nil
+}
+
+func (l *ListMetricsService) GetMetricsByNamespace(namespace string) ([]models.Metric, error) {
+	metrics, err := l.ListMetricsWithPageLimit(&cloudwatch.ListMetricsInput{Namespace: aws.String(namespace)})
+	if err != nil {
+		return nil, err
+	}
+
+	response := []models.Metric{}
+	dupCheck := make(map[string]struct{})
+	for _, metric := range metrics {
+		if _, exists := dupCheck[*metric.MetricName]; exists {
+			continue
+		}
+		dupCheck[*metric.MetricName] = struct{}{}
+		response = append(response, models.Metric{Name: *metric.MetricName, Namespace: *metric.Namespace})
+	}
+
+	return response, nil
 }
 
 func setDimensionFilter(input *cloudwatch.ListMetricsInput, dimensionFilter []*request.Dimension) {

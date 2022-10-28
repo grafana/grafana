@@ -61,6 +61,10 @@ var (
 		Reason:     "bad Request",
 		StatusCode: 400,
 	}
+	ErrNoPanelQueriesFound = PublicDashboardErr{
+		Reason:     "failed to extract queries from panel",
+		StatusCode: 400,
+	}
 )
 
 type PublicDashboard struct {
@@ -147,7 +151,7 @@ func (pd PublicDashboard) BuildTimeSettings(dashboard *models.Dashboard) TimeSet
 }
 
 // DTO for transforming user input in the api
-type SavePublicDashboardConfigDTO struct {
+type SavePublicDashboardDTO struct {
 	DashboardUid    string
 	OrgId           int64
 	UserId          int64
@@ -168,6 +172,6 @@ type AnnotationsQueryDTO struct {
 // COMMANDS
 //
 
-type SavePublicDashboardConfigCommand struct {
+type SavePublicDashboardCommand struct {
 	PublicDashboard PublicDashboard
 }
