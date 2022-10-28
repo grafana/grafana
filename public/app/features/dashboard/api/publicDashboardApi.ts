@@ -6,8 +6,7 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardModel } from 'app/features/dashboard/state';
-
-import { ListPublicDashboardResponse } from '../../manage-dashboards/types';
+import { ListPublicDashboardResponse } from 'app/features/manage-dashboards/types';
 
 type ReqOptions = {
   manageError?: (err: unknown) => { error: unknown };
