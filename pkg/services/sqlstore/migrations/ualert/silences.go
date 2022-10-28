@@ -36,7 +36,7 @@ func (m *migration) addSilence(da dashAlert, rule *alertRule) error {
 		return errors.New("failed to create uuid for silence")
 	}
 
-	n, v := getLabelForRouteMatching(rule.UID)
+	n, v := getLabelForSilenceMatching(rule.UID)
 	s := &pb.MeshSilence{
 		Silence: &pb.Silence{
 			Id: uid.String(),
@@ -210,4 +210,8 @@ func openReplace(filename string) (*replaceFile, error) {
 		filename: filename,
 	}
 	return rf, nil
+}
+
+func getLabelForSilenceMatching(ruleUID string) (string, string) {
+	return "rule_uid", ruleUID
 }

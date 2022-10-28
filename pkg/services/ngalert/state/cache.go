@@ -90,13 +90,13 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 		}
 	}
 	if len(dupes) > 0 {
-		log.Warn("evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
+		log.Warn("Evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
 	}
 
 	il := ngModels.InstanceLabels(lbs)
 	id, err := il.StringKey()
 	if err != nil {
-		log.Error("error getting cacheId for entry", "err", err.Error())
+		log.Error("Error getting cacheId for entry", "error", err)
 	}
 
 	if state, ok := rs.states[id]; ok {
@@ -122,7 +122,7 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 	newState := &State{
 		AlertRuleUID:       alertRule.UID,
 		OrgID:              alertRule.OrgID,
-		CacheId:            id,
+		CacheID:            id,
 		Labels:             lbs,
 		Annotations:        annotations,
 		EvaluationDuration: result.EvaluationDuration,
@@ -145,7 +145,7 @@ func (rs *ruleStates) expandRuleLabelsAndAnnotations(ctx context.Context, log lo
 			ev, err := expandTemplate(ctx, alertRule.Title, v, templateLabels, alertInstance, externalURL)
 			expanded[k] = ev
 			if err != nil {
-				log.Error("error in expanding template", "name", k, "value", v, "err", err.Error())
+				log.Error("Error in expanding template", "name", k, "value", v, "error", err)
 				// Store the original template on error.
 				expanded[k] = v
 			}
@@ -171,7 +171,7 @@ func (c *cache) set(entry *State) {
 	if _, ok := c.states[entry.OrgID][entry.AlertRuleUID]; !ok {
 		c.states[entry.OrgID][entry.AlertRuleUID] = &ruleStates{states: make(map[string]*State)}
 	}
-	c.states[entry.OrgID][entry.AlertRuleUID].states[entry.CacheId] = entry
+	c.states[entry.OrgID][entry.AlertRuleUID].states[entry.CacheID] = entry
 }
 
 func (c *cache) get(orgID int64, alertRuleUID, stateId string) *State {

@@ -19,7 +19,10 @@ func TestKindRegistry(t *testing.T) {
 		ids = append(ids, k.ID)
 	}
 	require.Equal(t, []string{
+		"dashboard",
 		"dummy",
+		"folder",
+		"geojson",
 		"kind1",
 		"kind2",
 		"kind3",

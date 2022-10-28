@@ -110,4 +110,4 @@ export function VizLegend<T>({
   }
 }
 
-VizLegend.displayName = 'Legend';
+VizLegend.displayName = 'VizLegend';

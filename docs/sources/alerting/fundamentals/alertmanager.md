@@ -35,4 +35,8 @@ Here are two examples of when you may want to configure your own external alertm
 
 Alertmanagers are visible from the drop-down menu on the Alerting Contact Points, Notification Policies, and Silences pages.
 
-For more information on Alertmanager, refer to [Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/latest/alertmanager/).
+**Useful links**
+
+[Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/latest/alertmanager/)
+
+[Add an external Alertmanager](https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alertmanager/)

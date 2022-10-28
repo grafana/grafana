@@ -255,7 +255,7 @@ describe('PanelAlertTabContent', () => {
   });
 
   it('Will take into account datasource minInterval', async () => {
-    (getDatasourceSrv() as any as MockDataSourceSrv).datasources[dataSources.prometheus.uid].interval = '7m';
+    (getDatasourceSrv() as unknown as MockDataSourceSrv).datasources[dataSources.prometheus.uid].interval = '7m';
 
     await renderAlertTabContent(
       dashboard,

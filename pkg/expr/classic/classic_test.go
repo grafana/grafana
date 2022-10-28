@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
@@ -49,8 +50,8 @@ func TestUnmarshalConditionCMD(t *testing.T) {
 			expectedCommand: &ConditionsCmd{
 				Conditions: []condition{
 					{
-						QueryRefID: "A",
-						Reducer:    classicReducer("avg"),
+						InputRefID: "A",
+						Reducer:    reducer("avg"),
 						Operator:   "and",
 						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 2},
 					},
@@ -89,8 +90,8 @@ func TestUnmarshalConditionCMD(t *testing.T) {
 			expectedCommand: &ConditionsCmd{
 				Conditions: []condition{
 					{
-						QueryRefID: "A",
-						Reducer:    classicReducer("diff"),
+						InputRefID: "A",
+						Reducer:    reducer("diff"),
 						Operator:   "or",
 						Evaluator:  &rangedEvaluator{Type: "within_range", Lower: 2, Upper: 3},
 					},
@@ -134,8 +135,8 @@ func TestConditionsCmdExecute(t *testing.T) {
 			conditionsCmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
-						QueryRefID: "A",
-						Reducer:    classicReducer("avg"),
+						InputRefID: "A",
+						Reducer:    reducer("avg"),
 						Operator:   "and",
 						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
 					},
@@ -158,8 +159,8 @@ func TestConditionsCmdExecute(t *testing.T) {
 			conditionsCmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
-						QueryRefID: "A",
-						Reducer:    classicReducer("avg"),
+						InputRefID: "A",
+						Reducer:    reducer("avg"),
 						Operator:   "and",
 						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
 					},
@@ -183,8 +184,8 @@ func TestConditionsCmdExecute(t *testing.T) {
 			conditionsCmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
-						QueryRefID: "A",
-						Reducer:    classicReducer("avg"),
+						InputRefID: "A",
+						Reducer:    reducer("avg"),
 						Operator:   "and",
 						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: .5},
 					},
@@ -207,13 +208,13 @@ func TestConditionsCmdExecute(t *testing.T) {
 			conditionsCmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
-						QueryRefID: "A",
-						Reducer:    classicReducer("max"),
+						InputRefID: "A",
+						Reducer:    reducer("max"),
 						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
 					},
 					{
-						QueryRefID: "A",
-						Reducer:    classicReducer("min"),
+						InputRefID: "A",
+						Reducer:    reducer("min"),
 						Operator:   "or",
 						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 12},
 					},
@@ -237,8 +238,8 @@ func TestConditionsCmdExecute(t *testing.T) {
 			conditionsCmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
-						QueryRefID: "A",
-						Reducer:    classicReducer("avg"),
+						InputRefID: "A",
+						Reducer:    reducer("avg"),
 						Operator:   "and",
 						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
 					},
@@ -262,8 +263,8 @@ func TestConditionsCmdExecute(t *testing.T) {
 			conditionsCmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
-						QueryRefID: "A",
-						Reducer:    classicReducer("avg"),
+						InputRefID: "A",
+						Reducer:    reducer("avg"),
 						Operator:   "and",
 						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
 					},
@@ -287,8 +288,8 @@ func TestConditionsCmdExecute(t *testing.T) {
 			conditionsCmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
-						QueryRefID: "A",
-						Reducer:    classicReducer("avg"),
+						InputRefID: "A",
+						Reducer:    reducer("avg"),
 						Operator:   "and",
 						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
 					},
@@ -311,8 +312,8 @@ func TestConditionsCmdExecute(t *testing.T) {
 			conditionsCmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
-						QueryRefID: "A",
-						Reducer:    classicReducer("diff"),
+						InputRefID: "A",
+						Reducer:    reducer("diff"),
 						Operator:   "and",
 						Evaluator:  &rangedEvaluator{Type: "within_range", Lower: 2, Upper: 3},
 					},
@@ -328,14 +329,37 @@ func TestConditionsCmdExecute(t *testing.T) {
 			name: "single query with no data",
 			vars: mathexp.Vars{
 				"A": mathexp.Results{
+					Values: []mathexp.Value{mathexp.NoData{}.New()},
+				},
+			},
+			conditionsCmd: &ConditionsCmd{
+				Conditions: []condition{
+					{
+						InputRefID: "A",
+						Reducer:    reducer("avg"),
+						Operator:   "and",
+						Evaluator:  &thresholdEvaluator{"gt", 1},
+					},
+				},
+			},
+			resultNumber: func() mathexp.Number {
+				v := valBasedNumber(nil)
+				v.SetMeta([]EvalMatch{{Metric: "NoData"}})
+				return v
+			},
+		},
+		{
+			name: "single query with no values",
+			vars: mathexp.Vars{
+				"A": mathexp.Results{
 					Values: []mathexp.Value{},
 				},
 			},
 			conditionsCmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
-						QueryRefID: "A",
-						Reducer:    classicReducer("avg"),
+						InputRefID: "A",
+						Reducer:    reducer("avg"),
 						Operator:   "and",
 						Evaluator:  &thresholdEvaluator{"gt", 1},
 					},
@@ -361,8 +385,8 @@ func TestConditionsCmdExecute(t *testing.T) {
 			conditionsCmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
-						QueryRefID: "A",
-						Reducer:    classicReducer("avg"),
+						InputRefID: "A",
+						Reducer:    reducer("avg"),
 						Operator:   "and",
 						Evaluator:  &thresholdEvaluator{"gt", 1},
 					},
@@ -382,7 +406,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := tt.conditionsCmd.Execute(context.Background(), tt.vars)
+			res, err := tt.conditionsCmd.Execute(context.Background(), time.Now(), tt.vars)
 			require.NoError(t, err)
 
 			require.Equal(t, 1, len(res.Values))

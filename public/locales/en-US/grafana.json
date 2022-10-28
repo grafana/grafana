@@ -1,10 +1,8 @@
 {
+  "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
   "common": {
     "locale": {
-      "default": "Default",
-      "en": "English",
-      "es": "Spanish",
-      "fr": "French"
+      "default": "Default"
     },
     "save": "Save"
   },
@@ -103,53 +101,209 @@
     }
   },
   "nav": {
-    "alerting": "Alerting",
-    "alerting-admin": "Admin",
-    "alerting-am-routes": "Notification policies",
-    "alerting-channels": "Notification channels",
-    "alerting-groups": "Groups",
-    "alerting-legacy": "Alerting (legacy)",
-    "alerting-list": "Alert rules",
-    "alerting-receivers": "Contact points",
-    "alerting-silences": "Silences",
-    "api-keys": "API keys",
-    "config": "Configuration",
-    "correlations": "Correlations",
-    "create": "Create",
-    "create-alert": "New alert rule",
-    "create-dashboard": "Dashboard",
-    "create-folder": "Folder",
-    "create-import": "Import",
-    "dashboards": "Dashboards",
-    "datasources": "Data sources",
-    "explore": "Explore",
-    "help": "Help",
-    "home": "Home",
-    "library-panels": "Library panels",
-    "live": "Event streaming",
-    "live-cloud": "Cloud",
-    "live-pipeline": "Pipeline",
-    "live-status": "Status",
-    "manage-dashboards": "Browse",
-    "new-dashboard": "New dashboard",
-    "new-folder": "New folder",
-    "org-settings": "Preferences",
-    "playlists": "Playlists",
-    "plugins": "Plugins",
-    "profile/password": "Change password",
-    "profile/settings": "Preferences",
-    "service-accounts": "Service accounts",
-    "sign-out": "Sign out",
-    "snapshots": "Snapshots",
-    "starred": "Starred",
-    "starred-empty": "Your starred dashboards will appear here",
-    "teams": "Teams",
-    "users": "Users"
+    "admin": {
+      "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
+      "title": "Server admin"
+    },
+    "alerting": {
+      "subtitle": "Learn about problems in your systems moments after they occur",
+      "title": "Alerting"
+    },
+    "alerting-admin": {
+      "title": "Admin"
+    },
+    "alerting-am-routes": {
+      "subtitle": "Determine how alerts are routed to contact points",
+      "title": "Notification policies"
+    },
+    "alerting-channels": {
+      "title": "Notification channels"
+    },
+    "alerting-groups": {
+      "subtitle": "See grouped alerts from an Alertmanager instance",
+      "title": "Groups"
+    },
+    "alerting-legacy": {
+      "title": "Alerting (legacy)"
+    },
+    "alerting-list": {
+      "subtitle": "Rules that determine whether an alert will fire",
+      "title": "Alert rules"
+    },
+    "alerting-receivers": {
+      "subtitle": "Decide how your contacts are notified when an alert fires",
+      "title": "Contact points"
+    },
+    "alerting-silences": {
+      "subtitle": "Stop notifications from one or more alerting rules",
+      "title": "Silences"
+    },
+    "alerts-and-incidents": {
+      "subtitle": "Alerting and incident management apps",
+      "title": "Alerts & incidents"
+    },
+    "api-keys": {
+      "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",
+      "title": "API keys"
+    },
+    "apps": {
+      "subtitle": "App plugins that extend the Grafana experience",
+      "title": "Apps"
+    },
+    "config": {
+      "title": "Administration",
+      "titleBeforeTopnav": "Configuration"
+    },
+    "correlations": {
+      "subtitle": "Add and configure correlations",
+      "title": "Correlations"
+    },
+    "create": {
+      "title": "Create"
+    },
+    "create-alert": {
+      "title": "New alert rule"
+    },
+    "create-dashboard": {
+      "title": "Dashboard"
+    },
+    "create-folder": {
+      "title": "Folder"
+    },
+    "create-import": {
+      "title": "Import"
+    },
+    "dashboards": {
+      "subtitle": "Create and manage dashboards to visualize your data",
+      "title": "Dashboards"
+    },
+    "datasources": {
+      "subtitle": "Add and configure data sources",
+      "title": "Data sources"
+    },
+    "explore": {
+      "title": "Explore"
+    },
+    "global-orgs": {
+      "subtitle": "Isolated instances of Grafana running on the same server",
+      "title": "Organizations"
+    },
+    "global-users": {
+      "subtitle": "Manage and create users across the whole Grafana server",
+      "title": "Users"
+    },
+    "help": {
+      "title": "Help"
+    },
+    "help/community": "Community",
+    "help/documentation": "Documentation",
+    "help/keyboard-shortcuts": "Keyboard shortcuts",
+    "help/support": "Support",
+    "home": {
+      "title": "Home"
+    },
+    "library-panels": {
+      "subtitle": "Reusable panels that can be added to multiple dashboards",
+      "title": "Library panels"
+    },
+    "live": {
+      "title": "Event streaming"
+    },
+    "live-cloud": {
+      "title": "Cloud"
+    },
+    "live-pipeline": {
+      "title": "Pipeline"
+    },
+    "live-status": {
+      "title": "Status"
+    },
+    "manage-dashboards": {
+      "title": "Browse"
+    },
+    "monitoring": {
+      "subtitle": "Monitoring and infrastructure apps",
+      "title": "Monitoring"
+    },
+    "new-dashboard": {
+      "title": "New dashboard"
+    },
+    "new-folder": {
+      "title": "New folder"
+    },
+    "org-settings": {
+      "subtitle": "Manage preferences across an organization",
+      "title": "Preferences"
+    },
+    "playlists": {
+      "subtitle": "Groups of dashboards that are displayed in a sequence",
+      "title": "Playlists"
+    },
+    "plugins": {
+      "subtitle": "Extend the Grafana experience with plugins",
+      "title": "Plugins"
+    },
+    "profile/notifications": {
+      "title": "Notification history"
+    },
+    "profile/password": {
+      "title": "Change password"
+    },
+    "profile/settings": {
+      "title": "Preferences"
+    },
+    "profile/switch-org": "Switch organization",
+    "scenes": {
+      "title": "Scenes"
+    },
+    "search": {
+      "placeholder": "Search Grafana"
+    },
+    "server-settings": {
+      "subtitle": "View the settings defined in your Grafana config",
+      "title": "Settings"
+    },
+    "service-accounts": {
+      "subtitle": "Use service accounts to run automated workloads in Grafana",
+      "title": "Service accounts"
+    },
+    "sign-in": "Sign in",
+    "sign-out": {
+      "title": "Sign out"
+    },
+    "snapshots": {
+      "subtitle": "Interactive, publically available, point-in-time representations of dashboards",
+      "title": "Snapshots"
+    },
+    "starred": {
+      "title": "Starred"
+    },
+    "starred-empty": {
+      "title": "Your starred dashboards will appear here"
+    },
+    "storage": {
+      "subtitle": "Manage file storage",
+      "title": "Storage"
+    },
+    "teams": {
+      "subtitle": "Groups of users that have common dashboard and permission needs",
+      "title": "Teams"
+    },
+    "upgrading": {
+      "title": "Stats and license"
+    },
+    "users": {
+      "subtitle": "Invite and assign roles to users",
+      "title": "Users"
+    }
   },
   "navigation": {
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
     }
+  },
+  "news": {
+    "title": "Latest from the blog"
   },
   "panel": {
     "header-menu": {

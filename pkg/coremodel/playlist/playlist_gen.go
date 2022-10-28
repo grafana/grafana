@@ -90,8 +90,8 @@ var currentVersion = thema.SV(0, 0)
 // The lineage is the canonical specification of the current playlist schema,
 // all prior schema versions, and the mappings that allow migration between
 // schema versions.
-func Lineage(lib thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
-	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("pkg", "coremodel", "playlist"), cueFS, lib, opts...)
+func Lineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
+	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("pkg", "coremodel", "playlist"), cueFS, rt, opts...)
 }
 
 var _ thema.LineageFactory = Lineage
@@ -124,8 +124,8 @@ func (c *Coremodel) GoType() interface{} {
 // Note that this function does not cache, and initially loading a Thema lineage
 // can be expensive. As such, the Grafana backend should prefer to access this
 // coremodel through a registry (pkg/framework/coremodel/registry), which does cache.
-func New(lib thema.Library) (*Coremodel, error) {
-	lin, err := Lineage(lib)
+func New(rt *thema.Runtime) (*Coremodel, error) {
+	lin, err := Lineage(rt)
 	if err != nil {
 		return nil, err
 	}

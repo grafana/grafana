@@ -18,6 +18,8 @@ import {
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
+import { CorrelationData } from '../features/correlations/useCorrelations';
+
 export enum ExploreId {
   left = 'left',
   right = 'right',
@@ -44,6 +46,8 @@ export interface ExploreState {
    * Explore state of the right area in split view.
    */
   right?: ExploreItemState;
+
+  correlations?: CorrelationData[];
 
   /**
    * Settings for rich history (note: filters are stored per each pane separately)

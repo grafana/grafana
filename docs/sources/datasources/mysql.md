@@ -182,7 +182,7 @@ A time series query result is returned in a [wide data frame format]({{< relref 
 
 > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
-To optionally customize the default series name formatting, refer to [Standard options definitions]({{< relref "../panels/configure-standard-options/#display-name" >}}).
+To optionally customize the default series name formatting, refer to [Standard options definitions]({{< relref "../panels-visualizations/configure-standard-options/#display-name" >}}).
 
 **Example with `metric` column:**
 
@@ -224,7 +224,7 @@ GROUP BY time, hostname
 ORDER BY time
 ```
 
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [[Standard options definitions]({{< relref "../panels/configure-standard-options/#display-name" >}}) display value of `${__field.labels.hostname}`.
+Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [[Standard options definitions]({{< relref "../panels-visualizations/configure-standard-options/#display-name" >}}) display value of `${__field.labels.hostname}`.
 
 Data frame result:
 

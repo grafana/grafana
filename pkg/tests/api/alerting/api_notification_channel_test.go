@@ -20,13 +20,13 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -776,7 +776,7 @@ func TestNotificationChannels(t *testing.T) {
 		resp = getRequest(t, receiversURL, http.StatusOK) // nolint
 		b = getBody(t, resp.Body)
 
-		var receivers apimodels.Receivers
+		var receivers []apimodels.Receiver
 		err := json.Unmarshal([]byte(b), &receivers)
 		require.NoError(t, err)
 		for _, rcv := range receivers {
@@ -799,7 +799,7 @@ func TestNotificationChannels(t *testing.T) {
 		t.Cleanup(func() {
 			store.GenerateNewAlertRuleUID = originalFunction
 		})
-		store.GenerateNewAlertRuleUID = func(_ *sqlstore.DBSession, _ int64, ruleTitle string) (string, error) {
+		store.GenerateNewAlertRuleUID = func(_ *db.Session, _ int64, ruleTitle string) (string, error) {
 			return "UID_" + ruleTitle, nil
 		}
 
@@ -824,7 +824,7 @@ func TestNotificationChannels(t *testing.T) {
 	resp := getRequest(t, receiversURL, http.StatusOK) // nolint
 	b := getBody(t, resp.Body)
 
-	var receivers apimodels.Receivers
+	var receivers []apimodels.Receiver
 	err := json.Unmarshal([]byte(b), &receivers)
 	require.NoError(t, err)
 	for _, rcv := range receivers {
@@ -857,8 +857,8 @@ func TestNotificationChannels(t *testing.T) {
 
 					// If the receiver is not active, no attempts to send notifications should be registered.
 					if expActive {
+						// Prometheus' durations get rounded down, so we might end up with "0s" if we have values smaller than 1ms.
 						require.NotZero(t, integration.LastNotifyAttempt)
-						require.NotEqual(t, "0s", integration.LastNotifyAttemptDuration)
 					} else {
 						require.Zero(t, integration.LastNotifyAttempt)
 						require.Equal(t, "0s", integration.LastNotifyAttemptDuration)
@@ -1612,7 +1612,7 @@ const alertmanagerConfig = `
             }
           }
         ]
-      },   
+      },
 	  {
         "name": "slack_recv2",
         "grafana_managed_receiver_configs": [
@@ -2356,7 +2356,6 @@ var expNonEmailNotifications = map[string][]string{
 		`{
 		  "routing_key": "pagerduty_recv/pagerduty_test",
 		  "dedup_key": "234edb34441f942f713f3c2ccf58b1d719d921b4cbe34e57a1630f1dee847e3b",
-		  "description": "[FIRING:1] PagerdutyAlert (default)",
 		  "event_action": "trigger",
 		  "payload": {
 			"summary": "Integration Test [FIRING:1] PagerdutyAlert (default)",

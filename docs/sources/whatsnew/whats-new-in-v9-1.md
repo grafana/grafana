@@ -31,7 +31,7 @@ Service accounts are an evolution in machine access within Grafana.
 You can create multiple API tokens per service account with independent expiration dates, and temporarily disable a service account without deleting it.
 These benefits make service accounts a more flexible way for Terraform and other apps to authenticate with Grafana.
 
-Service accounts also work with [role-based access control]({{< relref "../administration/roles-and-permissions/access-control" >}}) in [Grafana Enterprise]({{< relref "../enterprise/" >}}).
+Service accounts also work with [role-based access control]({{< relref "../administration/roles-and-permissions/access-control" >}}) in [Grafana Enterprise]({{< relref "../introduction/grafana-enterprise" >}}).
 You can improve security by granting service accounts specific roles to limit the functions they can perform.
 Service accounts have been in beta since Grafana v8.5.
 During that time, we've improved the UI and migration path from API keys, made it possible to add service accounts to teams, and inherit team permissions.
@@ -85,15 +85,15 @@ As part of the upcoming improvements to Grafana's navigation, you can now direct
 #### Heatmap improvements
 
 The beta heatmap announced in version 9.0 is now used throughout Grafana.
-Its performance is improved, and it now supports [exemplars]({{< relref "../basics/exemplars/" >}}).
-To learn more about the heatmap panel, see the [documentation]({{< relref "../visualizations/heatmap/" >}}).
+Its performance is improved, and it now supports [exemplars]({{< relref "../fundamentals/exemplars/" >}}).
+To learn more about the heatmap panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/heatmap/" >}}).
 
 {{< figure src="/static/img/docs/panels/heatmap-panel-9-1.png" max-width="750px" caption="A heatmap panel" >}}
 
 #### Geomap
 
-You can now measure both distances and areas on Geomap visualizations by using the panel's new [measure tools]({{< relref "../visualizations/geomap/controls/#show-measure-tools" >}}).
-To learn more about the Geomap panel, see the [documentation]({{< relref "../visualizations/geomap/" >}}).
+You can now measure both distances and areas on Geomap visualizations by using the panel's new [measure tools]({{< relref "../panels-visualizations/visualizations/geomap/#show-measure-tools" >}}).
+To learn more about the Geomap panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/geomap/" >}}).
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-area-9-1-0.png" max-width="750px" caption="Geomap panel measuring tool - area" >}}
 

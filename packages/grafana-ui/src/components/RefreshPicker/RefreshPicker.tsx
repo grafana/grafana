@@ -50,7 +50,7 @@ export class RefreshPicker extends PureComponent<Props> {
 
   onChangeSelect = (item: SelectableValue<string>) => {
     const { onIntervalChanged } = this.props;
-    if (onIntervalChanged && item.value) {
+    if (onIntervalChanged && item.value != null) {
       onIntervalChanged(item.value);
     }
   };

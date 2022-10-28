@@ -7,6 +7,6 @@ var currentVersion{{ .SlotName }} = thema.SV({{ .LatestSeqv }}, {{ .LatestSchv }
 
 // {{ .SlotName }}Lineage returns the Thema lineage for the {{ .PluginID }} {{ .PluginType }} plugin's
 // {{ .SlotName }} ["github.com/grafana/grafana/pkg/framework/coremodel".Slot] implementation.
-func {{ .SlotName }}Lineage(lib thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
-	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("public", "app", "{{ .Name }}"), cueFS, lib, opts...)
+func {{ .SlotName }}Lineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
+	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("public", "app", "{{ .Name }}"), cueFS, rt, opts...)
 }
