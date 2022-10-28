@@ -100,7 +100,7 @@ e2e.scenario({
     const CI = e2e.env('CI');
     if (CI) {
       e2e()
-        .readFile('../../../cloud-data-sources/e2e-scripts/outputs.json')
+        .readFile('../../outputs.json')
         .then((outputs) => {
           provisionAzureMonitorDatasources([
             {
