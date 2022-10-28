@@ -29,7 +29,7 @@ Images are stored in the [data]({{< relref "../../setup-grafana/configure-grafan
 
 ## Requirements
 
-To use images in notifications, Grafana must be set up to use [image rendering]({{< relref "../setup-grafana/image-rendering/" >}}). It is also recommended that Grafana is set up to upload images to an [external image store]({{< relref "../setup-grafana/configure-grafana/#external_image_storage" >}}) such as Amazon S3, Azure Blob Storage, Google Cloud Storage or even Grafana.
+To use images in notifications, Grafana must be set up to use [image rendering](https://grafana.com/docs/grafana/next/setup-grafana/image-rendering/). It is also recommended that Grafana is set up to upload images to an external image store, such as Amazon S3, Azure Blob Storage, Google Cloud Storage or even Grafana.
 
 ## Configuration
 

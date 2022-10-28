@@ -69,4 +69,6 @@ With mute timings, you can specify a time interval when you don’t want new not
 
 - [Role-based access control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) in Grafana Enterprise.
 
-- [Alertmanager]({{< relref "fundamentals/alertmanager/" >}}) and [High availability]({{< relref "./high-availability/" >}})
+- [Alertmanager]({{< relref "fundamentals/alertmanager/" >}})
+
+- [High availability](https://grafana.com/docs/grafana/next/alerting/fundamentals/high-availability/)
