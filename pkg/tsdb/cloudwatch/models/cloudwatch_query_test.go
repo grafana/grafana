@@ -883,7 +883,6 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 	}
 }
 func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
-	t.Skip()
 	t.Run("migrates alias to label when label does not already exist and feature toggle enabled", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
@@ -953,7 +952,7 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 		require.Len(t, res, 2)
 
 		sort.Slice(res, func(i, j int) bool {
-			return res[i].RefId > res[j].RefId
+			return res[i].RefId < res[j].RefId
 		})
 
 		require.NotNil(t, res[0])
