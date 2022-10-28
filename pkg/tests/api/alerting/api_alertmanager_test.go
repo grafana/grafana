@@ -1877,6 +1877,8 @@ func TestQuota(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
+		// needs permission to update org quota
+		IsAdmin:        true,
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",

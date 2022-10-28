@@ -221,6 +221,7 @@ providers:
 				}
 				b, err := io.ReadAll(resp.Body)
 				require.NoError(t, err)
+				fmt.Println(">>>>", string(b))
 				dashboardErr := &errorResponseBody{}
 				err = json.Unmarshal(b, dashboardErr)
 				require.NoError(t, err)

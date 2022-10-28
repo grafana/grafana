@@ -10,6 +10,18 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+// swagger:route GET /org/quotas getCurrentOrg getCurrentOrgQuota
+//
+// Fetch Organization quota.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:read` and scope `org:id:1` (orgIDScope).
+//
+// Responses:
+// 200: getQuotaResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetCurrentOrgQuotas(c *models.ReqContext) response.Response {
 	return hs.getOrgQuotasHelper(c, c.OrgID)
 }
@@ -37,7 +49,7 @@ func (hs *HTTPServer) GetOrgQuotas(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) getOrgQuotasHelper(c *models.ReqContext, orgID int64) response.Response {
 	q, err := hs.QuotaService.Get(c.Req.Context(), "org", orgID)
 	if err != nil {
-		return response.Err(err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get quota", err)
 	}
 	return response.JSON(http.StatusOK, q)
 }

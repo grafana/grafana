@@ -206,7 +206,7 @@ func (a apiClient) CreateFolder(t *testing.T, uID string, title string) {
 func (a apiClient) GetOrgQuotaLimits(t *testing.T, orgID int64) (int64, int64) {
 	t.Helper()
 
-	u := fmt.Sprintf("%s/api/org/%d/quotas", a.url, orgID)
+	u := fmt.Sprintf("%s/api/orgs/%d/quotas", a.url, orgID)
 	// nolint:gosec
 	resp, err := http.Get(u)
 	require.NoError(t, err)
@@ -236,17 +236,19 @@ func (a apiClient) UpdateAlertRuleOrgQuota(t *testing.T, orgID int64, limit int6
 	t.Helper()
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
-	err := enc.Encode(quota.UpdateQuotaCmd{
+	err := enc.Encode(&quota.UpdateQuotaCmd{
 		Target: "alert_rule",
 		Limit:  limit,
+		OrgId:  orgID,
 	})
 	require.NoError(t, err)
 
-	u := fmt.Sprintf("%s/api/org/%d/quota/alert_rule", a.url, orgID)
+	u := fmt.Sprintf("%s/api/orgs/%d/quotas/alert_rule", a.url, orgID)
 	// nolint:gosec
 	client := &http.Client{}
 	req, err := http.NewRequest(http.MethodPut, u, &buf)
 	require.NoError(t, err)
+	req.Header.Add("Content-Type", "application/json")
 	resp, err := client.Do(req)
 	require.NoError(t, err)
 	defer func() {

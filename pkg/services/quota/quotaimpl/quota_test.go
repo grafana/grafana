@@ -44,7 +44,7 @@ import (
 
 func TestQuotaService(t *testing.T) {
 	quotaStore := &quotatest.FakeQuotaStore{}
-	quotaService := Service{
+	quotaService := service{
 		store: quotaStore,
 	}
 

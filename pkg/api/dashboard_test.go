@@ -39,7 +39,6 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
@@ -151,6 +150,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
 			Coremodels:              registry.NewBase(nil),
+			QuotaService:            quotatest.NewQuotaServiceFake(false, nil),
 		}
 
 		setUp := func() {
@@ -1081,12 +1081,10 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
 		hs := HTTPServer{
-			Cfg:                 cfg,
-			ProvisioningService: provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                newTestLive(t, db.InitTestDB(t)),
-			QuotaService: &quotaimpl.Service{
-				Cfg: cfg,
-			},
+			Cfg:                   cfg,
+			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
+			Live:                  newTestLive(t, db.InitTestDB(t)),
+			QuotaService:          quotatest.NewQuotaServiceFake(false, nil),
 			pluginStore:           &plugins.FakePluginStore{},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
@@ -1120,7 +1118,7 @@ func postValidateScenario(t *testing.T, desc string, url string, routePattern st
 			Cfg:                   cfg,
 			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                  newTestLive(t, db.InitTestDB(t)),
-			QuotaService:          &quotaimpl.Service{Cfg: cfg},
+			QuotaService:          quotatest.NewQuotaServiceFake(false, nil),
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
 			SQLStore:              sqlmock,
@@ -1156,7 +1154,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                    newTestLive(t, db.InitTestDB(t)),
-			QuotaService:            &quotaimpl.Service{Cfg: cfg},
+			QuotaService:            quotatest.NewQuotaServiceFake(false, nil),
 			LibraryPanelService:     &mockLibraryPanelService{},
 			LibraryElementService:   &mockLibraryElementService{},
 			SQLStore:                sqlmock,
@@ -1194,7 +1192,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                    newTestLive(t, db.InitTestDB(t)),
-			QuotaService:            &quotaimpl.Service{Cfg: cfg},
+			QuotaService:            quotatest.NewQuotaServiceFake(false, nil),
 			LibraryPanelService:     &mockLibraryPanelService{},
 			LibraryElementService:   &mockLibraryElementService{},
 			DashboardService:        mock,

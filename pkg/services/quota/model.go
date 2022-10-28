@@ -13,7 +13,7 @@ var ErrInvalidTargetSrv = errutil.NewBase(errutil.StatusBadRequest, "quota.inval
 var ErrInvalidScope = errutil.NewBase(errutil.StatusBadRequest, "quota.invalid-scope")
 var ErrInvalidTarget = errutil.NewBase(errutil.StatusInternal, "quota.invalid-target-table")
 var ErrTargetSrvConflict = errutil.NewBase(errutil.StatusBadRequest, "quota.target-srv-conflict")
-var ErrDisabled = errutil.NewBase(errutil.StatusNotFound, "quota.disabled", errutil.WithPublicMessage("Quotas not enabled"))
+var ErrDisabled = errutil.NewBase(errutil.StatusForbidden, "quota.disabled", errutil.WithPublicMessage("Quotas not enabled"))
 var ErrInvalidTagFormat = errutil.NewBase(errutil.StatusInternal, "quota.invalid-invalid-tag-format")
 
 type ScopeParameters struct {

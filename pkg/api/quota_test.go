@@ -38,6 +38,7 @@ func setupDBAndSettingsForAccessControlQuotaTests(t *testing.T, sc accessControl
 
 func TestAPIEndpoint_GetCurrentOrgQuotas_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
+	cfg.Quota.Enabled = true
 	cfg.RBACEnabled = false
 	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
@@ -57,7 +58,9 @@ func TestAPIEndpoint_GetCurrentOrgQuotas_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_GetCurrentOrgQuotas_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true)
+	cfg := setting.NewCfg()
+	cfg.Quota.Enabled = true
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
@@ -81,6 +84,7 @@ func TestAPIEndpoint_GetCurrentOrgQuotas_AccessControl(t *testing.T) {
 
 func TestAPIEndpoint_GetOrgQuotas_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
+	cfg.Quota.Enabled = true
 	cfg.RBACEnabled = false
 	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
@@ -100,7 +104,9 @@ func TestAPIEndpoint_GetOrgQuotas_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_GetOrgQuotas_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true)
+	cfg := setting.NewCfg()
+	cfg.Quota.Enabled = true
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
 
 	t.Run("AccessControl allows viewing another org quotas with correct permissions", func(t *testing.T) {
@@ -125,6 +131,7 @@ func TestAPIEndpoint_GetOrgQuotas_AccessControl(t *testing.T) {
 
 func TestAPIEndpoint_PutOrgQuotas_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
+	cfg.Quota.Enabled = true
 	cfg.RBACEnabled = false
 	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
@@ -141,12 +148,26 @@ func TestAPIEndpoint_PutOrgQuotas_LegacyAccessControl(t *testing.T) {
 	input = strings.NewReader(testUpdateOrgQuotaCmd)
 	t.Run("Grafana admin viewer can update another org quotas", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input, t)
+		fmt.Println(">>>", response)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 }
 
 func TestAPIEndpoint_PutOrgQuotas_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true)
+	cfg := setting.NewCfg()
+	cfg.Quota = setting.QuotaSettings{
+		Enabled: true,
+		Global: setting.GlobalQuota{
+			Org: 5,
+		},
+		Org: setting.OrgQuota{
+			User: 5,
+		},
+		User: setting.UserQuota{
+			Org: 5,
+		},
+	}
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
 
 	input := strings.NewReader(testUpdateOrgQuotaCmd)

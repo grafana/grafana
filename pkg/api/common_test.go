@@ -45,7 +45,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
-	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -413,7 +412,7 @@ func setupHTTPServerWithCfgDb(
 		Cfg:                    cfg,
 		Features:               features,
 		Live:                   newTestLive(t, db),
-		QuotaService:           quotaimpl.ProvideService(db, db.Cfg),
+		QuotaService:           quotaService,
 		RouteRegister:          routeRegister,
 		SQLStore:               store,
 		License:                &licensing.OSSLicensingService{},

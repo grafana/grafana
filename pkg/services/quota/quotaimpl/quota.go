@@ -13,7 +13,34 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type Service struct {
+type serviceDisabled struct {
+}
+
+func (s *serviceDisabled) QuotaReached(c *models.ReqContext, target string) (bool, error) {
+	return false, nil
+}
+
+func (s *serviceDisabled) Get(ctx context.Context, scope string, id int64) ([]quota.QuotaDTO, error) {
+	return nil, quota.ErrDisabled
+}
+
+func (s *serviceDisabled) Update(ctx context.Context, cmd *quota.UpdateQuotaCmd) error {
+	return quota.ErrDisabled
+}
+
+func (s *serviceDisabled) CheckQuotaReached(ctx context.Context, target string, scopeParams *quota.ScopeParameters) (bool, error) {
+	return false, nil
+}
+
+func (s *serviceDisabled) DeleteByUser(ctx context.Context, userID int64) error {
+	return quota.ErrDisabled
+}
+
+func (s *serviceDisabled) AddReporter(_ context.Context, e *quota.NewQuotaReporter) error {
+	return nil
+}
+
+type service struct {
 	store  store
 	Cfg    *setting.Cfg
 	Logger log.Logger
@@ -24,34 +51,8 @@ type Service struct {
 	defaultLimits *quota.Map
 }
 
-type ServiceDisabled struct{}
-
-func (s *ServiceDisabled) QuotaReached(c *models.ReqContext, target string) (bool, error) {
-	return false, quota.ErrDisabled
-}
-
-func (s *ServiceDisabled) Get(ctx context.Context, scope string, id int64) ([]quota.QuotaDTO, error) {
-	return nil, quota.ErrDisabled
-}
-
-func (s *ServiceDisabled) Update(ctx context.Context, cmd *quota.UpdateQuotaCmd) error {
-	return quota.ErrDisabled
-}
-
-func (s *ServiceDisabled) CheckQuotaReached(ctx context.Context, target string, scopeParams *quota.ScopeParameters) (bool, error) {
-	return false, quota.ErrDisabled
-}
-
-func (s *ServiceDisabled) DeleteByUser(ctx context.Context, userID int64) error {
-	return quota.ErrDisabled
-}
-
-func (s *ServiceDisabled) AddReporter(_ context.Context, e *quota.NewQuotaReporter) error {
-	return nil
-}
-
 func ProvideService(db db.DB, cfg *setting.Cfg) quota.Service {
-	s := Service{
+	s := service{
 		store:         &sqlStore{db: db},
 		Cfg:           cfg,
 		Logger:        log.New("quota_service"),
@@ -60,18 +61,18 @@ func ProvideService(db db.DB, cfg *setting.Cfg) quota.Service {
 	}
 
 	if s.IsDisabled() {
-		return &ServiceDisabled{}
+		return &serviceDisabled{}
 	}
 
 	return &s
 }
 
-func (s *Service) IsDisabled() bool {
+func (s *service) IsDisabled() bool {
 	return !s.Cfg.Quota.Enabled
 }
 
 // QuotaReached checks that quota is reached for a target. Runs CheckQuotaReached and take context and scope parameters from the request context
-func (s *Service) QuotaReached(c *models.ReqContext, target string) (bool, error) {
+func (s *service) QuotaReached(c *models.ReqContext, target string) (bool, error) {
 	// No request context means this is a background service, like LDAP Background Sync
 	if c == nil {
 		return false, nil
@@ -87,7 +88,7 @@ func (s *Service) QuotaReached(c *models.ReqContext, target string) (bool, error
 	return s.CheckQuotaReached(c.Req.Context(), target, params)
 }
 
-func (s *Service) Get(ctx context.Context, scope string, id int64) ([]quota.QuotaDTO, error) {
+func (s *service) Get(ctx context.Context, scope string, id int64) ([]quota.QuotaDTO, error) {
 	quotaScope := quota.Scope(scope)
 	if err := quotaScope.Validate(); err != nil {
 		return nil, err
@@ -153,7 +154,7 @@ func (s *Service) Get(ctx context.Context, scope string, id int64) ([]quota.Quot
 	return q, nil
 }
 
-func (s *Service) Update(ctx context.Context, cmd *quota.UpdateQuotaCmd) error {
+func (s *service) Update(ctx context.Context, cmd *quota.UpdateQuotaCmd) error {
 	targetFound := false
 	knownTargets, err := s.defaultLimits.Targets()
 	if err != nil {
@@ -172,7 +173,7 @@ func (s *Service) Update(ctx context.Context, cmd *quota.UpdateQuotaCmd) error {
 }
 
 // CheckQuotaReached check that quota is reached for a target. If ScopeParameters are not defined, only global scope is checked
-func (s *Service) CheckQuotaReached(ctx context.Context, target string, scopeParams *quota.ScopeParameters) (bool, error) {
+func (s *service) CheckQuotaReached(ctx context.Context, target string, scopeParams *quota.ScopeParameters) (bool, error) {
 	targetSrvLimits, err := s.getOverridenLimits(ctx, quota.TargetSrv(target), scopeParams)
 	if err != nil {
 		return false, err
@@ -206,11 +207,11 @@ func (s *Service) CheckQuotaReached(ctx context.Context, target string, scopePar
 	return false, nil
 }
 
-func (s *Service) DeleteByUser(ctx context.Context, userID int64) error {
+func (s *service) DeleteByUser(ctx context.Context, userID int64) error {
 	return s.store.DeleteByUser(ctx, userID)
 }
 
-func (s *Service) AddReporter(_ context.Context, e *quota.NewQuotaReporter) error {
+func (s *service) AddReporter(_ context.Context, e *quota.NewQuotaReporter) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -226,7 +227,7 @@ func (s *Service) AddReporter(_ context.Context, e *quota.NewQuotaReporter) erro
 	return nil
 }
 
-func (s *Service) getReporter(target quota.TargetSrv) (quota.UsageReporterFunc, bool) {
+func (s *service) getReporter(target quota.TargetSrv) (quota.UsageReporterFunc, bool) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -239,7 +240,7 @@ type reporter struct {
 	reporterFunc quota.UsageReporterFunc
 }
 
-func (s *Service) getReporters() <-chan reporter {
+func (s *service) getReporters() <-chan reporter {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
@@ -254,7 +255,7 @@ func (s *Service) getReporters() <-chan reporter {
 	return ch
 }
 
-func (s *Service) getOverridenLimits(ctx context.Context, targetSrv quota.TargetSrv, scopeParams *quota.ScopeParameters) (map[quota.Tag]int64, error) {
+func (s *service) getOverridenLimits(ctx context.Context, targetSrv quota.TargetSrv, scopeParams *quota.ScopeParameters) (map[quota.Tag]int64, error) {
 	targetSrvLimits := make(map[quota.Tag]int64)
 
 	customLimits, err := s.store.Get(ctx, scopeParams)
@@ -284,7 +285,7 @@ func (s *Service) getOverridenLimits(ctx context.Context, targetSrv quota.Target
 	return targetSrvLimits, nil
 }
 
-func (s *Service) getUsage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
+func (s *service) getUsage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
 	usage := &quota.Map{}
 	g, ctx := errgroup.WithContext(ctx)
 

@@ -66,7 +66,7 @@ func (api *ImportDashboardAPI) ImportDashboard(c *models.ReqContext) response.Re
 
 	limitReached, err := api.quotaService.QuotaReached(c, "dashboard")
 	if err != nil {
-		return response.Error(500, "failed to get quota", err)
+		return response.Err(err)
 	}
 
 	if limitReached {
