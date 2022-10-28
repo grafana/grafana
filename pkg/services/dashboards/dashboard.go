@@ -78,9 +78,7 @@ type Store interface {
 	DeleteACLByUser(context.Context, int64) error
 
 	// CountDashboardsInFolder returns the number of dashboards associated with
-	// the given parent folder ID. Note that this will be refactored to take the
-	// same CountDashboardsInFolderQuery struct and lookup by parent folder UID
-	// when folder ID is removed from the dashboard model.
+	// the given parent folder ID.
 	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
 
 	FolderStore
