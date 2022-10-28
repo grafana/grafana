@@ -37,7 +37,7 @@ export const SharePublicDashboard = (props: Props) => {
     isError: isFetchingError,
   } = useGetPublicDashboardQuery(props.dashboard.uid, {
     // if we don't have an access token, don't try to load public dashboard
-    skip: !props.dashboard.meta.publicDashboardAccessToken,
+    skip: !props.dashboard.meta.hasPublicDashboard,
   });
 
   const [createPublicDashboard, { isLoading: isSaveLoading }] = useCreatePublicDashboardMutation();
@@ -93,6 +93,7 @@ export const SharePublicDashboard = (props: Props) => {
       payload: { ...publicDashboard!, isEnabled: enabledSwitch.isEnabled, annotationsEnabled },
     };
 
+    // create or update based on whether we have existing uid
     publicDashboard?.uid ? updatePublicDashboard(req) : createPublicDashboard(req);
   };
 
