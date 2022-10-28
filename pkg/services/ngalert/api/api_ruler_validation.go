@@ -21,7 +21,6 @@ func validateRuleNode(
 	namespace *models.Folder,
 	conditionValidator func(ngmodels.Condition) error,
 	cfg *setting.UnifiedAlertingSettings) (*ngmodels.AlertRule, error) {
-
 	intervalSeconds, err := validateInterval(cfg, interval)
 	if err != nil {
 		return nil, err
