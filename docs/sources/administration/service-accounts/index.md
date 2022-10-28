@@ -156,8 +156,8 @@ You can assign on of the following permissions to a specific user or a team:
 
 ## Debug the permissions of a service account token
 
-Sometimes, for debugging purposes, you might need to know which RBAC permissions are attached to a service account token.
-This section will give you an overview of how to do it.
+This section explains how to learn which RBAC permissions are attached to a service account token.
+This can help you diagnose permissions-related issues with token authorization.
 
 ### Before you begin
 
