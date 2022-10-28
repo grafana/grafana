@@ -76,7 +76,6 @@ const (
 
 // swagger:model
 type PostableNGalertConfig struct {
-	Alertmanagers       []string            `json:"alertmanagers"`
 	AlertmanagersChoice AlertmanagersChoice `json:"alertmanagersChoice"`
 }
 
