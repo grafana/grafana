@@ -1,7 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/visualizations/flame-graph/
-  - /docs/grafana/latest/panels-visualizations/visualizations/flame-graph/
 keywords:
   - grafana
   - dashboard
