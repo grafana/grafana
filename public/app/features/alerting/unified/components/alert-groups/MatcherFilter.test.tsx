@@ -22,4 +22,16 @@ describe('Analytics', () => {
 
     expect(logInfo).toHaveBeenCalledWith(LogMessages.filterByLabel);
   });
+
+  it('should call onChange handler', async () => {
+    lodash.debounce = jest.fn().mockImplementation((fn) => fn);
+    const onFilterMock = jest.fn();
+
+    render(<MatcherFilter defaultQueryString="foo" onFilterChange={onFilterMock} />);
+
+    const searchInput = screen.getByTestId('search-query-input');
+    await userEvent.type(searchInput, '=bar');
+
+    expect(onFilterMock).toHaveBeenLastCalledWith('foo=bar');
+  });
 });
