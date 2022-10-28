@@ -66,7 +66,7 @@ func (ss *sqlStore) GetParents(ctx context.Context, cmd *folder.GetParentsQuery)
 func (ss *sqlStore) GetChildren(ctx context.Context, cmd *folder.GetTreeQuery) ([]*folder.Folder, error) {
 	var folders []*folder.Folder
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		err := sess.Where("parent_uid=?", cmd.UID).Find(folders)
+		err := sess.Where("parent_uid=? AND org_id=?", cmd.UID, cmd.OrgID).Find(folders)
 		return err
 	})
 	return folders, err
