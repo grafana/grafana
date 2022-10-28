@@ -132,6 +132,7 @@ func (d *PublicDashboardStoreImpl) FindByDashboardUid(ctx context.Context, orgId
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		exists, err = sess.Get(pdRes)
+
 		if err != nil {
 			return err
 		}
@@ -143,11 +144,11 @@ func (d *PublicDashboardStoreImpl) FindByDashboardUid(ctx context.Context, orgId
 		return nil, err
 	}
 
-	if !exists {
-		return nil, err
+	if exists {
+		return pdRes, err
 	}
 
-	return pdRes, err
+	return nil, err
 }
 
 // Save Persists public dashboard

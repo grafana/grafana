@@ -72,8 +72,6 @@ async function fetchDashboard(
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
 
-        console.log(args.urlType, args.urlSlug, args.urlUid);
-
         if (args.fixUrl && dashDTO.meta.url && !playlistSrv.isPlaying) {
           // check if the current url is correct (might be old slug)
           const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);

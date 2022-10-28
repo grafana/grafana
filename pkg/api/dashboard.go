@@ -107,6 +107,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
 		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, dash.Uid)
+		hs.log.Info("WTF", "pubdash", publicDashboard)
 
 		if publicDashboard != nil {
 			publicDashboardEnabled = publicDashboard.IsEnabled

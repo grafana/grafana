@@ -16,7 +16,6 @@ import { Configuration } from 'app/features/dashboard/components/ShareModal/Shar
 import { Description } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/Description';
 import {
   Acknowledgements,
-  PublicDashboard,
   dashboardHasTemplateVariables,
   generatePublicDashboardUrl,
   publicDashboardPersisted,
@@ -32,17 +31,14 @@ export const SharePublicDashboard = (props: Props) => {
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
   const styles = useStyles2(getStyles);
 
-  let isFetchingLoading = false;
-  let publicDashboard: PublicDashboard | undefined;
-  let isFetchingError = false;
-
-  // FIXME
-  //if (props.dashboard.meta.publicDashboardAccessToken){
-  let res = useGetPublicDashboardQuery(props.dashboard.uid);
-  isFetchingLoading = res.isLoading;
-  publicDashboard = res.data;
-  isFetchingError = res.isFetching;
-  //}
+  const {
+    isLoading: isFetchingLoading,
+    data: publicDashboard,
+    isError: isFetchingError,
+  } = useGetPublicDashboardQuery(props.dashboard.uid, {
+    // if we don't have an access token, don't try to load public dashboard
+    skip: !props.dashboard.meta.publicDashboardAccessToken,
+  });
 
   const [createPublicDashboard, { isLoading: isSaveLoading }] = useCreatePublicDashboardMutation();
   const [updatePublicDashboard, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
