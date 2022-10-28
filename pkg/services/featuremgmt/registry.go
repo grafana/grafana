@@ -106,7 +106,7 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "lokiMonacoEditor",
+			Name:        "disableLokiMonacoEditor",
 			Description: "Access to Monaco query editor for Loki",
 			State:       FeatureStateAlpha,
 		},

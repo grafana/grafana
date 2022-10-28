@@ -34,7 +34,7 @@ export interface FeatureToggles {
   publicDashboards?: boolean;
   lokiLive?: boolean;
   lokiDataframeApi?: boolean;
-  lokiMonacoEditor?: boolean;
+  disableLokiMonacoEditor?: boolean;
   swaggerUi?: boolean;
   featureHighlights?: boolean;
   dashboardComments?: boolean;
