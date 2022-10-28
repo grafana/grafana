@@ -37,7 +37,7 @@ export const publicDashboardApi = createApi({
   tagTypes: ['Config'],
   keepUnusedDataFor: 0,
   endpoints: (builder) => ({
-    getConfig: builder.query<PublicDashboard, string>({
+    getPublicDashboard: builder.query<PublicDashboard, string>({
       query: (dashboardUid) => ({
         url: `/uid/${dashboardUid}/public-dashboards`,
         manageError: getConfigError,
@@ -54,7 +54,7 @@ export const publicDashboardApi = createApi({
       },
       providesTags: ['Config'],
     }),
-    saveConfig: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
+    createPublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({
         url: `/uid/${params.dashboard.uid}/public-dashboards`,
         method: 'POST',
@@ -63,7 +63,26 @@ export const publicDashboardApi = createApi({
       extraOptions: { maxRetries: 0 },
       async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
-        dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
+        dispatch(notifyApp(createSuccessNotification('Public dashboard created!')));
+
+        // Update runtime meta flag
+        dashboard.updateMeta({
+          publicDashboardUid: data.uid,
+          publicDashboardEnabled: data.isEnabled,
+        });
+      },
+      invalidatesTags: ['Config'],
+    }),
+    updatePublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
+      query: (params) => ({
+        url: `/uid/${params.dashboard.uid}/public-dashboards`,
+        method: 'PUT',
+        data: params.payload,
+      }),
+      extraOptions: { maxRetries: 0 },
+      async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
+        const { data } = await queryFulfilled;
+        dispatch(notifyApp(createSuccessNotification('Public dashboard updated!')));
 
         // Update runtime meta flag
         dashboard.updateMeta({
@@ -76,4 +95,5 @@ export const publicDashboardApi = createApi({
   }),
 });
 
-export const { useGetConfigQuery, useSaveConfigMutation } = publicDashboardApi;
+export const { useGetPublicDashboardQuery, useCreatePublicDashboardMutation, useUpdatePublicDashboardMutation } =
+  publicDashboardApi;

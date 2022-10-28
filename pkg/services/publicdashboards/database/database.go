@@ -127,21 +127,23 @@ func (d *PublicDashboardStoreImpl) FindByDashboardUid(ctx context.Context, orgId
 		return nil, dashboards.ErrDashboardIdentifierNotSet
 	}
 
+	exists := false
 	pdRes := &PublicDashboard{OrgId: orgId, DashboardUid: dashboardUid}
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		// publicDashboard
-		exists, err := sess.Get(pdRes)
+		var err error
+		exists, err = sess.Get(pdRes)
 		if err != nil {
 			return err
-		}
-		if !exists {
-			return ErrPublicDashboardNotFound
 		}
 
 		return nil
 	})
 
 	if err != nil {
+		return nil, err
+	}
+
+	if !exists {
 		return nil, err
 	}
 

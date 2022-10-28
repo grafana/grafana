@@ -100,11 +100,19 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	}
 
 	var (
-		hasPublicDashboard bool
-		err                error
+		publicDashboardEnabled     bool
+		publicDashboardAccessToken string
+		err                        error
 	)
+
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-		hasPublicDashboard, err = hs.PublicDashboardsApi.PublicDashboardService.ExistsEnabledByDashboardUid(c.Req.Context(), dash.Uid)
+		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, dash.Uid)
+
+		if publicDashboard != nil {
+			publicDashboardEnabled = publicDashboard.IsEnabled
+			publicDashboardAccessToken = publicDashboard.AccessToken
+		}
+
 		if err != nil {
 			return response.Error(500, "Error while retrieving public dashboards", err)
 		}
@@ -153,26 +161,27 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	}
 
 	meta := dtos.DashboardMeta{
-		IsStarred:              isStarred,
-		Slug:                   dash.Slug,
-		Type:                   models.DashTypeDB,
-		CanStar:                c.IsSignedIn,
-		CanSave:                canSave,
-		CanEdit:                canEdit,
-		CanAdmin:               canAdmin,
-		CanDelete:              canDelete,
-		Created:                dash.Created,
-		Updated:                dash.Updated,
-		UpdatedBy:              updater,
-		CreatedBy:              creator,
-		Version:                dash.Version,
-		HasACL:                 dash.HasACL,
-		IsFolder:               dash.IsFolder,
-		FolderId:               dash.FolderId,
-		Url:                    dash.GetUrl(),
-		FolderTitle:            "General",
-		AnnotationsPermissions: annotationPermissions,
-		PublicDashboardEnabled: hasPublicDashboard,
+		IsStarred:                  isStarred,
+		Slug:                       dash.Slug,
+		Type:                       models.DashTypeDB,
+		CanStar:                    c.IsSignedIn,
+		CanSave:                    canSave,
+		CanEdit:                    canEdit,
+		CanAdmin:                   canAdmin,
+		CanDelete:                  canDelete,
+		Created:                    dash.Created,
+		Updated:                    dash.Updated,
+		UpdatedBy:                  updater,
+		CreatedBy:                  creator,
+		Version:                    dash.Version,
+		HasACL:                     dash.HasACL,
+		IsFolder:                   dash.IsFolder,
+		FolderId:                   dash.FolderId,
+		Url:                        dash.GetUrl(),
+		FolderTitle:                "General",
+		AnnotationsPermissions:     annotationPermissions,
+		PublicDashboardEnabled:     publicDashboardEnabled,
+		PublicDashboardAccessToken: publicDashboardAccessToken,
 	}
 
 	// lookup folder title

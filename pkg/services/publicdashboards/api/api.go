@@ -89,18 +89,24 @@ func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, resp)
 }
 
-// GetPublicDashboard Gets public dashboard configuration for dashboard
-// GET /api/dashboards/uid/:uid/public-config
+// GetPublicDashboard Gets public dashboard for dashboard
+// GET /api/dashboards/uid/:uid/public-dashboards
 func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 	pdc, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, web.Params(c.Req)[":dashboardUid"])
+
 	if err != nil {
-		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "GetPublicDashboardConfig: failed to get public dashboard config", err)
+		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "GetPublicDashboard: failed to get public dashboard ", err)
 	}
+
+	if pdc == nil {
+		return api.handleError(c.Req.Context(), http.StatusNotFound, "GetPublicDashboardConfig: public dashboard not found", ErrPublicDashboardNotFound)
+	}
+
 	return response.JSON(http.StatusOK, pdc)
 }
 
-// SavePublicDashboard Sets public dashboard configuration for dashboard
-// POST /api/dashboards/uid/:uid/public-config
+// SavePublicDashboard Sets public dashboard for dashboard
+// POST /api/dashboards/uid/:uid/public-dashboards
 func (api *Api) SavePublicDashboard(c *models.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
@@ -125,7 +131,7 @@ func (api *Api) SavePublicDashboard(c *models.ReqContext) response.Response {
 	// Save the public dashboard
 	pubdash, err := api.PublicDashboardService.Save(c.Req.Context(), c.SignedInUser, &dto)
 	if err != nil {
-		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "SavePublicDashboardConfig: failed to save public dashboard configuration", err)
+		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "SavePublicDashboardConfig: failed to save public dashboard", err)
 	}
 
 	return response.JSON(http.StatusOK, pubdash)

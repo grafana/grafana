@@ -6,12 +6,17 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { reportInteraction } from '@grafana/runtime/src';
 import { Alert, Button, ClipboardButton, Field, HorizontalGroup, Input, useStyles2, Spinner } from '@grafana/ui/src';
 import { contextSrv } from 'app/core/services/context_srv';
-import { useGetConfigQuery, useSaveConfigMutation } from 'app/features/dashboard/api/publicDashboardApi';
+import {
+  useGetPublicDashboardQuery,
+  useCreatePublicDashboardMutation,
+  useUpdatePublicDashboardMutation,
+} from 'app/features/dashboard/api/publicDashboardApi';
 import { AcknowledgeCheckboxes } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/AcknowledgeCheckboxes';
 import { Configuration } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/Configuration';
 import { Description } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/Description';
 import {
   Acknowledgements,
+  PublicDashboard,
   dashboardHasTemplateVariables,
   generatePublicDashboardUrl,
   publicDashboardPersisted,
@@ -27,13 +32,20 @@ export const SharePublicDashboard = (props: Props) => {
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
   const styles = useStyles2(getStyles);
 
-  const {
-    isLoading: isFetchingLoading,
-    data: publicDashboard,
-    isError: isFetchingError,
-  } = useGetConfigQuery(props.dashboard.uid);
+  let isFetchingLoading = false;
+  let publicDashboard: PublicDashboard | undefined;
+  let isFetchingError = false;
 
-  const [saveConfig, { isLoading: isSaveLoading }] = useSaveConfigMutation();
+  // FIXME
+  //if (props.dashboard.meta.publicDashboardAccessToken){
+  let res = useGetPublicDashboardQuery(props.dashboard.uid);
+  isFetchingLoading = res.isLoading;
+  publicDashboard = res.data;
+  isFetchingError = res.isFetching;
+  //}
+
+  const [createPublicDashboard, { isLoading: isSaveLoading }] = useCreatePublicDashboardMutation();
+  const [updatePublicDashboard, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
 
   const [acknowledgements, setAcknowledgements] = useState<Acknowledgements>({
     public: false,
@@ -63,7 +75,7 @@ export const SharePublicDashboard = (props: Props) => {
     setEnabledSwitch((prevState) => ({ ...prevState, isEnabled: !!publicDashboard?.isEnabled }));
   }, [publicDashboard]);
 
-  const isLoading = isFetchingLoading || isSaveLoading;
+  const isLoading = isFetchingLoading || isSaveLoading || isUpdateLoading;
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const acknowledged = acknowledgements.public && acknowledgements.datasources && acknowledgements.usage;
   const isSaveEnabled = useMemo(
@@ -80,10 +92,12 @@ export const SharePublicDashboard = (props: Props) => {
   const onSavePublicConfig = () => {
     reportInteraction('grafana_dashboards_public_create_clicked');
 
-    saveConfig({
+    const req = {
       dashboard: props.dashboard,
       payload: { ...publicDashboard!, isEnabled: enabledSwitch.isEnabled, annotationsEnabled },
-    });
+    };
+
+    publicDashboard?.uid ? updatePublicDashboard(req) : createPublicDashboard(req);
   };
 
   const onAcknowledge = (field: string, checked: boolean) => {
