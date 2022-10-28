@@ -2,20 +2,25 @@ import { css } from '@emotion/css';
 import React, { useEffect, useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { durationToMilliseconds, GrafanaTheme2, parseDuration } from '@grafana/data';
 import { Modal, Button, Field, Input, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
-import { RulerRulesConfigDTO, RulerRuleGroupDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import {
+  RulerRulesConfigDTO,
+  RulerRuleGroupDTO,
+  RulerRuleDTO,
+  RulerGrafanaRuleDTO,
+  RulerAlertingRuleDTO,
+} from 'app/types/unified-alerting-dto';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateLotexNamespaceAndGroupAction } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { getRulesSourceName } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { isGrafanaRulerRule, isAlertingRulerRule } from '../../utils/rules';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { evaluateEveryValidationOptions } from '../rule-editor/GrafanaEvaluationBehavior';
@@ -26,18 +31,21 @@ interface AlertWithFor {
   forDuration: string;
 }
 
+export const isRulerGrafanaRuleDTO = (rule: RulerRuleDTO): rule is RulerGrafanaRuleDTO => 'grafana_alert' in rule;
+export const isAlertingRuleDTO = (rule: RulerRuleDTO): rule is RulerAlertingRuleDTO => 'alert' in rule;
+
 export const getAlertInfo = (alert: RulerRuleDTO): AlertWithFor => {
   const emptyAlert: AlertWithFor = {
     alertName: '',
     forDuration: '0s',
   };
-  if (isGrafanaRulerRule(alert)) {
+  if (isRulerGrafanaRuleDTO(alert)) {
     return {
       alertName: alert.grafana_alert.title,
       forDuration: alert.for,
     };
   }
-  if (isAlertingRulerRule(alert)) {
+  if (isAlertingRuleDTO(alert)) {
     return {
       alertName: alert.alert,
       forDuration: alert.for ?? '1m',
@@ -57,6 +65,12 @@ export const getIntervalForGroup = (
   return interval;
 };
 
+// parseDuration method needs units separated by space
+export const safeParseDurationstr = (duration: string) => {
+  const reg = /(?<=[a-z])(?=\d)/i;
+  return parseDuration(duration.replace(reg, ' '));
+};
+
 type AlertsWithForTableColumnProps = DynamicTableColumnProps<AlertWithFor>;
 type AlertsWithForTableProps = DynamicTableItemProps<AlertWithFor>;
 
@@ -73,10 +87,18 @@ export const RulesForGroupTable = ({
   const folderObj: Array<RulerRuleGroupDTO<RulerRuleDTO>> = rulerRules ? rulerRules[folder] : [];
   const groupObj = folderObj?.find((rule) => rule.name === group);
   const rules: RulerRuleDTO[] = groupObj?.rules ?? [];
-  const rows: AlertsWithForTableProps[] = rules.map((rule: RulerRuleDTO, index) => ({
-    id: index,
-    data: getAlertInfo(rule),
-  }));
+
+  const rows: AlertsWithForTableProps[] = rules
+    .slice()
+    .sort(
+      (alert1, alert2) =>
+        durationToMilliseconds(safeParseDurationstr(getAlertInfo(alert1).forDuration)) -
+        durationToMilliseconds(safeParseDurationstr(getAlertInfo(alert2).forDuration))
+    )
+    .map((rule: RulerRuleDTO, index) => ({
+      id: index,
+      data: getAlertInfo(rule),
+    }));
 
   function getColumns(): AlertsWithForTableColumnProps[] {
     return [

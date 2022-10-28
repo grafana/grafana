@@ -1,7 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
-import { durationToMilliseconds, parseDuration } from '@grafana/data';
+import { durationToMilliseconds } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
@@ -62,7 +62,7 @@ import {
   FetchRulerRulesFilter,
   setRulerRuleGroup,
 } from '../api/ruler';
-import { getAlertInfo } from '../components/rules/EditRuleGroupModal';
+import { getAlertInfo, safeParseDurationstr } from '../components/rules/EditRuleGroupModal';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
@@ -776,7 +776,7 @@ const rulesInSameGroupHaveInvalidFor = (
 
   return rulesSameGroup.filter((rule: RulerRuleDTO) => {
     const { forDuration } = getAlertInfo(rule);
-    return durationToMilliseconds(parseDuration(forDuration)) < everyDuration;
+    return durationToMilliseconds(safeParseDurationstr(forDuration)) < everyDuration;
   });
 };
 
@@ -828,7 +828,7 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
               groupfoldersForGrafana?.result,
               groupName,
               namespaceName,
-              durationToMilliseconds(parseDuration(groupInterval ?? ''))
+              durationToMilliseconds(safeParseDurationstr(groupInterval ?? ''))
             );
             if (notValidRules.length > 0) {
               throw new Error(
