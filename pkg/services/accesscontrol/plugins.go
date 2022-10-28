@@ -4,11 +4,6 @@ import (
 	"strings"
 )
 
-type PluginJSON struct {
-	ID    string             `json:"id"`
-	Roles []RoleRegistration `json:"roles"`
-}
-
 // ValidatePluginPermissions errors when a permission does not match expected pattern for plugins
 func ValidatePluginPermissions(pluginID string, permissions []Permission) error {
 	for i := range permissions {

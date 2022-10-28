@@ -2,9 +2,7 @@ package acimpl
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -14,14 +12,18 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var _ plugins.RoleRegistry = &Service{}
 
 const (
 	cacheTTL = 10 * time.Second
@@ -207,9 +209,7 @@ func permissionCacheKey(user *user.SignedInUser) (string, error) {
 
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
-func (s *Service) DeclarePluginRoles(rawJSON io.ReadCloser) error {
-	defer func() { _ = rawJSON.Close() }()
-
+func (s *Service) DeclarePluginRoles(_ context.Context, pluginID string, regs []plugins.RoleRegistration) error {
 	// If accesscontrol is disabled no need to register roles
 	if accesscontrol.IsDisabled(s.cfg) {
 		return nil
@@ -220,17 +220,9 @@ func (s *Service) DeclarePluginRoles(rawJSON io.ReadCloser) error {
 		return nil
 	}
 
-	plugin := accesscontrol.PluginJSON{}
-	if errReadJSON := json.NewDecoder(rawJSON).Decode(&plugin); errReadJSON != nil {
-		s.log.Warn("Declare plugin roles failed",
-			"pluginID", plugin.ID,
-			"warning", "Could not parse plugin.json file content.",
-			"error", errReadJSON)
-		return errReadJSON
-	}
-
-	for _, r := range plugin.Roles {
-		err := accesscontrol.ValidatePluginRole(plugin.ID, r.Role)
+	acRegs := pluginutils.ToRegistrations(regs)
+	for _, r := range acRegs {
+		err := accesscontrol.ValidatePluginRole(pluginID, r.Role)
 		if err != nil {
 			return err
 		}

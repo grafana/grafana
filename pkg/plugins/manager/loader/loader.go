@@ -85,7 +85,6 @@ func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string) 
 
 func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSONPaths []string) ([]*plugins.Plugin, error) {
 	var foundPlugins = foundPlugins{}
-	var foundPluginsJSONPath = map[string]string{}
 
 	// load plugin.json files and map directory to JSON data
 	for _, pluginJSONPath := range pluginJSONPaths {
@@ -106,7 +105,6 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 			continue
 		}
 		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
-		foundPluginsJSONPath[plugin.ID] = pluginJSONAbsPath
 	}
 
 	// get all registered plugins
@@ -201,22 +199,12 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		}
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 
-		if pluginJSONPath, ok := foundPluginsJSONPath[p.ID]; ok {
-			// nolint:gosec
-			// We can ignore the gosec G304 warning on this one because `currentPath` is based
-			// on plugin the folder structure on disk and not user input.
-			reader, err := os.Open(pluginJSONPath)
-			if err != nil {
-				continue
-			}
-
-			if errDeclareRoles := l.roleRegistry.DeclarePluginRoles(reader); errDeclareRoles != nil {
-				l.log.Warn("Declare plugin roles failed",
-					"pluginID", p.ID,
-					"warning", "Make sure the role declaration is correct.",
-					"path", p.PluginDir+"/plugin.json",
-					"error", errDeclareRoles)
-			}
+		if errDeclareRoles := l.roleRegistry.DeclarePluginRoles(ctx, p.ID, p.Roles); errDeclareRoles != nil {
+			l.log.Warn("Declare plugin roles failed",
+				"pluginID", p.ID,
+				"warning", "Make sure the role declaration is correct.",
+				"path", p.PluginDir+"/plugin.json",
+				"error", errDeclareRoles)
 		}
 	}
 

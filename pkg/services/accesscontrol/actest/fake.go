@@ -2,7 +2,6 @@ package actest
 
 import (
 	"context"
-	"io"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -30,10 +29,6 @@ func (f FakeService) DeleteUserPermissions(ctx context.Context, orgID, userID in
 }
 
 func (f FakeService) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
-	return f.ExpectedErr
-}
-
-func (f FakeService) DeclarePluginRoles(_ io.ReadCloser) error {
 	return f.ExpectedErr
 }
 

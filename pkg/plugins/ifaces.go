@@ -2,7 +2,6 @@ package plugins
 
 import (
 	"context"
-	"io"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -77,5 +76,5 @@ type PluginLoaderAuthorizer interface {
 }
 
 type RoleRegistry interface {
-	DeclarePluginRoles(rawJSON io.ReadCloser) error
+	DeclarePluginRoles(ctx context.Context, pluginID string, registrations []RoleRegistration) error
 }

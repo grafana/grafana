@@ -1,10 +1,7 @@
 package acimpl
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -163,7 +161,7 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 	tests := []struct {
 		name          string
 		pluginID      string
-		registrations []accesscontrol.RoleRegistration
+		registrations []plugins.RoleRegistration
 		wantErr       bool
 		err           error
 	}{
@@ -174,9 +172,9 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 		{
 			name:     "should add registration",
 			pluginID: "test-app",
-			registrations: []accesscontrol.RoleRegistration{
+			registrations: []plugins.RoleRegistration{
 				{
-					Role:   accesscontrol.RoleDTO{Name: "plugins.app:test-app:test"},
+					Role:   plugins.Role{Name: "plugins.app:test-app:test"},
 					Grants: []string{"Admin"},
 				},
 			},
@@ -185,9 +183,9 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 		{
 			name:     "should fail registration invalid role name",
 			pluginID: "test-app",
-			registrations: []accesscontrol.RoleRegistration{
+			registrations: []plugins.RoleRegistration{
 				{
-					Role:   accesscontrol.RoleDTO{Name: "invalid.plugins.app:test-app:test"},
+					Role:   plugins.Role{Name: "invalid.plugins.app:test-app:test"},
 					Grants: []string{"Admin"},
 				},
 			},
@@ -197,11 +195,11 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 		{
 			name:     "should add registration with valid permissions",
 			pluginID: "test-app",
-			registrations: []accesscontrol.RoleRegistration{
+			registrations: []plugins.RoleRegistration{
 				{
-					Role: accesscontrol.RoleDTO{
+					Role: plugins.Role{
 						Name: "plugins.app:test-app:test",
-						Permissions: []accesscontrol.Permission{
+						Permissions: []plugins.Permission{
 							{Action: "plugins.app:read"},
 							{Action: "test-app:read"},
 							{Action: "test-app.resource:read"},
@@ -215,11 +213,11 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 		{
 			name:     "should fail registration invalid permission action",
 			pluginID: "test-app",
-			registrations: []accesscontrol.RoleRegistration{
+			registrations: []plugins.RoleRegistration{
 				{
-					Role: accesscontrol.RoleDTO{
+					Role: plugins.Role{
 						Name: "plugins.app:test-app:test",
-						Permissions: []accesscontrol.Permission{
+						Permissions: []plugins.Permission{
 							{Action: "invalid.test-app.resource:read"},
 						},
 					},
@@ -232,9 +230,9 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 		{
 			name:     "should fail registration invalid basic role assignment",
 			pluginID: "test-app",
-			registrations: []accesscontrol.RoleRegistration{
+			registrations: []plugins.RoleRegistration{
 				{
-					Role:   accesscontrol.RoleDTO{Name: "plugins.app:test-app:test"},
+					Role:   plugins.Role{Name: "plugins.app:test-app:test"},
 					Grants: []string{"WrongAdmin"},
 				},
 			},
@@ -244,13 +242,13 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 		{
 			name:     "should add multiple registrations at once",
 			pluginID: "test-app",
-			registrations: []accesscontrol.RoleRegistration{
+			registrations: []plugins.RoleRegistration{
 				{
-					Role:   accesscontrol.RoleDTO{Name: "plugins.app:test-app:test"},
+					Role:   plugins.Role{Name: "plugins.app:test-app:test"},
 					Grants: []string{"Admin"},
 				},
 				{
-					Role:   accesscontrol.RoleDTO{Name: "plugins.app:test-app:test2"},
+					Role:   plugins.Role{Name: "plugins.app:test-app:test2"},
 					Grants: []string{"Admin"},
 				},
 			},
@@ -265,15 +263,8 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 			// Reset the registations
 			ac.registrations = accesscontrol.RegistrationList{}
 
-			rawJSON, err := json.Marshal(accesscontrol.PluginJSON{
-				ID:    tt.pluginID,
-				Roles: tt.registrations,
-			})
-			require.NoError(t, err)
-			reader := io.NopCloser(bytes.NewReader(rawJSON))
-
 			// Test
-			err = ac.DeclarePluginRoles(reader)
+			err := ac.DeclarePluginRoles(context.Background(), tt.pluginID, tt.registrations)
 			if tt.wantErr {
 				require.Error(t, err)
 				assert.ErrorIs(t, err, tt.err)

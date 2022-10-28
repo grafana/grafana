@@ -3,7 +3,6 @@ package accesscontrol
 import (
 	"context"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -33,9 +32,6 @@ type Service interface {
 	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(registrations ...RoleRegistration) error
-	// DeclarePluginRoles allows the caller to declare, to the service, plugins roles and their
-	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
-	DeclarePluginRoles(rawJSON io.ReadCloser) error
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
 }
