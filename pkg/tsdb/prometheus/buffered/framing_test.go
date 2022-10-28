@@ -19,7 +19,7 @@ import (
 	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
@@ -140,7 +140,7 @@ func runQuery(response []byte, sq storedPrometheusQuery) (*backend.QueryDataResp
 		intervalCalculator: intervalv2.NewCalculator(),
 		tracer:             tracer,
 		TimeInterval:       "15s",
-		log:                &fakeLogger{},
+		log:                &logtest.Fake{},
 		client:             api,
 	}
 
@@ -178,12 +178,3 @@ func runQuery(response []byte, sq storedPrometheusQuery) (*backend.QueryDataResp
 
 	return b.runQueries(context.Background(), queries)
 }
-
-type fakeLogger struct {
-	log.Logger
-}
-
-func (fl *fakeLogger) Debug(testMessage string, ctx ...interface{}) {}
-func (fl *fakeLogger) Info(testMessage string, ctx ...interface{})  {}
-func (fl *fakeLogger) Warn(testMessage string, ctx ...interface{})  {}
-func (fl *fakeLogger) Error(testMessage string, ctx ...interface{}) {}

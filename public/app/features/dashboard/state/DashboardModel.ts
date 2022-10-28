@@ -278,6 +278,20 @@ export class DashboardModel implements TimeModel {
           this.isSnapshotTruthy() || !(panel.type === 'add-panel' || panel.repeatPanelId || panel.repeatedByRow)
       )
       .map((panel) => {
+        // Clean libarary panels on save
+        if (panel.libraryPanel) {
+          const { id, title, libraryPanel, gridPos } = panel;
+          return {
+            id,
+            title,
+            gridPos,
+            libraryPanel: {
+              uid: libraryPanel.uid,
+              name: libraryPanel.name,
+            },
+          };
+        }
+
         // If we save while editing we should include the panel in edit mode instead of the
         // unmodified source panel
         if (this.panelInEdit && this.panelInEdit.id === panel.id) {
@@ -1114,10 +1128,14 @@ export class DashboardModel implements TimeModel {
   }
 
   canAddAnnotations() {
-    // If RBAC is enabled there are additional conditions to check.
-    const canAdd = !contextSrv.accessControlEnabled() || Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
+    // When the builtin annotations are disabled, we should not add any in the UI
+    const found = this.annotations.list.find((item) => item.builtIn === 1);
+    if (found?.enable === false || !this.canEditDashboard()) {
+      return false;
+    }
 
-    return this.canEditDashboard() && canAdd;
+    // If RBAC is enabled there are additional conditions to check.
+    return !contextSrv.accessControlEnabled() || Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
   }
 
   canEditDashboard() {

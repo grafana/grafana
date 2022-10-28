@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { AutoSizeInput, EditorField, EditorRow } from '@grafana/ui';
+import { EditorField, EditorRow } from '@grafana/experimental';
+import { AutoSizeInput } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { DEFAULT_LIMIT } from '../datasource';
@@ -12,6 +13,10 @@ interface Props {
 }
 
 export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) => {
+  if (!query.hasOwnProperty('limit')) {
+    query.limit = DEFAULT_LIMIT;
+  }
+
   const onLimitChange = (e: React.FormEvent<HTMLInputElement>) => {
     onChange({ ...query, limit: parseInt(e.currentTarget.value, 10) });
   };
@@ -26,7 +31,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
               placeholder="auto"
               type="number"
               min={1}
-              defaultValue={DEFAULT_LIMIT}
+              defaultValue={query.limit || DEFAULT_LIMIT}
               onCommitChange={onLimitChange}
               value={query.limit}
             />

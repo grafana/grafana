@@ -54,6 +54,7 @@ export interface FeatureToggles {
   traceToMetrics?: boolean;
   prometheusStreamingJSONParser?: boolean;
   prometheusStreamingJSONParserTest?: boolean;
+  newDBLibrary?: boolean;
   validateDashboardsOnSave?: boolean;
   autoMigrateGraphPanels?: boolean;
   prometheusWideSeries?: boolean;
@@ -72,5 +73,11 @@ export interface FeatureToggles {
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   increaseInMemDatabaseQueryCache?: boolean;
+  interFont?: boolean;
+  newPanelChromeUI?: boolean;
   queryLibrary?: boolean;
+  showDashboardValidationWarnings?: boolean;
+  mysqlAnsiQuotes?: boolean;
+  accessControlOnCall?: boolean;
+  nestedFolders?: boolean;
 }

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { ComponentSize } from '../../types/size';
 import { Button } from '../Button';
@@ -17,7 +17,7 @@ export interface Props {
   closeOnConfirm?: boolean;
 }
 
-export const DeleteButton: FC<Props> = ({ size, disabled, onConfirm, 'aria-label': ariaLabel, closeOnConfirm }) => {
+export const DeleteButton = ({ size, disabled, onConfirm, 'aria-label': ariaLabel, closeOnConfirm }: Props) => {
   return (
     <ConfirmButton
       confirmText="Delete"

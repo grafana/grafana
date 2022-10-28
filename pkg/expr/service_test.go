@@ -43,6 +43,10 @@ func TestService(t *testing.T) {
 				Type:  "test",
 			},
 			JSON: json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange: AbsoluteTimeRange{
+				From: time.Time{},
+				To:   time.Time{},
+			},
 		},
 		{
 			RefID:      "B",
@@ -56,7 +60,7 @@ func TestService(t *testing.T) {
 	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)
 
-	res, err := s.ExecutePipeline(context.Background(), pl)
+	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
 	require.NoError(t, err)
 
 	bDF := data.NewFrame("",

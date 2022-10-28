@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 func exportLive(helper *commitHelper, job *gitExportJob) error {
 	messagedir := path.Join(helper.orgDir, "system", "live", "message")
 
-	return job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+	return job.sql.WithDbSession(helper.ctx, func(sess *db.Session) error {
 		type msgResult struct {
 			Channel   string    `xorm:"channel"`
 			Data      string    `xorm:"data"`

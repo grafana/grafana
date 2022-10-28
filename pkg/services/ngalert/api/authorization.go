@@ -114,8 +114,6 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingInstanceRead)
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/alerts":
 		eval = ac.EvalPermission(ac.ActionAlertingInstanceRead)
-	case http.MethodPost + "/api/alertmanager/grafana/api/v2/alerts":
-		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceCreate), ac.EvalPermission(ac.ActionAlertingInstanceUpdate))
 
 	// Grafana Prometheus-compatible Paths
 	case http.MethodGet + "/api/prometheus/grafana/api/v1/alerts":
@@ -171,8 +169,6 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 	case http.MethodPost + "/api/alertmanager/{DatasourceUID}/config/api/v1/alerts":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalWrite, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
-	case http.MethodPost + "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
 	case http.MethodGet + "/api/v1/ngalert":
 		// let user with any alerting permission access this API

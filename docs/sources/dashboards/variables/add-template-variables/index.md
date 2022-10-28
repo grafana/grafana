@@ -25,6 +25,7 @@ aliases:
   - /docs/grafana/latest/variables/formatting-multi-value-variables/
   - /docs/grafana/latest/reference/templating/
   - /docs/grafana/latest/variables/manage-variable/
+  - /docs/grafana/latest/dashboards/variables/add-template-variables/
 title: Add and manage variables
 menuTitle: Manage variables
 weight: 100

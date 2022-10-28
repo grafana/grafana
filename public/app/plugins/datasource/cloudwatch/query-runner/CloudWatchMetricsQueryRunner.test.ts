@@ -726,10 +726,6 @@ describe('CloudWatchMetricsQueryRunner', () => {
       };
     });
 
-    it('should error if invalid mode', async () => {
-      expect(() => runner.filterMetricQuery(baseQuery)).toThrowError('invalid metric editor mode');
-    });
-
     describe('metric search queries', () => {
       beforeEach(() => {
         baseQuery = {

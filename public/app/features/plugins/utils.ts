@@ -2,6 +2,7 @@ import { Location as HistoryLocation } from 'history';
 
 import { GrafanaPlugin, NavIndex, NavModel, NavModelItem, PanelPluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { getRootSectionForNode } from 'app/core/selectors/navModel';
 
 import { importPanelPluginFromMeta } from './importPanelPlugin';
@@ -99,7 +100,7 @@ export function getPluginSection(location: HistoryLocation, navIndex: NavIndex, 
   // Some plugins like cloud home don't have any precense in the navtree so we need to allow those
   const navTreeNodeForPlugin = navIndex[`plugin-page-${pluginId}`];
   if (!navTreeNodeForPlugin) {
-    return { id: 'root-plugin-page', text: 'Root plugin page', hideFromBreadcrumbs: true };
+    return navIndex[HOME_NAV_ID];
   }
 
   if (!navTreeNodeForPlugin.parentItem) {

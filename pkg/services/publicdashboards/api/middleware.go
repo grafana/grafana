@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// Adds orgId to context based on org of public dashboard
+// SetPublicDashboardOrgIdOnContext Adds orgId to context based on org of public dashboard
 func SetPublicDashboardOrgIdOnContext(publicDashboardService publicdashboards.Service) func(c *models.ReqContext) {
 	return func(c *models.ReqContext) {
 		accessToken, ok := web.Params(c.Req)[":accessToken"]
@@ -19,7 +19,7 @@ func SetPublicDashboardOrgIdOnContext(publicDashboardService publicdashboards.Se
 		}
 
 		// Get public dashboard
-		orgId, err := publicDashboardService.GetPublicDashboardOrgId(c.Req.Context(), accessToken)
+		orgId, err := publicDashboardService.GetOrgIdByAccessToken(c.Req.Context(), accessToken)
 		if err != nil {
 			return
 		}
@@ -28,14 +28,15 @@ func SetPublicDashboardOrgIdOnContext(publicDashboardService publicdashboards.Se
 	}
 }
 
-// Adds public dashboard flag on context
+// SetPublicDashboardFlag Adds public dashboard flag on context
 func SetPublicDashboardFlag(c *models.ReqContext) {
 	c.IsPublicDashboardView = true
 }
 
-// Middleware to enforce that a public dashboards exists before continuing to
-// handler
-func RequiresValidAccessToken(publicDashboardService publicdashboards.Service) func(c *models.ReqContext) {
+// RequiresExistingAccessToken Middleware to enforce that a public dashboards exists before continuing to handler. This
+// method will query the database to ensure that it exists.
+// Use when we want to enforce a public dashboard is valid on an endpoint we do not maintain
+func RequiresExistingAccessToken(publicDashboardService publicdashboards.Service) func(c *models.ReqContext) {
 	return func(c *models.ReqContext) {
 		accessToken, ok := web.Params(c.Req)[":accessToken"]
 
@@ -49,7 +50,7 @@ func RequiresValidAccessToken(publicDashboardService publicdashboards.Service) f
 		}
 
 		// Check that the access token references an enabled public dashboard
-		exists, err := publicDashboardService.AccessTokenExists(c.Req.Context(), accessToken)
+		exists, err := publicDashboardService.ExistsEnabledByAccessToken(c.Req.Context(), accessToken)
 		if err != nil {
 			c.JsonApiErr(http.StatusInternalServerError, "Failed to query access token", nil)
 			return

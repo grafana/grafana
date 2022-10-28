@@ -53,7 +53,10 @@ export function RuleListErrors(): ReactElement {
       result.push(
         <>
           Failed to load the data source configuration for{' '}
-          <a href={makeDataSourceLink(dataSource)}>{dataSource.name}</a>: {error.message || 'Unknown error.'}
+          <a href={makeDataSourceLink(dataSource)} className={styles.dsLink}>
+            {dataSource.name}
+          </a>
+          : {error.message || 'Unknown error.'}
         </>
       );
     });
@@ -61,8 +64,11 @@ export function RuleListErrors(): ReactElement {
     promRequestErrors.forEach(({ dataSource, error }) =>
       result.push(
         <>
-          Failed to load rules state from <a href={makeDataSourceLink(dataSource)}>{dataSource.name}</a>:{' '}
-          {error.message || 'Unknown error.'}
+          Failed to load rules state from{' '}
+          <a href={makeDataSourceLink(dataSource)} className={styles.dsLink}>
+            {dataSource.name}
+          </a>
+          : {error.message || 'Unknown error.'}
         </>
       )
     );
@@ -70,14 +76,17 @@ export function RuleListErrors(): ReactElement {
     rulerRequestErrors.forEach(({ dataSource, error }) =>
       result.push(
         <>
-          Failed to load rules config from <a href={makeDataSourceLink(dataSource)}>{dataSource.name}</a>:{' '}
-          {error.message || 'Unknown error.'}
+          Failed to load rules config from{' '}
+          <a href={makeDataSourceLink(dataSource)} className={styles.dsLink}>
+            {dataSource.name}
+          </a>
+          : {error.message || 'Unknown error.'}
         </>
       )
     );
 
     return result;
-  }, [dataSourceConfigRequests, promRuleRequests, rulerRuleRequests]);
+  }, [dataSourceConfigRequests, promRuleRequests, rulerRuleRequests, styles.dsLink]);
 
   return (
     <>
@@ -140,5 +149,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   floatRight: css`
     display: flex;
     justify-content: flex-end;
+  `,
+  dsLink: css`
+    font-weight: ${theme.typography.fontWeightBold};
   `,
 });

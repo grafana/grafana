@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/expr"
 	cmreg "github.com/grafana/grafana/pkg/framework/coremodel/registry"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -70,6 +71,7 @@ import (
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -120,13 +122,13 @@ import (
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	objectdummyserver "github.com/grafana/grafana/pkg/services/store/object/dummy"
+	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -155,6 +157,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
+	"github.com/grafana/grafana/pkg/tsdb/parca"
+	"github.com/grafana/grafana/pkg/tsdb/phlare"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
@@ -275,6 +279,8 @@ var wireBasicSet = wire.NewSet(
 	graphite.ProvideService,
 	prometheus.ProvideService,
 	elasticsearch.ProvideService,
+	phlare.ProvideService,
+	parca.ProvideService,
 	encryptionservice.ProvideEncryptionService,
 	wire.Bind(new(encryption.Internal), new(*encryptionservice.Service)),
 	secretsManager.ProvideSecretsService,
@@ -308,12 +314,11 @@ var wireBasicSet = wire.NewSet(
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
 	dashboardservice.ProvideDashboardService,
-	dashboardservice.ProvideFolderService,
 	dashboardstore.ProvideDashboardStore,
+	folderimpl.ProvideService,
 	wire.Bind(new(dashboards.DashboardService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.DashboardProvisioningService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.PluginService), new(*dashboardservice.DashboardServiceImpl)),
-	wire.Bind(new(dashboards.FolderService), new(*dashboardservice.FolderServiceImpl)),
 	wire.Bind(new(dashboards.Store), new(*dashboardstore.DashboardStore)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
@@ -330,8 +335,8 @@ var wireBasicSet = wire.NewSet(
 	authproxy.ProvideAuthProxy,
 	statscollector.ProvideService,
 	cmreg.CoremodelSet,
-	cuectx.ProvideCUEContext,
-	cuectx.ProvideThemaLibrary,
+	cuectx.GrafanaCUEContext,
+	cuectx.GrafanaThemaRuntime,
 	csrf.ProvideCSRFFilter,
 	ossaccesscontrol.ProvideTeamPermissions,
 	wire.Bind(new(accesscontrol.TeamPermissionsService), new(*ossaccesscontrol.TeamPermissionsService)),
@@ -357,6 +362,7 @@ var wireBasicSet = wire.NewSet(
 	interceptors.ProvideAuthenticator,
 	kind.ProvideService, // The registry known kinds
 	objectdummyserver.ProvideDummyObjectServer,
+	resolver.ProvideObjectReferenceResolver,
 	object.ProvideHTTPObjectStore,
 	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,

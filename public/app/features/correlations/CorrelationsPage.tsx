@@ -148,7 +148,7 @@ export default function CorrelationsPage() {
             <Table
               renderExpandedRow={({ target, source, ...correlation }) => (
                 <EditCorrelationForm
-                  defaultValues={{ sourceUID: source.uid, ...correlation }}
+                  correlation={{ ...correlation, sourceUID: source.uid, targetUID: target.uid }}
                   onUpdated={fetchCorrelations}
                   readOnly={isSourceReadOnly({ source }) || !canWriteCorrelations}
                 />
