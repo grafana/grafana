@@ -9,7 +9,7 @@ import {
 
 describe('listPublicDashboardsUrl', () => {
   it('has the correct url', () => {
-    expect(LIST_PUBLIC_DASHBOARD_URL).toEqual('/api/dashboards/public');
+    expect(LIST_PUBLIC_DASHBOARD_URL).toEqual('/api/dashboards/public-dashboards');
   });
 });
 
