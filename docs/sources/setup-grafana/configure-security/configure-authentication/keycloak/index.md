@@ -15,6 +15,8 @@ weight: 200
 
 # Configure Keycloak OAuth2 authentication
 
+Keycloak OAuth2 authentication allows users to log in to Grafana using their Keycloak credentials. This guide explains how to set up Keycloak as an authentication provider in Grafana.
+
 Refer to [Generic OAuth authentication](../generic-oauth) for extra configuration options available for this provider.
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
@@ -33,9 +35,9 @@ scopes = openid email profile offline_access roles
 email_attribute_path = email
 login_attribute_path = username
 name_attribute_path = full_name
-auth_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/auth
-token_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/token
-api_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/userinfo
+auth_url = https://<PROVIDER_DOMAIN>/realms/<REALM_NAME>/protocol/openid-connect/auth
+token_url = https://<PROVIDER_DOMAIN>/realms/<REALM_NAME>/protocol/openid-connect/token
+api_url = https://<PROVIDER_DOMAIN>/realms/<REALM_NAME>/protocol/openid-connect/userinfo
 role_attribute_path = contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
 ```
 
@@ -56,11 +58,11 @@ and `<REALM_NAME>` can be `grafana`.
 - Standard Flow Enabled: `ON`
 - Implicit Flow Enabled: `OFF`
 - Direct Access Grants Enabled: `ON`
-- Root URL: `<grafana root url>`
-- Valid Redirect URIs: `<grafana root url>/*`
-- Web Origins: `<grafana root url>`
-- Admin URL: `<grafana root url>`
-- Base URL: `<grafana root url>`
+- Root URL: `<grafana_root_url>`
+- Valid Redirect URIs: `<grafana_root_url>/*`
+- Web Origins: `<grafana_root_url>`
+- Admin URL: `<grafana_root_url>`
+- Base URL: `<grafana_root_url>`
 
 As an example, `<grafana_root_url>` can be `https://play.grafana.org`.
 Non-listed configuration options can be left at their default values.
@@ -87,7 +89,9 @@ viewer
 
 ## Teamsync
 
-Teamsync is a feature that allows you to map groups from your identity provider to Grafana teams. This is useful if you want to give your users access to specific dashboards or folders based on their group membership.
+> **Note:** Available in [Grafana Enterprise](../../../../introduction/grafana-enterprise) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
+
+[Teamsync](../../configure-team-sync/) is a feature that allows you to map groups from your identity provider to Grafana teams. This is useful if you want to give your users access to specific dashboards or folders based on their group membership.
 
 To enable teamsync, you need to add a `groups` mapper to the client configuration in Keycloak.
 This will add the `groups` claim to the id_token. You can then use the `groups` claim to map groups to teams in Grafana.
