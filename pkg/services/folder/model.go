@@ -42,17 +42,18 @@ func NewFolder(title string, description string) *Folder {
 // CreateFolderCommand captures the information required by the folder service
 // to create a folder.
 type CreateFolderCommand struct {
-	UID         string `json:"uid"`
+	UID         string `json:"uid" xorm:"uid"`
+	OrgID       int64  `json:"orgId" xorm:"org_id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	ParentUID   string `json:"parent_uid"`
+	ParentUID   string `json:"parent_uid" xorm:"parent_uid"`
 }
 
 // UpdateFolderCommand captures the information required by the folder service
 // to update a folder. Use Move to update a folder's parent folder.
 type UpdateFolderCommand struct {
 	Folder         *Folder `json:"folder"` // The extant folder
-	NewUID         *string `json:"uid"`
+	NewUID         *string `json:"uid" xorm:"uid"`
 	NewTitle       *string `json:"title"`
 	NewDescription *string `json:"description"`
 }
@@ -67,7 +68,7 @@ type MoveFolderCommand struct {
 // DeleteFolderCommand captures the information required by the folder service
 // to delete a folder.
 type DeleteFolderCommand struct {
-	UID string `json:"uid"`
+	UID string `json:"uid" xorm:"uid"`
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
@@ -83,15 +84,15 @@ type GetFolderQuery struct {
 // GetParentsQuery captures the information required by the folder service to
 // return a list of all parent folders of a given folder.
 type GetParentsQuery struct {
-	UID string
+	UID string `xorm:"uid"`
 }
 
 // GetTreeCommand captures the information required by the folder service to
 // return a list of child folders of the given folder.
 
 type GetTreeQuery struct {
-	UID   string
-	OrgID int64
+	UID   string `xorm:"uid"`
+	OrgID int64  `xorm:"org_id"`
 	Depth int64
 
 	// Pagination options
