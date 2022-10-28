@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { flattenDeep, compact } from 'lodash';
+import { flattenDeep, compact, uniq } from 'lodash';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
@@ -49,7 +49,7 @@ const useGetCustomLabels = () => {
 
   labels.forEach((label: Record<string, string>) => {
     Object.entries(label).forEach(([key, value]) => {
-      labelsByKey[key] = [...(labelsByKey[key] || []), value];
+      labelsByKey[key] = uniq([...(labelsByKey[key] || []), value]);
     });
   });
 
