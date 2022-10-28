@@ -53,10 +53,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     logsLabel: css`
       label: logs-label;
       display: flex;
-      padding: 0 2px;
+      padding: ${theme.spacing(0, 0.25)};
       background-color: ${theme.colors.background.secondary};
       border-radius: ${theme.shape.borderRadius(1)};
-      margin: 1px 4px 0 0;
+      margin: ${theme.spacing(0.125, 0.5, 0, 0)};
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
