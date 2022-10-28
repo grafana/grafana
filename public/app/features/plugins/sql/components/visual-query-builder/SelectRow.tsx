@@ -102,7 +102,7 @@ export function SelectRow({ sql, format, columns, onSqlChange, functions }: Sele
   }, [onSqlChange, sql]);
 
   return (
-    <Stack gap={2} alignItems="end" wrap direction="column">
+    <Stack gap={2} wrap direction="column">
       {sql.columns?.map((item, index) => (
         <div key={index}>
           <Stack gap={2} alignItems="end">
