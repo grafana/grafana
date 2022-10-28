@@ -129,19 +129,19 @@ func responseToDataFrames(resp *connect.Response[querierv1.SelectMergeStacktrace
 	return treeToNestedSetDataFrame(tree, profileTypeID)
 }
 
-// Offset of the bar relative to previous sibling
+// START_OFFSET is offset of the bar relative to previous sibling
 const START_OFFSET = 0
 
-// Value or width of the bar
+// VALUE_OFFSET is value or width of the bar
 const VALUE_OFFSET = 1
 
-// Self value of the bar
+// SELF_OFFSET is self value of the bar
 const SELF_OFFSET = 2
 
-// Index into the names array
+// NAME_OFFSET is index into the names array
 const NAME_OFFSET = 3
 
-// Next bar. Each bar of the profile is represented by 4 number in a flat array.
+// ITEM_OFFSET Next bar. Each bar of the profile is represented by 4 number in a flat array.
 const ITEM_OFFSET = 4
 
 type ProfileTree struct {

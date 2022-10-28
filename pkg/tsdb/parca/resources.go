@@ -46,7 +46,6 @@ func (d *ParcaDatasource) callProfileTypes(ctx context.Context, req *backend.Cal
 			Delta:      t.Delta,
 			ID:         id,
 		})
-
 	}
 
 	data, err := json.Marshal(types)
@@ -79,6 +78,9 @@ func (d *ParcaDatasource) callLabelNames(ctx context.Context, req *backend.CallR
 
 func (d *ParcaDatasource) callLabelValues(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	parsedUrl, err := url.Parse(req.URL)
+	if err != nil {
+		return err
+	}
 	label, ok := parsedUrl.Query()["label"]
 	if !ok {
 		label = []string{""}

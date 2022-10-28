@@ -91,7 +91,6 @@ func makeMetricRequest(qm queryModel, query backend.DataQuery) *connect.Request[
 			Limit: uint32(query.MaxDataPoints),
 		},
 	}
-
 }
 
 type CustomMeta struct {

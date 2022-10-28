@@ -83,6 +83,9 @@ type SeriesRequestJson struct {
 
 func (d *PhlareDatasource) callSeries(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	parsedUrl, err := url.Parse(req.URL)
+	if err != nil {
+		return err
+	}
 	matchers, ok := parsedUrl.Query()["matchers"]
 	if !ok {
 		matchers = []string{"{}"}

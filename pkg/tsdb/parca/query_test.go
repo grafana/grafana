@@ -174,26 +174,26 @@ type FakeClient struct {
 	Req *connect.Request[v1alpha1.QueryRequest]
 }
 
-func (f FakeClient) QueryRange(ctx context.Context, c *connect.Request[v1alpha1.QueryRangeRequest]) (*connect.Response[v1alpha1.QueryRangeResponse], error) {
+func (f *FakeClient) QueryRange(ctx context.Context, c *connect.Request[v1alpha1.QueryRangeRequest]) (*connect.Response[v1alpha1.QueryRangeResponse], error) {
 	return rangeResponse, nil
 }
 
-func (f FakeClient) Query(ctx context.Context, c *connect.Request[v1alpha1.QueryRequest]) (*connect.Response[v1alpha1.QueryResponse], error) {
+func (f *FakeClient) Query(ctx context.Context, c *connect.Request[v1alpha1.QueryRequest]) (*connect.Response[v1alpha1.QueryResponse], error) {
 	f.Req = c
 	return flamegraphResponse, nil
 }
 
-func (f FakeClient) Series(ctx context.Context, c *connect.Request[v1alpha1.SeriesRequest]) (*connect.Response[v1alpha1.SeriesResponse], error) {
+func (f *FakeClient) Series(ctx context.Context, c *connect.Request[v1alpha1.SeriesRequest]) (*connect.Response[v1alpha1.SeriesResponse], error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (f FakeClient) ProfileTypes(ctx context.Context, c *connect.Request[v1alpha1.ProfileTypesRequest]) (*connect.Response[v1alpha1.ProfileTypesResponse], error) {
+func (f *FakeClient) ProfileTypes(ctx context.Context, c *connect.Request[v1alpha1.ProfileTypesRequest]) (*connect.Response[v1alpha1.ProfileTypesResponse], error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (f FakeClient) Labels(ctx context.Context, c *connect.Request[v1alpha1.LabelsRequest]) (*connect.Response[v1alpha1.LabelsResponse], error) {
+func (f *FakeClient) Labels(ctx context.Context, c *connect.Request[v1alpha1.LabelsRequest]) (*connect.Response[v1alpha1.LabelsResponse], error) {
 	return &connect.Response[v1alpha1.LabelsResponse]{
 		Msg: &v1alpha1.LabelsResponse{
 			LabelNames: []string{"instance", "job"},
@@ -202,7 +202,7 @@ func (f FakeClient) Labels(ctx context.Context, c *connect.Request[v1alpha1.Labe
 	}, nil
 }
 
-func (f FakeClient) Values(ctx context.Context, c *connect.Request[v1alpha1.ValuesRequest]) (*connect.Response[v1alpha1.ValuesResponse], error) {
+func (f *FakeClient) Values(ctx context.Context, c *connect.Request[v1alpha1.ValuesRequest]) (*connect.Response[v1alpha1.ValuesResponse], error) {
 	return &connect.Response[v1alpha1.ValuesResponse]{
 		Msg: &v1alpha1.ValuesResponse{
 			LabelValues: []string{"foo", "bar"},
@@ -211,7 +211,7 @@ func (f FakeClient) Values(ctx context.Context, c *connect.Request[v1alpha1.Valu
 	}, nil
 }
 
-func (f FakeClient) ShareProfile(ctx context.Context, c *connect.Request[v1alpha1.ShareProfileRequest]) (*connect.Response[v1alpha1.ShareProfileResponse], error) {
+func (f *FakeClient) ShareProfile(ctx context.Context, c *connect.Request[v1alpha1.ShareProfileRequest]) (*connect.Response[v1alpha1.ShareProfileResponse], error) {
 	//TODO implement me
 	panic("implement me")
 }

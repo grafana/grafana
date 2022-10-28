@@ -8,7 +8,6 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	v1 "github.com/grafana/grafana/pkg/tsdb/phlare/gen/common/v1"
 	"github.com/stretchr/testify/require"
 
 	commonv1 "github.com/grafana/grafana/pkg/tsdb/phlare/gen/common/v1"
@@ -240,7 +239,6 @@ func Test_seriesToDataFrame(t *testing.T) {
 		require.Equal(t, 2, len(frames[1].Fields))
 		require.Equal(t, data.NewField("samples", map[string]string{"foo": "bar"}, []float64{30, 10}).SetConfig(&data.FieldConfig{Unit: "short"}), frames[0].Fields[1])
 		require.Equal(t, data.NewField("samples", map[string]string{"foo": "baz"}, []float64{30, 10}).SetConfig(&data.FieldConfig{Unit: "short"}), frames[1].Fields[1])
-
 	})
 }
 
@@ -263,8 +261,8 @@ func (f *FakeClient) LabelNames(context.Context, *connect.Request[querierv1.Labe
 func (f *FakeClient) Series(ctx context.Context, c *connect.Request[querierv1.SeriesRequest]) (*connect.Response[querierv1.SeriesResponse], error) {
 	return &connect.Response[querierv1.SeriesResponse]{
 		Msg: &querierv1.SeriesResponse{
-			LabelsSet: []*v1.Labels{{
-				Labels: []*v1.LabelPair{
+			LabelsSet: []*commonv1.Labels{{
+				Labels: []*commonv1.LabelPair{
 					{
 						Name:  "__unit__",
 						Value: "cpu",
@@ -307,7 +305,7 @@ func (f *FakeClient) SelectSeries(ctx context.Context, req *connect.Request[quer
 		Msg: &querierv1.SelectSeriesResponse{
 			Series: []*commonv1.Series{
 				{
-					Labels: []*v1.LabelPair{{Name: "foo", Value: "bar"}},
+					Labels: []*commonv1.LabelPair{{Name: "foo", Value: "bar"}},
 					Points: []*commonv1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}},
 				},
 			},
