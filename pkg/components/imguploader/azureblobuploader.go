@@ -140,7 +140,7 @@ func (c *StorageClient) GetBlobSasUrl(ctx context.Context, containerName, blobNa
 	qp := sasQueryParams.Encode()
 	blobSasUrl := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s?%s", c.Auth.Account, containerName, blobName, qp)
 
-	logger.Warn("Image SAS url", "url", blobSasUrl)
+	// Return Blob SAS token URL
 	return blobSasUrl, nil
 }
 
