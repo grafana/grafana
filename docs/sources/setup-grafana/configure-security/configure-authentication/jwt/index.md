@@ -82,6 +82,10 @@ can use URL login instead.
 > **Warning**: this can lead to JWTs being exposed in logs and possible session hijacking if the server is not
 > using HTTP over TLS.
 
+#### Prerequisites
+
+- [Enable JWT]({{< relref "#enable-jwt" >}}).
+
 ```ini
 # [auth.jwt]
 # ...
