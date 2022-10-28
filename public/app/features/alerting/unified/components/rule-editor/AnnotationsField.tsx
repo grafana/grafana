@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { debounce } from 'lodash';
 import React, { CSSProperties, useCallback, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useDebounce, useToggle } from 'react-use';
@@ -23,12 +22,15 @@ import {
 
 import { dashboardApi } from '../../api/alertingApi';
 import { RuleFormValues } from '../../types/rule-form';
+import { Annotation } from '../../utils/constants';
 
 import { AnnotationKeyInput } from './AnnotationKeyInput';
 
 const AnnotationsField = () => {
   const styles = useStyles(getStyles);
   const [showPanelSelector, setShowPanelSelector] = useToggle(false);
+  const [selectedDashboard, setSelectedDashboard] = useState<string | undefined>(undefined);
+  const [selectedPanel, setSelectedPanel] = useState<number | undefined>(undefined);
 
   const {
     control,
@@ -44,6 +46,35 @@ const AnnotationsField = () => {
   );
 
   const { fields, append, remove } = useFieldArray({ control, name: 'annotations' });
+
+  const onPanelChange = () => {
+    // if (!selectedDashboard || !selectedPanel) {
+    //   return;
+    // }
+    //
+    // const dashboardFieldIdx = fields.findIndex((f) => f.key === Annotation.dashboardUID);
+    // const panelFieldIdx = fields.findIndex((f) => f.key === Annotation.panelID);
+    //
+    // remove([dashboardFieldIdx, panelFieldIdx]);
+    // if (dashboardField) {
+    //   dashboardField.value = selectedDashboard;
+    // } else {
+    // if (dashboardFieldIdx === -1 || panelFieldIdx === -1) {
+    // append([
+    //   { key: Annotation.dashboardUID, value: selectedDashboard },
+    //   { key: Annotation.panelID, value: selectedPanel.toString(10) },
+    // ]);
+    // } else {
+    //   insert(dashboardFieldIdx, { key: Annotation.dashboardUID, value: selectedDashboard });
+    //   insert(panelFieldIdx, { key: Annotation.panelID, value: selectedPanel.toString(10) });
+    // }
+    // }
+    // if (panelField) {
+    //   panelField.value = selectedPanel.toString(10);
+    // } else {
+    //   append({ key: Annotation.panelID, value: selectedPanel.toString(10) });
+    // }
+  };
 
   return (
     <>
@@ -120,64 +151,151 @@ const AnnotationsField = () => {
           isOpen={showPanelSelector}
           onDismiss={setShowPanelSelector}
         >
-          DASHBOARD AND PANEL PICKER
-          <DashboardPicker />
+          <DashboardPicker
+            dashboardUid={selectedDashboard}
+            panelId={selectedPanel}
+            onDashboardChange={setSelectedDashboard}
+            onPanelChange={setSelectedPanel}
+          />
+          <Modal.ButtonRow>
+            <Button
+              type="button"
+              variant="primary"
+              disabled={!selectedDashboard && !selectedPanel}
+              onClick={onPanelChange}
+            >
+              Confirm
+            </Button>
+            <Button type="button" variant="secondary">
+              Cancel
+            </Button>
+          </Modal.ButtonRow>
         </Modal>
       </div>
     </>
   );
 };
 
-const DashboardPicker = () => {
+interface PanelDTO {
+  id: number;
+  title?: string;
+}
+
+function panelSort(a: PanelDTO, b: PanelDTO) {
+  if (a.title && b.title) {
+    return a.title.localeCompare(b.title);
+  }
+  if (a.title && !b.title) {
+    return 1;
+  } else if (!a.title && b.title) {
+    return -1;
+  }
+
+  return 0;
+}
+
+interface DashboardPickerProps {
+  dashboardUid?: string;
+  panelId?: number;
+  onDashboardChange: (uid: string | undefined) => void;
+  onPanelChange: (id: number | undefined) => void;
+}
+
+const DashboardPicker = ({ dashboardUid, panelId, onDashboardChange, onPanelChange }: DashboardPickerProps) => {
   const styles = useStyles2(getPickerStyles);
 
-  const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [dashboardFilter, setDashboardFilter] = useState('');
+  const [debouncedDashboardFilter, setDebouncedDashboardFilter] = useState('');
 
-  const { useSearchQuery, useLazyDashboardQuery } = dashboardApi;
+  const [panelFilter, setPanelFilter] = useState('');
 
-  const { data: searchResults } = useSearchQuery({ query: debouncedQuery });
-  const [triggerDashboard, dashboardResult] = useLazyDashboardQuery();
+  const { useSearchQuery, useDashboardQuery } = dashboardApi;
+
+  const { currentData: filteredDashboards = [], isFetching: isDashSearchFetching } = useSearchQuery({
+    query: debouncedDashboardFilter,
+  });
+  const { currentData: dashboardResult, isFetching: isDashboardFetching } = useDashboardQuery(
+    { uid: dashboardUid ?? '' },
+    { skip: !dashboardUid }
+  );
 
   useDebounce(
     () => {
-      setDebouncedQuery(query);
+      setDebouncedDashboardFilter(dashboardFilter);
     },
     500,
-    [query]
+    [dashboardFilter]
   );
 
-  if (!searchResults) {
-    return null;
-  }
+  const handleDashboardChange = (dashboardUid: string) => {
+    onDashboardChange(dashboardUid);
+    onPanelChange(undefined);
+  };
+
+  const filteredPanels =
+    dashboardResult?.dashboard?.panels
+      ?.filter((panel): panel is PanelDTO => panel.title?.includes(panelFilter))
+      .sort(panelSort) ?? [];
 
   const DashboardRow = ({ index, style }: { index: number; style: CSSProperties }) => {
-    const dashboard = searchResults[index];
+    const dashboard = filteredDashboards[index];
+    const isSelected = dashboardUid === dashboard.uid;
 
     return (
-      <div style={style} className={styles.row} onClick={() => triggerDashboard({ uid: dashboard.uid })}>
+      <div
+        title={dashboard.title}
+        style={style}
+        className={cx(styles.row, { [styles.rowOdd]: index % 2 === 1, [styles.rowSelected]: isSelected })}
+        onClick={() => handleDashboardChange(dashboard.uid)}
+      >
         {dashboard.title}
       </div>
     );
   };
 
+  const PanelRow = ({ index, style }: { index: number; style: CSSProperties }) => {
+    const panel = filteredPanels[index];
+    const isSelected = panelId === panel.id;
+
+    return (
+      <div
+        style={style}
+        className={cx(styles.row, { [styles.rowOdd]: index % 2 === 1, [styles.rowSelected]: isSelected })}
+        onClick={() => onPanelChange(panel.id)}
+      >
+        {panel.title || '<No title>'}
+      </div>
+    );
+  };
+
   return (
-    <Stack direction="row">
+    <Stack direction="row" gap={2}>
       <div style={{ flex: 1 }}>
-        <FilterInput value={query} onChange={setQuery} title="Search dashboard" />
-        <FixedSizeList itemSize={40} height={600} itemCount={searchResults.length} width="100%">
+        <FilterInput
+          value={dashboardFilter}
+          onChange={setDashboardFilter}
+          title="Search dashboard"
+          placeholder="Search dashboard"
+          autoFocus
+        />
+        {isDashSearchFetching && (
+          <LoadingPlaceholder text="Loading dashboards..." className={styles.loadingPlaceholder} />
+        )}
+        <FixedSizeList itemSize={32} height={550} itemCount={filteredDashboards.length} width="100%">
           {DashboardRow}
         </FixedSizeList>
       </div>
       <div style={{ flex: 1 }}>
-        {dashboardResult?.currentData && (
-          <ul>
-            {dashboardResult?.currentData?.dashboard?.panels?.map((panel) => (
-              <li key={panel.id}>{panel.title}</li>
-            ))}
-          </ul>
+        <FilterInput value={panelFilter} onChange={setPanelFilter} title="Search panel" placeholder="Search panel" />
+        {!isDashboardFetching && (
+          <FixedSizeList itemSize={32} height={550} itemCount={filteredPanels.length} width="100%">
+            {PanelRow}
+          </FixedSizeList>
         )}
-        {dashboardResult.isLoading && <LoadingPlaceholder text="Loading dashboard" />}
+        {!dashboardUid && !isDashboardFetching && <div>Select a dashboard to get a list of available panels</div>}
+        {isDashboardFetching && (
+          <LoadingPlaceholder text="Loading dashboard..." className={styles.loadingPlaceholder} />
+        )}
       </div>
     </Stack>
   );
@@ -185,7 +303,24 @@ const DashboardPicker = () => {
 
 const getPickerStyles = (theme: GrafanaTheme2) => ({
   row: css`
-    padding: ${theme.spacing(1)};
+    padding: ${theme.spacing(0.5)};
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+    border: 2px solid transparent;
+  `,
+  rowSelected: css`
+    border-color: ${theme.colors.border.strong};
+  `,
+  rowOdd: css`
+    background-color: ${theme.colors.background.secondary};
+  `,
+  loadingPlaceholder: css`
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   `,
 });
 
