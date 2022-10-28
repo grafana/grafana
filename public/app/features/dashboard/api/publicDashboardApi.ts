@@ -41,7 +41,7 @@ export const publicDashboardApi = createApi({
   endpoints: (builder) => ({
     getConfig: builder.query<PublicDashboard, string>({
       query: (dashboardUid) => ({
-        url: `/uid/${dashboardUid}/public-config`,
+        url: `/uid/${dashboardUid}/public-dashboards`,
         manageError: getConfigError,
         showErrorAlert: false,
       }),
@@ -58,7 +58,7 @@ export const publicDashboardApi = createApi({
     }),
     saveConfig: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({
-        url: `/uid/${params.dashboard.uid}/public-config`,
+        url: `/uid/${params.dashboard.uid}/public-dashboards`,
         method: 'POST',
         data: params.payload,
       }),
@@ -76,7 +76,7 @@ export const publicDashboardApi = createApi({
     }),
     getPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
       query: () => ({
-        url: '/public',
+        url: '/public-dashboards',
       }),
       providesTags: ['PublicDashboards'],
     }),

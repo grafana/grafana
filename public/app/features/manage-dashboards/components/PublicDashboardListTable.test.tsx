@@ -33,7 +33,9 @@ const publicDashboardListResponse: ListPublicDashboardResponse[] = [
 ];
 
 const server = setupServer(
-  rest.get('/api/dashboards/public', (_, res, ctx) => res(ctx.status(200), ctx.json(publicDashboardListResponse))),
+  rest.get('/api/dashboards/public-dashboards', (_, res, ctx) =>
+    res(ctx.status(200), ctx.json(publicDashboardListResponse))
+  ),
   rest.delete('/api/dashboards/uid/:dashboardUid/public-dashboards/:uid', (_, res, ctx) => res(ctx.status(200)))
 );
 
@@ -93,7 +95,7 @@ describe('Show table', () => {
   });
   it('renders empty list', async () => {
     server.use(
-      rest.get('/api/dashboards/public', (req, res, ctx) => {
+      rest.get('/api/dashboards/public-dashboards', (req, res, ctx) => {
         return res(ctx.status(200), ctx.json([]));
       })
     );

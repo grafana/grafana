@@ -115,7 +115,7 @@ func (pd *PublicDashboardServiceImpl) FindByDashboardUid(ctx context.Context, or
 
 // Save is a helper method to persist the sharing config
 // to the database. It handles validations for sharing config and persistence
-func (pd *PublicDashboardServiceImpl) Save(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error) {
+func (pd *PublicDashboardServiceImpl) Save(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
 	// validate if the dashboard exists
 	dashboard, err := pd.FindDashboard(ctx, dto.DashboardUid, u.OrgID)
 	if err != nil {
@@ -193,7 +193,7 @@ func (pd *PublicDashboardServiceImpl) NewPublicDashboardAccessToken(ctx context.
 
 // Called by Save this handles business logic
 // to generate token and calls create at the database layer
-func (pd *PublicDashboardServiceImpl) savePublicDashboard(ctx context.Context, dto *SavePublicDashboardConfigDTO) (string, error) {
+func (pd *PublicDashboardServiceImpl) savePublicDashboard(ctx context.Context, dto *SavePublicDashboardDTO) (string, error) {
 	uid, err := pd.NewPublicDashboardUid(ctx)
 	if err != nil {
 		return "", err
@@ -204,7 +204,7 @@ func (pd *PublicDashboardServiceImpl) savePublicDashboard(ctx context.Context, d
 		return "", err
 	}
 
-	cmd := SavePublicDashboardConfigCommand{
+	cmd := SavePublicDashboardCommand{
 		PublicDashboard: PublicDashboard{
 			Uid:                uid,
 			DashboardUid:       dto.DashboardUid,
@@ -228,8 +228,8 @@ func (pd *PublicDashboardServiceImpl) savePublicDashboard(ctx context.Context, d
 
 // Called by Save this handles business logic for updating a
 // dashboard and calls update at the database layer
-func (pd *PublicDashboardServiceImpl) updatePublicDashboard(ctx context.Context, dto *SavePublicDashboardConfigDTO) (string, error) {
-	cmd := SavePublicDashboardConfigCommand{
+func (pd *PublicDashboardServiceImpl) updatePublicDashboard(ctx context.Context, dto *SavePublicDashboardDTO) (string, error) {
+	cmd := SavePublicDashboardCommand{
 		PublicDashboard: PublicDashboard{
 			Uid:                dto.PublicDashboard.Uid,
 			IsEnabled:          dto.PublicDashboard.IsEnabled,

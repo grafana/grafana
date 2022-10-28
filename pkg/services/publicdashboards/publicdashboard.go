@@ -19,7 +19,7 @@ type Service interface {
 	FindAnnotations(ctx context.Context, reqDTO AnnotationsQueryDTO, accessToken string) ([]AnnotationEvent, error)
 	FindDashboard(ctx context.Context, dashboardUid string, orgId int64) (*models.Dashboard, error)
 	FindAll(ctx context.Context, u *user.SignedInUser, orgId int64) ([]PublicDashboardListResponse, error)
-	Save(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error)
+	Save(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error)
 	Delete(ctx context.Context, userOrgId int64, dashboardUid string, uid string) error
 
 	GetMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO PublicDashboardQueryDTO) (dtos.MetricRequest, error)
@@ -39,8 +39,8 @@ type Store interface {
 	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
 	FindDashboard(ctx context.Context, dashboardUid string, orgId int64) (*models.Dashboard, error)
 	FindAll(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error)
-	Save(ctx context.Context, cmd SavePublicDashboardConfigCommand) error
-	Update(ctx context.Context, cmd SavePublicDashboardConfigCommand) error
+	Save(ctx context.Context, cmd SavePublicDashboardCommand) error
+	Update(ctx context.Context, cmd SavePublicDashboardCommand) error
 	Delete(ctx context.Context, userOrgId int64, dashboardUid, uid string) error
 
 	GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error)

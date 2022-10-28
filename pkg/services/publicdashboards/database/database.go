@@ -71,18 +71,7 @@ func (d *PublicDashboardStoreImpl) FindDashboard(ctx context.Context, dashboardU
 	return dashboard, err
 }
 
-func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, userOrgId int64, dashboardUid string, uid string) error {
-	dashboard := &PublicDashboard{OrgId: userOrgId, DashboardUid: dashboardUid, Uid: uid}
-	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Delete(dashboard)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-}
-
-// Find Returns public dashboard configuration by Uid or nil if not found
+// Find Returns public dashboard by Uid or nil if not found
 func (d *PublicDashboardStoreImpl) Find(ctx context.Context, uid string) (*PublicDashboard, error) {
 	if uid == "" {
 		return nil, nil
@@ -132,7 +121,7 @@ func (d *PublicDashboardStoreImpl) FindByAccessToken(ctx context.Context, access
 	return pdRes, err
 }
 
-// FindByDashboardUid Retrieves public dashboard configuration by dashboard uid
+// FindByDashboardUid Retrieves public dashboard by dashboard uid
 func (d *PublicDashboardStoreImpl) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
 	if dashboardUid == "" {
 		return nil, dashboards.ErrDashboardIdentifierNotSet
@@ -159,8 +148,8 @@ func (d *PublicDashboardStoreImpl) FindByDashboardUid(ctx context.Context, orgId
 	return pdRes, err
 }
 
-// Save Persists public dashboard configuration
-func (d *PublicDashboardStoreImpl) Save(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
+// Save Persists public dashboard
+func (d *PublicDashboardStoreImpl) Save(ctx context.Context, cmd SavePublicDashboardCommand) error {
 	if cmd.PublicDashboard.DashboardUid == "" {
 		return dashboards.ErrDashboardIdentifierNotSet
 	}
@@ -177,8 +166,8 @@ func (d *PublicDashboardStoreImpl) Save(ctx context.Context, cmd SavePublicDashb
 	return err
 }
 
-// Update updates existing public dashboard configuration
-func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
+// Update updates existing public dashboard
+func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDashboardCommand) error {
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		timeSettingsJSON, err := json.Marshal(cmd.PublicDashboard.TimeSettings)
 		if err != nil {
@@ -201,6 +190,17 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 	})
 
 	return err
+}
+
+func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, userOrgId int64, dashboardUid string, uid string) error {
+	dashboard := &PublicDashboard{OrgId: userOrgId, DashboardUid: dashboardUid, Uid: uid}
+	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Delete(dashboard)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 // ExistsEnabledByDashboardUid Responds true if there is an enabled public dashboard for a dashboard uid
