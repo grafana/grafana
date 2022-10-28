@@ -31,8 +31,8 @@ func (s *FakeService) GetFolderByTitle(ctx context.Context, user *user.SignedInU
 func (s *FakeService) CreateFolder(ctx context.Context, cmd *folder.CreateFolderCommand) (*models.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
-func (s *FakeService) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderCommand) error {
-	return s.ExpectedError
+func (s *FakeService) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderCommand) (*models.Folder, error) {
+	return s.ExpectedFolder, s.ExpectedError
 }
 func (s *FakeService) DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError

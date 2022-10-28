@@ -145,7 +145,7 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	err := hs.folderService.UpdateFolder(c.Req.Context(), &folder.UpdateFolderCommand{NewUID: web.Params(c.Req)[":uid"]})
+	_, err := hs.folderService.UpdateFolder(c.Req.Context(), &folder.UpdateFolderCommand{NewUID: web.Params(c.Req)[":uid"]})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}

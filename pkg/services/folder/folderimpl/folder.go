@@ -212,9 +212,9 @@ func (s *Service) CreateFolder(ctx context.Context, cmd *folder.CreateFolderComm
 	return folder, nil
 }
 
-func (s *Service) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderCommand) error {
+func (s *Service) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderCommand) (*models.Folder, error) {
 	user, err := appcontext.User(ctx)
-	query := models.GetDashboardQuery{OrgId: user.OrgID, Uid: cmd.existingUid}
+	query := models.GetDashboardQuery{OrgId: user.OrgID, Uid: cmd.Folder.UID}
 	if _, err := s.dashboardStore.GetDashboard(ctx, &query); err != nil {
 		return toFolderError(err)
 	}
@@ -245,12 +245,12 @@ func (s *Service) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderComm
 		return toFolderError(err)
 	}
 
-	var folder *models.Folder
-	folder, err = s.dashboardStore.GetFolderByID(ctx, orgID, dash.Id)
+	var folder *folder.Folder
+	folder, err = s.dashboardStore.GetFolderByID(ctx, user.OrgID, dash.Id)
 	if err != nil {
 		return err
 	}
-	cmd.Result = folder
+	cmd.Folder = folder
 
 	if currentTitle != folder.Title {
 		if err := s.bus.Publish(ctx, &events.FolderTitleUpdated{
@@ -258,13 +258,13 @@ func (s *Service) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderComm
 			Title:     folder.Title,
 			ID:        dash.Id,
 			UID:       dash.Uid,
-			OrgID:     orgID,
+			OrgID:     user.OrgID,
 		}); err != nil {
 			s.log.Error("failed to publish FolderTitleUpdated event", "folder", folder.Title, "user", user.UserID, "error", err)
 		}
 	}
 
-	return nil
+	return cmd.Folder, nil
 }
 
 func (s *Service) DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {

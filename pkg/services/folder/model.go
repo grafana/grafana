@@ -1,7 +1,10 @@
 package folder
 
 import (
+	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
 const (
@@ -40,6 +43,28 @@ func NewFolder(title string, description string) *Folder {
 	}
 }
 
+// TODO: this will be removed when the nested folder service refactoring is complete.
+// UpdateDashboardModel updates an existing model from command into model for update.
+func (cmd *UpdateFolderCommand) UpdateDashboardModel(dashFolder *models.Dashboard, orgId int64, userId int64) *models.Dashboard {
+	dashFolder.OrgId = orgId
+	dashFolder.Title = strings.TrimSpace(cmd.Folder.Title)
+
+	if cmd.Folder.UID != "" {
+		dashFolder.SetUid(cmd.Folder.UID)
+	}
+
+	dashFolder.SetVersion(int(cmd.Folder.OrgID)) // TODO: don't think i refactored this right
+	dashFolder.IsFolder = true
+
+	if userId == 0 {
+		userId = -1
+	}
+
+	dashFolder.UpdatedBy = userId
+
+	return dashFolder
+}
+
 // CreateFolderCommand captures the information required by the folder service
 // to create a folder.
 type CreateFolderCommand struct {
@@ -56,7 +81,9 @@ type UpdateFolderCommand struct {
 	NewUID         *string `json:"uid"`
 	NewTitle       *string `json:"title"`
 	NewDescription *string `json:"description"`
-	ExistingUid    string  `json:"existinguid"`
+
+	// TODO: not sure we need overwrite / may want to remove when nested folder service refactoring is complete
+	Overwrite bool `json:"overwrite"`
 }
 
 // MoveFolderCommand captures the information required by the folder service
