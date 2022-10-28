@@ -1023,7 +1023,6 @@ func (d *DashboardStore) GetDashboardTags(ctx context.Context, query *models.Get
 // implementation is complete.
 func (d *DashboardStore) CountDashboardsInFolder(
 	ctx context.Context, req *dashboards.CountDashboardsInFolderRequest) (int64, error) {
-
 	var dashboards = make([]*models.Dashboard, 0)
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		session := sess.In("folder_id", req.FolderID).In("org_id", req.OrgID).
