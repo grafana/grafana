@@ -36,6 +36,7 @@ function DontShowIfSmallDevice({ children }: { children: JSX.Element | string })
   const theme = useTheme2();
   const smBreakpoint = theme.breakpoints.values.xxl;
   const [isSmallScreen, setIsSmallScreen] = useState(matchesWidth(smBreakpoint));
+  const style = useStyles2(getStyles);
 
   useMediaQueryChange({
     breakpoint: smBreakpoint,
@@ -47,7 +48,7 @@ function DontShowIfSmallDevice({ children }: { children: JSX.Element | string })
   if (isSmallScreen) {
     return null;
   } else {
-    return <>{children}</>;
+    return <div className={style.buttonText}>{children}</div>;
   }
 }
 
@@ -207,5 +208,11 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   button: css`
     height: 24px;
     font-size: ${theme.typography.size.sm};
+    svg {
+      margin-right: 0;
+    }
+  `,
+  buttonText: css`
+    margin-left: 8px;
   `,
 });
