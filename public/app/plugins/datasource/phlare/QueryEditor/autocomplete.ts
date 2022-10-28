@@ -165,7 +165,7 @@ const labelNameRegex = /[a-zA-Z_][a-zA-Z0-9_]*/;
 const labelValueRegex = /[^"]*/; // anything except a double quote
 const labelPairsRegex = new RegExp(`(${labelNameRegex.source})="(${labelValueRegex.source})"`, 'g');
 const inLabelValueRegex = new RegExp(`(${labelNameRegex.source})=("?)${labelValueRegex.source}$`);
-const inLabelNameRegex = new RegExp(`[{,]\s*[a-zA-Z0-9_]*$`);
+const inLabelNameRegex = new RegExp(/[{,]\s*[a-zA-Z0-9_]*$/);
 
 /**
  * Figure out where is the cursor and what kind of suggestions are appropriate.

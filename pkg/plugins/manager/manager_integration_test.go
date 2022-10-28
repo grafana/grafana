@@ -204,6 +204,8 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"jaeger":                           {},
 		"mixed":                            {},
 		"zipkin":                           {},
+		"phlare":                           {},
+		"parca":                            {},
 	}
 
 	expApps := map[string]struct{}{
