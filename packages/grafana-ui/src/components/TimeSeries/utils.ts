@@ -533,6 +533,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   const hoverProximityPx = 15;
 
   let cursor: Partial<uPlot.Cursor> = {
+    // allow X / Y zoom
+    drag: { setScale: true, x: true, y: true, uni: Infinity },
     // this scans left and right from cursor position to find nearest data index with value != null
     // TODO: do we want to only scan past undefined values, but halt at explicit null values?
     dataIdx: (self, seriesIdx, hoveredIdx, cursorXVal) => {
