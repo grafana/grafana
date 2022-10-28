@@ -82,7 +82,6 @@ func TestParseTreeTestdata(t *testing.T) {
 		},
 		"test-app-with-roles": {
 			rootid: "test-app",
-			skip:   "has a 'roles' section which isn't a known part of spec",
 		},
 		"unsigned-datasource": {
 			rootid:  "test-datasource",

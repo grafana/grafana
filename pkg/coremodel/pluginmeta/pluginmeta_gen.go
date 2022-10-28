@@ -47,6 +47,17 @@ const (
 	TypeSecretsmanager Type = "secretsmanager"
 )
 
+// Defines values for BasicRole.
+const (
+	BasicRoleAdmin BasicRole = "Admin"
+
+	BasicRoleEditor BasicRole = "Editor"
+
+	BasicRoleGrafanaAdmin BasicRole = "Grafana Admin"
+
+	BasicRoleViewer BasicRole = "Viewer"
+)
+
 // Defines values for DependencyType.
 const (
 	DependencyTypeApp DependencyType = "app"
@@ -91,6 +102,17 @@ const (
 	ReleaseStateDeprecated ReleaseState = "deprecated"
 
 	ReleaseStateStable ReleaseState = "stable"
+)
+
+// Defines values for RoleRegistrationGrants.
+const (
+	RoleRegistrationGrantsAdmin RoleRegistrationGrants = "Admin"
+
+	RoleRegistrationGrantsEditor RoleRegistrationGrants = "Editor"
+
+	RoleRegistrationGrantsGrafanaAdmin RoleRegistrationGrants = "Grafana Admin"
+
+	RoleRegistrationGrantsViewer RoleRegistrationGrants = "Viewer"
 )
 
 // Model is the Go representation of a pluginmeta.
@@ -253,6 +275,9 @@ type Model struct {
 		MinInterval *bool `json:"minInterval,omitempty"`
 	} `json:"queryOptions,omitempty"`
 
+	// List of RBAC roles and their assignments.
+	Roles *[]RoleRegistration `json:"roles,omitempty"`
+
 	// Routes is a list of proxy routes, if any. For datasource plugins only.
 	Routes *[]Route `json:"routes,omitempty"`
 
@@ -288,6 +313,12 @@ type Category string
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type Type string
+
+// BasicRole is the Go representation of a pluginmeta.BasicRole.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type BasicRole string
 
 // BuildInfo is the Go representation of a pluginmeta.BuildInfo.
 //
@@ -473,11 +504,64 @@ type JWTTokenAuth struct {
 	Url string `json:"url"`
 }
 
+// Permission is the Go representation of a pluginmeta.Permission.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type Permission struct {
+	Action string  `json:"action"`
+	Scope  *string `json:"scope,omitempty"`
+}
+
 // ReleaseState indicates release maturity state of a plugin.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type ReleaseState string
+
+// Role describes an RBAC role and its permissions
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type Role struct {
+	Description string `json:"description"`
+	DisplayName string `json:"displayName"`
+	Group       string `json:"group"`
+	Name        string `json:"name"`
+	Permissions []struct {
+		Action string  `json:"action"`
+		Scope  *string `json:"scope,omitempty"`
+	} `json:"permissions"`
+}
+
+// RoleRegistration describes the definition of an RBAC role
+// and its assignments to BasicRoles
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type RoleRegistration struct {
+	// Assignment to a basic role
+	// (Viewer, Editor, Admin, Grafana Admin)
+	Grants []RoleRegistrationGrants `json:"grants"`
+
+	// RBAC role definition
+	Role struct {
+		Description string `json:"description"`
+		DisplayName string `json:"displayName"`
+		Group       string `json:"group"`
+		Name        string `json:"name"`
+		Permissions []struct {
+			Action string  `json:"action"`
+			Scope  *string `json:"scope,omitempty"`
+		} `json:"permissions"`
+	} `json:"role"`
+}
+
+// RoleRegistrationGrants is the Go representation of a RoleRegistration.Grants.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type RoleRegistrationGrants string
 
 // A proxy route used in datasource plugins for plugin authentication
 // and adding headers to HTTP requests made by the plugin.

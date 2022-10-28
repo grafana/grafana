@@ -131,6 +131,36 @@ seqs: [
 				// in all orgs
 				autoEnabled?: bool
 
+				// List of RBAC roles and their assignments.
+				roles?: [...#RoleRegistration]
+
+				// RoleRegistration describes the definition of an RBAC role
+				// and its assignments to BasicRoles
+				#RoleRegistration: {
+					// RBAC role definition
+					role: #Role
+
+					// Assignment to a basic role 
+					// (Viewer, Editor, Admin, Grafana Admin)
+					grants: [...#BasicRole]
+				}
+
+				// Role describes an RBAC role and its permissions
+				#Role: {
+					name: string,
+					displayName: string,
+					description: string,
+					group: string,
+					permissions: [...#Permission]
+				}
+
+				#Permission: {
+					action: string,
+					scope?: string
+				}
+
+				#BasicRole: "Grafana Admin" | "Admin" | "Editor" | "Viewer"
+
 				// Dependencies needed by the plugin.
 				dependencies: #Dependencies
 
