@@ -281,7 +281,6 @@ type Role struct {
 	Name        string       `json:"name"`
 	DisplayName string       `json:"displayName"`
 	Description string       `json:"description"`
-	Group       string       `xorm:"group_name" json:"group"`
 	Permissions []Permission `json:"permissions"`
 }
 

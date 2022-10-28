@@ -364,6 +364,6 @@ func NewFakeRoleRegistry() *FakeRoleRegistry {
 	return &FakeRoleRegistry{}
 }
 
-func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ []plugins.RoleRegistration) error {
+func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ string, _ []plugins.RoleRegistration) error {
 	return f.ExpectedErr
 }

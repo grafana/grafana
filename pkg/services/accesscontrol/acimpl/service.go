@@ -209,7 +209,7 @@ func permissionCacheKey(user *user.SignedInUser) (string, error) {
 
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
-func (s *Service) DeclarePluginRoles(_ context.Context, pluginID string, regs []plugins.RoleRegistration) error {
+func (s *Service) DeclarePluginRoles(_ context.Context, ID, name string, regs []plugins.RoleRegistration) error {
 	// If accesscontrol is disabled no need to register roles
 	if accesscontrol.IsDisabled(s.cfg) {
 		return nil
@@ -220,9 +220,9 @@ func (s *Service) DeclarePluginRoles(_ context.Context, pluginID string, regs []
 		return nil
 	}
 
-	acRegs := pluginutils.ToRegistrations(regs)
+	acRegs := pluginutils.ToRegistrations(name, regs)
 	for _, r := range acRegs {
-		err := accesscontrol.ValidatePluginRole(pluginID, r.Role)
+		err := accesscontrol.ValidatePluginRole(ID, r.Role)
 		if err != nil {
 			return err
 		}

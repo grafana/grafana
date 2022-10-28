@@ -45,7 +45,7 @@ type Mock struct {
 	GetUserPermissionsFunc             func(context.Context, *user.SignedInUser, accesscontrol.Options) ([]accesscontrol.Permission, error)
 	IsDisabledFunc                     func() bool
 	DeclareFixedRolesFunc              func(...accesscontrol.RoleRegistration) error
-	DeclarePluginRolesFunc             func(context.Context, string, []plugins.RoleRegistration) error
+	DeclarePluginRolesFunc             func(context.Context, string, string, []plugins.RoleRegistration) error
 	GetUserBuiltInRolesFunc            func(user *user.SignedInUser) []string
 	RegisterFixedRolesFunc             func() error
 	RegisterScopeAttributeResolverFunc func(string, accesscontrol.ScopeAttributeResolver)
@@ -176,11 +176,11 @@ func (m *Mock) RegisterFixedRoles(ctx context.Context) error {
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their
 // assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 // This mock returns no error unless an override is provided.
-func (m *Mock) DeclarePluginRoles(ctx context.Context, pluginID string, regs []plugins.RoleRegistration) error {
-	m.Calls.DeclarePluginRoles = append(m.Calls.DeclarePluginRoles, []interface{}{ctx, pluginID, regs})
+func (m *Mock) DeclarePluginRoles(ctx context.Context, ID, name string, regs []plugins.RoleRegistration) error {
+	m.Calls.DeclarePluginRoles = append(m.Calls.DeclarePluginRoles, []interface{}{ctx, ID, name, regs})
 	// Use override if provided
 	if m.DeclarePluginRolesFunc != nil {
-		return m.DeclarePluginRolesFunc(ctx, pluginID, regs)
+		return m.DeclarePluginRolesFunc(ctx, ID, name, regs)
 	}
 	return nil
 }

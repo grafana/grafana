@@ -651,7 +651,6 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 										Name:        "plugins.app:test-app:reader",
 										DisplayName: "test-app reader",
 										Description: "View everything in the test-app plugin",
-										Group:       "Plugins",
 										Permissions: []plugins.Permission{
 											{Action: "plugins.app:access", Scope: "plugins.app:id:test-app"},
 											{Action: "test-app.resource:read", Scope: "resources:*"},

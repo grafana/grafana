@@ -264,7 +264,7 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 			ac.registrations = accesscontrol.RegistrationList{}
 
 			// Test
-			err := ac.DeclarePluginRoles(context.Background(), tt.pluginID, tt.registrations)
+			err := ac.DeclarePluginRoles(context.Background(), tt.pluginID, tt.pluginID, tt.registrations)
 			if tt.wantErr {
 				require.Error(t, err)
 				assert.ErrorIs(t, err, tt.err)

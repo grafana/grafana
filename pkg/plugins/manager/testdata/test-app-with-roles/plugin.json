@@ -20,7 +20,6 @@
         "name": "plugins.app:test-app:reader",
         "displayName": "test-app reader",
         "description": "View everything in the test-app plugin",
-        "group": "Plugins",
         "permissions": [
           {
             "action": "plugins.app:access",

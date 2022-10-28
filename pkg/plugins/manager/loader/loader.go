@@ -199,7 +199,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		}
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 
-		if errDeclareRoles := l.roleRegistry.DeclarePluginRoles(ctx, p.ID, p.Roles); errDeclareRoles != nil {
+		if errDeclareRoles := l.roleRegistry.DeclarePluginRoles(ctx, p.ID, p.Name, p.Roles); errDeclareRoles != nil {
 			l.log.Warn("Declare plugin roles failed",
 				"pluginID", p.ID,
 				"warning", "Make sure the role declaration is correct.",

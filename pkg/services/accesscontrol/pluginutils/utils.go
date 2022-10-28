@@ -5,7 +5,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-func ToRegistrations(regs []plugins.RoleRegistration) []ac.RoleRegistration {
+func ToRegistrations(pluginName string, regs []plugins.RoleRegistration) []ac.RoleRegistration {
 	res := make([]ac.RoleRegistration, 0, len(regs))
 	for i := range regs {
 		res = append(res, ac.RoleRegistration{
@@ -14,7 +14,7 @@ func ToRegistrations(regs []plugins.RoleRegistration) []ac.RoleRegistration {
 				Name:        regs[i].Role.Name,
 				DisplayName: regs[i].Role.DisplayName,
 				Description: regs[i].Role.Description,
-				Group:       regs[i].Role.Group,
+				Group:       pluginName,
 				Permissions: toPermissions(regs[i].Role.Permissions),
 				OrgID:       ac.GlobalOrgID,
 			},

@@ -150,7 +150,6 @@ seqs: [
 					name: string,
 					displayName: string,
 					description: string,
-					group: string,
 					permissions: [...#Permission]
 				}
 

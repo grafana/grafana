@@ -526,7 +526,6 @@ type ReleaseState string
 type Role struct {
 	Description string `json:"description"`
 	DisplayName string `json:"displayName"`
-	Group       string `json:"group"`
 	Name        string `json:"name"`
 	Permissions []struct {
 		Action string  `json:"action"`
@@ -548,7 +547,6 @@ type RoleRegistration struct {
 	Role struct {
 		Description string `json:"description"`
 		DisplayName string `json:"displayName"`
-		Group       string `json:"group"`
 		Name        string `json:"name"`
 		Permissions []struct {
 			Action string  `json:"action"`
