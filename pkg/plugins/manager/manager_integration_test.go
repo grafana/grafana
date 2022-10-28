@@ -104,7 +104,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
 	reg := registry.ProvideService()
 	l := loader.ProvideService(pCfg, &licensing.OSSLicensingService{Cfg: cfg}, signature.NewUnsignedAuthorizer(pCfg),
-		reg, provider.ProvideService(coreRegistry), actest.FakeService{}, featuremgmt.WithFeatures())
+		reg, provider.ProvideService(coreRegistry), actest.FakeService{})
 	ps, err := store.ProvideService(cfg, pCfg, reg, l)
 	require.NoError(t, err)
 
