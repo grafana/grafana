@@ -15,16 +15,14 @@ export const PubdashFooter = function () {
   const styles = useStyles2(getStyles);
   const conf = getPubdashFooterConfig();
 
-  return (
-    !conf.hide && (
-      <div className={styles.footer}>
-        <span className={styles.logoText}>
-          <a href={conf.link} target="_blank" rel="noreferrer noopener">
-            {conf.text} <img className={styles.logoImg} alt="" src={conf.logo}></img>
-          </a>
-        </span>
-      </div>
-    )
+  return conf.hide ? null : (
+    <div className={styles.footer}>
+      <span className={styles.logoText}>
+        <a href={conf.link} target="_blank" rel="noreferrer noopener">
+          {conf.text} <img className={styles.logoImg} alt="" src={conf.logo}></img>
+        </a>
+      </span>
+    </div>
   );
 };
 
