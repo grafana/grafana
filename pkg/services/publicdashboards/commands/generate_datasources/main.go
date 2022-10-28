@@ -28,7 +28,7 @@ func main() {
 
 	myTemplate := template.Must(template.New("").Parse(goTemplate))
 
-	file, err := os.Create("supported_datasources.go")
+	file, err := os.Create("supported_datasources_gen.go")
 	if err != nil {
 		fmt.Println(err)
 	}
