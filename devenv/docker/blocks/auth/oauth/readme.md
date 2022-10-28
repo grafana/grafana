@@ -23,8 +23,8 @@ scopes = openid email profile offline_access roles
 email_attribute_path = email
 login_attribute_path = username
 name_attribute_path = full_name
-auth_url = http://localhost:8087/auth/realms/grafana/protocol/openid-connect/auth
-token_url = http://localhost:8087/auth/realms/grafana/protocol/openid-connect/token
+auth_url = http://localhost:8087/realms/grafana/protocol/openid-connect/auth
+token_url = http://localhost:8087/realms/grafana/protocol/openid-connect/token
 role_attribute_path = contains(roles[*], 'grafanaadmin') && 'GrafanaAdmin' || contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
 allow_assign_grafana_admin = true
 ```
