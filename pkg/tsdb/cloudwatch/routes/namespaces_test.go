@@ -28,9 +28,9 @@ func Test_Namespaces_Route(t *testing.T) {
 			services.GetHardCodedNamespaces = origGetHardCodedNamespaces
 		})
 		haveBeenCalled := false
-		services.GetHardCodedNamespaces = func() []string {
+		services.GetHardCodedNamespaces = func() []models.ResourceResponse[string] {
 			haveBeenCalled = true
-			return []string{}
+			return []models.ResourceResponse[string]{}
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/namespaces", nil)
@@ -44,15 +44,15 @@ func Test_Namespaces_Route(t *testing.T) {
 		t.Cleanup(func() {
 			services.GetHardCodedNamespaces = origGetHardCodedNamespaces
 		})
-		services.GetHardCodedNamespaces = func() []string {
-			return []string{"AWS/EC2", "AWS/ELB"}
+		services.GetHardCodedNamespaces = func() []models.ResourceResponse[string] {
+			return []models.ResourceResponse[string]{{Value: "AWS/EC2"}, {Value: "AWS/ELB"}}
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/namespaces", nil)
 		customNamespaces = "customNamespace1,customNamespace2"
 		handler := http.HandlerFunc(ResourceRequestMiddleware(NamespacesHandler, logger, factoryFunc))
 		handler.ServeHTTP(rr, req)
-		assert.JSONEq(t, `["AWS/EC2", "AWS/ELB", "customNamespace1", "customNamespace2"]`, rr.Body.String())
+		assert.JSONEq(t, `[{"value":"AWS/EC2"}, {"value":"AWS/ELB"}, {"value":"customNamespace1"}, {"value":"customNamespace2"}]`, rr.Body.String())
 	})
 
 	t.Run("sorts result", func(t *testing.T) {
@@ -60,14 +60,14 @@ func Test_Namespaces_Route(t *testing.T) {
 		t.Cleanup(func() {
 			services.GetHardCodedNamespaces = origGetHardCodedNamespaces
 		})
-		services.GetHardCodedNamespaces = func() []string {
-			return []string{"AWS/XYZ", "AWS/ELB"}
+		services.GetHardCodedNamespaces = func() []models.ResourceResponse[string] {
+			return []models.ResourceResponse[string]{{Value: "AWS/XYZ"}, {Value: "AWS/ELB"}}
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/namespaces", nil)
 		customNamespaces = "DCustomNamespace1,ACustomNamespace2"
 		handler := http.HandlerFunc(ResourceRequestMiddleware(NamespacesHandler, logger, factoryFunc))
 		handler.ServeHTTP(rr, req)
-		assert.JSONEq(t, `["ACustomNamespace2", "AWS/ELB", "AWS/XYZ", "DCustomNamespace1"]`, rr.Body.String())
+		assert.JSONEq(t, `[{"value":"ACustomNamespace2"}, {"value":"AWS/ELB"}, {"value":"AWS/XYZ"}, {"value":"DCustomNamespace1"}]`, rr.Body.String())
 	})
 }

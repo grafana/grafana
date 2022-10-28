@@ -22,20 +22,20 @@ func MetricsHandler(pluginCtx backend.PluginContext, reqCtxFactory models.Reques
 		return nil, models.NewHttpError("error in MetricsHandler", http.StatusInternalServerError, err)
 	}
 
-	var metrics []resources.Metric
+	var response []models.ResourceResponse[models.Metric]
 	switch metricsRequest.Type() {
 	case resources.AllMetricsRequestType:
-		metrics = services.GetAllHardCodedMetrics()
+		response = services.GetAllHardCodedMetrics()
 	case resources.MetricsByNamespaceRequestType:
-		metrics, err = services.GetHardCodedMetricsByNamespace(metricsRequest.Namespace)
+		response, err = services.GetHardCodedMetricsByNamespace(metricsRequest.Namespace)
 	case resources.CustomNamespaceRequestType:
-		metrics, err = service.GetMetricsByNamespace(metricsRequest.Namespace)
+		response, err = service.GetMetricsByNamespace(metricsRequest.Namespace)
 	}
 	if err != nil {
 		return nil, models.NewHttpError("error in MetricsHandler", http.StatusInternalServerError, err)
 	}
 
-	metricsResponse, err := json.Marshal(metrics)
+	metricsResponse, err := json.Marshal(response)
 	if err != nil {
 		return nil, models.NewHttpError("error in MetricsHandler", http.StatusInternalServerError, err)
 	}

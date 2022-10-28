@@ -18,7 +18,7 @@ func NewListMetricsService(metricsClient models.MetricsClientProvider) models.Li
 	return &ListMetricsService{metricsClient}
 }
 
-func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(r resources.DimensionKeysRequest) ([]string, error) {
+func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(r resources.DimensionKeysRequest) ([]models.ResourceResponse[string], error) {
 	input := &cloudwatch.ListMetricsInput{}
 	if r.Namespace != "" {
 		input.Namespace = aws.String(r.Namespace)
@@ -33,7 +33,7 @@ func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(r resources.Dimen
 		return nil, fmt.Errorf("%v: %w", "unable to call AWS API", err)
 	}
 
-	var dimensionKeys []string
+	var response []models.ResourceResponse[string]
 	// remove duplicates
 	dupCheck := make(map[string]struct{})
 	for _, metric := range metrics {
@@ -56,14 +56,14 @@ func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(r resources.Dimen
 			}
 
 			dupCheck[*dim.Name] = struct{}{}
-			dimensionKeys = append(dimensionKeys, *dim.Name)
+			response = append(response, models.ResourceResponse[string]{Value: *dim.Name})
 		}
 	}
 
-	return dimensionKeys, nil
+	return response, nil
 }
 
-func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(r resources.DimensionValuesRequest) ([]string, error) {
+func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(r resources.DimensionValuesRequest) ([]models.ResourceResponse[string], error) {
 	input := &cloudwatch.ListMetricsInput{
 		Namespace:  aws.String(r.Namespace),
 		MetricName: aws.String(r.MetricName),
@@ -75,7 +75,7 @@ func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(r resources.Dim
 		return nil, fmt.Errorf("%v: %w", "unable to call AWS API", err)
 	}
 
-	var dimensionValues []string
+	var response []models.ResourceResponse[string]
 	dupCheck := make(map[string]bool)
 	for _, metric := range metrics {
 		for _, dim := range metric.Dimensions {
@@ -85,51 +85,53 @@ func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(r resources.Dim
 				}
 
 				dupCheck[*dim.Value] = true
-				dimensionValues = append(dimensionValues, *dim.Value)
+				response = append(response, models.ResourceResponse[string]{Value: *dim.Value})
 			}
 		}
 	}
 
-	sort.Strings(dimensionValues)
-	return dimensionValues, nil
+	sort.Slice(response, func(i, j int) bool {
+		return response[i].Value < response[j].Value
+	})
+	return response, nil
 }
 
-func (l *ListMetricsService) GetDimensionKeysByNamespace(namespace string) ([]string, error) {
-	metrics, err := l.ListMetricsWithPageLimit(&cloudwatch.ListMetricsInput{Namespace: aws.String(namespace)})
+func (l *ListMetricsService) GetDimensionKeysByNamespace(namespace string) ([]models.ResourceResponse[string], error) {
+	response, err := l.ListMetricsWithPageLimit(&cloudwatch.ListMetricsInput{Namespace: aws.String(namespace)})
 	if err != nil {
-		return []string{}, err
+		return []models.ResourceResponse[string]{}, err
 	}
 
-	var dimensionKeys []string
+	var dimensionKeys []models.ResourceResponse[string]
 	dupCheck := make(map[string]struct{})
-	for _, metric := range metrics {
+	for _, metric := range response {
 		for _, dim := range metric.Dimensions {
 			if _, exists := dupCheck[*dim.Name]; exists {
 				continue
 			}
 
 			dupCheck[*dim.Name] = struct{}{}
-			dimensionKeys = append(dimensionKeys, *dim.Name)
+			dimensionKeys = append(dimensionKeys, models.ResourceResponse[string]{Value: *dim.Name})
 		}
 	}
 
 	return dimensionKeys, nil
 }
 
-func (l *ListMetricsService) GetMetricsByNamespace(namespace string) ([]resources.Metric, error) {
+func (l *ListMetricsService) GetMetricsByNamespace(namespace string) ([]models.ResourceResponse[models.Metric], error) {
 	metrics, err := l.ListMetricsWithPageLimit(&cloudwatch.ListMetricsInput{Namespace: aws.String(namespace)})
 	if err != nil {
 		return nil, err
 	}
 
-	response := []resources.Metric{}
+	response := []models.ResourceResponse[models.Metric]{}
 	dupCheck := make(map[string]struct{})
 	for _, metric := range metrics {
 		if _, exists := dupCheck[*metric.MetricName]; exists {
 			continue
 		}
 		dupCheck[*metric.MetricName] = struct{}{}
-		response = append(response, resources.Metric{Name: *metric.MetricName, Namespace: *metric.Namespace})
+		response = append(response, models.ResourceResponse[models.Metric]{Value: models.Metric{Name: *metric.MetricName, Namespace: *metric.Namespace}})
 	}
 
 	return response, nil

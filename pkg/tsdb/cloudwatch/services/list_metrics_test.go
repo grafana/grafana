@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -57,7 +58,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-		assert.Equal(t, []string{"InstanceType", "AutoScalingGroupName"}, resp)
+		assert.Equal(t, []models.ResourceResponse[string]{{Value: "InstanceType"}, {Value: "AutoScalingGroupName"}}, resp)
 	})
 }
 
@@ -70,7 +71,7 @@ func TestListMetricsService_GetDimensionKeysByNamespace(t *testing.T) {
 		resp, err := listMetricsService.GetDimensionKeysByNamespace("AWS/EC2")
 
 		require.NoError(t, err)
-		assert.Equal(t, []string{"InstanceId", "InstanceType", "AutoScalingGroupName"}, resp)
+		assert.Equal(t, []models.ResourceResponse[string]{{Value: "InstanceId"}, {Value: "InstanceType"}, {Value: "AutoScalingGroupName"}}, resp)
 	})
 }
 
@@ -91,6 +92,6 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-		assert.Equal(t, []string{"i-1234567890abcdef0", "i-5234567890abcdef0", "i-64234567890abcdef0"}, resp)
+		assert.Equal(t, []models.ResourceResponse[string]{{Value: "i-1234567890abcdef0"}, {Value: "i-5234567890abcdef0"}, {Value: "i-64234567890abcdef0"}}, resp)
 	})
 }

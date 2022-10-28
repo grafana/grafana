@@ -17,7 +17,7 @@ type OAMClientProvider interface {
 }
 
 type AccountsProvider interface {
-	GetAccountsForCurrentUserOrRole() ([]*Account, error)
+	GetAccountsForCurrentUserOrRole() ([]ResourceResponse[*Account], error)
 }
 
 type ClientsProvider interface {

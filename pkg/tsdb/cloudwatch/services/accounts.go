@@ -20,7 +20,7 @@ func NewAccountsService(oamClient models.OAMClientProvider) models.AccountsProvi
 	return &AccountsService{oamClient}
 }
 
-func (a *AccountsService) GetAccountsForCurrentUserOrRole() ([]*models.Account, error) {
+func (a *AccountsService) GetAccountsForCurrentUserOrRole() ([]models.ResourceResponse[*models.Account], error) {
 	var nextToken *string
 	sinks := []*oam.ListSinksItem{}
 	for {
@@ -85,7 +85,7 @@ func (a *AccountsService) GetAccountsForCurrentUserOrRole() ([]*models.Account, 
 		nextToken = links.NextToken
 	}
 
-	return result, nil
+	return valuesToListMetricRespone(result), nil
 }
 
 func getAccountId(arn string) string {

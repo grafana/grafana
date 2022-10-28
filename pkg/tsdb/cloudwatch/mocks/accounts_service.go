@@ -9,8 +9,8 @@ type AccountsServiceMock struct {
 	mock.Mock
 }
 
-func (a *AccountsServiceMock) GetAccountsForCurrentUserOrRole() ([]*models.Account, error) {
+func (a *AccountsServiceMock) GetAccountsForCurrentUserOrRole() ([]models.ResourceResponse[*models.Account], error) {
 	args := a.Called()
 
-	return args.Get(0).([]*models.Account), args.Error(1)
+	return args.Get(0).([]models.ResourceResponse[*models.Account]), args.Error(1)
 }

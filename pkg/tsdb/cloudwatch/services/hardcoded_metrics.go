@@ -4,19 +4,20 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
 
-var GetHardCodedDimensionKeysByNamespace = func(namespace string) ([]string, error) {
+var GetHardCodedDimensionKeysByNamespace = func(namespace string) ([]resources.ResourceResponse[string], error) {
 	var dimensionKeys []string
 	exists := false
 	if dimensionKeys, exists = constants.NamespaceDimensionKeysMap[namespace]; !exists {
 		return nil, fmt.Errorf("unable to find dimensions for namespace '%q'", namespace)
 	}
-	return dimensionKeys, nil
+	return valuesToListMetricRespone(dimensionKeys), nil
 }
 
-var GetHardCodedMetricsByNamespace = func(namespace string) ([]resources.Metric, error) {
+var GetHardCodedMetricsByNamespace = func(namespace string) ([]resources.ResourceResponse[models.Metric], error) {
 	response := []resources.Metric{}
 	exists := false
 	var metrics []string
@@ -28,10 +29,10 @@ var GetHardCodedMetricsByNamespace = func(namespace string) ([]resources.Metric,
 		response = append(response, resources.Metric{Namespace: namespace, Name: metric})
 	}
 
-	return response, nil
+	return valuesToListMetricRespone(response), nil
 }
 
-var GetAllHardCodedMetrics = func() []resources.Metric {
+var GetAllHardCodedMetrics = func() []resources.ResourceResponse[models.Metric] {
 	response := []resources.Metric{}
 	for namespace, metrics := range constants.NamespaceMetricsMap {
 		for _, metric := range metrics {
@@ -39,14 +40,14 @@ var GetAllHardCodedMetrics = func() []resources.Metric {
 		}
 	}
 
-	return response
+	return valuesToListMetricRespone(response)
 }
 
-var GetHardCodedNamespaces = func() []string {
+var GetHardCodedNamespaces = func() []models.ResourceResponse[string] {
 	var namespaces []string
 	for key := range constants.NamespaceMetricsMap {
 		namespaces = append(namespaces, key)
 	}
 
-	return namespaces
+	return valuesToListMetricRespone(namespaces)
 }

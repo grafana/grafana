@@ -494,3 +494,8 @@ export interface MetricResponse {
   name: string;
   namespace: string;
 }
+
+export interface ResourceResponse<T> {
+  account?: Account;
+  value: T;
+}

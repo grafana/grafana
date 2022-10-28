@@ -1,27 +1,27 @@
 package routes
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_Metrics_Route(t *testing.T) {
 	t.Run("calls GetMetricsByNamespace when a CustomNamespaceRequestType is passed", func(t *testing.T) {
 		mockListMetricsService := mocks.ListMetricsServiceMock{}
-		mockListMetricsService.On("GetMetricsByNamespace", mock.Anything).Return([]resources.Metric{}, nil)
+		mockListMetricsService.On("GetMetricsByNamespace", mock.Anything).Return([]resources.ResourceResponse[models.Metric]{}, nil)
 		newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
 			return &mockListMetricsService, nil
 		}
@@ -38,17 +38,14 @@ func Test_Metrics_Route(t *testing.T) {
 			services.GetAllHardCodedMetrics = origGetAllHardCodedMetrics
 		})
 		haveBeenCalled := false
-		services.GetAllHardCodedMetrics = func() []resources.Metric {
+		services.GetAllHardCodedMetrics = func() []models.ResourceResponse[models.Metric] {
 			haveBeenCalled = true
-			return []resources.Metric{}
+			return []models.ResourceResponse[models.Metric]{}
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/metrics?region=us-east-2", nil)
 		handler := http.HandlerFunc(ResourceRequestMiddleware(MetricsHandler, logger, nil))
 		handler.ServeHTTP(rr, req)
-		res := []resources.Metric{}
-		err := json.Unmarshal(rr.Body.Bytes(), &res)
-		require.Nil(t, err)
 		assert.True(t, haveBeenCalled)
 	})
 
@@ -59,25 +56,22 @@ func Test_Metrics_Route(t *testing.T) {
 		})
 		haveBeenCalled := false
 		usedNamespace := ""
-		services.GetHardCodedMetricsByNamespace = func(namespace string) ([]resources.Metric, error) {
+		services.GetHardCodedMetricsByNamespace = func(namespace string) ([]models.ResourceResponse[models.Metric], error) {
 			haveBeenCalled = true
 			usedNamespace = namespace
-			return []resources.Metric{}, nil
+			return []models.ResourceResponse[models.Metric]{}, nil
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/metrics?region=us-east-2&namespace=AWS/DMS", nil)
 		handler := http.HandlerFunc(ResourceRequestMiddleware(MetricsHandler, logger, nil))
 		handler.ServeHTTP(rr, req)
-		res := []resources.Metric{}
-		err := json.Unmarshal(rr.Body.Bytes(), &res)
-		require.Nil(t, err)
 		assert.True(t, haveBeenCalled)
 		assert.Equal(t, "AWS/DMS", usedNamespace)
 	})
 
 	t.Run("returns 500 if GetMetricsByNamespace returns an error", func(t *testing.T) {
 		mockListMetricsService := mocks.ListMetricsServiceMock{}
-		mockListMetricsService.On("GetMetricsByNamespace", mock.Anything).Return([]resources.Metric{}, fmt.Errorf("some error"))
+		mockListMetricsService.On("GetMetricsByNamespace", mock.Anything).Return([]resources.ResourceResponse[models.Metric]{}, fmt.Errorf("some error"))
 		newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
 			return &mockListMetricsService, nil
 		}

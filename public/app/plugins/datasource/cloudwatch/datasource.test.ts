@@ -205,13 +205,9 @@ describe('datasource', () => {
     it('should map resource response to metric response', async () => {
       const datasource = setupMockedDataSource({
         getMock: jest.fn().mockResolvedValue([
+          { value: { namespace: 'AWS/EC2', name: 'CPUUtilization' } },
           {
-            namespace: 'AWS/EC2',
-            name: 'CPUUtilization',
-          },
-          {
-            namespace: 'AWS/Redshift',
-            name: 'CPUPercentage',
+            value: { namespace: 'AWS/Redshift', name: 'CPUPercentage' },
           },
         ]),
       }).datasource;

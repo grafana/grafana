@@ -6,10 +6,10 @@ import (
 )
 
 type ListMetricsProvider interface {
-	GetDimensionKeysByDimensionFilter(resources.DimensionKeysRequest) ([]string, error)
-	GetDimensionKeysByNamespace(string) ([]string, error)
-	GetDimensionValuesByDimensionFilter(resources.DimensionValuesRequest) ([]string, error)
-	GetMetricsByNamespace(namespace string) ([]resources.Metric, error)
+	GetDimensionKeysByDimensionFilter(resources.DimensionKeysRequest) ([]ResourceResponse[string], error)
+	GetDimensionKeysByNamespace(string) ([]ResourceResponse[string], error)
+	GetDimensionValuesByDimensionFilter(resources.DimensionValuesRequest) ([]ResourceResponse[string], error)
+	GetMetricsByNamespace(namespace string) ([]ResourceResponse[Metric], error)
 }
 
 type MetricsClientProvider interface {

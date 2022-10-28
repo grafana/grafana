@@ -1,6 +1,6 @@
 import { memoize } from 'lodash';
 
-import { DataSourceInstanceSettings, SelectableValue, toOption } from '@grafana/data';
+import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -15,6 +15,7 @@ import {
   MultiFilters,
   Account,
   ResourceRequest,
+  ResourceResponse,
 } from './types';
 
 export interface SelectableResourceValue extends SelectableValue<string> {
@@ -36,9 +37,9 @@ export class CloudWatchAPI extends CloudWatchRequest {
   }
 
   getAccounts({ region }: ResourceRequest): Promise<Account[]> {
-    return this.memoizedGetRequest<Account[]>('accounts', {
+    return this.memoizedGetRequest<Array<ResourceResponse<Account>>>('accounts', {
       region: this.templateSrv.replace(region),
-    });
+    }).then((accounts) => accounts.map((a) => a.value));
   }
 
   isMonitoringAccount(region: string): Promise<boolean> {
@@ -55,8 +56,8 @@ export class CloudWatchAPI extends CloudWatchRequest {
   }
 
   getNamespaces() {
-    return this.memoizedGetRequest<string[]>('namespaces').then((namespaces) =>
-      namespaces.map((n) => ({ label: n, value: n }))
+    return this.memoizedGetRequest<Array<ResourceResponse<string>>>('namespaces').then((namespaces) =>
+      namespaces.map((n) => ({ label: n.value, value: n.value }))
     );
   }
 
@@ -79,16 +80,16 @@ export class CloudWatchAPI extends CloudWatchRequest {
       return [];
     }
 
-    return this.memoizedGetRequest<MetricResponse[]>('metrics', {
+    return this.memoizedGetRequest<Array<ResourceResponse<MetricResponse>>>('metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
-    }).then((metrics) => metrics.map((m) => ({ label: m.name, value: m.name })));
+    }).then((metrics) => metrics.map((m) => ({ label: m.value.name, value: m.value.name })));
   }
 
   async getAllMetrics({ region }: GetMetricsRequest): Promise<Array<{ metricName?: string; namespace: string }>> {
-    return this.memoizedGetRequest<MetricResponse[]>('metrics', {
+    return this.memoizedGetRequest<Array<ResourceResponse<MetricResponse>>>('metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
-    }).then((metrics) => metrics.map((m) => ({ metricName: m.name, namespace: m.namespace })));
+    }).then((metrics) => metrics.map((m) => ({ metricName: m.value.name, namespace: m.value.namespace })));
   }
 
   async getDimensionKeys({
@@ -97,12 +98,12 @@ export class CloudWatchAPI extends CloudWatchRequest {
     dimensionFilters = {},
     metricName = '',
   }: GetDimensionKeysRequest): Promise<Array<SelectableValue<string>>> {
-    return this.memoizedGetRequest<string[]>('dimension-keys', {
+    return this.memoizedGetRequest<Array<ResourceResponse<string>>>('dimension-keys', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
       dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
       metricName,
-    }).then((dimensionKeys) => dimensionKeys.map(toOption));
+    }).then((r) => r.map((r) => ({ label: r.value, value: r.value })));
   }
 
   async getDimensionValues({
@@ -116,14 +117,13 @@ export class CloudWatchAPI extends CloudWatchRequest {
       return [];
     }
 
-    const values = await this.memoizedGetRequest<string[]>('dimension-values', {
+    const values = await this.memoizedGetRequest<Array<ResourceResponse<string>>>('dimension-values', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
       metricName: this.templateSrv.replace(metricName.trim()),
       dimensionKey: this.templateSrv.replace(dimensionKey),
       dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
-    }).then((dimensionValues) => dimensionValues.map(toOption));
-
+    }).then((r) => r.map((r) => ({ label: r.value, value: r.value })));
     return values;
   }
 

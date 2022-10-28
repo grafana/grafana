@@ -75,9 +75,9 @@ func TestHandleGetAccounts(t *testing.T) {
 		assert.NoError(t, err)
 		fakeOAMClient.AssertNumberOfCalls(t, "ListSinks", 2)
 		require.Len(t, resp, 1)
-		assert.True(t, resp[0].IsMonitoringAccount)
-		assert.Equal(t, "Account 1", resp[0].Label)
-		assert.Equal(t, "arn:aws:logs:us-east-1:123456789012:log-group:my-log-group1", resp[0].Arn)
+		assert.True(t, resp[0].Value.IsMonitoringAccount)
+		assert.Equal(t, "Account 1", resp[0].Value.Label)
+		assert.Equal(t, "arn:aws:logs:us-east-1:123456789012:log-group:my-log-group1", resp[0].Value.Arn)
 	})
 
 	t.Run("Should merge the first sink with attached links", func(t *testing.T) {
@@ -115,11 +115,11 @@ func TestHandleGetAccounts(t *testing.T) {
 		assert.NoError(t, err)
 		fakeOAMClient.AssertNumberOfCalls(t, "ListSinks", 2)
 		fakeOAMClient.AssertNumberOfCalls(t, "ListAttachedLinks", 2)
-		expectedAccounts := []*models.Account{
-			{Id: "123456789012", Label: "Account 1", Arn: "arn:aws:logs:us-east-1:123456789012:log-group:my-log-group1", IsMonitoringAccount: true},
-			{Id: "123456789013", Label: "Account 10", Arn: "arn:aws:logs:us-east-1:123456789013:log-group:my-log-group10", IsMonitoringAccount: false},
-			{Id: "123456789014", Label: "Account 11", Arn: "arn:aws:logs:us-east-1:123456789014:log-group:my-log-group11", IsMonitoringAccount: false},
-			{Id: "123456789012", Label: "Account 12", Arn: "arn:aws:logs:us-east-1:123456789012:log-group:my-log-group12", IsMonitoringAccount: false},
+		expectedAccounts := []models.ResourceResponse[*models.Account]{
+			{Value: &models.Account{Id: "123456789012", Label: "Account 1", Arn: "arn:aws:logs:us-east-1:123456789012:log-group:my-log-group1", IsMonitoringAccount: true}},
+			{Value: &models.Account{Id: "123456789013", Label: "Account 10", Arn: "arn:aws:logs:us-east-1:123456789013:log-group:my-log-group10", IsMonitoringAccount: false}},
+			{Value: &models.Account{Id: "123456789014", Label: "Account 11", Arn: "arn:aws:logs:us-east-1:123456789014:log-group:my-log-group11", IsMonitoringAccount: false}},
+			{Value: &models.Account{Id: "123456789012", Label: "Account 12", Arn: "arn:aws:logs:us-east-1:123456789012:log-group:my-log-group12", IsMonitoringAccount: false}},
 		}
 		assert.Equal(t, expectedAccounts, resp)
 	})
