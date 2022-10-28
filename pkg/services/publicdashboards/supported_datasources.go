@@ -2,7 +2,7 @@
 
 package publicdashboards
 
-var CompatibleDatasources = map[string]bool{
+var SupportedDatasources = map[string]bool{
 	"aquaqanalytics-kdbbackend-datasource":   true,
 	"cloudwatch":                             true,
 	"dlopes7-appdynamics-datasource":         true,
