@@ -3,6 +3,7 @@ aliases:
   - /docs/grafana/latest/alerting/alerting-rules/rule-list/
   - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/rule-list/
   - /docs/grafana/latest/alerting/view-alert-rules/
+  - /docs/grafana/latest/alerting/alerting-rules/view-alert-rules
 description: Manage alerting rules
 keywords:
   - grafana
@@ -11,7 +12,7 @@ keywords:
   - rules
   - view
 title: View and filter alert rules
-weight: 140
+weight: 410
 ---
 
 # View and filter alert rules

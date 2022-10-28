@@ -7,7 +7,7 @@ import (
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 )
 
-func ValidateSavePublicDashboard(dto *SavePublicDashboardConfigDTO, dashboard *models.Dashboard) error {
+func ValidateSavePublicDashboard(dto *SavePublicDashboardDTO, dashboard *models.Dashboard) error {
 	if hasTemplateVariables(dashboard) {
 		return ErrPublicDashboardHasTemplateVariables
 	}
