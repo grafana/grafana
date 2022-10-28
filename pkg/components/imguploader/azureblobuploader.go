@@ -96,7 +96,6 @@ func (az *AzureBlobUploader) Upload(ctx context.Context, imageDiskPath string) (
 	url := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", az.account_name, az.container_name, randomFileName)
 
 	if az.sas_token_expiration != "" {
-
 		sasTokenExpiration, err := strconv.Atoi(az.sas_token_expiration)
 		if err != nil {
 			logger.Warn("Variable 'sas_token_expiration' is not in corect format. Must be number", "err", err)
