@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
 
 import { dateTime } from '@grafana/data';
@@ -43,6 +43,8 @@ describe('LokiQueryField', () => {
 
     const { rerender } = render(<LokiQueryField {...props} />);
 
+    expect(await screen.findByText('Loading...')).toBeInTheDocument();
+
     expect(fetchLabelsMock).not.toHaveBeenCalled();
 
     // 2 minutes difference over the initial time
@@ -65,6 +67,8 @@ describe('LokiQueryField', () => {
     props.datasource.languageProvider.fetchLabels = fetchLabelsMock;
 
     const { rerender } = render(<LokiQueryField {...props} />);
+
+    expect(await screen.findByText('Loading...')).toBeInTheDocument();
 
     expect(fetchLabelsMock).not.toHaveBeenCalled();
 

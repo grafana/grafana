@@ -66,7 +66,7 @@ describe('LokiQueryEditorSelector', () => {
   it('shows code editor if expr and nothing else', async () => {
     // We opt for showing code editor for queries created before this feature was added
     render(<LokiQueryEditor {...defaultProps} />);
-    expectCodeEditor();
+    await expectCodeEditor();
   });
 
   it('shows builder if new query', async () => {
@@ -84,7 +84,7 @@ describe('LokiQueryEditorSelector', () => {
 
   it('shows code editor when code mode is set', async () => {
     renderWithMode(QueryEditorMode.Code);
-    expectCodeEditor();
+    await expectCodeEditor();
   });
 
   it('shows builder when builder mode is set', async () => {
@@ -94,6 +94,7 @@ describe('LokiQueryEditorSelector', () => {
 
   it('changes to builder mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Code);
+    await expectCodeEditor();
     await switchToMode(QueryEditorMode.Builder);
     expect(onChange).toBeCalledWith({
       refId: 'A',
@@ -129,7 +130,11 @@ describe('LokiQueryEditorSelector', () => {
 
   it('changes to code mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Builder);
+
+    await expectBuilder();
+
     await switchToMode(QueryEditorMode.Code);
+
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
@@ -144,6 +149,7 @@ describe('LokiQueryEditorSelector', () => {
       expr: 'rate({instance="host.docker.internal:3000"}[$__interval])',
       editorMode: QueryEditorMode.Code,
     });
+    await expectCodeEditor();
     await switchToMode(QueryEditorMode.Builder);
     rerender(
       <LokiQueryEditor
@@ -174,9 +180,9 @@ function renderWithProps(overrides?: Partial<LokiQuery>) {
   return { onChange, ...stuff };
 }
 
-function expectCodeEditor() {
+async function expectCodeEditor() {
   // Log browser shows this until log labels are loaded.
-  expect(screen.getByText('Loading labels...')).toBeInTheDocument();
+  expect(await screen.findByText('Loading...')).toBeInTheDocument();
 }
 
 async function expectBuilder() {
