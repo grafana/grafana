@@ -10,6 +10,7 @@ import (
 	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -222,6 +223,20 @@ func TestDashboardService(t *testing.T) {
 			// 	err := service.DeleteACLByUser(context.Background(), 1)
 			// 	require.NoError(t, err)
 			// })
+		})
+
+		t.Run("Count dashboards in folder", func(t *testing.T) {
+			fakeStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&models.Folder{}, nil)
+			fakeStore.On("CountDashboardsInFolder", mock.Anything, mock.AnythingOfType("*dashboards.CountDashboardsInFolderRequest")).Return(int64(3), nil)
+
+			// set up a ctx with signed in user
+			ctx := context.Background()
+			usr := &user.SignedInUser{UserID: 1}
+			ctx = appcontext.WithUser(ctx, usr)
+
+			count, err := service.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderQuery{FolderUID: "i am a folder"})
+			require.NoError(t, err)
+			require.Equal(t, int64(3), count)
 		})
 	})
 
