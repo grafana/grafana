@@ -388,7 +388,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 			}}
 
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, true, []map[string]interface{}{}, customPanels)
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -829,7 +829,7 @@ func TestBuildMetricRequest(t *testing.T) {
 		MaxDataPoints: int64(200),
 	}
 
-	dto := &SavePublicDashboardConfigDTO{
+	dto := &SavePublicDashboardDTO{
 		DashboardUid: publicDashboard.Uid,
 		OrgId:        publicDashboard.OrgId,
 		PublicDashboard: &PublicDashboard{
@@ -843,7 +843,7 @@ func TestBuildMetricRequest(t *testing.T) {
 	publicDashboardPD, err := service.Save(context.Background(), SignedInUser, dto)
 	require.NoError(t, err)
 
-	nonPublicDto := &SavePublicDashboardConfigDTO{
+	nonPublicDto := &SavePublicDashboardDTO{
 		DashboardUid: nonPublicDashboard.Uid,
 		OrgId:        nonPublicDashboard.OrgId,
 		PublicDashboard: &PublicDashboard{
