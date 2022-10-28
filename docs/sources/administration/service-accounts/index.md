@@ -176,7 +176,7 @@ To list your token's permissions, use the `/api/access-control/user/permissions`
 curl -H "Authorization: Bearer glsa_HOruNAb7SOiCdshU9algkrq7FDsNSLAa_54e2f8be" -X GET '<grafana_url>/api/access-control/user/permissions?scoped=true' | jq
 ```
 
-output:
+The output lists the token's permissions:
 
 ```json
 {
