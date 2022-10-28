@@ -75,7 +75,7 @@ func (hs *HTTPServer) UpdateOrgQuota(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Err(quota.ErrBadRequest.Errorf("bad request data: %w", err))
 	}
-	cmd.OrgId, err = strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	cmd.OrgID, err = strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
 		return response.Err(quota.ErrBadRequest.Errorf("orgId is invalid: %w", err))
 	}
@@ -148,7 +148,7 @@ func (hs *HTTPServer) UpdateUserQuota(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Err(quota.ErrBadRequest.Errorf("bad request data: %w", err))
 	}
-	cmd.UserId, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	cmd.UserID, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Err(quota.ErrBadRequest.Errorf("id is invalid: %w", err))
 	}

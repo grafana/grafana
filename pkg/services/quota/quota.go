@@ -8,12 +8,12 @@ import (
 
 type Service interface {
 	// Get returns the quota for the specific scope (global, organization, user)
-	// If the scope is organization, the id is expected to be the organisation ID.
+	// If the scope is organization, the ID is expected to be the organisation ID.
 	// If the scope is user, the id is expected to be the user ID.
-	Get(ctx context.Context, scope string, id int64) ([]QuotaDTO, error)
+	Get(ctx context.Context, scope string, ID int64) ([]QuotaDTO, error)
 	// Update overrides the quota for a specific scope (global, organization, user).
-	// If the cmd.OrgId is set, then the organization quota are updated.
-	// If the cmd.UseId is set, then the user quota are updated.
+	// If the cmd.OrgID is set, then the organization quota are updated.
+	// If the cmd.UseID is set, then the user quota are updated.
 	Update(ctx context.Context, cmd *UpdateQuotaCmd) error
 	// QuotaReached is called by the quota middleware for applying quota enforcement to API handlers
 	QuotaReached(c *models.ReqContext, target string) (bool, error)

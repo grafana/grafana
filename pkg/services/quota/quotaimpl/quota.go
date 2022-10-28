@@ -49,15 +49,19 @@ type service struct {
 	reporters map[quota.TargetSrv]quota.UsageReporterFunc
 
 	defaultLimits *quota.Map
+
+	targetToSrv *quota.TargetToSrv
 }
 
 func ProvideService(db db.DB, cfg *setting.Cfg) quota.Service {
+	logger := log.New("quota_service")
 	s := service{
-		store:         &sqlStore{db: db},
+		store:         &sqlStore{db: db, logger: logger},
 		Cfg:           cfg,
-		Logger:        log.New("quota_service"),
+		Logger:        logger,
 		reporters:     make(map[quota.TargetSrv]quota.UsageReporterFunc),
 		defaultLimits: &quota.Map{},
+		targetToSrv:   quota.NewTargetToSrv(),
 	}
 
 	if s.IsDisabled() {
@@ -103,7 +107,11 @@ func (s *service) Get(ctx context.Context, scope string, id int64) ([]quota.Quot
 		scopeParams.UserID = id
 	}
 
-	customLimits, err := s.store.Get(ctx, &scopeParams)
+	c, err := s.getContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	customLimits, err := s.store.Get(c, &scopeParams)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +177,12 @@ func (s *service) Update(ctx context.Context, cmd *quota.UpdateQuotaCmd) error {
 	if !targetFound {
 		return quota.ErrInvalidTarget.Errorf("unknown quota target: %s", cmd.Target)
 	}
-	return s.store.Update(ctx, cmd)
+
+	c, err := s.getContext(ctx)
+	if err != nil {
+		return err
+	}
+	return s.store.Update(c, cmd)
 }
 
 // CheckQuotaReached check that quota is reached for a target. If ScopeParameters are not defined, only global scope is checked
@@ -208,7 +221,11 @@ func (s *service) CheckQuotaReached(ctx context.Context, target string, scopePar
 }
 
 func (s *service) DeleteByUser(ctx context.Context, userID int64) error {
-	return s.store.DeleteByUser(ctx, userID)
+	c, err := s.getContext(ctx)
+	if err != nil {
+		return err
+	}
+	return s.store.DeleteByUser(c, userID)
 }
 
 func (s *service) AddReporter(_ context.Context, e *quota.NewQuotaReporter) error {
@@ -222,7 +239,18 @@ func (s *service) AddReporter(_ context.Context, e *quota.NewQuotaReporter) erro
 
 	s.reporters[e.TargetSrv] = e.Reporter
 
-	s.defaultLimits.Merge(e.DefaultLimits)
+	for item := range e.DefaultLimits.Iter() {
+		target, err := item.Tag.GetTarget()
+		if err != nil {
+			return err
+		}
+		srv, err := item.Tag.GetSrv()
+		if err != nil {
+			return err
+		}
+		s.targetToSrv.Set(target, srv)
+		s.defaultLimits.Set(item.Tag, item.Value)
+	}
 
 	return nil
 }
@@ -258,7 +286,11 @@ func (s *service) getReporters() <-chan reporter {
 func (s *service) getOverridenLimits(ctx context.Context, targetSrv quota.TargetSrv, scopeParams *quota.ScopeParameters) (map[quota.Tag]int64, error) {
 	targetSrvLimits := make(map[quota.Tag]int64)
 
-	customLimits, err := s.store.Get(ctx, scopeParams)
+	c, err := s.getContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	customLimits, err := s.store.Get(c, scopeParams)
 	if err != nil {
 		return targetSrvLimits, err
 	}
@@ -306,4 +338,8 @@ func (s *service) getUsage(ctx context.Context, scopeParams *quota.ScopeParamete
 	}
 
 	return usage, nil
+}
+
+func (s *service) getContext(ctx context.Context) (quota.Context, error) {
+	return quota.FromContext(ctx, s.targetToSrv), nil
 }

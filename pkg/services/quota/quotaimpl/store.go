@@ -1,26 +1,26 @@
 package quotaimpl
 
 import (
-	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type store interface {
-	Get(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error)
-	Update(ctx context.Context, cmd *quota.UpdateQuotaCmd) error
-	DeleteByUser(context.Context, int64) error
+	Get(ctx quota.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error)
+	Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error
+	DeleteByUser(quota.Context, int64) error
 }
 
 type sqlStore struct {
-	db db.DB
+	db     db.DB
+	logger log.Logger
 }
 
-func (ss *sqlStore) DeleteByUser(ctx context.Context, userID int64) error {
+func (ss *sqlStore) DeleteByUser(ctx quota.Context, userID int64) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var rawSQL = "DELETE FROM quota WHERE user_id = ?"
 		_, err := sess.Exec(rawSQL, userID)
@@ -28,7 +28,7 @@ func (ss *sqlStore) DeleteByUser(ctx context.Context, userID int64) error {
 	})
 }
 
-func (ss *sqlStore) Get(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
+func (ss *sqlStore) Get(ctx quota.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
 	limits := quota.Map{}
 	if scopeParams.OrgID != 0 {
 		orgLimits, err := ss.getOrgScopeQuota(ctx, scopeParams.OrgID)
@@ -49,13 +49,13 @@ func (ss *sqlStore) Get(ctx context.Context, scopeParams *quota.ScopeParameters)
 	return &limits, nil
 }
 
-func (ss *sqlStore) Update(ctx context.Context, cmd *quota.UpdateQuotaCmd) error {
+func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// Check if quota is already defined in the DB
 		quota := quota.Quota{
 			Target: cmd.Target,
-			UserId: cmd.UserId,
-			OrgId:  cmd.OrgId,
+			UserId: cmd.UserID,
+			OrgId:  cmd.OrgID,
 		}
 		has, err := sess.Get(&quota)
 		if err != nil {
@@ -81,7 +81,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *quota.UpdateQuotaCmd) error
 	})
 }
 
-func (ss *sqlStore) getUserScopeQuota(ctx context.Context, userID int64) (*quota.Map, error) {
+func (ss *sqlStore) getUserScopeQuota(ctx quota.Context, userID int64) (*quota.Map, error) {
 	r := quota.Map{}
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		quotas := make([]*quota.Quota, 0)
@@ -90,9 +90,9 @@ func (ss *sqlStore) getUserScopeQuota(ctx context.Context, userID int64) (*quota
 		}
 
 		for _, q := range quotas {
-			srv := quota.TargetSrv(q.Target)
-			if q.Target == org.OrgUserQuotaTarget {
-				srv = quota.TargetSrv(org.QuotaTargetSrv)
+			srv, ok := ctx.TargetToSrv.Get(quota.Target(q.Target))
+			if !ok {
+				ss.logger.Info("failed to get service for target", "target", q.Target)
 			}
 			tag, err := quota.NewTag(srv, quota.Target(q.Target), quota.UserScope)
 			if err != nil {
@@ -105,7 +105,7 @@ func (ss *sqlStore) getUserScopeQuota(ctx context.Context, userID int64) (*quota
 	return &r, err
 }
 
-func (ss *sqlStore) getOrgScopeQuota(ctx context.Context, OrgID int64) (*quota.Map, error) {
+func (ss *sqlStore) getOrgScopeQuota(ctx quota.Context, OrgID int64) (*quota.Map, error) {
 	r := quota.Map{}
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		quotas := make([]*quota.Quota, 0)
@@ -114,9 +114,9 @@ func (ss *sqlStore) getOrgScopeQuota(ctx context.Context, OrgID int64) (*quota.M
 		}
 
 		for _, q := range quotas {
-			srv := quota.TargetSrv(q.Target)
-			if q.Target == org.OrgUserQuotaTarget {
-				srv = quota.TargetSrv(org.QuotaTargetSrv)
+			srv, ok := ctx.TargetToSrv.Get(quota.Target(q.Target))
+			if !ok {
+				ss.logger.Info("failed to get service for target", "target", q.Target)
 			}
 			tag, err := quota.NewTag(srv, quota.Target(q.Target), quota.OrgScope)
 			if err != nil {

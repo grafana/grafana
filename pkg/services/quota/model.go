@@ -211,8 +211,8 @@ func (dto QuotaDTO) Tag() (Tag, error) {
 type UpdateQuotaCmd struct {
 	Target string `json:"target"`
 	Limit  int64  `json:"limit"`
-	OrgId  int64  `json:"-"`
-	UserId int64  `json:"-"`
+	OrgID  int64  `json:"-"`
+	UserID int64  `json:"-"`
 }
 
 type NewQuotaReporter struct {

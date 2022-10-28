@@ -44,14 +44,14 @@ type FakeQuotaStore struct {
 	ExpectedError error
 }
 
-func (f *FakeQuotaStore) DeleteByUser(ctx context.Context, userID int64) error {
+func (f *FakeQuotaStore) DeleteByUser(ctx quota.Context, userID int64) error {
 	return f.ExpectedError
 }
 
-func (f *FakeQuotaStore) Get(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
+func (f *FakeQuotaStore) Get(ctx quota.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
 	return nil, f.ExpectedError
 }
 
-func (f *FakeQuotaStore) Update(ctx context.Context, cmd *quota.UpdateQuotaCmd) error {
+func (f *FakeQuotaStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 	return f.ExpectedError
 }

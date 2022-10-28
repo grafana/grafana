@@ -189,7 +189,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 		// update quota for the created org and limit users to 1
 		var customOrgUserLimit int64 = 1
 		orgCmd := quota.UpdateQuotaCmd{
-			OrgId:  o.ID,
+			OrgID:  o.ID,
 			Target: org.OrgUserQuotaTarget,
 			Limit:  customOrgUserLimit,
 		}
@@ -252,7 +252,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 		// update quota for the created org and limit dashboards to 1
 		var customOrgDashboardLimit int64 = 1
 		orgCmd := quota.UpdateQuotaCmd{
-			OrgId:  o.ID,
+			OrgID:  o.ID,
 			Target: string(dashboards.QuotaTarget),
 			Limit:  customOrgDashboardLimit,
 		}
@@ -274,7 +274,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 		// update quota for the created user and limit orgs to 1
 		var customUserOrgsLimit int64 = 1
 		userQuotaCmd := quota.UpdateQuotaCmd{
-			UserId: u.ID,
+			UserID: u.ID,
 			Target: org.OrgUserQuotaTarget,
 			Limit:  customUserOrgsLimit,
 		}
@@ -364,7 +364,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 		// update quota for the created org and limit users to 1
 		var customOrgUserLimit int64 = 1
 		orgCmd := quota.UpdateQuotaCmd{
-			OrgId:  o.ID,
+			OrgID:  o.ID,
 			Target: org.OrgUserQuotaTarget,
 			Limit:  customOrgUserLimit,
 		}
@@ -380,7 +380,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 
 		customOrgUserLimit = 2
 		orgCmd = quota.UpdateQuotaCmd{
-			OrgId:  o.ID,
+			OrgID:  o.ID,
 			Target: org.OrgUserQuotaTarget,
 			Limit:  customOrgUserLimit,
 		}
@@ -397,7 +397,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 		// update quota for the created org and limit users to 1
 		var customUserOrgLimit int64 = 1
 		userQuotaCmd := quota.UpdateQuotaCmd{
-			UserId: u.ID,
+			UserID: u.ID,
 			Target: org.OrgUserQuotaTarget,
 			Limit:  customUserOrgLimit,
 		}
@@ -413,7 +413,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 
 		customUserOrgLimit = 10
 		userQuotaCmd = quota.UpdateQuotaCmd{
-			UserId: u.ID,
+			UserID: u.ID,
 			Target: org.OrgUserQuotaTarget,
 			Limit:  customUserOrgLimit,
 		}

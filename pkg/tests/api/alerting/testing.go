@@ -239,7 +239,7 @@ func (a apiClient) UpdateAlertRuleOrgQuota(t *testing.T, orgID int64, limit int6
 	err := enc.Encode(&quota.UpdateQuotaCmd{
 		Target: "alert_rule",
 		Limit:  limit,
-		OrgId:  orgID,
+		OrgID:  orgID,
 	})
 	require.NoError(t, err)
 
