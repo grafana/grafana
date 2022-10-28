@@ -6,10 +6,11 @@ keywords:
   - alerting
   - images
   - notifications
-title: Images in notifications
+title: Use images in notifications
+weight: 460
 ---
 
-# Images in notifications
+# Use images in notifications
 
 Images in notifications helps recipients of alert notifications better understand why an alert has fired or resolved by including an image of the panel associated with the Grafana managed alert rule.
 
@@ -22,17 +23,17 @@ If Grafana is set up to send images in notifications, it takes a screenshot of t
 
 Grafana does not support images for alert rules that are not associated with a panel. An alert rule is associated with a panel when it has both Dashboard UID and Panel ID annotations.
 
-Images are stored in the [data]({{< relref "../setup-grafana/configure-grafana/#paths" >}}) path and so Grafana must have write-access to this path. If Grafana cannot write to this path then screenshots cannot be saved to disk and an error will be logged for each failed screenshot attempt. In addition to storing images on disk, Grafana can also store the image in an external image store such as Amazon S3, Azure Blob Storage, Google Cloud Storage and even Grafana where screenshots are stored in `public/img/attachments`. Screenshots older than `temp_data_lifetime` are deleted from disk but not the external image store. If Grafana is the external image store then screenshots are deleted from `data` but not from `public/img/attachments`.
+Images are stored in the [data]({{< relref "../../setup-grafana/configure-grafana/#paths" >}}) path and so Grafana must have write-access to this path. If Grafana cannot write to this path then screenshots cannot be saved to disk and an error will be logged for each failed screenshot attempt. In addition to storing images on disk, Grafana can also store the image in an external image store such as Amazon S3, Azure Blob Storage, Google Cloud Storage and even Grafana where screenshots are stored in `public/img/attachments`. Screenshots older than `temp_data_lifetime` are deleted from disk but not the external image store. If Grafana is the external image store then screenshots are deleted from `data` but not from `public/img/attachments`.
 
 > **Note**: It is recommended that you use an external image store, as not all contact points support uploading images from disk. It is also possible that the image on disk is deleted before an alert notification is sent if `temp_data_lifetime` is less than the `group_wait` and `group_interval` options used in Alertmanager.
 
 ## Requirements
 
-To use images in notifications, Grafana must be set up to use [image rendering]({{< relref "../setup-grafana/image-rendering/" >}}). It is also recommended that Grafana is set up to upload images to an [external image store]({{< relref "../setup-grafana/configure-grafana/#external_image_storage" >}}) such as Amazon S3, Azure Blob Storage, Google Cloud Storage or even Grafana.
+To use images in notifications, Grafana must be set up to use [image rendering](https://grafana.com/docs/grafana/next/setup-grafana/image-rendering/). It is also recommended that Grafana is set up to upload images to an external image store, such as Amazon S3, Azure Blob Storage, Google Cloud Storage or even Grafana.
 
 ## Configuration
 
-If Grafana has been set up to use [image rendering]({{< relref "../setup-grafana/image-rendering/" >}}) images in notifications can be turned on via the `capture` option in `[unified_alerting.screenshots]`:
+If Grafana has been set up to use image rendering, images in notifications can be turned on via the `capture` option in `[unified_alerting.screenshots]`:
 
     # Enable screenshots in notifications. This option requires the Grafana Image Renderer plugin.
     # For more information on configuration options, refer to [rendering].

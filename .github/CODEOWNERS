@@ -46,6 +46,9 @@ go.sum @grafana/backend-platform
 /devenv/docker/blocks/loki* @grafana/observability-logs
 /devenv/docker/blocks/elastic* @grafana/observability-logs
 
+# Performance tests
+/devenv/docker/loadtests-ts @grafana/grafana-edge-squad
+
 # Continuous Integration
 .drone.yml @grafana/grafana-release-eng
 .drone.star @grafana/grafana-release-eng

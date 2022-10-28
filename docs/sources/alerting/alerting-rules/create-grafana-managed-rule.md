@@ -9,7 +9,7 @@ keywords:
   - guide
   - rules
   - create
-title: Create Grafana managed alert rule
+title: Create Grafana managed alert rules
 weight: 400
 ---
 

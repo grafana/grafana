@@ -13,7 +13,11 @@ import (
 func BuildFrontendPackages(c *cli.Context) error {
 	version := ""
 	if c.NArg() == 1 {
-		version = strings.TrimPrefix(c.Args().Get(0), "v")
+		// Fixes scenario where an incompatible semver is provided to lerna, which will cause the step to fail.
+		// When there is an invalid semver, a frontend package won't be published anyways.
+		if strings.Count(version, ".") == 2 {
+			version = strings.TrimPrefix(c.Args().Get(0), "v")
+		}
 	}
 
 	cfg, mode, err := frontend.GetConfig(c, version)
