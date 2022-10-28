@@ -743,11 +743,11 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
         ],
     }
 
-def cloud_plugins_e2e_tests_step(suite, edition, cloud, port=3001, video="false", tries=None, trigger=None):
-    cmd = './bin/build e2e-tests --port {} --suite {} --video {}'.format(port, suite, video)
-    if tries:
-        cmd += ' --tries {}'.format(tries)
+def cloud_plugins_e2e_tests_step(suite, edition, cloud, port=3001, video="false", trigger=None):
     environment = {}
+    when = {}
+    if trigger:
+        when = trigger
     if cloud == 'azure':
         environment = {
             'CYPRESS_CI': 'true',
@@ -757,34 +757,26 @@ def cloud_plugins_e2e_tests_step(suite, edition, cloud, port=3001, video="false"
             'AZURE_SP_PASSWORD': from_secret('azure_sp_pw'),
             'AZURE_TENANT': from_secret('azure_tenant')
         }
-    gitcmd = 'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/cloud-data-sources" --depth=1'
+        when= dict(when, paths={
+                'include' : [
+                    'pkg/tsdb/azuremonitor/**',
+                    'public/app/plugins/datasource/grafana-azure-monitor-datasource/**'
+                ]
+            })
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
     step = {
         'name': 'end-to-end-tests-{}-{}'.format(suite, cloud) + enterprise2_suffix(edition),
-        'image': 'cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97',
+        'image': 'us.gcr.io/cloud-data-sources/e2e:latest',
         'depends_on': [
             'grafana-server',
         ],
         'environment': environment,
         'commands': [
-            'apt-get update && apt-get install git curl jq --yes',
-            'cd ..',
-            gitcmd,
-            'cd cloud-data-sources/e2e-scripts',
-            './scripts/install-dependencies-ci.sh {}'.format(cloud),
-            'export PATH=$PATH:/root/.pulumi/bin',
-            './scripts/{}-login.sh'.format(cloud),
-            './scripts/install.sh {}'.format(cloud),
-            './scripts/azure-pulumi-login.sh {} deploy {}'.format(cloud, branch),
-            'cd ../../grafana',
-            cmd,
-            'cd ../cloud-data-sources/e2e-scripts',
-            './scripts/destroy.sh {} destroy {}'.format(cloud, branch),
-            'cd ../.. && rm -rf cloud-data-sources'
+            'cd /',
+            './cpp-e2e/scripts/ci-run.sh {} {}'.format(cloud, branch)
         ],
     }
-    if trigger:
-        step = dict(step, when=trigger)
+    step = dict(step, when=when)
     return step
 
 def build_docs_website_step():
