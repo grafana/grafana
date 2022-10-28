@@ -17,3 +17,6 @@ Learn about the key concepts and features that help you create, manage, and take
 - [Alertmanager](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alertmanager/)
 - [Annotations and labels for alerting rules](https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/)
 - [State and health of alerting rules](https://grafana.com/docs/grafana/latest/alerting/fundamentals/state-and-health/)
+- [Contact points](https://grafana.com/docs/grafana/latest/alerting/fundamentals/contact-points/)
+- [Silences](https://grafana.com/docs/grafana/latest/alerting/fundamentals/silences/)
+- [Alerting high availability](https://grafana.com/docs/grafana/latest/alerting/fundamentals/high-availability/)
