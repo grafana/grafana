@@ -598,7 +598,11 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 		dataFields = append(dataFields, data.NewField(label, nil, labelsVector[label]))
 	}
 
-	return append(frames, newDataFrame("exemplar", "exemplar", dataFields...))
+	newFrame := newDataFrame("exemplar", "exemplar", dataFields...)
+	// unset on exemplars (ugly but this client will be deprecated soon)
+	newFrame.Meta.Type = ""
+
+	return append(frames, newFrame)
 }
 
 func sortedLabels(labelsVector map[string][]string) []string {
