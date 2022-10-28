@@ -77,6 +77,7 @@ func (api *Api) RegisterAPIEndpoints() {
 	api.RouteRegister.Post("/api/dashboards/uid/:dashboardUid/public-dashboards",
 		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.SavePublicDashboard))
+
 	// Delete Public dashboard
 	api.RouteRegister.Delete("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
 		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
@@ -136,7 +137,7 @@ func (api *Api) SavePublicDashboard(c *models.ReqContext) response.Response {
 }
 
 // Delete a public dashboard
-// DELETE /api/dashboards/uid/:uid/public-dashboards/:publicDashboardUid
+// DELETE /api/dashboards/uid/:dashboardUid/public-dashboards/:uid
 func (api *Api) DeletePublicDashboard(c *models.ReqContext) response.Response {
 	err := api.PublicDashboardService.Delete(c.Req.Context(), c.SignedInUser.OrgID, web.Params(c.Req)[":dashboardUid"], web.Params(c.Req)[":uid"])
 	if err != nil {
