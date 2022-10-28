@@ -166,7 +166,7 @@ as we will need to use the token to authenticate against Grafana.
 
 ### List a service account token's permissions
 
-To list your token's permissions, you can target the `/api/access-control/user/permissions` permissions.
+To list your token's permissions, use the `/api/access-control/user/permissions` endpoint.
 
 #### Example
 
