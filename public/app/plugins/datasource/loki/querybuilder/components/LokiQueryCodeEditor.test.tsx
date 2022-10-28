@@ -1,9 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
-
-import { LokiDatasource } from '../../datasource';
+import { createLokiDatasource } from '../../mocks';
 import { LokiQuery } from '../../types';
 
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
@@ -15,15 +13,7 @@ const defaultQuery: LokiQuery = {
 };
 
 const createDefaultProps = () => {
-  const datasource = new LokiDatasource(
-    {
-      url: '',
-      jsonData: {},
-      meta: {} as DataSourcePluginMeta,
-    } as DataSourceInstanceSettings,
-    undefined,
-    undefined
-  );
+  const datasource = createLokiDatasource();
 
   const props = {
     datasource,
