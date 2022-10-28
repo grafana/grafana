@@ -3,9 +3,6 @@ package social
 import (
 	"errors"
 	"fmt"
-
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
 var (
@@ -25,9 +22,9 @@ func (e *InvalidBasicRoleError) Error() string {
 		}
 		return v
 	}
-	return fmt.Sprintf("integration requires a valid org role assigned in %s. Assigned role: %s", withFallback(e.idP, "idP"), withFallback(e.assignedRole, "<empty>"))
+	return fmt.Sprintf("Integration requires a valid org role assigned in %s. Assigned role: %s", withFallback(e.idP, "idP"), withFallback(e.assignedRole, "\" \""))
 }
 
 func (e *InvalidBasicRoleError) Unwrap() error {
-	return &Error{cases.Title(language.Und).String(e.Error())}
+	return &Error{e.Error()}
 }
