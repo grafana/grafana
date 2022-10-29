@@ -22,7 +22,7 @@ These resources are measured through profiles which aggregate that information i
 
 {{< figure src="/static/img/docs/flame-graph-panel/flame-graph.png" class="docs-image--no-shadow" max-width= "900px" caption="Figure 1 - Flame graph" >}}
 
-Figure 1 shows and illustrates what this data looks like when rendered. The top block is the total and is the root or parent of all other blocks. It represents 100% of the profile(s) being measured. There may be 1 or more blocks for each subsequent row that is rendered below the total. Each of these blocks represents a child in the stack of function calls that originated from the original call to the root at the top of the flamegraph.
+Figure 1 illustrates what this data looks like when rendered. The top block is the root or parent of the other blocks, and represents the total of all of the profiles being measured. There may be one or more blocks for each row that is rendered below the total. Each of these blocks represents a child in the stack of function calls that originated from the original call to the root at the top of the flame graph.
 
 Each block can have 0 or more siblings but can only have one parent.
 
