@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { durationToMilliseconds, GrafanaTheme2, parseDuration } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -27,33 +27,48 @@ import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { evaluateEveryValidationOptions } from '../rule-editor/GrafanaEvaluationBehavior';
 
 const MINUTE = '1m';
-interface AlertWithFor {
+interface AlertInfo {
   alertName: string;
   forDuration: string;
+  numberEvaluations: number;
 }
+
+const getNumberEvaluationsToStartAlerting = (forDuration: string, currentEvaluation: string) => {
+  const evalNumber = durationToMilliseconds(safeParseDurationstr(currentEvaluation));
+  const forNumber = durationToMilliseconds(safeParseDurationstr(forDuration));
+  if (evalNumber === 0) {
+    return 0;
+  } else {
+    return Math.ceil(forNumber / evalNumber);
+  }
+};
 
 export const isRulerGrafanaRuleDTO = (rule: RulerRuleDTO): rule is RulerGrafanaRuleDTO => 'grafana_alert' in rule;
 export const isAlertingRuleDTO = (rule: RulerRuleDTO): rule is RulerAlertingRuleDTO => 'alert' in rule;
 
-export const getAlertInfo = (alert: RulerRuleDTO): AlertWithFor => {
-  const emptyAlert: AlertWithFor = {
+export const getAlertInfo = (alert: RulerRuleDTO, currentEvaluation: string): AlertInfo => {
+  const emptyAlert: AlertInfo = {
     alertName: '',
     forDuration: '0s',
+    numberEvaluations: 0,
   };
   if (isRulerGrafanaRuleDTO(alert)) {
     return {
       alertName: alert.grafana_alert.title,
       forDuration: alert.for,
+      numberEvaluations: getNumberEvaluationsToStartAlerting(alert.for, currentEvaluation),
     };
   }
   if (isAlertingRuleDTO(alert)) {
     return {
       alertName: alert.alert,
       forDuration: alert.for ?? '1m',
+      numberEvaluations: getNumberEvaluationsToStartAlerting(alert.for ?? '1m', currentEvaluation),
     };
   }
   return emptyAlert;
 };
+
 export const getIntervalForGroup = (
   rulerRules: RulerRulesConfigDTO | null | undefined,
   group: string,
@@ -72,8 +87,8 @@ export const safeParseDurationstr = (duration: string) => {
   return parseDuration(duration.replace(reg, ' '));
 };
 
-type AlertsWithForTableColumnProps = DynamicTableColumnProps<AlertWithFor>;
-type AlertsWithForTableProps = DynamicTableItemProps<AlertWithFor>;
+type AlertsWithForTableColumnProps = DynamicTableColumnProps<AlertInfo>;
+type AlertsWithForTableProps = DynamicTableItemProps<AlertInfo>;
 
 export const RulesForGroupTable = ({
   rulerRules,
@@ -89,19 +104,23 @@ export const RulesForGroupTable = ({
   const groupObj = folderObj?.find((rule) => rule.name === group);
   const rules: RulerRuleDTO[] = groupObj?.rules ?? [];
 
+  const { watch } = useFormContext<FormValues>();
+  const currentInterval = watch('groupInterval');
+
   const rows: AlertsWithForTableProps[] = rules
     .slice()
     .sort(
       (alert1, alert2) =>
-        durationToMilliseconds(safeParseDurationstr(getAlertInfo(alert1).forDuration)) -
-        durationToMilliseconds(safeParseDurationstr(getAlertInfo(alert2).forDuration))
+        durationToMilliseconds(safeParseDurationstr(getAlertInfo(alert1, currentInterval).forDuration)) -
+        durationToMilliseconds(safeParseDurationstr(getAlertInfo(alert2, currentInterval).forDuration))
     )
     .map((rule: RulerRuleDTO, index) => ({
       id: index,
-      data: getAlertInfo(rule),
+      data: getAlertInfo(rule, currentInterval),
     }));
 
-  function getColumns(): AlertsWithForTableColumnProps[] {
+  //add a hint that would say how many evaluations need to start alerting.
+  function getColumns(currentEvaluation: string): AlertsWithForTableColumnProps[] {
     return [
       {
         id: 'alertName',
@@ -109,7 +128,7 @@ export const RulesForGroupTable = ({
         renderCell: ({ data: { alertName } }) => {
           return <>{alertName}</>;
         },
-        size: 0.7,
+        size: 0.6,
       },
       {
         id: 'for',
@@ -117,13 +136,21 @@ export const RulesForGroupTable = ({
         renderCell: ({ data: { forDuration } }) => {
           return <>{forDuration}</>;
         },
-        size: 0.3,
+        size: 0.2,
+      },
+      {
+        id: 'numberEvaluations',
+        label: '#Evaluations',
+        renderCell: ({ data: { numberEvaluations } }) => {
+          return <>{numberEvaluations}</>;
+        },
+        size: 0.2,
       },
     ];
   }
   return (
     <div className={styles.tableWrapper}>
-      <DynamicTable items={rows} cols={getColumns()} />
+      <DynamicTable items={rows} cols={getColumns(currentInterval)} />
     </div>
   );
 };
@@ -283,6 +310,9 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
             {rulerRuleRequests && (
               <>
                 <div>List of rules that belong to this group</div>
+                <div className={styles.evalRequiredLabel}>
+                  #Evaluations column represents number of evaluations neededed before alert starts firing.
+                </div>
                 <RulesForGroupTable
                   rulerRules={groupfoldersForSource.result}
                   group={group.name}
@@ -331,5 +361,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: ${theme.spacing(2)};
     height: 225px;
     overflow: auto;
+  `,
+  evalRequiredLabel: css`
+    font-size: ${theme.typography.bodySmall.fontSize};
   `,
 });
