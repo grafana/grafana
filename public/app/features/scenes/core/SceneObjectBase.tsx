@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Observer, Subject, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { EventBusSrv } from '@grafana/data';
+import { BusEvent, EventBusSrv } from '@grafana/data';
 import { useForceUpdate } from '@grafana/ui';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
@@ -22,9 +22,10 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   subject = new Subject<TState>();
   state: TState;
   parent?: SceneObjectBase<SceneObjectState>;
-  subs = new Subscription();
   isActive?: boolean;
   events = new EventBusSrv();
+
+  protected subs = new Subscription();
 
   constructor(state: TState) {
     if (!state.key) {
@@ -81,8 +82,8 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     this.setParent();
     this.subject.next(this.state);
 
-    // broadcast state change. This is event is subscribed to by UrlSyncManager and UndoManager
-    this.getRoot().events.publish(
+    // Bubble state change event. This is event is subscribed to by UrlSyncManager and UndoManager
+    this.publishEvent(
       new SceneObjectStateChangedEvent({
         prevState,
         newState: this.state,
@@ -92,29 +93,56 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     );
   }
 
-  private getRoot(): SceneObject {
+  /**
+   * Feel that having subscribe (via rxjs Subscribable) and .events (on SceneObject interface) and now this publishEvent might be a bit confusing and in need of some rename/clarity
+   * Bubble event up the scene object graph
+   * */
+  protected publishEvent(event: BusEvent) {
+    this.events.publish(event);
+
+    if (this.parent) {
+      this.parent.publishEvent(event);
+    }
+  }
+
+  protected getRoot(): SceneObject {
     return !this.parent ? this : this.parent.getRoot();
   }
 
   activate() {
     this.isActive = true;
 
-    const { $data } = this.state;
+    const { $data, $variables } = this.state;
+
     if ($data && !$data.isActive) {
       $data.activate();
+    }
+
+    if ($variables && !$variables.isActive) {
+      $variables.activate();
     }
   }
 
   deactivate(): void {
     this.isActive = false;
 
-    const { $data } = this.state;
+    const { $data, $variables } = this.state;
+
     if ($data && $data.isActive) {
       $data.deactivate();
     }
 
+    if ($variables && $variables.isActive) {
+      $variables.deactivate();
+    }
+
+    // Clear subscriptions and listeners
+    this.events.removeAllListeners();
     this.subs.unsubscribe();
     this.subs = new Subscription();
+
+    this.subject.complete();
+    this.subject = new Subject<TState>();
   }
 
   useState() {
@@ -171,7 +199,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   }
 
   /**
-   * Will create new SceneItem with shalled cloned state, but all states items of type SceneItem are deep cloned
+   * Will create new SceneItem with shalled cloned state, but all states items of type SceneObject are deep cloned
    */
   clone(withState?: Partial<TState>): this {
     const clonedState = { ...this.state };

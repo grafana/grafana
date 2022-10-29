@@ -1,4 +1,8 @@
+import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
+
+import { SceneDataNode } from './SceneDataNode';
 import { SceneObjectBase } from './SceneObjectBase';
+import { SceneObjectStateChangedEvent } from './events';
 import { SceneLayoutChild, SceneObject, SceneObjectStatePlain } from './types';
 
 interface TestSceneState extends SceneObjectStatePlain {
@@ -64,5 +68,58 @@ describe('SceneObject', () => {
 
     const clone = scene.clone({ name: 'new name' });
     expect(clone.state.name).toBe('new name');
+  });
+
+  describe('When activated', () => {
+    const scene = new TestScene({
+      $data: new SceneDataNode({}),
+      $variables: new SceneVariableSet({ variables: [] }),
+    });
+
+    scene.activate();
+
+    it('Should set isActive true', () => {
+      expect(scene.isActive).toBe(true);
+    });
+
+    it('Should activate $data', () => {
+      expect(scene.state.$data!.isActive).toBe(true);
+    });
+
+    it('Should activate $variables', () => {
+      expect(scene.state.$variables!.isActive).toBe(true);
+    });
+  });
+
+  describe('When deactivated', () => {
+    const scene = new TestScene({
+      $data: new SceneDataNode({}),
+      $variables: new SceneVariableSet({ variables: [] }),
+    });
+
+    scene.activate();
+
+    // Subscribe to state change and to event
+    const stateSub = scene.subscribe({ next: () => {} });
+    const eventSub = scene.events.subscribe(SceneObjectStateChangedEvent, () => {});
+
+    scene.deactivate();
+
+    it('Should close subscriptions', () => {
+      expect(stateSub.closed).toBe(true);
+      expect((eventSub as any).closed).toBe(true);
+    });
+
+    it('Should set isActive false', () => {
+      expect(scene.isActive).toBe(false);
+    });
+
+    it('Should activate $data', () => {
+      expect(scene.state.$data!.isActive).toBe(false);
+    });
+
+    it('Should activate $variables', () => {
+      expect(scene.state.$variables!.isActive).toBe(false);
+    });
   });
 });
