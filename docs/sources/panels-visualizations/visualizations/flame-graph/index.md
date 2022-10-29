@@ -18,7 +18,7 @@ weight: 850
 
 The flame graph takes advantage of the hierarchical nature of profiling data. It condenses data into a format that allows you to easily see which code paths are consuming the most system resources.
 
-The way in which these resources are measured are through profiles which aggregate that information into a format which is then sent to the flame graph visualization. For example, allocated objects or space when measuring memory.
+These resources are measured through profiles which aggregate that information into a format which is then sent to the flame graph visualization. For example, allocated objects or space when measuring memory.
 
 {{< figure src="/static/img/docs/flame-graph-panel/flame-graph.png" class="docs-image--no-shadow" max-width= "900px" caption="Figure 1 - Flame graph" >}}
 
