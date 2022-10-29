@@ -1,30 +1,21 @@
 import { useEffect } from 'react';
-import { Observer, Subject, Subscription } from 'rxjs';
+import { Observer, Subject, Subscription, Unsubscribable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { BusEvent, EventBusSrv } from '@grafana/data';
+import { BusEvent, BusEventHandler, BusEventType, EventBusSrv } from '@grafana/data';
 import { useForceUpdate } from '@grafana/ui';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
-import {
-  SceneDataState,
-  SceneObject,
-  SceneComponent,
-  SceneEditor,
-  SceneTimeRange,
-  isSceneObject,
-  SceneObjectState,
-  SceneLayoutChild,
-} from './types';
+import { SceneDataState, SceneObject, SceneComponent, SceneEditor, SceneTimeRange, SceneObjectState } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
-  subject = new Subject<TState>();
-  state: TState;
-  parent?: SceneObjectBase<SceneObjectState>;
-  isActive?: boolean;
   events = new EventBusSrv();
 
+  private _isActive = false;
+  private _subject = new Subject<TState>();
+  private _state: TState;
+  protected _parent?: SceneObject;
   protected subs = new Subscription();
 
   constructor(state: TState) {
@@ -32,9 +23,24 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
       state.key = uuidv4();
     }
 
-    this.state = state;
-    this.subject.next(state);
+    this._state = state;
+    this._subject.next(state);
     this.setParent();
+  }
+
+  /** Current state */
+  get state(): TState {
+    return this._state;
+  }
+
+  /** True if currently being active (ie displayed for visual objects) */
+  get isActive(): boolean {
+    return this._isActive;
+  }
+
+  /** Returns the parent, undefined for root object */
+  get parent(): SceneObject | undefined {
+    return this._parent;
   }
 
   /**
@@ -53,64 +59,73 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   }
 
   private setParent() {
-    for (const propValue of Object.values(this.state)) {
-      if (isSceneObject(propValue)) {
-        propValue.parent = this;
+    for (const propValue of Object.values(this._state)) {
+      if (propValue instanceof SceneObjectBase) {
+        propValue._parent = this;
       }
 
       if (Array.isArray(propValue)) {
         for (const child of propValue) {
-          if (isSceneObject(child)) {
-            child.parent = this;
+          if (child instanceof SceneObjectBase) {
+            child._parent = this;
           }
         }
       }
     }
   }
 
-  /** This function implements the Subscribable<TState> interface */
-  subscribe(observer: Partial<Observer<TState>>) {
-    return this.subject.subscribe(observer);
+  /**
+   * Subscribe to the scene state subject
+   **/
+  subscribeToState(observerOrNext?: Partial<Observer<TState>>): Subscription {
+    return this._subject.subscribe(observerOrNext);
+  }
+
+  /**
+   * Subscribe to the scene event
+   **/
+  subscribeToEvent<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
+    return this.events.subscribe(eventType, handler);
   }
 
   setState(update: Partial<TState>) {
-    const prevState = this.state;
-    this.state = {
-      ...this.state,
+    const prevState = this._state;
+    this._state = {
+      ...this._state,
       ...update,
     };
     this.setParent();
-    this.subject.next(this.state);
+    this._subject.next(this._state);
 
     // Bubble state change event. This is event is subscribed to by UrlSyncManager and UndoManager
     this.publishEvent(
       new SceneObjectStateChangedEvent({
         prevState,
-        newState: this.state,
+        newState: this._state,
         partialUpdate: update,
         changedObject: this,
-      })
+      }),
+      true
     );
   }
 
-  /**
-   * Feel that having subscribe (via rxjs Subscribable) and .events (on SceneObject interface) and now this publishEvent might be a bit confusing and in need of some rename/clarity
-   * Bubble event up the scene object graph
-   * */
-  protected publishEvent(event: BusEvent) {
+  /*
+   * Publish an event and optionally bubble it up the scene
+   **/
+  publishEvent(event: BusEvent, bubble?: boolean) {
     this.events.publish(event);
 
-    if (this.parent) {
+    if (bubble && this.parent) {
       this.parent.publishEvent(event);
     }
   }
 
-  protected getRoot(): SceneObject {
+  getRoot(): SceneObject {
     return !this.parent ? this : this.parent.getRoot();
   }
 
   activate() {
-    this.isActive = true;
+    this._isActive = true;
 
     const { $data, $variables } = this.state;
 
@@ -124,7 +139,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   }
 
   deactivate(): void {
-    this.isActive = false;
+    this._isActive = false;
 
     const { $data, $variables } = this.state;
 
@@ -141,8 +156,8 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     this.subs.unsubscribe();
     this.subs = new Subscription();
 
-    this.subject.complete();
-    this.subject = new Subject<TState>();
+    this._subject.complete();
+    this._subject = new Subject<TState>();
   }
 
   useState() {
@@ -210,15 +225,19 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
       if (propValue instanceof SceneObjectBase) {
         clonedState[key] = propValue.clone();
       }
-    }
 
-    // Clone layout children
-    if ('children' in this.state) {
-      const newChildren: SceneLayoutChild[] = [];
-      for (const child of this.state.children) {
-        newChildren.push(child.clone());
+      // Clone scene objects in arrays
+      if (Array.isArray(propValue)) {
+        const newArray: any = [];
+        for (const child of propValue) {
+          if (child instanceof SceneObjectBase) {
+            newArray.push(child.clone());
+          } else {
+            newArray.push(child);
+          }
+        }
+        clonedState[key] = newArray;
       }
-      (clonedState as any).children = newChildren;
     }
 
     Object.assign(clonedState, withState);
@@ -235,7 +254,7 @@ function useSceneObjectState<TState extends SceneObjectState>(model: SceneObject
   const forceUpdate = useForceUpdate();
 
   useEffect(() => {
-    const s = model.subject.subscribe(forceUpdate);
+    const s = model.subscribeToState({ next: forceUpdate });
     return () => s.unsubscribe();
   }, [model, forceUpdate]);
 

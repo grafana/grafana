@@ -20,6 +20,11 @@ describe('SceneObject', () => {
       nested: new TestScene({
         name: 'nested',
       }),
+      actions: [
+        new TestScene({
+          name: 'action child',
+        }),
+      ],
       children: [
         new TestScene({
           name: 'layout child',
@@ -32,8 +37,9 @@ describe('SceneObject', () => {
     const clone = scene.clone();
     expect(clone).not.toBe(scene);
     expect(clone.state.nested).not.toBe(scene.state.nested);
-    expect(clone.state.nested?.isActive).toBe(undefined);
+    expect(clone.state.nested?.isActive).toBe(false);
     expect(clone.state.children![0]).not.toBe(scene.state.children![0]);
+    expect(clone.state.actions![0]).not.toBe(scene.state.actions![0]);
   });
 
   it('SceneObject should have parent when added to container', () => {
@@ -100,8 +106,8 @@ describe('SceneObject', () => {
     scene.activate();
 
     // Subscribe to state change and to event
-    const stateSub = scene.subscribe({ next: () => {} });
-    const eventSub = scene.events.subscribe(SceneObjectStateChangedEvent, () => {});
+    const stateSub = scene.subscribeToState({ next: () => {} });
+    const eventSub = scene.subscribeToEvent(SceneObjectStateChangedEvent, () => {});
 
     scene.deactivate();
 

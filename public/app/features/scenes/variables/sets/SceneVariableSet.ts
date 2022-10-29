@@ -17,7 +17,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
     this.updateManager = new VariablesUpdateManager(this.parent!);
 
     // Subscribe to changes to child variables
-    this.subs.add(this.events.subscribe(SceneObjectStateChangedEvent, this.onVariableStateChanged));
+    this.subs.add(this.subscribeToEvent(SceneObjectStateChangedEvent, this.onVariableStateChanged));
     this.updateManager.updateAll();
   }
 
