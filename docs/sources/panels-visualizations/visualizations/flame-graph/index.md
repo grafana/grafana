@@ -30,9 +30,7 @@ In figure 1 displays many rows of colored blocks as well as grayed-out sections 
 
 {{< figure src="/static/img/docs/flame-graph-panel/flame-graph-hovering.png" class="docs-image--no-shadow" max-width= "900px" caption="Figure 2 - Hovering over flame graph" >}}
 
-As there is more information to a block other than just its label, we decided to hide this information by default and show it on hover.
-
-Hovering over a specific block pops up a tooltip that shows you what the profile is measuring, in this case total time, along with other information such as this block's % of total time, the amount of time it took and the samples that were measured.
+You can hover a specific block to view a tooltip that shows you what the profile is measuring, in this case total time, along with other information such as this block's % of total time, the amount of time it took, and the samples that were measured.
 
 {{< figure src="/static/img/docs/flame-graph-panel/flame-graph-clicking.png" class="docs-image--no-shadow" max-width= "900px" caption="Figure 3 - Clicking on a block" >}}
 
