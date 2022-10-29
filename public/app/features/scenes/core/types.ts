@@ -43,19 +43,22 @@ export interface SceneDataState extends SceneObjectStatePlain {
 
 export interface SceneObject<TState extends SceneObjectState = SceneObjectState> {
   /** The current state */
-  state: TState;
+  readonly state: TState;
 
   /** True when there is a React component mounted for this Object */
-  isActive?: boolean;
+  readonly isActive?: boolean;
 
   /** SceneObject parent */
-  parent?: SceneObject;
+  readonly parent?: SceneObject;
 
   /** Subscribe to state changes */
   subscribeToState(observer?: Partial<Observer<TState>>): Subscription;
 
   /** Subscribe to a scene event */
   subscribeToEvent<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable;
+
+  /** Publish an event and optionally bubble it up the scene */
+  publishEvent(event: BusEvent, bubble?: boolean): void;
 
   /** Utility hook that wraps useObservable. Used by React components to subscribes to state changes */
   useState(): TState;
@@ -71,6 +74,15 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
 
   /** Get the scene editor */
   getSceneEditor(): SceneEditor;
+
+  /** Get the scene root */
+  getRoot(): SceneObject;
+
+  /** Get the closest node with data */
+  getData(): SceneObject<SceneDataState>;
+
+  /** Get the closest node with time range */
+  getTimeRange(): SceneTimeRange;
 
   /** Returns a deep clone this object and all its children */
   clone(state?: Partial<TState>): this;

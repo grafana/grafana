@@ -13,18 +13,17 @@ import {
   SceneComponent,
   SceneEditor,
   SceneTimeRange,
-  isSceneObject,
   SceneObjectState,
   SceneLayoutChild,
 } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
-  state: TState;
-  parent?: SceneObjectBase<SceneObjectState>;
-  isActive?: boolean;
   events = new EventBusSrv();
 
-  private subject = new Subject<TState>();
+  private _isActive = false;
+  private _subject = new Subject<TState>();
+  private _state: TState;
+  protected _parent?: SceneObject;
   protected subs = new Subscription();
 
   constructor(state: TState) {
@@ -32,9 +31,24 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
       state.key = uuidv4();
     }
 
-    this.state = state;
-    this.subject.next(state);
+    this._state = state;
+    this._subject.next(state);
     this.setParent();
+  }
+
+  /** Current state */
+  get state(): TState {
+    return this._state;
+  }
+
+  /** True if currently being active (ie displayed for visual objects) */
+  get isActive(): boolean {
+    return this._isActive;
+  }
+
+  /** Returns the parent, undefined for root object */
+  get parent(): SceneObject | undefined {
+    return this._parent;
   }
 
   /**
@@ -53,14 +67,14 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   }
 
   private setParent() {
-    for (const propValue of Object.values(this.state)) {
-      if (isSceneObject(propValue)) {
-        propValue.parent = this;
+    for (const propValue of Object.values(this._state)) {
+      if (propValue instanceof SceneObjectBase) {
+        propValue._parent = this;
       }
 
       if (Array.isArray(propValue)) {
         for (const child of propValue) {
-          if (isSceneObject(child)) {
+          if (propValue instanceof SceneObjectBase) {
             child.parent = this;
           }
         }
@@ -72,7 +86,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
    * Subscribe to the scene state subject
    **/
   subscribeToState(observerOrNext?: Partial<Observer<TState>>): Subscription {
-    return this.subject.subscribe(observerOrNext);
+    return this._subject.subscribe(observerOrNext);
   }
 
   /**
@@ -83,42 +97,43 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   }
 
   setState(update: Partial<TState>) {
-    const prevState = this.state;
-    this.state = {
-      ...this.state,
+    const prevState = this._state;
+    this._state = {
+      ...this._state,
       ...update,
     };
     this.setParent();
-    this.subject.next(this.state);
+    this._subject.next(this._state);
 
     // Bubble state change event. This is event is subscribed to by UrlSyncManager and UndoManager
-    this.dispatchEvent(
+    this.publishEvent(
       new SceneObjectStateChangedEvent({
         prevState,
-        newState: this.state,
+        newState: this._state,
         partialUpdate: update,
         changedObject: this,
-      })
+      }),
+      true
     );
   }
 
   /*
-   * Dispatches and bubbles an event up the scene graph
+   * Publish an event and optionally bubble it up the scene
    **/
-  protected dispatchEvent(event: BusEvent) {
+  publishEvent(event: BusEvent, bubble?: boolean) {
     this.events.publish(event);
 
-    if (this.parent) {
-      this.parent.dispatchEvent(event);
+    if (bubble && this.parent) {
+      this.parent.publishEvent(event);
     }
   }
 
-  protected getRoot(): SceneObject {
+  getRoot(): SceneObject {
     return !this.parent ? this : this.parent.getRoot();
   }
 
   activate() {
-    this.isActive = true;
+    this._isActive = true;
 
     const { $data, $variables } = this.state;
 
@@ -132,7 +147,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   }
 
   deactivate(): void {
-    this.isActive = false;
+    this._isActive = false;
 
     const { $data, $variables } = this.state;
 
@@ -149,8 +164,8 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     this.subs.unsubscribe();
     this.subs = new Subscription();
 
-    this.subject.complete();
-    this.subject = new Subject<TState>();
+    this._subject.complete();
+    this._subject = new Subject<TState>();
   }
 
   useState() {
