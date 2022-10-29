@@ -34,9 +34,7 @@ You can hover a specific block to view a tooltip that shows you what the profile
 
 {{< figure src="/static/img/docs/flame-graph-panel/flame-graph-clicking.png" class="docs-image--no-shadow" max-width= "900px" caption="Figure 3 - Clicking on a block" >}}
 
-As there may be multiple blocks per row, we may want to focus on a particular block in the row and its children only to further drill down the stack of function calls.
-
-Clicking on a particular block will do just that, hiding the block's siblings. The clicked block is set to 100% of the flame graphs width and all its children blocks are now shown with their widths updated relative to their new parents width.
+You can click on a block to drill down to the stack of function calls for that block and its child blocks. The clicked block is set to 100% of the flame graph's width and all its children blocks are shown with their widths updated relative to the width of the parent block.
 
 This process can be repeated to focus on finding the amount of resources that particular blocks and their children are consuming.
 
