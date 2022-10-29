@@ -16,7 +16,7 @@ weight: 850
 
 ## Flame graph
 
-The flame graph takes advantage of the hierarchical nature of profiling data. It aims to condense this data down into a format that allows you to easily see which code paths are consuming the most resources in your system.
+The flame graph takes advantage of the hierarchical nature of profiling data. It condenses data into a format that allows you to easily see which code paths are consuming the most system resources.
 
 The way in which these resources are measured are through profiles which aggregate that information into a format which is then sent to the flame graph visualization. For example, allocated objects or space when measuring memory.
 
