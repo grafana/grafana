@@ -1,16 +1,16 @@
 import React from 'react';
-import { Subscribable } from 'rxjs';
+import { Observer, Subscription, Unsubscribable } from 'rxjs';
 
-import { EventBus, PanelData, TimeRange, UrlQueryMap } from '@grafana/data';
+import { BusEvent, BusEventHandler, BusEventType, PanelData, TimeRange, UrlQueryMap } from '@grafana/data';
 
-import { SceneVariableSet } from '../variables/types';
+import { SceneVariables } from '../variables/types';
 
 export interface SceneObjectStatePlain {
   key?: string;
   $timeRange?: SceneTimeRange;
   $data?: SceneObject<SceneDataState>;
   $editor?: SceneEditor;
-  $variables?: SceneVariableSet;
+  $variables?: SceneVariables;
 }
 
 export interface SceneLayoutChildState extends SceneObjectStatePlain {
@@ -41,7 +41,7 @@ export interface SceneDataState extends SceneObjectStatePlain {
   data?: PanelData;
 }
 
-export interface SceneObject<TState extends SceneObjectState = SceneObjectState> extends Subscribable<TState> {
+export interface SceneObject<TState extends SceneObjectState = SceneObjectState> {
   /** The current state */
   state: TState;
 
@@ -51,8 +51,11 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** SceneObject parent */
   parent?: SceneObject;
 
-  /** Currently only used from root to broadcast events */
-  events: EventBus;
+  /** Subscribe to state changes */
+  subscribeToState(observer?: Partial<Observer<TState>>): Subscription;
+
+  /** Subscribe to a scene event */
+  subscribeToEvent<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable;
 
   /** Utility hook that wraps useObservable. Used by React components to subscribes to state changes */
   useState(): TState;

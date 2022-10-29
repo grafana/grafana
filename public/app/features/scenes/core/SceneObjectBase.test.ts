@@ -1,4 +1,4 @@
-import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
+import { SceneVariableSet } from '../variables/SceneVariableSet';
 
 import { SceneDataNode } from './SceneDataNode';
 import { SceneObjectBase } from './SceneObjectBase';
@@ -100,8 +100,8 @@ describe('SceneObject', () => {
     scene.activate();
 
     // Subscribe to state change and to event
-    const stateSub = scene.subscribe({ next: () => {} });
-    const eventSub = scene.events.subscribe(SceneObjectStateChangedEvent, () => {});
+    const stateSub = scene.subscribeToState({ next: () => {} });
+    const eventSub = scene.subscribeToEvent(SceneObjectStateChangedEvent, () => {});
 
     scene.deactivate();
 

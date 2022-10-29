@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { Observer, Subject, Subscription } from 'rxjs';
+import { Observer, Subject, Subscription, Unsubscribable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { BusEvent, EventBusSrv } from '@grafana/data';
+import { BusEvent, BusEventHandler, BusEventType, EventBusSrv } from '@grafana/data';
 import { useForceUpdate } from '@grafana/ui';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
@@ -19,12 +19,12 @@ import {
 } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
-  subject = new Subject<TState>();
   state: TState;
   parent?: SceneObjectBase<SceneObjectState>;
   isActive?: boolean;
   events = new EventBusSrv();
 
+  private subject = new Subject<TState>();
   protected subs = new Subscription();
 
   constructor(state: TState) {
@@ -68,9 +68,18 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     }
   }
 
-  /** This function implements the Subscribable<TState> interface */
-  subscribe(observer: Partial<Observer<TState>>) {
-    return this.subject.subscribe(observer);
+  /**
+   * Subscribe to the scene state subject
+   **/
+  subscribeToState(observerOrNext?: Partial<Observer<TState>>): Subscription {
+    return this.subject.subscribe(observerOrNext);
+  }
+
+  /**
+   * Subscribe to the scene event
+   **/
+  subscribeToEvent<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
+    return this.events.subscribe(eventType, handler);
   }
 
   setState(update: Partial<TState>) {
@@ -83,7 +92,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     this.subject.next(this.state);
 
     // Bubble state change event. This is event is subscribed to by UrlSyncManager and UndoManager
-    this.publishEvent(
+    this.dispatchEvent(
       new SceneObjectStateChangedEvent({
         prevState,
         newState: this.state,
@@ -93,15 +102,14 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     );
   }
 
-  /**
-   * Feel that having subscribe (via rxjs Subscribable) and .events (on SceneObject interface) and now this publishEvent might be a bit confusing and in need of some rename/clarity
-   * Bubble event up the scene object graph
-   * */
-  protected publishEvent(event: BusEvent) {
+  /*
+   * Dispatches and bubbles an event up the scene graph
+   **/
+  protected dispatchEvent(event: BusEvent) {
     this.events.publish(event);
 
     if (this.parent) {
-      this.parent.publishEvent(event);
+      this.parent.dispatchEvent(event);
     }
   }
 
@@ -235,7 +243,7 @@ function useSceneObjectState<TState extends SceneObjectState>(model: SceneObject
   const forceUpdate = useForceUpdate();
 
   useEffect(() => {
-    const s = model.subject.subscribe(forceUpdate);
+    const s = model.subscribeToState({ next: forceUpdate });
     return () => s.unsubscribe();
   }, [model, forceUpdate]);
 
