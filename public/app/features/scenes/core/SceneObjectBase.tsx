@@ -74,8 +74,8 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
 
       if (Array.isArray(propValue)) {
         for (const child of propValue) {
-          if (propValue instanceof SceneObjectBase) {
-            child.parent = this;
+          if (child instanceof SceneObjectBase) {
+            child._parent = this;
           }
         }
       }

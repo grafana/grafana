@@ -46,7 +46,7 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   readonly state: TState;
 
   /** True when there is a React component mounted for this Object */
-  readonly isActive?: boolean;
+  readonly isActive: boolean;
 
   /** SceneObject parent */
   readonly parent?: SceneObject;
@@ -69,7 +69,7 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** Called when the Component is mounted. A place to register event listeners add subscribe to state changes */
   activate(): void;
 
-  /** Called when component unmounts. Unsubscribe to events */
+  /** Called when component unmounts. Unsubscribe and closes all subscriptions  */
   deactivate(): void;
 
   /** Get the scene editor */

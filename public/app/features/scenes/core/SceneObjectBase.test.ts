@@ -32,7 +32,7 @@ describe('SceneObject', () => {
     const clone = scene.clone();
     expect(clone).not.toBe(scene);
     expect(clone.state.nested).not.toBe(scene.state.nested);
-    expect(clone.state.nested?.isActive).toBe(undefined);
+    expect(clone.state.nested?.isActive).toBe(false);
     expect(clone.state.children![0]).not.toBe(scene.state.children![0]);
   });
 
