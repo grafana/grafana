@@ -1,7 +1,6 @@
 import { Subscription, Unsubscribable } from 'rxjs';
 
-import { SceneObject } from '../../core/types';
-import { SceneVariable } from '../types';
+import { SceneVariable, SceneVariables } from '../types';
 
 export interface VariableUpdateInProgress {
   variable: SceneVariable;
@@ -18,9 +17,9 @@ export class VariablesUpdateManager {
   subs: Subscription = new Subscription();
   dependencies = new Map<string, string[]>();
   updating = new Map<string, VariableUpdateInProgress>();
-  sceneContext: SceneObject;
+  sceneContext: SceneVariables;
 
-  constructor(sceneContext: SceneObject) {
+  constructor(sceneContext: SceneVariables) {
     this.sceneContext = sceneContext;
   }
 
@@ -86,7 +85,7 @@ export class VariablesUpdateManager {
    * Then it will start the update process.
    */
   updateAll() {
-    for (const variable of this.getVariables().state.variables) {
+    for (const variable of this.sceneContext.state.variables) {
       if (variable.updateOptions) {
         this.variablesToUpdate.set(variable.state.name, variable);
       }
@@ -97,15 +96,6 @@ export class VariablesUpdateManager {
     }
 
     this.updateNextBatch();
-  }
-
-  getVariables() {
-    const variables = this.sceneContext.state.$variables;
-    if (!variables) {
-      throw new Error('No variables attached to scene context');
-    }
-
-    return variables;
   }
 
   /**
@@ -128,7 +118,7 @@ export class VariablesUpdateManager {
 
     for (const [name, deps] of this.dependencies) {
       if (deps.includes(variable.state.name)) {
-        const otherVariable = this.getVariables().getByName(name);
+        const otherVariable = this.sceneContext.getByName(name);
         if (otherVariable) {
           this.variablesToUpdate.set(name, otherVariable);
         }
