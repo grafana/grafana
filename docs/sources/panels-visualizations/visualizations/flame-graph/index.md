@@ -26,7 +26,7 @@ Figure 1 illustrates what this data looks like when rendered. The top block is t
 
 Each block can have zero or more siblings but can only have one parent.
 
-In figure 1 we have many rows of colored blocks but also have grayed out sections which represent a set of blocks that represent a relatively short execution time and so were collapsed together into one section for performance reasons.
+In figure 1 displays many rows of colored blocks as well as grayed-out sections which are a set of blocks that represent a relatively short execution time and were collapsed together into one section for performance reasons.
 
 {{< figure src="/static/img/docs/flame-graph-panel/flame-graph-hovering.png" class="docs-image--no-shadow" max-width= "900px" caption="Figure 2 - Hovering over flame graph" >}}
 
