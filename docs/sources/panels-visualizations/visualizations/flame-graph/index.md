@@ -24,7 +24,7 @@ These resources are measured through profiles which aggregate that information i
 
 Figure 1 illustrates what this data looks like when rendered. The top block is the root or parent of the other blocks, and represents the total of all of the profiles being measured. There may be one or more blocks for each row that is rendered below the total. Each of these blocks represents a child in the stack of function calls that originated from the original call to the root at the top of the flame graph.
 
-Each block can have 0 or more siblings but can only have one parent.
+Each block can have zero or more siblings but can only have one parent.
 
 In figure 1 we have many rows of colored blocks but also have grayed out sections which represent a set of blocks that represent a relatively short execution time and so were collapsed together into one section for performance reasons.
 
