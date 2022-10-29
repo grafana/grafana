@@ -20,6 +20,11 @@ describe('SceneObject', () => {
       nested: new TestScene({
         name: 'nested',
       }),
+      actions: [
+        new TestScene({
+          name: 'action child',
+        }),
+      ],
       children: [
         new TestScene({
           name: 'layout child',
@@ -34,6 +39,7 @@ describe('SceneObject', () => {
     expect(clone.state.nested).not.toBe(scene.state.nested);
     expect(clone.state.nested?.isActive).toBe(false);
     expect(clone.state.children![0]).not.toBe(scene.state.children![0]);
+    expect(clone.state.actions![0]).not.toBe(scene.state.actions![0]);
   });
 
   it('SceneObject should have parent when added to container', () => {

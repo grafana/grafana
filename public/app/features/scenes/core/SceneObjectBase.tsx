@@ -7,15 +7,7 @@ import { useForceUpdate } from '@grafana/ui';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
-import {
-  SceneDataState,
-  SceneObject,
-  SceneComponent,
-  SceneEditor,
-  SceneTimeRange,
-  SceneObjectState,
-  SceneLayoutChild,
-} from './types';
+import { SceneDataState, SceneObject, SceneComponent, SceneEditor, SceneTimeRange, SceneObjectState } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
   events = new EventBusSrv();
@@ -233,15 +225,19 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
       if (propValue instanceof SceneObjectBase) {
         clonedState[key] = propValue.clone();
       }
-    }
 
-    // Clone layout children
-    if ('children' in this.state) {
-      const newChildren: SceneLayoutChild[] = [];
-      for (const child of this.state.children) {
-        newChildren.push(child.clone());
+      // Clone scene objects in arrays
+      if (Array.isArray(propValue)) {
+        const newArray: any = [];
+        for (const child of propValue) {
+          if (child instanceof SceneObjectBase) {
+            newArray.push(child.clone());
+          } else {
+            newArray.push(child);
+          }
+        }
+        clonedState[key] = newArray;
       }
-      (clonedState as any).children = newChildren;
     }
 
     Object.assign(clonedState, withState);
