@@ -22,9 +22,10 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   subject = new Subject<TState>();
   state: TState;
   parent?: SceneObjectBase<SceneObjectState>;
-  subs = new Subscription();
   isActive?: boolean;
   events = new EventBusSrv();
+
+  protected subs = new Subscription();
 
   constructor(state: TState) {
     if (!state.key) {
@@ -125,13 +126,23 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   deactivate(): void {
     this.isActive = false;
 
-    const { $data } = this.state;
+    const { $data, $variables } = this.state;
+
     if ($data && $data.isActive) {
       $data.deactivate();
     }
 
+    if ($variables && $variables.isActive) {
+      $variables.deactivate();
+    }
+
+    // Clear subscriptions and listeners
+    this.events.removeAllListeners();
     this.subs.unsubscribe();
     this.subs = new Subscription();
+
+    this.subject.complete();
+    this.subject = new Subject<TState>();
   }
 
   useState() {
