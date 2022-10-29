@@ -122,72 +122,77 @@ func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (
 		Responses: backend.Responses{},
 	}
 	for _, query := range queries {
-		ctx, endSpan := utils.StartTrace(ctx, b.tracer, "datasource.prometheus", []utils.Attribute{
-			{Key: "expr", Value: query.Expr, Kv: attribute.Key("expr").String(query.Expr)},
-			{Key: "start_unixnano", Value: query.Start, Kv: attribute.Key("start_unixnano").Int64(query.Start.UnixNano())},
-			{Key: "stop_unixnano", Value: query.End, Kv: attribute.Key("stop_unixnano").Int64(query.End.UnixNano())},
-		})
-		defer endSpan()
-
-		logger := b.log.FromContext(ctx) // read trace-id and other info from the context
-		logger.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
-
-		response := make(map[TimeSeriesQueryType]interface{})
-
-		timeRange := apiv1.Range{
-			Step: query.Step,
-			// Align query range to step. It rounds start and end down to a multiple of step.
-			Start: alignTimeRange(query.Start, query.Step, query.UtcOffsetSec),
-			End:   alignTimeRange(query.End, query.Step, query.UtcOffsetSec),
-		}
-
-		if query.RangeQuery {
-			rangeResponse, _, err := b.client.QueryRange(ctx, query.Expr, timeRange)
-			if err != nil {
-				logger.Error("Range query failed", "query", query.Expr, "err", err)
-				result.Responses[query.RefId] = backend.DataResponse{Error: err}
-				continue
-			}
-			response[RangeQueryType] = rangeResponse
-		}
-
-		if query.InstantQuery {
-			instantResponse, _, err := b.client.Query(ctx, query.Expr, query.End)
-			if err != nil {
-				logger.Error("Instant query failed", "query", query.Expr, "err", err)
-				result.Responses[query.RefId] = backend.DataResponse{Error: err}
-				continue
-			}
-			response[InstantQueryType] = instantResponse
-		}
-
-		// This is a special case
-		// If exemplar query returns error, we want to only log it and continue with other results processing
-		if query.ExemplarQuery {
-			exemplarResponse, err := b.client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
-			if err != nil {
-				logger.Error("Exemplar query failed", "query", query.Expr, "err", err)
-			} else {
-				response[ExemplarQueryType] = exemplarResponse
-			}
-		}
-
-		frames, err := parseTimeSeriesResponse(response, query)
+		response, err := b.runQuery(ctx, query)
 		if err != nil {
 			return &result, err
 		}
+		result.Responses[query.RefId] = response
+	}
+	return &result, nil
+}
 
-		// The ExecutedQueryString can be viewed in QueryInspector in UI
-		for _, frame := range frames {
-			frame.Meta.ExecutedQueryString = "Expr: " + query.Expr + "\n" + "Step: " + query.Step.String()
+func (b *Buffered) runQuery(ctx context.Context, query *PrometheusQuery) (backend.DataResponse, error) {
+	ctx, endSpan := utils.StartTrace(ctx, b.tracer, "datasource.prometheus", []utils.Attribute{
+		{Key: "expr", Value: query.Expr, Kv: attribute.Key("expr").String(query.Expr)},
+		{Key: "start_unixnano", Value: query.Start, Kv: attribute.Key("start_unixnano").Int64(query.Start.UnixNano())},
+		{Key: "stop_unixnano", Value: query.End, Kv: attribute.Key("stop_unixnano").Int64(query.End.UnixNano())},
+	})
+	defer endSpan()
+
+	logger := b.log.FromContext(ctx) // read trace-id and other info from the context
+	logger.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
+
+	response := make(map[TimeSeriesQueryType]interface{})
+
+	timeRange := apiv1.Range{
+		Step: query.Step,
+		// Align query range to step. It rounds start and end down to a multiple of step.
+		Start: alignTimeRange(query.Start, query.Step, query.UtcOffsetSec),
+		End:   alignTimeRange(query.End, query.Step, query.UtcOffsetSec),
+	}
+
+	if query.RangeQuery {
+		rangeResponse, _, err := b.client.QueryRange(ctx, query.Expr, timeRange)
+		if err != nil {
+			logger.Error("Range query failed", "query", query.Expr, "err", err)
+			return backend.DataResponse{Error: err}, nil
 		}
+		response[RangeQueryType] = rangeResponse
+	}
 
-		result.Responses[query.RefId] = backend.DataResponse{
-			Frames: frames,
+	if query.InstantQuery {
+		instantResponse, _, err := b.client.Query(ctx, query.Expr, query.End)
+		if err != nil {
+			logger.Error("Instant query failed", "query", query.Expr, "err", err)
+			return backend.DataResponse{Error: err}, nil
+		}
+		response[InstantQueryType] = instantResponse
+	}
+
+	// This is a special case
+	// If exemplar query returns error, we want to only log it and continue with other results processing
+	if query.ExemplarQuery {
+		exemplarResponse, err := b.client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
+		if err != nil {
+			logger.Error("Exemplar query failed", "query", query.Expr, "err", err)
+		} else {
+			response[ExemplarQueryType] = exemplarResponse
 		}
 	}
 
-	return &result, nil
+	frames, err := parseTimeSeriesResponse(response, query)
+	if err != nil {
+		return backend.DataResponse{}, err
+	}
+
+	// The ExecutedQueryString can be viewed in QueryInspector in UI
+	for _, frame := range frames {
+		frame.Meta.ExecutedQueryString = "Expr: " + query.Expr + "\n" + "Step: " + query.Step.String()
+	}
+
+	return backend.DataResponse{
+		Frames: frames,
+	}, nil
 }
 
 func formatLegend(metric model.Metric, query *PrometheusQuery) string {
@@ -598,7 +603,11 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 		dataFields = append(dataFields, data.NewField(label, nil, labelsVector[label]))
 	}
 
-	return append(frames, newDataFrame("exemplar", "exemplar", dataFields...))
+	newFrame := newDataFrame("exemplar", "exemplar", dataFields...)
+	// unset on exemplars (ugly but this client will be deprecated soon)
+	newFrame.Meta.Type = ""
+
+	return append(frames, newFrame)
 }
 
 func sortedLabels(labelsVector map[string][]string) []string {
