@@ -16,10 +16,14 @@ const (
 	ReportsAdmin  SystemUserType = "ReportsAdmin"
 )
 
+// SystemUsersFilterProvider interface internal to `pkg/store` service.
+// Used by the Storage service to retrieve path filter for system users
 type SystemUsersFilterProvider interface {
 	GetFilter(user *user.SignedInUser) (map[string]filestorage.PathFilter, error)
 }
 
+// SystemUsersProvider interface used by `pkg/store` clients
+// Used to retrieve users with access only to their own slice of storage
 type SystemUsersProvider interface {
 	GetUser(userType SystemUserType, orgID int64) (*user.SignedInUser, error)
 }
