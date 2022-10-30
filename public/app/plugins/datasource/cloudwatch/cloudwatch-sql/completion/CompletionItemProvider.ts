@@ -112,14 +112,14 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
             const namespaceToken = getNamespaceToken(currentToken);
             if (namespaceToken?.value) {
               // if a namespace is specified, only suggest metrics for the namespace
-              const metrics = await this.api.getMetrics(
-                this.templateSrv.replace(namespaceToken?.value.replace(/\"/g, '')),
-                this.templateSrv.replace(this.region)
-              );
+              const metrics = await this.api.getMetrics({
+                namespace: namespaceToken?.value.replace(/\"/g, ''),
+                region: this.region,
+              });
               metrics.forEach((m) => m.value && addSuggestion(m.value));
             } else {
               // If no namespace is specified in the query, just list all metrics
-              const metrics = await this.api.getAllMetrics(this.templateSrv.replace(this.region));
+              const metrics = await this.api.getAllMetrics({ region: this.region });
               uniq(metrics.map((m) => m.metricName)).forEach((m) => m && addSuggestion(m, { insertText: m }));
             }
           }
@@ -147,7 +147,7 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
           let namespaces = [];
           if (metricNameToken?.value) {
             // if a metric is specified, only suggest namespaces that actually have that metric
-            const metrics = await this.api.getAllMetrics(this.region);
+            const metrics = await this.api.getMetrics({ region: this.region });
             const metricName = this.templateSrv.replace(metricNameToken.value);
             namespaces = metrics.filter((m) => m.metricName === metricName).map((m) => m.namespace);
           } else {

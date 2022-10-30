@@ -32,10 +32,12 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
   const { isEditor } = contextSrv;
   const hasEditPermissionInFolders = folder ? canSave : contextSrv.hasEditPermissionInFolders;
   const canCreateFolders = contextSrv.hasAccess(AccessControlAction.FoldersCreate, isEditor);
-  const canCreateDashboards = contextSrv.hasAccess(
-    AccessControlAction.DashboardsCreate,
-    hasEditPermissionInFolders || !!canSave
-  );
+  const canCreateDashboardsFallback = hasEditPermissionInFolders || !!canSave;
+  const canCreateDashboards = folder?.id
+    ? contextSrv.hasAccessInMetadata(AccessControlAction.DashboardsCreate, folder, canCreateDashboardsFallback)
+    : contextSrv.hasAccess(AccessControlAction.DashboardsCreate, canCreateDashboardsFallback);
+  const viewActions = (folder === undefined && canCreateFolders) || canCreateDashboards;
+
   let [includePanels, setIncludePanels] = useLocalStorage<boolean>(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
   if (!config.featureToggles.panelTitleSearch) {
     includePanels = false;
@@ -60,7 +62,7 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
             suffix={false ? <Spinner /> : null}
           />
         </div>
-        {canCreateFolders && canCreateDashboards && (
+        {viewActions && (
           <DashboardActions
             folderId={folderId}
             canCreateFolders={canCreateFolders}

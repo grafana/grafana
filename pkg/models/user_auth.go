@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/org"
@@ -35,6 +36,10 @@ type ExternalUserInfo struct {
 	OrgRoles       map[int64]org.RoleType
 	IsGrafanaAdmin *bool // This is a pointer to know if we should sync this or not (nil = ignore sync)
 	IsDisabled     bool
+}
+
+func (e *ExternalUserInfo) String() string {
+	return fmt.Sprintf("%+v", *e)
 }
 
 type LoginInfo struct {

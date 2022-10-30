@@ -92,7 +92,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		ac:        api.AccessControl,
 	}
 
-	evaluator := eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.ExpressionService)
+	evaluator := eval.NewEvaluator(api.Cfg, api.DatasourceCache, api.ExpressionService)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
