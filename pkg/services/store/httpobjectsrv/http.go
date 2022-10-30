@@ -1,4 +1,4 @@
-package object
+package httpobjectsrv
 
 import (
 	"fmt"
@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/store/kind"
+	"github.com/grafana/grafana/pkg/services/store/object"
+	"github.com/grafana/grafana/pkg/services/store/router"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 
@@ -25,16 +27,18 @@ type HTTPObjectStore interface {
 }
 
 type httpObjectStore struct {
-	store ObjectStoreServer
-	log   log.Logger
-	kinds kind.KindRegistry
+	store  object.ObjectStoreServer
+	log    log.Logger
+	kinds  kind.KindRegistry
+	router router.ObjectStoreRouter
 }
 
-func ProvideHTTPObjectStore(store ObjectStoreServer, kinds kind.KindRegistry) HTTPObjectStore {
+func ProvideHTTPObjectStore(store object.ObjectStoreServer, kinds kind.KindRegistry) HTTPObjectStore {
 	return &httpObjectStore{
-		store: store,
-		log:   log.New("http-object-store"),
-		kinds: kinds,
+		store:  store,
+		log:    log.New("http-object-store"),
+		kinds:  kinds,
+		router: router.NewObjectStoreRouter(kinds),
 	}
 }
 
@@ -45,49 +49,45 @@ func (s *httpObjectStore) RegisterHTTPRoutes(route routing.RouteRegister) {
 
 	// Every * must parse to a GRN (uid+kind)
 	route.Get("/store/*", reqGrafanaAdmin, routing.Wrap(s.doGetObject))
-	route.Get("/raw/*", reqGrafanaAdmin, routing.Wrap(s.doGetRawObject))
 	route.Post("/store/*", reqGrafanaAdmin, routing.Wrap(s.doWriteObject))
 	route.Delete("/store/*", reqGrafanaAdmin, routing.Wrap(s.doDeleteObject))
+	route.Get("/raw/*", reqGrafanaAdmin, routing.Wrap(s.doGetRawObject))
 	route.Get("/history/*", reqGrafanaAdmin, routing.Wrap(s.doGetHistory))
 	route.Get("/list/*", reqGrafanaAdmin, routing.Wrap(s.doListFolder)) // Simplified version of search -- path is prefix
 	route.Get("/search", reqGrafanaAdmin, routing.Wrap(s.doSearch))
 
 	// File upload
-	route.Post("/upload", reqGrafanaAdmin, routing.Wrap(s.doUpload))
+	route.Post("/upload/:scope", reqGrafanaAdmin, routing.Wrap(s.doUpload))
 }
 
 // This function will extract UID+Kind from the requested path "*" in our router
 // This is far from ideal! but is at least consistent for these endpoints.
 // This will quickly be revisited as we explore how to encode UID+Kind in a "GRN" format
-func parseRequestParams(req *http.Request) (uid string, kind string, params map[string]string) {
-	params = web.Params(req)
-	path := params["*"]
-	idx := strings.LastIndex(path, ".")
-	if idx > 0 {
-		uid = path[:idx]
-		kind = path[idx+1:]
-	} else {
-		uid = path
-		kind = "?"
+func (s *httpObjectStore) getGRNFromRequest(c *models.ReqContext) (*object.GRN, map[string]string, error) {
+	params := web.Params(c.Req)
+	info, err := s.router.RouteFromKey(c.Req.Context(),
+		fmt.Sprintf("%d/%s", c.OrgID, params["*"]))
+	if err != nil {
+		return nil, params, err
 	}
 
 	// Read parameters that are encoded in the URL
-	vals := req.URL.Query()
+	vals := c.Req.URL.Query()
 	for k, v := range vals {
 		if len(v) > 0 {
 			params[k] = v[0]
 		}
 	}
-	return
+	return info.GRN, params, nil
 }
 
 func (s *httpObjectStore) doGetObject(c *models.ReqContext) response.Response {
-	uid, kind, params := parseRequestParams(c.Req)
-	rsp, err := s.store.Read(c.Req.Context(), &ReadObjectRequest{
-		GRN: &GRN{
-			UID:  uid,
-			Kind: kind,
-		},
+	grn, params, err := s.getGRNFromRequest(c)
+	if err != nil {
+		return response.Error(400, err.Error(), err)
+	}
+	rsp, err := s.store.Read(c.Req.Context(), &object.ReadObjectRequest{
+		GRN:         grn,
 		Version:     params["version"],           // ?version = XYZ
 		WithBody:    params["body"] != "false",   // default to true
 		WithSummary: params["summary"] == "true", // default to false
@@ -117,12 +117,12 @@ func (s *httpObjectStore) doGetObject(c *models.ReqContext) response.Response {
 }
 
 func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response {
-	uid, kind, params := parseRequestParams(c.Req)
-	rsp, err := s.store.Read(c.Req.Context(), &ReadObjectRequest{
-		GRN: &GRN{
-			UID:  uid,
-			Kind: kind,
-		},
+	grn, params, err := s.getGRNFromRequest(c)
+	if err != nil {
+		return response.Error(400, err.Error(), err)
+	}
+	rsp, err := s.store.Read(c.Req.Context(), &object.ReadObjectRequest{
+		GRN:         grn,
 		Version:     params["version"], // ?version = XYZ
 		WithBody:    true,
 		WithSummary: false,
@@ -130,7 +130,7 @@ func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response
 	if err != nil {
 		return response.Error(500, "?", err)
 	}
-	info, err := s.kinds.GetInfo(kind)
+	info, err := s.kinds.GetInfo(grn.Kind)
 	if err != nil {
 		return response.Error(400, "Unsupported kind", err)
 	}
@@ -167,7 +167,10 @@ func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response
 const MAX_UPLOAD_SIZE = 5 * 1024 * 1024 // 5MB
 
 func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response {
-	uid, kind, params := parseRequestParams(c.Req)
+	grn, params, err := s.getGRNFromRequest(c)
+	if err != nil {
+		return response.Error(400, err.Error(), err)
+	}
 
 	// Cap the max size
 	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, MAX_UPLOAD_SIZE)
@@ -176,11 +179,8 @@ func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response 
 		return response.Error(400, "error reading body", err)
 	}
 
-	rsp, err := s.store.Write(c.Req.Context(), &WriteObjectRequest{
-		GRN: &GRN{
-			UID:  uid,
-			Kind: kind,
-		},
+	rsp, err := s.store.Write(c.Req.Context(), &object.WriteObjectRequest{
+		GRN:             grn,
 		Body:            b,
 		Comment:         params["comment"],
 		PreviousVersion: params["previousVersion"],
@@ -192,12 +192,12 @@ func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response 
 }
 
 func (s *httpObjectStore) doDeleteObject(c *models.ReqContext) response.Response {
-	uid, kind, params := parseRequestParams(c.Req)
-	rsp, err := s.store.Delete(c.Req.Context(), &DeleteObjectRequest{
-		GRN: &GRN{
-			UID:  uid,
-			Kind: kind,
-		},
+	grn, params, err := s.getGRNFromRequest(c)
+	if err != nil {
+		return response.Error(400, err.Error(), err)
+	}
+	rsp, err := s.store.Delete(c.Req.Context(), &object.DeleteObjectRequest{
+		GRN:             grn,
 		PreviousVersion: params["previousVersion"],
 	})
 	if err != nil {
@@ -207,13 +207,13 @@ func (s *httpObjectStore) doDeleteObject(c *models.ReqContext) response.Response
 }
 
 func (s *httpObjectStore) doGetHistory(c *models.ReqContext) response.Response {
-	uid, kind, params := parseRequestParams(c.Req)
+	grn, params, err := s.getGRNFromRequest(c)
+	if err != nil {
+		return response.Error(400, err.Error(), err)
+	}
 	limit := int64(20) // params
-	rsp, err := s.store.History(c.Req.Context(), &ObjectHistoryRequest{
-		GRN: &GRN{
-			UID:  uid,
-			Kind: kind,
-		},
+	rsp, err := s.store.History(c.Req.Context(), &object.ObjectHistoryRequest{
+		GRN:           grn,
 		Limit:         limit,
 		NextPageToken: params["nextPageToken"],
 	})
@@ -224,16 +224,22 @@ func (s *httpObjectStore) doGetHistory(c *models.ReqContext) response.Response {
 }
 
 func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
+	scope := web.Params(c.Req)[":scope"]
+	if scope == "" {
+		return response.Error(400, "invalid scope", nil)
+	}
+
 	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, MAX_UPLOAD_SIZE)
 	if err := c.Req.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
 		msg := fmt.Sprintf("Please limit file uploaded under %s", util.ByteCountSI(MAX_UPLOAD_SIZE))
 		return response.Error(400, msg, nil)
 	}
-	var rsp []*WriteObjectResponse
+	var rsp []*object.WriteObjectResponse
 
 	message := getMultipartFormValue(c.Req, "message")
 	overwriteExistingFile := getMultipartFormValue(c.Req, "overwriteExistingFile") != "false" // must explicitly overwrite
 	folder := getMultipartFormValue(c.Req, "folder")
+	ctx := c.Req.Context()
 
 	for _, fileHeaders := range c.Req.MultipartForm.File {
 		for _, fileHeader := range fileHeaders {
@@ -266,15 +272,29 @@ func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
 			if err != nil {
 				return response.Error(500, "Internal Server Error", err)
 			}
-			// mimeType := http.DetectContentType(data)
 
-			if !overwriteExistingFile {
-				fmt.Printf("TODO! check previous version exits?\n")
+			grn := &object.GRN{
+				Scope: scope,
+				UID:   uid,
+				Kind:  kind.ID,
 			}
 
-			result, err := s.store.Write(c.Req.Context(), &WriteObjectRequest{
-				UID:     uid,
-				Kind:    kind.ID,
+			if !overwriteExistingFile {
+				result, err := s.store.Read(ctx, &object.ReadObjectRequest{
+					GRN:         grn,
+					WithBody:    false,
+					WithSummary: false,
+				})
+				if err != nil {
+					return response.Error(500, "Internal Server Error", err)
+				}
+				if result.Object != nil {
+					return response.Error(400, "File name already in use", err)
+				}
+			}
+
+			result, err := s.store.Write(ctx, &object.WriteObjectRequest{
+				GRN:     grn,
 				Body:    data,
 				Comment: message,
 				//	PreviousVersion: params["previousVersion"],
@@ -297,7 +317,7 @@ func (s *httpObjectStore) doListFolder(c *models.ReqContext) response.Response {
 func (s *httpObjectStore) doSearch(c *models.ReqContext) response.Response {
 	vals := c.Req.URL.Query()
 
-	req := &ObjectSearchRequest{
+	req := &object.ObjectSearchRequest{
 		WithBody:   asBoolean("body", vals, false),
 		WithLabels: asBoolean("labels", vals, true),
 		WithFields: asBoolean("fields", vals, true),

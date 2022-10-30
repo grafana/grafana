@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -72,11 +71,13 @@ func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*obje
 	var syncTime sql.NullTime
 	createdByID := int64(0)
 	updatedByID := int64(0)
-	raw := &object.RawObject{}
+	raw := &object.RawObject{
+		GRN: &object.GRN{},
+	}
 
 	summaryjson := &summarySupport{}
 	args := []interface{}{
-		&key, &raw.Kind, &raw.Version,
+		&key, &raw.GRN.Kind, &raw.Version,
 		&raw.Size, &raw.ETag, &summaryjson.errors,
 		&created, &createdByID,
 		&updated, &updatedByID,
@@ -124,18 +125,25 @@ func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*obje
 	return rsp, nil
 }
 
-func (s sqlObjectServer) getRouteInfo(ctx context.Context, kind string, uid string) (router.ResourceRouteInfo, error) {
-	modifier := store.UserFromContext(ctx)
-	return s.router.Route(ctx, grn.GRN{
-		TenantID:           modifier.OrgID,
-		ResourceKind:       kind,
-		ResourceIdentifier: uid,
-		Namespace:          "drive", // "flat",
-	})
+func (s sqlObjectServer) getRoute(ctx context.Context, grn *object.GRN) (router.ResourceRouteInfo, error) {
+	if grn == nil {
+		return router.ResourceRouteInfo{}, fmt.Errorf("missing grn")
+	}
+	user := store.UserFromContext(ctx)
+	if user == nil {
+		return router.ResourceRouteInfo{}, fmt.Errorf("can not find user in context")
+	}
+	if user.OrgID != grn.TenantId {
+		if grn.TenantId > 0 {
+			return router.ResourceRouteInfo{}, fmt.Errorf("invalid user (wrong tenant id)")
+		}
+		grn.TenantId = user.OrgID
+	}
+	return s.router.Route(ctx, grn)
 }
 
 func (s sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
-	route, err := s.getRouteInfo(ctx, r.Kind, r.UID)
+	route, err := s.getRoute(ctx, r.GRN)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +171,7 @@ func (s sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObjec
 	constraints := []string{}
 
 	for _, r := range b.Batch {
-		route, err := s.getRouteInfo(ctx, r.Kind, r.UID)
+		route, err := s.getRoute(ctx, r.GRN)
 		if err != nil {
 			return nil, err
 		}
@@ -202,12 +210,16 @@ func createContentsHash(contents []byte) string {
 }
 
 func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
-	route, err := s.getRouteInfo(ctx, r.Kind, r.UID)
+	route, err := s.getRoute(ctx, r.GRN)
 	if err != nil {
 		return nil, err
 	}
+	grn := r.GRN
+	if grn == nil {
+		return nil, fmt.Errorf("invalid grn")
+	}
 
-	builder := s.kinds.GetSummaryBuilder(r.Kind)
+	builder := s.kinds.GetSummaryBuilder(grn.Kind)
 	if builder == nil {
 		return nil, fmt.Errorf("unsupported kind")
 	}
@@ -216,7 +228,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		return nil, fmt.Errorf("can not find user in context")
 	}
 
-	summary, body, err := builder(ctx, r.UID, r.Body)
+	summary, body, err := builder(ctx, grn.UID, r.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -233,9 +245,11 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 	}
 
 	// Make sure all parent folders exist
-	err = s.ensureFolders(ctx, &route)
-	if err != nil {
-		return nil, err
+	if grn.Scope == models.ObjectStoreScopeDrive {
+		err = s.ensureFolders(ctx, grn)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
@@ -339,7 +353,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 
 		// 4. Special handling for the access object
 		// rules get saved individually in addition to the object
-		accessRules, err := access.GetFolderAccessRules(r.Kind, body)
+		accessRules, err := access.GetFolderAccessRules(grn.Kind, body)
 		if err != nil {
 			return err
 		}
@@ -385,7 +399,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 			`"name", "description",`+
 			`"labels", "fields", "errors") `+
 			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			key, getParentFolderKey(r.Kind, key), r.Kind, versionInfo.Size, body, etag, versionInfo.Version,
+			key, getParentFolderKey(grn.Kind, key), grn.Kind, versionInfo.Size, body, etag, versionInfo.Version,
 			timestamp, modifier.UserID, timestamp, modifier.UserID, // created + updated are the same
 			summary.Name, summary.Description,
 			summaryjson.labels, summaryjson.fields, summaryjson.errors,
@@ -400,7 +414,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 }
 
 func (s sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
-	route, err := s.getRouteInfo(ctx, r.Kind, r.UID)
+	route, err := s.getRoute(ctx, r.GRN)
 	if err != nil {
 		return nil, err
 	}
@@ -430,8 +444,11 @@ func (s sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectReque
 }
 
 func (s sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
-	modifier := store.UserFromContext(ctx)
-	key := fmt.Sprintf("%d/%s.%s", modifier.OrgID, r.UID, r.Kind)
+	route, err := s.getRoute(ctx, r.GRN)
+	if err != nil {
+		return nil, err
+	}
+	key := route.Key
 
 	page := ""
 	args := []interface{}{key}
@@ -535,11 +552,13 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 
 	rsp := &object.ObjectSearchResponse{}
 	for rows.Next() {
-		result := &object.ObjectSearchResult{}
+		result := &object.ObjectSearchResult{
+			GRN: &object.GRN{},
+		}
 		summaryjson := summarySupport{}
 
 		args := []interface{}{
-			&key, &result.Kind, &result.Version, &summaryjson.errors,
+			&key, &result.GRN.Kind, &result.Version, &summaryjson.errors,
 			&updated, &updatedByID,
 			&result.Name, &summaryjson.description,
 		}
@@ -558,12 +577,16 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 			return rsp, err
 		}
 
-		result.UID = "TODO!" + key
+		info, err := s.router.RouteFromKey(ctx, key)
+		if err != nil {
+			return rsp, err
+		}
+		result.GRN = info.GRN
 
 		// found one more than requested
 		if len(rsp.Results) >= selectQuery.limit {
 			// TODO? should this encode start+offset?
-			rsp.NextPageToken = result.UID
+			rsp.NextPageToken = key
 			break
 		}
 
@@ -592,16 +615,18 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 	return rsp, err
 }
 
-func (s sqlObjectServer) ensureFolders(ctx context.Context, route *router.ResourceRouteInfo) error {
-	uid := route.GRN.ResourceIdentifier
+func (s sqlObjectServer) ensureFolders(ctx context.Context, objectgrn *object.GRN) error {
+	uid := objectgrn.UID
 	idx := strings.LastIndex(uid, "/")
+	grn := &object.GRN{
+		TenantId: objectgrn.TenantId,
+		Scope:    objectgrn.Scope,
+		Kind:     models.StandardKindFolder,
+	}
 	for idx > 0 {
 		parent := uid[:idx]
-		fr, err := s.router.Route(ctx, grn.GRN{
-			TenantID:           route.GRN.TenantID,
-			ResourceKind:       models.StandardKindFolder,
-			ResourceIdentifier: parent,
-		})
+		grn.UID = parent
+		fr, err := s.router.Route(ctx, grn)
 		if err != nil {
 			return err
 		}
@@ -613,7 +638,7 @@ func (s sqlObjectServer) ensureFolders(ctx context.Context, route *router.Resour
 		}
 		if !rows.Next() {
 			f := &folder.Model{
-				Name: store.GuessNameFromUID(fr.GRN.ResourceIdentifier),
+				Name: store.GuessNameFromUID(fr.GRN.UID),
 			}
 			fmt.Printf("CREATE:%s :: %v\n", fr.Key, f)
 			body, err := json.Marshal(f)
@@ -622,8 +647,7 @@ func (s sqlObjectServer) ensureFolders(ctx context.Context, route *router.Resour
 			}
 
 			_, err = s.Write(ctx, &object.WriteObjectRequest{
-				UID:  fr.GRN.ResourceIdentifier,
-				Kind: fr.GRN.ResourceKind,
+				GRN:  grn,
 				Body: body,
 			})
 			if err != nil {
