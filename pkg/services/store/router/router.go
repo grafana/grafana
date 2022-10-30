@@ -121,33 +121,41 @@ func (r *standardStoreRouter) RouteFromKey(ctx context.Context, key string) (Res
 	switch info.GRN.Scope {
 	case models.ObjectStoreScopeDrive:
 		{
-			if strings.HasSuffix(key, ".json") {
-				sdx := strings.LastIndex(key, "/")
-				idx = strings.LastIndex(key, "-")
-				if idx > sdx {
-					ddx := strings.LastIndex(key, ".") // .json
-					info.GRN.UID = key[:idx]
-					info.GRN.Kind = key[idx+1 : ddx]
-				} else {
-					switch key[sdx+1:] {
-					case "__folder.json":
-						{
-							info.GRN.UID = key[:sdx]
-							info.GRN.Kind = models.StandardKindFolder
+			idx := strings.LastIndex(key, ".")
+			if idx > 0 {
+				ext := key[idx+1:]
+				if ext == "json" {
+					sdx := strings.LastIndex(key, "/")
+					idx = strings.LastIndex(key, "-")
+					if idx > sdx {
+						ddx := strings.LastIndex(key, ".") // .json
+						info.GRN.UID = key[:idx]
+						info.GRN.Kind = key[idx+1 : ddx]
+					} else {
+						switch key[sdx+1:] {
+						case "__folder.json":
+							{
+								info.GRN.UID = key[:sdx]
+								info.GRN.Kind = models.StandardKindFolder
+							}
+						default:
+							return info, fmt.Errorf("unable to parse drive path")
 						}
-					default:
-						return info, fmt.Errorf("unable to parse drive path")
 					}
+				} else {
+					info.GRN.UID = key[:idx]
+					k, err := r.kinds.GetFromExtension(ext)
+					if err != nil {
+						return info, err
+					}
+					info.GRN.Kind = k.ID
 				}
+
 			} else {
-				// Lookup by kind extension ()
-				idx = strings.LastIndex(key, ".")
-				info.GRN.UID = key[:idx]
-				k, err := r.kinds.GetFromExtension(key[idx+1:])
-				if err != nil {
-					return info, err
-				}
-				info.GRN.Kind = k.ID
+				idx = strings.Index(key, "/")
+
+				info.GRN.Kind = key[:idx]
+				info.GRN.UID = key[idx+1:]
 			}
 		}
 
