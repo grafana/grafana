@@ -18,7 +18,7 @@ import { configureStore } from 'app/store/configureStore';
 import { ShareModal } from '../ShareModal';
 
 const server = setupServer(
-  rest.get('/api/dashboards/uid/:uId/public-config', (_, res, ctx) => {
+  rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (_, res, ctx) => {
     return res(
       ctx.status(200),
       ctx.json({
@@ -159,7 +159,7 @@ describe('SharePublic', () => {
   });
   it('when fetch errors happen, then all inputs remain disabled', async () => {
     server.use(
-      rest.get('/api/dashboards/uid/:uId/public-config', (req, res, ctx) => {
+      rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
         return res(ctx.status(500));
       })
     );
@@ -220,14 +220,14 @@ describe('SharePublic - New config setup', () => {
 describe('SharePublic - Already persisted', () => {
   beforeEach(() => {
     server.use(
-      rest.get('/api/dashboards/uid/:uId/public-config', (req, res, ctx) => {
+      rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
         return res(
           ctx.status(200),
           ctx.json({
             isEnabled: true,
             annotationsEnabled: true,
             uid: 'a-uid',
-            dashboardUid: req.params.uId,
+            dashboardUid: req.params.dashboardUid,
             accessToken: 'an-access-token',
           })
         );
@@ -266,14 +266,14 @@ describe('SharePublic - Already persisted', () => {
   });
   it('when pubdash is disabled in the db, then link url is not available and annotations toggle is disabled', async () => {
     server.use(
-      rest.get('/api/dashboards/uid/:uId/public-config', (req, res, ctx) => {
+      rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
         return res(
           ctx.status(200),
           ctx.json({
             isEnabled: false,
             annotationsEnabled: false,
             uid: 'a-uid',
-            dashboardUid: req.params.uId,
+            dashboardUid: req.params.dashboardUid,
             accessToken: 'an-access-token',
           })
         );
