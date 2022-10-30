@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/grn"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/store/kind"
+	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,67 +16,59 @@ func TestSimpleRouter(t *testing.T) {
 	router := &standardStoreRouter{
 		kinds: kind.NewKindRegistry(),
 	}
-	info, err := router.Route(ctx, grn.GRN{
-		ResourceIdentifier: "path/to/file",
+	info, err := router.Route(ctx, &object.GRN{
+		UID: "path/to/file",
 	})
 	require.Error(t, err) // needs OrgID
 
 	type routeScenario struct {
-		GRN   grn.GRN
+		GRN   *object.GRN
 		Error string
 		Key   string
 	}
 
 	scenarios := []routeScenario{{
-		Error: "missing OrgID",
-		GRN:   grn.GRN{Namespace: "drive"},
+		Error: "missing TenantId",
+		GRN:   &object.GRN{Scope: "x"},
 	}, {
-		Error: "unknown kind",
-		GRN: grn.GRN{
-			TenantID:           11,
-			Namespace:          "drive",
-			ResourceIdentifier: "path/to/file",
-			ResourceKind:       "xyz",
+		Error: "unknown Kind: xyz",
+		GRN: &object.GRN{
+			TenantId: 11,
+			Scope:    models.ObjectStoreScopeDrive,
+			UID:      "path/to/file",
+			Kind:     "xyz",
 		},
 	}, {
 		Key: "11/drive/path/to/file-dashboard.json",
-		GRN: grn.GRN{
-			TenantID:           11,
-			Namespace:          "drive",
-			ResourceIdentifier: "path/to/file",
-			ResourceKind:       "dashboard",
+		GRN: &object.GRN{
+			TenantId: 11,
+			Scope:    models.ObjectStoreScopeDrive,
+			UID:      "path/to/file",
+			Kind:     "dashboard",
 		},
 	}, {
 		Key: "11/drive/path/to/folder/__folder.json",
-		GRN: grn.GRN{
-			TenantID:           11,
-			Namespace:          "drive",
-			ResourceIdentifier: "path/to/folder",
-			ResourceKind:       "folder",
-		},
-	}, {
-		Key: "11/drive/path/to/folder/__access.json",
-		GRN: grn.GRN{
-			TenantID:           11,
-			Namespace:          "drive",
-			ResourceIdentifier: "path/to/folder",
-			ResourceKind:       "folder-access",
+		GRN: &object.GRN{
+			TenantId: 11,
+			Scope:    models.ObjectStoreScopeDrive,
+			UID:      "path/to/folder",
+			Kind:     "folder",
 		},
 	}, {
 		Key: "10/drive/path/to/file.png",
-		GRN: grn.GRN{
-			TenantID:           10,
-			Namespace:          "drive",
-			ResourceIdentifier: "path/to/file",
-			ResourceKind:       "png",
+		GRN: &object.GRN{
+			TenantId: 10,
+			Scope:    models.ObjectStoreScopeDrive,
+			UID:      "path/to/file",
+			Kind:     "png",
 		},
 	}, {
-		Key: "10/custom/kind/playlist/aaaaa", // ?.json better or not?
-		GRN: grn.GRN{
-			TenantID:           10,
-			Namespace:          "custom", // can this have slashes?
-			ResourceIdentifier: "aaaaa",
-			ResourceKind:       "playlist",
+		Key: "10/entity/playlist/aaaaa", // ?.json better or not?
+		GRN: &object.GRN{
+			TenantId: 10,
+			Scope:    models.ObjectStoreScopeEntity,
+			UID:      "aaaaa",
+			Kind:     "playlist",
 		},
 	}}
 

@@ -47,6 +47,12 @@ const (
 	// ExternalEntityReferenceRuntime_Transformer is a "type" under runtime
 	// UIDs include: joinByField, organize, seriesToColumns, etc
 	ExternalEntityReferenceRuntime_Transformer = "transformer"
+
+	// ObjectStoreScopeEntity is organized in: {kind}/{uid}
+	ObjectStoreScopeEntity = "entity"
+
+	// ObjectStoreScopeDrive is organized in: {uid/with/slash}.{kind}
+	ObjectStoreScopeDrive = "drive"
 )
 
 // ObjectKindInfo describes information needed from the object store
