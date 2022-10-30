@@ -48,6 +48,44 @@ datasources:
 
 If you have a literal `$` in your value and want to avoid interpolation, `$$` can be used.
 
+### Env provider
+
+The `env` provider can be used to expand an environment variable. If you
+set an option to `$__env{PORT}` the `PORT` environment variable will be
+used in its place. For environment variables you can also use the
+short-hand syntax `${PORT}`.
+
+```yaml
+datasources:
+  - name: Graphite
+    url: http://localhost:$__env{PORT}
+    user: $__env{USER}
+    secureJsonData:
+      password: $__env{PASSWORD}
+```
+
+### File provider
+
+`file` reads a file from the filesystem. It trims whitespace from the
+beginning and the end of files.
+The database password in the following example would be replaced by
+the content of the `/etc/secrets/graphite_db_password` file:
+
+```yaml
+datasources:
+  - name: Graphite
+    url: http://localhost:8080
+    user: admin
+    secureJsonData:
+      password: $__file{/etc/secrets/graphite_db_password}
+```
+
+### Vault provider
+
+The `vault` provider allows you to manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault).
+
+> Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../configure-security/configure-database-encryption/integrate-with-hashicorp-vault/" >}}) in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
+
 <hr />
 
 ## Configuration Management Tools
