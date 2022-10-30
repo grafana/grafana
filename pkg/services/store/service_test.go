@@ -74,7 +74,7 @@ func TestListFiles(t *testing.T) {
 
 	store := newStandardStorageService(db.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
-	}, allowAllAuthService, cfg)
+	}, allowAllAuthService, cfg, nil)
 	frame, err := store.List(context.Background(), dummyUser, "public/testdata")
 	require.NoError(t, err)
 
@@ -94,7 +94,7 @@ func TestListFilesWithoutPermissions(t *testing.T) {
 
 	store := newStandardStorageService(db.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
-	}, denyAllAuthService, cfg)
+	}, denyAllAuthService, cfg, nil)
 	frame, err := store.List(context.Background(), dummyUser, "public/testdata")
 	require.NoError(t, err)
 	rowLen, err := frame.RowLen()
@@ -114,7 +114,7 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	}
 	store := newStandardStorageService(db.InitTestDB(t), []storageRuntime{sqlStorage}, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
-	}, authService, cfg)
+	}, authService, cfg, nil)
 	store.cfg = &GlobalStorageConfig{
 		AllowUnsanitizedSvgUpload: true,
 	}
@@ -268,7 +268,7 @@ func TestSetupWithNonUniqueStoragePrefixes(t *testing.T) {
 
 	newStandardStorageService(db.InitTestDB(t), []storageRuntime{sqlStorage, sqlStorage2}, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
-	}, allowAllAuthService, cfg)
+	}, allowAllAuthService, cfg, nil)
 }
 
 func TestContentRootWithNestedStorage(t *testing.T) {
@@ -293,7 +293,7 @@ func TestContentRootWithNestedStorage(t *testing.T) {
 
 	store := newStandardStorageService(db.InitTestDB(t), []storageRuntime{contentStorage, nestedStorage}, func(orgId int64) []storageRuntime {
 		return []storageRuntime{nestedOrgedStorage, contentStorage}
-	}, allowAllAuthService, cfg)
+	}, allowAllAuthService, cfg, nil)
 	store.cfg = &GlobalStorageConfig{
 		AllowUnsanitizedSvgUpload: true,
 	}
@@ -531,7 +531,7 @@ func TestShadowingExistingFolderByNestedContentRoot(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	store := newStandardStorageService(db, []storageRuntime{nestedStorage, contentStorage}, func(orgId int64) []storageRuntime { return make([]storageRuntime, 0) }, allowAllAuthService, cfg)
+	store := newStandardStorageService(db, []storageRuntime{nestedStorage, contentStorage}, func(orgId int64) []storageRuntime { return make([]storageRuntime, 0) }, allowAllAuthService, cfg, nil)
 	store.cfg = &GlobalStorageConfig{
 		AllowUnsanitizedSvgUpload: true,
 	}

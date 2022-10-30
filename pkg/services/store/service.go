@@ -42,11 +42,6 @@ const RootSystem = "system"
 const reportsStorage = "reports"
 const SystemReportsStorage = "system/" + reportsStorage
 
-var (
-	SystemReportsReader = &user.SignedInUser{OrgID: ac.GlobalOrgID}
-	SystemReportsAdmin  = &user.SignedInUser{OrgID: ac.GlobalOrgID}
-)
-
 const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
 
 type DeleteFolderCmd struct {
@@ -90,6 +85,7 @@ type standardStorageService struct {
 	cfg          *GlobalStorageConfig
 	authService  storageAuthService
 	quotaService quota.Service
+	systemUsers  SystemUsersFilterProvider
 }
 
 func ProvideService(
@@ -97,6 +93,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	quotaService quota.Service,
+	systemUsersService SystemUsers,
 ) StorageService {
 	settings, err := LoadStorageConfig(cfg, features)
 	if err != nil {
@@ -202,12 +199,17 @@ func ProvideService(
 		}
 
 		if storageName == RootSystem {
-			systemReportsFilter := createSystemReportsPathFilter()
-			return map[string]filestorage.PathFilter{
-				ActionFilesRead:   systemReportsFilter,
-				ActionFilesWrite:  systemReportsFilter,
-				ActionFilesDelete: systemReportsFilter,
+			filter, err := systemUsersService.GetFilter(user)
+			if err != nil {
+				grafanaStorageLogger.Error("failed to create path filter for system user", "userID", user.UserID, "userLogin", user.Login, "err", err)
+				return map[string]filestorage.PathFilter{
+					ActionFilesRead:   denyAllPathFilter,
+					ActionFilesWrite:  denyAllPathFilter,
+					ActionFilesDelete: denyAllPathFilter,
+				}
 			}
+
+			return filter
 		}
 
 		if storageName == RootContent {
@@ -246,27 +248,13 @@ func ProvideService(
 		}
 	})
 
-	s := newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg)
+	s := newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg, systemUsersService)
 	s.quotaService = quotaService
 	s.cfg = settings
 	return s
 }
 
-func createSystemReportsPathFilter() filestorage.PathFilter {
-	return filestorage.NewPathFilter(
-		[]string{filestorage.Delimiter + reportsStorage + filestorage.Delimiter}, // access to all folders and files inside `/reports/`
-		[]string{filestorage.Delimiter + reportsStorage},                         // access to the `/reports` folder itself, but not to any other sibling folder
-		nil,
-		nil)
-}
-
-func newStandardStorageService(
-	sql db.DB,
-	globalRoots []storageRuntime,
-	initializeOrgStorages func(orgId int64) []storageRuntime,
-	authService storageAuthService,
-	cfg *setting.Cfg,
-) *standardStorageService {
+func newStandardStorageService(sql db.DB, globalRoots []storageRuntime, initializeOrgStorages func(orgId int64) []storageRuntime, authService storageAuthService, cfg *setting.Cfg, systemUsers SystemUsersFilterProvider) *standardStorageService {
 	prefixes := make(map[string]bool)
 
 	for _, root := range globalRoots {
@@ -290,6 +278,7 @@ func newStandardStorageService(
 		sql:         sql,
 		tree:        res,
 		authService: authService,
+		systemUsers: systemUsers,
 	}
 }
 
