@@ -18,7 +18,7 @@ import {
  */
 export class EventBusSrv implements EventBus, LegacyEmitter {
   private emitter: EventEmitter;
-  private subscribers = new Map<BusEventHandler<any>, Subscriber<BusEvent>>();
+  private subscribers = new Map<Function, Subscriber<BusEvent>>();
 
   constructor() {
     this.emitter = new EventEmitter();
@@ -32,7 +32,7 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
     return this.getStream(typeFilter).subscribe({ next: handler });
   }
 
-  getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T> {
+  getStream<T extends BusEvent = BusEvent>(eventType: BusEventType<T>): Observable<T> {
     return new Observable<T>((observer) => {
       const handler = (event: T) => {
         observer.next(event);
