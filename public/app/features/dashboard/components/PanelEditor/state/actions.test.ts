@@ -1,4 +1,4 @@
-import { createDashboardJSON } from 'app/features/dashboard/state/__fixtures__/dashboardJson';
+import { createDashboardFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { panelModelAndPluginReady, removePanel } from 'app/features/panel/state/reducers';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 
@@ -12,7 +12,7 @@ describe('panelEditor actions', () => {
   describe('initPanelEditor', () => {
     it('initPanelEditor should create edit panel model as clone', async () => {
       const dashboard = new DashboardModel(
-        createDashboardJSON({
+        createDashboardFixture({
           panels: [{ id: 12, type: 'graph' }],
         })
       );
@@ -40,7 +40,7 @@ describe('panelEditor actions', () => {
     it('should update source panel', async () => {
       const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
       const dashboard = new DashboardModel(
-        createDashboardJSON({
+        createDashboardFixture({
           panels: [{ id: 12, type: 'graph' }],
         })
       );
@@ -74,7 +74,7 @@ describe('panelEditor actions', () => {
     it('should dispatch panelModelAndPluginReady if type changed', async () => {
       const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
       const dashboard = new DashboardModel(
-        createDashboardJSON({
+        createDashboardFixture({
           panels: [{ id: 12, type: 'graph' }],
         })
       );
@@ -115,7 +115,7 @@ describe('panelEditor actions', () => {
       } as any;
 
       const dashboard = new DashboardModel(
-        createDashboardJSON({
+        createDashboardFixture({
           panels: [{ id: 12, type: 'graph' }],
         })
       );
@@ -150,7 +150,7 @@ describe('panelEditor actions', () => {
       sourcePanel.plugin.angularPanelCtrl = undefined;
 
       const dashboard = new DashboardModel(
-        createDashboardJSON({
+        createDashboardFixture({
           panels: [{ id: 12, type: 'graph' }],
         })
       );
@@ -182,7 +182,7 @@ describe('panelEditor actions', () => {
       sourcePanel.plugin.angularPanelCtrl = undefined;
 
       const dashboard = new DashboardModel(
-        createDashboardJSON({
+        createDashboardFixture({
           panels: [{ id: 12, type: 'graph' }],
         })
       );
@@ -223,7 +223,7 @@ describe('panelEditor actions', () => {
       sourcePanel.plugin.angularPanelCtrl = {};
 
       const dashboard = new DashboardModel(
-        createDashboardJSON({
+        createDashboardFixture({
           panels: [{ id: 12, type: 'graph' }],
         })
       );

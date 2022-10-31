@@ -6,7 +6,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from 'app/store/configureStore';
 
 import { DashboardModel } from '../../state';
-import { createDashboardJSON } from '../../state/__fixtures__/dashboardJson';
+import { createDashboardFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 
@@ -32,7 +32,7 @@ const store = configureStore();
 const mockPost = jest.fn();
 const buildMocks = () => ({
   dashboard: new DashboardModel(
-    createDashboardJSON({
+    createDashboardFixture({
       uid: 'mockDashboardUid',
       version: 1,
     })

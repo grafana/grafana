@@ -11,7 +11,7 @@ import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 
 import { DashboardModel } from '../../state/DashboardModel';
-import { createDashboardJSON } from '../../state/__fixtures__/dashboardJson';
+import { createDashboardFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { AnnotationsSettings } from './AnnotationsSettings';
 
@@ -80,7 +80,7 @@ describe('AnnotationsSettings', () => {
 
   beforeEach(() => {
     dashboard = new DashboardModel(
-      createDashboardJSON({
+      createDashboardFixture({
         id: 74,
         version: 7,
         annotations: {

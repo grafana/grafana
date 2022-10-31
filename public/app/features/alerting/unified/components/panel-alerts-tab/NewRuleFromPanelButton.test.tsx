@@ -4,7 +4,7 @@ import React from 'react';
 
 import { logInfo } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { createDashboardJSON } from 'app/features/dashboard/state/__fixtures__/dashboardJson';
+import { createDashboardFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
 import { LogMessages } from '../../Analytics';
 
@@ -42,7 +42,7 @@ describe('Analytics', () => {
       id: 123,
     });
     const dashboard = new DashboardModel(
-      createDashboardJSON({
+      createDashboardFixture({
         id: 1,
       })
     );

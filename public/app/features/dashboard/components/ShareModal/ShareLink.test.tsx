@@ -12,7 +12,7 @@ import { Echo } from '../../../../core/services/echo/Echo';
 import { variableAdapters } from '../../../variables/adapters';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { DashboardModel, PanelModel } from '../../state';
-import { createDashboardJSON } from '../../state/__fixtures__/dashboardJson';
+import { createDashboardFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { Props, ShareLink } from './ShareLink';
 
@@ -87,7 +87,7 @@ describe('ShareModal', () => {
     props = {
       panel: new PanelModel({ id: 22, options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
       dashboard: new DashboardModel(
-        createDashboardJSON({
+        createDashboardFixture({
           time: {
             from: defaultTimeRange.from.toISOString(),
             to: defaultTimeRange.to.toISOString(),
@@ -186,7 +186,7 @@ describe('when appUrl is set in the grafana config', () => {
 
   it('should render the correct link', async () => {
     const mockDashboard = new DashboardModel(
-      createDashboardJSON({
+      createDashboardFixture({
         uid: 'mockDashboardUid',
         id: 1,
       })

@@ -11,7 +11,7 @@ import { setBackendSrv } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
 import { DashboardModel } from '../../state';
-import { createDashboardJSON } from '../../state/__fixtures__/dashboardJson';
+import { createDashboardFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { GeneralSettingsUnconnected as GeneralSettings, Props } from './GeneralSettings';
 
@@ -22,7 +22,7 @@ setBackendSrv({
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
     dashboard: new DashboardModel(
-      createDashboardJSON({
+      createDashboardFixture({
         title: 'test dashboard title',
         description: 'test dashboard description',
         timepicker: {

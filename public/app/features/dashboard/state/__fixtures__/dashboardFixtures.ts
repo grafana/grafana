@@ -1,6 +1,6 @@
 import { Dashboard, defaultDashboardCursorSync, Panel } from '@grafana/schema';
 
-export function createDashboardJSON(dashboardInput: Partial<Dashboard> = {}): Dashboard {
+export function createDashboardFixture(dashboardInput: Partial<Dashboard> = {}): Dashboard {
   return {
     editable: true,
     graphTooltip: defaultDashboardCursorSync,
@@ -10,7 +10,7 @@ export function createDashboardJSON(dashboardInput: Partial<Dashboard> = {}): Da
   };
 }
 
-export function createPanelJSON(panelInput: Partial<Panel> = {}): Panel {
+export function createPanelFixture(panelInput: Partial<Panel> = {}): Panel {
   return {
     fieldConfig: {
       defaults: {},

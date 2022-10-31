@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import React from 'react';
 
 import { DashboardModel, PanelModel } from '../dashboard/state';
-import { createDashboardJSON, createPanelJSON } from '../dashboard/state/__fixtures__/dashboardJson';
+import { createDashboardFixture, createPanelFixture } from '../dashboard/state/__fixtures__/dashboardFixtures';
 
 import { TestRuleResult, Props } from './TestRuleResult';
 
@@ -20,8 +20,8 @@ jest.mock('@grafana/runtime', () => {
 const props: Props = {
   panel: new PanelModel({ id: 1 }),
   dashboard: new DashboardModel(
-    createDashboardJSON({
-      panels: [createPanelJSON({ id: 1 })],
+    createDashboardFixture({
+      panels: [createPanelFixture({ id: 1 })],
     })
   ),
 };

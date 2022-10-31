@@ -17,7 +17,7 @@ import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/compon
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 
 import { DashboardModel, PanelModel } from '../../state';
-import { createDashboardJSON } from '../../state/__fixtures__/dashboardJson';
+import { createDashboardFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { OptionsPaneOptions } from './OptionsPaneOptions';
 import { dataOverrideTooltipDescription, overrideRuleTooltipDescription } from './state/getOptionOverrides';
@@ -89,7 +89,7 @@ class OptionsPaneOptionsTestScenario {
     options: {},
   });
 
-  dashboard = new DashboardModel(createDashboardJSON());
+  dashboard = new DashboardModel(createDashboardFixture());
   store = mockStore({
     dashboard: { panels: [] },
     templating: {

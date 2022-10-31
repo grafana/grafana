@@ -11,13 +11,13 @@ import { setStarred } from '../../../../core/reducers/navBarTree';
 import { configureStore } from '../../../../store/configureStore';
 import { updateTimeZoneForSession } from '../../../profile/state/reducers';
 import { DashboardModel } from '../../state';
-import { createDashboardJSON } from '../../state/__fixtures__/dashboardJson';
+import { createDashboardFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { DashNav } from './DashNav';
 
 describe('Public dashboard title tag', () => {
   it('will be rendered when publicDashboardEnabled set to true in dashboard meta', async () => {
-    let dashboard = new DashboardModel(createDashboardJSON(), { publicDashboardEnabled: false });
+    let dashboard = new DashboardModel(createDashboardFixture(), { publicDashboardEnabled: false });
 
     const store = configureStore();
     const context = getGrafanaContextMock();
