@@ -10,11 +10,11 @@ import { SceneObjectStateChangedEvent } from './events';
 import { SceneDataState, SceneObject, SceneComponent, SceneEditor, SceneTimeRange, SceneObjectState } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
-  events = new EventBusSrv();
-
   private _isActive = false;
   private _subject = new Subject<TState>();
   private _state: TState;
+  private _events = new EventBusSrv();
+
   protected _parent?: SceneObject;
   protected subs = new Subscription();
 
@@ -85,7 +85,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
    * Subscribe to the scene event
    **/
   subscribeToEvent<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
-    return this.events.subscribe(eventType, handler);
+    return this._events.subscribe(eventType, handler);
   }
 
   setState(update: Partial<TState>) {
@@ -113,10 +113,10 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
    * Publish an event and optionally bubble it up the scene
    **/
   publishEvent(event: BusEvent, bubble?: boolean) {
-    this.events.publish(event);
+    this._events.publish(event);
 
     if (bubble && this.parent) {
-      this.parent.publishEvent(event);
+      this.parent.publishEvent(event, bubble);
     }
   }
 
@@ -152,7 +152,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     }
 
     // Clear subscriptions and listeners
-    this.events.removeAllListeners();
+    this._events.removeAllListeners();
     this.subs.unsubscribe();
     this.subs = new Subscription();
 
