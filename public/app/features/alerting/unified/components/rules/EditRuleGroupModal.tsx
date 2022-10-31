@@ -4,7 +4,7 @@ import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { durationToMilliseconds, GrafanaTheme2, parseDuration } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Modal, Button, Field, Input, useStyles2, Label, Icon, Tooltip } from '@grafana/ui';
+import { Modal, Button, Field, Input, useStyles2, Label, Icon, Tooltip, Badge } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useDispatch } from 'app/types';
@@ -22,15 +22,19 @@ import { updateLotexNamespaceAndGroupAction } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { getRulesSourceName } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
+import { parsePrometheusDuration } from '../../utils/time';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
-import { evaluateEveryValidationOptions } from '../rule-editor/GrafanaEvaluationBehavior';
+import { evaluateEveryValidationOptions, MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
 
 const MINUTE = '1m';
 interface AlertInfo {
   alertName: string;
   forDuration: string;
   numberEvaluations: number;
+}
+function ForError({ message }: { message: string }) {
+  return <Badge color="orange" icon="exclamation-triangle" text={'Error'} tooltip={message} />;
 }
 
 const getNumberEvaluationsToStartAlerting = (forDuration: string, currentEvaluation: string) => {
@@ -68,6 +72,23 @@ export const getAlertInfo = (alert: RulerRuleDTO, currentEvaluation: string): Al
     };
   }
   return emptyAlert;
+};
+export const isValidEvaluation = (evaluation: string) => {
+  try {
+    const duration = parsePrometheusDuration(evaluation);
+
+    if (duration < MIN_TIME_RANGE_STEP_S * 1000) {
+      return false;
+    }
+
+    if (duration % (MIN_TIME_RANGE_STEP_S * 1000) !== 0) {
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    return false;
+  }
 };
 
 export const getIntervalForGroup = (
@@ -143,7 +164,14 @@ export const RulesForGroupTable = ({
         id: 'numberEvaluations',
         label: '#Evaluations',
         renderCell: ({ data: { numberEvaluations } }) => {
-          return <>{numberEvaluations}</>;
+          if (!isValidEvaluation(currentInterval)) {
+            return <ForError message={'Invalid evaluation interval format'} />;
+          }
+          if (numberEvaluations === 0) {
+            return <ForError message="Invalid For value: it should be greater or equal than evaluation interval." />;
+          } else {
+            return <>{numberEvaluations}</>;
+          }
         },
         size: 0.2,
       },
@@ -315,7 +343,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                   #Evaluations column represents number of evaluations neededed before alert starts firing.
                 </div>
                 <RulesForGroupTable
-                  rulerRules={groupfoldersForSource.result}
+                  rulerRules={groupfoldersForSource?.result}
                   group={group.name}
                   folder={namespace.name}
                 />
