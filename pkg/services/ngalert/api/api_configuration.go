@@ -60,7 +60,7 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Respon
 	}
 
 	resp := apimodels.GettableNGalertConfig{
-		Alertmanagers:       cfg.Alertmanagers,
+		Alertmanagers:       []string{},
 		AlertmanagersChoice: apimodels.AlertmanagersChoice(cfg.SendAlertsTo.String()),
 	}
 	return response.JSON(http.StatusOK, resp)
@@ -86,15 +86,8 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels
 	}
 
 	cfg := &ngmodels.AdminConfiguration{
-		Alertmanagers: []string{},
-		SendAlertsTo:  sendAlertsTo,
-		OrgID:         c.OrgID,
-	}
-
-	if err := cfg.Validate(); err != nil {
-		msg := "failed to validate admin configuration"
-		srv.log.Error(msg, "error", err)
-		return ErrResp(http.StatusBadRequest, err, msg)
+		SendAlertsTo: sendAlertsTo,
+		OrgID:        c.OrgID,
 	}
 
 	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: cfg}
