@@ -227,6 +227,15 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 			ExpectedHttpResponse: ErrPublicDashboardIdentifierNotSet.StatusCode,
 			ShouldCallService:    false,
 		},
+		{
+			Name:                 "Public dashboard uid does not exist",
+			User:                 userEditorPublicDashboard,
+			DashboardUid:         dashboardUid,
+			PublicDashboardUid:   "UIDDOESNOTEXIST",
+			ResponseErr:          ErrPublicDashboardNotFound,
+			ExpectedHttpResponse: ErrPublicDashboardNotFound.StatusCode,
+			ShouldCallService:    true,
+		},
 	}
 
 	for _, test := range testCases {

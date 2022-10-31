@@ -380,57 +380,46 @@ func TestUpdatePublicDashboard(t *testing.T) {
 }
 
 func TestDeletePublicDashboard(t *testing.T) {
-	t.Run("When public dashboard is deleted, then find public dashboard throws an error", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
-		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
-		publicDashboardStore := database.ProvideStore(sqlStore)
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
+	testCases := []struct {
+		Name             string
+		AffectedRowsResp int64
+		ErrResp          error
+		ExpectedErr      error
+	}{
+		{
+			Name:             "Successfully deletes a public dashboards",
+			AffectedRowsResp: 1,
+			ErrResp:          nil,
+			ExpectedErr:      nil,
+		},
+		{
+			Name:             "Public dashboard not found",
+			AffectedRowsResp: 0,
+			ErrResp:          nil,
+			ExpectedErr:      ErrPublicDashboardNotFound,
+		},
+		{
+			Name:             "Database error",
+			AffectedRowsResp: 0,
+			ErrResp:          errors.New("db error!"),
+			ExpectedErr:      errors.New("db error!"),
+		},
+	}
 
-		service := &PublicDashboardServiceImpl{
-			log:   log.New("test.logger"),
-			store: publicDashboardStore,
-		}
+	for _, tt := range testCases {
+		t.Run(tt.Name, func(t *testing.T) {
+			store := NewFakePublicDashboardStore(t)
+			store.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.AffectedRowsResp, tt.ExpectedErr)
 
-		dto := &SavePublicDashboardDTO{
-			DashboardUid: dashboard.Uid,
-			OrgId:        dashboard.OrgId,
-			UserId:       7,
-			PublicDashboard: &PublicDashboard{
-				AnnotationsEnabled: false,
-				IsEnabled:          true,
-				TimeSettings:       timeSettings,
-			},
-		}
+			service := &PublicDashboardServiceImpl{
+				log:   log.New("test.logger"),
+				store: store,
+			}
 
-		savedPubdash, err := service.Save(context.Background(), SignedInUser, dto)
-		require.NoError(t, err)
-
-		pubdash, err := service.FindByDashboardUid(context.Background(), savedPubdash.OrgId, savedPubdash.DashboardUid)
-		require.NoError(t, err)
-		require.Equal(t, pubdash, savedPubdash)
-
-		deletedError := service.Delete(context.Background(), dashboard.OrgId, savedPubdash.Uid)
-		require.NoError(t, deletedError)
-
-		pubdash, err = service.FindByDashboardUid(context.Background(), savedPubdash.OrgId, savedPubdash.DashboardUid)
-		require.Error(t, err)
-		require.Equal(t, ErrPublicDashboardNotFound, err)
-		require.Nil(t, pubdash)
-	})
-
-	t.Run("When public dashboard is deleted, then find public dashboard throws an error", func(t *testing.T) {
-		store := NewFakePublicDashboardStore(t)
-		store.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(errors.New("db-error"))
-
-		service := &PublicDashboardServiceImpl{
-			log:   log.New("test.logger"),
-			store: store,
-		}
-
-		err := service.Delete(context.Background(), 13, "uid")
-		require.Error(t, err)
-	})
+			err := service.Delete(context.Background(), 13, "uid")
+			assert.Equal(t, tt.ExpectedErr, err)
+		})
+	}
 }
 
 func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,

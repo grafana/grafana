@@ -41,7 +41,7 @@ type Store interface {
 	FindAll(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error)
 	Save(ctx context.Context, cmd SavePublicDashboardCommand) error
 	Update(ctx context.Context, cmd SavePublicDashboardCommand) error
-	Delete(ctx context.Context, orgId int64, uid string) error
+	Delete(ctx context.Context, orgId int64, uid string) (int64, error)
 
 	GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error)
 	ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error)

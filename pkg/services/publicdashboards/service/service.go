@@ -266,7 +266,16 @@ func (pd *PublicDashboardServiceImpl) GetOrgIdByAccessToken(ctx context.Context,
 }
 
 func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, orgId int64, uid string) error {
-	return pd.store.Delete(ctx, orgId, uid)
+	affectedRows, err := pd.store.Delete(ctx, orgId, uid)
+	if err != nil {
+		return err
+	}
+
+	if affectedRows == 0 {
+		return ErrPublicDashboardNotFound
+	}
+
+	return nil
 }
 
 // intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards

@@ -192,15 +192,20 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 	return err
 }
 
-func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, orgId int64, uid string) error {
+func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, orgId int64, uid string) (int64, error) {
 	dashboard := &PublicDashboard{OrgId: orgId, Uid: uid}
-	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Delete(dashboard)
+	var affectedRows int64
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		affectedRows, err = sess.Delete(dashboard)
+
 		if err != nil {
 			return err
 		}
 		return nil
 	})
+
+	return affectedRows, err
 }
 
 // ExistsEnabledByDashboardUid Responds true if there is an enabled public dashboard for a dashboard uid
