@@ -1,3 +1,4 @@
+import { eq } from 'lodash';
 import { lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
@@ -122,6 +123,7 @@ class DataSourceWithBackend<
     const queries = targets.map((q) => {
       let datasource = this.getRef();
       let datasourceId = this.id;
+      let shouldApplyTemplateVariables = true;
 
       if (isExpressionReference(q.datasource)) {
         return {
@@ -137,12 +139,19 @@ class DataSourceWithBackend<
           throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
         }
 
-        datasource = ds.rawRef ?? getDataSourceRef(ds);
-        datasourceId = ds.id;
+        const dsRef = ds.rawRef ?? getDataSourceRef(ds);
+        const dsId = ds.id;
+        if (!eq(dsRef, datasource) || datasourceId !== dsId) {
+          datasource = dsRef;
+          datasourceId = dsId;
+          // If the query is using a different datasource, we would need to retrieve the datasource
+          // instance (async) and apply the template variables but it seems it's not necessary for now.
+          shouldApplyTemplateVariables = false;
+        }
       }
 
       return {
-        ...this.applyTemplateVariables(q, request.scopedVars),
+        ...(shouldApplyTemplateVariables ? this.applyTemplateVariables(q, request.scopedVars) : q),
         datasource,
         datasourceId, // deprecated!
         intervalMs,
