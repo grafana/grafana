@@ -77,8 +77,10 @@ func parseRequestParams(req *http.Request) (uid string, kind string, params map[
 func (s *httpObjectStore) doGetObject(c *models.ReqContext) response.Response {
 	uid, kind, params := parseRequestParams(c.Req)
 	rsp, err := s.store.Read(c.Req.Context(), &ReadObjectRequest{
-		UID:         uid,
-		Kind:        kind,
+		GRN: &GRN{
+			UID:  uid,
+			Kind: kind,
+		},
 		Version:     params["version"],           // ?version = XYZ
 		WithBody:    params["body"] != "false",   // default to true
 		WithSummary: params["summary"] == "true", // default to false
@@ -110,8 +112,10 @@ func (s *httpObjectStore) doGetObject(c *models.ReqContext) response.Response {
 func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response {
 	uid, kind, params := parseRequestParams(c.Req)
 	rsp, err := s.store.Read(c.Req.Context(), &ReadObjectRequest{
-		UID:         uid,
-		Kind:        kind,
+		GRN: &GRN{
+			UID:  uid,
+			Kind: kind,
+		},
 		Version:     params["version"], // ?version = XYZ
 		WithBody:    true,
 		WithSummary: false,
@@ -166,8 +170,10 @@ func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response 
 	}
 
 	rsp, err := s.store.Write(c.Req.Context(), &WriteObjectRequest{
-		UID:             uid,
-		Kind:            kind,
+		GRN: &GRN{
+			UID:  uid,
+			Kind: kind,
+		},
 		Body:            b,
 		Comment:         params["comment"],
 		PreviousVersion: params["previousVersion"],
@@ -181,8 +187,10 @@ func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response 
 func (s *httpObjectStore) doDeleteObject(c *models.ReqContext) response.Response {
 	uid, kind, params := parseRequestParams(c.Req)
 	rsp, err := s.store.Delete(c.Req.Context(), &DeleteObjectRequest{
-		UID:             uid,
-		Kind:            kind,
+		GRN: &GRN{
+			UID:  uid,
+			Kind: kind,
+		},
 		PreviousVersion: params["previousVersion"],
 	})
 	if err != nil {
@@ -195,8 +203,10 @@ func (s *httpObjectStore) doGetHistory(c *models.ReqContext) response.Response {
 	uid, kind, params := parseRequestParams(c.Req)
 	limit := int64(20) // params
 	rsp, err := s.store.History(c.Req.Context(), &ObjectHistoryRequest{
-		UID:           uid,
-		Kind:          kind,
+		GRN: &GRN{
+			UID:  uid,
+			Kind: kind,
+		},
 		Limit:         limit,
 		NextPageToken: params["nextPageToken"],
 	})
