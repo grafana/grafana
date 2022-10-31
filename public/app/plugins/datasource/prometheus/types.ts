@@ -1,4 +1,5 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
+import { FetchError, FetchResponse } from '@grafana/runtime';
 
 import { QueryEditorMode } from './querybuilder/shared/types';
 
@@ -115,7 +116,14 @@ export type PromValue = [number, any];
 
 export interface PromMetric {
   __name__?: string;
+
   [index: string]: any;
+}
+
+export function isFetchSuccessResponse(
+  response: FetchError<PromDataErrorResponse<PromMatrixData>> | FetchResponse<PromDataSuccessResponse<PromMatrixData>>
+): response is FetchResponse {
+  return 'ok' in response;
 }
 
 export function isMatrixData(result: MatrixOrVectorResult): result is PromMatrixData['result'][0] {

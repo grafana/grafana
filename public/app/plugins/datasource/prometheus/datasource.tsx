@@ -51,6 +51,7 @@ import { getInitHints, getQueryHints } from './query_hints';
 import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
 import {
   ExemplarTraceIdDestination,
+  isFetchSuccessResponse,
   PromDataErrorResponse,
   PromDataSuccessResponse,
   PromExemplarData,
@@ -726,6 +727,34 @@ export class PrometheusDatasource
       datasource: this.getRef(),
     };
 
+    if (this.access === 'direct') {
+      const start = this.getPrometheusTime(options.range.from, false);
+      const end = this.getPrometheusTime(options.range.to, true);
+      const queryOptions = { ...options, interval: step };
+
+      const queryModel = {
+        expr,
+        interval: step,
+        refId: 'X',
+        requestId: `prom-query-${annotation.name}`,
+      };
+      const query = this.createQuery(queryModel, queryOptions, start, end);
+      return await lastValueFrom(
+        this.performTimeSeriesQuery(query, query.start, query.end).pipe(
+          filter((response: any) => isFetchSuccessResponse(response)),
+          map((response: FetchResponse<PromDataSuccessResponse<PromMatrixData>>) => {
+            const frames: DataFrame[] = transform(response, {
+              query: query,
+              target: queryModel,
+              responseListLength: 1,
+              exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
+            });
+            return this.processAnnotationResponse(options, frames);
+          })
+        )
+      );
+    }
+
     return await lastValueFrom(
       getBackendSrv()
         .fetch<BackendDataSourceResponse>({
@@ -740,14 +769,14 @@ export class PrometheusDatasource
         })
         .pipe(
           map((rsp: FetchResponse<BackendDataSourceResponse>) => {
-            return this.processAnnotationResponse(options, rsp.data);
+            const frames: DataFrame[] = toDataQueryResponse({ data: rsp.data }).data;
+            return this.processAnnotationResponse(options, frames);
           })
         )
     );
   }
 
-  processAnnotationResponse = (options: any, data: BackendDataSourceResponse) => {
-    const frames: DataFrame[] = toDataQueryResponse({ data: data }).data;
+  processAnnotationResponse = (options: any, frames: DataFrame[]) => {
     if (!frames || !frames.length) {
       return [];
     }
@@ -772,6 +801,7 @@ export class PrometheusDatasource
       const timeValueTuple: Array<[number, number]> = [];
 
       let idx = 0;
+      let previousTimestamp: number;
       valueField.values.toArray().forEach((value: string) => {
         let timeStampValue: number;
         let valueValue: number;
@@ -787,6 +817,10 @@ export class PrometheusDatasource
         }
 
         idx++;
+        if (!isNaN(timeStampValue) && timeStampValue !== previousTimestamp) {
+          timeValueTuple.push([timeStampValue, valueValue]);
+          previousTimestamp = timeStampValue;
+        }
         timeValueTuple.push([timeStampValue, valueValue]);
       });
 
