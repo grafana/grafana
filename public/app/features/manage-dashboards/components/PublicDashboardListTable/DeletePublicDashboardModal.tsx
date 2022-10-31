@@ -12,8 +12,8 @@ const Body = ({ title }: { title?: string }) => {
       <p className={styles.title}>Do you want to delete this public dashboard?</p>
       <p className={styles.description}>
         {title
-          ? `Public dashboard configuration will be deleted, while "${title}" dashboard will remain private.`
-          : 'Public dashboard configuration will be deleted'}
+          ? `This will delete the public dashboard for ${title}. Your dashboard will not be deleted.`
+          : 'Orphaned public dashboard will be deleted'}
       </p>
     </>
   );
