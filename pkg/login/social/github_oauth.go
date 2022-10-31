@@ -203,7 +203,7 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 
 	role, grafanaAdmin := s.extractRoleAndAdmin(response.Body, teams, true)
 	if s.roleAttributeStrict && !role.IsValid() {
-		return nil, ErrInvalidBasicRole
+		return nil, &InvalidBasicRoleError{idP: "Github", assignedRole: string(role)}
 	}
 
 	var isGrafanaAdmin *bool = nil

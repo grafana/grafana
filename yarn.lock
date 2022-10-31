@@ -1718,7 +1718,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/plugin-proposal-object-rest-spread@npm:^7.12.1, @babel/plugin-proposal-object-rest-spread@npm:^7.19.4":
+"@babel/plugin-proposal-object-rest-spread@npm:7.19.4, @babel/plugin-proposal-object-rest-spread@npm:^7.12.1, @babel/plugin-proposal-object-rest-spread@npm:^7.19.4":
   version: 7.19.4
   resolution: "@babel/plugin-proposal-object-rest-spread@npm:7.19.4"
   dependencies:
@@ -2069,6 +2069,17 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.0.0-0
   checksum: 2cde73725ec51118ebf410bf02d78781c03fa4d3185993fcc9d253b97443381b621c44810084c5dd68b92eb8bdfae0e5b163e91b32bebbb33852383d1815c05d
+  languageName: node
+  linkType: hard
+
+"@babel/plugin-syntax-typescript@npm:^7.20.0":
+  version: 7.20.0
+  resolution: "@babel/plugin-syntax-typescript@npm:7.20.0"
+  dependencies:
+    "@babel/helper-plugin-utils": ^7.19.0
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: 6189c0b5c32ba3c9a80a42338bd50719d783b20ef29b853d4f03929e971913d3cefd80184e924ae98ad6db09080be8fe6f1ffde9a6db8972523234f0274d36f7
   languageName: node
   linkType: hard
 
@@ -2687,6 +2698,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/plugin-transform-typescript@npm:7.20.0":
+  version: 7.20.0
+  resolution: "@babel/plugin-transform-typescript@npm:7.20.0"
+  dependencies:
+    "@babel/helper-create-class-features-plugin": ^7.19.0
+    "@babel/helper-plugin-utils": ^7.19.0
+    "@babel/plugin-syntax-typescript": ^7.20.0
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: 7cc335a95374d03e09ec48fe313dccde477ab4784f26f7b24fdc7a9db3c670759c3c8177a671a68365467c0885dad82b5dda3f57ba0b6bf7459f4ae55fae4ee4
+  languageName: node
+  linkType: hard
+
 "@babel/plugin-transform-typescript@npm:^7.18.6":
   version: 7.18.6
   resolution: "@babel/plugin-transform-typescript@npm:7.18.6"
@@ -3081,12 +3105,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:7.19.0, @babel/runtime@npm:^7.10.2, @babel/runtime@npm:^7.14.5, @babel/runtime@npm:^7.17.2, @babel/runtime@npm:^7.18.9":
-  version: 7.19.0
-  resolution: "@babel/runtime@npm:7.19.0"
+"@babel/runtime@npm:7.20.0":
+  version: 7.20.0
+  resolution: "@babel/runtime@npm:7.20.0"
   dependencies:
-    regenerator-runtime: ^0.13.4
-  checksum: fa69c351bb05e1db3ceb9a02fdcf620c234180af68cdda02152d3561015f6d55277265d3109815992f96d910f3db709458cae4f8df1c3def66f32e0867d82294
+    regenerator-runtime: ^0.13.10
+  checksum: 637fca51db34f3a59d329b7e0d01163769fe94915fdb04e4ac4ba62de9f1ca637ce3a564fe3b0166ccdd7f02f14b6a5707ee3e550b3e01c72327c6620d8e6a8b
   languageName: node
   linkType: hard
 
@@ -3096,6 +3120,15 @@ __metadata:
   dependencies:
     regenerator-runtime: ^0.13.4
   checksum: c40825430400e47c19b97e4142d5315d2910305b9714d44a711472587ee2fd4521fdba5f02ddd9df3902f5e988d9854fa83f4da1e0c091f70f6983fa52480606
+  languageName: node
+  linkType: hard
+
+"@babel/runtime@npm:^7.10.2, @babel/runtime@npm:^7.14.5, @babel/runtime@npm:^7.17.2, @babel/runtime@npm:^7.18.9":
+  version: 7.19.0
+  resolution: "@babel/runtime@npm:7.19.0"
+  dependencies:
+    regenerator-runtime: ^0.13.4
+  checksum: fa69c351bb05e1db3ceb9a02fdcf620c234180af68cdda02152d3561015f6d55277265d3109815992f96d910f3db709458cae4f8df1c3def66f32e0867d82294
   languageName: node
   linkType: hard
 
@@ -4446,7 +4479,7 @@ __metadata:
     "@types/lodash": 4.14.182
     "@types/node": 16.11.45
     "@types/uuid": 8.3.4
-    babel-loader: 8.2.5
+    babel-loader: 9.0.0
     blink-diff: 1.0.13
     chrome-remote-interface: 0.31.3
     commander: 8.3.0
@@ -13890,7 +13923,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-loader@npm:8.2.5, babel-loader@npm:^8.0.0, babel-loader@npm:^8.2.5":
+"babel-loader@npm:9.0.0":
+  version: 9.0.0
+  resolution: "babel-loader@npm:9.0.0"
+  dependencies:
+    find-cache-dir: ^3.3.2
+    schema-utils: ^4.0.0
+  peerDependencies:
+    "@babel/core": ^7.12.0
+    webpack: ">=5"
+  checksum: 6b146e33c81fd948ffdefa8a6319efa1bea6e17c946bfac4641375710e51831aeb7f4a20c88604eaa00f5ecd4b6591da5a65ade326feba792609f932df150645
+  languageName: node
+  linkType: hard
+
+"babel-loader@npm:^8.0.0, babel-loader@npm:^8.2.5":
   version: 8.2.5
   resolution: "babel-loader@npm:8.2.5"
   dependencies:
@@ -20484,7 +20530,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"find-cache-dir@npm:^3.3.1":
+"find-cache-dir@npm:^3.3.1, find-cache-dir@npm:^3.3.2":
   version: 3.3.2
   resolution: "find-cache-dir@npm:3.3.2"
   dependencies:
@@ -21607,16 +21653,16 @@ __metadata:
     "@babel/core": 7.19.0
     "@babel/plugin-proposal-class-properties": 7.18.6
     "@babel/plugin-proposal-nullish-coalescing-operator": 7.18.6
-    "@babel/plugin-proposal-object-rest-spread": 7.18.9
+    "@babel/plugin-proposal-object-rest-spread": 7.19.4
     "@babel/plugin-proposal-optional-chaining": 7.18.9
     "@babel/plugin-syntax-dynamic-import": 7.8.3
     "@babel/plugin-transform-react-constant-elements": 7.18.9
     "@babel/plugin-transform-runtime": 7.19.1
-    "@babel/plugin-transform-typescript": 7.19.0
+    "@babel/plugin-transform-typescript": 7.20.0
     "@babel/preset-env": 7.19.0
     "@babel/preset-react": 7.18.6
     "@babel/preset-typescript": 7.18.6
-    "@babel/runtime": 7.19.0
+    "@babel/runtime": 7.20.0
     "@betterer/betterer": 5.4.0
     "@betterer/cli": 5.4.0
     "@betterer/eslint": 5.4.0
@@ -21753,7 +21799,7 @@ __metadata:
     autoprefixer: 10.4.7
     axios: 0.27.2
     babel-jest: 28.1.3
-    babel-loader: 8.2.5
+    babel-loader: 9.0.0
     babel-plugin-angularjs-annotate: 0.10.0
     babel-plugin-macros: 3.1.0
     baron: 3.0.3
@@ -33241,6 +33287,13 @@ __metadata:
   version: 0.11.1
   resolution: "regenerator-runtime@npm:0.11.1"
   checksum: 3c97bd2c7b2b3247e6f8e2147a002eb78c995323732dad5dc70fac8d8d0b758d0295e7015b90d3d444446ae77cbd24b9f9123ec3a77018e81d8999818301b4f4
+  languageName: node
+  linkType: hard
+
+"regenerator-runtime@npm:^0.13.10":
+  version: 0.13.10
+  resolution: "regenerator-runtime@npm:0.13.10"
+  checksum: 09893f5a9e82932642d9a999716b6c626dc53ef2a01307c952ebbf8e011802360163a37c304c18a6c358548be5a72b448e37209954a18696f21e438c81cbb4b9
   languageName: node
   linkType: hard
 

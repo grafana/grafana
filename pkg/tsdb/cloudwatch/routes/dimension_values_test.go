@@ -16,7 +16,7 @@ func Test_DimensionValues_Route(t *testing.T) {
 	t.Run("Calls GetDimensionValuesByDimensionFilter when a valid request is passed", func(t *testing.T) {
 		mockListMetricsService := mocks.ListMetricsServiceMock{}
 		mockListMetricsService.On("GetDimensionValuesByDimensionFilter").Return([]string{}, nil)
-		newListMetricsService = func(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, region string) (models.ListMetricsProvider, error) {
+		newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
 			return &mockListMetricsService, nil
 		}
 		rr := httptest.NewRecorder()
@@ -28,7 +28,7 @@ func Test_DimensionValues_Route(t *testing.T) {
 	t.Run("returns 500 if GetDimensionValuesByDimensionFilter returns an error", func(t *testing.T) {
 		mockListMetricsService := mocks.ListMetricsServiceMock{}
 		mockListMetricsService.On("GetDimensionValuesByDimensionFilter").Return([]string{}, fmt.Errorf("some error"))
-		newListMetricsService = func(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, region string) (models.ListMetricsProvider, error) {
+		newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
 			return &mockListMetricsService, nil
 		}
 		rr := httptest.NewRecorder()

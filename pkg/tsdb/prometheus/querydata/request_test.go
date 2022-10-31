@@ -13,15 +13,17 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	p "github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	p "github.com/prometheus/common/model"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
@@ -415,7 +417,7 @@ func setup(wideFrames bool) (*testContext, error) {
 
 	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusStreamingJSONParser": true, "prometheusWideSeries": wideFrames}}
 
-	opts, err := buffered.CreateTransportOptions(settings, &setting.Cfg{}, &fakeLogger{})
+	opts, err := buffered.CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
 	if err != nil {
 		return nil, err
 	}
@@ -425,7 +427,7 @@ func setup(wideFrames bool) (*testContext, error) {
 		return nil, err
 	}
 
-	queryData, _ := querydata.New(httpClient, features, tracer, settings, &fakeLogger{})
+	queryData, _ := querydata.New(httpClient, features, tracer, settings, &logtest.Fake{})
 
 	return &testContext{
 		httpProvider: httpProvider,
