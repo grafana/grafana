@@ -1,4 +1,4 @@
-import { createAsyncThunk } from '@reduxjs/toolkit';
+import { createAsyncThunk, AsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
 import { durationToMilliseconds } from '@grafana/data';
@@ -754,14 +754,6 @@ interface UpdateNamespaceAndGroupOptions {
   newGroupName: string;
   groupInterval?: string;
 }
-// This method was introduced for making betterer happy (it was complaining about using as StoreState)
-const isStoreState = (something: unknown): something is StoreState => {
-  if (typeof something === 'object') {
-    return something ? 'unifiedAlerting' in something : false;
-  } else {
-    return false;
-  }
-};
 
 export const rulesInSameGroupHaveInvalidFor = (
   rulerRules: RulerRulesConfigDTO | null | undefined,
@@ -784,7 +776,11 @@ export const rulesInSameGroupHaveInvalidFor = (
 };
 
 // allows renaming namespace, renaming group and changing group interval, all in one go
-export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
+export const updateLotexNamespaceAndGroupAction: AsyncThunk<
+  void,
+  UpdateNamespaceAndGroupOptions,
+  { state: StoreState }
+> = createAsyncThunk<void, UpdateNamespaceAndGroupOptions, { state: StoreState }>(
   'unifiedalerting/updateLotexNamespaceAndGroup',
   async (options: UpdateNamespaceAndGroupOptions, thunkAPI): Promise<void> => {
     return withAppEvents(
@@ -824,9 +820,7 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
           // validation for new groupInterval
           if (groupInterval !== existingGroup.interval) {
             const storeState = thunkAPI.getState();
-            const groupfoldersForSource = isStoreState(storeState)
-              ? storeState?.unifiedAlerting.rulerRules[rulesSourceName]
-              : null;
+            const groupfoldersForSource = storeState?.unifiedAlerting.rulerRules[rulesSourceName];
             const notValidRules = rulesInSameGroupHaveInvalidFor(
               groupfoldersForSource?.result,
               groupName,
