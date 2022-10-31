@@ -369,6 +369,7 @@ export interface Panel {
   /**
    * Direction to repeat in if 'repeat' is set.
    * "h" for horizontal, "v" for vertical.
+   * TODO this is probably optional
    */
   repeatDirection: ('h' | 'v');
   /**

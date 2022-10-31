@@ -25,6 +25,7 @@ import {
   variableStateFetching,
 } from './sharedReducer';
 import { variablesInitTransaction } from './transactionReducer';
+import {createDashboardModelFixture} from "../../dashboard/state/__fixtures__/dashboardFixtures";
 
 variableAdapters.setInit(() => [createIntervalVariableAdapter(), createConstantVariableAdapter()]);
 
@@ -226,5 +227,5 @@ describe('when onTimeRangeUpdated is dispatched', () => {
 });
 
 function getDashboardModel(): DashboardModel {
-  return new DashboardModel({ schemaVersion: 9999 }); // ignore any schema migrations
+  return createDashboardModelFixture({ schemaVersion: 9999 }); // ignore any schema migrations
 }

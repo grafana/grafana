@@ -11,33 +11,33 @@ export type {
   DashboardLink,
   DashboardLinkType,
   VariableType,
-  FieldColorModeId,
   FieldColorSeriesByMode,
   FieldColor,
   GridPos,
   Threshold,
-  ThresholdsMode,
   ThresholdsConfig,
   ValueMapping,
-  MappingType,
   ValueMap,
   RangeMap,
   RegexMap,
   SpecialValueMap,
-  SpecialValueMatch,
   ValueMappingResult,
   Transformation,
-  DashboardCursorSync,
   MatcherConfig,
   RowPanel
 } from './raw/dashboard/x/dashboard.gen';
 
-// Raw generated default consts from dashboard entity type.
+// Raw generated enums and default consts from dashboard entity type.
 export {
   defaultAnnotationQuery,
   defaultDashboardLink,
+  FieldColorModeId,
   defaultGridPos,
+  ThresholdsMode,
   defaultThresholdsConfig,
+  MappingType,
+  SpecialValueMatch,
+  DashboardCursorSync,
   defaultDashboardCursorSync,
   defaultMatcherConfig,
   defaultRowPanel
@@ -81,5 +81,5 @@ export type {
   PlaylistItem
 } from './raw/playlist/x/playlist.gen';
 
-// Raw generated default consts from playlist entity type.
+// Raw generated enums and default consts from playlist entity type.
 export { defaultPlaylist } from './raw/playlist/x/playlist.gen';

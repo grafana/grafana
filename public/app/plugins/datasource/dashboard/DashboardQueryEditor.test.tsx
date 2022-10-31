@@ -10,6 +10,10 @@ import { DashboardModel } from 'app/features/dashboard/state';
 
 import { DashboardQueryEditor } from './DashboardQueryEditor';
 import { SHARED_DASHBOARD_QUERY } from './types';
+import {
+  createDashboardModelFixture,
+  createPanelJSONFixture
+} from "../../../features/dashboard/state/__fixtures__/dashboardFixtures";
 
 jest.mock('app/core/config', () => ({
   ...(jest.requireActual('app/core/config') as unknown as object),
@@ -42,21 +46,21 @@ describe('DashboardQueryEditor', () => {
   let mockDashboard: DashboardModel;
 
   beforeEach(() => {
-    mockDashboard = new DashboardModel({
+    mockDashboard = createDashboardModelFixture({
       panels: [
-        {
+        createPanelJSONFixture({
           targets: [],
           type: 'timeseries',
           id: 1,
           title: 'My first panel',
-        },
-        {
+        }),
+        createPanelJSONFixture({
           targets: [],
           id: 2,
           type: 'timeseries',
           title: 'Another panel',
-        },
-        {
+        }),
+        createPanelJSONFixture({
           datasource: {
             uid: SHARED_DASHBOARD_QUERY,
           },
@@ -64,7 +68,7 @@ describe('DashboardQueryEditor', () => {
           id: 3,
           type: 'timeseries',
           title: 'A dashboard query panel',
-        },
+        }),
       ],
     });
     jest.spyOn(getDashboardSrv(), 'getCurrent').mockImplementation(() => mockDashboard);

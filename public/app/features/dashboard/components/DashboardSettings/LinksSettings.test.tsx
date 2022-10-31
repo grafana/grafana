@@ -10,6 +10,7 @@ import { locationService } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
 import { DashboardModel } from '../../state';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { DashboardSettings } from './DashboardSettings';
 
@@ -32,7 +33,7 @@ function setup(dashboard: DashboardModel) {
 }
 
 function buildTestDashboard() {
-  return new DashboardModel({
+  return createDashboardModelFixture({
     links: [
       {
         asDropdown: false,
@@ -82,7 +83,7 @@ describe('LinksSettings', () => {
   };
 
   test('it renders a header and cta if no links', () => {
-    const linklessDashboard = new DashboardModel({ links: [] });
+    const linklessDashboard = createDashboardModelFixture({ links: [] });
     setup(linklessDashboard);
 
     expect(screen.getByRole('heading', { name: 'Links' })).toBeInTheDocument();

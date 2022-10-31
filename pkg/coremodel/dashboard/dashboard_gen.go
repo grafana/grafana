@@ -720,6 +720,7 @@ type Panel struct {
 
 	// Direction to repeat in if 'repeat' is set.
 	// "h" for horizontal, "v" for vertical.
+	// TODO this is probably optional
 	RepeatDirection PanelRepeatDirection `json:"repeatDirection"`
 
 	// TODO docs
@@ -758,6 +759,7 @@ type Panel struct {
 
 // Direction to repeat in if 'repeat' is set.
 // "h" for horizontal, "v" for vertical.
+// TODO this is probably optional
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
