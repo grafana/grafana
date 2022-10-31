@@ -65,6 +65,13 @@
         "react-moveable"
       ]
     },
+    {
+      "groupName": "Slate",
+      "matchPackageNames": [
+        "slate",
+        "slate-react"
+      ]
+    }
   ],
   "pin": {
     "enabled": false
