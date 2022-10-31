@@ -11,23 +11,23 @@ function getDefaultDashboardModel(): DashboardModel {
   return createDashboardModelFixture({
     refresh: false,
     panels: [
-      createPanelJSONFixture({
+      {
         id: 1,
         type: 'graph',
         gridPos: { x: 0, y: 0, w: 24, h: 6 },
-        legend: { sortDesc: false }, // legend is not in the cue schema for panel yet
-      }),
-      createPanelJSONFixture({
+        legend: { sortDesc: false }, // TODO legend is marked as a non-persisted field
+      },
+      {
         id: 2,
         type: 'row',
         gridPos: { x: 0, y: 6, w: 24, h: 2 },
-        collapsed: true, // collapsed is not in the cue schema for panel yet
+        collapsed: true,
         panels: [
           { id: 3, type: 'graph', gridPos: { x: 0, y: 6, w: 12, h: 2 } },
           { id: 4, type: 'graph', gridPos: { x: 12, y: 6, w: 12, h: 2 } },
         ],
-      }),
-      createPanelJSONFixture({ id: 5, type: 'row', gridPos: { x: 0, y: 6, w: 1, h: 1 } }),
+      },
+      { id: 5, type: 'row', gridPos: { x: 0, y: 6, w: 1, h: 1 }, collapsed: false, panels: []},
     ],
   });
 }

@@ -1,9 +1,8 @@
 import { CoreApp, DataFrame, DataQueryRequest, DataSourceApi, dateTime, LoadingState, PanelData } from '@grafana/data';
 import { MetaAnalyticsEventName, reportMetaAnalytics } from '@grafana/runtime';
 
-import { DashboardModel } from '../../dashboard/state';
-
 import { emitDataRequestEvent } from './queryAnalytics';
+import {createDashboardModelFixture} from "../../dashboard/state/__fixtures__/dashboardFixtures";
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -14,7 +13,7 @@ const datasource = {
   id: 1,
 } as DataSourceApi;
 
-const dashboardModel = new DashboardModel(
+const dashboardModel = createDashboardModelFixture(
   { id: 1, title: 'Test Dashboard', uid: 'test' },
   { folderTitle: 'Test Folder' }
 );

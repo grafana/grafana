@@ -1,7 +1,7 @@
 import { TypedVariableModel } from '@grafana/data';
 
 import { DashboardState, StoreState } from '../../../types';
-import { DashboardModel, PanelModel } from '../../dashboard/state';
+import { PanelModel } from '../../dashboard/state';
 import { initialState } from '../../dashboard/state/reducers';
 import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from '../constant/adapter';
@@ -12,8 +12,9 @@ import { ExtendedUrlQueryMap } from '../utils';
 import { templateVarsChangedInUrl } from './actions';
 import { getPreloadedState } from './helpers';
 import { VariablesState } from './types';
+import {createDashboardModelFixture} from "../../dashboard/state/__fixtures__/dashboardFixtures";
 
-const dashboardModel = new DashboardModel({});
+const dashboardModel = createDashboardModelFixture({});
 
 variableAdapters.setInit(() => [createCustomVariableAdapter(), createConstantVariableAdapter()]);
 
