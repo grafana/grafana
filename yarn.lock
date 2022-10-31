@@ -4742,7 +4742,7 @@ __metadata:
     "@grafana/e2e-selectors": 9.3.0-pre
     "@grafana/schema": 9.3.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@leeoniya/ufuzzy": 0.7.0
+    "@leeoniya/ufuzzy": 0.8.0
     "@mdx-js/react": 1.6.22
     "@monaco-editor/react": 4.4.5
     "@popperjs/core": 2.11.5
@@ -5774,10 +5774,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@leeoniya/ufuzzy@npm:0.7.0":
-  version: 0.7.0
-  resolution: "@leeoniya/ufuzzy@npm:0.7.0"
-  checksum: c2dd65b1f2ded54cd28a4294aa6083a30c633b55bff643cf1f6835b8c5022e0c6e8172958db3ae6a5871ed816c5bacec04184d1a6707638ed4d0a63506627557
+"@leeoniya/ufuzzy@npm:0.8.0":
+  version: 0.8.0
+  resolution: "@leeoniya/ufuzzy@npm:0.8.0"
+  checksum: 15c2c944beafcd97da8487ea7c0f5b59268ac080e492aa8ad6a53719f02164677725ef228211290433a13efaf4c1abd99b6f286c37c469872863e7e2fee90385
   languageName: node
   linkType: hard
 
@@ -21689,7 +21689,7 @@ __metadata:
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
     "@kusto/monaco-kusto": 5.2.0
-    "@leeoniya/ufuzzy": 0.7.0
+    "@leeoniya/ufuzzy": 0.8.0
     "@lezer/common": 1.0.0
     "@lezer/highlight": ^1.0.0
     "@lezer/lr": 1.2.3
