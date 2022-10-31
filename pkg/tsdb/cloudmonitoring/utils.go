@@ -28,11 +28,11 @@ func containsLabel(labels []string, newLabel string) bool {
 	return false
 }
 
-func addInterval(period string, field *data.Field) {
+func addInterval(period string, field *data.Field) error {
 	period = strings.TrimPrefix(period, "+")
 	p, err := intervalv2.ParseIntervalStringToTimeDuration(period)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	if err == nil {
 		if field.Config != nil {
@@ -43,4 +43,5 @@ func addInterval(period string, field *data.Field) {
 			})
 		}
 	}
+	return nil
 }
