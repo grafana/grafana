@@ -116,6 +116,50 @@ func (pd *PublicDashboardServiceImpl) FindByDashboardUid(ctx context.Context, or
 // Save is a helper method to persist the sharing config
 // to the database. It handles validations for sharing config and persistence
 func (pd *PublicDashboardServiceImpl) Save(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
+	// ensure dashboard exists
+	dashboard, err := pd.FindDashboard(ctx, dto.DashboardUid, u.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	// set default value for time settings
+	if dto.PublicDashboard.TimeSettings == nil {
+		dto.PublicDashboard.TimeSettings = &TimeSettings{}
+	}
+
+	// validate fields
+	err = validation.ValidateSavePublicDashboard(dto, dashboard)
+	if err != nil {
+		return nil, err
+	}
+
+	// verify public dashboard does not exist
+	existingPubdash, err := pd.store.Find(ctx, dto.PublicDashboard.Uid)
+	if err != nil {
+		return nil, err
+	} else if existingPubdash != nil {
+		return nil, ErrPublicDashboardBadRequest
+	}
+
+	// save
+	pubdashUid, err := pd.savePublicDashboard(ctx, dto)
+	if err != nil {
+		return nil, err
+	}
+
+	//Get latest public dashboard to return
+	newPubdash, err := pd.store.Find(ctx, pubdashUid)
+	if err != nil {
+		return nil, err
+	}
+
+	pd.logIsEnabledChanged(existingPubdash, newPubdash, u)
+
+	return newPubdash, err
+}
+
+// Updates an existing public dashboard based on publicdashboard.Uid
+func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
 	// validate if the dashboard exists
 	dashboard, err := pd.FindDashboard(ctx, dto.DashboardUid, u.OrgID)
 	if err != nil {
@@ -131,24 +175,23 @@ func (pd *PublicDashboardServiceImpl) Save(ctx context.Context, u *user.SignedIn
 	existingPubdash, err := pd.store.Find(ctx, dto.PublicDashboard.Uid)
 	if err != nil {
 		return nil, err
+	} else if existingPubdash == nil {
+		return nil, ErrPublicDashboardNotFound
 	}
 
-	// save changes
-	var pubdashUid string
-	if existingPubdash == nil {
-		err = validation.ValidateSavePublicDashboard(dto, dashboard)
-		if err != nil {
-			return nil, err
-		}
-		pubdashUid, err = pd.savePublicDashboard(ctx, dto)
-	} else {
-		pubdashUid, err = pd.updatePublicDashboard(ctx, dto)
-	}
+	// validate dashboard
+	err = validation.ValidateSavePublicDashboard(dto, dashboard)
 	if err != nil {
 		return nil, err
 	}
 
-	//Get latest public dashboard to return
+	// do the update
+	pubdashUid, err := pd.updatePublicDashboard(ctx, dto)
+	if err != nil {
+		return nil, err
+	}
+
+	// get latest public dashboard to return
 	newPubdash, err := pd.store.Find(ctx, pubdashUid)
 	if err != nil {
 		return nil, err
