@@ -1612,7 +1612,7 @@ const alertmanagerConfig = `
             }
           }
         ]
-      },   
+      },
 	  {
         "name": "slack_recv2",
         "grafana_managed_receiver_configs": [
@@ -2356,7 +2356,6 @@ var expNonEmailNotifications = map[string][]string{
 		`{
 		  "routing_key": "pagerduty_recv/pagerduty_test",
 		  "dedup_key": "234edb34441f942f713f3c2ccf58b1d719d921b4cbe34e57a1630f1dee847e3b",
-		  "description": "[FIRING:1] PagerdutyAlert (default)",
 		  "event_action": "trigger",
 		  "payload": {
 			"summary": "Integration Test [FIRING:1] PagerdutyAlert (default)",

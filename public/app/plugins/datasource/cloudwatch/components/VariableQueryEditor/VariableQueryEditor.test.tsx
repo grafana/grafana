@@ -230,7 +230,7 @@ describe('VariableEditor', () => {
         container: document.body,
       });
 
-      expect(ds.datasource.api.getMetrics).toHaveBeenCalledWith('z2', 'b1');
+      expect(ds.datasource.api.getMetrics).toHaveBeenCalledWith({ namespace: 'z2', region: 'b1' });
       expect(ds.datasource.api.getDimensionKeys).toHaveBeenCalledWith({ namespace: 'z2', region: 'b1' });
       expect(props.onChange).toHaveBeenCalledWith({
         ...defaultQuery,

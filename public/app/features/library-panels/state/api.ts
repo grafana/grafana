@@ -1,5 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
+import { DashboardModel } from 'app/features/dashboard/state';
+
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { DashboardSearchItem } from '../../search/types';
 import {
@@ -54,7 +56,18 @@ export async function getLibraryPanel(uid: string, isHandled = false): Promise<L
       showErrorAlert: !isHandled,
     })
   );
-  return response.data.result;
+  // kinda heavy weight migration process!!!
+  const { result } = response.data;
+  const dash = new DashboardModel({
+    schemaVersion: 35, // should be saved in the library panel
+    panels: [result.model],
+  });
+  const model = dash.panels[0].getSaveModel(); // migrated panel
+  dash.destroy(); // kill event listeners
+  return {
+    ...result,
+    model,
+  };
 }
 
 export async function getLibraryPanelByName(name: string): Promise<LibraryElementDTO[]> {
@@ -76,9 +89,9 @@ export async function addLibraryPanel(
 }
 
 export async function updateLibraryPanel(panelSaveModel: PanelModelWithLibraryPanel): Promise<LibraryElementDTO> {
-  const { uid, name, version } = panelSaveModel.libraryPanel;
+  const { libraryPanel, ...model } = panelSaveModel;
+  const { uid, name, version } = libraryPanel;
   const kind = LibraryElementKind.Panel;
-  const model = panelSaveModel;
   const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {
     name,
     model,

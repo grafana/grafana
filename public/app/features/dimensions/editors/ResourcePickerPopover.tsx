@@ -37,8 +37,9 @@ export const ResourcePickerPopover = (props: Props) => {
   const { dialogProps } = useDialog({}, ref);
   const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen: true }, ref);
 
+  const isURL = value && value.includes('://');
   const [newValue, setNewValue] = useState<string>(value ?? '');
-  const [activePicker, setActivePicker] = useState<PickerTabType>(PickerTabType.Folder);
+  const [activePicker, setActivePicker] = useState<PickerTabType>(isURL ? PickerTabType.URL : PickerTabType.Folder);
   const [formData, setFormData] = useState<FormData>(new FormData());
   const [upload, setUpload] = useState<boolean>(false);
   const [error, setError] = useState<ErrorResponse>({ message: '' });
