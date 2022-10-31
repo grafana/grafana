@@ -3,11 +3,12 @@ import { Observable, Subject } from 'rxjs';
 import { LoadingState, SelectableValue, VariableOption } from '@grafana/data';
 import { queryMetricTree } from 'app/plugins/datasource/testdata/metricTree';
 
-import { SceneVariableBase } from '../SceneVariableBase';
 import { VariableValueSelect } from '../components/VariableValueSelect';
 import { getVariableDependencies } from '../getVariableDependencies';
 import { sceneTemplateInterpolator } from '../sceneTemplateInterpolator';
 import { SceneVariableState, VariableUpdateContext } from '../types';
+
+import { SceneVariableBase } from './SceneVariableBase';
 
 export interface TestVariableState extends SceneVariableState {
   //query: DataQuery;

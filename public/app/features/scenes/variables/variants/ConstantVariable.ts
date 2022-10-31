@@ -1,4 +1,4 @@
-import { SceneVariableBase } from '../SceneVariableBase';
+import { SceneVariableBase } from './SceneVariableBase';
 
 /**
  * This variable is only designed for unit tests and potentially e2e tests.

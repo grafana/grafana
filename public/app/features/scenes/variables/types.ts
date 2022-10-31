@@ -17,8 +17,18 @@ export interface SceneVariableState extends SceneObjectStatePlain {
 }
 
 export interface SceneVariable<T extends SceneVariableState = SceneVariableState> extends SceneObject<T> {
+  /** The react component to use for the value selector */
   ValueSelectComponent?: SceneComponent<SceneVariable>;
+
+  /**
+   * Should return a string array of other variables this variable is using in it's definition.
+   */
   getDependencies?(): string[];
+
+  /**
+   * This function is called when variable should execute it's query (if it's a query variable) and re-evaluate whether the
+   * current value is valid and if not update it's current value.
+   */
   updateOptions?(context: VariableUpdateContext): Observable<number>;
 }
 
