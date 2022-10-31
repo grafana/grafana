@@ -14,6 +14,19 @@ import (
 	tload "github.com/grafana/thema/load"
 )
 
+// CoreStructuredDeclParentPath is the path, relative to the repository root, where
+// each child directory is expected to contain .cue files declaring one
+// CoreStructured kind.
+var CoreStructuredDeclParentPath = filepath.Join("kinds", "structured")
+
+// RawDeclParentPath is the path, relative to the repository root, where each child
+// directory is expected to contain .cue files declaring one Raw kind.
+var RawDeclParentPath = filepath.Join("kinds", "raw")
+
+// GoCoreKindParentPath is the path, relative to the repository root, to the directory
+// containing one directory per kind, full of generated Go kind output: types and bindings.
+var GoCoreKindParentPath = filepath.Join("pkg", "kinds")
+
 var defaultFramework cue.Value
 var fwOnce sync.Once
 
