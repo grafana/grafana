@@ -571,7 +571,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
     });
   });
 
-  describe('timezoneUTCOffset', () => {
+  describe.skip('timezoneUTCOffset', () => {
     const testQuery = {
       id: '',
       refId: 'a',
