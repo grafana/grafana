@@ -112,6 +112,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
   cancelFlippingTimer?: number;
   topLogsRef = createRef<HTMLDivElement>();
+  logsVolumeEventBus: EventBus;
 
   state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
@@ -125,6 +126,11 @@ class UnthemedLogs extends PureComponent<Props, State> {
     showDetectedFields: [],
     forceEscape: false,
   };
+
+  constructor(props: Props) {
+    super(props);
+    this.logsVolumeEventBus = props.eventBus.newScopedBus('logsvolume', { onlyLocal: false });
+  }
 
   componentWillUnmount() {
     if (this.flipOrderTimer) {
@@ -338,7 +344,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
       addResultsToCache,
       exploreId,
       scrollElement,
-      eventBus,
     } = this.props;
 
     const {
@@ -386,7 +391,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               splitOpen={splitOpen}
               onLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
               onHiddenSeriesChanged={this.onToggleLogLevel}
-              eventBus={eventBus.newScopedBus('logsvolume', { onlyLocal: false })}
+              eventBus={this.logsVolumeEventBus}
             />
           )}
         </Collapse>

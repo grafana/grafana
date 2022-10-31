@@ -126,12 +126,16 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   absoluteTimeUnsubsciber: Unsubscribable | undefined;
   topOfViewRef = createRef<HTMLDivElement>();
+  graphEventBus: EventBus;
+  logsEventBus: EventBus;
 
   constructor(props: Props) {
     super(props);
     this.state = {
       openDrawer: undefined,
     };
+    this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
+    this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
   }
 
   componentDidMount() {
@@ -277,7 +281,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           splitOpenFn={splitOpen}
           loadingState={queryResponse.state}
           anchorToZero={false}
-          eventBus={this.props.eventBus.newScopedBus('graph', { onlyLocal: false })}
+          eventBus={this.graphEventBus}
         />
       </Collapse>
     );
@@ -310,7 +314,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         onStartScanning={this.onStartScanning}
         onStopScanning={this.onStopScanning}
         scrollElement={this.scrollElement}
-        eventBus={this.props.eventBus.newScopedBus('logs', { onlyLocal: false })}
+        eventBus={this.logsEventBus}
       />
     );
   }
