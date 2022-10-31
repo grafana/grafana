@@ -338,10 +338,6 @@ func TestQuery_ResourceRequest_DescribeAllLogGroups(t *testing.T) {
 			},
 		}
 
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
-		})
-
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
 		req := &backend.CallResourceRequest{
@@ -375,10 +371,6 @@ func TestQuery_ResourceRequest_DescribeAllLogGroups(t *testing.T) {
 				{LogGroups: []*cloudwatchlogs.LogGroup{}},
 			},
 		}
-
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
-		})
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
