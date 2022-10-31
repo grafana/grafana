@@ -361,9 +361,9 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
 	interceptors.ProvideAuthenticator,
+	kind.ProvideService, // The registry of known kinds
 	//	objectdummyserver.ProvideDummyObjectServer,
 	sqlstash.ProvideSQLObjectServer,
-	kind.ProvideService, // The registry of known kinds
 	httpobjectstore.ProvideHTTPObjectStore,
 	resolver.ProvideObjectReferenceResolver,
 	teamimpl.ProvideService,

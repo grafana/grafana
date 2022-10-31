@@ -37,28 +37,22 @@ func TestParseGRNStr(t *testing.T) {
 			true,
 		},
 		{ // good!
-			"grn::::roles/Admin",
+			"grn::roles/Admin",
 			GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "Admin"},
 			false,
 		},
 		{ // good!
-			"grn::::roles/Admin/with/some/slashes",
+			"grn::roles/Admin/with/some/slashes",
 			GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "Admin/with/some/slashes"},
 			false,
 		},
 		{ // good!
-			"grn:123456789:service:namespace:roles/Admin/with/some/slashes",
-			GRN{
-				TenantID:           123456789,
-				Service:            "service",
-				Namespace:          "namespace",
-				ResourceKind:       "roles",
-				ResourceIdentifier: "Admin/with/some/slashes",
-			},
+			"grn:123456789:roles/Admin/with/some/slashes",
+			GRN{TenantID: 123456789, ResourceKind: "roles", ResourceIdentifier: "Admin/with/some/slashes"},
 			false,
 		},
 		{ // Weird, but valid.
-			"grn::::roles///Admin/with/leading/slashes",
+			"grn::roles///Admin/with/leading/slashes",
 			GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "//Admin/with/leading/slashes"},
 			false,
 		},
