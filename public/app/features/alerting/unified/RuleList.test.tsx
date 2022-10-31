@@ -125,9 +125,9 @@ const ui = {
 
   editGroupModal: {
     namespaceInput: byRole('textbox', { hidden: true, name: /namespace/i }),
-    ruleGroupInput: byRole('textbox', { name: 'Rule group', exact: true }),
+    ruleGroupInput: byRole('textbox', { name: 'Evaluation group', exact: true }),
     intervalInput: byRole('textbox', {
-      name: /rule group evaluation interval evaluation interval should be smaller or equal than for values for existing rules in this group\./i,
+      name: /Rule group evaluation interval Evaluation interval should be smaller or equal than For values for existing rules in this group./i,
     }),
     saveButton: byRole('button', { name: /Save changes/ }),
   },
@@ -562,7 +562,9 @@ describe('RuleList', () => {
         await expect(screen.getByRole('textbox', { hidden: true, name: /namespace/i })).toHaveDisplayValue(
           'namespace1'
         );
-        await expect(screen.getByRole('textbox', { name: 'Rule group', exact: true })).toHaveDisplayValue('group1');
+        await expect(screen.getByRole('textbox', { name: 'Evaluation group', exact: true })).toHaveDisplayValue(
+          'group1'
+        );
         await fn();
       });
     }
@@ -610,8 +612,8 @@ describe('RuleList', () => {
 
     testCase('rename just the lotex group', async () => {
       // make changes to form
-      await userEvent.clear(screen.getByRole('textbox', { name: 'Rule group', exact: true }));
-      await userEvent.type(screen.getByRole('textbox', { name: 'Rule group', exact: true }), 'super group');
+      await userEvent.clear(screen.getByRole('textbox', { name: 'Evaluation group', exact: true }));
+      await userEvent.type(screen.getByRole('textbox', { name: 'Evaluation group', exact: true }), 'super group');
       await userEvent.type(
         screen.getByRole('textbox', {
           name: /rule group evaluation interval evaluation interval should be smaller or equal than for values for existing rules in this group\./i,

@@ -237,7 +237,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
     <Modal
       className={styles.modal}
       isOpen={true}
-      title="Edit namespace or rule group"
+      title="Edit namespace or evaluation group"
       onDismiss={onClose}
       onClickBackdrop={onClose}
     >
@@ -267,7 +267,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               label={
                 <Label htmlFor="groupName">
                   <Stack gap={0.5}>
-                    Rule group
+                    Evaluation group
                     <InfoIcon text={'You can update group name'} />
                   </Stack>
                 </Label>
@@ -278,7 +278,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               <Input
                 id="groupName"
                 {...register('groupName', {
-                  required: 'Rule group name is required.',
+                  required: 'Evaluation group name is required.',
                 })}
               />
             </Field>
