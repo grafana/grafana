@@ -44,8 +44,8 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		sqlStore, cfg = db.InitTestDBwithCfg(t)
 		starService = starimpl.ProvideService(sqlStore, cfg)
 		quotaService := quotatest.NewQuotaServiceFake(false, nil)
-		dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
-
+		var err error
+		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
 		require.NoError(t, err)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")

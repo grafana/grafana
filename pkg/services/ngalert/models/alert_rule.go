@@ -461,7 +461,7 @@ func (g RulesGroup) SortByGroupIndex() {
 }
 
 const (
-	QuotaTargetSrv quota.TargetSrv = "alert_rule"
+	QuotaTargetSrv quota.TargetSrv = "ngalert"
 	QuotaTarget    quota.Target    = "alert_rule"
 )
 

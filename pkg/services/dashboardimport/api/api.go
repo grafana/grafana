@@ -64,7 +64,7 @@ func (api *ImportDashboardAPI) ImportDashboard(c *models.ReqContext) response.Re
 		return response.Error(http.StatusUnprocessableEntity, "Dashboard must be set", nil)
 	}
 
-	limitReached, err := api.quotaService.QuotaReached(c, "dashboard")
+	limitReached, err := api.quotaService.QuotaReached(c, string(dashboards.QuotaTargetSrv))
 	if err != nil {
 		return response.Err(err)
 	}

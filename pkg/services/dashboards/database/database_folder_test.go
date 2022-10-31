@@ -35,7 +35,8 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			sqlStore = db.InitTestDB(t)
 			sqlStore.Cfg.RBACEnabled = false
 			quotaService := quotatest.NewQuotaServiceFake(false, nil)
-			dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+			var err error
+			dashboardStore, err = ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 			require.NoError(t, err)
 			folder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 			dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod", "webapp")

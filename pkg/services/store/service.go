@@ -60,7 +60,7 @@ type CreateFolderCmd struct {
 }
 
 const (
-	QuotaTargetSrv quota.TargetSrv = "file"
+	QuotaTargetSrv quota.TargetSrv = "store"
 	QuotaTarget    quota.Target    = "file"
 )
 

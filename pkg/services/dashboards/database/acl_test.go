@@ -28,7 +28,8 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 	setup := func(t *testing.T) {
 		sqlStore = db.InitTestDB(t)
 		quotaService := quotatest.NewQuotaServiceFake(false, nil)
-		dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		var err error
+		dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 		require.NoError(t, err)
 		currentUser = createUser(t, sqlStore, "viewer", "Viewer", false)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")

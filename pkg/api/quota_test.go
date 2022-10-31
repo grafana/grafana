@@ -148,7 +148,6 @@ func TestAPIEndpoint_PutOrgQuotas_LegacyAccessControl(t *testing.T) {
 	input = strings.NewReader(testUpdateOrgQuotaCmd)
 	t.Run("Grafana admin viewer can update another org quotas", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input, t)
-		fmt.Println(">>>", response)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 }
