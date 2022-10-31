@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { flattenDeep, compact, uniq } from 'lodash';
+import { flattenDeep, compact } from 'lodash';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
@@ -19,7 +19,7 @@ interface Props {
   className?: string;
 }
 
-const useGetCustomLabels = () => {
+const useGetCustomLabels = (): Record<string, string[]> => {
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -31,7 +31,7 @@ const useGetCustomLabels = () => {
   const rulerRequest = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
 
   if (!rulerRequest || rulerRequest.loading) {
-    return;
+    return {};
   }
 
   const result = rulerRequest.result || {};
@@ -49,7 +49,7 @@ const useGetCustomLabels = () => {
 
   labels.forEach((label: Record<string, string>) => {
     Object.entries(label).forEach(([key, value]) => {
-      labelsByKey[key] = uniq([...(labelsByKey[key] || []), value]);
+      labelsByKey[key] = [...new Set([...(labelsByKey[key] || []), value])];
     });
   });
 
@@ -78,18 +78,11 @@ const LabelsField: FC<Props> = ({ className }) => {
   const [selectedKey, setSelectedKey] = useState('');
 
   const keys = useMemo(() => {
-    if (!labelsByKey) {
-      return [];
-    }
     return mapLabelsToOptions(Object.keys(labelsByKey));
   }, [labelsByKey]);
 
   const getValuesForLabel = useCallback(
     (key: string) => {
-      if (!labelsByKey || !key) {
-        return [];
-      }
-
       return mapLabelsToOptions(labelsByKey[key]);
     },
     [labelsByKey]
