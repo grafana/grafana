@@ -290,7 +290,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 >
                   <Stack gap={0.5}>
                     Rule group evaluation interval
-                    <InfoIcon text={'You can update evaluation interval'} />
+                    <InfoIcon text={'How frequently to evaluate rules.'} />
                   </Stack>
                 </Label>
               }
