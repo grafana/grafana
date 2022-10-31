@@ -23,8 +23,10 @@ settings page). When you create the application you will need to specify
 a callback URL. Specify this as callback:
 
 ```bash
-http://<my_grafana_server_name_or_ip>:<grafana_server_port>/grafana/login/github
+http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/github
 ```
+
+> Note: <my_grafana_server_name_or_ip>'s value should match your grafana server's `root_url`, the URL used to access grafana.
 
 This callback URL must match the full HTTP address that you use in your
 browser to access Grafana, but with the suffix path of `/login/github`.

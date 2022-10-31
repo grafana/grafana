@@ -3,51 +3,65 @@ package object;
 
 option go_package = "./;object";
 
-// The canonical object/document data -- this represents the raw bytes and storage level metadata
-message RawObject {
-  // Unique ID
-  string UID = 1;
+message GRN {
+  // the tenant/org id
+  int64 tenant_id = 1;
+
+  // mabybe "namespace"?  valid values include
+  // * entity
+  // * drive
+  // * service/xyz
+  string scope = 2;
 
   // Identify the object kind.  This kind will be used to apply a schema to the body and
   // will trigger additional indexing behavior.
-  string kind = 2;
+  string kind = 3;
+
+  // Unique ID
+  string UID = 4;
+}
+
+// The canonical object/document data -- this represents the raw bytes and storage level metadata
+message RawObject {
+  // Object identifier
+  GRN GRN = 1;
 
   // Time in epoch milliseconds that the object was created
-  int64 created = 3;
+  int64 created = 2;
 
   // Time in epoch milliseconds that the object was updated
-  int64 updated = 4;
+  int64 updated = 3;
 
   // Who created the object
-  string created_by = 5;
+  string created_by = 4;
 
   // Who updated the object
-  string updated_by = 6;
+  string updated_by = 5;
 
   // Content Length
-  int64 size = 7;
+  int64 size = 6;
 
   // MD5 digest of the body
-  string ETag = 8;
+  string ETag = 7;
 
   // Raw bytes of the storage object.  The kind will determine what is a valid payload
-  bytes body = 9;
+  bytes body = 8;
 
   // The version will change when the object is saved. It is not necessarily sortable
   //
   // NOTE: currently managed by the dashboard+dashboard_version tables
-  string version = 10;
+  string version = 9;
 
   // External location info
-  RawObjectSyncInfo sync = 11;
+  RawObjectSyncInfo sync = 10;
 }
 
 message RawObjectSyncInfo {
   // NOTE: currently managed by the dashboard_provisioning table
-  string source = 11;
+  string source = 1;
 
   // Time in epoch milliseconds that the object was last synced with an external system (provisioning/git)
-  int64 time = 12;
+  int64 time = 2;
 }
 
 // Report error while working with objects
@@ -91,20 +105,17 @@ message ObjectVersionInfo {
 //-----------------------------------------------
 
 message ReadObjectRequest {
-  // Unique ID (Kind is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
-  string UID = 1;
-
-  // Object kind (UID is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
-  string kind = 2;
+  // Object identifier
+  GRN GRN = 1;
 
   // Fetch an explicit version
-  string version = 3;
+  string version = 2;
 
   // Include the full body bytes
-  bool with_body = 4;
+  bool with_body = 3;
 
   // Include derived summary metadata
-  bool with_summary = 5;
+  bool with_summary = 4;
 }
 
 message ReadObjectResponse {
@@ -120,7 +131,7 @@ message ReadObjectResponse {
 //------------------------------------------------------
 
 message BatchReadObjectRequest {
-  repeated ReadObjectRequest batch = 3;
+  repeated ReadObjectRequest batch = 1;
 }
 
 message BatchReadObjectResponse {
@@ -132,20 +143,17 @@ message BatchReadObjectResponse {
 //-----------------------------------------------
 
 message WriteObjectRequest {
-  // Unique ID (Kind is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
-  string UID = 1;
-
-  // Object kind (UID is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
-  string kind = 2;
+  // Object identifier
+  GRN GRN = 1;
 
   // The raw object body
-  bytes body = 3;
+  bytes body = 2;
 
   // Message that can be seen when exploring object history
-  string comment = 4;
+  string comment = 3;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
-  string previous_version = 6;
+  string previous_version = 4;
 }
 
 message WriteObjectResponse {
@@ -175,11 +183,8 @@ message WriteObjectResponse {
 //-----------------------------------------------
 
 message DeleteObjectRequest {
-  // Unique ID (Kind is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
-  string UID = 1;
-
-  // Object kind (UID is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
-  string kind = 2;
+  // Object identifier
+  GRN GRN = 1;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
   string previous_version = 3;
@@ -194,11 +199,8 @@ message DeleteObjectResponse {
 //-----------------------------------------------
 
 message ObjectHistoryRequest {
-  // Unique ID (Kind is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
-  string UID = 1;
-
-  // Object kind (UID is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
-  string kind = 2;
+  // Object identifier
+  GRN GRN = 1;
 
   // Maximum number of items to return
   int64 limit = 3; 
@@ -254,12 +256,8 @@ message ObjectSearchRequest {
 
 // Search result metadata for each object
 message ObjectSearchResult {
-  // Unique ID
-  string UID = 1;
-
-  // Identify the object kind.  This kind will be used to apply a schema to the body and
-  // will trigger additional indexing behavior.
-  string kind = 2;
+  // Object identifier
+  GRN GRN = 1;
 
   // The current veresion of this object
   string version = 3;
