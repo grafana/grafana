@@ -141,7 +141,7 @@ func (api *Api) SavePublicDashboard(c *models.ReqContext) response.Response {
 func (api *Api) DeletePublicDashboard(c *models.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	if uid == "" || !util.IsValidShortUID(uid) {
-		return api.handleError(c.Req.Context(), http.StatusBadRequest, "DeletePublicDashboard: no uid", dashboards.ErrDashboardIdentifierNotSet)
+		return api.handleError(c.Req.Context(), http.StatusBadRequest, "DeletePublicDashboard: invalid dashboard uid", dashboards.ErrDashboardIdentifierNotSet)
 	}
 
 	err := api.PublicDashboardService.Delete(c.Req.Context(), c.OrgID, uid)
