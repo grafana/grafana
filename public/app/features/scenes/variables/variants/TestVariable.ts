@@ -6,7 +6,7 @@ import { queryMetricTree } from 'app/plugins/datasource/testdata/metricTree';
 import { VariableValueSelect } from '../components/VariableValueSelect';
 import { getVariableDependencies } from '../getVariableDependencies';
 import { sceneTemplateInterpolator } from '../sceneTemplateInterpolator';
-import { SceneVariableState, VariableUpdateContext } from '../types';
+import { SceneVariableState, VariableGetOptionsArgs, VariableValueOption } from '../types';
 
 import { SceneVariableBase } from './SceneVariableBase';
 
@@ -25,35 +25,40 @@ export class TestVariable extends SceneVariableBase<TestVariableState> {
   ValueSelectComponent = VariableValueSelect;
   completeUpdate = new Subject<number>();
 
-  updateOptions(ctx: VariableUpdateContext) {
+  getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
     const { delayMs } = this.state;
 
-    try {
+    return new Observable<VariableValueOption[]>((observer) => {
       this.setState({ state: LoadingState.Loading });
 
-      return new Observable<number>((observer) => {
-        this.completeUpdate.subscribe({
-          next: () => {
-            setDummyOptions(this, ctx);
-            observer.next(1);
-          },
-        });
-
-        let timeout: NodeJS.Timeout | undefined;
-
-        if (delayMs) {
-          timeout = setTimeout(() => this.signalUpdateCompleted(), delayMs);
-        }
-
-        return () => {
-          clearTimeout(timeout);
-          // console.log('Canceling QueryVariable query');
-        };
+      this.completeUpdate.subscribe({
+        next: () => {
+          observer.next(this.issueQuery());
+        },
       });
-    } catch (err) {
-      this.setState({ error: err, state: LoadingState.Error });
-      throw err;
-    }
+
+      let timeout: NodeJS.Timeout | undefined;
+
+      if (delayMs) {
+        timeout = setTimeout(() => this.signalUpdateCompleted(), delayMs);
+      }
+
+      return () => {
+        clearTimeout(timeout);
+        // console.log('Canceling QueryVariable query');
+      };
+    });
+  }
+
+  issueQuery() {
+    const interpolatedQuery = sceneTemplateInterpolator(this.state.query, this);
+    const options = queryMetricTree(interpolatedQuery).map((x) => ({ label: x.name, value: x.name }));
+
+    this.setState({
+      issuedQuery: interpolatedQuery,
+    });
+
+    return options;
   }
 
   onValueChange = (value: SelectableValue<string>) => {
@@ -68,17 +73,4 @@ export class TestVariable extends SceneVariableBase<TestVariableState> {
   getDependencies() {
     return getVariableDependencies(this.state.query);
   }
-}
-
-function setDummyOptions(variable: TestVariable, ctx: VariableUpdateContext) {
-  const interpolatedQuery = sceneTemplateInterpolator(variable.state.query, ctx.sceneContext);
-  const options = queryMetricTree(interpolatedQuery).map((x) => ({ text: x.name, value: x.name, selected: false }));
-
-  variable.setState({
-    issuedQuery: interpolatedQuery,
-    options,
-    value: options.length > 0 ? options[0].value : '',
-    text: options.length > 0 ? options[0].text : '',
-    state: LoadingState.Done,
-  });
 }

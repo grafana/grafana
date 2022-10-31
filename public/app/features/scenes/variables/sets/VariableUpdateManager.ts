@@ -1,6 +1,8 @@
 import { Subscription, Unsubscribable } from 'rxjs';
 
-import { SceneVariable, SceneVariables } from '../types';
+import { LoadingState } from '@grafana/data';
+
+import { SceneVariable, SceneVariables, VariableValueOption } from '../types';
 
 export interface VariableUpdateInProgress {
   variable: SceneVariable;
@@ -29,10 +31,6 @@ export class VariablesUpdateManager {
    */
   updateNextBatch() {
     for (const [name, variable] of this.variablesToUpdate) {
-      if (!variable.updateOptions) {
-        continue;
-      }
-
       // Wait for variables that has dependencies that also needs updates
       if (this.hasDependendencyThatNeedsUpdating(variable)) {
         continue;
@@ -40,9 +38,9 @@ export class VariablesUpdateManager {
 
       this.updating.set(name, {
         variable,
-        subscription: variable.updateOptions(this).subscribe({
-          next: () => this.variableUpdateCompleted(name, variable),
-          error: (err) => this.variableUpdateCompleted(name, variable, err),
+        subscription: variable.getValueOptions({}).subscribe({
+          next: (valueOptions) => this.handleNewVariableValueOptions(variable, valueOptions),
+          error: (err) => this.handleVariableError(variable, err),
         }),
       });
     }
@@ -52,13 +50,35 @@ export class VariablesUpdateManager {
    * A variable has completed it's update process.
    * This could mean that variables that depend on it can now be updated in turn.
    */
-  private variableUpdateCompleted(name: string, variable: SceneVariable, err?: Error) {
-    const update = this.updating.get(name);
+  private handleNewVariableValueOptions(variable: SceneVariable, options: VariableValueOption[]) {
+    const update = this.updating.get(variable.state.name);
     update?.subscription.unsubscribe();
 
-    this.updating.delete(name);
-    this.variablesToUpdate.delete(name);
+    this.updating.delete(variable.state.name);
+    this.variablesToUpdate.delete(variable.state.name);
     this.updateNextBatch();
+  }
+
+  private handleVariableError(variable: SceneVariable, err: Error) {
+    variable.setState({ state: LoadingState.Error });
+    // todo hanndle properly
+  }
+
+  /**
+   * Check if current value is valid given new options. If not update the value.
+   * TODO: Handle multi valued variables
+   */
+  private validateCurrentValueGivenOptions(variable: SceneVariable, options: VariableValueOption[]) {
+    if (options.length === 0) {
+      // TODO handle the no value state
+      variable.setState({ value: '?' });
+    }
+
+    const foundCurrent = options.find((x) => x.value === variable.state.value);
+    if (!foundCurrent) {
+      // Current value is not valid. Set to first of the available options
+      variable.setState({ value: options[0].value, text: options[0].label });
+    }
   }
 
   /**

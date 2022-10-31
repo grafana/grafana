@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 
-import { LoadingState } from '@grafana/data';
+import { LoadingState, MetricFindValue, SelectableValue } from '@grafana/data';
 import { VariableHide } from 'app/features/variables/types';
 
 import { SceneComponent, SceneObject, SceneObjectStatePlain } from '../core/types';
@@ -29,11 +29,16 @@ export interface SceneVariable<T extends SceneVariableState = SceneVariableState
    * This function is called when variable should execute it's query (if it's a query variable) and re-evaluate whether the
    * current value is valid and if not update it's current value.
    */
-  updateOptions?(context: VariableUpdateContext): Observable<number>;
+  getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]>;
+
+  /**
+   * Called when a dependent variable has changed and new value options have been evaluated.
+   **/
+  updateValueGivenNewOptions(options: VariableValueOption[]): void;
 }
 
-export interface VariableUpdateContext {
-  sceneContext: SceneObject;
+export type VariableValueOption = SelectableValue<string>;
+export interface VariableGetOptionsArgs {
   searchFilter?: string;
 }
 
