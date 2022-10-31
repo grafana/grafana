@@ -2,14 +2,15 @@
 aliases:
   - /docs/grafana/latest/enterprise/access-control/rbac-provisioning/
   - /docs/grafana/latest/administration/roles-and-permissions/access-control/rbac-provisioning/
-description: Learn about RBAC provisioning and view an example YAML provisioning file
+  - /docs/grafana/latest/administration/roles-and-permissions/access-control/rbac-grafana-provisioning
+description: Learn about RBAC Grafana provisioning and view an example YAML provisioning file
   that configures Grafana role assignments.
-menuTitle: RBAC provisioning
-title: Grafana RBAC provisioning
+menuTitle: Provisioning RBAC with Grafana
+title: Provisioning RBAC with Grafana
 weight: 60
 ---
 
-# Grafana RBAC provisioning
+# Provisioning RBAC with Grafana
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
@@ -117,3 +118,9 @@ teams:
         # <string> state of the assignment. Defaults to 'present'. If 'absent', the assignment will be revoked.
         state: absent
 ```
+
+## Useful Links
+
+[Provisioning RBAC setup with Terraform]({{< relref "./rbac-terraform-provisioning">}})
+
+[Grafana provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/)
