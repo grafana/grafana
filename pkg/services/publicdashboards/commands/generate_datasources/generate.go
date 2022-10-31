@@ -3,7 +3,6 @@ package generate_datasources
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"sort"
 	"sync"
@@ -52,12 +51,6 @@ func getDatasourcePluginSlugs(baseUrl string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			fmt.Println("Error closing response body")
-		}
-	}(resp.Body)
 	res := &listPluginResponse{}
 	err = json.NewDecoder(resp.Body).Decode(res)
 	if err != nil {
@@ -67,6 +60,7 @@ func getDatasourcePluginSlugs(baseUrl string) ([]string, error) {
 	for _, meta := range res.Items {
 		slugs = append(slugs, meta.Slug)
 	}
+	_ = resp.Body.Close()
 	return slugs, nil
 }
 
@@ -80,6 +74,8 @@ func getDatasourceDetails(slugs []string, baseUrl string) []datasourceDetails {
 		go func(i int, slug string) {
 			defer wg.Done()
 			url := baseUrl + pluginEndpoint(slug)
+			// url can not be constant since it gets generated based on slug
+			//nolint:gosec
 			r, err := http.Get(url)
 			if err != nil {
 				panic(err)
@@ -92,6 +88,7 @@ func getDatasourceDetails(slugs []string, baseUrl string) []datasourceDetails {
 			}
 			datasource.Json.Slug = slug
 			datasources[i] = datasource.Json
+			_ = r.Body.Close()
 		}(i, slug)
 	}
 
