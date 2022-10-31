@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { ChangeEvent } from 'react';
+
 export interface SwitchRowProps {
   label?: string;
   tooltip?: React.ReactNode;
@@ -8,4 +10,5 @@ export interface SwitchRowProps {
   className?: string;
   dataTestId?: string;
   input: any;
+  onChange?: (event: ChangeEvent, input: HTMLInputElement) => void;
 }
