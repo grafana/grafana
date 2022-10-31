@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import React, { FC, FormEvent } from 'react';
 
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, Stack, useStyles } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles } from '@grafana/ui';
 
 import alertDef, { EvalFunction } from '../../alerting/state/alertDef';
 import { ClassicCondition, ReducerType } from '../types';

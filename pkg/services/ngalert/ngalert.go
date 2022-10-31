@@ -183,14 +183,14 @@ func (ng *AlertNG) init() error {
 	schedCfg := schedule.SchedulerCfg{
 		Cfg:         ng.Cfg.UnifiedAlerting,
 		C:           clk,
-		Evaluator:   eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.ExpressionService),
+		Evaluator:   eval.NewEvaluator(ng.Cfg, ng.DataSourceCache, ng.ExpressionService),
 		RuleStore:   store,
 		Metrics:     ng.Metrics.GetSchedulerMetrics(),
 		AlertSender: alertsRouter,
 	}
 
-	historian := historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService, ng.Log)
-	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.imageService, clk, historian)
+	historian := historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService)
+	stateManager := state.NewManager(ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.imageService, clk, historian)
 	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
@@ -235,6 +235,14 @@ func (ng *AlertNG) init() error {
 		AlertsRouter:         alertsRouter,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
+
+	log.RegisterContextualLogProvider(func(ctx context.Context) ([]interface{}, bool) {
+		key, ok := models.RuleKeyFromContext(ctx)
+		if !ok {
+			return nil, false
+		}
+		return key.LogContext(), true
+	})
 
 	return DeclareFixedRoles(ng.accesscontrolService)
 }

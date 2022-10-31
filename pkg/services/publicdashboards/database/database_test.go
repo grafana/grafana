@@ -55,7 +55,7 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 	// should not be included in response
 	_ = insertPublicDashboard(t, publicdashboardStore, "wrongOrgId", 777, false)
 
-	resp, err := publicdashboardStore.ListPublicDashboards(context.Background(), orgId)
+	resp, err := publicdashboardStore.FindAll(context.Background(), orgId)
 	require.NoError(t, err)
 
 	assert.Len(t, resp, 3)
@@ -64,7 +64,7 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 	assert.Equal(t, resp[2].Uid, c.Uid)
 }
 
-func TestIntegrationGetDashboard(t *testing.T) {
+func TestIntegrationFindDashboard(t *testing.T) {
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore *dashboardsDB.DashboardStore
@@ -78,18 +78,17 @@ func TestIntegrationGetDashboard(t *testing.T) {
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 	}
 
-	t.Run("GetDashboard can get original dashboard by uid", func(t *testing.T) {
+	t.Run("FindDashboard can get original dashboard by uid", func(t *testing.T) {
 		setup()
 
-		dashboard, err := publicdashboardStore.GetDashboard(context.Background(), savedDashboard.Uid)
+		dashboard, err := publicdashboardStore.FindDashboard(context.Background(), savedDashboard.Uid, savedDashboard.OrgId)
 
 		require.NoError(t, err)
 		require.Equal(t, savedDashboard.Uid, dashboard.Uid)
 	})
 }
 
-// AccessTokenExists
-func TestIntegrationAccessTokenExists(t *testing.T) {
+func TestIntegrationExistsEnabledByAccessToken(t *testing.T) {
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore *dashboardsDB.DashboardStore
@@ -102,10 +101,10 @@ func TestIntegrationAccessTokenExists(t *testing.T) {
 		publicdashboardStore = ProvideStore(sqlStore)
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 	}
-	t.Run("AccessTokenExists will return true when at least one public dashboard has a matching access token", func(t *testing.T) {
+	t.Run("ExistsEnabledByAccessToken will return true when at least one public dashboard has a matching access token", func(t *testing.T) {
 		setup()
 
-		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
+		err := publicdashboardStore.Save(context.Background(), SavePublicDashboardCommand{
 			PublicDashboard: PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "abc123",
@@ -118,16 +117,16 @@ func TestIntegrationAccessTokenExists(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		res, err := publicdashboardStore.AccessTokenExists(context.Background(), "accessToken")
+		res, err := publicdashboardStore.ExistsEnabledByAccessToken(context.Background(), "accessToken")
 		require.NoError(t, err)
 
 		require.True(t, res)
 	})
 
-	t.Run("AccessTokenExists will return false when IsEnabled=false", func(t *testing.T) {
+	t.Run("ExistsEnabledByAccessToken will return false when IsEnabled=false", func(t *testing.T) {
 		setup()
 
-		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
+		err := publicdashboardStore.Save(context.Background(), SavePublicDashboardCommand{
 			PublicDashboard: PublicDashboard{
 				IsEnabled:    false,
 				Uid:          "abc123",
@@ -140,24 +139,23 @@ func TestIntegrationAccessTokenExists(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		res, err := publicdashboardStore.AccessTokenExists(context.Background(), "accessToken")
+		res, err := publicdashboardStore.ExistsEnabledByAccessToken(context.Background(), "accessToken")
 		require.NoError(t, err)
 
 		require.False(t, res)
 	})
 
-	t.Run("AccessTokenExists will return false when no public dashboard has matching access token", func(t *testing.T) {
+	t.Run("ExistsEnabledByAccessToken will return false when no public dashboard has matching access token", func(t *testing.T) {
 		setup()
 
-		res, err := publicdashboardStore.AccessTokenExists(context.Background(), "accessToken")
+		res, err := publicdashboardStore.ExistsEnabledByAccessToken(context.Background(), "accessToken")
 
 		require.NoError(t, err)
 		require.False(t, res)
 	})
 }
 
-// PublicDashboardEnabled
-func TestIntegrationPublicDashboardEnabled(t *testing.T) {
+func TestIntegrationExistsEnabledByDashboardUid(t *testing.T) {
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore *dashboardsDB.DashboardStore
@@ -171,10 +169,10 @@ func TestIntegrationPublicDashboardEnabled(t *testing.T) {
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 	}
 
-	t.Run("PublicDashboardEnabled Will return true when dashboard has at least one enabled public dashboard", func(t *testing.T) {
+	t.Run("ExistsEnabledByDashboardUid Will return true when dashboard has at least one enabled public dashboard", func(t *testing.T) {
 		setup()
 
-		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
+		err := publicdashboardStore.Save(context.Background(), SavePublicDashboardCommand{
 			PublicDashboard: PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "abc123",
@@ -187,16 +185,16 @@ func TestIntegrationPublicDashboardEnabled(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		res, err := publicdashboardStore.PublicDashboardEnabled(context.Background(), savedDashboard.Uid)
+		res, err := publicdashboardStore.ExistsEnabledByDashboardUid(context.Background(), savedDashboard.Uid)
 		require.NoError(t, err)
 
 		require.True(t, res)
 	})
 
-	t.Run("PublicDashboardEnabled will return false when dashboard has public dashboards but they are not enabled", func(t *testing.T) {
+	t.Run("ExistsEnabledByDashboardUid will return false when dashboard has public dashboards but they are not enabled", func(t *testing.T) {
 		setup()
 
-		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
+		err := publicdashboardStore.Save(context.Background(), SavePublicDashboardCommand{
 			PublicDashboard: PublicDashboard{
 				IsEnabled:    false,
 				Uid:          "abc123",
@@ -209,85 +207,14 @@ func TestIntegrationPublicDashboardEnabled(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		res, err := publicdashboardStore.PublicDashboardEnabled(context.Background(), savedDashboard.Uid)
+		res, err := publicdashboardStore.ExistsEnabledByDashboardUid(context.Background(), savedDashboard.Uid)
 		require.NoError(t, err)
 
 		require.False(t, res)
 	})
 }
 
-// GetPublicDashboard
-func TestIntegrationGetPublicDashboard(t *testing.T) {
-	var sqlStore db.DB
-	var cfg *setting.Cfg
-	var dashboardStore *dashboardsDB.DashboardStore
-	var publicdashboardStore *PublicDashboardStoreImpl
-	var savedDashboard *models.Dashboard
-
-	setup := func() {
-		sqlStore, cfg = db.InitTestDBwithCfg(t)
-		dashboardStore = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg))
-		publicdashboardStore = ProvideStore(sqlStore)
-		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
-	}
-
-	t.Run("returns PublicDashboard and Dashboard", func(t *testing.T) {
-		setup()
-		cmd := SavePublicDashboardConfigCommand{
-			PublicDashboard: PublicDashboard{
-				IsEnabled:    true,
-				Uid:          "abc1234",
-				DashboardUid: savedDashboard.Uid,
-				OrgId:        savedDashboard.OrgId,
-				TimeSettings: DefaultTimeSettings,
-				CreatedAt:    DefaultTime,
-				CreatedBy:    7,
-				AccessToken:  "NOTAREALUUID",
-			},
-		}
-
-		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), cmd)
-		require.NoError(t, err)
-
-		pd, d, err := publicdashboardStore.GetPublicDashboard(context.Background(), "NOTAREALUUID")
-		require.NoError(t, err)
-
-		assert.Equal(t, pd, &cmd.PublicDashboard)
-		assert.Equal(t, d.Uid, cmd.PublicDashboard.DashboardUid)
-	})
-
-	t.Run("returns ErrPublicDashboardNotFound with empty uid", func(t *testing.T) {
-		setup()
-		_, _, err := publicdashboardStore.GetPublicDashboard(context.Background(), "")
-		require.Error(t, ErrPublicDashboardIdentifierNotSet, err)
-	})
-
-	t.Run("returns ErrPublicDashboardNotFound when PublicDashboard not found", func(t *testing.T) {
-		setup()
-		_, _, err := publicdashboardStore.GetPublicDashboard(context.Background(), "zzzzzz")
-		require.Error(t, ErrPublicDashboardNotFound, err)
-	})
-
-	t.Run("returns ErrDashboardNotFound when Dashboard not found", func(t *testing.T) {
-		setup()
-		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
-			PublicDashboard: PublicDashboard{
-				IsEnabled:    true,
-				Uid:          "abc1234",
-				DashboardUid: "nevergonnafindme",
-				OrgId:        savedDashboard.OrgId,
-				CreatedAt:    DefaultTime,
-				CreatedBy:    7,
-			},
-		})
-		require.NoError(t, err)
-		_, _, err = publicdashboardStore.GetPublicDashboard(context.Background(), "abc1234")
-		require.Error(t, dashboards.ErrDashboardNotFound, err)
-	})
-}
-
-// GetPublicDashboardConfig
-func TestIntegrationGetPublicDashboardConfig(t *testing.T) {
+func TestIntegrationFindByDashboardUid(t *testing.T) {
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore *dashboardsDB.DashboardStore
@@ -303,20 +230,21 @@ func TestIntegrationGetPublicDashboardConfig(t *testing.T) {
 
 	t.Run("returns isPublic and set dashboardUid and orgId", func(t *testing.T) {
 		setup()
-		pubdash, err := publicdashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard.OrgId, savedDashboard.Uid)
+		savedPubdash := insertPublicDashboard(t, publicdashboardStore, savedDashboard.Uid, savedDashboard.OrgId, false)
+		pubdash, err := publicdashboardStore.FindByDashboardUid(context.Background(), savedDashboard.OrgId, savedDashboard.Uid)
 		require.NoError(t, err)
-		assert.Equal(t, &PublicDashboard{IsEnabled: false, DashboardUid: savedDashboard.Uid, OrgId: savedDashboard.OrgId}, pubdash)
+		assert.Equal(t, savedPubdash, pubdash)
 	})
 
 	t.Run("returns dashboard errDashboardIdentifierNotSet", func(t *testing.T) {
 		setup()
-		_, err := publicdashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard.OrgId, "")
+		_, err := publicdashboardStore.FindByDashboardUid(context.Background(), savedDashboard.OrgId, "")
 		require.Error(t, dashboards.ErrDashboardIdentifierNotSet, err)
 	})
 
 	t.Run("returns along with public dashboard when exists", func(t *testing.T) {
 		setup()
-		cmd := SavePublicDashboardConfigCommand{
+		cmd := SavePublicDashboardCommand{
 			PublicDashboard: PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "pubdash-uid",
@@ -329,19 +257,26 @@ func TestIntegrationGetPublicDashboardConfig(t *testing.T) {
 		}
 
 		// insert test public dashboard
-		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), cmd)
+		err := publicdashboardStore.Save(context.Background(), cmd)
 		require.NoError(t, err)
 
 		// retrieve from db
-		pubdash, err := publicdashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard.OrgId, savedDashboard.Uid)
+		pubdash, err := publicdashboardStore.FindByDashboardUid(context.Background(), savedDashboard.OrgId, savedDashboard.Uid)
 		require.NoError(t, err)
 
 		assert.True(t, assert.ObjectsAreEqualValues(&cmd.PublicDashboard, pubdash))
 	})
+
+	t.Run("returns error when public dashboard doesn't exist", func(t *testing.T) {
+		setup()
+		pubdash, err := publicdashboardStore.FindByDashboardUid(context.Background(), 9, "fake-dashboard-uid")
+		require.Error(t, err)
+		require.Nil(t, pubdash)
+		assert.Equal(t, ErrPublicDashboardNotFound, err)
+	})
 }
 
-// SavePublicDashboardConfig
-func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
+func TestIntegrationSavePublicDashboard(t *testing.T) {
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore *dashboardsDB.DashboardStore
@@ -355,39 +290,41 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 		publicdashboardStore = ProvideStore(sqlStore)
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 		savedDashboard2 = insertTestDashboard(t, dashboardStore, "testDashie2", 1, 0, true)
+		insertPublicDashboard(t, publicdashboardStore, savedDashboard2.Uid, savedDashboard2.OrgId, false)
 	}
 
 	t.Run("saves new public dashboard", func(t *testing.T) {
 		setup()
-		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
+		err := publicdashboardStore.Save(context.Background(), SavePublicDashboardCommand{
 			PublicDashboard: PublicDashboard{
-				IsEnabled:    true,
-				Uid:          "pubdash-uid",
-				DashboardUid: savedDashboard.Uid,
-				OrgId:        savedDashboard.OrgId,
-				TimeSettings: DefaultTimeSettings,
-				CreatedAt:    DefaultTime,
-				CreatedBy:    7,
-				AccessToken:  "NOTAREALUUID",
+				IsEnabled:          true,
+				AnnotationsEnabled: true,
+				Uid:                "pubdash-uid",
+				DashboardUid:       savedDashboard.Uid,
+				OrgId:              savedDashboard.OrgId,
+				TimeSettings:       DefaultTimeSettings,
+				CreatedAt:          DefaultTime,
+				CreatedBy:          7,
+				AccessToken:        "NOTAREALUUID",
 			},
 		})
 		require.NoError(t, err)
 
-		pubdash, err := publicdashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard.OrgId, savedDashboard.Uid)
+		pubdash, err := publicdashboardStore.FindByDashboardUid(context.Background(), savedDashboard.OrgId, savedDashboard.Uid)
 		require.NoError(t, err)
 
 		// verify we have a valid uid
 		assert.True(t, util.IsValidShortUID(pubdash.Uid))
 
 		// verify we didn't update all dashboards
-		pubdash2, err := publicdashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard2.OrgId, savedDashboard2.Uid)
+		pubdash2, err := publicdashboardStore.FindByDashboardUid(context.Background(), savedDashboard2.OrgId, savedDashboard2.Uid)
 		require.NoError(t, err)
 		assert.False(t, pubdash2.IsEnabled)
 	})
 
 	t.Run("guards from saving without dashboardUid", func(t *testing.T) {
 		setup()
-		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
+		err := publicdashboardStore.Save(context.Background(), SavePublicDashboardCommand{
 			PublicDashboard: PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "pubdash-uid",
@@ -403,7 +340,6 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 	})
 }
 
-// UpdatePublicDashboardConfig
 func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 	var sqlStore db.DB
 	var cfg *setting.Cfg
@@ -424,68 +360,72 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		setup()
 
 		pdUid := "asdf1234"
-		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
+		err := publicdashboardStore.Save(context.Background(), SavePublicDashboardCommand{
 			PublicDashboard: PublicDashboard{
-				Uid:          pdUid,
-				DashboardUid: savedDashboard.Uid,
-				OrgId:        savedDashboard.OrgId,
-				IsEnabled:    true,
-				CreatedAt:    DefaultTime,
-				CreatedBy:    7,
-				AccessToken:  "NOTAREALUUID",
+				Uid:                pdUid,
+				DashboardUid:       savedDashboard.Uid,
+				OrgId:              savedDashboard.OrgId,
+				IsEnabled:          false,
+				AnnotationsEnabled: true,
+				CreatedAt:          DefaultTime,
+				CreatedBy:          7,
+				AccessToken:        "NOTAREALUUID",
 			},
 		})
 		require.NoError(t, err)
 
 		// inserting two different public dashboards to test update works and only affect the desired pd by uid
 		anotherPdUid := "anotherUid"
-		err = publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
+		err = publicdashboardStore.Save(context.Background(), SavePublicDashboardCommand{
 			PublicDashboard: PublicDashboard{
-				Uid:          anotherPdUid,
-				DashboardUid: anotherSavedDashboard.Uid,
-				OrgId:        anotherSavedDashboard.OrgId,
-				IsEnabled:    true,
-				CreatedAt:    DefaultTime,
-				CreatedBy:    7,
-				AccessToken:  "fakeaccesstoken",
+				Uid:                anotherPdUid,
+				DashboardUid:       anotherSavedDashboard.Uid,
+				OrgId:              anotherSavedDashboard.OrgId,
+				IsEnabled:          true,
+				AnnotationsEnabled: false,
+				CreatedAt:          DefaultTime,
+				CreatedBy:          7,
+				AccessToken:        "fakeaccesstoken",
 			},
 		})
 		require.NoError(t, err)
 
 		updatedPublicDashboard := PublicDashboard{
-			Uid:          pdUid,
-			DashboardUid: savedDashboard.Uid,
-			OrgId:        savedDashboard.OrgId,
-			IsEnabled:    false,
-			TimeSettings: &TimeSettings{From: "now-8", To: "now"},
-			UpdatedAt:    time.Now().UTC().Round(time.Second),
-			UpdatedBy:    8,
+			Uid:                pdUid,
+			DashboardUid:       savedDashboard.Uid,
+			OrgId:              savedDashboard.OrgId,
+			IsEnabled:          false,
+			AnnotationsEnabled: true,
+			TimeSettings:       &TimeSettings{From: "now-8", To: "now"},
+			UpdatedAt:          time.Now().UTC().Round(time.Second),
+			UpdatedBy:          8,
 		}
 		// update initial record
-		err = publicdashboardStore.UpdatePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
+		err = publicdashboardStore.Update(context.Background(), SavePublicDashboardCommand{
 			PublicDashboard: updatedPublicDashboard,
 		})
 		require.NoError(t, err)
 
 		// updated dashboard should have changed
-		pdRetrieved, err := publicdashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard.OrgId, savedDashboard.Uid)
+		pdRetrieved, err := publicdashboardStore.FindByDashboardUid(context.Background(), savedDashboard.OrgId, savedDashboard.Uid)
 		require.NoError(t, err)
 
 		assert.Equal(t, updatedPublicDashboard.UpdatedAt, pdRetrieved.UpdatedAt)
-		// make sure we're correctly updated IsEnabled because we have to call
+		// make sure we're correctly updated ExistsEnabledByDashboardUid because we have to call
 		// UseBool with xorm
 		assert.Equal(t, updatedPublicDashboard.IsEnabled, pdRetrieved.IsEnabled)
+		assert.Equal(t, updatedPublicDashboard.AnnotationsEnabled, pdRetrieved.AnnotationsEnabled)
 
 		// not updated dashboard shouldn't have changed
-		pdNotUpdatedRetrieved, err := publicdashboardStore.GetPublicDashboardConfig(context.Background(), anotherSavedDashboard.OrgId, anotherSavedDashboard.Uid)
+		pdNotUpdatedRetrieved, err := publicdashboardStore.FindByDashboardUid(context.Background(), anotherSavedDashboard.OrgId, anotherSavedDashboard.Uid)
 		require.NoError(t, err)
 		assert.NotEqual(t, updatedPublicDashboard.UpdatedAt, pdNotUpdatedRetrieved.UpdatedAt)
 		assert.NotEqual(t, updatedPublicDashboard.IsEnabled, pdNotUpdatedRetrieved.IsEnabled)
+		assert.NotEqual(t, updatedPublicDashboard.AnnotationsEnabled, pdNotUpdatedRetrieved.AnnotationsEnabled)
 	})
 }
 
-// GetPublicDashboardOrgId
-func TestIntegrationGetPublicDashboardOrgId(t *testing.T) {
+func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore *dashboardsDB.DashboardStore
@@ -498,10 +438,10 @@ func TestIntegrationGetPublicDashboardOrgId(t *testing.T) {
 		publicdashboardStore = ProvideStore(sqlStore)
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 	}
-	t.Run("GetPublicDashboardOrgId will OrgId when enabled", func(t *testing.T) {
+	t.Run("GetOrgIdByAccessToken will OrgId when enabled", func(t *testing.T) {
 		setup()
 
-		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
+		err := publicdashboardStore.Save(context.Background(), SavePublicDashboardCommand{
 			PublicDashboard: PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "abc123",
@@ -514,16 +454,16 @@ func TestIntegrationGetPublicDashboardOrgId(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		orgId, err := publicdashboardStore.GetPublicDashboardOrgId(context.Background(), "accessToken")
+		orgId, err := publicdashboardStore.GetOrgIdByAccessToken(context.Background(), "accessToken")
 		require.NoError(t, err)
 
 		assert.Equal(t, savedDashboard.OrgId, orgId)
 	})
 
-	t.Run("GetPublicDashboardOrgId will return 0 when IsEnabled=false", func(t *testing.T) {
+	t.Run("GetOrgIdByAccessToken will return 0 when IsEnabled=false", func(t *testing.T) {
 		setup()
 
-		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
+		err := publicdashboardStore.Save(context.Background(), SavePublicDashboardCommand{
 			PublicDashboard: PublicDashboard{
 				IsEnabled:    false,
 				Uid:          "abc123",
@@ -535,15 +475,15 @@ func TestIntegrationGetPublicDashboardOrgId(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		orgId, err := publicdashboardStore.GetPublicDashboardOrgId(context.Background(), "accessToken")
+		orgId, err := publicdashboardStore.GetOrgIdByAccessToken(context.Background(), "accessToken")
 		require.NoError(t, err)
 		assert.NotEqual(t, savedDashboard.OrgId, orgId)
 	})
 
-	t.Run("GetPublicDashboardOrgId will return 0 when no public dashboard has matching access token", func(t *testing.T) {
+	t.Run("GetOrgIdByAccessToken will return 0 when no public dashboard has matching access token", func(t *testing.T) {
 		setup()
 
-		orgId, err := publicdashboardStore.GetPublicDashboardOrgId(context.Background(), "nonExistentAccessToken")
+		orgId, err := publicdashboardStore.GetOrgIdByAccessToken(context.Background(), "nonExistentAccessToken")
 		require.NoError(t, err)
 		assert.NotEqual(t, savedDashboard.OrgId, orgId)
 	})
@@ -575,13 +515,12 @@ func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardSto
 func insertPublicDashboard(t *testing.T, publicdashboardStore *PublicDashboardStoreImpl, dashboardUid string, orgId int64, isEnabled bool) *PublicDashboard {
 	ctx := context.Background()
 
-	uid, err := publicdashboardStore.GenerateNewPublicDashboardUid(ctx)
-	require.NoError(t, err)
+	uid := util.GenerateShortUID()
 
 	accessToken, err := tokens.GenerateAccessToken()
 	require.NoError(t, err)
 
-	cmd := SavePublicDashboardConfigCommand{
+	cmd := SavePublicDashboardCommand{
 		PublicDashboard: PublicDashboard{
 			Uid:          uid,
 			DashboardUid: dashboardUid,
@@ -594,10 +533,10 @@ func insertPublicDashboard(t *testing.T, publicdashboardStore *PublicDashboardSt
 		},
 	}
 
-	err = publicdashboardStore.SavePublicDashboardConfig(ctx, cmd)
+	err = publicdashboardStore.Save(ctx, cmd)
 	require.NoError(t, err)
 
-	pubdash, err := publicdashboardStore.GetPublicDashboardByUid(ctx, uid)
+	pubdash, err := publicdashboardStore.Find(ctx, uid)
 	require.NoError(t, err)
 
 	return pubdash

@@ -56,7 +56,7 @@ func namespaceFromUID(uid string) string {
 	return "orgId-1"
 }
 
-func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind string, version string) (*RawObjectWithHistory, *object.RawObject, error) {
+func (i *dummyObjectServer) findObject(ctx context.Context, uid string, kind string, version string) (*RawObjectWithHistory, *object.RawObject, error) {
 	if uid == "" {
 		return nil, nil, errors.New("UID must not be empty")
 	}
@@ -101,7 +101,7 @@ func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind stri
 	return obj, nil, nil
 }
 
-func (i dummyObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
+func (i *dummyObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
 	_, objVersion, err := i.findObject(ctx, r.UID, r.Kind, r.Version)
 	if err != nil {
 		return nil, err
@@ -131,7 +131,7 @@ func (i dummyObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest
 	return rsp, err
 }
 
-func (i dummyObjectServer) BatchRead(ctx context.Context, batchR *object.BatchReadObjectRequest) (*object.BatchReadObjectResponse, error) {
+func (i *dummyObjectServer) BatchRead(ctx context.Context, batchR *object.BatchReadObjectRequest) (*object.BatchReadObjectResponse, error) {
 	results := make([]*object.ReadObjectResponse, 0)
 	for _, r := range batchR.Batch {
 		resp, err := i.Read(ctx, r)
@@ -149,7 +149,7 @@ func createContentsHash(contents []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
+func (i *dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
 	builder := i.kinds.GetSummaryBuilder(r.Kind)
 	if builder == nil {
 		return nil, fmt.Errorf("unsupported kind: " + r.Kind)
@@ -224,7 +224,7 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 	return rsp, nil
 }
 
-func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
+func (i *dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
 	modifier := store.GetUserIDString(store.UserFromContext(ctx))
 	rawObj := &object.RawObject{
 		UID:       r.UID,
@@ -268,7 +268,7 @@ func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequ
 	}, nil
 }
 
-func (i dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
+func (i *dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
 	namespace := namespaceFromUID(r.UID)
 	obj, err := i.collection.FindFirst(ctx, namespace, func(i *RawObjectWithHistory) (bool, error) {
 		if i == nil || r == nil {
@@ -287,7 +287,7 @@ func (i dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectReque
 	return i.update(ctx, r, namespace)
 }
 
-func (i dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
+func (i *dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
 	_, err := i.collection.Delete(ctx, namespaceFromUID(r.UID), func(i *RawObjectWithHistory) (bool, error) {
 		match := i.Object.UID == r.UID && i.Object.Kind == r.Kind
 		if match {
@@ -310,7 +310,7 @@ func (i dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectReq
 	}, nil
 }
 
-func (i dummyObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
+func (i *dummyObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
 	obj, _, err := i.findObject(ctx, r.UID, r.Kind, "")
 	if err != nil {
 		return nil, err
@@ -327,7 +327,7 @@ func (i dummyObjectServer) History(ctx context.Context, r *object.ObjectHistoryR
 	return rsp, nil
 }
 
-func (i dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
+func (i *dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
 	var kindMap map[string]bool
 	if len(r.Kind) != 0 {
 		kindMap = make(map[string]bool)
@@ -351,14 +351,24 @@ func (i dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchReq
 
 	searchResults := make([]*object.ObjectSearchResult, 0)
 	for _, o := range objects {
+		builder := i.kinds.GetSummaryBuilder(o.Object.Kind)
+		if builder == nil {
+			continue
+		}
+		summary, clean, e2 := builder(ctx, o.Object.UID, o.Object.Body)
+		if e2 != nil {
+			continue
+		}
+
 		searchResults = append(searchResults, &object.ObjectSearchResult{
-			UID:       o.Object.UID,
-			Kind:      o.Object.Kind,
-			Version:   o.Object.Version,
-			Updated:   o.Object.Updated,
-			UpdatedBy: o.Object.UpdatedBy,
-			Name:      "? name from summary",
-			Body:      o.Object.Body,
+			UID:         o.Object.UID,
+			Kind:        o.Object.Kind,
+			Version:     o.Object.Version,
+			Updated:     o.Object.Updated,
+			UpdatedBy:   o.Object.UpdatedBy,
+			Name:        summary.Name,
+			Description: summary.Description,
+			Body:        clean,
 		})
 	}
 

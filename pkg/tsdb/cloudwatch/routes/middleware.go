@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
-func ResourceRequestMiddleware(handleFunc models.RouteHandlerFunc, clientFactory models.ClientsFactoryFunc) func(rw http.ResponseWriter, req *http.Request) {
+func ResourceRequestMiddleware(handleFunc models.RouteHandlerFunc, reqCtxFactory models.RequestContextFactoryFunc) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		if req.Method != "GET" {
 			respondWithError(rw, models.NewHttpError("Invalid method", http.StatusMethodNotAllowed, nil))
@@ -17,7 +17,7 @@ func ResourceRequestMiddleware(handleFunc models.RouteHandlerFunc, clientFactory
 
 		ctx := req.Context()
 		pluginContext := httpadapter.PluginConfigFromContext(ctx)
-		json, httpError := handleFunc(pluginContext, clientFactory, req.URL.Query())
+		json, httpError := handleFunc(pluginContext, reqCtxFactory, req.URL.Query())
 		if httpError != nil {
 			cwlog.Error("error handling resource request", "error", httpError.Message)
 			respondWithError(rw, httpError)
