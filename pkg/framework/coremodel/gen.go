@@ -239,12 +239,24 @@ func extractTSIndexVeneerElements(cm *gcgen.CoremodelDeclaration, tf *ast.File) 
 				has = has || tgt.target == "type"
 			}
 			if has {
-				custom = append(custom, *pair.T)
+				// enums can't use 'export type'
+				if pair.isEnum {
+					customD = append(customD, *pair.T)
+				} else {
+					custom = append(custom, *pair.T)
+				}
+
 				if pair.D != nil {
 					customD = append(customD, *pair.D)
 				}
 			} else {
-				raw = append(raw, *pair.T)
+				// enums can't use 'export type'
+				if pair.isEnum {
+					rawD = append(rawD, *pair.T)
+				} else {
+					raw = append(raw, *pair.T)
+				}
+
 				if pair.D != nil {
 					rawD = append(rawD, *pair.D)
 				}
@@ -270,7 +282,7 @@ func extractTSIndexVeneerElements(cm *gcgen.CoremodelDeclaration, tf *ast.File) 
 	}
 	if len(rawD) > 0 {
 		ret = append(ret, ast.ExportSet{
-			CommentList: []ast.Comment{ts.CommentFromString(fmt.Sprintf("Raw generated default consts from %s entity type.", cm.Lineage.Name()), 80, false)},
+			CommentList: []ast.Comment{ts.CommentFromString(fmt.Sprintf("Raw generated enums and default consts from %s entity type.", cm.Lineage.Name()), 80, false)},
 			TypeOnly:    false,
 			Exports:     rawD,
 			From:        ast.Str{Value: fmt.Sprintf("./raw/%s/%s/%s.gen", cm.Lineage.Name(), cm.PathVersion(), cm.Lineage.Name())},
@@ -311,7 +323,8 @@ func extractTSIndexVeneerElements(cm *gcgen.CoremodelDeclaration, tf *ast.File) 
 }
 
 type declPair struct {
-	T, D *ast.Ident
+	T, D   *ast.Ident
+	isEnum bool
 }
 
 func findDeclNode(name string, tf *ast.File) declPair {
@@ -326,6 +339,7 @@ func findDeclNode(name string, tf *ast.File) declPair {
 		case ast.TypeDecl:
 			if x.Name.Name == name {
 				p.T = &x.Name
+				_, p.isEnum = x.Type.(ast.EnumType)
 			}
 		case ast.VarDecl:
 			if x.Names.Idents[0].Name == "default"+name {
