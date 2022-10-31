@@ -945,7 +945,6 @@ func (e externalAlertmanagerToDatasources) Exec(sess *xorm.Session, mg *migrator
 			if u.User != nil {
 				ds.BasicAuthUser = u.User.Username()
 				if password, ok := u.User.Password(); ok {
-					//
 					ds.SecureJsonData = GetEncryptedJsonData(map[string]string{
 						"basicAuthPassword": password,
 					})
