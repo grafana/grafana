@@ -6,6 +6,7 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { ListPublicDashboardResponse } from 'app/features/manage-dashboards/types';
 
 type ReqOptions = {
   manageError?: (err: unknown) => { error: unknown };
@@ -33,8 +34,8 @@ const getConfigError = (err: { status: number }) => ({ error: err.status !== 404
 
 export const publicDashboardApi = createApi({
   reducerPath: 'publicDashboardApi',
-  baseQuery: retry(backendSrvBaseQuery({ baseUrl: '/api/dashboards' }), { maxRetries: 3 }),
-  tagTypes: ['Config'],
+  baseQuery: retry(backendSrvBaseQuery({ baseUrl: '/api/dashboards' }), { maxRetries: 0 }),
+  tagTypes: ['Config', 'PublicDashboards'],
   keepUnusedDataFor: 0,
   endpoints: (builder) => ({
     getConfig: builder.query<PublicDashboard, string>({
@@ -60,7 +61,6 @@ export const publicDashboardApi = createApi({
         method: 'POST',
         data: params.payload,
       }),
-      extraOptions: { maxRetries: 0 },
       async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
         dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
@@ -73,7 +73,38 @@ export const publicDashboardApi = createApi({
       },
       invalidatesTags: ['Config'],
     }),
+    listPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
+      query: () => ({
+        url: '/public-dashboards',
+      }),
+      providesTags: ['PublicDashboards'],
+    }),
+    deletePublicDashboard: builder.mutation<void, { dashboardTitle: string; dashboardUid: string; uid: string }>({
+      query: (params) => ({
+        url: `/uid/${params.dashboardUid}/public-dashboards/${params.uid}`,
+        method: 'DELETE',
+      }),
+      async onQueryStarted({ dashboardTitle }, { dispatch, queryFulfilled }) {
+        await queryFulfilled;
+        dispatch(
+          notifyApp(
+            createSuccessNotification(
+              'Public dashboard deleted',
+              !!dashboardTitle
+                ? `Public dashboard for ${dashboardTitle} has been deleted`
+                : `Public dashboard has been deleted`
+            )
+          )
+        );
+      },
+      invalidatesTags: ['PublicDashboards'],
+    }),
   }),
 });
 
-export const { useGetConfigQuery, useSaveConfigMutation } = publicDashboardApi;
+export const {
+  useGetConfigQuery,
+  useSaveConfigMutation,
+  useDeletePublicDashboardMutation,
+  useListPublicDashboardsQuery,
+} = publicDashboardApi;

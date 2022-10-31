@@ -227,4 +227,11 @@ export const Pages = {
       url: '/?search=open&layout=folders',
     },
   },
+  PublicDashboards: {
+    ListItem: {
+      linkButton: 'public-dashboard-link-button',
+      configButton: 'public-dashboard-configuration-button',
+      trashcanButton: 'public-dashboard-remove-button',
+    },
+  },
 };
