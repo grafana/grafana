@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 
-import { LoadingState, MetricFindValue, SelectableValue } from '@grafana/data';
+import { LoadingState, SelectableValue } from '@grafana/data';
 import { VariableHide } from 'app/features/variables/types';
 
 import { SceneComponent, SceneObject, SceneObjectStatePlain } from '../core/types';
