@@ -572,6 +572,10 @@ describe('CloudWatchMetricsQueryRunner', () => {
   });
 
   describe('timezoneUTCOffset', () => {
+    afterEach(() => {
+      jest.resetAllMocks();
+    });
+
     const testQuery = {
       id: '',
       refId: 'a',
@@ -595,6 +599,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
       ['UTC', '+0000'],
     ];
     describe.each(testTable)('should use the right time zone offset', (ianaTimezone, expectedOffset) => {
+      jest.useFakeTimers().setSystemTime(new Date('2022-09-01'));
       const { runner, fetchMock, request } = setupMockedMetricsQueryRunner();
       runner.handleMetricQueries([testQuery], {
         ...request,
