@@ -9,6 +9,16 @@ $input-border: 1px solid $input-border-color;
   position: relative;
   margin-bottom: $space-xs;
 
+  &--flex {
+    max-width: 600px;
+    width: 100%;
+    position: relative;
+  }
+
+  &--full-width {
+    width: 100%;
+  }
+
   &--offset-1 {
     margin-left: $spacer;
   }

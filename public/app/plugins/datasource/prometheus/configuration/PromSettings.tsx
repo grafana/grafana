@@ -241,7 +241,6 @@ export const PromSettings = (props: Props) => {
                       });
                     }
                   )}
-                  width={20}
                 />
               }
               tooltip="Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing this field will save your current settings, and attempt to detect the version."
@@ -262,7 +261,6 @@ export const PromSettings = (props: Props) => {
                       (o) => o.value === options.jsonData.prometheusVersion
                     )}
                     onChange={onChangeHandler('prometheusVersion', options, onOptionsChange)}
-                    width={20}
                   />
                 }
                 tooltip={`Use this to set the version of your ${options.jsonData.prometheusType} instance if it is not automatically configured.`}
@@ -287,14 +285,14 @@ export const PromSettings = (props: Props) => {
           </InlineField>
         </div>
         <div className="gf-form-inline">
-          <div className="gf-form max-width-30">
+          <div className="gf-form gf-form--full-width">
             <FormField
+              className={'gf-form--flex'}
               label="Custom query parameters"
               labelWidth={14}
               tooltip="Add custom parameters to all Prometheus or Thanos queries."
               inputEl={
                 <Input
-                  className="width-25"
                   value={options.jsonData.customQueryParameters}
                   onChange={onChangeHandler('customQueryParameters', options, onOptionsChange)}
                   spellCheck={false}

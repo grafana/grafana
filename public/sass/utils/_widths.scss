@@ -4,6 +4,10 @@
 .width-auto {
   width: auto;
 }
+//.width-20-flex{
+//  width: ($spacer * 20) !important;
+//  flex:1 0 auto;
+//}
 
 // widths
 @for $i from 1 through 30 {

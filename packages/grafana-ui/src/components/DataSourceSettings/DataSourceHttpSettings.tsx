@@ -124,7 +124,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
     box-shadow: inset 0 0px 5px ${theme.v1.palette.red};
   `;
 
-  const inputStyle = cx({ [`width-20`]: true, [notValidStyle]: !isValidUrl });
+  const inputStyle = cx({ [notValidStyle]: !isValidUrl });
 
   const urlInput = (
     <Input
@@ -145,7 +145,13 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
         <h3 className="page-heading">HTTP</h3>
         <div className="gf-form-group">
           <div className="gf-form">
-            <FormField label="URL" labelWidth={13} tooltip={urlTooltip} inputEl={urlInput} />
+            <FormField
+              className={'gf-form--flex'}
+              label="URL"
+              labelWidth={13}
+              tooltip={urlTooltip}
+              inputEl={urlInput}
+            />
           </div>
 
           {showAccessOptions && (
@@ -169,7 +175,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
           )}
           {dataSourceConfig.access === 'proxy' && (
             <div className="gf-form-group">
-              <div className="gf-form">
+              <div className="gf-form gf-form--flex">
                 <InlineFormLabel
                   width={13}
                   tooltip="Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
@@ -177,8 +183,8 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
                   Allowed cookies
                 </InlineFormLabel>
                 <TagsInput
+                  className={'gf-form--grow'}
                   tags={dataSourceConfig.jsonData.keepCookies}
-                  width={40}
                   onChange={(cookies) =>
                     onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, keepCookies: cookies } })
                   }
@@ -186,10 +192,10 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
               </div>
               <div className="gf-form">
                 <FormField
+                  className={'gf-form--flex'}
                   label="Timeout"
                   type="number"
                   labelWidth={13}
-                  inputWidth={20}
                   tooltip="HTTP request timeout in seconds"
                   placeholder="Timeout in seconds"
                   aria-label="Timeout in seconds"
