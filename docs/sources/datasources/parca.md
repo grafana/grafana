@@ -7,7 +7,7 @@ aliases:
 - parca
 - guide
 - profiling
-  title: Parca
+  title: Parca data source
   weight: 1110
 ---
 
@@ -19,38 +19,38 @@ aliases:
 
 Grafana ships with built-in support for Parca, a continuous profiling OSS database for analysis of CPU and memory usage, down to the line number and throughout time. Add it as a data source, and you are ready to query your profiles in [Explore]({{< relref "../explore" >}}).
 
-## Add data source
+## Configure the Parca data source
 
 To access Parca settings, click the **Configuration** (gear) icon, then click **Data Sources** > **Parca**.
 
-| Name         | Description                                                                             |
-| ------------ | --------------------------------------------------------------------------------------- |
-| `Name`       | The name using which you will refer to the data source in panels, queries, and Explore. |
-| `Default`    | The default data source will be pre-selected for new panels.                            |
-| `URL`        | The URL of the Tempo instance, e.g., `http://localhost:4100`                            |
-| `Basic Auth` | Enable basic authentication to the Tempo data source.                                   |
-| `User`       | User name for basic authentication.                                                     |
-| `Password`   | Password for basic authentication.                                                      |
+| Name         | Description                                                        |
+| ------------ | ------------------------------------------------------------------ |
+| `Name`       | A name to specify the data source in panels, queries, and Explore. |
+| `Default`    | The default data source will be pre-selected for new panels.       |
+| `URL`        | The URL of the Tempo instance, e.g., `http://localhost:4100`       |
+| `Basic Auth` | Enable basic authentication to the Tempo data source.              |
+| `User`       | User name for basic authentication.                                |
+| `Password`   | Password for basic authentication.                                 |
 
 ## Querying
 
-### Query editor
+### Query Editor
 
 TODO: image
 
-Query editor consists, going from the top left, of profile type selector, a label selector input, and a collapsible options section.
+Query editor gives you access to a profile type selector, a label selector, and collapsible options.
 
 TODO: image
 
-Select profile type from the drop-down. While the label selector can be left empty to query all profiles without filtering by labels, the profile type needs to be selected for the query to be valid. Grafana does not show any data if the profile type isn’t selected and the query is run.
+Select a profile type from the drop-down menu. While the label selector can be left empty to query all profiles without filtering by labels, the profile type must to be selected for the query to be valid. Grafana does not show any data if the profile type isn’t selected when a query is run.
 
 TODO: image
 
-Use the labels selector input to filter by labels. Parca uses similar syntax to Prometheus to filter labels, and we provide an autocomplete functionality to list all the available labels and their values when typing. Refer to Parca documentation (TODO link) for available operators and syntax.
+Use the labels selector input to filter by labels. Parca uses similar syntax to Prometheus to filter labels. Refer to Parca documentation (TODO link) for available operators and syntax.
 
 TODO: image
 
-Query type allows you to decide if you want to return only profile data which can be shown in a flame graph (TODO link) or metric data visualized in a graph or both. The Both option is available only in a dashboard as you can select only single visualization for a panel.
+Select a query type to return the profile data which can be shown in a flame graph (TODO link), metric data visualized in a graph, or both. You can only select both options in a dashboard, because panels allow only one visualization.
 
 ### Profiles query results
 
@@ -58,19 +58,19 @@ Profiles can be visualized in a flame graph. See the flame graphs documentation 
 
 TODO: image
 
-Parca returns profiles aggregated over the selected time range. This means the absolute values in the flame graph grow as the time range gets wider while keeping the relative values meaningful. You can zoom the time range to get a higher granularity profile up to the point of a single Parca scrape interval.
+Parca returns profiles aggregated over a selected time range, and the absolute values in the flame graph grow as the time range gets bigger while keeping the relative values meaningful. You can zoom in on the time range to get a higher granularity profile up to the point of a single Parca scrape interval.
 
 ### Metrics query results
 
-Metrics results represent the aggregated value over time of the selected profile type. Parca currently always return non-grouped data with a series for each label combination.
+Metrics results represent the aggregated value, over time, of the selected profile type. Parca returns ungrouped data with a series for each label combination.
 
 TODO: image
 
-This allows you to quickly see any spikes in the value of the scraped profiles and zoom into a particular time range.
+This allows you to quickly see any spikes in the value of the scraped profiles and zoom in to a particular time range.
 
 ## Provision the Parca data source
 
-You can modify the Grafana configuration files to provision the Parca data source. Read more about how it works and all the settings you can set for data sources on the provisioning topic (TODO link).
+You can modify the Grafana configuration files to provision the Parca data source. To learn more, and to view the available provisioning settings, see (TODO link).
 
 Here is an example config:
 

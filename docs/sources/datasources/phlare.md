@@ -8,7 +8,7 @@ aliases:
 - phlare
 - guide
 - profiling
-  title: Phlare
+  title: Phlare data source
   weight: 1150
 ---
 
@@ -20,13 +20,13 @@ aliases:
 
 Grafana ships with built-in support for Phlare, a horizontally scalable, highly-available, multi-tenant, OSS, continuous profiling aggregation system from Grafana Labs. Add it as a data source, and you are ready to query your profiles in [Explore]({{< relref "../explore" >}}).
 
-## Add data source
+## Configure the Phlare data source
 
 To access Phlare settings, click the **Configuration** (gear) icon, then click **Data Sources** > **Phlare**.
 
 | Name           | Description                                                                                                                                                                    |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Name`         | The name using which you will refer to the data source in panels, queries, and Explore.                                                                                        |
+| `Name`         | A name to specify the data source in panels, queries, and Explore.                                                                                                             |
 | `Default`      | The default data source will be pre-selected for new panels.                                                                                                                   |
 | `URL`          | The URL of the Tempo instance, e.g., `http://localhost:4100`                                                                                                                   |
 | `Basic Auth`   | Enable basic authentication to the Tempo data source.                                                                                                                          |
@@ -36,25 +36,25 @@ To access Phlare settings, click the **Configuration** (gear) icon, then click *
 
 ## Querying
 
-### Query editor
+### Query Editor
 
 TODO: image
 
-Query editor consists, going from the top left, of profile type selector, a label selector input, and a collapsible options section.
+Query editor gives you access to a profile type selector, a label selector, and collapsible options.
 
 TODO: image
 
-Select profile type from the drop-down. While the label selector can be left empty to query all profiles without filtering by labels, the profile type needs to be selected for the query to be valid. Grafana does not show any data if the profile type isn’t selected and the query is run.
+Select a profile type from the drop-down menu. While the label selector can be left empty to query all profiles without filtering by labels, the profile type must to be selected for the query to be valid. Grafana does not show any data if the profile type isn’t selected when a query is run.
 
 TODO: image
 
-Use the labels selector input to filter by labels. Phlare uses similar syntax to Prometheus to filter labels, and we provide an autocomplete functionality to list all the available labels and their values when typing. Refer to Phlare documentation (TODO link) for available operators and syntax.
+Use the labels selector input to filter by labels. Parca uses similar syntax to Prometheus to filter labels. Refer to Parca documentation (TODO link) for available operators and syntax.
 
 TODO: image
 
 Options section contains a switch for Query Type and Group by.
 
-Query type allows you to decide if you want to return only profile data which can be shown in a flame graph (TODO link) or metric data visualized in a graph or both. The Both option is available only in a dashboard as you can select only single visualization for a panel.
+Select a query type to return the profile data which can be shown in a flame graph (TODO link), metric data visualized in a graph, or both. You can only select both options in a dashboard, because panels allow only one visualization.
 
 Group by allows you to group metric data by a specified label. Without any Group by label, metric data is aggregated over all the labels into single time series. You can use multiple labels to group by. Group by has only an effect on the metric data and does not change the profile data results.
 
@@ -64,7 +64,7 @@ Profiles can be visualized in a flame graph. See the flame graphs documentation 
 
 TODO: image
 
-Phlare returns profiles aggregated over the selected time range. This means the absolute values in the flame graph grow as the time range gets wider while keeping the relative values meaningful. You can zoom the time range to get a higher granularity profile up to the point of a single Phlare scrape interval.
+Phlare returns profiles aggregated over a selected time range, and the absolute values in the flame graph grow as the time range gets bigger while keeping the relative values meaningful. You can zoom in on the time range to get a higher granularity profile up to the point of a single Phlare scrape interval.
 
 ### Metrics query results
 
@@ -72,11 +72,11 @@ Metrics results represent the aggregated sum value over time of the selected pro
 
 TODO: image
 
-This allows you to quickly see any spikes in the value of the scraped profiles and zoom into a particular time range.
+This allows you to quickly see any spikes in the value of the scraped profiles and zoom in to a particular time range.
 
 ## Provision the Phlare data source
 
-You can modify the Grafana configuration files to provision the Phlare data source. Read more about how it works and all the settings you can set for data sources on the provisioning topic (TODO link).
+You can modify the Grafana configuration files to provision the Phlare data source. To learn more, and to view the available provisioning settings, see (TODO link).
 
 Here is an example config:
 
