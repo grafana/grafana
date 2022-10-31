@@ -83,7 +83,7 @@ describe('LinksSettings', () => {
   };
 
   test('it renders a header and cta if no links', () => {
-    const linklessDashboard = new DashboardModel(createDashboardModelFixture({ links: [] }));
+    const linklessDashboard = createDashboardModelFixture({ links: [] });
     setup(linklessDashboard);
 
     expect(screen.getByRole('heading', { name: 'Links' })).toBeInTheDocument();

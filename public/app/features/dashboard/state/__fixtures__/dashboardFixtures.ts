@@ -1,4 +1,4 @@
-import { Dashboard, defaultDashboardCursorSync, Panel } from '@grafana/schema';
+import { AnnotationQuery, Dashboard, defaultDashboardCursorSync, Panel } from '@grafana/schema';
 import { DashboardMeta } from 'app/types';
 
 import { DashboardModel } from '../DashboardModel';
@@ -31,5 +31,19 @@ export function createPanelJSONFixture(panelInput: Partial<Panel> = {}): Panel {
     transparent: false,
     type: 'timeseries',
     ...panelInput,
+  };
+}
+
+export function createAnnotationJSONFixture(annotationInput: Partial<AnnotationQuery>): AnnotationQuery {
+  return {
+    builtIn: 0, // ??
+    datasource: {
+      type: 'foo',
+      uid: 'bar',
+    },
+    showIn: 2,
+    enable: true,
+    type: 'anno',
+    ...annotationInput,
   };
 }
