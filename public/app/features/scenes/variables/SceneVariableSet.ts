@@ -3,11 +3,11 @@ import { variableRegex } from 'app/features/variables/utils';
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneObject } from '../core/types';
 
-import { SceneVariable, SceneVariableSet, SceneVariableSetState, SceneVariableState } from './types';
+import { SceneVariable, SceneVariables, SceneVariableSetState, SceneVariableState } from './types';
 
 export class TextBoxSceneVariable extends SceneObjectBase<SceneVariableState> implements SceneVariable {}
 
-export class SceneVariableManager extends SceneObjectBase<SceneVariableSetState> implements SceneVariableSet {
+export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> implements SceneVariables {
   getVariableByName(name: string): SceneVariable | undefined {
     // TODO: Replace with index
     return this.state.variables.find((x) => x.state.name === name);

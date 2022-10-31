@@ -34,12 +34,12 @@ export const HighlightedQuery: FC<{ language: 'promql' | 'logql'; expr: string }
 
   const slateValue = useMemo(() => makeValue(expr), [expr]);
 
-  return <Editor plugins={plugins} value={slateValue} readOnly={true} />;
+  //We don't want to set readOnly={true} to the Editor to prevent unwanted charaters in the copied text. See https://github.com/grafana/grafana/pull/57839
+  return <Editor data-testid={'expression-editor'} plugins={plugins} value={slateValue} />;
 };
 
 export const Expression: FC<Props> = ({ expression: query, rulesSource }) => {
   const styles = useStyles(getStyles);
-
   return (
     <Well className={cx(styles.well, 'slate-query-field')}>
       {isCloudRulesSource(rulesSource) ? (

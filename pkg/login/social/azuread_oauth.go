@@ -72,7 +72,7 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 
 	role, grafanaAdmin := s.extractRoleAndAdmin(&claims)
 	if s.roleAttributeStrict && !role.IsValid() {
-		return nil, ErrInvalidBasicRole
+		return nil, &InvalidBasicRoleError{idP: "Azure", assignedRole: string(role)}
 	}
 
 	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)

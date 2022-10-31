@@ -106,78 +106,82 @@ func (e *objectStoreJob) start() {
 	what := models.StandardKindDashboard
 	e.status.Count[what] = 0
 
-	if false {
-		// TODO paging etc
-		// NOTE: doing work inside rows.Next() leads to database locked
-		dashInfo, err := e.getDashboards(ctx)
-		if err != nil {
-			e.status.Status = "error: " + err.Error()
-			return
+	// TODO paging etc
+	// NOTE: doing work inside rows.Next() leads to database locked
+	dashInfo, err := e.getDashboards(ctx)
+	if err != nil {
+		e.status.Status = "error: " + err.Error()
+		return
+	}
+
+	for _, dash := range dashInfo {
+		rowUser.OrgID = dash.OrgID
+		rowUser.UserID = dash.UpdatedBy
+		if dash.UpdatedBy < 0 {
+			rowUser.UserID = 0 // avoid Uint64Val issue????
 		}
 
-		for _, dash := range dashInfo {
-			rowUser.OrgID = dash.OrgID
-			rowUser.UserID = dash.UpdatedBy
-			if dash.UpdatedBy < 0 {
-				rowUser.UserID = 0 // avoid Uint64Val issue????
-			}
-
-			_, err = e.store.Write(ctx, &object.WriteObjectRequest{
-				UID:     fmt.Sprintf("export/%s", dash.UID),
-				Kind:    models.StandardKindDashboard,
-				Body:    dash.Body,
-				Comment: "export from dashboard table",
-			})
-			if err != nil {
-				e.status.Status = "error: " + err.Error()
-				return
-			}
-			e.status.Changed = time.Now().UnixMilli()
-			e.status.Index++
-			e.status.Count[what] += 1
-			e.status.Last = fmt.Sprintf("ITEM: %s", dash.UID)
-			e.broadcaster(e.status)
-		}
-
-		// Playlists
-		what = models.StandardKindPlaylist
-		e.status.Count[what] = 0
-		rowUser.OrgID = 1
-		rowUser.UserID = 1
-		res, err := e.playlistService.Search(ctx, &playlist.GetPlaylistsQuery{
-			OrgId: rowUser.OrgID, // TODO... all or orgs
-			Limit: 5000,
+		_, err = e.store.Write(ctx, &object.WriteObjectRequest{
+			GRN: &object.GRN{
+				Scope: models.ObjectStoreScopeDrive,
+				UID:   dash.UID,
+				Kind:  models.StandardKindDashboard,
+			},
+			Body:    dash.Body,
+			Comment: "export from dashboard table",
 		})
 		if err != nil {
 			e.status.Status = "error: " + err.Error()
 			return
 		}
-		for _, item := range res {
-			playlist, err := e.playlistService.Get(ctx, &playlist.GetPlaylistByUidQuery{
-				UID:   item.UID,
-				OrgId: rowUser.OrgID,
-			})
-			if err != nil {
-				e.status.Status = "error: " + err.Error()
-				return
-			}
+		e.status.Changed = time.Now().UnixMilli()
+		e.status.Index++
+		e.status.Count[what] += 1
+		e.status.Last = fmt.Sprintf("ITEM: %s", dash.UID)
+		e.broadcaster(e.status)
+	}
 
-			_, err = e.store.Write(ctx, &object.WriteObjectRequest{
-				UID:     fmt.Sprintf("export/%s", playlist.Uid),
-				Kind:    models.StandardKindPlaylist,
-				Body:    prettyJSON(playlist),
-				Comment: "export from playlists",
-			})
-			if err != nil {
-				e.status.Status = "error: " + err.Error()
-				return
-			}
-			e.status.Changed = time.Now().UnixMilli()
-			e.status.Index++
-			e.status.Count[what] += 1
-			e.status.Last = fmt.Sprintf("ITEM: %s", playlist.Uid)
-			e.broadcaster(e.status)
+	// Playlists
+	what = models.StandardKindPlaylist
+	e.status.Count[what] = 0
+	rowUser.OrgID = 1
+	rowUser.UserID = 1
+	res, err := e.playlistService.Search(ctx, &playlist.GetPlaylistsQuery{
+		OrgId: rowUser.OrgID, // TODO... all or orgs
+		Limit: 5000,
+	})
+	if err != nil {
+		e.status.Status = "error: " + err.Error()
+		return
+	}
+	for _, item := range res {
+		playlist, err := e.playlistService.Get(ctx, &playlist.GetPlaylistByUidQuery{
+			UID:   item.UID,
+			OrgId: rowUser.OrgID,
+		})
+		if err != nil {
+			e.status.Status = "error: " + err.Error()
+			return
 		}
+
+		_, err = e.store.Write(ctx, &object.WriteObjectRequest{
+			GRN: &object.GRN{
+				Scope: models.ObjectStoreScopeEntity,
+				UID:   playlist.Uid,
+				Kind:  models.StandardKindPlaylist,
+			},
+			Body:    prettyJSON(playlist),
+			Comment: "export from playlists",
+		})
+		if err != nil {
+			e.status.Status = "error: " + err.Error()
+			return
+		}
+		e.status.Changed = time.Now().UnixMilli()
+		e.status.Index++
+		e.status.Count[what] += 1
+		e.status.Last = fmt.Sprintf("ITEM: %s", playlist.Uid)
+		e.broadcaster(e.status)
 	}
 
 	// TODO.. query lookup
@@ -224,8 +228,11 @@ func (e *objectStoreJob) start() {
 			}
 
 			_, err = e.store.Write(ctx, &object.WriteObjectRequest{
-				UID:     dto.Key,
-				Kind:    models.StandardKindSnapshot,
+				GRN: &object.GRN{
+					Scope: models.ObjectStoreScopeEntity,
+					UID:   dto.Key,
+					Kind:  models.StandardKindSnapshot,
+				},
 				Body:    prettyJSON(m),
 				Comment: "export from snapshtts",
 			})

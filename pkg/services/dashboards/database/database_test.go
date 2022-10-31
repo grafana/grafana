@@ -245,7 +245,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 
 		uid := util.GenerateShortUID()
-		cmd := publicDashboardModels.SavePublicDashboardConfigCommand{
+		cmd := publicDashboardModels.SavePublicDashboardCommand{
 			PublicDashboard: publicDashboardModels.PublicDashboard{
 				Uid:          uid,
 				DashboardUid: savedDash.Uid,
@@ -280,7 +280,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 
 		uid := util.GenerateShortUID()
-		cmd := publicDashboardModels.SavePublicDashboardConfigCommand{
+		cmd := publicDashboardModels.SavePublicDashboardCommand{
 			PublicDashboard: publicDashboardModels.PublicDashboard{
 				Uid:          uid,
 				DashboardUid: savedDash.Uid,
