@@ -4,6 +4,7 @@ import React, { memo, PropsWithChildren } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
+import { Trans } from '../../../utils/i18n';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -20,7 +21,11 @@ const getStyles = (theme: GrafanaTheme2) => {
 export const TimePickerTitle = memo<PropsWithChildren<{}>>(({ children }) => {
   const styles = useStyles2(getStyles);
 
-  return <h3 className={styles.text}>{children}</h3>;
+  return (
+    <h3 className={styles.text}>
+      <Trans i18nKey="grafana-ui.time-picker-title.h3-title">{{ children }}</Trans>
+    </h3>
+  );
 });
 
 TimePickerTitle.displayName = 'TimePickerTitle';
