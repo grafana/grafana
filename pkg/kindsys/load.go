@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"sync"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/errors"
@@ -14,13 +15,20 @@ import (
 )
 
 var defaultFramework cue.Value
+var fwOnce sync.Once
 
 func init() {
-	var err error
-	defaultFramework, err = doLoadFrameworkCUE(cuectx.GrafanaCUEContext())
-	if err != nil {
-		panic(err)
-	}
+	loadpFrameworkOnce()
+}
+
+func loadpFrameworkOnce() {
+	fwOnce.Do(func() {
+		var err error
+		defaultFramework, err = doLoadFrameworkCUE(cuectx.GrafanaCUEContext())
+		if err != nil {
+			panic(err)
+		}
+	})
 }
 
 var prefix = filepath.Join("/pkg", "kindsys")
@@ -62,6 +70,9 @@ func doLoadFrameworkCUE(ctx *cue.Context) (cue.Value, error) {
 // is passed, the singleton will be used.
 func CUEFramework(ctx *cue.Context) cue.Value {
 	if ctx == nil || ctx == cuectx.GrafanaCUEContext() {
+		// Ensure framework is loaded, even if this func is called
+		// from an init() somewhere.
+		loadpFrameworkOnce()
 		return defaultFramework
 	}
 	// Error guaranteed to be nil here because erroring would have caused init() to panic
