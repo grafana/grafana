@@ -60,7 +60,6 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Respon
 	}
 
 	resp := apimodels.GettableNGalertConfig{
-		Alertmanagers:       []string{},
 		AlertmanagersChoice: apimodels.AlertmanagersChoice(cfg.SendAlertsTo.String()),
 	}
 	return response.JSON(http.StatusOK, resp)
