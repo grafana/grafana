@@ -1,13 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { identity } from 'lodash';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { usePrevious } from 'react-use';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import {
   AbsoluteTimeRange,
   applyFieldOverrides,
-  compareArrayValues,
-  compareDataFrameStructures,
   createFieldConfigRegistry,
   DataFrame,
   dateTime,
@@ -73,12 +70,6 @@ export function ExploreGraph({
 }: Props) {
   const theme = useTheme2();
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
-  const [baseStructureRev, setBaseStructureRev] = useState(1);
-
-  const previousData = usePrevious(data);
-  const structureChangesRef = useRef(0);
-  const structureRev = baseStructureRev + structureChangesRef.current;
-  const prevStructureRev = usePrevious(structureRev);
 
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>({
     defaults: {
@@ -94,14 +85,6 @@ export function ExploreGraph({
     },
     overrides: [],
   });
-
-  if (data && previousData && !compareArrayValues(previousData, data, compareDataFrameStructures)) {
-    structureChangesRef.current++;
-
-    if (prevStructureRev === structureRev) {
-      setFieldConfig({ ...fieldConfig, overrides: [] });
-    }
-  }
 
   const style = useStyles2(getStyles);
   const timeRange = {
@@ -145,7 +128,6 @@ export function ExploreGraph({
     eventBus: appEvents,
     onSplitOpen: splitOpenFn,
     onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {
-      setBaseStructureRev((r) => r + 1);
       setFieldConfig(seriesVisibilityConfigFactory(label, mode, fieldConfig, data));
     },
   };
@@ -159,14 +141,13 @@ export function ExploreGraph({
           <span
             className={cx([style.showAllTimeSeries])}
             onClick={() => {
-              structureChangesRef.current++;
               setShowAllTimeSeries(true);
             }}
           >{`Show all ${dataWithConfig.length}`}</span>
         </div>
       )}
       <PanelRenderer
-        data={{ series: seriesToShow, timeRange, structureRev, state: loadingState, annotations }}
+        data={{ series: seriesToShow, timeRange, state: loadingState, annotations }}
         pluginId="timeseries"
         title=""
         width={width}
