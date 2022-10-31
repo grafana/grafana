@@ -262,9 +262,9 @@ func (p *ResourcePermission) Contains(targetActions []string) bool {
 }
 
 type SetResourcePermissionCommand struct {
-	UserID      int64  `json:"userID"`
-	TeamID      int64  `json:"teamID"`
-	BuiltinRole string `json:"builtinRole"`
+	UserID      int64  `json:"userId,omitempty"`
+	TeamID      int64  `json:"teamId,omitempty"`
+	BuiltinRole string `json:"builtInRole,omitempty"`
 	Permission  string `json:"permission"`
 }
 
