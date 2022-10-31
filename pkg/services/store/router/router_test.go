@@ -55,6 +55,14 @@ func TestSimpleRouter(t *testing.T) {
 			Kind:     "folder",
 		},
 	}, {
+		Key: "11/drive/path/to/folder/__access.json",
+		GRN: &object.GRN{
+			TenantId: 11,
+			Scope:    models.ObjectStoreScopeDrive,
+			UID:      "path/to/folder",
+			Kind:     "folder-access",
+		},
+	}, {
 		Key: "10/drive/path/to/file.png",
 		GRN: &object.GRN{
 			TenantId: 10,

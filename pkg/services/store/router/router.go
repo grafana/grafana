@@ -78,6 +78,10 @@ func (r *standardStoreRouter) Route(ctx context.Context, grn *object.GRN) (Resou
 				info.Key = fmt.Sprintf("%d/%s/%s/__folder.json", grn.TenantId, grn.Scope, grn.UID)
 				return info, nil
 			}
+			if grn.Kind == models.StandardKindFolderAccess {
+				info.Key = fmt.Sprintf("%d/%s/%s/__access.json", grn.TenantId, grn.Scope, grn.UID)
+				return info, nil
+			}
 			if kind.FileExtension != "" {
 				info.Key = fmt.Sprintf("%d/%s/%s.%s", grn.TenantId, grn.Scope, grn.UID, kind.FileExtension)
 			} else {
@@ -137,6 +141,11 @@ func (r *standardStoreRouter) RouteFromKey(ctx context.Context, key string) (Res
 							{
 								info.GRN.UID = key[:sdx]
 								info.GRN.Kind = models.StandardKindFolder
+							}
+						case "__access.json":
+							{
+								info.GRN.UID = key[:sdx]
+								info.GRN.Kind = models.StandardKindFolderAccess
 							}
 						default:
 							return info, fmt.Errorf("unable to parse drive path")

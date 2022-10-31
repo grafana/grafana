@@ -45,6 +45,10 @@ func NewKindRegistry() KindRegistry {
 		info:    access.GetObjectKindInfo(),
 		builder: access.GetObjectSummaryBuilder(),
 	}
+	kinds[models.StandardKindFolderAccess] = &kindValues{
+		info:    access.GetObjectKindInfo(),
+		builder: access.GetObjectSummaryBuilder(),
+	}
 	kinds[models.StandardKindSnapshot] = &kindValues{
 		info:    snapshot.GetObjectKindInfo(),
 		builder: snapshot.GetObjectSummaryBuilder(),
