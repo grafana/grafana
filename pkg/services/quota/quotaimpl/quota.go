@@ -16,11 +16,11 @@ import (
 type serviceDisabled struct {
 }
 
-func (s *serviceDisabled) QuotaReached(c *models.ReqContext, target string) (bool, error) {
+func (s *serviceDisabled) QuotaReached(c *models.ReqContext, targetSrv quota.TargetSrv) (bool, error) {
 	return false, nil
 }
 
-func (s *serviceDisabled) Get(ctx context.Context, scope string, id int64) ([]quota.QuotaDTO, error) {
+func (s *serviceDisabled) Get(ctx context.Context, scope quota.Scope, id int64) ([]quota.QuotaDTO, error) {
 	return nil, quota.ErrDisabled
 }
 
@@ -28,7 +28,7 @@ func (s *serviceDisabled) Update(ctx context.Context, cmd *quota.UpdateQuotaCmd)
 	return quota.ErrDisabled
 }
 
-func (s *serviceDisabled) CheckQuotaReached(ctx context.Context, target string, scopeParams *quota.ScopeParameters) (bool, error) {
+func (s *serviceDisabled) CheckQuotaReached(ctx context.Context, targetSrv quota.TargetSrv, scopeParams *quota.ScopeParameters) (bool, error) {
 	return false, nil
 }
 
@@ -76,7 +76,7 @@ func (s *service) IsDisabled() bool {
 }
 
 // QuotaReached checks that quota is reached for a target. Runs CheckQuotaReached and take context and scope parameters from the request context
-func (s *service) QuotaReached(c *models.ReqContext, target string) (bool, error) {
+func (s *service) QuotaReached(c *models.ReqContext, targetSrv quota.TargetSrv) (bool, error) {
 	// No request context means this is a background service, like LDAP Background Sync
 	if c == nil {
 		return false, nil
@@ -89,21 +89,20 @@ func (s *service) QuotaReached(c *models.ReqContext, target string) (bool, error
 			UserID: c.UserID,
 		}
 	}
-	return s.CheckQuotaReached(c.Req.Context(), target, params)
+	return s.CheckQuotaReached(c.Req.Context(), targetSrv, params)
 }
 
-func (s *service) Get(ctx context.Context, scope string, id int64) ([]quota.QuotaDTO, error) {
-	quotaScope := quota.Scope(scope)
-	if err := quotaScope.Validate(); err != nil {
+func (s *service) Get(ctx context.Context, scope quota.Scope, id int64) ([]quota.QuotaDTO, error) {
+	if err := scope.Validate(); err != nil {
 		return nil, err
 	}
 
 	q := make([]quota.QuotaDTO, 0)
 
 	scopeParams := quota.ScopeParameters{}
-	if quotaScope == quota.OrgScope {
+	if scope == quota.OrgScope {
 		scopeParams.OrgID = id
-	} else if quotaScope == quota.UserScope {
+	} else if scope == quota.UserScope {
 		scopeParams.UserID = id
 	}
 
@@ -129,7 +128,7 @@ func (s *service) Get(ctx context.Context, scope string, id int64) ([]quota.Quot
 			return nil, err
 		}
 
-		if scp != quota.Scope(scope) {
+		if scp != scope {
 			continue
 		}
 
@@ -155,7 +154,7 @@ func (s *service) Get(ctx context.Context, scope string, id int64) ([]quota.Quot
 			UserId:  scopeParams.UserID,
 			Used:    used,
 			Service: string(srv),
-			Scope:   scope,
+			Scope:   string(scope),
 		})
 	}
 
@@ -186,13 +185,13 @@ func (s *service) Update(ctx context.Context, cmd *quota.UpdateQuotaCmd) error {
 }
 
 // CheckQuotaReached check that quota is reached for a target. If ScopeParameters are not defined, only global scope is checked
-func (s *service) CheckQuotaReached(ctx context.Context, target string, scopeParams *quota.ScopeParameters) (bool, error) {
-	targetSrvLimits, err := s.getOverridenLimits(ctx, quota.TargetSrv(target), scopeParams)
+func (s *service) CheckQuotaReached(ctx context.Context, targetSrv quota.TargetSrv, scopeParams *quota.ScopeParameters) (bool, error) {
+	targetSrvLimits, err := s.getOverridenLimits(ctx, targetSrv, scopeParams)
 	if err != nil {
 		return false, err
 	}
 
-	usageReporterFunc, ok := s.getReporter(quota.TargetSrv(target))
+	usageReporterFunc, ok := s.getReporter(targetSrv)
 	if !ok {
 		return false, quota.ErrInvalidTargetSrv
 	}

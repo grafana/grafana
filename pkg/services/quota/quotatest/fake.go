@@ -16,7 +16,7 @@ func NewQuotaServiceFake(reached bool, err error) *FakeQuotaService {
 	return &FakeQuotaService{reached, err}
 }
 
-func (f *FakeQuotaService) Get(ctx context.Context, scope string, id int64) ([]quota.QuotaDTO, error) {
+func (f *FakeQuotaService) Get(ctx context.Context, scope quota.Scope, id int64) ([]quota.QuotaDTO, error) {
 	return []quota.QuotaDTO{}, nil
 }
 
@@ -24,11 +24,11 @@ func (f *FakeQuotaService) Update(ctx context.Context, cmd *quota.UpdateQuotaCmd
 	return nil
 }
 
-func (f *FakeQuotaService) QuotaReached(c *models.ReqContext, target string) (bool, error) {
+func (f *FakeQuotaService) QuotaReached(c *models.ReqContext, target quota.TargetSrv) (bool, error) {
 	return f.reached, f.err
 }
 
-func (f *FakeQuotaService) CheckQuotaReached(c context.Context, target string, params *quota.ScopeParameters) (bool, error) {
+func (f *FakeQuotaService) CheckQuotaReached(c context.Context, target quota.TargetSrv, params *quota.ScopeParameters) (bool, error) {
 	return f.reached, f.err
 }
 

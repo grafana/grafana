@@ -457,7 +457,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *user.SignedIn
 
 func (s *standardStorageService) checkFileQuota(ctx context.Context, path string) error {
 	// assumes we are only uploading to the SQL database - TODO: refactor once we introduce object stores
-	quotaReached, err := s.quotaService.CheckQuotaReached(ctx, "file", nil)
+	quotaReached, err := s.quotaService.CheckQuotaReached(ctx, QuotaTargetSrv, nil)
 	if err != nil {
 		grafanaStorageLogger.Error("failed while checking upload quota", "path", path, "error", err)
 		return ErrUploadInternalError

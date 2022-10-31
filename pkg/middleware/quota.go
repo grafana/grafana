@@ -16,7 +16,7 @@ func Quota(quotaService quota.Service) func(string) web.Handler {
 	//https://open.spotify.com/track/7bZSoBEAEEUsGEuLOf94Jm?si=T1Tdju5qRSmmR0zph_6RBw fuuuuunky
 	return func(targetSrv string) web.Handler {
 		return func(c *models.ReqContext) {
-			limitReached, err := quotaService.QuotaReached(c, targetSrv)
+			limitReached, err := quotaService.QuotaReached(c, quota.TargetSrv(targetSrv))
 			if err != nil {
 				c.JsonApiErr(500, "Failed to get quota", err)
 				return

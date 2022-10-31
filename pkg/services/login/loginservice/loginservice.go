@@ -71,7 +71,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 			return login.ErrSignupNotAllowed
 		}
 
-		limitReached, errLimit := ls.QuotaService.QuotaReached(cmd.ReqContext, user.QuotaTargetSrv)
+		limitReached, errLimit := ls.QuotaService.QuotaReached(cmd.ReqContext, quota.TargetSrv(user.QuotaTargetSrv))
 		if errLimit != nil {
 			cmd.ReqContext.Logger.Warn("Error getting user quota.", "error", errLimit)
 			return login.ErrGettingUserQuota

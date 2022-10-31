@@ -108,7 +108,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	defaultGlobalLimits := make(map[quota.Tag]int64)
 	existingGlobalUsage := make(map[quota.Tag]int64)
 	scope := quota.GlobalScope
-	result, err := quotaService.Get(context.Background(), string(scope), 0)
+	result, err := quotaService.Get(context.Background(), scope, 0)
 	require.NoError(t, err)
 	for _, r := range result {
 		tag, err := r.Tag()
@@ -145,7 +145,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	defaultOrgLimits := make(map[quota.Tag]int64)
 	existingOrgUsage := make(map[quota.Tag]int64)
 	scope = quota.OrgScope
-	result, err = quotaService.Get(context.Background(), string(scope), o.ID)
+	result, err = quotaService.Get(context.Background(), scope, o.ID)
 	require.NoError(t, err)
 	for _, r := range result {
 		tag, err := r.Tag()
@@ -173,7 +173,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	defaultUserLimits := make(map[quota.Tag]int64)
 	existingUserUsage := make(map[quota.Tag]int64)
 	scope = quota.UserScope
-	result, err = quotaService.Get(context.Background(), string(scope), u.ID)
+	result, err = quotaService.Get(context.Background(), scope, u.ID)
 	require.NoError(t, err)
 	for _, r := range result {
 		tag, err := r.Tag()
@@ -228,7 +228,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 		})
 
 		t.Run("Should be able to quota list for org", func(t *testing.T) {
-			result, err := quotaService.Get(context.Background(), string(quota.OrgScope), o.ID)
+			result, err := quotaService.Get(context.Background(), quota.OrgScope, o.ID)
 			require.NoError(t, err)
 			require.Len(t, result, 5)
 
@@ -301,7 +301,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 		})
 
 		t.Run("Should be able to quota list for user", func(t *testing.T) {
-			result, err = quotaService.Get(context.Background(), string(quota.UserScope), u.ID)
+			result, err = quotaService.Get(context.Background(), quota.UserScope, u.ID)
 			require.NoError(t, err)
 			require.Len(t, result, 1)
 			for _, res := range result {
@@ -439,7 +439,7 @@ func getQuotaBySrvTargetScope(t *testing.T, quotaService quota.Service, srv quot
 		id = scopeParams.UserID
 	}
 
-	result, err := quotaService.Get(context.Background(), string(scope), id)
+	result, err := quotaService.Get(context.Background(), scope, id)
 	require.NoError(t, err)
 	for _, r := range result {
 		if r.Target != string(target) {

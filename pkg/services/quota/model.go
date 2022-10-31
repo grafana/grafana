@@ -38,12 +38,6 @@ func (s Scope) Validate() error {
 	}
 }
 
-type QuotaScope struct {
-	Name         Scope
-	Target       string
-	DefaultLimit int64
-}
-
 type TargetSrv string
 
 type Target string
