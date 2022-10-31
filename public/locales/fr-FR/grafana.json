@@ -84,6 +84,11 @@
   "folder-picker": {
     "loading": "Chargement des dossiers..."
   },
+  "grafana-ui": {
+    "time-picker-title": {
+      "h3-title": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Annuler",

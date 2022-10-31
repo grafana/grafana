@@ -84,6 +84,11 @@
   "folder-picker": {
     "loading": "正在加载文件夹..."
   },
+  "grafana-ui": {
+    "time-picker-title": {
+      "h3-title": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "取消",
