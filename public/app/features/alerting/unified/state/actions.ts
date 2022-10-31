@@ -32,7 +32,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
-import { logInfo, LogMessages, withPerfLogging } from '../Analytics';
+import { logInfo, LogMessages, withPerformanceLogging } from '../Analytics';
 import {
   addAlertManagers,
   createOrUpdateSilence,
@@ -104,7 +104,7 @@ export const fetchPromRulesAction = createAsyncThunk(
   ): Promise<RuleNamespace[]> => {
     await thunkAPI.dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
 
-    const fetchRulesWithLogging = withPerfLogging(fetchRules, `[${rulesSourceName}] Prometheus rules loaded`, {
+    const fetchRulesWithLogging = withPerformanceLogging(fetchRules, `[${rulesSourceName}] Prometheus rules loaded`, {
       dataSourceName: rulesSourceName,
       thunk: 'unifiedalerting/fetchPromRules',
     });
@@ -133,7 +133,7 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
         );
 
         const lazyConfigInitSupported = amFeatures?.lazyConfigInit ?? false;
-        const fetchAMconfigWithLogging = withPerfLogging(
+        const fetchAMconfigWithLogging = withPerformanceLogging(
           fetchAlertManagerConfig,
           `[${alertManagerSourceName}] Alertmanager config loaded`,
           {
@@ -210,10 +210,14 @@ export const fetchRulerRulesAction = createAsyncThunk(
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const rulerConfig = getDataSourceRulerConfig(getState, rulesSourceName);
 
-    const fetchRulerRulesWithLogging = withPerfLogging(fetchRulerRules, `[${rulesSourceName}] Ruler rules loaded`, {
-      dataSourceName: rulesSourceName,
-      thunk: 'unifiedalerting/fetchRulerRules',
-    });
+    const fetchRulerRulesWithLogging = withPerformanceLogging(
+      fetchRulerRules,
+      `[${rulesSourceName}] Ruler rules loaded`,
+      {
+        dataSourceName: rulesSourceName,
+        thunk: 'unifiedalerting/fetchRulerRules',
+      }
+    );
 
     return await withSerializedError(fetchRulerRulesWithLogging(rulerConfig, filter));
   }
@@ -234,10 +238,14 @@ export function fetchPromAndRulerRulesAction({ rulesSourceName }: { rulesSourceN
 export const fetchSilencesAction = createAsyncThunk(
   'unifiedalerting/fetchSilences',
   (alertManagerSourceName: string): Promise<Silence[]> => {
-    const fetchSilencesWithLogging = withPerfLogging(fetchSilences, `[${alertManagerSourceName}] Silences loaded`, {
-      dataSourceName: alertManagerSourceName,
-      thunk: 'unifiedalerting/fetchSilences',
-    });
+    const fetchSilencesWithLogging = withPerformanceLogging(
+      fetchSilences,
+      `[${alertManagerSourceName}] Silences loaded`,
+      {
+        dataSourceName: alertManagerSourceName,
+        thunk: 'unifiedalerting/fetchSilences',
+      }
+    );
 
     return withSerializedError(fetchSilencesWithLogging(alertManagerSourceName));
   }
@@ -287,7 +295,7 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
 
         const { id, name } = ds;
 
-        const discoverFeaturesWithLogging = withPerfLogging(
+        const discoverFeaturesWithLogging = withPerformanceLogging(
           discoverFeatures,
           `[${rulesSourceName}] Rules source features discovered`,
           {

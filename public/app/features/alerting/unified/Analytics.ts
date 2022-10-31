@@ -23,7 +23,7 @@ export function logInfo(message: string, context: Record<string, string | number
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function withPerfLogging<TFunc extends (...args: any[]) => Promise<any>>(
+export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise<any>>(
   func: TFunc,
   message: string,
   context: Record<string, string>
