@@ -28,8 +28,8 @@ export function SelectRow({ sql, format, columns, onSqlChange, functions }: Sele
   // Add necessary alias options for time series format
   // when that format has been selected
   if (format === QueryFormat.Timeseries) {
-    timeSeriesAliasOpts.push({ label: 'time', value: '"time"' });
-    timeSeriesAliasOpts.push({ label: 'value', value: '"value"' });
+    timeSeriesAliasOpts.push({ label: 'time', value: 'time' });
+    timeSeriesAliasOpts.push({ label: 'value', value: 'value' });
   }
 
   const onColumnChange = useCallback(
@@ -71,7 +71,13 @@ export function SelectRow({ sql, format, columns, onSqlChange, functions }: Sele
 
   const onAliasChange = useCallback(
     (item: QueryEditorFunctionExpression, index: number) => (alias: SelectableValue<string>) => {
-      let newItem = { ...item, alias: alias?.value };
+      let newItem = { ...item };
+
+      if (alias !== null) {
+        newItem = { ...item, alias: `"${alias?.value?.trim()}"` };
+      } else {
+        delete newItem.alias;
+      }
 
       const newSql: SQLExpression = {
         ...sql,
