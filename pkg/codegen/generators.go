@@ -84,7 +84,7 @@ func machineNameFor(m kindsys.SomeKindMeta) string {
 		return x.MachineName
 	case kindsys.CustomStructuredMeta:
 		return x.MachineName
-	case kindsys.SlotImplMeta:
+	case kindsys.ComposableMeta:
 		return x.MachineName
 	default:
 		// unreachable so long as all the possibilities in KindMetas have switch branches
@@ -100,7 +100,7 @@ func nameFor(m kindsys.SomeKindMeta) string {
 		return x.Name
 	case kindsys.CustomStructuredMeta:
 		return x.Name
-	case kindsys.SlotImplMeta:
+	case kindsys.ComposableMeta:
 		return x.Name
 	default:
 		// unreachable so long as all the possibilities in KindMetas have switch branches

@@ -46,6 +46,16 @@ type Structured interface {
 	Meta() CoreStructuredMeta // TODO figure out how to reconcile this interface with CustomStructuredMeta
 }
 
+// type Composable interface {
+// 	Interface
+//
+// 	// TODO docs
+// 	Lineage() thema.Lineage
+//
+// 	// TODO docs
+// 	Meta() CoreStructuredMeta // TODO figure out how to reconcile this interface with CustomStructuredMeta
+// }
+
 // CoreStructuredDeclParentPath is the path, relative to the repository root, where
 // each child directory is expected to contain .cue files declaring one
 // CoreStructured kind.
@@ -58,16 +68,6 @@ var RawDeclParentPath = filepath.Join("kinds", "raw")
 // GoCoreKindParentPath is the path, relative to the repository root, to the directory
 // containing one directory per kind, full of generated Go kind output: types and bindings.
 var GoCoreKindParentPath = filepath.Join("pkg", "kinds")
-
-// type SlotImplementation interface {
-// 	Interface
-//
-// 	// TODO docs
-// 	Lineage() thema.Lineage
-//
-// 	// TODO docs
-// 	Meta() SlotImplMeta
-// }
 
 // TODO generate from type.cue
 type RawMeta struct {
@@ -106,7 +106,7 @@ type CustomStructuredMeta struct {
 func (m CustomStructuredMeta) _private() {}
 
 // TODO
-type SlotImplMeta struct {
+type ComposableMeta struct {
 	Name              string                 `json:"name"`
 	PluralName        string                 `json:"pluralName"`
 	MachineName       string                 `json:"machineName"`
@@ -115,7 +115,7 @@ type SlotImplMeta struct {
 	Maturity          Maturity               `json:"maturity"`
 }
 
-func (m SlotImplMeta) _private() {}
+func (m ComposableMeta) _private() {}
 
 // SomeKindMeta is an interface type to abstract over the different kind
 // metadata struct types: [RawMeta], [CoreStructuredMeta],
@@ -129,6 +129,6 @@ type SomeKindMeta interface {
 
 // KindMetas is a type parameter that comprises the base possible set of
 // kind metadata configurations.
-type KindMetas = interface {
-	RawMeta | CoreStructuredMeta | CustomStructuredMeta | SlotImplMeta
+type KindMetas interface {
+	RawMeta | CoreStructuredMeta | CustomStructuredMeta | ComposableMeta
 }

@@ -86,7 +86,7 @@ func ToSomeKindMeta(v cue.Value) (SomeKindMeta, error) {
 	if meta, err := ToKindMeta[CustomStructuredMeta](v); err == nil {
 		return meta, nil
 	}
-	if meta, err := ToKindMeta[SlotImplMeta](v); err == nil {
+	if meta, err := ToKindMeta[ComposableMeta](v); err == nil {
 		return meta, nil
 	}
 	return nil, ErrValueNotAKind
@@ -111,8 +111,8 @@ func ToKindMeta[T KindMetas](v cue.Value) (T, error) {
 		kdef = fw.LookupPath(cue.MakePath(cue.Def("CoreStructured")))
 	case CustomStructuredMeta:
 		kdef = fw.LookupPath(cue.MakePath(cue.Def("CustomStructured")))
-	case SlotImplMeta:
-		kdef = fw.LookupPath(cue.MakePath(cue.Def("Slot")))
+	case ComposableMeta:
+		kdef = fw.LookupPath(cue.MakePath(cue.Def("Composable")))
 	default:
 		// unreachable so long as all the possibilities in KindMetas have switch branches
 		panic("unreachable")
@@ -154,7 +154,7 @@ func (decl *SomeDecl) BindKindLineage(rt *thema.Runtime, opts ...thema.BindOptio
 	switch decl.Meta.(type) {
 	case RawMeta:
 		return nil, nil
-	case CoreStructuredMeta, CustomStructuredMeta, SlotImplMeta:
+	case CoreStructuredMeta, CustomStructuredMeta, ComposableMeta:
 		return thema.BindLineage(decl.V.LookupPath(cue.MakePath(cue.Str("lineage"))), rt, opts...)
 	default:
 		panic("unreachable")
@@ -179,9 +179,9 @@ func (decl *SomeDecl) IsCustomStructured() bool {
 	return is
 }
 
-// IsSlotImpl indicates whether the represented kind is a slot implementation kind.
-func (decl *SomeDecl) IsSlotImpl() bool {
-	_, is := decl.Meta.(SlotImplMeta)
+// IsComposable indicates whether the represented kind is a composable kind.
+func (decl *SomeDecl) IsComposable() bool {
+	_, is := decl.Meta.(ComposableMeta)
 	return is
 }
 

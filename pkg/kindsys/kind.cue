@@ -22,8 +22,9 @@ import (
 //   - Byte sequences are like arguments to the class constructor
 //   - Entities are like objects - what's returned from the constructor
 //
-// There are four essential categories of kinds: Raw, Slot, CoreStructured and CustomStructured.
-#Kind: #Raw | #Slot | #CoreStructured | #CustomStructured
+// There are four categories of kinds: Raw, Composable, CoreStructured,
+// and CustomStructured.
+#Kind: #Raw | #Composable | #CoreStructured | #CustomStructured
 
 // properties shared between all kind varieties.
 _sharedKind: {
@@ -67,22 +68,6 @@ _sharedKind: {
 // Maturity indicates the how far a given kind declaration is in its initial
 // journey. Mature kinds still evolve, but with guarantees about compatibility.
 #Maturity: "committed" | "experimental" | "stable" | "mature"
-
-// Raw is a category of Kind that specifies handling for a raw file,
-// like an image, or an svg or parquet file. Grafana mostly acts as asset storage for raw
-// kinds: the byte sequence is a black box to Grafana, and type is determined
-// through metadata such as file extension.
-#Raw: {
-	_sharedKind
-	form: "raw"
-	extensions?: [...string]
-
-	maturity: *"experimental" | "mature" // TODO unclear if we want maturity for raw kinds
-
-	// known TODOs
-	// - sanitize function
-	// - get summary
-}
 
 // Structured encompasses all three of the structured kind categories, in which
 // a schema specifies validity rules for the byte sequence. These represent all
