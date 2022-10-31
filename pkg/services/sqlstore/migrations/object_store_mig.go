@@ -32,8 +32,8 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			// Who changed what when -- We should avoid JOINs with other tables in the database
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
-			{Name: "updated_by", Type: migrator.DB_Int, Nullable: false},
-			{Name: "created_by", Type: migrator.DB_Int, Nullable: false},
+			{Name: "updated_by", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "created_by", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 
 			// For objects that are synchronized from an external source (ie provisioning or git)
 			{Name: "sync_src", Type: migrator.DB_Text, Nullable: true},
@@ -102,7 +102,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 
 			// Who changed what when
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
-			{Name: "updated_by", Type: migrator.DB_Int, Nullable: false},
+			{Name: "updated_by", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 
 			// Commit message
 			{Name: "message", Type: migrator.DB_Text, Nullable: false}, // defaults to empty string
