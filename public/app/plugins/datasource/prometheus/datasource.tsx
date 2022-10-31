@@ -741,7 +741,7 @@ export class PrometheusDatasource
       const query = this.createQuery(queryModel, queryOptions, start, end);
       return await lastValueFrom(
         this.performTimeSeriesQuery(query, query.start, query.end).pipe(
-          filter((response: any) => isFetchSuccessResponse(response)),
+          filter(isFetchSuccessResponse),
           map((response: FetchResponse<PromDataSuccessResponse<PromMatrixData>>) => {
             const frames: DataFrame[] = transform(response, {
               query: query,
