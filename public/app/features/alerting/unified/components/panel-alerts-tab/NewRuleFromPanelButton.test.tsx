@@ -4,6 +4,7 @@ import React from 'react';
 
 import { logInfo } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { createDashboardJSON } from 'app/features/dashboard/state/__fixtures__/dashboardJson';
 
 import { LogMessages } from '../../Analytics';
 
@@ -40,9 +41,11 @@ describe('Analytics', () => {
     const panel = new PanelModel({
       id: 123,
     });
-    const dashboard = new DashboardModel({
-      id: 1,
-    });
+    const dashboard = new DashboardModel(
+      createDashboardJSON({
+        id: 1,
+      })
+    );
     render(<NewRuleFromPanelButton panel={panel} dashboard={dashboard} />);
 
     const button = screen.getByText('Create alert rule from this panel');
