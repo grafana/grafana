@@ -169,7 +169,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	}
 
 	if s.roleAttributeStrict && !userInfo.Role.IsValid() {
-		return nil, ErrInvalidBasicRole
+		return nil, &InvalidBasicRoleError{assignedRole: string(userInfo.Role)}
 	}
 
 	if userInfo.Email == "" {

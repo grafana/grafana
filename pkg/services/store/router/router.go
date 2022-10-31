@@ -150,7 +150,6 @@ func (r *standardStoreRouter) RouteFromKey(ctx context.Context, key string) (Res
 					}
 					info.GRN.Kind = k.ID
 				}
-
 			} else {
 				idx = strings.Index(key, "/")
 
