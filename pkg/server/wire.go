@@ -125,7 +125,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
-	"github.com/grafana/grafana/pkg/services/store/httpobjectsrv"
+	"github.com/grafana/grafana/pkg/services/store/httpobjectstore"
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	//	objectdummyserver "github.com/grafana/grafana/pkg/services/store/object/dummy"
@@ -364,7 +364,7 @@ var wireBasicSet = wire.NewSet(
 	//	objectdummyserver.ProvideDummyObjectServer,
 	sqlstash.ProvideSQLObjectServer,
 	kind.ProvideService, // The registry of known kinds
-	httpobjectsrv.ProvideHTTPObjectStore,
+	httpobjectstore.ProvideHTTPObjectStore,
 	resolver.ProvideObjectReferenceResolver,
 	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,

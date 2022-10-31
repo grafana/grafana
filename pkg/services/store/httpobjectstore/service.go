@@ -1,4 +1,4 @@
-package httpobjectsrv
+package httpobjectstore
 
 import (
 	"fmt"
