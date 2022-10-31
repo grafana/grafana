@@ -327,19 +327,6 @@ func TestQuery_ResourceRequest_DescribeAllLogGroups(t *testing.T) {
 		assert.Equal(t, stringsToSuggestData([]string{
 			"group_a", "group_b", "group_c", "group_x", "group_y", "group_z",
 		}), suggestDataResponse)
-
-		firstCall := cli.calls.describeLogGroups[0]
-		secondCall := cli.calls.describeLogGroups[1]
-
-		expectedFirst := &cloudwatchlogs.DescribeLogGroupsInput{
-			Limit: aws.Int64(50),
-		}
-		expectedSecond := &cloudwatchlogs.DescribeLogGroupsInput{
-			Limit:     aws.Int64(50),
-			NextToken: aws.String("foo"),
-		}
-		assert.Equal(t, expectedFirst, firstCall)
-		assert.Equal(t, expectedSecond, secondCall)
 	})
 
 	t.Run("Should call api with LogGroupNamePrefix if passed in resource call", func(t *testing.T) {
