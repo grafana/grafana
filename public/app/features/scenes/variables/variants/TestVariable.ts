@@ -1,6 +1,6 @@
 import { Observable, Subject } from 'rxjs';
 
-import { LoadingState, SelectableValue, VariableOption } from '@grafana/data';
+import { LoadingState, SelectableValue } from '@grafana/data';
 import { queryMetricTree } from 'app/plugins/datasource/testdata/metricTree';
 
 import { VariableValueSelect } from '../components/VariableValueSelect';
@@ -13,7 +13,7 @@ import { SceneVariableBase } from './SceneVariableBase';
 export interface TestVariableState extends SceneVariableState {
   //query: DataQuery;
   query: string;
-  options: VariableOption[];
+  options: VariableValueOption[];
   delayMs?: number;
   issuedQuery?: string;
 }
@@ -56,6 +56,7 @@ export class TestVariable extends SceneVariableBase<TestVariableState> {
 
     this.setState({
       issuedQuery: interpolatedQuery,
+      options,
     });
 
     return options;

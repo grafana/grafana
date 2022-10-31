@@ -51,6 +51,8 @@ export class VariablesUpdateManager {
    * This could mean that variables that depend on it can now be updated in turn.
    */
   private handleNewVariableValueOptions(variable: SceneVariable, options: VariableValueOption[]) {
+    this.updateVariableStateGivenNewOptions(variable, options);
+
     const update = this.updating.get(variable.state.name);
     update?.subscription.unsubscribe();
 
@@ -61,23 +63,27 @@ export class VariablesUpdateManager {
 
   private handleVariableError(variable: SceneVariable, err: Error) {
     variable.setState({ state: LoadingState.Error });
-    // todo hanndle properly
+    // todo handle properly
   }
 
   /**
    * Check if current value is valid given new options. If not update the value.
    * TODO: Handle multi valued variables
    */
-  private validateCurrentValueGivenOptions(variable: SceneVariable, options: VariableValueOption[]) {
+  private updateVariableStateGivenNewOptions(variable: SceneVariable, options: VariableValueOption[]) {
     if (options.length === 0) {
       // TODO handle the no value state
-      variable.setState({ value: '?' });
+      variable.setState({ value: '?', state: LoadingState.Done });
+      return;
     }
 
     const foundCurrent = options.find((x) => x.value === variable.state.value);
     if (!foundCurrent) {
       // Current value is not valid. Set to first of the available options
-      variable.setState({ value: options[0].value, text: options[0].label });
+      variable.setState({ value: options[0].value, text: options[0].label, state: LoadingState.Done });
+    } else {
+      // current value is still ok
+      variable.setState({ state: LoadingState.Done });
     }
   }
 
@@ -106,9 +112,7 @@ export class VariablesUpdateManager {
    */
   updateAll() {
     for (const variable of this.sceneContext.state.variables) {
-      if (variable.updateOptions) {
-        this.variablesToUpdate.set(variable.state.name, variable);
-      }
+      this.variablesToUpdate.set(variable.state.name, variable);
 
       if (variable.getDependencies) {
         this.dependencies.set(variable.state.name, variable.getDependencies());

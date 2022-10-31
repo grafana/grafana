@@ -11,7 +11,6 @@ export function VariableValueSelect({ model }: SceneComponentProps<SceneVariable
   // temp solution, was unable to get the generics right
   const variable = model as TestVariable;
   const { name, value, state, options } = variable.useState();
-  const selectOptions = options.map((op) => ({ label: op.text as string, value: op.value as string }));
 
   return (
     <div className="submenu-item gf-form-inline">
@@ -21,7 +20,7 @@ export function VariableValueSelect({ model }: SceneComponentProps<SceneVariable
         width="auto"
         onChange={variable.onValueChange}
         isLoading={state === LoadingState.Loading}
-        options={selectOptions}
+        options={options}
       />
     </div>
   );

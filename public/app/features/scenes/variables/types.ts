@@ -16,7 +16,7 @@ export interface SceneVariableState extends SceneObjectStatePlain {
   value: string | string[]; // old current.value
 }
 
-export interface SceneVariable<T extends SceneVariableState = SceneVariableState> extends SceneObject<T> {
+export interface SceneVariable<TState extends SceneVariableState = SceneVariableState> extends SceneObject<TState> {
   /** The react component to use for the value selector */
   ValueSelectComponent?: SceneComponent<SceneVariable>;
 
@@ -30,11 +30,6 @@ export interface SceneVariable<T extends SceneVariableState = SceneVariableState
    * current value is valid and if not update it's current value.
    */
   getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]>;
-
-  /**
-   * Called when a dependent variable has changed and new value options have been evaluated.
-   **/
-  updateValueGivenNewOptions(options: VariableValueOption[]): void;
 }
 
 export type VariableValueOption = SelectableValue<string>;
