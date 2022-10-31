@@ -115,7 +115,7 @@ func (s *SocialGitlab) UserInfo(client *http.Client, _ *oauth2.Token) (*BasicUse
 
 	role, grafanaAdmin := s.extractRoleAndAdmin(response.Body, groups, true)
 	if s.roleAttributeStrict && !role.IsValid() {
-		return nil, ErrInvalidBasicRole
+		return nil, &InvalidBasicRoleError{idP: "Gitlab", assignedRole: string(role)}
 	}
 
 	var isGrafanaAdmin *bool = nil
