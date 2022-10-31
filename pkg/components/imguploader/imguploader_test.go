@@ -165,7 +165,7 @@ func TestImageUploaderFactory(t *testing.T) {
 				require.Equal(t, "account_name", original.account_name)
 				require.Equal(t, "account_key", original.account_key)
 				require.Equal(t, "container_name", original.container_name)
-				require.Equal(t, "sas_token_expiration_days", original.sas_token_expiration_days)
+				require.Equal(t, -1, original.sas_token_expiration_days)
 			})
 		})
 
