@@ -50,7 +50,21 @@
       "matchPackagePatterns": ["@storybook"],
       "extends": ["schedule:monthly"],
       "groupName": "Storybook updates"
-    }
+    },
+    {
+      "groupName": "React Aria",
+      "matchPackagePrefixes": [
+        "@react-aria/",
+        "@react-stately/"
+      ]
+    },
+    {
+      "groupName": "Moveable",
+      "matchPackageNames": [
+        "moveable",
+        "react-moveable"
+      ]
+    },
   ],
   "pin": {
     "enabled": false
