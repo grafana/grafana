@@ -179,7 +179,7 @@ Keep dashboard content in the logs (request or response fields). This can signif
 
 ### verbose
 
-Keep requests and responses body. This can significantly increase the size of your logs.
+Log all requests and keep requests and responses body. This can significantly increase the size of your logs.
 
 ### log_all_status_codes
 
