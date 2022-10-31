@@ -237,6 +237,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 	key := route.Key
 
 	rsp := &object.WriteObjectResponse{
+		GRN:    grn,
 		Status: object.WriteObjectResponse_CREATED, // Will be changed if not true
 	}
 
@@ -461,20 +462,20 @@ func (s sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryReq
 	;`
 
 	timestamp := time.Now()
-	updateById := int64(0)
 	rows, err := s.sess.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
-	rsp := &object.ObjectHistoryResponse{}
+	rsp := &object.ObjectHistoryResponse{
+		GRN: route.GRN,
+	}
 	for rows.Next() {
 		v := &object.ObjectVersionInfo{}
-		err := rows.Scan(&v.Version, &v.Size, &v.ETag, &timestamp, &updateById, &v.Comment)
+		err := rows.Scan(&v.Version, &v.Size, &v.ETag, &timestamp, &v.UpdatedBy, &v.Comment)
 		if err != nil {
 			return nil, err
 		}
 		v.Updated = timestamp.UnixMilli()
-		v.UpdatedBy = fmt.Sprintf("user:%d", updateById)
 		rsp.Versions = append(rsp.Versions, v)
 	}
 	return rsp, err

@@ -287,6 +287,11 @@ func (codec *writeResponseCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Str
 		stream.WriteObjectField("error")
 		stream.WriteVal(obj.Error)
 	}
+	if obj.GRN != nil {
+		stream.WriteMore()
+		stream.WriteObjectField("GRN")
+		stream.WriteVal(obj.GRN)
+	}
 	if obj.Object != nil {
 		stream.WriteMore()
 		stream.WriteObjectField("object")
