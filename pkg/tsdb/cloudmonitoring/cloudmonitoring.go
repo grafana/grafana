@@ -685,7 +685,10 @@ func addConfigData(frames data.Frames, dl string, unit string, period string) da
 			frames[i].Fields[0].Config = &data.FieldConfig{}
 		}
 		if period != "" {
-			addInterval(period, frames[i].Fields[0])
+			err := addInterval(period, frames[i].Fields[0])
+			if err != nil {
+				slog.Error("Failed to add interval", "error", err)
+			}
 		}
 	}
 	return frames
