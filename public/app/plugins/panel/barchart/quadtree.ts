@@ -13,6 +13,29 @@ export function pointWithin(px: number, py: number, rlft: number, rtop: number, 
 
 /**
  * @internal
+ */
+export function findRect(qt: Quadtree, sidx: number, didx: number): Rect | undefined {
+  let out: Rect | undefined;
+
+  if (qt.o.length) {
+    out = qt.o.find((rect) => rect.sidx === sidx && rect.didx === didx);
+  }
+
+  if (out == null && qt.q) {
+    for (let i = 0; i < qt.q.length; i++) {
+      out = findRect(qt.q[i], sidx, didx);
+
+      if (out) {
+        break;
+      }
+    }
+  }
+
+  return out;
+}
+
+/**
+ * @internal
  *
  * Determines if r2 is intersected by r1.
  */

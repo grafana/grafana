@@ -126,8 +126,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/kind"
-	"github.com/grafana/grafana/pkg/services/store/object"
 	objectdummyserver "github.com/grafana/grafana/pkg/services/store/object/dummy"
+	"github.com/grafana/grafana/pkg/services/store/object/httpobjectstore"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/tag"
@@ -363,7 +363,7 @@ var wireBasicSet = wire.NewSet(
 	kind.ProvideService, // The registry known kinds
 	objectdummyserver.ProvideDummyObjectServer,
 	resolver.ProvideObjectReferenceResolver,
-	object.ProvideHTTPObjectStore,
+	httpobjectstore.ProvideHTTPObjectStore,
 	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,
 	loginattemptimpl.ProvideService,
