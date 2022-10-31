@@ -534,6 +534,10 @@ Default is `admin`.
 
 The password of the default Grafana Admin. Set once on first-run. Default is `admin`.
 
+# admin_email
+
+The email of the default Grafana Admin, created on startup. Default is `admin@localhost`.
+
 ### secret_key
 
 Used for signing some data source settings like secrets and passwords, the encryption format used is AES-256 in CFB mode. Cannot be changed without requiring an update
