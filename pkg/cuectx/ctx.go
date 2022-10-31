@@ -124,21 +124,23 @@ func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
 	return merged_fs.NewMergedFS(m, grafana.CueSchemaFS), nil
 }
 
-// BuildGrafanaInstance wraps [load.InstancesWithThema] to load a [*build.Instance]
-// corresponding to a particular path within the github.com/grafana/grafana CUE module,
-// then builds that into a [cue.Value], checks it for errors and returns.
+// BuildGrafanaInstance wraps [load.InstancesWithThema] to load a
+// [*build.Instance] corresponding to a particular path within the
+// github.com/grafana/grafana CUE module, then builds that into a [cue.Value],
+// checks it for errors and returns.
 //
-// This allows resolution of imports within the grafana or thema CUE modules to work
-// correctly and consistently by relying on the embedded FS at [grafana.CueSchemaFS] and
-// [thema.CueFS].
+// This allows resolution of imports within the grafana or thema CUE modules to
+// work correctly and consistently by relying on the embedded FS at
+// [grafana.CueSchemaFS] and [thema.CueFS].
 //
 // relpath should be a relative path path within [grafana.CueSchemaFS] to be
 // loaded. Optionally, the caller may provide an additional fs.FS via the
 // overlay parameter, which will be merged with [grafana.CueSchemaFS] at
 // relpath, and loaded.
 //
-// pkg, if non-empty, is set as the value of ["cuelang.org/go/cue/load".Config.Package]. If
-// the CUE package to be loaded is the same as the parent directory name, it should be omitted.
+// pkg, if non-empty, is set as the value of
+// ["cuelang.org/go/cue/load".Config.Package]. If the CUE package to be loaded
+// is the same as the parent directory name, it should be omitted.
 //
 // NOTE this function will be removed in favor of a more generic loader
 func BuildGrafanaInstance(relpath string, pkg string, ctx *cue.Context, overlay fs.FS) (cue.Value, error) {

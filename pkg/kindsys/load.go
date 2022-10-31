@@ -69,29 +69,6 @@ func CUEFramework(ctx *cue.Context) cue.Value {
 	return v
 }
 
-// ToSomeKindMeta takes a cue.Value expected to represent any one of the kind
-// categories, and attempts to extract its metadata into the relevant typed
-// struct.
-func ToSomeKindMeta(v cue.Value) (SomeKindMeta, error) {
-	if !v.Exists() {
-		return nil, ErrValueNotExist
-	}
-
-	if meta, err := ToKindMeta[RawMeta](v); err == nil {
-		return meta, nil
-	}
-	if meta, err := ToKindMeta[CoreStructuredMeta](v); err == nil {
-		return meta, nil
-	}
-	if meta, err := ToKindMeta[CustomStructuredMeta](v); err == nil {
-		return meta, nil
-	}
-	if meta, err := ToKindMeta[ComposableMeta](v); err == nil {
-		return meta, nil
-	}
-	return nil, ErrValueNotAKind
-}
-
 // ToKindMeta takes a cue.Value expected to represent a kind of the category
 // specified by the type parameter and populates the Go type from the cue.Value.
 func ToKindMeta[T KindMetas](v cue.Value) (T, error) {
@@ -196,30 +173,6 @@ type Decl[T KindMetas] struct {
 	Meta T
 }
 
-// LoadAnyKindFS takes an fs.FS and validates that it contains a valid kind
-// definition from any of the kind categories. On success, it returns a
-// representation of the entire kind definition contained in the provided kfs.
-func LoadAnyKindFS(kfs fs.FS, path string, ctx *cue.Context) (*SomeDecl, error) {
-	// TODO use a more genericized loader
-	inst, err := tload.InstancesWithThema(kfs, path)
-	if err != nil {
-		return nil, err
-	}
-
-	vk := ctx.BuildInstance(inst)
-	if err = vk.Validate(cue.Concrete(false), cue.All()); err != nil {
-		return nil, err
-	}
-	pkd := &SomeDecl{
-		V: vk,
-	}
-	pkd.Meta, err = ToSomeKindMeta(vk)
-	if err != nil {
-		return nil, err
-	}
-	return pkd, nil
-}
-
 // Some converts the typed Decl to the equivalent typeless SomeDecl.
 func (decl *Decl[T]) Some() *SomeDecl {
 	return &SomeDecl{
@@ -236,11 +189,11 @@ func (decl *Decl[T]) Some() *SomeDecl {
 // relative to the grafana/grafana root. For example, dashboards are in
 // "kinds/structured/dashboard".
 //
-// The bytes containing the .cue file declarations will be retrieved from the
-// central embedded FS, [grafana.CueSchemaFS]. If desired (e.g. for testing), an
-// optional fs.FS may be provided via the overlay parameter, which will be
-// merged over [grafana.CueSchemaFS]. But in all typical circumstances, overlay
-// can and should be nil.
+// The .cue file bytes containing the core kind declaration will be retrieved
+// from the central embedded FS, [grafana.CueSchemaFS]. If desired (e.g. for
+// testing), an optional fs.FS may be provided via the overlay parameter, which
+// will be merged over [grafana.CueSchemaFS]. But in typical circumstances,
+// overlay can and should be nil.
 //
 // This is a low-level function, primarily intended for use in code generation.
 // For representations of core kinds that are useful in Go programs at runtime,
@@ -258,4 +211,24 @@ func LoadCoreKind[T RawMeta | CoreStructuredMeta](declpath string, ctx *cue.Cont
 		return nil, err
 	}
 	return decl, nil
+}
+
+// LoadCustomKind takes an fs.FS that contains a CustomKind declaration at the
+// path indicated by dir, and validates that it contains a valid CustomKind
+// declaration. On success, it returns a Go representation of the entire
+// CustomKind declaration.
+func LoadCustomKind(kfs fs.FS, dir string, ctx *cue.Context) (*Decl[CustomStructuredMeta], error) {
+	inst, err := cuectx.LoadInstanceWithGrafana(kfs, dir)
+	panic("TODO")
+}
+
+// NOTE exists solely for discussion purposes
+func LoadCustomKind2(kfs fs.FS, dir string, ctx *cue.Context) (*CustomKind, error) {
+	panic("JUST SPITBALLING")
+}
+
+// NOTE exists solely for discussion purposes
+type CustomKind struct {
+	Decl    *Decl[CustomStructuredMeta]
+	Lineage thema.Lineage
 }
