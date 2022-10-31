@@ -180,7 +180,7 @@ func (w *WeComNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 	}
 
 	if tmplErr != nil {
-		w.log.Warn("failed to template WeCom message", "err", tmplErr.Error())
+		w.log.Warn("failed to template WeCom message", "error", tmplErr.Error())
 	}
 
 	cmd := &models.SendWebhookSync{
@@ -189,7 +189,7 @@ func (w *WeComNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 	}
 
 	if err = w.ns.SendWebhookSync(ctx, cmd); err != nil {
-		w.log.Error("failed to send WeCom webhook", "err", err, "notification", w.Name)
+		w.log.Error("failed to send WeCom webhook", "error", err, "notification", w.Name)
 		return false, err
 	}
 

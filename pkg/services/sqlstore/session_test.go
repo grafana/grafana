@@ -59,4 +59,20 @@ func TestRetryingOnFailures(t *testing.T) {
 			require.Equal(t, i, store.dbCfg.QueryRetries+1)
 		})
 	}
+
+	// Check SQL query
+	sess := store.GetSqlxSession()
+	rows, err := sess.Query(context.Background(), `SELECT "hello",2.3,4`)
+	require.NoError(t, err)
+	require.True(t, rows.Next()) // first row
+
+	str1 := ""
+	val2 := float64(100.1)
+	val3 := int64(200)
+	err = rows.Scan(&str1, &val2, &val3)
+	require.NoError(t, err)
+	require.Equal(t, "hello", str1)
+	require.Equal(t, 2.3, val2)
+	require.Equal(t, int64(4), val3)
+	require.False(t, rows.Next()) // no more rows
 }

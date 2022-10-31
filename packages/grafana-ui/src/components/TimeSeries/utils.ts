@@ -223,7 +223,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
           centeredZero: customConfig.axisCenteredZero,
-          range: customConfig.stacking?.mode === StackingMode.Percent ? [0, 1] : undefined,
+          range:
+            customConfig.stacking?.mode === StackingMode.Percent
+              ? (u: uPlot, dataMin: number, dataMax: number) => {
+                  dataMin = dataMin < 0 ? -1 : 0;
+                  dataMax = dataMax > 0 ? 1 : 0;
+                  return [dataMin, dataMax];
+                }
+              : undefined,
           decimals: field.config.decimals,
         },
         field
@@ -272,7 +279,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             label: customConfig.axisLabel,
             size: customConfig.axisWidth,
             placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-            formatValue: (v, decimals) => formattedValueToString(fmt(v, config.decimals ?? decimals)),
+            formatValue: (v, decimals) => formattedValueToString(fmt(v, decimals)),
             theme,
             grid: { show: customConfig.axisGridShow },
             decimals: field.config.decimals,
@@ -393,8 +400,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       }
 
       if (customConfig.fillBelowTo) {
+        const fillBelowToField = frame.fields.find((f) => f.name === customConfig.fillBelowTo);
+        const fillBelowDispName = getFieldDisplayName(fillBelowToField!, frame, allFrames);
+
         const t = indexByName.get(dispName);
-        const b = indexByName.get(customConfig.fillBelowTo);
+        const b = indexByName.get(fillBelowDispName);
         if (isNumber(b) && isNumber(t)) {
           builder.addBand({
             series: [t, b],

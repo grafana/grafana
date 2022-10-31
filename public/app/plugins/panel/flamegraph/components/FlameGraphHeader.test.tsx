@@ -3,6 +3,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
 
+import { CoreApp } from '@grafana/data';
+
 import FlameGraphHeader from './FlameGraphHeader';
 import { SelectedView } from './types';
 
@@ -13,6 +15,7 @@ describe('FlameGraphHeader', () => {
 
     return (
       <FlameGraphHeader
+        app={CoreApp.Explore}
         search={search}
         setSearch={setSearch}
         setTopLevelIndex={jest.fn()}

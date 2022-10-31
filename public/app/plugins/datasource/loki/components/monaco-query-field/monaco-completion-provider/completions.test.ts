@@ -6,6 +6,10 @@ import { CompletionDataProvider } from './CompletionDataProvider';
 import { getCompletions } from './completions';
 import { Label, Situation } from './situation';
 
+jest.mock('../../../querybuilder/operations', () => ({
+  explainOperator: () => 'Operator docs',
+}));
+
 const history = [
   {
     ts: 12345678,
@@ -35,50 +39,59 @@ const otherLabels: Label[] = [
 ];
 const afterSelectorCompletions = [
   {
+    documentation: 'Operator docs',
     insertText: '|= "$0"',
     isSnippet: true,
     label: '|= ""',
     type: 'LINE_FILTER',
   },
   {
+    documentation: 'Operator docs',
     insertText: '!= "$0"',
     isSnippet: true,
     label: '!= ""',
     type: 'LINE_FILTER',
   },
   {
+    documentation: 'Operator docs',
     insertText: '|~ "$0"',
     isSnippet: true,
     label: '|~ ""',
     type: 'LINE_FILTER',
   },
   {
+    documentation: 'Operator docs',
     insertText: '!~ "$0"',
     isSnippet: true,
     label: '!~ ""',
     type: 'LINE_FILTER',
   },
   {
+    documentation: 'Operator docs',
     insertText: '',
     label: '// Placeholder for the detected parser',
     type: 'DETECTED_PARSER_PLACEHOLDER',
   },
   {
+    documentation: 'Operator docs',
     insertText: '',
     label: '// Placeholder for logfmt or json',
     type: 'OPPOSITE_PARSER_PLACEHOLDER',
   },
   {
+    documentation: 'Operator docs',
     insertText: '| pattern',
     label: 'pattern',
     type: 'PARSER',
   },
   {
+    documentation: 'Operator docs',
     insertText: '| regexp',
     label: 'regexp',
     type: 'PARSER',
   },
   {
+    documentation: 'Operator docs',
     insertText: '| unpack',
     label: 'unpack',
     type: 'PARSER',
@@ -96,13 +109,22 @@ const afterSelectorCompletions = [
   {
     insertText: '| unwrap',
     label: 'unwrap',
-    type: 'LINE_FILTER',
+    type: 'PIPE_OPERATION',
+    documentation: 'Operator docs',
   },
   {
     insertText: '| line_format "{{.$0}}"',
     isSnippet: true,
     label: 'line_format',
-    type: 'LINE_FORMAT',
+    type: 'PIPE_OPERATION',
+    documentation: 'Operator docs',
+  },
+  {
+    insertText: '| label_format',
+    isSnippet: true,
+    label: 'label_format',
+    type: 'PIPE_OPERATION',
+    documentation: 'Operator docs',
   },
 ];
 

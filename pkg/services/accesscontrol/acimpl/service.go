@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -15,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -76,7 +76,7 @@ func (s *Service) GetUsageStats(_ context.Context) map[string]interface{} {
 }
 
 var actionsToFetch = append(
-	ossaccesscontrol.TeamAdminActions, append(ossaccesscontrol.DashboardAdminActions, ossaccesscontrol.FolderAdminActions...)...,
+	ossaccesscontrol.TeamAdminActions, append(ossaccesscontrol.DashboardAdminActions, append(ossaccesscontrol.FolderAdminActions, ossaccesscontrol.ServiceAccountAdminActions...)...)...,
 )
 
 // GetUserPermissions returns user permissions based on built-in roles

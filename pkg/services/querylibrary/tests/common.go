@@ -57,6 +57,7 @@ func createTestContext(t *testing.T) testContext {
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{featuremgmt.FlagPanelTitleSearch, featuremgmt.FlagQueryLibrary},
+		QueryRetries:         3,
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 

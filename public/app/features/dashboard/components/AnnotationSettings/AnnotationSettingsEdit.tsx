@@ -3,8 +3,9 @@ import { useAsync } from 'react-use';
 
 import { AnnotationQuery, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Stack } from '@grafana/experimental';
 import { DataSourcePicker, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { Button, Checkbox, Field, FieldSet, HorizontalGroup, Input, Stack } from '@grafana/ui';
+import { Button, Checkbox, Field, FieldSet, HorizontalGroup, Input } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 
@@ -127,9 +128,11 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
         {ds && !ds.annotations && <AngularEditorLoader datasource={ds} annotation={annotation} onChange={onUpdate} />}
       </FieldSet>
       <Stack>
-        <Button variant="destructive" onClick={onDelete}>
-          Delete
-        </Button>
+        {!annotation.builtIn && (
+          <Button variant="destructive" onClick={onDelete}>
+            Delete
+          </Button>
+        )}
         <Button variant="secondary" onClick={onPreview}>
           Preview in dashboard
         </Button>

@@ -11,19 +11,19 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 var _ Job = new(gitExportJob)
 
 type gitExportJob struct {
 	logger                    log.Logger
-	sql                       *sqlstore.SQLStore
+	sql                       db.DB
 	dashboardsnapshotsService dashboardsnapshots.Service
 	datasourceService         datasources.DataSourceService
 	playlistService           playlist.Service
@@ -37,7 +37,7 @@ type gitExportJob struct {
 	helper      *commitHelper
 }
 
-func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore,
+func startGitExportJob(cfg ExportConfig, sql db.DB,
 	dashboardsnapshotsService dashboardsnapshots.Service, rootDir string, orgID int64,
 	broadcaster statusBroadcaster, playlistService playlist.Service, orgService org.Service,
 	datasourceService datasources.DataSourceService) (Job, error) {

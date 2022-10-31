@@ -275,10 +275,7 @@ func postRequest(cfg packaging.PublishConfig, pth string, obj interface{}, descr
 		}
 	}()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		var body []byte
-		if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
-			return err
-		}
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return err
 		}

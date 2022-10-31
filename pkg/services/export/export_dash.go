@@ -9,8 +9,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 )
 
@@ -35,7 +36,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 		comment: "Exported folder structure",
 	}
 
-	err = job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+	err = job.sql.WithDbSession(helper.ctx, func(sess *db.Session) error {
 		type dashDataQueryResult struct {
 			Id       int64
 			UID      string `xorm:"uid"`
@@ -58,7 +59,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 			return err
 		}
 
-		reader := dashboard.NewStaticDashboardSummaryBuilder(lookup)
+		reader := dashboard.NewStaticDashboardSummaryBuilder(lookup, false)
 
 		// Process all folders
 		for _, row := range rows {
@@ -136,7 +137,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 	}
 
 	// Now walk the history
-	err = job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+	err = job.sql.WithDbSession(helper.ctx, func(sess *db.Session) error {
 		type dashVersionResult struct {
 			DashId    int64     `xorm:"id"`
 			Version   int64     `xorm:"version"`

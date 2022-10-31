@@ -7,6 +7,8 @@ import (
 	"context"
 
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/tsdb/parca"
+	phlare "github.com/grafana/grafana/pkg/tsdb/phlare"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api"
@@ -16,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/expr"
 	cmreg "github.com/grafana/grafana/pkg/framework/coremodel/registry"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -111,10 +115,9 @@ import (
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
+	objectdummyserver "github.com/grafana/grafana/pkg/services/store/object/dummy"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -155,7 +158,7 @@ var wireSet = wire.NewSet(
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
 	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
-	sqlstore.ProvideService,
+	db.ProvideService,
 	wire.InterfaceValue(new(usagestats.Service), noOpUsageStats{}),
 	wire.InterfaceValue(new(routing.RouteRegister), noOpRouteRegister{}),
 	encryptionservice.ProvideEncryptionService,
@@ -258,6 +261,8 @@ var wireSet = wire.NewSet(
 	graphite.ProvideService,
 	prometheus.ProvideService,
 	elasticsearch.ProvideService,
+	phlare.ProvideService,
+	parca.ProvideService,
 	secretsMigrator.ProvideSecretsMigrator,
 	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
 	grafanads.ProvideService,
@@ -324,13 +329,14 @@ var wireSet = wire.NewSet(
 	userauthimpl.ProvideService,
 	ngmetrics.ProvideServiceForTest,
 	notifications.MockNotificationService,
-	wire.Bind(new(notifications.TempUserStore), new(*mockstore.SQLStoreMock)),
+	objectdummyserver.ProvideFakeObjectServer,
+	wire.Bind(new(notifications.TempUserStore), new(*dbtest.FakeDB)),
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
-	mockstore.NewSQLStoreMock,
+	dbtest.NewFakeDB,
 	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
-	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	wire.Bind(new(db.DB), new(*dbtest.FakeDB)),
 	prefimpl.ProvideService,
 	opentsdb.ProvideService,
 	acimpl.ProvideAccessControl,

@@ -3,8 +3,8 @@ package resourcepermissions
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type ResourceValidator func(ctx context.Context, orgID int64, resourceID string) error
@@ -32,11 +32,11 @@ type Options struct {
 	// RoleGroup is the group name for the generated fixed roles
 	RoleGroup string
 	// OnSetUser if configured will be called each time a permission is set for a user
-	OnSetUser func(session *sqlstore.DBSession, orgID int64, user accesscontrol.User, resourceID, permission string) error
+	OnSetUser func(session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error
 	// OnSetTeam if configured will be called each time a permission is set for a team
-	OnSetTeam func(session *sqlstore.DBSession, orgID, teamID int64, resourceID, permission string) error
+	OnSetTeam func(session *db.Session, orgID, teamID int64, resourceID, permission string) error
 	// OnSetBuiltInRole if configured will be called each time a permission is set for a built-in role
-	OnSetBuiltInRole func(session *sqlstore.DBSession, orgID int64, builtInRole, resourceID, permission string) error
+	OnSetBuiltInRole func(session *db.Session, orgID int64, builtInRole, resourceID, permission string) error
 	// InheritedScopesSolver if configured can generate additional scopes that will be used when fetching permissions for a resource
 	InheritedScopesSolver InheritedScopesSolver
 }
