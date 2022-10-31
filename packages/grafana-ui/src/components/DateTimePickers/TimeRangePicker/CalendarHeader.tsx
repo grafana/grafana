@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { Trans } from 'src/utils/i18n';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -16,9 +15,7 @@ export function Header({ onClose }: TimePickerCalendarProps) {
 
   return (
     <div className={styles.container}>
-      <TimePickerTitle>
-        <Trans i18nKey="time-picker.calendar-select-range.title">Select a time range</Trans>
-      </TimePickerTitle>
+      <TimePickerTitle>Select a time range</TimePickerTitle>
       <Button
         aria-label={selectors.components.TimePicker.calendar.closeButton}
         icon="times"

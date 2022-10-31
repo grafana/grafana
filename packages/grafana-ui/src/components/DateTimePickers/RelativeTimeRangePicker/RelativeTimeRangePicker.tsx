@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import React, { FormEvent, useCallback, useState } from 'react';
-import { Trans } from 'src/utils/i18n';
 
 import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
 
@@ -123,9 +122,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
                   <TimePickerTitle>
                     <Tooltip content={<TooltipContent />} placement="bottom" theme="info">
                       <div>
-                        <Trans i18nKey="time-picker.specify-time-range.title">
-                          Specify time range <Icon name="info-circle" />
-                        </Trans>
+                        Specify time range <Icon name="info-circle" />
                       </div>
                     </Tooltip>
                   </TimePickerTitle>
