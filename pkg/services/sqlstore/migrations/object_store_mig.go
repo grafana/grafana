@@ -109,6 +109,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"key", "version"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"updated_by"}, Type: migrator.IndexType},
 		},
 	})
 
