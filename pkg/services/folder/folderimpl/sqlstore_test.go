@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCreate(t *testing.T) {
+func TestIntegrationCreate(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	store := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
 
@@ -147,7 +147,7 @@ func TestCreate(t *testing.T) {
 	})
 }
 
-func TestDelete(t *testing.T) {
+func TestIntegrationDelete(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	store := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
 
@@ -191,7 +191,7 @@ func TestDelete(t *testing.T) {
 	})
 }
 
-func TestUpdate(t *testing.T) {
+func TestIntegrationUpdate(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	store := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
 
@@ -280,7 +280,7 @@ func TestUpdate(t *testing.T) {
 }
 
 /*
-func TestMove(t *testing.T) {
+func TestIntegrationMove(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	store := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
 
@@ -373,15 +373,15 @@ func TestMove(t *testing.T) {
 }
 */
 
-func TestGet(t *testing.T) {}
+func TestIntegrationGet(t *testing.T) {}
 
-func TestGetParent(t *testing.T) {}
+func TestIntegrationGetParent(t *testing.T) {}
 
-func TestGetParents(t *testing.T) {}
+func TestIntegrationGetParents(t *testing.T) {}
 
-func TestGetChildren(t *testing.T) {}
+func TestIntegrationGetChildren(t *testing.T) {}
 
-func TestGetDescendents(t *testing.T) {}
+func TestIntegrationGetDescendents(t *testing.T) {}
 
 func createSubTree(t *testing.T, store *sqlStore, orgID int64, parentUID string, depth int, prefix string) []string {
 	t.Helper()

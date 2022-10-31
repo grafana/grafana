@@ -3,6 +3,7 @@ package folderimpl
 import (
 	"context"
 	"encoding/binary"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -33,11 +34,13 @@ func (ss *sqlStore) Create(ctx context.Context, cmd *folder.CreateFolderCommand)
 		ParentUID:   cmd.ParentUID,
 		Title:       cmd.Title,
 		Description: cmd.Description,
+		Created:     time.Now(),
+		Updated:     time.Now(),
 	}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		folderID, err := sess.Insert(foldr)
 		if err != nil {
-			return err
+			return folder.ErrDatabaseError.Errorf("failed to insert folder: %w", err)
 		}
 		foldr.ID = folderID
 		return nil
@@ -47,15 +50,22 @@ func (ss *sqlStore) Create(ctx context.Context, cmd *folder.CreateFolderCommand)
 
 func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec("DELETE FROM folder WHERE folder_uid=? AND org_id=?", uid, orgID)
-		return err
+		_, err := sess.Exec("DELETE FROM folder WHERE uid=? AND org_id=?", uid, orgID)
+		if err != nil {
+			return folder.ErrDatabaseError.Errorf("failed to delete folder: %w", err)
+		}
+		return nil
 	})
 }
 
 func (ss *sqlStore) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
+	cmd.Folder.Updated = time.Now()
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.ID(cmd.Folder.ID).AllCols().Update(cmd.Folder)
-		return err
+		if err != nil {
+			return folder.ErrDatabaseError.Errorf("failed to update folder: %w", err)
+		}
+		return nil
 	})
 
 	return cmd.Folder, err
@@ -66,7 +76,7 @@ func (ss *sqlStore) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folde
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		exists, err := sess.Where("uid=? OR id=? OR title=?", cmd.UID, cmd.ID, cmd.Title).Get(foldr)
 		if err != nil {
-			return err
+			return folder.ErrDatabaseError.Errorf("failed to get folder: %w", err)
 		}
 		if !exists {
 			return folder.ErrFolderNotFound.Errorf("folder not found")
@@ -83,21 +93,13 @@ func (ss *sqlStore) GetParents(ctx context.Context, cmd *folder.GetParentsQuery)
 	}
 
 	recQuery :=
-		`WITH RecQry AS (
-		SELECT * 
-			FROM folder 
-		UNION ALL 
-		SELECT f.* 
-			FROM folder f INNER JOIN RecQry r 
-				ON f.parent_uid = r.uid
-		)
-		SELECT *
-	  		FROM RecQry`
+		`WITH RECURSIVE RecQry AS ( SELECT * FROM folder UNION ALL SELECT f.* FROM folder f INNER JOIN RecQry r ON f.parent_uid = r.uid)
+		SELECT * FROM RecQry WHERE uid = ? AND org_id = ?;`
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		res, err := sess.Query(recQuery)
 		if err != nil {
-			return err
+			return folder.ErrDatabaseError.Errorf("failed to get folder parents: %w", err)
 		}
 
 		for _, row := range res {
@@ -121,7 +123,10 @@ func (ss *sqlStore) GetChildren(ctx context.Context, cmd *folder.GetTreeQuery) (
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		err := sess.Where("parent_uid=? AND org_id=?", cmd.UID, cmd.OrgID).Find(folders)
-		return err
+		if err != nil {
+			folder.ErrDatabaseError.Errorf("failed to get folder children: %w", err)
+		}
+		return nil
 	})
 	return folders, err
 }
@@ -134,7 +139,7 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd *folder.GetParentsQ
 		for uid != folder.GeneralFolderUID && len(foldrs) < 8 {
 			err := sess.Where("uid=?", uid).Find(foldr)
 			if err != nil {
-				return err
+				return folder.ErrDatabaseError.Errorf("failed to get folder parents: %w", err)
 			}
 			foldrs = append(foldrs, foldr)
 			uid = foldr.ParentUID
