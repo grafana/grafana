@@ -84,11 +84,6 @@
   "folder-picker": {
     "loading": "Loading folders..."
   },
-  "grafana-ui": {
-    "time-picker-title": {
-      "h3-title": "{{children}}"
-    }
-  },
   "library-panel": {
     "add-modal": {
       "cancel": "Cancel",
