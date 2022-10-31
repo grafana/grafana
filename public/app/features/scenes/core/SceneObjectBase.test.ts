@@ -120,11 +120,11 @@ describe('SceneObject', () => {
       expect(scene.isActive).toBe(false);
     });
 
-    it('Should activate $data', () => {
+    it('Should deactivate $data', () => {
       expect(scene.state.$data!.isActive).toBe(false);
     });
 
-    it('Should activate $variables', () => {
+    it('Should deactivate $variables', () => {
       expect(scene.state.$variables!.isActive).toBe(false);
     });
   });
