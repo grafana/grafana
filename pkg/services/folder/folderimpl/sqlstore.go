@@ -2,7 +2,6 @@ package folderimpl
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -33,7 +32,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd *folder.CreateFolderCommand)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		folderID, err := sess.Insert(foldr)
 		if err != nil {
-			return fmt.Errorf("create: %v", err)
+			return err
 		}
 		foldr.ID = folderID
 		return nil
@@ -43,7 +42,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd *folder.CreateFolderCommand)
 
 func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec("DELETE FROM folder WHERE folder_uid=? AND org_id=?", uid, orgID)
+		_, err := sess.Exec("DELETE FROM folder WHERE uid=? AND org_id=?", uid, orgID)
 		return err
 	})
 }
