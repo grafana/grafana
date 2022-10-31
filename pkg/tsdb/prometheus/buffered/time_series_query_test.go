@@ -706,7 +706,11 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			data.NewField("traceID", map[string]string{}, []string{"test1", "test2"}),
 			data.NewField("userID", map[string]string{}, []string{"", "test3"}),
 		}
-		if diff := cmp.Diff(newDataFrame("exemplar", "exemplar", fields...), res[0], data.FrameTestCompareOptions()...); diff != "" {
+
+		newFrame := newDataFrame("exemplar", "exemplar", fields...)
+		newFrame.Meta.Type = ""
+
+		if diff := cmp.Diff(newFrame, res[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 	})

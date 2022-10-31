@@ -2,12 +2,16 @@ package folder
 
 import (
 	"time"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
 	GeneralFolderUID     = "general"
 	MaxNestedFolderDepth = 8
 )
+
+var ErrFolderNotFound = errutil.NewBase(errutil.StatusNotFound, "folder.notFound")
 
 type Folder struct {
 	ID          int64
@@ -17,16 +21,11 @@ type Folder struct {
 	Title       string
 	Description string
 
-	// TODO: is URL relevant for folders?
-	URL string
-
 	Created time.Time
 	Updated time.Time
 
-	// TODO: are these next three relevant for folders?
+	// TODO: validate if this field is required/relevant to folders.
 	UpdatedBy int64
-	CreatedBy int64
-	HasACL    bool
 }
 
 // NewFolder tales a title and returns a Folder with the Created and Updated
@@ -43,17 +42,18 @@ func NewFolder(title string, description string) *Folder {
 // CreateFolderCommand captures the information required by the folder service
 // to create a folder.
 type CreateFolderCommand struct {
-	UID         string `json:"uid"`
+	UID         string `json:"uid" xorm:"uid"`
+	OrgID       int64  `json:"orgId" xorm:"org_id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	ParentUID   string `json:"parent_uid"`
+	ParentUID   string `json:"parent_uid" xorm:"parent_uid"`
 }
 
 // UpdateFolderCommand captures the information required by the folder service
 // to update a folder. Use Move to update a folder's parent folder.
 type UpdateFolderCommand struct {
 	Folder         *Folder `json:"folder"` // The extant folder
-	NewUID         *string `json:"uid"`
+	NewUID         *string `json:"uid" xorm:"uid"`
 	NewTitle       *string `json:"title"`
 	NewDescription *string `json:"description"`
 }
@@ -68,30 +68,31 @@ type MoveFolderCommand struct {
 // DeleteFolderCommand captures the information required by the folder service
 // to delete a folder.
 type DeleteFolderCommand struct {
-	UID string `json:"uid"`
+	UID string `json:"uid" xorm:"uid"`
 }
 
-// GetFolderCommand is used for all folder Get requests. Only one of UID, ID, or
+// GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
 // Title should be set; if multilpe fields are set by the caller the dashboard
 // service will select the field with the most specificity, in order: ID, UID,
 // Title.
-type GetFolderCommand struct {
+type GetFolderQuery struct {
 	UID   *string
 	ID    *int
 	Title *string
 }
 
-// GetParentsCommand captures the information required by the folder service to
+// GetParentsQuery captures the information required by the folder service to
 // return a list of all parent folders of a given folder.
-type GetParentsCommand struct {
-	UID string
+type GetParentsQuery struct {
+	UID string `xorm:"uid"`
 }
 
 // GetTreeCommand captures the information required by the folder service to
 // return a list of child folders of the given folder.
 
-type GetTreeCommand struct {
-	UID   string
+type GetTreeQuery struct {
+	UID   string `xorm:"uid"`
+	OrgID int64  `xorm:"org_id"`
 	Depth int64
 
 	// Pagination options

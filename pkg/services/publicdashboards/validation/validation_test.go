@@ -22,7 +22,7 @@ func TestValidateSavePublicDashboard(t *testing.T) {
 		}`)
 		dashboardData, _ := simplejson.NewJson(templateVars)
 		dashboard := models.NewDashboardFromJson(dashboardData)
-		dto := &SavePublicDashboardConfigDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
+		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
 
 		err := ValidateSavePublicDashboard(dto, dashboard)
 		require.ErrorContains(t, err, ErrPublicDashboardHasTemplateVariables.Reason)
@@ -36,7 +36,7 @@ func TestValidateSavePublicDashboard(t *testing.T) {
 		}`)
 		dashboardData, _ := simplejson.NewJson(templateVars)
 		dashboard := models.NewDashboardFromJson(dashboardData)
-		dto := &SavePublicDashboardConfigDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
+		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
 
 		err := ValidateSavePublicDashboard(dto, dashboard)
 		require.NoError(t, err)

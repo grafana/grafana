@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -463,3 +464,14 @@ const (
 	QuotaTargetSrv quota.TargetSrv = "alert_rule"
 	QuotaTarget    quota.Target    = "alert_rule"
 )
+
+type ruleKeyContextKey struct{}
+
+func WithRuleKey(ctx context.Context, ruleKey AlertRuleKey) context.Context {
+	return context.WithValue(ctx, ruleKeyContextKey{}, ruleKey)
+}
+
+func RuleKeyFromContext(ctx context.Context) (AlertRuleKey, bool) {
+	key, ok := ctx.Value(ruleKeyContextKey{}).(AlertRuleKey)
+	return key, ok
+}

@@ -102,8 +102,8 @@ func TestGetPublicDashboard(t *testing.T) {
 				store: &fakeStore,
 			}
 
-			fakeStore.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.Anything).
-				Return(test.StoreResp.pd, test.StoreResp.d, test.StoreResp.err)
+			fakeStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(test.StoreResp.pd, test.StoreResp.err)
+			fakeStore.On("FindDashboard", mock.Anything, mock.Anything, mock.Anything).Return(test.StoreResp.d, test.StoreResp.err)
 
 			pdc, dash, err := service.FindPublicDashboardAndDashboardByAccessToken(context.Background(), test.AccessToken)
 			if test.ErrResp != nil {
@@ -136,7 +136,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -184,7 +184,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -217,7 +217,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -243,7 +243,7 @@ func TestSavePublicDashboard(t *testing.T) {
 		}
 
 		publicDashboardStore := &FakePublicDashboardStore{}
-		publicDashboardStore.On("FindDashboard", mock.Anything, mock.Anything).Return(dashboard, nil)
+		publicDashboardStore.On("FindDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 		publicDashboardStore.On("Find", mock.Anything, mock.Anything).Return(nil, nil)
 		publicDashboardStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(pubdash, nil)
 		publicDashboardStore.On("NewPublicDashboardUid", mock.Anything).Return("an-uid", nil)
@@ -253,7 +253,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			store: publicDashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: "an-id",
 			OrgId:        8,
 			UserId:       7,
@@ -286,7 +286,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -301,7 +301,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
-		dto = &SavePublicDashboardConfigDTO{
+		dto = &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       8,
@@ -352,7 +352,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -368,7 +368,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
-		dto = &SavePublicDashboardConfigDTO{
+		dto = &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       8,

@@ -91,7 +91,7 @@ export function drawMarkers(opts: RendererOpts) {
 
             if (delta < minDelta) {
               minDelta = delta;
-              colWidth = Math.abs(u.valToPos(dataX[i], 'x') - u.valToPos(dataX[prevIdx], 'x'));
+              colWidth = Math.abs(u.valToPos(dataX[i], 'x', true) - u.valToPos(dataX[prevIdx], 'x', true));
             }
           }
 

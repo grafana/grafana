@@ -183,7 +183,7 @@ func (ng *AlertNG) init() error {
 	schedCfg := schedule.SchedulerCfg{
 		Cfg:         ng.Cfg.UnifiedAlerting,
 		C:           clk,
-		Evaluator:   eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.ExpressionService),
+		Evaluator:   eval.NewEvaluator(ng.Cfg, ng.DataSourceCache, ng.ExpressionService),
 		RuleStore:   store,
 		Metrics:     ng.Metrics.GetSchedulerMetrics(),
 		AlertSender: alertsRouter,
@@ -248,6 +248,14 @@ func (ng *AlertNG) init() error {
 	}); err != nil {
 		return err
 	}
+
+	log.RegisterContextualLogProvider(func(ctx context.Context) ([]interface{}, bool) {
+		key, ok := models.RuleKeyFromContext(ctx)
+		if !ok {
+			return nil, false
+		}
+		return key.LogContext(), true
+	})
 
 	return DeclareFixedRoles(ng.accesscontrolService)
 }

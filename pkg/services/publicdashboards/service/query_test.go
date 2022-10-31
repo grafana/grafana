@@ -390,7 +390,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 			}}
 
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, true, []map[string]interface{}{}, customPanels)
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -423,8 +423,10 @@ func TestGetAnnotations(t *testing.T) {
 			store:           &fakeStore,
 			AnnotationsRepo: annotationsRepo,
 		}
-		fakeStore.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).
-			Return(&PublicDashboard{Uid: "uid1", IsEnabled: true}, grafanamodels.NewDashboard("dash1"), nil)
+		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).
+			Return(&PublicDashboard{Uid: "uid1", IsEnabled: true}, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).
+			Return(grafanamodels.NewDashboard("dash1"), nil)
 
 		reqDTO := AnnotationsQueryDTO{
 			From: 1,
@@ -477,7 +479,10 @@ func TestGetAnnotations(t *testing.T) {
 			AnnotationsRepo: &annotationsRepo,
 		}
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: true}
-		fakeStore.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+
+		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dashboard, nil)
+
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
 				Id:          1,
@@ -534,7 +539,10 @@ func TestGetAnnotations(t *testing.T) {
 			AnnotationsRepo: &annotationsRepo,
 		}
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: true}
-		fakeStore.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+
+		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dashboard, nil)
+
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
 				Id:          1,
@@ -603,7 +611,10 @@ func TestGetAnnotations(t *testing.T) {
 			AnnotationsRepo: &annotationsRepo,
 		}
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: true}
-		fakeStore.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+
+		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dashboard, nil)
+
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
 				Id:          1,
@@ -645,7 +656,9 @@ func TestGetAnnotations(t *testing.T) {
 		}
 		dashboard := grafanamodels.NewDashboard("dashWithNoAnnotations")
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: true}
-		fakeStore.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+
+		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dashboard, nil)
 
 		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
@@ -678,7 +691,9 @@ func TestGetAnnotations(t *testing.T) {
 		annos := []DashAnnotation{grafanaAnnotation}
 		dashboard := AddAnnotationsToDashboard(t, dash, annos)
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: false}
-		fakeStore.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+
+		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dashboard, nil)
 
 		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
@@ -710,7 +725,10 @@ func TestGetAnnotations(t *testing.T) {
 		annos := []DashAnnotation{grafanaAnnotation}
 		dash = AddAnnotationsToDashboard(t, dash, annos)
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dash.Uid, AnnotationsEnabled: true}
-		fakeStore.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dash, nil)
+
+		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dash, nil)
+
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return(nil, errors.New("failed")).Maybe()
 
 		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
@@ -815,7 +833,7 @@ func TestBuildMetricRequest(t *testing.T) {
 		MaxDataPoints: int64(200),
 	}
 
-	dto := &SavePublicDashboardConfigDTO{
+	dto := &SavePublicDashboardDTO{
 		DashboardUid: publicDashboard.Uid,
 		OrgId:        publicDashboard.OrgId,
 		PublicDashboard: &PublicDashboard{
@@ -829,7 +847,7 @@ func TestBuildMetricRequest(t *testing.T) {
 	publicDashboardPD, err := service.Save(context.Background(), SignedInUser, dto)
 	require.NoError(t, err)
 
-	nonPublicDto := &SavePublicDashboardConfigDTO{
+	nonPublicDto := &SavePublicDashboardDTO{
 		DashboardUid: nonPublicDashboard.Uid,
 		OrgId:        nonPublicDashboard.OrgId,
 		PublicDashboard: &PublicDashboard{

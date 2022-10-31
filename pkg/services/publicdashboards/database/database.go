@@ -33,7 +33,7 @@ func ProvideStore(sqlStore db.DB) *PublicDashboardStoreImpl {
 	}
 }
 
-// Gets list of public dashboards by orgId
+// FindAll Returns a list of public dashboards by orgId
 func (d *PublicDashboardStoreImpl) FindAll(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
 	resp := make([]PublicDashboardListResponse, 0)
 
@@ -55,8 +55,8 @@ func (d *PublicDashboardStoreImpl) FindAll(ctx context.Context, orgId int64) ([]
 	return resp, nil
 }
 
-func (d *PublicDashboardStoreImpl) FindDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
-	dashboard := &models.Dashboard{Uid: dashboardUid}
+func (d *PublicDashboardStoreImpl) FindDashboard(ctx context.Context, dashboardUid string, orgId int64) (*models.Dashboard, error) {
+	dashboard := &models.Dashboard{Uid: dashboardUid, OrgId: orgId}
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.Get(dashboard)
 		if err != nil {
@@ -71,40 +71,7 @@ func (d *PublicDashboardStoreImpl) FindDashboard(ctx context.Context, dashboardU
 	return dashboard, err
 }
 
-// FindPublicDashboardAndDashboardByAccessToken Retrieves public dashboard. This method makes 2 queries to the db so that in the
-// even that the underlying dashboard is missing it will return a 404.
-func (d *PublicDashboardStoreImpl) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
-	if accessToken == "" {
-		return nil, nil, ErrPublicDashboardIdentifierNotSet
-	}
-
-	// get public dashboard
-	pdRes := &PublicDashboard{AccessToken: accessToken}
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Get(pdRes)
-		if err != nil {
-			return err
-		}
-		if !has {
-			return ErrPublicDashboardNotFound
-		}
-		return nil
-	})
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// find dashboard
-	dashRes, err := d.FindDashboard(ctx, pdRes.DashboardUid)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return pdRes, dashRes, err
-}
-
-// Find Returns public dashboard configuration by Uid or nil if not found
+// Find Returns public dashboard by Uid or nil if not found
 func (d *PublicDashboardStoreImpl) Find(ctx context.Context, uid string) (*PublicDashboard, error) {
 	if uid == "" {
 		return nil, nil
@@ -129,7 +96,7 @@ func (d *PublicDashboardStoreImpl) Find(ctx context.Context, uid string) (*Publi
 	return pdRes, err
 }
 
-// GetPublicDashboardByAccessToken Returns public dashboard by access token or nil if not found
+// FindByAccessToken Returns public dashboard by access token or nil if not found
 func (d *PublicDashboardStoreImpl) FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error) {
 	if accessToken == "" {
 		return nil, ErrPublicDashboardIdentifierNotSet
@@ -154,7 +121,7 @@ func (d *PublicDashboardStoreImpl) FindByAccessToken(ctx context.Context, access
 	return pdRes, err
 }
 
-// FindByDashboardUid Retrieves public dashboard configuration by dashboard uid
+// FindByDashboardUid Retrieves public dashboard by dashboard uid
 func (d *PublicDashboardStoreImpl) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
 	if dashboardUid == "" {
 		return nil, dashboards.ErrDashboardIdentifierNotSet
@@ -181,8 +148,8 @@ func (d *PublicDashboardStoreImpl) FindByDashboardUid(ctx context.Context, orgId
 	return pdRes, err
 }
 
-// Persists public dashboard configuration
-func (d *PublicDashboardStoreImpl) Save(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
+// Save Persists public dashboard
+func (d *PublicDashboardStoreImpl) Save(ctx context.Context, cmd SavePublicDashboardCommand) error {
 	if cmd.PublicDashboard.DashboardUid == "" {
 		return dashboards.ErrDashboardIdentifierNotSet
 	}
@@ -199,8 +166,8 @@ func (d *PublicDashboardStoreImpl) Save(ctx context.Context, cmd SavePublicDashb
 	return err
 }
 
-// Update updates existing public dashboard configuration
-func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
+// Update updates existing public dashboard
+func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDashboardCommand) error {
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		timeSettingsJSON, err := json.Marshal(cmd.PublicDashboard.TimeSettings)
 		if err != nil {
