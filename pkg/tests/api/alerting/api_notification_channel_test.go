@@ -811,7 +811,6 @@ func TestNotificationChannels(t *testing.T) {
 	// Eventually, we'll get all the desired alerts.
 	// nolint:gosec
 	require.Eventually(t, func() bool {
-		// TODO: not waiting for the failed notifications, flaky test?
 		return mockChannel.totalNotifications() >= len(nonEmailAlertNames) &&
 			mockChannel.totalNotificationErrors() >= len(expNotificationErrors) &&
 			len(mockEmail.emails) >= 1
