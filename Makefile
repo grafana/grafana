@@ -73,6 +73,9 @@ gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
 
+gen-jsonnet:
+	@$(MAKE) -C devenv/dev-dashboards main.libsonnet
+
 build-go: $(MERGED_SPEC_TARGET) gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
@@ -174,6 +177,7 @@ devenv: devenv-down ## Start optional services, e.g. postgres, prometheus, and e
 	@cd devenv; \
 	docker-compose up -d --build
 endif
+
 
 devenv-down: ## Stop optional services.
 	@cd devenv; \
