@@ -7,8 +7,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
-import { DashboardModel } from '../../state/DashboardModel';
-import { createDashboardFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 import { historySrv } from '../VersionHistory/HistorySrv';
 
 import { VersionsSettings, VERSIONS_FETCH_LIMIT } from './VersionsSettings';
@@ -28,14 +27,12 @@ const queryByFullText = (text: string) =>
   });
 
 function setup() {
-  const dashboard = new DashboardModel(
-    createDashboardFixture({
-      id: 74,
-      version: 11,
-      // formatDate: jest.fn(() => 'date'),
-      // getRelativeTime: jest.fn(() => 'time ago'),
-    })
-  );
+  const dashboard = createDashboardModelFixture({
+    id: 74,
+    version: 11,
+    // formatDate: jest.fn(() => 'date'),
+    // getRelativeTime: jest.fn(() => 'time ago'),
+  });
 
   const sectionNav = {
     main: { text: 'Dashboard' },

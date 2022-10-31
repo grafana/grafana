@@ -6,7 +6,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from 'app/store/configureStore';
 
 import { DashboardModel } from '../../state';
-import { createDashboardFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 
@@ -31,12 +31,10 @@ jest.mock('app/core/services/backend_srv', () => ({
 const store = configureStore();
 const mockPost = jest.fn();
 const buildMocks = () => ({
-  dashboard: new DashboardModel(
-    createDashboardFixture({
-      uid: 'mockDashboardUid',
-      version: 1,
-    })
-  ),
+  dashboard: createDashboardModelFixture({
+    uid: 'mockDashboardUid',
+    version: 1,
+  }),
   error: {
     status: 412,
     data: {

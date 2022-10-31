@@ -1,5 +1,5 @@
 import { DashboardModel } from '../../state/DashboardModel';
-import { createDashboardFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { HistorySrv } from './HistorySrv';
 import { restore, versions } from './__mocks__/dashboardHistoryMocks';
@@ -26,8 +26,8 @@ describe('historySrv', () => {
 
   let historySrv = new HistorySrv();
 
-  const dash = new DashboardModel(createDashboardFixture({ uid: '_U4zObQMz' }));
-  const emptyDash = new DashboardModel(createDashboardFixture({}));
+  const dash = createDashboardModelFixture({ uid: '_U4zObQMz' });
+  const emptyDash = createDashboardModelFixture();
   const historyListOpts = { limit: 10, start: 0 };
 
   beforeEach(() => {

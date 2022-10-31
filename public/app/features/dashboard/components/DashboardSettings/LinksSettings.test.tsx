@@ -10,7 +10,7 @@ import { locationService } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
 import { DashboardModel } from '../../state';
-import { createDashboardFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { DashboardSettings } from './DashboardSettings';
 
@@ -33,48 +33,46 @@ function setup(dashboard: DashboardModel) {
 }
 
 function buildTestDashboard() {
-  return new DashboardModel(
-    createDashboardFixture({
-      links: [
-        {
-          asDropdown: false,
-          icon: 'external link',
-          includeVars: false,
-          keepTime: false,
-          tags: [],
-          targetBlank: false,
-          title: 'link 1',
-          tooltip: '',
-          type: 'link',
-          url: 'https://www.google.com',
-        },
-        {
-          asDropdown: false,
-          icon: 'external link',
-          includeVars: false,
-          keepTime: false,
-          tags: ['gdev'],
-          targetBlank: false,
-          title: 'link 2',
-          tooltip: '',
-          type: 'dashboards',
-          url: '',
-        },
-        {
-          asDropdown: false,
-          icon: 'external link',
-          includeVars: false,
-          keepTime: false,
-          tags: [],
-          targetBlank: false,
-          title: '',
-          tooltip: '',
-          type: 'link',
-          url: 'https://www.bing.com',
-        },
-      ],
-    })
-  );
+  return createDashboardModelFixture({
+    links: [
+      {
+        asDropdown: false,
+        icon: 'external link',
+        includeVars: false,
+        keepTime: false,
+        tags: [],
+        targetBlank: false,
+        title: 'link 1',
+        tooltip: '',
+        type: 'link',
+        url: 'https://www.google.com',
+      },
+      {
+        asDropdown: false,
+        icon: 'external link',
+        includeVars: false,
+        keepTime: false,
+        tags: ['gdev'],
+        targetBlank: false,
+        title: 'link 2',
+        tooltip: '',
+        type: 'dashboards',
+        url: '',
+      },
+      {
+        asDropdown: false,
+        icon: 'external link',
+        includeVars: false,
+        keepTime: false,
+        tags: [],
+        targetBlank: false,
+        title: '',
+        tooltip: '',
+        type: 'link',
+        url: 'https://www.bing.com',
+      },
+    ],
+  });
 }
 
 describe('LinksSettings', () => {
@@ -85,7 +83,7 @@ describe('LinksSettings', () => {
   };
 
   test('it renders a header and cta if no links', () => {
-    const linklessDashboard = new DashboardModel(createDashboardFixture({ links: [] }));
+    const linklessDashboard = new DashboardModel(createDashboardModelFixture({ links: [] }));
     setup(linklessDashboard);
 
     expect(screen.getByRole('heading', { name: 'Links' })).toBeInTheDocument();

@@ -10,8 +10,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { setBackendSrv } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
-import { DashboardModel } from '../../state';
-import { createDashboardFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { GeneralSettingsUnconnected as GeneralSettings, Props } from './GeneralSettings';
 
@@ -21,8 +20,8 @@ setBackendSrv({
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
-    dashboard: new DashboardModel(
-      createDashboardFixture({
+    dashboard: createDashboardModelFixture(
+      {
         title: 'test dashboard title',
         description: 'test dashboard description',
         timepicker: {
@@ -33,7 +32,7 @@ const setupTestContext = (options: Partial<Props>) => {
           hidden: false,
         },
         timezone: 'utc',
-      }),
+      },
       {
         folderId: 1,
         folderTitle: 'test',

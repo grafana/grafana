@@ -1,7 +1,13 @@
 import { Dashboard, defaultDashboardCursorSync, Panel } from '@grafana/schema';
+import { DashboardMeta } from 'app/types';
 
-export function createDashboardFixture(dashboardInput: Partial<Dashboard> = {}): Dashboard {
-  return {
+import { DashboardModel } from '../DashboardModel';
+
+export function createDashboardModelFixture(
+  dashboardInput: Partial<Dashboard> = {},
+  meta?: DashboardMeta
+): DashboardModel {
+  const dashboardJson: Dashboard = {
     editable: true,
     graphTooltip: defaultDashboardCursorSync,
     schemaVersion: 36,
@@ -9,9 +15,11 @@ export function createDashboardFixture(dashboardInput: Partial<Dashboard> = {}):
     style: 'dark',
     ...dashboardInput,
   };
+
+  return new DashboardModel(dashboardJson, meta);
 }
 
-export function createPanelFixture(panelInput: Partial<Panel> = {}): Panel {
+export function createPanelJSONFixture(panelInput: Partial<Panel> = {}): Panel {
   return {
     fieldConfig: {
       defaults: {},

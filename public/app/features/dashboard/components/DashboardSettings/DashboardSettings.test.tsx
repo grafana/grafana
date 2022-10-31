@@ -9,8 +9,7 @@ import { setBackendSrv } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { configureStore } from 'app/store/configureStore';
 
-import { DashboardModel } from '../../state';
-import { createDashboardFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { DashboardSettings } from './DashboardSettings';
 
@@ -28,10 +27,10 @@ setBackendSrv({
 
 describe('DashboardSettings', () => {
   it('pressing escape navigates away correctly', async () => {
-    const dashboard = new DashboardModel(
-      createDashboardFixture({
+    const dashboard = createDashboardModelFixture(
+      {
         title: 'Foo',
-      }),
+      },
       {
         folderId: 1,
       }
