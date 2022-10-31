@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,6 +29,18 @@ func TestCreate(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("creating a 1st level folder without providing a UID should fail", func(t *testing.T) {
+		title := "folder1"
+		desc := "folder desc"
+
+		_, err := store.Create(context.Background(), &folder.CreateFolderCommand{
+			Title:       title,
+			Description: desc,
+			OrgID:       orgID,
+		})
+		require.Error(t, err)
+	})
+
 	t.Run("creating a 1st level folder without providing a parent should default to the root folder", func(t *testing.T) {
 		title := "folder1"
 		desc := "folder desc"
@@ -35,7 +48,8 @@ func TestCreate(t *testing.T) {
 		f, err := store.Create(context.Background(), &folder.CreateFolderCommand{
 			Title:       title,
 			Description: desc,
-			// OrgID: orgID,
+			OrgID:       orgID,
+			UID:         util.GenerateShortUID(),
 		})
 		require.NoError(t, err)
 		t.Cleanup(func() {
@@ -62,10 +76,11 @@ func TestCreate(t *testing.T) {
 		title := "folder1"
 		desc := "folder desc"
 		_, err := store.Create(context.Background(), &folder.CreateFolderCommand{
-			Title: title,
-			// OrgID: orgID,
+			Title:       title,
+			OrgID:       orgID,
 			ParentUID:   "unknown",
 			Description: desc,
+			UID:         util.GenerateShortUID(),
 		})
 		require.Error(t, err)
 	})
@@ -74,7 +89,8 @@ func TestCreate(t *testing.T) {
 		title := "folder1"
 		parent, err := store.Create(context.Background(), &folder.CreateFolderCommand{
 			Title: title,
-			// OrgID: orgID,
+			OrgID: orgID,
+			UID:   util.GenerateShortUID(),
 		})
 		require.NoError(t, err)
 		require.Equal(t, title, parent.Title)
@@ -89,10 +105,11 @@ func TestCreate(t *testing.T) {
 		title = "folder2"
 		desc := "folder desc"
 		f, err := store.Create(context.Background(), &folder.CreateFolderCommand{
-			Title: title,
-			// OrgID: orgID,
+			Title:       title,
+			OrgID:       orgID,
 			ParentUID:   parent.UID,
 			Description: desc,
+			UID:         util.GenerateShortUID(),
 		})
 		require.NoError(t, err)
 		t.Cleanup(func() {
@@ -121,9 +138,10 @@ func TestCreate(t *testing.T) {
 
 		title := fmt.Sprintf("folder-%d", len(ancestorUIDs))
 		_, err := store.Create(context.Background(), &folder.CreateFolderCommand{
-			Title: title,
-			// OrgID: orgID,
+			Title:     title,
+			OrgID:     orgID,
 			ParentUID: ancestorUIDs[len(ancestorUIDs)-1],
+			UID:       util.GenerateShortUID(),
 		})
 		assert.Error(t, err)
 	})
@@ -192,7 +210,8 @@ func TestUpdate(t *testing.T) {
 	f, err := store.Create(context.Background(), &folder.CreateFolderCommand{
 		Title:       origTitle,
 		Description: origDesc,
-		// OrgID: orgID,
+		OrgID:       orgID,
+		UID:         util.GenerateShortUID(),
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -260,6 +279,7 @@ func TestUpdate(t *testing.T) {
 	})
 }
 
+/*
 func TestMove(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	store := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
@@ -351,6 +371,7 @@ func TestMove(t *testing.T) {
 		require.Error(t, err)
 	})
 }
+*/
 
 func TestGet(t *testing.T) {}
 
@@ -370,9 +391,10 @@ func createSubTree(t *testing.T, store *sqlStore, orgID int64, parentUID string,
 		parentUID := ancestorUIDs[len(ancestorUIDs)-1]
 		title := fmt.Sprintf("%sfolder-%d", prefix, i)
 		f, err := store.Create(context.Background(), &folder.CreateFolderCommand{
-			Title: title,
-			// OrgID: orgID,
+			Title:     title,
+			OrgID:     orgID,
 			ParentUID: parentUID,
+			UID:       util.GenerateShortUID(),
 		})
 		require.NoError(t, err)
 		t.Cleanup(func() {

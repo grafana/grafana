@@ -14,11 +14,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xorcare/pointer"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
@@ -62,7 +63,7 @@ func executeMockedQuery(t *testing.T, name string, query queryModel) *backend.Da
 		testDataPath: name + ".csv",
 	}
 
-	dr := executeQuery(context.Background(), query, runner, 50)
+	dr := executeQuery(context.Background(), glog, query, runner, 50)
 	return &dr
 }
 
@@ -226,7 +227,7 @@ func TestRealQuery(t *testing.T) {
 		runner, err := runnerFromDataSource(dsInfo)
 		require.NoError(t, err)
 
-		dr := executeQuery(context.Background(), queryModel{
+		dr := executeQuery(context.Background(), glog, queryModel{
 			MaxDataPoints: 100,
 			RawQuery:      "buckets()",
 		}, runner, 50)
