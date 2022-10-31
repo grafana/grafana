@@ -123,7 +123,7 @@ func (e *objectStoreJob) start() {
 
 		_, err = e.store.Write(ctx, &object.WriteObjectRequest{
 			GRN: &object.GRN{
-				Scope: models.ObjectStoreScopeDrive,
+				Scope: models.ObjectStoreScopeEntity,
 				UID:   dash.UID,
 				Kind:  models.StandardKindDashboard,
 			},
