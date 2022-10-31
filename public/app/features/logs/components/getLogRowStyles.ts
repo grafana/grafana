@@ -70,8 +70,8 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       > td:not(.log-row-menu-cell) {
         position: relative;
         padding-right: ${theme.spacing(1)};
-        border-top: 1px solid transparent;
-        border-bottom: 1px solid transparent;
+        border-top: ${theme.spacing(0.125)} solid transparent;
+        border-bottom: ${theme.spacing(0.125)} solid transparent;
         height: 100%;
       }
     `,
@@ -83,16 +83,16 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
     `,
     logsRowLevel: css`
       label: logs-row__level;
-      max-width: 10px;
+      max-width: ${theme.spacing(1.25)};
       cursor: default;
       &::after {
         content: '';
         display: block;
         position: absolute;
-        top: 1px;
-        bottom: 1px;
-        width: 3px;
-        left: 4px;
+        top: ${theme.spacing(0.125)};
+        bottom: ${theme.spacing(0.125)};
+        width: ${theme.spacing(0.375)};
+        left: ${theme.spacing(0.5)};
         background-color: ${logColor};
       }
     `,
@@ -103,7 +103,7 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       label: logs-row-toggle-details__level;
       font-size: 9px;
       padding-top: ${theme.spacing(0.625)};
-      max-width: 15px;
+      max-width: ${theme.spacing(1.875)};
     `,
     logsRowLocalTime: css`
       label: logs-row__localtime;
@@ -128,9 +128,9 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
     //Log details specific CSS
     logDetailsContainer: css`
       label: logs-row-details-table;
-      border: 1px solid ${theme.colors.border.medium};
+      border: ${theme.spacing(0.125)} solid ${theme.colors.border.medium};
       padding: 0 ${theme.spacing(1)} ${theme.spacing(1)};
-      border-radius: 3px;
+      border-radius: ${theme.shape.borderRadius(1.5)};
       margin: ${theme.spacing(2.5)} ${theme.spacing(1)} ${theme.spacing(2.5)} ${theme.spacing(2)};
       cursor: default;
     `,

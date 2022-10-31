@@ -64,7 +64,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     logsLabelValue: css`
       label: logs-label__value;
       display: inline-block;
-      max-width: 20em;
+      max-width: ${theme.spacing(25)};
       text-overflow: ellipsis;
       overflow: hidden;
     `,
