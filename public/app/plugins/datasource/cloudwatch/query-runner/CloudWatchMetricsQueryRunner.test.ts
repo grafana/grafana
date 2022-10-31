@@ -572,8 +572,11 @@ describe('CloudWatchMetricsQueryRunner', () => {
   });
 
   describe('timezoneUTCOffset', () => {
+    beforeEach(() => {
+      jest.useFakeTimers().setSystemTime(new Date('2022-09-01'));
+    });
     afterEach(() => {
-      jest.resetAllMocks();
+      jest.useFakeTimers().clearAllTimers();
     });
 
     const testQuery = {
@@ -598,8 +601,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
       ['Asia/Tokyo', '+0900'],
       ['UTC', '+0000'],
     ];
-    describe.each(testTable)('should use the right time zone offset', (ianaTimezone, expectedOffset) => {
-      jest.useFakeTimers().setSystemTime(new Date('2022-09-01'));
+    test.each(testTable)('should use the right time zone offset', (ianaTimezone, expectedOffset) => {
       const { runner, fetchMock, request } = setupMockedMetricsQueryRunner();
       runner.handleMetricQueries([testQuery], {
         ...request,
