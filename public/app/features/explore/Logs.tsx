@@ -23,6 +23,9 @@ import {
   SplitOpen,
   DataQueryResponse,
   CoreApp,
+  DataHoverEvent,
+  DataHoverClearEvent,
+  EventBus,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
@@ -79,6 +82,7 @@ interface Props extends Themeable2 {
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
   clearCache: () => void;
+  eventBus: EventBus;
 }
 
 interface State {
@@ -131,6 +135,20 @@ class UnthemedLogs extends PureComponent<Props, State> {
       window.clearTimeout(this.cancelFlippingTimer);
     }
   }
+
+  onLogRowHover = (row?: LogRowModel) => {
+    if (!row) {
+      this.props.eventBus.publish(new DataHoverClearEvent());
+    } else {
+      this.props.eventBus.publish(
+        new DataHoverEvent({
+          point: {
+            time: row.timeEpochMs,
+          },
+        })
+      );
+    }
+  };
 
   onChangeLogsSortOrder = () => {
     this.setState({ isFlipping: true });
@@ -320,6 +338,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       addResultsToCache,
       exploreId,
       scrollElement,
+      eventBus,
     } = this.props;
 
     const {
@@ -367,6 +386,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               splitOpen={splitOpen}
               onLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
               onHiddenSeriesChanged={this.onToggleLogLevel}
+              eventBus={eventBus.newScopedBus('logsvolume', { onlyLocal: false })}
             />
           )}
         </Collapse>
@@ -480,6 +500,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 onClickHideDetectedField={this.hideDetectedField}
                 app={CoreApp.Explore}
                 scrollElement={scrollElement}
+                onLogRowHover={this.onLogRowHover}
               />
             </div>
             <LogsNavigation

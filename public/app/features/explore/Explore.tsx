@@ -3,10 +3,17 @@ import memoizeOne from 'memoize-one';
 import React, { createRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { compose } from 'redux';
 import { Unsubscribable } from 'rxjs';
 
-import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, QueryFixAction, RawTimeRange } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  DataQuery,
+  GrafanaTheme2,
+  LoadingState,
+  QueryFixAction,
+  RawTimeRange,
+  EventBus,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
@@ -77,6 +84,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 export interface ExploreProps extends Themeable2 {
   exploreId: ExploreId;
   theme: GrafanaTheme2;
+  eventBus: EventBus;
 }
 
 enum ExploreDrawer {
@@ -269,6 +277,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           splitOpenFn={splitOpen}
           loadingState={queryResponse.state}
           anchorToZero={false}
+          eventBus={this.props.eventBus.newScopedBus('graph', { onlyLocal: false })}
         />
       </Collapse>
     );
@@ -301,6 +310,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         onStartScanning={this.onStartScanning}
         onStopScanning={this.onStopScanning}
         scrollElement={this.scrollElement}
+        eventBus={this.props.eventBus.newScopedBus('logs', { onlyLocal: false })}
       />
     );
   }
@@ -523,4 +533,4 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export default compose(connector, withTheme2)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;
+export default withTheme2(connector(Explore));

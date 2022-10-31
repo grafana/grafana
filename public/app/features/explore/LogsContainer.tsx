@@ -8,6 +8,7 @@ import {
   LoadingState,
   LogRowModel,
   RawTimeRange,
+  EventBus,
 } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
@@ -35,6 +36,7 @@ interface LogsContainerProps extends PropsFromRedux {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
+  eventBus: EventBus;
 }
 
 class LogsContainer extends PureComponent<LogsContainerProps> {
@@ -155,6 +157,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             addResultsToCache={() => addResultsToCache(exploreId)}
             clearCache={() => clearCache(exploreId)}
             scrollElement={scrollElement}
+            eventBus={this.props.eventBus}
           />
         </LogsCrossFadeTransition>
       </>
