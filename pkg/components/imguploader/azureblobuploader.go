@@ -25,20 +25,20 @@ import (
 )
 
 type AzureBlobUploader struct {
-	account_name         string
-	account_key          string
-	container_name       string
-	sas_token_expiration string
-	log                  log.Logger
+	account_name              string
+	account_key               string
+	container_name            string
+	sas_token_expiration_days int
+	log                       log.Logger
 }
 
-func NewAzureBlobUploader(account_name string, account_key string, container_name string, sas_token_expiration string) *AzureBlobUploader {
+func NewAzureBlobUploader(account_name string, account_key string, container_name string, sas_token_expiration_days int) *AzureBlobUploader {
 	return &AzureBlobUploader{
-		account_name:         account_name,
-		account_key:          account_key,
-		container_name:       container_name,
-		sas_token_expiration: sas_token_expiration,
-		log:                  log.New("azureBlobUploader"),
+		account_name:              account_name,
+		account_key:               account_key,
+		container_name:            container_name,
+		sas_token_expiration_days: sas_token_expiration_days,
+		log:                       log.New("azureBlobUploader"),
 	}
 }
 
@@ -95,14 +95,8 @@ func (az *AzureBlobUploader) Upload(ctx context.Context, imageDiskPath string) (
 
 	url := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", az.account_name, az.container_name, randomFileName)
 
-	if az.sas_token_expiration != "" {
-		sasTokenExpiration, err := strconv.Atoi(az.sas_token_expiration)
-		if err != nil {
-			logger.Warn("Variable 'sas_token_expiration' is not in corect format. Must be number", "err", err)
-			return "", err
-		}
-
-		url, err = blob.GetBlobSasUrl(ctx, az.container_name, randomFileName, sasTokenExpiration)
+	if az.sas_token_expiration_days > 0 {
+		url, err = blob.GetBlobSasUrl(ctx, az.container_name, randomFileName, az.sas_token_expiration_days)
 		if err != nil {
 			return "", err
 		}
