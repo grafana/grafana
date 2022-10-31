@@ -577,7 +577,7 @@ func TestIntegrationDelete(t *testing.T) {
 
 		// Verify public dashboard is actually deleted
 		deletedDashboard, err := publicdashboardStore.FindByDashboardUid(context.Background(), savedPublicDashboard.OrgId, savedPublicDashboard.DashboardUid)
-		require.Equal(t, ErrPublicDashboardNotFound, err)
+		require.NoError(t, err)
 		require.Nil(t, deletedDashboard)
 	})
 
