@@ -47,7 +47,7 @@ While the main path for extending kindsys is through adding metadata, there are 
 [CUE attributes](https://cuelang.org/docs/references/spec/#attributes) provide additional information to kind tooling. They are suitable when it is necessary for a schema author to express additional information about a particular field or definition within a schema, without actually modifying the meaning of the schema. Two such known patterns are:
 
 * Controlling nuanced behavior of code generators for some field or type. Example: [@cuetsy](https://github.com/grafana/cuetsy#usage) attributes, which govern TS output
-* Expressing some kind of structured TODO or WIP information on a field or type that can be easily analyzed and fed into other maturity or work-management systems
+* Expressing some kind of structured TODO or WIP information on a field or type that can be easily analyzed and fed into other systems. Example: a kind marked at least `stable` maturity may not have any `@grafanamaturity` attributes
 
 In both of these cases, attributes are a tool _for the individual kind author_ to convey something to downstream consumers of kind declarations. It is essential. While attributes allow consistency in _how_ a particular task is accomplished, they leave _when_ to apply the rule up to the judgment of the kind author.
 
