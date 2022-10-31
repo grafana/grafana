@@ -380,7 +380,7 @@ func TestQuery_ResourceRequest_DescribeAllLogGroups(t *testing.T) {
 		}, cli.calls.describeLogGroups)
 	})
 
-	t.Run("Should call api without LogGroupNamePrefix an empty string is passed in resource call", func(t *testing.T) {
+	t.Run("Should call api without LogGroupNamePrefix when an empty string is passed in resource call", func(t *testing.T) {
 		cli = fakeCWLogsClient{
 			logGroups: []cloudwatchlogs.DescribeLogGroupsOutput{
 				{LogGroups: []*cloudwatchlogs.LogGroup{}},
