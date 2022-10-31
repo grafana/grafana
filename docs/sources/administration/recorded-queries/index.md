@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/enterprise/recorded-queries/
+  - /docs/grafana/latest/administration/recorded-queries/
 description: Grafana Enterprise recorded queries
 keywords:
   - grafana
@@ -17,7 +18,7 @@ Recorded queries allow you to see trends over time by taking a snapshot of a dat
 
 For our plugins that do not return time series, it might be useful to plot historical data. For example, you might want to query ServiceNow to see a history of request response times but it can only return current point-in-time metrics.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise/" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}).
 
 ## How recorded queries work
 
