@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -14,6 +15,7 @@ import (
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/services/datasources"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -874,5 +876,65 @@ func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Mig
 		migrator.Logger.Error("failed to insert changes to alert_rule_version", "err", err)
 		return fmt.Errorf("unable to update alert rules with group index: %w", err)
 	}
+	return nil
+}
+
+func AddExternalAlertmanagerToDatasourceMigration(mg *migrator.Migrator) {
+	mg.AddMigration("migrate external alertmanagers to datsourcse", &externalAlertmanagerToDatasources{})
+}
+
+type externalAlertmanagerToDatasources struct {
+	migrator.MigrationBase
+}
+
+func (e externalAlertmanagerToDatasources) SQL(dialect migrator.Dialect) string {
+	return "migrate external alertmanagers to datasource"
+}
+
+func (e externalAlertmanagerToDatasources) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	var results []ngmodels.AdminConfiguration
+	sess.SQL("SELECT org_id, alertmanagers FROM ngalert_configuration").Get(&results)
+
+	for _, result := range results {
+		for _, am := range result.Alertmanagers {
+			u, err := url.Parse(am)
+			if err != nil {
+				return err
+			}
+
+			// make a copy of u that doesn't have credentials
+
+			ds := &datasources.DataSource{
+				OrgId:   result.OrgID,
+				Name:    "", // make a random name (alertmanager-uid)
+				Type:    "alertmanager",
+				Access:  "proxy",          // check this value
+				Url:     "",               // string of u without credentials
+				Created: result.CreatedAt, // make into time.Time
+				Updated: result.UpdatedAt, // make into time.Time
+				Uid:     "",               // make a random uuid
+				Version: 1,
+			}
+
+			if u.User != nil {
+				ds.BasicAuthUser = u.User.Username()
+				if password, ok := u.User.Password(); ok {
+					//
+					ds.SecureJsonData = GetEncryptedJsonData(map[string]string{
+						"basicAuthPassword": password,
+					})
+				}
+			}
+
+			rowsAffected, err := sess.Table("data_source").Insert(&ds)
+			if err != nil {
+				return err
+			}
+			if rowsAffected == 0 {
+				return fmt.Errorf("expected 1 row, got %d", rowsAffected)
+			}
+		}
+	}
+
 	return nil
 }
