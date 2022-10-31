@@ -10,7 +10,7 @@ title: Provisioning RBAC with Grafana
 weight: 60
 ---
 
-# Grafana RBAC provisioning
+# Provisioning RBAC with Grafana
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
