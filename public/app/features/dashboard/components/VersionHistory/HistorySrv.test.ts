@@ -1,4 +1,5 @@
 import { DashboardModel } from '../../state/DashboardModel';
+import { createDashboardJSON } from '../../state/__fixtures__/dashboardJson';
 
 import { HistorySrv } from './HistorySrv';
 import { restore, versions } from './__mocks__/dashboardHistoryMocks';
@@ -25,8 +26,8 @@ describe('historySrv', () => {
 
   let historySrv = new HistorySrv();
 
-  const dash = new DashboardModel({ uid: '_U4zObQMz' });
-  const emptyDash = new DashboardModel({});
+  const dash = new DashboardModel(createDashboardJSON({ uid: '_U4zObQMz' }));
+  const emptyDash = new DashboardModel(createDashboardJSON({}));
   const historyListOpts = { limit: 10, start: 0 };
 
   beforeEach(() => {

@@ -10,6 +10,7 @@ import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { configureStore } from 'app/store/configureStore';
 
 import { DashboardModel } from '../../state';
+import { createDashboardJSON } from '../../state/__fixtures__/dashboardJson';
 
 import { DashboardSettings } from './DashboardSettings';
 
@@ -28,9 +29,9 @@ setBackendSrv({
 describe('DashboardSettings', () => {
   it('pressing escape navigates away correctly', async () => {
     const dashboard = new DashboardModel(
-      {
+      createDashboardJSON({
         title: 'Foo',
-      },
+      }),
       {
         folderId: 1,
       }

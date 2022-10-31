@@ -12,6 +12,7 @@ import { Echo } from '../../../../core/services/echo/Echo';
 import { variableAdapters } from '../../../variables/adapters';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { DashboardModel, PanelModel } from '../../state';
+import { createDashboardJSON } from '../../state/__fixtures__/dashboardJson';
 
 import { Props, ShareLink } from './ShareLink';
 
@@ -78,13 +79,22 @@ describe('ShareModal', () => {
   });
 
   beforeEach(() => {
+    const defaultTimeRange = getDefaultTimeRange();
     setUTCTimeZone();
     mockLocationHref('http://server/#!/test');
     config.rendererAvailable = true;
     config.bootData.user.orgId = 1;
     props = {
       panel: new PanelModel({ id: 22, options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
-      dashboard: new DashboardModel({ time: getDefaultTimeRange(), id: 1 }),
+      dashboard: new DashboardModel(
+        createDashboardJSON({
+          time: {
+            from: defaultTimeRange.from.toISOString(),
+            to: defaultTimeRange.to.toISOString(),
+          },
+          id: 1,
+        })
+      ),
     };
   });
 
@@ -175,10 +185,12 @@ describe('when appUrl is set in the grafana config', () => {
   });
 
   it('should render the correct link', async () => {
-    const mockDashboard = new DashboardModel({
-      uid: 'mockDashboardUid',
-      id: 1,
-    });
+    const mockDashboard = new DashboardModel(
+      createDashboardJSON({
+        uid: 'mockDashboardUid',
+        id: 1,
+      })
+    );
     const mockPanel = new PanelModel({
       id: 'mockPanelId',
     });

@@ -11,6 +11,7 @@ import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 
 import { DashboardModel } from '../../state/DashboardModel';
+import { createDashboardJSON } from '../../state/__fixtures__/dashboardJson';
 
 import { AnnotationsSettings } from './AnnotationsSettings';
 
@@ -78,24 +79,27 @@ describe('AnnotationsSettings', () => {
   });
 
   beforeEach(() => {
-    dashboard = new DashboardModel({
-      id: 74,
-      version: 7,
-      annotations: {
-        list: [
-          {
-            builtIn: 1,
-            datasource: { uid: 'uid1', type: 'grafana' },
-            enable: true,
-            hide: true,
-            iconColor: 'rgba(0, 211, 255, 1)',
-            name: 'Annotations & Alerts',
-            type: 'dashboard',
-          },
-        ],
-      },
-      links: [],
-    });
+    dashboard = new DashboardModel(
+      createDashboardJSON({
+        id: 74,
+        version: 7,
+        annotations: {
+          list: [
+            {
+              builtIn: 1,
+              datasource: { uid: 'uid1', type: 'grafana' },
+              enable: true,
+              hide: true,
+              iconColor: 'rgba(0, 211, 255, 1)',
+              name: 'Annotations & Alerts',
+              type: 'dashboard',
+              showIn: 1,
+            },
+          ],
+        },
+        links: [],
+      })
+    );
   });
 
   test('it renders empty list cta if only builtIn annotation', async () => {

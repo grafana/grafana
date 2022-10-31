@@ -7,6 +7,7 @@ import config from 'app/core/config';
 
 import { Echo } from '../../../../core/services/echo/Echo';
 import { DashboardModel, PanelModel } from '../../state';
+import { createDashboardJSON } from '../../state/__fixtures__/dashboardJson';
 
 import { ShareEmbed } from './ShareEmbed';
 
@@ -68,9 +69,11 @@ describe('ShareEmbed', () => {
   });
 
   it('generates the correct embed url for a dashboard', () => {
-    const mockDashboard = new DashboardModel({
-      uid: 'mockDashboardUid',
-    });
+    const mockDashboard = new DashboardModel(
+      createDashboardJSON({
+        uid: 'mockDashboardUid',
+      })
+    );
     const mockPanel = new PanelModel({
       id: 'mockPanelId',
     });
@@ -86,9 +89,11 @@ describe('ShareEmbed', () => {
 
   it('generates the correct embed url for a dashboard set to the homepage in the grafana config', () => {
     mockLocationHref('http://dashboards.grafana.com/?orgId=1');
-    const mockDashboard = new DashboardModel({
-      uid: 'mockDashboardUid',
-    });
+    const mockDashboard = new DashboardModel(
+      createDashboardJSON({
+        uid: 'mockDashboardUid',
+      })
+    );
     const mockPanel = new PanelModel({
       id: 'mockPanelId',
     });
@@ -104,9 +109,11 @@ describe('ShareEmbed', () => {
   it('generates the correct embed url for a snapshot', () => {
     const mockSlug = 'mockSlug';
     mockLocationHref(`http://dashboards.grafana.com/dashboard/snapshot/${mockSlug}?orgId=1`);
-    const mockDashboard = new DashboardModel({
-      uid: 'mockDashboardUid',
-    });
+    const mockDashboard = new DashboardModel(
+      createDashboardJSON({
+        uid: 'mockDashboardUid',
+      })
+    );
     const mockPanel = new PanelModel({
       id: 'mockPanelId',
     });
@@ -122,9 +129,11 @@ describe('ShareEmbed', () => {
   it('generates the correct embed url for a scripted dashboard', () => {
     const mockSlug = 'scripted.js';
     mockLocationHref(`http://dashboards.grafana.com/dashboard/script/${mockSlug}?orgId=1`);
-    const mockDashboard = new DashboardModel({
-      uid: 'mockDashboardUid',
-    });
+    const mockDashboard = new DashboardModel(
+      createDashboardJSON({
+        uid: 'mockDashboardUid',
+      })
+    );
     const mockPanel = new PanelModel({
       id: 'mockPanelId',
     });

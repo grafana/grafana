@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { DashboardModel } from 'app/features/dashboard/state';
+import { createDashboardJSON } from 'app/features/dashboard/state/__fixtures__/dashboardJson';
 
 import { SaveDashboardOptions } from '../types';
 
@@ -123,14 +124,14 @@ describe('SaveDashboardAsForm', () => {
     it('renders saved message draft if it was filled before', () => {
       render(
         <SaveDashboardForm
-          dashboard={new DashboardModel({})}
+          dashboard={new DashboardModel(createDashboardJSON())}
           onCancel={() => {}}
           onSuccess={() => {}}
           onSubmit={async () => {
             return {};
           }}
           saveModel={{
-            clone: new DashboardModel({}),
+            clone: new DashboardModel(createDashboardJSON()),
             diff: {},
             diffCount: 0,
             hasChanges: true,

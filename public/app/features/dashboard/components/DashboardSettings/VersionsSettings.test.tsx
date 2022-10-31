@@ -8,6 +8,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
 import { DashboardModel } from '../../state/DashboardModel';
+import { createDashboardJSON } from '../../state/__fixtures__/dashboardJson';
 import { historySrv } from '../VersionHistory/HistorySrv';
 
 import { VersionsSettings, VERSIONS_FETCH_LIMIT } from './VersionsSettings';
@@ -27,12 +28,14 @@ const queryByFullText = (text: string) =>
   });
 
 function setup() {
-  const dashboard = new DashboardModel({
-    id: 74,
-    version: 11,
-    formatDate: jest.fn(() => 'date'),
-    getRelativeTime: jest.fn(() => 'time ago'),
-  });
+  const dashboard = new DashboardModel(
+    createDashboardJSON({
+      id: 74,
+      version: 11,
+      // formatDate: jest.fn(() => 'date'),
+      // getRelativeTime: jest.fn(() => 'time ago'),
+    })
+  );
 
   const sectionNav = {
     main: { text: 'Dashboard' },

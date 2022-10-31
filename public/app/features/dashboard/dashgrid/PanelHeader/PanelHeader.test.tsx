@@ -3,6 +3,7 @@ import React from 'react';
 
 import { createEmptyQueryResponse } from '../../../explore/state/utils';
 import { DashboardModel, PanelModel } from '../../state';
+import { createDashboardJSON } from '../../state/__fixtures__/dashboardJson';
 
 import { PanelHeader } from './PanelHeader';
 
@@ -16,7 +17,7 @@ let panelModel = new PanelModel({
 let panelData = createEmptyQueryResponse();
 
 describe('Panel Header', () => {
-  const dashboardModel = new DashboardModel({}, { publicDashboardAccessToken: 'abc123' });
+  const dashboardModel = new DashboardModel(createDashboardJSON({}), { publicDashboardAccessToken: 'abc123' });
   it('will render header title but not render dropdown icon when dashboard is being viewed publicly', () => {
     window.history.pushState({}, 'Test Title', '/public-dashboards/abc123');
 
@@ -29,7 +30,7 @@ describe('Panel Header', () => {
   });
 
   it('will render header title and dropdown icon when dashboard is not being viewed publicly', () => {
-    const dashboardModel = new DashboardModel({}, { publicDashboardAccessToken: '' });
+    const dashboardModel = new DashboardModel(createDashboardJSON({}), { publicDashboardAccessToken: '' });
     window.history.pushState({}, 'Test Title', '/d/abc/123');
 
     render(

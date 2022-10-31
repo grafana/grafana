@@ -13,6 +13,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { createDashboardJSON } from 'app/features/dashboard/state/__fixtures__/dashboardJson';
 import { configureStore } from 'app/store/configureStore';
 
 import { ShareModal } from '../ShareModal';
@@ -81,9 +82,11 @@ beforeAll(() => {
 
 beforeEach(() => {
   config.featureToggles.publicDashboards = true;
-  mockDashboard = new DashboardModel({
-    uid: 'mockDashboardUid',
-  });
+  mockDashboard = new DashboardModel(
+    createDashboardJSON({
+      uid: 'mockDashboardUid',
+    })
+  );
 
   mockPanel = new PanelModel({
     id: 'mockPanelId',
