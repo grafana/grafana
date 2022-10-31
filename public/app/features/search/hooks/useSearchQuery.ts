@@ -44,14 +44,6 @@ export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
 
   const onSelectSearchItem = () => {
     dispatch(clearFilters());
-    locationService.partial(
-      {
-        search: null,
-        folder: null,
-        ...defaultQueryParams,
-      },
-      true
-    );
   };
 
   const onTagFilterChange = (tags: string[]) => {
