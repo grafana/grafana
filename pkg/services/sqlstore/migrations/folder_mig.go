@@ -19,6 +19,9 @@ func addFolderMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("Add index for parent_uid", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
 		Cols: []string{"parent_uid", "org_id"},
 	}))
+	mg.AddMigration("Add index for uid", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
+		Cols: []string{"uid", "org_id"},
+	}))
 }
 
 // nolint:unused // this is temporarily unused during feature development

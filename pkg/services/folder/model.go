@@ -12,31 +12,21 @@ const (
 )
 
 var ErrFolderNotFound = errutil.NewBase(errutil.StatusNotFound, "folder.notFound")
+var ErrFolderTooDeep = errutil.NewBase(errutil.StatusInternal, "folder.tooDeep")
 
 type Folder struct {
-	ID          int64
-	OrgID       int64
-	UID         string
-	ParentUID   string
-	Title       string
-	Description string
+	ID          int64  `xorm:"'id' pk autoincr"`
+	OrgID       int64  `xorm:"org_id"`
+	UID         string `xorm:"uid"`
+	ParentUID   string `xorm:"parent_uid"`
+	Title       string `xorm:"title"`
+	Description string `xorm:"description"`
 
-	Created time.Time
-	Updated time.Time
+	Created time.Time `xorm:"created"`
+	Updated time.Time `xorm:"updated"`
 
 	// TODO: validate if this field is required/relevant to folders.
-	UpdatedBy int64
-}
-
-// NewFolder tales a title and returns a Folder with the Created and Updated
-// fields set to the current time.
-func NewFolder(title string, description string) *Folder {
-	return &Folder{
-		Title:       title,
-		Description: description,
-		Created:     time.Now(),
-		Updated:     time.Now(),
-	}
+	// UpdatedBy int64
 }
 
 // CreateFolderCommand captures the information required by the folder service
@@ -61,6 +51,7 @@ type UpdateFolderCommand struct {
 // MoveFolderCommand captures the information required by the folder service
 // to move a folder.
 type MoveFolderCommand struct {
+	OrgID        int64  `xorm:"org_id"`
 	UID          string `json:"uid"`
 	NewParentUID string `json:"new_parent_uid"`
 }
@@ -68,7 +59,8 @@ type MoveFolderCommand struct {
 // DeleteFolderCommand captures the information required by the folder service
 // to delete a folder.
 type DeleteFolderCommand struct {
-	UID string `json:"uid" xorm:"uid"`
+	OrgID int64  `xorm:"org_id"`
+	UID   string `json:"uid" xorm:"uid"`
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
@@ -76,6 +68,7 @@ type DeleteFolderCommand struct {
 // service will select the field with the most specificity, in order: ID, UID,
 // Title.
 type GetFolderQuery struct {
+	OrgID int64 `xorm:"org_id"'`
 	UID   *string
 	ID    *int
 	Title *string
@@ -84,7 +77,8 @@ type GetFolderQuery struct {
 // GetParentsQuery captures the information required by the folder service to
 // return a list of all parent folders of a given folder.
 type GetParentsQuery struct {
-	UID string `xorm:"uid"`
+	OrgID int64  `xorm:"org_id"`
+	UID   string `xorm:"uid"`
 }
 
 // GetTreeCommand captures the information required by the folder service to

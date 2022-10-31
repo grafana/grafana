@@ -2,28 +2,24 @@ package folderimpl
 
 import (
 	"context"
-	"encoding/binary"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type sqlStore struct {
 	db  db.DB
 	log log.Logger
-	cfg *setting.Cfg
-	fm  featuremgmt.FeatureManager
 }
 
 // sqlStore implements the store interface.
 var _ store = (*sqlStore)(nil)
 
-func ProvideStore(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureManager) *sqlStore {
-	return &sqlStore{db: db, log: log.New("folder-store"), cfg: cfg, fm: features}
+func newSQLStore(db db.DB) *sqlStore {
+	return &sqlStore{db: db, log: log.New("folder-store")}
 }
 
 func (ss *sqlStore) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
@@ -37,7 +33,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd *folder.CreateFolderCommand)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		folderID, err := sess.Insert(foldr)
 		if err != nil {
-			return err
+			return fmt.Errorf("create: %v", err)
 		}
 		foldr.ID = folderID
 		return nil
@@ -62,9 +58,9 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *folder.UpdateFolderCommand)
 }
 
 func (ss *sqlStore) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
-	var foldr *folder.Folder
+	foldr := &folder.Folder{}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		exists, err := sess.Where("uid=? OR id=? OR title=?", cmd.UID, cmd.ID, cmd.Title).Get(foldr)
+		exists, err := sess.Where("org_id=? AND (uid=? OR id=? OR title=?)", cmd.OrgID, cmd.UID, cmd.ID, cmd.Title).Get(foldr)
 		if err != nil {
 			return err
 		}
@@ -77,43 +73,10 @@ func (ss *sqlStore) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folde
 }
 
 func (ss *sqlStore) GetParents(ctx context.Context, cmd *folder.GetParentsQuery) ([]*folder.Folder, error) {
-	var folders []*folder.Folder
 	if ss.db.GetDBType() == migrator.MySQL {
 		return ss.getParentsMySQL(ctx, cmd)
 	}
-
-	recQuery :=
-		`WITH RecQry AS (
-		SELECT * 
-			FROM folder 
-		UNION ALL 
-		SELECT f.* 
-			FROM folder f INNER JOIN RecQry r 
-				ON f.parent_uid = r.uid
-		)
-		SELECT *
-	  		FROM RecQry`
-
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		res, err := sess.Query(recQuery)
-		if err != nil {
-			return err
-		}
-
-		for _, row := range res {
-			folders = append(folders, &folder.Folder{
-				ID:          int64(binary.BigEndian.Uint64(row["id"])),
-				OrgID:       int64(binary.BigEndian.Uint64(row["org_id"])),
-				UID:         string(row["uid"]),
-				ParentUID:   string(row["parent_uid"]),
-				Title:       string(row["title"]),
-				Description: string(row["description"]),
-				// CreatedBy:   int64(binary.BigEndian.Uint64(row["created_by"])),
-			})
-		}
-		return nil
-	})
-	return nil, err
+	return ss.getParentsCTE(ctx, cmd)
 }
 
 func (ss *sqlStore) GetChildren(ctx context.Context, cmd *folder.GetTreeQuery) ([]*folder.Folder, error) {
@@ -126,20 +89,44 @@ func (ss *sqlStore) GetChildren(ctx context.Context, cmd *folder.GetTreeQuery) (
 	return folders, err
 }
 
-func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd *folder.GetParentsQuery) ([]*folder.Folder, error) {
-	var foldrs []*folder.Folder
-	var foldr *folder.Folder
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		uid := cmd.UID
-		for uid != folder.GeneralFolderUID && len(foldrs) < 8 {
-			err := sess.Where("uid=?", uid).Find(foldr)
+func (ss *sqlStore) getParentsCTE(ctx context.Context, cmd *folder.GetParentsQuery) (folders []*folder.Folder, err error) {
+	recQuery := `WITH RECURSIVE parents(id, uid, org_id, title, description, parent_uid, created, updated) AS (
+		SELECT * FROM folder WHERE (org_id == ? AND uid == ?) UNION ALL 
+		SELECT folder.* FROM folder
+			JOIN parents ON (folder.uid=parents.parent_uid AND folder.org_id = parents.org_id)
+		) SELECT * FROM parents;`
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL(recQuery, cmd.OrgID, cmd.UID).Find(&folders)
+	})
+	return folders[1:], err
+}
+
+func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd *folder.GetParentsQuery) (folders []*folder.Folder, err error) {
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		uid := ""
+		ok, err := sess.Table("folder").Where("org_id=? AND uid=?", cmd.OrgID, cmd.UID).Cols("parent_uid").Get(&uid)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return folder.ErrFolderNotFound
+		}
+		for {
+			f := &folder.Folder{}
+			ok, err := sess.Where("org_id=? AND uid=?", cmd.OrgID, uid).Get(f)
 			if err != nil {
 				return err
 			}
-			foldrs = append(foldrs, foldr)
-			uid = foldr.ParentUID
+			if !ok {
+				break
+			}
+			folders = append(folders, f)
+			uid = f.ParentUID
+			if len(folders) > 8 {
+				return folder.ErrFolderTooDeep
+			}
 		}
 		return nil
 	})
-	return foldrs, err
+	return folders, err
 }
