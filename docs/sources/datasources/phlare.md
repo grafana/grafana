@@ -1,15 +1,15 @@
 ---
 aliases:
-- /docs/grafana/latest/datasources/phlare/
-- /docs/grafana/latest/features/datasources/phlare/
-  description: Horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation system. OSS profiling solution from Grafana Labs.
-  keywords:
-- grafana
-- phlare
-- guide
-- profiling
-  title: Phlare data source
-  weight: 1150
+  - /docs/grafana/latest/datasources/phlare/
+  - /docs/grafana/latest/features/datasources/phlare/
+description: Horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation system. OSS profiling solution from Grafana Labs.
+keywords:
+  - grafana
+  - phlare
+  - guide
+  - profiling
+title: Phlare
+weight: 1150
 ---
 
 # Phlare data source
@@ -38,19 +38,19 @@ To access Phlare settings, click the **Configuration** (gear) icon, then click *
 
 ### Query Editor
 
-TODO: image
+![Query editor](/static/img/docs/phlare/query-editor.png 'Query editor')
 
 Query editor gives you access to a profile type selector, a label selector, and collapsible options.
 
-TODO: image
+![Profile selector](/static/img/docs/phlare/select-profile.png 'Profile selector')
 
-Select a profile type from the drop-down menu. While the label selector can be left empty to query all profiles without filtering by labels, the profile type must to be selected for the query to be valid. Grafana does not show any data if the profile type isn’t selected when a query is run.
+Select a profile type from the drop-down menu. While the label selector can be left empty to query all profiles without filtering by labels, the profile type must be selected for the query to be valid. Grafana does not show any data if the profile type isn’t selected when a query is run.
 
-TODO: image
+![Labels selector](/static/img/docs/phlare/labels-selector.png 'Labels selector')
 
-Use the labels selector input to filter by labels. Parca uses similar syntax to Prometheus to filter labels. Refer to Parca documentation (TODO link) for available operators and syntax.
+Use the labels selector input to filter by labels. Phlare uses similar syntax to Prometheus to filter labels. Refer to Phlare documentation (TODO link) for available operators and syntax.
 
-TODO: image
+![Options section](/static/img/docs/phlare/options-section.png 'Options section')
 
 Options section contains a switch for Query Type and Group by.
 
@@ -62,7 +62,7 @@ Group by allows you to group metric data by a specified label. Without any Group
 
 Profiles can be visualized in a flame graph. See the flame graphs documentation (TODO link) to learn about the visualization and its features.
 
-TODO: image
+![Flame graph](/static/img/docs/phlare/flame-graph.png 'Flame graph')
 
 Phlare returns profiles aggregated over a selected time range, and the absolute values in the flame graph grow as the time range gets bigger while keeping the relative values meaningful. You can zoom in on the time range to get a higher granularity profile up to the point of a single Phlare scrape interval.
 
@@ -70,13 +70,13 @@ Phlare returns profiles aggregated over a selected time range, and the absolute 
 
 Metrics results represent the aggregated sum value over time of the selected profile type.
 
-TODO: image
+![Metrics graph](/static/img/docs/phlare/metric-graph.png 'Metrics graph')
 
 This allows you to quickly see any spikes in the value of the scraped profiles and zoom in to a particular time range.
 
 ## Provision the Phlare data source
 
-You can modify the Grafana configuration files to provision the Phlare data source. To learn more, and to view the available provisioning settings, see (TODO link).
+You can modify the Grafana configuration files to provision the Phlare data source. To learn more, and to view the available provisioning settings, see [provisioning documentation]({{< relref "../administration/provisioning/#datasources" >}}).
 
 Here is an example config:
 

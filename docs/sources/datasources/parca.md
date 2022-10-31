@@ -1,14 +1,14 @@
 ---
 aliases:
-- /docs/grafana/latest/datasources/parca/
-- /docs/grafana/latest/features/datasources/parca/
-  description: Continuous profiling for analysis of CPU and memory usage, down to the line number and throughout time. Saving infrastructure cost, improving performance, and increasing reliability..
-  keywords:
-- parca
-- guide
-- profiling
-  title: Parca data source
-  weight: 1110
+  - /docs/grafana/latest/datasources/parca/
+  - /docs/grafana/latest/features/datasources/parca/
+description: Continuous profiling for analysis of CPU and memory usage, down to the line number and throughout time. Saving infrastructure cost, improving performance, and increasing reliability.
+keywords:
+  - parca
+  - guide
+  - profiling
+title: Parca
+weight: 1110
 ---
 
 # Parca data source
@@ -36,19 +36,19 @@ To access Parca settings, click the **Configuration** (gear) icon, then click **
 
 ### Query Editor
 
-TODO: image
+![Query editor](/static/img/docs/parca/query-editor.png 'Query editor')
 
 Query editor gives you access to a profile type selector, a label selector, and collapsible options.
 
-TODO: image
+![Profile selector](/static/img/docs/parca/select-profile.png 'Profile selector')
 
-Select a profile type from the drop-down menu. While the label selector can be left empty to query all profiles without filtering by labels, the profile type must to be selected for the query to be valid. Grafana does not show any data if the profile type isn’t selected when a query is run.
+Select a profile type from the drop-down menu. While the label selector can be left empty to query all profiles without filtering by labels, the profile type must be selected for the query to be valid. Grafana does not show any data if the profile type isn’t selected when a query is run.
 
-TODO: image
+![Labels selector](/static/img/docs/parca/labels-selector.png 'Labels selector')
 
-Use the labels selector input to filter by labels. Parca uses similar syntax to Prometheus to filter labels. Refer to Parca documentation (TODO link) for available operators and syntax.
+Use the labels selector input to filter by labels. Parca uses similar syntax to Prometheus to filter labels. Refer to [Parca documentation](https://www.parca.dev/docs) for available operators and syntax.
 
-TODO: image
+![Options section](/static/img/docs/parca/options-section.png 'Options section')
 
 Select a query type to return the profile data which can be shown in a flame graph (TODO link), metric data visualized in a graph, or both. You can only select both options in a dashboard, because panels allow only one visualization.
 
@@ -56,7 +56,7 @@ Select a query type to return the profile data which can be shown in a flame gra
 
 Profiles can be visualized in a flame graph. See the flame graphs documentation (TODO link) to learn about the visualization and its features.
 
-TODO: image
+![Flame graph](/static/img/docs/parca/flame-graph.png 'Flame graph')
 
 Parca returns profiles aggregated over a selected time range, and the absolute values in the flame graph grow as the time range gets bigger while keeping the relative values meaningful. You can zoom in on the time range to get a higher granularity profile up to the point of a single Parca scrape interval.
 
@@ -64,13 +64,13 @@ Parca returns profiles aggregated over a selected time range, and the absolute v
 
 Metrics results represent the aggregated value, over time, of the selected profile type. Parca returns ungrouped data with a series for each label combination.
 
-TODO: image
+![Metrics graph](/static/img/docs/parca/metric-graph.png 'Metrics graph')
 
 This allows you to quickly see any spikes in the value of the scraped profiles and zoom in to a particular time range.
 
 ## Provision the Parca data source
 
-You can modify the Grafana configuration files to provision the Parca data source. To learn more, and to view the available provisioning settings, see (TODO link).
+You can modify the Grafana configuration files to provision the Parca data source. To learn more, and to view the available provisioning settings, see [provisioning documentation]({{< relref "../administration/provisioning/#datasources" >}}).
 
 Here is an example config:
 
