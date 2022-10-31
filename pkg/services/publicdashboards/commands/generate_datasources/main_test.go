@@ -11,19 +11,20 @@ import (
 
 func TestCanGetCompatibleDatasources(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		w.WriteHeader(http.StatusOK)
 		// response for getting metadata for all datasources
 		if r.URL.String() == allPluginsEndpoint() {
-			w.Write([]byte(`{"items":[{"slug":"postgres"},{"slug":"frontendDatasource"}]}`))
+			_, err = w.Write([]byte(`{"items":[{"slug":"postgres"},{"slug":"frontendDatasource"}]}`))
 		}
-
 		// responses for specific datasource plugins
 		if r.URL.String() == pluginEndpoint("postgres") {
-			w.Write([]byte(`{"json":{"alerting":true,"backend":true}}`))
+			_, err = w.Write([]byte(`{"json":{"alerting":true,"backend":true}}`))
 		}
 		if r.URL.String() == pluginEndpoint("frontendDatasource") {
-			w.Write([]byte(`{"json":{}}`))
+			_, err = w.Write([]byte(`{"json":{}}`))
 		}
+		require.NoError(t, err)
 	}))
 	defer server.Close()
 

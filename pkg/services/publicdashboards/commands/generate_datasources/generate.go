@@ -3,6 +3,7 @@ package generate_datasources
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"sort"
 	"sync"
@@ -51,7 +52,12 @@ func getDatasourcePluginSlugs(baseUrl string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Println("Error closing response body")
+		}
+	}(resp.Body)
 	res := &listPluginResponse{}
 	err = json.NewDecoder(resp.Body).Decode(res)
 	if err != nil {
