@@ -2,20 +2,22 @@ package migrations
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func addObjectStorageMigrations(mg *migrator.Migrator) {
-	objectTable := migrator.Table{
+	tables := []migrator.Table{}
+	tables = append(tables, migrator.Table{
 		Name: "object",
 		Columns: []*migrator.Column{
 			// Object key contains everything required to make it unique across all instances
-			// orgId+kind+uid+scope?
+			// orgId+scope+kind+uid
 			{Name: "key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false, IsPrimaryKey: true},
 
-			// If objects are organized into folders (ie '/' exists in the uid),
-			// this will optimize the common use case of listing all files in a folder
+			// This is an optimization for listing everything at the same level in the object store
 			{Name: "parent_folder_key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
 
 			// The object type
@@ -27,11 +29,11 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false}, // md5(body)
 			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
 
-			// Who changed what when
+			// Who changed what when -- We should avoid JOINs with other tables in the database
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
-			{Name: "updated_by", Type: migrator.DB_Int, Nullable: false}, // joined to user table
-			{Name: "created_by", Type: migrator.DB_Int, Nullable: false}, // joined to user table
+			{Name: "updated_by", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "created_by", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 
 			// For objects that are synchronized from an external source (ie provisioning or git)
 			{Name: "sync_src", Type: migrator.DB_Text, Nullable: true},
@@ -49,9 +51,9 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			{Cols: []string{"parent_folder_key"}}, // list in folder
 			{Cols: []string{"kind"}},              // filter by type
 		},
-	}
+	})
 
-	objectLabelsTable := migrator.Table{
+	tables = append(tables, migrator.Table{
 		Name: "object_labels",
 		Columns: []*migrator.Column{
 			{Name: "key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
@@ -61,9 +63,9 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 		Indices: []*migrator.Index{
 			{Cols: []string{"key", "label"}, Type: migrator.UniqueIndex},
 		},
-	}
+	})
 
-	objectReferenceTable := migrator.Table{
+	tables = append(tables, migrator.Table{
 		Name: "object_ref",
 		Columns: []*migrator.Column{
 			// Source:
@@ -85,9 +87,9 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			{Cols: []string{"kind"}, Type: migrator.IndexType},
 			{Cols: []string{"resolved_to"}, Type: migrator.IndexType},
 		},
-	}
+	})
 
-	objectHistoryTable := migrator.Table{
+	tables = append(tables, migrator.Table{
 		Name: "object_history",
 		Columns: []*migrator.Column{
 			{Name: "key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
@@ -100,18 +102,19 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 
 			// Who changed what when
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
-			{Name: "updated_by", Type: migrator.DB_Int, Nullable: false},
+			{Name: "updated_by", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 
 			// Commit message
 			{Name: "message", Type: migrator.DB_Text, Nullable: false}, // defaults to empty string
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"key", "version"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"updated_by"}, Type: migrator.IndexType},
 		},
-	}
+	})
 
 	// Define access based on prefix rules (eg... .htaccess (- ‿◦ ))
-	objectAccessTable := migrator.Table{
+	tables = append(tables, migrator.Table{
 		Name: "object_access",
 		Columns: []*migrator.Column{
 			{Name: "prefix", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
@@ -123,34 +126,55 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			{Cols: []string{"prefix"}, Type: migrator.IndexType},
 			{Cols: []string{"prefix", "action", "kind", "who"}, Type: migrator.UniqueIndex},
 		},
-	}
+	})
 
 	// Keep track of renames (404 handler)
-	objectAliasTable := migrator.Table{
+	tables = append(tables, migrator.Table{
 		Name: "object_alias",
 		Columns: []*migrator.Column{
 			{Name: "old_key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false, IsPrimaryKey: true},
 			{Name: "new_key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
-			{Name: "updated_by", Type: migrator.DB_Int, Nullable: false},
+			{Name: "updated_by", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 		},
 		PrimaryKeys: []string{"old_key"},
 		Indices: []*migrator.Index{
 			{Cols: []string{"new_key"}, Type: migrator.IndexType},
 		},
+	})
+
+	// !!! This should not run in production!
+	// The object store SQL schema is still in active development and this
+	// will only be called when the feature toggle is enabled
+	// this check should not be necessary, but is added as an extra check
+	if setting.Env == setting.Prod {
+		return
 	}
 
+	// Migration cleanups: given that this is a complex setup
+	// that requires a lot of testing before we are ready to push out of dev
+	// this script lets us easy wipe previous changes and initialize clean tables
+	suffix := " (v1)" // change this when we want to wipe and reset the object tables
+	mg.AddMigration("ObjectStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
+		DELETE FROM migration_log WHERE migration_id LIKE 'ObjectStore init%';
+		DROP table if exists "object"; 
+		DROP table if exists "object_ref"; 
+		DROP table if exists "object_history"; 
+		DROP table if exists "object_labels";
+		DROP table if exists "object_alias";
+		DROP table if exists "object_access";
+	`)))
+
 	// Initialize all tables
-	tables := []migrator.Table{objectTable, objectLabelsTable, objectReferenceTable, objectHistoryTable, objectAliasTable, objectAccessTable}
 	for t := range tables {
-		mg.AddMigration("ObjectStore init: table "+tables[t].Name, migrator.NewAddTableMigration(tables[t]))
+		mg.AddMigration("ObjectStore init: table "+tables[t].Name+suffix, migrator.NewAddTableMigration(tables[t]))
 		for i := range tables[t].Indices {
-			mg.AddMigration(fmt.Sprintf("ObjectStore init: index %s[%d]", tables[t].Name, i), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
+			mg.AddMigration(fmt.Sprintf("ObjectStore init: index %s[%d]"+suffix, tables[t].Name, i), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
 		}
 	}
 
 	// TODO: add collation support to `migrator.Column`
-	mg.AddMigration("ObjectStore init: set path collation in object tables", migrator.NewRawSQLMigration("").
+	mg.AddMigration("ObjectStore init: set path collation in object tables"+suffix, migrator.NewRawSQLMigration("").
 		// MySQL `utf8mb4_unicode_ci` collation is set in `mysql_dialect.go`
 		// SQLite uses a `BINARY` collation by default
 		Postgres("ALTER TABLE object ALTER COLUMN path TYPE VARCHAR(1024) COLLATE \"C\";")) // Collate C - sorting done based on character code byte values

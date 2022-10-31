@@ -211,6 +211,8 @@ describe('RuleList', () => {
       return Promise.reject(new Error(`unexpected datasourceName: ${dataSourceName}`));
     });
 
+    mocks.api.fetchRulerRules.mockRejectedValue({ status: 500, data: { message: 'Server error' } });
+
     await renderRuleList();
 
     await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(4));
