@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -72,12 +73,12 @@ func TestIntegrationFolderService(t *testing.T) {
 			folderId := rand.Int63()
 			folderUID := util.GenerateShortUID()
 
-			folder := models.NewFolder("Folder")
-			folder.Id = folderId
-			folder.Uid = folderUID
+			newFolder := folder.NewFolder("Folder", "Description")
+			newFolder.ID = folderId
+			newFolder.UID = folderUID
 
-			store.On("GetFolderByID", mock.Anything, orgID, folderId).Return(folder, nil)
-			store.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(folder, nil)
+			store.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
+			store.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
 				_, err := service.GetFolderByID(context.Background(), usr, folderId, orgID)
@@ -97,7 +98,12 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			t.Run("When creating folder should return access denied error", func(t *testing.T) {
 				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Times(2)
-				_, err := service.CreateFolder(context.Background(), usr, orgID, folder.Title, folderUID)
+				ctx := context.Background()
+				ctx = appcontext.WithUser(ctx, usr)
+				_, err := service.CreateFolder(ctx, &folder.CreateFolderCommand{
+					UID:   folderUID,
+					Title: newFolder.Title,
+				})
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
@@ -108,10 +114,11 @@ func TestIntegrationFolderService(t *testing.T) {
 					folder.Result.IsFolder = true
 				}).Return(&models.Dashboard{}, nil)
 				ctx := context.Background()
-				ctx = appcontext.WithUser(ctx, &usr)
-				err := service.UpdateFolder(context.Background(), &folder.UpdateFolderCommand{
-					Uid:   folderUID,
-					Title: "Folder-TEST",
+				ctx = appcontext.WithUser(ctx, usr)
+				newTitle := "Folder-TEST"
+				_, err := service.UpdateFolder(context.Background(), &folder.UpdateFolderCommand{
+					NewUID:   &folderUID,
+					NewTitle: &newTitle,
 				})
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
@@ -140,7 +147,11 @@ func TestIntegrationFolderService(t *testing.T) {
 				store.On("SaveDashboard", mock.Anything).Return(dash, nil).Once()
 				store.On("GetFolderByID", mock.Anything, orgID, dash.Id).Return(f, nil)
 
-				actualFolder, err := service.CreateFolder(context.Background(), usr, orgID, dash.Title, "")
+				ctx := context.Background()
+				ctx = appcontext.WithUser(ctx, usr)
+				actualFolder, err := service.CreateFolder(ctx, &folder.CreateFolderCommand{
+					Title: dash.Title,
+				})
 				require.NoError(t, err)
 				require.Equal(t, f, actualFolder)
 			})
@@ -149,7 +160,12 @@ func TestIntegrationFolderService(t *testing.T) {
 				dash := models.NewDashboardFolder("Test-Folder")
 				dash.Id = rand.Int63()
 
-				_, err := service.CreateFolder(context.Background(), usr, orgID, dash.Title, "general")
+				ctx := context.Background()
+				ctx = appcontext.WithUser(ctx, usr)
+				_, err := service.CreateFolder(ctx, &folder.CreateFolderCommand{
+					Title: dash.Title,
+					UID:   "general",
+				})
 				require.ErrorIs(t, err, dashboards.ErrFolderInvalidUID)
 			})
 
@@ -167,8 +183,12 @@ func TestIntegrationFolderService(t *testing.T) {
 					Uid:   dashboardFolder.Uid,
 					Title: "TEST-Folder",
 				}
-
-				err := service.UpdateFolder(context.Background(), usr, orgID, dashboardFolder.Uid, req)
+				ctx := context.Background()
+				ctx = appcontext.WithUser(ctx, usr)
+				UID := dashboardFolder.Uid
+				_, err := service.UpdateFolder(ctx, &folder.UpdateFolderCommand{
+					NewUID: &UID,
+				})
 				require.NoError(t, err)
 				require.Equal(t, f, req.Result)
 			})

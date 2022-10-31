@@ -142,7 +142,7 @@ func (s *Service) GetFolderByTitle(ctx context.Context, user *user.SignedInUser,
 	return dashFolder, nil
 }
 
-func (s *Service) CreateFolder(ctx context.Context, cmd *folder.CreateFolderCommand) (*models.Folder, error) {
+func (s *Service) CreateFolder(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	user, err := appcontext.User(ctx)
 	if err != nil {
 		return nil, toFolderError(err)
@@ -180,7 +180,7 @@ func (s *Service) CreateFolder(ctx context.Context, cmd *folder.CreateFolderComm
 		return nil, toFolderError(err)
 	}
 
-	var folder *models.Folder
+	var folder *folder.Folder
 	folder, err = s.dashboardStore.GetFolderByID(ctx, user.OrgID, dash.Id)
 	if err != nil {
 		return nil, err
@@ -200,9 +200,9 @@ func (s *Service) CreateFolder(ctx context.Context, cmd *folder.CreateFolderComm
 			{BuiltinRole: string(org.RoleViewer), Permission: models.PERMISSION_VIEW.String()},
 		}...)
 
-		_, permissionErr = s.permissions.SetPermissions(ctx, user.OrgID, folder.Uid, permissions...)
+		_, permissionErr = s.permissions.SetPermissions(ctx, user.OrgID, folder.UID, permissions...)
 	} else if s.cfg.EditorsCanAdmin && user.IsRealUser() && !user.IsAnonymous {
-		permissionErr = s.MakeUserAdmin(ctx, user.OrgID, userID, folder.Id, true)
+		permissionErr = s.MakeUserAdmin(ctx, user.OrgID, userID, folder.ID, true)
 	}
 
 	if permissionErr != nil {
@@ -212,18 +212,18 @@ func (s *Service) CreateFolder(ctx context.Context, cmd *folder.CreateFolderComm
 	return folder, nil
 }
 
-func (s *Service) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderCommand) (*models.Folder, error) {
+func (s *Service) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
 	user, err := appcontext.User(ctx)
 	query := models.GetDashboardQuery{OrgId: user.OrgID, Uid: cmd.Folder.UID}
 	if _, err := s.dashboardStore.GetDashboard(ctx, &query); err != nil {
-		return toFolderError(err)
+		return nil, toFolderError(err)
 	}
 
 	dashFolder := query.Result
 	currentTitle := dashFolder.Title
 
 	if !dashFolder.IsFolder {
-		return dashboards.ErrFolderNotFound
+		return nil, dashboards.ErrFolderNotFound
 	}
 
 	cmd.UpdateDashboardModel(dashFolder, user.OrgID, user.UserID)
@@ -237,18 +237,18 @@ func (s *Service) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderComm
 
 	saveDashboardCmd, err := s.dashboardService.BuildSaveDashboardCommand(ctx, dto, false, false)
 	if err != nil {
-		return toFolderError(err)
+		return nil, toFolderError(err)
 	}
 
 	dash, err := s.dashboardStore.SaveDashboard(ctx, *saveDashboardCmd)
 	if err != nil {
-		return toFolderError(err)
+		return nil, toFolderError(err)
 	}
 
 	var folder *folder.Folder
 	folder, err = s.dashboardStore.GetFolderByID(ctx, user.OrgID, dash.Id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	cmd.Folder = folder
 

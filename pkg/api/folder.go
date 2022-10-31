@@ -124,7 +124,7 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
 	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, folder))
 }
 
@@ -141,15 +141,16 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 // 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
-	cmd := models.UpdateFolderCommand{}
+	cmd := folder.UpdateFolderCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	_, err := hs.folderService.UpdateFolder(c.Req.Context(), &folder.UpdateFolderCommand{NewUID: web.Params(c.Req)[":uid"]})
+	UID := web.Params(c.Req)[":uid"]
+	_, err := hs.folderService.UpdateFolder(c.Req.Context(), &folder.UpdateFolderCommand{NewUID: &UID})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
-	g := guardian.New(c.Req.Context(), cmd.Result.Id, c.OrgID, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), cmd.Result.ID, c.OrgID, c.SignedInUser)
 	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, cmd.Result))
 }
 
@@ -188,7 +189,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	})
 }
 
-func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {
+func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuardian, folder *folder.Folder) dtos.Folder {
 	canEdit, _ := g.CanEdit()
 	canSave, _ := g.CanSave()
 	canAdmin, _ := g.CanAdmin()
@@ -204,10 +205,10 @@ func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuar
 	}
 
 	return dtos.Folder{
-		Id:            folder.Id,
-		Uid:           folder.Uid,
+		Id:            folder.ID,
+		Uid:           folder.UID,
 		Title:         folder.Title,
-		Url:           folder.Url,
+		Url:           folder.URL,
 		HasACL:        folder.HasACL,
 		CanSave:       canSave,
 		CanEdit:       canEdit,
@@ -218,7 +219,7 @@ func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuar
 		UpdatedBy:     updater,
 		Updated:       folder.Updated,
 		Version:       folder.Version,
-		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.Uid),
+		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.UID),
 	}
 }
 

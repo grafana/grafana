@@ -304,9 +304,9 @@ type fakeFolderService struct {
 	GetFolderByUIDError  error
 	GetFolderByIDResult  *models.Folder
 	GetFolderByIDError   error
-	CreateFolderResult   *models.Folder
+	CreateFolderResult   *folder.Folder
 	CreateFolderError    error
-	UpdateFolderResult   *models.Folder
+	UpdateFolderResult   *folder.Folder
 	UpdateFolderError    error
 	DeleteFolderResult   *models.Folder
 	DeleteFolderError    error
@@ -325,13 +325,12 @@ func (s *fakeFolderService) GetFolderByUID(ctx context.Context, user *user.Signe
 	return s.GetFolderByUIDResult, s.GetFolderByUIDError
 }
 
-func (s *fakeFolderService) CreateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, title, uid string) (*models.Folder, error) {
+func (s *fakeFolderService) CreateFolder(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	return s.CreateFolderResult, s.CreateFolderError
 }
 
-func (s *fakeFolderService) UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
-	cmd.Result = s.UpdateFolderResult
-	return s.UpdateFolderError
+func (s *fakeFolderService) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
+	return s.UpdateFolderResult, s.UpdateFolderError
 }
 
 func (s *fakeFolderService) DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 // DashboardService is a service for operating on dashboards.
@@ -89,5 +88,5 @@ type FolderStore interface {
 	// GetFolderByUID retrieves a folder by its UID
 	GetFolderByUID(ctx context.Context, orgID int64, uid string) (*models.Folder, error)
 	// GetFolderByID retrieves a folder by its ID
-	GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error)
+	GetFolderByID(ctx context.Context, orgID int64, id int64) (*models.Folder, error)
 }

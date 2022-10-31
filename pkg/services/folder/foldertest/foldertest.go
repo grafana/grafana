@@ -9,9 +9,10 @@ import (
 )
 
 type FakeService struct {
-	ExpectedFolders []*models.Folder
-	ExpectedFolder  *models.Folder
-	ExpectedError   error
+	ExpectedFolders   []*models.Folder
+	ExpectedFolder    *models.Folder
+	NewExpectedFolder *folder.Folder // TODO: remove this and change ExpectedFolder to type *folder.Folder when nested folders refactor is done
+	ExpectedError     error
 }
 
 var _ folder.Service = (*FakeService)(nil)
@@ -28,11 +29,11 @@ func (s *FakeService) GetFolderByUID(ctx context.Context, user *user.SignedInUse
 func (s *FakeService) GetFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*models.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
-func (s *FakeService) CreateFolder(ctx context.Context, cmd *folder.CreateFolderCommand) (*models.Folder, error) {
-	return s.ExpectedFolder, s.ExpectedError
+func (s *FakeService) CreateFolder(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
+	return s.NewExpectedFolder, s.ExpectedError
 }
-func (s *FakeService) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderCommand) (*models.Folder, error) {
-	return s.ExpectedFolder, s.ExpectedError
+func (s *FakeService) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
+	return s.NewExpectedFolder, s.ExpectedError
 }
 func (s *FakeService) DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
