@@ -136,13 +136,13 @@ func (_m *FakePublicDashboardService) FindByDashboardUid(ctx context.Context, or
 	return r0, r1
 }
 
-// FindDashboard provides a mock function with given fields: ctx, dashboardUid, orgId
-func (_m *FakePublicDashboardService) FindDashboard(ctx context.Context, dashboardUid string, orgId int64) (*pkgmodels.Dashboard, error) {
-	ret := _m.Called(ctx, dashboardUid, orgId)
+// FindDashboard provides a mock function with given fields: ctx, orgId, dashboardUid
+func (_m *FakePublicDashboardService) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*pkgmodels.Dashboard, error) {
+	ret := _m.Called(ctx, orgId, dashboardUid)
 
 	var r0 *pkgmodels.Dashboard
-	if rf, ok := ret.Get(0).(func(context.Context, string, int64) *pkgmodels.Dashboard); ok {
-		r0 = rf(ctx, dashboardUid, orgId)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *pkgmodels.Dashboard); ok {
+		r0 = rf(ctx, orgId, dashboardUid)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*pkgmodels.Dashboard)
@@ -150,8 +150,8 @@ func (_m *FakePublicDashboardService) FindDashboard(ctx context.Context, dashboa
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string, int64) error); ok {
-		r1 = rf(ctx, dashboardUid, orgId)
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
+		r1 = rf(ctx, orgId, dashboardUid)
 	} else {
 		r1 = ret.Error(1)
 	}

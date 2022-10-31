@@ -92,6 +92,12 @@ func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
 // GetPublicDashboard Gets public dashboard configuration for dashboard
 // GET /api/dashboards/uid/:uid/public-config
 func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
+	// exit if we don't have a valid dashboardUid
+	dashboardUid := web.Params(c.Req)[":dashboardUid"]
+	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
+		api.handleError(c.Req.Context(), http.StatusBadRequest, "GetPublicDashboard: no valid dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
+	}
+
 	pdc, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, web.Params(c.Req)[":dashboardUid"])
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "GetPublicDashboardConfig: failed to get public dashboard config", err)
@@ -105,12 +111,12 @@ func (api *Api) SavePublicDashboard(c *models.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
-		api.handleError(c.Req.Context(), http.StatusBadRequest, "SavePublicDashboardConfig: no dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
+		api.handleError(c.Req.Context(), http.StatusBadRequest, "SavePublicDashboard: invalid dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
 	}
 
 	pubdash := &PublicDashboard{}
 	if err := web.Bind(c.Req, pubdash); err != nil {
-		return response.Error(http.StatusBadRequest, "SavePublicDashboardConfig: bad request data", err)
+		return response.Error(http.StatusBadRequest, "SavePublicDashboard: bad request data", err)
 	}
 
 	// Always set the orgID and userID from the session
