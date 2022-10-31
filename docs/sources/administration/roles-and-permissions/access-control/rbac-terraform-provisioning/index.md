@@ -8,7 +8,7 @@ title: Provisioning RBAC with Terraform
 weight: 60
 ---
 
-# Terraform RBAC provisioning
+# Provisioning RBAC with Terraform
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
@@ -146,6 +146,6 @@ Similarly, you can look up and use `id`s of users, teams and service accounts th
 
 ## Useful Links
 
-[Provisioning RBAC setup with Grafana provisioning]({{< relref "./rbac-grafana-provisioning">}})
+[RBAC setup with Grafana provisioning]({{< relref "./rbac-grafana-provisioning">}})
 
 [Grafana Cloud Terraform provisioning](https://grafana.com/docs/grafana-cloud/infrastructure-as-code/terraform/)
