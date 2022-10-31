@@ -11,11 +11,6 @@ import (
 
 type SystemUserType string
 
-const (
-	ReportsReader SystemUserType = "ReportsReader"
-	ReportsAdmin  SystemUserType = "ReportsAdmin"
-)
-
 // SystemUsersFilterProvider interface internal to `pkg/store` service.
 // Used by the Storage service to retrieve path filter for system users
 type SystemUsersFilterProvider interface {
@@ -31,38 +26,14 @@ type SystemUsersProvider interface {
 type SystemUsers interface {
 	SystemUsersFilterProvider
 	SystemUsersProvider
+	RegisterUser(userType SystemUserType, filterFn func() map[string]filestorage.PathFilter)
 }
 
 func ProvideSystemUsersService() SystemUsers {
-	reportsReader := &user.SignedInUser{OrgID: ac.GlobalOrgID, Login: string(ReportsReader)}
-	reportsAdmin := &user.SignedInUser{OrgID: ac.GlobalOrgID, Login: string(ReportsAdmin)}
-
 	return &hardcodedSystemUsers{
-		users: map[SystemUserType]map[int64]*user.SignedInUser{
-			ReportsReader: {
-				ac.GlobalOrgID: reportsReader,
-			},
-			ReportsAdmin: {
-				ac.GlobalOrgID: reportsAdmin,
-			},
-		},
-		createFilterByUser: map[*user.SignedInUser]func() map[string]filestorage.PathFilter{
-			reportsReader: func() map[string]filestorage.PathFilter {
-				return map[string]filestorage.PathFilter{
-					ActionFilesRead:   createSystemReportsPathFilter(),
-					ActionFilesWrite:  denyAllPathFilter,
-					ActionFilesDelete: denyAllPathFilter,
-				}
-			},
-			reportsAdmin: func() map[string]filestorage.PathFilter {
-				systemReportsFilter := createSystemReportsPathFilter()
-				return map[string]filestorage.PathFilter{
-					ActionFilesRead:   systemReportsFilter,
-					ActionFilesWrite:  systemReportsFilter,
-					ActionFilesDelete: systemReportsFilter,
-				}
-			},
-		},
+		mutex:              sync.RWMutex{},
+		users:              make(map[SystemUserType]map[int64]*user.SignedInUser),
+		createFilterByUser: make(map[*user.SignedInUser]func() map[string]filestorage.PathFilter),
 	}
 }
 
@@ -123,10 +94,12 @@ func (h *hardcodedSystemUsers) GetUser(userType SystemUserType, orgID int64) (*u
 	return newUser, nil
 }
 
-func createSystemReportsPathFilter() filestorage.PathFilter {
-	return filestorage.NewPathFilter(
-		[]string{filestorage.Delimiter + reportsStorage + filestorage.Delimiter}, // access to all folders and files inside `/reports/`
-		[]string{filestorage.Delimiter + reportsStorage},                         // access to the `/reports` folder itself, but not to any other sibling folder
-		nil,
-		nil)
+func (h *hardcodedSystemUsers) RegisterUser(userType SystemUserType, filterFn func() map[string]filestorage.PathFilter) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	globalUser := &user.SignedInUser{OrgID: ac.GlobalOrgID, Login: string(userType)}
+	h.users[userType] = map[int64]*user.SignedInUser{ac.GlobalOrgID: globalUser}
+
+	h.createFilterByUser[globalUser] = filterFn
 }

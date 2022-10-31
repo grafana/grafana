@@ -39,9 +39,6 @@ const RootContent = "content"
 const RootDevenv = "devenv"
 const RootSystem = "system"
 
-const reportsStorage = "reports"
-const SystemReportsStorage = "system/" + reportsStorage
-
 const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
 
 type DeleteFolderCmd struct {
