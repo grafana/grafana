@@ -224,16 +224,20 @@ func (s *httpObjectStore) doGetHistory(c *models.ReqContext) response.Response {
 }
 
 func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
-	scope := web.Params(c.Req)[":scope"]
-	if scope == "" {
-		return response.Error(400, "invalid scope", nil)
-	}
-
 	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, MAX_UPLOAD_SIZE)
 	if err := c.Req.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
 		msg := fmt.Sprintf("Please limit file uploaded under %s", util.ByteCountSI(MAX_UPLOAD_SIZE))
 		return response.Error(400, msg, nil)
 	}
+	fileinfo := c.Req.MultipartForm.File
+	if len(fileinfo) < 1 {
+		return response.Error(400, "missing files", nil)
+	}
+	scope := web.Params(c.Req)[":scope"]
+	if scope == "" {
+		return response.Error(400, "invalid scope", nil)
+	}
+
 	var rsp []*object.WriteObjectResponse
 
 	message := getMultipartFormValue(c.Req, "message")
@@ -241,7 +245,7 @@ func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
 	folder := getMultipartFormValue(c.Req, "folder")
 	ctx := c.Req.Context()
 
-	for _, fileHeaders := range c.Req.MultipartForm.File {
+	for _, fileHeaders := range fileinfo {
 		for _, fileHeader := range fileHeaders {
 			idx := strings.LastIndex(fileHeader.Filename, ".")
 			if idx <= 0 {

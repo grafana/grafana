@@ -69,8 +69,6 @@ func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*obje
 	key := "" // string (extract UID?)
 	var syncSrc sql.NullString
 	var syncTime sql.NullTime
-	createdByID := int64(0)
-	updatedByID := int64(0)
 	raw := &object.RawObject{
 		GRN: &object.GRN{},
 	}
@@ -79,8 +77,8 @@ func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*obje
 	args := []interface{}{
 		&key, &raw.GRN.Kind, &raw.Version,
 		&raw.Size, &raw.ETag, &summaryjson.errors,
-		&created, &createdByID,
-		&updated, &updatedByID,
+		&created, &raw.CreatedBy,
+		&updated, &raw.UpdatedBy,
 		&syncSrc, &syncTime,
 	}
 	if r.WithBody {
@@ -96,8 +94,6 @@ func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*obje
 	}
 	raw.Created = created.UnixMilli()
 	raw.Updated = updated.UnixMilli()
-	raw.CreatedBy = fmt.Sprintf("user:%d", updatedByID)
-	raw.UpdatedBy = fmt.Sprintf("user:%d", updatedByID)
 
 	if syncSrc.Valid || syncTime.Valid {
 		raw.Sync = &object.RawObjectSyncInfo{
@@ -315,7 +311,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 			`VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 			key, versionInfo.Version, versionInfo.Comment,
 			versionInfo.Size, body, versionInfo.ETag,
-			timestamp, modifier.UserID,
+			timestamp, versionInfo.UpdatedBy,
 		)
 		if err != nil {
 			return err
@@ -384,7 +380,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 				`"labels"=?, "fields"=?, "errors"=? `+
 				`WHERE key=?`,
 				body, versionInfo.Size, etag, versionInfo.Version,
-				timestamp, modifier.UserID,
+				timestamp, versionInfo.UpdatedBy,
 				summary.Name, summary.Description,
 				summaryjson.labels, summaryjson.fields, summaryjson.errors,
 				key,
@@ -400,7 +396,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 			`"labels", "fields", "errors") `+
 			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			key, getParentFolderKey(grn.Kind, key), grn.Kind, versionInfo.Size, body, etag, versionInfo.Version,
-			timestamp, modifier.UserID, timestamp, modifier.UserID, // created + updated are the same
+			timestamp, versionInfo.UpdatedBy, timestamp, versionInfo.UpdatedBy, // created + updated are the same
 			summary.Name, summary.Description,
 			summaryjson.labels, summaryjson.fields, summaryjson.errors,
 		)
@@ -548,7 +544,6 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 	}
 	key := ""
 	updated := time.Now()
-	updatedByID := int64(0)
 
 	rsp := &object.ObjectSearchResponse{}
 	for rows.Next() {
@@ -559,7 +554,7 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 
 		args := []interface{}{
 			&key, &result.GRN.Kind, &result.Version, &summaryjson.errors,
-			&updated, &updatedByID,
+			&updated, &result.UpdatedBy,
 			&result.Name, &summaryjson.description,
 		}
 		if r.WithBody {
@@ -582,6 +577,7 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 			return rsp, err
 		}
 		result.GRN = info.GRN
+		result.Updated = updated.UnixMilli()
 
 		// found one more than requested
 		if len(rsp.Results) >= selectQuery.limit {
@@ -640,7 +636,7 @@ func (s sqlObjectServer) ensureFolders(ctx context.Context, objectgrn *object.GR
 			f := &folder.Model{
 				Name: store.GuessNameFromUID(fr.GRN.UID),
 			}
-			fmt.Printf("CREATE:%s :: %v\n", fr.Key, f)
+			fmt.Printf("CREATE:%s :: %s\n", fr.Key, f.Name)
 			body, err := json.Marshal(f)
 			if err != nil {
 				return err
