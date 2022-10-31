@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/searchV2"
-	"github.com/grafana/grafana/pkg/services/store/httpobjectstore"
+	"github.com/grafana/grafana/pkg/services/store/object/httpobjectstore"
 	"github.com/grafana/grafana/pkg/services/userauth"
 
 	"github.com/prometheus/client_golang/prometheus"
