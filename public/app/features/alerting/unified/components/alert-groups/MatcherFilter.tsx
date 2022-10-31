@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { FormEvent } from 'react';
+import React, { FormEvent, useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -18,12 +18,18 @@ interface Props {
 export const MatcherFilter = ({ className, onFilterChange, defaultQueryString }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const handleSearchChange = debounce((e: FormEvent<HTMLInputElement>) => {
-    logInfo(LogMessages.filterByLabel);
+  const onSearchInputChanged = useMemo(
+    () =>
+      debounce((e: FormEvent<HTMLInputElement>) => {
+        logInfo(LogMessages.filterByLabel);
 
-    const target = e.target as HTMLInputElement;
-    onFilterChange(target.value);
-  }, 600);
+        const target = e.target as HTMLInputElement;
+        onFilterChange(target.value);
+      }, 600),
+    [onFilterChange]
+  );
+
+  useEffect(() => onSearchInputChanged.cancel(), [onSearchInputChanged]);
 
   const searchIcon = <Icon name={'search'} />;
 
@@ -47,7 +53,7 @@ export const MatcherFilter = ({ className, onFilterChange, defaultQueryString }:
       <Input
         placeholder="Search"
         defaultValue={defaultQueryString}
-        onChange={handleSearchChange}
+        onChange={onSearchInputChanged}
         data-testid="search-query-input"
         prefix={searchIcon}
         className={styles.inputWidth}
