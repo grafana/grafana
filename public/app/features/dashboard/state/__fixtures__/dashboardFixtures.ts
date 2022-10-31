@@ -5,6 +5,7 @@ export function createDashboardFixture(dashboardInput: Partial<Dashboard> = {}):
     editable: true,
     graphTooltip: defaultDashboardCursorSync,
     schemaVersion: 36,
+    revision: 1,
     style: 'dark',
     ...dashboardInput,
   };
