@@ -39,7 +39,8 @@ const getNumberEvaluationsToStartAlerting = (forDuration: string, currentEvaluat
   if (evalNumber === 0) {
     return 0;
   } else {
-    return Math.ceil(forNumber / evalNumber);
+    const evaluationsBeforeCeil = forNumber / evalNumber;
+    return evaluationsBeforeCeil < 1 ? 0 : Math.ceil(forNumber / evalNumber) + 1;
   }
 };
 
@@ -120,7 +121,7 @@ export const RulesForGroupTable = ({
     }));
 
   //add a hint that would say how many evaluations need to start alerting.
-  function getColumns(currentEvaluation: string): AlertsWithForTableColumnProps[] {
+  function getColumns(): AlertsWithForTableColumnProps[] {
     return [
       {
         id: 'alertName',
@@ -150,7 +151,7 @@ export const RulesForGroupTable = ({
   }
   return (
     <div className={styles.tableWrapper}>
-      <DynamicTable items={rows} cols={getColumns(currentInterval)} />
+      <DynamicTable items={rows} cols={getColumns()} />
     </div>
   );
 };
