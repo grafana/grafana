@@ -203,6 +203,7 @@ type SignedInUser struct {
 	Name               string
 	Email              string
 	ApiKeyID           int64 `xorm:"api_key_id"`
+	IsServiceAccount   bool  `xorm:"is_service_account"`
 	OrgCount           int
 	IsGrafanaAdmin     bool
 	IsAnonymous        bool
@@ -276,8 +277,13 @@ func (u *SignedInUser) HasRole(role roletype.RoleType) bool {
 	return u.OrgRole.Includes(role)
 }
 
+// IsRealUser returns true if the user is a real user and not a service account
 func (u *SignedInUser) IsRealUser() bool {
-	return u.UserID > 0
+	// backwards compatibility
+	// checking if userId the user is a real user
+	// previously we used to check if the UserId was 0 or -1
+	// and not a service account
+	return u.UserID > 0 && u.IsServiceAccount == false
 }
 
 func (u *SignedInUser) IsApiKeyUser() bool {
