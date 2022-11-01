@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useObservable } from 'react-use';
 import { first } from 'rxjs/operators';
@@ -8,16 +8,11 @@ import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { activePanelSubject } from './CanvasPanel';
-import { LayerActionID } from './types';
+import { AnchorPoint, LayerActionID } from './types';
 import { getElementTypes } from './utils';
 
 type Props = {
   scene: Scene;
-};
-
-type AnchorPoint = {
-  x: number;
-  y: number;
 };
 
 export const CanvasContextMenu = ({ scene }: Props) => {
@@ -101,9 +96,9 @@ export const CanvasContextMenu = ({ scene }: Props) => {
       return null;
     };
 
-    const typeOptions = getElementTypes(scene.shouldShowAdvancedTypes);
+    const typeOptions = getElementTypes(scene.shouldShowAdvancedTypes).options;
     const addItemMenuItem = !scene.isPanelEditing && (
-      <div className={(styles.menuItem, styles.center)}>
+      <div className={cx(styles.menuItem, styles.center)}>
         <AddLayerButton
           options={typeOptions}
           label={'Add item'}
@@ -127,7 +122,9 @@ export const CanvasContextMenu = ({ scene }: Props) => {
       <MenuItem
         label={'Set background'}
         onClick={() => {
-          console.log('Set canvas background');
+          if (scene.setBackgroundCallback) {
+            scene.setBackgroundCallback(anchorPoint);
+          }
           closeContextMenu();
         }}
         className={styles.menuItem}

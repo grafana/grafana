@@ -26,7 +26,7 @@ import {
   getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/CanvasContextMenu';
-import { LayerActionID } from 'app/plugins/panel/canvas/types';
+import { AnchorPoint, LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
@@ -66,6 +66,7 @@ export class Scene {
   isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
 
   inlineEditingCallback?: () => void;
+  setBackgroundCallback?: (anchorPoint: AnchorPoint) => void;
 
   readonly editModeEnabled = new BehaviorSubject<boolean>(false);
   subscription: Subscription;
