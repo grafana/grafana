@@ -84,6 +84,7 @@ type GetFolderQuery struct {
 	UID   *string
 	ID    *int
 	Title *string
+	OrgID int64
 }
 
 // GetParentsQuery captures the information required by the folder service to

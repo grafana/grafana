@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -41,6 +42,18 @@ func TestIntegrationCreate(t *testing.T) {
 		require.Error(t, err)
 	})
 
+	t.Run("creating a 1st level folder without providing a parent UID should fail", func(t *testing.T) {
+		title := "folder1"
+		desc := "folder desc"
+
+		_, err := store.Create(context.Background(), &folder.CreateFolderCommand{
+			Title:       title,
+			Description: desc,
+			OrgID:       orgID,
+		})
+		require.Error(t, err)
+	})
+
 	t.Run("creating a 1st level folder without providing a parent should default to the root folder", func(t *testing.T) {
 		title := "folder1"
 		desc := "folder desc"
@@ -50,6 +63,7 @@ func TestIntegrationCreate(t *testing.T) {
 			Description: desc,
 			OrgID:       orgID,
 			UID:         util.GenerateShortUID(),
+			ParentUID:   folder.GeneralFolderUID,
 		})
 		require.NoError(t, err)
 		t.Cleanup(func() {
@@ -62,14 +76,17 @@ func TestIntegrationCreate(t *testing.T) {
 		assert.NotEmpty(t, f.ID)
 		assert.NotEmpty(t, f.UID)
 
-		assertAncestorUIDs(t, store, f.UID, []string{folder.GeneralFolderUID})
-
 		ff, err := store.Get(context.Background(), &folder.GetFolderQuery{
-			UID: &f.UID,
+			UID:   &f.UID,
+			OrgID: orgID,
 		})
 		assert.NoError(t, err)
+		spew.Dump("<<<", ff)
 		assert.Equal(t, title, ff.Title)
 		assert.Equal(t, desc, ff.Description)
+		assert.Equal(t, accesscontrol.GeneralFolderUID, ff.ParentUID)
+
+		assertAncestorUIDs(t, store, f, []string{folder.GeneralFolderUID})
 	})
 
 	t.Run("creating a folder with unknown parent should fail", func(t *testing.T) {
@@ -100,7 +117,7 @@ func TestIntegrationCreate(t *testing.T) {
 			err := store.Delete(context.Background(), parent.UID, orgID)
 			require.NoError(t, err)
 		})
-		assertAncestorUIDs(t, store, parent.UID, []string{folder.GeneralFolderUID})
+		assertAncestorUIDs(t, store, parent, []string{folder.GeneralFolderUID})
 
 		title = "folder2"
 		desc := "folder desc"
@@ -122,8 +139,8 @@ func TestIntegrationCreate(t *testing.T) {
 		assert.NotEmpty(t, f.ID)
 		assert.NotEmpty(t, f.UID)
 
-		assertAncestorUIDs(t, store, f.UID, []string{folder.GeneralFolderUID, parent.UID})
-		assertChildrenUIDs(t, store, parent.UID, []string{f.UID})
+		assertAncestorUIDs(t, store, f, []string{folder.GeneralFolderUID, parent.UID})
+		assertChildrenUIDs(t, store, parent, []string{f.UID})
 
 		ff, err := store.Get(context.Background(), &folder.GetFolderQuery{
 			UID: &f.UID,
@@ -421,21 +438,23 @@ func createSubTree(t *testing.T, store *sqlStore, orgID int64, parentUID string,
 	return ancestorUIDs
 }
 
-func assertAncestorUIDs(t *testing.T, store *sqlStore, UID string, expected []string) {
+func assertAncestorUIDs(t *testing.T, store *sqlStore, f *folder.Folder, expected []string) {
 	ancestors, err := store.GetParents(context.Background(), &folder.GetParentsQuery{
-		UID: UID,
+		UID:   f.UID,
+		OrgID: f.OrgID,
 	})
 	require.NoError(t, err)
-	actualAncestorsUIDs := make([]string, 0)
+	actualAncestorsUIDs := []string{folder.GeneralFolderUID}
 	for _, f := range ancestors {
 		actualAncestorsUIDs = append(actualAncestorsUIDs, f.UID)
 	}
 	assert.Equal(t, expected, actualAncestorsUIDs)
 }
 
-func assertChildrenUIDs(t *testing.T, store *sqlStore, UID string, expected []string) {
+func assertChildrenUIDs(t *testing.T, store *sqlStore, f *folder.Folder, expected []string) {
 	ancestors, err := store.GetChildren(context.Background(), &folder.GetTreeQuery{
-		UID: UID,
+		UID:   f.UID,
+		OrgID: f.OrgID,
 	})
 	require.NoError(t, err)
 	actualChildrenUIDs := make([]string, 0)

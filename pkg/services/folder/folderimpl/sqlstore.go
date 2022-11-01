@@ -72,9 +72,22 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *folder.UpdateFolderCommand)
 }
 
 func (ss *sqlStore) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
-	var foldr *folder.Folder
+	foldr := &folder.Folder{}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		exists, err := sess.Where("uid=? OR id=? OR title=?", cmd.UID, cmd.ID, cmd.Title).Get(foldr)
+		exists := false
+		var err error
+
+		switch {
+		case cmd.ID != nil:
+			exists, err = sess.SQL("SELECT * FROM folder WHERE id = ?", cmd.ID).Get(foldr)
+			break
+		case cmd.Title != nil:
+			exists, err = sess.SQL("SELECT * FROM folder WHERE title = ? AND org_id = ?", cmd.Title, cmd.OrgID).Get(foldr)
+			break
+		default:
+			exists, err = sess.SQL("SELECT * FROM folder WHERE uid = ? AND org_id = ?", cmd.UID, cmd.OrgID).Get(foldr)
+			break
+		}
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to get folder: %w", err)
 		}
@@ -92,12 +105,16 @@ func (ss *sqlStore) GetParents(ctx context.Context, cmd *folder.GetParentsQuery)
 		return ss.getParentsMySQL(ctx, cmd)
 	}
 
-	recQuery :=
-		`WITH RECURSIVE RecQry AS ( SELECT * FROM folder UNION ALL SELECT f.* FROM folder f INNER JOIN RecQry r ON f.parent_uid = r.uid)
-		SELECT * FROM RecQry WHERE uid = ? AND org_id = ?;`
+	recQuery := `
+		WITH RECURSIVE RecQry AS (
+			SELECT * FROM folder WHERE uid = ? AND org_id = ?
+			UNION ALL SELECT f.* FROM folder f INNER JOIN RecQry r ON f.uid = r.parent_uid and f.org_id = r.org_id
+		)
+		SELECT * FROM RecQry WHERE uid != ?;
+	`
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		res, err := sess.Query(recQuery)
+		res, err := sess.Query(recQuery, cmd.UID, cmd.OrgID, cmd.UID)
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to get folder parents: %w", err)
 		}
@@ -137,7 +154,7 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd *folder.GetParentsQ
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		uid := cmd.UID
 		for uid != folder.GeneralFolderUID && len(foldrs) < 8 {
-			err := sess.Where("uid=?", uid).Find(foldr)
+			err := sess.Where("uid=? AND org_id=>", uid, cmd.OrgID).Find(foldr)
 			if err != nil {
 				return folder.ErrDatabaseError.Errorf("failed to get folder parents: %w", err)
 			}
