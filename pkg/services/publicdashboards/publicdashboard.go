@@ -20,6 +20,7 @@ type Service interface {
 	FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*models.Dashboard, error)
 	FindAll(ctx context.Context, u *user.SignedInUser, orgId int64) ([]PublicDashboardListResponse, error)
 	Save(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error)
+	Delete(ctx context.Context, orgId int64, uid string) error
 
 	GetMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO PublicDashboardQueryDTO) (dtos.MetricRequest, error)
 	GetQueryDataResponse(ctx context.Context, skipCache bool, reqDTO PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error)
@@ -40,6 +41,7 @@ type Store interface {
 	FindAll(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error)
 	Save(ctx context.Context, cmd SavePublicDashboardCommand) error
 	Update(ctx context.Context, cmd SavePublicDashboardCommand) error
+	Delete(ctx context.Context, orgId int64, uid string) (int64, error)
 
 	GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error)
 	ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error)

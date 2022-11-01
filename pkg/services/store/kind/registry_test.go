@@ -20,13 +20,11 @@ func TestKindRegistry(t *testing.T) {
 	}
 	require.Equal(t, []string{
 		"dashboard",
-		"dummy",
 		"folder",
 		"folder-access",
+		"frame",
 		"geojson",
-		"kind1",
-		"kind2",
-		"kind3",
+		"jsonobj",
 		"playlist",
 		"png",
 		"snapshot",

@@ -8,13 +8,15 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// The real object extends dashbaord with the three additional fields
+// A snapshot is a dashboard with no external queries and a few additional properties
 type Model struct {
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	DeleteKey   string `json:"deleteKey"`
-	ExternalURL string `json:"externalURL"`
-	Expires     int64  `json:"expires,omitempty"` // time that this expires
+	Name         string          `json:"name"`
+	Description  string          `json:"description,omitempty"`
+	DeleteKey    string          `json:"deleteKey"`
+	ExternalURL  string          `json:"externalURL"`
+	Expires      int64           `json:"expires,omitempty"` // time that this expires
+	DashboardUID string          `json:"dashboard,omitempty"`
+	Snapshot     json.RawMessage `json:"snapshot,omitempty"`
 }
 
 func GetObjectKindInfo() models.ObjectKindInfo {
@@ -48,6 +50,9 @@ func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
 				"deleteKey":   obj.DeleteKey,
 				"externalURL": obj.ExternalURL,
 				"expires":     obj.Expires,
+			},
+			References: []*models.ObjectExternalReference{
+				{Kind: models.StandardKindDashboard, UID: obj.DashboardUID},
 			},
 		}
 

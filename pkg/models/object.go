@@ -9,9 +9,9 @@ import "context"
 const (
 	StandardKindDashboard    = "dashboard"
 	StandardKindPlaylist     = "playlist"
+	StandardKindSnapshot     = "snapshot"
 	StandardKindFolder       = "folder"
 	StandardKindFolderAccess = "folder-access"
-	StandardKindSnapshot     = "snapshot" // dashboard with all embedded data
 
 	// StandardKindDataSource: not a real kind yet, but used to define references from dashboards
 	// Types: influx, prometheus, testdata, ...
@@ -29,6 +29,12 @@ const (
 
 	// StandardKindGeoJSON represents spatial data
 	StandardKindGeoJSON = "geojson"
+
+	// StandardKindDataFrame data frame
+	StandardKindDataFrame = "frame"
+
+	// StandardKindJSONObj generic json object
+	StandardKindJSONObj = "jsonobj"
 
 	// StandardKindQuery early development on panel query library
 	// the kind may need to change to better encapsulate { targets:[], transforms:[] }
