@@ -1,11 +1,19 @@
 import { memoize } from 'lodash';
 
-import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
+import { DataSourceInstanceSettings, SelectableValue, toOption } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudWatchRequest } from './query-runner/CloudWatchRequest';
-import { CloudWatchJsonData, DescribeLogGroupsRequest, Dimensions, MultiFilters } from './types';
+import {
+  CloudWatchJsonData,
+  DescribeLogGroupsRequest,
+  GetDimensionKeysRequest,
+  GetDimensionValuesRequest,
+  GetMetricsRequest,
+  MetricResponse,
+  MultiFilters,
+} from './types';
 
 export interface SelectableResourceValue extends SelectableValue<string> {
   text: string;
@@ -33,7 +41,9 @@ export class CloudWatchAPI extends CloudWatchRequest {
   }
 
   getNamespaces() {
-    return this.memoizedGetRequest<SelectableResourceValue[]>('namespaces');
+    return this.memoizedGetRequest<string[]>('namespaces').then((namespaces) =>
+      namespaces.map((n) => ({ label: n, value: n }))
+    );
   }
 
   async describeLogGroups(params: DescribeLogGroupsRequest) {
@@ -50,61 +60,55 @@ export class CloudWatchAPI extends CloudWatchRequest {
     });
   }
 
-  async getMetrics(namespace: string | undefined, region?: string) {
+  async getMetrics({ region, namespace }: GetMetricsRequest): Promise<Array<SelectableValue<string>>> {
     if (!namespace) {
       return [];
     }
 
-    return this.memoizedGetRequest<SelectableResourceValue[]>('metrics', {
+    return this.memoizedGetRequest<MetricResponse[]>('metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
-    });
+    }).then((metrics) => metrics.map((m) => ({ label: m.name, value: m.name })));
   }
 
-  async getAllMetrics(region: string): Promise<Array<{ metricName?: string; namespace: string }>> {
-    const values = await this.memoizedGetRequest<SelectableResourceValue[]>('all-metrics', {
+  async getAllMetrics({ region }: GetMetricsRequest): Promise<Array<{ metricName?: string; namespace: string }>> {
+    return this.memoizedGetRequest<MetricResponse[]>('metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
-    });
-
-    return values.map((v) => ({ metricName: v.value, namespace: v.text }));
+    }).then((metrics) => metrics.map((m) => ({ metricName: m.name, namespace: m.namespace })));
   }
 
-  async getDimensionKeys(
-    namespace: string | undefined,
-    region: string,
-    dimensionFilters: Dimensions = {},
-    metricName = ''
-  ) {
-    if (!namespace) {
-      return [];
-    }
-
-    return this.memoizedGetRequest<SelectableResourceValue[]>('dimension-keys', {
+  async getDimensionKeys({
+    region,
+    namespace = '',
+    dimensionFilters = {},
+    metricName = '',
+  }: GetDimensionKeysRequest): Promise<Array<SelectableValue<string>>> {
+    return this.memoizedGetRequest<string[]>('dimension-keys', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
       dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
       metricName,
-    });
+    }).then((dimensionKeys) => dimensionKeys.map(toOption));
   }
 
-  async getDimensionValues(
-    region: string,
-    namespace: string | undefined,
-    metricName: string | undefined,
-    dimensionKey: string,
-    filterDimensions: {}
-  ) {
+  async getDimensionValues({
+    dimensionKey,
+    region,
+    namespace,
+    dimensionFilters = {},
+    metricName = '',
+  }: GetDimensionValuesRequest) {
     if (!namespace || !metricName) {
       return [];
     }
 
-    const values = await this.memoizedGetRequest<SelectableResourceValue[]>('dimension-values', {
+    const values = await this.memoizedGetRequest<string[]>('dimension-values', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
       metricName: this.templateSrv.replace(metricName.trim()),
       dimensionKey: this.templateSrv.replace(dimensionKey),
-      dimensions: JSON.stringify(this.convertDimensionFormat(filterDimensions, {})),
-    });
+      dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
+    }).then((dimensionValues) => dimensionValues.map(toOption));
 
     return values;
   }

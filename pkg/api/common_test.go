@@ -46,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchusers"
@@ -315,6 +316,10 @@ func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []accessc
 		}
 }
 
+func userWithPermissions(orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
+	return &user.SignedInUser{OrgID: orgID, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
+}
+
 // setInitCtxSignedInUser sets a copy of the user in initCtx
 func setInitCtxSignedInUser(initCtx *models.ReqContext, user user.SignedInUser) {
 	initCtx.IsSignedIn = true
@@ -348,7 +353,7 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 		Cfg:             cfg,
 		Features:        features,
 		License:         &licensing.OSSLicensingService{},
-		AccessControl:   accesscontrolmock.New().WithDisabled(),
+		AccessControl:   acimpl.ProvideAccessControl(cfg),
 		annotationsRepo: annotationstest.NewFakeAnnotationsRepo(),
 	}
 }
@@ -367,7 +372,6 @@ func setupHTTPServerWithCfgDb(
 	store sqlstore.Store, features *featuremgmt.FeatureManager, options ...APITestServerOption,
 ) accessControlScenarioContext {
 	t.Helper()
-
 	license := &licensing.OSSLicensingService{}
 	routeRegister := routing.NewRouteRegister()
 	teamService := teamimpl.ProvideService(db, cfg)
@@ -491,15 +495,23 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 
 	hs := &HTTPServer{
 		RouteRegister:      routing.NewRouteRegister(),
-		Cfg:                setting.NewCfg(),
 		License:            &licensing.OSSLicensingService{},
-		AccessControl:      accesscontrolmock.New().WithDisabled(),
 		Features:           featuremgmt.WithFeatures(),
+		QuotaService:       quotatest.NewQuotaServiceFake(),
 		searchUsersService: &searchusers.OSSService{},
 	}
 
 	for _, opt := range opts {
 		opt(hs)
+	}
+
+	if hs.Cfg == nil {
+		hs.Cfg = setting.NewCfg()
+		hs.Cfg.RBACEnabled = false
+	}
+
+	if hs.AccessControl == nil {
+		hs.AccessControl = acimpl.ProvideAccessControl(hs.Cfg)
 	}
 
 	hs.registerRoutes()

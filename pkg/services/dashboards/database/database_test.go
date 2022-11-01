@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
+	publicDashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -23,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestIntegrationDashboardDataAccess(t *testing.T) {
@@ -34,6 +37,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	var savedFolder, savedDash, savedDash2 *models.Dashboard
 	var dashboardStore *DashboardStore
 	var starService star.Service
+	var publicDashboardStore *database.PublicDashboardStoreImpl
 
 	setup := func() {
 		sqlStore, cfg = db.InitTestDBwithCfg(t)
@@ -44,6 +48,8 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.Id, false, "prod")
 		savedDash2 = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod")
 		insertTestRule(t, sqlStore, savedFolder.OrgId, savedFolder.Uid)
+
+		publicDashboardStore = database.ProvideStore(sqlStore)
 	}
 
 	t.Run("Should return dashboard model", func(t *testing.T) {
@@ -233,6 +239,78 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: false}
 		err := dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.True(t, errors.Is(err, dashboards.ErrFolderContainsAlertRules))
+	})
+
+	t.Run("Should be able to delete dashboard and related public dashboard", func(t *testing.T) {
+		setup()
+
+		uid := util.GenerateShortUID()
+		cmd := publicDashboardModels.SavePublicDashboardCommand{
+			PublicDashboard: publicDashboardModels.PublicDashboard{
+				Uid:          uid,
+				DashboardUid: savedDash.Uid,
+				OrgId:        savedDash.OrgId,
+				IsEnabled:    true,
+				TimeSettings: &publicDashboardModels.TimeSettings{},
+				CreatedBy:    1,
+				CreatedAt:    time.Now(),
+				AccessToken:  "an-access-token",
+			},
+		}
+		err := publicDashboardStore.Save(context.Background(), cmd)
+		require.NoError(t, err)
+		pubdashConfig, _ := publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
+		require.NotNil(t, pubdashConfig)
+
+		deleteCmd := &models.DeleteDashboardCommand{Id: savedDash.Id, OrgId: savedDash.OrgId}
+		err = dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
+		require.NoError(t, err)
+
+		query := models.GetDashboardQuery{Uid: savedDash.Uid, OrgId: savedDash.OrgId}
+		dash, getErr := dashboardStore.GetDashboard(context.Background(), &query)
+		require.Equal(t, getErr, dashboards.ErrDashboardNotFound)
+		assert.Nil(t, dash)
+
+		pubdashConfig, err = publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
+		require.Nil(t, err)
+		require.Nil(t, pubdashConfig)
+	})
+
+	t.Run("Should be able to delete a dashboard folder, with its dashboard and related public dashboard", func(t *testing.T) {
+		setup()
+
+		uid := util.GenerateShortUID()
+		cmd := publicDashboardModels.SavePublicDashboardCommand{
+			PublicDashboard: publicDashboardModels.PublicDashboard{
+				Uid:          uid,
+				DashboardUid: savedDash.Uid,
+				OrgId:        savedDash.OrgId,
+				IsEnabled:    true,
+				TimeSettings: &publicDashboardModels.TimeSettings{},
+				CreatedBy:    1,
+				CreatedAt:    time.Now(),
+				AccessToken:  "an-access-token",
+			},
+		}
+		err := publicDashboardStore.Save(context.Background(), cmd)
+		require.NoError(t, err)
+		pubdashConfig, _ := publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
+		require.NotNil(t, pubdashConfig)
+
+		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: true}
+		err = dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
+		require.NoError(t, err)
+
+		query := models.GetDashboardsQuery{
+			DashboardIds: []int64{savedFolder.Id, savedDash.Id},
+		}
+		err = dashboardStore.GetDashboards(context.Background(), &query)
+		require.NoError(t, err)
+		require.Equal(t, len(query.Result), 0)
+
+		pubdashConfig, err = publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
+		require.Nil(t, err)
+		require.Nil(t, pubdashConfig)
 	})
 
 	t.Run("Should be able to delete a dashboard folder and its children if force delete rules is enabled", func(t *testing.T) {

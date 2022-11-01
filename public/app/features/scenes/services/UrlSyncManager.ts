@@ -11,7 +11,7 @@ export class UrlSyncManager {
   private stateChangeSub: Unsubscribable;
 
   constructor(sceneRoot: SceneObject) {
-    this.stateChangeSub = sceneRoot.events.subscribe(SceneObjectStateChangedEvent, this.onStateChanged);
+    this.stateChangeSub = sceneRoot.subscribeToEvent(SceneObjectStateChangedEvent, this.onStateChanged);
     this.locationListenerUnsub = locationService.getHistory().listen(this.onLocationUpdate);
   }
 

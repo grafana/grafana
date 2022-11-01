@@ -1,12 +1,8 @@
 {
-  "_comment": "",
+  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
   "common": {
     "locale": {
-      "default": "Por defecto",
-      "en-US": "Inglés",
-      "es-ES": "Español",
-      "fr-FR": "Francés",
-      "zh-Hans": "Chino (simplificado)"
+      "default": "Por defecto"
     },
     "save": "Guardar"
   },
@@ -19,7 +15,7 @@
       "meta-tab": "Metadatos",
       "query-tab": "Consulta",
       "stats-tab": "Estadísticas",
-      "subtitle": "{{queryCount}} consultas con un tiempo total de consulta de {{formatted}}",
+      "subtitle": "{{queryCount}} consultas con un tiempo total de consulta de {{formatted}}",
       "title": "Inspeccionar: {{panelTitle}}"
     },
     "inspect-data": {
@@ -364,10 +360,10 @@
       "delete-button": "Elimine la instantánea.",
       "deleted-message": "La instantánea se ha eliminado. Si ya ha accedido una vez a ella, la eliminación de la caché del navegador o de la caché de la CDN puede tardar hasta una hora.",
       "expire": "Expira",
-      "expire-day": "1 día",
-      "expire-hour": "1 hora",
+      "expire-day": "1 día",
+      "expire-hour": "1 hora",
       "expire-never": "Nunca",
-      "expire-week": "7 días",
+      "expire-week": "7 días",
       "info-text-1": "Una instantánea es una forma inmediata de compartir un panel interactivo públicamente. Cuando se crean, eliminamos datos confidenciales como consultas (métricas, plantilla y anotación) y enlaces de panel, dejando solo los datos de métricas visibles y los nombres de serie incrustados en el panel.",
       "info-text-2": "Tenga en cuenta que su instantánea <1>puede ser vista por cualquiera</1> que tenga el enlace y pueda acceder a la URL. Comparta sus instantáneas con cautela.",
       "local-button": "Instantánea local",

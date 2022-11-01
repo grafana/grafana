@@ -7,6 +7,8 @@ import (
 	"context"
 
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/tsdb/parca"
+	phlare "github.com/grafana/grafana/pkg/tsdb/phlare"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api"
@@ -115,6 +117,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
+	objectdummyserver "github.com/grafana/grafana/pkg/services/store/object/dummy"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -258,6 +261,8 @@ var wireSet = wire.NewSet(
 	graphite.ProvideService,
 	prometheus.ProvideService,
 	elasticsearch.ProvideService,
+	phlare.ProvideService,
+	parca.ProvideService,
 	secretsMigrator.ProvideSecretsMigrator,
 	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
 	grafanads.ProvideService,
@@ -324,6 +329,7 @@ var wireSet = wire.NewSet(
 	userauthimpl.ProvideService,
 	ngmetrics.ProvideServiceForTest,
 	notifications.MockNotificationService,
+	objectdummyserver.ProvideFakeObjectServer,
 	wire.Bind(new(notifications.TempUserStore), new(*dbtest.FakeDB)),
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),

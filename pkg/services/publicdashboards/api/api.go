@@ -4,10 +4,8 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -52,106 +50,83 @@ func ProvideApi(
 	return api
 }
 
-// Registers Endpoints on Grafana Router
+// RegisterAPIEndpoints Registers Endpoints on Grafana Router
 func (api *Api) RegisterAPIEndpoints() {
-	auth := accesscontrol.Middleware(api.AccessControl)
-
+	// Public endpoints
 	// Anonymous access to public dashboard route is configured in pkg/api/api.go
 	// because it is deeply dependent on the HTTPServer.Index() method and would result in a
 	// circular dependency
 
-	// public endpoints
-	api.RouteRegister.Get("/api/public/dashboards/:accessToken", routing.Wrap(api.GetPublicDashboard))
+	api.RouteRegister.Get("/api/public/dashboards/:accessToken", routing.Wrap(api.ViewPublicDashboard))
 	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
 	api.RouteRegister.Get("/api/public/dashboards/:accessToken/annotations", routing.Wrap(api.GetAnnotations))
 
-	// List Public Dashboards
-	api.RouteRegister.Get("/api/dashboards/public", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
+	// Auth endpoints
+	auth := accesscontrol.Middleware(api.AccessControl)
+	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":dashboardUid"))
+
+	// List public dashboards for org
+	api.RouteRegister.Get("/api/dashboards/public-dashboards", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
+
+	// Get public dashboard
+	api.RouteRegister.Get("/api/dashboards/uid/:dashboardUid/public-dashboards",
+		auth(middleware.ReqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, uidScope)),
+		routing.Wrap(api.GetPublicDashboard))
 
 	// Create/Update Public Dashboard
-	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
-	api.RouteRegister.Get("/api/dashboards/uid/:uid/public-config",
-		auth(middleware.ReqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, uidScope)),
-		routing.Wrap(api.GetPublicDashboardConfig))
-
-	api.RouteRegister.Post("/api/dashboards/uid/:uid/public-config",
+	api.RouteRegister.Post("/api/dashboards/uid/:dashboardUid/public-dashboards",
 		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
-		routing.Wrap(api.SavePublicDashboardConfig))
+		routing.Wrap(api.SavePublicDashboard))
+
+	// Delete Public dashboard
+	api.RouteRegister.Delete("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
+		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
+		routing.Wrap(api.DeletePublicDashboard))
 }
 
-// Gets public dashboard
-// GET /api/public/dashboards/:accessToken
-func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
-	accessToken := web.Params(c.Req)[":accessToken"]
-
-	pubdash, dash, err := api.PublicDashboardService.GetPublicDashboard(
-		c.Req.Context(),
-		accessToken,
-	)
-
-	if err != nil {
-		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "GetPublicDashboard: failed to get public dashboard", err)
-	}
-
-	meta := dtos.DashboardMeta{
-		Slug:                       dash.Slug,
-		Type:                       models.DashTypeDB,
-		CanStar:                    false,
-		CanSave:                    false,
-		CanEdit:                    false,
-		CanAdmin:                   false,
-		CanDelete:                  false,
-		Created:                    dash.Created,
-		Updated:                    dash.Updated,
-		Version:                    dash.Version,
-		IsFolder:                   false,
-		FolderId:                   dash.FolderId,
-		PublicDashboardAccessToken: pubdash.AccessToken,
-		PublicDashboardUID:         pubdash.Uid,
-	}
-
-	dto := dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}
-
-	return response.JSON(http.StatusOK, dto)
-}
-
-// Gets list of public dashboards for an org
+// ListPublicDashboards Gets list of public dashboards for an org
 // GET /api/dashboards/public
 func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
-	resp, err := api.PublicDashboardService.ListPublicDashboards(c.Req.Context(), c.OrgID)
+	resp, err := api.PublicDashboardService.FindAll(c.Req.Context(), c.SignedInUser, c.OrgID)
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "ListPublicDashboards: failed to list public dashboards", err)
 	}
 	return response.JSON(http.StatusOK, resp)
 }
 
-// Gets public dashboard configuration for dashboard
+// GetPublicDashboard Gets public dashboard configuration for dashboard
 // GET /api/dashboards/uid/:uid/public-config
-func (api *Api) GetPublicDashboardConfig(c *models.ReqContext) response.Response {
-	pdc, err := api.PublicDashboardService.GetPublicDashboardConfig(c.Req.Context(), c.OrgID, web.Params(c.Req)[":uid"])
+func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
+	// exit if we don't have a valid dashboardUid
+	dashboardUid := web.Params(c.Req)[":dashboardUid"]
+	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
+		api.handleError(c.Req.Context(), http.StatusBadRequest, "GetPublicDashboard: no valid dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
+	}
+
+	pdc, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, web.Params(c.Req)[":dashboardUid"])
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "GetPublicDashboardConfig: failed to get public dashboard config", err)
 	}
 	return response.JSON(http.StatusOK, pdc)
 }
 
-// Sets public dashboard configuration for dashboard
+// SavePublicDashboard Sets public dashboard configuration for dashboard
 // POST /api/dashboards/uid/:uid/public-config
-func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Response {
+func (api *Api) SavePublicDashboard(c *models.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
-	dashboardUid := web.Params(c.Req)[":uid"]
+	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
-		api.handleError(c.Req.Context(), http.StatusBadRequest, "SavePublicDashboardConfig: no dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
+		api.handleError(c.Req.Context(), http.StatusBadRequest, "SavePublicDashboard: invalid dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
 	}
 
 	pubdash := &PublicDashboard{}
 	if err := web.Bind(c.Req, pubdash); err != nil {
-		return response.Error(http.StatusBadRequest, "SavePublicDashboardConfig: bad request data", err)
+		return response.Error(http.StatusBadRequest, "SavePublicDashboard: bad request data", err)
 	}
 
 	// Always set the orgID and userID from the session
 	pubdash.OrgId = c.OrgID
-	dto := SavePublicDashboardConfigDTO{
+	dto := SavePublicDashboardDTO{
 		UserId:          c.UserID,
 		OrgId:           c.OrgID,
 		DashboardUid:    dashboardUid,
@@ -159,7 +134,7 @@ func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Respons
 	}
 
 	// Save the public dashboard
-	pubdash, err := api.PublicDashboardService.SavePublicDashboardConfig(c.Req.Context(), c.SignedInUser, &dto)
+	pubdash, err := api.PublicDashboardService.Save(c.Req.Context(), c.SignedInUser, &dto)
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "SavePublicDashboardConfig: failed to save public dashboard configuration", err)
 	}
@@ -167,40 +142,20 @@ func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Respons
 	return response.JSON(http.StatusOK, pubdash)
 }
 
-// QueryPublicDashboard returns all results for a given panel on a public dashboard
-// POST /api/public/dashboard/:accessToken/panels/:panelId/query
-func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
-	panelId, err := strconv.ParseInt(web.Params(c.Req)[":panelId"], 10, 64)
+// Delete a public dashboard
+// DELETE /api/dashboards/uid/:dashboardUid/public-dashboards/:uid
+func (api *Api) DeletePublicDashboard(c *models.ReqContext) response.Response {
+	uid := web.Params(c.Req)[":uid"]
+	if uid == "" || !util.IsValidShortUID(uid) {
+		return api.handleError(c.Req.Context(), http.StatusBadRequest, "DeletePublicDashboard: invalid dashboard uid", dashboards.ErrDashboardIdentifierNotSet)
+	}
+
+	err := api.PublicDashboardService.Delete(c.Req.Context(), c.OrgID, uid)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "QueryPublicDashboard: invalid panel ID", err)
+		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "DeletePublicDashboard: failed to delete public dashboard", err)
 	}
 
-	reqDTO := PublicDashboardQueryDTO{}
-	if err = web.Bind(c.Req, &reqDTO); err != nil {
-		return response.Error(http.StatusBadRequest, "QueryPublicDashboard: bad request data", err)
-	}
-
-	resp, err := api.PublicDashboardService.GetQueryDataResponse(c.Req.Context(), c.SkipCache, reqDTO, panelId, web.Params(c.Req)[":accessToken"])
-	if err != nil {
-		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "QueryPublicDashboard: error running public dashboard panel queries", err)
-	}
-
-	return toJsonStreamingResponse(api.Features, resp)
-}
-
-func (api *Api) GetAnnotations(c *models.ReqContext) response.Response {
-	reqDTO := AnnotationsQueryDTO{
-		From: c.QueryInt64("from"),
-		To:   c.QueryInt64("to"),
-	}
-
-	annotations, err := api.PublicDashboardService.GetAnnotations(c.Req.Context(), reqDTO, web.Params(c.Req)[":accessToken"])
-
-	if err != nil {
-		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "error getting public dashboard annotations", err)
-	}
-
-	return response.JSON(http.StatusOK, annotations)
+	return response.JSON(http.StatusOK, nil)
 }
 
 // util to help us unpack dashboard and publicdashboard errors or use default http code and message
