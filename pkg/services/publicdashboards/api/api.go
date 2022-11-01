@@ -144,8 +144,8 @@ func (api *Api) CreatePublicDashboard(c *models.ReqContext) response.Response {
 		PublicDashboard: pubdash,
 	}
 
-	// Save the public dashboard
-	pubdash, err := api.PublicDashboardService.Save(c.Req.Context(), c.SignedInUser, &dto)
+	//Create the public dashboard
+	pubdash, err := api.PublicDashboardService.Create(c.Req.Context(), c.SignedInUser, &dto)
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "CreatePublicDashboard: failed to save public dashboard", err)
 	}
@@ -181,7 +181,7 @@ func (api *Api) UpdatePublicDashboard(c *models.ReqContext) response.Response {
 	}
 
 	// Save the public dashboard
-	pubdash, err := api.PublicDashboardService.Save(c.Req.Context(), c.SignedInUser, &dto)
+	pubdash, err := api.PublicDashboardService.Update(c.Req.Context(), c.SignedInUser, &dto)
 	if err != nil {
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "UpdatePublicDashboard: failed to save public dashboard", err)
 	}

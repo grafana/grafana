@@ -456,7 +456,7 @@ func TestApiSavePublicDashboard(t *testing.T) {
 
 			// this is to avoid AssertExpectations fail at t.Cleanup when the middleware returns before calling the service
 			if test.ShouldCallService {
-				service.On("Save", mock.Anything, mock.Anything, mock.AnythingOfType("*models.SavePublicDashboardDTO")).
+				service.On("Create", mock.Anything, mock.Anything, mock.AnythingOfType("*models.SavePublicDashboardDTO")).
 					Return(&PublicDashboard{IsEnabled: true}, test.SaveDashboardErr)
 			}
 

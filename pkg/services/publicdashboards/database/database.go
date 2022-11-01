@@ -209,7 +209,7 @@ func (d *PublicDashboardStoreImpl) GetOrgIdByAccessToken(ctx context.Context, ac
 }
 
 // Creates a public dashboard
-func (d *PublicDashboardStoreImpl) Save(ctx context.Context, cmd SavePublicDashboardCommand) error {
+func (d *PublicDashboardStoreImpl) Create(ctx context.Context, cmd SavePublicDashboardCommand) error {
 	if cmd.PublicDashboard.DashboardUid == "" {
 		return dashboards.ErrDashboardIdentifierNotSet
 	}

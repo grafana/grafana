@@ -18,6 +18,20 @@ type FakePublicDashboardStore struct {
 	mock.Mock
 }
 
+// Create provides a mock function with given fields: ctx, cmd
+func (_m *FakePublicDashboardStore) Create(ctx context.Context, cmd models.SavePublicDashboardCommand) error {
+	ret := _m.Called(ctx, cmd)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, models.SavePublicDashboardCommand) error); ok {
+		r0 = rf(ctx, cmd)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Delete provides a mock function with given fields: ctx, orgId, uid
 func (_m *FakePublicDashboardStore) Delete(ctx context.Context, orgId int64, uid string) (int64, error) {
 	ret := _m.Called(ctx, orgId, uid)
@@ -215,20 +229,6 @@ func (_m *FakePublicDashboardStore) GetOrgIdByAccessToken(ctx context.Context, a
 	}
 
 	return r0, r1
-}
-
-// Save provides a mock function with given fields: ctx, cmd
-func (_m *FakePublicDashboardStore) Save(ctx context.Context, cmd models.SavePublicDashboardCommand) error {
-	ret := _m.Called(ctx, cmd)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, models.SavePublicDashboardCommand) error); ok {
-		r0 = rf(ctx, cmd)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 // Update provides a mock function with given fields: ctx, cmd
