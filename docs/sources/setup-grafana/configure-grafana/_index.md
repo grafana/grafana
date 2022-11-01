@@ -267,6 +267,7 @@ Not set when the value is -1.
 ### socket_mode
 
 Mode where the socket should be set when `protocol=socket`. Make sure that Grafana process is the file owner before you change this setting.
+
 ### socket
 
 Path where the socket should be created when `protocol=socket`. Make sure Grafana has appropriate permissions for that path before you change this setting.
