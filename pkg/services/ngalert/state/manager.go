@@ -2,7 +2,6 @@ package state
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -15,8 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
-
-	"github.com/grafana/grafana/pkg/services/screenshot"
 )
 
 var ResendDelay = 30 * time.Second
@@ -187,37 +184,6 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	return append(states, resolvedStates...)
 }
 
-// Maybe take a screenshot. Do it if:
-// 1. The alert state is transitioning into the "Alerting" state from something else.
-// 2. The alert state has just transitioned to the resolved state.
-// 3. The state is alerting and there is no screenshot annotation on the alert state.
-func (st *Manager) maybeTakeScreenshot(
-	ctx context.Context,
-	alertRule *ngModels.AlertRule,
-	state *State,
-	oldState eval.State,
-) error {
-	shouldScreenshot := state.Resolved ||
-		state.State == eval.Alerting && oldState != eval.Alerting ||
-		state.State == eval.Alerting && state.Image == nil
-	if !shouldScreenshot {
-		return nil
-	}
-
-	img, err := st.imageService.NewImage(ctx, alertRule)
-	if err != nil &&
-		errors.Is(err, screenshot.ErrScreenshotsUnavailable) ||
-		errors.Is(err, image.ErrNoDashboard) ||
-		errors.Is(err, image.ErrNoPanel) {
-		// It's not an error if screenshots are disabled, or our rule isn't allowed to generate screenshots.
-		return nil
-	} else if err != nil {
-		return err
-	}
-	state.Image = img
-	return nil
-}
-
 // Set the current state based on evaluation results
 func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, logger log.Logger) *State {
 	currentState := st.cache.getOrCreate(ctx, st.log, alertRule, result, extraLabels, st.externalURL)
@@ -261,12 +227,16 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	// to Alertmanager.
 	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
 
-	err := st.maybeTakeScreenshot(ctx, alertRule, currentState, oldState)
-	if err != nil {
-		logger.Warn("Failed to generate a screenshot for an alert instance",
-			"dashboard", alertRule.DashboardUID,
-			"panel", alertRule.PanelID,
-			"error", err)
+	if shouldTakeImage(currentState.State, oldState, currentState.Image, currentState.Resolved) {
+		image, err := takeImage(ctx, st.imageService, alertRule)
+		if err != nil {
+			logger.Warn("Failed to take an image",
+				"dashboard", alertRule.DashboardUID,
+				"panel", alertRule.PanelID,
+				"err", err)
+		} else if image != nil {
+			currentState.Image = image
+		}
 	}
 
 	st.cache.set(currentState)
@@ -389,6 +359,10 @@ func (i InstanceStateAndReason) String() string {
 }
 
 func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State, logger log.Logger) []*State {
+	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
+	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
+	var resolvedImage *ngModels.Image
+
 	var resolvedStates []*State
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
 	toDelete := make([]ngModels.AlertInstanceKey, 0)
@@ -418,6 +392,20 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 						previousState,
 					)
 				}
+
+				// If there is no resolved image for this rule then take one
+				if resolvedImage == nil {
+					image, err := takeImage(ctx, st.imageService, alertRule)
+					if err != nil {
+						logger.Warn("Failed to take an image",
+							"dashboard", alertRule.DashboardUID,
+							"panel", alertRule.PanelID,
+							"err", err)
+					} else if image != nil {
+						resolvedImage = image
+					}
+				}
+				s.Image = resolvedImage
 				resolvedStates = append(resolvedStates, s)
 			}
 		}
