@@ -1,11 +1,12 @@
 import { Meta } from '@storybook/react';
 import React from 'react';
+import { createFilter } from 'react-select';
 
 import { SelectableValue } from '@grafana/data';
 
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-import { Select } from './Select';
+import { Select, VirtualizedSelect } from './Select';
 
 const meta: Meta = {
   title: 'Forms/Select (Perf)',
@@ -23,5 +24,14 @@ for (let index = 0; index < 10000; index++) {
 }
 
 export function SelectThousands() {
-  return <Select options={lotsOfItems} onChange={() => {}} />;
+  return (
+    <div>
+      Virtual:
+      <VirtualizedSelect options={lotsOfItems} onChange={() => {}} />
+      Virtual with ignoreAccents false:
+      <VirtualizedSelect filterOption={createFilter({ ignoreAccents: false })} options={lotsOfItems} onChange={() => {}} />
+      Normal:
+      <Select options={lotsOfItems} onChange={() => {}} />
+    </div>
+  );
 }
