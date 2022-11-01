@@ -19,6 +19,6 @@ export interface SceneVariableSetState extends SceneObjectStatePlain {
   variables: SceneVariable[];
 }
 
-export interface SceneVariableSet extends SceneObject<SceneVariableSetState> {
+export interface SceneVariables extends SceneObject<SceneVariableSetState> {
   getVariableByName(name: string): SceneVariable | undefined;
 }

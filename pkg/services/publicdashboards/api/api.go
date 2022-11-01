@@ -82,6 +82,11 @@ func (api *Api) RegisterAPIEndpoints() {
 	api.RouteRegister.Put("/api/dashboards/uid/:dashboardUid/public-dashboards",
 		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.UpdatePublicDashboard))
+
+	// Delete Public dashboard
+	api.RouteRegister.Delete("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
+		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
+		routing.Wrap(api.DeletePublicDashboard))
 }
 
 // ListPublicDashboards Gets list of public dashboards for an org
@@ -97,6 +102,12 @@ func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
 // GetPublicDashboard Gets public dashboard for dashboard
 // GET /api/dashboards/uid/:uid/public-dashboards
 func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
+	// exit if we don't have a valid dashboardUid
+	dashboardUid := web.Params(c.Req)[":dashboardUid"]
+	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
+		api.handleError(c.Req.Context(), http.StatusBadRequest, "GetPublicDashboard: no valid dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
+	}
+
 	pdc, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, web.Params(c.Req)[":dashboardUid"])
 
 	if err != nil {
@@ -116,7 +127,7 @@ func (api *Api) CreatePublicDashboard(c *models.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
-		api.handleError(c.Req.Context(), http.StatusBadRequest, "CreatePublicDashboard: no dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
+		api.handleError(c.Req.Context(), http.StatusBadRequest, "SavePublicDashboard: invalid dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
 	}
 
 	pubdash := &PublicDashboard{}
@@ -176,6 +187,22 @@ func (api *Api) UpdatePublicDashboard(c *models.ReqContext) response.Response {
 	}
 
 	return response.JSON(http.StatusOK, pubdash)
+}
+
+// Delete a public dashboard
+// DELETE /api/dashboards/uid/:dashboardUid/public-dashboards/:uid
+func (api *Api) DeletePublicDashboard(c *models.ReqContext) response.Response {
+	uid := web.Params(c.Req)[":uid"]
+	if uid == "" || !util.IsValidShortUID(uid) {
+		return api.handleError(c.Req.Context(), http.StatusBadRequest, "DeletePublicDashboard: invalid dashboard uid", dashboards.ErrDashboardIdentifierNotSet)
+	}
+
+	err := api.PublicDashboardService.Delete(c.Req.Context(), c.OrgID, uid)
+	if err != nil {
+		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "DeletePublicDashboard: failed to delete public dashboard", err)
+	}
+
+	return response.JSON(http.StatusOK, nil)
 }
 
 // util to help us unpack dashboard and publicdashboard errors or use default http code and message
