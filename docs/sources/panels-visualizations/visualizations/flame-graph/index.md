@@ -48,7 +48,7 @@ You can also click on any block or hover over it to narrow your search.
 
 The top table allows you to visualize which symbols take up the most resources in your profile.
 
-The table has three columns, symbols, self and total - representing the self time and total time of each symbol. The table is sorted by self time by default, but can be reordered by total time or symbol name upon clicking the column headers.
+The table has three columns: symbols, self, and total. The table is sorted by self time by default, but can be reordered by total time or symbol name by clicking the column headers.
 
 ![Figure 5 - Top table](/static/img/docs/flame-graph-panel/top-table.png 'Figure 5 - Top table')
 
