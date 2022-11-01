@@ -82,7 +82,7 @@ type DeleteFolderCommand struct {
 // Title.
 type GetFolderQuery struct {
 	UID   *string
-	ID    *int
+	ID    *int64
 	Title *string
 	OrgID int64
 }

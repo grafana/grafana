@@ -2,7 +2,6 @@ package folderimpl
 
 import (
 	"context"
-	"encoding/binary"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -50,9 +49,16 @@ func (ss *sqlStore) Create(ctx context.Context, cmd *folder.CreateFolderCommand)
 
 func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec("DELETE FROM folder WHERE uid=? AND org_id=?", uid, orgID)
+		res, err := sess.Exec("DELETE FROM folder WHERE uid=? AND org_id=?", uid, orgID)
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to delete folder: %w", err)
+		}
+		affected, err := res.RowsAffected()
+		if err != nil {
+			return folder.ErrDatabaseError.Errorf("failed to get affected rows: %w", err)
+		}
+		if affected == 0 {
+			return folder.ErrFolderNotFound.Errorf("folder not found")
 		}
 		return nil
 	})
@@ -80,13 +86,10 @@ func (ss *sqlStore) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folde
 		switch {
 		case cmd.ID != nil:
 			exists, err = sess.SQL("SELECT * FROM folder WHERE id = ?", cmd.ID).Get(foldr)
-			break
 		case cmd.Title != nil:
 			exists, err = sess.SQL("SELECT * FROM folder WHERE title = ? AND org_id = ?", cmd.Title, cmd.OrgID).Get(foldr)
-			break
 		default:
 			exists, err = sess.SQL("SELECT * FROM folder WHERE uid = ? AND org_id = ?", cmd.UID, cmd.OrgID).Get(foldr)
-			break
 		}
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to get folder: %w", err)
@@ -114,25 +117,13 @@ func (ss *sqlStore) GetParents(ctx context.Context, cmd *folder.GetParentsQuery)
 	`
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		res, err := sess.Query(recQuery, cmd.UID, cmd.OrgID, cmd.UID)
+		err := sess.SQL(recQuery, cmd.UID, cmd.OrgID, cmd.UID).Find(&folders)
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to get folder parents: %w", err)
 		}
-
-		for _, row := range res {
-			folders = append(folders, &folder.Folder{
-				ID:          int64(binary.BigEndian.Uint64(row["id"])),
-				OrgID:       int64(binary.BigEndian.Uint64(row["org_id"])),
-				UID:         string(row["uid"]),
-				ParentUID:   string(row["parent_uid"]),
-				Title:       string(row["title"]),
-				Description: string(row["description"]),
-				// CreatedBy:   int64(binary.BigEndian.Uint64(row["created_by"])),
-			})
-		}
 		return nil
 	})
-	return nil, err
+	return folders, err
 }
 
 func (ss *sqlStore) GetChildren(ctx context.Context, cmd *folder.GetTreeQuery) ([]*folder.Folder, error) {
