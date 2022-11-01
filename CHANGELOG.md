@@ -1,3 +1,26 @@
+<!-- 9.2.3 START -->
+
+# 9.2.3 (2022-10-31)
+
+### Features and enhancements
+
+- **Docs:** Add information about DB version support to upgrade guide. [#57643](https://github.com/grafana/grafana/pull/57643), [@joeblubaugh](https://github.com/joeblubaugh)
+- **Footer:** Update footer release notes link to Github changelog. [#57871](https://github.com/grafana/grafana/pull/57871), [@joshhunt](https://github.com/joshhunt)
+- **Prometheus:** Do not drop errors in streaming parser. [#57698](https://github.com/grafana/grafana/pull/57698), [@kylebrandt](https://github.com/kylebrandt)
+- **Prometheus:** Flavor/version configuration. [#57554](https://github.com/grafana/grafana/pull/57554), [@gtk-grafana](https://github.com/gtk-grafana)
+- **Prometheus:** Provide label values match parameter API when supported prometheus instance is configured. [#57553](https://github.com/grafana/grafana/pull/57553), [@gtk-grafana](https://github.com/gtk-grafana)
+- **Security:** Upgrade x/text to version unaffected by CVE-2022-32149. [#57797](https://github.com/grafana/grafana/pull/57797), [@yong-jie-gong](https://github.com/yong-jie-gong)
+
+### Bug fixes
+
+- **Access control:** Fix a bug with argument order for data source managed permission updates. (Enterprise)
+- **Auth:** Fix GF_AUTH_JWT_URL_LOGIN env variable doesn't work. [#57689](https://github.com/grafana/grafana/pull/57689), [@Jguer](https://github.com/Jguer)
+- **Live:** Explicitly reply with http 200. [#57428](https://github.com/grafana/grafana/pull/57428), [@sh0rez](https://github.com/sh0rez)
+- **Prometheus:** Fix builder operation mode changing multiselect to single select behaviour. [#57780](https://github.com/grafana/grafana/pull/57780), [@itsmylife](https://github.com/itsmylife)
+- **Prometheus:** Fix builder operation mode changing multiselect to single select behaviour. [#57493](https://github.com/grafana/grafana/pull/57493), [@yinjialu](https://github.com/yinjialu)
+- **Security:** Fix vulnerabilities in webpack loader-utils. [#57533](https://github.com/grafana/grafana/pull/57533), [@jackw](https://github.com/jackw)
+
+<!-- 9.2.3 END -->
 <!-- 9.2.2 START -->
 
 # 9.2.2 (2022-10-25)
