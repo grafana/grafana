@@ -18,8 +18,8 @@ import (
 )
 
 // GetAnnotations returns annotations for a public dashboard
-func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO models.AnnotationsQueryDTO, accessToken string) ([]models.AnnotationEvent, error) {
-	pub, dash, err := pd.GetPublicDashboardAndDashboard(ctx, accessToken)
+func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDTO models.AnnotationsQueryDTO, accessToken string) ([]models.AnnotationEvent, error) {
+	pub, dash, err := pd.FindPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dash
 
 // GetQueryDataResponse returns a query data response for the given panel and query
 func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipCache bool, queryDto models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
-	publicDashboard, dashboard, err := pd.GetPublicDashboardAndDashboard(ctx, accessToken)
+	publicDashboard, dashboard, err := pd.FindPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +131,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 	}
 
 	if len(metricReq.Queries) == 0 {
-		return nil, nil
+		return nil, models.ErrNoPanelQueriesFound
 	}
 
 	anonymousUser := buildAnonymousUser(ctx, dashboard)

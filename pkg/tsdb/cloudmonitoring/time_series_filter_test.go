@@ -389,6 +389,21 @@ func TestTimeSeriesFilter(t *testing.T) {
 		assert.Equal(t, "114250375703598695", labels["resource.label.instance_id"])
 	})
 
+	t.Run("includes time interval", func(t *testing.T) {
+		data, err := loadTestFile("./test-data/5-series-response-meta-data.json")
+		require.NoError(t, err)
+		assert.Equal(t, 3, len(data.TimeSeries))
+		res := &backend.DataResponse{}
+		query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{
+			"aggregation.alignmentPeriod": []string{"+60s"},
+		}}
+		err = query.parseResponse(res, data, "")
+		require.NoError(t, err)
+		frames := res.Frames
+		timeField := frames[0].Fields[0]
+		assert.Equal(t, float64(60*1000), timeField.Config.Interval)
+	})
+
 	t.Run("parseResponse successfully parses metadata for distribution valueType", func(t *testing.T) {
 		t.Run("exponential bounds", func(t *testing.T) {
 			data, err := loadTestFile("./test-data/3-series-response-distribution-exponential.json")

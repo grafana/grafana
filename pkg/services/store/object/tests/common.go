@@ -1,6 +1,7 @@
 package object_server_tests
 
 import (
+	"context"
 	"testing"
 
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
@@ -8,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	saAPI "github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	saTests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -51,6 +53,7 @@ type testContext struct {
 	authToken string
 	client    object.ObjectStoreClient
 	user      *user.SignedInUser
+	ctx       context.Context
 }
 
 func createTestContext(t *testing.T) testContext {
@@ -76,5 +79,6 @@ func createTestContext(t *testing.T) testContext {
 		authToken: authToken,
 		client:    client,
 		user:      serviceAccountUser,
+		ctx:       store.ContextWithUser(context.Background(), serviceAccountUser),
 	}
 }

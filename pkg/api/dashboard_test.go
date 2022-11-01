@@ -1241,14 +1241,6 @@ func (s mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboard
 type mockLibraryPanelService struct {
 }
 
-func (m *mockLibraryPanelService) LoadLibraryPanelsForDashboard(c context.Context, dash *models.Dashboard) error {
-	return nil
-}
-
-func (m *mockLibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dashboard) error {
-	return nil
-}
-
 func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, dash *models.Dashboard) error {
 	return nil
 }
