@@ -41,6 +41,7 @@ import (
 	managerStore "github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -331,7 +332,7 @@ var wireBasicSet = wire.NewSet(
 	authproxy.ProvideAuthProxy,
 	statscollector.ProvideService,
 	cmreg.CoremodelSet,
-	kindreg.KindSet,
+	corekind.KindSet,
 	cuectx.GrafanaCUEContext,
 	cuectx.GrafanaThemaRuntime,
 	csrf.ProvideCSRFFilter,
