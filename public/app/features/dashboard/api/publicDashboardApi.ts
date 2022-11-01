@@ -67,6 +67,7 @@ export const publicDashboardApi = createApi({
 
         // Update runtime meta flag
         dashboard.updateMeta({
+          hasPublicDashboard: true,
           publicDashboardUid: data.uid,
           publicDashboardEnabled: data.isEnabled,
         });
@@ -86,6 +87,7 @@ export const publicDashboardApi = createApi({
 
         // Update runtime meta flag
         dashboard.updateMeta({
+          hasPublicDashboard: true,
           publicDashboardUid: data.uid,
           publicDashboardEnabled: data.isEnabled,
         });
@@ -124,6 +126,7 @@ export const publicDashboardApi = createApi({
 export const {
   useGetPublicDashboardQuery,
   useCreatePublicDashboardMutation,
+  useUpdatePublicDashboardMutation,
   useDeletePublicDashboardMutation,
   useListPublicDashboardsQuery,
 } = publicDashboardApi;

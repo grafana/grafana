@@ -36,7 +36,7 @@ export const SharePublicDashboard = (props: Props) => {
     data: publicDashboard,
     isError: isFetchingError,
   } = useGetPublicDashboardQuery(props.dashboard.uid, {
-    // if we don't have an access token, don't try to load public dashboard
+    // if we don't have a public dashboard, don't try to load public dashboard
     skip: !props.dashboard.meta.hasPublicDashboard,
   });
 
@@ -94,7 +94,7 @@ export const SharePublicDashboard = (props: Props) => {
     };
 
     // create or update based on whether we have existing uid
-    publicDashboard?.uid ? updatePublicDashboard(req) : createPublicDashboard(req);
+    props.dashboard.meta.hasPublicDashboard ? updatePublicDashboard(req) : createPublicDashboard(req);
   };
 
   const onAcknowledge = (field: string, checked: boolean) => {
