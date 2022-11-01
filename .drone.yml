@@ -1407,8 +1407,8 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana --base alpine --base
-    ubuntu --arch amd64 --arch arm64 --arch armv7
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana --base
+    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7
   depends_on:
   - build-docker-images
   - build-docker-images-ubuntu
@@ -1420,7 +1420,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: publish-images-grafana
+  name: publish-images-grafana/grafana
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -1428,8 +1428,8 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana-oss --base alpine
-    --base ubuntu --arch amd64 --arch arm64 --arch armv7
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-oss --base
+    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7
   depends_on:
   - build-docker-images
   - build-docker-images-ubuntu
@@ -1441,7 +1441,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: publish-images-grafana-oss
+  name: publish-images-grafana/grafana-oss
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -3398,8 +3398,8 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana --base alpine --base
-    ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag ${TAG}
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana --base
+    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag ${TAG}
   depends_on:
   - fetch-images-oss
   environment:
@@ -3410,13 +3410,13 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: publish-images-grafana
+  name: publish-images-grafana/grafana
   volumes:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana-oss --base alpine
-    --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag ${TAG}
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-oss --base
+    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag ${TAG}
   depends_on:
   - fetch-images-oss
   environment:
@@ -3427,7 +3427,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: publish-images-grafana-oss
+  name: publish-images-grafana/grafana-oss
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -3486,8 +3486,9 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana-enterprise --base
-    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag ${TAG}
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-enterprise
+    --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag
+    ${TAG}
   depends_on:
   - fetch-images-enterprise
   environment:
@@ -3498,7 +3499,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: publish-images-grafana-enterprise
+  name: publish-images-grafana/grafana-enterprise
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -3557,7 +3558,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl artifacts docker publish --security --dockerhub-repo grafana-enterprise
+  - ./bin/grabpl artifacts docker publish --security --dockerhub-repo grafana/grafana-enterprise
     --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag
     ${TAG}
   depends_on:
@@ -3570,7 +3571,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: publish-images-grafana-enterprise
+  name: publish-images-grafana/grafana-enterprise
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -5616,6 +5617,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: a6ffce1281d86597d2b88df238241ef19f7924574e9d3910213910fc7c080d91
+hmac: 8b53bb78241233d3a0eb3bd4fb539ed7b76288881ff70682dac3c0ebdb704b2c
 
 ...
