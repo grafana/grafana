@@ -29,6 +29,12 @@ const (
 	// StandardKindGeoJSON represents spatial data
 	StandardKindGeoJSON = "geojson"
 
+	// StandardKindDataFrame data frame
+	StandardKindDataFrame = "frame"
+
+	// StandardKindJSONObj generic json object
+	StandardKindJSONObj = "jsonobj"
+
 	// StandardKindQuery early development on panel query library
 	// the kind may need to change to better encapsulate { targets:[], transforms:[] }
 	StandardKindQuery = "query"
