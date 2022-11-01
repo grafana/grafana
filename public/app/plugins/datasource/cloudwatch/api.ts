@@ -75,7 +75,7 @@ export class CloudWatchAPI extends CloudWatchRequest {
     });
   }
 
-  async getMetrics({ region, namespace }: GetMetricsRequest): Promise<Array<SelectableValue<string>>> {
+  async getMetrics({ region, namespace, accountId }: GetMetricsRequest): Promise<Array<SelectableValue<string>>> {
     if (!namespace) {
       return [];
     }
@@ -83,12 +83,17 @@ export class CloudWatchAPI extends CloudWatchRequest {
     return this.memoizedGetRequest<Array<ResourceResponse<MetricResponse>>>('metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
+      accountId: this.templateSrv.replace(accountId),
     }).then((metrics) => metrics.map((m) => ({ label: m.value.name, value: m.value.name })));
   }
 
-  async getAllMetrics({ region }: GetMetricsRequest): Promise<Array<{ metricName?: string; namespace: string }>> {
+  async getAllMetrics({
+    region,
+    accountId,
+  }: GetMetricsRequest): Promise<Array<{ metricName?: string; namespace: string }>> {
     return this.memoizedGetRequest<Array<ResourceResponse<MetricResponse>>>('metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
+      accountId: this.templateSrv.replace(accountId),
     }).then((metrics) => metrics.map((m) => ({ metricName: m.value.name, namespace: m.value.namespace })));
   }
 
@@ -97,12 +102,14 @@ export class CloudWatchAPI extends CloudWatchRequest {
     namespace = '',
     dimensionFilters = {},
     metricName = '',
+    accountId,
   }: GetDimensionKeysRequest): Promise<Array<SelectableValue<string>>> {
     return this.memoizedGetRequest<Array<ResourceResponse<string>>>('dimension-keys', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
+      accountId: this.templateSrv.replace(accountId),
+      metricName: this.templateSrv.replace(metricName),
       dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
-      metricName,
     }).then((r) => r.map((r) => ({ label: r.value, value: r.value })));
   }
 
@@ -112,6 +119,7 @@ export class CloudWatchAPI extends CloudWatchRequest {
     namespace,
     dimensionFilters = {},
     metricName = '',
+    accountId,
   }: GetDimensionValuesRequest) {
     if (!namespace || !metricName) {
       return [];
@@ -123,6 +131,7 @@ export class CloudWatchAPI extends CloudWatchRequest {
       metricName: this.templateSrv.replace(metricName.trim()),
       dimensionKey: this.templateSrv.replace(dimensionKey),
       dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
+      accountId: this.templateSrv.replace(accountId),
     }).then((r) => r.map((r) => ({ label: r.value, value: r.value })));
     return values;
   }

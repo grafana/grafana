@@ -5,7 +5,7 @@ import { SelectableValue, toOption } from '@grafana/data';
 
 import { CloudWatchAPI } from './api';
 import { CloudWatchDatasource } from './datasource';
-import { GetDimensionKeysRequest } from './types';
+import { GetDimensionKeysRequest, GetMetricsRequest } from './types';
 import { appendTemplateVariables } from './utils/utils';
 
 export const useRegions = (datasource: CloudWatchDatasource): [Array<SelectableValue<string>>, boolean] => {
@@ -40,31 +40,31 @@ export const useNamespaces = (datasource: CloudWatchDatasource) => {
   return namespaces;
 };
 
-export const useMetrics = (datasource: CloudWatchDatasource, region: string, namespace: string | undefined) => {
+export const useMetrics = (datasource: CloudWatchDatasource, { region, namespace, accountId }: GetMetricsRequest) => {
   const [metrics, setMetrics] = useState<Array<SelectableValue<string>>>([]);
   useEffect(() => {
-    datasource.api.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
+    datasource.api.getMetrics({ namespace, region, accountId }).then((result: Array<SelectableValue<string>>) => {
       setMetrics(appendTemplateVariables(datasource, result));
     });
-  }, [datasource, region, namespace]);
+  }, [datasource, region, namespace, accountId]);
 
   return metrics;
 };
 
 export const useDimensionKeys = (
   datasource: CloudWatchDatasource,
-  { namespace, region, dimensionFilters, metricName }: GetDimensionKeysRequest
+  { namespace, region, dimensionFilters, metricName, accountId }: GetDimensionKeysRequest
 ) => {
   const [dimensionKeys, setDimensionKeys] = useState<Array<SelectableValue<string>>>([]);
 
   // doing deep comparison to avoid making new api calls to list metrics unless dimension filter object props changes
   useDeepCompareEffect(() => {
     datasource.api
-      .getDimensionKeys({ namespace, region, dimensionFilters, metricName })
+      .getDimensionKeys({ namespace, region, dimensionFilters, metricName, accountId })
       .then((result: Array<SelectableValue<string>>) => {
         setDimensionKeys(appendTemplateVariables(datasource, result));
       });
-  }, [datasource, region, namespace, metricName, dimensionFilters]);
+  }, [datasource, region, namespace, metricName, dimensionFilters, accountId]);
 
   return dimensionKeys;
 };

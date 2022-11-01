@@ -52,7 +52,7 @@ func (a *AccountsService) GetAccountsForCurrentUserOrRole() ([]models.ResourceRe
 	}
 
 	sinkIdentifier := sinks[0].Arn
-	result := []*models.Account{{
+	response := []*models.Account{{
 		Id:                  getAccountId(*sinkIdentifier),
 		Label:               *sinks[0].Name,
 		Arn:                 *sinkIdentifier,
@@ -71,7 +71,7 @@ func (a *AccountsService) GetAccountsForCurrentUserOrRole() ([]models.ResourceRe
 
 		for _, link := range links.Items {
 			arn := *link.LinkArn
-			result = append(result, &models.Account{
+			response = append(response, &models.Account{
 				Id:                  getAccountId(arn),
 				Label:               *link.Label,
 				Arn:                 arn,
@@ -85,7 +85,7 @@ func (a *AccountsService) GetAccountsForCurrentUserOrRole() ([]models.ResourceRe
 		nextToken = links.NextToken
 	}
 
-	return valuesToListMetricRespone(result), nil
+	return valuesToListMetricRespone(response), nil
 }
 
 func getAccountId(arn string) string {

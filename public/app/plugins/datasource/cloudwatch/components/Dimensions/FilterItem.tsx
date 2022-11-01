@@ -34,7 +34,7 @@ const excludeCurrentKey = (dimensions: Dimensions, currentKey: string | undefine
 
 export const FilterItem: FunctionComponent<Props> = ({
   filter,
-  metricStat: { region, namespace, metricName, dimensions },
+  metricStat: { region, namespace, metricName, dimensions, accountId },
   datasource,
   dimensionKeys,
   disableExpressions,
@@ -58,6 +58,7 @@ export const FilterItem: FunctionComponent<Props> = ({
         region,
         namespace,
         metricName,
+        accountId,
       })
       .then((result: Array<SelectableValue<string>>) => {
         if (result.length && !disableExpressions && !result.some((o) => o.value === wildcardOption.value)) {
@@ -67,7 +68,14 @@ export const FilterItem: FunctionComponent<Props> = ({
       });
   };
 
-  const [state, loadOptions] = useAsyncFn(loadDimensionValues, [filter.key, dimensions]);
+  const [state, loadOptions] = useAsyncFn(loadDimensionValues, [
+    filter.key,
+    dimensions,
+    region,
+    namespace,
+    metricName,
+    accountId,
+  ]);
   const theme = useTheme2();
   const styles = getOperatorStyles(theme);
 

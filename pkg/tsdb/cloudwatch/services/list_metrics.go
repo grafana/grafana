@@ -27,13 +27,14 @@ func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(r resources.Dimen
 		input.MetricName = aws.String(r.MetricName)
 	}
 	setDimensionFilter(input, r.DimensionFilter)
+	setAccount(input, r.ResourceRequest)
 
 	metrics, err := l.ListMetricsWithPageLimit(input)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "unable to call AWS API", err)
 	}
 
-	var response []models.ResourceResponse[string]
+	response := []models.ResourceResponse[string]{}
 	// remove duplicates
 	dupCheck := make(map[string]struct{})
 	for _, metric := range metrics {
@@ -56,7 +57,7 @@ func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(r resources.Dimen
 			}
 
 			dupCheck[*dim.Name] = struct{}{}
-			response = append(response, models.ResourceResponse[string]{Value: *dim.Name})
+			response = append(response, models.ResourceResponse[string]{Account: metric.Account, Value: *dim.Name})
 		}
 	}
 
@@ -69,13 +70,14 @@ func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(r resources.Dim
 		MetricName: aws.String(r.MetricName),
 	}
 	setDimensionFilter(input, r.DimensionFilter)
+	setAccount(input, r.ResourceRequest)
 
 	metrics, err := l.ListMetricsWithPageLimit(input)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "unable to call AWS API", err)
 	}
 
-	var response []models.ResourceResponse[string]
+	response := []models.ResourceResponse[string]{}
 	dupCheck := make(map[string]bool)
 	for _, metric := range metrics {
 		for _, dim := range metric.Dimensions {
@@ -85,7 +87,7 @@ func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(r resources.Dim
 				}
 
 				dupCheck[*dim.Value] = true
-				response = append(response, models.ResourceResponse[string]{Value: *dim.Value})
+				response = append(response, models.ResourceResponse[string]{Account: metric.Account, Value: *dim.Value})
 			}
 		}
 	}
@@ -96,30 +98,34 @@ func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(r resources.Dim
 	return response, nil
 }
 
-func (l *ListMetricsService) GetDimensionKeysByNamespace(namespace string) ([]models.ResourceResponse[string], error) {
-	response, err := l.ListMetricsWithPageLimit(&cloudwatch.ListMetricsInput{Namespace: aws.String(namespace)})
+func (l *ListMetricsService) GetDimensionKeysByNamespace(r *request.DimensionKeysRequest) ([]models.ResourceResponse[string], error) {
+	input := &cloudwatch.ListMetricsInput{Namespace: aws.String(r.Namespace)}
+	setAccount(input, r.ResourceRequest)
+	metrics, err := l.ListMetricsWithPageLimit(input)
 	if err != nil {
 		return []models.ResourceResponse[string]{}, err
 	}
 
-	var dimensionKeys []models.ResourceResponse[string]
+	response := []models.ResourceResponse[string]{}
 	dupCheck := make(map[string]struct{})
-	for _, metric := range response {
+	for _, metric := range metrics {
 		for _, dim := range metric.Dimensions {
 			if _, exists := dupCheck[*dim.Name]; exists {
 				continue
 			}
 
 			dupCheck[*dim.Name] = struct{}{}
-			dimensionKeys = append(dimensionKeys, models.ResourceResponse[string]{Value: *dim.Name})
+			response = append(response, models.ResourceResponse[string]{Account: metric.Account, Value: *dim.Name})
 		}
 	}
 
-	return dimensionKeys, nil
+	return response, nil
 }
 
-func (l *ListMetricsService) GetMetricsByNamespace(namespace string) ([]models.ResourceResponse[models.Metric], error) {
-	metrics, err := l.ListMetricsWithPageLimit(&cloudwatch.ListMetricsInput{Namespace: aws.String(namespace)})
+func (l *ListMetricsService) GetMetricsByNamespace(r *request.MetricsRequest) ([]models.ResourceResponse[models.Metric], error) {
+	input := &cloudwatch.ListMetricsInput{Namespace: aws.String(r.Namespace)}
+	setAccount(input, r.ResourceRequest)
+	metrics, err := l.ListMetricsWithPageLimit(input)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +137,7 @@ func (l *ListMetricsService) GetMetricsByNamespace(namespace string) ([]models.R
 			continue
 		}
 		dupCheck[*metric.MetricName] = struct{}{}
-		response = append(response, models.ResourceResponse[models.Metric]{Value: models.Metric{Name: *metric.MetricName, Namespace: *metric.Namespace}})
+		response = append(response, models.ResourceResponse[models.Metric]{Account: metric.Account, Value: models.Metric{Name: *metric.MetricName, Namespace: *metric.Namespace}})
 	}
 
 	return response, nil
@@ -146,5 +152,14 @@ func setDimensionFilter(input *cloudwatch.ListMetricsInput, dimensionFilter []*r
 			df.Value = aws.String(dimension.Value)
 		}
 		input.Dimensions = append(input.Dimensions, df)
+	}
+}
+
+func setAccount(input *cloudwatch.ListMetricsInput, r *request.ResourceRequest) {
+	if r != nil && r.AccountId != nil {
+		input.IncludeLinkedAccounts = aws.Bool(true)
+		if !r.ShouldTargetAllAccounts() {
+			input.OwningAccount = r.AccountId
+		}
 	}
 }

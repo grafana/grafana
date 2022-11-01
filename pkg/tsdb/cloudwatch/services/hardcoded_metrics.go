@@ -9,12 +9,12 @@ import (
 )
 
 var GetHardCodedDimensionKeysByNamespace = func(namespace string) ([]resources.ResourceResponse[string], error) {
-	var dimensionKeys []string
+	var response []string
 	exists := false
-	if dimensionKeys, exists = constants.NamespaceDimensionKeysMap[namespace]; !exists {
+	if response, exists = constants.NamespaceDimensionKeysMap[namespace]; !exists {
 		return nil, fmt.Errorf("unable to find dimensions for namespace '%q'", namespace)
 	}
-	return valuesToListMetricRespone(dimensionKeys), nil
+	return valuesToListMetricRespone(response), nil
 }
 
 var GetHardCodedMetricsByNamespace = func(namespace string) ([]resources.ResourceResponse[models.Metric], error) {
@@ -44,10 +44,10 @@ var GetAllHardCodedMetrics = func() []resources.ResourceResponse[models.Metric] 
 }
 
 var GetHardCodedNamespaces = func() []models.ResourceResponse[string] {
-	var namespaces []string
+	response := []string{}
 	for key := range constants.NamespaceMetricsMap {
-		namespaces = append(namespaces, key)
+		response = append(response, key)
 	}
 
-	return valuesToListMetricRespone(namespaces)
+	return valuesToListMetricRespone(response)
 }

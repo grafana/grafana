@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
@@ -7,10 +7,10 @@ import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
 import { CloudWatchAPI } from '../api';
-import { MetricStat, Account as AccountType, AccountInfo } from '../types';
+import { MetricStat } from '../types';
 
 export interface Props {
-  onChange: (account?: AccountInfo) => void;
+  onChange: (accountId?: string) => void;
   query: MetricStat;
   api: CloudWatchAPI;
 }
@@ -21,36 +21,29 @@ const allOption: SelectableValue<string> = {
   description: 'Target all linked accounts',
 };
 
-const crossAccount: AccountInfo = {
-  crossAccount: true,
-};
-
 export function Account({ query, onChange, api }: Props) {
-  const [accounts, setAccounts] = useState<AccountType[]>([]);
-
   const fetchAccounts = () =>
     api
       .getAccounts({ region: query.region })
       .then((accounts) => {
-        if (!accounts.length && query.accountInfo) {
+        if (!accounts.length && query.accountId) {
           onChange(undefined);
           return [];
         }
 
-        setAccounts(accounts);
         const options = accounts.map((a) => ({
           label: `${a.label}${a.isMonitoringAccount ? ' (Monitoring account)' : ''}`,
-          value: a.arn,
+          value: a.id,
           description: a.id,
         }));
 
-        if (!options.find((o) => o.value === query.accountInfo?.account?.arn)) {
-          onChange(crossAccount);
+        if (!options.find((o) => o.value === query?.accountId)) {
+          onChange(allOption.value);
         }
         return options.length ? [allOption, ...options] : options;
       })
       .catch(() => {
-        query.accountInfo && onChange(undefined);
+        query.accountId && onChange(undefined);
         return [];
       });
 
@@ -70,8 +63,7 @@ export function Account({ query, onChange, api }: Props) {
     return null;
   }
 
-  const current = state.value?.find((a) => a.value === query.accountInfo?.account?.arn);
-  const value = current ?? allOption;
+  const value = state.value?.find((a) => a.value === query.accountId);
 
   return (
     <EditorField label="Account" width={26}>
@@ -80,13 +72,7 @@ export function Account({ query, onChange, api }: Props) {
         aria-label="Account"
         value={value}
         options={state.value}
-        onChange={({ value: accountArn }) => {
-          accountArn &&
-            onChange({
-              crossAccount: false,
-              account: accounts.find((a) => a.arn === accountArn),
-            });
-        }}
+        onChange={({ value: accountId }) => accountId && onChange(accountId)}
       />
     </EditorField>
   );

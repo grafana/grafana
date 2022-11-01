@@ -34,7 +34,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const { region, namespace, metricName, dimensionKey, dimensionFilters } = parsedQuery;
   const [regions, regionIsLoading] = useRegions(datasource);
   const namespaces = useNamespaces(datasource);
-  const metrics = useMetrics(datasource, region, namespace);
+  const metrics = useMetrics(datasource, { region, namespace });
   const dimensionKeys = useDimensionKeys(datasource, { region, namespace, metricName });
   const keysForDimensionFilter = useDimensionKeys(datasource, { region, namespace, metricName, dimensionFilters });
 

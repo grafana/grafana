@@ -8,7 +8,7 @@ import { Dimensions } from '..';
 import { CloudWatchDatasource } from '../../datasource';
 import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
 import { standardStatistics } from '../../standardStatistics';
-import { MetricStat, AccountInfo } from '../../types';
+import { MetricStat } from '../../types';
 import { appendTemplateVariables, toOption } from '../../utils/utils';
 import { Account } from '../Account';
 
@@ -29,9 +29,8 @@ export function MetricStatEditor({
   onChange,
   onRunQuery,
 }: React.PropsWithChildren<Props>) {
-  const { region, namespace } = metricStat;
   const namespaces = useNamespaces(datasource);
-  const metrics = useMetrics(datasource, region, namespace);
+  const metrics = useMetrics(datasource, metricStat);
   const dimensionKeys = useDimensionKeys(datasource, { ...metricStat, dimensionFilters: metricStat.dimensions });
 
   const onMetricStatChange = (metricStat: MetricStat) => {
@@ -118,7 +117,7 @@ export function MetricStatEditor({
         {!disableExpressions && (
           <Account
             query={metricStat}
-            onChange={(accountInfo?: AccountInfo) => onMetricStatChange({ ...metricStat, accountInfo })}
+            onChange={(accountId?: string) => onMetricStatChange({ ...metricStat, accountId })}
             api={datasource.api}
           ></Account>
         )}

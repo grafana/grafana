@@ -13,7 +13,7 @@ type ListMetricsProvider interface {
 }
 
 type MetricsClientProvider interface {
-	ListMetricsWithPageLimit(params *cloudwatch.ListMetricsInput) ([]*cloudwatch.Metric, error)
+	ListMetricsWithPageLimit(params *cloudwatch.ListMetricsInput) ([]*MetricOutput, error)
 }
 
 type CloudWatchMetricsAPIProvider interface {

@@ -10,3 +10,5 @@ func valuesToListMetricRespone[T any](values []T) []models.ResourceResponse[T] {
 
 	return response
 }
+
+func stringPtr(s string) *string { return &s }

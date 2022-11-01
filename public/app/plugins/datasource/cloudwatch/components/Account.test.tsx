@@ -11,19 +11,19 @@ import { Account } from './Account';
 export const accounts = [
   {
     arn: 'arn:aws:iam::123456789012:root',
-    accountId: '123456789012',
+    id: '123456789012',
     label: 'test-account',
     isMonitoringAccount: true,
   },
   {
     arn: 'arn:aws:iam::432156789012:root',
-    accountId: '432156789012',
+    id: '432156789012',
     label: 'test-account2',
     isMonitoringAccount: false,
   },
   {
-    arn: 'arn:aws:iam::987656789012:root',
-    accountId: '432156789012',
+    arn: 'arn:aws:iam::432156789013:root',
+    id: '432156789013',
     label: 'test-account3',
     isMonitoringAccount: false,
   },
@@ -37,15 +37,7 @@ describe('Account', () => {
     dimensions: {},
     statistic: '',
     matchExact: true,
-    accountInfo: {
-      crossAccount: false,
-      account: {
-        arn: 'arn:aws:iam::123456789012:root',
-        id: '123456789012',
-        label: 'test-account',
-        isMonitoringAccount: true,
-      },
-    },
+    accountId: '123456789012',
   };
 
   const props = {
@@ -117,15 +109,7 @@ describe('Account', () => {
             onChange={onChange}
             query={{
               ...props.metricStat,
-              accountInfo: {
-                crossAccount: false,
-                account: {
-                  arn: 'arn:aws:iam::58356789012:root',
-                  id: '58356789012',
-                  label: 'some label',
-                  isMonitoringAccount: true,
-                },
-              },
+              accountId: '58356789012',
             }}
             api={mock.api}
           />
@@ -145,21 +129,13 @@ describe('Account', () => {
             onChange={onChange}
             query={{
               ...props.metricStat,
-              accountInfo: {
-                crossAccount: false,
-                account: {
-                  arn: 'arn:aws:iam::58356789012:root',
-                  label: '',
-                  id: '58356789012',
-                  isMonitoringAccount: true,
-                },
-              },
+              accountId: '58356789012',
             }}
             api={api}
           />
         );
       });
-      expect(onChange).toHaveBeenCalledWith({ crossAccount: true });
+      expect(onChange).toHaveBeenCalledWith('all');
     });
 
     it('should render "all" if crossAccount is stored in the query model', async () => {
@@ -172,9 +148,7 @@ describe('Account', () => {
             onChange={onChange}
             query={{
               ...props.metricStat,
-              accountInfo: {
-                crossAccount: true,
-              },
+              accountId: 'all',
             }}
             api={api}
           />
@@ -184,7 +158,7 @@ describe('Account', () => {
       expect(await screen.getByText('All')).toBeInTheDocument();
     });
 
-    it('should not unset accountArn if the current value is in the loaded list of accounts', async () => {
+    it('should not unset accountId if the current value is in the loaded list of accounts', async () => {
       const api = setupMockedAPI().api;
       api.getAccounts = jest.fn().mockResolvedValue(accounts);
       const onChange = jest.fn();
@@ -194,15 +168,7 @@ describe('Account', () => {
             onChange={onChange}
             query={{
               ...props.metricStat,
-              accountInfo: {
-                crossAccount: false,
-                account: {
-                  arn: 'arn:aws:iam::432156789012:root',
-                  label: '',
-                  id: '432156789012',
-                  isMonitoringAccount: true,
-                },
-              },
+              accountId: '432156789012',
             }}
             api={api}
           />
