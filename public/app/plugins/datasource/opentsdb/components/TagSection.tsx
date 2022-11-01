@@ -136,7 +136,7 @@ export function TagSection({
             );
           })}
         {!addTagMode && (
-          <button className="gf-form-label" type="button" onClick={changeAddTagMode} data-testid={testIds.open}>
+          <button className="gf-form-label" type="button" onClick={changeAddTagMode} aria-label="Add tag">
             <Icon name={'plus'} />
           </button>
         )}
@@ -219,7 +219,6 @@ export function TagSection({
 
 export const testIds = {
   section: 'opentsdb-tag',
-  open: 'opentsdb-tag-editor',
   list: 'opentsdb-tag-list',
   error: 'opentsdb-tag-error',
   remove: 'opentsdb-tag-remove',

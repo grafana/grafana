@@ -138,7 +138,7 @@ export function FilterSection({
             );
           })}
         {!addFilterMode && (
-          <button className="gf-form-label" type="button" onClick={changeAddFilterMode} data-testid={testIds.open}>
+          <button className="gf-form-label" type="button" onClick={changeAddFilterMode} aria-label="Add filter">
             <Icon name={'plus'} />
           </button>
         )}
@@ -247,7 +247,6 @@ export function FilterSection({
 
 export const testIds = {
   section: 'opentsdb-filter',
-  open: 'opentsdb-filter-editor',
   list: 'opentsdb-filter-list',
   error: 'opentsdb-filter-error',
   remove: 'opentsdb-filter-remove',
