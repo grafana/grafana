@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { createSelector, createStructuredSelector } from 'reselect';
+import { Trace, TraceData, TraceProcess, TraceResponse, TraceSpan, TraceSpanData } from 'src/types/trace';
 
 import TreeNode from '../utils/TreeNode';
 import { formatMillisecondTime, formatSecondTime, ONE_SECOND } from '../utils/date';
@@ -28,15 +29,13 @@ import {
   getSpanProcessId,
 } from './span';
 
-export const getTraceId = (trace) => trace.traceID;
-
-export const getTraceSpans = (trace) => trace.spans;
-
-const getTraceProcesses = (trace) => trace.processes;
+export const getTraceId = (trace: TraceData | Trace) => trace.traceID;
+export const getTraceSpans = (trace: TraceResponse) => trace.spans;
+const getTraceProcesses = (trace: TraceData | Trace) => trace.processes;
 
 const getSpanWithProcess = createSelector(
-  (state) => state.span,
-  (state) => state.processes,
+  (state: { span: TraceSpanData; processes: Record<string, TraceProcess> }) => state.span,
+  (state: { span: TraceSpanData; processes: Record<string, TraceProcess> }) => state.processes,
   (span, processes) => ({
     ...span,
     process: processes[getSpanProcessId(span)],
@@ -63,7 +62,7 @@ export const TREE_ROOT_ID = '__root__';
  * @return {TreeNode}    A tree of spanIDs derived from the relationships
  *                       between spans in the trace.
  */
-export function getTraceSpanIdsAsTree(trace) {
+export function getTraceSpanIdsAsTree(trace: TraceResponse) {
   const nodesById = new Map(trace.spans.map((span) => [span.spanID, new TreeNode(span.spanID)]));
   const spansById = new Map(trace.spans.map((span) => [span.spanID, span]));
   const root = new TreeNode(TREE_ROOT_ID);
@@ -81,15 +80,15 @@ export function getTraceSpanIdsAsTree(trace) {
       root.children.push(node);
     }
   });
-  const comparator = (nodeA, nodeB) => {
+  const comparator = (nodeA: { value: string }, nodeB: { value: string }) => {
     const a = spansById.get(nodeA.value);
     const b = spansById.get(nodeB.value);
-    return +(a.startTime > b.startTime) || +(a.startTime === b.startTime) - 1;
+    return +(a!.startTime > b!.startTime) || +(a!.startTime === b!.startTime) - 1;
   };
   trace.spans.forEach((span) => {
     const node = nodesById.get(span.spanID);
-    if (node.children.length > 1) {
-      node.children.sort(comparator);
+    if (node!.children.length > 1) {
+      node?.children.sort(comparator);
     }
   });
   root.children.sort(comparator);
@@ -97,13 +96,13 @@ export function getTraceSpanIdsAsTree(trace) {
 }
 
 // attach "process" as an object to each span.
-export const hydrateSpansWithProcesses = (trace) => {
+export const hydrateSpansWithProcesses = (trace: TraceResponse) => {
   const spans = getTraceSpans(trace);
   const processes = getTraceProcesses(trace);
 
   return {
     ...trace,
-    spans: spans.map((span) => getSpanWithProcess({ span, processes })),
+    spans: spans.map((span: TraceSpanData) => getSpanWithProcess({ span, processes })),
   };
 };
 
@@ -120,7 +119,7 @@ export const getTraceDuration = createSelector(getTraceSpans, getTraceTimestamp,
   spans.reduce(
     (prevDuration, span) =>
       prevDuration
-        ? Math.max(getSpanTimestamp(span) - timestamp + getSpanDuration(span), prevDuration)
+        ? Math.max(getSpanTimestamp(span) - timestamp! + getSpanDuration(span), prevDuration)
         : getSpanDuration(span),
     null
   )
@@ -129,7 +128,7 @@ export const getTraceDuration = createSelector(getTraceSpans, getTraceTimestamp,
 export const getTraceEndTimestamp = createSelector(
   getTraceTimestamp,
   getTraceDuration,
-  (timestamp, duration) => timestamp + duration
+  (timestamp, duration) => timestamp! + duration
 );
 
 export const getParentSpan = createSelector(
@@ -144,8 +143,8 @@ export const getParentSpan = createSelector(
 export const getTraceDepth = createSelector(getTraceSpanIdsAsTree, (spanTree) => spanTree.depth - 1);
 
 export const getSpanDepthForTrace = createSelector(
-  createSelector((state) => state.trace, getTraceSpanIdsAsTree),
-  createSelector((state) => state.span, getSpanId),
+  createSelector((state: { trace: Trace }) => state.trace, getTraceSpanIdsAsTree),
+  createSelector((state: { span: TraceSpan }) => state.span, getSpanId),
   (node, spanID) => node.getPath(spanID).length - 1
 );
 
@@ -166,25 +165,25 @@ export const DURATION_FORMATTERS = {
 };
 
 const getDurationFormatterForTrace = createSelector(getTraceDuration, (totalDuration) =>
-  totalDuration >= ONE_SECOND ? DURATION_FORMATTERS.s : DURATION_FORMATTERS.ms
+  totalDuration! >= ONE_SECOND ? DURATION_FORMATTERS.s : DURATION_FORMATTERS.ms
 );
 
 export const formatDurationForUnit = createSelector(
-  ({ duration }) => duration,
-  ({ unit }) => DURATION_FORMATTERS[unit],
+  ({ duration }: { duration: number }) => duration,
+  ({ unit }: { unit: string }) => DURATION_FORMATTERS[unit],
   (duration, formatter) => formatter(duration)
 );
 
 export const formatDurationForTrace = createSelector(
-  ({ duration }) => duration,
-  createSelector(({ trace }) => trace, getDurationFormatterForTrace),
+  ({ duration }: { duration: number }) => duration,
+  createSelector(({ trace }: { trace: { spans: Array<{ duration: number }> } }) => trace, getDurationFormatterForTrace),
   (duration, formatter) => formatter(duration)
 );
 
 export const getSortedSpans = createSelector(
-  ({ trace }) => trace,
-  ({ spans }) => spans,
-  ({ sort }) => sort,
+  ({ trace }: { trace: TraceResponse }) => trace,
+  ({ spans }: { spans: TraceSpanData[] }) => spans,
+  ({ sort }: { sort: { dir: number; comparator: () => number; selector: () => number } }) => sort,
   (trace, spans, { dir, comparator, selector }) =>
     [...spans].sort((spanA, spanB) => dir * comparator(selector(spanA, trace), selector(spanB, trace)))
 );
@@ -192,13 +191,13 @@ export const getSortedSpans = createSelector(
 const getTraceSpansByHierarchyPosition = createSelector(getTraceSpanIdsAsTree, (tree) => {
   const hierarchyPositionMap = new Map();
   let i = 0;
-  tree.walk((spanID) => hierarchyPositionMap.set(spanID, i++));
+  tree.walk((spanID: string) => hierarchyPositionMap.set(spanID, i++));
   return hierarchyPositionMap;
 });
 
 export const getTreeSizeForTraceSpan = createSelector(
-  createSelector((state) => state.trace, getTraceSpanIdsAsTree),
-  createSelector((state) => state.span, getSpanId),
+  createSelector((state: { trace: Trace }) => state.trace, getTraceSpanIdsAsTree),
+  createSelector((state: { span: TraceSpanData }) => state.span, getSpanId),
   (tree, spanID) => {
     const node = tree.find(spanID);
     if (!node) {
@@ -209,8 +208,8 @@ export const getTreeSizeForTraceSpan = createSelector(
 );
 
 export const getSpanHierarchySortPositionForTrace = createSelector(
-  createSelector(({ trace }) => trace, getTraceSpansByHierarchyPosition),
-  ({ span }) => span,
+  createSelector(({ trace }: { trace: Trace }) => trace, getTraceSpansByHierarchyPosition),
+  ({ span }: { span: TraceSpan }) => span,
   (hierarchyPositionMap, span) => hierarchyPositionMap.get(getSpanId(span))
 );
 
@@ -226,12 +225,12 @@ export const getTraceName = createSelector(
 );
 
 export const omitCollapsedSpans = createSelector(
-  ({ spans }) => spans,
-  createSelector(({ trace }) => trace, getTraceSpanIdsAsTree),
-  ({ collapsed }) => collapsed,
+  ({ spans }: { spans: TraceSpan[] }) => spans,
+  createSelector(({ trace }: { trace: TraceResponse }) => trace, getTraceSpanIdsAsTree),
+  ({ collapsed }: { collapsed: string[] }) => collapsed,
   (spans, tree, collapse) => {
     const hiddenSpanIds = collapse.reduce((result, collapsedSpanId) => {
-      tree.find(collapsedSpanId).walk((id) => id !== collapsedSpanId && result.add(id));
+      tree.find(collapsedSpanId).walk((id: string) => id !== collapsedSpanId && result.add(id));
       return result;
     }, new Set());
 
@@ -242,13 +241,13 @@ export const omitCollapsedSpans = createSelector(
 export const DEFAULT_TICK_INTERVAL = 4;
 export const DEFAULT_TICK_WIDTH = 3;
 export const getTicksForTrace = createSelector(
-  ({ trace }) => trace,
+  ({ trace }: { trace: { spans: Array<{ startTime: number; duration: number }> } }) => trace,
   ({ interval = DEFAULT_TICK_INTERVAL }) => interval,
   ({ width = DEFAULT_TICK_WIDTH }) => width,
   (
-    trace,
-    interval,
-    width
+    trace: { spans: [{ startTime: number; duration: number }] },
+    interval: number,
+    width: number
     // timestamps will be spaced over the interval, starting from the initial timestamp
   ) =>
     [...Array(interval + 1).keys()].map((num) => ({
@@ -260,7 +259,7 @@ export const getTicksForTrace = createSelector(
 // TODO: delete this when the backend can ensure uniqueness
 /* istanbul ignore next */
 export const enforceUniqueSpanIds = createSelector(
-  /* istanbul ignore next */ (trace) => trace,
+  /* istanbul ignore next */ (trace: Trace) => trace,
   getTraceSpans,
   /* istanbul ignore next */ (trace, spans) => {
     const map = new Map();
@@ -287,7 +286,7 @@ export const enforceUniqueSpanIds = createSelector(
 
 // TODO: delete this when the backend can ensure uniqueness
 export const dropEmptyStartTimeSpans = createSelector(
-  /* istanbul ignore next */ (trace) => trace,
+  /* istanbul ignore next */ (trace: Trace) => trace,
   getTraceSpans,
   /* istanbul ignore next */ (trace, spans) => ({
     ...trace,
