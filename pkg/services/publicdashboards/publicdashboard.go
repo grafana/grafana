@@ -40,8 +40,8 @@ type Store interface {
 	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
 	FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*models.Dashboard, error)
 	FindAll(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error)
-	Create(ctx context.Context, cmd SavePublicDashboardCommand) error
-	Update(ctx context.Context, cmd SavePublicDashboardCommand) error
+	Create(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error)
+	Update(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error)
 	Delete(ctx context.Context, orgId int64, uid string) (int64, error)
 
 	GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error)

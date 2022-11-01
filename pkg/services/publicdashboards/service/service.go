@@ -174,7 +174,7 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 		},
 	}
 
-	err = pd.store.Create(ctx, cmd)
+	_, err = pd.store.Create(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -234,9 +234,14 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 	}
 
 	// persist
-	err = pd.store.Update(ctx, cmd)
+	affectedRows, err := pd.store.Update(ctx, cmd)
 	if err != nil {
 		return nil, err
+	}
+
+	// 404 if not found
+	if affectedRows == 0 {
+		return nil, ErrPublicDashboardNotFound
 	}
 
 	// get latest public dashboard to return

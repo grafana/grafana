@@ -209,13 +209,15 @@ func (d *PublicDashboardStoreImpl) GetOrgIdByAccessToken(ctx context.Context, ac
 }
 
 // Creates a public dashboard
-func (d *PublicDashboardStoreImpl) Create(ctx context.Context, cmd SavePublicDashboardCommand) error {
+func (d *PublicDashboardStoreImpl) Create(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error) {
 	if cmd.PublicDashboard.DashboardUid == "" {
-		return dashboards.ErrDashboardIdentifierNotSet
+		return 0, dashboards.ErrDashboardIdentifierNotSet
 	}
 
+	var affectedRows int64
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.UseBool("is_enabled").Insert(&cmd.PublicDashboard)
+		var err error
+		affectedRows, err = sess.UseBool("is_enabled").Insert(&cmd.PublicDashboard)
 		if err != nil {
 			return err
 		}
@@ -223,18 +225,19 @@ func (d *PublicDashboardStoreImpl) Create(ctx context.Context, cmd SavePublicDas
 		return nil
 	})
 
-	return err
+	return affectedRows, err
 }
 
 // Updates existing public dashboard
-func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDashboardCommand) error {
+func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error) {
+	var affectedRows int64
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		timeSettingsJSON, err := json.Marshal(cmd.PublicDashboard.TimeSettings)
 		if err != nil {
 			return err
 		}
 
-		_, err = sess.Exec("UPDATE dashboard_public SET is_enabled = ?, annotations_enabled = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
+		sqlResult, err := sess.Exec("UPDATE dashboard_public SET is_enabled = ?, annotations_enabled = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
 			cmd.PublicDashboard.IsEnabled,
 			cmd.PublicDashboard.AnnotationsEnabled,
 			string(timeSettingsJSON),
@@ -246,10 +249,11 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 			return err
 		}
 
+		affectedRows, err = sqlResult.RowsAffected()
 		return nil
 	})
 
-	return err
+	return affectedRows, err
 }
 
 // Deletes a public dashboard

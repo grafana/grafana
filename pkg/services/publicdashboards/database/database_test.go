@@ -464,10 +464,11 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 			UpdatedBy:          8,
 		}
 		// update initial record
-		err = publicdashboardStore.Update(context.Background(), SavePublicDashboardCommand{
+		rowsAffected, err := publicdashboardStore.Update(context.Background(), SavePublicDashboardCommand{
 			PublicDashboard: updatedPublicDashboard,
 		})
 		require.NoError(t, err)
+		assert.EqualValues(t, rowsAffected, 1)
 
 		// updated dashboard should have changed
 		pdRetrieved, err := publicdashboardStore.FindByDashboardUid(context.Background(), savedDashboard.OrgId, savedDashboard.Uid)
