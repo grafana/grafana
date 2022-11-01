@@ -124,7 +124,7 @@ password = $__file{/etc/secrets/gf_sql_password}
 
 The `vault` provider allows you to manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault).
 
-> Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../configure-security/configure-database-encryption/integrate-with-hashicorp-vault/" >}}) in [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+> Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../configure-security/configure-database-encryption/integrate-with-hashicorp-vault/" >}}) in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
 
 <hr />
 
@@ -377,7 +377,7 @@ This setting applies to `sqlite` only and controls the number of times the syste
 
 ## [remote_cache]
 
-Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../../enterprise/query-caching/" >}}).
+Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../../administration/data-source-management/#query-caching" >}}).
 
 ### type
 
@@ -541,6 +541,10 @@ Default is `admin`.
 ### admin_password
 
 The password of the default Grafana Admin. Set once on first-run. Default is `admin`.
+
+# admin_email
+
+The email of the default Grafana Admin, created on startup. Default is `admin@localhost`.
 
 ### secret_key
 
@@ -1307,7 +1311,7 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ## [unified_alerting.screenshots]
 
-For more information about screenshots, refer to [Images in notifications]({{< relref "../../alerting/images-in-notifications/" >}}).
+For more information about screenshots, refer to [Images in notifications(https://grafana.com/docs/grafana/next/alerting/manage-notifications/images-in-notifications)].
 
 ### capture
 
@@ -1325,7 +1329,7 @@ Uploads screenshots to the local Grafana server or remote storage such as Azure,
 
 ## [unified_alerting.reserved_labels]
 
-For more information about Grafana Reserved Labels, refer to [Labels in Grafana Alerting]({{< relref "../../alerting/fundamentals/annotation-label/how-to-use-labels/#grafana-reserved-labels" >}}).
+For more information about Grafana Reserved Labels, refer to [Labels in Grafana Alerting](https://grafana.com/docs/grafana/next/alerting/fundamentals/annotation-label/how-to-use-labels/)
 
 ### disabled_labels
 
@@ -1959,7 +1963,7 @@ Change the listening port of the gRPC server. Default port is `0` and will autom
 
 ## [enterprise]
 
-For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
 
 <hr>
 

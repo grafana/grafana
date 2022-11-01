@@ -204,6 +204,61 @@ func TestGoogleChatNotifier(t *testing.T) {
 			},
 			expMsgError: nil,
 		}, {
+			name:        "Customized title",
+			settings:    `{"url": "http://localhost", "title": "Alerts firing: {{ len .Alerts.Firing }}"}`,
+			externalURL: "http://localhost",
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: &outerStruct{
+				PreviewText:  "Alerts firing: 1",
+				FallbackText: "Alerts firing: 1",
+				Cards: []card{
+					{
+						Header: header{
+							Title: "Alerts firing: 1",
+						},
+						Sections: []section{
+							{
+								Widgets: []widget{
+									textParagraphWidget{
+										Text: text{
+											Text: "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+										},
+									},
+									buttonWidget{
+										Buttons: []button{
+											{
+												TextButton: textButton{
+													Text: "OPEN IN GRAFANA",
+													OnClick: onClick{
+														OpenLink: openLink{
+															URL: "http://localhost/alerting/list",
+														},
+													},
+												},
+											},
+										},
+									},
+									textParagraphWidget{
+										Text: text{
+											// RFC822 only has the minute, hence it works in most cases.
+											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expMsgError: nil,
+		}, {
 			name:        "Missing field in template",
 			settings:    `{"url": "http://localhost", "message": "I'm a custom template {{ .NotAField }} bad template"}`,
 			externalURL: "http://localhost",
@@ -410,25 +465,30 @@ func TestGoogleChatNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &NotificationChannelConfig{
-				Name:     "googlechat_testing",
-				Type:     "googlechat",
-				Settings: settingsJSON,
+			webhookSender := mockNotificationService()
+			imageStore := &UnavailableImageStore{}
+
+			fc := FactoryConfig{
+				Config: &NotificationChannelConfig{
+					Name:     "googlechat_testing",
+					Type:     "googlechat",
+					Settings: settingsJSON,
+				},
+				ImageStore:          imageStore,
+				NotificationService: webhookSender,
+				Template:            tmpl,
 			}
 
-			webhookSender := mockNotificationService()
-			cfg, err := NewGoogleChatConfig(m)
+			pn, err := newGoogleChatNotifier(fc)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
-			imageStore := &UnavailableImageStore{}
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewGoogleChatNotifier(cfg, imageStore, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)
