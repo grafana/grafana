@@ -1,20 +1,16 @@
 export const Messages = {
-  tabs: {
-    inventory: 'All backups',
-    scheduled: 'Scheduled Backups',
-    locations: 'Storage Locations',
-    restore: 'Restore History',
-  },
   add: 'Add',
   addStorageLocation: 'Add storage location',
   createNewBackup: 'Create backup',
   createScheduledBackup: 'Create scheduled backup',
   backupManagement: 'Backup Management',
   backupInventory: {
+    newBackup: 'New backup',
     table: {
       noData: 'No backups found',
       columns: {
         name: 'Backup name',
+        service: 'Service Name',
         created: 'Created',
         location: 'Location',
         vendor: 'DB Technology',
@@ -43,6 +39,8 @@ export const Messages = {
       "For security reasons, we won't delete this backup from the filesystem. Please make sure to manually remove it.",
     getLogsTitle: (name: string) => `Backup logs for ${name}`,
     getDeleteMessage: (name: string) => `Are you sure you want to delete "${name}"?`,
+    addSuccess: 'Backup successfully started',
+    getDeleteSuccess: (name: string) => `Backup "${name}" successfully deleted.`,
   },
   restoreHistory: {
     table: {
@@ -70,6 +68,7 @@ export const Messages = {
     getDeleteSuccess: (name: string) => `Backup location "${name}" successfully deleted.`,
   },
   scheduledBackups: {
+    newScheduledBackup: 'New Scheduled Backup',
     table: {
       noData: 'No scheduled backups found',
       columns: {

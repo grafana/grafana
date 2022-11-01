@@ -15,17 +15,23 @@ export const Messages = {
   month: 'Month',
   day: 'Day',
   weekDay: 'Weekday',
-  startTime: 'Start time, h/m',
+  startTimeHour: 'Start time (hour)',
+  startTimeMinute: 'Start time (minute)',
+  advanceSettings: 'Advanced Settings:',
   fullLogs: 'Full logs',
   enabled: 'Enabled',
   retention: 'Retention (Number of backups - 0 for unlimited)',
-  scheduleSection: 'Schedule - UTC time',
+  scheduleSection: 'UTC time',
+  backupInfo: 'Backup info',
+  onDemand: 'On Demand',
+  schedule: 'Schedule Backup',
+  scheduleName: 'Schedule',
   getModalTitle: (scheduleMode: boolean, edit: boolean) => {
     if (scheduleMode) {
-      return edit ? 'Edit Scheduled backup' : 'Schedule backup';
+      return edit ? 'Edit Scheduled backup' : 'Create Scheduled backup';
     }
 
-    return 'Backup on demand';
+    return 'Create Backup on demand';
   },
   getSubmitButtonText: (scheduleMode: boolean, edit: boolean) => {
     if (scheduleMode) {

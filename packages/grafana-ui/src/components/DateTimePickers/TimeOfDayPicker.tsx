@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import RcTimePicker from 'rc-time-picker';
+import RcTimePicker, { TimePickerProps } from 'rc-time-picker';
 import React, { FC } from 'react';
 
 import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme } from '@grafana/data';
@@ -18,6 +18,7 @@ export interface Props {
   minuteStep?: number;
   size?: FormInputSize;
   disabled?: boolean;
+  timepickerProps?: TimePickerProps;
 }
 
 export const TimeOfDayPicker: FC<Props> = ({
@@ -28,6 +29,7 @@ export const TimeOfDayPicker: FC<Props> = ({
   value,
   size = 'auto',
   disabled,
+  timepickerProps,
 }) => {
   const styles = useStyles(getStyles);
 
@@ -44,6 +46,7 @@ export const TimeOfDayPicker: FC<Props> = ({
       minuteStep={minuteStep}
       inputIcon={<Caret wrapperStyle={styles.caretWrapper} />}
       disabled={disabled}
+      {...timepickerProps}
     />
   );
 };

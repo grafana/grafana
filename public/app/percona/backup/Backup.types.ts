@@ -34,6 +34,11 @@ export enum BackupMode {
   PITR = 'PITR',
 }
 
+export enum BackupType {
+  DEMAND = 'DEMAND',
+  SCHEDULED = 'SCHEDULED',
+}
+
 export interface RawBackupLog {
   chunk_id: number;
   data: string;

@@ -20,6 +20,7 @@ export interface Props {
   labelId?: string;
   // @Percona
   controlled?: boolean;
+  buttonDataTestId?: string;
 }
 
 export const CollapsableSection: FC<Props> = ({
@@ -32,6 +33,7 @@ export const CollapsableSection: FC<Props> = ({
   labelId,
   loading = false,
   controlled = false,
+  buttonDataTestId,
 }) => {
   const [open, toggleOpen] = useState<boolean>(isOpen);
   const styles = useStyles2(collapsableSectionStyles);
@@ -67,6 +69,7 @@ export const CollapsableSection: FC<Props> = ({
           aria-expanded={open && !loading}
           aria-controls={`collapse-content-${id}`}
           aria-labelledby={buttonLabelId}
+          data-testid={buttonDataTestId}
         >
           {loading ? (
             <Spinner className={styles.spinner} />

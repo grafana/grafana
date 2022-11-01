@@ -37,8 +37,8 @@ export const Status: FC<StatusProps> = ({ status, showLogsAction = false, onLogC
     }),
     [status, styles.statusSuccess, styles.statusError]
   );
-  const isPending = pendingStates.includes(status);
-  const backupSucceeded = successfulStates.includes(status);
+  const isPending = useMemo(() => pendingStates.includes(status), [status]);
+  const backupSucceeded = useMemo(() => successfulStates.includes(status), [status]);
 
   return (
     <div className={styles.statusContainer}>

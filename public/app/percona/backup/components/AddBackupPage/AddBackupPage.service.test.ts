@@ -2,10 +2,10 @@ import { SelectableValue } from '@grafana/data';
 import { InventoryService } from 'app/percona/inventory/Inventory.service';
 import { Databases } from 'app/percona/shared/core';
 
-import { AddBackupModalService } from './AddBackupModal.service';
-import { SelectableService } from './AddBackupModal.types';
+import { AddBackupPageService } from './AddBackupPage.service';
+import { SelectableService } from './AddBackupPage.types';
 
-describe('AddBackupModalService', () => {
+describe('AddBackupPageService', () => {
   it('should return only supported services', async () => {
     jest.spyOn(InventoryService, 'getDbServices').mockReturnValueOnce(
       Promise.resolve({
@@ -18,7 +18,7 @@ describe('AddBackupModalService', () => {
         proxysql: [{ id: 'proxysql1', name: 'proxysql one' }],
       })
     );
-    const services = await AddBackupModalService.loadServiceOptions();
+    const services = await AddBackupPageService.loadServiceOptions();
     const orderFn = (s1: SelectableValue<SelectableService>, s2: SelectableValue<SelectableService>) =>
       s1.label?.localeCompare(s2.label ?? '') ?? 0;
 

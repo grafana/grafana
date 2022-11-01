@@ -33,7 +33,7 @@ export interface StorageLocationReponse {
   name: string;
   description: string;
   s3_config?: S3ConfigResponse;
-  pmm_client_config?: FSConfigResponse;
+  filesystem_config?: FSConfigResponse;
 }
 
 export interface StorageLocationListReponse {

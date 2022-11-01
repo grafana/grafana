@@ -36,7 +36,7 @@ const rawFSLocation: StorageLocationReponse = {
   location_id: 'location_4',
   name: 'second location',
   description: 'description_2',
-  pmm_client_config: {
+  filesystem_config: {
     path: '/foo/bar',
   },
 };
@@ -65,7 +65,7 @@ describe('StorageLocationsUtils', () => {
       name: rawFSLocation.name,
       description: rawFSLocation.description,
       type: LocationType.CLIENT,
-      path: rawFSLocation.pmm_client_config?.path,
+      path: rawFSLocation.filesystem_config?.path,
     });
   });
 
@@ -86,7 +86,7 @@ describe('StorageLocationsUtils', () => {
       location_id: fsLocation.locationID,
       name: fsLocation.name,
       description: fsLocation.description,
-      pmm_client_config: {
+      filesystem_config: {
         path: fsLocation.path,
       },
     });
@@ -95,7 +95,7 @@ describe('StorageLocationsUtils', () => {
       location_id: fsLocation.locationID,
       name: fsLocation.name,
       description: fsLocation.description,
-      pmm_client_config: {
+      filesystem_config: {
         path: fsLocation.path,
       },
     });

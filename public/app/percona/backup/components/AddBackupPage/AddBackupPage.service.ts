@@ -3,9 +3,9 @@ import { SelectableValue } from '@grafana/data';
 import { InventoryService } from 'app/percona/inventory/Inventory.service';
 import { Databases } from 'app/percona/shared/core';
 
-import { SelectableService } from './AddBackupModal.types';
+import { SelectableService } from './AddBackupPage.types';
 
-export const AddBackupModalService = {
+export const AddBackupPageService = {
   async loadServiceOptions(): Promise<Array<SelectableValue<SelectableService>>> {
     const supportedServices: Databases[] = [Databases.mysql, Databases.mongodb];
     const services = await InventoryService.getDbServices();

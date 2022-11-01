@@ -1,8 +1,8 @@
 import { SelectableValue } from '@grafana/data';
 import { Databases } from 'app/percona/shared/core';
 
-import * as service from '../AddBackupModal.service';
-import { SelectableService } from '../AddBackupModal.types';
+import * as service from '../AddBackupPage.service';
+import { SelectableService } from '../AddBackupPage.types';
 
 export const serviceStubs: Array<SelectableValue<SelectableService>> = [
   {
@@ -15,6 +15,6 @@ export const serviceStubs: Array<SelectableValue<SelectableService>> = [
   },
 ];
 
-export const AddBackupModalService =
-  jest.genMockFromModule<typeof service>('../AddBackupModal.service').AddBackupModalService;
-AddBackupModalService.loadServiceOptions = () => Promise.resolve(serviceStubs);
+export const AddBackupPageService =
+  jest.genMockFromModule<typeof service>('../AddBackupPage.service').AddBackupPageService;
+AddBackupPageService.loadServiceOptions = () => Promise.resolve(serviceStubs);

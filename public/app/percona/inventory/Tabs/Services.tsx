@@ -8,7 +8,7 @@ import { AppEvents } from '@grafana/data';
 import { Button, HorizontalGroup, Modal } from '@grafana/ui';
 import { OldPage } from 'app/core/components/Page/Page';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
-import { SelectedTableRows } from 'app/percona/shared/components/Elements/Table';
+import { SelectedTableRows } from 'app/percona/shared/components/Elements/Table/Table.types';
 import { FormElement } from 'app/percona/shared/components/Form';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';

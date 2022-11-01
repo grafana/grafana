@@ -3,7 +3,10 @@ import { DataModel, RetryMode } from 'app/percona/backup/Backup.types';
 import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
 import { MONTHS, WEEKDAYS } from 'app/percona/shared/helpers/cron/constants';
 
-import { getOptionFromDigit } from './AddBackupModal.utils';
+import { Messages } from './AddBackupPage.messages';
+import { getOptionFromDigit } from './AddBackupPage.utils';
+
+export const SCHEDULED_TYPE = 'scheduled_task_id';
 
 export const VENDOR_OPTIONS: Array<SelectableValue<Databases>> = [
   {
@@ -32,6 +35,14 @@ export const DATA_MODEL_OPTIONS: Array<SelectableValue<DataModel>> = [
   {
     value: DataModel.LOGICAL,
     label: 'Logical',
+  },
+];
+
+export const PAGE_SWITCHER_OPTIONS: Array<SelectableValue<string>> = [
+  { value: 'demand', label: Messages.onDemand },
+  {
+    value: 'scheduled',
+    label: Messages.schedule,
   },
 ];
 

@@ -5,6 +5,7 @@ export interface AsyncSelectFieldProps<T> extends Omit<SelectCommonProps<T>, 'op
   // AsyncSelect has options stored internally. We cannot enable plain values as we don't have access to the fetched options
   value?: SelectableValue<T>;
   invalid?: boolean;
+  className?: string;
   label: string;
   name: string;
 }

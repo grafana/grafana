@@ -6,7 +6,6 @@ import { Column, Row } from 'react-table';
 import { OldPage } from 'app/core/components/Page/Page';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
-import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { DATABASE_LABELS } from 'app/percona/shared/core';
@@ -106,7 +105,6 @@ export const RestoreHistory: FC = () => {
   return (
     <OldPage navModel={navModel}>
       <OldPage.Contents>
-        <TechnicalPreview />
         <FeatureLoader featureName={Messages.backupManagement} featureSelector={featureSelector}>
           <Table
             columns={columns}
@@ -114,6 +112,7 @@ export const RestoreHistory: FC = () => {
             totalItems={data.length}
             emptyMessage={Messages.restoreHistory.table.noData}
             pendingRequest={pending}
+            autoResetExpanded={false}
             renderExpandedRow={renderSelectedSubRow}
           />
         </FeatureLoader>

@@ -18,7 +18,7 @@ export const stubLocations: StorageLocationListReponse = {
       location_id: 'location_2',
       name: 'second location',
       description: 'description_2',
-      pmm_client_config: {
+      filesystem_config: {
         path: '/path/to/server',
       },
     },
@@ -26,7 +26,7 @@ export const stubLocations: StorageLocationListReponse = {
       location_id: 'location_3',
       name: 'third location',
       description: 'description_3',
-      pmm_client_config: {
+      filesystem_config: {
         path: '/path/to/client',
       },
     },

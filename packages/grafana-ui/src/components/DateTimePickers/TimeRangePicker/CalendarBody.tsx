@@ -88,6 +88,12 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
         display: flex;
       }
 
+      .react-calendar__month-view__days__day:disabled,
+      .react-calendar__year-view__months__month:disabled,
+      .react-calendar__decade-view__years__year:disabled {
+        color: #3f4249;
+      }
+
       .react-calendar__navigation__label,
       .react-calendar__navigation__arrow,
       .react-calendar__navigation {

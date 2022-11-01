@@ -275,7 +275,7 @@
     "@opentelemetry/api": "1.1.0",
     "@opentelemetry/exporter-collector": "0.25.0",
     "@opentelemetry/semantic-conventions": "1.5.0",
-    "@percona/platform-core": "1.0.8",
+    "@percona/platform-core": "^1.0.9",
     "@popperjs/core": "2.11.5",
     "@react-aria/button": "3.5.1",
     "@react-aria/dialog": "3.2.1",

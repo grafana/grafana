@@ -8448,9 +8448,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@percona/platform-core@npm:1.0.8":
-  version: 1.0.8
-  resolution: "@percona/platform-core@npm:1.0.8"
+"@percona/platform-core@npm:^1.0.9":
+  version: 1.0.9
+  resolution: "@percona/platform-core@npm:1.0.9"
   dependencies:
     "@popperjs/core": ^2.9.2
     react-popper: ^2.2.5
@@ -8465,7 +8465,7 @@ __metadata:
     react: 17.0.1
     react-dom: 17.0.1
     react-final-form: ^6.5.3
-  checksum: 4386d0580999fbc56f39bfd26a28544d2be349396fbbcdfcc7cb7b616381de8176b02cc697d632599998903cb395f2052a247ea79378cfe83650dc958393d434
+  checksum: c3b3ed1294fbcdb63a785b16a2fab0e0ef493367daf9d01559d62039813fea210318fe6bbbaa238e0d7a118a4f7a1d74dbc7daccf913f894e0270eb3372c6bdf
   languageName: node
   linkType: hard
 
@@ -23710,7 +23710,7 @@ __metadata:
     "@opentelemetry/api": 1.1.0
     "@opentelemetry/exporter-collector": 0.25.0
     "@opentelemetry/semantic-conventions": 1.5.0
-    "@percona/platform-core": 1.0.8
+    "@percona/platform-core": ^1.0.9
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.7
     "@popperjs/core": 2.11.5
     "@react-aria/button": 3.5.1

@@ -6,6 +6,7 @@ import { Form } from 'react-final-form';
 import { AppEvents } from '@grafana/data';
 import { Button, HorizontalGroup, Modal } from '@grafana/ui';
 import { OldPage } from 'app/core/components/Page/Page';
+import { InventoryDataService, Model } from 'app/percona/inventory/Inventory.tools';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { SelectedTableRows } from 'app/percona/shared/components/Elements/Table';
 import { FormElement } from 'app/percona/shared/components/Form';
@@ -17,7 +18,6 @@ import { filterFulfilled, processPromiseResults } from 'app/percona/shared/helpe
 import { appEvents } from '../../../core/app_events';
 import { GET_NODES_CANCEL_TOKEN, NODES_COLUMNS } from '../Inventory.constants';
 import { InventoryService } from '../Inventory.service';
-import { InventoryDataService, Model } from '../Inventory.tools';
 import { NodesList } from '../Inventory.types';
 
 import { styles } from './Tabs.styles';
