@@ -96,7 +96,7 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
     <div className={cx(styles.container, styles.slider)}>
       {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}
       <Global styles={styles.slider} />
-      <label className={cx(styles.sliderInput, ...sliderInputClassNames)}>
+      <div className={cx(styles.sliderInput, ...sliderInputClassNames)}>
         <SliderWithTooltip
           min={min}
           max={max}
@@ -113,7 +113,7 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
         <span className={stylesSlider.numberInputWrapper} ref={inputRef}>
           <NumberInput value={sliderValue} onChange={onSliderInputChange} max={max} min={min} step={step} />
         </span>
-      </label>
+      </div>
     </div>
   );
 };
