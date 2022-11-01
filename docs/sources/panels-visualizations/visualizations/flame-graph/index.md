@@ -40,7 +40,7 @@ This process can be repeated to focus on finding the amount of resources that pa
 
 ![Figure 4 - Search](/static/img/docs/flame-graph-panel/flame-graph-search.png 'Figure 4 - Search')
 
-When you would like to quickly find the blocks with particular labels you can use the search field. Simply type in the label you want to search for and all of the blocks in the table with that text in their label will remain colored with all of the remaining blocks grayed out.
+You can use the search field to find blocks with particular labels. When you search by a label name, all of the blocks in the table with labels that include the search text remain colored, while the rest of the blocks are grayed-out.
 
 You can also click on any block or hover over it to narrow your search.
 
