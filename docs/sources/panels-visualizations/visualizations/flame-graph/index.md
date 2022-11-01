@@ -68,7 +68,7 @@ You can choose from three table view options:
 
 ## Data API
 
-The flame graph expects a data frame data in a particular format to be able to render it. As the data is hierarchical while a data frame has a tabular structure, the way to encode it is to use a [nested set model](https://en.wikipedia.org/wiki/Nested_set_model).
+In order to render the flame graph, you must format the data frame data using a [nested set model](https://en.wikipedia.org/wiki/Nested_set_model).
 
 In a simplified form it means each item of the flame graph is encoded just by its nesting level as an integer value, its metadata and by its order in the data frame. This means that the order of items is significant and needs to be correct. The ordering is depth first traversal of the items in the flame graph. This allows us to recreate the graph without needing variable length values in the data frame like children's array.
 
