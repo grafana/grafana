@@ -483,7 +483,6 @@ var featuresEnabledDuringTests = []string{
 	featuremgmt.FlagDashboardPreviews,
 	featuremgmt.FlagDashboardComments,
 	featuremgmt.FlagPanelTitleSearch,
-	featuremgmt.FlagObjectStore,
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
