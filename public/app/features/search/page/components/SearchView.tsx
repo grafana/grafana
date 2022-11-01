@@ -12,8 +12,8 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { FolderDTO } from 'app/types';
 
 import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequirements';
-import { useSearchQuery } from '../../hooks/useSearchQuery';
 import { getGrafanaSearcher, SearchQuery } from '../../service';
+import { useSearchStateManager } from '../../state/SearchState';
 import { SearchLayout } from '../../types';
 import {
   reportDashboardListViewed,
@@ -49,19 +49,8 @@ export const SearchView = ({
   keyboardEvents,
 }: SearchViewProps) => {
   const styles = useStyles2(getStyles);
-
-  const {
-    query,
-    onQueryChange,
-    onTagFilterChange,
-    onStarredFilterChange,
-    onTagAdd,
-    onDatasourceChange,
-    onSortChange,
-    onLayoutChange,
-    onClearStarred,
-    onSelectSearchItem,
-  } = useSearchQuery({});
+  const stateManager = useSearchStateManager();
+  const query = stateManager.useState();
 
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
   const layout = getValidQueryLayout(query);
@@ -129,7 +118,7 @@ export const SearchView = ({
       tagCount: query.tag?.length,
       includePanels,
     });
-    onSelectSearchItem();
+    stateManager.onSelectSearchItem();
   };
 
   const doSearch = useMemo(
@@ -196,15 +185,8 @@ export const SearchView = ({
     clearSelection();
     setListKey(Date.now());
     // trigger again the search to the backend
-    onQueryChange(query.query);
+    stateManager.onQueryChange(query.query);
   };
-
-  const getStarredItems = useCallback(
-    (e: React.FormEvent<HTMLInputElement>) => {
-      onStarredFilterChange(e);
-    },
-    [onStarredFilterChange]
-  );
 
   const renderResults = () => {
     const value = results.value;
@@ -222,13 +204,13 @@ export const SearchView = ({
             variant="secondary"
             onClick={() => {
               if (query.query) {
-                onQueryChange('');
+                stateManager.onQueryChange('');
               }
               if (query.tag?.length) {
-                onTagFilterChange([]);
+                stateManager.onTagFilterChange([]);
               }
               if (query.datasource) {
-                onDatasourceChange(undefined);
+                stateManager.onDatasourceChange(undefined);
               }
             }}
           >
@@ -246,7 +228,7 @@ export const SearchView = ({
             section={{ uid: folderDTO.uid, kind: 'folder', title: folderDTO.title }}
             selection={selection}
             selectionToggle={toggleSelection}
-            onTagSelected={onTagAdd}
+            onTagSelected={stateManager.onAddTag}
             renderStandaloneBody={true}
             tags={query.tag}
             key={listKey}
@@ -260,7 +242,7 @@ export const SearchView = ({
           selection={selection}
           selectionToggle={toggleSelection}
           tags={query.tag}
-          onTagSelected={onTagAdd}
+          onTagSelected={stateManager.onAddTag}
           hidePseudoFolders={hidePseudoFolders}
           onClickItem={onClickItem}
         />
@@ -278,9 +260,9 @@ export const SearchView = ({
               clearSelection,
               width: width,
               height: height,
-              onTagSelected: onTagAdd,
+              onTagSelected: stateManager.onAddTag,
               keyboardEvents,
-              onDatasourceChange: query.datasource ? onDatasourceChange : undefined,
+              onDatasourceChange: query.datasource ? stateManager.onDatasourceChange : undefined,
               onClickItem: onClickItem,
             };
 
@@ -323,22 +305,22 @@ export const SearchView = ({
           onLayoutChange={(v) => {
             if (v === SearchLayout.Folders) {
               if (query.query) {
-                onQueryChange(''); // parent will clear the sort
+                stateManager.onQueryChange(''); // parent will clear the sort
               }
               if (query.starred) {
-                onClearStarred();
+                stateManager.onClearStarred();
               }
             }
-            onLayoutChange(v);
+            stateManager.onLayoutChange(v);
           }}
           showStarredFilter={hidePseudoFolders}
-          onStarredFilterChange={!hidePseudoFolders ? undefined : getStarredItems}
-          onSortChange={onSortChange}
-          onTagFilterChange={onTagFilterChange}
+          onStarredFilterChange={!hidePseudoFolders ? undefined : stateManager.onStarredFilterChange}
+          onSortChange={stateManager.onSortChange}
+          onTagFilterChange={stateManager.onTagFilterChange}
           getTagOptions={getTagOptions}
           getSortOptions={getGrafanaSearcher().getSortOptions}
           sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
-          onDatasourceChange={onDatasourceChange}
+          onDatasourceChange={stateManager.onDatasourceChange}
           query={query}
           includePanels={includePanels!}
           setIncludePanels={setIncludePanels}
@@ -349,7 +331,7 @@ export const SearchView = ({
         <PreviewsSystemRequirements
           bottomSpacing={3}
           showPreviews={true}
-          onRemove={() => onLayoutChange(SearchLayout.List)}
+          onRemove={() => stateManager.onLayoutChange(SearchLayout.List)}
         />
       )}
       {renderResults()}
