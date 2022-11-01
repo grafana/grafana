@@ -9,10 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -30,6 +26,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 var timeSettings = &TimeSettings{From: "now-12h", To: "now"}
@@ -133,7 +132,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -179,7 +178,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -210,7 +209,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -246,7 +245,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			store: publicDashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: "an-id",
 			OrgId:        8,
 			UserId:       7,
@@ -277,7 +276,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -292,7 +291,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
-		dto = &SavePublicDashboardConfigDTO{
+		dto = &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       8,
@@ -341,7 +340,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -357,7 +356,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
-		dto = &SavePublicDashboardConfigDTO{
+		dto = &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       8,
@@ -378,6 +377,49 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 		assert.Equal(t, &TimeSettings{}, updatedPubdash.TimeSettings)
 	})
+}
+
+func TestDeletePublicDashboard(t *testing.T) {
+	testCases := []struct {
+		Name             string
+		AffectedRowsResp int64
+		ErrResp          error
+		ExpectedErr      error
+	}{
+		{
+			Name:             "Successfully deletes a public dashboards",
+			AffectedRowsResp: 1,
+			ErrResp:          nil,
+			ExpectedErr:      nil,
+		},
+		{
+			Name:             "Public dashboard not found",
+			AffectedRowsResp: 0,
+			ErrResp:          nil,
+			ExpectedErr:      ErrPublicDashboardNotFound,
+		},
+		{
+			Name:             "Database error",
+			AffectedRowsResp: 0,
+			ErrResp:          errors.New("db error!"),
+			ExpectedErr:      errors.New("db error!"),
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.Name, func(t *testing.T) {
+			store := NewFakePublicDashboardStore(t)
+			store.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.AffectedRowsResp, tt.ExpectedErr)
+
+			service := &PublicDashboardServiceImpl{
+				log:   log.New("test.logger"),
+				store: store,
+			}
+
+			err := service.Delete(context.Background(), 13, "uid")
+			assert.Equal(t, tt.ExpectedErr, err)
+		})
+	}
 }
 
 func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,

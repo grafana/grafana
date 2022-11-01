@@ -62,6 +62,7 @@ type NavLink struct {
 	HideFromTabs     bool       `json:"hideFromTabs,omitempty"`
 	ShowIconInNavbar bool       `json:"showIconInNavbar,omitempty"`
 	RoundIcon        bool       `json:"roundIcon,omitempty"`
+	IsSection        bool       `json:"isSection,omitempty"`
 	Children         []*NavLink `json:"children,omitempty"`
 	HighlightText    string     `json:"highlightText,omitempty"`
 	HighlightID      string     `json:"highlightId,omitempty"`
