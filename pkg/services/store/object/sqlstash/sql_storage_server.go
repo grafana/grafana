@@ -278,29 +278,21 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 	if err != nil {
 		return nil, err
 	}
-	grn := r.GRN
+	grn := route.GRN
 	if grn == nil {
 		return nil, fmt.Errorf("invalid grn")
 	}
 
-	builder := s.kinds.GetSummaryBuilder(grn.Kind)
-	if builder == nil {
-		return nil, fmt.Errorf("unsupported kind")
-	}
 	modifier := store.UserFromContext(ctx)
 	if modifier == nil {
 		return nil, fmt.Errorf("can not find user in context")
 	}
 
-	summary, body, err := builder(ctx, grn.UID, r.Body)
+	summary, body, err := s.prepare(ctx, r)
 	if err != nil {
 		return nil, err
 	}
 
-	summaryjson, err := newSummarySupport(summary)
-	if err != nil {
-		return nil, err
-	}
 	etag := createContentsHash(body)
 	key := route.Key
 
@@ -387,7 +379,7 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 		}
 
 		// 2. Add the labels rows
-		for k, v := range summary.Labels {
+		for k, v := range summary.model.Labels {
 			_, err = tx.Exec(ctx, `INSERT INTO object_labels (`+
 				`"key", "label", "value") `+
 				`VALUES (?, ?, ?)`,
@@ -399,7 +391,7 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 		}
 
 		// 3. Add the references rows
-		for _, ref := range summary.References {
+		for _, ref := range summary.model.References {
 			resolved, err := s.resolver.Resolve(ctx, ref)
 			if err != nil {
 				return err
@@ -450,8 +442,8 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 				`WHERE key=?`,
 				body, versionInfo.Size, etag, versionInfo.Version,
 				timestamp, versionInfo.UpdatedBy,
-				summary.Name, summary.Description,
-				summaryjson.labels, summaryjson.fields, summaryjson.errors,
+				summary.model.Name, summary.model.Description,
+				summary.labels, summary.fields, summary.errors,
 				key,
 			)
 			return err
@@ -466,16 +458,35 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			key, getParentFolderKey(grn.Kind, key), grn.Kind, versionInfo.Size, body, etag, versionInfo.Version,
 			timestamp, versionInfo.UpdatedBy, timestamp, versionInfo.UpdatedBy, // created + updated are the same
-			summary.Name, summary.Description,
-			summaryjson.labels, summaryjson.fields, summaryjson.errors,
+			summary.model.Name, summary.model.Description,
+			summary.labels, summary.fields, summary.errors,
 		)
 		return err
 	})
-	rsp.SummaryJson = summaryjson.marshaled
+	rsp.SummaryJson = summary.marshaled
 	if err != nil {
 		rsp.Status = object.WriteObjectResponse_ERROR
 	}
 	return rsp, err
+}
+
+func (s *sqlObjectServer) prepare(ctx context.Context, r *object.WriteObjectRequest) (*summarySupport, []byte, error) {
+	grn := r.GRN
+	builder := s.kinds.GetSummaryBuilder(grn.Kind)
+	if builder == nil {
+		return nil, nil, fmt.Errorf("unsupported kind")
+	}
+
+	summary, body, err := builder(ctx, grn.UID, r.Body)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	summaryjson, err := newSummarySupport(summary)
+	if err != nil {
+		return nil, nil, err
+	}
+	return summaryjson, body, nil
 }
 
 func (s *sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {

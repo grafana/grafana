@@ -7,6 +7,7 @@ import (
 )
 
 type summarySupport struct {
+	model       *models.ObjectSummary
 	name        string
 	description *string // null or empty
 	labels      *string
@@ -15,10 +16,12 @@ type summarySupport struct {
 	marshaled   []byte
 }
 
-func newSummarySupport(summary *models.ObjectSummary) (summarySupport, error) {
+func newSummarySupport(summary *models.ObjectSummary) (*summarySupport, error) {
 	var err error
 	var js []byte
-	s := summarySupport{}
+	s := &summarySupport{
+		model: summary,
+	}
 	if summary != nil {
 		s.marshaled, err = json.Marshal(summary)
 		if err != nil {
