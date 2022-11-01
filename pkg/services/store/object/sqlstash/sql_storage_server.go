@@ -63,7 +63,7 @@ func getReadSelect(r *object.ReadObjectRequest) string {
 	return "SELECT " + strings.Join(fields, ",") + " FROM object WHERE "
 }
 
-func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
+func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql.Rows, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
 	created := time.Now()
 	updated := time.Now()
 	key := "" // string (extract UID?)
@@ -102,6 +102,12 @@ func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*obje
 		}
 	}
 
+	// Get the GRN from key.  TODO? save each part as a column?
+	info, _ := s.router.RouteFromKey(ctx, key)
+	if info.GRN != nil {
+		raw.GRN = info.GRN
+	}
+
 	rsp := &object.ReadObjectResponse{
 		Object: raw,
 	}
@@ -121,7 +127,7 @@ func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*obje
 	return rsp, nil
 }
 
-func (s sqlObjectServer) getRoute(ctx context.Context, grn *object.GRN) (router.ResourceRouteInfo, error) {
+func (s *sqlObjectServer) getRoute(ctx context.Context, grn *object.GRN) (router.ResourceRouteInfo, error) {
 	if grn == nil {
 		return router.ResourceRouteInfo{}, fmt.Errorf("missing grn")
 	}
@@ -138,7 +144,11 @@ func (s sqlObjectServer) getRoute(ctx context.Context, grn *object.GRN) (router.
 	return s.router.Route(ctx, grn)
 }
 
-func (s sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
+func (s *sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
+	if r.Version != "" {
+		return s.readFromHistory(ctx, r)
+	}
+
 	route, err := s.getRoute(ctx, r.GRN)
 	if err != nil {
 		return nil, err
@@ -146,10 +156,6 @@ func (s sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) 
 
 	args := []interface{}{route.Key}
 	where := "key=?"
-	if r.Version != "" {
-		args = append(args, r.Version)
-		where = "key=? AND version=?"
-	}
 
 	rows, err := s.sess.Query(ctx, getReadSelect(r)+where, args...)
 	if err != nil {
@@ -159,10 +165,72 @@ func (s sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) 
 	if !rows.Next() {
 		return &object.ReadObjectResponse{}, nil
 	}
-	return rowToReadObjectResponse(rows, r)
+	return s.rowToReadObjectResponse(ctx, rows, r)
 }
 
-func (s sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObjectRequest) (*object.BatchReadObjectResponse, error) {
+func (s *sqlObjectServer) readFromHistory(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
+	route, err := s.getRoute(ctx, r.GRN)
+	if err != nil {
+		return nil, err
+	}
+
+	fields := []string{
+		`"body"`, `"size"`, `"etag"`,
+		`"updated"`, `"updated_by"`,
+	}
+
+	rows, err := s.sess.Query(ctx,
+		"SELECT "+strings.Join(fields, ",")+" FROM object_history WHERE key=? AND version=?", route.Key, r.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	// Version or key not found
+	if !rows.Next() {
+		return &object.ReadObjectResponse{}, nil
+	}
+
+	raw := &object.RawObject{
+		GRN: r.GRN,
+	}
+	rsp := &object.ReadObjectResponse{
+		Object: raw,
+	}
+	updated := time.Now()
+	err = rows.Scan(&raw.Body, &raw.Size, &raw.ETag, &updated, &raw.UpdatedBy)
+	if err != nil {
+		return nil, err
+	}
+	// For versioned files, the created+updated are the same
+	raw.Updated = updated.UnixMilli()
+	raw.Created = raw.Updated
+	raw.CreatedBy = raw.UpdatedBy
+	raw.Version = r.Version // from the query
+
+	// Dynamically create the summary
+	if r.WithSummary {
+		builder := s.kinds.GetSummaryBuilder(r.GRN.Kind)
+		if builder != nil {
+			val, out, err := builder(ctx, r.GRN.UID, raw.Body)
+			if err == nil {
+				raw.Body = out // cleaned up
+				rsp.SummaryJson, err = json.Marshal(val)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
+	// Clear the body if not requested
+	if !r.WithBody {
+		rsp.Object.Body = nil
+	}
+
+	return rsp, err
+}
+
+func (s *sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObjectRequest) (*object.BatchReadObjectResponse, error) {
 	args := []interface{}{}
 	constraints := []string{}
 
@@ -175,11 +243,11 @@ func (s sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObjec
 		where := "key=?"
 		args = append(args, route.Key)
 		if r.Version != "" {
-			args = append(args, r.Version)
-			where = "(key=? AND version=?)"
+			return nil, fmt.Errorf("version not supported for batch read (yet?)")
 		}
 		constraints = append(constraints, where)
 	}
+
 	// TODO, validate everything has same WithBody/WithSummary
 	req := b.Batch[0]
 	query := getReadSelect(req) + strings.Join(constraints, " OR ")
@@ -191,7 +259,7 @@ func (s sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObjec
 	// TODO? make sure the results are in order?
 	rsp := &object.BatchReadObjectResponse{}
 	for rows.Next() {
-		r, err := rowToReadObjectResponse(rows, req)
+		r, err := s.rowToReadObjectResponse(ctx, rows, req)
 		if err != nil {
 			return nil, err
 		}
@@ -205,7 +273,7 @@ func createContentsHash(contents []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
+func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
 	route, err := s.getRoute(ctx, r.GRN)
 	if err != nil {
 		return nil, err
@@ -303,7 +371,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		// 1. Add the `object_history` values
 		versionInfo.Size = int64(len(body))
 		versionInfo.ETag = etag
-		versionInfo.Updated = timestamp.Unix()
+		versionInfo.Updated = timestamp.UnixMilli()
 		versionInfo.UpdatedBy = store.GetUserIDString(modifier)
 		_, err = tx.Exec(ctx, `INSERT INTO object_history (`+
 			`"key", "version", "message", `+
@@ -410,7 +478,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 	return rsp, err
 }
 
-func (s sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
+func (s *sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
 	route, err := s.getRoute(ctx, r.GRN)
 	if err != nil {
 		return nil, err
@@ -440,7 +508,7 @@ func (s sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectReque
 	return rsp, err
 }
 
-func (s sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
+func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
 	route, err := s.getRoute(ctx, r.GRN)
 	if err != nil {
 		return nil, err
@@ -481,7 +549,7 @@ func (s sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryReq
 	return rsp, err
 }
 
-func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
+func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
 	user := store.UserFromContext(ctx)
 	if r.NextPageToken != "" || len(r.Sort) > 0 || len(r.Labels) > 0 {
 		return nil, fmt.Errorf("not yet supported")
@@ -612,7 +680,7 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 	return rsp, err
 }
 
-func (s sqlObjectServer) ensureFolders(ctx context.Context, objectgrn *object.GRN) error {
+func (s *sqlObjectServer) ensureFolders(ctx context.Context, objectgrn *object.GRN) error {
 	uid := objectgrn.UID
 	idx := strings.LastIndex(uid, "/")
 	grn := &object.GRN{
