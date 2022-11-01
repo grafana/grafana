@@ -54,7 +54,7 @@ The table has three columns: symbols, self, and total. The table is sorted by se
 
 Clicking on a row of the top table will add or remove that row's symbol to the search input for the flame graph.
 
-Clicking on that top table row again will remove its symbol from the search input.
+Clicking on the same row again will remove its symbol from the search input.
 
 ![Figure 6 - Clicking on a top table row](/static/img/docs/flame-graph-panel/top-table-clicking.png 'Figure 6 - Clicking on a top table row')
 
