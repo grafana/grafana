@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
@@ -115,7 +116,7 @@ func TestObjectServer(t *testing.T) {
 
 	fakeUser := fmt.Sprintf("user:%d:%s", testCtx.user.UserID, testCtx.user.Login)
 	firstVersion := "1"
-	kind := "dummy"
+	kind := models.StandardKindJSONObj
 	grn := &object.GRN{
 		Kind:  kind,
 		UID:   "my-test-entity",
@@ -292,7 +293,7 @@ func TestObjectServer(t *testing.T) {
 		uid2 := "uid2"
 		uid3 := "uid3"
 		uid4 := "uid4"
-		kind2 := "kind2"
+		kind2 := models.StandardKindPlaylist
 		w1, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
 			GRN:  grn,
 			Body: body,
@@ -342,7 +343,7 @@ func TestObjectServer(t *testing.T) {
 			version = append(version, res.Version)
 		}
 		require.Equal(t, []string{"my-test-entity", "uid2", "uid3", "uid4"}, uids)
-		require.Equal(t, []string{"dummy", "dummy", "kind2", "kind2"}, kinds)
+		require.Equal(t, []string{"jsonobj", "jsonobj", "playlist", "playlist"}, kinds)
 		require.Equal(t, []string{
 			w1.Object.Version,
 			w2.Object.Version,
@@ -364,7 +365,7 @@ func TestObjectServer(t *testing.T) {
 			version = append(version, res.Version)
 		}
 		require.Equal(t, []string{"my-test-entity", "uid2"}, uids)
-		require.Equal(t, []string{"dummy", "dummy"}, kinds)
+		require.Equal(t, []string{"jsonobj", "jsonobj"}, kinds)
 		require.Equal(t, []string{
 			w1.Object.Version,
 			w2.Object.Version,
