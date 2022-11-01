@@ -21,6 +21,7 @@ func NativeSettingsForDialect(d migrator.Dialect) BulkOpSettings {
 
 func normalizeBulkSettings(s BulkOpSettings) BulkOpSettings {
 	if s.BatchSize < 1 {
+		sessionLogger.Debug("Invalid batch size, falling back to the default", "requested", s.BatchSize, "actual", DefaultBatchSize)
 		s.BatchSize = DefaultBatchSize
 	}
 	return s
