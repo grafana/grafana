@@ -43,59 +43,64 @@ export const PublicDashboardListTable = () => {
             </tr>
           </thead>
           <tbody>
-            {publicDashboards?.map((pd: ListPublicDashboardResponse) => (
-              <tr key={pd.uid}>
-                <td className={styles.titleTd}>
-                  <Tooltip
-                    content={!!pd.dashboardUid ? pd.title : 'The linked dashboard has already been deleted'}
-                    placement="top"
-                  >
-                    {!!pd.dashboardUid ? (
-                      <Link className={styles.link} href={`/d/${pd.dashboardUid}`}>
-                        {pd.title}
-                      </Link>
-                    ) : (
-                      <div className={styles.orphanedTitle}>
-                        <p>Orphaned public dashboard</p>
-                        <Icon name="info-circle" className={styles.orphanedInfoIcon} />
-                      </div>
-                    )}
-                  </Tooltip>
-                </td>
-                <td>
-                  <Tag
-                    name={pd.isEnabled ? 'enabled' : 'disabled'}
-                    colorIndex={!pd.dashboardUid ? 9 : pd.isEnabled ? 20 : 15}
-                  />
-                </td>
-                <td>
-                  <ButtonGroup className={styles.buttonGroup}>
-                    <LinkButton
-                      href={viewPublicDashboardUrl(pd.accessToken)}
-                      fill="text"
-                      size={responsiveSize}
-                      title={pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled'}
-                      target="_blank"
-                      disabled={!pd.isEnabled || !pd.dashboardUid}
-                      data-testid={selectors.ListItem.linkButton}
+            {publicDashboards?.map((pd: ListPublicDashboardResponse) => {
+              const isOrphaned = !pd.dashboardUid;
+              return (
+                <tr key={pd.uid}>
+                  <td className={styles.titleTd}>
+                    <Tooltip
+                      content={!isOrphaned ? pd.title : 'The linked dashboard has already been deleted'}
+                      placement="top"
                     >
-                      <Icon size={responsiveSize} name="external-link-alt" />
-                    </LinkButton>
-                    <LinkButton
-                      fill="text"
-                      size={responsiveSize}
-                      href={`/d/${pd.dashboardUid}?shareView=share`}
-                      title="Configure public dashboard"
-                      disabled={!pd.dashboardUid}
-                      data-testid={selectors.ListItem.configButton}
-                    >
-                      <Icon size={responsiveSize} name="cog" />
-                    </LinkButton>
-                    {hasWritePermissions && <DeletePublicDashboardButton publicDashboard={pd} size={responsiveSize} />}
-                  </ButtonGroup>
-                </td>
-              </tr>
-            ))}
+                      {!isOrphaned ? (
+                        <Link className={styles.link} href={`/d/${pd.dashboardUid}`}>
+                          {pd.title}
+                        </Link>
+                      ) : (
+                        <div className={styles.orphanedTitle}>
+                          <p>Orphaned public dashboard</p>
+                          <Icon name="info-circle" className={styles.orphanedInfoIcon} />
+                        </div>
+                      )}
+                    </Tooltip>
+                  </td>
+                  <td>
+                    <Tag
+                      name={pd.isEnabled ? 'enabled' : 'disabled'}
+                      colorIndex={isOrphaned ? 9 : pd.isEnabled ? 20 : 15}
+                    />
+                  </td>
+                  <td>
+                    <ButtonGroup className={styles.buttonGroup}>
+                      <LinkButton
+                        href={viewPublicDashboardUrl(pd.accessToken)}
+                        fill="text"
+                        size={responsiveSize}
+                        title={pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled'}
+                        target="_blank"
+                        disabled={!pd.isEnabled || isOrphaned}
+                        data-testid={selectors.ListItem.linkButton}
+                      >
+                        <Icon size={responsiveSize} name="external-link-alt" />
+                      </LinkButton>
+                      <LinkButton
+                        fill="text"
+                        size={responsiveSize}
+                        href={`/d/${pd.dashboardUid}?shareView=share`}
+                        title="Configure public dashboard"
+                        disabled={isOrphaned}
+                        data-testid={selectors.ListItem.configButton}
+                      >
+                        <Icon size={responsiveSize} name="cog" />
+                      </LinkButton>
+                      {hasWritePermissions && (
+                        <DeletePublicDashboardButton publicDashboard={pd} size={responsiveSize} />
+                      )}
+                    </ButtonGroup>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
