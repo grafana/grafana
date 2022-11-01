@@ -375,6 +375,7 @@ func (i *dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchRe
 	}, nil
 }
 
+// This sets the TenantId on the request GRN
 func getFullGRN(ctx context.Context, grn *object.GRN) *object.GRN {
 	if grn.TenantId == 0 {
 		modifier := store.UserFromContext(ctx)
