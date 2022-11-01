@@ -52,7 +52,7 @@ The table has three columns: symbols, self, and total. The table is sorted by se
 
 ![Figure 5 - Top table](/static/img/docs/flame-graph-panel/top-table.png 'Figure 5 - Top table')
 
-Clicking on a particular row of the top table will add that row's symbol to the search input which will search for that symbol in the flame graph.
+Clicking on a row of the top table will add or remove that row's symbol to the search input for the flame graph.
 
 Clicking on that top table row again will remove its symbol from the search input.
 
