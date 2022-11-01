@@ -58,11 +58,7 @@ Clicking on that top table row again will remove its symbol from the search inpu
 
 ![Figure 6 - Clicking on a top table row](/static/img/docs/flame-graph-panel/top-table-clicking.png 'Figure 6 - Clicking on a top table row')
 
-Of course, sometimes you will not need to view both the top table and flame graph at the same time. This is especially true for large profiles.
-
-In this case and if you only want to see the top table, you can click on the top table button to show only the top table.
-
-3 options are available:
+You can choose from three table view options:
 
 - Top Table: Only show the top table
 - Flame Graph: Only show the flame graph
