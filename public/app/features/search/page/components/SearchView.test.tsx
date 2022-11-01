@@ -7,7 +7,6 @@ import { Observable } from 'rxjs';
 
 import { ArrayVector, DataFrame, DataFrameView, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { StoreState } from 'app/types';
 
 import { initialState } from '../../reducers/searchQueryReducer';
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service';
