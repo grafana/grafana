@@ -82,6 +82,13 @@ func (a *State) GetAlertInstanceKey() (models.AlertInstanceKey, error) {
 	return models.AlertInstanceKey{RuleOrgID: a.OrgID, RuleUID: a.AlertRuleUID, LabelsHash: labelsHash}, nil
 }
 
+func (a *State) Resolve(reason string, endsAt time.Time) {
+	a.State = eval.Normal
+	a.StateReason = reason
+	a.EndsAt = endsAt
+	a.Resolved = true
+}
+
 // StateTransition describes the transition from one state to another.
 type StateTransition struct {
 	*State
