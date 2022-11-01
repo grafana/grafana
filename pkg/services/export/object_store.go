@@ -247,7 +247,6 @@ func (e *objectStoreJob) start() {
 			e.broadcaster(e.status)
 		}
 	}
-
 }
 
 type dashInfo struct {
