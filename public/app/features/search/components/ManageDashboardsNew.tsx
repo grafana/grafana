@@ -8,7 +8,7 @@ import { FolderDTO, AccessControlAction } from 'app/types';
 
 import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
 import { SearchView } from '../page/components/SearchView';
-import { useAndInitStateManager } from '../state/SearchState';
+import { useAndInitSearchStateManager } from '../state/SearchState';
 
 import { DashboardActions } from './DashboardActions';
 
@@ -19,7 +19,7 @@ export interface Props {
 export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
   const styles = useStyles2(getStyles);
   // since we don't use "query" from use search... it is not actually loaded from the URL!
-  const stateManager = useAndInitStateManager({ folderUid: folder?.uid });
+  const stateManager = useAndInitSearchStateManager({ folderUid: folder?.uid });
   const state = stateManager.useState();
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 

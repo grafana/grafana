@@ -262,7 +262,7 @@ export interface InitStateManagerArgs {
   folderUid?: string;
 }
 
-export const useAndInitStateManager = ({ folderUid }: InitStateManagerArgs) => {
+export const useAndInitSearchStateManager = ({ folderUid }: InitStateManagerArgs) => {
   const stateManger = getSearchStateManager();
 
   useEffect(() => {
@@ -270,7 +270,6 @@ export const useAndInitStateManager = ({ folderUid }: InitStateManagerArgs) => {
 
     stateManger.initState({
       ...stateFromUrl,
-
       folderUid: folderUid,
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
     });

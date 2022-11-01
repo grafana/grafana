@@ -6,13 +6,13 @@ import { IconButton, stylesFactory, useStyles2 } from '@grafana/ui';
 
 import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
 import { SearchView } from '../page/components/SearchView';
-import { useAndInitStateManager } from '../state/SearchState';
+import { useAndInitSearchStateManager } from '../state/SearchState';
 
 export interface Props {}
 
 export function DashboardSearch({}: Props) {
   const styles = useStyles2(getStyles);
-  const stateManager = useAndInitStateManager({});
+  const stateManager = useAndInitSearchStateManager({});
   const state = stateManager.useState();
 
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();

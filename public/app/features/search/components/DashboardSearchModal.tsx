@@ -10,7 +10,7 @@ import { IconButton, useStyles2 } from '@grafana/ui';
 
 import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
 import { SearchView } from '../page/components/SearchView';
-import { useAndInitStateManager } from '../state/SearchState';
+import { useAndInitSearchStateManager } from '../state/SearchState';
 
 const ANIMATION_DURATION = 200;
 
@@ -21,7 +21,7 @@ export interface Props {
 export function DashboardSearchModal({ isOpen }: Props) {
   const styles = useStyles2(getStyles);
   const animStyles = useStyles2((theme) => getAnimStyles(theme, ANIMATION_DURATION));
-  const stateManager = useAndInitStateManager({});
+  const stateManager = useAndInitSearchStateManager({});
   const state = stateManager.useState();
   const ref = useRef<HTMLDivElement>(null);
   const backdropRef = useRef(null);
