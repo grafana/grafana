@@ -12,8 +12,6 @@ import { useListPublicDashboardsQuery } from 'app/features/dashboard/api/publicD
 import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
 import { AccessControlAction } from 'app/types';
 
-import { ListPublicDashboardResponse } from '../../types';
-
 import { DeletePublicDashboardButton } from './DeletePublicDashboardButton';
 
 export const viewPublicDashboardUrl = (accessToken: string): string =>
@@ -43,30 +41,17 @@ export const PublicDashboardListTable = () => {
             </tr>
           </thead>
           <tbody>
-            {publicDashboards?.map((pd: ListPublicDashboardResponse) => (
+            {publicDashboards?.map((pd) => (
               <tr key={pd.uid}>
                 <td className={styles.titleTd}>
-                  <Tooltip
-                    content={!!pd.dashboardUid ? pd.title : 'Related dashboard was already deleted'}
-                    placement="top"
-                  >
-                    {!!pd.dashboardUid ? (
-                      <Link className={styles.link} href={`/d/${pd.dashboardUid}`}>
-                        {pd.title}
-                      </Link>
-                    ) : (
-                      <div className={styles.orphanedTitle}>
-                        <p>Orphaned public dashboard</p>
-                        <Icon name="info-circle" className={styles.orphanedInfoIcon} />
-                      </div>
-                    )}
+                  <Tooltip content={pd.title} placement="top">
+                    <Link className={styles.link} href={`/d/${pd.dashboardUid}`}>
+                      {pd.title}
+                    </Link>
                   </Tooltip>
                 </td>
                 <td>
-                  <Tag
-                    name={pd.isEnabled ? 'enabled' : 'disabled'}
-                    colorIndex={!pd.dashboardUid ? 9 : pd.isEnabled ? 20 : 15}
-                  />
+                  <Tag name={pd.isEnabled ? 'enabled' : 'disabled'} colorIndex={pd.isEnabled ? 20 : 15} />
                 </td>
                 <td>
                   <ButtonGroup className={styles.buttonGroup}>
@@ -76,7 +61,7 @@ export const PublicDashboardListTable = () => {
                       size={responsiveSize}
                       title={pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled'}
                       target="_blank"
-                      disabled={!pd.isEnabled || !pd.dashboardUid}
+                      disabled={!pd.isEnabled}
                       data-testid={selectors.ListItem.linkButton}
                     >
                       <Icon size={responsiveSize} name="external-link-alt" />
@@ -86,7 +71,6 @@ export const PublicDashboardListTable = () => {
                       size={responsiveSize}
                       href={`/d/${pd.dashboardUid}?shareView=share`}
                       title="Configure public dashboard"
-                      disabled={!pd.dashboardUid}
                       data-testid={selectors.ListItem.configButton}
                     >
                       <Icon size={responsiveSize} name="cog" />
@@ -125,20 +109,6 @@ function getStyles(theme: GrafanaTheme2, isMobile: boolean) {
     `,
     buttonGroup: css`
       justify-content: ${isMobile ? 'space-between' : 'end'};
-    `,
-    orphanedTitle: css`
-      display: flex;
-      align-items: center;
-
-      p {
-        margin: ${theme.spacing(0, 1, 0, 0)};
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-    `,
-    orphanedInfoIcon: css`
-      color: ${theme.colors.text.link};
     `,
   };
 }

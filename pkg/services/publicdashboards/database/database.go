@@ -38,9 +38,9 @@ func (d *PublicDashboardStoreImpl) FindAll(ctx context.Context, orgId int64) ([]
 	resp := make([]PublicDashboardListResponse, 0)
 
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		sess.Table("dashboard_public").Select(
-			"dashboard_public.uid, dashboard_public.access_token, dashboard.uid as dashboard_uid, dashboard_public.is_enabled, dashboard.title").
+		sess.Table("dashboard_public").
 			Join("LEFT", "dashboard", "dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id").
+			Cols("dashboard_public.uid", "dashboard_public.access_token", "dashboard_public.dashboard_uid", "dashboard_public.is_enabled", "dashboard.title").
 			Where("dashboard_public.org_id = ?", orgId).
 			OrderBy(" is_enabled DESC, dashboard.title IS NULL, dashboard.title ASC")
 
