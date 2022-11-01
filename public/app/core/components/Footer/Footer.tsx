@@ -40,11 +40,10 @@ export let getFooterLinks = (): FooterLink[] => {
 };
 
 export function getVersionMeta(version: string) {
-  const containsHyphen = version.includes('-');
   const isBeta = version.includes('-beta');
 
   return {
-    hasReleaseNotes: !containsHyphen || isBeta,
+    hasReleaseNotes: true,
     isBeta,
   };
 }
@@ -65,17 +64,13 @@ export let getVersionLinks = (): FooterLink[] => {
     return links;
   }
 
-  const { hasReleaseNotes, isBeta } = getVersionMeta(buildInfo.version);
-  const versionSlug = buildInfo.version.replace(/\./g, '-'); // replace all periods with hyphens
-  const docsVersion = isBeta ? 'next' : 'latest';
+  const { hasReleaseNotes } = getVersionMeta(buildInfo.version);
 
   links.push({
     target: '_blank',
     id: 'version',
     text: `v${buildInfo.version} (${buildInfo.commit})`,
-    url: hasReleaseNotes
-      ? `https://grafana.com/docs/grafana/${docsVersion}/release-notes/release-notes-${versionSlug}/`
-      : undefined,
+    url: hasReleaseNotes ? `https://github.com/grafana/grafana/blob/main/CHANGELOG.md` : undefined,
   });
 
   if (buildInfo.hasUpdate) {

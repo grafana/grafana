@@ -3779,6 +3779,8 @@ steps:
   depends_on:
   - publish-packages-oss
   environment:
+    GCP_KEY:
+      from_secret: gcp_key
     GRAFANA_COM_API_KEY:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.3
@@ -3890,6 +3892,8 @@ steps:
   depends_on:
   - publish-packages-enterprise
   environment:
+    GCP_KEY:
+      from_secret: gcp_key
     GRAFANA_COM_API_KEY:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.3
@@ -5612,6 +5616,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: d3b06a42ab277a3f065d4fd6e0367cb67aac08c60d4bb20438d1ba5f64d369cc
+hmac: a6ffce1281d86597d2b88df238241ef19f7924574e9d3910213910fc7c080d91
 
 ...
