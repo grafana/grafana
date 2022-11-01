@@ -24,8 +24,6 @@ func TestKindRegistry(t *testing.T) {
 		"frame",
 		"geojson",
 		"jsonobj",
-		"kind1",
-		"kind2",
 		"playlist",
 		"png",
 		"snapshot",

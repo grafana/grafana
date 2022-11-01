@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/store/kind/dataframe"
-	"github.com/grafana/grafana/pkg/services/store/kind/dummy"
 	"github.com/grafana/grafana/pkg/services/store/kind/folder"
 	"github.com/grafana/grafana/pkg/services/store/kind/geojson"
 	"github.com/grafana/grafana/pkg/services/store/kind/jsonobj"
@@ -61,14 +60,6 @@ func NewKindRegistry() KindRegistry {
 	kinds[models.StandardKindJSONObj] = &kindValues{
 		info:    jsonobj.GetObjectKindInfo(),
 		builder: jsonobj.GetObjectSummaryBuilder(),
-	}
-
-	// FIXME -- these are registered because existing tests use them
-	for _, k := range []string{"kind1", "kind2"} {
-		kinds[k] = &kindValues{
-			info:    dummy.GetObjectKindInfo(k),
-			builder: dummy.GetObjectSummaryBuilder(k),
-		}
 	}
 
 	// create a registry
