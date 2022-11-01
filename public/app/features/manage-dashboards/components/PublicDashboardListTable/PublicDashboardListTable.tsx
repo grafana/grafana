@@ -47,7 +47,7 @@ export const PublicDashboardListTable = () => {
               <tr key={pd.uid}>
                 <td className={styles.titleTd}>
                   <Tooltip
-                    content={!!pd.dashboardUid ? pd.title : 'Related dashboard was already deleted'}
+                    content={!!pd.dashboardUid ? pd.title : 'The linked dashboard has already been deleted'}
                     placement="top"
                   >
                     {!!pd.dashboardUid ? (
