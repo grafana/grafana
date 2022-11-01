@@ -61,7 +61,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     });
 
     // issue new search query
-    this.doSearch();
+    this.doSearchWithDebounce();
   }
 
   onCloseSearch = () => {
@@ -161,7 +161,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     return q;
   }
 
-  doSearch = debounce((): void => {
+  doSearchWithDebounce = debounce((): void => {
     const trackingInfo = {
       layout: this.state.layout,
       starred: this.state.starred,
@@ -191,7 +191,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     } else {
       getGrafanaSearcher()
         .search(this.lastQuery)
-        .then((result) => this.setState({ result }))
+        .then((result) => this.setState({ result, loading: false }))
         .catch((error) => {
           reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
             ...trackingInfo,
