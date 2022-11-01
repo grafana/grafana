@@ -1,5 +1,5 @@
 import EventEmitter from 'eventemitter3';
-import { Unsubscribable, Observable } from 'rxjs';
+import { Unsubscribable, Observable, Subscriber } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 import {
@@ -18,6 +18,7 @@ import {
  */
 export class EventBusSrv implements EventBus, LegacyEmitter {
   private emitter: EventEmitter;
+  private subscribers = new Map<Function, Subscriber<BusEvent>>();
 
   constructor() {
     this.emitter = new EventEmitter();
@@ -31,16 +32,18 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
     return this.getStream(typeFilter).subscribe({ next: handler });
   }
 
-  getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T> {
+  getStream<T extends BusEvent = BusEvent>(eventType: BusEventType<T>): Observable<T> {
     return new Observable<T>((observer) => {
       const handler = (event: T) => {
         observer.next(event);
       };
 
       this.emitter.on(eventType.type, handler);
+      this.subscribers.set(handler, observer);
 
       return () => {
         this.emitter.off(eventType.type, handler);
+        this.subscribers.delete(handler);
       };
     });
   }
@@ -95,6 +98,10 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
 
   removeAllListeners() {
     this.emitter.removeAllListeners();
+    for (const [key, sub] of this.subscribers) {
+      sub.complete();
+      this.subscribers.delete(key);
+    }
   }
 }
 

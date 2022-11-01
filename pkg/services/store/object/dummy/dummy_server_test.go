@@ -44,6 +44,7 @@ func TestRawObjectWithHistory(t *testing.T) {
 
 	raw := &RawObjectWithHistory{
 		Object: &object.RawObject{
+			GRN:     &object.GRN{UID: "x"},
 			Version: "A",
 			Body:    body,
 		},
@@ -56,12 +57,31 @@ func TestRawObjectWithHistory(t *testing.T) {
 		body,
 	})
 
-	b, err := json.Marshal(raw)
+	b, err := json.MarshalIndent(raw, "", "  ")
 	require.NoError(t, err)
 
 	str := string(b)
-	fmt.Printf("expect: %s", str)
-	require.JSONEq(t, `{"object":{"UID":"","version":"A","body":{"field":1.23,"hello":"world"}},"history":[{"info":{"version":"B"},"body":"eyJmaWVsZCI6MS4yMywiaGVsbG8iOiJ3b3JsZCJ9"}]}`, str)
+	//fmt.Printf("expect: %s", str)
+	require.JSONEq(t, `{
+		"object": {
+		  "GRN": {
+			"UID": "x"
+		  },
+		  "version": "A",
+		  "body": {
+			"field": 1.23,
+			"hello": "world"
+		  }
+		},
+		"history": [
+		  {
+			"info": {
+			  "version": "B"
+			},
+			"body": "eyJmaWVsZCI6MS4yMywiaGVsbG8iOiJ3b3JsZCJ9"
+		  }
+		]
+	  }`, str)
 
 	copy := &ObjectVersionWithBody{}
 	err = json.Unmarshal(b, copy)

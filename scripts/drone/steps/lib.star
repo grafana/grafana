@@ -1038,6 +1038,7 @@ def publish_grafanacom_step(edition, ver_mode):
         ],
         'environment': {
             'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
+            'GCP_KEY': from_secret('gcp_key'),
         },
         'commands': [
             cmd,
