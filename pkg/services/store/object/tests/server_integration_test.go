@@ -33,8 +33,8 @@ type objectVersionMatcher struct {
 }
 
 func timestampInRange(ts int64, tsRange []time.Time) bool {
-	loww := tsRange[0].UnixMilli() - 2 // two for rounding errors when they are the same
-	high := tsRange[1].UnixMilli() + 2 // two for rounding errors when they are the same
+	loww := tsRange[0].UnixMilli() - 1
+	high := tsRange[1].UnixMilli() + 1
 	return ts >= loww && ts <= high
 }
 
