@@ -99,7 +99,8 @@ func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.It
 
 	return r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// We can batch-insert every annotation with no tags. If an annotation has tags, we need the ID.
-		if _, err := sess.Table("annotation").InsertMulti(hasNoTags); err != nil {
+		opts := sqlstore.NativeSettingsForDialect(r.db.GetDialect())
+		if _, err := sess.BulkInsert("annotation", hasNoTags, opts); err != nil {
 			return err
 		}
 
