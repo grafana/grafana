@@ -451,6 +451,11 @@ export interface LegacyAnnotationQuery extends MetricStat, DataQuery {
   type: string;
 }
 
+export interface MetricResponse {
+  name: string;
+  namespace: string;
+}
+
 export interface ResourceRequest {
   region: string;
 }
@@ -466,4 +471,8 @@ export interface GetDimensionValuesRequest extends ResourceRequest {
   namespace: string;
   metricName?: string;
   dimensionFilters?: Dimensions;
+}
+
+export interface GetMetricsRequest extends ResourceRequest {
+  namespace?: string;
 }

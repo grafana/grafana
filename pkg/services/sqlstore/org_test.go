@@ -66,15 +66,6 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 			_, err = sqlStore.CreateUser(context.Background(), serviceaccountcmd)
 			require.NoError(t, err)
 
-			t.Run("Should be able to read user info projection", func(t *testing.T) {
-				query := models.GetUserProfileQuery{UserId: ac1.ID}
-				err = sqlStore.GetUserProfile(context.Background(), &query)
-
-				require.NoError(t, err)
-				require.Equal(t, query.Result.Email, "ac1@test.com")
-				require.Equal(t, query.Result.Login, "ac1")
-			})
-
 			t.Run("Given an added org user", func(t *testing.T) {
 				cmd := models.AddOrgUserCommand{
 					OrgId:  ac1.OrgID,

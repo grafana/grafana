@@ -8,9 +8,10 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/stretchr/testify/require"
 )
 
 type mockedRoundTripperForOauth struct {
@@ -122,7 +123,7 @@ func TestOauthForwardIdentity(t *testing.T) {
 
 			tracer := tracing.InitializeTracerForTest()
 
-			data, err := queryData(context.Background(), &req, &dsInfo, log.New("testlog"), tracer)
+			data, err := queryData(context.Background(), &req, &dsInfo, tracer)
 			// we do a basic check that the result is OK
 			require.NoError(t, err)
 			require.Len(t, data.Responses, 1)
