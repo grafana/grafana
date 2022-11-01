@@ -45,8 +45,15 @@ class ColorGenerator {
     let i = this.cache.get(key);
     if (i == null) {
       const hash = this.hashCode(key.toLowerCase());
-      const hashIndex = Math.abs(hash % this.colorsHex.length);
-      i = hashIndex === 4 ? hashIndex + 1 : hashIndex;
+      i = Math.abs(hash % this.colorsHex.length);
+
+      const prevCacheItem = Array.from(this.cache).pop();
+      if (prevCacheItem && prevCacheItem[1] === i) {
+        // prevCacheItem has same index (so same color)
+        // we don't want sequential spans to have the same color
+        i = i + 1 < this.colorsHex.length ? i + 1 : i - 1;
+      }
+
       this.cache.set(key, i);
     }
     return i;
