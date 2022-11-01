@@ -11,24 +11,23 @@ import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { fetchRulerRulesIfNotFetchedYet } from '../../state/actions';
-import { RuleFormValues } from '../../types/rule-form';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import AlertLabelDropdown from '../AlertLabelDropdown';
 
 interface Props {
   className?: string;
 }
 
-const useGetCustomLabels = (): Record<string, string[]> => {
+const useGetCustomLabels = (dataSourceName: string): Record<string, string[]> => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchRulerRulesIfNotFetchedYet(GRAFANA_RULES_SOURCE_NAME));
-  }, [dispatch]);
+    dispatch(fetchRulerRulesIfNotFetchedYet(dataSourceName));
+  }, [dispatch, dataSourceName]);
 
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
 
-  const rulerRequest = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
+  const rulerRequest = rulerRuleRequests[dataSourceName];
 
   if (!rulerRequest || rulerRequest.loading) {
     return {};
@@ -73,7 +72,9 @@ const LabelsField: FC<Props> = ({ className }) => {
   const labels = watch('labels');
   const { fields, append, remove } = useFieldArray({ control, name: 'labels' });
 
-  const labelsByKey = useGetCustomLabels();
+  const dataSourceName = watch('dataSourceName');
+
+  const labelsByKey = useGetCustomLabels(dataSourceName || RuleFormType.grafana);
 
   const [selectedKey, setSelectedKey] = useState('');
 
