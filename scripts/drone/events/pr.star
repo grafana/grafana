@@ -49,6 +49,11 @@ load(
     'lint_frontend_pipeline',
 )
 
+load(
+    'scripts/drone/pipelines/swagger_gen.star',
+    'swagger_gen',
+)
+
 ver_mode = 'pr'
 trigger = {
     'event': [
@@ -75,6 +80,7 @@ def pr_pipelines(edition):
         integration_tests(get_pr_trigger(include_paths=['pkg/**', 'packaging/**', '.drone.yml', 'conf/**', 'go.sum', 'go.mod', 'public/app/plugins/**/plugin.json']), ver_mode, edition),
         docs_pipelines(edition, ver_mode, trigger_docs_pr()),
         shellcheck_pipeline(),
+        swagger_gen(get_pr_trigger(include_paths=['pkg/**']), edition, ver_mode),
     ]
 
 

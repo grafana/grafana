@@ -822,6 +822,69 @@ volumes:
   name: docker
 ---
 clone:
+  disable: true
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: pr-swagger-gen
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - git clone https://github.com/grafana/grafana.git grafana
+  - cd grafana
+  - git checkout ${DRONE_SOURCE_BRANCH}
+  image: golang:1.19.2
+  name: clone-pr-branch
+- commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - if git show-ref refs/heads/${DRONE_SOURCE_BRANCH}; then git checkout ${DRONE_SOURCE_BRANCH};
+    else git checkout main; fi
+  - ./dev.sh
+  depends_on:
+  - clone-pr-branch
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: golang:1.19.2
+  name: clone-pr-enterprise-branch
+- commands:
+  - cd grafana
+  - make clean-api-spec && make openapi3-gen
+  - for f in public/api-spec.json public/api-merged.json public/openapi3.json; do
+    git add $f; done
+  - if git diff --name-only --cached; then git commit -m "Update OpenAPI and Swagger"
+    && git push origin ${DRONE_SOURCE_BRANCH}; else echo "Everything seems up to date!";
+    fi
+  depends_on:
+  - clone-pr-enterprise-branch
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: golang:1.19.2
+  name: swagger-gen
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    include:
+    - pkg/**
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
   retries: 3
 depends_on: []
 image_pull_secrets:
@@ -5423,6 +5486,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 96004f03bf2032c32fa88303da619580dd72f9a460d4bf90b4faacb7ccceb6b4
+hmac: d490d846db9359363e6c695d6447add9a52f46e924f6d7db231f784e88454442
 
 ...
