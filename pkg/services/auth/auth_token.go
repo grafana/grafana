@@ -62,7 +62,7 @@ func ProvideActiveAuthTokenService(cfg *setting.Cfg, sqlStore db.DB, quotaServic
 		return s, err
 	}
 
-	if err := quotaService.AddReporter(context.TODO(), &quota.NewQuotaReporter{
+	if err := quotaService.AddReporter(&quota.NewUsageReporter{
 		TargetSrv:     QuotaTargetSrv,
 		DefaultLimits: defaultLimits,
 		Reporter:      s.ActiveTokenCount,

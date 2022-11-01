@@ -36,7 +36,7 @@ func (s *serviceDisabled) DeleteByUser(ctx context.Context, userID int64) error 
 	return quota.ErrDisabled
 }
 
-func (s *serviceDisabled) AddReporter(_ context.Context, e *quota.NewQuotaReporter) error {
+func (s *serviceDisabled) AddReporter(e *quota.NewUsageReporter) error {
 	return nil
 }
 
@@ -227,7 +227,7 @@ func (s *service) DeleteByUser(ctx context.Context, userID int64) error {
 	return s.store.DeleteByUser(c, userID)
 }
 
-func (s *service) AddReporter(_ context.Context, e *quota.NewQuotaReporter) error {
+func (s *service) AddReporter(e *quota.NewUsageReporter) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 

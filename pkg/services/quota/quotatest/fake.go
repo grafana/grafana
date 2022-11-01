@@ -36,7 +36,7 @@ func (f *FakeQuotaService) DeleteByUser(c context.Context, userID int64) error {
 	return f.err
 }
 
-func (f *FakeQuotaService) AddReporter(_ context.Context, e *quota.NewQuotaReporter) error {
+func (f *FakeQuotaService) AddReporter(e *quota.NewUsageReporter) error {
 	return f.err
 }
 

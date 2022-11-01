@@ -209,7 +209,7 @@ type UpdateQuotaCmd struct {
 	UserID int64  `json:"-"`
 }
 
-type NewQuotaReporter struct {
+type NewUsageReporter struct {
 	TargetSrv     TargetSrv
 	DefaultLimits *Map
 	Reporter      UsageReporterFunc

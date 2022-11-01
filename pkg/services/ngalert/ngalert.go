@@ -241,7 +241,7 @@ func (ng *AlertNG) init() error {
 		return err
 	}
 
-	if err := ng.QuotaService.AddReporter(context.TODO(), &quota.NewQuotaReporter{
+	if err := ng.QuotaService.AddReporter(&quota.NewUsageReporter{
 		TargetSrv:     models.QuotaTargetSrv,
 		DefaultLimits: defaultLimits,
 		Reporter:      api.Usage,

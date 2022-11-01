@@ -24,7 +24,7 @@ type Service interface {
 	// DeleteByOrg(ctx context.Context, orgID int64) error
 
 	// AddReporter registers a service UsageReporterFunc, targets and their default limits
-	AddReporter(ctx context.Context, e *NewQuotaReporter) error
+	AddReporter(e *NewUsageReporter) error
 }
 
 type UsageReporterFunc func(ctx context.Context, scopeParams *ScopeParameters) (*Map, error)
