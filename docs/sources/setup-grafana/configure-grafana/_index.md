@@ -257,9 +257,20 @@ Path to the certificate file (if `protocol` is set to `https` or `h2`).
 
 Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
+### socket_gid
+
+GID where the socket should be set when `protocol=socket`.
+Make sure that the target group is in the group of Grafana process and that Grafana process is the file owner before you change this setting.
+It is recommended to set the gid as http server user gid.
+Not set when the value is -1.
+
+### socket_mode
+
+Mode where the socket should be set when `protocol=socket`. Make sure that Grafana process is the file owner before you change this setting.
+
 ### socket
 
-Path where the socket should be created when `protocol=socket`. Make sure that Grafana has appropriate permissions before you change this setting.
+Path where the socket should be created when `protocol=socket`. Make sure Grafana has appropriate permissions for that path before you change this setting.
 
 ### cdn_url
 
