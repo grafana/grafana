@@ -14,7 +14,7 @@ type Service interface {
 	GetFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*models.Folder, error)
 	CreateFolder(ctx context.Context, cmd *CreateFolderCommand) (*Folder, error)
 	UpdateFolder(ctx context.Context, cmd *UpdateFolderCommand) (*Folder, error)
-	DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error)
+	DeleteFolder(ctx context.Context, cmd *DeleteFolderCommand) (*Folder, error)
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error
 }
 

@@ -124,7 +124,9 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
-				_, err := service.DeleteFolder(context.Background(), usr, orgID, folderUID, false)
+				_, err := service.DeleteFolder(context.Background(), &folder.DeleteFolderCommand{
+					UID: folderUID,
+				})
 				require.Error(t, err)
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
@@ -205,7 +207,9 @@ func TestIntegrationFolderService(t *testing.T) {
 				}).Return(nil).Once()
 
 				expectedForceDeleteRules := rand.Int63()%2 == 0
-				_, err := service.DeleteFolder(context.Background(), usr, orgID, f.Uid, expectedForceDeleteRules)
+				_, err := service.DeleteFolder(context.Background(), &folder.DeleteFolderCommand{
+					UID: f.Uid,
+				})
 				require.NoError(t, err)
 				require.NotNil(t, actualCmd)
 				require.Equal(t, f.Id, actualCmd.Id)

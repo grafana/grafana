@@ -150,7 +150,7 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
-	g := guardian.New(c.Req.Context(), cmd.Result.ID, c.OrgID, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), cmd.Result.Id, c.OrgID, c.SignedInUser)
 	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, cmd.Result))
 }
 
@@ -177,7 +177,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	}
 
 	uid := web.Params(c.Req)[":uid"]
-	f, err := hs.folderService.DeleteFolder(c.Req.Context(), c.SignedInUser, c.OrgID, uid, c.QueryBool("forceDeleteRules"))
+	f, err := hs.folderService.DeleteFolder(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}

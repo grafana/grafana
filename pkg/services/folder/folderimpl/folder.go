@@ -267,13 +267,14 @@ func (s *Service) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderComm
 	return cmd.Folder, nil
 }
 
-func (s *Service) DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
-	dashFolder, err := s.dashboardStore.GetFolderByUID(ctx, orgID, uid)
+func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) (*folder.Folder, error) {
+	user, err := appcontext.User(ctx)
+	dashFolder, err := s.dashboardStore.GetFolderByUID(ctx, user.OrgID, string(user.UserID))
 	if err != nil {
 		return nil, err
 	}
 
-	guard := guardian.New(ctx, dashFolder.Id, orgID, user)
+	guard := guardian.New(ctx, dashFolder.Id, user.OrgID, user)
 	if canSave, err := guard.CanDelete(); err != nil || !canSave {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -281,7 +282,7 @@ func (s *Service) DeleteFolder(ctx context.Context, user *user.SignedInUser, org
 		return nil, dashboards.ErrFolderAccessDenied
 	}
 
-	deleteCmd := models.DeleteDashboardCommand{OrgId: orgID, Id: dashFolder.Id, ForceDeleteFolderRules: forceDeleteRules}
+	deleteCmd := models.DeleteDashboardCommand{OrgId: user.OrgID, Id: dashFolder.Id, ForceDeleteFolderRules: forceDeleteRules}
 
 	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 		return nil, toFolderError(err)

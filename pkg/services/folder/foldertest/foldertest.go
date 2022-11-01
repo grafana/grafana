@@ -35,8 +35,8 @@ func (s *FakeService) CreateFolder(ctx context.Context, cmd *folder.CreateFolder
 func (s *FakeService) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
 	return s.NewExpectedFolder, s.ExpectedError
 }
-func (s *FakeService) DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
-	return s.ExpectedFolder, s.ExpectedError
+func (s *FakeService) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) (*folder.Folder, error) {
+	return s.NewExpectedFolder, s.ExpectedError
 }
 func (s *FakeService) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {
 	return s.ExpectedError
