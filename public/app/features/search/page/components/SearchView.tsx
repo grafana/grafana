@@ -13,7 +13,6 @@ import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequi
 import { getGrafanaSearcher } from '../../service';
 import { useSearchStateManager } from '../../state/SearchState';
 import { SearchLayout } from '../../types';
-import { reportDashboardListViewed, reportSearchResultInteraction } from '../reporting';
 import { newSearchSelection, updateSearchSelection } from '../selection';
 
 import { ActionRow, getValidQueryLayout } from './ActionRow';
@@ -43,32 +42,7 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
   const [listKey, setListKey] = useState(Date.now());
 
   // Search usage reporting
-  useDebounce(
-    () => {
-      reportDashboardListViewed(state.eventTrackingNamespace, {
-        layout: state.layout,
-        starred: state.starred,
-        sortValue: state.sort?.value,
-        query: state.query,
-        tagCount: state.tag?.length,
-        includePanels: state.includePanels,
-      });
-    },
-    1000,
-    []
-  );
-
-  const onClickItem = () => {
-    reportSearchResultInteraction(state.eventTrackingNamespace, {
-      layout: state.layout,
-      starred: state.starred,
-      sortValue: state.sort?.value,
-      query: state.query,
-      tagCount: state.tag?.length,
-      includePanels: state.includePanels,
-    });
-    stateManager.onSelectSearchItem();
-  };
+  useDebounce(stateManager.onReportSearchUsage, 1000, []);
 
   const clearSelection = useCallback(() => {
     searchSelection.items.clear();
@@ -136,7 +110,7 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
             renderStandaloneBody={true}
             tags={state.tag}
             key={listKey}
-            onClickItem={onClickItem}
+            onClickItem={stateManager.onSearchItemClicked}
           />
         );
       }
@@ -148,7 +122,7 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
           tags={state.tag}
           onTagSelected={stateManager.onAddTag}
           hidePseudoFolders={hidePseudoFolders}
-          onClickItem={onClickItem}
+          onClickItem={stateManager.onSearchItemClicked}
         />
       );
     }
@@ -167,7 +141,7 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
               onTagSelected: stateManager.onAddTag,
               keyboardEvents,
               onDatasourceChange: state.datasource ? stateManager.onDatasourceChange : undefined,
-              onClickItem: onClickItem,
+              onClickItem: stateManager.onSearchItemClicked,
             };
 
             if (layout === SearchLayout.Grid) {

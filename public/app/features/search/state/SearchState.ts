@@ -8,7 +8,12 @@ import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import store from 'app/core/store';
 
 import { SEARCH_PANELS_LOCAL_STORAGE_KEY, SEARCH_SELECTED_LAYOUT } from '../constants';
-import { reportSearchFailedQueryInteraction, reportSearchQueryInteraction } from '../page/reporting';
+import {
+  reportDashboardListViewed,
+  reportSearchFailedQueryInteraction,
+  reportSearchQueryInteraction,
+  reportSearchResultInteraction,
+} from '../page/reporting';
 import { getGrafanaSearcher, SearchQuery } from '../service';
 import { SearchLayout, SearchQueryParams, SearchState } from '../types';
 import { parseRouteParams } from '../utils';
@@ -65,12 +70,6 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       folder: null,
       ...defaultQueryParams,
     });
-  };
-
-  onSelectSearchItem = () => {
-    // Clear some filters
-    this.setState({ tag: [], starred: false, sort: null, query: '' });
-    this.onCloseSearch();
   };
 
   onQueryChange = (query: string) => {
@@ -207,6 +206,38 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   getTagOptions = (): Promise<TermCount[]> => {
     return getGrafanaSearcher().tags(this.lastQuery!);
   };
+
+  /**
+   * When item is selected clear some filters and report interaction
+   */
+  onSearchItemClicked = () => {
+    // Clear some filters
+    this.setState({ tag: [], starred: false, sort: null, query: '' });
+    this.onCloseSearch();
+
+    reportSearchResultInteraction(this.state.eventTrackingNamespace, {
+      layout: this.state.layout,
+      starred: this.state.starred,
+      sortValue: this.state.sort?.value,
+      query: this.state.query,
+      tagCount: this.state.tag?.length,
+      includePanels: this.state.includePanels,
+    });
+  };
+
+  /**
+   * Caller should handle debounce
+   */
+  onReportSearchUsage() {
+    reportDashboardListViewed(this.state.eventTrackingNamespace, {
+      layout: this.state.layout,
+      starred: this.state.starred,
+      sortValue: this.state.sort?.value,
+      query: this.state.query,
+      tagCount: this.state.tag?.length,
+      includePanels: this.state.includePanels,
+    });
+  }
 }
 
 let stateManger: SearchStateManager;
