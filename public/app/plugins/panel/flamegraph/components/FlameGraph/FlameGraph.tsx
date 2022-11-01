@@ -20,7 +20,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { CoreApp, DataFrame, FieldType } from '@grafana/data';
+import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from '@grafana/data';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
 import { TooltipData, SelectedView } from '../types';
@@ -99,18 +99,23 @@ const FlameGraph = ({
       ctx.font = 12 * window.devicePixelRatio + 'px monospace';
       ctx.strokeStyle = 'white';
 
+      const processor = getDisplayProcessor({
+        field: valueField!,
+        theme: createTheme() /* theme does not matter for us here */,
+      });
+
       for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
         const level = levels[levelIndex];
         // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
         // sometimes we collapse multiple bars into single rect.
-        const dimensions = getRectDimensionsForLevel(level, levelIndex, totalTicks, rangeMin, pixelsPerTick);
+        const dimensions = getRectDimensionsForLevel(level, levelIndex, totalTicks, rangeMin, pixelsPerTick, processor);
         for (const rect of dimensions) {
           // Render each rectangle based on the computed dimensions
           renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex);
         }
       }
     },
-    [levels, wrapperWidth, totalTicks, rangeMin, rangeMax, search, topLevelIndex]
+    [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex]
   );
 
   useEffect(() => {
