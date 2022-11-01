@@ -48,19 +48,19 @@ Select a profile type from the drop-down menu. While the label selector can be l
 
 ![Labels selector](/static/img/docs/phlare/labels-selector.png 'Labels selector')
 
-Use the labels selector input to filter by labels. Phlare uses similar syntax to Prometheus to filter labels. Refer to Phlare documentation (TODO link) for available operators and syntax.
+Use the labels selector input to filter by labels. Phlare uses similar syntax to Prometheus to filter labels. Refer to [Phlare documentation](https://grafana.com/docs/phlare/latest/) for available operators and syntax.
 
 ![Options section](/static/img/docs/phlare/options-section.png 'Options section')
 
 Options section contains a switch for Query Type and Group by.
 
-Select a query type to return the profile data which can be shown in a flame graph (TODO link), metric data visualized in a graph, or both. You can only select both options in a dashboard, because panels allow only one visualization.
+Select a query type to return the profile data which can be shown in the [Flame Graph]({{< relref "../panels-visualizations/visualizations/flame-graph" >}}), metric data visualized in a graph, or both. You can only select both options in a dashboard, because panels allow only one visualization.
 
 Group by allows you to group metric data by a specified label. Without any Group by label, metric data is aggregated over all the labels into single time series. You can use multiple labels to group by. Group by has only an effect on the metric data and does not change the profile data results.
 
 ### Profiles query results
 
-Profiles can be visualized in a flame graph. See the flame graphs documentation (TODO link) to learn about the visualization and its features.
+Profiles can be visualized in a flame graph. See the [Flame Graph documentation]({{< relref "../panels-visualizations/visualizations/flame-graph" >}}) to learn about the visualization and its features.
 
 ![Flame graph](/static/img/docs/phlare/flame-graph.png 'Flame graph')
 

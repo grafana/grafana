@@ -50,11 +50,11 @@ Use the labels selector input to filter by labels. Parca uses similar syntax to 
 
 ![Options section](/static/img/docs/parca/options-section.png 'Options section')
 
-Select a query type to return the profile data which can be shown in a flame graph (TODO link), metric data visualized in a graph, or both. You can only select both options in a dashboard, because panels allow only one visualization.
+Select a query type to return the profile data which can be shown in the [Flame Graph]({{< relref "../panels-visualizations/visualizations/flame-graph" >}}), metric data visualized in a graph, or both. You can only select both options in a dashboard, because panels allow only one visualization.
 
 ### Profiles query results
 
-Profiles can be visualized in a flame graph. See the flame graphs documentation (TODO link) to learn about the visualization and its features.
+Profiles can be visualized in a flame graph. See the [Flame Graph documentation]({{< relref "../panels-visualizations/visualizations/flame-graph" >}}) to learn about the visualization and its features.
 
 ![Flame graph](/static/img/docs/parca/flame-graph.png 'Flame graph')
 
