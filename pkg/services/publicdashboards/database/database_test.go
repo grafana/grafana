@@ -5,9 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
@@ -19,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // This is what the db sets empty time settings to
@@ -550,6 +549,44 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 		orgId, err := publicdashboardStore.GetOrgIdByAccessToken(context.Background(), "nonExistentAccessToken")
 		require.NoError(t, err)
 		assert.NotEqual(t, savedDashboard.OrgId, orgId)
+	})
+}
+
+func TestIntegrationDelete(t *testing.T) {
+	var sqlStore db.DB
+	var cfg *setting.Cfg
+	var dashboardStore *dashboardsDB.DashboardStore
+	var publicdashboardStore *PublicDashboardStoreImpl
+	var savedDashboard *models.Dashboard
+	var savedPublicDashboard *PublicDashboard
+
+	setup := func() {
+		sqlStore, cfg = db.InitTestDBwithCfg(t)
+		dashboardStore = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg))
+		publicdashboardStore = ProvideStore(sqlStore)
+		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+		savedPublicDashboard = insertPublicDashboard(t, publicdashboardStore, savedDashboard.Uid, savedDashboard.OrgId, true)
+	}
+
+	t.Run("Delete success", func(t *testing.T) {
+		setup()
+		// Do the deletion
+		affectedRows, err := publicdashboardStore.Delete(context.Background(), savedPublicDashboard.OrgId, savedPublicDashboard.Uid)
+		require.NoError(t, err)
+		assert.EqualValues(t, affectedRows, 1)
+
+		// Verify public dashboard is actually deleted
+		deletedDashboard, err := publicdashboardStore.FindByDashboardUid(context.Background(), savedPublicDashboard.OrgId, savedPublicDashboard.DashboardUid)
+		require.NoError(t, err)
+		require.Nil(t, deletedDashboard)
+	})
+
+	t.Run("Non-existent public dashboard deletion doesn't throw an error", func(t *testing.T) {
+		setup()
+
+		affectedRows, err := publicdashboardStore.Delete(context.Background(), 15, "non-existent-uid")
+		require.NoError(t, err)
+		assert.EqualValues(t, affectedRows, 0)
 	})
 }
 

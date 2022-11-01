@@ -25,6 +25,20 @@ type FakePublicDashboardService struct {
 	mock.Mock
 }
 
+// Delete provides a mock function with given fields: ctx, orgId, uid
+func (_m *FakePublicDashboardService) Delete(ctx context.Context, orgId int64, uid string) error {
+	ret := _m.Called(ctx, orgId, uid)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) error); ok {
+		r0 = rf(ctx, orgId, uid)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ExistsEnabledByAccessToken provides a mock function with given fields: ctx, accessToken
 func (_m *FakePublicDashboardService) ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error) {
 	ret := _m.Called(ctx, accessToken)
