@@ -18,12 +18,13 @@
 // THIS SOFTWARE.
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useMeasure } from 'react-use';
+import { UseMeasureRef } from 'react-use/lib/useMeasure';
 
-import { CoreApp, DataFrame, FieldType } from '@grafana/data';
+import { CoreApp, DataFrame, FieldType, GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { TooltipData, SelectedView } from '../types';
+import { TooltipData, SelectedView, FlameGraphScale } from '../types';
 
 import FlameGraphTooltip, { getTooltipData } from './FlameGraphTooltip';
 import { ItemWithStart } from './dataTransform';
@@ -41,9 +42,11 @@ type Props = {
   setTopLevelIndex: (level: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
-  xAxis: string[];
-  setAxisValues: (levelIndex: number, barIndex: number) => void;
+  flameGraphScale: FlameGraphScale[];
+  setScale: (levelIndex: number, barIndex: number) => void;
   selectedView: SelectedView;
+  sizeRef: UseMeasureRef<HTMLDivElement>;
+  containerWidth: number;
   style?: React.CSSProperties;
 };
 
@@ -59,16 +62,17 @@ const FlameGraph = ({
   setTopLevelIndex,
   setRangeMin,
   setRangeMax,
-  xAxis,
-  setAxisValues,
+  flameGraphScale,
+  setScale,
   selectedView,
+  sizeRef,
+  containerWidth,
 }: Props) => {
-  const styles = getStyles(selectedView, app, flameGraphHeight);
+  const styles = useStyles2((theme) => getStyles(theme, selectedView, app, flameGraphHeight));
   const totalTicks = data.fields[1].values.get(0);
   const valueField =
     data.fields.find((f) => f.name === 'value') ?? data.fields.find((f) => f.type === FieldType.number);
 
-  const [sizeRef, { width: wrapperWidth }] = useMeasure<HTMLDivElement>();
   const graphRef = useRef<HTMLCanvasElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData>();
@@ -94,9 +98,9 @@ const FlameGraph = ({
       const graph = graphRef.current!;
 
       const height = PIXELS_PER_LEVEL * levels.length;
-      graph.width = Math.round(wrapperWidth * window.devicePixelRatio);
+      graph.width = Math.round(containerWidth * window.devicePixelRatio);
       graph.height = Math.round(height * window.devicePixelRatio);
-      graph.style.width = `${wrapperWidth}px`;
+      graph.style.width = `${containerWidth}px`;
       graph.style.height = `${height}px`;
 
       ctx.textBaseline = 'middle';
@@ -114,16 +118,16 @@ const FlameGraph = ({
         }
       }
     },
-    [levels, wrapperWidth, totalTicks, rangeMin, rangeMax, search, topLevelIndex]
+    [levels, containerWidth, totalTicks, rangeMin, rangeMax, search, topLevelIndex]
   );
 
   useEffect(() => {
-    setAxisValues(0, 0);
-  }, [setAxisValues]);
+    setScale(0, 0);
+  }, [setScale]);
 
   useEffect(() => {
     if (graphRef.current) {
-      const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
+      const pixelsPerTick = (containerWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
       render(pixelsPerTick);
 
       // Clicking allows user to "zoom" into the flamegraph. Zooming means the x axis gets smaller so that the clicked
@@ -136,7 +140,7 @@ const FlameGraph = ({
           setTopLevelIndex(levelIndex);
           setRangeMin(levels[levelIndex][barIndex].start / totalTicks);
           setRangeMax((levels[levelIndex][barIndex].start + levels[levelIndex][barIndex].value) / totalTicks);
-          setAxisValues(levelIndex, barIndex);
+          setScale(levelIndex, barIndex);
         }
       };
 
@@ -170,29 +174,35 @@ const FlameGraph = ({
     rangeMax,
     topLevelIndex,
     totalTicks,
-    wrapperWidth,
+    containerWidth,
     setTopLevelIndex,
     setRangeMin,
     setRangeMax,
     selectedView,
     valueField,
-    setAxisValues,
+    setScale,
+    sizeRef,
   ]);
 
   return (
     <>
-      <div className={styles.xAxis}>
-        {xAxis?.length &&
-          xAxis.map((elem: string, idx: number) => {
-            return (
-              <div key={idx}>
-                {elem}
-                <div className={styles.tick} style={{ textAlign: idx === 0 ? 'left' : idx === 4 ? 'right' : 'center' }}>
-                  <span>|</span>
-                </div>
+      <div className={styles.scaleContainer}>
+        {flameGraphScale.map((scaleItem: FlameGraphScale, idx: number) => {
+          return (
+            <div
+              key={idx}
+              className={styles.scale}
+              style={{ width: `${scaleItem.width}px`, textAlign: idx === 0 ? 'left' : 'right' }}
+            >
+              <div className={styles.text} style={{ marginLeft: idx === 0 ? '-2px' : '-15px' }}>
+                {scaleItem.showText ? scaleItem.text : ''}
               </div>
-            );
-          })}
+              <div className={styles.tick}>
+                <div>|</div>
+              </div>
+            </div>
+          );
+        })}
       </div>
       <div className={styles.graph} ref={sizeRef}>
         <canvas ref={graphRef} data-testid="flameGraph" />
@@ -202,23 +212,59 @@ const FlameGraph = ({
   );
 };
 
-const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: number | undefined) => ({
+const getStyles = (
+  theme: GrafanaTheme2,
+  selectedView: SelectedView,
+  app: CoreApp,
+  flameGraphHeight: number | undefined
+) => ({
   graph: css`
     cursor: pointer;
     float: left;
     overflow: scroll;
     width: ${selectedView === SelectedView.FlameGraph ? '100%' : '50%'};
     ${app !== CoreApp.Explore
-      ? `height: calc(${flameGraphHeight}px - 74px)`
-      : ''}; // 74px to adjust for space needed above flame graph
+      ? `height: calc(${flameGraphHeight}px - 94px)`
+      : ''}; // to adjust for space needed above flame graph
   `,
-  xAxis: css`
+  scaleContainer: css`
     height: 30px;
     display: flex;
-    justify-content: space-between;
+    margin-bottom: 20px;
+
+    // This keeps the horizontal line inside the first and last ticks.
+    & > :nth-child(2) {
+      &:before {
+        margin-left: 4%;
+      }
+    }
+    & > :nth-child(9) {
+      &:before {
+        width: 96%;
+      }
+    }
+  `,
+  scale: css`
+    position: relative;
+
+    &:before {
+      content: '';
+      position: absolute;
+      top: 79%;
+      left: 0;
+      border-top: 2px solid ${theme.colors.emphasize(theme.colors.text.primary, 0.4)};
+      width: 100%;
+    }
+  `,
+  text: css`
+    color: ${theme.colors.emphasize(theme.colors.text.primary, 0.25)};
+    display: inline-block;
+    position: absolute;
+    white-space: nowrap;
   `,
   tick: css`
-    margin: -10px 0 0 0;
+    color: ${theme.colors.emphasize(theme.colors.text.primary, 0.1)};
+    margin: 13px 0 0 0;
   `,
 });
 

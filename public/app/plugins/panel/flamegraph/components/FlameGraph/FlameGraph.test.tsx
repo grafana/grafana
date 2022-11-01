@@ -4,19 +4,12 @@ import React, { useState } from 'react';
 
 import { CoreApp, DataFrameView, MutableDataFrame } from '@grafana/data';
 
-import { SelectedView } from '../types';
+import { FlameGraphScale, SelectedView } from '../types';
 
 import FlameGraph from './FlameGraph';
 import { Item, nestedSetToLevels } from './dataTransform';
 import { data } from './testData/dataNestedSet';
 import 'jest-canvas-mock';
-
-jest.mock('react-use', () => ({
-  useMeasure: () => {
-    const ref = React.useRef();
-    return [ref, { width: 1600 }];
-  },
-}));
 
 describe('FlameGraph', () => {
   const FlameGraphWithProps = () => {
@@ -24,8 +17,8 @@ describe('FlameGraph', () => {
     const [rangeMin, setRangeMin] = useState(0);
     const [rangeMax, setRangeMax] = useState(1);
     const [search] = useState('');
-    const [xAxis, __] = useState<string[]>([]);
-    const [selectedView, _] = useState(SelectedView.Both);
+    const [flameGraphScale, setFlameGraphScale] = useState<FlameGraphScale[]>([]);
+    const [selectedView, __] = useState(SelectedView.Both);
 
     const flameGraphData = new MutableDataFrame(data);
     const dataView = new DataFrameView<Item>(flameGraphData);
@@ -43,9 +36,13 @@ describe('FlameGraph', () => {
         setTopLevelIndex={setTopLevelIndex}
         setRangeMin={setRangeMin}
         setRangeMax={setRangeMax}
-        xAxis={xAxis}
-        setAxisValues={jest.fn()}
+        flameGraphScale={flameGraphScale}
+        setScale={() => {
+          setFlameGraphScale(scaleObject);
+        }}
         selectedView={selectedView}
+        sizeRef={jest.fn()}
+        containerWidth={1600}
       />
     );
   };
@@ -61,5 +58,58 @@ describe('FlameGraph', () => {
     const ctx = canvas!.getContext('2d');
     const calls = ctx!.__getDrawCalls();
     expect(calls).toMatchSnapshot();
+
+    // renders scale
+    expect(screen.getByText('293')).toBeTruthy();
+    expect(screen.getByText('586')).toBeTruthy();
+    expect(screen.getByText('1.14 GiB')).toBeTruthy();
   });
 });
+
+const scaleObject = [
+  {
+    text: '0',
+    showText: true,
+    width: 0,
+  },
+  {
+    text: '146',
+    showText: false,
+    width: 32,
+  },
+  {
+    text: '293',
+    showText: true,
+    width: 32,
+  },
+  {
+    text: '439',
+    showText: false,
+    width: 32,
+  },
+  {
+    text: '586',
+    showText: true,
+    width: 32,
+  },
+  {
+    text: '732',
+    showText: false,
+    width: 32,
+  },
+  {
+    text: '878',
+    showText: false,
+    width: 32,
+  },
+  {
+    text: '1.00',
+    showText: false,
+    width: 32,
+  },
+  {
+    text: '1.14  GiB',
+    showText: true,
+    width: 32,
+  },
+];

@@ -18,7 +18,7 @@ type Props = {
   selectedView: SelectedView;
   setSelectedView: (view: SelectedView) => void;
   containerWidth: number;
-  setAxisValues: (levelIndex: number, barIndex: number) => void;
+  setScale: (levelIndex: number, barIndex: number) => void;
 };
 
 const FlameGraphHeader = ({
@@ -31,7 +31,7 @@ const FlameGraphHeader = ({
   selectedView,
   setSelectedView,
   containerWidth,
-  setAxisValues,
+  setScale,
 }: Props) => {
   const styles = useStyles2((theme) => getStyles(theme, app));
 
@@ -69,7 +69,7 @@ const FlameGraphHeader = ({
             setRangeMin(0);
             setRangeMax(1);
             setSearch('');
-            setAxisValues(0, 0);
+            setScale(0, 0);
           }}
         >
           Reset View

@@ -11,7 +11,7 @@ import FlameGraph from './FlameGraph/FlameGraph';
 import { Item, nestedSetToLevels } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
-import { SelectedView } from './types';
+import { SelectedView, FlameGraphScale } from './types';
 
 type Props = {
   data: DataFrame;
@@ -27,9 +27,10 @@ const FlameGraphContainer = (props: Props) => {
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(1);
   const [search, setSearch] = useState('');
-  const [xAxis, setXAxis] = useState<string[]>([]);
+  const [flameGraphScale, setFlameGraphScale] = useState<FlameGraphScale[]>([]);
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
+  const [flameGraphSizeRef, { width: flameGraphContainerWidth }] = useMeasure<HTMLDivElement>();
   const valueField =
     props.data.fields.find((f) => f.name === 'value') ?? props.data.fields.find((f) => f.type === FieldType.number);
 
@@ -57,23 +58,48 @@ const FlameGraphContainer = (props: Props) => {
     }
   }, [selectedView, setSelectedView, containerWidth]);
 
-  const setAxisValues = useCallback(
+  const setScale = useCallback(
     (levelIndex: number, barIndex: number) => {
       const processor = getDisplayProcessor({
         field: valueField!,
         theme: createTheme() /* theme does not matter for us here */,
       });
       const bar = levels[levelIndex][barIndex];
-      const barMultipliers = [0, 0.25, 0.5, 0.75, 1];
-      let axis = [];
+      const barSettings = [
+        { multiplier: 0, showText: true },
+        { multiplier: 0.0625, showText: false },
+        { multiplier: 0.0625, showText: true },
+        { multiplier: 0.0625, showText: false },
+        { multiplier: 0.0625, showText: true },
+        { multiplier: 0.0625, showText: false },
+        { multiplier: 0.0625, showText: false },
+        { multiplier: 0.0625, showText: false },
+        { multiplier: 0.0625, showText: true },
+      ];
+      let scale = [];
+      let barAccumulator = 0;
 
-      for (let idx in barMultipliers) {
-        const displayValue = processor(bar.value * barMultipliers[idx]);
-        axis.push(displayValue.suffix ? `${displayValue.text} ${displayValue.suffix}` : displayValue.text);
+      for (let i = 0; i < barSettings.length; i++) {
+        let barValue = bar.value * barSettings[i].multiplier;
+        barValue += barAccumulator;
+        barAccumulator += bar.value * barSettings[i].multiplier;
+        const barWidth = flameGraphContainerWidth * barSettings[i].multiplier;
+        const displayValue = processor(barValue);
+
+        let text = displayValue.text;
+        if (i === 8 && displayValue.suffix) {
+          text += ` ${displayValue.suffix}`;
+        }
+
+        scale.push({
+          text: text,
+          showText: barSettings[i].showText,
+          width: barWidth,
+        });
       }
-      setXAxis(axis);
+      setFlameGraphScale(scale);
     },
-    [valueField, levels, setXAxis]
+    [valueField, levels, flameGraphContainerWidth]
   );
 
   return (
@@ -88,7 +114,7 @@ const FlameGraphContainer = (props: Props) => {
         selectedView={selectedView}
         setSelectedView={setSelectedView}
         containerWidth={containerWidth}
-        setAxisValues={setAxisValues}
+        setScale={setScale}
       />
 
       {selectedView !== SelectedView.FlameGraph && (
@@ -102,7 +128,7 @@ const FlameGraphContainer = (props: Props) => {
           setTopLevelIndex={setTopLevelIndex}
           setRangeMin={setRangeMin}
           setRangeMax={setRangeMax}
-          setAxisValues={setAxisValues}
+          setScale={setScale}
         />
       )}
 
@@ -119,9 +145,11 @@ const FlameGraphContainer = (props: Props) => {
           setTopLevelIndex={setTopLevelIndex}
           setRangeMin={setRangeMin}
           setRangeMax={setRangeMax}
-          xAxis={xAxis}
-          setAxisValues={setAxisValues}
+          flameGraphScale={flameGraphScale}
+          setScale={setScale}
           selectedView={selectedView}
+          sizeRef={flameGraphSizeRef}
+          containerWidth={flameGraphContainerWidth}
         />
       )}
     </div>

@@ -20,7 +20,7 @@ type Props = {
   setTopLevelIndex: (level: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
-  setAxisValues: (levelIndex: number, barIndex: number) => void;
+  setScale: (levelIndex: number, barIndex: number) => void;
 };
 
 const FlameGraphTopTableContainer = ({
@@ -33,7 +33,7 @@ const FlameGraphTopTableContainer = ({
   setTopLevelIndex,
   setRangeMin,
   setRangeMax,
-  setAxisValues,
+  setScale,
 }: Props) => {
   const styles = useStyles2(() => getStyles(selectedView, app));
   const [topTable, setTopTable] = useState<TopTableData[]>();
@@ -117,7 +117,7 @@ const FlameGraphTopTableContainer = ({
                 setTopLevelIndex={setTopLevelIndex}
                 setRangeMin={setRangeMin}
                 setRangeMax={setRangeMax}
-                setAxisValues={setAxisValues}
+                setScale={setScale}
               />
             )}
           </AutoSizer>
@@ -134,9 +134,9 @@ const getStyles = (selectedView: SelectedView, app: CoreApp) => {
     topTableContainer: css`
       cursor: pointer;
       float: left;
-      margin: 30px ${marginRight} 0 0;
+      margin: 50px ${marginRight} 0 0;
       width: ${selectedView === SelectedView.TopTable ? '100%' : `calc(50% - ${marginRight})`};
-      ${app !== CoreApp.Explore ? 'height: calc(100% - 74px)' : ''}; // 74px to adjust for space needed above top table
+      ${app !== CoreApp.Explore ? 'height: calc(100% - 94px)' : ''}; // to adjust for space needed above top table
     `,
   };
 };

@@ -40,3 +40,9 @@ export type TopTableValue = {
   value: number;
   unitValue: string;
 };
+
+export interface FlameGraphScale {
+  text: string;
+  showText: boolean;
+  width: number;
+}
