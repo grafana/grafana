@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -61,7 +62,8 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext) response.Res
 	}
 
 	if element.FolderID != 0 {
-		folder, err := l.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, element.FolderID, c.OrgID)
+		id := int(element.FolderID)
+		folder, err := l.folderService.GetFolderByID(c.Req.Context(), &folder.GetFolderQuery{ID: &id})
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "failed to get folder", err)
 		}
