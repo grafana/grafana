@@ -811,8 +811,9 @@ func TestNotificationChannels(t *testing.T) {
 	// Eventually, we'll get all the desired alerts.
 	// nolint:gosec
 	require.Eventually(t, func() bool {
-		// TODO: not waiting for the failed notifications, flaky test?
-		return mockChannel.totalNotifications() >= len(nonEmailAlertNames) && len(mockEmail.emails) >= 1
+		return mockChannel.totalNotifications() >= len(nonEmailAlertNames) &&
+			mockChannel.totalNotificationErrors() >= len(expNotificationErrors) &&
+			len(mockEmail.emails) >= 1
 	}, 30*time.Second, 1*time.Second)
 
 	mockChannel.matchesExpNotifications(t, expNonEmailNotifications)
@@ -988,8 +989,9 @@ type mockNotificationChannel struct {
 	t      *testing.T
 	server *http.Server
 
-	receivedNotifications    map[string][]string
-	receivedNotificationsMtx sync.Mutex
+	receivedNotifications  map[string][]string
+	notificationErrorCount int
+	notificationsMtx       sync.RWMutex
 }
 
 func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNotificationChannel {
@@ -1018,10 +1020,17 @@ func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNot
 
 func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	nc.t.Helper()
-	nc.receivedNotificationsMtx.Lock()
-	defer nc.receivedNotificationsMtx.Unlock()
+	nc.notificationsMtx.Lock()
+	defer nc.notificationsMtx.Unlock()
 
+	// paths[0] contains the receiver's name
 	paths := strings.Split(req.URL.Path[1:], "/")
+	if _, ok := expNotificationErrors[paths[0]]; ok {
+		nc.notificationErrorCount++
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	key := strings.Join(paths[0:2], "/")
 	body := getBody(nc.t, req.Body)
 
@@ -1031,18 +1040,24 @@ func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.
 
 func (nc *mockNotificationChannel) totalNotifications() int {
 	total := 0
-	nc.receivedNotificationsMtx.Lock()
-	defer nc.receivedNotificationsMtx.Unlock()
+	nc.notificationsMtx.RLock()
+	defer nc.notificationsMtx.RUnlock()
 	for _, v := range nc.receivedNotifications {
 		total += len(v)
 	}
 	return total
 }
 
+func (nc *mockNotificationChannel) totalNotificationErrors() int {
+	nc.notificationsMtx.RLock()
+	defer nc.notificationsMtx.RUnlock()
+	return nc.notificationErrorCount
+}
+
 func (nc *mockNotificationChannel) matchesExpNotifications(t *testing.T, exp map[string][]string) {
 	t.Helper()
-	nc.receivedNotificationsMtx.Lock()
-	defer nc.receivedNotificationsMtx.Unlock()
+	nc.notificationsMtx.RLock()
+	defer nc.notificationsMtx.RUnlock()
 
 	require.Len(t, nc.receivedNotifications, len(exp))
 
@@ -1642,7 +1657,7 @@ const alertmanagerConfig = `
               "text": "Integration Test"
             },
             "secureSettings": {
-              "url": "htt://127.0.0.1:8080/slack_failed_recv/slack_failed_test"
+              "url": "http://CHANNEL_ADDR/slack_failed_recv/slack_failed_test"
             }
           }
 		]
@@ -2635,10 +2650,10 @@ var expNonEmailNotifications = map[string][]string{
 
 // expNotificationErrors maps a receiver name with its expected error string.
 var expNotificationErrors = map[string]string{
-	"slack_failed_recv": `Post "htt://127.0.0.1:8080/slack_failed_recv/slack_failed_test": unsupported protocol scheme "htt"`,
+	"slack_failed_recv": "request to Slack API failed with status code 500",
 }
 
-// expNotificationErrors maps a receiver name with its expected error string.
+// expInactiveReceivers is a set of receivers expected to be unused.
 var expInactiveReceivers = map[string]struct{}{
 	"slack_inactive_recv": {},
 }
