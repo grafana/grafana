@@ -105,7 +105,7 @@ title: Grafana documentation
       <img src="/static/img/docs/logos/icon_cloudwatch.svg">
       <h5>AWS CloudWatch</h5>
     </a>
-    <a href="{{< relref "datasources/azuremonitor/" >}}" class="nav-cards__item nav-cards__item--ds">
+    <a href="{{< relref "datasources/azure-monitor/" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/static/img/docs/logos/icon_azure_monitor.jpg">
       <h5>Azure Monitor</h5>
     </a>
