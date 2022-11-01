@@ -21,19 +21,16 @@ const FlameGraphTooltip = ({ tooltipRef, tooltipData, showTooltip }: Props) => {
         <Tooltip
           content={
             <div>
-              <div className={styles.name}>{tooltipData.name}</div>
-              <div>
-                {tooltipData.percentTitle}: <b>{tooltipData.percentValue}%</b>
-              </div>
-              <div>
-                {tooltipData.unitTitle}: <b>{tooltipData.unitValue}</b>
-              </div>
-              <div>
-                Self {tooltipData.unitTitle}: <b>{tooltipData.unitSelf}</b>
-              </div>
-              <div>
+              <p>{tooltipData.name}</p>
+              <p>
+                {tooltipData.unitTitle}
+                <br />
+                Total: <b>{tooltipData.unitValue}</b> ({tooltipData.percentValue}%)
+                <br />
+                Self: <b>{tooltipData.unitSelf}</b> ({tooltipData.percentSelf}%)
+                <br />
                 Samples: <b>{tooltipData.samples}</b>
-              </div>
+              </p>
             </div>
           }
           placement={'right'}
@@ -53,15 +50,15 @@ export const getTooltipData = (
   self: number,
   totalTicks: number
 ): TooltipData => {
-  let samples = value;
-  let percentTitle = '';
-  let unitTitle = '';
+  let percentTitle;
+  let unitTitle;
 
   const processor = getDisplayProcessor({ field, theme: createTheme() /* theme does not matter for us here */ });
   const displayValue = processor(value);
   const displaySelf = processor(self);
 
-  const percent = Math.round(10000 * (samples / totalTicks)) / 100;
+  const percentValue = Math.round(10000 * (value / totalTicks)) / 100;
+  const percentSelf = Math.round(10000 * (self / totalTicks)) / 100;
   let unitValue = displayValue.text + displayValue.suffix;
   let unitSelf = displaySelf.text + displaySelf.suffix;
 
@@ -90,12 +87,13 @@ export const getTooltipData = (
 
   return {
     name: label,
-    percentTitle: percentTitle,
-    percentValue: percent,
-    unitTitle: unitTitle,
+    percentTitle,
+    percentValue,
+    percentSelf,
+    unitTitle,
     unitValue,
     unitSelf,
-    samples: samples.toLocaleString(),
+    samples: value.toLocaleString(),
   };
 };
 

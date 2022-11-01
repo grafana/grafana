@@ -2,6 +2,7 @@ export type TooltipData = {
   name: string;
   percentTitle: string;
   percentValue: number;
+  percentSelf: number;
   unitTitle: string;
   unitValue: string;
   unitSelf: string;
