@@ -126,7 +126,7 @@ func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql
 	return rsp, nil
 }
 
-func (s *sqlObjectServer) getRoute(ctx context.Context, grn *object.GRN) (router.ResourceRouteInfo, error) {
+func (s *sqlObjectServer) getObjectKey(ctx context.Context, grn *object.GRN) (router.ResourceRouteInfo, error) {
 	if grn == nil {
 		return router.ResourceRouteInfo{}, fmt.Errorf("missing grn")
 	}
@@ -148,7 +148,7 @@ func (s *sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest)
 		return s.readFromHistory(ctx, r)
 	}
 
-	route, err := s.getRoute(ctx, r.GRN)
+	route, err := s.getObjectKey(ctx, r.GRN)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +168,7 @@ func (s *sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest)
 }
 
 func (s *sqlObjectServer) readFromHistory(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
-	route, err := s.getRoute(ctx, r.GRN)
+	route, err := s.getObjectKey(ctx, r.GRN)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +234,7 @@ func (s *sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObje
 	constraints := []string{}
 
 	for _, r := range b.Batch {
-		route, err := s.getRoute(ctx, r.GRN)
+		route, err := s.getObjectKey(ctx, r.GRN)
 		if err != nil {
 			return nil, err
 		}
@@ -273,7 +273,7 @@ func createContentsHash(contents []byte) string {
 }
 
 func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
-	route, err := s.getRoute(ctx, r.GRN)
+	route, err := s.getObjectKey(ctx, r.GRN)
 	if err != nil {
 		return nil, err
 	}
@@ -466,7 +466,7 @@ func (s *sqlObjectServer) prepare(ctx context.Context, r *object.WriteObjectRequ
 }
 
 func (s *sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
-	route, err := s.getRoute(ctx, r.GRN)
+	route, err := s.getObjectKey(ctx, r.GRN)
 	if err != nil {
 		return nil, err
 	}
@@ -496,7 +496,7 @@ func (s *sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequ
 }
 
 func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
-	route, err := s.getRoute(ctx, r.GRN)
+	route, err := s.getObjectKey(ctx, r.GRN)
 	if err != nil {
 		return nil, err
 	}
@@ -505,15 +505,15 @@ func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRe
 	page := ""
 	args := []interface{}{key}
 	if r.NextPageToken != "" {
-		args = append(args, r.NextPageToken) // TODO, need to get time from the version
-		page = "AND updated <= ?"
+		// args = append(args, r.NextPageToken) // TODO, need to get time from the version
+		// page = "AND updated <= ?"
+		return nil, fmt.Errorf("next page not supported yet")
 	}
 
-	// TODO limiting...
 	query := `SELECT "version","size","etag","updated","updated_by","message"
 		FROM object_history
 		WHERE "key"=? ` + page + `
-		ORDER BY "updated" DESC
+		ORDER BY "updated" DESC LIMIT 100
 	;`
 
 	timestamp := time.Now()
