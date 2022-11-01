@@ -1,30 +1,19 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { IconButton, stylesFactory, useStyles2 } from '@grafana/ui';
 
-import { SEARCH_PANELS_LOCAL_STORAGE_KEY } from '../constants';
 import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
-import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchView } from '../page/components/SearchView';
+import { useAndInitStateManager } from '../state/SearchState';
 
 export interface Props {}
 
 export function DashboardSearch({}: Props) {
   const styles = useStyles2(getStyles);
-  const { query, onQueryChange, onCloseSearch } = useSearchQuery({});
-
-  let [includePanels, setIncludePanels] = useLocalStorage<boolean>(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
-  if (!config.featureToggles.panelTitleSearch) {
-    includePanels = false;
-  }
-
-  const onSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onQueryChange(e.currentTarget.value);
-  };
+  const stateManager = useAndInitStateManager({});
+  const state = stateManager.useState();
 
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
@@ -35,9 +24,9 @@ export function DashboardSearch({}: Props) {
           <div>
             <input
               type="text"
-              placeholder={includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
-              value={query.query ?? ''}
-              onChange={onSearchQueryChange}
+              placeholder={state.includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
+              value={state.query ?? ''}
+              onChange={(e) => stateManager.onQueryChange(e.currentTarget.value)}
               onKeyDown={onKeyDown}
               spellCheck={false}
               className={styles.input}
@@ -45,16 +34,11 @@ export function DashboardSearch({}: Props) {
           </div>
 
           <div className={styles.closeBtn}>
-            <IconButton name="times" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
+            <IconButton name="times" onClick={stateManager.onCloseSearch} size="xxl" tooltip="Close search" />
           </div>
         </div>
         <div className={styles.search}>
-          <SearchView
-            showManage={false}
-            includePanels={includePanels!}
-            setIncludePanels={setIncludePanels}
-            keyboardEvents={keyboardEvents}
-          />
+          <SearchView showManage={false} keyboardEvents={keyboardEvents} />
         </div>
       </div>
     </div>

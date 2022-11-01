@@ -1,26 +1,19 @@
 import { css } from '@emotion/css';
-import debounce from 'debounce-promise';
-import React, { useCallback, useMemo, useState } from 'react';
-import { useAsync, useDebounce } from 'react-use';
+import React, { useCallback, useState } from 'react';
+import { useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { FolderDTO } from 'app/types';
 
 import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequirements';
-import { getGrafanaSearcher, SearchQuery } from '../../service';
+import { getGrafanaSearcher } from '../../service';
 import { useSearchStateManager } from '../../state/SearchState';
 import { SearchLayout } from '../../types';
-import {
-  reportDashboardListViewed,
-  reportSearchResultInteraction,
-  reportSearchQueryInteraction,
-  reportSearchFailedQueryInteraction,
-} from '../reporting';
+import { reportDashboardListViewed, reportSearchResultInteraction } from '../reporting';
 import { newSearchSelection, updateSearchSelection } from '../selection';
 
 import { ActionRow, getValidQueryLayout } from './ActionRow';
@@ -35,74 +28,30 @@ export type SearchViewProps = {
   showManage: boolean;
   folderDTO?: FolderDTO;
   hidePseudoFolders?: boolean; // Recent + starred
-  includePanels: boolean;
-  setIncludePanels: (v: boolean) => void;
   keyboardEvents: Observable<React.KeyboardEvent>;
 };
 
-export const SearchView = ({
-  showManage,
-  folderDTO,
-  hidePseudoFolders,
-  includePanels,
-  setIncludePanels,
-  keyboardEvents,
-}: SearchViewProps) => {
+export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardEvents }: SearchViewProps) => {
   const styles = useStyles2(getStyles);
   const stateManager = useSearchStateManager();
-  const query = stateManager.useState();
+  const state = stateManager.useState();
 
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
-  const layout = getValidQueryLayout(query);
+  const layout = getValidQueryLayout(state);
   const isFolders = layout === SearchLayout.Folders;
 
   const [listKey, setListKey] = useState(Date.now());
-  const eventTrackingNamespace = folderDTO ? 'manage_dashboards' : 'dashboard_search';
-
-  const searchQuery = useMemo(() => {
-    const q: SearchQuery = {
-      query: query.query,
-      tags: query.tag as string[],
-      ds_uid: query.datasource as string,
-      location: folderDTO?.uid, // This will scope all results to the prefix
-      sort: query.sort?.value,
-      explain: query.explain,
-      withAllowedActions: query.explain, // allowedActions are currently not used for anything on the UI and added only in `explain` mode
-      starred: query.starred,
-    };
-
-    // Only dashboards have additional properties
-    if (q.sort?.length && !q.sort.includes('name')) {
-      q.kind = ['dashboard', 'folder']; // skip panels
-    }
-
-    if (!q.query?.length) {
-      q.query = '*';
-      if (!q.location) {
-        q.kind = ['dashboard', 'folder']; // skip panels
-      }
-    }
-
-    if (!includePanels && !q.kind) {
-      q.kind = ['dashboard', 'folder']; // skip panels
-    }
-
-    if (q.query === '*' && !q.sort?.length) {
-      q.sort = 'name_sort';
-    }
-    return q;
-  }, [query, folderDTO, includePanels]);
 
   // Search usage reporting
   useDebounce(
     () => {
-      reportDashboardListViewed(eventTrackingNamespace, {
-        layout: query.layout,
-        starred: query.starred,
-        sortValue: query.sort?.value,
-        query: query.query,
-        tagCount: query.tag?.length,
-        includePanels,
+      reportDashboardListViewed(state.eventTrackingNamespace, {
+        layout: state.layout,
+        starred: state.starred,
+        sortValue: state.sort?.value,
+        query: state.query,
+        tagCount: state.tag?.length,
+        includePanels: state.includePanels,
       });
     },
     1000,
@@ -110,56 +59,16 @@ export const SearchView = ({
   );
 
   const onClickItem = () => {
-    reportSearchResultInteraction(eventTrackingNamespace, {
-      layout: query.layout,
-      starred: query.starred,
-      sortValue: query.sort?.value,
-      query: query.query,
-      tagCount: query.tag?.length,
-      includePanels,
+    reportSearchResultInteraction(state.eventTrackingNamespace, {
+      layout: state.layout,
+      starred: state.starred,
+      sortValue: state.sort?.value,
+      query: state.query,
+      tagCount: state.tag?.length,
+      includePanels: state.includePanels,
     });
     stateManager.onSelectSearchItem();
   };
-
-  const doSearch = useMemo(
-    () =>
-      debounce((query, searchQuery, includePanels, eventTrackingNamespace) => {
-        const trackingInfo = {
-          layout: query.layout,
-          starred: query.starred,
-          sortValue: query.sort?.value,
-          query: query.query,
-          tagCount: query.tag?.length,
-          includePanels,
-        };
-
-        reportSearchQueryInteraction(eventTrackingNamespace, trackingInfo);
-
-        if (searchQuery.starred) {
-          return getGrafanaSearcher()
-            .starred(searchQuery)
-            .catch((error) =>
-              reportSearchFailedQueryInteraction(eventTrackingNamespace, { ...trackingInfo, error: error?.message })
-            );
-        }
-
-        return getGrafanaSearcher()
-          .search(searchQuery)
-          .catch((error) =>
-            reportSearchFailedQueryInteraction(eventTrackingNamespace, { ...trackingInfo, error: error?.message })
-          );
-      }, 300),
-    []
-  );
-
-  const results = useAsync(() => {
-    // No need to query all dashboards if we are in search folder view
-    if (layout === SearchLayout.Folders && !folderDTO) {
-      return Promise.resolve();
-    }
-
-    return doSearch(query, searchQuery, includePanels, eventTrackingNamespace);
-  }, [searchQuery, layout]);
 
   const clearSelection = useCallback(() => {
     searchSelection.items.clear();
@@ -174,25 +83,20 @@ export const SearchView = ({
     [searchSelection]
   );
 
-  // This gets the possible tags from within the query results
-  const getTagOptions = (): Promise<TermCount[]> => {
-    return getGrafanaSearcher().tags(searchQuery);
-  };
-
   // function to update items when dashboards or folders are moved or deleted
   const onChangeItemsList = async () => {
     // clean up search selection
     clearSelection();
     setListKey(Date.now());
     // trigger again the search to the backend
-    stateManager.onQueryChange(query.query);
+    stateManager.onQueryChange(state.query);
   };
 
   const renderResults = () => {
-    const value = results.value;
+    const value = state.result;
 
     if ((!value || !value.totalRows) && !isFolders) {
-      if (results.loading && !value) {
+      if (state.loading && !value) {
         return <Spinner />;
       }
 
@@ -203,13 +107,13 @@ export const SearchView = ({
           <Button
             variant="secondary"
             onClick={() => {
-              if (query.query) {
+              if (state.query) {
                 stateManager.onQueryChange('');
               }
-              if (query.tag?.length) {
+              if (state.tag?.length) {
                 stateManager.onTagFilterChange([]);
               }
-              if (query.datasource) {
+              if (state.datasource) {
                 stateManager.onDatasourceChange(undefined);
               }
             }}
@@ -230,7 +134,7 @@ export const SearchView = ({
             selectionToggle={toggleSelection}
             onTagSelected={stateManager.onAddTag}
             renderStandaloneBody={true}
-            tags={query.tag}
+            tags={state.tag}
             key={listKey}
             onClickItem={onClickItem}
           />
@@ -241,7 +145,7 @@ export const SearchView = ({
           key={listKey}
           selection={selection}
           selectionToggle={toggleSelection}
-          tags={query.tag}
+          tags={state.tag}
           onTagSelected={stateManager.onAddTag}
           hidePseudoFolders={hidePseudoFolders}
           onClickItem={onClickItem}
@@ -262,7 +166,7 @@ export const SearchView = ({
               height: height,
               onTagSelected: stateManager.onAddTag,
               keyboardEvents,
-              onDatasourceChange: query.datasource ? stateManager.onDatasourceChange : undefined,
+              onDatasourceChange: state.datasource ? stateManager.onDatasourceChange : undefined,
               onClickItem: onClickItem,
             };
 
@@ -281,7 +185,7 @@ export const SearchView = ({
     );
   };
 
-  if (folderDTO && !results.loading && !results.value?.totalRows && !query.query.length) {
+  if (folderDTO && !state.loading && !state.result?.totalRows && !state.query.length) {
     return (
       <EmptyListCTA
         title="This folder doesn't have any dashboards yet"
@@ -304,10 +208,10 @@ export const SearchView = ({
         <ActionRow
           onLayoutChange={(v) => {
             if (v === SearchLayout.Folders) {
-              if (query.query) {
+              if (state.query) {
                 stateManager.onQueryChange(''); // parent will clear the sort
               }
-              if (query.starred) {
+              if (state.starred) {
                 stateManager.onClearStarred();
               }
             }
@@ -317,13 +221,13 @@ export const SearchView = ({
           onStarredFilterChange={!hidePseudoFolders ? undefined : stateManager.onStarredFilterChange}
           onSortChange={stateManager.onSortChange}
           onTagFilterChange={stateManager.onTagFilterChange}
-          getTagOptions={getTagOptions}
+          getTagOptions={stateManager.getTagOptions}
           getSortOptions={getGrafanaSearcher().getSortOptions}
           sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
           onDatasourceChange={stateManager.onDatasourceChange}
-          query={query}
-          includePanels={includePanels!}
-          setIncludePanels={setIncludePanels}
+          query={state}
+          includePanels={state.includePanels!}
+          setIncludePanels={stateManager.onSetIncludePanels}
         />
       )}
 
