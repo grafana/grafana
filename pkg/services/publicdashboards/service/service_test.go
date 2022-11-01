@@ -226,7 +226,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("Pubdash access token generation throws an error if pubdash is not persisted", func(t *testing.T) {
+	t.Run("Throws an error when pubdash with generated access token already exists", func(t *testing.T) {
 		dashboard := models.NewDashboard("testDashie")
 		pubdash := &PublicDashboard{
 			IsEnabled:          true,
@@ -240,7 +240,6 @@ func TestCreatePublicDashboard(t *testing.T) {
 		publicDashboardStore.On("FindDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 		publicDashboardStore.On("Find", mock.Anything, mock.Anything).Return(nil, nil)
 		publicDashboardStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(pubdash, nil)
-		publicDashboardStore.On("NewPublicDashboardUid", mock.Anything).Return("an-uid", nil)
 
 		service := &PublicDashboardServiceImpl{
 			log:   log.New("test.logger"),
@@ -337,6 +336,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
+		// insert initial pubdash
 		savedPubdash, err := service.Create(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
@@ -358,9 +358,6 @@ func TestUpdatePublicDashboard(t *testing.T) {
 				AccessToken:        "NOTAREALUUID",
 			},
 		}
-
-		// Since the dto.PublicDashboard has a uid, this will call
-		// service.updatePublicDashboard
 		updatedPubdash, err := service.Update(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 

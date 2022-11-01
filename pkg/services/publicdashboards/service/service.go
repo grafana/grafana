@@ -149,7 +149,6 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 		return nil, ErrPublicDashboardBadRequest
 	}
 
-	// save
 	uid, err := pd.NewPublicDashboardUid(ctx)
 	if err != nil {
 		return nil, err
