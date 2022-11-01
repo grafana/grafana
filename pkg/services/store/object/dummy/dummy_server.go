@@ -101,7 +101,8 @@ func (i *dummyObjectServer) findObject(ctx context.Context, grn *object.GRN, ver
 }
 
 func (i *dummyObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
-	_, objVersion, err := i.findObject(ctx, r.GRN, r.Version)
+	grn := getFullGRN(ctx, r.GRN)
+	_, objVersion, err := i.findObject(ctx, grn, r.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +176,7 @@ func (i *dummyObjectServer) update(ctx context.Context, r *object.WriteObjectReq
 			GRN:       r.GRN,
 			Created:   i.Object.Created,
 			CreatedBy: i.Object.CreatedBy,
-			Updated:   time.Now().Unix(),
+			Updated:   time.Now().UnixMilli(),
 			UpdatedBy: store.GetUserIDString(modifier),
 			Size:      int64(len(r.Body)),
 			ETag:      createContentsHash(r.Body),
@@ -225,8 +226,8 @@ func (i *dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectReq
 	modifier := store.GetUserIDString(store.UserFromContext(ctx))
 	rawObj := &object.RawObject{
 		GRN:       r.GRN,
-		Updated:   time.Now().Unix(),
-		Created:   time.Now().Unix(),
+		Updated:   time.Now().UnixMilli(),
+		Created:   time.Now().UnixMilli(),
 		CreatedBy: modifier,
 		UpdatedBy: modifier,
 		Size:      int64(len(r.Body)),
@@ -265,12 +266,13 @@ func (i *dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectReq
 }
 
 func (i *dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
-	namespace := namespaceFromUID(r.GRN)
+	grn := getFullGRN(ctx, r.GRN)
+	namespace := namespaceFromUID(grn)
 	obj, err := i.collection.FindFirst(ctx, namespace, func(i *RawObjectWithHistory) (bool, error) {
 		if i == nil || r == nil {
 			return false, nil
 		}
-		return r.GRN.Equals(i.Object.GRN), nil
+		return grn.Equals(i.Object.GRN), nil
 	})
 	if err != nil {
 		return nil, err
@@ -284,8 +286,9 @@ func (i *dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequ
 }
 
 func (i *dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
-	_, err := i.collection.Delete(ctx, namespaceFromUID(r.GRN), func(i *RawObjectWithHistory) (bool, error) {
-		if r.GRN.Equals(i.Object.GRN) {
+	grn := getFullGRN(ctx, r.GRN)
+	_, err := i.collection.Delete(ctx, namespaceFromUID(grn), func(i *RawObjectWithHistory) (bool, error) {
+		if grn.Equals(i.Object.GRN) {
 			if r.PreviousVersion != "" && i.Object.Version != r.PreviousVersion {
 				return false, fmt.Errorf("expected the previous version to be %s, but was %s", r.PreviousVersion, i.Object.Version)
 			}
@@ -306,7 +309,8 @@ func (i *dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRe
 }
 
 func (i *dummyObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
-	obj, _, err := i.findObject(ctx, r.GRN, "")
+	grn := getFullGRN(ctx, r.GRN)
+	obj, _, err := i.findObject(ctx, grn, "")
 	if err != nil {
 		return nil, err
 	}
@@ -369,4 +373,12 @@ func (i *dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchRe
 	return &object.ObjectSearchResponse{
 		Results: searchResults,
 	}, nil
+}
+
+func getFullGRN(ctx context.Context, grn *object.GRN) *object.GRN {
+	if grn.TenantId == 0 {
+		modifier := store.UserFromContext(ctx)
+		grn.TenantId = modifier.OrgID
+	}
+	return grn
 }
