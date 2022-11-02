@@ -124,16 +124,6 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   onLayoutChange = (layout: SearchLayout) => {
     localStorage.setItem(SEARCH_SELECTED_LAYOUT, layout);
 
-    /*       if (layout === SearchLayout.Folders) {
-        if (state.query) {
-          stateManager.onQueryChange(''); // parent will clear the sort
-        }
-        if (state.starred) {
-          stateManager.onClearStarred();
-        }
-      }      
-       */
-
     if (this.state.sort && layout === SearchLayout.Folders) {
       this.setStateAndDoSearch({ layout, prevSort: this.state.sort, sort: null });
     } else {

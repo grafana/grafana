@@ -10,7 +10,6 @@ jest.mock('@grafana/runtime', () => {
   const originalModule = jest.requireActual('@grafana/runtime');
   return {
     ...originalModule,
-    reportInteraction: jest.fn(),
   };
 });
 

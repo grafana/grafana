@@ -9,7 +9,6 @@ import { CloudWatchQuery } from './types';
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
-    reportInteraction: jest.fn(),
     getAppEvents: () => ({
       subscribe: jest.fn((e, h) => {
         handler = h;
