@@ -113,6 +113,8 @@ func (e *objectStoreJob) start() {
 		e.status.Status = "error: " + err.Error()
 		return
 	}
+	e.status.Last = fmt.Sprintf("export %d dashboards", len(dashInfo))
+	e.broadcaster(e.status)
 
 	for _, dash := range dashInfo {
 		rowUser.OrgID = dash.OrgID

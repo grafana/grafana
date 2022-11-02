@@ -8,17 +8,31 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+func getKeyColumn(name string) *migrator.Column {
+	return &migrator.Column{
+		Name:     name,
+		Type:     migrator.DB_NVarchar,
+		Length:   1024,
+		Nullable: false,
+		IsLatin:  true, // only used in MySQL
+	}
+}
+
 func addObjectStorageMigrations(mg *migrator.Migrator) {
 	tables := []migrator.Table{}
 	tables = append(tables, migrator.Table{
 		Name: "object",
 		Columns: []*migrator.Column{
 			// Object key contains everything required to make it unique across all instances
-			// orgId+scope+kind+uid
-			{Name: "key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false, IsPrimaryKey: true},
+			// orgId + scope + kind + uid
+			func() *migrator.Column {
+				pk := getKeyColumn("key")
+				pk.IsPrimaryKey = true
+				return pk
+			}(),
 
 			// This is an optimization for listing everything at the same level in the object store
-			{Name: "parent_folder_key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
+			getKeyColumn("parent_folder_key"),
 
 			// The object type
 			{Name: "kind", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
@@ -26,7 +40,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			// The raw object body (any byte array)
 			{Name: "body", Type: migrator.DB_Blob, Nullable: false},
 			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false}, // md5(body)
+			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false, IsLatin: true}, // md5(body)
 			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
 
 			// Who changed what when -- We should avoid JOINs with other tables in the database
@@ -55,7 +69,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	tables = append(tables, migrator.Table{
 		Name: "object_labels",
 		Columns: []*migrator.Column{
-			{Name: "key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
+			getKeyColumn("key"),
 			{Name: "label", Type: migrator.DB_NVarchar, Length: 191, Nullable: false},
 			{Name: "value", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
 		},
@@ -68,7 +82,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 		Name: "object_ref",
 		Columns: []*migrator.Column{
 			// Source:
-			{Name: "key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
+			getKeyColumn("key"),
 
 			// Address (defined in the body, not resolved, may be invalid and change)
 			{Name: "kind", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
@@ -77,7 +91,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 
 			// Runtime calcs (will depend on the system state)
 			{Name: "resolved_ok", Type: migrator.DB_Bool, Nullable: false},
-			{Name: "resolved_to", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
+			getKeyColumn("resolved_to"),
 			{Name: "resolved_warning", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "resolved_time", Type: migrator.DB_DateTime, Nullable: false}, // resolution cache timestamp
 		},
@@ -91,13 +105,13 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	tables = append(tables, migrator.Table{
 		Name: "object_history",
 		Columns: []*migrator.Column{
-			{Name: "key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
+			getKeyColumn("key"),
 			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
 
 			// Raw bytes
 			{Name: "body", Type: migrator.DB_Blob, Nullable: false},
 			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false}, // md5(body)
+			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false, IsLatin: true}, // md5(body)
 
 			// Who changed what when
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
@@ -123,19 +137,16 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	// Migration cleanups: given that this is a complex setup
 	// that requires a lot of testing before we are ready to push out of dev
 	// this script lets us easy wipe previous changes and initialize clean tables
-	suffix := " (v0)" // change this when we want to wipe and reset the object tables
+	suffix := " (X)" // change this when we want to wipe and reset the object tables
 	mg.AddMigration("ObjectStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
 		DELETE FROM migration_log WHERE migration_id LIKE 'ObjectStore init%';
-		DROP TABLE IF EXISTS "object"; 
-		DROP TABLE IF EXISTS "object_ref"; 
-		DROP TABLE IF EXISTS "object_history"; 
-		DROP TABLE IF EXISTS "object_labels";
-		DROP TABLE IF EXISTS "object_alias";
-		DROP TABLE IF EXISTS "object_access";
 	`)))
 
 	// Initialize all tables
 	for t := range tables {
+		mg.AddMigration("ObjectStore init: drop "+tables[t].Name+suffix, migrator.NewRawSQLMigration(
+			fmt.Sprintf("DROP TABLE IF EXISTS %s", tables[t].Name),
+		))
 		mg.AddMigration("ObjectStore init: table "+tables[t].Name+suffix, migrator.NewAddTableMigration(tables[t]))
 		for i := range tables[t].Indices {
 			mg.AddMigration(fmt.Sprintf("ObjectStore init: index %s[%d]"+suffix, tables[t].Name, i), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
