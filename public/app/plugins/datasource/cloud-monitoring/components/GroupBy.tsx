@@ -47,6 +47,7 @@ export const GroupBy: FunctionComponent<Props> = ({
           onChange={(options) => {
             onChange({ ...query, groupBys: options.map((o) => o.value!) });
           }}
+          menuPlacement="top"
         />
       </EditorField>
       <Aggregation

@@ -65,12 +65,9 @@ func modelsToFolders(m []*models.Folder) []*folder.Folder {
 			UID:         f.Uid,
 			Title:       f.Title,
 			Description: "", // model.Folder does not have a description
-			URL:         f.Url,
 			Created:     f.Created,
-			CreatedBy:   f.CreatedBy,
 			Updated:     f.Updated,
 			UpdatedBy:   f.UpdatedBy,
-			HasACL:      f.HasACL,
 		}
 	}
 	return ret
