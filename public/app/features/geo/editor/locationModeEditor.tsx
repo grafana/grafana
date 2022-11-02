@@ -1,8 +1,15 @@
+import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
-import { StandardEditorProps, FrameGeometrySourceMode, DataFrame, FrameGeometrySource } from '@grafana/data';
+import {
+  StandardEditorProps,
+  FrameGeometrySourceMode,
+  DataFrame,
+  FrameGeometrySource,
+  GrafanaTheme2,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Alert, HorizontalGroup, RadioButtonGroup } from '@grafana/ui';
+import { Alert, HorizontalGroup, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { FrameGeometryField, getGeometryField, getLocationMatchers } from '../utils/location';
 
@@ -53,10 +60,12 @@ export const LocationModeEditor = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.settings]);
 
+  const styles = useStyles2(getStyles);
+
   // TODO extend for other cases, for example auto when it's happy
   const dataValidation = () => {
     if (info && info.warning) {
-      return <Alert title={info.warning} severity="warning" />;
+      return <Alert title={info.warning} severity="warning" className={styles.alert} />;
     } else {
       return null;
     }
@@ -74,4 +83,16 @@ export const LocationModeEditor = ({
       <HorizontalGroup>{dataValidation()}</HorizontalGroup>
     </>
   );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    alert: css`
+      & div {
+        padding: 4px;
+      }
+      margin-bottom: 0px;
+      padding: 2px;
+    `,
+  };
 };
