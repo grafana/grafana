@@ -2,12 +2,17 @@ import { render, screen } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
 
 import { dateTime } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { createLokiDatasource } from '../mocks';
 
 import { LokiQueryField } from './LokiQueryField';
 
 type Props = ComponentProps<typeof LokiQueryField>;
+
+beforeAll(() => {
+  config.featureToggles.lokiMonacoEditor = true;
+});
 
 describe('LokiQueryField', () => {
   let props: Props;
