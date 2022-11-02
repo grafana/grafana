@@ -34,4 +34,5 @@ To view notification errors, complete the following steps.
    This can be either OK, No attempts, or Error.
 
 ## Useful links
+
 [Receivers API](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json)
