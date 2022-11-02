@@ -1,15 +1,51 @@
 import { isEmpty } from 'lodash';
 
-import {
-  QueryEditorExpressionType,
-  QueryEditorFunctionExpression,
-  QueryEditorGroupByExpression,
-  QueryEditorPropertyExpression,
-  QueryEditorPropertyType,
-} from '../expressions';
-import { SQLQuery, SQLExpression } from '../types';
+import { RAQBFieldTypes, SQLExpression, SQLQuery } from 'app/features/plugins/sql/types';
 
-export function defaultToRawSql({ sql, dataset, table }: SQLQuery): string {
+export function getFieldConfig(type: string): { raqbFieldType: RAQBFieldTypes; icon: string } {
+  switch (type) {
+    case 'boolean': {
+      return { raqbFieldType: 'boolean', icon: 'toggle-off' };
+    }
+    case 'bit':
+    case 'bit varying':
+    case 'character':
+    case 'character varying':
+    case 'text': {
+      return { raqbFieldType: 'text', icon: 'text' };
+    }
+    case 'smallint':
+    case 'integer':
+    case 'bigint':
+    case 'decimal':
+    case 'numeric':
+    case 'real':
+    case 'double precision':
+    case 'serial':
+    case 'bigserial':
+    case 'smallserial': {
+      return { raqbFieldType: 'number', icon: 'calculator-alt' };
+    }
+    case 'date': {
+      return { raqbFieldType: 'date', icon: 'clock-nine' };
+    }
+    case 'time':
+    case 'time with time zone':
+    case 'time without time zone':
+    case 'interval': {
+      return { raqbFieldType: 'time', icon: 'clock-nine' };
+    }
+    case 'timestamp':
+    case 'timestamp with time zone':
+    case 'timestamp without time zone': {
+      return { raqbFieldType: 'datetime', icon: 'clock-nine' };
+    }
+    default:
+      return { raqbFieldType: 'text', icon: 'text' };
+  }
+}
+
+export function toRawSql({ sql, table }: SQLQuery): string {
   let rawQuery = '';
 
   // Return early with empty string if there is no sql column
@@ -19,8 +55,8 @@ export function defaultToRawSql({ sql, dataset, table }: SQLQuery): string {
 
   rawQuery += createSelectClause(sql.columns);
 
-  if (dataset && table) {
-    rawQuery += `FROM ${dataset}.${table} `;
+  if (table) {
+    rawQuery += `FROM ${table} `;
   }
 
   if (sql.whereString) {
@@ -61,6 +97,7 @@ function createSelectClause(sqlColumns: NonNullable<SQLExpression['columns']>): 
     }
     return rawColumn;
   });
+
   return `SELECT ${columns.join(', ')} `;
 }
 
@@ -73,37 +110,3 @@ export const haveColumns = (columns: SQLExpression['columns']): columns is NonNu
   const haveFunction = columns.some((c) => c.name);
   return haveColumn || haveFunction;
 };
-
-/**
- * Creates a GroupByExpression for a specified field
- */
-export function setGroupByField(field?: string): QueryEditorGroupByExpression {
-  return {
-    type: QueryEditorExpressionType.GroupBy,
-    property: {
-      type: QueryEditorPropertyType.String,
-      name: field,
-    },
-  };
-}
-
-/**
- * Creates a PropertyExpression for a specified field
- */
-export function setPropertyField(field?: string): QueryEditorPropertyExpression {
-  return {
-    type: QueryEditorExpressionType.Property,
-    property: {
-      type: QueryEditorPropertyType.String,
-      name: field,
-    },
-  };
-}
-
-export function createFunctionField(functionName?: string): QueryEditorFunctionExpression {
-  return {
-    type: QueryEditorExpressionType.Function,
-    name: functionName,
-    parameters: [],
-  };
-}
