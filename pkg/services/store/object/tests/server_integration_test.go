@@ -33,9 +33,9 @@ type objectVersionMatcher struct {
 }
 
 func timestampInRange(ts int64, tsRange []time.Time) bool {
-	loww := tsRange[0].UnixMilli() - 1
+	low := tsRange[0].UnixMilli() - 1
 	high := tsRange[1].UnixMilli() + 1
-	return ts >= loww && ts <= high
+	return ts >= low && ts <= high
 }
 
 func requireObjectMatch(t *testing.T, obj *object.RawObject, m rawObjectMatcher) {
