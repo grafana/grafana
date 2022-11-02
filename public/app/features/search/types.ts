@@ -70,18 +70,6 @@ export interface SearchAction extends Action {
   payload?: any;
 }
 
-export interface DashboardQuery {
-  query: string;
-  tag: string[];
-  starred: boolean;
-  explain?: boolean; // adds debug info
-  datasource?: string;
-  sort: SelectableValue | null;
-  // Save sorting data between layouts
-  prevSort: SelectableValue | null;
-  layout: SearchLayout;
-}
-
 export type EventTrackingNamespace = 'manage_dashboards' | 'dashboard_search';
 
 export interface SearchState {

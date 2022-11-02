@@ -180,17 +180,7 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
         <ManageActions items={searchSelection.items} onChange={onChangeItemsList} clearSelection={clearSelection} />
       ) : (
         <ActionRow
-          onLayoutChange={(v) => {
-            if (v === SearchLayout.Folders) {
-              if (state.query) {
-                stateManager.onQueryChange(''); // parent will clear the sort
-              }
-              if (state.starred) {
-                stateManager.onClearStarred();
-              }
-            }
-            stateManager.onLayoutChange(v);
-          }}
+          onLayoutChange={stateManager.onLayoutChange}
           showStarredFilter={hidePseudoFolders}
           onStarredFilterChange={!hidePseudoFolders ? undefined : stateManager.onStarredFilterChange}
           onSortChange={stateManager.onSortChange}
@@ -199,9 +189,9 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
           getSortOptions={getGrafanaSearcher().getSortOptions}
           sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
           onDatasourceChange={stateManager.onDatasourceChange}
-          query={state}
+          state={state}
           includePanels={state.includePanels!}
-          setIncludePanels={stateManager.onSetIncludePanels}
+          onSetIncludePanels={stateManager.onSetIncludePanels}
         />
       )}
 
