@@ -1,0 +1,15 @@
+local grafana = import "grizzly/grafana.libsonnet";
+local resource = import "grizzly/resource.libsonnet";
+local dashboard = grafana.dashboard;
+{
+  folders: [grafana.folder.new('dev-dashboards', 'dev-dashboards')],
+  dashboards: [{{range .Dashboards}}
+    dashboard.new('{{.Name}}', import '{{.Path}}') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },{{end}}
+  ],
+} 

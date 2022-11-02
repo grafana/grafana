@@ -1,17 +1,9 @@
-DASHBOARD_FILES = $(shell find ./ -type f -name '*.json')
-DASHBOARDS = $(patsubst ./%, %, $(DASHBOARD_FILES))
+DASHBOARDS = $(shell find ./ -type f -name '*.json')
 
-gen.libsonnet: $(DASHBOARDS)
-	@rm $@ 2>/dev/null || true
-	@echo '{' >> $@
-	@echo "\tgrafanaDashboardFolder:: 'dev-dashboards', " >> $@
-	@echo '\tgrafanaDashboards+:: {' >> $@
-	@for dashboard in $(filter-out $(lastword $(DASHBOARDS)), $(DASHBOARDS)); do \
-		echo "\t\t'$$(basename $$dashboard)': (import '$$dashboard')," >> $@; \
-	done
-	@echo "\t\t'$(notdir $(lastword $(DASHBOARDS)))': (import '$(lastword $(DASHBOARDS))')" >> $@;
-	@echo '\t}' >> $@
-	@echo '}' >> $@
-	@echo "$(words $(DASHBOARDS)) dashboards added to $@"
+vendor:
+	jb install
 
+gen.libsonnet: $(DASHBOARDS) vendor
+	go generate ./gen.go
+	
 main.libsonnet: gen.libsonnet
