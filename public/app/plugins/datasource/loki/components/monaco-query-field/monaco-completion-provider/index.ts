@@ -3,7 +3,6 @@ import type { Monaco, monacoTypes } from '@grafana/ui';
 import { CompletionDataProvider } from './CompletionDataProvider';
 import { NeverCaseError } from './NeverCaseError';
 import { getCompletions, CompletionType } from './completions';
-import { getSituation } from './situation';
 
 // from: monacoTypes.languages.CompletionItemInsertTextRule.InsertAsSnippet
 const INSERT_AS_SNIPPET_ENUM_VALUE = 4;
@@ -77,9 +76,8 @@ export function getCompletionProvider(
       column: position.column,
       lineNumber: position.lineNumber,
     };
-    const offset = model.getOffsetAt(positionClone);
-    const situation = getSituation(model.getValue(), offset);
-    const completionsPromise = situation != null ? getCompletions(situation, dataProvider) : Promise.resolve([]);
+    const completionsPromise =
+      getCompletions(model.getValue(), model.getOffsetAt(positionClone), dataProvider) || Promise.resolve([]);
     return completionsPromise.then((items) => {
       // monaco by default alphabetically orders the items.
       // to stop it, we use a number-as-string sortkey,
