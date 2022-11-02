@@ -24,7 +24,7 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
   const linkClass = cx({
     [styles.link]: true,
     [styles.activeStyle]: item.active,
-    [styles.isSection]: Boolean(children?.length),
+    [styles.isSection]: Boolean(children?.length) || item.isSection,
     [styles.hasActiveChild]: hasActiveChild,
     [styles.isSectionRoot]: isSectionRoot,
     [styles.noRootMargin]: noRootMargin,

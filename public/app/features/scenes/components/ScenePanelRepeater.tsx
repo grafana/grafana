@@ -21,7 +21,7 @@ export class ScenePanelRepeater extends SceneObjectBase<RepeatOptions> {
     super.activate();
 
     this.subs.add(
-      this.getData().subscribe({
+      this.getData().subscribeToState({
         next: (data) => {
           if (data.data?.state === LoadingState.Done) {
             this.performRepeat(data.data);
