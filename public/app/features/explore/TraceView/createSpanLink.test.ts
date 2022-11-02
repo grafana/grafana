@@ -599,7 +599,7 @@ describe('createSpanLinkFactory', () => {
 
     beforeAll(() => {
       setDataSourceSrv({
-        getInstanceSettings(uid: string) {
+        getInstanceSettings() {
           return {
             uid: elasticsearchUID,
             name: 'Elasticsearch',
@@ -627,7 +627,7 @@ describe('createSpanLinkFactory', () => {
       );
     });
 
-    it('automatically timeshifts the time range by one second in a splunk query', () => {
+    it('automatically timeshifts the time range by one second in a query', () => {
       const createLink = setupSpanLinkFactory({
         datasourceUid: elasticsearchUID,
       });
@@ -644,11 +644,14 @@ describe('createSpanLinkFactory', () => {
     });
 
     it('formats query correctly if filterByTraceID and or filterBySpanID is true', () => {
-      const createLink = setupSpanLinkFactory({
-        datasourceUid: elasticsearchUID,
-        filterByTraceID: true,
-        filterBySpanID: true,
-      });
+      const createLink = setupSpanLinkFactory(
+        {
+          datasourceUid: elasticsearchUID,
+          filterByTraceID: true,
+          filterBySpanID: true,
+        },
+        elasticsearchUID
+      );
 
       expect(createLink).toBeDefined();
       const links = createLink!(createTraceSpan());
@@ -663,9 +666,12 @@ describe('createSpanLinkFactory', () => {
     });
 
     it('should format one tag correctly', () => {
-      const createLink = setupSpanLinkFactory({
-        tags: ['ip'],
-      });
+      const createLink = setupSpanLinkFactory(
+        {
+          tags: ['ip'],
+        },
+        elasticsearchUID
+      );
       expect(createLink).toBeDefined();
       const links = createLink!(
         createTraceSpan({
@@ -686,9 +692,12 @@ describe('createSpanLinkFactory', () => {
     });
 
     it('should format multiple tags correctly', () => {
-      const createLink = setupSpanLinkFactory({
-        tags: ['ip', 'hostname'],
-      });
+      const createLink = setupSpanLinkFactory(
+        {
+          tags: ['ip', 'hostname'],
+        },
+        elasticsearchUID
+      );
       expect(createLink).toBeDefined();
       const links = createLink!(
         createTraceSpan({
@@ -712,13 +721,16 @@ describe('createSpanLinkFactory', () => {
     });
 
     it('handles renamed tags', () => {
-      const createLink = setupSpanLinkFactory({
-        mapTagNamesEnabled: true,
-        mappedTags: [
-          { key: 'service.name', value: 'service' },
-          { key: 'k8s.pod.name', value: 'pod' },
-        ],
-      });
+      const createLink = setupSpanLinkFactory(
+        {
+          mapTagNamesEnabled: true,
+          mappedTags: [
+            { key: 'service.name', value: 'service' },
+            { key: 'k8s.pod.name', value: 'pod' },
+          ],
+        },
+        elasticsearchUID
+      );
       expect(createLink).toBeDefined();
       const links = createLink!(
         createTraceSpan({
