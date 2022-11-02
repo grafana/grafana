@@ -177,9 +177,8 @@ func (d *PublicDashboardStoreImpl) ExistsEnabledByDashboardUid(ctx context.Conte
 func (d *PublicDashboardStoreImpl) ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error) {
 	hasPublicDashboard := false
 	err := d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		sql := "SELECT COUNT(*) FROM dashboard_public WHERE access_token=? AND is_enabled=true"
-
-		result, err := dbSession.SQL(sql, accessToken).Count()
+		publicDashboard := &PublicDashboard{DashboardUid: dashboardUid, IsEnabled: true}
+result, err = sess.Count(publicDashboard)
 		if err != nil {
 			return err
 		}
