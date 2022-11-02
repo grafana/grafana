@@ -33,6 +33,8 @@ export function SetBackground({ onClose, scene, anchorPoint }: Props) {
         };
         scene.revId++;
         scene.save();
+
+        scene.root.reinitializeMoveable();
       }
 
       // Force a re-render (update scene data after config update)
