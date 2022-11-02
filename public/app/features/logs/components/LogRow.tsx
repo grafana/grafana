@@ -53,7 +53,7 @@ interface Props extends Themeable2 {
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  showContextToggle?: (row?: LogRowModel) => boolean;
+  showContextToggle?: (row?: LogRowModel) => Promise<boolean>;
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
@@ -97,9 +97,9 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   };
 
   toggleContext = (method: string) => {
-    const { datasourceType, uid: logRowUid } = this.props.row;
+    const { datasource, uid: logRowUid } = this.props.row;
     reportInteraction('grafana_explore_logs_log_context_clicked', {
-      datasourceType,
+      datasourceType: datasource?.type,
       logRowUid,
       type: method,
     });
@@ -118,7 +118,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     }
 
     reportInteraction('grafana_explore_logs_log_details_clicked', {
-      datasourceType: this.props.row.datasourceType,
+      datasourceType: this.props.row.datasource?.type,
       type: this.state.showDetails ? 'close' : 'open',
       logRowUid: this.props.row.uid,
       app: this.props.app,

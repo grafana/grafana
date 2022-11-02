@@ -25,11 +25,15 @@ interface Props extends Themeable2 {
   showRowMenu?: boolean;
   app?: CoreApp;
   scrollElement?: HTMLDivElement;
-  showContextToggle?: (row?: LogRowModel) => boolean;
+  showContextToggle?: (row?: LogRowModel) => Promise<boolean>;
   getRows: () => LogRowModel[];
   onToggleContext: (method: string) => void;
   updateLimit?: () => void;
   logsSortOrder?: LogsSortOrder | null;
+}
+
+interface LogRowMessageState {
+  shouldShowContextToggle: boolean;
 }
 
 const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboard: boolean | undefined) => {
@@ -117,8 +121,23 @@ const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): s
   return line;
 });
 
-class UnThemedLogRowMessage extends PureComponent<Props> {
+class UnThemedLogRowMessage extends PureComponent<Props, LogRowMessageState> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      shouldShowContextToggle: false,
+    };
+  }
+
   logRowRef: React.RefObject<HTMLTableCellElement> = React.createRef();
+
+  fetchShouldShowContextToggle = async () =>
+    this.props.showContextToggle ? await this.props.showContextToggle(this.props.row) : false;
+
+  async componentDidMount() {
+    const contextToggle = await this.fetchShouldShowContextToggle();
+    this.setState({ shouldShowContextToggle: contextToggle });
+  }
 
   onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
     e.stopPropagation();
@@ -151,14 +170,13 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       onToggleContext,
       app,
       logsSortOrder,
-      showContextToggle,
     } = this.props;
 
     const style = getLogRowStyles(theme, row.logLevel);
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
-    const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
-    const styles = getStyles(theme, shouldShowContextToggle, app === CoreApp.Dashboard);
+
+    const styles = getStyles(theme, this.state.shouldShowContextToggle, app === CoreApp.Dashboard);
 
     return (
       <>
@@ -201,7 +219,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
         {showRowMenu && (
           <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
             <span className={cx('log-row-menu', styles.rowMenu)} onClick={(e) => e.stopPropagation()}>
-              {shouldShowContextToggle && (
+              {this.state.shouldShowContextToggle && (
                 <Tooltip placement="top" content={'Show context'}>
                   <IconButton size="md" name="gf-show-context" onClick={this.onShowContextClick} />
                 </Tooltip>

@@ -82,7 +82,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     }
 
     reportInteraction('grafana_explore_logs_log_details_replace_line_clicked', {
-      datasourceType: row.datasourceType,
+      datasourceType: row.datasource?.type,
       logRowUid: row.uid,
       type: 'enable',
     });
@@ -95,7 +95,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     }
 
     reportInteraction('grafana_explore_logs_log_details_replace_line_clicked', {
-      datasourceType: row.datasourceType,
+      datasourceType: row.datasource?.type,
       logRowUid: row.uid,
       type: 'disable',
     });
@@ -108,7 +108,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
-      datasourceType: row.datasourceType,
+      datasourceType: row.datasource?.type,
       filterType: 'include',
       logRowUid: row.uid,
     });
@@ -121,7 +121,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
-      datasourceType: row.datasourceType,
+      datasourceType: row.datasource?.type,
       filterType: 'exclude',
       logRowUid: row.uid,
     });
@@ -138,7 +138,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     this.toggleFieldsStats();
 
     reportInteraction('grafana_explore_logs_log_details_stats_clicked', {
-      dataSourceType: row.datasourceType,
+      dataSourceType: row.datasource?.type,
       fieldType: isLabel ? 'label' : 'detectedField',
       type: showFieldsStats ? 'close' : 'open',
       logRowUid: row.uid,

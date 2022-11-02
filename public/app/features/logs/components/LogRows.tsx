@@ -29,7 +29,7 @@ export interface Props extends Themeable2 {
   showDetectedFields?: string[];
   app?: CoreApp;
   scrollElement?: HTMLDivElement;
-  showContextToggle?: (row?: LogRowModel) => boolean;
+  showContextToggle?: (row?: LogRowModel) => Promise<boolean>;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;

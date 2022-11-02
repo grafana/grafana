@@ -432,7 +432,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
         logLevel = getLogLevel(entry);
       }
 
-      const datasourceType = queries.find((query) => query.refId === series.refId)?.datasource?.type;
+      const datasource = queries.find((query) => query.refId === series.refId)?.datasource;
 
       rows.push({
         entryFieldIndex: stringField.index,
@@ -452,7 +452,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
         raw: message,
         labels: labels || {},
         uid: idField ? idField.values.get(j) : j.toString(),
-        datasourceType,
+        datasource: datasource || undefined,
       });
     }
   }

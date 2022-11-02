@@ -1,7 +1,7 @@
 import { Labels } from './data';
 import { DataFrame } from './dataFrame';
 import { DataQueryResponse } from './datasource';
-import { DataQuery } from './query';
+import { DataQuery, DataSourceRef } from './query';
 import { AbsoluteTimeRange } from './time';
 
 /**
@@ -78,7 +78,7 @@ export interface LogRowModel {
   timeUtc: string;
   uid: string;
   uniqueLabels?: Labels;
-  datasourceType?: string;
+  datasource?: DataSourceRef;
 }
 
 export interface LogsModel {

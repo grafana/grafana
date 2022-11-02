@@ -10,6 +10,7 @@ import {
   RawTimeRange,
   SplitOpen,
 } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
@@ -59,11 +60,12 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     return [];
   };
 
-  showContextToggle = (row?: LogRowModel): boolean => {
+  showContextToggle = async (row?: LogRowModel): Promise<boolean> => {
     const { datasourceInstance } = this.props;
-
-    if (hasLogsContextSupport(datasourceInstance)) {
-      return datasourceInstance.showContextToggle(row);
+    const rowDatasource = await getDataSourceSrv().get(row?.datasource);
+    const datasource = rowDatasource || datasourceInstance;
+    if (hasLogsContextSupport(datasource)) {
+      return datasource.showContextToggle(row);
     }
 
     return false;

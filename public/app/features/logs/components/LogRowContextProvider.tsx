@@ -214,9 +214,9 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
     updateLimit: () => {
       setLimit(limit + 10);
 
-      const { datasourceType, uid: logRowUid } = row;
+      const { datasource, uid: logRowUid } = row;
       reportInteraction('grafana_explore_logs_log_context_load_more_clicked', {
-        datasourceType,
+        datasourceType: datasource?.type,
         logRowUid,
         newLimit: limit + 10,
       });

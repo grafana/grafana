@@ -69,7 +69,7 @@ interface Props extends Themeable2 {
   scrollElement?: HTMLDivElement;
   onSetLogsVolumeEnabled: (enabled: boolean) => void;
   loadLogsVolumeData: (exploreId: ExploreId) => void;
-  showContextToggle?: (row?: LogRowModel) => boolean;
+  showContextToggle?: (row?: LogRowModel) => Promise<boolean>;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
