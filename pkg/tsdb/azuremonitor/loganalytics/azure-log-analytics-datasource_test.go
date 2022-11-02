@@ -185,6 +185,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 	ctx := context.Background()
 	url := "http://ds"
 	dsInfo := types.DatasourceInfo{}
+	headers := make(map[string]string)
 
 	tests := []struct {
 		name            string
@@ -203,7 +204,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ds := AzureLogAnalyticsDatasource{}
-			req, err := ds.createRequest(ctx, dsInfo, url)
+			req, err := ds.createRequest(ctx, dsInfo, url, headers)
 			tt.Err(t, err)
 			if req.URL.String() != tt.expectedURL {
 				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())
@@ -225,13 +226,14 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 			"azureLogAnalyticsSameAs": false,
 		},
 	}
+	headers := make(map[string]string)
 	ctx := context.Background()
 	query := &AzureLogAnalyticsQuery{
 		Params:    url.Values{},
 		TimeRange: backend.TimeRange{},
 	}
 	tracer := tracing.InitializeTracerForTest()
-	res := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL, tracer)
+	res := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL, tracer, headers)
 	if res.Error == nil {
 		t.Fatal("expecting an error")
 	}

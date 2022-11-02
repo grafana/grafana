@@ -739,6 +739,7 @@ func TestAzureMonitorCreateRequest(t *testing.T) {
 	ctx := context.Background()
 	dsInfo := types.DatasourceInfo{}
 	url := "http://ds/"
+	headers := make(map[string]string)
 
 	tests := []struct {
 		name            string
@@ -759,7 +760,7 @@ func TestAzureMonitorCreateRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ds := AzureMonitorDatasource{}
-			req, err := ds.createRequest(ctx, dsInfo, url)
+			req, err := ds.createRequest(ctx, dsInfo, url, headers)
 			tt.Err(t, err)
 			if req.URL.String() != tt.expectedURL {
 				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())
