@@ -8,6 +8,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -15,9 +19,7 @@ import (
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var userAdmin = &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUser"}
@@ -111,7 +113,7 @@ func TestAPIListPublicDashboard(t *testing.T) {
 			Name:                 "Handles Service error",
 			User:                 userViewer,
 			Response:             nil,
-			ResponseErr:          errors.New("error, service broken"),
+			ResponseErr:          ErrInternalServerError.Errorf(""),
 			ExpectedHttpResponse: http.StatusInternalServerError,
 		},
 	}
@@ -138,10 +140,11 @@ func TestAPIListPublicDashboard(t *testing.T) {
 			}
 
 			if test.ResponseErr != nil {
-				var errResp JsonErrResponse
+				var errResp errutil.PublicError
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, "error, service broken", errResp.Error)
+				assert.Equal(t, "Internal server error", errResp.Message)
+				assert.Equal(t, "publicdashboards.internalServerError", errResp.MessageID)
 				service.AssertNotCalled(t, "FindAll")
 			}
 		})
@@ -156,13 +159,14 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 	userEditorPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Login: "testEditorUser", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {fmt.Sprintf("dashboards:uid:%s", dashboardUid)}}}}
 
 	testCases := []struct {
-		Name                 string
-		User                 *user.SignedInUser
-		DashboardUid         string
-		PublicDashboardUid   string
-		ResponseErr          error
-		ExpectedHttpResponse int
-		ShouldCallService    bool
+		Name                    string
+		User                    *user.SignedInUser
+		DashboardUid            string
+		PublicDashboardUid      string
+		ResponseErr             error
+		ExpectedHttpResponse    int
+		ExpectedMessageResponse string
+		ShouldCallService       bool
 	}{
 		{
 			Name:                 "User viewer cannot delete public dashboard",
@@ -201,22 +205,24 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 			ShouldCallService:    true,
 		},
 		{
-			Name:                 "Internal server error returns an error",
-			User:                 userEditorPublicDashboard,
-			DashboardUid:         dashboardUid,
-			PublicDashboardUid:   publicDashboardUid,
-			ResponseErr:          errors.New("server error"),
-			ExpectedHttpResponse: http.StatusInternalServerError,
-			ShouldCallService:    true,
+			Name:                    "Internal server error returns an error",
+			User:                    userEditorPublicDashboard,
+			DashboardUid:            dashboardUid,
+			PublicDashboardUid:      publicDashboardUid,
+			ResponseErr:             ErrInternalServerError.Errorf(""),
+			ExpectedHttpResponse:    ErrInternalServerError.Errorf("").Reason.Status().HTTPStatus(),
+			ExpectedMessageResponse: ErrInternalServerError.Errorf("").PublicMessage,
+			ShouldCallService:       true,
 		},
 		{
-			Name:                 "PublicDashboard error returns correct status code instead of 500",
-			User:                 userEditorPublicDashboard,
-			DashboardUid:         dashboardUid,
-			PublicDashboardUid:   publicDashboardUid,
-			ResponseErr:          ErrPublicDashboardIdentifierNotSet,
-			ExpectedHttpResponse: ErrPublicDashboardIdentifierNotSet.StatusCode,
-			ShouldCallService:    true,
+			Name:                    "PublicDashboard error returns correct status code instead of 500",
+			User:                    userEditorPublicDashboard,
+			DashboardUid:            dashboardUid,
+			PublicDashboardUid:      publicDashboardUid,
+			ResponseErr:             ErrPublicDashboardIdentifierNotSet.Errorf(""),
+			ExpectedHttpResponse:    ErrPublicDashboardIdentifierNotSet.Errorf("").Reason.Status().HTTPStatus(),
+			ExpectedMessageResponse: ErrPublicDashboardIdentifierNotSet.Errorf("").PublicMessage,
+			ShouldCallService:       true,
 		},
 		{
 			Name:                 "Invalid publicDashboardUid throws an error",
@@ -224,17 +230,18 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 			DashboardUid:         dashboardUid,
 			PublicDashboardUid:   "inv@lid-publicd@shboard-uid!",
 			ResponseErr:          nil,
-			ExpectedHttpResponse: ErrPublicDashboardIdentifierNotSet.StatusCode,
+			ExpectedHttpResponse: http.StatusBadRequest,
 			ShouldCallService:    false,
 		},
 		{
-			Name:                 "Public dashboard uid does not exist",
-			User:                 userEditorPublicDashboard,
-			DashboardUid:         dashboardUid,
-			PublicDashboardUid:   "UIDDOESNOTEXIST",
-			ResponseErr:          ErrPublicDashboardNotFound,
-			ExpectedHttpResponse: ErrPublicDashboardNotFound.StatusCode,
-			ShouldCallService:    true,
+			Name:                    "Public dashboard uid does not exist",
+			User:                    userEditorPublicDashboard,
+			DashboardUid:            dashboardUid,
+			PublicDashboardUid:      "UIDDOESNOTEXIST",
+			ResponseErr:             ErrPublicDashboardNotFound.Errorf(""),
+			ExpectedHttpResponse:    ErrPublicDashboardNotFound.Errorf("").Reason.Status().HTTPStatus(),
+			ExpectedMessageResponse: ErrPublicDashboardNotFound.Errorf("").PublicMessage,
+			ShouldCallService:       true,
 		},
 	}
 
@@ -267,10 +274,11 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 			}
 
 			if test.ResponseErr != nil {
-				var errResp JsonErrResponse
+				var errResp errutil.PublicError
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, test.ResponseErr.Error(), errResp.Error)
+				assert.Equal(t, test.ExpectedHttpResponse, errResp.StatusCode)
+				assert.Equal(t, test.ExpectedMessageResponse, errResp.Message)
 			}
 		})
 	}
@@ -304,7 +312,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			DashboardUid:          "77777",
 			ExpectedHttpResponse:  http.StatusNotFound,
 			PublicDashboardResult: nil,
-			PublicDashboardErr:    dashboards.ErrDashboardNotFound,
+			PublicDashboardErr:    ErrDashboardNotFound.Errorf(""),
 			User:                  userViewer,
 			AccessControlEnabled:  false,
 			ShouldCallService:     true,
@@ -406,7 +414,7 @@ func TestApiSavePublicDashboard(t *testing.T) {
 			Name:                 "returns 500 when not persisted",
 			ExpectedHttpResponse: http.StatusInternalServerError,
 			publicDashboard:      &PublicDashboard{},
-			SaveDashboardErr:     errors.New("backend failed to save"),
+			SaveDashboardErr:     ErrInternalServerError.Errorf(""),
 			User:                 userAdmin,
 			AccessControlEnabled: false,
 			ShouldCallService:    true,
@@ -415,7 +423,7 @@ func TestApiSavePublicDashboard(t *testing.T) {
 			Name:                 "returns 404 when dashboard not found",
 			ExpectedHttpResponse: http.StatusNotFound,
 			publicDashboard:      &PublicDashboard{},
-			SaveDashboardErr:     dashboards.ErrDashboardNotFound,
+			SaveDashboardErr:     ErrDashboardNotFound.Errorf(""),
 			User:                 userAdmin,
 			AccessControlEnabled: false,
 			ShouldCallService:    true,
@@ -434,7 +442,7 @@ func TestApiSavePublicDashboard(t *testing.T) {
 			Name:                 "returns 403 when no permissions",
 			ExpectedHttpResponse: http.StatusForbidden,
 			publicDashboard:      &PublicDashboard{IsEnabled: true},
-			SaveDashboardErr:     nil,
+			SaveDashboardErr:     ErrInternalServerError.Errorf("default error"),
 			User:                 userViewer,
 			AccessControlEnabled: false,
 			ShouldCallService:    false,
