@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/request"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -60,9 +60,9 @@ func TestMetricsClient(t *testing.T) {
 		response, err := client.ListMetricsWithPageLimit(&cloudwatch.ListMetricsInput{IncludeLinkedAccounts: aws.Bool(true)})
 		require.NoError(t, err)
 		expected := []*models.MetricOutput{
-			{Metric: &cloudwatch.Metric{MetricName: aws.String("Test_MetricName1")}, Account: &request.Account{Id: "1234567890"}},
-			{Metric: &cloudwatch.Metric{MetricName: aws.String("Test_MetricName2")}, Account: &request.Account{Id: "1234567890"}},
-			{Metric: &cloudwatch.Metric{MetricName: aws.String("Test_MetricName3")}, Account: &request.Account{Id: "1234567895"}},
+			{Metric: &cloudwatch.Metric{MetricName: aws.String("Test_MetricName1")}, Account: &resources.Account{Id: "1234567890"}},
+			{Metric: &cloudwatch.Metric{MetricName: aws.String("Test_MetricName2")}, Account: &resources.Account{Id: "1234567890"}},
+			{Metric: &cloudwatch.Metric{MetricName: aws.String("Test_MetricName3")}, Account: &resources.Account{Id: "1234567895"}},
 		}
 		assert.Equal(t, expected, response)
 	})

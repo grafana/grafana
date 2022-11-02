@@ -5,7 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/request"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
 
 type RequestContext struct {

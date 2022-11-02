@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/request"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
 
 type metricsClient struct {
@@ -29,7 +29,7 @@ func (l *metricsClient) ListMetricsWithPageLimit(params *cloudwatch.ListMetricsI
 			for idx, metric := range metrics {
 				metric := &models.MetricOutput{Metric: metric.(*cloudwatch.Metric)}
 				if len(page.OwningAccounts) >= idx && params.IncludeLinkedAccounts != nil && *params.IncludeLinkedAccounts {
-					metric.Account = &request.Account{
+					metric.Account = &resources.Account{
 						Id: *page.OwningAccounts[idx],
 					}
 				}

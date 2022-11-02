@@ -10,7 +10,13 @@ type ResourceResponse[T any] struct {
 	Value     T       `json:"value"`
 }
 
+type Account struct {
+	Id    string `json:"id"`
+	Arn   string `json:"arn,omitempty"`
+	Label string `json:"label,omitempty"`
+}
+
 type Metric struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
-}
+

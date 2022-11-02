@@ -98,7 +98,7 @@ func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(r resources.Dim
 	return response, nil
 }
 
-func (l *ListMetricsService) GetDimensionKeysByNamespace(r *request.DimensionKeysRequest) ([]models.ResourceResponse[string], error) {
+func (l *ListMetricsService) GetDimensionKeysByNamespace(r *resources.DimensionKeysRequest) ([]models.ResourceResponse[string], error) {
 	input := &cloudwatch.ListMetricsInput{Namespace: aws.String(r.Namespace)}
 	setAccount(input, r.ResourceRequest)
 	metrics, err := l.ListMetricsWithPageLimit(input)
@@ -122,7 +122,7 @@ func (l *ListMetricsService) GetDimensionKeysByNamespace(r *request.DimensionKey
 	return response, nil
 }
 
-func (l *ListMetricsService) GetMetricsByNamespace(r *request.MetricsRequest) ([]models.ResourceResponse[models.Metric], error) {
+func (l *ListMetricsService) GetMetricsByNamespace(r *resources.MetricsRequest) ([]models.ResourceResponse[models.Metric], error) {
 	input := &cloudwatch.ListMetricsInput{Namespace: aws.String(r.Namespace)}
 	setAccount(input, r.ResourceRequest)
 	metrics, err := l.ListMetricsWithPageLimit(input)
@@ -155,7 +155,7 @@ func setDimensionFilter(input *cloudwatch.ListMetricsInput, dimensionFilter []*r
 	}
 }
 
-func setAccount(input *cloudwatch.ListMetricsInput, r *request.ResourceRequest) {
+func setAccount(input *cloudwatch.ListMetricsInput, r *resources.ResourceRequest) {
 	if r != nil && r.AccountId != nil {
 		input.IncludeLinkedAccounts = aws.Bool(true)
 		if !r.ShouldTargetAllAccounts() {

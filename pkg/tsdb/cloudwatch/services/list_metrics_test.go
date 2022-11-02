@@ -50,7 +50,7 @@ var metricResponse = []*models.MetricOutput{
 	},
 }
 
-type validateInputTestCase[T request.DimensionKeysRequest | request.DimensionValuesRequest] struct {
+type validateInputTestCase[T resources.DimensionKeysRequest | resources.DimensionValuesRequest] struct {
 	name                          string
 	input                         *T
 	listMetricsWithPageLimitInput *cloudwatch.ListMetricsInput
@@ -73,14 +73,14 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 		assert.Equal(t, []models.ResourceResponse[string]{{Value: "InstanceType"}, {Value: "AutoScalingGroupName"}}, resp)
 	})
 
-	testCases := []validateInputTestCase[request.DimensionKeysRequest]{
+	testCases := []validateInputTestCase[resources.DimensionKeysRequest]{
 		{
 			name: "Should set account correctly on list metric input if it cross account is defined on the request",
-			input: &request.DimensionKeysRequest{
-				ResourceRequest: &request.ResourceRequest{Region: "us-east-1", AccountId: stringPtr(useLinkedAccountsId)},
+			input: &resources.DimensionKeysRequest{
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: stringPtr(useLinkedAccountsId)},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
-				DimensionFilter: []*request.Dimension{{Name: "InstanceId", Value: ""}},
+				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
 			},
 			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
 				MetricName:            aws.String("CPUUtilization"),
@@ -91,11 +91,11 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 		},
 		{
 			name: "Should set account correctly on list metric input if single account is defined on the request",
-			input: &request.DimensionKeysRequest{
-				ResourceRequest: &request.ResourceRequest{Region: "us-east-1", AccountId: stringPtr("1234567890")},
+			input: &resources.DimensionKeysRequest{
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: stringPtr("1234567890")},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
-				DimensionFilter: []*request.Dimension{{Name: "InstanceId", Value: ""}},
+				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
 			},
 			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
 				MetricName:            aws.String("CPUUtilization"),
@@ -107,11 +107,11 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 		},
 		{
 			name: "Should not set namespace and metricName on list metric input if empty strings are set for these in the request",
-			input: &request.DimensionKeysRequest{
-				ResourceRequest: &request.ResourceRequest{Region: "us-east-1"},
+			input: &resources.DimensionKeysRequest{
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1"},
 				Namespace:       "",
 				MetricName:      "",
-				DimensionFilter: []*request.Dimension{{Name: "InstanceId", Value: ""}},
+				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
 			},
 			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{Dimensions: []*cloudwatch.DimensionFilter{{Name: aws.String("InstanceId")}}},
 		},
@@ -136,17 +136,17 @@ func TestListMetricsService_GetDimensionKeysByNamespace(t *testing.T) {
 		fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(metricResponse, nil)
 		listMetricsService := NewListMetricsService(fakeMetricsClient)
 
-		resp, err := listMetricsService.GetDimensionKeysByNamespace(&request.DimensionKeysRequest{Namespace: "AWS/EC2"})
+		resp, err := listMetricsService.GetDimensionKeysByNamespace(&resources.DimensionKeysRequest{Namespace: "AWS/EC2"})
 
 		require.NoError(t, err)
 		assert.Equal(t, []models.ResourceResponse[string]{{Value: "InstanceId"}, {Value: "InstanceType"}, {Value: "AutoScalingGroupName"}}, resp)
 	})
 
-	testCases := []validateInputTestCase[request.DimensionKeysRequest]{
+	testCases := []validateInputTestCase[resources.DimensionKeysRequest]{
 		{
 			name: "Should set account correctly on list metric input if it cross account is defined on the request",
-			input: &request.DimensionKeysRequest{
-				ResourceRequest: &request.ResourceRequest{Region: "us-east-1", AccountId: stringPtr(useLinkedAccountsId)},
+			input: &resources.DimensionKeysRequest{
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: stringPtr(useLinkedAccountsId)},
 				Namespace:       "AWS/EC2",
 			},
 			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
@@ -156,8 +156,8 @@ func TestListMetricsService_GetDimensionKeysByNamespace(t *testing.T) {
 		},
 		{
 			name: "Should set account correctly on list metric input if single account is defined on the request",
-			input: &request.DimensionKeysRequest{
-				ResourceRequest: &request.ResourceRequest{Region: "us-east-1", AccountId: stringPtr("1234567890")},
+			input: &resources.DimensionKeysRequest{
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: stringPtr("1234567890")},
 				Namespace:       "AWS/EC2",
 			},
 			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
@@ -201,14 +201,14 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 		assert.Equal(t, []models.ResourceResponse[string]{{Value: "i-1234567890abcdef0"}, {Value: "i-5234567890abcdef0"}, {Value: "i-64234567890abcdef0"}}, resp)
 	})
 
-	testCases := []validateInputTestCase[request.DimensionValuesRequest]{
+	testCases := []validateInputTestCase[resources.DimensionValuesRequest]{
 		{
 			name: "Should set account correctly on list metric input if it cross account is defined on the request",
-			input: &request.DimensionValuesRequest{
-				ResourceRequest: &request.ResourceRequest{Region: "us-east-1", AccountId: stringPtr(useLinkedAccountsId)},
+			input: &resources.DimensionValuesRequest{
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: stringPtr(useLinkedAccountsId)},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
-				DimensionFilter: []*request.Dimension{{Name: "InstanceId", Value: ""}},
+				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
 			},
 			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
 				MetricName:            aws.String("CPUUtilization"),
@@ -219,11 +219,11 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 		},
 		{
 			name: "Should set account correctly on list metric input if single account is defined on the request",
-			input: &request.DimensionValuesRequest{
-				ResourceRequest: &request.ResourceRequest{Region: "us-east-1", AccountId: stringPtr("1234567890")},
+			input: &resources.DimensionValuesRequest{
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: stringPtr("1234567890")},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
-				DimensionFilter: []*request.Dimension{{Name: "InstanceId", Value: ""}},
+				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
 			},
 			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
 				MetricName:            aws.String("CPUUtilization"),
