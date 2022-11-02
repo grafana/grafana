@@ -3906,9 +3906,6 @@ exports[`better eslint`] = {
     "public/app/features/explore/Explore.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/explore/ExploreGraph.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/features/explore/ExplorePaneContainer.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],

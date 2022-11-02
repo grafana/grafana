@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { identity } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useCounter } from 'react-use';
 
 import {
   AbsoluteTimeRange,
@@ -34,6 +35,8 @@ import { ExploreGraphStyle } from '../../types';
 import { seriesVisibilityConfigFactory } from '../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 
 import { applyGraphStyle } from './exploreGraphStyleUtils';
+
+const fieldConfigRegistry = createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Explore');
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
@@ -69,7 +72,9 @@ export function ExploreGraph({
   anchorToZero,
 }: Props) {
   const theme = useTheme2();
+  const style = useStyles2(getStyles);
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
+  const [structureRev, { inc: incrementStructureRev }] = useCounter(1);
 
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>({
     defaults: {
@@ -86,7 +91,6 @@ export function ExploreGraph({
     overrides: [],
   });
 
-  const style = useStyles2(getStyles);
   const timeRange = {
     from: dateTime(absoluteRange.from),
     to: dateTime(absoluteRange.to),
@@ -96,18 +100,23 @@ export function ExploreGraph({
     },
   };
 
-  const dataWithConfig = useMemo(() => {
-    const registry = createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Explore');
-    const styledFieldConfig = applyGraphStyle(fieldConfig, graphStyle);
-    return applyFieldOverrides({
-      fieldConfig: styledFieldConfig,
-      data,
-      timeZone,
-      replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
-      theme,
-      fieldConfigRegistry: registry,
-    });
-  }, [fieldConfig, graphStyle, data, timeZone, theme]);
+  const styledFieldConfig = useMemo(() => applyGraphStyle(fieldConfig, graphStyle), [fieldConfig, graphStyle]);
+
+  const dataWithConfig = applyFieldOverrides({
+    fieldConfig: styledFieldConfig,
+    data,
+    timeZone,
+    replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
+    theme,
+    fieldConfigRegistry,
+  });
+
+  // structureRev should be incremented when either the number of series or the config changes.
+  // like useEffect, but runs before rendering.
+  // TODO: while this works as it is supposed to, we are forced to do this now because of the way
+  // ExploreGraph is implemented. We should refactor it to a single component that handles structureRev increments
+  // when a user changes the viz style and not react to the value change itself.
+  useMemo(incrementStructureRev, [dataWithConfig.length, styledFieldConfig, incrementStructureRev]);
 
   useEffect(() => {
     if (onHiddenSeriesChanged) {
@@ -132,6 +141,19 @@ export function ExploreGraph({
     },
   };
 
+  const panelOptions: TimeSeriesOptions = useMemo(
+    () => ({
+      tooltip: { mode: tooltipDisplayMode, sort: SortOrder.None },
+      legend: {
+        displayMode: LegendDisplayMode.List,
+        showLegend: true,
+        placement: 'bottom',
+        calcs: [],
+      },
+    }),
+    [tooltipDisplayMode]
+  );
+
   return (
     <PanelContextProvider value={panelContext}>
       {dataWithConfig.length > MAX_NUMBER_OF_TIME_SERIES && !showAllTimeSeries && (
@@ -147,24 +169,14 @@ export function ExploreGraph({
         </div>
       )}
       <PanelRenderer
-        data={{ series: seriesToShow, timeRange, state: loadingState, annotations }}
+        data={{ series: seriesToShow, timeRange, state: loadingState, annotations, structureRev }}
         pluginId="timeseries"
         title=""
         width={width}
         height={height}
         onChangeTimeRange={onChangeTime}
         timeZone={timeZone}
-        options={
-          {
-            tooltip: { mode: tooltipDisplayMode, sort: SortOrder.None },
-            legend: {
-              displayMode: LegendDisplayMode.List,
-              showLegend: true,
-              placement: 'bottom',
-              calcs: [],
-            },
-          } as TimeSeriesOptions
-        }
+        options={panelOptions}
       />
     </PanelContextProvider>
   );
