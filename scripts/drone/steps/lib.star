@@ -1012,7 +1012,6 @@ def publish_linux_packages_step(edition, package_manager='deb'):
             'grabpl'
         ],
         'privileged': True,
-        'failure': 'ignore', # While we're testing it
         'settings': {
             'access_key_id': from_secret('packages_access_key_id'),
             'secret_access_key': from_secret('packages_secret_access_key'),

@@ -3590,7 +3590,6 @@ steps:
   name: compile-build-cmd
 - depends_on:
   - grabpl
-  failure: ignore
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages-deb
   privileged: true
@@ -3612,7 +3611,6 @@ steps:
     target_bucket: grafana-packages
 - depends_on:
   - grabpl
-  failure: ignore
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages-rpm
   privileged: true
@@ -3687,7 +3685,6 @@ steps:
   name: compile-build-cmd
 - depends_on:
   - grabpl
-  failure: ignore
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages-deb
   privileged: true
@@ -3709,7 +3706,6 @@ steps:
     target_bucket: grafana-packages
 - depends_on:
   - grabpl
-  failure: ignore
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages-rpm
   privileged: true
@@ -5320,6 +5316,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 9d7c0bc997ba232aa3adf0ebf9700ef100d06625bed76e82d0d517874ccba394
+hmac: b7a812befcaa64d70ce856f290029308d9c73f3b479bd24387e698081275e084
 
 ...
