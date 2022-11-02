@@ -91,14 +91,21 @@ export const isValidEvaluation = (evaluation: string) => {
   }
 };
 
-export const getIntervalForGroup = (
+export const getGroupFromRuler = (
   rulerRules: RulerRulesConfigDTO | null | undefined,
   group: string,
   folder: string
 ) => {
   const folderObj: Array<RulerRuleGroupDTO<RulerRuleDTO>> = rulerRules ? rulerRules[folder] : [];
-  const groupObj = folderObj?.find((rulerRuleGroup) => rulerRuleGroup.name === group);
+  return folderObj?.find((rulerRuleGroup) => rulerRuleGroup.name === group);
+};
 
+export const getIntervalForGroup = (
+  rulerRules: RulerRulesConfigDTO | null | undefined,
+  group: string,
+  folder: string
+) => {
+  const groupObj = getGroupFromRuler(rulerRules, group, folder);
   const interval = groupObj?.interval ?? MINUTE;
   return interval;
 };
@@ -124,8 +131,7 @@ export const RulesForGroupTable = ({
   folder: string;
 }) => {
   const styles = useStyles2(getStyles);
-  const folderObj: Array<RulerRuleGroupDTO<RulerRuleDTO>> = rulerRules ? rulerRules[folder] : [];
-  const groupObj = folderObj?.find((rule) => rule.name === group);
+  const groupObj = getGroupFromRuler(rulerRules, group, folder);
   const rules: RulerRuleDTO[] = groupObj?.rules ?? [];
 
   const { watch } = useFormContext<FormValues>();

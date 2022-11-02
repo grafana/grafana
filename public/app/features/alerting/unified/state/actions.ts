@@ -28,7 +28,6 @@ import {
   PostableRulerRuleGroupDTO,
   PromApplication,
   RulerRuleDTO,
-  RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
@@ -61,7 +60,7 @@ import {
   FetchRulerRulesFilter,
   setRulerRuleGroup,
 } from '../api/ruler';
-import { getAlertInfo, safeParseDurationstr } from '../components/rules/EditRuleGroupModal';
+import { getAlertInfo, safeParseDurationstr, getGroupFromRuler } from '../components/rules/EditRuleGroupModal';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
@@ -760,8 +759,7 @@ export const rulesInSameGroupHaveInvalidFor = (
   folder_: string,
   everyDuration: string
 ) => {
-  const folderObj: RulerRuleGroupDTO[] = (rulerRules && rulerRules[folder_]) ?? [];
-  const groupObj = folderObj?.find((ruleGroup) => ruleGroup.name === group);
+  const groupObj = getGroupFromRuler(rulerRules, group, folder_);
 
   const rulesSameGroup: RulerRuleDTO[] = groupObj?.rules ?? [];
 
