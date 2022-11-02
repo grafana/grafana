@@ -398,8 +398,6 @@ func (m *managedFolderAlertActionsMigrator) Exec(sess *xorm.Session, mg *migrato
 	return nil
 }
 
-// commented as it's not used, but was used by previous migrations
-// const managedFolderAlertActionsRepeatMigratorID = "managed folder permissions alert actions repeated migration"
 const managedFolderAlertActionsRepeatMigratorFixedID = "managed folder permissions alert actions repeated migration fixed"
 
 /*
