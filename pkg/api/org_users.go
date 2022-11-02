@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -211,6 +212,7 @@ func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *org.GetOrgU
 
 	filteredUsers := make([]*org.OrgUserDTO, 0, len(result))
 	userIDs := map[string]bool{}
+	authLabelsUserIDs := make([]int64, 0, len(result))
 	for _, user := range result {
 		if dtos.IsHiddenUser(user.Login, signedInUser, hs.Cfg) {
 			continue
@@ -218,7 +220,22 @@ func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *org.GetOrgU
 		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
 
 		userIDs[fmt.Sprint(user.UserID)] = true
+		authLabelsUserIDs = append(authLabelsUserIDs, user.UserID)
 		filteredUsers = append(filteredUsers, user)
+	}
+	ccc := c.Req.Context()
+	modules, err := hs.authInfoService.GetUserLabels(ccc, models.GetUserLabelsQuery{
+		UserIDs: authLabelsUserIDs,
+	})
+
+	if err != nil {
+		hs.log.Warn("failed to retrieve users IDP label", err)
+	}
+
+	for i := range filteredUsers {
+		if module, ok := modules[filteredUsers[i].UserID]; ok {
+			filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
+		}
 	}
 
 	// Get accesscontrol metadata for users in the target org
