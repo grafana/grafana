@@ -213,6 +213,15 @@ func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.Si
 		if cookieStr := parsedReq.httpRequest.Header.Get("Cookie"); cookieStr != "" {
 			req.Headers["Cookie"] = cookieStr
 		}
+
+		// pass through http headers for plugins to use
+		for k, v := range parsedReq.httpRequest.Header {
+			if len(v) == 0 {
+				req.Headers[k] = ""
+			} else {
+				req.Headers[k] = v[0] // assume only the first would be used
+			}
+		}
 	}
 
 	for _, q := range queries {

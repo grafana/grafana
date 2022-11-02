@@ -47,7 +47,7 @@ func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *ht
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
 func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client,
-	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+	url string, tracer tracing.Tracer, originalHTTPHeaders map[string]string) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	queries, err := e.buildQueries(originalQueries, dsInfo)
@@ -56,7 +56,7 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url, tracer)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url, tracer, originalHTTPHeaders)
 	}
 
 	return result, nil
@@ -189,10 +189,10 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 }
 
 func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.AzureMonitorQuery, dsInfo types.DatasourceInfo, cli *http.Client,
-	url string, tracer tracing.Tracer) backend.DataResponse {
+	url string, tracer tracing.Tracer, originalHTTPHeaders map[string]string) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
-	req, err := e.createRequest(ctx, dsInfo, url)
+	req, err := e.createRequest(ctx, dsInfo, url, originalHTTPHeaders)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse
@@ -249,13 +249,21 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 	return dataResponse
 }
 
-func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo types.DatasourceInfo, url string) (*http.Request, error) {
+func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo types.DatasourceInfo, url string, originalHTTPHeaders map[string]string) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, fmt.Errorf("%v: %w", "Failed to create request", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+
+	clientRequestId, err := azlog.ExtractOrCreateRequestId(originalHTTPHeaders)
+	if err != nil {
+		azlog.Debug("Failed to create request", "error", err)
+		return nil, fmt.Errorf("%v: %w", "Failed to create request", err)
+	}
+	req.Header.Set("x-ms-client-request-id", clientRequestId)
 
 	return req, nil
 }

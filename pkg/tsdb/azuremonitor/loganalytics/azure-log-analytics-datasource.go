@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azlog"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -50,7 +51,7 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
 func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client,
-	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+	url string, tracer tracing.Tracer, originalHTTPHeaders map[string]string) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	queries, err := e.buildQueries(originalQueries, dsInfo)
@@ -59,7 +60,7 @@ func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url, tracer)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url, tracer, originalHTTPHeaders)
 	}
 
 	return result, nil
@@ -130,7 +131,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []backend.DataQuery, 
 }
 
 func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client,
-	url string, tracer tracing.Tracer) backend.DataResponse {
+	url string, tracer tracing.Tracer, originalHTTPHeaders map[string]string) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
 	dataResponseErrorWithExecuted := func(err error) backend.DataResponse {
@@ -151,7 +152,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return dataResponseErrorWithExecuted(fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials"))
 	}
 
-	req, err := e.createRequest(ctx, dsInfo, url)
+	req, err := e.createRequest(ctx, dsInfo, url, originalHTTPHeaders)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse
@@ -229,7 +230,7 @@ func appendErrorNotice(frame *data.Frame, err *AzureLogAnalyticsAPIError) {
 	}
 }
 
-func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo types.DatasourceInfo, url string) (*http.Request, error) {
+func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo types.DatasourceInfo, url string, originalHTTPHeaders map[string]string) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
@@ -237,6 +238,14 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	}
 	req.URL.Path = "/"
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+
+	clientRequestId, err := azlog.ExtractOrCreateRequestId(originalHTTPHeaders)
+	if err != nil {
+		azlog.Debug("Failed to create request", "error", err)
+		return nil, fmt.Errorf("%v: %w", "Failed to create request", err)
+	}
+	req.Header.Set("x-ms-client-request-id", clientRequestId)
 
 	return req, nil
 }

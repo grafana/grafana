@@ -1,6 +1,9 @@
 package azlog
 
-import "github.com/grafana/grafana/pkg/infra/log"
+import (
+	"github.com/google/uuid"
+	"github.com/grafana/grafana/pkg/infra/log"
+)
 
 var (
 	azlog = log.New("tsdb.azuremonitor")
@@ -20,4 +23,21 @@ func Error(msg string, args ...interface{}) {
 
 func Info(msg string, args ...interface{}) {
 	azlog.Info(msg, args)
+}
+
+func ExtractOrCreateRequestId(headers map[string]string) (string, error) {
+	clientRequestId, ok := headers["X-Ms-Client-Request-Id"]
+	if !ok {
+		uid, err := uuid.NewRandom()
+		if err != nil {
+			Error("failed to create new client request Id", "err", err)
+			return "", err
+		}
+		clientRequestId = uid.String()
+		azlog.Info("Client request id created", "clientRequestId", clientRequestId)
+	} else {
+		azlog.Info("Client request id extracted from HTTP headers", "clientRequestId", clientRequestId)
+	}
+
+	return clientRequestId, nil
 }

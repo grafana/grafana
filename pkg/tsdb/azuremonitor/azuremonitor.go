@@ -159,7 +159,7 @@ func getAzureRoutes(cloud string, jsonData json.RawMessage) (map[string]types.Az
 }
 
 type azDatasourceExecutor interface {
-	ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error)
+	ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer, originalHTTPHeaders map[string]string) (*backend.QueryDataResponse, error)
 	ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client)
 }
 
@@ -191,7 +191,7 @@ func (s *Service) newQueryMux() *datasource.QueryTypeMux {
 			if !ok {
 				return nil, fmt.Errorf("missing service for %s", dst)
 			}
-			return executor.ExecuteTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL, s.tracer)
+			return executor.ExecuteTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL, s.tracer, req.Headers)
 		})
 	}
 	return mux

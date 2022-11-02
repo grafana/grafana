@@ -58,7 +58,7 @@ func (e *AzureResourceGraphDatasource) ResourceRequest(rw http.ResponseWriter, r
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
 func (e *AzureResourceGraphDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client,
-	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+	url string, tracer tracing.Tracer, originalHTTPHeaders map[string]string) (*backend.QueryDataResponse, error) {
 	result := &backend.QueryDataResponse{
 		Responses: map[string]backend.DataResponse{},
 	}
@@ -69,7 +69,7 @@ func (e *AzureResourceGraphDatasource) ExecuteTimeSeriesQuery(ctx context.Contex
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url, tracer)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url, tracer, originalHTTPHeaders)
 	}
 
 	return result, nil
@@ -119,7 +119,7 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery,
 }
 
 func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery, dsInfo types.DatasourceInfo, client *http.Client,
-	dsURL string, tracer tracing.Tracer) backend.DataResponse {
+	dsURL string, tracer tracing.Tracer, originalHTTPHeaders map[string]string) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
 	params := url.Values{}
@@ -156,7 +156,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return dataResponse
 	}
 
-	req, err := e.createRequest(ctx, dsInfo, reqBody, dsURL)
+	req, err := e.createRequest(ctx, dsInfo, reqBody, dsURL, originalHTTPHeaders)
 
 	if err != nil {
 		dataResponse.Error = err
@@ -224,7 +224,7 @@ func AddConfigLinks(frame data.Frame, dl string) data.Frame {
 	return frame
 }
 
-func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo types.DatasourceInfo, reqBody []byte, url string) (*http.Request, error) {
+func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo types.DatasourceInfo, reqBody []byte, url string, originalHTTPHeaders map[string]string) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
@@ -233,6 +233,13 @@ func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo
 	req.URL.Path = "/"
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+
+	clientRequestId, err := azlog.ExtractOrCreateRequestId(originalHTTPHeaders)
+	if err != nil {
+		azlog.Debug("Failed to create request", "error", err)
+		return nil, fmt.Errorf("%v: %w", "Failed to create request", err)
+	}
+	req.Header.Set("x-ms-client-request-id", clientRequestId)
 
 	return req, nil
 }
