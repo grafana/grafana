@@ -12,6 +12,12 @@ import (
 	"text/template"
 )
 
+var EXCLUDE = map[string]struct{}{
+	"jsonnetfile.json":      {},
+	"jsonnetfile.lock.json": {},
+	"panel-library.json":    {}, // TODO: remove panel-library once importing issue is fixed
+}
+
 //go:generate go run gen.go
 
 //go:embed *.json */*.json
@@ -22,7 +28,7 @@ var tmplFS embed.FS
 
 func main() {
 	g := newGen()
-	out, err := g.Generate()
+	out, err := g.generate()
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +51,7 @@ func newGen() *libjsonnetGen {
 	return &libjsonnetGen{templates: tmpls}
 }
 
-func (g *libjsonnetGen) Generate() (string, error) {
+func (g *libjsonnetGen) generate() (string, error) {
 	if err := g.readDir("."); err != nil {
 		return "", err
 	}
@@ -69,9 +75,10 @@ func (g *libjsonnetGen) readDir(dir string) error {
 	}
 
 	for _, f := range files {
-		if strings.HasPrefix(f.Name(), "jsonnetfile") || strings.HasPrefix(f.Name(), "panel-library") {
+		if _, skip := EXCLUDE[f.Name()]; skip {
 			continue
 		}
+
 		if f.IsDir() {
 			if err := g.readDir(path.Join(dir, f.Name())); err != nil {
 				return err

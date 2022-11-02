@@ -4,6 +4,13 @@ local dashboard = grafana.dashboard;
 {
   folders: [grafana.folder.new('dev-dashboards', 'dev-dashboards')],
   dashboards: [
+    dashboard.new('testdata_alerts', import 'alerting/testdata_alerts.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('all-panels', import 'all-panels.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
