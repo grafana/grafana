@@ -209,7 +209,7 @@ def enterprise_downstream_step(edition, ver_mode):
 
 def lint_backend_step(edition):
     return {
-        'name': 'lint-backend' + enterprise2_suffix(edition),
+        'name': 'lint-backend',
         'image': go_image,
         'environment': {
             # We need CGO because of go-sqlite3
@@ -481,28 +481,16 @@ def build_plugins_step(edition, ver_mode):
 
 
 def test_backend_step(edition):
-    if edition == 'enterprise2':
-        return {
-            'name': 'test-backend' + enterprise2_suffix(edition),
-            'image': build_image,
-            'depends_on': [
-                'wire-install',
-            ],
-            'commands': [
-                'go test -tags=pro -covermode=atomic -timeout=5m ./pkg/...',
-            ],
-        }
-    else:
-        return {
-            'name': 'test-backend' + enterprise2_suffix(edition),
-            'image': build_image,
-            'depends_on': [
-                'wire-install',
-            ],
-            'commands': [
-                'go test -short -covermode=atomic -timeout=5m ./pkg/...',
-            ],
-        }
+    return {
+        'name': 'test-backend',
+        'image': build_image,
+        'depends_on': [
+            'wire-install',
+        ],
+        'commands': [
+            'go test -short -covermode=atomic -timeout=5m ./pkg/...',
+        ],
+    }
 
 
 
