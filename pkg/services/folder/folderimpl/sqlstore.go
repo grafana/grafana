@@ -50,17 +50,19 @@ func (ss *sqlStore) Create(ctx context.Context, cmd *folder.CreateFolderCommand)
 
 func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		res, err := sess.Exec("DELETE FROM folder WHERE uid=? AND org_id=?", uid, orgID)
+		_, err := sess.Exec("DELETE FROM folder WHERE uid=? AND org_id=?", uid, orgID)
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to delete folder: %w", err)
 		}
-		affected, err := res.RowsAffected()
-		if err != nil {
-			return folder.ErrDatabaseError.Errorf("failed to get affected rows: %w", err)
-		}
-		if affected == 0 {
-			return folder.ErrFolderNotFound.Errorf("folder not found")
-		}
+		/*
+			affected, err := res.RowsAffected()
+			if err != nil {
+				return folder.ErrDatabaseError.Errorf("failed to get affected rows: %w", err)
+			}
+				if affected == 0 {
+					return folder.ErrFolderNotFound.Errorf("folder not found uid:%s org_id:%d", uid, orgID)
+				}
+		*/
 		return nil
 	})
 }
@@ -68,10 +70,38 @@ func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
 func (ss *sqlStore) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
 	cmd.Folder.Updated = time.Now()
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		description := cmd.Folder.Description
+		if cmd.NewDescription != nil {
+			description = *cmd.NewDescription
+		}
+
+		title := cmd.Folder.Title
+		if cmd.NewTitle != nil {
+			title = *cmd.NewTitle
+		}
+
+		uid := cmd.Folder.UID
+		if cmd.NewUID != nil {
+			uid = *cmd.NewUID
+		}
+
 		_, err := sess.ID(cmd.Folder.ID).AllCols().Update(cmd.Folder)
+		res, err := sess.Exec("UPDATE folder SET description = ?, title = ?, uid = ? WHERE uid = ? AND org_id = ?", description, title, uid, cmd.Folder.UID, cmd.Folder.OrgID)
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to update folder: %w", err)
 		}
+
+		affected, err := res.RowsAffected()
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to get affected row: %w", err)
+		}
+		if affected == 0 {
+			return folder.ErrInternal.Errorf("no folders are updated")
+		}
+
+		cmd.Folder.Description = description
+		cmd.Folder.Title = title
+		cmd.Folder.UID = uid
 		return nil
 	})
 
