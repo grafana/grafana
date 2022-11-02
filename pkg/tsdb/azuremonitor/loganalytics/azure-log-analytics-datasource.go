@@ -240,7 +240,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
-	clientRequestId, err := azlog.ExtractOrCreateRequestId(originalHTTPHeaders)
+	clientRequestId, err := azlog.ExtractOrCreateRequestId(ctx, originalHTTPHeaders)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, fmt.Errorf("%v: %w", "Failed to create request", err)

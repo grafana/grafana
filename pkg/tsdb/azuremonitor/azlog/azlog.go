@@ -1,8 +1,11 @@
 package azlog
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 var (
@@ -25,16 +28,21 @@ func Info(msg string, args ...interface{}) {
 	azlog.Info(msg, args)
 }
 
-func ExtractOrCreateRequestId(headers map[string]string) (string, error) {
+func ExtractOrCreateRequestId(ctx context.Context, headers map[string]string) (string, error) {
 	clientRequestId, ok := headers["X-Ms-Client-Request-Id"]
 	if !ok {
-		uid, err := uuid.NewRandom()
-		if err != nil {
-			Error("failed to create new client request Id", "err", err)
-			return "", err
+		if traceID := tracing.TraceIDFromContext(ctx, false); traceID != "" {
+			clientRequestId = traceID
+			azlog.Info("Client request id inherited from traceID", "clientRequestId", clientRequestId)
+		} else {
+			uid, err := uuid.NewRandom()
+			if err != nil {
+				Error("failed to create new client request Id", "err", err)
+				return "", err
+			}
+			clientRequestId = uid.String()
+			azlog.Info("Client request id created", "clientRequestId", clientRequestId)
 		}
-		clientRequestId = uid.String()
-		azlog.Info("Client request id created", "clientRequestId", clientRequestId)
 	} else {
 		azlog.Info("Client request id extracted from HTTP headers", "clientRequestId", clientRequestId)
 	}
