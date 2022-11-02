@@ -4,12 +4,12 @@ import React from 'react';
 import {
   DataSourceJsonData,
   DataSourcePluginOptionsEditorProps,
-  GrafanaTheme,
+  GrafanaTheme2,
   KeyValue,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, InlineField, InlineFieldRow, Input, useStyles } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
 
 import KeyValueInput from '../TraceToLogs/KeyValueInput';
 
@@ -33,7 +33,7 @@ export interface TraceToMetricsData extends DataSourceJsonData {
 interface Props extends DataSourcePluginOptionsEditorProps<TraceToMetricsData> {}
 
 export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={css({ width: '100%' })}>
@@ -211,10 +211,10 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css`
-    padding-bottom: ${theme.spacing.md};
-    color: ${theme.colors.textSemiWeak};
+    padding-bottom: ${theme.spacing(2)};
+    color: ${theme.colors.text.secondary};
   `,
   row: css`
     label: row;
