@@ -370,8 +370,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                 onClick={() => {
                   showModal(UnlinkModal, {
                     onConfirm: () => {
-                      delete this.props.panel.libraryPanel;
-                      this.props.panel.render();
+                      this.props.panel.unlinkLibraryPanel();
                       this.forceUpdate();
                     },
                     onDismiss: hideModal,

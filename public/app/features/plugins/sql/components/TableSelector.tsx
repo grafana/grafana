@@ -12,11 +12,12 @@ interface TableSelectorProps extends ResourceSelectorProps {
   value: string | null;
   query: QueryWithDefaults;
   onChange: (v: SelectableValue) => void;
+  forceFetch?: boolean;
 }
 
-export const TableSelector: React.FC<TableSelectorProps> = ({ db, query, value, className, onChange }) => {
+export const TableSelector: React.FC<TableSelectorProps> = ({ db, query, value, className, onChange, forceFetch }) => {
   const state = useAsync(async () => {
-    if (!query.dataset) {
+    if (!query.dataset && !forceFetch) {
       return [];
     }
     const tables = await db.tables(query.dataset);

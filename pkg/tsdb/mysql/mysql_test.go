@@ -72,9 +72,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		RowLimit:          1000000,
 	}
 
-	rowTransformer := mysqlQueryResultTransformer{
-		log: logger,
-	}
+	rowTransformer := mysqlQueryResultTransformer{}
 
 	exe, err := sqleng.NewQueryDataHandler(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
 
@@ -1165,9 +1163,7 @@ func TestIntegrationMySQL(t *testing.T) {
 				RowLimit:          1,
 			}
 
-			queryResultTransformer := mysqlQueryResultTransformer{
-				log: logger,
-			}
+			queryResultTransformer := mysqlQueryResultTransformer{}
 
 			handler, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMysqlMacroEngine(logger), logger)
 			require.NoError(t, err)
