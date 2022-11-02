@@ -398,7 +398,7 @@ func (m *managedFolderAlertActionsMigrator) Exec(sess *xorm.Session, mg *migrato
 	return nil
 }
 
-const managedFolderAlertActionsRepeatMigratorID = "managed folder permissions alert actions repeated migration fixed"
+const managedFolderAlertActionsRepeatMigratorID = "managed folder permissions alert actions repeated migration"
 
 /*
 AddManagedFolderAlertActionsMigration has to be run after AddDashboardPermissionsMigrator, as it is only effective if dashboard permissions have already been migrated.
@@ -406,6 +406,15 @@ AddManagedFolderAlertActionsRepeatMigrator ensures that alerting permissions tha
 */
 func AddManagedFolderAlertActionsRepeatMigration(mg *migrator.Migrator) {
 	mg.AddMigration(managedFolderAlertActionsRepeatMigratorID, &managedFolderAlertActionsRepeatMigrator{})
+}
+
+const managedFolderAlertActionsRepeatMigratorFixedID = "managed folder permissions alert actions repeated fixed migration"
+
+/*
+AddManagedFolderAlertActionsRepeatFixedMigration is a fixed version of AddManagedFolderAlertActionsRepeatMigration.
+*/
+func AddManagedFolderAlertActionsRepeatFixedMigration(mg *migrator.Migrator) {
+	mg.AddMigration(managedFolderAlertActionsRepeatMigratorFixedID, &managedFolderAlertActionsRepeatMigrator{})
 }
 
 type managedFolderAlertActionsRepeatMigrator struct {
