@@ -823,7 +823,7 @@ export const updateLotexNamespaceAndGroupAction: AsyncThunk<
             );
             if (notValidRules.length > 0) {
               throw new Error(
-                `These alerts belonging to this group would have an invalid For value: ${notValidRules
+                `These alerts belonging to this group will have an invalid 'For' value: ${notValidRules
                   .map((rule) => {
                     const { alertName } = getAlertInfo(rule, groupInterval ?? '');
                     return alertName;

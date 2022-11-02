@@ -127,7 +127,7 @@ const ui = {
     namespaceInput: byRole('textbox', { hidden: true, name: /namespace/i }),
     ruleGroupInput: byRole('textbox', { name: 'Evaluation group', exact: true }),
     intervalInput: byRole('textbox', {
-      name: /Rule group evaluation interval Evaluation interval should be smaller or equal than For values for existing rules in this group./i,
+      name: /Rule group evaluation interval Evaluation interval should be smaller or equal than 'For' values for existing rules in this group./i,
     }),
     saveButton: byRole('button', { name: /Save changes/ }),
   },
@@ -616,7 +616,7 @@ describe('RuleList', () => {
       await userEvent.type(screen.getByRole('textbox', { name: 'Evaluation group', exact: true }), 'super group');
       await userEvent.type(
         screen.getByRole('textbox', {
-          name: /rule group evaluation interval evaluation interval should be smaller or equal than for values for existing rules in this group\./i,
+          name: /rule group evaluation interval evaluation interval should be smaller or equal than 'for' values for existing rules in this group\./i,
         }),
         '5m'
       );
