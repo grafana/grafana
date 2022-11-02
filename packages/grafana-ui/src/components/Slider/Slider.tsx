@@ -92,7 +92,7 @@ export const Slider: FunctionComponent<SliderProps> = ({
     <div className={cx(styles.container, styles.slider)}>
       {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}
       <Global styles={styles.tooltip} />
-      <label className={cx(styles.sliderInput, ...sliderInputClassNames)}>
+      <div className={cx(styles.sliderInput, ...sliderInputClassNames)}>
         <SliderWithTooltip
           min={min}
           max={max}
@@ -117,7 +117,7 @@ export const Slider: FunctionComponent<SliderProps> = ({
           min={min}
           max={max}
         />
-      </label>
+      </div>
     </div>
   );
 };
