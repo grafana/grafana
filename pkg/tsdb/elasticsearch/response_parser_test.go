@@ -2,6 +2,7 @@ package elasticsearch
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"testing"
 	"time"
@@ -823,7 +824,7 @@ func TestResponseParser(t *testing.T) {
 			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
 
-			experimental.CheckGoldenJSONResponse(t, "testdata", "trimedges_string.golden", &queryRes, false)
+			experimental.CheckGoldenJSONResponse(t, "testdata", "trimedges_string.golden", &queryRes, *update)
 		})
 
 		t.Run("No group by time", func(t *testing.T) {
@@ -1215,3 +1216,5 @@ func newResponseParserForTest(tsdbQueries map[string]string, responseBody string
 
 	return newResponseParser(response.Responses, queries, nil), nil
 }
+
+var update = flag.Bool("update", true, "update golden files")

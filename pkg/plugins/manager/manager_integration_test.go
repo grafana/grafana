@@ -141,7 +141,7 @@ func verifyPluginQuery(t *testing.T, ctx context.Context, c plugins.Client) {
 	require.NoError(t, err)
 	payload, err := resp.MarshalJSON()
 	require.NoError(t, err)
-	require.JSONEq(t, `{"results":{"A":{"frames":[{"schema":{"refId":"A","fields":[{"name":"time","type":"time","typeInfo":{"frame":"time.Time"}},{"name":"A-series","type":"number","typeInfo":{"frame":"int64","nullable":true}}]},"data":{"values":[[1661420570000,1661420630000,1661420690000,1661420750000,1661420810000,1661420870000],[1,20,90,30,5,0]]}}]}}}`, string(payload))
+	require.JSONEq(t, `{"results":{"A":{"frames":[{"schema":{"refId":"A","fields":[{"name":"time","type":"time","typeInfo":{"frame":"time.Time"}},{"name":"A-series","type":"number","typeInfo":{"frame":"int64","nullable":true}}]},"data":{"values":[[1661420570000,1661420630000,1661420690000,1661420750000,1661420810000,1661420870000],[1,20,90,30,5,0]]}}],"status":200}}}`, string(payload))
 }
 
 func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Service) {
