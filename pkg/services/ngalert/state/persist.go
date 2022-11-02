@@ -22,5 +22,6 @@ type RuleReader interface {
 
 // Historian maintains an audit log of alert state history.
 type Historian interface {
-	RecordStates(ctx context.Context, states []StateTransition)
+	// RecordStates writes a number of state transitions for a given rule to state history.
+	RecordStates(ctx context.Context, rule *models.AlertRule, states []StateTransition)
 }

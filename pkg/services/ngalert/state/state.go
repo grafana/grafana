@@ -78,7 +78,6 @@ type StateTransition struct {
 	*State
 	PreviousState       eval.State
 	PreviousStateReason string
-	Rule                *models.AlertRule
 }
 
 func (c StateTransition) Formatted() string {
