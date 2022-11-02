@@ -95,7 +95,7 @@ func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
 }
 
 // GetPublicDashboard Gets public dashboard configuration for dashboard
-// GET /api/dashboards/uid/:uid/public-config
+// GET /api/dashboards/uid/:dashboardUid/public-dashboards
 func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]

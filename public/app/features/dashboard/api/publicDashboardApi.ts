@@ -36,7 +36,7 @@ export const publicDashboardApi = createApi({
   reducerPath: 'publicDashboardApi',
   baseQuery: retry(backendSrvBaseQuery({ baseUrl: '/api/dashboards' }), { maxRetries: 0 }),
   tagTypes: ['Config', 'PublicDashboards'],
-  keepUnusedDataFor: 0,
+  refetchOnMountOrArgChange: true,
   endpoints: (builder) => ({
     getConfig: builder.query<PublicDashboard, string>({
       query: (dashboardUid) => ({
@@ -79,12 +79,15 @@ export const publicDashboardApi = createApi({
       }),
       providesTags: ['PublicDashboards'],
     }),
-    deletePublicDashboard: builder.mutation<void, { dashboardTitle: string; dashboardUid: string; uid: string }>({
+    deletePublicDashboard: builder.mutation<
+      void,
+      { dashboard?: DashboardModel; dashboardTitle: string; dashboardUid: string; uid: string }
+    >({
       query: (params) => ({
         url: `/uid/${params.dashboardUid}/public-dashboards/${params.uid}`,
         method: 'DELETE',
       }),
-      async onQueryStarted({ dashboardTitle }, { dispatch, queryFulfilled }) {
+      async onQueryStarted({ dashboard, dashboardTitle, uid }, { dispatch, queryFulfilled }) {
         await queryFulfilled;
         dispatch(
           notifyApp(
@@ -96,8 +99,13 @@ export const publicDashboardApi = createApi({
             )
           )
         );
+
+        dashboard?.updateMeta({
+          publicDashboardUid: uid,
+          publicDashboardEnabled: false,
+        });
       },
-      invalidatesTags: ['PublicDashboards'],
+      invalidatesTags: ['Config', 'PublicDashboards'],
     }),
   }),
 });
