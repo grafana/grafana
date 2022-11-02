@@ -264,7 +264,7 @@
     "@kusto/monaco-kusto": "5.2.0",
     "@leeoniya/ufuzzy": "0.8.0",
     "@lezer/common": "1.0.1",
-    "@lezer/highlight": "^1.0.0",
+    "@lezer/highlight": "1.1.2",
     "@lezer/lr": "1.2.3",
     "@opentelemetry/api": "1.2.0",
     "@opentelemetry/exporter-collector": "0.25.0",

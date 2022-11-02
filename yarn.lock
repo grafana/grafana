@@ -6442,26 +6442,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/common@npm:1.0.1":
+"@lezer/common@npm:1.0.1, @lezer/common@npm:^1.0.0":
   version: 1.0.1
   resolution: "@lezer/common@npm:1.0.1"
   checksum: 05bda2b0b90713a511502e1e0c67842996cb86415cd701c46eb49f8fa117552229a4bc7244f1e8e0025e3563294a52911eebd70d06a4bc987280fca5d148c34b
   languageName: node
   linkType: hard
 
-"@lezer/common@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "@lezer/common@npm:1.0.0"
-  checksum: 0ba652b39f9ff073a6a8a3376a74279f2c2d2ccdd4d2bb57c7b607341dbdbf64baf9c23a196314f09349d175623bc73a6a0b6a0eeb2cc63f3a1190fd631f7c31
-  languageName: node
-  linkType: hard
-
-"@lezer/highlight@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "@lezer/highlight@npm:1.0.0"
+"@lezer/highlight@npm:1.1.2":
+  version: 1.1.2
+  resolution: "@lezer/highlight@npm:1.1.2"
   dependencies:
     "@lezer/common": ^1.0.0
-  checksum: 9ce6c4ea041598e2500f11610e74163eba0361954df8dbf5d12b96dc8b5ab5da8af2defda7ff5728ca460d49f053a7502f2840361bcd8dcf30e8a23f7c30672a
+  checksum: b974c3f43c4338840f7f6110948d5f69ba8ce9d58b75e493bbef5183d63b3b531a1416398e9c7844914d134ea4e9ae717fae240629d937554fcc4cf1ab5385e8
   languageName: node
   linkType: hard
 
@@ -21241,7 +21234,7 @@ __metadata:
     "@kusto/monaco-kusto": 5.2.0
     "@leeoniya/ufuzzy": 0.8.0
     "@lezer/common": 1.0.1
-    "@lezer/highlight": ^1.0.0
+    "@lezer/highlight": 1.1.2
     "@lezer/lr": 1.2.3
     "@opentelemetry/api": 1.2.0
     "@opentelemetry/exporter-collector": 0.25.0
