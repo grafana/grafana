@@ -5,6 +5,7 @@ import './module';
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
     getAppEvents: () => ({
       subscribe: jest.fn((e, handler) => {
         // Trigger test event
