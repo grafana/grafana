@@ -214,6 +214,11 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
+			Name:        "newDBLibrary",
+			Description: "Use jmoiron/sqlx rather than xorm for a few backend services",
+			State:       FeatureStateBeta,
+		},
+		{
 			Name:            "validateDashboardsOnSave",
 			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
 			State:           FeatureStateAlpha,
@@ -336,8 +341,18 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "datasourceLogger",
+			Description: "Logs all datasource requests",
+		},
+		{
 			Name:            "accessControlOnCall",
 			Description:     "Access control primitives for OnCall",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:            "nestedFolders",
+			Description:     "Enable folder nesting",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},

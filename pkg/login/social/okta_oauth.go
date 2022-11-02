@@ -82,7 +82,7 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 
 	role, grafanaAdmin := s.extractRoleAndAdmin(data.rawJSON, groups, true)
 	if s.roleAttributeStrict && !role.IsValid() {
-		return nil, ErrInvalidBasicRole
+		return nil, &InvalidBasicRoleError{idP: "Okta", assignedRole: string(role)}
 	}
 
 	var isGrafanaAdmin *bool = nil

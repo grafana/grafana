@@ -54,6 +54,7 @@ export interface FeatureToggles {
   traceToMetrics?: boolean;
   prometheusStreamingJSONParser?: boolean;
   prometheusStreamingJSONParserTest?: boolean;
+  newDBLibrary?: boolean;
   validateDashboardsOnSave?: boolean;
   autoMigrateGraphPanels?: boolean;
   prometheusWideSeries?: boolean;
@@ -77,5 +78,7 @@ export interface FeatureToggles {
   queryLibrary?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
+  datasourceLogger?: boolean;
   accessControlOnCall?: boolean;
+  nestedFolders?: boolean;
 }
