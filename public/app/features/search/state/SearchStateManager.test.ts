@@ -1,10 +1,27 @@
+import { DataFrameView } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
+import { DashboardQueryResult, getGrafanaSearcher } from '../service';
 import { SearchLayout } from '../types';
 
 import { getSearchStateManager } from './SearchStateManager';
 
+jest.mock('@grafana/runtime', () => {
+  const originalModule = jest.requireActual('@grafana/runtime');
+  return {
+    ...originalModule,
+    reportInteraction: jest.fn(),
+  };
+});
+
 describe('SearchStateManager', () => {
+  jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue({
+    isItemLoaded: jest.fn(),
+    loadMoreItems: jest.fn(),
+    totalRows: 0,
+    view: new DataFrameView<DashboardQueryResult>({ fields: [], length: 0 }),
+  });
+
   it('Can get search state manager with initial state', async () => {
     const stm = getSearchStateManager();
     expect(stm.state.layout).toBe(SearchLayout.Folders);

@@ -38,16 +38,19 @@ export const defaultQueryParams: SearchQueryParams = {
 
 export class SearchStateManager extends StateManagerBase<SearchState> {
   updateLocation = debounce((query) => locationService.partial(query, true), 300);
+  doSearchWithDebounce = debounce(() => this.doSearch(), 300);
   lastQuery?: SearchQuery;
 
   initStateFromUrl(folderUid?: string) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
 
-    stateManager.setStateAndDoSearch({
+    stateManager.setState({
       ...stateFromUrl,
       folderUid: folderUid,
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
     });
+
+    this.doSearch();
   }
   /**
    * Updates internal and url state, then triggers a new search
@@ -166,7 +169,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     return q;
   }
 
-  doSearchWithDebounce = debounce((): void => {
+  private doSearch() {
     const trackingInfo = {
       layout: this.state.layout,
       starred: this.state.starred,
@@ -205,7 +208,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
           this.setState({ loading: false });
         });
     }
-  }, 300);
+  }
 
   // This gets the possible tags from within the query results
   getTagOptions = (): Promise<TermCount[]> => {

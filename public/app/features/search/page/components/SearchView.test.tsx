@@ -19,12 +19,6 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...originalModule,
     reportInteraction: jest.fn(),
-    config: {
-      ...originalModule.config,
-      featureToggles: {
-        panelTitleSearch: false,
-      },
-    },
   };
 });
 
