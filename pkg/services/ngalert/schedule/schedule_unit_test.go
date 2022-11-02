@@ -20,7 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -482,7 +481,6 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	t.Helper()
 
 	mockedClock := clock.NewMock()
-	logger := log.New("ngalert schedule test")
 
 	if rs == nil {
 		rs = newFakeRulesStore()
@@ -494,7 +492,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 
 	var evaluator eval.Evaluator = evalMock
 	if evalMock == nil {
-		evaluator = eval.NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, logger, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil))
+		evaluator = eval.NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil))
 	}
 
 	if registry == nil {
@@ -527,7 +525,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	}
 
 	stateRs := state.FakeRuleReader{}
-	st := state.NewManager(log.New("test"), m.GetStateMetrics(), nil, &stateRs, is, &image.NoopImageService{}, mockedClock, &state.FakeHistorian{})
+	st := state.NewManager(m.GetStateMetrics(), nil, &stateRs, is, &image.NoopImageService{}, mockedClock, &state.FakeHistorian{})
 	return NewScheduler(schedCfg, appUrl, st)
 }
 

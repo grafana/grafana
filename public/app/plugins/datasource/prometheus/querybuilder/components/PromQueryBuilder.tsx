@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 
 import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
-import { EditorRow } from '@grafana/ui';
+import { EditorRow } from '@grafana/experimental';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
@@ -99,7 +99,13 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   return (
     <>
       <EditorRow>
-        <MetricSelect query={query} onChange={onChange} onGetMetrics={onGetMetrics} />
+        <MetricSelect
+          query={query}
+          onChange={onChange}
+          onGetMetrics={onGetMetrics}
+          datasource={datasource}
+          labelsFilters={query.labels}
+        />
         <LabelFilters
           labelsFilters={query.labels}
           onChange={onChangeLabels}

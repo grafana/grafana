@@ -3,6 +3,7 @@ import { ResourceKey } from 'i18next';
 export const ENGLISH_US = 'en-US';
 export const FRENCH_FRANCE = 'fr-FR';
 export const SPANISH_SPAIN = 'es-ES';
+export const GERMAN_GERMANY = 'de-DE';
 export const CHINESE_SIMPLIFIED = 'zh-Hans';
 export const PSEUDO_LOCALE = 'pseudo-LOCALE';
 
@@ -36,6 +37,12 @@ export const LOCALES: LocaleDefinition[] = [
     code: SPANISH_SPAIN,
     name: 'Español',
     loader: () => import('../../../locales/es-ES/grafana.json'),
+  },
+
+  {
+    code: GERMAN_GERMANY,
+    name: 'Deutsch',
+    loader: () => import('../../../locales/de-DE/grafana.json'),
   },
 
   {

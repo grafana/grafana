@@ -38,6 +38,9 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		assert.True(t, sc.context.IsSignedIn)
 		assert.Equal(t, orgID, sc.context.OrgID)
 		assert.Equal(t, org.RoleEditor, sc.context.OrgRole)
+		list := contexthandler.AuthHTTPHeaderListFromContext(sc.context.Req.Context())
+		require.NotNil(t, list)
+		require.EqualValues(t, []string{"Authorization"}, list.Items)
 	}, configure)
 
 	middlewareScenario(t, "Handle auth", func(t *testing.T, sc *scenarioContext) {
@@ -71,6 +74,9 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 
 		assert.True(t, sc.context.IsSignedIn)
 		assert.Equal(t, id, sc.context.UserID)
+		list := contexthandler.AuthHTTPHeaderListFromContext(sc.context.Req.Context())
+		require.NotNil(t, list)
+		require.EqualValues(t, []string{"Authorization"}, list.Items)
 	}, configure)
 
 	middlewareScenario(t, "Should return error if user is not found", func(t *testing.T, sc *scenarioContext) {

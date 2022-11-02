@@ -93,7 +93,7 @@ describe('discoverDataSourceFeatures', () => {
 
       const response = await discoverDataSourceFeatures({ url: '/datasource/proxy', name: 'Loki', type: 'loki' });
 
-      expect(response.application).toBe(PromApplication.Lotex);
+      expect(response.application).toBe(PromApplication.Cortex);
       expect(response.features.rulerApiEnabled).toBe(true);
 
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
@@ -126,7 +126,7 @@ describe('discoverDataSourceFeatures', () => {
         type: 'prometheus',
       });
 
-      expect(response.application).toBe(PromApplication.Lotex);
+      expect(response.application).toBe(PromApplication.Cortex);
       expect(response.features.rulerApiEnabled).toBe(false);
 
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
@@ -152,7 +152,7 @@ describe('discoverDataSourceFeatures', () => {
         type: 'prometheus',
       });
 
-      expect(response.application).toBe(PromApplication.Lotex);
+      expect(response.application).toBe(PromApplication.Cortex);
       expect(response.features.rulerApiEnabled).toBe(true);
 
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);

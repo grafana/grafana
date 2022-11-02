@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.14'
+grabpl_version = 'v3.0.15'
 build_image = 'grafana/build-container:1.6.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -209,7 +209,7 @@ def enterprise_downstream_step(edition, ver_mode):
 
 def lint_backend_step(edition):
     return {
-        'name': 'lint-backend' + enterprise2_suffix(edition),
+        'name': 'lint-backend',
         'image': go_image,
         'environment': {
             # We need CGO because of go-sqlite3
@@ -481,28 +481,16 @@ def build_plugins_step(edition, ver_mode):
 
 
 def test_backend_step(edition):
-    if edition == 'enterprise2':
-        return {
-            'name': 'test-backend' + enterprise2_suffix(edition),
-            'image': build_image,
-            'depends_on': [
-                'wire-install',
-            ],
-            'commands': [
-                'go test -tags=pro -covermode=atomic -timeout=5m ./pkg/...',
-            ],
-        }
-    else:
-        return {
-            'name': 'test-backend' + enterprise2_suffix(edition),
-            'image': build_image,
-            'depends_on': [
-                'wire-install',
-            ],
-            'commands': [
-                'go test -short -covermode=atomic -timeout=5m ./pkg/...',
-            ],
-        }
+    return {
+        'name': 'test-backend',
+        'image': build_image,
+        'depends_on': [
+            'wire-install',
+        ],
+        'commands': [
+            'go test -short -covermode=atomic -timeout=5m ./pkg/...',
+        ],
+    }
 
 
 
@@ -1038,6 +1026,7 @@ def publish_grafanacom_step(edition, ver_mode):
         ],
         'environment': {
             'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
+            'GCP_KEY': from_secret('gcp_key'),
         },
         'commands': [
             cmd,

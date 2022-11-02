@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -9,73 +10,72 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_DimensionKeys_Route(t *testing.T) {
-	t.Run("rejects POST method", func(t *testing.T) {
+	t.Run("calls FilterDimensionKeysRequest when a StandardDimensionKeysRequest is passed", func(t *testing.T) {
+		mockListMetricsService := mocks.ListMetricsServiceMock{}
+		mockListMetricsService.On("GetDimensionKeysByDimensionFilter").Return([]string{}, nil)
+		newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
+			return &mockListMetricsService, nil
+		}
 		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("POST", "/dimension-keys?region=us-east-1", nil)
+		req := httptest.NewRequest("GET", `/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization&dimensionFilters={"NodeID":["Shared"],"stage":["QueryCommit"]}`, nil)
 		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionKeysHandler, nil))
 		handler.ServeHTTP(rr, req)
-		assert.Equal(t, http.StatusMethodNotAllowed, rr.Code)
+		mockListMetricsService.AssertNumberOfCalls(t, "GetDimensionKeysByDimensionFilter", 1)
 	})
 
-	t.Run("requires region query value", func(t *testing.T) {
+	t.Run("calls GetDimensionKeysByNamespace when a CustomMetricDimensionKeysRequest is passed", func(t *testing.T) {
+		mockListMetricsService := mocks.ListMetricsServiceMock{}
+		mockListMetricsService.On("GetDimensionKeysByNamespace").Return([]string{}, nil)
+		newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
+			return &mockListMetricsService, nil
+		}
 		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/dimension-keys", nil)
+		req := httptest.NewRequest("GET", `/dimension-keys?region=us-east-2&namespace=custom&metricName=CPUUtilization`, nil)
 		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionKeysHandler, nil))
 		handler.ServeHTTP(rr, req)
-		assert.Equal(t, http.StatusBadRequest, rr.Code)
+		mockListMetricsService.AssertNumberOfCalls(t, "GetDimensionKeysByNamespace", 1)
 	})
 
-	tests := []struct {
-		url         string
-		methodName  string
-		requestType string
-	}{
-		{
-			url:         "/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization",
-			methodName:  "GetHardCodedDimensionKeysByNamespace",
-			requestType: "StandardDimensionKeysRequest"},
-		{
-			url:         `/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization&dimensionFilters={"NodeID":["Shared"],"stage":["QueryCommit"]}`,
-			methodName:  "GetDimensionKeysByDimensionFilter",
-			requestType: "FilterDimensionKeysRequest"},
-		{
-			url:         `/dimension-keys?region=us-east-2&namespace=customNamespace&metricName=CPUUtilization`,
-			methodName:  "GetDimensionKeysByNamespace",
-			requestType: "CustomMetricDimensionKeysRequest"},
-	}
-
-	for _, tc := range tests {
-		t.Run(fmt.Sprintf("calls %s when a StandardDimensionKeysRequest is passed", tc.requestType), func(t *testing.T) {
-			mockListMetricsService := mocks.ListMetricsServiceMock{}
-			mockListMetricsService.On(tc.methodName).Return([]string{}, nil)
-			newListMetricsService = func(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, region string) (models.ListMetricsProvider, error) {
-				return &mockListMetricsService, nil
-			}
-			rr := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", tc.url, nil)
-			handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionKeysHandler, nil))
-			handler.ServeHTTP(rr, req)
-			mockListMetricsService.AssertNumberOfCalls(t, tc.methodName, 1)
+	t.Run("calls GetHardCodedDimensionKeysByNamespace when a StandardDimensionKeysRequest is passed", func(t *testing.T) {
+		origGetHardCodedDimensionKeysByNamespace := services.GetHardCodedDimensionKeysByNamespace
+		t.Cleanup(func() {
+			services.GetHardCodedDimensionKeysByNamespace = origGetHardCodedDimensionKeysByNamespace
 		})
-	}
+		haveBeenCalled := false
+		usedNamespace := ""
+		services.GetHardCodedDimensionKeysByNamespace = func(namespace string) ([]string, error) {
+			haveBeenCalled = true
+			usedNamespace = namespace
+			return []string{}, nil
+		}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization", nil)
+		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionKeysHandler, nil))
+		handler.ServeHTTP(rr, req)
+		res := []models.Metric{}
+		err := json.Unmarshal(rr.Body.Bytes(), &res)
+		require.Nil(t, err)
+		assert.True(t, haveBeenCalled)
+		assert.Equal(t, "AWS/EC2", usedNamespace)
+	})
 
-	for _, tc := range tests {
-		t.Run(fmt.Sprintf("return 500 if %s returns an error", tc.requestType), func(t *testing.T) {
-			mockListMetricsService := mocks.ListMetricsServiceMock{}
-			mockListMetricsService.On(tc.methodName).Return([]string{}, fmt.Errorf("some error"))
-			newListMetricsService = func(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, region string) (models.ListMetricsProvider, error) {
-				return &mockListMetricsService, nil
-			}
-			rr := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", tc.url, nil)
-			handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionKeysHandler, nil))
-			handler.ServeHTTP(rr, req)
-			assert.Equal(t, http.StatusInternalServerError, rr.Code)
-			assert.Equal(t, `{"Message":"error in DimensionKeyHandler: some error","Error":"some error","StatusCode":500}`, rr.Body.String())
-		})
-	}
+	t.Run("return 500 if GetDimensionKeysByDimensionFilter returns an error", func(t *testing.T) {
+		mockListMetricsService := mocks.ListMetricsServiceMock{}
+		mockListMetricsService.On("GetDimensionKeysByDimensionFilter").Return([]string{}, fmt.Errorf("some error"))
+		newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
+			return &mockListMetricsService, nil
+		}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", `/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization&dimensionFilters={"NodeID":["Shared"],"stage":["QueryCommit"]}`, nil)
+		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionKeysHandler, nil))
+		handler.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+		assert.Equal(t, `{"Message":"error in DimensionKeyHandler: some error","Error":"some error","StatusCode":500}`, rr.Body.String())
+	})
 }
