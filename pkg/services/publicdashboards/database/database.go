@@ -177,8 +177,9 @@ func (d *PublicDashboardStoreImpl) ExistsEnabledByDashboardUid(ctx context.Conte
 func (d *PublicDashboardStoreImpl) ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error) {
 	hasPublicDashboard := false
 	err := d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		publicDashboard := &PublicDashboard{DashboardUid: dashboardUid, IsEnabled: true}
-result, err = sess.Count(publicDashboard)
+		sql := "SELECT COUNT(*) FROM dashboard_public WHERE access_token=? AND is_enabled=true"
+
+		result, err := dbSession.SQL(sql, accessToken).Count()
 		if err != nil {
 			return err
 		}
@@ -217,11 +218,7 @@ func (d *PublicDashboardStoreImpl) Create(ctx context.Context, cmd SavePublicDas
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		affectedRows, err = sess.UseBool("is_enabled").Insert(&cmd.PublicDashboard)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return err
 	})
 
 	return affectedRows, err
@@ -249,9 +246,6 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 		}
 
 		affectedRows, err = sqlResult.RowsAffected()
-		if err != nil {
-			return err
-		}
 
 		return nil
 	})
@@ -267,10 +261,7 @@ func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, orgId int64, uid 
 		var err error
 		affectedRows, err = sess.Delete(dashboard)
 
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	})
 
 	return affectedRows, err

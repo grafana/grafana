@@ -143,7 +143,6 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 	// verify public dashboard does not exist and that we didn't get one from the
 	// request
 	existingPubdash, err := pd.store.Find(ctx, dto.PublicDashboard.Uid)
-	pd.log.Info("whoops!")
 	if err != nil {
 		return nil, err
 	} else if existingPubdash != nil {

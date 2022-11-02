@@ -53,7 +53,7 @@ export const publicDashboardApi = createApi({
           dispatch(notifyApp(createErrorNotification(customError?.error?.data?.message)));
         }
       },
-      providesTags: ['Config'],
+      providesTags: ['PublicDashboards'],
     }),
     createPublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({
@@ -72,7 +72,7 @@ export const publicDashboardApi = createApi({
           publicDashboardEnabled: data.isEnabled,
         });
       },
-      invalidatesTags: ['Config'],
+      invalidatesTags: ['PublicDashboards'],
     }),
     updatePublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({
@@ -92,7 +92,7 @@ export const publicDashboardApi = createApi({
           publicDashboardEnabled: data.isEnabled,
         });
       },
-      invalidatesTags: ['Config'],
+      invalidatesTags: ['PublicDashboards'],
     }),
     listPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
       query: () => ({
