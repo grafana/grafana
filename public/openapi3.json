@@ -1511,6 +1511,19 @@
         },
         "description": "(empty)"
       },
+      "receiversResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/receiver"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "recordingRuleResponse": {
         "content": {
           "application/json": {
@@ -2790,6 +2803,10 @@
           "replyTo": {
             "type": "string"
           },
+          "scaleFactor": {
+            "format": "int64",
+            "type": "integer"
+          },
           "schedule": {
             "$ref": "#/components/schemas/ScheduleDTO"
           },
@@ -3096,6 +3113,10 @@
           },
           "replyTo": {
             "type": "string"
+          },
+          "scaleFactor": {
+            "format": "int64",
+            "type": "integer"
           },
           "schedule": {
             "$ref": "#/components/schemas/ScheduleDTO"
@@ -3979,7 +4000,7 @@
         "type": "string"
       },
       "DsPermissionType": {
-        "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
+        "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\n`2` - Edit\nEnum: 0,1,2",
         "format": "int64",
         "type": "integer"
       },
@@ -3995,6 +4016,9 @@
           },
           "auth_password": {
             "$ref": "#/components/schemas/Secret"
+          },
+          "auth_password_file": {
+            "type": "string"
           },
           "auth_secret": {
             "$ref": "#/components/schemas/Secret"
@@ -4910,6 +4934,9 @@
           "smtp_auth_password": {
             "$ref": "#/components/schemas/Secret"
           },
+          "smtp_auth_password_file": {
+            "type": "string"
+          },
           "smtp_auth_secret": {
             "$ref": "#/components/schemas/Secret"
           },
@@ -5468,6 +5495,10 @@
             "type": "string"
           },
           "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "schemaVersion": {
             "format": "int64",
             "type": "integer"
           },
@@ -8662,6 +8693,9 @@
             },
             "type": "array"
           },
+          "location": {
+            "type": "string"
+          },
           "months": {
             "items": {
               "type": "string"
@@ -9713,7 +9747,6 @@
         "type": "object"
       },
       "alertGroup": {
-        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -9905,7 +9938,6 @@
         "type": "array"
       },
       "gettableSilence": {
-        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -9954,13 +9986,13 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -10057,6 +10089,15 @@
         ],
         "type": "object"
       },
+      "postSilencesOKBody": {
+        "properties": {
+          "silenceID": {
+            "description": "silence ID",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "postableAlert": {
         "description": "PostableAlert postable alert",
         "properties": {
@@ -10095,7 +10136,6 @@
         "type": "array"
       },
       "postableSilence": {
-        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -10133,6 +10173,7 @@
         "type": "object"
       },
       "receiver": {
+        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -13713,7 +13754,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Creates an API key.",
+        "summary": "Create an API key.",
         "tags": [
           "api_keys"
         ]

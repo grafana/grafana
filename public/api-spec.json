@@ -2481,7 +2481,7 @@
         "tags": [
           "api_keys"
         ],
-        "summary": "Creates an API key.",
+        "summary": "Create an API key.",
         "operationId": "addAPIkey",
         "parameters": [
           {
@@ -10425,6 +10425,10 @@
         "replyTo": {
           "type": "string"
         },
+        "scaleFactor": {
+          "type": "integer",
+          "format": "int64"
+        },
         "schedule": {
           "$ref": "#/definitions/ScheduleDTO"
         },
@@ -10725,6 +10729,10 @@
         },
         "replyTo": {
           "type": "string"
+        },
+        "scaleFactor": {
+          "type": "integer",
+          "format": "int64"
         },
         "schedule": {
           "$ref": "#/definitions/ScheduleDTO"
@@ -11590,7 +11598,7 @@
       "type": "string"
     },
     "DsPermissionType": {
-      "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
+      "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\n`2` - Edit\nEnum: 0,1,2",
       "type": "integer",
       "format": "int64"
     },
@@ -12351,6 +12359,10 @@
           "type": "string"
         },
         "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "schemaVersion": {
           "type": "integer",
           "format": "int64"
         },
