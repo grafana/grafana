@@ -312,8 +312,6 @@
       }
     },
     {
-      "dashboardFilter": "",
-      "dashboardTags": [],
       "datasource": {
         "type": "testdata",
         "uid": "PD8C576611E62080A"
@@ -325,30 +323,6 @@
         "y": 0
       },
       "id": 9,
-      "limit": 10,
-      "links": [],
-      "nameFilter": "$namefilter",
-      "onlyAlertsOnDashboard": false,
-      "options": {
-        "alertInstanceLabelFilter": "",
-        "alertName": "",
-        "dashboardAlerts": false,
-        "groupBy": [],
-        "groupMode": "default",
-        "maxItems": 20,
-        "sortOrder": 1,
-        "stateFilter": {
-          "error": true,
-          "firing": true,
-          "noData": false,
-          "normal": false,
-          "pending": true
-        },
-        "viewMode": "list"
-      },
-      "show": "current",
-      "sortOrder": 1,
-      "stateFilter": [],
       "targets": [
         {
           "datasource": {
@@ -785,7 +759,6 @@
       }
     }
   ],
-  "revision": 2,
   "schemaVersion": 37,
   "style": "dark",
   "tags": [
