@@ -46,20 +46,15 @@ func (obj *RawObject) UnmarshalJSON(b []byte) error {
 
 func (codec *rawObjectCodec) IsEmpty(ptr unsafe.Pointer) bool {
 	f := (*RawObject)(ptr)
-	return f.UID == "" && f.Body == nil
+	return f.GRN == nil && f.Body == nil
 }
 
 func (codec *rawObjectCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	obj := (*RawObject)(ptr)
 	stream.WriteObjectStart()
-	stream.WriteObjectField("UID")
-	stream.WriteString(obj.UID)
+	stream.WriteObjectField("GRN")
+	stream.WriteVal(obj.GRN)
 
-	if obj.Kind != "" {
-		stream.WriteMore()
-		stream.WriteObjectField("kind")
-		stream.WriteString(obj.Kind)
-	}
 	if obj.Version != "" {
 		stream.WriteMore()
 		stream.WriteObjectField("version")
@@ -125,10 +120,9 @@ func (codec *rawObjectCodec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator)
 func readRawObject(iter *jsoniter.Iterator, raw *RawObject) {
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 		switch l1Field {
-		case "UID":
-			raw.UID = iter.ReadString()
-		case "kind":
-			raw.Kind = iter.ReadString()
+		case "GRN":
+			raw.GRN = &GRN{}
+			iter.ReadVal(raw.GRN)
 		case "updated":
 			raw.Updated = iter.ReadInt64()
 		case "updatedBy":
@@ -211,20 +205,15 @@ func (obj *ObjectSearchResult) MarshalJSON() ([]byte, error) {
 
 func (codec *searchResultCodec) IsEmpty(ptr unsafe.Pointer) bool {
 	f := (*ObjectSearchResult)(ptr)
-	return f.UID == "" && f.Body == nil
+	return f.GRN == nil && f.Body == nil
 }
 
 func (codec *searchResultCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	obj := (*ObjectSearchResult)(ptr)
 	stream.WriteObjectStart()
-	stream.WriteObjectField("UID")
-	stream.WriteString(obj.UID)
+	stream.WriteObjectField("GRN")
+	stream.WriteVal(obj.GRN)
 
-	if obj.Kind != "" {
-		stream.WriteMore()
-		stream.WriteObjectField("kind")
-		stream.WriteString(obj.Kind)
-	}
 	if obj.Name != "" {
 		stream.WriteMore()
 		stream.WriteObjectField("name")
@@ -297,6 +286,11 @@ func (codec *writeResponseCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Str
 		stream.WriteMore()
 		stream.WriteObjectField("error")
 		stream.WriteVal(obj.Error)
+	}
+	if obj.GRN != nil {
+		stream.WriteMore()
+		stream.WriteObjectField("GRN")
+		stream.WriteVal(obj.GRN)
 	}
 	if obj.Object != nil {
 		stream.WriteMore()
