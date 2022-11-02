@@ -411,6 +411,15 @@
     "absolute": {
       "recent-title": "Ŗęčęŉŧľy ūşęđ äþşőľūŧę řäŉģęş",
       "title": "Åþşőľūŧę ŧįmę řäŉģę"
+    },
+    "calendar-select-range": {
+      "title": "Ŝęľęčŧ ä ŧįmę řäŉģę"
+    },
+    "range-list": {
+      "title": "{ŧįŧľę}"
+    },
+    "specify-time-range": {
+      "title": "Ŝpęčįƒy ŧįmę řäŉģę <1></1>"
     }
   },
   "user-orgs": {

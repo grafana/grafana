@@ -411,6 +411,15 @@
     "absolute": {
       "recent-title": "Intervalos absolutos utilizados recientemente",
       "title": "Intervalo de tiempo absoluto"
+    },
+    "calendar-select-range": {
+      "title": ""
+    },
+    "range-list": {
+      "title": ""
+    },
+    "specify-time-range": {
+      "title": ""
     }
   },
   "user-orgs": {

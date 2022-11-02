@@ -411,6 +411,15 @@
     "absolute": {
       "recent-title": "Périodes absolues récemment utilisées",
       "title": "Période temporelle absolue"
+    },
+    "calendar-select-range": {
+      "title": ""
+    },
+    "range-list": {
+      "title": ""
+    },
+    "specify-time-range": {
+      "title": ""
     }
   },
   "user-orgs": {
