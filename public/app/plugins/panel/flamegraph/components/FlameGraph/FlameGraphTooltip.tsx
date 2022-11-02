@@ -22,7 +22,7 @@ const FlameGraphTooltip = ({ tooltipRef, tooltipData, showTooltip }: Props) => {
           content={
             <div>
               <p>{tooltipData.name}</p>
-              <p>
+              <p className={styles.lastParagraph}>
                 {tooltipData.unitTitle}
                 <br />
                 Total: <b>{tooltipData.unitValue}</b> ({tooltipData.percentValue}%)
@@ -100,6 +100,9 @@ export const getTooltipData = (
 const getStyles = () => ({
   tooltip: css`
     position: fixed;
+  `,
+  lastParagraph: css`
+    margin-bottom: 0;
   `,
   name: css`
     margin-bottom: 10px;
