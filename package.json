@@ -222,7 +222,7 @@
     "react-test-renderer": "17.0.2",
     "redux-mock-store": "1.5.4",
     "rimraf": "3.0.2",
-    "rudder-sdk-js": "2.15.0",
+    "rudder-sdk-js": "2.18.1",
     "sass": "1.55.0",
     "sass-loader": "13.0.2",
     "sinon": "14.0.1",
