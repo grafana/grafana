@@ -35,78 +35,77 @@ func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashb
 
 // RecordStates writes a number of state transitions for a given rule to state history.
 func (h *AnnotationStateHistorian) RecordStates(ctx context.Context, rule *ngmodels.AlertRule, states []state.StateTransition) {
+	logger := h.log.New(rule.GetKey().LogContext()...)
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
-	annotations := h.buildAnnotations(rule, states)
-	go h.recordAnnotationsSync(ctx, annotations)
+	annotations := h.buildAnnotations(rule, states, logger)
+	panel := parsePanelKey(rule, logger)
+	go h.recordAnnotationsSync(ctx, panel, annotations, logger)
 }
 
-type itemWithMetadata struct {
-	annotations.Item
-	dashUID       string
-	parsedPanelID int64
-}
-
-func (h *AnnotationStateHistorian) buildAnnotations(rule *ngmodels.AlertRule, states []state.StateTransition) []itemWithMetadata {
-	items := make([]itemWithMetadata, 0, len(states))
+func (h *AnnotationStateHistorian) buildAnnotations(rule *ngmodels.AlertRule, states []state.StateTransition, logger log.Logger) []annotations.Item {
+	items := make([]annotations.Item, 0, len(states))
 	for _, state := range states {
-		logger := h.log.New(state.State.GetRuleKey().LogContext()...)
 		logger.Debug("Alert state changed creating annotation", "newState", state.Formatted(), "oldState", state.PreviousFormatted())
 
 		annotationText, annotationData := buildAnnotationTextAndData(rule, state.State)
 
-		item := itemWithMetadata{
-			Item: annotations.Item{
-				AlertId:   rule.ID,
-				OrgId:     state.OrgID,
-				PrevState: state.PreviousFormatted(),
-				NewState:  state.Formatted(),
-				Text:      annotationText,
-				Data:      annotationData,
-				Epoch:     state.LastEvaluationTime.UnixNano() / int64(time.Millisecond),
-			},
+		item := annotations.Item{
+			AlertId:   rule.ID,
+			OrgId:     state.OrgID,
+			PrevState: state.PreviousFormatted(),
+			NewState:  state.Formatted(),
+			Text:      annotationText,
+			Data:      annotationData,
+			Epoch:     state.LastEvaluationTime.UnixNano() / int64(time.Millisecond),
 		}
 
-		dashUID, ok := state.Annotations[ngmodels.DashboardUIDAnnotation]
-		if ok {
-			panelUID := state.Annotations[ngmodels.PanelIDAnnotation]
-
-			panelID, err := strconv.ParseInt(panelUID, 10, 64)
-			if err != nil {
-				logger.Error("Error parsing panelUID for alert annotation", "panelUID", panelUID, "error", err)
-				continue
-			}
-			item.dashUID = dashUID
-			item.parsedPanelID = panelID
-		}
 		items = append(items, item)
 	}
 	return items
 }
 
-func (h *AnnotationStateHistorian) recordAnnotationsSync(ctx context.Context, items []itemWithMetadata) {
-	annotations := make([]annotations.Item, 0, len(items))
+// panelKey uniquely identifies a panel.
+type panelKey struct {
+	orgID   int64
+	dashUID string
+	panelID int64
+}
 
-	for _, item := range items {
-		if item.dashUID != "" {
-			dashID, err := h.dashboards.getID(ctx, item.OrgId, item.dashUID)
-			if err != nil {
-				h.log.Error("Error getting dashboard for alert annotation", "dashboardUID", item.dashUID, "alertRuleID", item.AlertId, "error", err)
-				return
-			}
-
-			item.Item.PanelId = item.parsedPanelID
-			item.Item.DashboardId = dashID
+// panelKey attempts to get the key of the panel attached to the given rule. Returns nil if the rule is not attached to a panel.
+func parsePanelKey(rule *ngmodels.AlertRule, logger log.Logger) *panelKey {
+	dashUID, ok := rule.Annotations[ngmodels.DashboardUIDAnnotation]
+	if ok {
+		panelAnno := rule.Annotations[ngmodels.PanelIDAnnotation]
+		panelID, err := strconv.ParseInt(panelAnno, 10, 64)
+		if err != nil {
+			logger.Error("Error parsing panelUID for alert annotation", "actual", panelAnno, "error", err)
+			return nil
 		}
-		annotations = append(annotations, item.Item)
+		return &panelKey{
+			orgID:   rule.OrgID,
+			dashUID: dashUID,
+			panelID: panelID,
+		}
+	}
+	return nil
+}
+
+func (h *AnnotationStateHistorian) recordAnnotationsSync(ctx context.Context, panel *panelKey, annotations []annotations.Item, logger log.Logger) {
+	if panel != nil {
+		dashID, err := h.dashboards.getID(ctx, panel.orgID, panel.dashUID)
+		if err != nil {
+			logger.Error("Error getting dashboard for alert annotation", "dashboardUID", panel.dashUID, "error", err)
+			return
+		}
+
+		for _, i := range annotations {
+			i.DashboardId = dashID
+			i.PanelId = panel.panelID
+		}
 	}
 
 	if err := h.annotations.SaveMany(ctx, annotations); err != nil {
-		affectedIDs := make([]int64, 0, len(items))
-		for _, i := range items {
-			affectedIDs = append(affectedIDs, i.AlertId)
-		}
-		h.log.Error("Error saving alert annotation batch", "alertRuleIDs", affectedIDs, "error", err)
-		return
+		logger.Error("Error saving alert annotation batch", "error", err)
 	}
 }
 
