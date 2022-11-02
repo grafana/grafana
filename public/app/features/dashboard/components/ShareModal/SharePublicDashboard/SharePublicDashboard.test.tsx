@@ -20,14 +20,8 @@ import { ShareModal } from '../ShareModal';
 const server = setupServer(
   rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (_, res, ctx) => {
     return res(
-      ctx.status(200),
-      ctx.json({
-        isEnabled: false,
-        annotationsEnabled: false,
-        uid: undefined,
-        dashboardUid: undefined,
-        accessToken: 'an-access-token',
-      })
+      ctx.status(404),
+      ctx.json({ error: 'public dashboard not found', message: 'public dashboard not found', traceID: '' })
     );
   })
 );
@@ -113,7 +107,6 @@ describe('SharePublic', () => {
     expect(screen.getByRole('tablist')).toHaveTextContent('Link');
     expect(screen.getByRole('tablist')).not.toHaveTextContent('Public dashboard');
   });
-
   it('renders share panel when public dashboards feature is enabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
 
@@ -123,8 +116,24 @@ describe('SharePublic', () => {
     fireEvent.click(screen.getByText('Public dashboard'));
 
     await screen.findByText('Welcome to Grafana public dashboards alpha!');
-  });
 
+    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
+  });
+  it('renders public dashboard modal without delete button because lack of permissions', async () => {
+    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
+
+    expect(screen.getByRole('tablist')).toHaveTextContent('Link');
+    expect(screen.getByRole('tablist')).toHaveTextContent('Public dashboard');
+
+    fireEvent.click(screen.getByText('Public dashboard'));
+
+    await screen.findByText('Welcome to Grafana public dashboards alpha!');
+
+    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
+  });
   it('renders default relative time in input', async () => {
     expect(mockDashboard.time).toEqual({ from: 'now-6h', to: 'now' });
 
@@ -156,6 +165,7 @@ describe('SharePublic', () => {
     expect(screen.getByTestId(selectors.CostIncreaseCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeDisabled();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
+    expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
   });
   it('when fetch errors happen, then all inputs remain disabled', async () => {
     server.use(
@@ -173,6 +183,7 @@ describe('SharePublic', () => {
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeDisabled();
     expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeDisabled();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
+    expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
   });
   // test checking if current version of dashboard in state is persisted to db
 });
@@ -191,6 +202,7 @@ describe('SharePublic - New config setup', () => {
     expect(screen.getByTestId(selectors.CostIncreaseCheckbox)).toBeEnabled();
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeEnabled();
     expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeEnabled();
+    expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
 
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
   });
@@ -235,11 +247,19 @@ describe('SharePublic - Already persisted', () => {
     );
   });
 
-  it('when modal is opened, then save button is enabled', async () => {
+  it('when modal is opened, then save button and delete button are enabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
     await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
 
+    expect(screen.getByTestId(selectors.DeleteButton)).toBeEnabled();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeEnabled();
+  });
+  it('delete button is not rendered because lack of permissions', async () => {
+    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
+    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+
+    expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
   });
   it('when modal is opened, then annotations toggle is enabled and checked when its enabled in the db', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
@@ -258,6 +278,7 @@ describe('SharePublic - Already persisted', () => {
 
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeEnabled();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeEnabled();
+    expect(screen.getByTestId(selectors.DeleteButton)).toBeEnabled();
   });
   it('when pubdash is enabled, then link url is available', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });

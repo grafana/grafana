@@ -209,6 +209,7 @@ export const SharePublicDashboard = (props: Props) => {
               </Button>
               {publicDashboard && hasWritePermissions && (
                 <DeletePublicDashboardButton
+                  data-testid={selectors.DeleteButton}
                   onDismiss={onDismissDelete}
                   variant="destructive"
                   dashboard={props.dashboard}
