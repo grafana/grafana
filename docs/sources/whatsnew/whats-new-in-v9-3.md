@@ -36,6 +36,18 @@ We have a new feature as part of our Public Dashboard efforts. We have introduce
 
 [image public-dashboard-audit-table.png]
 
+## Conflict user management via CLI
+
+We have added user conflict management in our cli for admins to be able to handle logins or emails which are case sensitive. We have an option to only allow logins to be case insensitive from [v9.1.0](https://github.com/grafana/grafana/pull/49262). This option will be set to true by default in Grafana 10.
+
+Case insenstive by default might impact your Grafana instance and a subset of your users might be affected by this change. Therefore we have developed a CLI to be able handle conflict and choose which user accounts to be kept and which to be removed.
+
+```bash
+$ grafana-cli admin user-manager conflicts list
+```
+
+Learn more about it here, you can read our [conflict CLI - blogpost](link)
+
 ## Transformations - Partition by values
 
 Available in experimental in Grafana Open Source, Enterprise, Cloud Pro, Cloud Advanced
