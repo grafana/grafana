@@ -5,17 +5,20 @@ import {
   PanelPlugin,
   ReducerID,
   standardEditorsRegistry,
+  identityOverrideProcessor
 } from '@grafana/data';
 import { TableFieldOptions, BackgroundDisplayMode, BarGaugeDisplayMode } from '@grafana/schema';
 import { TableCellDisplayMode } from '@grafana/ui';
 
 import { PaginationEditor } from './PaginationEditor';
+import { TableCellSubOptionEditor } from './TableCellSubOptionEditor';
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { PanelOptions, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
 import { TableSuggestionsSupplier } from './suggestions';
 
 const footerCategory = 'Table footer';
+const cellCategory = ['Cell Options'];
 
 export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
@@ -74,7 +77,21 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
               { value: TableCellDisplayMode.Image, label: 'Image' },
             ],
           },
+          
           defaultValue: defaultPanelFieldConfig.cellOptions.displayMode,
+          
+        })
+        .addCustomEditor<void, object>({
+          id: 'cellSubOptions',
+          path: 'cellSuboptions',
+          name: 'Cell Options',
+          editor: TableCellSubOptionEditor,
+          override: TableCellSubOptionEditor,
+          defaultValue: {},
+          process: identityOverrideProcessor,
+          category: cellCategory,
+          shouldApply: (f) => true,
+          showIf: (cfg) => { console.log(cfg); return true; },
         })
         .addSelect({
           path: 'cellOptions.gaugeDisplayMode',

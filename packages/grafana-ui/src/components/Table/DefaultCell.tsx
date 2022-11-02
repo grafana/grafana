@@ -62,8 +62,6 @@ function getCellStyle(
     return tableStyles.buildCellContainerStyle(displayValue.color, undefined, !disableOverflowOnHover);
   }
 
-  console.log(field.config.custom?.cellOptions);
-
   if (
     field.config.custom?.cellOptions.displayMode === TableCellDisplayMode.ColorBackground &&
     field.config.custom?.cellOptions.backgroundDisplayMode === BackgroundDisplayMode.Basic
