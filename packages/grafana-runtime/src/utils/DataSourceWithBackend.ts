@@ -1,4 +1,3 @@
-import { eq } from 'lodash';
 import { lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
