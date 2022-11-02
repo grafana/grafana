@@ -482,7 +482,7 @@ def build_plugins_step(edition, ver_mode):
 
 def test_backend_step(edition):
     return {
-        'name': 'test-backend' + enterprise2_suffix(edition),
+        'name': 'test-backend',
         'image': build_image,
         'depends_on': [
             'wire-install',
