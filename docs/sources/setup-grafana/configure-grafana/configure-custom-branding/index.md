@@ -101,3 +101,27 @@ GF_WHITE_LABELING_FOOTER_LINKS_EXTRACUSTOM_URL=http://your.custom.site
 - Grafana version with build number
 
 If you specify `footer_links` or `GF_WHITE_LABELING_FOOTER_LINKS`, then all other default links are removed from the footer and only what is specified is included.
+
+## Custom branding for Public Dashboards
+
+In addition to the customizations detailed below, as an Enterprise user you can also customize the footer for your public dashboards.
+To do this, you can add a new section on your `grafana.ini` file.
+
+```ini
+[white_labeling.public_dashboards]
+
+# Hides the footer for the public dashboards if set to "true". If
+# example: footer_hide = "true"
+;footer_hide =
+
+# Set to text shown in the footer
+;footer_text =
+
+# Set to complete url to override public dashboard footer logo
+;footer_logo =
+
+# Set to link for the footer
+;footer_link =
+```
+
+If you specify `footer_hide` to `true`, all the other values are ignored as the footer will not be shown.
