@@ -1,5 +1,7 @@
 package kindsys
 
+import "github.com/grafana/thema"
+
 // Composable is a category of structured kind that provides schema elements for
 // composition into CoreStructured and CustomStructured kinds. Grafana plugins
 // provide composable kinds; for example, a datasource plugin provides one to
@@ -9,7 +11,7 @@ package kindsys
 // Each Composable is an implementation of exactly one Slot, a shared meta-schema
 // defined by Grafana itself that constrains the shape of schemas declared in
 // that ComposableKind.
-#Composable: {
+#Composable: S={
 	_sharedKind
 	form: "structured"
 
