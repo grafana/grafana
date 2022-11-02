@@ -126,7 +126,7 @@ export const Pages = {
             submitButton: 'Variable editor Submit button',
           },
           QueryVariable: {
-            queryOptionsDataSourceSelect: Components.DataSourcePicker.container,
+            queryOptionsDataSourceSelect: Components.DataSourcePicker.inputV2,
             queryOptionsRefreshSelect: 'Variable editor Form Query Refresh select',
             queryOptionsRefreshSelectV2: 'data-testid Variable editor Form Query Refresh select',
             queryOptionsRegExInput: 'Variable editor Form Query RegEx field',
