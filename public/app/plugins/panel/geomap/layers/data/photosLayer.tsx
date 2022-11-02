@@ -52,9 +52,12 @@ export const defaultPhotosConfig: MapLayerOptions<PhotoConfig> = {
 };
 
 // TODO Find a way to use SVG scaled to behave like a png, currently using base64 conversion
-//const unknownImage = '../../../../../public/img/icons/unicons/question-circle.svg';
+//const unknownImageSVG = '../../../../../public/img/icons/unicons/question-circle.svg';
 const unknownImage =
   'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBjbGFzcz0iY3NzLWV5eDRkbyI+PHBhdGggZD0iTTExLjI5LDE1LjI5YTEuNTgsMS41OCwwLDAsMC0uMTIuMTUuNzYuNzYsMCwwLDAtLjA5LjE4LjY0LjY0LDAsMCwwLS4wNi4xOCwxLjM2LDEuMzYsMCwwLDAsMCwuMi44NC44NCwwLDAsMCwuMDguMzguOS45LDAsMCwwLC41NC41NC45NC45NCwwLDAsMCwuNzYsMCwuOS45LDAsMCwwLC41NC0uNTRBMSwxLDAsMCwwLDEzLDE2YTEsMSwwLDAsMC0uMjktLjcxQTEsMSwwLDAsMCwxMS4yOSwxNS4yOVpNMTIsMkExMCwxMCwwLDEsMCwyMiwxMiwxMCwxMCwwLDAsMCwxMiwyWm0wLDE4YTgsOCwwLDEsMSw4LThBOCw4LDAsMCwxLDEyLDIwWk0xMiw3QTMsMywwLDAsMCw5LjQsOC41YTEsMSwwLDEsMCwxLjczLDFBMSwxLDAsMCwxLDEyLDlhMSwxLDAsMCwxLDAsMiwxLDEsMCwwLDAtMSwxdjFhMSwxLDAsMCwwLDIsMHYtLjE4QTMsMywwLDAsMCwxMiw3WiI+PC9wYXRoPjwvc3ZnPgo=';
+const blankPixel =
+  'data:image/svg+xml;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+let photoLoad: number[] = []; // TODO find a better way to manage this, used to track image load
 
 /**
  * Map layer configuration for circle overlay
@@ -91,15 +94,35 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
 
     vectorLayer.setStyle((feature: FeatureLike) => {
       let src = unknownImage;
+      let idx: number = Infinity;
       if (images.length > 0) {
-        const idx = feature.get('rowIndex') as number;
+        idx = feature.get('rowIndex') as number;
         src = images[idx] ?? unknownImage;
       }
-      return new Style({
+      const photoStyle = new Style({
         image: new Photo({
           src,
           radius: config.radius,
           crop: config.crop,
+          kind: config.kind,
+          shadow: false,
+          stroke: new Stroke({
+            width: 0,
+            color: 'rgba(0,0,0,0)',
+          }),
+          onload: () => {
+            vectorLayer.changed(); // ensure vector layer is rendered properly after image load
+            if (photoLoad && !photoLoad.includes(idx)) {
+              photoLoad.push(idx);
+            }
+          },
+        }),
+      });
+      const blankStyle = new Style({
+        image: new Photo({
+          src: blankPixel,
+          radius: config.radius,
+          crop: false,
           kind: config.kind,
           shadow: config.shadow,
           stroke: new Stroke({
@@ -111,6 +134,27 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
           },
         }),
       });
+      const errorStyle = new Style({
+        image: new Photo({
+          src: unknownImage,
+          radius: config.radius,
+          crop: false,
+          kind: config.kind,
+          shadow: false,
+          stroke: new Stroke({
+            width: 0,
+            color: 'rgba(0,0,0,0)',
+          }),
+          onload: () => {
+            vectorLayer.changed(); // ensure vector layer is rendered properly after image load
+          },
+        }),
+      });
+      if (photoLoad && photoLoad.includes(idx)) {
+        return [blankStyle, photoStyle];
+      }
+      // If image index is not in the loaded array, return layer stack with error
+      return [blankStyle, errorStyle, photoStyle];
     });
 
     return {
