@@ -24,11 +24,13 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { VariableWithMultiSupport } from '../../../variables/types';
 import { getSearchFilterScopedVar, SearchFilterOptions } from '../../../variables/utils';
+import { ResponseParser } from '../ResponseParser';
 import { MACRO_NAMES } from '../constants';
-import { DB, SQLQuery, SQLOptions, ResponseParser, SqlQueryModel, QueryFormat } from '../types';
+import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat } from '../types';
 
 export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
   id: number;
+  responseParser: ResponseParser;
   name: string;
   interval: string;
   db: DB;
@@ -40,6 +42,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   ) {
     super(instanceSettings);
     this.name = instanceSettings.name;
+    this.responseParser = new ResponseParser();
     this.id = instanceSettings.id;
     const settingsData = instanceSettings.jsonData || {};
     this.interval = settingsData.timeInterval || '1m';
@@ -50,7 +53,9 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
 
   abstract getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): SqlQueryModel;
 
-  abstract getResponseParser(): ResponseParser;
+  getResponseParser() {
+    return this.responseParser;
+  }
 
   interpolateVariable = (value: string | string[] | number, variable: VariableWithMultiSupport) => {
     if (typeof value === 'string') {

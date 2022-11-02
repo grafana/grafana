@@ -8,12 +8,16 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
+
+var logger = &logtest.Fake{}
 
 func Test_DimensionKeys_Route(t *testing.T) {
 	t.Run("calls FilterDimensionKeysRequest when a StandardDimensionKeysRequest is passed", func(t *testing.T) {
@@ -24,7 +28,7 @@ func Test_DimensionKeys_Route(t *testing.T) {
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", `/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization&dimensionFilters={"NodeID":["Shared"],"stage":["QueryCommit"]}`, nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionKeysHandler, nil))
+		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionKeysHandler, logger, nil))
 		handler.ServeHTTP(rr, req)
 		mockListMetricsService.AssertNumberOfCalls(t, "GetDimensionKeysByDimensionFilter", 1)
 	})
@@ -37,7 +41,7 @@ func Test_DimensionKeys_Route(t *testing.T) {
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", `/dimension-keys?region=us-east-2&namespace=custom&metricName=CPUUtilization`, nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionKeysHandler, nil))
+		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionKeysHandler, logger, nil))
 		handler.ServeHTTP(rr, req)
 		mockListMetricsService.AssertNumberOfCalls(t, "GetDimensionKeysByNamespace", 1)
 	})
@@ -56,7 +60,7 @@ func Test_DimensionKeys_Route(t *testing.T) {
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionKeysHandler, nil))
+		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionKeysHandler, logger, nil))
 		handler.ServeHTTP(rr, req)
 		res := []models.Metric{}
 		err := json.Unmarshal(rr.Body.Bytes(), &res)
@@ -73,7 +77,7 @@ func Test_DimensionKeys_Route(t *testing.T) {
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", `/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization&dimensionFilters={"NodeID":["Shared"],"stage":["QueryCommit"]}`, nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionKeysHandler, nil))
+		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionKeysHandler, logger, nil))
 		handler.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 		assert.Equal(t, `{"Message":"error in DimensionKeyHandler: some error","Error":"some error","StatusCode":500}`, rr.Body.String())

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { Component } from 'react';
 
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Form, HorizontalGroup, Select, stylesFactory } from '@grafana/ui';
 import { TeamPicker } from 'app/core/components/Select/TeamPicker';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
@@ -92,7 +92,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     const newItem = this.state;
     const pickerClassName = 'min-width-20';
     const isValid = this.isValid();
-    const styles = getStyles(config.theme);
+    const styles = getStyles(config.theme2);
 
     return (
       <div className="cta-form">
@@ -138,9 +138,9 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   label: css`
-    color: ${theme.colors.textBlue};
+    color: ${theme.colors.primary.text};
     font-weight: bold;
   `,
 }));
