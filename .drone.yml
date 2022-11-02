@@ -493,20 +493,8 @@ steps:
   image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
   name: end-to-end-tests-various-suite
 - commands:
-  - apt-get update && apt-get install git curl jq --yes
-  - cd ..
-  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/cloud-data-sources" --depth=1
-  - cd cloud-data-sources/e2e-scripts
-  - ./scripts/install-dependencies-ci.sh azure
-  - export PATH=$PATH:/root/.pulumi/bin
-  - ./scripts/azure-login.sh
-  - ./scripts/install.sh azure
-  - ./scripts/azure-pulumi-login.sh azure deploy ${DRONE_SOURCE_BRANCH}
-  - cd ../../grafana
-  - ./bin/build e2e-tests --port 3001 --suite cloud-plugins-suite --video false
-  - cd ../cloud-data-sources/e2e-scripts
-  - ./scripts/destroy.sh azure destroy ${DRONE_SOURCE_BRANCH}
-  - cd ../.. && rm -rf cloud-data-sources
+  - cd /
+  - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
   depends_on:
   - grafana-server
   environment:
@@ -520,9 +508,13 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token_pr
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
   name: end-to-end-tests-cloud-plugins-suite-azure
   when:
+    paths:
+      include:
+      - pkg/tsdb/azuremonitor/**
+      - public/app/plugins/datasource/grafana-azure-monitor-datasource/**
     repo:
     - grafana/grafana
 - commands:
@@ -1318,20 +1310,8 @@ steps:
   image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
   name: end-to-end-tests-various-suite
 - commands:
-  - apt-get update && apt-get install git curl jq --yes
-  - cd ..
-  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/cloud-data-sources" --depth=1
-  - cd cloud-data-sources/e2e-scripts
-  - ./scripts/install-dependencies-ci.sh azure
-  - export PATH=$PATH:/root/.pulumi/bin
-  - ./scripts/azure-login.sh
-  - ./scripts/install.sh azure
-  - ./scripts/azure-pulumi-login.sh azure deploy ${DRONE_SOURCE_BRANCH}
-  - cd ../../grafana
-  - ./bin/build e2e-tests --port 3001 --suite cloud-plugins-suite --video false
-  - cd ../cloud-data-sources/e2e-scripts
-  - ./scripts/destroy.sh azure destroy ${DRONE_SOURCE_BRANCH}
-  - cd ../.. && rm -rf cloud-data-sources
+  - cd /
+  - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
   depends_on:
   - grafana-server
   environment:
@@ -1345,9 +1325,13 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token_pr
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
   name: end-to-end-tests-cloud-plugins-suite-azure
   when:
+    paths:
+      include:
+      - pkg/tsdb/azuremonitor/**
+      - public/app/plugins/datasource/grafana-azure-monitor-datasource/**
     repo:
     - grafana/grafana
 - commands:
@@ -5600,6 +5584,24 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 get:
+  name: application_id
+  path: infra/data/ci/datasources/cpp-azure-resourcemanager-credentials
+kind: secret
+name: azure_sp_app_id
+---
+get:
+  name: application_secret
+  path: infra/data/ci/datasources/cpp-azure-resourcemanager-credentials
+kind: secret
+name: azure_sp_app_pw
+---
+get:
+  name: tenant_id
+  path: infra/data/ci/datasources/cpp-azure-resourcemanager-credentials
+kind: secret
+name: azure_tenant
+---
+get:
   name: public-key
   path: infra/data/ci/packages-publish/gpg
 kind: secret
@@ -5636,6 +5638,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 01e95873c6924e0ba2e14384a2d4439ff07d87c3ce005c794dbd59847ca9b3ce
+hmac: 2d749c63e6f9700065b5c6f2da007aa8c5c1a4008c914ef26728945f3fe828fe
 
 ...
