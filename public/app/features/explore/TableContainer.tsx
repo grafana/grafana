@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { ValueLinkConfig, applyFieldOverrides, TimeZone } from '@grafana/data';
+import { ValueLinkConfig, applyFieldOverrides, TimeZone, SplitOpen } from '@grafana/data';
 import { Collapse, Table } from '@grafana/ui';
 import { FilterItem } from '@grafana/ui/src/components/Table/types';
 import { config } from 'app/core/config';
@@ -10,7 +10,6 @@ import { StoreState } from 'app/types';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 
 import { MetaInfoText } from './MetaInfoText';
-import { splitOpen } from './state/main';
 import { getFieldLinksForExplore } from './utils/links';
 
 interface TableContainerProps {
@@ -19,6 +18,7 @@ interface TableContainerProps {
   width: number;
   timeZone: TimeZone;
   onCellFilterAdded?: (filter: FilterItem) => void;
+  splitOpenFn: SplitOpen;
 }
 
 function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
@@ -30,11 +30,7 @@ function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) 
   return { loading, tableResult, range };
 }
 
-const mapDispatchToProps = {
-  splitOpen,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
+const connector = connect(mapStateToProps, {});
 
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
@@ -51,7 +47,7 @@ export class TableContainer extends PureComponent<Props> {
   }
 
   render() {
-    const { loading, onCellFilterAdded, tableResult, width, splitOpen, range, ariaLabel, timeZone } = this.props;
+    const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone } = this.props;
     const height = this.getTableHeight();
     const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
 
@@ -76,7 +72,7 @@ export class TableContainer extends PureComponent<Props> {
           return getFieldLinksForExplore({
             field,
             rowIndex: config.valueRowIndex!,
-            splitOpenFn: splitOpen,
+            splitOpenFn,
             range,
             dataFrame: dataFrame!,
           });

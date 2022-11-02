@@ -331,7 +331,6 @@ def get_enterprise_pipelines(trigger, ver_mode):
         pipelines.extend([
             test_frontend(trigger, ver_mode, edition),
             test_backend(trigger, ver_mode, edition),
-            test_backend(trigger, ver_mode, edition2),
             pipeline(
                 name='{}-enterprise-integration-tests'.format(ver_mode), edition=edition, trigger=trigger, services=services,
                 steps=[download_grabpl_step(), identify_runner_step(), clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode), verify_gen_cue_step(edition), verify_gen_jsonnet_step(edition), wire_install_step()] + integration_test_steps + [redis_integration_tests_step(), memcached_integration_tests_step()],
