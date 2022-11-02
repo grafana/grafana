@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -163,18 +162,14 @@ func (api *Api) UpdatePublicDashboard(c *models.ReqContext) response.Response {
 		return api.handleError(c.Req.Context(), http.StatusBadRequest, "UpdatePublicDashboard: no dashboardUid", dashboards.ErrDashboardIdentifierInvalid)
 	}
 
-	fmt.Println("POTATO 1")
 	pubdash := &PublicDashboard{}
 	if err := web.Bind(c.Req, pubdash); err != nil {
 		return api.handleError(c.Req.Context(), http.StatusBadRequest, "UpdatePublicDashboard: bad request data", err)
 	}
 
-	fmt.Println("POTATO 2")
 	if pubdash.Uid == "" {
 		return api.handleError(c.Req.Context(), http.StatusBadRequest, "UpdatePublicDashboard: missing public dashboard uid", ErrPublicDashboardIdentifierNotSet)
 	}
-
-	fmt.Println("POTATO 3")
 
 	// Always set the orgID and userID from the session
 	pubdash.OrgId = c.OrgID
@@ -188,10 +183,8 @@ func (api *Api) UpdatePublicDashboard(c *models.ReqContext) response.Response {
 	// Save the public dashboard
 	pubdash, err := api.PublicDashboardService.Update(c.Req.Context(), c.SignedInUser, &dto)
 	if err != nil {
-		fmt.Println("POTATO 4")
 		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "UpdatePublicDashboard: failed to update public dashboard", err)
 	}
-	fmt.Println("POTATO 5")
 
 	return response.JSON(http.StatusOK, pubdash)
 }

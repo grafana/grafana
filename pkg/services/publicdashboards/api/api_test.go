@@ -474,7 +474,6 @@ func TestAPIUpdatePublicDashboard(t *testing.T) {
 			testServer := setupTestServer(t, cfg, features, service, nil, test.User)
 
 			path := fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards", test.DashboardUid)
-			fmt.Println("PATH: ", path)
 			response := callAPI(
 				testServer,
 				http.MethodPut,
@@ -489,10 +488,6 @@ func TestAPIUpdatePublicDashboard(t *testing.T) {
 				service.AssertNotCalled(t, "Update")
 			}
 
-			fmt.Printf("%#v", response)
-			fmt.Println()
-			fmt.Println(string(response.Body.Bytes()))
-
 			// check response
 			if response.Code == http.StatusOK {
 				val, err := json.Marshal(test.PublicDashboardRes)
@@ -506,10 +501,8 @@ func TestAPIUpdatePublicDashboard(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, test.PublicDashboardErr.Error(), errResp.Error)
 			}
-
 		})
 	}
-
 }
 
 func TestAPIDeletePublicDashboard(t *testing.T) {

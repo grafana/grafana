@@ -250,6 +250,10 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 		}
 
 		affectedRows, err = sqlResult.RowsAffected()
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 
