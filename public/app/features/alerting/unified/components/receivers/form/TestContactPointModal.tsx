@@ -92,7 +92,7 @@ export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
                 <AnnotationsField />
               </div>
               <div className={styles.section}>
-                <LabelsField />
+                <LabelsField suggest={false} />
               </div>
             </>
           )}
