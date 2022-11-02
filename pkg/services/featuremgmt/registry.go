@@ -341,6 +341,10 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "datasourceLogger",
+			Description: "Logs all datasource requests",
+		},
+		{
 			Name:            "accessControlOnCall",
 			Description:     "Access control primitives for OnCall",
 			State:           FeatureStateAlpha,
