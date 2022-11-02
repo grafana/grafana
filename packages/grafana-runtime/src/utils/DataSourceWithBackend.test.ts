@@ -39,7 +39,8 @@ jest.mock('../services', () => ({
 
 describe('DataSourceWithBackend', () => {
   test('check the executed queries', () => {
-    const mock = runQueryAndReturnFetchMock({
+    const { mock, ds } = createMockDatasource();
+    ds.query({
       maxDataPoints: 10,
       intervalMs: 5000,
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
@@ -82,8 +83,22 @@ describe('DataSourceWithBackend', () => {
     `);
   });
 
+  test('should apply template variables only for the current data source', () => {
+    const { mock, ds } = createMockDatasource();
+    ds.applyTemplateVariables = jest.fn();
+    ds.query({
+      maxDataPoints: 10,
+      intervalMs: 5000,
+      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+    } as DataQueryRequest);
+
+    expect(mock.calls.length).toBe(1);
+    expect(ds.applyTemplateVariables).toHaveBeenCalledTimes(1);
+  });
+
   test('check that the executed queries is hidden from inspector', () => {
-    const mock = runQueryAndReturnFetchMock({
+    const { mock, ds } = createMockDatasource();
+    ds.query({
       maxDataPoints: 10,
       intervalMs: 5000,
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
@@ -150,9 +165,7 @@ describe('DataSourceWithBackend', () => {
   });
 });
 
-function runQueryAndReturnFetchMock(
-  request: DataQueryRequest
-): jest.MockContext<Promise<FetchResponse>, BackendSrvRequest[]> {
+function createMockDatasource() {
   const settings = {
     name: 'test',
     id: 1234,
@@ -165,7 +178,5 @@ function runQueryAndReturnFetchMock(
   mockDatasourceRequest.mockReturnValue(Promise.resolve({} as FetchResponse));
 
   const ds = new MyDataSource(settings);
-  ds.query(request);
-
-  return mockDatasourceRequest.mock;
+  return { ds, mock: mockDatasourceRequest.mock };
 }
