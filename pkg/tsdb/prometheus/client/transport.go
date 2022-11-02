@@ -1,4 +1,4 @@
-package buffered
+package client
 
 import (
 	"fmt"
@@ -49,7 +49,7 @@ func CreateTransportOptions(settings backend.DataSourceInstanceSettings, cfg *se
 	return &opts, nil
 }
 
-func CreateClient(roundTripper http.RoundTripper, url string) (apiv1.API, error) {
+func CreateAPIClient(roundTripper http.RoundTripper, url string) (apiv1.API, error) {
 	cfg := api.Config{
 		Address:      url,
 		RoundTripper: roundTripper,
