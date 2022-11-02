@@ -40,7 +40,7 @@ func NewBase(rt *thema.Runtime) *Base {
 // All returns a slice of the [kindsys.Interface] instances corresponding to all
 // core raw and structured kinds.
 //
-// The returned slice is sorted lexicographically by kind name.
+// The returned slice is sorted lexicographically by kind machine name.
 func (b *Base) All() []kindsys.Interface {
 	ret := make([]kindsys.Interface, len(b.all))
 	copy(ret, b.all)
@@ -49,7 +49,7 @@ func (b *Base) All() []kindsys.Interface {
 
 // AllRaw returns a slice of the [kindsys.Raw] instances for all raw kinds.
 //
-// The returned slice is sorted lexicographically by kind name.
+// The returned slice is sorted lexicographically by kind machine name.
 func (b *Base) AllRaw() []kindsys.Raw {
 	ret := make([]kindsys.Raw, 0, b.numRaw)
 	for _, k := range b.all {
@@ -64,7 +64,7 @@ func (b *Base) AllRaw() []kindsys.Raw {
 // AllStructured returns a slice of the [kindsys.Structured] instances for
 // all core structured kinds.
 //
-// The returned slice is sorted lexicographically by kind name.
+// The returned slice is sorted lexicographically by kind machine name.
 func (b *Base) AllStructured() []kindsys.Structured {
 	ret := make([]kindsys.Structured, 0, b.numStructured)
 	for _, k := range b.all {

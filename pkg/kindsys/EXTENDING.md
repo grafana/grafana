@@ -2,9 +2,9 @@
 
 This package contains Grafana's kind system, which defines the rules that govern all Grafana kind declarations, including both core and plugin kinds. It contains many contracts on which public promises of backwards compatibility are made. All changes must be considered with care.
 
-While this package is maintained by @grafana/grafana-as-code, it is designed with the expectation that others will make additions to it. This document is the guide to making such contributions.
+While this package is maintained by @grafana/grafana-as-code, contributions from others are a main goal! Any time you have the thought, "I wish this part of Grafana's codebase was consistent," rather than writing docs (that people will inevitably miss), it's worth seeing if you can express that consistency as a kindsys extension instead.
 
-Before we can talk about how to extend kindsys, we first have to identify its key components.
+This document is the guide to extending kindsys. But first, we have to identify kindsys's key components.
 
 ## Elements of kindsys
 

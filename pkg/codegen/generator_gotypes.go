@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/thema"
-	"github.com/grafana/thema/encoding/tgo"
+	"github.com/grafana/thema/encoding/gocode"
 	"golang.org/x/tools/go/ast/astutil"
 )
 
@@ -63,9 +63,9 @@ func (gen *genGoTypes) Generate(decl *DeclForGen) (*GeneratedFile, error) {
 	sch := thema.SchemaP(lin, thema.LatestVersion(lin))
 	pdir := gen.cfg.GenDirName(decl)
 	// TODO allow using name instead of machine name in thema generator
-	b, err := tgo.GenerateTypesOpenAPI(sch, &tgo.TypeConfigOpenAPI{
+	b, err := gocode.GenerateTypesOpenAPI(sch, &gocode.TypeConfigOpenAPI{
 		PackageName: filepath.Base(pdir),
-		Apply:       gen.cfg.Apply,
+		ApplyFuncs:  []astutil.ApplyFunc{gen.cfg.Apply},
 	})
 	if err != nil {
 		return nil, err

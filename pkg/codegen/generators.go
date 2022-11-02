@@ -67,14 +67,13 @@ func (decl *DeclForGen) Lineage() thema.Lineage {
 	return decl.lin
 }
 
-// func (decl *DeclForGen) Name() string {
-// 	return machineNameFor(decl.Meta)
-// }
-//
-// func (decl *DeclForGen) MachineName() string {
-// 	// TODO get this from _actual_ meta once we have it in the kind DSL
-// 	return strings.Title(machineNameFor(decl.Meta))
-// }
+func (decl *DeclForGen) Name() string {
+	return nameFor(decl.Meta)
+}
+
+func (decl *DeclForGen) MachineName() string {
+	return machineNameFor(decl.Meta)
+}
 
 func machineNameFor(m kindsys.SomeKindMeta) string {
 	switch x := m.(type) {

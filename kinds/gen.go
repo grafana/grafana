@@ -24,6 +24,12 @@ var singles = []codegen.KindGenStep{
 	codegen.GoTypesGenerator(kindsys.GoCoreKindParentPath, nil),
 	codegen.CoreStructuredKindGenerator(kindsys.GoCoreKindParentPath, nil),
 	codegen.RawKindGenerator(kindsys.GoCoreKindParentPath, nil),
+	codegen.TSTypesGenerator(kindsys.TSCoreKindParentPath, &codegen.TSTypesGeneratorConfig{
+		GenDirName: func(decl *codegen.DeclForGen) string {
+			// FIXME this hardcodes always generating to experimental dir. OK for now, but need generator fanout
+			return filepath.Join(decl.MachineName(), "x")
+		},
+	}),
 }
 
 // All the aggregate generators to be run for core kinds.
