@@ -23,7 +23,7 @@ function renderAlertLabelsPicker() {
 
   render(
     <Provider store={store}>
-      <LabelsField />
+      <LabelsField suggest={true} />
     </Provider>,
     { wrapper: FormProviderWrapper }
   );
