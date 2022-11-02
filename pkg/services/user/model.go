@@ -283,7 +283,7 @@ func (u *SignedInUser) IsRealUser() bool {
 	// checking if userId the user is a real user
 	// previously we used to check if the UserId was 0 or -1
 	// and not a service account
-	return u.UserID > 0 && u.IsServiceAccount == false
+	return u.UserID > 0 && !u.IsServiceAccount
 }
 
 func (u *SignedInUser) IsApiKeyUser() bool {
