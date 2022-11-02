@@ -10,8 +10,10 @@
 
 export const PanelModelVersion = Object.freeze([0, 0]);
 
-
 export interface PanelOptions {
+  /**
+   * empty/missing will default to grafana blog
+   */
   feedUrl?: string;
   showImage?: boolean;
 }
@@ -19,4 +21,3 @@ export interface PanelOptions {
 export const defaultPanelOptions: Partial<PanelOptions> = {
   showImage: true,
 };
-

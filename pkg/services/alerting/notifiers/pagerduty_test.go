@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
+	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/validations"
 
 	"github.com/stretchr/testify/require"
@@ -328,7 +329,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Name:    "someRule",
 			Message: "someMessage",
 			State:   models.AlertStateAlerting,
-			AlertRuleTags: []*models.Tag{
+			AlertRuleTags: []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "group", Value: "aGroup"},
 				{Key: "class", Value: "aClass"},
@@ -408,7 +409,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Name:    "someRule",
 			Message: "someMessage",
 			State:   models.AlertStateAlerting,
-			AlertRuleTags: []*models.Tag{
+			AlertRuleTags: []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "group", Value: "aGroup"},
 				{Key: "class", Value: "aClass"},
@@ -487,7 +488,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Name:    "someRule",
 			Message: "someMessage",
 			State:   models.AlertStateAlerting,
-			AlertRuleTags: []*models.Tag{
+			AlertRuleTags: []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "group", Value: "aGroup"},
 				{Key: "class", Value: "aClass"},

@@ -28,7 +28,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       border-top: 1px solid ${theme.colors.border.weak};
       margin: ${theme.spacing(0, -2, 0, -2)};
       box-shadow: ${theme.shadows.z3};
-      z-index: ${theme.zIndex.sidemenu};
+      z-index: ${theme.zIndex.navbarFixed};
     `,
     drawerActive: css`
       opacity: 1;

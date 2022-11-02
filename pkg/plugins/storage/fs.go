@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/logger"
 )
 
+var _ Manager = (*FS)(nil)
+
 var reGitBuild = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
 
 var (

@@ -82,6 +82,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   const [coords, setCoords] = useState<{ viewport: CartesianCoords2D; canvas: CartesianCoords2D } | null>(null);
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
+  const [isActive, setIsActive] = useState<boolean>(false);
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
 
   const onCloseToolTip = () => {
@@ -251,6 +252,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       getTimeRange,
+      timeZone,
       theme,
       timeZones: [timeZone],
       eventBus,
@@ -298,6 +300,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
             setCoords,
             setHover,
             isToolTipOpen,
+            isActive,
+            setIsActive,
           });
         }
 
@@ -307,7 +311,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
 
         return (
           <Portal>
-            {hover && coords && (
+            {hover && coords && focusedSeriesIdx && (
               <VizTooltipContainer
                 position={{ x: coords.viewport.x, y: coords.viewport.y }}
                 offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}

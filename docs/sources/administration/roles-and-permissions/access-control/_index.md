@@ -78,7 +78,7 @@ Grafana Enterprise includes the ability for you to assign discrete fixed roles t
 Assign fixed roles when the basic roles do not meet your permission requirements. For example, you might want a user with the basic viewer role to also edit dashboards. Or, you might want anyone with the editor role to also add and manage users. Fixed roles provide users more granular access to create, view, and update the following Grafana resources:
 
 - [Alerting]({{< relref "../../../alerting/" >}})
-- [Annotations]({{< relref "../../../dashboards/annotations/" >}})
+- [Annotations]({{< relref "../../../dashboards/build-dashboards/annotate-visualizations" >}})
 - [API keys]({{< relref "../../api-keys/" >}})
 - [Dashboards and folders]({{< relref "../../../dashboards/" >}})
 - [Data sources]({{< relref "../../../datasources/" >}})
@@ -90,7 +90,7 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 - [Provisioning]({{< relref "../../provisioning/" >}})
 - [Reports]({{< relref "../../../dashboards/create-reports/" >}})
 - [Roles]({{< relref "../../" >}})
-- [Settings]({{< relref "../../../enterprise/settings-updates/" >}})
+- [Settings]({{< relref "../../../setup-grafana/configure-grafana/settings-updates-at-runtime" >}})
 - [Service accounts]({{< relref "../../service-accounts/" >}})
 - [Teams]({{< relref "../../team-management/" >}})
 - [Users]({{< relref "../../user-management/" >}})

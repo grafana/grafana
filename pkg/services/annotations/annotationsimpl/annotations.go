@@ -3,9 +3,10 @@ package annotationsimpl
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -13,12 +14,14 @@ type RepositoryImpl struct {
 	store store
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg) *RepositoryImpl {
+func ProvideService(db db.DB, cfg *setting.Cfg, tagService tag.Service) *RepositoryImpl {
 	return &RepositoryImpl{
-		store: &SQLAnnotationRepo{
-			cfg: cfg,
-			db:  db,
-			log: log.New("annotations"),
+		store: &xormRepositoryImpl{
+			cfg:               cfg,
+			db:                db,
+			log:               log.New("annotations"),
+			tagService:        tagService,
+			maximumTagsLength: cfg.AnnotationMaximumTagsLength,
 		},
 	}
 }

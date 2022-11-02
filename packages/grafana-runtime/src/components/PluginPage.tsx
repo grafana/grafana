@@ -3,6 +3,8 @@ import React from 'react';
 import { NavModelItem, PageLayoutType } from '@grafana/data';
 
 export interface PluginPageProps {
+  /** Shown under main heading */
+  subTitle?: React.ReactNode;
   pageNav?: NavModelItem;
   children: React.ReactNode;
   layout?: PageLayoutType;

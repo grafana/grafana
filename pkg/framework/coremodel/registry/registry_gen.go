@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/coremodel/dashboard"
+	"github.com/grafana/grafana/pkg/coremodel/playlist"
 	"github.com/grafana/grafana/pkg/coremodel/pluginmeta"
 	"github.com/grafana/grafana/pkg/framework/coremodel"
 	"github.com/grafana/thema"
@@ -27,12 +28,14 @@ import (
 type Base struct {
 	all        []coremodel.Interface
 	dashboard  *dashboard.Coremodel
+	playlist   *playlist.Coremodel
 	pluginmeta *pluginmeta.Coremodel
 }
 
 // type guards
 var (
 	_ coremodel.Interface = &dashboard.Coremodel{}
+	_ coremodel.Interface = &playlist.Coremodel{}
 	_ coremodel.Interface = &pluginmeta.Coremodel{}
 )
 
@@ -42,23 +45,35 @@ func (b *Base) Dashboard() *dashboard.Coremodel {
 	return b.dashboard
 }
 
+// Playlist returns the playlist coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (b *Base) Playlist() *playlist.Coremodel {
+	return b.playlist
+}
+
 // Pluginmeta returns the pluginmeta coremodel. The return value is guaranteed to
 // implement coremodel.Interface.
 func (b *Base) Pluginmeta() *pluginmeta.Coremodel {
 	return b.pluginmeta
 }
 
-func doProvideBase(lib thema.Library) *Base {
+func doProvideBase(rt *thema.Runtime) *Base {
 	var err error
 	reg := &Base{}
 
-	reg.dashboard, err = dashboard.New(lib)
+	reg.dashboard, err = dashboard.New(rt)
 	if err != nil {
 		panic(fmt.Sprintf("error while initializing dashboard coremodel: %s", err))
 	}
 	reg.all = append(reg.all, reg.dashboard)
 
-	reg.pluginmeta, err = pluginmeta.New(lib)
+	reg.playlist, err = playlist.New(rt)
+	if err != nil {
+		panic(fmt.Sprintf("error while initializing playlist coremodel: %s", err))
+	}
+	reg.all = append(reg.all, reg.playlist)
+
+	reg.pluginmeta, err = pluginmeta.New(rt)
 	if err != nil {
 		panic(fmt.Sprintf("error while initializing pluginmeta coremodel: %s", err))
 	}

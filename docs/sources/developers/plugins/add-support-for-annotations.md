@@ -6,7 +6,7 @@ title: Add support for annotations
 
 # Add support for annotations
 
-This guide explains how to add support for [annotations]({{< relref "../../dashboards/annotations/" >}}) to an existing data source plugin.
+This guide explains how to add support for [annotations]({{< relref "../../dashboards/build-dashboards/annotate-visualizations" >}}) to an existing data source plugin.
 
 This guide assumes that you're already familiar with how to [Build a data source plugin]({{< ref "build-a-data-source-plugin.md" >}}).
 

@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting/metrics"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -25,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/util/ticker"
 )
 
 // AlertEngine is the background process that
@@ -37,7 +37,7 @@ type AlertEngine struct {
 	Cfg              *setting.Cfg
 
 	execQueue          chan *Job
-	ticker             *Ticker
+	ticker             *ticker.T
 	scheduler          scheduler
 	evalHandler        evalHandler
 	ruleReader         ruleReader
@@ -90,7 +90,7 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator models.Plug
 // Run starts the alerting service background process.
 func (e *AlertEngine) Run(ctx context.Context) error {
 	reg := prometheus.WrapRegistererWithPrefix("legacy_", prometheus.DefaultRegisterer)
-	e.ticker = NewTicker(clock.New(), 1*time.Second, metrics.NewTickerMetrics(reg))
+	e.ticker = ticker.New(clock.New(), 1*time.Second, ticker.NewMetrics(reg, "alerting"))
 	defer e.ticker.Stop()
 	alertGroup, ctx := errgroup.WithContext(ctx)
 	alertGroup.Go(func() error { return e.alertingTicker(ctx) })

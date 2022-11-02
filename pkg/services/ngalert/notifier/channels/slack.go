@@ -101,7 +101,7 @@ func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
 		settings.Username = "Grafana"
 	}
 	if settings.Text == "" {
-		settings.Text = `{{ template "default.message" . }}`
+		settings.Text = DefaultMessageEmbed
 	}
 	if settings.Title == "" {
 		settings.Title = DefaultMessageTitleEmbed
@@ -191,7 +191,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 var sendSlackRequest = func(request *http.Request, logger log.Logger) (retErr error) {
 	defer func() {
 		if retErr != nil {
-			logger.Warn("failed to send slack request", "err", retErr)
+			logger.Warn("failed to send slack request", "error", retErr)
 		}
 	}()
 
@@ -215,7 +215,7 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) (retErr er
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			logger.Warn("failed to close response body", "err", err)
+			logger.Warn("failed to close response body", "error", err)
 		}
 	}()
 
@@ -244,7 +244,7 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) (retErr er
 
 	if !rslt.Ok && rslt.Err != "" {
 		logger.Error("Sending Slack API request failed", "url", request.URL.String(), "statusCode", resp.Status,
-			"err", rslt.Err)
+			"error", rslt.Err)
 		return fmt.Errorf("failed to make Slack API request: %s", rslt.Err)
 	}
 
@@ -288,7 +288,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.A
 	}, alrts...)
 
 	if tmplErr != nil {
-		sn.log.Warn("failed to template Slack message", "err", tmplErr.Error())
+		sn.log.Warn("failed to template Slack message", "error", tmplErr.Error())
 	}
 
 	mentionsBuilder := strings.Builder{}

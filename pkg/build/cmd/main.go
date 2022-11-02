@@ -125,6 +125,19 @@ func main() {
 			Action: ExportVersion,
 		},
 		{
+			Name:      "package",
+			Usage:     "Package one or more Grafana variants",
+			ArgsUsage: "[version]",
+			Action:    ArgCountWrapper(1, Package),
+			Flags: []cli.Flag{
+				&jobsFlag,
+				&variantsFlag,
+				&editionFlag,
+				&buildIDFlag,
+				&signFlag,
+			},
+		},
+		{
 			Name:   "store-storybook",
 			Usage:  "Integrity check for storybook build",
 			Action: StoreStorybook,
@@ -151,6 +164,53 @@ func main() {
 							Flags: []cli.Flag{
 								&editionFlag,
 							},
+						},
+					},
+				},
+			},
+		},
+		{
+			Name:  "publish",
+			Usage: "Publish packages to Grafana com and repositories",
+			Subcommands: cli.Commands{
+				{
+					Name:   "grafana-com",
+					Usage:  "Publish packages to grafana.com",
+					Action: GrafanaCom,
+					Flags: []cli.Flag{
+						&editionFlag,
+						&buildIDFlag,
+						&dryRunFlag,
+						&cli.StringFlag{
+							Name:  "src-bucket",
+							Value: "grafana-downloads",
+							Usage: "Google Cloud Storage bucket",
+						},
+					},
+				},
+				{
+					Name:   "github",
+					Usage:  "Publish packages to GitHub releases",
+					Action: PublishGitHub,
+					Flags: []cli.Flag{
+						&dryRunFlag,
+						&cli.StringFlag{
+							Name:     "path",
+							Required: true,
+							Usage:    "Path to the asset to be published",
+						},
+						&cli.StringFlag{
+							Name:     "repo",
+							Required: true,
+							Usage:    "GitHub repository",
+						},
+						&cli.StringFlag{
+							Name:  "tag",
+							Usage: "Release tag (default from metadata)ß",
+						},
+						&cli.BoolFlag{
+							Name:  "create",
+							Usage: "Create release if it doesn't exist",
 						},
 					},
 				},

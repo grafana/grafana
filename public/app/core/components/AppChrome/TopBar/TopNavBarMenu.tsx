@@ -1,18 +1,24 @@
 import { css } from '@emotion/css';
-import { i18n } from '@lingui/core';
+import { cloneDeep } from 'lodash';
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Menu, MenuItem, useStyles2 } from '@grafana/ui';
 
-import menuItemTranslations from '../../NavBar/navBarItem-translations';
+import { getNavTitle } from '../../NavBar/navBarItem-translations';
+import { enrichConfigItems, enrichWithInteractionTracking } from '../../NavBar/utils';
 
 export interface TopNavBarMenuProps {
   node: NavModelItem;
 }
 
-export function TopNavBarMenu({ node }: TopNavBarMenuProps) {
+export function TopNavBarMenu({ node: nodePlain }: TopNavBarMenuProps) {
   const styles = useStyles2(getStyles);
+  const location = useLocation();
+  const enriched = enrichConfigItems([cloneDeep(nodePlain)], location);
+  const node = enrichWithInteractionTracking(enriched[0], false);
+
   if (!node) {
     return null;
   }
@@ -21,14 +27,13 @@ export function TopNavBarMenu({ node }: TopNavBarMenuProps) {
     <Menu
       header={
         <div onClick={(e) => e.stopPropagation()} className={styles.header}>
-          <div>{node.text}</div>
+          <div>{getNavTitle(node.id) ?? node.text}</div>
           {node.subTitle && <div className={styles.subTitle}>{node.subTitle}</div>}
         </div>
       }
     >
       {node.children?.map((item) => {
-        const translationKey = item.id && menuItemTranslations[item.id];
-        const itemText = translationKey ? i18n._(translationKey) : item.text;
+        const itemText = getNavTitle(item.id) ?? item.text;
         const showExternalLinkIcon = /^https?:\/\//.test(item.url || '');
         return item.url ? (
           <MenuItem

@@ -10,7 +10,9 @@ describe('Variables - Text box', () => {
     // Create a new "text box" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().type('Text box{enter}');
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().within(() => {
+      e2e().get('input').type('Text box{enter}');
+    });
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type('VariableUnderTest').blur();
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2().type('Variable under test').blur();
     e2e.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInputV2().type('cat-dog').blur();

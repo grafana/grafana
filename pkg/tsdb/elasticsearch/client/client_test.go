@@ -12,7 +12,6 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,18 +19,6 @@ import (
 
 func TestClient_ExecuteMultisearch(t *testing.T) {
 	t.Run("Given a fake http client and a client with response", func(t *testing.T) {
-		version, err := semver.NewVersion("8.0.0")
-		require.NoError(t, err)
-		ds := DatasourceInfo{
-			Database:                   "[metrics-]YYYY.MM.DD",
-			ESVersion:                  version,
-			TimeField:                  "@timestamp",
-			Interval:                   "Daily",
-			MaxConcurrentShardRequests: 6,
-			IncludeFrozen:              true,
-			XPack:                      true,
-		}
-
 		var request *http.Request
 		var requestBody *bytes.Buffer
 
@@ -55,7 +42,21 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 			require.NoError(t, err)
 			rw.WriteHeader(200)
 		}))
-		ds.URL = ts.URL
+
+		version, err := semver.NewVersion("8.0.0")
+		require.NoError(t, err)
+
+		ds := DatasourceInfo{
+			URL:                        ts.URL,
+			HTTPClient:                 ts.Client(),
+			Database:                   "[metrics-]YYYY.MM.DD",
+			ESVersion:                  version,
+			TimeField:                  "@timestamp",
+			Interval:                   "Daily",
+			MaxConcurrentShardRequests: 6,
+			IncludeFrozen:              true,
+			XPack:                      true,
+		}
 
 		from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 		to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
@@ -64,19 +65,12 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 			To:   to,
 		}
 
-		c, err := NewClient(context.Background(), httpclient.NewProvider(), &ds, timeRange)
+		c, err := NewClient(context.Background(), &ds, timeRange)
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
-		currentNewDatasourceHTTPClient := newDatasourceHttpClient
-
-		newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *DatasourceInfo) (*http.Client, error) {
-			return ts.Client(), nil
-		}
-
 		t.Cleanup(func() {
 			ts.Close()
-			newDatasourceHttpClient = currentNewDatasourceHTTPClient
 		})
 
 		ms, err := createMultisearchForTest(t, c)

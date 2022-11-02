@@ -166,7 +166,6 @@ export interface ValidationResults {
 }
 
 export interface SqlQueryModel {
-  interpolate: () => string;
   quoteLiteral: (v: string) => string;
 }
 

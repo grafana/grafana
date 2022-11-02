@@ -3,6 +3,8 @@ import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Icon, IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { useSelector } from 'app/types';
 
 import { Breadcrumbs } from '../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../Breadcrumbs/utils';
@@ -29,15 +31,16 @@ export function NavToolbar({
   onToggleSearchBar,
   onToggleKioskMode,
 }: Props) {
+  const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const styles = useStyles2(getStyles);
-  const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav);
+  const breadcrumbs = buildBreadcrumbs(homeNav, sectionNav, pageNav);
 
   return (
     <div className={styles.pageToolbar}>
       <div className={styles.menuButton}>
         <IconButton name="bars" tooltip="Toggle menu" tooltipPlacement="bottom" size="xl" onClick={onToggleMegaMenu} />
       </div>
-      <Breadcrumbs breadcrumbs={breadcrumbs} />
+      <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbs} />
       <div className={styles.actions}>
         {actions}
         {actions && <NavToolbarSeparator />}
@@ -54,6 +57,9 @@ export function NavToolbar({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    breadcrumbs: css({
+      maxWidth: '50%',
+    }),
     pageToolbar: css({
       height: TOP_BAR_LEVEL_HEIGHT,
       display: 'flex',

@@ -17,7 +17,6 @@ import {
   Field,
   getDefaultTimeRange,
   AbstractQuery,
-  getLogLevelFromKey,
   LogLevel,
   LogRowModel,
   MetricFindValue,
@@ -32,8 +31,12 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
+import { getLogLevelFromKey } from '../../../features/logs/utils';
 
+import { ElasticResponse } from './ElasticResponse';
+import { IndexPattern } from './IndexPattern';
 import LanguageProvider from './LanguageProvider';
+import { ElasticQueryBuilder } from './QueryBuilder';
 import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import {
   BucketAggregation,
@@ -46,10 +49,7 @@ import {
   Logs,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
-import { ElasticResponse } from './elastic_response';
-import { IndexPattern } from './index_pattern';
-import { ElasticQueryBuilder } from './query_builder';
-import { defaultBucketAgg, hasMetricOfType } from './query_def';
+import { defaultBucketAgg, hasMetricOfType } from './queryDef';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, TermsQuery } from './types';
 import { coerceESVersion, getScriptValue, isSupportedVersion } from './utils';
 

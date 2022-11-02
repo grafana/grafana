@@ -19,6 +19,10 @@ export interface NavLinkDTO {
   hideFromTabs?: boolean;
   showIconInNavbar?: boolean;
   roundIcon?: boolean;
+  /**
+   * This is true for some sections that have no children (but is still a section)
+   **/
+  isSection?: boolean;
   children?: NavLinkDTO[];
   highlightText?: string;
   emptyMessageId?: string;
@@ -36,6 +40,8 @@ export interface NavModelItem extends NavLinkDTO {
   highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
   hideFromBreadcrumbs?: boolean;
+  /** To render custom things between title and child tabs */
+  headerExtra?: ComponentType;
 }
 
 export enum NavSection {

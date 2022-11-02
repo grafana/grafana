@@ -61,6 +61,7 @@ public/css/*.min.css
 *.sublime-workspace
 *.swp
 .idea/
+.fleet/
 *.iml
 *.tmp
 .DS_Store
@@ -125,11 +126,13 @@ pkg/cmd/grafana-server/__debug_bin
 !.yarn/patches/*.patch
 
 # Ignoring frontend packages specifics
+/packages/grafana-ui/.yarn/.cache
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
 /packages/**/tsdoc-metadata.json
 /packages/**/package.tgz
+/packages/grafana-toolkit/sass
 ## CI places the packages in a different location
 /npm-artifacts/*.tgz
 
@@ -174,10 +177,12 @@ compilation-stats.json
 !pkg/framework/**/*_gen.go
 !pkg/plugins/pfs/**/*_gen.go
 !public/app/plugins/**/*_gen.go
+!pkg/services/publicdashboards/*_gen.go
 
 # Auto-generated internationalization files
 public/locales/_build/
-public/locales/**/*.js
+public/locales/*/*.js
+public/locales/*/grafana_old.json
 
 deployment_tools_config.json
 

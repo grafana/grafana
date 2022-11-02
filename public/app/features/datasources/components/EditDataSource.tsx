@@ -1,7 +1,12 @@
 import { AnyAction } from '@reduxjs/toolkit';
 import React from 'react';
 
-import { DataSourcePluginMeta, DataSourceSettings as DataSourceSettingsType } from '@grafana/data';
+import {
+  DataSourcePluginContextProvider,
+  DataSourcePluginMeta,
+  DataSourceSettings as DataSourceSettingsType,
+} from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { DataSourceSettingsState, useDispatch } from 'app/types';
 
@@ -85,7 +90,7 @@ export type ViewProps = {
   onNameChange: (name: string) => AnyAction;
   onOptionsChange: (dataSource: DataSourceSettingsType) => AnyAction;
   onTest: () => void;
-  onUpdate: (dataSource: DataSourceSettingsType) => Promise<void>;
+  onUpdate: (dataSource: DataSourceSettingsType) => Promise<DataSourceSettingsType>;
 };
 
 export function EditDataSourceView({
@@ -106,9 +111,14 @@ export function EditDataSourceView({
   const { readOnly, hasWriteRights, hasDeleteRights } = dataSourceRights;
   const hasDataSource = dataSource.id > 0;
 
+  const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
+
+  const hasAlertingEnabled = Boolean(dsi?.meta?.alerting ?? false);
+  const isAlertManagerDatasource = dsi?.type === 'alertmanager';
+  const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
+
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     await onUpdate({ ...dataSource });
 
     onTest();
@@ -123,12 +133,16 @@ export function EditDataSourceView({
   }
 
   // TODO - is this needed?
-  if (!hasDataSource) {
+  if (!hasDataSource || !dsi) {
     return null;
   }
 
   if (pageId) {
-    return <DataSourcePluginConfigPage pageId={pageId} plugin={plugin} />;
+    return (
+      <DataSourcePluginContextProvider instanceSettings={dsi}>
+        <DataSourcePluginConfigPage pageId={pageId} plugin={plugin} />;
+      </DataSourcePluginContextProvider>
+    );
   }
 
   return (
@@ -144,15 +158,18 @@ export function EditDataSourceView({
         isDefault={dataSource.isDefault}
         onDefaultChange={onDefaultChange}
         onNameChange={onNameChange}
+        alertingSupported={alertingSupported}
       />
 
       {plugin && (
-        <DataSourcePluginSettings
-          plugin={plugin}
-          dataSource={dataSource}
-          dataSourceMeta={dataSourceMeta}
-          onModelChange={onOptionsChange}
-        />
+        <DataSourcePluginContextProvider instanceSettings={dsi}>
+          <DataSourcePluginSettings
+            plugin={plugin}
+            dataSource={dataSource}
+            dataSourceMeta={dataSourceMeta}
+            onModelChange={onOptionsChange}
+          />
+        </DataSourcePluginContextProvider>
       )}
 
       <DataSourceTestingStatus testingStatus={testingStatus} />

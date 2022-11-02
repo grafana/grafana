@@ -18,7 +18,7 @@ const rawRange = {
 };
 
 const defaultTimeSrvMock = {
-  timeRange: () => ({
+  timeRange: jest.fn().mockReturnValue({
     from: rawRange.from,
     to: rawRange.to,
     raw: rawRange,

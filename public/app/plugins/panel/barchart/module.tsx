@@ -8,7 +8,7 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { StackingMode, VisibilityMode } from '@grafana/schema';
+import { GraphTransform, StackingMode, VisibilityMode } from '@grafana/schema';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 
 import { BarChartPanel } from './BarChartPanel';
@@ -62,6 +62,28 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
             options: graphFieldOptions.fillGradient,
           },
         });
+
+      builder.addSelect({
+        category: ['Graph styles'],
+        name: 'Transform',
+        path: 'transform',
+        settings: {
+          options: [
+            {
+              label: 'Constant',
+              value: GraphTransform.Constant,
+              description: 'The first value will be shown as a constant line',
+            },
+            {
+              label: 'Negative Y',
+              value: GraphTransform.NegativeY,
+              description: 'Flip the results to negative values on the y axis',
+            },
+          ],
+          isClearable: true,
+        },
+        hideFromDefaults: true,
+      });
 
       commonOptionsBuilder.addAxisConfig(builder, cfg, false);
       commonOptionsBuilder.addHideFrom(builder);

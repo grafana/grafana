@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue } from '@grafana/data';
-import { EditorRow } from '@grafana/ui';
+import { EditorRow } from '@grafana/experimental';
 import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
 import { OperationExplainedBox } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationExplainedBox';
 import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
@@ -14,6 +14,7 @@ import {
   QueryBuilderOperation,
 } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
+import { testIds } from '../../components/LokiQueryEditor';
 import { LokiDatasource } from '../../datasource';
 import { escapeLabelValueInSelector } from '../../languageUtils';
 import logqlGrammar from '../../syntax';
@@ -31,8 +32,6 @@ export interface Props {
   onChange: (update: LokiVisualQuery) => void;
   onRunQuery: () => void;
 }
-export const MISSING_LABEL_FILTER_ERROR_MESSAGE = 'Select at least 1 label filter (label and value)';
-
 export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery, showExplain }) => {
   const [sampleData, setSampleData] = useState<PanelData>();
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>(undefined);
@@ -56,7 +55,14 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
 
     const expr = lokiQueryModeller.renderLabels(labelsToConsider);
     const series = await datasource.languageProvider.fetchSeriesLabels(expr);
-    return Object.keys(series).sort();
+    const labelsNamesToConsider = labelsToConsider.map((l) => l.label);
+
+    const labelNames = Object.keys(series)
+      // Filter out label names that are already selected
+      .filter((name) => !labelsNamesToConsider.includes(name))
+      .sort();
+
+    return labelNames;
   };
 
   const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {
@@ -77,16 +83,16 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
     return values ? values.map((v) => escapeLabelValueInSelector(v, forLabel.op)) : []; // Escape values in return
   };
 
-  const labelFilterError: string | undefined = useMemo(() => {
+  const labelFilterRequired: boolean = useMemo(() => {
     const { labels, operations: op } = query;
     if (!labels.length && op.length) {
-      // We don't want to show error for initial state with empty line contains operation
+      // Filter is required when operations are present (empty line contains operation is exception)
       if (op.length === 1 && op[0].id === LokiOperationId.LineContains && op[0].params[0] === '') {
-        return undefined;
+        return false;
       }
-      return MISSING_LABEL_FILTER_ERROR_MESSAGE;
+      return true;
     }
-    return undefined;
+    return false;
   }, [query]);
 
   useEffect(() => {
@@ -102,7 +108,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
 
   const lang = { grammar: logqlGrammar, name: 'logql' };
   return (
-    <>
+    <div data-testid={testIds.editor}>
       <EditorRow>
         <LabelFilters
           onGetLabelNames={(forLabel: Partial<QueryBuilderLabelFilter>) =>
@@ -113,7 +119,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           }
           labelsFilters={query.labels}
           onChange={onChangeLabels}
-          error={labelFilterError}
+          labelFilterRequired={labelFilterRequired}
         />
       </EditorRow>
       {showExplain && (
@@ -165,7 +171,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           showExplain={showExplain}
         />
       )}
-    </>
+    </div>
   );
 });
 

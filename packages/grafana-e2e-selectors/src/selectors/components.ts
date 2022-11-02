@@ -318,6 +318,8 @@ export const Components = {
     expandFolder: (sectionId: string) => `data-testid Expand folder ${sectionId}`,
     dashboardItem: (item: string) => `${Components.Search.dashboardItems} ${item}`,
     dashboardCard: (item: string) => `data-testid Search card ${item}`,
+    folderHeader: (folderName: string) => `data-testid Folder header ${folderName}`,
+    folderContent: (folderName: string) => `data-testid Folder content ${folderName}`,
     dashboardItems: 'data-testid Dashboard search item',
   },
   DashboardLinks: {

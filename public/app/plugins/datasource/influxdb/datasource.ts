@@ -317,11 +317,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     // add global adhoc filters to timeFilter
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-    if (adhocFilters.length > 0) {
+    const adhocFiltersFromDashboard = options.targets.flatMap((target: InfluxQuery) => target.adhocFilters ?? []);
+    if (adhocFilters?.length || adhocFiltersFromDashboard?.length) {
+      const ahFilters = adhocFilters?.length ? adhocFilters : adhocFiltersFromDashboard;
       const tmpQuery = new InfluxQueryModel({ refId: 'A' }, this.templateSrv, scopedVars);
-      timeFilter += ' AND ' + tmpQuery.renderAdhocFilters(adhocFilters);
+      timeFilter += ' AND ' + tmpQuery.renderAdhocFilters(ahFilters);
     }
-
     // replace grafana variables
     scopedVars.timeFilter = { value: timeFilter };
 
@@ -506,6 +507,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     return {
       ...expandedQuery,
+      adhocFilters: this.templateSrv.getAdhocFilters(this.name) ?? [],
       query: this.templateSrv.replace(query.query ?? '', rest, 'regex'), // The raw query text
       alias: this.templateSrv.replace(query.alias ?? '', scopedVars),
       limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars, 'regex'),

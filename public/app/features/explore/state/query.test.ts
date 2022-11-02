@@ -22,6 +22,7 @@ import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv } from '../../dashboard/services/TimeSrv';
 
 import { createDefaultInitialState } from './helpers';
+import { saveCorrelationsAction } from './main';
 import {
   addQueryRowAction,
   addResultsToCache,
@@ -35,6 +36,7 @@ import {
   scanStartAction,
   scanStopAction,
   storeLogsVolumeDataProviderAction,
+  setLogsVolumeEnabled,
 } from './query';
 import { makeExplorePaneState } from './utils';
 
@@ -98,28 +100,31 @@ function setupQueryResponse(state: StoreState) {
 }
 
 describe('runQueries', () => {
-  it('should pass dataFrames to state even if there is error in response', async () => {
+  const setupTests = () => {
     setTimeSrv({ init() {} } as any);
-    const { dispatch, getState } = configureStore({
+    return configureStore({
       ...(defaultInitialState as any),
     });
+  };
+
+  it('should pass dataFrames to state even if there is error in response', async () => {
+    const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
+    await dispatch(saveCorrelationsAction([]));
     await dispatch(runQueries(ExploreId.left));
     expect(getState().explore[ExploreId.left].showMetrics).toBeTruthy();
     expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
   });
 
   it('should modify the request-id for log-volume queries', async () => {
-    setTimeSrv({ init() {} } as any);
-    const { dispatch, getState } = configureStore({
-      ...(defaultInitialState as any),
-    });
+    const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
+    await dispatch(saveCorrelationsAction([]));
     await dispatch(runQueries(ExploreId.left));
 
     const state = getState().explore[ExploreId.left];
     expect(state.queryResponse.request?.requestId).toBe('explore_left');
-    const datasource = state.datasourceInstance as any as DataSourceWithLogsVolumeSupport<DataQuery>;
+    const datasource = state.datasourceInstance as unknown as DataSourceWithLogsVolumeSupport<DataQuery>;
     expect(datasource.getLogsVolumeDataProvider).toBeCalledWith(
       expect.objectContaining({
         requestId: 'explore_left_log_volume',
@@ -128,15 +133,22 @@ describe('runQueries', () => {
   });
 
   it('should set state to done if query completes without emitting', async () => {
-    setTimeSrv({ init() {} } as any);
-    const { dispatch, getState } = configureStore({
-      ...(defaultInitialState as any),
-    });
+    const { dispatch, getState } = setupTests();
     const leftDatasourceInstance = assertIsDefined(getState().explore[ExploreId.left].datasourceInstance);
     jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(EMPTY);
+    await dispatch(saveCorrelationsAction([]));
     await dispatch(runQueries(ExploreId.left));
     await new Promise((resolve) => setTimeout(() => resolve(''), 500));
     expect(getState().explore[ExploreId.left].queryResponse.state).toBe(LoadingState.Done);
+  });
+
+  it('shows results only after correlations are loaded', async () => {
+    const { dispatch, getState } = setupTests();
+    setupQueryResponse(getState());
+    await dispatch(runQueries(ExploreId.left));
+    expect(getState().explore[ExploreId.left].graphResult).not.toBeDefined();
+    await dispatch(saveCorrelationsAction([]));
+    expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
   });
 });
 
@@ -464,6 +476,35 @@ describe('reducer', () => {
       expect(getState().explore[ExploreId.left].logsVolumeData).toBeDefined();
       expect(getState().explore[ExploreId.left].logsVolumeData!.state).toBe(LoadingState.Done);
       expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeUndefined();
+    });
+
+    it('do not load logsVolume data when disabled', async () => {
+      // turn logsvolume off
+      dispatch(setLogsVolumeEnabled(ExploreId.left, false));
+      expect(getState().explore[ExploreId.left].logsVolumeEnabled).toBe(false);
+
+      // verify that if we run a query, it will not do logsvolume, but the Provider will still be set
+      await dispatch(runQueries(ExploreId.left));
+      expect(getState().explore[ExploreId.left].logsVolumeData).toBeUndefined();
+      expect(getState().explore[ExploreId.left].logsVolumeDataSubscription).toBeUndefined();
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
+    });
+
+    it('load logsVolume data when it gets enabled', async () => {
+      // first it is disabled
+      dispatch(setLogsVolumeEnabled(ExploreId.left, false));
+
+      // runQueries sets up the logsVolume query, but does not run it
+      await dispatch(runQueries(ExploreId.left));
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
+
+      // we turn logsvolume on
+      await dispatch(setLogsVolumeEnabled(ExploreId.left, true));
+
+      // verify it was turned on
+      expect(getState().explore[ExploreId.left].logsVolumeEnabled).toBe(true);
+
+      expect(getState().explore[ExploreId.left].logsVolumeDataSubscription).toBeDefined();
     });
   });
 });

@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/storage"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
@@ -103,6 +104,10 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			}
 		}
 
+		if (pluginDef.ID == "parca" || pluginDef.ID == "phlare") && !hs.Features.IsEnabled(featuremgmt.FlagFlameGraph) {
+			continue
+		}
+
 		filteredPluginDefinitions = append(filteredPluginDefinitions, pluginDef)
 		filteredPluginIDs[pluginDef.ID] = true
 	}
@@ -170,19 +175,20 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 	}
 
 	dto := &dtos.PluginSetting{
-		Type:          string(plugin.Type),
-		Id:            plugin.ID,
-		Name:          plugin.Name,
-		Info:          plugin.Info,
-		Dependencies:  plugin.Dependencies,
-		Includes:      plugin.Includes,
-		BaseUrl:       plugin.BaseURL,
-		Module:        plugin.Module,
-		DefaultNavUrl: path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
-		State:         plugin.State,
-		Signature:     plugin.Signature,
-		SignatureType: plugin.SignatureType,
-		SignatureOrg:  plugin.SignatureOrg,
+		Type:             string(plugin.Type),
+		Id:               plugin.ID,
+		Name:             plugin.Name,
+		Info:             plugin.Info,
+		Dependencies:     plugin.Dependencies,
+		Includes:         plugin.Includes,
+		BaseUrl:          plugin.BaseURL,
+		Module:           plugin.Module,
+		DefaultNavUrl:    path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
+		State:            plugin.State,
+		Signature:        plugin.Signature,
+		SignatureType:    plugin.SignatureType,
+		SignatureOrg:     plugin.SignatureOrg,
+		SecureJsonFields: map[string]bool{},
 	}
 
 	if plugin.IsApp() {
@@ -202,6 +208,12 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		dto.Enabled = ps.Enabled
 		dto.Pinned = ps.Pinned
 		dto.JsonData = ps.JSONData
+
+		for k, v := range hs.PluginSettings.DecryptedValues(ps) {
+			if len(v) > 0 {
+				dto.SecureJsonFields[k] = true
+			}
+		}
 	}
 
 	update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), plugin.ID)
@@ -406,7 +418,7 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginManager.Add(c.Req.Context(), pluginID, dto.Version, plugins.CompatOpts{
+	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, plugins.CompatOpts{
 		GrafanaVersion: hs.Cfg.BuildVersion,
 		OS:             runtime.GOOS,
 		Arch:           runtime.GOARCH,
@@ -441,7 +453,7 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginManager.Remove(c.Req.Context(), pluginID)
+	err := hs.pluginInstaller.Remove(c.Req.Context(), pluginID)
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotInstalled) {
 			return response.Error(http.StatusNotFound, "Plugin not installed", err)

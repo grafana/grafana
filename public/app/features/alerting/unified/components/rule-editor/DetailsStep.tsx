@@ -4,7 +4,8 @@ import React, { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Field, Input, InputControl, Label, Tooltip, Icon, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { useStyles2, Field, Input, InputControl, Label, Tooltip, Icon } from '@grafana/ui';
 import { FolderPickerFilter } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
@@ -15,7 +16,7 @@ import { RuleForm, RuleFormType, RuleFormValues } from '../../types/rule-form';
 import AnnotationsField from './AnnotationsField';
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import { RuleEditorSection } from './RuleEditorSection';
-import { RuleFolderPicker, Folder } from './RuleFolderPicker';
+import { RuleFolderPicker, Folder, containsSlashes } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
 const recordingRuleNameValidationPattern = {
@@ -117,6 +118,7 @@ export const DetailsStep = ({ initialFolder }: DetailsStepProps) => {
                   enableCreateNew={contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
                   enableReset={true}
                   filter={folderFilter}
+                  dissalowSlashes={true}
                 />
               )}
               name="folder"
@@ -165,14 +167,16 @@ const useRuleFolderFilter = (existingRuleForm: RuleForm | null) => {
         existingRuleForm &&
         hit.folderId === existingRuleForm.id &&
         contextSrv.hasAccessInMetadata(AccessControlAction.AlertingRuleUpdate, hit, rbacDisabledFallback);
-
       return canCreateRuleInFolder || canUpdateInCurrentFolder;
     },
     [existingRuleForm]
   );
 
   return useCallback<FolderPickerFilter>(
-    (folderHits) => folderHits.filter(isSearchHitAvailable),
+    (folderHits) =>
+      folderHits
+        .filter(isSearchHitAvailable)
+        .filter((value: DashboardSearchHit) => !containsSlashes(value.title ?? '')),
     [isSearchHitAvailable]
   );
 };
@@ -193,6 +197,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
-    align-items: flex-end;
+    align-items: end;
   `,
 });

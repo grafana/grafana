@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import {
-  LogRowModel,
-  toDataFrame,
+  DataQueryError,
+  DataQueryResponse,
   Field,
   FieldCache,
+  LogRowModel,
   LogsSortOrder,
-  DataQueryResponse,
-  DataQueryError,
+  toDataFrame,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 
 export interface RowContextOptions {
   direction?: 'BACKWARD' | 'FORWARD';
@@ -45,6 +46,7 @@ interface LogRowContextProviderProps {
     hasMoreContextRows: HasMoreContextRows;
     updateLimit: () => void;
     limit: number;
+    logsSortOrder?: LogsSortOrder | null;
   }) => JSX.Element;
 }
 
@@ -92,7 +94,7 @@ export const getRowContexts = async (
           // ns which came before but they come in the response that search for logs after. This means right now
           // we will show those as if they came after. This is not strictly correct but seems better than losing them
           // and making this correct would mean quite a bit of complexity to shuffle things around and messing up
-          //counts.
+          // counts.
           if (idField.values.get(fieldIndex) === row.uid) {
             continue;
           }
@@ -108,7 +110,10 @@ export const getRowContexts = async (
         const lineField: Field<string> = dataFrame.fields.filter((field) => field.name === 'line')[0];
         const line = lineField.values.get(fieldIndex); // assuming that both fields have same length
 
-        data.push(line);
+        // since we request limit+1 logs, we occasionally get one extra log in the response
+        if (data.length < limit) {
+          data.push(line);
+        }
       }
     }
 
@@ -144,7 +149,7 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   // React Hook that creates an object state value called result to component state and a setter function called setResult
   // The initial value for result is null
   // Used for sorting the response from backend
-  const [result, setResult] = useState<ResultType>(null as any as ResultType);
+  const [result, setResult] = useState<ResultType>(null as unknown as ResultType);
 
   // React Hook that creates an object state value called hasMoreContextRows to component state and a setter function called setHasMoreContextRows
   // The initial value for hasMoreContextRows is {before: true, after: true}
@@ -206,7 +211,17 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
       after: result ? result.errors[1] : undefined,
     },
     hasMoreContextRows,
-    updateLimit: () => setLimit(limit + 10),
+    updateLimit: () => {
+      setLimit(limit + 10);
+
+      const { datasourceType, uid: logRowUid } = row;
+      reportInteraction('grafana_explore_logs_log_context_load_more_clicked', {
+        datasourceType,
+        logRowUid,
+        newLimit: limit + 10,
+      });
+    },
     limit,
+    logsSortOrder,
   });
 };

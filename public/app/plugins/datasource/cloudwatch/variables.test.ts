@@ -1,3 +1,5 @@
+import { toOption } from '@grafana/data';
+
 import { dimensionVariable, labelsVariable, setupMockedDataSource } from './__mocks__/CloudWatchDataSource';
 import { VariableQuery, VariableQueryType } from './types';
 import { CloudWatchVariableSupport } from './variables';
@@ -19,13 +21,13 @@ mock.datasource.api.getRegions = jest.fn().mockResolvedValue([{ label: 'a', valu
 mock.datasource.api.getNamespaces = jest.fn().mockResolvedValue([{ label: 'b', value: 'b' }]);
 mock.datasource.api.getMetrics = jest.fn().mockResolvedValue([{ label: 'c', value: 'c' }]);
 mock.datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([{ label: 'd', value: 'd' }]);
-mock.datasource.logsQueryRunner.describeAllLogGroups = jest.fn().mockResolvedValue(['a', 'b']);
+mock.datasource.api.describeAllLogGroups = jest.fn().mockResolvedValue(['a', 'b'].map(toOption));
 const getDimensionValues = jest.fn().mockResolvedValue([{ label: 'e', value: 'e' }]);
 const getEbsVolumeIds = jest.fn().mockResolvedValue([{ label: 'f', value: 'f' }]);
 const getEc2InstanceAttribute = jest.fn().mockResolvedValue([{ label: 'g', value: 'g' }]);
 const getResourceARNs = jest.fn().mockResolvedValue([{ label: 'h', value: 'h' }]);
 
-const variables = new CloudWatchVariableSupport(mock.datasource.api, mock.datasource.logsQueryRunner);
+const variables = new CloudWatchVariableSupport(mock.datasource.api);
 
 describe('variables', () => {
   it('should run regions', async () => {
@@ -74,13 +76,13 @@ describe('variables', () => {
     });
     it('should run if values are set', async () => {
       const result = await variables.execute(query);
-      expect(getDimensionValues).toBeCalledWith(
-        query.region,
-        query.namespace,
-        query.metricName,
-        query.dimensionKey,
-        query.dimensionFilters
-      );
+      expect(getDimensionValues).toBeCalledWith({
+        region: query.region,
+        namespace: query.namespace,
+        metricName: query.metricName,
+        dimensionKey: query.dimensionKey,
+        dimensionFilters: query.dimensionFilters,
+      });
       expect(result).toEqual([{ text: 'e', value: 'e', expandable: true }]);
     });
   });

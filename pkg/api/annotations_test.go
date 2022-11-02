@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -23,11 +24,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 )
 
 func TestAnnotationsAPIEndpoint(t *testing.T) {
 	hs := setupSimpleHTTPServer(nil)
-	store := sqlstore.InitTestDB(t)
+	store := db.InitTestDB(t)
 	store.Cfg = hs.Cfg
 	hs.SQLStore = store
 
@@ -308,7 +310,7 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 	cmd dtos.UpdateAnnotationsCmd, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
-		store := sqlstore.InitTestDB(t)
+		store := db.InitTestDB(t)
 		store.Cfg = hs.Cfg
 		hs.SQLStore = store
 
@@ -333,7 +335,7 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role org.RoleType, cmd dtos.PatchAnnotationsCmd, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
-		store := sqlstore.InitTestDB(t)
+		store := db.InitTestDB(t)
 		store.Cfg = hs.Cfg
 		hs.SQLStore = store
 
@@ -922,7 +924,7 @@ func setUpACL() {
 	viewerRole := org.RoleViewer
 	editorRole := org.RoleEditor
 	store := mockstore.NewSQLStoreMock()
-	store.ExpectedTeamsByUser = []*models.TeamDTO{}
+	teamSvc := &teamtest.FakeService{}
 	dashSvc := &dashboards.FakeDashboardService{}
 	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 		q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
@@ -932,7 +934,7 @@ func setUpACL() {
 		}
 	}).Return(nil)
 
-	guardian.InitLegacyGuardian(store, dashSvc)
+	guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
 }
 
 func setUpRBACGuardian(t *testing.T) {

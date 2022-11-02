@@ -3,31 +3,35 @@ package annotationsimpl
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
+	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
-
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestIntegrationAnnotations(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sql := sqlstore.InitTestDB(t)
-	repo := SQLAnnotationRepo{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test")}
+	sql := db.InitTestDB(t)
+	var maximumTagsLength int64 = 60
+	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength}
 
 	testUser := &user.SignedInUser{
 		OrgID: 1,
@@ -41,7 +45,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 	t.Run("Testing annotation create, read, update and delete", func(t *testing.T) {
 		t.Cleanup(func() {
-			err := sql.WithDbSession(context.Background(), func(dbSession *sqlstore.DBSession) error {
+			err := sql.WithDbSession(context.Background(), func(dbSession *db.Session) error {
 				_, err := dbSession.Exec("DELETE FROM annotation WHERE 1=1")
 				if err != nil {
 					return err
@@ -52,7 +56,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
+		dashboardStore := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg))
 
 		testDashboard1 := models.SaveDashboardCommand{
 			UserId: 1,
@@ -61,7 +65,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 				"title": "Dashboard 1",
 			}),
 		}
-		dashboard, err := dashboardStore.SaveDashboard(testDashboard1)
+
+		dashboard, err := dashboardStore.SaveDashboard(context.Background(), testDashboard1)
 		require.NoError(t, err)
 
 		testDashboard2 := models.SaveDashboardCommand{
@@ -71,7 +76,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				"title": "Dashboard 2",
 			}),
 		}
-		dashboard2, err := dashboardStore.SaveDashboard(testDashboard2)
+		dashboard2, err := dashboardStore.SaveDashboard(context.Background(), testDashboard2)
 		require.NoError(t, err)
 
 		annotation := &annotations.Item{
@@ -96,7 +101,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			Type:        "alert",
 			Epoch:       21, // Should swap epoch & epochEnd
 			EpochEnd:    20,
-			Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
+			Tags:        []string{"outage", "type:outage", "server:server-1", "error"},
 		}
 		err = repo.Add(context.Background(), annotation2)
 		require.NoError(t, err)
@@ -145,6 +150,18 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.GreaterOrEqual(t, items[0].Updated, int64(0))
 			assert.Equal(t, items[0].Updated, items[0].Created)
 		})
+
+		badAnnotation := &annotations.Item{
+			OrgId:  1,
+			UserId: 1,
+			Text:   "rollback",
+			Type:   "",
+			Epoch:  17,
+			Tags:   []string{strings.Repeat("a", int(maximumTagsLength+1))},
+		}
+		err = repo.Add(context.Background(), badAnnotation)
+		require.Error(t, err)
+		require.ErrorIs(t, err, annotations.ErrBaseTagLimitExceeded)
 
 		t.Run("Can query for annotation by id", func(t *testing.T) {
 			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
@@ -391,18 +408,21 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sql := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
-	repo := SQLAnnotationRepo{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test")}
-	dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
+	sql := db.InitTestDB(t)
+
+	var maximumTagsLength int64 = 60
+	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength}
+	dashboardStore := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg))
 
 	testDashboard1 := models.SaveDashboardCommand{
-		UserId: 1,
-		OrgId:  1,
+		UserId:   1,
+		OrgId:    1,
+		IsFolder: false,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"title": "Dashboard 1",
 		}),
 	}
-	dashboard, err := dashboardStore.SaveDashboard(testDashboard1)
+	dashboard, err := dashboardStore.SaveDashboard(context.Background(), testDashboard1)
 	require.NoError(t, err)
 	dash1UID := dashboard.Uid
 
@@ -413,7 +433,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 			"title": "Dashboard 2",
 		}),
 	}
-	_, err = dashboardStore.SaveDashboard(testDashboard2)
+	_, err = dashboardStore.SaveDashboard(context.Background(), testDashboard2)
 	require.NoError(t, err)
 
 	dash1Annotation := &annotations.Item{
@@ -443,6 +463,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		UserID: 1,
 		OrgID:  1,
 	}
+	role := setupRBACRole(t, repo, user)
 
 	type testStruct struct {
 		description           string
@@ -503,6 +524,8 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			user.Permissions = map[int64]map[string][]string{1: tc.permissions}
+			setupRBACPermission(t, repo, role, user)
+
 			results, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgId:        1,
 				SignedInUser: user,
@@ -518,4 +541,62 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 			}
 		})
 	}
+}
+
+func setupRBACRole(t *testing.T, repo xormRepositoryImpl, user *user.SignedInUser) *accesscontrol.Role {
+	t.Helper()
+	var role *accesscontrol.Role
+	err := repo.db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		role = &accesscontrol.Role{
+			OrgID:   user.OrgID,
+			UID:     "test_role",
+			Name:    "test:role",
+			Updated: time.Now(),
+			Created: time.Now(),
+		}
+		_, err := sess.Insert(role)
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.Insert(accesscontrol.UserRole{
+			OrgID:   role.OrgID,
+			RoleID:  role.ID,
+			UserID:  user.UserID,
+			Created: time.Now(),
+		})
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	require.NoError(t, err)
+	return role
+}
+
+func setupRBACPermission(t *testing.T, repo xormRepositoryImpl, role *accesscontrol.Role, user *user.SignedInUser) {
+	t.Helper()
+	err := repo.db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		if _, err := sess.Exec("DELETE FROM permission WHERE role_id = ?", role.ID); err != nil {
+			return err
+		}
+
+		var acPermission []accesscontrol.Permission
+		for action, scopes := range user.Permissions[user.OrgID] {
+			for _, scope := range scopes {
+				acPermission = append(acPermission, accesscontrol.Permission{
+					RoleID: role.ID, Action: action, Scope: scope, Created: time.Now(), Updated: time.Now(),
+				})
+			}
+		}
+
+		if _, err := sess.InsertMulti(&acPermission); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	require.NoError(t, err)
 }

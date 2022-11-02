@@ -7,6 +7,8 @@ import (
 	"context"
 
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/tsdb/parca"
+	phlare "github.com/grafana/grafana/pkg/tsdb/phlare"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api"
@@ -16,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/expr"
 	cmreg "github.com/grafana/grafana/pkg/framework/coremodel/registry"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -111,11 +115,13 @@ import (
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
+	objectdummyserver "github.com/grafana/grafana/pkg/services/store/object/dummy"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
+	"github.com/grafana/grafana/pkg/services/tag"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
 	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
@@ -152,7 +158,7 @@ var wireSet = wire.NewSet(
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
 	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
-	sqlstore.ProvideService,
+	db.ProvideService,
 	wire.InterfaceValue(new(usagestats.Service), noOpUsageStats{}),
 	wire.InterfaceValue(new(routing.RouteRegister), noOpRouteRegister{}),
 	encryptionservice.ProvideEncryptionService,
@@ -181,14 +187,14 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
 	repo.ProvideService,
 	wire.Bind(new(repo.Service), new(*repo.Manager)),
-	manager.ProvideService,
-	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
-	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),
-	wire.Bind(new(plugins.SecretsPluginManager), new(*manager.PluginManager)),
+	manager.ProvideInstaller,
+	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 	client.ProvideService,
 	wire.Bind(new(plugins.Client), new(*client.Service)),
 	managerStore.ProvideService,
 	wire.Bind(new(plugins.Store), new(*managerStore.Service)),
+	wire.Bind(new(plugins.RendererManager), new(*managerStore.Service)),
+	wire.Bind(new(plugins.SecretsPluginManager), new(*managerStore.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*managerStore.Service)),
 	pluginDashboards.ProvideFileStoreManager,
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
@@ -255,6 +261,8 @@ var wireSet = wire.NewSet(
 	graphite.ProvideService,
 	prometheus.ProvideService,
 	elasticsearch.ProvideService,
+	phlare.ProvideService,
+	parca.ProvideService,
 	secretsMigrator.ProvideSecretsMigrator,
 	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
 	grafanads.ProvideService,
@@ -278,12 +286,10 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(teamguardian.Store), new(*teamguardianDatabase.TeamGuardianStoreImpl)),
 	teamguardianManager.ProvideService,
 	dashboardservice.ProvideDashboardService,
-	dashboardservice.ProvideFolderService,
 	dashboardstore.ProvideDashboardStore,
 	wire.Bind(new(dashboards.DashboardService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.DashboardProvisioningService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.PluginService), new(*dashboardservice.DashboardServiceImpl)),
-	wire.Bind(new(dashboards.FolderService), new(*dashboardservice.FolderServiceImpl)),
 	wire.Bind(new(dashboards.Store), new(*dashboardstore.DashboardStore)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
@@ -300,8 +306,8 @@ var wireSet = wire.NewSet(
 	authproxy.ProvideAuthProxy,
 	statscollector.ProvideService,
 	cmreg.CoremodelSet,
-	cuectx.ProvideCUEContext,
-	cuectx.ProvideThemaLibrary,
+	cuectx.GrafanaCUEContext,
+	cuectx.GrafanaThemaRuntime,
 	csrf.ProvideCSRFFilter,
 	ossaccesscontrol.ProvideTeamPermissions,
 	wire.Bind(new(accesscontrol.TeamPermissionsService), new(*ossaccesscontrol.TeamPermissionsService)),
@@ -319,21 +325,24 @@ var wireSet = wire.NewSet(
 	publicdashboardsApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
+	teamimpl.ProvideService,
 	userauthimpl.ProvideService,
 	ngmetrics.ProvideServiceForTest,
-	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 	notifications.MockNotificationService,
-	wire.Bind(new(notifications.TempUserStore), new(*mockstore.SQLStoreMock)),
+	objectdummyserver.ProvideFakeObjectServer,
+	wire.Bind(new(notifications.TempUserStore), new(*dbtest.FakeDB)),
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
-	mockstore.NewSQLStoreMock,
+	dbtest.NewFakeDB,
 	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
-	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	wire.Bind(new(db.DB), new(*dbtest.FakeDB)),
 	prefimpl.ProvideService,
 	opentsdb.ProvideService,
 	acimpl.ProvideAccessControl,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
+	tagimpl.ProvideService,
+	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 )
 
 func Initialize(cfg *setting.Cfg) (Runner, error) {

@@ -1,13 +1,16 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
-import { RegisterOptions, UseFormRegisterReturn } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Field, Input, TextArea, useStyles2 } from '@grafana/ui';
 
-import { EditFormDTO } from './types';
+import { Correlation } from '../types';
 
-const getInputId = (inputName: string, correlation?: EditFormDTO) => {
+import { QueryEditorField } from './QueryEditorField';
+import { FormDTO } from './types';
+
+const getInputId = (inputName: string, correlation?: CorrelationBaseData) => {
   if (!correlation) {
     return inputName;
   }
@@ -16,9 +19,6 @@ const getInputId = (inputName: string, correlation?: EditFormDTO) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  marginless: css`
-    margin: 0;
-  `,
   label: css`
     max-width: ${theme.spacing(32)};
   `,
@@ -27,17 +27,24 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
+type CorrelationBaseData = Pick<Correlation, 'uid' | 'sourceUID' | 'targetUID'>;
 interface Props {
-  register: (path: 'label' | 'description', options?: RegisterOptions) => UseFormRegisterReturn;
   readOnly?: boolean;
-  correlation?: EditFormDTO;
+  correlation?: CorrelationBaseData;
 }
 
-export function CorrelationDetailsFormPart({ register, readOnly = false, correlation }: Props) {
+export function CorrelationDetailsFormPart({ readOnly = false, correlation }: Props) {
   const styles = useStyles2(getStyles);
+  const {
+    register,
+    formState: { errors },
+  } = useFormContext<FormDTO>();
+  const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || correlation?.targetUID;
 
   return (
     <>
+      <input type="hidden" {...register('config.type')} />
+
       <Field label="Label" className={styles.label}>
         <Input
           id={getInputId('label', correlation)}
@@ -50,10 +57,31 @@ export function CorrelationDetailsFormPart({ register, readOnly = false, correla
       <Field
         label="Description"
         // the Field component automatically adds margin to itself, so we are forced to workaround it by overriding  its styles
-        className={cx(readOnly && styles.marginless, styles.description)}
+        className={cx(styles.description)}
       >
         <TextArea id={getInputId('description', correlation)} {...register('description')} readOnly={readOnly} />
       </Field>
+
+      <Field
+        label="Target field"
+        className={styles.label}
+        invalid={!!errors?.config?.field}
+        error={errors?.config?.field?.message}
+      >
+        <Input
+          id={getInputId('field', correlation)}
+          {...register('config.field', { required: 'This field is required.' })}
+          readOnly={readOnly}
+        />
+      </Field>
+
+      <QueryEditorField
+        name="config.target"
+        dsUid={targetUID}
+        invalid={!!errors?.config?.target}
+        // @ts-expect-error react-hook-form's errors do not work well with object types
+        error={errors?.config?.target?.message}
+      />
     </>
   );
 }

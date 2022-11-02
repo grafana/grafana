@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/validations"
 
 	"github.com/stretchr/testify/require"
@@ -83,7 +84,7 @@ func TestOpsGenieNotifier(t *testing.T) {
           "apiKey": "abcdefgh0123456789"
 				}`
 
-			tagPairs := []*models.Tag{
+			tagPairs := []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "aKey", Value: "aValue"},
 			}
@@ -132,7 +133,7 @@ func TestOpsGenieNotifier(t *testing.T) {
           "sendTagsAs": "details"
 				}`
 
-			tagPairs := []*models.Tag{
+			tagPairs := []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "aKey", Value: "aValue"},
 			}
@@ -181,7 +182,7 @@ func TestOpsGenieNotifier(t *testing.T) {
           "sendTagsAs": "both"
 				}`
 
-			tagPairs := []*models.Tag{
+			tagPairs := []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "aKey", Value: "aValue"},
 			}

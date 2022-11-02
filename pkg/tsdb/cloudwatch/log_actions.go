@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
@@ -53,7 +55,7 @@ func (e *AWSError) Error() string {
 	return fmt.Sprintf("%s: %s", e.Code, e.Message)
 }
 
-func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, logger log.Logger, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	resultChan := make(chan backend.Responses, len(req.Queries))
@@ -68,7 +70,7 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 
 		query := query
 		eg.Go(func() error {
-			dataframe, err := e.executeLogAction(ectx, model, query, req.PluginContext)
+			dataframe, err := e.executeLogAction(ectx, logger, model, query, req.PluginContext)
 			if err != nil {
 				var AWSError *AWSError
 				if errors.As(err, &AWSError) {
@@ -108,13 +110,13 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 	return resp, nil
 }
 
-func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model LogQueryJson, query backend.DataQuery, pluginCtx backend.PluginContext) (*data.Frame, error) {
-	dsInfo, err := e.getDSInfo(pluginCtx)
+func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, logger log.Logger, model LogQueryJson, query backend.DataQuery, pluginCtx backend.PluginContext) (*data.Frame, error) {
+	instance, err := e.getInstance(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	region := dsInfo.region
+	region := instance.Settings.Region
 	if model.Region != "" {
 		region = model.Region
 	}
@@ -126,14 +128,10 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model LogQuer
 
 	var data *data.Frame = nil
 	switch model.SubType {
-	case "DescribeLogGroups":
-		data, err = e.handleDescribeLogGroups(ctx, logsClient, model)
-	case "DescribeAllLogGroups":
-		data, err = e.handleDescribeAllLogGroups(ctx, logsClient, model)
 	case "GetLogGroupFields":
 		data, err = e.handleGetLogGroupFields(ctx, logsClient, model, query.RefID)
 	case "StartQuery":
-		data, err = e.handleStartQuery(ctx, logsClient, model, query.TimeRange, query.RefID)
+		data, err = e.handleStartQuery(ctx, logger, logsClient, model, query.TimeRange, query.RefID)
 	case "StopQuery":
 		data, err = e.handleStopQuery(ctx, logsClient, model)
 	case "GetQueryResults":
@@ -203,74 +201,6 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 	return data.NewFrame("logEvents", timestampField, messageField), nil
 }
 
-func (e *cloudWatchExecutor) handleDescribeLogGroups(ctx context.Context,
-	logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters LogQueryJson) (*data.Frame, error) {
-	logGroupLimit := defaultLogGroupLimit
-	if parameters.Limit != nil && *parameters.Limit != 0 {
-		logGroupLimit = *parameters.Limit
-	}
-
-	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
-	var err error
-	if len(parameters.LogGroupNamePrefix) == 0 {
-		response, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
-			Limit: aws.Int64(logGroupLimit),
-		})
-	} else {
-		response, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
-			Limit:              aws.Int64(logGroupLimit),
-			LogGroupNamePrefix: aws.String(parameters.LogGroupNamePrefix),
-		})
-	}
-	if err != nil || response == nil {
-		return nil, err
-	}
-
-	logGroupNames := make([]*string, 0)
-	for _, logGroup := range response.LogGroups {
-		logGroupNames = append(logGroupNames, logGroup.LogGroupName)
-	}
-
-	groupNamesField := data.NewField("logGroupName", nil, logGroupNames)
-	frame := data.NewFrame("logGroups", groupNamesField)
-
-	return frame, nil
-}
-
-func (e *cloudWatchExecutor) handleDescribeAllLogGroups(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters LogQueryJson) (*data.Frame, error) {
-	var namePrefix, nextToken *string
-	if len(parameters.LogGroupNamePrefix) != 0 {
-		namePrefix = aws.String(parameters.LogGroupNamePrefix)
-	}
-
-	var response *cloudwatchlogs.DescribeLogGroupsOutput
-	var err error
-	logGroupNames := []*string{}
-	for {
-		response, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
-			LogGroupNamePrefix: namePrefix,
-			NextToken:          nextToken,
-			Limit:              aws.Int64(defaultLogGroupLimit),
-		})
-		if err != nil || response == nil {
-			return nil, err
-		}
-
-		for _, logGroup := range response.LogGroups {
-			logGroupNames = append(logGroupNames, logGroup.LogGroupName)
-		}
-
-		if response.NextToken == nil {
-			break
-		}
-		nextToken = response.NextToken
-	}
-
-	groupNamesField := data.NewField("logGroupName", nil, logGroupNames)
-	frame := data.NewFrame("logGroups", groupNamesField)
-	return frame, nil
-}
-
 func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
 	parameters LogQueryJson, timeRange backend.TimeRange) (*cloudwatchlogs.StartQueryOutput, error) {
 	startTime := timeRange.From
@@ -306,13 +236,13 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	return logsClient.StartQueryWithContext(ctx, startQueryInput)
 }
 
-func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
+func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logger log.Logger, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
 	model LogQueryJson, timeRange backend.TimeRange, refID string) (*data.Frame, error) {
 	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, model, timeRange)
 	if err != nil {
 		var awsErr awserr.Error
 		if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
-			plog.Debug("executeStartQuery limit exceeded", "err", awsErr)
+			logger.Debug("executeStartQuery limit exceeded", "err", awsErr)
 			return nil, &AWSError{Code: limitExceededException, Message: err.Error()}
 		}
 		return nil, err

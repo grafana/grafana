@@ -56,8 +56,7 @@ describe('MegaMenu', () => {
     setup();
 
     expect(await screen.findByTestId('navbarmenu')).toBeInTheDocument();
-    expect(await screen.findByLabelText('Home')).toBeInTheDocument();
-    expect(screen.queryAllByLabelText('Section name').length).toBe(2);
+    expect(await screen.findByRole('link', { name: 'Section name' })).toBeInTheDocument();
   });
 
   it('should filter out profile', async () => {

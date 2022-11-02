@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -98,6 +99,16 @@ const (
 
 	// FolderTitleLabel is the label that will contain the title of an alert's folder/namespace.
 	FolderTitleLabel = GrafanaReservedLabelPrefix + "folder"
+
+	// StateReasonAnnotation is the name of the annotation that explains the difference between evaluation state and alert state (i.e. changing state when NoData or Error).
+	StateReasonAnnotation = GrafanaReservedLabelPrefix + "state_reason"
+
+	ValuesAnnotation      = "__values__"
+	ValueStringAnnotation = "__value_string__"
+)
+
+var (
+	StateReasonMissingSeries = "MissingSeries"
 )
 
 var (
@@ -173,7 +184,6 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 func (alertRule *AlertRule) GetEvalCondition() Condition {
 	return Condition{
 		Condition: alertRule.Condition,
-		OrgID:     alertRule.OrgID,
 		Data:      alertRule.Data,
 	}
 }
@@ -359,12 +369,6 @@ type ListNamespaceAlertRulesQuery struct {
 	Result []*AlertRule
 }
 
-// ListRuleGroupsQuery is the query for listing unique rule groups
-// across all organizations
-type ListRuleGroupsQuery struct {
-	Result []string
-}
-
 // ListOrgRuleGroupsQuery is the query for listing unique rule groups
 // for an organization
 type ListOrgRuleGroupsQuery struct {
@@ -379,13 +383,17 @@ type ListOrgRuleGroupsQuery struct {
 	Result [][]string
 }
 
+type UpdateRule struct {
+	Existing *AlertRule
+	New      AlertRule
+}
+
 // Condition contains backend expressions and queries and the RefID
 // of the query or expression that will be evaluated.
 type Condition struct {
 	// Condition is the RefID of the query or expression from
 	// the Data property to get the results for.
 	Condition string `json:"condition"`
-	OrgID     int64  `json:"-"`
 
 	// Data is an array of data source queries and/or server side expressions.
 	Data []AlertQuery `json:"data"`
@@ -449,4 +457,15 @@ func (g RulesGroup) SortByGroupIndex() {
 		}
 		return g[i].RuleGroupIndex < g[j].RuleGroupIndex
 	})
+}
+
+type ruleKeyContextKey struct{}
+
+func WithRuleKey(ctx context.Context, ruleKey AlertRuleKey) context.Context {
+	return context.WithValue(ctx, ruleKeyContextKey{}, ruleKey)
+}
+
+func RuleKeyFromContext(ctx context.Context) (AlertRuleKey, bool) {
+	key, ok := ctx.Value(ruleKeyContextKey{}).(AlertRuleKey)
+	return key, ok
 }

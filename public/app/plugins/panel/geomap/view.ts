@@ -15,7 +15,7 @@ export enum MapCenterID {
 export const centerPointRegistry = new Registry<MapCenterItems>(() => [
   {
     id: MapCenterID.Fit as string,
-    name: 'Fit data layers',
+    name: 'Fit to data',
     zoom: 15, // max zoom
   },
   {

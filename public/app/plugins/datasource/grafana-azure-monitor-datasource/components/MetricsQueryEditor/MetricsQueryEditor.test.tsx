@@ -31,17 +31,21 @@ const variableOptionGroup = {
 };
 
 export function createMockResourcePickerData() {
-  const mockDatasource = new ResourcePickerData(createMockInstanceSetttings());
+  const mockDatasource = createMockDatasource();
+  const mockResourcePicker = new ResourcePickerData(
+    createMockInstanceSetttings(),
+    mockDatasource.azureMonitorDatasource
+  );
 
-  mockDatasource.getSubscriptions = jest.fn().mockResolvedValue(createMockSubscriptions());
-  mockDatasource.getResourceGroupsBySubscriptionId = jest
+  mockResourcePicker.getSubscriptions = jest.fn().mockResolvedValue(createMockSubscriptions());
+  mockResourcePicker.getResourceGroupsBySubscriptionId = jest
     .fn()
     .mockResolvedValue(createMockResourceGroupsBySubscription());
-  mockDatasource.getResourcesForResourceGroup = jest.fn().mockResolvedValue(mockResourcesByResourceGroup());
-  mockDatasource.getResourceURIFromWorkspace = jest.fn().mockReturnValue('');
-  mockDatasource.getResourceURIDisplayProperties = jest.fn().mockResolvedValue({});
+  mockResourcePicker.getResourcesForResourceGroup = jest.fn().mockResolvedValue(mockResourcesByResourceGroup());
+  mockResourcePicker.getResourceURIFromWorkspace = jest.fn().mockReturnValue('');
+  mockResourcePicker.getResourceURIDisplayProperties = jest.fn().mockResolvedValue({});
 
-  return mockDatasource;
+  return mockResourcePicker;
 }
 
 describe('MetricsQueryEditor', () => {

@@ -30,10 +30,10 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { BackendDataSourceResponse, config, FetchError, FetchResponse, toDataQueryResponse } from '@grafana/runtime';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
+import { RowContextOptions } from '../../../../features/logs/components/LogRowContextProvider';
 import {
   CloudWatchJsonData,
   CloudWatchLogsQuery,
@@ -424,20 +424,6 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       data: dataFrames,
     };
   };
-
-  async describeLogGroups(params: DescribeLogGroupsRequest): Promise<string[]> {
-    const dataFrames = await lastValueFrom(this.makeLogActionRequest('DescribeLogGroups', [params]));
-
-    const logGroupNames = dataFrames[0]?.fields[0]?.values.toArray() ?? [];
-    return logGroupNames;
-  }
-
-  async describeAllLogGroups(params: DescribeLogGroupsRequest): Promise<string[]> {
-    const dataFrames = await lastValueFrom(this.makeLogActionRequest('DescribeAllLogGroups', [params]));
-
-    const logGroupNames = dataFrames[0]?.fields[0]?.values.toArray() ?? [];
-    return logGroupNames;
-  }
 
   async getLogGroupFields(params: GetLogGroupFieldsRequest): Promise<GetLogGroupFieldsResponse> {
     const dataFrames = await lastValueFrom(this.makeLogActionRequest('GetLogGroupFields', [params]));

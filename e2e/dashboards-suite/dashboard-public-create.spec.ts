@@ -16,9 +16,9 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.shareButton().click();
 
     // Select public dashboards tab
-    e2e().intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('query-public-config');
+    e2e().intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('query-public-dashboard');
     e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
-    e2e().wait('@query-public-config');
+    e2e().wait('@query-public-dashboard');
 
     // Saving button should be disabled
     e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.disabled');
@@ -28,20 +28,23 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.PublicDashboard.LimitedDSCheckbox().should('be.enabled').click({ force: true });
     e2e.pages.ShareDashboardModal.PublicDashboard.CostIncreaseCheckbox().should('be.enabled').click({ force: true });
 
+    e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.disabled');
+
     // Switch on enabling toggle
     e2e.pages.ShareDashboardModal.PublicDashboard.EnableSwitch().should('be.enabled').click({ force: true });
+    e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.enabled');
 
-    // Save configuration
-    e2e().intercept('POST', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('save');
+    // Save public dashboard
+    e2e().intercept('POST', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('save');
     e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().click();
     e2e().wait('@save');
 
-    // Checkboxes should be disabled after saving configuration
+    // Checkboxes should be disabled after saving public dashboard
     e2e.pages.ShareDashboardModal.PublicDashboard.WillBePublicCheckbox().should('be.disabled');
     e2e.pages.ShareDashboardModal.PublicDashboard.LimitedDSCheckbox().should('be.disabled');
     e2e.pages.ShareDashboardModal.PublicDashboard.CostIncreaseCheckbox().should('be.disabled');
 
-    // Save config button should still be enabled
+    // Save public dashboard button should still be enabled
     e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.enabled');
   },
 });
@@ -65,9 +68,11 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.shareButton().click();
 
     // Select public dashboards tab
-    e2e().intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('query-public-config');
+    e2e().intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('query-public-dashboard');
     e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
-    e2e().wait('@query-public-config');
+    e2e().wait('@query-public-dashboard');
+
+    e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.enabled');
 
     // Make a request to public dashboards api endpoint without authentication
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput()
@@ -99,9 +104,9 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.shareButton().click();
 
     // Select public dashboards tab
-    e2e().intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('query-public-config');
+    e2e().intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('query-public-dashboard');
     e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
-    e2e().wait('@query-public-config');
+    e2e().wait('@query-public-dashboard');
 
     // All checkboxes should be disabled
     e2e.pages.ShareDashboardModal.PublicDashboard.WillBePublicCheckbox().should('be.disabled');
@@ -119,8 +124,8 @@ e2e.scenario({
     // Switch off enabling toggle
     e2e.pages.ShareDashboardModal.PublicDashboard.EnableSwitch().should('be.enabled').click({ force: true });
 
-    // Save configuration
-    e2e().intercept('POST', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('save');
+    // Save public dashboard
+    e2e().intercept('POST', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('save');
     e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().click();
     e2e().wait('@save');
 

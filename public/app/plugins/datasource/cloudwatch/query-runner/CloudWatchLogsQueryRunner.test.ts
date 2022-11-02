@@ -1,7 +1,6 @@
 import { interval, lastValueFrom, of } from 'rxjs';
 
 import { LogRowModel, MutableDataFrame, FieldType, LogLevel, dataFrameToJSON, DataQueryErrorType } from '@grafana/data';
-import { BackendDataSourceResponse } from '@grafana/runtime';
 
 import { genMockFrames, setupMockedLogsQueryRunner } from '../__mocks__/LogsQueryRunner';
 import { validLogsQuery } from '../__mocks__/queries';
@@ -13,114 +12,6 @@ import { LOG_IDENTIFIER_INTERNAL, LOGSTREAM_IDENTIFIER_INTERNAL } from './CloudW
 describe('CloudWatchLogsQueryRunner', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-  describe('describeLogGroup', () => {
-    it('replaces region correctly in the query', async () => {
-      const { runner, fetchMock } = setupMockedLogsQueryRunner();
-      await runner.describeLogGroups({ region: 'default' });
-      expect(fetchMock.mock.calls[0][0].data.queries[0].region).toBe('us-west-1');
-
-      await runner.describeLogGroups({ region: 'eu-east' });
-      expect(fetchMock.mock.calls[1][0].data.queries[0].region).toBe('eu-east');
-    });
-
-    it('should return log groups as an array of strings', async () => {
-      const data: BackendDataSourceResponse = {
-        results: {
-          A: {
-            frames: [
-              {
-                schema: {
-                  name: 'logGroups',
-                  refId: 'A',
-                  fields: [{ name: 'logGroupName', type: FieldType.string }],
-                },
-                data: {
-                  values: [
-                    [
-                      '/aws/containerinsights/dev303-workshop/application',
-                      '/aws/containerinsights/dev303-workshop/dataplane',
-                      '/aws/containerinsights/dev303-workshop/flowlogs',
-                      '/aws/containerinsights/dev303-workshop/host',
-                      '/aws/containerinsights/dev303-workshop/performance',
-                      '/aws/containerinsights/dev303-workshop/prometheus',
-                      '/aws/containerinsights/ecommerce-sockshop/application',
-                      '/aws/containerinsights/ecommerce-sockshop/dataplane',
-                      '/aws/containerinsights/ecommerce-sockshop/host',
-                      '/aws/containerinsights/ecommerce-sockshop/performance',
-                      '/aws/containerinsights/watchdemo-perf/application',
-                      '/aws/containerinsights/watchdemo-perf/dataplane',
-                      '/aws/containerinsights/watchdemo-perf/host',
-                      '/aws/containerinsights/watchdemo-perf/performance',
-                      '/aws/containerinsights/watchdemo-perf/prometheus',
-                      '/aws/containerinsights/watchdemo-prod-us-east-1/performance',
-                      '/aws/containerinsights/watchdemo-staging/application',
-                      '/aws/containerinsights/watchdemo-staging/dataplane',
-                      '/aws/containerinsights/watchdemo-staging/host',
-                      '/aws/containerinsights/watchdemo-staging/performance',
-                      '/aws/ecs/containerinsights/bugbash-ec2/performance',
-                      '/aws/ecs/containerinsights/ecs-demoworkshop/performance',
-                      '/aws/ecs/containerinsights/ecs-workshop-dev/performance',
-                      '/aws/eks/dev303-workshop/cluster',
-                      '/aws/events/cloudtrail',
-                      '/aws/events/ecs',
-                      '/aws/lambda/cwsyn-mycanary-fac97ded-f134-499a-9d71-4c3be1f63182',
-                      '/aws/lambda/cwsyn-watch-linkchecks-ef7ef273-5da2-4663-af54-d2f52d55b060',
-                      '/ecs/ecs-cwagent-daemon-service',
-                      '/ecs/ecs-demo-limitTask',
-                      'CloudTrail/DefaultLogGroup',
-                      'container-insights-prometheus-beta',
-                      'container-insights-prometheus-demo',
-                    ],
-                  ],
-                },
-              },
-            ],
-          },
-        },
-      };
-
-      const { runner } = setupMockedLogsQueryRunner({ data });
-      const expectedLogGroups = [
-        '/aws/containerinsights/dev303-workshop/application',
-        '/aws/containerinsights/dev303-workshop/dataplane',
-        '/aws/containerinsights/dev303-workshop/flowlogs',
-        '/aws/containerinsights/dev303-workshop/host',
-        '/aws/containerinsights/dev303-workshop/performance',
-        '/aws/containerinsights/dev303-workshop/prometheus',
-        '/aws/containerinsights/ecommerce-sockshop/application',
-        '/aws/containerinsights/ecommerce-sockshop/dataplane',
-        '/aws/containerinsights/ecommerce-sockshop/host',
-        '/aws/containerinsights/ecommerce-sockshop/performance',
-        '/aws/containerinsights/watchdemo-perf/application',
-        '/aws/containerinsights/watchdemo-perf/dataplane',
-        '/aws/containerinsights/watchdemo-perf/host',
-        '/aws/containerinsights/watchdemo-perf/performance',
-        '/aws/containerinsights/watchdemo-perf/prometheus',
-        '/aws/containerinsights/watchdemo-prod-us-east-1/performance',
-        '/aws/containerinsights/watchdemo-staging/application',
-        '/aws/containerinsights/watchdemo-staging/dataplane',
-        '/aws/containerinsights/watchdemo-staging/host',
-        '/aws/containerinsights/watchdemo-staging/performance',
-        '/aws/ecs/containerinsights/bugbash-ec2/performance',
-        '/aws/ecs/containerinsights/ecs-demoworkshop/performance',
-        '/aws/ecs/containerinsights/ecs-workshop-dev/performance',
-        '/aws/eks/dev303-workshop/cluster',
-        '/aws/events/cloudtrail',
-        '/aws/events/ecs',
-        '/aws/lambda/cwsyn-mycanary-fac97ded-f134-499a-9d71-4c3be1f63182',
-        '/aws/lambda/cwsyn-watch-linkchecks-ef7ef273-5da2-4663-af54-d2f52d55b060',
-        '/ecs/ecs-cwagent-daemon-service',
-        '/ecs/ecs-demo-limitTask',
-        'CloudTrail/DefaultLogGroup',
-        'container-insights-prometheus-beta',
-        'container-insights-prometheus-demo',
-      ];
-
-      const logGroups = await runner.describeLogGroups({ region: 'default' });
-
-      expect(logGroups).toEqual(expectedLogGroups);
-    });
   });
 
   describe('getLogRowContext', () => {

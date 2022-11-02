@@ -159,7 +159,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 	t.Run("deleting a correlation pointing to a read-only data source should work", func(t *testing.T) {
 		correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
 			SourceUID: writableDs,
-			TargetUID: writableDs,
+			TargetUID: &writableDs,
 			OrgId:     writableDsOrgId,
 		})
 
@@ -191,7 +191,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 	t.Run("should correctly delete a correlation", func(t *testing.T) {
 		correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
 			SourceUID: writableDs,
-			TargetUID: readOnlyDS,
+			TargetUID: &readOnlyDS,
 			OrgId:     writableDsOrgId,
 		})
 
