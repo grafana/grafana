@@ -71,6 +71,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 		Img:        plugin.Info.Logos.Small,
 		Section:    navtree.NavSectionPlugin,
 		SortWeight: navtree.WeightPlugin,
+		IsSection:  true,
 	}
 
 	if topNavEnabled {

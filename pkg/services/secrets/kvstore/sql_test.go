@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type TestCase struct {
@@ -25,7 +26,7 @@ func (t *TestCase) Value() string {
 }
 
 func TestSecretsKVStoreSQL(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	kv := NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 
@@ -158,7 +159,7 @@ func TestSecretsKVStoreSQL(t *testing.T) {
 	})
 
 	t.Run("listing existing keys", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		secretsService := manager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		kv := NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 
@@ -233,7 +234,7 @@ func TestSecretsKVStoreSQL(t *testing.T) {
 	})
 
 	t.Run("getting all secrets", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		secretsService := manager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		kv := NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 

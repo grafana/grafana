@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
@@ -80,7 +81,7 @@ func Test_UnmarshalReduceCommand_Settings(t *testing.T) {
 				RefID:      "A",
 				Query:      qmap,
 				QueryType:  "",
-				TimeRange:  TimeRange{},
+				TimeRange:  RelativeTimeRange{},
 				DataSource: nil,
 			})
 
@@ -114,7 +115,7 @@ func TestReduceExecute(t *testing.T) {
 			},
 		}
 
-		execute, err := cmd.Execute(context.Background(), vars)
+		execute, err := cmd.Execute(context.Background(), time.Now(), vars)
 		require.NoError(t, err)
 
 		require.Len(t, execute.Values, len(numbers))
@@ -149,7 +150,7 @@ func TestReduceExecute(t *testing.T) {
 			},
 		}
 
-		results, err := cmd.Execute(context.Background(), vars)
+		results, err := cmd.Execute(context.Background(), time.Now(), vars)
 		require.NoError(t, err)
 
 		require.Len(t, results.Values, 1)

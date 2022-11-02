@@ -85,7 +85,7 @@ Grafana graphs now support Prometheus _exemplars_. They are displayed as diamond
 
 {{< figure src="/static/img/docs/v74/exemplars.png" max-width="900px" caption="Exemplar example" >}}
 
-For more information, refer to [Exemplars]({{< relref "../datasources/prometheus/#exemplars" >}}).
+For more information, refer to [Exemplars]({{< relref "../fundamentals/exemplars/" >}}).
 
 ### Trace to logs
 
@@ -94,15 +94,15 @@ You can now navigate from a span in a trace view directly to logs relevant for t
 The following topics were updated as a result of this feature:
 
 - [Explore]({{< relref "../explore/trace-integration/" >}})
-- [Jaeger]({{< relref "../datasources/jaeger/#trace-to-logs" >}})
-- [Tempo]({{< relref "../datasources/tempo/#trace-to-logs" >}})
-- [Zipkin]({{< relref "../datasources/zipkin/#trace-to-logs" >}})
+- [Jaeger]({{< relref "../datasources/jaeger#configure-trace-to-logs" >}})
+- [Tempo]({{< relref "../datasources/tempo#configure-trace-to-logs" >}})
+- [Zipkin]({{< relref "../datasources/zipkin#configure-trace-to-logs" >}})
 
 ### Server-side expressions
 
 _Server-side expressions_ is an experimental feature that allows you to manipulate data returned from backend data source queries. Expressions allow you to manipulate data with math and other operations when the data source is a backend data source or a **--Mixed--** data source.
 
-The main use case is for [multi-dimensional]({{< relref "../basics/timeseries-dimensions/" >}}) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
+The main use case is for [multi-dimensional]({{< relref "../fundamentals/timeseries-dimensions/" >}}) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
 
 > **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana Alerting.
 
@@ -141,13 +141,13 @@ Grafana 7.4 includes the following enhancements
 
 > **Note:** We have deprecated browser access mode. It will be removed in a future release.
 
-For more information, refer to the [Elasticsearch docs]({{< relref "../datasources/elasticsearch/" >}}).
+For more information, refer to the [Elasticsearch docs]({{< relref "../datasources/elasticsearch" >}}).
 
 ### Azure Monitor updates
 
 The Azure Monitor query type was renamed to Metrics and Azure Logs Analytics was renamed to Logs to match the service names in Azure and align the concepts with the rest of Grafana.
 
-[Azure Monitor]({{< relref "../datasources/azuremonitor/" >}}) was updated to reflect this change.
+[Azure Monitor]({{< relref "../datasources/azure-monitor" >}}) was updated to reflect this change.
 
 ### MQL support added for Google Cloud Monitoring
 
@@ -157,7 +157,7 @@ Unlike the visual query builder, MQL allows you to control the time range and pe
 
 MQL uses a set of operations and functions. Operations are linked together using the common pipe mechanism, where the output of one operation becomes the input to the next. Linking operations makes it possible to build up complex queries incrementally.
 
-Once query type Metrics is selected in the Cloud Monitoring query editor, you can toggle between the editor modes for visual query builder and MQL. For more information, refer to the [Google Cloud Monitoring docs]({{< relref "../datasources/google-cloud-monitoring/#out-of-the-box-dashboards" >}}).
+Once query type Metrics is selected in the Cloud Monitoring query editor, you can toggle between the editor modes for visual query builder and MQL. For more information, refer to the [Google Cloud Monitoring docs]({{< relref "../datasources/google-cloud-monitoring#import-pre-configured-dashboards" >}}).
 
 Many thanks to [mtanda](https://github.com/mtanda) this contribution!
 
@@ -169,7 +169,7 @@ Google Cloud Monitoring data source ships with pre-configured dashboards for som
 
 If you want to customize a dashboard, we recommend that you save it under a different name. Otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 
-For more information, refer to the [Google Cloud Monitoring docs]({{< relref "../datasources/google-cloud-monitoring/#out-of-the-box-dashboards" >}}).
+For more information, refer to the [Google Cloud Monitoring docs]({{< relref "../datasources/google-cloud-monitoring#import-pre-configured-dashboards" >}}).
 
 ### Query Editor Help
 

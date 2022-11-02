@@ -3,11 +3,12 @@ package sqlstore
 import (
 	"context"
 
+	"xorm.io/core"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/user"
-	"xorm.io/core"
 )
 
 type Store interface {
@@ -19,7 +20,6 @@ type Store interface {
 	GetDBType() core.DbType
 	GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error
 	CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error)
-	GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error
 	GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error
 	WithDbSession(ctx context.Context, callback DBTransactionFunc) error
 	WithNewDbSession(ctx context.Context, callback DBTransactionFunc) error

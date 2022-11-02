@@ -26,3 +26,4 @@ export { PanelPlugin, type SetFieldConfigOptionsArgs, type StandardOptionConfig 
 export { createFieldConfigRegistry } from './panel/registryFactories';
 export { type QueryRunner, type QueryRunnerOptions } from './types/queryRunner';
 export { type GroupingToMatrixTransformerOptions } from './transformations/transformers/groupingToMatrix';
+export { getLinksSupplier } from './field/fieldOverrides';

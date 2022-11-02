@@ -53,9 +53,8 @@ def build_e2e(trigger, ver_mode, edition):
         yarn_install_step(),
     ]
     build_steps = []
-    if ver_mode == 'main' or ver_mode == 'pr':
-        build_steps.extend([trigger_test_release()])
     if ver_mode == 'pr':
+        build_steps.extend([trigger_test_release()])
         build_steps.extend([enterprise_downstream_step(edition=edition, ver_mode=ver_mode)])
     build_steps.extend([
         build_backend_step(edition=edition, ver_mode=ver_mode),
@@ -89,8 +88,8 @@ def build_e2e(trigger, ver_mode, edition):
         build_steps.extend([
             build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=False),
             build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=False),
-            publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana', trigger=trigger_oss),
-            publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana-oss', trigger=trigger_oss),
+            publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana/grafana', trigger=trigger_oss),
+            publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana/grafana-oss', trigger=trigger_oss),
             release_canary_npm_packages_step(edition, trigger=trigger_oss),
             upload_packages_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss),
             upload_cdn_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss)

@@ -3,6 +3,8 @@ import React from 'react';
 import { Provider } from 'react-redux';
 
 import { OrgRole } from '@grafana/data';
+import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
+import { getUserOrganizations } from 'app/features/org/state/actions';
 import { configureStore } from 'app/store/configureStore';
 import * as appTypes from 'app/types';
 
@@ -91,5 +93,23 @@ describe('OrganisationSwitcher', () => {
     });
 
     expect(screen.getByRole('button', { name: /change organization/i })).toBeInTheDocument();
+  });
+
+  it('should not render and not try to get user organizations if not signed in', () => {
+    const contextSrv = new ContextSrv();
+    contextSrv.user.isSignedIn = false;
+    setContextSrv(contextSrv);
+
+    renderWithProvider({
+      initialState: {
+        organization: {
+          organization: { name: 'test', id: 1 },
+          userOrgs: [],
+        },
+      },
+    });
+
+    expect(screen.queryByRole('combobox', { name: 'Change organization' })).not.toBeInTheDocument();
+    expect(getUserOrganizations).not.toHaveBeenCalled();
   });
 });

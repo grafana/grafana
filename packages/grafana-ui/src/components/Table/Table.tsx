@@ -1,7 +1,6 @@
-import React, { FC, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Cell,
-  Column,
   TableState,
   useAbsoluteLayout,
   useFilters,
@@ -29,6 +28,7 @@ import {
   TableSortByActionCallback,
   TableSortByFieldState,
   TableFooterCalc,
+  GrafanaTableColumn,
 } from './types';
 import { getColumns, sortCaseInsensitive, sortNumber, getFooterItems, createFooterCalculationValues } from './utils';
 
@@ -55,7 +55,7 @@ export interface Props {
 
 function useTableStateReducer({ onColumnResize, onSortByChange, data }: Props) {
   return useCallback(
-    (newState: TableState, action: any) => {
+    (newState: TableState, action: { type: string }) => {
       switch (action.type) {
         case 'columnDoneResizing':
           if (onColumnResize) {
@@ -99,7 +99,7 @@ function useTableStateReducer({ onColumnResize, onSortByChange, data }: Props) {
   );
 }
 
-function getInitialState(initialSortBy: Props['initialSortBy'], columns: Column[]): Partial<TableState> {
+function getInitialState(initialSortBy: Props['initialSortBy'], columns: GrafanaTableColumn[]): Partial<TableState> {
   const state: Partial<TableState> = {};
 
   if (initialSortBy) {
@@ -108,7 +108,7 @@ function getInitialState(initialSortBy: Props['initialSortBy'], columns: Column[
     for (const sortBy of initialSortBy) {
       for (const col of columns) {
         if (col.Header === sortBy.displayName) {
-          state.sortBy.push({ id: col.id as string, desc: sortBy.desc });
+          state.sortBy.push({ id: col.id!, desc: sortBy.desc });
         }
       }
     }
@@ -117,7 +117,7 @@ function getInitialState(initialSortBy: Props['initialSortBy'], columns: Column[
   return state;
 }
 
-export const Table: FC<Props> = memo((props: Props) => {
+export const Table = memo((props: Props) => {
   const {
     ariaLabel,
     data,
@@ -244,7 +244,7 @@ export const Table: FC<Props> = memo((props: Props) => {
       setFooterItems(undefined);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [footerOptions, theme, state.filters]);
+  }, [footerOptions, theme, state.filters, data]);
 
   let listHeight = height - (headerHeight + footerHeight);
 
@@ -284,7 +284,7 @@ export const Table: FC<Props> = memo((props: Props) => {
   });
 
   const RenderRow = React.useCallback(
-    ({ index: rowIndex, style }) => {
+    ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
       let row = rows[rowIndex];
       if (enablePagination) {
         row = page[rowIndex];

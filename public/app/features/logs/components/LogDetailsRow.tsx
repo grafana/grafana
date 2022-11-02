@@ -76,17 +76,29 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   showField = () => {
-    const { onClickShowDetectedField, parsedKey } = this.props;
+    const { onClickShowDetectedField, parsedKey, row } = this.props;
     if (onClickShowDetectedField) {
       onClickShowDetectedField(parsedKey);
     }
+
+    reportInteraction('grafana_explore_logs_log_details_replace_line_clicked', {
+      datasourceType: row.datasourceType,
+      logRowUid: row.uid,
+      type: 'enable',
+    });
   };
 
   hideField = () => {
-    const { onClickHideDetectedField, parsedKey } = this.props;
+    const { onClickHideDetectedField, parsedKey, row } = this.props;
     if (onClickHideDetectedField) {
       onClickHideDetectedField(parsedKey);
     }
+
+    reportInteraction('grafana_explore_logs_log_details_replace_line_clicked', {
+      datasourceType: row.datasourceType,
+      logRowUid: row.uid,
+      type: 'disable',
+    });
   };
 
   filterLabel = () => {

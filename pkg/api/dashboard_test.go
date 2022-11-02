@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/framework/coremodel/registry"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -102,7 +103,7 @@ func TestGetHomeDashboard(t *testing.T) {
 	}
 }
 
-func newTestLive(t *testing.T, store *sqlstore.SQLStore) *live.GrafanaLive {
+func newTestLive(t *testing.T, store db.DB) *live.GrafanaLive {
 	features := featuremgmt.WithFeatures()
 	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
@@ -258,7 +259,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 		mockSQLStore := mockstore.NewSQLStoreMock()
 		cfg := setting.NewCfg()
-		sql := sqlstore.InitTestDB(t)
+		sql := db.InitTestDB(t)
 
 		hs := &HTTPServer{
 			Cfg:                     cfg,
@@ -728,6 +729,60 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a dashboard to validate", func(t *testing.T) {
+		sqlmock := mockstore.SQLStoreMock{}
+
+		t.Run("When an invalid dashboard json is posted", func(t *testing.T) {
+			cmd := models.ValidateDashboardCommand{
+				Dashboard: "{\"hello\": \"world\"}",
+			}
+
+			role := org.RoleAdmin
+			postValidateScenario(t, "When calling POST on", "/api/dashboards/validate", "/api/dashboards/validate", cmd, role, func(sc *scenarioContext) {
+				callPostDashboard(sc)
+
+				result := sc.ToJSON()
+				assert.Equal(t, 422, sc.resp.Code)
+				assert.False(t, result.Get("isValid").MustBool())
+				assert.NotEmpty(t, result.Get("message").MustString())
+			}, &sqlmock)
+		})
+
+		t.Run("When a dashboard with a too-low schema version is posted", func(t *testing.T) {
+			cmd := models.ValidateDashboardCommand{
+				Dashboard: "{\"schemaVersion\": 1}",
+			}
+
+			role := org.RoleAdmin
+			postValidateScenario(t, "When calling POST on", "/api/dashboards/validate", "/api/dashboards/validate", cmd, role, func(sc *scenarioContext) {
+				callPostDashboard(sc)
+
+				result := sc.ToJSON()
+				assert.Equal(t, 412, sc.resp.Code)
+				assert.False(t, result.Get("isValid").MustBool())
+				assert.Equal(t, "invalid schema version", result.Get("message").MustString())
+			}, &sqlmock)
+		})
+
+		t.Run("When a valid dashboard is posted", func(t *testing.T) {
+			devenvDashboard, readErr := os.ReadFile("../../devenv/dev-dashboards/home.json")
+			assert.Empty(t, readErr)
+
+			cmd := models.ValidateDashboardCommand{
+				Dashboard: string(devenvDashboard),
+			}
+
+			role := org.RoleAdmin
+			postValidateScenario(t, "When calling POST on", "/api/dashboards/validate", "/api/dashboards/validate", cmd, role, func(sc *scenarioContext) {
+				callPostDashboard(sc)
+
+				result := sc.ToJSON()
+				assert.Equal(t, 200, sc.resp.Code)
+				assert.True(t, result.Get("isValid").MustBool())
+			}, &sqlmock)
+		})
+	})
+
 	t.Run("Given two dashboards being compared", func(t *testing.T) {
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
 		fakeDashboardVersionService.ExpectedDashboardVersions = []*dashver.DashboardVersion{
@@ -936,8 +991,8 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	}
 
 	if dashboardStore == nil {
-		sql := sqlstore.InitTestDB(t)
-		dashboardStore = database.ProvideDashboardStore(sql, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg))
+		sql := db.InitTestDB(t)
+		dashboardStore = database.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg))
 	}
 
 	libraryPanelsService := mockLibraryPanelService{}
@@ -1024,7 +1079,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 		hs := HTTPServer{
 			Cfg:                 cfg,
 			ProvisioningService: provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                newTestLive(t, sqlstore.InitTestDB(t)),
+			Live:                newTestLive(t, db.InitTestDB(t)),
 			QuotaService: &quotaimpl.Service{
 				Cfg: cfg,
 			},
@@ -1053,6 +1108,42 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 	})
 }
 
+func postValidateScenario(t *testing.T, desc string, url string, routePattern string, cmd models.ValidateDashboardCommand,
+	role org.RoleType, fn scenarioFunc, sqlmock sqlstore.Store) {
+	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
+		cfg := setting.NewCfg()
+		hs := HTTPServer{
+			Cfg:                   cfg,
+			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
+			Live:                  newTestLive(t, db.InitTestDB(t)),
+			QuotaService:          &quotaimpl.Service{Cfg: cfg},
+			LibraryPanelService:   &mockLibraryPanelService{},
+			LibraryElementService: &mockLibraryElementService{},
+			SQLStore:              sqlmock,
+			Features:              featuremgmt.WithFeatures(),
+			Coremodels:            registry.NewBase(nil),
+		}
+
+		sc := setupScenarioContext(t, url)
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
+			sc.context = c
+			sc.context.SignedInUser = &user.SignedInUser{
+				OrgID:  testOrgID,
+				UserID: testUserID,
+			}
+			sc.context.OrgRole = role
+
+			return hs.ValidateDashboard(c)
+		})
+
+		sc.m.Post(routePattern, sc.defaultHandler)
+
+		fn(sc)
+	})
+}
+
 func postDiffScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.CalculateDiffOptions,
 	role org.RoleType, fn scenarioFunc, sqlmock sqlstore.Store, fakeDashboardVersionService *dashvertest.FakeDashboardVersionService) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
@@ -1060,7 +1151,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 		hs := HTTPServer{
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                    newTestLive(t, sqlstore.InitTestDB(t)),
+			Live:                    newTestLive(t, db.InitTestDB(t)),
 			QuotaService:            &quotaimpl.Service{Cfg: cfg},
 			LibraryPanelService:     &mockLibraryPanelService{},
 			LibraryElementService:   &mockLibraryElementService{},
@@ -1098,7 +1189,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 		hs := HTTPServer{
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                    newTestLive(t, sqlstore.InitTestDB(t)),
+			Live:                    newTestLive(t, db.InitTestDB(t)),
 			QuotaService:            &quotaimpl.Service{Cfg: cfg},
 			LibraryPanelService:     &mockLibraryPanelService{},
 			LibraryElementService:   &mockLibraryElementService{},
@@ -1148,14 +1239,6 @@ func (s mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboard
 }
 
 type mockLibraryPanelService struct {
-}
-
-func (m *mockLibraryPanelService) LoadLibraryPanelsForDashboard(c context.Context, dash *models.Dashboard) error {
-	return nil
-}
-
-func (m *mockLibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dashboard) error {
-	return nil
 }
 
 func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, dash *models.Dashboard) error {

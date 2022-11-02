@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	plugifaces "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
@@ -29,14 +30,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func ProvideService(
 	ac accesscontrol.AccessControl,
 	cfg *setting.Cfg,
-	sqlStore *sqlstore.SQLStore,
+	sqlStore db.DB,
 	pluginStore plugifaces.Store,
 	encryptionService encryption.Internal,
 	notificatonService *notifications.NotificationService,
@@ -121,7 +121,7 @@ func newProvisioningServiceImpl(
 
 type ProvisioningServiceImpl struct {
 	Cfg                          *setting.Cfg
-	SQLStore                     *sqlstore.SQLStore
+	SQLStore                     db.DB
 	orgService                   org.Service
 	ac                           accesscontrol.AccessControl
 	pluginStore                  plugifaces.Store
