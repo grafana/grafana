@@ -88,13 +88,13 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
         case InstanceTypesExtra.external:
           return <ExternalServiceConnectionDetails form={form} />;
         case Databases.haproxy:
-          return <HAProxyConnectionDetails remoteInstanceCredentials={remoteInstanceCredentials} />;
+          return <HAProxyConnectionDetails form={form} remoteInstanceCredentials={remoteInstanceCredentials} />;
         case Databases.postgresql:
-          return <PostgreSQLConnectionDetails remoteInstanceCredentials={remoteInstanceCredentials} />;
+          return <PostgreSQLConnectionDetails form={form} remoteInstanceCredentials={remoteInstanceCredentials} />;
         case Databases.mongodb:
-          return <MongoDBConnectionDetails remoteInstanceCredentials={remoteInstanceCredentials} />;
+          return <MongoDBConnectionDetails form={form} remoteInstanceCredentials={remoteInstanceCredentials} />;
         case Databases.mysql:
-          return <MySQLConnectionDetails remoteInstanceCredentials={remoteInstanceCredentials} />;
+          return <MySQLConnectionDetails form={form} remoteInstanceCredentials={remoteInstanceCredentials} />;
         default:
           return <MainDetails form={form} remoteInstanceCredentials={remoteInstanceCredentials} />;
       }
