@@ -851,7 +851,7 @@ steps:
   - clone-pr-branch
   environment:
     GITHUB_TOKEN:
-      from_secret: github_token
+      from_secret: github_token_pr
   image: golang:1.19.2
   name: clone-pr-enterprise-branch
 - commands:
@@ -860,13 +860,11 @@ steps:
   - for f in public/api-spec.json public/api-merged.json public/openapi3.json; do
     git add $f; done
   - if git diff --name-only --cached; then git commit -m "Update OpenAPI and Swagger"
-    && git push origin ${DRONE_SOURCE_BRANCH}; else echo "Everything seems up to date!";
-    fi
+    --author="Grot (@grafanabot) <43478413+grafanabot@users.noreply.github.com>" &&
+    git push https://github.com/grafana/grafana.git ${DRONE_SOURCE_BRANCH}; else echo
+    "Everything seems up to date!"; fi
   depends_on:
   - clone-pr-enterprise-branch
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
   image: golang:1.19.2
   name: swagger-gen
 trigger:
@@ -5486,6 +5484,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: d490d846db9359363e6c695d6447add9a52f46e924f6d7db231f784e88454442
+hmac: c0e6ab00eb3358a6695cf693a7e7947335e2f6010a6240198e2179bdcac4a104
 
 ...

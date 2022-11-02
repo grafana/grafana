@@ -44,7 +44,7 @@ def clone_enterprise_step(edition, ver_mode):
         'name': 'clone-pr-enterprise-branch',
         'image': go_image,
         'environment': {
-            'GITHUB_TOKEN': from_secret(github_token),
+            'GITHUB_TOKEN': from_secret('github_token_pr'),
         },
         'commands': [
             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
@@ -68,14 +68,11 @@ def swagger_gen_step(edition, ver_mode):
     return {
         'name': 'swagger-gen',
         'image': go_image,
-        'environment': {
-            'GITHUB_TOKEN': from_secret(github_token),
-        },
         'commands': [
             'cd grafana',
 	        'make clean-api-spec && make openapi3-gen',
 	        'for f in public/api-spec.json public/api-merged.json public/openapi3.json; do git add $f; done',
-	        'if git diff --name-only --cached; then git commit -m "Update OpenAPI and Swagger" && git push origin {}; else echo "Everything seems up to date!"; fi'.format(committish),
+	        'if git diff --name-only --cached; then git commit -m "Update OpenAPI and Swagger" --author="Grot (@grafanabot) <43478413+grafanabot@users.noreply.github.com>" && git push https://github.com/grafana/grafana.git {}; else echo "Everything seems up to date!"; fi'.format(committish),
         ],
         'depends_on': [
             'clone-pr-enterprise-branch',
