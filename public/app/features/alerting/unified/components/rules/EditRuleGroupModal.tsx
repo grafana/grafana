@@ -4,7 +4,7 @@ import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Modal, Button, Field, Input, useStyles2, Label, Icon, Tooltip, Badge } from '@grafana/ui';
+import { Modal, Button, Field, Input, useStyles2, Label, Badge } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useDispatch } from 'app/types';
@@ -24,6 +24,7 @@ import { getRulesSourceName } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { parsePrometheusDuration } from '../../utils/time';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+import { InfoIcon } from '../InfoIcon';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { evaluateEveryValidationOptions, MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
 
@@ -200,14 +201,6 @@ interface FormValues {
   namespaceName: string;
   groupName: string;
   groupInterval: string;
-}
-
-function InfoIcon({ text }: { text: string }) {
-  return (
-    <Tooltip placement="top" content={<div>{text}</div>}>
-      <Icon name="info-circle" size="xs" />
-    </Tooltip>
-  );
 }
 
 export function EditCloudGroupModal(props: ModalProps): React.ReactElement {

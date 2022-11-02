@@ -1,8 +1,7 @@
 import { getNumberEvaluationsToStartAlerting } from './EditRuleGroupModal';
 describe('getNumberEvaluationsToStartAlerting method', () => {
   it('should return 0 in case of invalid data', () => {
-    const numberEvals = getNumberEvaluationsToStartAlerting('sd', 'ksdh');
-    expect(numberEvals).toBe(0);
+    expect(getNumberEvaluationsToStartAlerting('sd', 'ksdh')).toBe(0);
   });
   it('should return correct number in case of valid data', () => {
     expect(getNumberEvaluationsToStartAlerting('1m', '10m')).toBe(0);
