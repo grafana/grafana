@@ -76,7 +76,7 @@ export const publicDashboardApi = createApi({
     }),
     updatePublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({
-        url: `/uid/${params.dashboard.uid}/public-dashboards`,
+        url: `/uid/${params.dashboard.uid}/public-dashboards/${params.payload.uid}`,
         method: 'PUT',
         data: params.payload,
       }),

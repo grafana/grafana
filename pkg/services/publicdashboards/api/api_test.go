@@ -401,7 +401,7 @@ func TestAPIUpdatePublicDashboard(t *testing.T) {
 			PublicDashboardUid:   "",
 			PublicDashboardRes:   nil,
 			PublicDashboardErr:   dashboards.ErrDashboardIdentifierInvalid,
-			ExpectedHttpResponse: http.StatusBadRequest,
+			ExpectedHttpResponse: http.StatusNotFound,
 			ShouldCallService:    false,
 		},
 		{
@@ -410,8 +410,8 @@ func TestAPIUpdatePublicDashboard(t *testing.T) {
 			DashboardUid:         dashboardUid,
 			PublicDashboardUid:   "",
 			PublicDashboardRes:   nil,
-			PublicDashboardErr:   ErrPublicDashboardIdentifierNotSet,
-			ExpectedHttpResponse: http.StatusBadRequest,
+			PublicDashboardErr:   ErrPublicDashboardNotFound,
+			ExpectedHttpResponse: http.StatusNotFound,
 			ShouldCallService:    false,
 		},
 		{
@@ -449,12 +449,14 @@ func TestAPIUpdatePublicDashboard(t *testing.T) {
 		{
 			Name:                 "User has permissions on another dashboard",
 			User:                 userEditorAnotherPublicDashboard,
+			PublicDashboardUid:   publicDashboardUid,
 			ExpectedHttpResponse: http.StatusForbidden,
 			ShouldCallService:    false,
 		},
 		{
 			Name:                 "Viewer cannot update any dashboard",
 			User:                 userViewer,
+			PublicDashboardUid:   publicDashboardUid,
 			ExpectedHttpResponse: http.StatusForbidden,
 			ShouldCallService:    false,
 		},
@@ -472,15 +474,10 @@ func TestAPIUpdatePublicDashboard(t *testing.T) {
 			cfg := setting.NewCfg()
 			features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
 			testServer := setupTestServer(t, cfg, features, service, nil, test.User)
+			url := fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards/%s", test.DashboardUid, test.PublicDashboardUid)
+			body := strings.NewReader(fmt.Sprintf(`{ "uid": "%s"}`, test.PublicDashboardUid))
 
-			path := fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards", test.DashboardUid)
-			response := callAPI(
-				testServer,
-				http.MethodPut,
-				path,
-				strings.NewReader(fmt.Sprintf(`{ "uid": "%s"}`, test.PublicDashboardUid)),
-				t,
-			)
+			response := callAPI(testServer, http.MethodPut, url, body, t)
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
 			// check whether service called
@@ -488,14 +485,18 @@ func TestAPIUpdatePublicDashboard(t *testing.T) {
 				service.AssertNotCalled(t, "Update")
 			}
 
+			fmt.Println(response.Body.String())
+
 			// check response
 			if response.Code == http.StatusOK {
 				val, err := json.Marshal(test.PublicDashboardRes)
 				require.NoError(t, err)
 				assert.Equal(t, string(val), response.Body.String())
 
-				// verify 4XXs except 403 permissions
-			} else if test.ExpectedHttpResponse > 200 && test.ExpectedHttpResponse != 403 {
+				// verify 4XXs except 403 && 404
+			} else if test.ExpectedHttpResponse > 200 &&
+				test.ExpectedHttpResponse != 403 &&
+				test.ExpectedHttpResponse != 404 {
 				var errResp JsonErrResponse
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
