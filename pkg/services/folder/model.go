@@ -7,6 +7,7 @@ import (
 )
 
 var ErrMaximumDepthReached = errutil.NewBase(errutil.StatusBadRequest, "folder.maximum-depth-reached", errutil.WithPublicMessage("Maximum nested folder depth reached"))
+var ErrBadRequest = errutil.NewBase(errutil.StatusBadRequest, "folder.bad-request")
 var ErrDatabaseError = errutil.NewBase(errutil.StatusInternal, "folder.database-error")
 var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
 
@@ -100,7 +101,6 @@ type GetParentsQuery struct {
 type GetTreeQuery struct {
 	UID   string `xorm:"uid"`
 	OrgID int64  `xorm:"org_id"`
-	Depth int64
 
 	// Pagination options
 	Limit int64
