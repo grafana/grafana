@@ -415,11 +415,11 @@
     "calendar-select-range": {
       "title": "Ŝęľęčŧ ä ŧįmę řäŉģę"
     },
-    "range-list": {
-      "title": "{ŧįŧľę}"
-    },
     "specify-time-range": {
       "title": "Ŝpęčįƒy ŧįmę řäŉģę <1></1>"
+    },
+    "time-range": {
+      "example-title": "Ēχämpľę ŧįmę řäŉģęş"
     }
   },
   "user-orgs": {

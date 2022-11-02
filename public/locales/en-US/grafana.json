@@ -415,11 +415,11 @@
     "calendar-select-range": {
       "title": "Select a time range"
     },
-    "range-list": {
-      "title": "{title}"
-    },
     "specify-time-range": {
       "title": "Specify time range <1></1>"
+    },
+    "time-range": {
+      "example-title": "Example time ranges"
     }
   },
   "user-orgs": {
