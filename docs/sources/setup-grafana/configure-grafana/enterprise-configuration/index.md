@@ -179,11 +179,15 @@ Keep dashboard content in the logs (request or response fields). This can signif
 
 ### verbose
 
-Log all GET requests and always include request body for generic POST/PUT/PATCH requests.
+Log all requests and keep requests and responses body. This can significantly increase the size of your logs.
 
 ### log_all_status_codes
 
 Set to false to only log requests with 2xx, 3xx, 401, 403, 500 responses.
+
+### max_response_size_bytes
+
+Maximum response body (in bytes) to be recorded. May help reducing the memory footprint caused by auditing.
 
 ## [auditing.logs.file]
 

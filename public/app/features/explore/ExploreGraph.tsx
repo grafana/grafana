@@ -51,7 +51,7 @@ interface Props {
   annotations?: DataFrame[];
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
   tooltipDisplayMode?: TooltipDisplayMode;
-  splitOpenFn?: SplitOpen;
+  splitOpenFn: SplitOpen;
   onChangeTime: (timeRange: AbsoluteTimeRange) => void;
   graphStyle: ExploreGraphStyle;
   anchorToZero: boolean;

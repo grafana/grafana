@@ -37,10 +37,10 @@ func ProvideStore(sqlStore db.DB) *PublicDashboardStoreImpl {
 func (d *PublicDashboardStoreImpl) FindAll(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
 	resp := make([]PublicDashboardListResponse, 0)
 
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		sess.Table("dashboard_public").
+	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		sess.Table("dashboard_public").Select(
+			"dashboard_public.uid, dashboard_public.access_token, dashboard.uid as dashboard_uid, dashboard_public.is_enabled, dashboard.title").
 			Join("LEFT", "dashboard", "dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id").
-			Cols("dashboard_public.uid", "dashboard_public.access_token", "dashboard_public.dashboard_uid", "dashboard_public.is_enabled", "dashboard.title").
 			Where("dashboard_public.org_id = ?", orgId).
 			OrderBy(" is_enabled DESC, dashboard.title IS NULL, dashboard.title ASC")
 
@@ -55,18 +55,20 @@ func (d *PublicDashboardStoreImpl) FindAll(ctx context.Context, orgId int64) ([]
 	return resp, nil
 }
 
-func (d *PublicDashboardStoreImpl) FindDashboard(ctx context.Context, dashboardUid string, orgId int64) (*models.Dashboard, error) {
-	dashboard := &models.Dashboard{Uid: dashboardUid, OrgId: orgId}
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Get(dashboard)
-		if err != nil {
-			return err
-		}
-		if !has {
-			return ErrPublicDashboardNotFound
-		}
-		return nil
+// FindDashboard returns a dashboard by orgId and dashboardUid
+func (d *PublicDashboardStoreImpl) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*models.Dashboard, error) {
+	dashboard := &models.Dashboard{OrgId: orgId, Uid: dashboardUid}
+
+	var found bool
+	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		found, err = sess.Get(dashboard)
+		return err
 	})
+
+	if !found {
+		return nil, nil
+	}
 
 	return dashboard, err
 }
@@ -79,7 +81,7 @@ func (d *PublicDashboardStoreImpl) Find(ctx context.Context, uid string) (*Publi
 
 	var found bool
 	pdRes := &PublicDashboard{Uid: uid}
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		found, err = sess.Get(pdRes)
 		return err
@@ -99,12 +101,12 @@ func (d *PublicDashboardStoreImpl) Find(ctx context.Context, uid string) (*Publi
 // FindByAccessToken Returns public dashboard by access token or nil if not found
 func (d *PublicDashboardStoreImpl) FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error) {
 	if accessToken == "" {
-		return nil, ErrPublicDashboardIdentifierNotSet
+		return nil, nil
 	}
 
 	var found bool
 	pdRes := &PublicDashboard{AccessToken: accessToken}
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		found, err = sess.Get(pdRes)
 		return err
@@ -121,21 +123,19 @@ func (d *PublicDashboardStoreImpl) FindByAccessToken(ctx context.Context, access
 	return pdRes, err
 }
 
-// FindByDashboardUid Retrieves public dashboard by dashboard uid
+// FindByDashboardUid Retrieves public dashboard by dashboard uid or nil if not found
 func (d *PublicDashboardStoreImpl) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
-	if dashboardUid == "" {
-		return nil, dashboards.ErrDashboardIdentifierNotSet
+	if dashboardUid == "" || orgId == 0 {
+		return nil, nil
 	}
 
-	pdRes := &PublicDashboard{OrgId: orgId, DashboardUid: dashboardUid}
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		// publicDashboard
-		exists, err := sess.Get(pdRes)
+	var found bool
+	publicDashboard := &PublicDashboard{OrgId: orgId, DashboardUid: dashboardUid}
+	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		found, err = sess.Get(publicDashboard)
 		if err != nil {
 			return err
-		}
-		if !exists {
-			return ErrPublicDashboardNotFound
 		}
 
 		return nil
@@ -145,7 +145,11 @@ func (d *PublicDashboardStoreImpl) FindByDashboardUid(ctx context.Context, orgId
 		return nil, err
 	}
 
-	return pdRes, err
+	if !found {
+		return nil, nil
+	}
+
+	return publicDashboard, err
 }
 
 // Save Persists public dashboard
@@ -154,7 +158,7 @@ func (d *PublicDashboardStoreImpl) Save(ctx context.Context, cmd SavePublicDashb
 		return dashboards.ErrDashboardIdentifierNotSet
 	}
 
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.UseBool("is_enabled").Insert(&cmd.PublicDashboard)
 		if err != nil {
 			return err
@@ -168,7 +172,7 @@ func (d *PublicDashboardStoreImpl) Save(ctx context.Context, cmd SavePublicDashb
 
 // Update updates existing public dashboard
 func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDashboardCommand) error {
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		timeSettingsJSON, err := json.Marshal(cmd.PublicDashboard.TimeSettings)
 		if err != nil {
 			return err
@@ -190,6 +194,22 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 	})
 
 	return err
+}
+
+func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, orgId int64, uid string) (int64, error) {
+	dashboard := &PublicDashboard{OrgId: orgId, Uid: uid}
+	var affectedRows int64
+	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		affectedRows, err = sess.Delete(dashboard)
+
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	return affectedRows, err
 }
 
 // ExistsEnabledByDashboardUid Responds true if there is an enabled public dashboard for a dashboard uid
