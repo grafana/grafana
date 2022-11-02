@@ -4,8 +4,8 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Field, InlineLabel, Label, useStyles2, Tooltip, Icon } from '@grafana/ui';
 import { Stack } from '@grafana/experimental';
+import { Button, Field, InlineLabel, Label, useStyles2, Tooltip, Icon, Input } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -16,6 +16,7 @@ import AlertLabelDropdown from '../AlertLabelDropdown';
 
 interface Props {
   className?: string;
+  suggest: boolean;
 }
 
 const useGetCustomLabels = (dataSourceName: string): Record<string, string[]> => {
@@ -59,7 +60,7 @@ function mapLabelsToOptions(items: string[] = []): Array<SelectableValue<string>
   return items.map((item) => ({ label: item, value: item }));
 }
 
-const LabelsField: FC<Props> = ({ className }) => {
+const LabelsWithSuggestions: FC = () => {
   const styles = useStyles2(getStyles);
   const {
     register,
@@ -70,7 +71,7 @@ const LabelsField: FC<Props> = ({ className }) => {
   } = useFormContext<RuleFormValues>();
 
   const labels = watch('labels');
-  const { fields, append, remove } = useFieldArray({ control, name: 'labels' });
+  const { fields, remove, append } = useFieldArray({ control, name: 'labels' });
 
   const dataSourceName = watch('dataSourceName');
 
@@ -94,6 +95,163 @@ const LabelsField: FC<Props> = ({ className }) => {
   }, [selectedKey, getValuesForLabel]);
 
   return (
+    <>
+      {fields.map((field, index) => {
+        return (
+          <div key={field.id}>
+            <div className={cx(styles.flexRow, styles.centerAlignRow)}>
+              <Field
+                className={styles.labelInput}
+                invalid={Boolean(errors.labels?.[index]?.key?.message)}
+                error={errors.labels?.[index]?.key?.message}
+                data-testid={`label-key-${index}`}
+              >
+                <AlertLabelDropdown
+                  {...register(`labels.${index}.key`, {
+                    required: { value: Boolean(labels[index]?.value), message: 'Required.' },
+                  })}
+                  defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
+                  options={keys}
+                  onChange={(newValue: SelectableValue) => {
+                    setValue(`labels.${index}.key`, newValue.value);
+                    setSelectedKey(newValue.value);
+                  }}
+                  type="key"
+                />
+              </Field>
+              <InlineLabel className={styles.equalSign}>=</InlineLabel>
+              <Field
+                className={styles.labelInput}
+                invalid={Boolean(errors.labels?.[index]?.value?.message)}
+                error={errors.labels?.[index]?.value?.message}
+                data-testid={`label-value-${index}`}
+              >
+                <AlertLabelDropdown
+                  {...register(`labels.${index}.value`, {
+                    required: { value: Boolean(labels[index]?.key), message: 'Required.' },
+                  })}
+                  defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
+                  options={values}
+                  onChange={(newValue: SelectableValue) => {
+                    setValue(`labels.${index}.value`, newValue.value);
+                  }}
+                  onOpenMenu={() => {
+                    setSelectedKey(labels[index].key);
+                  }}
+                  type="value"
+                />
+              </Field>
+
+              <Button
+                className={styles.deleteLabelButton}
+                aria-label="delete label"
+                icon="trash-alt"
+                data-testid={`delete-label-${index}`}
+                variant="secondary"
+                onClick={() => {
+                  remove(index);
+                }}
+              />
+            </div>
+          </div>
+        );
+      })}
+      <Button
+        className={styles.addLabelButton}
+        icon="plus-circle"
+        type="button"
+        variant="secondary"
+        onClick={() => {
+          append({});
+        }}
+      >
+        Add label
+      </Button>
+    </>
+  );
+};
+
+const LabelsWithoutSuggestions: FC = () => {
+  const styles = useStyles2(getStyles);
+  const {
+    register,
+    control,
+    watch,
+    formState: { errors },
+  } = useFormContext<RuleFormValues>();
+
+  const labels = watch('labels');
+  const { fields, remove, append } = useFieldArray({ control, name: 'labels' });
+
+  return (
+    <>
+      {fields.map((field, index) => {
+        return (
+          <div key={field.id}>
+            <div className={cx(styles.flexRow, styles.centerAlignRow)}>
+              <Field
+                className={styles.labelInput}
+                invalid={!!errors.labels?.[index]?.key?.message}
+                error={errors.labels?.[index]?.key?.message}
+              >
+                <Input
+                  {...register(`labels.${index}.key`, {
+                    required: { value: !!labels[index]?.value, message: 'Required.' },
+                  })}
+                  placeholder="key"
+                  data-testid={`label-key-${index}`}
+                  defaultValue={field.key}
+                />
+              </Field>
+              <InlineLabel className={styles.equalSign}>=</InlineLabel>
+              <Field
+                className={styles.labelInput}
+                invalid={!!errors.labels?.[index]?.value?.message}
+                error={errors.labels?.[index]?.value?.message}
+              >
+                <Input
+                  {...register(`labels.${index}.value`, {
+                    required: { value: !!labels[index]?.key, message: 'Required.' },
+                  })}
+                  placeholder="value"
+                  data-testid={`label-value-${index}`}
+                  defaultValue={field.value}
+                />
+              </Field>
+
+              <Button
+                className={styles.deleteLabelButton}
+                aria-label="delete label"
+                icon="trash-alt"
+                data-testid={`delete-label-${index}`}
+                variant="secondary"
+                onClick={() => {
+                  remove(index);
+                }}
+              />
+            </div>
+          </div>
+        );
+      })}
+      <Button
+        className={styles.addLabelButton}
+        icon="plus-circle"
+        type="button"
+        variant="secondary"
+        onClick={() => {
+          append({});
+        }}
+      >
+        Add label
+      </Button>
+    </>
+  );
+};
+
+const LabelsField: FC<Props> = ({ className, suggest }) => {
+  const styles = useStyles2(getStyles);
+
+  return (
     <div className={cx(className, styles.wrapper)}>
       <Label>
         <Stack gap={0.5}>
@@ -114,77 +272,8 @@ const LabelsField: FC<Props> = ({ className }) => {
         <div className={styles.flexRow}>
           <InlineLabel width={18}>Labels</InlineLabel>
           <div className={styles.flexColumn}>
-            {fields.map((field, index) => {
-              return (
-                <div key={field.id}>
-                  <div className={cx(styles.flexRow, styles.centerAlignRow)}>
-                    <Field
-                      className={styles.labelInput}
-                      invalid={Boolean(errors.labels?.[index]?.key?.message)}
-                      error={errors.labels?.[index]?.key?.message}
-                      data-testid={`label-key-${index}`}
-                    >
-                      <AlertLabelDropdown
-                        {...register(`labels.${index}.key`, {
-                          required: { value: Boolean(labels[index]?.value), message: 'Required.' },
-                        })}
-                        defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
-                        options={keys}
-                        onChange={(newValue: SelectableValue) => {
-                          setValue(`labels.${index}.key`, newValue.value);
-                          setSelectedKey(newValue.value);
-                        }}
-                        type="key"
-                      />
-                    </Field>
-                    <InlineLabel className={styles.equalSign}>=</InlineLabel>
-                    <Field
-                      className={styles.labelInput}
-                      invalid={Boolean(errors.labels?.[index]?.value?.message)}
-                      error={errors.labels?.[index]?.value?.message}
-                      data-testid={`label-value-${index}`}
-                    >
-                      <AlertLabelDropdown
-                        {...register(`labels.${index}.value`, {
-                          required: { value: Boolean(labels[index]?.key), message: 'Required.' },
-                        })}
-                        defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
-                        options={values}
-                        onChange={(newValue: SelectableValue) => {
-                          setValue(`labels.${index}.value`, newValue.value);
-                        }}
-                        onOpenMenu={() => {
-                          setSelectedKey(labels[index].key);
-                        }}
-                        type="value"
-                      />
-                    </Field>
-
-                    <Button
-                      className={styles.deleteLabelButton}
-                      aria-label="delete label"
-                      icon="trash-alt"
-                      data-testid={`delete-label-${index}`}
-                      variant="secondary"
-                      onClick={() => {
-                        remove(index);
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-            <Button
-              className={styles.addLabelButton}
-              icon="plus-circle"
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                append({});
-              }}
-            >
-              Add label
-            </Button>
+            {suggest && <LabelsWithSuggestions />}
+            {!suggest && <LabelsWithoutSuggestions />}
           </div>
         </div>
       </>
