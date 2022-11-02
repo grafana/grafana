@@ -174,7 +174,7 @@ export const RulesForGroupTable = ({
             return <ForError message={'Invalid evaluation interval format'} />;
           }
           if (numberEvaluations === 0) {
-            return <ForError message="Invalid 'For' value: it should be greater or equal than evaluation interval." />;
+            return <ForError message="Invalid 'For' value: it should be greater or equal to evaluation interval." />;
           } else {
             return <>{numberEvaluations}</>;
           }
@@ -314,7 +314,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               label={
                 <Label
                   htmlFor="groupInterval"
-                  description="Evaluation interval should be smaller or equal than 'For' values for existing rules in this group."
+                  description="Evaluation interval should be smaller or equal to 'For' values for existing rules in this group."
                 >
                   <Stack gap={0.5}>
                     Rule group evaluation interval
