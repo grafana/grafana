@@ -6,22 +6,24 @@ package main
 import (
 	"bytes"
 	"embed"
+	"fmt"
 	"os"
 	"path"
 	"strings"
 	"text/template"
+
+	dev_dashboards "github.com/grafana/grafana/devenv/dev-dashboards"
+	"github.com/grafana/grafana/pkg/codegen"
 )
 
-var EXCLUDE = map[string]struct{}{
-	"jsonnetfile.json":      {},
-	"jsonnetfile.lock.json": {},
-	"panel-library.json":    {}, // TODO: remove panel-library once importing issue is fixed
-}
-
-//go:generate go run gen.go
-
-//go:embed *.json */*.json
-var devDashboardFS embed.FS
+var (
+	OUTPUT_PATH = "gen.libsonnet"
+	EXCLUDE     = map[string]struct{}{
+		"jsonnetfile.json":      {},
+		"jsonnetfile.lock.json": {},
+		"panel-library.json":    {}, // TODO: remove panel-library once importing issue is fixed
+	}
+)
 
 //go:embed tmpl/*.tmpl
 var tmplFS embed.FS
@@ -32,7 +34,22 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	os.WriteFile("./gen.libsonnet", []byte(out), 0644)
+	wd := codegen.NewWriteDiffer()
+	wd[OUTPUT_PATH] = []byte(out)
+
+	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
+		err = wd.Verify()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "generated code is not up to date:\n%s\nrun `make gen-jsonnet` to regenerate\n\n", err)
+			os.Exit(1)
+		}
+	} else {
+		err = wd.Write()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error while writing generated code to disk:\n%s\n", err)
+			os.Exit(1)
+		}
+	}
 }
 
 type devDashboard struct {
@@ -69,7 +86,7 @@ func (g *libjsonnetGen) generate() (string, error) {
 }
 
 func (g *libjsonnetGen) readDir(dir string) error {
-	files, err := devDashboardFS.ReadDir(dir)
+	files, err := dev_dashboards.DevDashboardFS.ReadDir(dir)
 	if err != nil {
 		return err
 	}

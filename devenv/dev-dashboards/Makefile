@@ -6,6 +6,6 @@ vendor: jsonnetfile.json jsonnetfile.lock.json
 	$(JB) install
 
 gen.libsonnet: $(DASHBOARDS) vendor gen.go
-	go generate ./gen.go
+	go generate ./
 	
 main.libsonnet: gen.libsonnet
