@@ -77,6 +77,7 @@ export interface FeatureToggles {
   queryLibrary?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
+  datasourceLogger?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
 }

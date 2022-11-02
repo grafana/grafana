@@ -58,7 +58,9 @@ func NewManager(metrics *metrics.State, externalURL *url.URL,
 		clock:         clock,
 		externalURL:   externalURL,
 	}
-	go manager.recordMetrics()
+	if manager.metrics != nil {
+		go manager.recordMetrics()
+	}
 	return manager
 }
 
@@ -67,6 +69,12 @@ func (st *Manager) Close() {
 }
 
 func (st *Manager) Warm(ctx context.Context) {
+	if st.instanceStore == nil {
+		st.log.Info("Skip warming the state because instance store is not configured")
+	}
+	if st.ruleStore == nil {
+		st.log.Info("Skip warming the state because rule store is not configured")
+	}
 	startTime := time.Now()
 	st.log.Info("Warming state cache for startup")
 
@@ -149,7 +157,7 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 	logger := st.log.New(ruleKey.LogContext()...)
 	logger.Debug("Resetting state of the rule")
 	states := st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
-	if len(states) > 0 {
+	if len(states) > 0 && st.instanceStore != nil {
 		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
 		if err != nil {
 			logger.Error("Failed to delete states that belong to a rule from database", "error", err)
@@ -162,7 +170,7 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
-	logger := st.log.New(alertRule.GetKey().LogContext()...)
+	logger := st.log.FromContext(ctx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
@@ -172,7 +180,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		processedResults[s.CacheID] = s
 	}
 	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults, logger)
-	if len(states) > 0 {
+	if len(states) > 0 && st.instanceStore != nil {
 		logger.Debug("Saving new states to the database", "count", len(states))
 		_, _ = st.saveAlertStates(ctx, states...)
 	}
@@ -264,7 +272,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	st.cache.set(currentState)
 
 	shouldUpdateAnnotation := oldState != currentState.State || oldReason != currentState.StateReason
-	if shouldUpdateAnnotation {
+	if shouldUpdateAnnotation && st.historian != nil {
 		go st.historian.RecordState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, InstanceStateAndReason{State: currentState.State, Reason: currentState.StateReason}, InstanceStateAndReason{State: oldState, Reason: oldReason})
 	}
 	return currentState
@@ -304,6 +312,10 @@ func (st *Manager) Put(states []*State) {
 
 // TODO: Is the `State` type necessary? Should it embed the instance?
 func (st *Manager) saveAlertStates(ctx context.Context, states ...*State) (saved, failed int) {
+	if st.instanceStore == nil {
+		return 0, 0
+	}
+
 	st.log.Debug("Saving alert states", "count", len(states))
 	instances := make([]ngModels.AlertInstance, 0, len(states))
 
@@ -400,17 +412,21 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 				s.StateReason = ngModels.StateReasonMissingSeries
 				s.EndsAt = evaluatedAt
 				s.Resolved = true
-				st.historian.RecordState(ctx, alertRule, s.Labels, evaluatedAt,
-					InstanceStateAndReason{State: eval.Normal, Reason: s.StateReason},
-					previousState,
-				)
+				if st.historian != nil {
+					st.historian.RecordState(ctx, alertRule, s.Labels, evaluatedAt,
+						InstanceStateAndReason{State: eval.Normal, Reason: s.StateReason},
+						previousState,
+					)
+				}
 				resolvedStates = append(resolvedStates, s)
 			}
 		}
 	}
 
-	if err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...); err != nil {
-		logger.Error("Unable to delete stale instances from database", "error", err, "count", len(toDelete))
+	if st.instanceStore != nil {
+		if err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...); err != nil {
+			logger.Error("Unable to delete stale instances from database", "error", err, "count", len(toDelete))
+		}
 	}
 	return resolvedStates
 }
