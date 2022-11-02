@@ -1730,78 +1730,8 @@ type: docker
 clone:
   retries: 3
 depends_on:
-- main-test-frontend
-- main-test-backend
 - main-build-e2e-publish
 - main-integration-tests
-- main-windows
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: main-publish
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.15/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.19.2
-  name: compile-build-cmd
-- commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
-  name: identify-runner
-- commands:
-  - ./bin/build publish packages --edition oss --gcp-key /tmp/gcpkey.json --build-id
-    ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - compile-build-cmd
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
-    GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
-    GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
-    GPG_PUB_KEY:
-      from_secret: gpg_pub_key
-    GRAFANA_COM_API_KEY:
-      from_secret: grafana_api_key
-  image: grafana/grafana-ci-deploy:1.3.3
-  name: publish-packages-oss
-trigger:
-  branch: main
-  event:
-  - push
-  paths:
-    exclude:
-    - '*.md'
-    - docs/**
-    - latest.json
-  repo:
-  - grafana/grafana
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on:
-- main-publish
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -1847,7 +1777,6 @@ depends_on:
 - main-build-e2e-publish
 - main-integration-tests
 - main-windows
-- main-publish
 kind: pipeline
 name: main-notify
 platform:
@@ -3659,34 +3588,6 @@ steps:
     CGO_ENABLED: 0
   image: golang:1.19.2
   name: compile-build-cmd
-- commands:
-  - ./bin/build publish packages --edition oss --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
-  depends_on:
-  - compile-build-cmd
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
-    GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
-    GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
-    GPG_PUB_KEY:
-      from_secret: gpg_pub_key
-    GRAFANA_COM_API_KEY:
-      from_secret: grafana_api_key
-  image: grafana/grafana-ci-deploy:1.3.3
-  name: publish-packages-oss
-- commands:
-  - ./bin/build publish grafana-com --edition oss ${DRONE_TAG}
-  depends_on:
-  - publish-packages-oss
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
-    GRAFANA_COM_API_KEY:
-      from_secret: grafana_api_key
-  image: grafana/grafana-ci-deploy:1.3.3
-  name: publish-grafanacom-oss
 - depends_on:
   - grabpl
   failure: ignore
@@ -3731,6 +3632,18 @@ steps:
     service_account_json:
       from_secret: packages_service_account
     target_bucket: grafana-packages
+- commands:
+  - ./bin/build publish grafana-com --edition oss ${DRONE_TAG}
+  depends_on:
+  - publish-linux-packages-deb
+  - publish-linux-packages-rpm
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    GRAFANA_COM_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/grafana-ci-deploy:1.3.3
+  name: publish-grafanacom-oss
 trigger:
   event:
   - promote
@@ -3772,34 +3685,6 @@ steps:
     CGO_ENABLED: 0
   image: golang:1.19.2
   name: compile-build-cmd
-- commands:
-  - ./bin/build publish packages --edition enterprise --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
-  depends_on:
-  - compile-build-cmd
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
-    GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
-    GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
-    GPG_PUB_KEY:
-      from_secret: gpg_pub_key
-    GRAFANA_COM_API_KEY:
-      from_secret: grafana_api_key
-  image: grafana/grafana-ci-deploy:1.3.3
-  name: publish-packages-enterprise
-- commands:
-  - ./bin/build publish grafana-com --edition enterprise ${DRONE_TAG}
-  depends_on:
-  - publish-packages-enterprise
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
-    GRAFANA_COM_API_KEY:
-      from_secret: grafana_api_key
-  image: grafana/grafana-ci-deploy:1.3.3
-  name: publish-grafanacom-enterprise
 - depends_on:
   - grabpl
   failure: ignore
@@ -3844,6 +3729,18 @@ steps:
     service_account_json:
       from_secret: packages_service_account
     target_bucket: grafana-packages
+- commands:
+  - ./bin/build publish grafana-com --edition enterprise ${DRONE_TAG}
+  depends_on:
+  - publish-linux-packages-deb
+  - publish-linux-packages-rpm
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    GRAFANA_COM_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/grafana-ci-deploy:1.3.3
+  name: publish-grafanacom-enterprise
 trigger:
   event:
   - promote
@@ -5423,6 +5320,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: bbc179e84a651150c80ff37442ae77605613dfdda47aa72604016b090715a12b
+hmac: 9d7c0bc997ba232aa3adf0ebf9700ef100d06625bed76e82d0d517874ccba394
 
 ...

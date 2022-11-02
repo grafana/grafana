@@ -974,37 +974,6 @@ def upload_packages_step(edition, ver_mode, trigger=None):
     return step
 
 
-def publish_packages_step(edition, ver_mode):
-    if ver_mode == 'release':
-        cmd = './bin/build publish packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
-            edition,
-        )
-    elif ver_mode == 'main':
-        build_no = '${DRONE_BUILD_NUMBER}'
-        cmd = './bin/build publish packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
-            edition, build_no,
-        )
-    else:
-        fail('Unexpected version mode {}'.format(ver_mode))
-
-    return {
-        'name': 'publish-packages-{}'.format(edition),
-        'image': publish_image,
-        'depends_on': [
-            'compile-build-cmd',
-        ],
-        'environment': {
-            'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
-            'GCP_KEY': from_secret('gcp_key'),
-            'GPG_PRIV_KEY': from_secret('gpg_priv_key'),
-            'GPG_PUB_KEY': from_secret('gpg_pub_key'),
-            'GPG_KEY_PASSWORD': from_secret('gpg_key_password'),
-        },
-        'commands': [
-            cmd,
-        ],
-    }
-
 def publish_grafanacom_step(edition, ver_mode):
     if ver_mode == 'release':
         cmd = './bin/build publish grafana-com --edition {} ${{DRONE_TAG}}'.format(
@@ -1022,7 +991,8 @@ def publish_grafanacom_step(edition, ver_mode):
         'name': 'publish-grafanacom-{}'.format(edition),
         'image': publish_image,
         'depends_on': [
-            'publish-packages-{}'.format(edition),
+            'publish-linux-packages-deb',
+            'publish-linux-packages-rpm',
         ],
         'environment': {
             'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
