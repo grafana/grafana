@@ -41,6 +41,9 @@ function ForError({ message }: { message: string }) {
 export const getNumberEvaluationsToStartAlerting = (forDuration: string, currentEvaluation: string) => {
   const evalNumberMs = safeParseDurationstr(currentEvaluation);
   const forNumber = safeParseDurationstr(forDuration);
+  if (forNumber === 0 && evalNumberMs !== 0) {
+    return 1;
+  }
   if (evalNumberMs === 0) {
     return 0;
   } else {
@@ -94,20 +97,20 @@ export const isValidEvaluation = (evaluation: string) => {
 
 export const getGroupFromRuler = (
   rulerRules: RulerRulesConfigDTO | null | undefined,
-  group: string,
-  folder: string
+  groupName: string,
+  folderName: string
 ) => {
-  const folderObj: Array<RulerRuleGroupDTO<RulerRuleDTO>> = rulerRules ? rulerRules[folder] : [];
-  return folderObj?.find((rulerRuleGroup) => rulerRuleGroup.name === group);
+  const folderObj: Array<RulerRuleGroupDTO<RulerRuleDTO>> = rulerRules ? rulerRules[folderName] : [];
+  return folderObj?.find((rulerRuleGroup) => rulerRuleGroup.name === groupName);
 };
 
 export const getIntervalForGroup = (
   rulerRules: RulerRulesConfigDTO | null | undefined,
-  group: string,
-  folder: string
+  groupName: string,
+  folderName: string
 ) => {
-  const groupObj = getGroupFromRuler(rulerRules, group, folder);
-  const interval = groupObj?.interval ?? MINUTE;
+  const group = getGroupFromRuler(rulerRules, groupName, folderName);
+  const interval = group?.interval ?? MINUTE;
   return interval;
 };
 
@@ -124,16 +127,16 @@ type AlertsWithForTableProps = DynamicTableItemProps<AlertInfo>;
 
 export const RulesForGroupTable = ({
   rulerRules,
-  group,
-  folder,
+  groupName,
+  folderName,
 }: {
   rulerRules: RulerRulesConfigDTO | null | undefined;
-  group: string;
-  folder: string;
+  groupName: string;
+  folderName: string;
 }) => {
   const styles = useStyles2(getStyles);
-  const groupObj = getGroupFromRuler(rulerRules, group, folder);
-  const rules: RulerRuleDTO[] = groupObj?.rules ?? [];
+  const group = getGroupFromRuler(rulerRules, groupName, folderName);
+  const rules: RulerRuleDTO[] = group?.rules ?? [];
 
   const { watch } = useFormContext<FormValues>();
   const currentInterval = watch('groupInterval');
@@ -343,8 +346,8 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 </div>
                 <RulesForGroupTable
                   rulerRules={groupfoldersForSource?.result}
-                  group={group.name}
-                  folder={namespace.name}
+                  groupName={group.name}
+                  folderName={namespace.name}
                 />
               </>
             )}

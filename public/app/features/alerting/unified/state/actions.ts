@@ -755,13 +755,13 @@ interface UpdateNamespaceAndGroupOptions {
 
 export const rulesInSameGroupHaveInvalidFor = (
   rulerRules: RulerRulesConfigDTO | null | undefined,
-  group: string,
-  folder_: string,
+  groupName: string,
+  folderName: string,
   everyDuration: string
 ) => {
-  const groupObj = getGroupFromRuler(rulerRules, group, folder_);
+  const group = getGroupFromRuler(rulerRules, groupName, folderName);
 
-  const rulesSameGroup: RulerRuleDTO[] = groupObj?.rules ?? [];
+  const rulesSameGroup: RulerRuleDTO[] = group?.rules ?? [];
 
   return rulesSameGroup.filter((rule: RulerRuleDTO) => {
     const { forDuration } = getAlertInfo(rule, everyDuration);
