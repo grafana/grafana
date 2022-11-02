@@ -64,7 +64,8 @@ export class CanvasPanel extends Component<Props, State> {
       this.props.options.root,
       this.props.options.inlineEditing,
       this.props.options.showAdvancedTypes,
-      this.onUpdateScene
+      this.onUpdateScene,
+      this
     );
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);

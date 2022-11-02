@@ -1,29 +1,30 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useObservable } from 'react-use';
 import { first } from 'rxjs/operators';
 
-import { ContextMenu, MenuItem } from '@grafana/ui';
-import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
+import { ContextMenu, MenuItem, MenuItemProps } from '@grafana/ui';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { activePanelSubject } from './CanvasPanel';
+import { FrameState } from '../../../features/canvas/runtime/frame';
+
+import { CanvasPanel } from './CanvasPanel';
 import { AnchorPoint, LayerActionID } from './types';
-import { getElementTypes } from './utils';
+import { getElementTypes, onAddItem } from './utils';
 
 type Props = {
   scene: Scene;
+  panel: CanvasPanel;
 };
 
-export const CanvasContextMenu = ({ scene }: Props) => {
-  const activePanel = useObservable(activePanelSubject);
-  const inlineEditorOpen = activePanel?.panel.state.openInlineEdit;
+export const CanvasContextMenu = ({ scene, panel }: Props) => {
+  const inlineEditorOpen = panel.state.openInlineEdit;
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
   const [anchorPoint, setAnchorPoint] = useState<AnchorPoint>({ x: 0, y: 0 });
 
   const styles = getStyles();
 
   const selectedElements = scene.selecto?.getSelectedTargets();
+  const rootLayer: FrameState | undefined = panel.context?.instanceState?.layer;
 
   const handleContextMenu = useCallback(
     (event: Event) => {
@@ -32,6 +33,8 @@ export const CanvasContextMenu = ({ scene }: Props) => {
       }
 
       event.preventDefault();
+      panel.setActivePanel();
+
       const shouldSelectElement = event.currentTarget !== scene.div;
       if (shouldSelectElement) {
         scene.select({ targets: [event.currentTarget as HTMLElement | SVGElement] });
@@ -39,7 +42,7 @@ export const CanvasContextMenu = ({ scene }: Props) => {
       setAnchorPoint({ x: event.pageX, y: event.pageY });
       setIsMenuVisible(true);
     },
-    [scene]
+    [scene, panel]
   );
 
   useEffect(() => {
@@ -67,7 +70,7 @@ export const CanvasContextMenu = ({ scene }: Props) => {
         onClick={() => {
           if (scene.inlineEditingCallback) {
             if (inlineEditorOpen) {
-              activePanel.panel.closeInlineEdit();
+              panel.closeInlineEdit();
             } else {
               scene.inlineEditingCallback();
             }
@@ -97,26 +100,21 @@ export const CanvasContextMenu = ({ scene }: Props) => {
     };
 
     const typeOptions = getElementTypes(scene.shouldShowAdvancedTypes).options;
+
+    const getTypeOptionsSubmenu = () => {
+      const submenuItems: Array<React.ReactElement<MenuItemProps<any>, string | React.JSXElementConstructor<any>>> = [];
+      typeOptions.map((option) => {
+        submenuItems.push(
+          <MenuItem key={option.value} label={option.label!} onClick={() => onAddItem(option, rootLayer)} />
+        );
+      });
+
+      return submenuItems;
+    };
+
     const addItemMenuItem = !scene.isPanelEditing && (
-      <div className={cx(styles.menuItem, styles.center)}>
-        <AddLayerButton
-          options={typeOptions}
-          label={'Add item'}
-          onChange={(sel) => {
-            console.log('yo');
-          }}
-        />
-      </div>
+      <MenuItem label="Add item" className={styles.menuItem} childItems={getTypeOptionsSubmenu()} />
     );
-    //   <MenuItem
-    //     label="Add item"
-    //     icon="plus"
-    //     onClick={() => {
-    //       console.log('click');
-    //     }}
-    //     className={styles.menuItem}
-    //   />
-    // );
 
     const setBackgroundMenuItem = !scene.isPanelEditing && (
       <MenuItem
@@ -227,10 +225,6 @@ export const CanvasContextMenu = ({ scene }: Props) => {
 
 const getStyles = () => ({
   menuItem: css`
-    max-width: 60ch;
-    overflow: hidden;
-  `,
-  center: css`
-    display: flex;
+    max-width: 200px;
   `,
 });
