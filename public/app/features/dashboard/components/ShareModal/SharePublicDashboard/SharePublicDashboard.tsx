@@ -15,6 +15,7 @@ import {
   Spinner,
   ModalsContext,
 } from '@grafana/ui/src';
+import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useGetConfigQuery, useSaveConfigMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { AcknowledgeCheckboxes } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/AcknowledgeCheckboxes';
@@ -27,6 +28,7 @@ import {
   publicDashboardPersisted,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { ShareModalTabProps } from 'app/features/dashboard/components/ShareModal/types';
+import { useIsDesktop } from 'app/features/dashboard/utils/screen';
 import { DeletePublicDashboardButton } from 'app/features/manage-dashboards/components/PublicDashboardListTable/DeletePublicDashboardButton';
 import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
 import { AccessControlAction } from 'app/types';
@@ -40,6 +42,7 @@ export const SharePublicDashboard = (props: Props) => {
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
   const styles = useStyles2(getStyles);
   const { showModal, hideModal } = useContext(ModalsContext);
+  const isDesktop = useIsDesktop();
 
   const {
     isLoading: isGetLoading,
@@ -134,7 +137,7 @@ export const SharePublicDashboard = (props: Props) => {
         >
           Welcome to Grafana public dashboards alpha!
         </p>
-        {isGetLoading || (isFetching && <Spinner />)}
+        {(isGetLoading || isFetching) && <Spinner />}
       </HorizontalGroup>
       <div className={styles.content}>
         {dashboardHasTemplateVariables(dashboardVariables) && !publicDashboardPersisted(publicDashboard) ? (
@@ -205,25 +208,27 @@ export const SharePublicDashboard = (props: Props) => {
               <Alert title="You don't have permissions to create or update a public dashboard" severity="warning" />
             )}
             <HorizontalGroup>
-              <Button disabled={isSaveDisabled} onClick={onSavePublicConfig} data-testid={selectors.SaveConfigButton}>
-                Save sharing configuration
-              </Button>
-              {publicDashboard && hasWritePermissions && (
-                <DeletePublicDashboardButton
-                  disabled={isDeleteDisabled}
-                  data-testid={selectors.DeleteButton}
-                  onDismiss={onDismissDelete}
-                  variant="destructive"
-                  dashboard={props.dashboard}
-                  publicDashboard={{
-                    uid: publicDashboard.uid,
-                    dashboardUid: props.dashboard.uid,
-                    title: props.dashboard.title,
-                  }}
-                >
-                  Delete public dashboard
-                </DeletePublicDashboardButton>
-              )}
+              <Layout orientation={isDesktop ? 0 : 1}>
+                <Button disabled={isSaveDisabled} onClick={onSavePublicConfig} data-testid={selectors.SaveConfigButton}>
+                  Save sharing configuration
+                </Button>
+                {publicDashboard && hasWritePermissions && (
+                  <DeletePublicDashboardButton
+                    disabled={isDeleteDisabled}
+                    data-testid={selectors.DeleteButton}
+                    onDismiss={onDismissDelete}
+                    variant="destructive"
+                    dashboard={props.dashboard}
+                    publicDashboard={{
+                      uid: publicDashboard.uid,
+                      dashboardUid: props.dashboard.uid,
+                      title: props.dashboard.title,
+                    }}
+                  >
+                    Delete public dashboard
+                  </DeletePublicDashboardButton>
+                )}
+              </Layout>
               {(isSaveLoading || isFetching) && <Spinner />}
             </HorizontalGroup>
           </>
