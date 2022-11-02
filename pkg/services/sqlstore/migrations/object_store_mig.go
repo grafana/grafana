@@ -127,12 +127,12 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	suffix := " (v0)" // change this when we want to wipe and reset the object tables
 	mg.AddMigration("ObjectStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
 		DELETE FROM migration_log WHERE migration_id LIKE 'ObjectStore init%';
-		DROP table if exists "object"; 
-		DROP table if exists "object_ref"; 
-		DROP table if exists "object_history"; 
-		DROP table if exists "object_labels";
-		DROP table if exists "object_alias";
-		DROP table if exists "object_access";
+		DROP TABLE IF EXISTS "object"; 
+		DROP TABLE IF EXISTS "object_ref"; 
+		DROP TABLE IF EXISTS "object_history"; 
+		DROP TABLE IF EXISTS "object_labels";
+		DROP TABLE IF EXISTS "object_alias";
+		DROP TABLE IF EXISTS "object_access";
 	`)))
 
 	// Initialize all tables
