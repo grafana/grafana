@@ -143,8 +143,7 @@ export const RulesForGroupTable = ({
       data: getAlertInfo(rule, currentInterval),
     }));
 
-  //add a hint that would say how many evaluations need to start alerting.
-  function getColumns(): AlertsWithForTableColumnProps[] {
+  const columns: AlertsWithForTableColumnProps[] = useMemo(() => {
     return [
       {
         id: 'alertName',
@@ -178,10 +177,11 @@ export const RulesForGroupTable = ({
         size: 0.2,
       },
     ];
-  }
+  }, [currentInterval]);
+
   return (
     <div className={styles.tableWrapper}>
-      <DynamicTable items={rows} cols={getColumns()} />
+      <DynamicTable items={rows} cols={columns} />
     </div>
   );
 };
