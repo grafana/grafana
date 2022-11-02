@@ -1,7 +1,6 @@
 import { createAsyncThunk, AsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
-import { durationToMilliseconds } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
@@ -768,10 +767,7 @@ export const rulesInSameGroupHaveInvalidFor = (
 
   return rulesSameGroup.filter((rule: RulerRuleDTO) => {
     const { forDuration } = getAlertInfo(rule, everyDuration);
-    return (
-      durationToMilliseconds(safeParseDurationstr(forDuration)) <
-      durationToMilliseconds(safeParseDurationstr(everyDuration))
-    );
+    return safeParseDurationstr(forDuration) < safeParseDurationstr(everyDuration);
   });
 };
 

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useMemo } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 
-import { durationToMilliseconds, GrafanaTheme2, parseDuration } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Modal, Button, Field, Input, useStyles2, Label, Icon, Tooltip, Badge } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -38,8 +38,8 @@ function ForError({ message }: { message: string }) {
 }
 
 const getNumberEvaluationsToStartAlerting = (forDuration: string, currentEvaluation: string) => {
-  const evalNumber = durationToMilliseconds(safeParseDurationstr(currentEvaluation));
-  const forNumber = durationToMilliseconds(safeParseDurationstr(forDuration));
+  const evalNumber = safeParseDurationstr(currentEvaluation);
+  const forNumber = safeParseDurationstr(forDuration);
   if (evalNumber === 0) {
     return 0;
   } else {
@@ -103,10 +103,12 @@ export const getIntervalForGroup = (
   return interval;
 };
 
-// parseDuration method needs units separated by space
-export const safeParseDurationstr = (duration: string) => {
-  const reg = /(?<=[a-z])(?=\d)/i;
-  return parseDuration(duration.replace(reg, ' '));
+export const safeParseDurationstr = (duration: string): number => {
+  try {
+    return parsePrometheusDuration(duration);
+  } catch (e) {
+    return 0;
+  }
 };
 
 type AlertsWithForTableColumnProps = DynamicTableColumnProps<AlertInfo>;
@@ -133,8 +135,8 @@ export const RulesForGroupTable = ({
     .slice()
     .sort(
       (alert1, alert2) =>
-        durationToMilliseconds(safeParseDurationstr(getAlertInfo(alert1, currentInterval).forDuration)) -
-        durationToMilliseconds(safeParseDurationstr(getAlertInfo(alert2, currentInterval).forDuration))
+        safeParseDurationstr(getAlertInfo(alert1, currentInterval).forDuration) -
+        safeParseDurationstr(getAlertInfo(alert2, currentInterval).forDuration)
     )
     .map((rule: RulerRuleDTO, index) => ({
       id: index,
