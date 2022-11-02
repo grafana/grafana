@@ -227,7 +227,7 @@
     "sass-loader": "13.1.0",
     "sinon": "14.0.1",
     "style-loader": "3.3.1",
-    "stylelint": "14.9.1",
+    "stylelint": "14.14.0",
     "stylelint-config-prettier": "9.0.3",
     "stylelint-config-sass-guidelines": "9.0.1",
     "terser-webpack-plugin": "5.3.6",
