@@ -53,7 +53,7 @@ const defaultProps = {
   width: 800,
   onCellFilterAdded: jest.fn(),
   tableResult: dataFrame,
-  splitOpen: (() => {}) as any,
+  splitOpenFn: (() => {}) as any,
   range: {} as any,
   timeZone: InternalTimeZones.utc,
 };
