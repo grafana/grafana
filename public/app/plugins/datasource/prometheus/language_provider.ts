@@ -471,6 +471,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
   }
 
+  /**
+   * @todo cache
+   * @param key
+   */
   fetchLabelValues = async (key: string): Promise<string[]> => {
     const params = this.datasource.getTimeRangeParams();
     const url = `/api/v1/label/${this.datasource.interpolateString(key)}/values`;
@@ -496,6 +500,18 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     return [];
   }
+
+  fetchSeriesValues = async (name: string, match?: string): Promise<string[]> => {
+    const interpolatedName = match ? this.datasource.interpolateString(match) : null;
+    const range = this.datasource.getTimeRangeParams();
+    const urlParams = {
+      ...range,
+      ...(interpolatedName && { 'match[]': interpolatedName }),
+    };
+    const url = `/api/v1/label/${name}/values`;
+    const data = await this.request(url, [], urlParams);
+    return data;
+  };
 
   /**
    * Fetch labels for a series. This is cached by its args but also by the global timeRange currently selected as
@@ -529,6 +545,47 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       const { values } = processLabels(data, withName);
       value = values;
       this.labelsCache.set(cacheKey, value);
+      console.log('fetchSeriesLabels CACHE MISS');
+    } else {
+      console.log('fetchSeriesLabels CACHE HIT');
+    }
+    return value;
+  };
+
+  /**
+   *
+   * @param name
+   * @param withName
+   */
+  fetchSeriesLabelsMatch = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
+    const interpolatedName = this.datasource.interpolateString(name);
+    const range = this.datasource.getTimeRangeParams();
+    const urlParams = {
+      ...range,
+      'match[]': interpolatedName,
+    };
+    const url = `/api/v1/labels`;
+    // Cache key is a bit different here. We add the `withName` param and also round up to a minute the intervals.
+    // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
+    // millisecond while still actually getting all the keys for the correct interval. This still can create problems
+    // when user does not the newest values for a minute if already cached.
+    const cacheParams = new URLSearchParams({
+      'match[]': interpolatedName,
+      start: roundSecToMin(parseInt(range.start, 10)).toString(),
+      end: roundSecToMin(parseInt(range.end, 10)).toString(),
+      withName: withName ? 'true' : 'false',
+    });
+
+    const cacheKey = `${url}?${cacheParams.toString()}`;
+    let value = this.labelsCache.get(cacheKey);
+    if (!value) {
+      const data: string[] = await this.request(url, [], urlParams);
+      // Convert string array to Record<string , []>
+      value = data.reduce((ac, a) => ({ ...ac, [a]: '' }), {});
+      this.labelsCache.set(cacheKey, value);
+      console.log('fetchSeriesLabels CACHE MISS');
+    } else {
+      console.log('fetchSeriesLabels CACHE HIT');
     }
     return value;
   };

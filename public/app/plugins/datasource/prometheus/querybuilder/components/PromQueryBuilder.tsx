@@ -64,7 +64,13 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
     labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     const expr = promQueryModeller.renderLabels(labelsToConsider);
-    const labelsIndex = await datasource.languageProvider.fetchSeriesLabels(expr);
+
+    let labelsIndex;
+    if (datasource.hasLabelsMatchAPISupport()) {
+      labelsIndex = await datasource.languageProvider.fetchSeriesLabelsMatch(expr);
+    } else {
+      labelsIndex = await datasource.languageProvider.fetchSeriesLabels(expr);
+    }
 
     // filter out already used labels
     return Object.keys(labelsIndex)
@@ -76,18 +82,10 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     if (!forLabel.label) {
       return [];
     }
-
-    // If no metric we need to use a different method
-    if (!query.metric) {
-      return (await datasource.languageProvider.getLabelValues(forLabel.label)).map((v) => ({ value: v }));
-    }
-
-    const labelsToConsider = query.labels.filter((x) => x !== forLabel);
-    labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
-    const expr = promQueryModeller.renderLabels(labelsToConsider);
-    const result = await datasource.languageProvider.fetchSeriesLabels(expr);
-    const forLabelInterpolated = datasource.interpolateString(forLabel.label);
-    return result[forLabelInterpolated].map((v) => ({ value: v })) ?? [];
+    const result = (await datasource.languageProvider.fetchSeriesValues(forLabel.label, query.metric)).map((v) => ({
+      value: v,
+    }));
+    return result;
   };
 
   const onGetMetrics = useCallback(() => {
