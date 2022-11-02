@@ -94,31 +94,6 @@ func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, p
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetNamespaces(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
-	var keys []string
-	for key := range constants.NamespaceMetricsMap {
-		keys = append(keys, key)
-	}
-
-	instance, err := e.getInstance(pluginCtx)
-	if err != nil {
-		return nil, err
-	}
-
-	customNamespaces := instance.Settings.Namespace
-	if customNamespaces != "" {
-		keys = append(keys, strings.Split(customNamespaces, ",")...)
-	}
-	sort.Strings(keys)
-
-	result := make([]suggestData, 0)
-	for _, key := range keys {
-		result = append(result, suggestData{Text: key, Value: key, Label: key})
-	}
-
-	return result, nil
-}
-
 func (e *cloudWatchExecutor) handleGetEbsVolumeIds(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	instanceId := parameters.Get("instanceId")
@@ -364,11 +339,15 @@ func (e *cloudWatchExecutor) handleGetAllLogGroups(pluginCtx backend.PluginConte
 	var response *cloudwatchlogs.DescribeLogGroupsOutput
 	result := make([]suggestData, 0)
 	for {
-		response, err = logsClient.DescribeLogGroups(&cloudwatchlogs.DescribeLogGroupsInput{
-			LogGroupNamePrefix: aws.String(logGroupNamePrefix),
-			NextToken:          nextToken,
-			Limit:              aws.Int64(defaultLogGroupLimit),
-		})
+		input := &cloudwatchlogs.DescribeLogGroupsInput{
+			Limit:     aws.Int64(defaultLogGroupLimit),
+			NextToken: nextToken,
+		}
+		if len(logGroupNamePrefix) > 0 {
+			input.LogGroupNamePrefix = aws.String(logGroupNamePrefix)
+		}
+		response, err = logsClient.DescribeLogGroups(input)
+
 		if err != nil || response == nil {
 			return nil, err
 		}

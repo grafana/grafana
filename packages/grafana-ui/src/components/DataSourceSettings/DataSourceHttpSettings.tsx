@@ -155,13 +155,14 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
                   <FormField label="Access" labelWidth={13} inputWidth={20} inputEl={accessSelect} />
                 </div>
                 <div className="gf-form">
-                  <label
+                  <button
+                    type="button"
                     className="gf-form-label query-keyword pointer"
                     onClick={() => setIsAccessHelpVisible((isVisible) => !isVisible)}
                   >
                     Help&nbsp;
                     <Icon name={isAccessHelpVisible ? 'angle-down' : 'angle-right'} style={{ marginBottom: 0 }} />
-                  </label>
+                  </button>
                 </div>
               </div>
               {isAccessHelpVisible && <HttpAccessHelp />}
