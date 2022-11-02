@@ -861,10 +861,13 @@ steps:
     git add $f; done
   - if git diff --name-only --cached; then git commit -m "Update OpenAPI and Swagger"
     --author="Grot (@grafanabot) <43478413+grafanabot@users.noreply.github.com>" &&
-    git push https://github.com/grafana/grafana.git ${DRONE_SOURCE_BRANCH}; else echo
-    "Everything seems up to date!"; fi
+    git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git ${DRONE_SOURCE_BRANCH};
+    else echo "Everything seems up to date!"; fi
   depends_on:
   - clone-pr-enterprise-branch
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token_pr
   image: golang:1.19.2
   name: swagger-gen
 trigger:
@@ -5484,6 +5487,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: c0e6ab00eb3358a6695cf693a7e7947335e2f6010a6240198e2179bdcac4a104
+hmac: c3cad85cab3612ef500bd3cb6af6ca5ab9c4722ef90f2f0f3b6e9f5684f5c424
 
 ...
