@@ -4725,7 +4725,7 @@ __metadata:
     rollup-plugin-node-externals: ^4.1.0
     rollup-plugin-svg-import: ^1.6.0
     rxjs: 7.5.7
-    sass-loader: 13.0.2
+    sass-loader: 13.1.0
     slate: 0.47.9
     slate-plain-serializer: 0.7.13
     slate-react: 0.22.10
@@ -21588,7 +21588,7 @@ __metadata:
     rudder-sdk-js: 2.18.1
     rxjs: 7.5.7
     sass: 1.55.0
-    sass-loader: 13.0.2
+    sass-loader: 13.1.0
     selecto: 1.20.2
     semver: 7.3.8
     sinon: 14.0.1
@@ -33982,9 +33982,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass-loader@npm:13.0.2":
-  version: 13.0.2
-  resolution: "sass-loader@npm:13.0.2"
+"sass-loader@npm:13.1.0":
+  version: 13.1.0
+  resolution: "sass-loader@npm:13.1.0"
   dependencies:
     klona: ^2.0.4
     neo-async: ^2.6.2
@@ -34003,7 +34003,7 @@ __metadata:
       optional: true
     sass-embedded:
       optional: true
-  checksum: 6306712cc75bd4b4260ce67178778c92110089485f358b5956b6b12aba15a55e5c7287154daaf8b32678891df915b7bcda7356991afe8bf08ca7356ed30eb448
+  checksum: 6b3b6c0e070a32c594001cee98c85a72afb6081c46d56a4283269e6c1802b0e26128bc8363fcd8d8c941abe1f9e441e3efcd401fcf3ef436e1f1fbeb6e0a1374
   languageName: node
   linkType: hard
 
