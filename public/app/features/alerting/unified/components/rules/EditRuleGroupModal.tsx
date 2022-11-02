@@ -133,15 +133,13 @@ export const RulesForGroupTable = ({
 
   const rows: AlertsWithForTableProps[] = rules
     .slice()
-    .sort(
-      (alert1, alert2) =>
-        safeParseDurationstr(getAlertInfo(alert1, currentInterval).forDuration) -
-        safeParseDurationstr(getAlertInfo(alert2, currentInterval).forDuration)
-    )
     .map((rule: RulerRuleDTO, index) => ({
       id: index,
       data: getAlertInfo(rule, currentInterval),
-    }));
+    }))
+    .sort(
+      (alert1, alert2) => safeParseDurationstr(alert1.data.forDuration) - safeParseDurationstr(alert2.data.forDuration)
+    );
 
   const columns: AlertsWithForTableColumnProps[] = useMemo(() => {
     return [
