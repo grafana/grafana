@@ -539,9 +539,9 @@ No permission is required.
 
 #### Query parameters
 
-| Param       | Type    | Required | Description                                                           |
-| ----------- | ------- | -------- | --------------------------------------------------------------------- |
-| reloadcache | boolean | No       | A flag to get permissions from store and reload the permission cache. |
+| Param       | Type    | Required | Description                            |
+| ----------- | ------- | -------- | -------------------------------------- |
+| reloadcache | boolean | No       | A flag to reload the permission cache. |
 
 #### Example request
 
