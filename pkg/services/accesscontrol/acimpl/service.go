@@ -222,13 +222,11 @@ func (s *Service) DeclarePluginRoles(_ context.Context, ID, name string, regs []
 
 	acRegs := pluginutils.ToRegistrations(name, regs)
 	for _, r := range acRegs {
-		err := accesscontrol.ValidatePluginRole(ID, r.Role)
-		if err != nil {
+		if err := accesscontrol.ValidatePluginRole(ID, r.Role); err != nil {
 			return err
 		}
 
-		err = accesscontrol.ValidateBuiltInRoles(r.Grants)
-		if err != nil {
+		if err := accesscontrol.ValidateBuiltInRoles(r.Grants); err != nil {
 			return err
 		}
 
