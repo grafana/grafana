@@ -124,7 +124,6 @@ class DataSourceWithBackend<
       let datasourceId = this.id;
       let shouldApplyTemplateVariables = true;
 
-      console.log('data source', this);
       if (isExpressionReference(q.datasource)) {
         return {
           ...q,
