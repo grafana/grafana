@@ -243,6 +243,7 @@ func deduplicateAcl(acl []models.DashboardACL) []models.DashboardACL {
 		current, ok := uniqueACL[string(*item.Role)]
 		if !ok {
 			uniqueACL[string(*item.Role)] = item
+			continue
 		}
 
 		if current.Permission < item.Permission {
