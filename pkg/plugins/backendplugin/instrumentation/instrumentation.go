@@ -45,7 +45,7 @@ func instrumentPluginRequest(ctx context.Context, cfg *config.Cfg, pluginCtx *ba
 	pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint).Observe(float64(elapsed / time.Millisecond))
 	pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status).Inc()
 
-	if cfg.LogPluginRequests {
+	if cfg.LogDatasourceRequests {
 		logParams := []interface{}{
 			"status", status,
 			"duration", elapsed,

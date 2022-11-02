@@ -255,9 +255,9 @@ const (
 	// Use double quote to escape keyword in Mysql query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
 
-	// FlagLogPluginRequests
-	// Logs all plugin requests
-	FlagLogPluginRequests = "logPluginRequests"
+	// FlagDatasourceLogger
+	// Logs all datasource requests
+	FlagDatasourceLogger = "datasourceLogger"
 
 	// FlagAccessControlOnCall
 	// Access control primitives for OnCall

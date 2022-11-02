@@ -341,8 +341,8 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "logPluginRequests",
-			Description: "Logs all plugin requests",
+			Name:        "datasourceLogger",
+			Description: "Logs all datasource requests",
 		},
 		{
 			Name:            "accessControlOnCall",
