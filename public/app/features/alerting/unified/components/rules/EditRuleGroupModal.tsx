@@ -37,7 +37,7 @@ function ForError({ message }: { message: string }) {
   return <Badge color="orange" icon="exclamation-triangle" text={'Error'} tooltip={message} />;
 }
 
-const getNumberEvaluationsToStartAlerting = (forDuration: string, currentEvaluation: string) => {
+export const getNumberEvaluationsToStartAlerting = (forDuration: string, currentEvaluation: string) => {
   const evalNumberMs = safeParseDurationstr(currentEvaluation);
   const forNumber = safeParseDurationstr(forDuration);
   if (evalNumberMs === 0) {
