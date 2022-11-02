@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type sqlStore struct {
@@ -113,17 +114,17 @@ func (ss *sqlStore) GetParents(ctx context.Context, cmd *folder.GetParentsQuery)
 			SELECT * FROM folder WHERE uid = ? AND org_id = ?
 			UNION ALL SELECT f.* FROM folder f INNER JOIN RecQry r ON f.uid = r.parent_uid and f.org_id = r.org_id
 		)
-		SELECT * FROM RecQry WHERE uid != ?;
+		SELECT * FROM RecQry;
 	`
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		err := sess.SQL(recQuery, cmd.UID, cmd.OrgID, cmd.UID).Find(&folders)
+		err := sess.SQL(recQuery, cmd.UID, cmd.OrgID).Find(&folders)
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to get folder parents: %w", err)
 		}
 		return nil
 	})
-	return folders, err
+	return util.Reverse(folders[1:]), err
 }
 
 func (ss *sqlStore) GetChildren(ctx context.Context, cmd *folder.GetTreeQuery) ([]*folder.Folder, error) {
