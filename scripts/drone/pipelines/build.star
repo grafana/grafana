@@ -30,6 +30,7 @@ load(
     'upload_packages_step',
     'upload_cdn_step',
     'verify_gen_cue_step',
+    'verify_gen_jsonnet_step',
     'test_a11y_frontend_step',
     'trigger_oss',
     'betterer_frontend_step',
@@ -49,6 +50,7 @@ def build_e2e(trigger, ver_mode, edition):
         download_grabpl_step(),
         compile_build_cmd(),
         verify_gen_cue_step(edition="oss"),
+        verify_gen_jsonnet_step(edition="oss"),
         wire_install_step(),
         yarn_install_step(),
     ]

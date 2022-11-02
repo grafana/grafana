@@ -178,7 +178,6 @@ devenv: devenv-down ## Start optional services, e.g. postgres, prometheus, and e
 	docker-compose up -d --build
 endif
 
-
 devenv-down: ## Stop optional services.
 	@cd devenv; \
 	test -f docker-compose.yaml && \

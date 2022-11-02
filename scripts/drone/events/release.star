@@ -38,6 +38,7 @@ load(
     'publish_grafanacom_step',
     'upload_cdn_step',
     'verify_gen_cue_step',
+    'verify_gen_jsonnet_step',
     'publish_images_step',
     'publish_linux_packages_step',
     'trigger_oss',
@@ -206,7 +207,7 @@ def get_oss_pipelines(trigger, ver_mode):
             test_backend(trigger, ver_mode),
             pipeline(
                 name='{}-oss-integration-tests'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(edition), wire_install_step(), ] + integration_test_steps,
+                steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(edition), verify_gen_jsonnet_step(edition), wire_install_step(), ] + integration_test_steps,
                 environment=environment, volumes=volumes,
             )
         ])
@@ -308,7 +309,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
         ]
     }
 
-    for step in [wire_install_step(), yarn_install_step(edition), verify_gen_cue_step(edition)]:
+    for step in [wire_install_step(), yarn_install_step(edition), verify_gen_cue_step(edition), verify_gen_jsonnet_step(edition)]:
         step.update(deps_on_clone_enterprise_step)
         init_steps.extend([step])
 
@@ -333,7 +334,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
             test_backend(trigger, ver_mode, edition2),
             pipeline(
                 name='{}-enterprise-integration-tests'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=[download_grabpl_step(), identify_runner_step(), clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode), verify_gen_cue_step(edition), wire_install_step()] + integration_test_steps + [redis_integration_tests_step(), memcached_integration_tests_step()],
+                steps=[download_grabpl_step(), identify_runner_step(), clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode), verify_gen_cue_step(edition), verify_gen_jsonnet_step(edition), wire_install_step()] + integration_test_steps + [redis_integration_tests_step(), memcached_integration_tests_step()],
                 environment=environment, volumes=volumes,
             ),
         ])

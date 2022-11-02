@@ -203,6 +203,14 @@ steps:
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
+- commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
@@ -342,6 +350,14 @@ steps:
   depends_on: []
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -643,6 +659,14 @@ steps:
   depends_on: []
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -1036,6 +1060,14 @@ steps:
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
+- commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
@@ -1168,6 +1200,14 @@ steps:
   depends_on: []
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -1569,6 +1609,14 @@ steps:
   depends_on: []
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -2276,6 +2324,14 @@ steps:
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
+- commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
@@ -2360,6 +2416,14 @@ steps:
   depends_on: []
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -2561,6 +2625,15 @@ steps:
   - init-enterprise
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - ./bin/build build-backend --jobs 8 --edition enterprise ${DRONE_TAG}
   depends_on:
@@ -2981,6 +3054,15 @@ steps:
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
+- commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
@@ -3079,6 +3161,15 @@ steps:
   - init-enterprise
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -3196,6 +3287,15 @@ steps:
   - init-enterprise
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -4356,6 +4456,14 @@ steps:
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
+- commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
@@ -4437,6 +4545,14 @@ steps:
   depends_on: []
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -4627,6 +4743,15 @@ steps:
   - init-enterprise
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - ./bin/build build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
@@ -5037,6 +5162,15 @@ steps:
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
+- commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
@@ -5131,6 +5265,15 @@ steps:
   - init-enterprise
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -5244,6 +5387,15 @@ steps:
   - init-enterprise
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -5612,6 +5764,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: d3b06a42ab277a3f065d4fd6e0367cb67aac08c60d4bb20438d1ba5f64d369cc
+hmac: fd2607ba579d724eab902dd953f3fe88d36edbd37cd187d9fca23e783dec3660
 
 ...
