@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import React, { FormEvent, useCallback, useState } from 'react';
-import { Trans } from 'src/utils/i18n';
 
 import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
+import { Trans, t } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
@@ -112,7 +112,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
             <div className={styles.body}>
               <CustomScrollbar className={styles.leftSide} hideHorizontalTrack>
                 <TimeRangeList
-                  title="Example time ranges"
+                  title={t('time-picker.time-range.example-title', 'Example time ranges')}
                   options={validOptions}
                   onChange={onChangeTimeOption}
                   value={timeOption}

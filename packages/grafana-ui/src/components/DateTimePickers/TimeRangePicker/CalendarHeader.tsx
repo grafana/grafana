@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { Trans } from 'src/utils/i18n';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes';
+import { Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
 
 import { TimePickerCalendarProps } from './TimePickerCalendar';
