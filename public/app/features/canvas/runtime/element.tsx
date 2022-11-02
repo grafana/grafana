@@ -454,8 +454,8 @@ export class ElementState implements LayerElement {
       <div
         key={this.UID}
         ref={this.initElement}
-        onMouseEnter={scene?.handleMouseEnter}
-        onMouseLeave={scene?.handleMouseLeave}
+        onMouseEnter={!isSelected ? scene?.handleMouseEnter : undefined}
+        onMouseLeave={!isSelected ? scene?.handleMouseLeave : undefined}
       >
         <item.display
           key={`${this.UID}/${this.revId}`}
