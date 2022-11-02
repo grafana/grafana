@@ -257,7 +257,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definiti
 	upstreamModel, err := ar.UpstreamModel()
 	upstreamModel.OrgID = c.OrgId
 	if err != nil {
-		ErrResp(http.StatusBadRequest, err, "")
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), upstreamModel, alerting_models.ProvenanceAPI, c.UserId)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
