@@ -31,20 +31,20 @@ const MINUTE = '1m';
 interface AlertInfo {
   alertName: string;
   forDuration: string;
-  numberEvaluations: number;
+  evaluationsToFire: number;
 }
 function ForError({ message }: { message: string }) {
   return <Badge color="orange" icon="exclamation-triangle" text={'Error'} tooltip={message} />;
 }
 
 const getNumberEvaluationsToStartAlerting = (forDuration: string, currentEvaluation: string) => {
-  const evalNumber = safeParseDurationstr(currentEvaluation);
+  const evalNumberMs = safeParseDurationstr(currentEvaluation);
   const forNumber = safeParseDurationstr(forDuration);
-  if (evalNumber === 0) {
+  if (evalNumberMs === 0) {
     return 0;
   } else {
-    const evaluationsBeforeCeil = forNumber / evalNumber;
-    return evaluationsBeforeCeil < 1 ? 0 : Math.ceil(forNumber / evalNumber) + 1;
+    const evaluationsBeforeCeil = forNumber / evalNumberMs;
+    return evaluationsBeforeCeil < 1 ? 0 : Math.ceil(forNumber / evalNumberMs) + 1;
   }
 };
 
@@ -55,20 +55,20 @@ export const getAlertInfo = (alert: RulerRuleDTO, currentEvaluation: string): Al
   const emptyAlert: AlertInfo = {
     alertName: '',
     forDuration: '0s',
-    numberEvaluations: 0,
+    evaluationsToFire: 0,
   };
   if (isRulerGrafanaRuleDTO(alert)) {
     return {
       alertName: alert.grafana_alert.title,
       forDuration: alert.for,
-      numberEvaluations: getNumberEvaluationsToStartAlerting(alert.for, currentEvaluation),
+      evaluationsToFire: getNumberEvaluationsToStartAlerting(alert.for, currentEvaluation),
     };
   }
   if (isAlertingRuleDTO(alert)) {
     return {
       alertName: alert.alert,
       forDuration: alert.for ?? '1m',
-      numberEvaluations: getNumberEvaluationsToStartAlerting(alert.for ?? '1m', currentEvaluation),
+      evaluationsToFire: getNumberEvaluationsToStartAlerting(alert.for ?? '1m', currentEvaluation),
     };
   }
   return emptyAlert;
@@ -97,7 +97,7 @@ export const getIntervalForGroup = (
   folder: string
 ) => {
   const folderObj: Array<RulerRuleGroupDTO<RulerRuleDTO>> = rulerRules ? rulerRules[folder] : [];
-  const groupObj = folderObj?.find((rule) => rule.name === group);
+  const groupObj = folderObj?.find((rulerRuleGroup) => rulerRuleGroup.name === group);
 
   const interval = groupObj?.interval ?? MINUTE;
   return interval;
@@ -164,7 +164,7 @@ export const RulesForGroupTable = ({
       {
         id: 'numberEvaluations',
         label: '#Evaluations',
-        renderCell: ({ data: { numberEvaluations } }) => {
+        renderCell: ({ data: { evaluationsToFire: numberEvaluations } }) => {
           if (!isValidEvaluation(currentInterval)) {
             return <ForError message={'Invalid evaluation interval format'} />;
           }
