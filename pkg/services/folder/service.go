@@ -9,8 +9,7 @@ import (
 
 type Service interface {
 	GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error)
-	// GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error)
-	GetFolderByID(ctx context.Context, cmd *GetFolderQuery) (*Folder, error)
+	GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error)
 	GetFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*models.Folder, error)
 	GetFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*models.Folder, error)
 	CreateFolder(ctx context.Context, cmd *CreateFolderCommand) (*Folder, error)

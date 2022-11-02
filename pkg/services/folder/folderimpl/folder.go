@@ -87,10 +87,9 @@ func (s *Service) GetFolders(ctx context.Context, user *user.SignedInUser, orgID
 	return folders, nil
 }
 
-func (s *Service) GetFolderByID(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
-	user, err := appcontext.User(ctx)
-	if *cmd.ID == 0 {
-		return &folder.Folder{ID: cmd.ID, Title: "General"}, nil
+func (s *Service) GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error) {
+	if id == 0 {
+		return &models.Folder{Id: id, Title: "General"}, nil
 	}
 
 	dashFolder, err := s.dashboardStore.GetFolderByID(ctx, orgID, id)

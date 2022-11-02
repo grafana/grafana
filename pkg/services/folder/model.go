@@ -32,7 +32,7 @@ type Folder struct {
 	HasACL    bool
 }
 
-// NewFolder takes a title and returns a Folder with the Created and Updated
+// NewFolder tales a title and returns a Folder with the Created and Updated
 // fields set to the current time.
 func NewFolder(title string, description string) *Folder {
 	return &Folder{
