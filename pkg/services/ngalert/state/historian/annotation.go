@@ -33,11 +33,11 @@ func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashb
 	}
 }
 
-func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmodels.AlertRule, labels data.Labels, result *eval.Result, evaluatedAt time.Time, currentData, previousData state.InstanceStateAndReason) {
+func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmodels.AlertRule, currentState *state.State, evaluatedAt time.Time, currentData, previousData state.InstanceStateAndReason) {
 	logger := h.log.New(rule.GetKey().LogContext()...)
 	logger.Debug("Alert state changed creating annotation", "newState", currentData.String(), "oldState", previousData.String())
 
-	annotationText, annotationData := buildAnnotationTextAndData(rule, labels, result)
+	annotationText, annotationData := buildAnnotationTextAndData(rule, currentState)
 	item := &annotations.Item{
 		AlertId:   rule.ID,
 		OrgId:     rule.OrgID,
@@ -74,24 +74,24 @@ func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmode
 	}
 }
 
-func buildAnnotationTextAndData(rule *ngmodels.AlertRule, labels data.Labels, result *eval.Result) (string, *simplejson.Json) {
+func buildAnnotationTextAndData(rule *ngmodels.AlertRule, currentState *state.State) (string, *simplejson.Json) {
 	jsonData := simplejson.New()
 	var value string
 
-	switch result.State {
+	switch currentState.State {
 	case eval.Error:
-		if result.Error == nil {
+		if currentState.Error == nil {
 			jsonData.Set("error", nil)
 		} else {
-			jsonData.Set("error", result.Error.Error())
+			jsonData.Set("error", currentState.Error.Error())
 		}
 		value = "Error"
 	case eval.NoData:
 		jsonData.Set("noData", true)
 		value = "No data"
 	default:
-		keys := make([]string, 0, len(result.Values))
-		for k := range result.Values {
+		keys := make([]string, 0, len(currentState.Values))
+		for k := range currentState.Values {
 			keys = append(keys, k)
 		}
 		sort.Strings(keys)
@@ -99,14 +99,14 @@ func buildAnnotationTextAndData(rule *ngmodels.AlertRule, labels data.Labels, re
 		values := map[string]float64{}
 		var strValues []string
 		for _, k := range keys {
-			values[k] = *result.Values[k].Value
-			strValues = append(strValues, fmt.Sprintf("%s=%f", k, *result.Values[k].Value))
+			values[k] = currentState.Values[k]
+			strValues = append(strValues, fmt.Sprintf("%s=%f", k, currentState.Values[k]))
 		}
 		jsonData.Set("values", simplejson.NewFromAny(values))
 		value = strings.Join(strValues, ", ")
 	}
 
-	labels = removePrivateLabels(labels)
+	labels := removePrivateLabels(currentState.Labels)
 	return fmt.Sprintf("%s {%s} - %s", rule.Title, labels.String(), value), jsonData
 }
 
