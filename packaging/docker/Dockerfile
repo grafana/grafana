@@ -1,5 +1,19 @@
+######################## IMPORTANT ########################
+#
+# There are 4 Dockerfiles which must be kept in sync:
+#
+# - Dockerfile
+# - Dockerfile.ubuntu
+# - packaging/docker/Dockerfile
+# - packaging/docker/ubuntu.Dockerfile
+#
+###########################################################
+
 ARG BASE_IMAGE=alpine:3.15
-FROM ${BASE_IMAGE}
+
+FROM ${BASE_IMAGE} as grafana-builder
+
+WORKDIR /tmp/grafana
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
 
@@ -9,14 +23,17 @@ RUN apk add --no-cache tar
 COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
 # Change to tar xfzv to make tar print every file it extracts
-RUN mkdir /tmp/grafana && tar xzf /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
+RUN tar xzf /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
 
+# Final stage
 FROM ${BASE_IMAGE}
+
+LABEL maintainer="Grafana team <hello@grafana.com>"
 
 ARG GF_UID="472"
 ARG GF_GID="0"
 
-ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+ENV PATH="/usr/share/grafana/bin:$PATH" \
     GF_PATHS_CONFIG="/etc/grafana/grafana.ini" \
     GF_PATHS_DATA="/var/lib/grafana" \
     GF_PATHS_HOME="/usr/share/grafana" \
@@ -26,8 +43,9 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 
 WORKDIR $GF_PATHS_HOME
 
-RUN apk add --no-cache ca-certificates bash tzdata musl-utils
-RUN apk info -vv | sort
+# Install dependencies
+RUN apk add --no-cache ca-certificates bash tzdata musl-utils && \
+    apk info -vv | sort
 
 # Oracle Support for x86_64 only
 RUN if [ `arch` = "x86_64" ]; then \
@@ -44,13 +62,12 @@ RUN if [ `arch` = "x86_64" ]; then \
       rm -f /etc/ld.so.cache; \
     fi
 
-COPY --from=0 /tmp/grafana "$GF_PATHS_HOME"
+COPY --from=grafana-builder /tmp/grafana .
 
 RUN if [ ! $(getent group "$GF_GID") ]; then \
       addgroup -S -g $GF_GID grafana; \
-    fi
-
-RUN export GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
+    fi && \
+    GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
     mkdir -p "$GF_PATHS_HOME/.aws" && \
     adduser -S -u $GF_UID -G "$GF_GID_NAME" grafana && \
     mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
@@ -62,8 +79,8 @@ RUN export GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
              "$GF_PATHS_LOGS" \
              "$GF_PATHS_PLUGINS" \
              "$GF_PATHS_DATA" && \
-    cp "$GF_PATHS_HOME/conf/sample.ini" "$GF_PATHS_CONFIG" && \
-    cp "$GF_PATHS_HOME/conf/ldap.toml" /etc/grafana/ldap.toml && \
+    cp conf/sample.ini "$GF_PATHS_CONFIG" && \
+    cp conf/ldap.toml /etc/grafana/ldap.toml && \
     chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
     chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
 

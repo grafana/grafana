@@ -1,49 +1,60 @@
+######################## IMPORTANT ########################
+#
+# There are 4 Dockerfiles which must be kept in sync:
+#
+# - Dockerfile
+# - Dockerfile.ubuntu
+# - packaging/docker/Dockerfile
+# - packaging/docker/ubuntu.Dockerfile
+#
+###########################################################
+
+ARG BASE_IMAGE=ubuntu:20.04
+
 FROM node:16-alpine3.15 as js-builder
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
-WORKDIR /usr/src/app/
+WORKDIR /tmp/grafana
 
-COPY package.json yarn.lock ./
-COPY packages packages
-COPY .yarnrc.yml ./
+COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
+COPY packages packages
 COPY plugins-bundled plugins-bundled
 
 RUN yarn install
 
 COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json .linguirc ./
 COPY public public
-COPY tools tools
 COPY scripts scripts
 COPY emails emails
 
 ENV NODE_ENV production
 RUN yarn build
 
-FROM golang:1.19.3 AS go-builder
+FROM golang:1.19.3 as go-builder
 
-WORKDIR /src/grafana
+WORKDIR /tmp/grafana
 
-COPY go.mod go.sum embed.go ./
-COPY Makefile build.go package.json ./
-COPY .bingo .bingo
-COPY pkg pkg/
-COPY cue.mod cue.mod/
-COPY packages/grafana-schema packages/grafana-schema/
-COPY public/app/plugins public/app/plugins/
+COPY go.mod go.sum embed.go Makefile build.go package.json ./
+COPY packages/grafana-schema packages/grafana-schema
+COPY public/app/plugins public/app/plugins
 COPY public/api-spec.json public/api-spec.json
+COPY pkg pkg
+COPY scripts scripts
+COPY cue.mod cue.mod
+COPY .bingo .bingo
 
-RUN go mod verify
-RUN make build-go
+RUN go mod verify && \
+    make build-go
 
-FROM ubuntu:20.04
+# Final stage
+FROM ${BASE_IMAGE}
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
-EXPOSE 3000
 
 ARG GF_UID="472"
-ARG GF_GID="472"
+ARG GF_GID="0"
 
 ENV PATH="/usr/share/grafana/bin:$PATH" \
     GF_PATHS_CONFIG="/etc/grafana/grafana.ini" \
@@ -55,15 +66,23 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
 
 WORKDIR $GF_PATHS_HOME
 
-COPY conf conf
+# Install dependencies
+# We need curl in the image
+RUN DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && \
+    apt-get install -y ca-certificates curl tzdata && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
 
-# curl should be part of the image
-RUN apt-get update && apt-get install -y ca-certificates curl
+COPY conf ./conf
 
-RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
-  addgroup --system --gid $GF_GID grafana && \
-  adduser --uid $GF_UID --system --ingroup grafana grafana && \
-  mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
+RUN if [ ! $(getent group "$GF_GID") ]; then \
+      addgroup --system --gid $GF_GID grafana; \
+    fi && \
+    GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
+    mkdir -p "$GF_PATHS_HOME/.aws" && \
+    adduser --system --uid $GF_UID --ingroup "$GF_GID_NAME" grafana && \
+    mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
              "$GF_PATHS_PROVISIONING/dashboards" \
              "$GF_PATHS_PROVISIONING/notifiers" \
              "$GF_PATHS_PROVISIONING/plugins" \
@@ -74,14 +93,15 @@ RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
              "$GF_PATHS_DATA" && \
     cp conf/sample.ini "$GF_PATHS_CONFIG" && \
     cp conf/ldap.toml /etc/grafana/ldap.toml && \
-    chown -R grafana:grafana "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
+    chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
     chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
 
-COPY --from=go-builder /src/grafana/bin/*/grafana-server /src/grafana/bin/*/grafana-cli /grafana/bin/*/grafana bin/
-COPY --from=js-builder /usr/src/app/public public
-COPY --from=js-builder /usr/src/app/tools tools
+COPY --from=go-builder /tmp/grafana/bin/*/grafana-server /tmp/grafana/bin/*/grafana-cli /grafana/bin/*/grafana ./bin/
+COPY --from=js-builder /tmp/grafana/public ./public
 
-COPY packaging/docker/run.sh /
+EXPOSE 3000
 
-USER grafana
+COPY ./packaging/docker/run.sh /run.sh
+
+USER "$GF_UID"
 ENTRYPOINT [ "/run.sh" ]
