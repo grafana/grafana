@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React, { ReactNode } from 'react';
-import { Trans } from 'src/utils/i18n';
 
 import { TimeOption } from '@grafana/data';
 
@@ -53,9 +52,7 @@ export const TimeRangeList = (props: Props) => {
     <section aria-label={title}>
       <fieldset>
         <div className={styles.title}>
-          <TimePickerTitle>
-            <Trans i18nKey="time-picker.range-list.title">{title}</Trans>
-          </TimePickerTitle>
+          <TimePickerTitle>{title}</TimePickerTitle>
         </div>
         <Options {...props} />
       </fieldset>
