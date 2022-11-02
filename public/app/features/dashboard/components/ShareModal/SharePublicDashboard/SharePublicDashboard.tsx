@@ -101,6 +101,7 @@ export const SharePublicDashboard = (props: Props) => {
       isFetching,
     ]
   );
+  const isDeleteDisabled = isLoading || isFetching || isGetError;
 
   const onSavePublicConfig = () => {
     reportInteraction('grafana_dashboards_public_create_clicked');
@@ -209,6 +210,7 @@ export const SharePublicDashboard = (props: Props) => {
               </Button>
               {publicDashboard && hasWritePermissions && (
                 <DeletePublicDashboardButton
+                  disabled={isDeleteDisabled}
                   data-testid={selectors.DeleteButton}
                   onDismiss={onDismissDelete}
                   variant="destructive"

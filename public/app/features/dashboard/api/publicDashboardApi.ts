@@ -53,7 +53,7 @@ export const publicDashboardApi = createApi({
           dispatch(notifyApp(createErrorNotification(customError?.error?.data?.message)));
         }
       },
-      providesTags: ['Config'],
+      providesTags: (result, error, dashboardUid) => [{ type: 'Config', id: dashboardUid }],
     }),
     saveConfig: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({
@@ -71,7 +71,7 @@ export const publicDashboardApi = createApi({
           publicDashboardEnabled: data.isEnabled,
         });
       },
-      invalidatesTags: ['Config'],
+      invalidatesTags: (result, error, { payload }) => [{ type: 'Config', id: payload.dashboardUid }],
     }),
     listPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
       query: () => ({
@@ -105,7 +105,7 @@ export const publicDashboardApi = createApi({
           publicDashboardEnabled: false,
         });
       },
-      invalidatesTags: ['Config', 'PublicDashboards'],
+      invalidatesTags: (result, error, { dashboardUid }) => [{ type: 'Config', id: dashboardUid }, 'PublicDashboards'],
     }),
   }),
 });
