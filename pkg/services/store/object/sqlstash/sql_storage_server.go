@@ -49,8 +49,8 @@ func getReadSelect(r *object.ReadObjectRequest) string {
 	fields := []string{
 		`"key"`, `"kind"`, `"version"`,
 		`"size"`, `"etag"`, `"errors"`, // errors are always returned
-		`"created"`, `"created_by"`,
-		`"updated"`, `"updated_by"`,
+		`"created_at"`, `"created_by"`,
+		`"updated_at"`, `"updated_by"`,
 		`"sync_src"`, `"sync_time"`}
 
 	if r.WithBody {
@@ -63,8 +63,6 @@ func getReadSelect(r *object.ReadObjectRequest) string {
 }
 
 func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql.Rows, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
-	created := time.Now()
-	updated := time.Now()
 	key := "" // string (extract UID?)
 	var syncSrc sql.NullString
 	var syncTime sql.NullTime
@@ -76,8 +74,8 @@ func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql
 	args := []interface{}{
 		&key, &raw.GRN.Kind, &raw.Version,
 		&raw.Size, &raw.ETag, &summaryjson.errors,
-		&created, &raw.CreatedBy,
-		&updated, &raw.UpdatedBy,
+		&raw.Created, &raw.CreatedBy,
+		&raw.Updated, &raw.UpdatedBy,
 		&syncSrc, &syncTime,
 	}
 	if r.WithBody {
@@ -91,8 +89,6 @@ func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql
 	if err != nil {
 		return nil, err
 	}
-	raw.Created = created.UnixMilli()
-	raw.Updated = updated.UnixMilli()
 
 	if syncSrc.Valid || syncTime.Valid {
 		raw.Sync = &object.RawObjectSyncInfo{
@@ -175,7 +171,7 @@ func (s *sqlObjectServer) readFromHistory(ctx context.Context, r *object.ReadObj
 
 	fields := []string{
 		`"body"`, `"size"`, `"etag"`,
-		`"updated"`, `"updated_by"`,
+		`"updated_at"`, `"updated_by"`,
 	}
 
 	rows, err := s.sess.Query(ctx,
@@ -195,13 +191,11 @@ func (s *sqlObjectServer) readFromHistory(ctx context.Context, r *object.ReadObj
 	rsp := &object.ReadObjectResponse{
 		Object: raw,
 	}
-	updated := time.Now()
-	err = rows.Scan(&raw.Body, &raw.Size, &raw.ETag, &updated, &raw.UpdatedBy)
+	err = rows.Scan(&raw.Body, &raw.Size, &raw.ETag, &raw.Updated, &raw.UpdatedBy)
 	if err != nil {
 		return nil, err
 	}
 	// For versioned files, the created+updated are the same
-	raw.Updated = updated.UnixMilli()
 	raw.Created = raw.Updated
 	raw.CreatedBy = raw.UpdatedBy
 	raw.Version = r.Version // from the query
@@ -302,20 +296,23 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 
 	// Make sure all parent folders exist
 	if grn.Scope == models.ObjectStoreScopeDrive {
-		err = s.ensureFolders(ctx, grn)
+		//	err = s.ensureFolders(ctx, grn)
 		if err != nil {
 			return nil, err
 		}
 	}
 
+	forUpdate := "" // TODO, MYSQL/PosgreSQL can lock the row " FOR UPDATE"
+
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		rows, err := tx.Query(ctx, `SELECT "etag","version","updated","size" FROM object WHERE "key"=?`, key)
+
+		rows, err := tx.Query(ctx, "SELECT etag,version,updated_at,size FROM object WHERE `key`=?"+forUpdate, key)
 		if err != nil {
 			return err
 		}
 
 		isUpdate := false
-		timestamp := time.Now()
+		timestamp := time.Now().UnixMilli()
 		versionInfo := &object.ObjectVersionInfo{
 			Version: "1",
 			Comment: r.Comment,
@@ -323,13 +320,11 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 
 		// Has a result
 		if rows.Next() {
-			update := time.Now()
 			current := &object.ObjectVersionInfo{}
-			err = rows.Scan(&current.ETag, &current.Version, &update, &current.Size)
+			err = rows.Scan(&current.ETag, &current.Version, &current.Updated, &current.Size)
 			if err != nil {
 				return err
 			}
-			current.Updated = update.UnixMilli()
 
 			if current.ETag == etag {
 				rsp.Object = current // TODO more
@@ -341,7 +336,7 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 			// Increment the version
 			i, _ := strconv.ParseInt(current.Version, 0, 64)
 			if i < 1 {
-				i = timestamp.UnixMilli()
+				i = timestamp
 			}
 			versionInfo.Version = fmt.Sprintf("%d", i+1)
 		}
@@ -351,10 +346,10 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 
 		if isUpdate {
 			// Clear the labels+refs
-			if _, err := tx.Exec(ctx, `DELETE FROM object_labels WHERE "key"= ?`, key); err != nil {
+			if _, err := tx.Exec(ctx, "DELETE FROM object_labels WHERE `key`= ?", key); err != nil {
 				return err
 			}
-			if _, err := tx.Exec(ctx, `DELETE FROM object_ref WHERE "key"= ?`, key); err != nil {
+			if _, err := tx.Exec(ctx, "DELETE FROM object_ref WHERE `key`= ?", key); err != nil {
 				return err
 			}
 		}
@@ -362,13 +357,13 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 		// 1. Add the `object_history` values
 		versionInfo.Size = int64(len(body))
 		versionInfo.ETag = etag
-		versionInfo.Updated = timestamp.UnixMilli()
+		versionInfo.Updated = timestamp
 		versionInfo.UpdatedBy = store.GetUserIDString(modifier)
 		_, err = tx.Exec(ctx, `INSERT INTO object_history (`+
-			`"key", "version", "message", `+
-			`"size", "body", "etag", `+
-			`"updated", "updated_by") `+
-			`VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+			"`key`, `version`, `message`, "+
+			"`size`, `body`, `etag`, "+
+			"`updated_at`, `updated_by`) "+
+			"VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 			key, versionInfo.Version, versionInfo.Comment,
 			versionInfo.Size, body, versionInfo.ETag,
 			timestamp, versionInfo.UpdatedBy,
@@ -380,7 +375,7 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 		// 2. Add the labels rows
 		for k, v := range summary.model.Labels {
 			_, err = tx.Exec(ctx, `INSERT INTO object_labels (`+
-				`"key", "label", "value") `+
+				"`key`, `label`, `value`) "+
 				`VALUES (?, ?, ?)`,
 				key, k, v,
 			)
@@ -396,8 +391,8 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 				return err
 			}
 			_, err = tx.Exec(ctx, `INSERT INTO object_ref (`+
-				`"key", "kind", "type", "uid", `+
-				`"resolved_ok", "resolved_to", "resolved_warning", "resolved_time") `+
+				"`key`, `kind`, `type`, `uid`, "+
+				"`resolved_ok`, `resolved_to`, `resolved_warning`, `resolved_time`) "+
 				`VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 				key, ref.Kind, ref.Type, ref.UID,
 				resolved.OK, resolved.Key, resolved.Warning, resolved.Timestamp,
@@ -411,11 +406,12 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 		rsp.Object = versionInfo
 		if isUpdate {
 			rsp.Status = object.WriteObjectResponse_UPDATED
-			_, err = tx.Exec(ctx, `UPDATE object SET "body"=?, "size"=?, "etag"=?, "version"=?, `+
-				`"updated"=?, "updated_by"=?,`+
-				`"name"=?, "description"=?,`+
-				`"labels"=?, "fields"=?, "errors"=? `+
-				`WHERE "key"=?`,
+			_, err = tx.Exec(ctx, "UPDATE object SET "+
+				"`body`=?, `size`=?, `etag`=?, `version`=?, "+
+				"`updated_at`=?, `updated_by`=?,"+
+				"`name`=?, `description`=?,"+
+				"`labels`=?, `fields`=?, `errors`=? "+
+				"WHERE `key`=?",
 				body, versionInfo.Size, etag, versionInfo.Version,
 				timestamp, versionInfo.UpdatedBy,
 				summary.model.Name, summary.model.Description,
@@ -426,12 +422,12 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 		}
 
 		// Insert the new row
-		_, err = tx.Exec(ctx, `INSERT INTO object (`+
-			`"key", "parent_folder_key", "kind", "size", "body", "etag", "version",`+
-			`"updated", "updated_by", "created", "created_by",`+
-			`"name", "description",`+
-			`"labels", "fields", "errors") `+
-			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		_, err = tx.Exec(ctx, "INSERT INTO object ("+
+			"`key`, `parent_folder_key`, `kind`, `size`, `body`, `etag`, `version`,"+
+			"`updated_at`, `updated_by`, `created_at`, `created_by`,"+
+			"`name`, `description`,"+
+			"`labels`, `fields`, `errors`) "+
+			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 			key, getParentFolderKey(grn.Kind, key), grn.Kind, versionInfo.Size, body, etag, versionInfo.Version,
 			timestamp, versionInfo.UpdatedBy, timestamp, versionInfo.UpdatedBy, // created + updated are the same
 			summary.model.Name, summary.model.Description,
@@ -510,13 +506,12 @@ func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRe
 		return nil, fmt.Errorf("next page not supported yet")
 	}
 
-	query := `SELECT "version","size","etag","updated","updated_by","message"
+	query := `SELECT version,size,etag,updated_at,updated_by,message
 		FROM object_history
 		WHERE "key"=? ` + page + `
-		ORDER BY "updated" DESC LIMIT 100
+		ORDER BY updated_at DESC LIMIT 100
 	;`
 
-	timestamp := time.Now()
 	rows, err := s.sess.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -526,11 +521,10 @@ func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRe
 	}
 	for rows.Next() {
 		v := &object.ObjectVersionInfo{}
-		err := rows.Scan(&v.Version, &v.Size, &v.ETag, &timestamp, &v.UpdatedBy, &v.Comment)
+		err := rows.Scan(&v.Version, &v.Size, &v.ETag, &v.Updated, &v.UpdatedBy, &v.Comment)
 		if err != nil {
 			return nil, err
 		}
-		v.Updated = timestamp.UnixMilli()
 		rsp.Versions = append(rsp.Versions, v)
 	}
 	return rsp, err
@@ -544,7 +538,7 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 
 	fields := []string{
 		`"key"`, `"kind"`, `"version"`, `"errors"`, // errors are always returned
-		`"updated"`, `"updated_by"`,
+		`"updated_at"`, `"updated_by"`,
 		`"name"`, `"description"`, // basic summary
 	}
 
@@ -599,7 +593,6 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 		return nil, err
 	}
 	key := ""
-	updated := time.Now()
 
 	rsp := &object.ObjectSearchResponse{}
 	for rows.Next() {
@@ -610,7 +603,7 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 
 		args := []interface{}{
 			&key, &result.GRN.Kind, &result.Version, &summaryjson.errors,
-			&updated, &result.UpdatedBy,
+			&result.Updated, &result.UpdatedBy,
 			&result.Name, &summaryjson.description,
 		}
 		if r.WithBody {
@@ -633,7 +626,6 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 			return rsp, err
 		}
 		result.GRN = info.GRN
-		result.Updated = updated.UnixMilli()
 
 		// found one more than requested
 		if len(rsp.Results) >= selectQuery.limit {
@@ -670,14 +662,16 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 func (s *sqlObjectServer) ensureFolders(ctx context.Context, objectgrn *object.GRN) error {
 	uid := objectgrn.UID
 	idx := strings.LastIndex(uid, "/")
-	grn := &object.GRN{
-		TenantId: objectgrn.TenantId,
-		Scope:    objectgrn.Scope,
-		Kind:     models.StandardKindFolder,
-	}
+	var missing []*object.GRN
+
 	for idx > 0 {
 		parent := uid[:idx]
-		grn.UID = parent
+		grn := &object.GRN{
+			TenantId: objectgrn.TenantId,
+			Scope:    objectgrn.Scope,
+			Kind:     models.StandardKindFolder,
+			UID:      parent,
+		}
 		fr, err := s.router.Route(ctx, grn)
 		if err != nil {
 			return err
@@ -689,25 +683,29 @@ func (s *sqlObjectServer) ensureFolders(ctx context.Context, objectgrn *object.G
 			return err
 		}
 		if !rows.Next() {
-			f := &folder.Model{
-				Name: store.GuessNameFromUID(fr.GRN.UID),
-			}
-			fmt.Printf("CREATE:%s :: %s\n", fr.Key, f.Name)
-			body, err := json.Marshal(f)
-			if err != nil {
-				return err
-			}
-
-			_, err = s.Write(ctx, &object.WriteObjectRequest{
-				GRN:  grn,
-				Body: body,
-			})
-			if err != nil {
-				return err
-			}
+			missing = append([]*object.GRN{grn}, missing...)
 		}
 		_ = rows.Close()
 		idx = strings.LastIndex(parent, "/")
+	}
+
+	// walk though each missing element
+	for _, grn := range missing {
+		f := &folder.Model{
+			Name: store.GuessNameFromUID(grn.UID),
+		}
+		fmt.Printf("CREATE:%s\n", grn.UID)
+		body, err := json.Marshal(f)
+		if err != nil {
+			return err
+		}
+		_, err = s.Write(ctx, &object.WriteObjectRequest{
+			GRN:  grn,
+			Body: body,
+		})
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
