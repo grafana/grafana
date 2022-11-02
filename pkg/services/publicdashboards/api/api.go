@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -127,12 +128,12 @@ func (api *Api) CreatePublicDashboard(c *models.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
-		api.handleError(c.Req.Context(), http.StatusBadRequest, "SavePublicDashboard: invalid dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
+		return api.handleError(c.Req.Context(), http.StatusBadRequest, "SavePublicDashboard: invalid dashboardUid", dashboards.ErrDashboardIdentifierInvalid)
 	}
 
 	pubdash := &PublicDashboard{}
 	if err := web.Bind(c.Req, pubdash); err != nil {
-		return response.Error(http.StatusBadRequest, "CreatePublicDashboard: bad request data", err)
+		return api.handleError(c.Req.Context(), http.StatusBadRequest, "CreatePublicDashboard: bad request data", err)
 	}
 
 	// Always set the orgID and userID from the session
@@ -159,17 +160,21 @@ func (api *Api) UpdatePublicDashboard(c *models.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
-		api.handleError(c.Req.Context(), http.StatusBadRequest, "UpdatePublicDashboard: no dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
+		return api.handleError(c.Req.Context(), http.StatusBadRequest, "UpdatePublicDashboard: no dashboardUid", dashboards.ErrDashboardIdentifierInvalid)
 	}
 
+	fmt.Println("POTATO 1")
 	pubdash := &PublicDashboard{}
 	if err := web.Bind(c.Req, pubdash); err != nil {
-		return response.Error(http.StatusBadRequest, "UpdatePublicDashboard: bad request data", err)
+		return api.handleError(c.Req.Context(), http.StatusBadRequest, "UpdatePublicDashboard: bad request data", err)
 	}
 
+	fmt.Println("POTATO 2")
 	if pubdash.Uid == "" {
-		return response.Error(http.StatusBadRequest, "UpdatePublicDashboard: missing public dashboard uid", ErrPublicDashboardIdentifierNotSet)
+		return api.handleError(c.Req.Context(), http.StatusBadRequest, "UpdatePublicDashboard: missing public dashboard uid", ErrPublicDashboardIdentifierNotSet)
 	}
+
+	fmt.Println("POTATO 3")
 
 	// Always set the orgID and userID from the session
 	pubdash.OrgId = c.OrgID
@@ -183,8 +188,10 @@ func (api *Api) UpdatePublicDashboard(c *models.ReqContext) response.Response {
 	// Save the public dashboard
 	pubdash, err := api.PublicDashboardService.Update(c.Req.Context(), c.SignedInUser, &dto)
 	if err != nil {
-		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "UpdatePublicDashboard: failed to save public dashboard", err)
+		fmt.Println("POTATO 4")
+		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "UpdatePublicDashboard: failed to update public dashboard", err)
 	}
+	fmt.Println("POTATO 5")
 
 	return response.JSON(http.StatusOK, pubdash)
 }
@@ -218,7 +225,8 @@ func (api *Api) handleError(ctx context.Context, code int, message string, err e
 		return response.Error(publicDashboardErr.StatusCode, publicDashboardErr.Error(), publicDashboardErr)
 	}
 
-	// handle dashboard errors as well
+	// NOTE this code may never hit as it always casts to public dashboard error
+	// handle dashboard errors
 	var dashboardErr dashboards.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
 		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), dashboardErr)
