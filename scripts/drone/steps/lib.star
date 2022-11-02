@@ -1039,7 +1039,7 @@ def publish_linux_packages_step(edition, package_manager='deb'):
             'secret_access_key': from_secret('packages_secret_access_key'),
             'service_account_json': from_secret('packages_service_account'),
             'target_bucket': 'grafana-packages',
-            'deb_distribution': 'stable',
+            'deb_distribution': 'auto',
             'gpg_passphrase': from_secret('packages_gpg_passphrase'),
             'gpg_public_key': from_secret('packages_gpg_public_key'),
             'gpg_private_key': from_secret('packages_gpg_private_key'),

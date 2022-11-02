@@ -3559,7 +3559,7 @@ steps:
   settings:
     access_key_id:
       from_secret: packages_access_key_id
-    deb_distribution: stable
+    deb_distribution: auto
     gpg_passphrase:
       from_secret: packages_gpg_passphrase
     gpg_private_key:
@@ -3581,7 +3581,7 @@ steps:
   settings:
     access_key_id:
       from_secret: packages_access_key_id
-    deb_distribution: stable
+    deb_distribution: auto
     gpg_passphrase:
       from_secret: packages_gpg_passphrase
     gpg_private_key:
@@ -3659,7 +3659,7 @@ steps:
   settings:
     access_key_id:
       from_secret: packages_access_key_id
-    deb_distribution: stable
+    deb_distribution: auto
     gpg_passphrase:
       from_secret: packages_gpg_passphrase
     gpg_private_key:
@@ -3681,7 +3681,7 @@ steps:
   settings:
     access_key_id:
       from_secret: packages_access_key_id
-    deb_distribution: stable
+    deb_distribution: auto
     gpg_passphrase:
       from_secret: packages_gpg_passphrase
     gpg_private_key:
@@ -5208,6 +5208,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: bb96677e0e3c1d25e4f91dd7f7752d0f0135002f27363c7e9e4310ec5276eb45
+hmac: 61544f9437501dccedc793eadc13d6d9e0d29d3f658e6d49f14a2125f8cb1c9a
 
 ...
