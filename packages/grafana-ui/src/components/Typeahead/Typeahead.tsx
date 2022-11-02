@@ -162,7 +162,7 @@ export class Typeahead extends PureComponent<Props, State> {
 
     return (
       <Portal origin={origin} isOpen={isOpen} style={this.menuPosition}>
-        <ul className="typeahead" data-testid="typeahead">
+        <ul role="menu" className="typeahead" data-testid="typeahead">
           <FixedSizeList
             ref={this.listRef}
             itemCount={allItems.length}
