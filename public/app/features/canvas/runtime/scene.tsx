@@ -25,6 +25,7 @@ import {
   getScaleDimensionFromData,
   getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
+import { ArrowAnchors } from 'app/plugins/panel/canvas/ArrowAnchors';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/CanvasContextMenu';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
@@ -608,11 +609,6 @@ export class Scene {
   render() {
     const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
 
-    // TODO: Break arrow UI / logic into separate component
-    // TODO: Figure out green highlight UX from draw.io
-    const halfSize = 2.5;
-    const anchorImage =
-      'data:image/svg+xml;base64,PCFET0NUWVBFIHN2ZyBQVUJMSUMgIi0vL1czQy8vRFREIFNWRyAxLjEvL0VOIiAiaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkIj48c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSI1cHgiIGhlaWdodD0iNXB4IiB2ZXJzaW9uPSIxLjEiPjxwYXRoIGQ9Im0gMCAwIEwgNSA1IE0gMCA1IEwgNSAwIiBzdHJva2Utd2lkdGg9IjIiIHN0eWxlPSJzdHJva2Utb3BhY2l0eTowLjQiIHN0cm9rZT0iI2ZmZmZmZiIvPjxwYXRoIGQ9Im0gMCAwIEwgNSA1IE0gMCA1IEwgNSAwIiBzdHJva2U9IiMyOWI2ZjIiLz48L3N2Zz4=';
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
         {this.root.render()}
@@ -621,185 +617,7 @@ export class Scene {
             <CanvasContextMenu scene={this} />
           </Portal>
         )}
-        <div
-          style={{
-            position: 'absolute',
-            display: 'none',
-          }}
-          ref={this.setArrowAnchorRef}
-        >
-          <ellipse
-            cx="865"
-            cy="633"
-            rx="8"
-            ry="8"
-            fillOpacity="0.3"
-            fill="#00ff00"
-            stroke="#00ff00"
-            strokeOpacity="0.3"
-            pointerEvents="none"
-          />
-          <img
-            alt="arrow anchor"
-            id="tl"
-            className={this.styles.anchor}
-            style={{
-              top: `-${halfSize}px`,
-              left: `-${halfSize}px`,
-            }}
-            src={anchorImage}
-          />
-          <img
-            alt="arrow anchor"
-            id="ttl"
-            className={this.styles.anchor}
-            style={{
-              top: `-${halfSize}px`,
-              left: `calc(25% - ${halfSize}px)`,
-            }}
-            src={anchorImage}
-          />
-          <img
-            alt="arrow anchor"
-            id="t"
-            className={this.styles.anchor}
-            style={{
-              left: `calc(50% - ${halfSize}px)`,
-              top: `-${halfSize}px`,
-            }}
-            src={anchorImage}
-          />
-          <img
-            alt="arrow anchor"
-            id="ttr"
-            className={this.styles.anchor}
-            style={{
-              left: `calc(75% - ${halfSize}px)`,
-              top: `-${halfSize}px`,
-            }}
-            src={anchorImage}
-          />
-          <img
-            alt="arrow anchor"
-            id="tr"
-            className={this.styles.anchor}
-            style={{
-              right: `-${halfSize}px`,
-              top: `-${halfSize}px`,
-            }}
-            src={anchorImage}
-          />
-          <img
-            alt="arrow anchor"
-            id="rrt"
-            className={this.styles.anchor}
-            style={{
-              top: `calc(75% - ${halfSize}px)`,
-              right: `-${halfSize}px`,
-            }}
-            src={anchorImage}
-          />
-          <img
-            alt="arrow anchor"
-            id="r"
-            className={this.styles.anchor}
-            style={{
-              top: `calc(50% - ${halfSize}px)`,
-              right: `-${halfSize}px`,
-            }}
-            src={anchorImage}
-          />
-          <img
-            alt="arrow anchor"
-            id="rrb"
-            className={this.styles.anchor}
-            style={{
-              top: `calc(25% - ${halfSize}px)`,
-              right: `-${halfSize}px`,
-            }}
-            src={anchorImage}
-          />
-          <img
-            alt="arrow anchor"
-            id="br"
-            className={this.styles.anchor}
-            style={{
-              right: `-${halfSize}px`,
-              bottom: `-${halfSize}px`,
-            }}
-            src={anchorImage}
-          />
-          <img
-            alt="arrow anchor"
-            id="bbr"
-            className={this.styles.anchor}
-            style={{
-              left: `calc(75% - ${halfSize}px)`,
-              bottom: `-${halfSize}px`,
-            }}
-            src={anchorImage}
-          />
-          <img
-            alt="arrow anchor"
-            id="b"
-            className={this.styles.anchor}
-            style={{
-              left: `calc(50% - ${halfSize}px)`,
-              bottom: `-${halfSize}px`,
-            }}
-            src={anchorImage}
-          />
-          <img
-            alt="arrow anchor"
-            id="bbl"
-            className={this.styles.anchor}
-            style={{
-              left: `calc(25% - ${halfSize}px)`,
-              bottom: `-${halfSize}px`,
-            }}
-            src={anchorImage}
-          />
-          <img
-            alt="arrow anchor"
-            id="bl"
-            className={this.styles.anchor}
-            style={{
-              left: `-${halfSize}px`,
-              bottom: `-${halfSize}px`,
-            }}
-            src={anchorImage}
-          />
-          <img
-            alt="arrow anchor"
-            id="llb"
-            className={this.styles.anchor}
-            style={{
-              top: `calc(75% - ${halfSize}px)`,
-              left: `-${halfSize}px`,
-            }}
-            src={anchorImage}
-          />
-          <img
-            alt="arrow anchor"
-            id="l"
-            className={this.styles.anchor}
-            style={{
-              top: `calc(50% - ${halfSize}px)`,
-              left: `-${halfSize}px`,
-            }}
-            src={anchorImage}
-          />
-          <img
-            alt="arrow anchor"
-            id="llt"
-            className={this.styles.anchor}
-            style={{
-              top: `calc(25% - ${halfSize}px)`,
-              left: `-${halfSize}px`,
-            }}
-            src={anchorImage}
-          />
-        </div>
+        <ArrowAnchors setRef={this.setArrowAnchorRef} />
       </div>
     );
   }
@@ -812,14 +630,5 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   `,
   selected: css`
     z-index: 999 !important;
-  `,
-  anchor: css`
-    position: absolute;
-    cursor: pointer;
-    width: 5px;
-    height: 5px;
-    &:hover {
-      background-color: 'green';
-    }
   `,
 }));
