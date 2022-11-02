@@ -261,7 +261,7 @@ func (e *objectStoreJob) getDashboards(ctx context.Context) ([]dashInfo, error) 
 	e.broadcaster(e.status)
 
 	dash := make([]dashInfo, 0)
-	rows, err := e.sess.Query(ctx, "SELECT org_id,uid,data,updated_by FROM dashboard WHERE is_folder=0")
+	rows, err := e.sess.Query(ctx, "SELECT org_id,uid,data,updated_by FROM dashboard WHERE is_folder=false")
 	if err != nil {
 		return nil, err
 	}
