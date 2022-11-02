@@ -250,6 +250,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     placement: AxisPlacement.Bottom,
     isTime: true,
     theme: theme,
+    timeZone,
   });
 
   const yField = dataRef.current?.heatmap?.fields[1]!;
@@ -407,7 +408,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     size: yAxisConfig.axisWidth || null,
     label: yAxisConfig.axisLabel,
     theme: theme,
-    formatValue: (v, decimals) => formattedValueToString(dispY(v, yField.config.decimals ?? decimals)),
+    formatValue: (v, decimals) => formattedValueToString(dispY(v, decimals)),
     splits: isOrdianalY
       ? (self: uPlot) => {
           const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);

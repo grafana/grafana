@@ -61,18 +61,19 @@ type LibraryElementWithMeta struct {
 
 // LibraryElementDTO is the frontend DTO for entities.
 type LibraryElementDTO struct {
-	ID          int64                 `json:"id"`
-	OrgID       int64                 `json:"orgId"`
-	FolderID    int64                 `json:"folderId"`
-	FolderUID   string                `json:"folderUid"`
-	UID         string                `json:"uid"`
-	Name        string                `json:"name"`
-	Kind        int64                 `json:"kind"`
-	Type        string                `json:"type"`
-	Description string                `json:"description"`
-	Model       json.RawMessage       `json:"model"`
-	Version     int64                 `json:"version"`
-	Meta        LibraryElementDTOMeta `json:"meta"`
+	ID            int64                 `json:"id"`
+	OrgID         int64                 `json:"orgId"`
+	FolderID      int64                 `json:"folderId"`
+	FolderUID     string                `json:"folderUid"`
+	UID           string                `json:"uid"`
+	Name          string                `json:"name"`
+	Kind          int64                 `json:"kind"`
+	Type          string                `json:"type"`
+	Description   string                `json:"description"`
+	Model         json.RawMessage       `json:"model"`
+	Version       int64                 `json:"version"`
+	Meta          LibraryElementDTOMeta `json:"meta"`
+	SchemaVersion int64                 `json:"schemaVersion,omitempty"`
 }
 
 // LibraryElementSearchResult is the search result for entities.
@@ -206,14 +207,15 @@ type PatchLibraryElementCommand struct {
 
 // searchLibraryElementsQuery is the query used for searching for Elements
 type searchLibraryElementsQuery struct {
-	perPage       int
-	page          int
-	searchString  string
-	sortDirection string
-	kind          int
-	typeFilter    string
-	excludeUID    string
-	folderFilter  string
+	perPage          int
+	page             int
+	searchString     string
+	sortDirection    string
+	kind             int
+	typeFilter       string
+	excludeUID       string
+	folderFilter     string
+	folderFilterUIDs string
 }
 
 // LibraryElementResponse is a response struct for LibraryElementDTO.

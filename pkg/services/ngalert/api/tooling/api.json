@@ -413,6 +413,9 @@
     "auth_password": {
      "$ref": "#/definitions/Secret"
     },
+    "auth_password_file": {
+     "type": "string"
+    },
     "auth_secret": {
      "$ref": "#/definitions/Secret"
     },
@@ -1160,6 +1163,9 @@
     },
     "smtp_auth_password": {
      "$ref": "#/definitions/Secret"
+    },
+    "smtp_auth_password_file": {
+     "type": "string"
     },
     "smtp_auth_secret": {
      "$ref": "#/definitions/Secret"
@@ -3035,6 +3041,9 @@
      },
      "type": "array"
     },
+    "location": {
+     "type": "string"
+    },
     "months": {
      "items": {
       "type": "string"
@@ -3269,7 +3278,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3461,7 +3469,6 @@
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3510,13 +3517,13 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -3613,6 +3620,15 @@
    ],
    "type": "object"
   },
+  "postSilencesOKBody": {
+   "properties": {
+    "silenceID": {
+     "description": "silence ID",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "postableAlert": {
    "description": "PostableAlert postable alert",
    "properties": {
@@ -3651,7 +3667,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3689,6 +3704,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -4459,6 +4475,17 @@
  "produces": [
   "application/json"
  ],
+ "responses": {
+  "receiversResponse": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/receiver"
+    },
+    "type": "array"
+   }
+  }
+ },
  "schemes": [
   "http",
   "https"

@@ -151,7 +151,7 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   // React Hook that creates an object state value called result to component state and a setter function called setResult
   // The initial value for result is null
   // Used for sorting the response from backend
-  const [result, setResult] = useState<ResultType>(null as any as ResultType);
+  const [result, setResult] = useState<ResultType | null>(null);
 
   // React Hook that creates an object state value called hasMoreContextRows to component state and a setter function called setHasMoreContextRows
   // The initial value for hasMoreContextRows is {before: true, after: true}
@@ -177,20 +177,22 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
         let hasMoreLogsBefore = true,
           hasMoreLogsAfter = true;
 
-        const currentResultBefore = currentResult?.data[0];
-        const currentResultAfter = currentResult?.data[1];
-        const valueBefore = value.data[0];
-        const valueAfter = value.data[1];
+        if (currentResult) {
+          const currentResultBefore = currentResult.data[0];
+          const currentResultAfter = currentResult.data[1];
+          const valueBefore = value.data[0];
+          const valueAfter = value.data[1];
 
-        // checks if there are more log rows in a given direction
-        // if after fetching additional rows the length of result is the same,
-        // we can assume there are no logs in that direction within a given time range
-        if (currentResult && (!valueBefore || currentResultBefore.length === valueBefore.length)) {
-          hasMoreLogsBefore = false;
-        }
+          // checks if there are more log rows in a given direction
+          // if after fetching additional rows the length of result is the same,
+          // we can assume there are no logs in that direction within a given time range
+          if (!valueBefore || currentResultBefore.length === valueBefore.length) {
+            hasMoreLogsBefore = false;
+          }
 
-        if (currentResult && (!valueAfter || currentResultAfter.length === valueAfter.length)) {
-          hasMoreLogsAfter = false;
+          if (!valueAfter || currentResultAfter.length === valueAfter.length) {
+            hasMoreLogsAfter = false;
+          }
         }
 
         setHasMoreContextRows({

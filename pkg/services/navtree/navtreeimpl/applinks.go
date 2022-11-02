@@ -71,6 +71,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 		Img:        plugin.Info.Logos.Small,
 		Section:    navtree.NavSectionPlugin,
 		SortWeight: navtree.WeightPlugin,
+		IsSection:  true,
 	}
 
 	if topNavEnabled {
@@ -214,12 +215,13 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"/a/grafana-auth-app": {SectionID: navtree.NavIDCfg, SortWeight: 7},
 	}
 
-	sec := s.cfg.Raw.Section("navigation.apps")
+	appSections := s.cfg.Raw.Section("navigation.app_sections")
+	appStandalonePages := s.cfg.Raw.Section("navigation.app_standalone_pages")
 
-	for _, key := range sec.Keys() {
+	for _, key := range appSections.Keys() {
 		pluginId := key.Name()
 		// Support <id> <weight> value
-		values := util.SplitString(sec.Key(key.Name()).MustString(""))
+		values := util.SplitString(appSections.Key(key.Name()).MustString(""))
 
 		appCfg := &NavigationAppConfig{SectionID: values[0]}
 		if len(values) > 1 {
@@ -229,5 +231,20 @@ func (s *ServiceImpl) readNavigationSettings() {
 		}
 
 		s.navigationAppConfig[pluginId] = *appCfg
+	}
+
+	for _, key := range appStandalonePages.Keys() {
+		url := key.Name()
+		// Support <id> <weight> value
+		values := util.SplitString(appStandalonePages.Key(key.Name()).MustString(""))
+
+		appCfg := &NavigationAppConfig{SectionID: values[0]}
+		if len(values) > 1 {
+			if weight, err := strconv.ParseInt(values[1], 10, 64); err == nil {
+				appCfg.SortWeight = weight
+			}
+		}
+
+		s.navigationAppPathConfig[url] = *appCfg
 	}
 }

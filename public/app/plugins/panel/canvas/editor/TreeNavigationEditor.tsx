@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
-import Tree from 'rc-tree';
+import Tree, { TreeNodeProps } from 'rc-tree';
 import React, { Key, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
@@ -32,15 +32,15 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
   const globalCSS = getGlobalStyles(theme);
   const styles = useStyles2(getStyles);
 
-  const selectedBgColor = theme.v1.colors.formInputBorderActive;
+  const selectedBgColor = theme.colors.primary.border;
   const { settings } = item;
   const selection = useMemo(
-    () => (settings?.selected ? settings.selected.map((v) => v.getName()) : []),
+    () => (settings?.selected ? settings.selected.map((v) => v?.getName()) : []),
     [settings?.selected]
   );
 
   const selectionByUID = useMemo(
-    () => (settings?.selected ? settings.selected.map((v) => v.UID) : []),
+    () => (settings?.selected ? settings.selected.map((v) => v?.UID) : []),
     [settings?.selected]
   );
 
@@ -87,7 +87,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     setAutoExpandParent(false);
   };
 
-  const switcherIcon = (obj: { isLeaf: boolean; expanded: boolean }) => {
+  const switcherIcon = (obj: TreeNodeProps) => {
     if (obj.isLeaf) {
       // TODO: Implement element specific icons
       return <></>;
@@ -141,7 +141,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     }
   };
 
-  const typeOptions = getElementTypes(settings.scene.shouldShowAdvancedTypes);
+  const typeOptions = getElementTypes(settings.scene.shouldShowAdvancedTypes).options;
 
   return (
     <>

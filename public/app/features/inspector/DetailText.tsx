@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
@@ -11,7 +11,7 @@ const getStyles = (theme: GrafanaTheme) => css`
   color: ${theme.colors.textWeak};
 `;
 
-export const DetailText: FC = ({ children }) => {
+export const DetailText = ({ children }: React.PropsWithChildren<{}>) => {
   const collapsedTextStyles = useStyles(getStyles);
   return <p className={collapsedTextStyles}>{children}</p>;
 };

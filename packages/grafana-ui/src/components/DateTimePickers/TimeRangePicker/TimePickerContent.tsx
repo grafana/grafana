@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { FilterInput } from '../..';
 import { stylesFactory, useTheme2 } from '../../../themes';
 import { getFocusStyles } from '../../../themes/mixins';
+import { t, Trans } from '../../../utils/i18n';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { Icon } from '../../Icon/Icon';
 
@@ -148,7 +149,9 @@ const NarrowScreenForm = (props: FormProps) => {
           aria-expanded={!collapsed}
           aria-controls="expanded-timerange"
         >
-          <TimePickerTitle>Absolute time range</TimePickerTitle>
+          <TimePickerTitle>
+            <Trans i18nKey="time-picker.absolute.title">Absolute time range</Trans>
+          </TimePickerTitle>
           {!hideQuickRanges && <Icon name={!collapsed ? 'angle-up' : 'angle-down'} />}
         </button>
       </div>
@@ -157,9 +160,10 @@ const NarrowScreenForm = (props: FormProps) => {
           <div className={styles.form}>
             <TimeRangeContent value={value} onApply={onChange} timeZone={timeZone} isFullscreen={false} />
           </div>
+          <p></p>
           {showHistory && (
             <TimeRangeList
-              title="Recently used absolute ranges"
+              title={t('time-picker.absolute.recent-title', 'Recently used absolute ranges')}
               options={historyOptions}
               onChange={onChangeTimeOption}
               placeholderEmpty={null}
@@ -183,7 +187,9 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
     <>
       <div className={styles.container}>
         <div className={styles.title} data-testid={selectors.components.TimePicker.absoluteTimeRangeTitle}>
-          <TimePickerTitle>Absolute time range</TimePickerTitle>
+          <TimePickerTitle>
+            <Trans i18nKey="time-picker.absolute.title">Absolute time range</Trans>
+          </TimePickerTitle>
         </div>
         <TimeRangeContent
           value={value}
@@ -197,7 +203,7 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
       {props.showHistory && (
         <div className={styles.recent}>
           <TimeRangeList
-            title="Recently used absolute ranges"
+            title={t('time-picker.absolute.recent-title', 'Recently used absolute ranges')}
             options={historyOptions || []}
             onChange={onChangeTimeOption}
             placeholderEmpty={<EmptyRecentList />}
@@ -353,7 +359,7 @@ const getEmptyListStyles = stylesFactory((theme: GrafanaTheme2) => {
       a,
       span {
         font-size: 13px;
-      }
+      }\
     `,
     link: css`
       color: ${theme.colors.text.link};

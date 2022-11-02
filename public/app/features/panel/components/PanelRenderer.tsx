@@ -9,6 +9,7 @@ import {
   PanelPlugin,
   compareArrayValues,
   compareDataFrameStructures,
+  PluginContextProvider,
 } from '@grafana/data';
 import { PanelRendererProps } from '@grafana/runtime';
 import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
@@ -73,24 +74,26 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
 
   return (
     <ErrorBoundaryAlert dependencies={[plugin, data]}>
-      <PanelComponent
-        id={1}
-        data={dataWithOverrides}
-        title={title}
-        timeRange={dataWithOverrides.timeRange}
-        timeZone={timeZone}
-        options={optionsWithDefaults!.options}
-        fieldConfig={fieldConfig}
-        transparent={false}
-        width={width}
-        height={height}
-        renderCounter={0}
-        replaceVariables={(str: string) => str}
-        onOptionsChange={onOptionsChange}
-        onFieldConfigChange={onFieldConfigChange}
-        onChangeTimeRange={onChangeTimeRange}
-        eventBus={appEvents}
-      />
+      <PluginContextProvider meta={plugin.meta}>
+        <PanelComponent
+          id={1}
+          data={dataWithOverrides}
+          title={title}
+          timeRange={dataWithOverrides.timeRange}
+          timeZone={timeZone}
+          options={optionsWithDefaults!.options}
+          fieldConfig={fieldConfig}
+          transparent={false}
+          width={width}
+          height={height}
+          renderCounter={0}
+          replaceVariables={(str: string) => str}
+          onOptionsChange={onOptionsChange}
+          onFieldConfigChange={onFieldConfigChange}
+          onChangeTimeRange={onChangeTimeRange}
+          eventBus={appEvents}
+        />
+      </PluginContextProvider>
     </ErrorBoundaryAlert>
   );
 }

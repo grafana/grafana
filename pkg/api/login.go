@@ -220,6 +220,11 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 			return resp
 		}
 
+		if errors.Is(err, login.ErrNoAuthProvider) {
+			resp = response.Error(http.StatusInternalServerError, "No authorization providers enabled", err)
+			return resp
+		}
+
 		// Do not expose disabled status,
 		// just show incorrect user credentials error (see #17947)
 		if errors.Is(err, login.ErrUserDisabled) {
@@ -299,6 +304,13 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 		}
 	}
 
+	// Invalidate the OAuth tokens in case the User logged in with OAuth or the last external AuthEntry is an OAuth one
+	if entry, exists, _ := hs.oauthTokenService.HasOAuthEntry(c.Req.Context(), c.SignedInUser); exists {
+		if err := hs.oauthTokenService.InvalidateOAuthTokens(c.Req.Context(), entry); err != nil {
+			hs.log.Warn("failed to invalidate oauth tokens for user", "userId", c.UserID, "error", err)
+		}
+	}
+
 	err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken, false)
 	if err != nil && !errors.Is(err, models.ErrUserTokenNotFound) {
 		hs.log.Error("failed to revoke auth token", "error", err)
@@ -341,7 +353,7 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName s
 }
 
 func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...interface{}) {
-	ctx.Logger.Error(err.Error(), v...)
+	ctx.Logger.Warn(err.Error(), v...)
 	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
 		hs.log.Error("Failed to set encrypted cookie", "err", err)
 	}

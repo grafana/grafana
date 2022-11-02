@@ -209,10 +209,10 @@ interface PortalProps {
   style: string;
 }
 
-class Portal extends PureComponent<PortalProps, {}> {
+class Portal extends PureComponent<React.PropsWithChildren<PortalProps>, {}> {
   node: HTMLElement;
 
-  constructor(props: PortalProps) {
+  constructor(props: React.PropsWithChildren<PortalProps>) {
     super(props);
     const { index = 0, origin = 'query', style } = props;
     this.node = document.createElement('div');

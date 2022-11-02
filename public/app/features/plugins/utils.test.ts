@@ -2,6 +2,7 @@ import { Location as HistoryLocation } from 'history';
 
 import { NavIndex, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { buildPluginSectionNav } from './utils';
 
@@ -29,10 +30,16 @@ describe('buildPluginSectionNav', () => {
     children: [app1],
   };
 
+  const home = {
+    id: HOME_NAV_ID,
+    text: 'Home',
+  };
+
   const adminSection: NavModelItem = {
     text: 'Admin',
     id: 'admin',
     children: [],
+    parentItem: home,
   };
 
   const standalonePluginPage = {
@@ -49,6 +56,7 @@ describe('buildPluginSectionNav', () => {
     apps: appsSection,
     [app1.id!]: appsSection.children[0],
     [standalonePluginPage.id]: standalonePluginPage,
+    [HOME_NAV_ID]: home,
   };
 
   it('Should return pluginNav if topnav is disabled', () => {
@@ -102,9 +110,7 @@ describe('buildPluginSectionNav', () => {
   it('Should not throw error just return a root nav model without children for plugins that dont exist in navtree', () => {
     config.featureToggles.topnav = true;
     const result = buildPluginSectionNav({} as HistoryLocation, pluginNav, navIndex, 'app3');
-    expect(result?.main.id).toBe('root-plugin-page');
-    expect(result?.main.hideFromBreadcrumbs).toBe(true);
-    expect(result?.main.children?.length).toBe(0);
+    expect(result?.main.id).toBe(HOME_NAV_ID);
   });
 
   it('Should throw error if app has no section', () => {

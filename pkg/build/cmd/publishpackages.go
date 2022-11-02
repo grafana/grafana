@@ -7,8 +7,10 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/build/config"
+	"github.com/grafana/grafana/pkg/build/fsutil"
 	"github.com/grafana/grafana/pkg/build/gcloud"
 	"github.com/grafana/grafana/pkg/build/gpg"
+	"github.com/grafana/grafana/pkg/build/packaging"
 	"github.com/urfave/cli/v2"
 )
 
@@ -43,7 +45,7 @@ func PublishPackages(c *cli.Context) error {
 	edition := config.Edition(c.String("edition"))
 
 	// TODO: Verify config values
-	cfg := PublishConfig{
+	cfg := packaging.PublishConfig{
 		Config: config.Config{
 			Version:       metadata.GrafanaVersion,
 			Bucket:        c.String("packages-bucket"),
@@ -67,7 +69,10 @@ func PublishPackages(c *cli.Context) error {
 	// In test release mode, the operator should configure different GCS buckets for the package repos,
 	// so should be safe.
 	if cfg.ReleaseMode.Mode == config.TagMode {
-		workDir := os.TempDir()
+		workDir, err := fsutil.CreateTempDir("")
+		if err != nil {
+			return err
+		}
 		defer func() {
 			if err := os.RemoveAll(workDir); err != nil {
 				log.Printf("Failed to remove temporary directory %q: %s\n", workDir, err.Error())
@@ -83,18 +88,18 @@ func PublishPackages(c *cli.Context) error {
 }
 
 // updatePkgRepos updates package manager repositories.
-func updatePkgRepos(cfg PublishConfig, workDir string) error {
+func updatePkgRepos(cfg packaging.PublishConfig, workDir string) error {
 	if err := gpg.Import(cfg.Config); err != nil {
 		return err
 	}
 
 	// If updating the Deb repo fails, still continue with the RPM repo, so we don't have to retry
 	// both by hand
-	debErr := updateDebRepo(cfg, workDir)
+	debErr := packaging.UpdateDebRepo(cfg, workDir)
 	if debErr != nil {
 		log.Printf("Updating Deb repo failed: %s\n", debErr)
 	}
-	rpmErr := updateRPMRepo(cfg, workDir)
+	rpmErr := packaging.UpdateRPMRepo(cfg, workDir)
 	if rpmErr != nil {
 		log.Printf("Updating RPM repo failed: %s\n", rpmErr)
 	}
