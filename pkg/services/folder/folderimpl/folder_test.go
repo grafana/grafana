@@ -9,8 +9,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	busmock "github.com/grafana/grafana/pkg/bus/mock"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -32,8 +33,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 	t.Run("should register scope resolvers", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		ac := acmock.New()
-
-		ProvideService(ac, busmock.New(), cfg, nil, nil, nil, nil, nil)
+		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, nil, nil, nil)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
 	})
@@ -61,7 +61,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			searchService:    nil,
 			features:         features,
 			permissions:      folderPermissions,
-			bus:              busmock.New(),
+			bus:              bus.ProvideBus(tracing.InitializeTracerForTest()),
 		}
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
@@ -95,7 +95,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When creating folder should return access denied error", func(t *testing.T) {
-				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Times(2)
+				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil).Times(2)
 				_, err := service.CreateFolder(context.Background(), usr, orgID, folder.Title, folderUID)
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
@@ -133,8 +133,8 @@ func TestIntegrationFolderService(t *testing.T) {
 				dash.Id = rand.Int63()
 				f := models.DashboardToFolder(dash)
 
-				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil)
-				store.On("SaveDashboard", mock.Anything).Return(dash, nil).Once()
+				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
+				store.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(dash, nil).Once()
 				store.On("GetFolderByID", mock.Anything, orgID, dash.Id).Return(f, nil)
 
 				actualFolder, err := service.CreateFolder(context.Background(), usr, orgID, dash.Title, "")
@@ -156,8 +156,8 @@ func TestIntegrationFolderService(t *testing.T) {
 				dashboardFolder.Uid = util.GenerateShortUID()
 				f := models.DashboardToFolder(dashboardFolder)
 
-				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil)
-				store.On("SaveDashboard", mock.Anything).Return(dashboardFolder, nil)
+				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
+				store.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(dashboardFolder, nil)
 				store.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.Id).Return(f, nil)
 
 				req := &models.UpdateFolderCommand{

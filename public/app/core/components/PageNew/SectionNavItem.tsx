@@ -24,7 +24,7 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
   const linkClass = cx({
     [styles.link]: true,
     [styles.activeStyle]: item.active,
-    [styles.isSection]: Boolean(children?.length),
+    [styles.isSection]: Boolean(children?.length) || item.isSection,
     [styles.hasActiveChild]: hasActiveChild,
     [styles.isSectionRoot]: isSectionRoot,
     [styles.noRootMargin]: noRootMargin,
@@ -57,6 +57,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(1, 0, 1, 1.5)};
       display: flex;
       align-items: center;
+      border-radius: ${theme.shape.borderRadius(2)};
       gap: ${theme.spacing(1)};
       height: 100%;
       position: relative;
@@ -71,7 +72,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: activeTabStyle;
       color: ${theme.colors.text.primary};
       background: ${theme.colors.emphasize(theme.colors.background.canvas, 0.03)};
-      border-radius: ${theme.shape.borderRadius(2)};
       font-weight: ${theme.typography.fontWeightMedium};
 
       &::before {

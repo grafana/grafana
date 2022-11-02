@@ -11,9 +11,12 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/tsdb/parca"
+	"github.com/grafana/grafana/pkg/tsdb/phlare"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
@@ -27,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/searchV2"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
@@ -71,10 +73,11 @@ func TestIntegrationPluginManager(t *testing.T) {
 	require.NoError(t, err)
 
 	cfg := &setting.Cfg{
-		Raw:                raw,
-		StaticRootPath:     staticRootPath,
-		BundledPluginsPath: bundledPluginsPath,
-		Azure:              &azsettings.AzureSettings{},
+		Raw:                    raw,
+		StaticRootPath:         staticRootPath,
+		BundledPluginsPath:     bundledPluginsPath,
+		Azure:                  &azsettings.AzureSettings{},
+		IsFeatureToggleEnabled: func(_ string) bool { return false },
 	}
 
 	tracer := tracing.InitializeTracerForTest()
@@ -95,10 +98,12 @@ func TestIntegrationPluginManager(t *testing.T) {
 	pg := postgres.ProvideService(cfg)
 	my := mysql.ProvideService(cfg, hcp)
 	ms := mssql.ProvideService(cfg)
-	sv2 := searchV2.ProvideService(cfg, sqlstore.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil)
+	sv2 := searchV2.ProvideService(cfg, db.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil)
 	graf := grafanads.ProvideService(sv2, nil)
+	phlare := phlare.ProvideService(hcp)
+	parca := parca.ProvideService(hcp)
 
-	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
+	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, phlare, parca)
 
 	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
 	reg := registry.ProvideService()
@@ -111,7 +116,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	verifyBundledPlugins(t, ctx, ps)
 	verifyPluginStaticRoutes(t, ctx, ps)
 	verifyBackendProcesses(t, reg.Plugins(ctx))
-	verifyPluginQuery(t, ctx, client.ProvideService(reg))
+	verifyPluginQuery(t, ctx, client.ProvideService(reg, pCfg))
 }
 
 func verifyPluginQuery(t *testing.T, ctx context.Context, c plugins.Client) {
@@ -200,6 +205,8 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"jaeger":                           {},
 		"mixed":                            {},
 		"zipkin":                           {},
+		"phlare":                           {},
+		"parca":                            {},
 	}
 
 	expApps := map[string]struct{}{

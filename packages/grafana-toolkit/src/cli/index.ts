@@ -37,8 +37,15 @@ export const run = (includeInternalScripts = false) => {
 
     program
       .command('node-version-check')
-      .description('Verify node version')
-      .action(async (cmd) => {
+      .description('[deprecated] Verify node version')
+      .action(async () => {
+        chalk.yellow.bold(
+          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        );
+        console.log(
+          'if you were reliant on this command we recommend https://www.npmjs.com/package/check-node-version'
+        );
+
         await execTask(nodeVersionCheckerTask)({});
       });
 
@@ -51,16 +58,22 @@ export const run = (includeInternalScripts = false) => {
 
     program
       .command('toolkit:build')
-      .description('Prepares grafana/toolkit dist package')
+      .description('[Deprecated] Prepares grafana/toolkit dist package')
       .action(async (cmd) => {
+        chalk.yellow.bold(
+          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        );
         await execTask(toolkitBuildTask)({});
       });
 
     program
       .command('searchTestData')
       .option('-c, --count <number_of_dashboards>', 'Specify number of dashboards')
-      .description('Setup test data for search')
+      .description('[deprecated] Setup test data for search')
       .action(async (cmd) => {
+        chalk.yellow.bold(
+          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        );
         await execTask(searchTestDataSetupTask)({ count: cmd.count });
       });
 
@@ -210,6 +223,9 @@ export const run = (includeInternalScripts = false) => {
     .command('plugin:bundle-managed')
     .description('Builds managed plugins')
     .action(async (cmd) => {
+      chalk.yellow.bold(
+        `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+      );
       await execTask(bundleManagedTask)({});
     });
 
@@ -220,6 +236,10 @@ export const run = (includeInternalScripts = false) => {
     .option('--commitHash <hashKey>', 'Specify the commit hash')
     .description('Publish to github')
     .action(async (cmd) => {
+      chalk.yellow.bold(`⚠️ This command is deprecated and will be removed . No further support will be provided. ⚠️`);
+      console.log(
+        'We recommend using github actions directly for plugin releasing. You can find an example here:  https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin/templates/github/ci/.github/workflows'
+      );
       await execTask(githubPublishTask)({
         dryrun: cmd.dryrun,
         verbose: cmd.verbose,
@@ -231,6 +251,9 @@ export const run = (includeInternalScripts = false) => {
     .command('plugin:update-circleci')
     .description('Update plugin')
     .action(async (cmd) => {
+      chalk.yellow.bold(
+        `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+      );
       await execTask(pluginUpdateTask)({});
     });
 

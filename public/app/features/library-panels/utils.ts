@@ -3,7 +3,7 @@ import { AppNotification } from '../../types';
 import { PanelModel } from '../dashboard/state';
 
 import { addLibraryPanel, updateLibraryPanel } from './state/api';
-import { LibraryElementDTO, PanelModelLibraryPanel } from './types';
+import { LibraryElementDTO } from './types';
 
 export function createPanelLibraryErrorNotification(message: string): AppNotification {
   return createErrorNotification(message);
@@ -11,11 +11,6 @@ export function createPanelLibraryErrorNotification(message: string): AppNotific
 
 export function createPanelLibrarySuccessNotification(message: string): AppNotification {
   return createSuccessNotification(message);
-}
-
-export function toPanelModelLibraryPanel(libraryPanelDto: LibraryElementDTO): PanelModelLibraryPanel {
-  const { uid, name, meta, version } = libraryPanelDto;
-  return { uid, name, meta, version };
 }
 
 export async function saveAndRefreshLibraryPanel(panel: PanelModel, folderId: number): Promise<LibraryElementDTO> {
@@ -42,7 +37,7 @@ function updatePanelModelWithUpdate(panel: PanelModel, updated: LibraryElementDT
   panel.restoreModel({
     ...updated.model,
     configRev: 0, // reset config rev, since changes have been saved
-    libraryPanel: toPanelModelLibraryPanel(updated),
+    libraryPanel: updated,
     title: panel.title,
   });
   panel.hasSavedPanelEditChange = true;
@@ -54,7 +49,7 @@ function saveOrUpdateLibraryPanel(panel: any, folderId: number): Promise<Library
     return Promise.reject();
   }
 
-  if (panel.libraryPanel && panel.libraryPanel.uid === undefined) {
+  if (panel.libraryPanel && panel.libraryPanel.uid === '') {
     return addLibraryPanel(panel, folderId!);
   }
 

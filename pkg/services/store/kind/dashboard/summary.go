@@ -3,6 +3,7 @@ package dashboard
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -20,15 +21,28 @@ func GetObjectKindInfo() models.ObjectKindInfo {
 
 // This summary does not resolve old name as UID
 func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
-	builder := NewStaticDashboardSummaryBuilder(&directLookup{})
+	builder := NewStaticDashboardSummaryBuilder(&directLookup{}, true)
 	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
 		return builder(ctx, uid, body)
 	}
 }
 
 // This implementation moves datasources referenced by internal ID or name to UID
-func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup) models.ObjectSummaryBuilder {
+func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup, sanitize bool) models.ObjectSummaryBuilder {
 	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
+		var parsed map[string]interface{}
+
+		if sanitize {
+			err := json.Unmarshal(body, &parsed)
+			if err != nil {
+				return nil, nil, err // did not parse
+			}
+			// values that should be managed by the container
+			delete(parsed, "uid")
+			delete(parsed, "version")
+			// slug? (derived from title)
+		}
+
 		summary := &models.ObjectSummary{
 			Labels: make(map[string]string),
 			Fields: make(map[string]interface{}),
@@ -87,6 +101,9 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup) models.ObjectSumm
 		}
 
 		summary.References = dashboardRefs.Get()
-		return summary, body, nil
+		if sanitize {
+			body, err = json.MarshalIndent(parsed, "", "  ")
+		}
+		return summary, body, err
 	}
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -75,6 +76,9 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 		assert.Equal(t, orgID, sc.context.OrgID)
 		assert.Equal(t, id, sc.context.UserID)
 		assert.Equal(t, myUsername, sc.context.Login)
+		list := contexthandler.AuthHTTPHeaderListFromContext(sc.context.Req.Context())
+		require.NotNil(t, list)
+		require.EqualValues(t, []string{sc.cfg.JWTAuthHeaderName}, list.Items)
 	}, configure, configureUsernameClaim)
 
 	middlewareScenario(t, "Valid token with bearer in authorization header", func(t *testing.T, sc *scenarioContext) {

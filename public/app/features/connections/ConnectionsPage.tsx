@@ -8,9 +8,8 @@ import { DataSourcesRoutesContext } from 'app/features/datasources/state';
 
 import { ROUTES } from './constants';
 import { useNavModel } from './hooks/useNavModel';
-import { CloudIntegrations } from './tabs/CloudIntegrations';
+import { ConnectData } from './tabs/ConnectData';
 import { DataSourcesEdit } from './tabs/DataSourcesEdit';
-import { Plugins } from './tabs/Plugins';
 
 export default function ConnectionsPage() {
   const navModel = useNavModel();
@@ -30,8 +29,7 @@ export default function ConnectionsPage() {
             <Route path={ROUTES.DataSourcesNew} component={NewDataSource} />
             <Route path={ROUTES.DataSourcesEdit} component={DataSourcesEdit} />
             <Route path={ROUTES.DataSources} component={DataSourcesList} />
-            <Route path={ROUTES.Plugins} component={Plugins} />
-            <Route path={ROUTES.CloudIntegrations} component={CloudIntegrations} />
+            <Route path={ROUTES.ConnectData} component={ConnectData} />
 
             {/* Default page */}
             <Route component={DataSourcesList} />

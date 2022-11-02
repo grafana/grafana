@@ -8,7 +8,7 @@ import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
+import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -98,6 +98,7 @@ export interface State {
 }
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
+  declare context: GrafanaContextType;
   static contextType = GrafanaContext;
 
   private forceRouteReloadCounter = 0;
@@ -298,9 +299,17 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       return;
     }
 
+    // Move all panels down by the height of the "add panel" widget.
+    // This is to work around an issue with react-grid-layout that can mess up the layout
+    // in certain configurations. (See https://github.com/react-grid-layout/react-grid-layout/issues/1787)
+    const addPanelWidgetHeight = 8;
+    for (const panel of dashboard.panelIterator()) {
+      panel.gridPos.y += addPanelWidgetHeight;
+    }
+
     dashboard.addPanel({
       type: 'add-panel',
-      gridPos: { x: 0, y: 0, w: 12, h: 8 },
+      gridPos: { x: 0, y: 0, w: 12, h: addPanelWidgetHeight },
       title: 'Panel Title',
     });
 

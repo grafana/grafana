@@ -27,7 +27,7 @@ Grafana allows you to create alerting rules for an external Grafana Mimir or Lok
 
   - **Loki** - The `local` rule storage type, default for the Loki data source, supports only viewing of rules. To edit rules, configure one of the other rule storage types.
 
-  - **Grafana Mimir** - use the [legacy `/api/prom` prefix](https://grafana.com/docs/mimir/latest/operators-guide/reference-http-api/#path-prefixes), not `/prometheus`. The Prometheus data source supports both Grafana Mimir and Prometheus, and Grafana expects that both the [Query API](https://grafana.com/docs/mimir/latest/operators-guide/reference-http-api/#querier--query-frontend) and [Ruler API](https://grafana.com/docs/mimir/latest/operators-guide/reference-http-api/#ruler) are under the same URL. You cannot provide a separate URL for the Ruler API.
+  - **Grafana Mimir** - use the `/prometheus` prefix. The Prometheus data source supports both Grafana Mimir and Prometheus, and Grafana expects that both the [Query API](https://grafana.com/docs/mimir/latest/operators-guide/reference-http-api/#querier--query-frontend) and [Ruler API](https://grafana.com/docs/mimir/latest/operators-guide/reference-http-api/#ruler) are under the same URL. You cannot provide a separate URL for the Ruler API.
 
 Watch this video to learn more about how to create a Mimir managed alert rule: {{< vimeo 720001865 >}}
 
@@ -51,4 +51,4 @@ Watch this video to learn more about how to create a Mimir managed alert rule: {
    - Add Runbook URL, panel, dashboard, and alert IDs.
    - Add custom labels.
 1. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.
-1. Next, create a [notification]({{< relref "../notifications/" >}}) for the rule.
+1. Next, create a notification for the rule.

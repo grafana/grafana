@@ -159,6 +159,10 @@ const (
 	// Run both old and streaming requests and log differences
 	FlagPrometheusStreamingJSONParserTest = "prometheusStreamingJSONParserTest"
 
+	// FlagNewDBLibrary
+	// Use jmoiron/sqlx rather than xorm for a few backend services
+	FlagNewDBLibrary = "newDBLibrary"
+
 	// FlagValidateDashboardsOnSave
 	// Validate dashboard JSON POSTed to api/dashboards/db
 	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
@@ -250,4 +254,16 @@ const (
 	// FlagMysqlAnsiQuotes
 	// Use double quote to escape keyword in Mysql query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
+
+	// FlagDatasourceLogger
+	// Logs all datasource requests
+	FlagDatasourceLogger = "datasourceLogger"
+
+	// FlagAccessControlOnCall
+	// Access control primitives for OnCall
+	FlagAccessControlOnCall = "accessControlOnCall"
+
+	// FlagNestedFolders
+	// Enable folder nesting
+	FlagNestedFolders = "nestedFolders"
 )

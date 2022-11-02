@@ -40,6 +40,8 @@
   font-size: $font-size-h5;
   font-weight: $font-weight-semi-bold;
   color: $text-color;
+  background: transparent;
+  border: none;
 
   .fa {
     color: $text-muted;
@@ -54,9 +56,11 @@
   opacity: 0;
   transition: 200ms opacity ease-in 200ms;
 
-  a {
+  button {
     color: $text-color-weak;
     padding-left: $spacer;
+    background: transparent;
+    border: none;
 
     &:hover {
       color: $link-hover-color;
