@@ -423,7 +423,7 @@ func TestGetAnnotations(t *testing.T) {
 		}
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).
 			Return(&PublicDashboard{Uid: "uid1", IsEnabled: true}, nil)
-		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).
+		fakeStore.On("FindDashboard", mock.Anything, mock.Anything, mock.AnythingOfType("string")).
 			Return(grafanamodels.NewDashboard("dash1"), nil)
 
 		reqDTO := AnnotationsQueryDTO{
@@ -479,7 +479,7 @@ func TestGetAnnotations(t *testing.T) {
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: true}
 
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
-		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dashboard, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.Anything, mock.AnythingOfType("string")).Return(dashboard, nil)
 
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
@@ -539,7 +539,7 @@ func TestGetAnnotations(t *testing.T) {
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: true}
 
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
-		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dashboard, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.Anything, mock.AnythingOfType("string")).Return(dashboard, nil)
 
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
@@ -611,7 +611,7 @@ func TestGetAnnotations(t *testing.T) {
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: true}
 
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
-		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dashboard, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.Anything, mock.AnythingOfType("string")).Return(dashboard, nil)
 
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
@@ -656,7 +656,7 @@ func TestGetAnnotations(t *testing.T) {
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: true}
 
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
-		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dashboard, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.Anything, mock.AnythingOfType("string")).Return(dashboard, nil)
 
 		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
@@ -691,7 +691,7 @@ func TestGetAnnotations(t *testing.T) {
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid, AnnotationsEnabled: false}
 
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
-		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dashboard, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.Anything, mock.AnythingOfType("string")).Return(dashboard, nil)
 
 		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
@@ -725,7 +725,7 @@ func TestGetAnnotations(t *testing.T) {
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dash.Uid, AnnotationsEnabled: true}
 
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
-		fakeStore.On("FindDashboard", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(dash, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.Anything, mock.AnythingOfType("string")).Return(dash, nil)
 
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return(nil, errors.New("failed")).Maybe()
 

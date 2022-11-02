@@ -24,7 +24,7 @@ type TestingApiSrv struct {
 	DatasourceCache datasources.CacheService
 	log             log.Logger
 	accessControl   accesscontrol.AccessControl
-	evaluator       eval.Evaluator
+	evaluator       eval.EvaluatorFactory
 }
 
 func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
@@ -44,16 +44,20 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 	}
 	ctx := eval.Context(c.Req.Context(), c.SignedInUser)
 
-	if err := srv.evaluator.Validate(ctx, evalCond); err != nil {
+	conditionEval, err := srv.evaluator.Create(ctx, evalCond)
+	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "invalid condition")
 	}
 
-	ctx = ctx.When(body.GrafanaManagedCondition.Now)
-	if ctx.At.IsZero() {
-		ctx = ctx.When(timeNow())
+	now := body.GrafanaManagedCondition.Now
+	if now.IsZero() {
+		now = timeNow()
 	}
 
-	evalResults := srv.evaluator.ConditionEval(ctx, evalCond)
+	evalResults, err := conditionEval.Evaluate(c.Req.Context(), now)
+	if err != nil {
+		return ErrResp(500, err, "Failed to evaluate the rule")
+	}
 
 	frame := evalResults.AsDataFrame()
 	return response.JSONStreaming(http.StatusOK, util.DynMap{
@@ -106,14 +110,28 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization), "")
 	}
 
-	ctx := eval.Context(c.Req.Context(), c.SignedInUser).When(cmd.Now)
-	if ctx.At.IsZero() {
-		ctx = ctx.When(timeNow())
+	cond := ngmodels.Condition{
+		Condition: "",
+		Data:      cmd.Data,
+	}
+	if len(cmd.Data) > 0 {
+		cond.Condition = cmd.Data[0].RefID
+	}
+	evaluator, err := srv.evaluator.Create(eval.Context(c.Req.Context(), c.SignedInUser), cond)
+
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "Failed to build evaluator for queries and expressions")
 	}
 
-	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(ctx, cmd.Data)
+	now := cmd.Now
+	if now.IsZero() {
+		now = timeNow()
+	}
+
+	evalResults, err := evaluator.EvaluateRaw(c.Req.Context(), now)
+
 	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate queries and expressions")
+		return ErrResp(http.StatusInternalServerError, err, "Failed to evaluate queries and expressions")
 	}
 
 	return response.JSONStreaming(http.StatusOK, evalResults)
