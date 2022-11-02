@@ -54,7 +54,7 @@ export const TimeRangeList = (props: Props) => {
       <fieldset>
         <div className={styles.title}>
           <TimePickerTitle>
-            <Trans i18nKey="time-picker.range.title">{title}</Trans>
+            <Trans i18nKey="time-picker.range-list.title">{title}</Trans>
           </TimePickerTitle>
         </div>
         <Options {...props} />
