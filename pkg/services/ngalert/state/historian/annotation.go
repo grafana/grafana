@@ -96,14 +96,12 @@ func buildAnnotationTextAndData(rule *ngmodels.AlertRule, currentState *state.St
 		}
 		sort.Strings(keys)
 
-		values := map[string]float64{}
-		var strValues []string
+		var values []string
 		for _, k := range keys {
-			values[k] = currentState.Values[k]
-			strValues = append(strValues, fmt.Sprintf("%s=%f", k, currentState.Values[k]))
+			values = append(values, fmt.Sprintf("%s=%f", k, currentState.Values[k]))
 		}
-		jsonData.Set("values", simplejson.NewFromAny(values))
-		value = strings.Join(strValues, ", ")
+		jsonData.Set("values", simplejson.NewFromAny(currentState.Values))
+		value = strings.Join(values, ", ")
 	}
 
 	labels := removePrivateLabels(currentState.Labels)
