@@ -314,6 +314,12 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = logSection.NewKey("address", o.GRPCServerAddress)
 			require.NoError(t, err)
 		}
+		if o.QueryRetries != 0 {
+			logSection, err := getOrCreateSection("database")
+			require.NoError(t, err)
+			_, err = logSection.NewKey("query_retries", fmt.Sprintf("%d", o.QueryRetries))
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -345,4 +351,5 @@ type GrafanaOpts struct {
 	UnifiedAlertingDisabledOrgs           []int64
 	EnableLog                             bool
 	GRPCServerAddress                     string
+	QueryRetries                          int64
 }

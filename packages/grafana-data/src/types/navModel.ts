@@ -19,6 +19,10 @@ export interface NavLinkDTO {
   hideFromTabs?: boolean;
   showIconInNavbar?: boolean;
   roundIcon?: boolean;
+  /**
+   * This is true for some sections that have no children (but is still a section)
+   **/
+  isSection?: boolean;
   children?: NavLinkDTO[];
   highlightText?: string;
   emptyMessageId?: string;

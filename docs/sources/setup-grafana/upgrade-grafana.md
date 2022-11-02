@@ -404,3 +404,7 @@ The concept of a `default` data source existed in Grafana since the beginning. H
 This behavior was not very intuitive and creates issues for users who want to change the default without it impacting existing dashboards.
 That is why we are changing the behavior in 8.5. From now on, the `default` data source will not be a persisted property but just the starting data source for new panels and queries.
 Existing dashboards that still have panels with a `datasource` set to null will be migrated when the dashboard opens. The migration will set the data source property to the **current** default data source.
+
+## Upgrading to v9.2
+
+Beginning in v9.2, Grafana has a [supported database versions policy]({{< relref "./installation/#supported-databases" >}}). As of this release, MySQL versions from 5.7, postgres versions from v10, and SQLite 3 are supported databases.
