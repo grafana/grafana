@@ -342,7 +342,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               <>
                 <div>List of rules that belong to this group</div>
                 <div className={styles.evalRequiredLabel}>
-                  #Evaluations column represents number of evaluations neededed before alert starts firing.
+                  #Evaluations column represents the number of evaluations needed before alert starts firing.
                 </div>
                 <RulesForGroupTable
                   rulerRules={groupfoldersForSource?.result}
