@@ -625,6 +625,15 @@ Set to `true` to add the Content-Security-Policy header to your requests. CSP al
 
 Set Content Security Policy template used when adding the Content-Security-Policy header to your requests. `$NONCE` in the template includes a random nonce.
 
+### content_security_policy_report_only
+
+Set to `true` to add the Content-Security-Policy-Report-Only header to your requests. CSP in Report Only mode allows to experiment with policies by monitoring their effects without enforcing.
+Both policies can be enabled simultaneously.
+
+### content_security_policy_template
+
+Set Content Security Policy Report Only template used when adding the Content-Security-Policy-Report-Only header to your requests. `$NONCE` in the template includes a random nonce.
+
 <hr />
 
 ### angular_support_enabled
