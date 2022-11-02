@@ -3,8 +3,7 @@ import React from 'react';
 import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Icon, IconButton, stylesFactory } from '@grafana/ui';
+import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
 import { LayerName } from './LayerName';
 import { LayerElement } from './types';
@@ -38,7 +37,7 @@ export const LayerDragDropList = <T extends LayerElement>({
   onNameChange,
   verifyLayerNameUniqueness,
 }: LayerDragDropListProps<T>) => {
-  const style = styles(config.theme2);
+  const style = useStyles2(getStyles);
 
   const getRowStyle = (isSelected: boolean) => {
     return isSelected ? `${style.row} ${style.sel}` : style.row;
@@ -127,7 +126,7 @@ LayerDragDropList.defaultProps = {
   isGroup: () => false,
 };
 
-const styles = stylesFactory((theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     margin-bottom: ${theme.spacing(2)};
   `,
@@ -135,7 +134,7 @@ const styles = stylesFactory((theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(0.5, 1)};
     border-radius: ${theme.shape.borderRadius(1)};
     background: ${theme.colors.background.secondary};
-    min-height: ${theme.spacing.gridSize * 4}px;
+    min-height: ${theme.spacing(4)};
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -173,4 +172,4 @@ const styles = stylesFactory((theme: GrafanaTheme2) => ({
     overflow: hidden;
     margin-right: ${theme.spacing(1)};
   `,
-}));
+});
