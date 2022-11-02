@@ -126,7 +126,6 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 					if !isOverridingCorePage {
 						sectionForPage.Children = append(sectionForPage.Children, link)
 					}
-
 				}
 			} else {
 				appLink.Children = append(appLink.Children, link)

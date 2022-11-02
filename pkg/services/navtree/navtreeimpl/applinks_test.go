@@ -201,15 +201,15 @@ func TestAddAppLinks(t *testing.T) {
 		treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx))
 		require.Equal(t, "Connections", treeRoot.Children[0].Text)
 		require.Equal(t, "Connect Data", treeRoot.Children[0].Children[1].Text)
-		require.Equal(t, "connections-connect-data", treeRoot.Children[0].Children[1].Id)	
-		require.Equal(t, "", treeRoot.Children[0].Children[1].PluginId)	
+		require.Equal(t, "connections-connect-data", treeRoot.Children[0].Children[1].Id)
+		require.Equal(t, "", treeRoot.Children[0].Children[1].PluginId)
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
 		require.Equal(t, "Connections", treeRoot.Children[0].Text)
-		require.Equal(t, "Connect Data", treeRoot.Children[0].Children[1].Text)	
-		require.Equal(t, "standalone-plugin-page-/connections/connect-data", treeRoot.Children[0].Children[1].Id)	
-		require.Equal(t, "test-app3", treeRoot.Children[0].Children[1].PluginId)	
+		require.Equal(t, "Connect Data", treeRoot.Children[0].Children[1].Text)
+		require.Equal(t, "standalone-plugin-page-/connections/connect-data", treeRoot.Children[0].Children[1].Id)
+		require.Equal(t, "test-app3", treeRoot.Children[0].Children[1].PluginId)
 	})
 }
 
