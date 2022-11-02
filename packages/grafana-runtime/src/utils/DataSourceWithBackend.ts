@@ -119,11 +119,13 @@ class DataSourceWithBackend<
       targets = targets.filter((q) => this.filterQuery!(q));
     }
 
+    const dsTypes = new Set<string>();
     const queries = targets.map((q) => {
       let datasource = this.getRef();
       let datasourceId = this.id;
 
       if (isExpressionReference(q.datasource)) {
+        dsTypes.add(ExpressionDatasourceRef.type);
         return {
           ...q,
           datasource: ExpressionDatasourceRef,
@@ -141,6 +143,9 @@ class DataSourceWithBackend<
         datasourceId = ds.id;
       }
 
+      if (datasource.type) {
+        dsTypes.add(datasource.type);
+      }
       return {
         ...this.applyTemplateVariables(q, request.scopedVars),
         datasource,
@@ -170,9 +175,17 @@ class DataSourceWithBackend<
       });
     }
 
+    const types = Array.from(dsTypes).join(',');
+    let url = '/api/ds/query';
+    if (dsTypes.size > 1) {
+      url = '/api/ds/query/mixed~' + types;
+    } else {
+      url = '/api/ds/query/' + types;
+    }
+
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
-        url: '/api/ds/query',
+        url,
         method: 'POST',
         data: body,
         requestId,

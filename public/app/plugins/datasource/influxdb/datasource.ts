@@ -407,7 +407,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return lastValueFrom(
         getBackendSrv()
           .fetch<BackendDataSourceResponse>({
-            url: '/api/ds/query',
+            url: '/api/ds/query/' + this.type,
             method: 'POST',
             data: {
               from: options.range.from.valueOf().toString(),

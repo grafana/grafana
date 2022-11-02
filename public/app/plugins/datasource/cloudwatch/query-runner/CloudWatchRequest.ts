@@ -14,7 +14,7 @@ import { CloudWatchJsonData, Dimensions, MetricRequest, MultiFilters, TSDBRespon
 export abstract class CloudWatchRequest {
   templateSrv: TemplateSrv;
   ref: DataSourceRef;
-  dsQueryEndpoint = '/api/ds/query';
+  dsQueryEndpoint = '/api/ds/query/cloudwatch';
   debouncedCustomAlert: (title: string, message: string) => void = memoizedDebounce(
     displayCustomError,
     AppNotificationTimeout.Error
