@@ -9,11 +9,6 @@ import { createLokiDatasource } from '../mocks';
 import { LokiQueryField } from './LokiQueryField';
 
 type Props = ComponentProps<typeof LokiQueryField>;
-
-beforeAll(() => {
-  config.featureToggles.lokiMonacoEditor = true;
-});
-
 describe('LokiQueryField', () => {
   let props: Props;
   beforeEach(() => {
@@ -34,6 +29,7 @@ describe('LokiQueryField', () => {
     };
     jest.spyOn(props.datasource.languageProvider, 'start').mockResolvedValue([]);
     jest.spyOn(props.datasource.languageProvider, 'fetchLabels').mockResolvedValue(['label1']);
+    config.featureToggles.lokiMonacoEditor = true;
   });
 
   it('refreshes metrics when time range changes over 1 minute', async () => {
@@ -76,5 +72,13 @@ describe('LokiQueryField', () => {
 
     rerender(<LokiQueryField {...props} range={newRange} />);
     expect(props.datasource.languageProvider.fetchLabels).not.toHaveBeenCalled();
+  });
+
+  it('can fall back to the legacy editor', async () => {
+    config.featureToggles.lokiMonacoEditor = false;
+    render(<LokiQueryField {...props} />);
+
+    expect(await screen.findByText('Enter a Loki query (run with Shift+Enter)')).toBeInTheDocument();
+    expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
   });
 });
