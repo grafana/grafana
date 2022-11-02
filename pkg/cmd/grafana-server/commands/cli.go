@@ -175,7 +175,7 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 	setting.IsEnterprise = extensions.IsEnterprise
 	setting.Packaging = validPackaging(packaging)
 
-	metrics.SetBuildInformation(opt.Version, opt.Commit, opt.BuildBranch)
+	metrics.SetBuildInformation(opt.Version, opt.Commit, opt.BuildBranch, buildstampInt64)
 
 	elevated, err := process.IsRunningWithElevatedPrivileges()
 	if err != nil {
