@@ -113,7 +113,12 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
     };
 
     const addItemMenuItem = !scene.isPanelEditing && (
-      <MenuItem label="Add item" className={styles.menuItem} childItems={getTypeOptionsSubmenu()} />
+      <MenuItem
+        label="Add item"
+        className={styles.menuItem}
+        childItems={getTypeOptionsSubmenu()}
+        customStyle={{ maxHeight: '150px', overflowY: 'auto' }}
+      />
     );
 
     const setBackgroundMenuItem = !scene.isPanelEditing && (
