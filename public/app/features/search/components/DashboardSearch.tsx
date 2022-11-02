@@ -1,19 +1,21 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, stylesFactory, useStyles2 } from '@grafana/ui';
 
 import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
 import { SearchView } from '../page/components/SearchView';
-import { useAndInitSearchStateManager } from '../state/SearchState';
+import { getSearchStateManager } from '../state/SearchStateManager';
 
 export interface Props {}
 
 export function DashboardSearch({}: Props) {
   const styles = useStyles2(getStyles);
-  const stateManager = useAndInitSearchStateManager({});
+  const stateManager = getSearchStateManager();
   const state = stateManager.useState();
+
+  useEffect(() => stateManager.initStateFromUrl(), [stateManager]);
 
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 

@@ -4,11 +4,11 @@ import { locationService } from '@grafana/runtime';
 import { FilterInput, ToolbarButton, useTheme2 } from '@grafana/ui';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { t } from 'app/core/internationalization';
-import { useSearchStateManager } from 'app/features/search/state/SearchState';
+import { getSearchStateManager } from 'app/features/search/state/SearchStateManager';
 
 export function TopSearchBarInput() {
   const theme = useTheme2();
-  const stateManager = useSearchStateManager();
+  const stateManager = getSearchStateManager();
   const state = stateManager.useState();
   const breakpoint = theme.breakpoints.values.sm;
 

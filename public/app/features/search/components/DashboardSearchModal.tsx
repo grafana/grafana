@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,7 +10,7 @@ import { IconButton, useStyles2 } from '@grafana/ui';
 
 import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
 import { SearchView } from '../page/components/SearchView';
-import { useAndInitSearchStateManager } from '../state/SearchState';
+import { getSearchStateManager } from '../state/SearchStateManager';
 
 const ANIMATION_DURATION = 200;
 
@@ -21,17 +21,16 @@ export interface Props {
 export function DashboardSearchModal({ isOpen }: Props) {
   const styles = useStyles2(getStyles);
   const animStyles = useStyles2((theme) => getAnimStyles(theme, ANIMATION_DURATION));
-  const stateManager = useAndInitSearchStateManager({});
+  const stateManager = getSearchStateManager();
   const state = stateManager.useState();
   const ref = useRef<HTMLDivElement>(null);
   const backdropRef = useRef(null);
   const [animationComplete, setAnimationComplete] = useState(false);
-
   const { overlayProps, underlayProps } = useOverlay({ isOpen, onClose: stateManager.onCloseSearch }, ref);
-
   const { dialogProps } = useDialog({}, ref);
-
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
+
+  useEffect(() => stateManager.initStateFromUrl(), [stateManager]);
 
   return (
     <OverlayContainer>

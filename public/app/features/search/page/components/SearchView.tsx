@@ -11,7 +11,7 @@ import { FolderDTO } from 'app/types';
 
 import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequirements';
 import { getGrafanaSearcher } from '../../service';
-import { useSearchStateManager } from '../../state/SearchState';
+import { getSearchStateManager } from '../../state/SearchStateManager';
 import { SearchLayout } from '../../types';
 import { newSearchSelection, updateSearchSelection } from '../selection';
 
@@ -32,7 +32,7 @@ export type SearchViewProps = {
 
 export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardEvents }: SearchViewProps) => {
   const styles = useStyles2(getStyles);
-  const stateManager = useSearchStateManager();
+  const stateManager = getSearchStateManager(); // State is initialized from URL by parent component
   const state = stateManager.useState();
 
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Input, useStyles2, Spinner } from '@grafana/ui';
@@ -8,7 +8,7 @@ import { FolderDTO, AccessControlAction } from 'app/types';
 
 import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
 import { SearchView } from '../page/components/SearchView';
-import { useAndInitSearchStateManager } from '../state/SearchState';
+import { getSearchStateManager } from '../state/SearchStateManager';
 
 import { DashboardActions } from './DashboardActions';
 
@@ -19,7 +19,7 @@ export interface Props {
 export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
   const styles = useStyles2(getStyles);
   // since we don't use "query" from use search... it is not actually loaded from the URL!
-  const stateManager = useAndInitSearchStateManager({ folderUid: folder?.uid });
+  const stateManager = getSearchStateManager();
   const state = stateManager.useState();
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
@@ -35,6 +35,8 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
     ? contextSrv.hasAccessInMetadata(AccessControlAction.DashboardsCreate, folder, canCreateDashboardsFallback)
     : contextSrv.hasAccess(AccessControlAction.DashboardsCreate, canCreateDashboardsFallback);
   const viewActions = (folder === undefined && canCreateFolders) || canCreateDashboards;
+
+  useEffect(() => stateManager.initStateFromUrl(folder?.uid), [folder?.uid, stateManager]);
 
   return (
     <>

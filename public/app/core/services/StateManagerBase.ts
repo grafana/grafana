@@ -8,8 +8,7 @@ export class StateManagerBase<TState> {
   private _state: TState;
 
   constructor(state: TState) {
-    this.state = state;
-    this.subject.next(state);
+    this._state = state;
   }
 
   useState() {

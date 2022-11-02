@@ -1,5 +1,5 @@
 import { debounce } from 'lodash';
-import { FormEvent, useEffect } from 'react';
+import { FormEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -40,10 +40,15 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   updateLocation = debounce((query) => locationService.partial(query, true), 300);
   lastQuery?: SearchQuery;
 
-  initState(state: Partial<SearchState>) {
-    this.setStateAndDoSearch(state);
-  }
+  initStateFromUrl(folderUid?: string) {
+    const stateFromUrl = parseRouteParams(locationService.getSearchObject());
 
+    stateManager.setStateAndDoSearch({
+      ...stateFromUrl,
+      folderUid: folderUid,
+      eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
+    });
+  }
   /**
    * Updates internal and url state, then triggers a new search
    */
@@ -212,7 +217,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
    */
   onSearchItemClicked = () => {
     // Clear some filters
-    this.setState({ tag: [], starred: false, sort: null, query: '' });
+    this.setState({ tag: [], starred: false, sort: null, query: '', folderUid: undefined });
     this.onCloseSearch();
 
     reportSearchResultInteraction(this.state.eventTrackingNamespace, {
@@ -240,10 +245,10 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   }
 }
 
-let stateManger: SearchStateManager;
+let stateManager: SearchStateManager;
 
-function getSearchStateManager() {
-  if (!stateManger) {
+export function getSearchStateManager() {
+  if (!stateManager) {
     const selectedLayout = localStorage.getItem(SEARCH_SELECTED_LAYOUT) as SearchLayout;
     const layout = selectedLayout ?? initialState.layout;
 
@@ -252,32 +257,8 @@ function getSearchStateManager() {
       includePanels = false;
     }
 
-    stateManger = new SearchStateManager({ ...initialState, layout: layout, includePanels });
+    stateManager = new SearchStateManager({ ...initialState, layout: layout, includePanels });
   }
 
-  return stateManger;
+  return stateManager;
 }
-
-export interface InitStateManagerArgs {
-  folderUid?: string;
-}
-
-export const useAndInitSearchStateManager = ({ folderUid }: InitStateManagerArgs) => {
-  const stateManger = getSearchStateManager();
-
-  useEffect(() => {
-    const stateFromUrl = parseRouteParams(locationService.getSearchObject());
-
-    stateManger.initState({
-      ...stateFromUrl,
-      folderUid: folderUid,
-      eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
-    });
-  }, [folderUid, stateManger]);
-
-  return stateManger;
-};
-
-export const useSearchStateManager = () => {
-  return getSearchStateManager();
-};
