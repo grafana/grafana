@@ -125,6 +125,7 @@ class DataSourceWithBackend<
       let datasourceId = this.id;
       let shouldApplyTemplateVariables = true;
 
+      console.log('data source', this);
       if (isExpressionReference(q.datasource)) {
         return {
           ...q,
@@ -141,7 +142,7 @@ class DataSourceWithBackend<
 
         const dsRef = ds.rawRef ?? getDataSourceRef(ds);
         const dsId = ds.id;
-        if (!eq(dsRef, datasource) || datasourceId !== dsId) {
+        if (dsRef.uid !== datasource.uid || datasourceId !== dsId) {
           datasource = dsRef;
           datasourceId = dsId;
           // If the query is using a different datasource, we would need to retrieve the datasource
