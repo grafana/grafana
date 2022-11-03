@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -13,13 +14,13 @@ import (
 
 type Service struct {
 	store            store
-	authTokenService models.ActiveTokenService
+	authTokenService auth.ActiveTokenService
 	Cfg              *setting.Cfg
 	SQLStore         sqlstore.Store
 	Logger           log.Logger
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, tokenService models.ActiveTokenService, ss *sqlstore.SQLStore) quota.Service {
+func ProvideService(db db.DB, cfg *setting.Cfg, tokenService auth.ActiveTokenService, ss *sqlstore.SQLStore) quota.Service {
 	return &Service{
 		store:            &sqlStore{db: db},
 		Cfg:              cfg,

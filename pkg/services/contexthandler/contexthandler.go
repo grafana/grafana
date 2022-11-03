@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -42,7 +43,7 @@ const (
 
 const ServiceName = "ContextHandler"
 
-func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
+func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtService models.JWTService,
 	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore db.DB,
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
 	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
@@ -69,7 +70,7 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 // ContextHandler is a middleware.
 type ContextHandler struct {
 	Cfg               *setting.Cfg
-	AuthTokenService  models.UserTokenService
+	AuthTokenService  auth.UserTokenService
 	JWTAuthService    models.JWTService
 	RemoteCache       *remotecache.RemoteCache
 	RenderService     rendering.Service
@@ -494,7 +495,7 @@ func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *models.
 	}
 }
 
-func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService models.UserTokenService,
+func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService auth.UserTokenService,
 	token *models.UserToken) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
 		// if response has already been written, skip.
