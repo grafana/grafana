@@ -72,7 +72,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 		Section:    navtree.NavSectionPlugin,
 		SortWeight: navtree.WeightPlugin,
 		IsSection:  true,
-		PluginId:   plugin.ID,
+		PluginID:   plugin.ID,
 	}
 
 	if topNavEnabled {
@@ -90,7 +90,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 			link := &navtree.NavLink{
 				Text:     include.Name,
 				Icon:     include.Icon,
-				PluginId: plugin.ID,
+				PluginID: plugin.ID,
 			}
 
 			if len(include.Path) > 0 {
@@ -115,7 +115,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 						if child.Url == link.Url {
 							child.Id = link.Id
 							child.SortWeight = link.SortWeight
-							child.PluginId = link.PluginId
+							child.PluginID = link.PluginID
 							child.Children = []*navtree.NavLink{}
 							isOverridingCorePage = true
 							break
@@ -138,7 +138,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 				link := &navtree.NavLink{
 					Url:      path.Join(s.cfg.AppSubURL, dboardURL),
 					Text:     include.Name,
-					PluginId: plugin.ID,
+					PluginID: plugin.ID,
 				}
 				appLink.Children = append(appLink.Children, link)
 			}
