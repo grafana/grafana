@@ -177,6 +177,7 @@ compilation-stats.json
 !pkg/framework/**/*_gen.go
 !pkg/plugins/pfs/**/*_gen.go
 !public/app/plugins/**/*_gen.go
+!pkg/services/publicdashboards/*_gen.go
 
 # Auto-generated internationalization files
 public/locales/_build/

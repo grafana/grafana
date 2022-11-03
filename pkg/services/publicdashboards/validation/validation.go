@@ -5,7 +5,7 @@ import (
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 )
 
-func ValidateSavePublicDashboard(dto *SavePublicDashboardDTO, dashboard *models.Dashboard) error {
+func ValidatePublicDashboard(dto *SavePublicDashboardDTO, dashboard *models.Dashboard) error {
 	if hasTemplateVariables(dashboard) {
 		return ErrPublicDashboardHasTemplateVariables.Errorf("ValidateSavePublicDashboard: public dashboard has template variables")
 	}
