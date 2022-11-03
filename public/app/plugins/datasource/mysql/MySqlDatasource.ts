@@ -1,39 +1,42 @@
 import { DataSourceInstanceSettings, ScopedVars, TimeRange } from '@grafana/data';
+import { CompletionItemKind, LanguageDefinition } from '@grafana/experimental';
 import { TemplateSrv } from '@grafana/runtime';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
-import { CompletionItemKind, DB, LanguageCompletionProvider, SQLQuery } from 'app/features/plugins/sql/types';
+import { DB, SQLQuery } from 'app/features/plugins/sql/types';
+import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
 
 import MySQLQueryModel from './MySqlQueryModel';
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
-import { fetchColumns, fetchTables, getFunctions, getSqlCompletionProvider } from './sqlCompletionProvider';
+import { fetchColumns, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { MySQLOptions } from './types';
 
 export class MySqlDatasource extends SqlDatasource {
-  completionProvider: LanguageCompletionProvider | undefined;
+  sqlLanguageDefinition: LanguageDefinition | undefined;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
     super(instanceSettings);
-    this.completionProvider = undefined;
   }
 
   getQueryModel(target?: Partial<SQLQuery>, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): MySQLQueryModel {
     return new MySQLQueryModel(target!, templateSrv, scopedVars);
   }
 
-  getSqlCompletionProvider(db: DB): LanguageCompletionProvider {
-    if (this.completionProvider !== undefined) {
-      return this.completionProvider;
+  getSqlLanguageDefinition(db: DB): LanguageDefinition {
+    if (this.sqlLanguageDefinition !== undefined) {
+      return this.sqlLanguageDefinition;
     }
 
     const args = {
       getColumns: { current: (query: SQLQuery) => fetchColumns(db, query) },
-      getTables: { current: (dataset?: string) => fetchTables(db, { dataset }) },
-      fetchMeta: { current: (path?: string) => this.fetchMeta(path) },
-      getFunctions: { current: () => getFunctions() },
+      getTables: { current: (dataset?: string) => this.fetchMeta(dataset) },
     };
-    this.completionProvider = getSqlCompletionProvider(args);
-    return this.completionProvider;
+    this.sqlLanguageDefinition = {
+      id: 'sql',
+      completionProvider: getSqlCompletionProvider(args),
+      formatter: formatSQL,
+    };
+    return this.sqlLanguageDefinition;
   }
 
   async fetchDatasets(): Promise<string[]> {
@@ -97,8 +100,8 @@ export class MySqlDatasource extends SqlDatasource {
         Promise.resolve({ query, error: '', isError: false, isValid: true }),
       dsID: () => this.id,
       lookup: (path?: string) => this.fetchMeta(path),
-      getSqlCompletionProvider: () => this.getSqlCompletionProvider(this.db),
-      functions: async () => getFunctions(),
+      functions: () => ['VARIANCE', 'STDDEV'],
+      getEditorLanguageDefinition: () => this.getSqlLanguageDefinition(this.db),
     };
   }
 }
