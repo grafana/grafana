@@ -98,7 +98,9 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			t.Run("When creating folder should return access denied error", func(t *testing.T) {
 				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil).Times(2)
-				_, err := service.CreateFolder(context.Background(), usr, orgID, folder.Title, folderUID)
+				ctx := context.Background()
+				ctx = appcontext.WithUser(ctx, usr)
+				_, err := service.CreateFolder(ctx, &folder.CreateFolderCommand{UID: folderUID, OrgID: orgID})
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 

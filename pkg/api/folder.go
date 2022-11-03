@@ -119,13 +119,15 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	folder, err := hs.folderService.CreateFolder(c.Req.Context(), &folder.CreateFolderCommand{Title: cmd.Title, UID: cmd.Uid})
+	f, err := hs.folderService.CreateFolder(c.Req.Context(), &folder.CreateFolderCommand{Title: cmd.Title, UID: cmd.Uid, OrgID: c.OrgID})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
-
-	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
-	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, folder))
+	// one place outside service layer we need to convert folder.Folder to models.Folder
+	// modelFolder := &models.Folder{Id: folder.ID, Uid: folder.UID, Title: folder.Title}
+	modelFolder := folder.ConvertFolderToModelFolder(f)
+	g := guardian.New(c.Req.Context(), f.ID, c.OrgID, c.SignedInUser)
+	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, modelFolder))
 }
 
 // swagger:route PUT /folders/{folder_uid} folders updateFolder
@@ -146,12 +148,14 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	UID := web.Params(c.Req)[":uid"]
-	_, err := hs.folderService.UpdateFolder(c.Req.Context(), &folder.UpdateFolderCommand{NewUID: &UID})
+	f, err := hs.folderService.UpdateFolder(c.Req.Context(), &folder.UpdateFolderCommand{NewUID: &UID})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
-	g := guardian.New(c.Req.Context(), cmd.Result.Id, c.OrgID, c.SignedInUser)
-	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, cmd.Result))
+	g := guardian.New(c.Req.Context(), f.ID, c.OrgID, c.SignedInUser)
+	// another area we are converting folder.Folder to models.Folder outside service layer
+	modelFolder := &models.Folder{Id: f.ID, Uid: f.UID, Title: f.Title}
+	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, modelFolder))
 }
 
 // swagger:route DELETE /folders/{folder_uid} folders deleteFolder
@@ -185,11 +189,11 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"title":   f.Title,
 		"message": fmt.Sprintf("Folder %s deleted", f.Title),
-		"id":      f.Id,
+		"id":      f.ID,
 	})
 }
 
-func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuardian, folder *folder.Folder) dtos.Folder {
+func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {
 	canEdit, _ := g.CanEdit()
 	canSave, _ := g.CanSave()
 	canAdmin, _ := g.CanAdmin()
@@ -205,10 +209,10 @@ func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuar
 	}
 
 	return dtos.Folder{
-		Id:            folder.ID,
-		Uid:           folder.UID,
+		Id:            folder.Id,
+		Uid:           folder.Uid,
 		Title:         folder.Title,
-		Url:           folder.URL,
+		Url:           folder.Url,
 		HasACL:        folder.HasACL,
 		CanSave:       canSave,
 		CanEdit:       canEdit,
@@ -219,7 +223,7 @@ func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuar
 		UpdatedBy:     updater,
 		Updated:       folder.Updated,
 		Version:       folder.Version,
-		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.UID),
+		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.Uid),
 	}
 }
 

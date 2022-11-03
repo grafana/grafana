@@ -187,7 +187,7 @@ func (s *Service) CreateFolder(ctx context.Context, cmd *folder.CreateFolderComm
 		return nil, err
 	}
 
-	folder := f.ConvertFolderToModelFolder(modelFolder)
+	folder := f.ConvertModelFolderToFolder(modelFolder)
 
 	var permissionErr error
 	if !accesscontrol.IsDisabled(s.cfg) {
@@ -253,7 +253,7 @@ func (s *Service) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderComm
 	if err != nil {
 		return nil, err
 	}
-	folder := f.ConvertFolderToModelFolder(modelFolder)
+	folder := f.ConvertModelFolderToFolder(modelFolder)
 	cmd.Folder = folder
 
 	if currentTitle != folder.Title {
@@ -286,13 +286,15 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 		return nil, dashboards.ErrFolderAccessDenied
 	}
 
-	deleteCmd := models.DeleteDashboardCommand{OrgId: user.OrgID, Id: dashFolder.Id, ForceDeleteFolderRules: forceDeleteRules}
+	folder := f.ConvertModelFolderToFolder(dashFolder)
+
+	deleteCmd := models.DeleteDashboardCommand{OrgId: user.OrgID, Id: dashFolder.Id, ForceDeleteFolderRules: forceDeleteRules} // how can i get forceDeleteRules from?
 
 	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 		return nil, toFolderError(err)
 	}
 
-	return dashFolder, nil
+	return folder, nil
 }
 
 func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {
