@@ -291,7 +291,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   } as FieldCalcs;
 
   const data = field.values;
-  calcs.count = data.length;
+  calcs.count = ignoreNulls ? data.length : data.toArray().filter((val) => val != null).length;
 
   const isNumberField = field.type === FieldType.number || FieldType.time;
 

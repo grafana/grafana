@@ -11,7 +11,7 @@ import {
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
 
-import { DataFrame, getFieldDisplayName, Field } from '@grafana/data';
+import { DataFrame, getFieldDisplayName, Field, ReducerID } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
@@ -232,14 +232,31 @@ export const Table = memo((props: Props) => {
     }
 
     if (footerOptions.show) {
-      setFooterItems(
-        getFooterItems(
-          headerGroups[0].headers as unknown as Array<{ field: Field }>,
-          createFooterCalculationValues(rows),
-          footerOptions,
-          theme
-        )
+      const footerItems = getFooterItems(
+        headerGroups[0].headers as unknown as Array<{ field: Field }>,
+        createFooterCalculationValues(rows),
+        footerOptions,
+        theme
       );
+
+      if (
+        props.footerOptions?.countAll &&
+        footerItems &&
+        typeof footerItems[0] === 'string' &&
+        footerItems[0].toLowerCase() === ReducerID.count
+      ) {
+        const maxCount = footerItems.reduce((max, item) => {
+          if (typeof item === 'string' && !isNaN(+item)) {
+            return Math.max(max, +item);
+          }
+          return max;
+        }, 0);
+
+        const footerItemsCountAll: FooterItem[] = [footerItems[0], maxCount.toString()];
+        setFooterItems(footerItemsCountAll);
+      } else {
+        setFooterItems(footerItems);
+      }
     } else {
       setFooterItems(undefined);
     }
@@ -381,6 +398,7 @@ export const Table = memo((props: Props) => {
             <FooterRow
               height={footerHeight}
               isPaginationVisible={Boolean(enablePagination)}
+              isCountAllSet={Boolean(props.footerOptions?.countAll)}
               footerValues={footerItems}
               footerGroups={footerGroups}
               totalColumnsWidth={totalColumnsWidth}

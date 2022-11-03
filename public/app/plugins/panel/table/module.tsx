@@ -131,6 +131,13 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         defaultValue: [ReducerID.sum],
         showIf: (cfg) => cfg.footer?.show,
       })
+      .addBooleanSwitch({
+        path: 'footer.countAll',
+        category: [footerCategory],
+        name: 'Count all data',
+        defaultValue: defaultPanelOptions.footer?.countAll,
+        showIf: (cfg) => cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] === ReducerID.count,
+      })
       .addMultiSelect({
         path: 'footer.fields',
         category: [footerCategory],

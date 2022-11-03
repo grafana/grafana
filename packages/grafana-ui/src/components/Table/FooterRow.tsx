@@ -14,6 +14,7 @@ export interface FooterRowProps {
   footerGroups: HeaderGroup[];
   footerValues: FooterItem[];
   isPaginationVisible: boolean;
+  isCountAllSet: boolean;
   height: number;
 }
 
