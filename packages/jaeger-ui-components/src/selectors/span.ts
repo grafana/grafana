@@ -20,7 +20,7 @@ import { TraceSpan, TraceSpanData, TraceSpanReference } from '../types/trace';
 import { getProcessServiceName } from './process';
 
 export const getSpanId = (
-  span: TraceSpan | { operationName: string; process: { serviceName: string }; spanID: string }
+  span: TraceSpanData | { operationName: string; process: { serviceName: string }; spanID: string }
 ) => span.spanID;
 export const getSpanName = (
   span: TraceSpanData | { operationName: string; process: { serviceName: string }; spanID: string }
@@ -39,7 +39,9 @@ export const getSpanParentId = createSelector(
   (childOfRef) => (childOfRef ? childOfRef.spanID : null)
 );
 
-export const getSpanProcess = (span: { operationName: string; process: { serviceName: string }; spanID: string }) => {
+export const getSpanProcess = (
+  span: TraceSpan | { operationName: string; process?: { serviceName: string }; spanID: string }
+) => {
   if (!span.process) {
     throw new Error(
       `
