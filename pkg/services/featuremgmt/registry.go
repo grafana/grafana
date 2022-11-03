@@ -341,8 +341,18 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "datasourceLogger",
+			Description: "Logs all datasource requests",
+		},
+		{
 			Name:            "accessControlOnCall",
 			Description:     "Access control primitives for OnCall",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:            "nestedFolders",
+			Description:     "Enable folder nesting",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},

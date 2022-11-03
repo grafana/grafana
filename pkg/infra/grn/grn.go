@@ -2,17 +2,19 @@ package grn
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
-
-	"cuelang.org/go/pkg/strconv"
 )
 
+// Grafana resource name.  See also:
+// https://github.com/grafana/grafana/blob/main/pkg/services/store/object/object.proto#L6
+// NOTE: This structure/format is still under active development and is subject to change
 type GRN struct {
 	// TenantID contains the ID of the tenant (in hosted grafana) or
 	// organization (in other environments) the resource belongs to. This field
 	// may be omitted for global Grafana resources which are not associated with
 	// an organization.
-	TenantID int
+	TenantID int64
 
 	// The kind of resource being identified, for e.g. "dashboard" or "user".
 	// The caller is responsible for validating the value.
@@ -21,6 +23,9 @@ type GRN struct {
 	// ResourceIdentifier is used by the underlying service to identify the
 	// resource.
 	ResourceIdentifier string
+
+	// GRN can not be extended
+	_ interface{}
 }
 
 // ParseStr attempts to parse a string into a GRN. It returns an error if the
@@ -47,7 +52,7 @@ func ParseStr(str string) (GRN, error) {
 	ret.ResourceKind = kind
 
 	if parts[1] != "" {
-		tID, err := strconv.Atoi(parts[1])
+		tID, err := strconv.ParseInt(parts[1], 10, 64)
 		if err != nil {
 			return ret, ErrInvalidGRN.Errorf("ID segment cannot be converted to an integer")
 		} else {
