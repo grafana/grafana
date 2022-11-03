@@ -634,7 +634,6 @@ func TestMergeUser(t *testing.T) {
 
 func TestMergeUserFromNewFileInput(t *testing.T) {
 	t.Run("should be able to merge users after choosing a different user to keep", func(t *testing.T) {
-
 		type testBuildConflictBlock struct {
 			desc                  string
 			users                 []user.User
@@ -710,8 +709,27 @@ conflict: test2
 				expectedValidationErr: fmt.Errorf("invalid number of users to keep, expected 1, got 2"),
 				expectedBlocks:        []string{"conflict: test"},
 			},
-			// TODO:
-			// return fmt.Errorf("invalid start character (expected '+,-') found %c for row %s", row[0], row)
+			{
+				desc: "should give error for having wrong character for user",
+				users: []user.User{
+					{
+						Email: "TEST",
+						Login: "TEST",
+						OrgID: int64(testOrgID),
+					},
+					{
+						Email: "test",
+						Login: "test",
+						OrgID: int64(testOrgID),
+					},
+				},
+				fileString: `conflict: test
++ id: 1, email: test, login: test, last_seen_at: 2012-09-19T08:31:20Z, auth_module:, conflict_email: true, conflict_login: true
+% id: 2, email: TEST, login: TEST, last_seen_at: 2012-09-19T08:31:29Z, auth_module:, conflict_email: true, conflict_login: true
+`,
+				expectedValidationErr: fmt.Errorf("invalid start character (expected '+,-') found %% for row number 3"),
+				expectedBlocks:        []string{"conflict: test"},
+			},
 		}
 		for _, tc := range testCases {
 			// Restore after destructive operation

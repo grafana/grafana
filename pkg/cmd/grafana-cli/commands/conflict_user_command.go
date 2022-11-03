@@ -135,7 +135,7 @@ func runValidateConflictUsersFile() func(context *cli.Context) error {
 		}
 		validErr := getValidConflictUsers(r, b)
 		if validErr != nil {
-			return fmt.Errorf("could not validate file with error %s", err)
+			return fmt.Errorf("could not validate file with error:\n%s", validErr)
 		}
 		logger.Info("File validation complete without errors.\n\n File can be used with ingesting command `ingest-file`.\n\n")
 		return nil
@@ -161,7 +161,7 @@ func runIngestConflictUsersFile() func(context *cli.Context) error {
 		}
 		validErr := getValidConflictUsers(r, b)
 		if validErr != nil {
-			return fmt.Errorf("could not validate file with error %s", validErr)
+			return fmt.Errorf("could not validate file with error:\n%s", validErr)
 		}
 		// should we rebuild blocks here?
 		// kind of a weird thing maybe?
@@ -239,7 +239,7 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 	}
 	counterKeepUsersForBlock := map[string]int{}
 	currentBlock := ""
-	for _, row := range strings.Split(string(b), "\n") {
+	for rowNumber, row := range strings.Split(string(b), "\n") {
 		// end of file
 		if row == "" {
 			break
@@ -252,13 +252,20 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 		entryRow := matchingExpression.Match([]byte(row))
 		// not and entry row -> is a conflict block row
 		if !entryRow {
+			// check for malformed row
+			// rows should be of the form
+			// conflict: <conflict>
+			// or
+			// + id: <id>
+			// - id: <id>
+			if (row[0] != '-') && (row[0] != '+') && (row[0] != 'c') {
+				return fmt.Errorf("invalid start character (expected '+,-') found %c for row number %d", row[0], rowNumber+1)
+			}
+
+			// is a conflict block row
 			// conflict: hej
 			currentBlock = row
 			continue
-		}
-		// if the row starts with a + or -, it is a diff
-		if (row[0] != '-') && (row[0] != '+') {
-			return fmt.Errorf("invalid start character (expected '+,-') found %c for row %s", row[0], row)
 		}
 		// need to track how many keep users we have for a block
 		if row[0] == '+' {
