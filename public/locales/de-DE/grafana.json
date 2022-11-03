@@ -412,14 +412,12 @@
       "recent-title": "Kürzlich verwendete absolute Bereiche",
       "title": "Absoluter Zeitbereich"
     },
-    "calendar-select-range": {
-      "title": ""
-    },
-    "specify-time-range": {
-      "title": ""
+    "calendar": {
+      "select-time": ""
     },
     "time-range": {
-      "example-title": ""
+      "example-title": "",
+      "specify": ""
     }
   },
   "user-orgs": {

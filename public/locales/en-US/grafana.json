@@ -412,14 +412,12 @@
       "recent-title": "Recently used absolute ranges",
       "title": "Absolute time range"
     },
-    "calendar-select-range": {
-      "title": "Select a time range"
-    },
-    "specify-time-range": {
-      "title": "Specify time range <1></1>"
+    "calendar": {
+      "select-time": "Select a time range"
     },
     "time-range": {
-      "example-title": "Example time ranges"
+      "example-title": "Example time ranges",
+      "specify": "Specify time range <1></1>"
     }
   },
   "user-orgs": {
