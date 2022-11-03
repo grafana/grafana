@@ -20,7 +20,7 @@ import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
 interface Props {
   // The ID of the plugin we would like to load and display
   pluginId: string;
-  // The navigation item that the plugin is rendered under
+  // The root navModelItem for the plugin (root = lives directly under 'home')
   pluginNavSection: NavModelItem;
 }
 
@@ -41,8 +41,8 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const portalNode = useMemo(() => createHtmlPortalNode(), []);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
   const { plugin, loading, pluginNav } = state;
-  const sectionNav = buildPluginSectionNav(pluginNavSection, pluginNav, currentUrl);
-  const context = useMemo(() => buildPluginPageContext(sectionNav), [sectionNav]);
+  const navModel = buildPluginSectionNav(pluginNavSection, pluginNav, currentUrl);
+  const context = useMemo(() => buildPluginPageContext(navModel), [navModel]);
 
   useEffect(() => {
     loadAppPlugin(pluginId, dispatch);
@@ -54,12 +54,12 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   );
 
   if (!plugin || pluginId !== plugin.meta.id) {
-    return <Page navModel={sectionNav}>{loading && <PageLoader />}</Page>;
+    return <Page navModel={navModel}>{loading && <PageLoader />}</Page>;
   }
 
   if (!plugin.root) {
     return (
-      <Page navModel={sectionNav ?? getWarningNav('Plugin load error')}>
+      <Page navModel={navModel ?? getWarningNav('Plugin load error')}>
         <div>No root app page component found</div>
       </Page>
     );
@@ -82,8 +82,8 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   return (
     <>
       <InPortal node={portalNode}>{pluginRoot}</InPortal>
-      {sectionNav ? (
-        <Page navModel={sectionNav} pageNav={pluginNav?.node}>
+      {navModel ? (
+        <Page navModel={navModel} pageNav={pluginNav?.node}>
           <Page.Contents isLoading={loading}>
             <OutPortal node={portalNode} />
           </Page.Contents>
