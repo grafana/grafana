@@ -61,14 +61,15 @@ func (e *AzureResourceGraphDatasource) ExecuteTimeSeriesQuery(ctx context.Contex
 	result := &backend.QueryDataResponse{
 		Responses: map[string]backend.DataResponse{},
 	}
+	ctxLogger := logger.FromContext(ctx)
 
-	queries, err := e.buildQueries(logger, originalQueries, dsInfo)
+	queries, err := e.buildQueries(ctxLogger, originalQueries, dsInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, logger, query, dsInfo, client, url, tracer)
+		result.Responses[query.RefID] = e.executeQuery(ctx, ctxLogger, query, dsInfo, client, url, tracer)
 	}
 
 	return result, nil
