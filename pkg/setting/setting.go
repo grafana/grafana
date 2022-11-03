@@ -247,6 +247,7 @@ type Cfg struct {
 	RendererCallbackUrl            string
 	RendererAuthToken              string
 	RendererConcurrentRequestLimit int
+	RendererRenderKeyLifeTime      time.Duration
 
 	// Security
 	DisableInitAdminCreation          bool
@@ -1486,6 +1487,7 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	}
 
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
+	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 

@@ -184,6 +184,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('geomap-photo-layer', import 'panel-geomap/geomap-photo-layer.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('geomap-spatial-operations-transformer', import 'panel-geomap/geomap-spatial-operations-transformer.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {

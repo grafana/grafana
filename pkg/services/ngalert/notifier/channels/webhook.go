@@ -43,6 +43,9 @@ type webhookSettings struct {
 	// HTTP Basic Authentication.
 	User     string `json:"username,omitempty" yaml:"username,omitempty"`
 	Password string `json:"password,omitempty" yaml:"password,omitempty"`
+
+	Title   string `json:"title,omitempty" yaml:"title,omitempty"`
+	Message string `json:"message,omitempty" yaml:"message,omitempty"`
 }
 
 func buildWebhookSettings(factoryConfig FactoryConfig) (webhookSettings, error) {
@@ -65,6 +68,12 @@ func buildWebhookSettings(factoryConfig FactoryConfig) (webhookSettings, error) 
 	}
 	if settings.User != "" && settings.Password != "" && settings.AuthorizationScheme != "" && settings.AuthorizationCredentials != "" {
 		return settings, errors.New("both HTTP Basic Authentication and Authorization Header are set, only 1 is permitted")
+	}
+	if settings.Title == "" {
+		settings.Title = DefaultMessageTitleEmbed
+	}
+	if settings.Message == "" {
+		settings.Message = DefaultMessageEmbed
 	}
 	return settings, err
 }
@@ -132,12 +141,9 @@ type WebhookMessage struct {
 	GroupKey        string `json:"groupKey"`
 	TruncatedAlerts int    `json:"truncatedAlerts"`
 	OrgID           int64  `json:"orgId"`
-
-	// Deprecated, to be removed in Grafana 10
-	// These are present to make migration a little less disruptive.
-	Title   string `json:"title"`
-	State   string `json:"state"`
-	Message string `json:"message"`
+	Title           string `json:"title"`
+	State           string `json:"state"`
+	Message         string `json:"message"`
 }
 
 // Notify implements the Notifier interface.
@@ -167,8 +173,8 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		GroupKey:        groupKey.String(),
 		TruncatedAlerts: numTruncated,
 		OrgID:           wn.orgID,
-		Title:           tmpl(DefaultMessageTitleEmbed),
-		Message:         tmpl(DefaultMessageEmbed),
+		Title:           tmpl(wn.settings.Title),
+		Message:         tmpl(wn.settings.Message),
 	}
 	if types.Alerts(as...).Status() == model.AlertFiring {
 		msg.State = string(models.AlertStateAlerting)
