@@ -545,9 +545,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       const { values } = processLabels(data, withName);
       value = values;
       this.labelsCache.set(cacheKey, value);
-      console.log('fetchSeriesLabels CACHE MISS');
-    } else {
-      console.log('fetchSeriesLabels CACHE HIT');
     }
     return value;
   };
@@ -583,9 +580,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       // Convert string array to Record<string , []>
       value = data.reduce((ac, a) => ({ ...ac, [a]: '' }), {});
       this.labelsCache.set(cacheKey, value);
-      console.log('fetchSeriesLabels CACHE MISS');
-    } else {
-      console.log('fetchSeriesLabels CACHE HIT');
     }
     return value;
   };
