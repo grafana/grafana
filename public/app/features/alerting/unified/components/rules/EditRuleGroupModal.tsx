@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo } from 'react';
-import { FormProvider, useForm, useFormContext } from 'react-hook-form';
+import { FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -18,7 +18,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { updateLotexNamespaceAndGroupAction } from '../../state/actions';
+import { rulesInSameGroupHaveInvalidFor, updateLotexNamespaceAndGroupAction } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { getRulesSourceName } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
@@ -26,7 +26,7 @@ import { parsePrometheusDuration } from '../../utils/time';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { InfoIcon } from '../InfoIcon';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
-import { evaluateEveryValidationOptions, MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
+import { MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
 
 const MINUTE = '1m';
 interface AlertInfo {
@@ -246,7 +246,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   };
 
   const formAPI = useForm<FormValues>({
-    mode: 'onSubmit',
+    mode: 'onBlur',
     defaultValues,
     shouldFocusError: true,
   });
@@ -264,6 +264,35 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const groupfoldersForSource = rulerRuleRequests[getRulesSourceName(namespace.rulesSource)];
 
+  const evaluateEveryValidationOptions: RegisterOptions = {
+    required: {
+      value: true,
+      message: 'Required.',
+    },
+    validate: (value: string) => {
+      try {
+        const duration = parsePrometheusDuration(value);
+
+        if (duration < MIN_TIME_RANGE_STEP_S * 1000) {
+          return `Cannot be less than ${MIN_TIME_RANGE_STEP_S} seconds.`;
+        }
+
+        if (duration % (MIN_TIME_RANGE_STEP_S * 1000) !== 0) {
+          return `Must be a multiple of ${MIN_TIME_RANGE_STEP_S} seconds.`;
+        }
+        if (
+          rulesInSameGroupHaveInvalidFor(groupfoldersForSource.result, group.name, namespace.name, value).length === 0
+        ) {
+          return true;
+        } else {
+          return `Invalid evaluation interval. Evaluation interval should be smaller or equal to 'For' values for existing rules in this group.`;
+        }
+      } catch (error) {
+        return error instanceof Error ? error.message : 'Failed to parse duration';
+      }
+    },
+  };
+
   return (
     <Modal
       className={styles.modal}
@@ -280,7 +309,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 <Label htmlFor="namespaceName">
                   <Stack gap={0.5}>
                     NameSpace
-                    <InfoIcon text={'You can update name space'} />
+                    <InfoIcon text={'Name space can be updated'} />
                   </Stack>
                 </Label>
               }
@@ -299,7 +328,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 <Label htmlFor="groupName">
                   <Stack gap={0.5}>
                     Evaluation group
-                    <InfoIcon text={'You can update group name'} />
+                    <InfoIcon text={'Group name can be updated'} />
                   </Stack>
                 </Label>
               }
