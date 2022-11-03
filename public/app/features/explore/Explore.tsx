@@ -4,7 +4,6 @@ import memoizeOne from 'memoize-one';
 import React, { createRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { compose } from 'redux';
 import { Unsubscribable } from 'rxjs';
 
 import {
@@ -14,6 +13,7 @@ import {
   LoadingState,
   QueryFixAction,
   RawTimeRange,
+  EventBus,
   SplitOpenOptions,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -87,6 +87,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 export interface ExploreProps extends Themeable2 {
   exploreId: ExploreId;
   theme: GrafanaTheme2;
+  eventBus: EventBus;
 }
 
 enum ExploreDrawer {
@@ -128,12 +129,16 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   absoluteTimeUnsubsciber: Unsubscribable | undefined;
   topOfViewRef = createRef<HTMLDivElement>();
+  graphEventBus: EventBus;
+  logsEventBus: EventBus;
 
   constructor(props: Props) {
     super(props);
     this.state = {
       openDrawer: undefined,
     };
+    this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
+    this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
   }
 
   componentDidMount() {
@@ -291,6 +296,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           splitOpenFn={this.onSplitOpen('graph')}
           loadingState={queryResponse.state}
           anchorToZero={false}
+          eventBus={this.graphEventBus}
         />
       </Collapse>
     );
@@ -324,6 +330,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         onStartScanning={this.onStartScanning}
         onStopScanning={this.onStopScanning}
         scrollElement={this.scrollElement}
+        eventBus={this.logsEventBus}
         splitOpenFn={this.onSplitOpen('logs')}
       />
     );
@@ -550,4 +557,4 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export default compose(connector, withTheme2)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;
+export default withTheme2(connector(Explore));

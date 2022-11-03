@@ -4,19 +4,37 @@ import React from 'react';
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-export const PubdashFooter = function () {
-  const styles = useStyles2(getStyles);
+export interface PublicDashboardFooterCfg {
+  hide: boolean;
+  text: string;
+  logo: string;
+  link: string;
+}
 
-  return (
+export const PublicDashboardFooter = function () {
+  const styles = useStyles2(getStyles);
+  const conf = getPublicDashboardFooterConfig();
+
+  return conf.hide ? null : (
     <div className={styles.footer}>
       <span className={styles.logoText}>
-        <a href="https://grafana.com/" target="_blank" rel="noreferrer noopener">
-          powered by Grafana <img className={styles.logoImg} alt="" src="public/img/grafana_icon.svg"></img>
+        <a href={conf.link} target="_blank" rel="noreferrer noopener">
+          {conf.text} <img className={styles.logoImg} alt="" src={conf.logo}></img>
         </a>
       </span>
     </div>
   );
 };
+
+export function setPublicDashboardFooterConfigFn(fn: typeof getPublicDashboardFooterConfig) {
+  getPublicDashboardFooterConfig = fn;
+}
+export let getPublicDashboardFooterConfig = (): PublicDashboardFooterCfg => ({
+  hide: false,
+  text: 'powered by Grafana',
+  logo: 'public/img/grafana_icon.svg',
+  link: 'https://grafana.com/',
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   footer: css`
