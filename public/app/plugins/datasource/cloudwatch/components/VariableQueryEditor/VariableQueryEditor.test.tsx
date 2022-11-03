@@ -226,9 +226,11 @@ describe('VariableEditor', () => {
       expect(querySelect).toBeInTheDocument();
       expect(screen.queryByText('Dimension Values')).toBeInTheDocument();
       const regionSelect = screen.getByRole('combobox', { name: 'Region' });
-      await select(regionSelect, 'b1', {
-        container: document.body,
-      });
+      await waitFor(() =>
+        select(regionSelect, 'b1', {
+          container: document.body,
+        })
+      );
 
       expect(ds.datasource.api.getMetrics).toHaveBeenCalledWith({ namespace: 'z2', region: 'b1' });
       expect(ds.datasource.api.getDimensionKeys).toHaveBeenCalledWith({ namespace: 'z2', region: 'b1' });

@@ -126,7 +126,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 	})
 
 	t.Run("End time before start time should result in error", func(t *testing.T) {
-		_, err := executor.executeTimeSeriesQuery(context.Background(), &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
+		_, err := executor.executeTimeSeriesQuery(context.Background(), logger, &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
 			From: now.Add(time.Hour * -1),
 			To:   now.Add(time.Hour * -2),
 		}}}})
@@ -134,7 +134,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 	})
 
 	t.Run("End time equals start time should result in error", func(t *testing.T) {
-		_, err := executor.executeTimeSeriesQuery(context.Background(), &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
+		_, err := executor.executeTimeSeriesQuery(context.Background(), logger, &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
 			From: now.Add(time.Hour * -1),
 			To:   now.Add(time.Hour * -1),
 		}}}})

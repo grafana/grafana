@@ -209,7 +209,7 @@ def enterprise_downstream_step(edition, ver_mode):
 
 def lint_backend_step(edition):
     return {
-        'name': 'lint-backend' + enterprise2_suffix(edition),
+        'name': 'lint-backend',
         'image': go_image,
         'environment': {
             # We need CGO because of go-sqlite3
@@ -481,28 +481,16 @@ def build_plugins_step(edition, ver_mode):
 
 
 def test_backend_step(edition):
-    if edition == 'enterprise2':
-        return {
-            'name': 'test-backend' + enterprise2_suffix(edition),
-            'image': build_image,
-            'depends_on': [
-                'wire-install',
-            ],
-            'commands': [
-                'go test -tags=pro -covermode=atomic -timeout=5m ./pkg/...',
-            ],
-        }
-    else:
-        return {
-            'name': 'test-backend' + enterprise2_suffix(edition),
-            'image': build_image,
-            'depends_on': [
-                'wire-install',
-            ],
-            'commands': [
-                'go test -short -covermode=atomic -timeout=5m ./pkg/...',
-            ],
-        }
+    return {
+        'name': 'test-backend',
+        'image': build_image,
+        'depends_on': [
+            'wire-install',
+        ],
+        'commands': [
+            'go test -short -covermode=atomic -timeout=5m ./pkg/...',
+        ],
+    }
 
 
 
@@ -986,37 +974,6 @@ def upload_packages_step(edition, ver_mode, trigger=None):
     return step
 
 
-def publish_packages_step(edition, ver_mode):
-    if ver_mode == 'release':
-        cmd = './bin/build publish packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
-            edition,
-        )
-    elif ver_mode == 'main':
-        build_no = '${DRONE_BUILD_NUMBER}'
-        cmd = './bin/build publish packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
-            edition, build_no,
-        )
-    else:
-        fail('Unexpected version mode {}'.format(ver_mode))
-
-    return {
-        'name': 'publish-packages-{}'.format(edition),
-        'image': publish_image,
-        'depends_on': [
-            'compile-build-cmd',
-        ],
-        'environment': {
-            'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
-            'GCP_KEY': from_secret('gcp_key'),
-            'GPG_PRIV_KEY': from_secret('gpg_priv_key'),
-            'GPG_PUB_KEY': from_secret('gpg_pub_key'),
-            'GPG_KEY_PASSWORD': from_secret('gpg_key_password'),
-        },
-        'commands': [
-            cmd,
-        ],
-    }
-
 def publish_grafanacom_step(edition, ver_mode):
     if ver_mode == 'release':
         cmd = './bin/build publish grafana-com --edition {} ${{DRONE_TAG}}'.format(
@@ -1034,7 +991,8 @@ def publish_grafanacom_step(edition, ver_mode):
         'name': 'publish-grafanacom-{}'.format(edition),
         'image': publish_image,
         'depends_on': [
-            'publish-packages-{}'.format(edition),
+            'publish-linux-packages-deb',
+            'publish-linux-packages-rpm',
         ],
         'environment': {
             'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
@@ -1054,13 +1012,12 @@ def publish_linux_packages_step(edition, package_manager='deb'):
             'grabpl'
         ],
         'privileged': True,
-        'failure': 'ignore', # While we're testing it
         'settings': {
             'access_key_id': from_secret('packages_access_key_id'),
             'secret_access_key': from_secret('packages_secret_access_key'),
             'service_account_json': from_secret('packages_service_account'),
             'target_bucket': 'grafana-packages',
-            'deb_distribution': 'stable',
+            'deb_distribution': 'auto',
             'gpg_passphrase': from_secret('packages_gpg_passphrase'),
             'gpg_public_key': from_secret('packages_gpg_public_key'),
             'gpg_private_key': from_secret('packages_gpg_private_key'),
