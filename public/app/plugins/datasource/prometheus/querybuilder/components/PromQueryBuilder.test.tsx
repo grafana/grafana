@@ -228,7 +228,7 @@ describe('PromQueryBuilder', () => {
     );
     expect(await screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
   });
-  
+
   // <ModernPrometheus>
   it('tries to load labels when metric selected modern prom', async () => {
     const { languageProvider } = setup(undefined, undefined, {
@@ -261,7 +261,9 @@ describe('PromQueryBuilder', () => {
     );
     await openLabelNameSelect(1);
     await waitFor(() =>
-      expect(languageProvider.fetchSeriesLabelsMatch).toBeCalledWith('{label_name="label_value", __name__="random_metric"}')
+      expect(languageProvider.fetchSeriesLabelsMatch).toBeCalledWith(
+        '{label_name="label_value", __name__="random_metric"}'
+      )
     );
   });
   //</ModernPrometheus>
