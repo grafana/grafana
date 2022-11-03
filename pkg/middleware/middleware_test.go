@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/navtree"
+	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -777,7 +778,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.userService = usertest.NewUserServiceFake()
 		sc.orgService = orgtest.NewOrgServiceFake()
 		sc.apiKeyService = &apikeytest.Service{}
-		sc.oauthTokenService = &authtest.FakeOAuthTokenService{}
+		sc.oauthTokenService = &oauthtest.FakeOAuthTokenService{}
 		ctxHdlr := getContextHandler(t, cfg, sc.mockSQLStore, sc.loginService, sc.apiKeyService, sc.userService, sc.orgService, sc.oauthTokenService)
 		sc.sqlStore = ctxHdlr.SQLStore
 		sc.contextHandler = ctxHdlr
@@ -814,7 +815,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *dbtest.FakeDB,
 	loginService *loginservice.LoginServiceMock, apiKeyService *apikeytest.Service,
 	userService *usertest.FakeUserService, orgService *orgtest.FakeOrgService,
-	oauthTokenService *authtest.FakeOAuthTokenService,
+	oauthTokenService *oauthtest.FakeOAuthTokenService,
 ) *contexthandler.ContextHandler {
 	t.Helper()
 
