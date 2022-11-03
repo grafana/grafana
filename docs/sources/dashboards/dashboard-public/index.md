@@ -166,4 +166,4 @@ We are excited to share this enhancement with you and we’d love your feedback!
 
 #### Custom branding
 
-Enterprise customers can change the way their Public Dashboard footer looks, as part of the Custom Branding feature. Check out the [Custom Branding documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/configure-custom-branding/) for more details
+If you are a Grafana Enterprise customer, you can use custom branding to change the appearance of a public dashboard footer. For more information, refer to [Custom branding](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/configure-custom-branding/).
