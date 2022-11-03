@@ -61,14 +61,14 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 
 	t.Run("When revoke an auth token for a user", func(t *testing.T) {
 		cmd := auth.RevokeAuthTokenCmd{AuthTokenId: 2}
-		token := &models.UserToken{Id: 1}
+		token := &auth.UserToken{Id: 1}
 		mockUser := &usertest.FakeUserService{
 			ExpectedUser: &user.User{ID: 200},
 		}
 
 		revokeUserAuthTokenInternalScenario(t, "Should be successful", cmd, 200, token, func(sc *scenarioContext) {
-			sc.userAuthTokenService.GetUserTokenProvider = func(ctx context.Context, userId, userTokenId int64) (*models.UserToken, error) {
-				return &models.UserToken{Id: 2}, nil
+			sc.userAuthTokenService.GetUserTokenProvider = func(ctx context.Context, userId, userTokenId int64) (*auth.UserToken, error) {
+				return &auth.UserToken{Id: 2}, nil
 			}
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 			assert.Equal(t, 200, sc.resp.Code)
@@ -77,10 +77,10 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 
 	t.Run("When revoke the active auth token used by himself", func(t *testing.T) {
 		cmd := auth.RevokeAuthTokenCmd{AuthTokenId: 2}
-		token := &models.UserToken{Id: 2}
+		token := &auth.UserToken{Id: 2}
 		mockUser := usertest.NewUserServiceFake()
 		revokeUserAuthTokenInternalScenario(t, "Should not be successful", cmd, testUserID, token, func(sc *scenarioContext) {
-			sc.userAuthTokenService.GetUserTokenProvider = func(ctx context.Context, userId, userTokenId int64) (*models.UserToken, error) {
+			sc.userAuthTokenService.GetUserTokenProvider = func(ctx context.Context, userId, userTokenId int64) (*auth.UserToken, error) {
 				return token, nil
 			}
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -89,10 +89,10 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When gets auth tokens for a user", func(t *testing.T) {
-		currentToken := &models.UserToken{Id: 1}
+		currentToken := &auth.UserToken{Id: 1}
 		mockUser := usertest.NewUserServiceFake()
 		getUserAuthTokensInternalScenario(t, "Should be successful", currentToken, func(sc *scenarioContext) {
-			tokens := []*models.UserToken{
+			tokens := []*auth.UserToken{
 				{
 					Id:        1,
 					ClientIp:  "127.0.0.1",
@@ -108,7 +108,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 					SeenAt:    0,
 				},
 			}
-			sc.userAuthTokenService.GetUserTokensProvider = func(ctx context.Context, userId int64) ([]*models.UserToken, error) {
+			sc.userAuthTokenService.GetUserTokensProvider = func(ctx context.Context, userId int64) ([]*auth.UserToken, error) {
 				return tokens, nil
 			}
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -224,7 +224,7 @@ func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId 
 }
 
 func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd auth.RevokeAuthTokenCmd, userId int64,
-	token *models.UserToken, fn scenarioFunc, userService user.Service) {
+	token *auth.UserToken, fn scenarioFunc, userService user.Service) {
 	t.Run(desc, func(t *testing.T) {
 		fakeAuthTokenService := authtest.NewFakeUserAuthTokenService()
 
@@ -249,7 +249,7 @@ func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd auth.Rev
 	})
 }
 
-func getUserAuthTokensInternalScenario(t *testing.T, desc string, token *models.UserToken, fn scenarioFunc, userService user.Service) {
+func getUserAuthTokensInternalScenario(t *testing.T, desc string, token *auth.UserToken, fn scenarioFunc, userService user.Service) {
 	t.Run(desc, func(t *testing.T) {
 		fakeAuthTokenService := authtest.NewFakeUserAuthTokenService()
 

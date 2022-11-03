@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -29,7 +28,7 @@ func TestUserAuthToken(t *testing.T) {
 	defer func() { getTime = time.Now }()
 
 	t.Run("When creating token", func(t *testing.T) {
-		createToken := func() *models.UserToken {
+		createToken := func() *auth.UserToken {
 			userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
 				net.ParseIP("192.168.10.11"), "some user agent")
 			require.Nil(t, err)
@@ -266,7 +265,7 @@ func TestUserAuthToken(t *testing.T) {
 		model, err := ctx.getAuthTokenByID(userToken.Id)
 		require.Nil(t, err)
 
-		var tok models.UserToken
+		var tok auth.UserToken
 		err = model.toUserToken(&tok)
 		require.Nil(t, err)
 
@@ -463,7 +462,7 @@ func TestUserAuthToken(t *testing.T) {
 	})
 
 	t.Run("When populating userAuthToken from UserToken should copy all properties", func(t *testing.T) {
-		ut := models.UserToken{
+		ut := auth.UserToken{
 			Id:            1,
 			UserId:        2,
 			AuthToken:     "a",
@@ -516,7 +515,7 @@ func TestUserAuthToken(t *testing.T) {
 		require.Nil(t, err)
 		uatMap := uatJSON.MustMap()
 
-		var ut models.UserToken
+		var ut auth.UserToken
 		err = uat.toUserToken(&ut)
 		require.Nil(t, err)
 		utBytes, err := json.Marshal(ut)

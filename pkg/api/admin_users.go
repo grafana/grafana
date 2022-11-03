@@ -504,5 +504,5 @@ type AdminCreateUserResponseResponse struct {
 // swagger:response adminGetUserAuthTokensResponse
 type AdminGetUserAuthTokensResponse struct {
 	// in:body
-	Body []*models.UserToken `json:"body"`
+	Body []*auth.UserToken `json:"body"`
 }

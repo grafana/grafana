@@ -224,8 +224,8 @@ func TestMiddlewareContext(t *testing.T) {
 		sc.withTokenSessionCookie("token")
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
 
-		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-			return &models.UserToken{
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+			return &auth.UserToken{
 				UserId:        userID,
 				UnhashedToken: unhashedToken,
 			}, nil
@@ -248,14 +248,14 @@ func TestMiddlewareContext(t *testing.T) {
 		sc.withTokenSessionCookie("token")
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
 
-		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-			return &models.UserToken{
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+			return &auth.UserToken{
 				UserId:        userID,
 				UnhashedToken: "",
 			}, nil
 		}
 
-		sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *models.UserToken,
+		sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *auth.UserToken,
 			clientIP net.IP, userAgent string) (bool, error) {
 			userToken.UnhashedToken = "rotated"
 			return true, nil
@@ -331,7 +331,7 @@ func TestMiddlewareContext(t *testing.T) {
 	middlewareScenario(t, "Invalid/expired auth token in cookie", func(t *testing.T, sc *scenarioContext) {
 		sc.withTokenSessionCookie("token")
 
-		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 			return nil, auth.ErrUserTokenNotFound
 		}
 
@@ -351,8 +351,8 @@ func TestMiddlewareContext(t *testing.T) {
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
 		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(11 * time.Second)}
 
-		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-			return &models.UserToken{
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+			return &auth.UserToken{
 				UserId:        userID,
 				UnhashedToken: unhashedToken,
 			}, nil
@@ -384,8 +384,8 @@ func TestMiddlewareContext(t *testing.T) {
 			OAuthRefreshToken: "refresh_token"}
 		sc.oauthTokenService.ExpectedErrors = map[string]error{"TryTokenRefresh": errors.New("error")}
 
-		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-			return &models.UserToken{
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+			return &auth.UserToken{
 				UserId:        userID,
 				UnhashedToken: unhashedToken,
 			}, nil
@@ -414,8 +414,8 @@ func TestMiddlewareContext(t *testing.T) {
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
 		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(-5 * time.Second), OAuthRefreshToken: "refreshtoken"}
 
-		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-			return &models.UserToken{
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+			return &auth.UserToken{
 				UserId:        userID,
 				UnhashedToken: unhashedToken,
 			}, nil
@@ -441,8 +441,8 @@ func TestMiddlewareContext(t *testing.T) {
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
 		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID}
 
-		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-			return &models.UserToken{
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+			return &auth.UserToken{
 				UserId:        userID,
 				UnhashedToken: unhashedToken,
 			}, nil

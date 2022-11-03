@@ -189,5 +189,5 @@ type RevokeUserAuthTokenParams struct {
 // swagger:response getUserAuthTokensResponse
 type GetUserAuthTokensResponse struct {
 	// in:body
-	Body []*models.UserToken `json:"body"`
+	Body []*auth.UserToken `json:"body"`
 }
