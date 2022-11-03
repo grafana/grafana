@@ -18,7 +18,7 @@ import (
 )
 
 func TestIntegrationCreate(t *testing.T) {
-	//t.Skip("skipping until folder migration is merged")
+	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
@@ -161,7 +161,7 @@ func TestIntegrationCreate(t *testing.T) {
 }
 
 func TestIntegrationDelete(t *testing.T) {
-	// t.Skip("skipping until folder migration is merged")
+	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
@@ -206,7 +206,7 @@ func TestIntegrationDelete(t *testing.T) {
 }
 
 func TestIntegrationUpdate(t *testing.T) {
-	// t.Skip("skipping until folder migration is merged")
+	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
@@ -308,7 +308,7 @@ func TestIntegrationUpdate(t *testing.T) {
 }
 
 func TestIntegrationGet(t *testing.T) {
-	// t.Skip("skipping until folder migration is merged")
+	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
@@ -387,7 +387,7 @@ func TestIntegrationGet(t *testing.T) {
 }
 
 func TestIntegrationGetParents(t *testing.T) {
-	// t.Skip("skipping until folder migration is merged")
+	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
@@ -448,7 +448,7 @@ func TestIntegrationGetParents(t *testing.T) {
 }
 
 func TestIntegrationGetChildren(t *testing.T) {
-	// t.Skip("skipping until folder migration is merged")
+	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
