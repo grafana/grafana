@@ -180,6 +180,7 @@ class DataSourceWithBackend<
         body,
       });
     }
+
     let pfix = '?';
     let url = '/api/ds/query';
     for (let v of dsTypes) {
@@ -188,9 +189,10 @@ class DataSourceWithBackend<
     }
     for (let v of dsUIDs) {
       url += pfix + 'uid=' + v;
+      pfix = '&';
     }
     if (hasExpr) {
-      url += '&expression';
+      url += pfix + 'expression=true';
     }
 
     return getBackendSrv()
