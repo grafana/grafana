@@ -41,7 +41,7 @@ All functions, aggregations and binary operations are added via the + Operation 
 
 ### Range vector
 
-The query builder will automatically mange and add the range selector. It will be shown as a parameter to the operations that require a range vector (rate, delta, increase, etc).
+The query builder will automatically manage and add the range selector. It will be shown as a parameter to the operations that require a range vector (rate, delta, increase, etc).
 
 ### Binary operations
 

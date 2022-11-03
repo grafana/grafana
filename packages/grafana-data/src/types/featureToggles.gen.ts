@@ -17,6 +17,7 @@ export interface FeatureToggles {
   [name: string]: boolean | undefined; // support any string value
 
   alertingBigTransactions?: boolean;
+  promQueryBuilder?: boolean;
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   database_metrics?: boolean;
