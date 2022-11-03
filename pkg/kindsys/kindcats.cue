@@ -101,3 +101,73 @@ _sharedKind: {
 
 	currentVersion: thema.#SyntacticVersion & (thema.#LatestVersion & {lin: lineage}).out
 }
+
+// Raw is a category of Kind that specifies handling for a raw file,
+// like an image, or an svg or parquet file. Grafana mostly acts as asset storage for raw
+// kinds: the byte sequence is a black box to Grafana, and type is determined
+// through metadata such as file extension.
+#Raw: {
+	_sharedKind
+	form: "raw"
+
+	// TODO docs
+	extensions?: [...string]
+
+	lineageIsGroup: false
+
+	maturity: *"experimental" | "mature" // TODO unclear if we want maturity for raw kinds
+
+	// known TODOs
+	// - sanitize function
+	// - get summary
+}
+
+// TODO
+#CustomStructured: {
+	#Structured
+
+	lineageIsGroup: false
+
+	maturity: *"experimental" | "mature"
+	...
+}
+
+// TODO
+#CoreStructured: {
+	#Structured
+
+	lineageIsGroup: false
+
+	maturity: *"committed" | "experimental" | "stable" | "mature"
+}
+
+// Composable is a category of structured kind that provides schema elements for
+// composition into CoreStructured and CustomStructured kinds. Grafana plugins
+// provide composable kinds; for example, a datasource plugin provides one to
+// describe the structure of its queries, which is then composed into dashboards
+// and alerting rules.
+//
+// Each Composable is an implementation of exactly one Slot, a shared meta-schema
+// defined by Grafana itself that constrains the shape of schemas declared in
+// that ComposableKind.
+#Composable: S={
+	_sharedKind
+	form: "structured"
+
+	// TODO docs
+	// TODO unify this with the existing slots decls in pkg/framework/coremodel
+	slot: "Panel" | "Query" | "DSConfig"
+
+	// TODO unify this with the existing slots decls in pkg/framework/coremodel
+	lineageIsGroup: bool & [
+		if slot == "Panel" { true },
+		if slot == "DSConfig" { true },
+		if slot == "Query" { false },
+	][0]
+
+	// lineage is the Thema lineage containing all the schemas that have existed for this kind.
+	// It is required that lineage.name is the same as the [machineName].
+	lineage: thema.#Lineage & { name: S.machineName }
+
+	maturity: *"experimental" | "mature"
+}
