@@ -241,14 +241,14 @@ export class CanvasPanel extends Component<Props, State> {
   };
 
   renderInlineEdit = () => {
-    return <InlineEdit onClose={() => this.closeInlineEdit()} id={this.props.id} scene={activeCanvasPanel!.scene} />;
+    return <InlineEdit onClose={() => this.closeInlineEdit()} id={this.props.id} scene={this.scene} />;
   };
 
   renderSetBackground = () => {
     return (
       <SetBackground
         onClose={() => this.closeSetBackground()}
-        scene={activeCanvasPanel!.scene}
+        scene={this.scene}
         anchorPoint={this.state.contextMenuAnchorPoint}
       />
     );

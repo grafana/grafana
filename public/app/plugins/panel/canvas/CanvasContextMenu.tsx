@@ -102,10 +102,16 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
     const typeOptions = getElementTypes(scene.shouldShowAdvancedTypes).options;
 
     const getTypeOptionsSubmenu = () => {
-      const submenuItems: Array<React.ReactElement<MenuItemProps<any>, string | React.JSXElementConstructor<any>>> = [];
+      const submenuItems: Array<
+        React.ReactElement<MenuItemProps<unknown>, string | React.JSXElementConstructor<unknown>>
+      > = [];
       typeOptions.map((option) => {
         submenuItems.push(
-          <MenuItem key={option.value} label={option.label!} onClick={() => onAddItem(option, rootLayer)} />
+          <MenuItem
+            key={option.value}
+            label={option.label ?? 'Canvas item'}
+            onClick={() => onAddItem(option, rootLayer)}
+          />
         );
       });
 
