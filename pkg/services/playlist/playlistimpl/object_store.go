@@ -59,8 +59,9 @@ func (s *objectStoreImpl) sync() {
 		body, _ := json.Marshal(dto)
 		_, _ = s.objectstore.Write(ctx, &object.WriteObjectRequest{
 			GRN: &object.GRN{
-				UID:  uid,
-				Kind: models.StandardKindPlaylist,
+				UID:   uid,
+				Kind:  models.StandardKindPlaylist,
+				Scope: models.ObjectStoreScopeEntity,
 			},
 			Body: body,
 		})
