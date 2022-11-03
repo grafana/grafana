@@ -169,7 +169,6 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 
 // handleQuerySingleDatasource handles one or more queries to a single datasource
 func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
-	panic("ahhhh")
 	queries := parsedReq.getFlattenedQueries()
 	ds := queries[0].datasource
 	if err := s.pluginRequestValidator.Validate(ds.Url, nil); err != nil {
