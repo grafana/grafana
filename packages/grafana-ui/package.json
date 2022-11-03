@@ -45,8 +45,8 @@
     "not IE 11"
   ],
   "dependencies": {
-    "@emotion/css": "11.9.0",
-    "@emotion/react": "11.9.3",
+    "@emotion/css": "11.10.5",
+    "@emotion/react": "11.10.5",
     "@grafana/data": "9.3.0-pre",
     "@grafana/e2e-selectors": "9.3.0-pre",
     "@grafana/schema": "9.3.0-pre",
