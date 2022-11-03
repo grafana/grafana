@@ -411,6 +411,10 @@
     "absolute": {
       "recent-title": "Ŗęčęŉŧľy ūşęđ äþşőľūŧę řäŉģęş",
       "title": "Åþşőľūŧę ŧįmę řäŉģę"
+    },
+    "time-range": {
+      "aria-role": "Ŧįmę řäŉģę şęľęčŧįőŉ",
+      "default-title": "Ŧįmę řäŉģęş"
     }
   },
   "user-orgs": {

@@ -411,6 +411,10 @@
     "absolute": {
       "recent-title": "Kürzlich verwendete absolute Bereiche",
       "title": "Absoluter Zeitbereich"
+    },
+    "time-range": {
+      "aria-role": "",
+      "default-title": ""
     }
   },
   "user-orgs": {
