@@ -26,11 +26,6 @@ func TSTypesGenerator(tskindsdir string, cfg *TSTypesGeneratorConfig) OneToOne {
 			return decl.Meta.Common().MachineName
 		}
 	}
-	if cfg.IsGroup == nil {
-		cfg.IsGroup = func(decl *DeclForGen) bool {
-			return false
-		}
-	}
 
 	return &genTSTypes{
 		tskindsdir: tskindsdir,
@@ -38,14 +33,11 @@ func TSTypesGenerator(tskindsdir string, cfg *TSTypesGeneratorConfig) OneToOne {
 	}
 }
 
+// TSTypesGeneratorConfig holds configuration options for [TSTypesGenerator].
 type TSTypesGeneratorConfig struct {
 	// GenDirName returns the name of the parent directory in which the type file
 	// should be generated. If nil, the DeclForGen.Lineage().Name() will be used.
 	GenDirName func(*DeclForGen) string
-
-	// IsGroup indicates whether the kind is a group lineage or not. See
-	// [typescript.TypeConfig].
-	IsGroup func(*DeclForGen) bool
 
 	// Version of the schema to generate. If nil, latest is generated.
 	Version *thema.SyntacticVersion
@@ -80,7 +72,7 @@ func (gen *genTSTypes) Generate(decl *DeclForGen) (*GeneratedFile, error) {
 	// TODO allow using name instead of machine name in thema generator
 	f, err := typescript.GenerateTypes(sch, &typescript.TypeConfig{
 		RootName: decl.Meta.Common().Name,
-		Group:    gen.cfg.IsGroup(decl),
+		Group:    decl.Meta.Common().LineageIsGroup,
 	})
 	if err != nil {
 		return nil, err
