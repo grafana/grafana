@@ -483,7 +483,7 @@ func (s *sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequ
 
 	rsp := &object.DeleteObjectResponse{}
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		results, err := tx.Exec(ctx, `DELETE FROM object WHERE "key"=?`, key)
+		results, err := tx.Exec(ctx, "DELETE FROM object WHERE `key`=?", key)
 		if err != nil {
 			return err
 		}
@@ -496,9 +496,9 @@ func (s *sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequ
 		}
 
 		// TODO: keep history? would need current version bump, and the "write" would have to get from history
-		_, _ = tx.Exec(ctx, `DELETE FROM object_history WHERE "key"=?`, key)
-		_, _ = tx.Exec(ctx, `DELETE FROM object_labels WHERE "key"=?`, key)
-		_, _ = tx.Exec(ctx, `DELETE FROM object_ref WHERE "key"=?`, key)
+		_, _ = tx.Exec(ctx, "DELETE FROM object_history WHERE `key`=?", key)
+		_, _ = tx.Exec(ctx, "DELETE FROM object_labels WHERE `key``=?", key)
+		_, _ = tx.Exec(ctx, "DELETE FROM object_ref WHERE `key`=?", key)
 		return nil
 	})
 	return rsp, err
@@ -690,7 +690,7 @@ func (s *sqlObjectServer) ensureFolders(ctx context.Context, objectgrn *object.G
 		}
 
 		// Not super efficient, but maybe it is OK?
-		rows, err := s.sess.Query(ctx, `SELECT 1 from object WHERE "key"=?`, fr.Key)
+		rows, err := s.sess.Query(ctx, "SELECT 1 from object WHERE `key`=?", fr.Key)
 		if err != nil {
 			return err
 		}
