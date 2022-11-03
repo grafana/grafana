@@ -13,7 +13,6 @@ import { getScenarioContext, setScenarioContext } from './support/scenarioContex
 import * as typings from './typings';
 
 const e2eObject = {
-  // eslint-ignore-next-line
   env: (args: string) => Cypress.env(args),
   config: () => Cypress.config(),
   blobToBase64String: (blob: Blob) => Cypress.Blob.blobToBase64String(blob),
@@ -24,9 +23,7 @@ const e2eObject = {
   typings,
   components: e2eFactory({ selectors: selectors.components }),
   flows,
-  // eslint-ignore-next-line
   getScenarioContext,
-  // eslint-ignore-next-line
   setScenarioContext,
   getSelectors: <T extends Selectors>(selectors: E2ESelectors<T>) => e2eFactory({ selectors }),
 };
