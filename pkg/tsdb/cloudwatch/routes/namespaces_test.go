@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 )
 
@@ -28,9 +29,9 @@ func Test_Namespaces_Route(t *testing.T) {
 			services.GetHardCodedNamespaces = origGetHardCodedNamespaces
 		})
 		haveBeenCalled := false
-		services.GetHardCodedNamespaces = func() []models.ResourceResponse[string] {
+		services.GetHardCodedNamespaces = func() []resources.ResourceResponse[string] {
 			haveBeenCalled = true
-			return []models.ResourceResponse[string]{}
+			return []resources.ResourceResponse[string]{}
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/namespaces", nil)
@@ -44,8 +45,8 @@ func Test_Namespaces_Route(t *testing.T) {
 		t.Cleanup(func() {
 			services.GetHardCodedNamespaces = origGetHardCodedNamespaces
 		})
-		services.GetHardCodedNamespaces = func() []models.ResourceResponse[string] {
-			return []models.ResourceResponse[string]{{Value: "AWS/EC2"}, {Value: "AWS/ELB"}}
+		services.GetHardCodedNamespaces = func() []resources.ResourceResponse[string] {
+			return []resources.ResourceResponse[string]{{Value: "AWS/EC2"}, {Value: "AWS/ELB"}}
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/namespaces", nil)
@@ -60,8 +61,8 @@ func Test_Namespaces_Route(t *testing.T) {
 		t.Cleanup(func() {
 			services.GetHardCodedNamespaces = origGetHardCodedNamespaces
 		})
-		services.GetHardCodedNamespaces = func() []models.ResourceResponse[string] {
-			return []models.ResourceResponse[string]{{Value: "AWS/XYZ"}, {Value: "AWS/ELB"}}
+		services.GetHardCodedNamespaces = func() []resources.ResourceResponse[string] {
+			return []resources.ResourceResponse[string]{{Value: "AWS/XYZ"}, {Value: "AWS/ELB"}}
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/namespaces", nil)

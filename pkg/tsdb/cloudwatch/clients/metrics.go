@@ -18,8 +18,8 @@ func NewMetricsClient(api models.CloudWatchMetricsAPIProvider, config *setting.C
 	return &metricsClient{CloudWatchMetricsAPIProvider: api, config: config}
 }
 
-func (l *metricsClient) ListMetricsWithPageLimit(params *cloudwatch.ListMetricsInput) ([]*models.MetricOutput, error) {
-	var cloudWatchMetrics []*models.MetricOutput
+func (l *metricsClient) ListMetricsWithPageLimit(params *cloudwatch.ListMetricsInput) ([]*resources.MetricResponse, error) {
+	var cloudWatchMetrics []*resources.MetricResponse
 	pageNum := 0
 	err := l.ListMetricsPages(params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
 		pageNum++
@@ -27,11 +27,9 @@ func (l *metricsClient) ListMetricsWithPageLimit(params *cloudwatch.ListMetricsI
 		metrics, err := awsutil.ValuesAtPath(page, "Metrics")
 		if err == nil {
 			for idx, metric := range metrics {
-				metric := &models.MetricOutput{Metric: metric.(*cloudwatch.Metric)}
+				metric := &resources.MetricResponse{Metric: metric.(*cloudwatch.Metric)}
 				if len(page.OwningAccounts) >= idx && params.IncludeLinkedAccounts != nil && *params.IncludeLinkedAccounts {
-					metric.Account = &resources.Account{
-						Id: *page.OwningAccounts[idx],
-					}
+					metric.AccountId = page.OwningAccounts[idx]
 				}
 				cloudWatchMetrics = append(cloudWatchMetrics, metric)
 			}

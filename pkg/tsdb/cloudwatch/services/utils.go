@@ -1,11 +1,13 @@
 package services
 
-import "github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+import (
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
+)
 
-func valuesToListMetricRespone[T any](values []T) []models.ResourceResponse[T] {
-	var response []models.ResourceResponse[T]
+func valuesToListMetricRespone[T any](values []T) []resources.ResourceResponse[T] {
+	var response []resources.ResourceResponse[T]
 	for _, value := range values {
-		response = append(response, models.ResourceResponse[T]{Value: value})
+		response = append(response, resources.ResourceResponse[T]{Value: value})
 	}
 
 	return response

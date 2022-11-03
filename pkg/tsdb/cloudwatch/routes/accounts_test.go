@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 	"github.com/stretchr/testify/assert"
 )
@@ -21,8 +22,8 @@ func Test_accounts_route(t *testing.T) {
 
 	t.Run("successfully returns array of accounts json", func(t *testing.T) {
 		mockAccountsService := mocks.AccountsServiceMock{}
-		mockAccountsService.On("GetAccountsForCurrentUserOrRole").Return([]models.ResourceResponse[*models.Account]{{
-			Value: &models.Account{
+		mockAccountsService.On("GetAccountsForCurrentUserOrRole").Return([]resources.ResourceResponse[*resources.Account]{{
+			Value: &resources.Account{
 				Id:                  "123456789012",
 				Arn:                 "some arn",
 				Label:               "some label",
@@ -60,7 +61,7 @@ func Test_accounts_route(t *testing.T) {
 
 	t.Run("returns 403 when accounts service returns ErrAccessDeniedException", func(t *testing.T) {
 		mockAccountsService := mocks.AccountsServiceMock{}
-		mockAccountsService.On("GetAccountsForCurrentUserOrRole").Return([]models.ResourceResponse[*models.Account](nil),
+		mockAccountsService.On("GetAccountsForCurrentUserOrRole").Return([]resources.ResourceResponse[*resources.Account](nil),
 			fmt.Errorf("%w: %s", services.ErrAccessDeniedException, "some AWS message"))
 		newAccountsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.AccountsProvider, error) {
 			return &mockAccountsService, nil
@@ -79,7 +80,7 @@ func Test_accounts_route(t *testing.T) {
 
 	t.Run("returns 500 when accounts service returns unknown error", func(t *testing.T) {
 		mockAccountsService := mocks.AccountsServiceMock{}
-		mockAccountsService.On("GetAccountsForCurrentUserOrRole").Return([]models.ResourceResponse[*models.Account](nil), fmt.Errorf("some error"))
+		mockAccountsService.On("GetAccountsForCurrentUserOrRole").Return([]resources.ResourceResponse[*resources.Account](nil), fmt.Errorf("some error"))
 		newAccountsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.AccountsProvider, error) {
 			return &mockAccountsService, nil
 		}

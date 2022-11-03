@@ -6,7 +6,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -15,7 +14,7 @@ import (
 
 const useLinkedAccountsId = "all"
 
-var metricResponse = []*models.MetricOutput{
+var metricResponse = []*resources.MetricResponse{
 	{
 		Metric: &cloudwatch.Metric{
 			MetricName: aws.String("CPUUtilization"),
@@ -70,7 +69,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-		assert.Equal(t, []models.ResourceResponse[string]{{Value: "InstanceType"}, {Value: "AutoScalingGroupName"}}, resp)
+		assert.Equal(t, []resources.ResourceResponse[string]{{Value: "InstanceType"}, {Value: "AutoScalingGroupName"}}, resp)
 	})
 
 	testCases := []validateInputTestCase[resources.DimensionKeysRequest]{
@@ -139,7 +138,7 @@ func TestListMetricsService_GetDimensionKeysByNamespace(t *testing.T) {
 		resp, err := listMetricsService.GetDimensionKeysByNamespace(&resources.DimensionKeysRequest{Namespace: "AWS/EC2"})
 
 		require.NoError(t, err)
-		assert.Equal(t, []models.ResourceResponse[string]{{Value: "InstanceId"}, {Value: "InstanceType"}, {Value: "AutoScalingGroupName"}}, resp)
+		assert.Equal(t, []resources.ResourceResponse[string]{{Value: "InstanceId"}, {Value: "InstanceType"}, {Value: "AutoScalingGroupName"}}, resp)
 	})
 
 	testCases := []validateInputTestCase[resources.DimensionKeysRequest]{
@@ -198,7 +197,7 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-		assert.Equal(t, []models.ResourceResponse[string]{{Value: "i-1234567890abcdef0"}, {Value: "i-5234567890abcdef0"}, {Value: "i-64234567890abcdef0"}}, resp)
+		assert.Equal(t, []resources.ResourceResponse[string]{{Value: "i-1234567890abcdef0"}, {Value: "i-5234567890abcdef0"}, {Value: "i-64234567890abcdef0"}}, resp)
 	})
 
 	testCases := []validateInputTestCase[resources.DimensionValuesRequest]{

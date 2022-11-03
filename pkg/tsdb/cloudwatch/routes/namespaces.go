@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 )
 
@@ -23,7 +24,7 @@ func NamespacesHandler(pluginCtx backend.PluginContext, reqCtxFactory models.Req
 	if customNamespace != "" {
 		customNamespaces := strings.Split(customNamespace, ",")
 		for _, customNamespace := range customNamespaces {
-			response = append(response, models.ResourceResponse[string]{Value: customNamespace})
+			response = append(response, resources.ResourceResponse[string]{Value: customNamespace})
 		}
 	}
 	sort.Slice(response, func(i, j int) bool {

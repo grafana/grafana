@@ -589,10 +589,10 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		sent := sender.Response
 		require.NotNil(t, sent)
 		require.Equal(t, http.StatusOK, sent.Status)
-		res := []models.ResourceResponse[string]{}
+		res := []resources.ResourceResponse[string]{}
 		err = json.Unmarshal(sent.Body, &res)
 		require.Nil(t, err)
-		assert.Equal(t, []models.ResourceResponse[string]{{Value: "Value1"}, {Value: "Value2"}, {Value: "Value7"}}, res)
+		assert.Equal(t, []resources.ResourceResponse[string]{{Value: "Value1"}, {Value: "Value2"}, {Value: "Value7"}}, res)
 	})
 
 	t.Run("Should handle dimension key filter query and return keys from the api", func(t *testing.T) {
@@ -625,10 +625,10 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		sent := sender.Response
 		require.NotNil(t, sent)
 		require.Equal(t, http.StatusOK, sent.Status)
-		res := []models.ResourceResponse[string]{}
+		res := []resources.ResourceResponse[string]{}
 		err = json.Unmarshal(sent.Body, &res)
 		require.Nil(t, err)
-		assert.Equal(t, []models.ResourceResponse[string]{{Value: "Test_DimensionName1"}, {Value: "Test_DimensionName2"}, {Value: "Test_DimensionName4"}, {Value: "Test_DimensionName5"}}, res)
+		assert.Equal(t, []resources.ResourceResponse[string]{{Value: "Test_DimensionName1"}, {Value: "Test_DimensionName2"}, {Value: "Test_DimensionName4"}, {Value: "Test_DimensionName5"}}, res)
 	})
 
 	t.Run("Should handle standard dimension key query and return hard coded keys", func(t *testing.T) {
@@ -649,10 +649,10 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		sent := sender.Response
 		require.NotNil(t, sent)
 		require.Equal(t, http.StatusOK, sent.Status)
-		res := []models.ResourceResponse[string]{}
+		res := []resources.ResourceResponse[string]{}
 		err = json.Unmarshal(sent.Body, &res)
 		require.Nil(t, err)
-		assert.Equal(t, []models.ResourceResponse[string]{{Value: "ClientId"}, {Value: "DomainName"}}, res)
+		assert.Equal(t, []resources.ResourceResponse[string]{{Value: "ClientId"}, {Value: "DomainName"}}, res)
 	})
 
 	t.Run("Should handle custom namespace dimension key query and return hard coded keys", func(t *testing.T) {
@@ -673,10 +673,10 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		sent := sender.Response
 		require.NotNil(t, sent)
 		require.Equal(t, http.StatusOK, sent.Status)
-		res := []models.ResourceResponse[string]{}
+		res := []resources.ResourceResponse[string]{}
 		err = json.Unmarshal(sent.Body, &res)
 		require.Nil(t, err)
-		assert.Equal(t, []models.ResourceResponse[string]{{Value: "ClientId"}, {Value: "DomainName"}}, res)
+		assert.Equal(t, []resources.ResourceResponse[string]{{Value: "ClientId"}, {Value: "DomainName"}}, res)
 	})
 
 	t.Run("Should handle custom namespace metrics query and return metrics from api", func(t *testing.T) {
@@ -709,10 +709,10 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		sent := sender.Response
 		require.NotNil(t, sent)
 		require.Equal(t, http.StatusOK, sent.Status)
-		res := []models.ResourceResponse[models.Metric]{}
+		res := []resources.ResourceResponse[resources.Metric]{}
 		err = json.Unmarshal(sent.Body, &res)
 		require.Nil(t, err)
-		assert.Equal(t, []models.ResourceResponse[models.Metric]{{Value: models.Metric{Name: "Test_MetricName1", Namespace: "AWS/EC2"}}, {Value: models.Metric{Name: "Test_MetricName2", Namespace: "AWS/EC2"}}, {Value: models.Metric{Name: "Test_MetricName3", Namespace: "AWS/ECS"}}, {Value: models.Metric{Name: "Test_MetricName10", Namespace: "AWS/ECS"}}, {Value: models.Metric{Name: "Test_MetricName4", Namespace: "AWS/ECS"}}, {Value: models.Metric{Name: "Test_MetricName5", Namespace: "AWS/Redshift"}}}, res)
+		assert.Equal(t, []resources.ResourceResponse[resources.Metric]{{Value: resources.Metric{Name: "Test_MetricName1", Namespace: "AWS/EC2"}}, {Value: resources.Metric{Name: "Test_MetricName2", Namespace: "AWS/EC2"}}, {Value: resources.Metric{Name: "Test_MetricName3", Namespace: "AWS/ECS"}}, {Value: resources.Metric{Name: "Test_MetricName10", Namespace: "AWS/ECS"}}, {Value: resources.Metric{Name: "Test_MetricName4", Namespace: "AWS/ECS"}}, {Value: resources.Metric{Name: "Test_MetricName5", Namespace: "AWS/Redshift"}}}, res)
 	})
 }
 
