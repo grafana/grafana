@@ -57,26 +57,11 @@ class ColorGenerator {
         // disallow a color that looks very similar to the previous color
         const prevColor = this.colorsHex[prevCacheItem[1]];
         if (tinycolor.readability(prevColor, this.colorsHex[i]) < 1.5) {
-          console.log(key, '<1.5', prevColor, this.colorsHex[i], tinycolor.readability(prevColor, this.colorsHex[i]));
           let newIndex = i;
           for (let j = 0; j < this.colorsHex.length; j++) {
             newIndex = this.getNextIndex(newIndex);
-            console.log(
-              key,
-              'checking',
-              prevColor,
-              this.colorsHex[newIndex],
-              tinycolor.readability(prevColor, this.colorsHex[newIndex])
-            );
 
             if (tinycolor.readability(prevColor, this.colorsHex[newIndex]) > 1.5) {
-              console.log(
-                key,
-                'found >1.5',
-                prevColor,
-                this.colorsHex[newIndex],
-                tinycolor.readability(prevColor, this.colorsHex[newIndex])
-              );
               i = newIndex;
               break;
             }
