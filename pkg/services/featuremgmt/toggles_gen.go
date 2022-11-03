@@ -266,4 +266,8 @@ const (
 	// FlagNestedFolders
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
+
+	// FlagAccessTokenExpirationCheck
+	// Enable OAuth acccess_token expiration check and token refresh using the refresh_token.
+	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
 )

@@ -356,5 +356,10 @@ var (
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
+		{
+			Name:        "accessTokenExpirationCheck",
+			Description: "Enable OAuth acccess_token expiration check and token refresh using the refresh_token.",
+			State:       FeatureStateStable,
+		},
 	}
 )
