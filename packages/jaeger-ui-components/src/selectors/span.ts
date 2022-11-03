@@ -14,7 +14,8 @@
 
 import fuzzy from 'fuzzy';
 import { createSelector } from 'reselect';
-import { TraceSpan, TraceSpanData, TraceSpanReference } from 'src/types/trace';
+
+import { TraceSpan, TraceSpanData, TraceSpanReference } from '../types/trace';
 
 import { getProcessServiceName } from './process';
 
