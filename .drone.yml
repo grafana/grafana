@@ -492,6 +492,31 @@ steps:
   image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
   name: end-to-end-tests-various-suite
 - commands:
+  - cd /
+  - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
+  depends_on:
+  - grafana-server
+  environment:
+    AZURE_SP_APP_ID:
+      from_secret: azure_sp_app_id
+    AZURE_SP_PASSWORD:
+      from_secret: azure_sp_pw
+    AZURE_TENANT:
+      from_secret: azure_tenant
+    CYPRESS_CI: "true"
+    GITHUB_TOKEN:
+      from_secret: github_token_pr
+    HOST: grafana-server
+  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
+  name: end-to-end-tests-cloud-plugins-suite-azure
+  when:
+    paths:
+      include:
+      - pkg/tsdb/azuremonitor/**
+      - public/app/plugins/datasource/grafana-azure-monitor-datasource/**
+    repo:
+    - grafana/grafana
+- commands:
   - apt-get update
   - apt-get install -yq zip
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
@@ -1281,6 +1306,31 @@ steps:
     HOST: grafana-server
   image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
   name: end-to-end-tests-various-suite
+- commands:
+  - cd /
+  - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
+  depends_on:
+  - grafana-server
+  environment:
+    AZURE_SP_APP_ID:
+      from_secret: azure_sp_app_id
+    AZURE_SP_PASSWORD:
+      from_secret: azure_sp_pw
+    AZURE_TENANT:
+      from_secret: azure_tenant
+    CYPRESS_CI: "true"
+    GITHUB_TOKEN:
+      from_secret: github_token_pr
+    HOST: grafana-server
+  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
+  name: end-to-end-tests-cloud-plugins-suite-azure
+  when:
+    paths:
+      include:
+      - pkg/tsdb/azuremonitor/**
+      - public/app/plugins/datasource/grafana-azure-monitor-datasource/**
+    repo:
+    - grafana/grafana
 - commands:
   - apt-get update
   - apt-get install -yq zip
@@ -5280,6 +5330,24 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 get:
+  name: application_id
+  path: infra/data/ci/datasources/cpp-azure-resourcemanager-credentials
+kind: secret
+name: azure_sp_app_id
+---
+get:
+  name: application_secret
+  path: infra/data/ci/datasources/cpp-azure-resourcemanager-credentials
+kind: secret
+name: azure_sp_app_pw
+---
+get:
+  name: tenant_id
+  path: infra/data/ci/datasources/cpp-azure-resourcemanager-credentials
+kind: secret
+name: azure_tenant
+---
+get:
   name: public-key
   path: infra/data/ci/packages-publish/gpg
 kind: secret
@@ -5316,6 +5384,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: b7a812befcaa64d70ce856f290029308d9c73f3b479bd24387e698081275e084
+hmac: 4e766fc669857db5bd1a8bc296c6ddaa60eaf6c571e629ee14f0aaa49f1f6be0
 
 ...
