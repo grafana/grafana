@@ -400,7 +400,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       }
 
       if (customConfig.fillBelowTo) {
-        const fillBelowToField = frame.fields.find((f) => f.name === customConfig.fillBelowTo);
+        const fillBelowToField = frame.fields.find((field) =>
+          [field.name, field.config?.displayName, field.config?.displayNameFromDS, field.state?.displayName].includes(
+            customConfig.fillBelowTo
+          )
+        );
         const fillBelowDispName = fillBelowToField
           ? getFieldDisplayName(fillBelowToField, frame, allFrames)
           : customConfig.fillBelowTo;
