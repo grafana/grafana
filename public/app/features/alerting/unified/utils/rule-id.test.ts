@@ -6,7 +6,7 @@ import {
   RulerRecordingRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { hashRulerRule } from './rule-id';
+import { hashRulerRule, parse, stringifyIdentifier } from './rule-id';
 
 describe('hashRulerRule', () => {
   it('should not hash unknown rule types', () => {
@@ -58,5 +58,44 @@ describe('hashRulerRule', () => {
     };
 
     expect(hashRulerRule(grafanaRule)).toBe(RULE_UID);
+  });
+
+  it('should correctly encode and decode unix-style path separators', () => {
+    const identifier = {
+      ruleSourceName: 'my-datasource',
+      namespace: 'folder1/folder2',
+      groupName: 'group1/group2',
+      ruleHash: 'abc123',
+    };
+
+    const encodedIdentifier = encodeURIComponent(stringifyIdentifier(identifier));
+
+    expect(encodedIdentifier).toBe('pri%24my-datasource%24folder1%1Ffolder2%24group1%1Fgroup2%24abc123');
+    expect(parse(encodedIdentifier, true)).toStrictEqual(identifier);
+  });
+
+  it('should correctly decode regular encoded path separators (%2F)', () => {
+    const identifier = {
+      ruleSourceName: 'my-datasource',
+      namespace: 'folder1/folder2',
+      groupName: 'group1/group2',
+      ruleHash: 'abc123',
+    };
+
+    expect(parse('pri%24my-datasource%24folder1%2Ffolder2%24group1%2Fgroup2%24abc123', true)).toStrictEqual(identifier);
+  });
+
+  it('should correctly encode and decode windows-style path separators', () => {
+    const identifier = {
+      ruleSourceName: 'my-datasource',
+      namespace: 'folder1\\folder2',
+      groupName: 'group1\\group2',
+      ruleHash: 'abc123',
+    };
+
+    const encodedIdentifier = encodeURIComponent(stringifyIdentifier(identifier));
+
+    expect(encodedIdentifier).toBe('pri%24my-datasource%24folder1%1Efolder2%24group1%1Egroup2%24abc123');
+    expect(parse(encodedIdentifier, true)).toStrictEqual(identifier);
   });
 });
