@@ -20,7 +20,7 @@ func TestToRegistrations(t *testing.T) {
 			want: []ac.RoleRegistration{},
 		},
 		{
-			name: "no registration",
+			name: "registration gets converted successfully",
 			regs: []plugins.RoleRegistration{
 				{
 					Role: plugins.Role{
