@@ -30,9 +30,7 @@ import (
 var logger = log.New("tsdb.azuremonitor")
 
 func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, tracer tracing.Tracer) *Service {
-	proxy := &httpServiceProxy{
-		logger: logger,
-	}
+	proxy := &httpServiceProxy{}
 	executors := map[string]azDatasourceExecutor{
 		azureMonitor:       &metrics.AzureMonitorDatasource{Proxy: proxy},
 		azureLogAnalytics:  &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy},

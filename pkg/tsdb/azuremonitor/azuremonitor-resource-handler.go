@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -24,7 +23,6 @@ func getTarget(original string) (target string, err error) {
 }
 
 type httpServiceProxy struct {
-	logger log.Logger
 }
 
 func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) http.ResponseWriter {
@@ -33,13 +31,13 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		rw.WriteHeader(http.StatusInternalServerError)
 		_, err = rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
 		if err != nil {
-			s.logger.Error("Unable to write HTTP response", "error", err)
+			logger.Error("Unable to write HTTP response", "error", err)
 		}
 		return nil
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			s.logger.Warn("Failed to close response body", "err", err)
+			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
@@ -48,14 +46,14 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		rw.WriteHeader(http.StatusInternalServerError)
 		_, err = rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
 		if err != nil {
-			s.logger.Error("Unable to write HTTP response", "error", err)
+			logger.Error("Unable to write HTTP response", "error", err)
 		}
 		return nil
 	}
 	rw.WriteHeader(res.StatusCode)
 	_, err = rw.Write(body)
 	if err != nil {
-		s.logger.Error("Unable to write HTTP response", "error", err)
+		logger.Error("Unable to write HTTP response", "error", err)
 	}
 
 	for k, v := range res.Header {
