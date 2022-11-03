@@ -163,3 +163,7 @@ guaranteed because plugin developers can override this functionality. The follow
 - Datasources using Reverse Proxy functionality are not supported.
 
 We are excited to share this enhancement with you and we’d love your feedback! Please check out the [Github](https://github.com/grafana/grafana/discussions/49253) discussion and join the conversation.
+
+#### Custom branding
+
+Enterprise customers can change the way their Public Dashboard footer looks, as part of the Custom Branding feature. Check out the [Custom Branding documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/configure-custom-branding/) for more details
