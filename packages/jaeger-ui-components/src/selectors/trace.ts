@@ -111,7 +111,7 @@ export const getTraceSpanCount = createSelector(getTraceSpans, (spans) => spans.
 export const getTraceTimestamp = createSelector(getTraceSpans, (spans) =>
   spans.reduce(
     (prevTimestamp, span) => (prevTimestamp ? Math.min(prevTimestamp, getSpanTimestamp(span)) : getSpanTimestamp(span)),
-    null
+    0
   )
 );
 
@@ -121,7 +121,7 @@ export const getTraceDuration = createSelector(getTraceSpans, getTraceTimestamp,
       prevDuration
         ? Math.max(getSpanTimestamp(span) - timestamp! + getSpanDuration(span), prevDuration)
         : getSpanDuration(span),
-    null
+    0
   )
 );
 
@@ -170,20 +170,28 @@ const getDurationFormatterForTrace = createSelector(getTraceDuration, (totalDura
 
 export const formatDurationForUnit = createSelector(
   ({ duration }: { duration: number }) => duration,
-  ({ unit }: { unit: string }) => DURATION_FORMATTERS[unit],
+  ({ unit }: { unit: 'ms' | 's' }) => DURATION_FORMATTERS[unit],
   (duration, formatter) => formatter(duration)
 );
 
 export const formatDurationForTrace = createSelector(
   ({ duration }: { duration: number }) => duration,
-  createSelector(({ trace }: { trace: { spans: Array<{ duration: number }> } }) => trace, getDurationFormatterForTrace),
+  createSelector(({ trace }: { trace: TraceResponse }) => trace, getDurationFormatterForTrace),
   (duration, formatter) => formatter(duration)
 );
 
 export const getSortedSpans = createSelector(
   ({ trace }: { trace: TraceResponse }) => trace,
   ({ spans }: { spans: TraceSpanData[] }) => spans,
-  ({ sort }: { sort: { dir: number; comparator: () => number; selector: () => number } }) => sort,
+  ({
+    sort,
+  }: {
+    sort: {
+      dir: number;
+      comparator: (itemA: TraceSpanData, itemB: TraceResponse) => number;
+      selector: (itemA: TraceSpanData, itemB: TraceResponse) => number;
+    };
+  }) => sort,
   (trace, spans, { dir, comparator, selector }) =>
     [...spans].sort((spanA, spanB) => dir * comparator(selector(spanA, trace), selector(spanB, trace)))
 );
@@ -241,11 +249,11 @@ export const omitCollapsedSpans = createSelector(
 export const DEFAULT_TICK_INTERVAL = 4;
 export const DEFAULT_TICK_WIDTH = 3;
 export const getTicksForTrace = createSelector(
-  ({ trace }: { trace: { spans: Array<{ startTime: number; duration: number }> } }) => trace,
-  ({ interval = DEFAULT_TICK_INTERVAL }) => interval,
-  ({ width = DEFAULT_TICK_WIDTH }) => width,
+  ({ trace }: { trace: TraceResponse }) => trace,
+  ({ interval = DEFAULT_TICK_INTERVAL }: { interval: number }) => interval,
+  ({ width = DEFAULT_TICK_WIDTH }: { width: number }) => width,
   (
-    trace: { spans: [{ startTime: number; duration: number }] },
+    trace: TraceResponse,
     interval: number,
     width: number
     // timestamps will be spaced over the interval, starting from the initial timestamp
@@ -264,6 +272,8 @@ export const enforceUniqueSpanIds = createSelector(
   /* istanbul ignore next */ (trace, spans) => {
     const map = new Map();
 
+    const spanArray: TraceSpanData[] = [];
+
     return {
       ...trace,
       spans: spans.reduce((result, span) => {
@@ -279,7 +289,7 @@ export const enforceUniqueSpanIds = createSelector(
         map.set(getSpanId(span), (map.get(getSpanId(span)) || 0) + 1);
 
         return result.concat([updatedSpan]);
-      }, []),
+      }, spanArray),
     };
   }
 );
