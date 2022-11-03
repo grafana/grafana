@@ -49,7 +49,7 @@
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@rollup/plugin-commonjs": "23.0.2",
-    "@rollup/plugin-node-resolve": "13.3.0",
+    "@rollup/plugin-node-resolve": "15.0.1",
     "@testing-library/dom": "8.13.0",
     "@testing-library/react": "12.1.4",
     "@testing-library/react-hooks": "8.0.1",
