@@ -3,6 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select, MultiSelect } from '@grafana/ui';
 
+import { selectors } from '../e2e/selectors';
 import { AzureMonitorQuery, AzureQueryEditorFieldProps, AzureMonitorOption, AzureQueryType } from '../types';
 import { findOptions } from '../utils/common';
 
@@ -67,7 +68,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
   const options = useMemo(() => [...subscriptions, variableOptionGroup], [subscriptions, variableOptionGroup]);
 
   return multiSelect ? (
-    <Field label="Subscriptions">
+    <Field label="Subscriptions" data-testid={selectors.components.queryEditor.argsQueryEditor.subscriptions.input}>
       <MultiSelect
         isClearable
         value={findOptions([...subscriptions, ...variableOptionGroup.options], query.subscriptions)}
@@ -78,7 +79,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
       />
     </Field>
   ) : (
-    <Field label="Subscription">
+    <Field label="Subscription" data-testid={selectors.components.queryEditor.argsQueryEditor.subscriptions.input}>
       <Select
         value={query.subscription}
         inputId="azure-monitor-subscriptions-field"

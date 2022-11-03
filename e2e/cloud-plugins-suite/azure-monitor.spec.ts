@@ -42,6 +42,7 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
         .find('input')
         .type(datasource.secureJsonData.clientSecret, { log: false });
       e2eSelectors.configEditor.loadSubscriptions.button().click().wait('@subscriptions').wait(500);
+      e2eSelectors.configEditor.defaultSubscription.input().find('input').type('datasources{enter}');
     },
     expectedAlertMessage: 'Successfully connected to all Azure Monitor endpoints',
   });
@@ -61,9 +62,7 @@ const addAzureMonitorVariable = (
     e2e.pages.Dashboard.Settings.Variables.List.newButton().click();
   }
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type(name);
-  e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().type(
-    `${dataSourceName}{enter}`
-  );
+  e2e.components.DataSourcePicker.inputV2().type(`${dataSourceName}{enter}`);
   e2eSelectors.variableEditor.queryType
     .input()
     .find('input')
@@ -145,7 +144,12 @@ e2e.scenario({
       visitDashboardAtStart: false,
       queriesForm: () => {
         e2eSelectors.queryEditor.resourcePicker.select.button().click();
-        e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonmetricstest').wait(500).type('{enter}');
+        e2eSelectors.queryEditor.resourcePicker.search
+          .input()
+          .wait(100)
+          .type('azmonmetricstest')
+          .wait(500)
+          .type('{enter}');
         e2e().contains('azmonmetricstest').click();
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
         e2e().contains('microsoft.storage/storageaccounts');
@@ -159,7 +163,12 @@ e2e.scenario({
       queriesForm: () => {
         e2eSelectors.queryEditor.header.select().find('input').type('Logs{enter}');
         e2eSelectors.queryEditor.resourcePicker.select.button().click();
-        e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonlogstest').wait(500).type('{enter}');
+        e2eSelectors.queryEditor.resourcePicker.search
+          .input()
+          .wait(100)
+          .type('azmonlogstest')
+          .wait(500)
+          .type('{enter}');
         e2e().contains('azmonlogstest').click();
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
         e2e.components.CodeEditor.container().type('AzureDiagnostics');
@@ -173,6 +182,8 @@ e2e.scenario({
       queriesForm: () => {
         e2eSelectors.queryEditor.header.select().find('input').type('Azure Resource Graph{enter}');
         e2e().wait(1000); // Need to wait for code editor to completely load
+        e2e().get('[aria-label="Remove Primary Subscription"]').click();
+        e2eSelectors.queryEditor.argsQueryEditor.subscriptions.input().find('input').type('datasources{enter}');
         e2e.components.CodeEditor.container().type(
           "Resources | where resourceGroup == 'cloud-plugins-e2e-test' | project name, resourceGroup"
         );
@@ -208,8 +219,11 @@ e2e.scenario({
     });
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('subscription').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('grafanalabs-datasources-dev').click();
-    e2e.pages.Dashboard.SubMenu.submenuItemLabels('resourceGroups').click();
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('test-resources').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels('resourceGroups').parent().find('button').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels('resourceGroups')
+      .parent()
+      .find('input')
+      .type('cloud-plugins-e2e-test{enter}');
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('namespaces').parent().find('button').click();
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('namespaces')
       .parent()

@@ -265,7 +265,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
       {getSubscriptions && (
         <>
           <div className="gf-form-inline">
-            <div className="gf-form">
+            <div className="gf-form" data-testid={selectors.components.configEditor.defaultSubscription.input}>
               <InlineFormLabel className="width-12">Default Subscription</InlineFormLabel>
               <div className="width-30">
                 <Select

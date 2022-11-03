@@ -20,6 +20,9 @@ export const components = {
     loadSubscriptions: {
       button: 'data-testid load-subscriptions',
     },
+    defaultSubscription: {
+      input: 'data-testid default-subscription',
+    },
   },
   queryEditor: {
     header: {
@@ -67,6 +70,9 @@ export const components = {
     argsQueryEditor: {
       container: {
         input: 'data-testid azure-monitor-arg-query-editor',
+      },
+      subscriptions: {
+        input: 'data-testid azure-monitor-args-subscription',
       },
     },
   },
