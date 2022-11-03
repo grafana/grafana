@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -60,7 +61,7 @@ func TestUserAuthToken(t *testing.T) {
 
 		t.Run("When lookup hashed token should return user auth token not found error", func(t *testing.T) {
 			userToken, err := ctx.tokenService.LookupToken(context.Background(), userToken.AuthToken)
-			require.Equal(t, models.ErrUserTokenNotFound, err)
+			require.Equal(t, auth.ErrUserTokenNotFound, err)
 			require.Nil(t, userToken)
 		})
 
@@ -85,13 +86,13 @@ func TestUserAuthToken(t *testing.T) {
 
 		t.Run("revoking nil token should return error", func(t *testing.T) {
 			err := ctx.tokenService.RevokeToken(context.Background(), nil, false)
-			require.Equal(t, models.ErrUserTokenNotFound, err)
+			require.Equal(t, auth.ErrUserTokenNotFound, err)
 		})
 
 		t.Run("revoking non-existing token should return error", func(t *testing.T) {
 			userToken.Id = 1000
 			err := ctx.tokenService.RevokeToken(context.Background(), userToken, false)
-			require.Equal(t, models.ErrUserTokenNotFound, err)
+			require.Equal(t, auth.ErrUserTokenNotFound, err)
 		})
 
 		ctx = createTestContext(t)

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -133,7 +134,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	}
 
 	if !exists {
-		return nil, models.ErrUserTokenNotFound
+		return nil, auth.ErrUserTokenNotFound
 	}
 
 	ctxLogger := s.log.FromContext(ctx)
@@ -301,7 +302,7 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models
 
 func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *models.UserToken, soft bool) error {
 	if token == nil {
-		return models.ErrUserTokenNotFound
+		return auth.ErrUserTokenNotFound
 	}
 
 	model, err := userAuthTokenFromUserToken(token)
@@ -332,7 +333,7 @@ func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *models.Us
 
 	if rowsAffected == 0 {
 		ctxLogger.Debug("user auth token not found/revoked", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent)
-		return models.ErrUserTokenNotFound
+		return auth.ErrUserTokenNotFound
 	}
 
 	ctxLogger.Debug("user auth token revoked", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "soft", soft)
@@ -399,7 +400,7 @@ func (s *UserAuthTokenService) GetUserToken(ctx context.Context, userId, userTok
 		}
 
 		if !exists {
-			return models.ErrUserTokenNotFound
+			return auth.ErrUserTokenNotFound
 		}
 
 		return token.toUserToken(&result)

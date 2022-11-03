@@ -1,14 +1,5 @@
 package models
 
-import (
-	"errors"
-)
-
-// Typed errors
-var (
-	ErrUserTokenNotFound = errors.New("user token not found")
-)
-
 // CreateTokenErr represents a token creation error; used in Enterprise
 type CreateTokenErr struct {
 	StatusCode  int

@@ -464,7 +464,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 				}
 
 				err = h.AuthTokenService.RevokeToken(ctx, token, false)
-				if err != nil && !errors.Is(err, models.ErrUserTokenNotFound) {
+				if err != nil && !errors.Is(err, auth.ErrUserTokenNotFound) {
 					reqContext.Logger.Error("failed to revoke auth token", "error", err)
 				}
 				return false
