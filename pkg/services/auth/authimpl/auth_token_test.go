@@ -205,7 +205,7 @@ func TestUserAuthToken(t *testing.T) {
 			}
 
 			notGood, err := ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-			require.Equal(t, reflect.TypeOf(err), reflect.TypeOf(&models.TokenExpiredError{}))
+			require.Equal(t, reflect.TypeOf(err), reflect.TypeOf(&auth.TokenExpiredError{}))
 			require.Nil(t, notGood)
 
 			t.Run("should not find active token when expired", func(t *testing.T) {
@@ -239,7 +239,7 @@ func TestUserAuthToken(t *testing.T) {
 			}
 
 			notGood, err := ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-			require.Equal(t, reflect.TypeOf(err), reflect.TypeOf(&models.TokenExpiredError{}))
+			require.Equal(t, reflect.TypeOf(err), reflect.TypeOf(&auth.TokenExpiredError{}))
 			require.Nil(t, notGood)
 		})
 	})

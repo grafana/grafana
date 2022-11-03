@@ -241,7 +241,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 
 	err = hs.loginUserWithUser(usr, c)
 	if err != nil {
-		var createTokenErr *models.CreateTokenErr
+		var createTokenErr *auth.CreateTokenErr
 		if errors.As(err, &createTokenErr) {
 			resp = response.Error(createTokenErr.StatusCode, createTokenErr.ExternalErr, createTokenErr.InternalErr)
 		} else {
@@ -384,7 +384,7 @@ func (hs *HTTPServer) samlSingleLogoutEnabled() bool {
 }
 
 func getLoginExternalError(err error) string {
-	var createTokenErr *models.CreateTokenErr
+	var createTokenErr *auth.CreateTokenErr
 	if errors.As(err, &createTokenErr) {
 		return createTokenErr.ExternalErr
 	}

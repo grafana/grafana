@@ -149,7 +149,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 
 	if model.CreatedAt <= s.createdAfterParam() || model.RotatedAt <= s.rotatedAfterParam() {
 		ctxLogger.Debug("user token has expired", "user ID", model.UserId, "token ID", model.Id)
-		return nil, &models.TokenExpiredError{
+		return nil, &auth.TokenExpiredError{
 			UserID:  model.UserId,
 			TokenID: model.Id,
 		}
