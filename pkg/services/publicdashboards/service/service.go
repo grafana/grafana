@@ -139,9 +139,9 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 	// request
 	existingPubdash, err := pd.store.Find(ctx, dto.PublicDashboard.Uid)
 	if err != nil {
-		return nil, err
+		return nil, ErrInternalServerError.Errorf("Create: failed to find the public dashboard: %w", err)
 	} else if existingPubdash != nil {
-		return nil, ErrPublicDashboardBadRequest
+		return nil, ErrBadRequest.Errorf("Create: public dashboard already exists: %s", dto.PublicDashboard.Uid)
 	}
 
 	uid, err := pd.NewPublicDashboardUid(ctx)
@@ -279,63 +279,6 @@ func (pd *PublicDashboardServiceImpl) NewPublicDashboardAccessToken(ctx context.
 		}
 	}
 	return "", ErrInternalServerError.Errorf("failed to generate a unique accesssToken for public dashboard")
-}
-
-// Called by Save this handles business logic
-// to generate token and calls create at the database layer
-func (pd *PublicDashboardServiceImpl) savePublicDashboard(ctx context.Context, dto *SavePublicDashboardDTO) (string, error) {
-	uid, err := pd.NewPublicDashboardUid(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	accessToken, err := pd.NewPublicDashboardAccessToken(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	cmd := SavePublicDashboardCommand{
-		PublicDashboard: PublicDashboard{
-			Uid:                uid,
-			DashboardUid:       dto.DashboardUid,
-			OrgId:              dto.OrgId,
-			IsEnabled:          dto.PublicDashboard.IsEnabled,
-			AnnotationsEnabled: dto.PublicDashboard.AnnotationsEnabled,
-			TimeSettings:       dto.PublicDashboard.TimeSettings,
-			CreatedBy:          dto.UserId,
-			CreatedAt:          time.Now(),
-			AccessToken:        accessToken,
-		},
-	}
-
-	err = pd.store.Save(ctx, cmd)
-	if err != nil {
-		return "", ErrInternalServerError.Errorf("savePublicDashboard: failed to save public dashboard: %w", err)
-	}
-
-	return uid, nil
-}
-
-// Called by Save this handles business logic for updating a
-// dashboard and calls update at the database layer
-func (pd *PublicDashboardServiceImpl) updatePublicDashboard(ctx context.Context, dto *SavePublicDashboardDTO) (string, error) {
-	cmd := SavePublicDashboardCommand{
-		PublicDashboard: PublicDashboard{
-			Uid:                dto.PublicDashboard.Uid,
-			IsEnabled:          dto.PublicDashboard.IsEnabled,
-			AnnotationsEnabled: dto.PublicDashboard.AnnotationsEnabled,
-			TimeSettings:       dto.PublicDashboard.TimeSettings,
-			UpdatedBy:          dto.UserId,
-			UpdatedAt:          time.Now(),
-		},
-	}
-
-	err := pd.store.Update(ctx, cmd)
-	if err != nil {
-		return "", ErrInternalServerError.Errorf("updatePublicDashboard: failed to update public dashboard: %w", err)
-	}
-
-	return dto.PublicDashboard.Uid, nil
 }
 
 // FindAll Returns a list of public dashboards by orgId

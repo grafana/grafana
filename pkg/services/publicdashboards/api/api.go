@@ -204,27 +204,6 @@ func (api *Api) DeletePublicDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, nil)
 }
 
-// util to help us unpack dashboard and publicdashboard errors or use default http code and message
-// we should look to do some future refactoring of these errors as publicdashboard err is the same as a dashboarderr, just defined in a
-// different package.
-func (api *Api) handleError(ctx context.Context, code int, message string, err error) response.Response {
-	var publicDashboardErr PublicDashboardErr
-	ctxLogger := api.Log.FromContext(ctx)
-	ctxLogger.Error(message, "error", err.Error())
-
-	// handle public dashboard error
-	if ok := errors.As(err, &publicDashboardErr); ok {
-		return response.Error(publicDashboardErr.StatusCode, publicDashboardErr.Error(), publicDashboardErr)
-	}
-
-	var dashboardErr dashboards.DashboardErr
-	if ok := errors.As(err, &dashboardErr); ok {
-		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), dashboardErr)
-	}
-
-	return response.Error(code, message, err)
-}
-
 // Copied from pkg/api/metrics.go
 func toJsonStreamingResponse(features *featuremgmt.FeatureManager, qdr *backend.QueryDataResponse) response.Response {
 	statusWhenError := http.StatusBadRequest

@@ -258,7 +258,6 @@ func TestCreatePublicDashboard(t *testing.T) {
 		}
 
 		_, err := service.Create(context.Background(), SignedInUser, dto)
-
 		require.Error(t, err)
 		require.Equal(t, err, ErrInternalServerError.Errorf("failed to generate a unique accesssToken for public dashboard"))
 		publicDashboardStore.AssertNotCalled(t, "Create")
@@ -309,7 +308,8 @@ func TestCreatePublicDashboard(t *testing.T) {
 		}
 
 		_, err = service.Create(context.Background(), SignedInUser, dto)
-		assert.Equal(t, ErrPublicDashboardBadRequest, err)
+		require.Error(t, err)
+		assert.True(t, ErrBadRequest.Is(err))
 	})
 }
 
