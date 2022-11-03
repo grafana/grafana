@@ -124,4 +124,4 @@ To customize the footer of a public dashboard, add the following section to the 
 ;footer_link =
 ```
 
-If you specify `footer_hide` to `true`, all the other values are ignored as the footer will not be shown.
+If you specify `footer_hide` to `true`, all the other values are ignored because the footer will not be shown.
