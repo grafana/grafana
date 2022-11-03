@@ -170,13 +170,13 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 
 	_, err = pd.store.Create(ctx, cmd)
 	if err != nil {
-		return nil, err
+		return nil, ErrInternalServerError.Errorf("Create: failed to create the public dashboard: %w", err)
 	}
 
 	//Get latest public dashboard to return
 	newPubdash, err := pd.store.Find(ctx, uid)
 	if err != nil {
-		return nil, err
+		return nil, ErrInternalServerError.Errorf("Create: failed to find the public dashboard: %w", err)
 	}
 
 	pd.logIsEnabledChanged(existingPubdash, newPubdash, u)
@@ -189,11 +189,11 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 	// validate if the dashboard exists
 	dashboard, err := pd.FindDashboard(ctx, u.OrgID, dto.DashboardUid)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("Save: failed to find dashboard by orgId: %d and dashboardUid: %s: %w", u.OrgID, dto.DashboardUid, err)
+		return nil, ErrInternalServerError.Errorf("Update: failed to find dashboard by orgId: %d and dashboardUid: %s: %w", u.OrgID, dto.DashboardUid, err)
 	}
 
 	if dashboard == nil {
-		return nil, ErrDashboardNotFound.Errorf("Save: dashboard not found by orgId: %d and dashboardUid: %s", u.OrgID, dto.DashboardUid)
+		return nil, ErrDashboardNotFound.Errorf("Update: dashboard not found by orgId: %d and dashboardUid: %s", u.OrgID, dto.DashboardUid)
 	}
 
 	// set default value for time settings
@@ -204,9 +204,9 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 	// get existing public dashboard if exists
 	existingPubdash, err := pd.store.Find(ctx, dto.PublicDashboard.Uid)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("Save: failed to find public dashboard by uid: %s: %w", dto.PublicDashboard.Uid, err)
+		return nil, ErrInternalServerError.Errorf("Update: failed to find public dashboard by uid: %s: %w", dto.PublicDashboard.Uid, err)
 	} else if existingPubdash == nil {
-		return nil, ErrPublicDashboardNotFound
+		return nil, ErrPublicDashboardNotFound.Errorf("Update: public dashboard not found by uid: %s", dto.PublicDashboard.Uid)
 	}
 
 	// validate dashboard
@@ -230,23 +230,23 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 	// persist
 	affectedRows, err := pd.store.Update(ctx, cmd)
 	if err != nil {
-		return nil, err
+		return nil, ErrInternalServerError.Errorf("Update: failed to update public dashboard: %w", err)
 	}
 
 	// 404 if not found
 	if affectedRows == 0 {
-		return nil, ErrPublicDashboardNotFound
+		return nil, ErrPublicDashboardNotFound.Errorf("Update: failed to update public dashboard not found by uid: %s", dto.PublicDashboard.Uid)
 	}
 
 	// get latest public dashboard to return
 	newPubdash, err := pd.store.Find(ctx, existingPubdash.Uid)
 	if err != nil {
-		return nil, err
+		return nil, ErrInternalServerError.Errorf("Update: failed to find public dashboard by uid: %s: %w", existingPubdash.Uid, err)
 	}
 
 	pd.logIsEnabledChanged(existingPubdash, newPubdash, u)
 
-	return newPubdash, err
+	return newPubdash, nil
 }
 
 // NewPublicDashboardUid Generates a unique uid to create a public dashboard. Will make 3 attempts and fail if it cannot find an unused uid
