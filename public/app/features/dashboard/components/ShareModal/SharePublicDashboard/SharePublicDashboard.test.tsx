@@ -117,7 +117,7 @@ describe('SharePublic', () => {
 
     await screen.findByText('Welcome to Grafana public dashboards alpha!');
 
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
     expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
   });
   it('renders public dashboard modal without delete button because lack of permissions', async () => {
