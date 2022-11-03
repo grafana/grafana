@@ -37,8 +37,6 @@ import { seriesVisibilityConfigFactory } from '../dashboard/dashgrid/SeriesVisib
 
 import { applyGraphStyle } from './exploreGraphStyleUtils';
 
-const fieldConfigRegistry = createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Explore');
-
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
 interface Props {
@@ -78,6 +76,10 @@ export function ExploreGraph({
   const style = useStyles2(getStyles);
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
   const [structureRev, { inc: incrementStructureRev }] = useCounter(1);
+  const fieldConfigRegistry = useMemo(
+    () => createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Explore'),
+    []
+  );
 
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>({
     defaults: {
