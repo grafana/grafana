@@ -66,14 +66,14 @@ const Options = ({ options, value, onChange, title }: Props) => {
 
   return (
     <>
-      <ul aria-roledescription={t('time-picker.range-list.aria-role', 'Time range selection')}>
+      <ul aria-roledescription={t('time-picker.time-range.aria-role', 'Time range selection')}>
         {options.map((option, index) => (
           <TimeRangeOption
             key={keyForOption(option, index)}
             value={option}
             selected={isEqual(option, value)}
             onSelect={onChange}
-            name={title ?? t('time-picker.range-option.default-title', 'Time ranges')}
+            name={title ?? t('time-picker.time-range.default-title', 'Time ranges')}
           />
         ))}
       </ul>
