@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/x/persistentcollection"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -170,14 +171,17 @@ func (i *dummyObjectServer) update(ctx context.Context, r *object.WriteObjectReq
 			return false, nil, err
 		}
 
-		modifier := store.UserFromContext(ctx)
+		modifier, err := store.GetUserIDStringFromContext(ctx)
+		if err != nil {
+			return false, nil, err
+		}
 
 		updated := &object.RawObject{
 			GRN:       r.GRN,
 			Created:   i.Object.Created,
 			CreatedBy: i.Object.CreatedBy,
 			Updated:   time.Now().UnixMilli(),
-			UpdatedBy: store.GetUserIDString(modifier),
+			UpdatedBy: modifier,
 			Size:      int64(len(r.Body)),
 			ETag:      createContentsHash(r.Body),
 			Body:      r.Body,
@@ -223,7 +227,10 @@ func (i *dummyObjectServer) update(ctx context.Context, r *object.WriteObjectReq
 }
 
 func (i *dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
-	modifier := store.GetUserIDString(store.UserFromContext(ctx))
+	modifier, err := store.GetUserIDStringFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	rawObj := &object.RawObject{
 		GRN:       r.GRN,
 		Updated:   time.Now().UnixMilli(),
@@ -253,7 +260,7 @@ func (i *dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectReq
 		}},
 	}
 
-	err := i.collection.Insert(ctx, namespace, newObj)
+	err = i.collection.Insert(ctx, namespace, newObj)
 	if err != nil {
 		return nil, err
 	}
@@ -378,7 +385,7 @@ func (i *dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchRe
 // This sets the TenantId on the request GRN
 func getFullGRN(ctx context.Context, grn *object.GRN) *object.GRN {
 	if grn.TenantId == 0 {
-		modifier := store.UserFromContext(ctx)
+		modifier := appcontext.MustUser(ctx)
 		grn.TenantId = modifier.OrgID
 	}
 	return grn

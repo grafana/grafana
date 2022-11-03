@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	objectstore "github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -39,7 +39,7 @@ func (s *objectStoreImpl) sync() {
 		OrgID:  0, // gets filled in from each row
 		UserID: 0,
 	}
-	ctx := objectstore.ContextWithUser(context.Background(), rowUser)
+	ctx := appcontext.WithUser(context.Background(), rowUser)
 	uid := ""
 	for rows.Next() {
 		err = rows.Scan(&rowUser.OrgID, &uid)
