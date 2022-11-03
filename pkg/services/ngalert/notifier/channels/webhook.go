@@ -141,12 +141,9 @@ type WebhookMessage struct {
 	GroupKey        string `json:"groupKey"`
 	TruncatedAlerts int    `json:"truncatedAlerts"`
 	OrgID           int64  `json:"orgId"`
-
-	// Deprecated, to be removed in Grafana 10
-	// These are present to make migration a little less disruptive.
-	Title   string `json:"title"`
-	State   string `json:"state"`
-	Message string `json:"message"`
+	Title           string `json:"title"`
+	State           string `json:"state"`
+	Message         string `json:"message"`
 }
 
 // Notify implements the Notifier interface.
