@@ -30,6 +30,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('Repeating-a-row-with-a-non-repeating-pan', import 'e2e-repeats/Repeating-a-row-with-a-non-repeating-panel.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('Repeating-a-row-with-a-non-repeating-pan', import 'e2e-repeats/Repeating-a-row-with-a-non-repeating-panel-and-horizontal-repeating-panel.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -38,13 +45,6 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('Repeating-a-row-with-a-non-repeating-pan', import 'e2e-repeats/Repeating-a-row-with-a-non-repeating-panel-and-vertical-repeating-panel.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('Repeating-a-row-with-a-non-repeating-pan', import 'e2e-repeats/Repeating-a-row-with-a-non-repeating-panel.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
