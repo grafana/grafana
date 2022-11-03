@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/grafana/thema"
@@ -45,6 +46,9 @@ type TSTypesGeneratorConfig struct {
 	// IsGroup indicates whether the kind is a group lineage or not. See
 	// [typescript.TypeConfig].
 	IsGroup func(*DeclForGen) bool
+
+	// Version of the schema to generate. If nil, latest is generated.
+	Version *thema.SyntacticVersion
 }
 
 type genTSTypes struct {
@@ -60,9 +64,19 @@ func (gen *genTSTypes) Generate(decl *DeclForGen) (*GeneratedFile, error) {
 	if decl.IsRaw() {
 		return nil, nil
 	}
+	var sch thema.Schema
+	var err error
 
 	lin := decl.Lineage()
-	sch := thema.SchemaP(lin, thema.LatestVersion(lin))
+	if gen.cfg.Version == nil {
+		sch = thema.SchemaP(lin, thema.LatestVersion(lin))
+	} else {
+		sch, err = lin.Schema(*gen.cfg.Version)
+		if err != nil {
+			return nil, fmt.Errorf("error in configured version for %s generator: %w", *gen.cfg.Version, err)
+		}
+	}
+
 	// TODO allow using name instead of machine name in thema generator
 	f, err := typescript.GenerateTypes(sch, &typescript.TypeConfig{
 		RootName: nameFor(decl.Meta),

@@ -1,3 +1,6 @@
+/**
+ * TODO docs
+ */
 export interface AnnotationTarget {
   limit: number;
   matchAny: boolean;

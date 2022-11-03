@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/grafana/thema"
@@ -41,6 +42,9 @@ type GoTypesGeneratorConfig struct {
 	// GenDirName returns the name of the parent directory in which the type file
 	// should be generated. If nil, the DeclForGen.Lineage().Name() will be used.
 	GenDirName func(*DeclForGen) string
+
+	// Version of the schema to generate. If nil, latest is generated.
+	Version *thema.SyntacticVersion
 }
 
 type genGoTypes struct {
@@ -59,8 +63,19 @@ func (gen *genGoTypes) Generate(decl *DeclForGen) (*GeneratedFile, error) {
 		return nil, nil
 	}
 
+	var sch thema.Schema
+	var err error
+
 	lin := decl.Lineage()
-	sch := thema.SchemaP(lin, thema.LatestVersion(lin))
+	if gen.cfg.Version == nil {
+		sch = thema.SchemaP(lin, thema.LatestVersion(lin))
+	} else {
+		sch, err = lin.Schema(*gen.cfg.Version)
+		if err != nil {
+			return nil, fmt.Errorf("error in configured version for %s generator: %w", *gen.cfg.Version, err)
+		}
+	}
+
 	pdir := gen.cfg.GenDirName(decl)
 	// TODO allow using name instead of machine name in thema generator
 	b, err := gocode.GenerateTypesOpenAPI(sch, &gocode.TypeConfigOpenAPI{
