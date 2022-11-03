@@ -3,26 +3,16 @@ import { get as lodashGet } from 'lodash';
 import React, { useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 
-import {
-  DataFrame,
-  GrafanaTheme2,
-  PanelOptionsEditorBuilder,
-  SelectableValue,
-  StandardEditorContext,
-} from '@grafana/data';
+import { DataFrame, GrafanaTheme2, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { useStyles2 } from '@grafana/ui/src';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
-import { notFoundItem } from 'app/features/canvas/elements/notFound';
-import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
-
-import { CanvasElementOptions, canvasElementRegistry } from '../../../features/canvas';
 
 import { activePanelSubject, InstanceState } from './CanvasPanel';
 import { TabsEditor } from './editor/TabsEditor';
@@ -30,7 +20,7 @@ import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
 import { addStandardCanvasEditorOptions } from './module';
 import { InlineEditTabs } from './types';
-import { getElementTypes } from './utils';
+import { getElementTypes, onAddItem } from './utils';
 
 export function InlineEditBody() {
   const activePanel = useObservable(activePanelSubject);
@@ -90,23 +80,6 @@ export function InlineEditBody() {
   const typeOptions = getElementTypes(instanceState?.scene.shouldShowAdvancedTypes).options;
   const rootLayer: FrameState | undefined = instanceState?.layer;
 
-  const onAddItem = (sel: SelectableValue<string>) => {
-    const newItem = canvasElementRegistry.getIfExists(sel.value) ?? notFoundItem;
-    const newElementOptions = newItem.getNewOptions() as CanvasElementOptions;
-    newElementOptions.type = newItem.id;
-    if (newItem.defaultSize) {
-      newElementOptions.placement = { ...newElementOptions.placement, ...newItem.defaultSize };
-    }
-    if (rootLayer) {
-      const newElement = new ElementState(newItem, newElementOptions, rootLayer);
-      newElement.updateData(rootLayer.scene.context);
-      rootLayer.elements.push(newElement);
-      rootLayer.scene.save();
-
-      rootLayer.reinitializeMoveable();
-    }
-  };
-
   const noElementSelected =
     instanceState && activeTab === InlineEditTabs.SelectedElement && instanceState.selected.length === 0;
 
@@ -114,7 +87,7 @@ export function InlineEditBody() {
     <>
       <div style={topLevelItemsContainerStyle}>{pane.items.map((item) => item.render())}</div>
       <div style={topLevelItemsContainerStyle}>
-        <AddLayerButton onChange={onAddItem} options={typeOptions} label={'Add item'} />
+        <AddLayerButton onChange={(sel) => onAddItem(sel, rootLayer)} options={typeOptions} label={'Add item'} />
       </div>
       <div style={topLevelItemsContainerStyle}>
         <TabsEditor onTabChange={onTabChange} />
