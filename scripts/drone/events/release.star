@@ -34,7 +34,6 @@ load(
     'benchmark_ldap_step',
     'store_storybook_step',
     'upload_packages_step',
-    'publish_packages_step',
     'publish_grafanacom_step',
     'upload_cdn_step',
     'verify_gen_cue_step',
@@ -387,19 +386,17 @@ def publish_packages_pipeline():
     oss_steps = [
         download_grabpl_step(),
         compile_build_cmd(),
-        publish_packages_step(edition='oss', ver_mode='release'),
-        publish_grafanacom_step(edition='oss', ver_mode='release'),
         publish_linux_packages_step(edition='oss', package_manager='deb'),
         publish_linux_packages_step(edition='oss', package_manager='rpm'),
+        publish_grafanacom_step(edition='oss', ver_mode='release'),
     ]
 
     enterprise_steps = [
         download_grabpl_step(),
         compile_build_cmd(),
-        publish_packages_step(edition='enterprise', ver_mode='release'),
-        publish_grafanacom_step(edition='enterprise', ver_mode='release'),
         publish_linux_packages_step(edition='enterprise', package_manager='deb'),
         publish_linux_packages_step(edition='enterprise', package_manager='rpm'),
+        publish_grafanacom_step(edition='enterprise', ver_mode='release'),
     ]
     deps = [
         'publish-artifacts-public',
