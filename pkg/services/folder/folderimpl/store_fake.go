@@ -26,8 +26,8 @@ func (f *FakeStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 	return f.ExpectedFolder, f.ExpectedError
 }
 
-func (f *FakeStore) Move(ctx context.Context, cmd folder.MoveFolderCommand) (*folder.Folder, error) {
-	return f.ExpectedFolder, f.ExpectedError
+func (f *FakeStore) Move(ctx context.Context, cmd folder.MoveFolderCommand) error {
+	return f.ExpectedError
 }
 
 func (f *FakeStore) Get(ctx context.Context, cmd folder.GetFolderQuery) (*folder.Folder, error) {

@@ -18,9 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type Service struct {
+	store store
+
 	log              log.Logger
 	cfg              *setting.Cfg
 	dashboardService dashboards.DashboardService
@@ -282,6 +285,36 @@ func (s *Service) DeleteFolder(ctx context.Context, user *user.SignedInUser, org
 	}
 
 	return dashFolder, nil
+}
+
+func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
+	cmd.UID = util.GenerateShortUID()
+	return s.store.Create(ctx, *cmd)
+}
+
+func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
+	return s.store.Update(ctx, *cmd)
+}
+
+func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
+	err := s.store.Move(ctx, *cmd)
+	return nil, err
+}
+
+func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) (*folder.Folder, error) {
+	return nil, s.store.Delete(ctx, cmd.UID, 0)
+}
+
+func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
+	return s.store.Get(ctx, *cmd)
+}
+
+func (s *Service) GetParents(ctx context.Context, cmd *folder.GetParentsQuery) ([]*folder.Folder, error) {
+	return s.store.GetParents(ctx, *cmd)
+}
+
+func (s *Service) GetTree(ctx context.Context, cmd *folder.GetTreeQuery) (map[string][]*folder.Folder, error) {
+	return nil, nil
 }
 
 func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {

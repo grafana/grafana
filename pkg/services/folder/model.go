@@ -69,6 +69,7 @@ type UpdateFolderCommand struct {
 type MoveFolderCommand struct {
 	UID          string `json:"uid"`
 	NewParentUID string `json:"new_parent_uid"`
+	OrgID        int64  `json:"orgId"`
 }
 
 // DeleteFolderCommand captures the information required by the folder service
