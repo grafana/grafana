@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	f "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -180,11 +181,13 @@ func (s *Service) CreateFolder(ctx context.Context, cmd *folder.CreateFolderComm
 		return nil, toFolderError(err)
 	}
 
-	var folder *folder.Folder
-	folder, err = s.dashboardStore.GetFolderByID(ctx, user.OrgID, dash.Id)
+	var modelFolder *models.Folder
+	modelFolder, err = s.dashboardStore.GetFolderByID(ctx, user.OrgID, dash.Id)
 	if err != nil {
 		return nil, err
 	}
+
+	folder := f.ConvertFolderToModelFolder(modelFolder)
 
 	var permissionErr error
 	if !accesscontrol.IsDisabled(s.cfg) {
@@ -245,11 +248,12 @@ func (s *Service) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderComm
 		return nil, toFolderError(err)
 	}
 
-	var folder *folder.Folder
-	folder, err = s.dashboardStore.GetFolderByID(ctx, user.OrgID, dash.Id)
+	var modelFolder *models.Folder
+	modelFolder, err = s.dashboardStore.GetFolderByID(ctx, user.OrgID, dash.Id)
 	if err != nil {
 		return nil, err
 	}
+	folder := f.ConvertFolderToModelFolder(modelFolder)
 	cmd.Folder = folder
 
 	if currentTitle != folder.Title {
