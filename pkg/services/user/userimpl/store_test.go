@@ -311,11 +311,11 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		require.Equal(t, user.ErrLastGrafanaAdmin, updatePermsError)
 
-		query := models.GetUserByIdQuery{Id: usr.ID}
-		getUserError := ss.GetUserById(context.Background(), &query)
+		query := user.GetUserByIDQuery{ID: usr.ID}
+		queryResult, getUserError := userStore.GetByID(context.Background(), query.ID)
 		require.Nil(t, getUserError)
 
-		require.True(t, query.Result.IsAdmin)
+		require.True(t, queryResult.IsAdmin)
 
 		// One user
 		const email = "user@test.com"

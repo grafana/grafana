@@ -26,11 +26,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
@@ -71,10 +72,11 @@ const (
 	timeSeriesQuery = "timeSeriesQuery"
 )
 
+var logger = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, features featuremgmt.FeatureToggles) *CloudWatchService {
-	cwlog.Debug("initing")
+	logger.Debug("Initializing")
 
 	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache(), features)
 
@@ -105,22 +107,23 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions Ses
 	return e
 }
 
-func (e *cloudWatchExecutor) getClients(pluginCtx backend.PluginContext, region string) (models.Clients, error) {
+func (e *cloudWatchExecutor) getRequestContext(pluginCtx backend.PluginContext, region string) (models.RequestContext, error) {
 	r := region
+	instance, err := e.getInstance(pluginCtx)
 	if region == defaultRegion {
-		instance, err := e.getInstance(pluginCtx)
 		if err != nil {
-			return models.Clients{}, err
+			return models.RequestContext{}, err
 		}
 		r = instance.Settings.Region
 	}
 
 	sess, err := e.newSession(pluginCtx, r)
 	if err != nil {
-		return models.Clients{}, err
+		return models.RequestContext{}, err
 	}
-	return models.Clients{
+	return models.RequestContext{
 		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), e.cfg),
+		Settings:              instance.Settings,
 	}, nil
 }
 
@@ -307,6 +310,7 @@ func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 }
 
 func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	logger := logger.FromContext(ctx)
 	/*
 		Unlike many other data sources, with Cloudwatch Logs query requests don't receive the results as the response
 		to the query, but rather an ID is first returned. Following this, a client is expected to send requests along
@@ -332,11 +336,11 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	case annotationQuery:
 		result, err = e.executeAnnotationQuery(req.PluginContext, model, q)
 	case logAction:
-		result, err = e.executeLogActions(ctx, req)
+		result, err = e.executeLogActions(ctx, logger, req)
 	case timeSeriesQuery:
 		fallthrough
 	default:
-		result, err = e.executeTimeSeriesQuery(ctx, req)
+		result, err = e.executeTimeSeriesQuery(ctx, logger, req)
 	}
 
 	return result, err
