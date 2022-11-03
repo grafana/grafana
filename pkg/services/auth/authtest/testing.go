@@ -1,4 +1,4 @@
-package auth
+package authtest
 
 import (
 	"context"

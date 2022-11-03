@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +25,7 @@ func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 	require.NoError(t, err)
 
 	tryRotateCallCount := 0
-	uts := &auth.FakeUserAuthTokenService{
+	uts := &authtest.FakeUserAuthTokenService{
 		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP net.IP,
 			userAgent string) (bool, error) {
 			tryRotateCallCount++
@@ -48,7 +48,7 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	reqContext, rr, err := initTokenRotationScenario(context.Background(), t, ctxHdlr)
 	require.NoError(t, err)
 
-	uts := &auth.FakeUserAuthTokenService{
+	uts := &authtest.FakeUserAuthTokenService{
 		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP net.IP,
 			userAgent string) (bool, error) {
 			newToken, err := util.RandomHex(16)
