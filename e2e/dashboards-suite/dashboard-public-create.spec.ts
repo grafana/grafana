@@ -8,7 +8,7 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     // Opening a dashboard without template variables
-    e2e().intercept('/api/ds/query').as('query');
+    e2e().intercept('POST', '/api/ds/query').as('query');
     e2e.flows.openDashboard({ uid: 'ZqZnVvFZz' });
     e2e().wait('@query');
 
@@ -16,9 +16,7 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.shareButton().click();
 
     // Select public dashboards tab
-    e2e().intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('query-public-dashboard');
     e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
-    e2e().wait('@query-public-dashboard');
 
     // Saving button should be disabled
     e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.disabled');
@@ -57,7 +55,7 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     // Opening a dashboard without template variables
-    e2e().intercept('/api/ds/query').as('query');
+    e2e().intercept('POST', '/api/ds/query').as('query');
     e2e.flows.openDashboard({ uid: 'ZqZnVvFZz' });
     e2e().wait('@query');
 
@@ -125,9 +123,9 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.PublicDashboard.EnableSwitch().should('be.enabled').click({ force: true });
 
     // Save public dashboard
-    e2e().intercept('POST', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('save');
+    e2e().intercept('PUT', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards/*').as('update');
     e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().click();
-    e2e().wait('@save');
+    e2e().wait('@update');
 
     // Url should be hidden
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput().should('not.exist');
