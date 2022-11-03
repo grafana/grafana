@@ -399,18 +399,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         };
       }
 
-      if (customConfig.fillBelowTo) {
-        const fillBelowToField = frame.fields.find((field) =>
-          [field.name, field.config?.displayName, field.config?.displayNameFromDS, field.state?.displayName].includes(
-            customConfig.fillBelowTo
-          )
-        );
-        const fillBelowDispName = fillBelowToField
-          ? getFieldDisplayName(fillBelowToField, frame, allFrames)
-          : customConfig.fillBelowTo;
+      if (customConfig.fillBelowTo?.frameIndex && customConfig.fillBelowTo?.fieldIndex) {
+        const field = allFrames[customConfig.fillBelowTo.frameIndex]?.fields[customConfig.fillBelowTo.fieldIndex];
+        const displayName = getFieldDisplayName(field, frame, allFrames);
 
         const t = indexByName.get(dispName);
-        const b = indexByName.get(fillBelowDispName);
+        const b = indexByName.get(displayName);
         if (isNumber(b) && isNumber(t)) {
           builder.addBand({
             series: [t, b],

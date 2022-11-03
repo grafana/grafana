@@ -130,7 +130,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           category: categoryStyles,
           editor: FillBellowToEditor,
           override: FillBellowToEditor,
-          process: stringOverrideProcessor,
+          process: identityOverrideProcessor,
           hideFromDefaults: true,
           shouldApply: (f) => true,
         })

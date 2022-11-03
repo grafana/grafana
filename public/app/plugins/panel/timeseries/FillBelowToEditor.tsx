@@ -3,17 +3,19 @@ import React, { useMemo } from 'react';
 import { FieldOverrideEditorProps, FieldType, getFieldDisplayName, SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-export const FillBellowToEditor: React.FC<FieldOverrideEditorProps<string, any>> = ({ value, context, onChange }) => {
+export const FillBellowToEditor: React.FC<
+  FieldOverrideEditorProps<{ frameIndex: string; fieldIndex: string }, any>
+> = ({ value, context, onChange }) => {
   const names = useMemo(() => {
-    const names: Array<SelectableValue<string>> = [];
+    const names: Array<SelectableValue<{ frameIndex: string; fieldIndex: string }>> = [];
     if (context.data.length) {
-      for (const frame of context.data) {
-        for (const field of frame.fields) {
+      for (const [frameIndex, frame] of Object.entries(context.data)) {
+        for (const [fieldIndex, field] of Object.entries(frame.fields)) {
           if (field.type === FieldType.number) {
             const label = getFieldDisplayName(field, frame, context.data);
             names.push({
-              label,
-              value: label,
+              label: label,
+              value: { frameIndex, fieldIndex },
             });
           }
         }
@@ -23,16 +25,18 @@ export const FillBellowToEditor: React.FC<FieldOverrideEditorProps<string, any>>
   }, [context]);
 
   const current = useMemo(() => {
-    const found = names.find((v) => v.value === value);
+    const found = names.find(
+      (v) => v.value?.frameIndex === value.frameIndex && v.value?.fieldIndex === value.fieldIndex
+    );
     if (found) {
       return found;
     }
-    if (value) {
-      return {
-        label: value,
-        value,
-      };
-    }
+    // if (value) {
+    //   return {
+    //     label: 'Field',
+    //     value,
+    //   };
+    // }
     return undefined;
   }, [names, value]);
 

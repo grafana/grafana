@@ -157,7 +157,7 @@ export interface BarConfig {
  * TODO docs
  */
 export interface FillConfig {
-  fillBelowTo?: string;
+  fillBelowTo?: {frameIndex: number; fieldIndex: number};
   fillColor?: string;
   fillOpacity?: number;
 }
