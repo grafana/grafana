@@ -34,7 +34,6 @@ let mockObservable: () => Observable<any>;
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
-    reportInteraction: jest.fn(),
     getBackendSrv: () => ({
       fetch: mockObservable,
       _request: mockObservable,

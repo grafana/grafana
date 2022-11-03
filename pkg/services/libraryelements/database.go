@@ -409,6 +409,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		var libraryElements []LibraryElement
 		countBuilder := db.SQLBuilder{}
 		countBuilder.Write("SELECT * FROM library_element AS le")
+		countBuilder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id")
 		countBuilder.Write(` WHERE le.org_id=?`, signedInUser.OrgID)
 		writeKindSQL(query, &countBuilder)
 		writeSearchStringSQL(query, l.SQLStore, &countBuilder)
