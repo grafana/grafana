@@ -42,6 +42,18 @@ export const useNamespaces = (datasource: CloudWatchDatasource) => {
 
 export const useMetrics = (datasource: CloudWatchDatasource, { region, namespace, accountId }: GetMetricsRequest) => {
   const [metrics, setMetrics] = useState<Array<SelectableValue<string>>>([]);
+
+  // need to ensure dependency array below recieves the interpolated value so that the effect is triggered when a variable is changed
+  if (region) {
+    region = datasource.templateSrv.replace(region, {});
+  }
+  if (namespace) {
+    namespace = datasource.templateSrv.replace(namespace, {});
+  }
+
+  if (accountId) {
+    accountId = datasource.templateSrv.replace(accountId, {});
+  }
   useEffect(() => {
     datasource.api.getMetrics({ namespace, region, accountId }).then((result: Array<SelectableValue<string>>) => {
       setMetrics(appendTemplateVariables(datasource, result));
@@ -53,24 +65,48 @@ export const useMetrics = (datasource: CloudWatchDatasource, { region, namespace
 
 export const useDimensionKeys = (
   datasource: CloudWatchDatasource,
-  { namespace, region, dimensionFilters, metricName, accountId }: GetDimensionKeysRequest
+  { region, namespace, metricName, dimensionFilters, accountId }: GetDimensionKeysRequest
 ) => {
   const [dimensionKeys, setDimensionKeys] = useState<Array<SelectableValue<string>>>([]);
+
+  // need to ensure dependency array below revieves the interpolated value so that the effect is triggered when a variable is changed
+  if (region) {
+    region = datasource.templateSrv.replace(region, {});
+  }
+  if (namespace) {
+    namespace = datasource.templateSrv.replace(namespace, {});
+  }
+
+  if (metricName) {
+    metricName = datasource.templateSrv.replace(metricName, {});
+  }
+
+  if (accountId) {
+    accountId = datasource.templateSrv.replace(accountId, {});
+  }
+
+  if (dimensionFilters) {
+    dimensionFilters = datasource.api.convertDimensionFormat(dimensionFilters, {});
+  }
 
   // doing deep comparison to avoid making new api calls to list metrics unless dimension filter object props changes
   useDeepCompareEffect(() => {
     datasource.api
-      .getDimensionKeys({ namespace, region, dimensionFilters, metricName, accountId })
+      .getDimensionKeys({ namespace, region, metricName, accountId, dimensionFilters })
       .then((result: Array<SelectableValue<string>>) => {
         setDimensionKeys(appendTemplateVariables(datasource, result));
       });
-  }, [datasource, region, namespace, metricName, dimensionFilters, accountId]);
+  }, [datasource, namespace, region, metricName, accountId, dimensionFilters]);
 
   return dimensionKeys;
 };
 
 export const useIsMonitoringAccount = (api: CloudWatchAPI, region: string) => {
   const [isMonitoringAccount, setIsMonitoringAccount] = useState(false);
+  // need to ensure dependency array below revieves the interpolated value so that the effect is triggered when a variable is changed
+  if (region) {
+    region = api.templateSrv.replace(region, {});
+  }
   useEffect(() => {
     api.isMonitoringAccount(region).then(setIsMonitoringAccount);
   }, [region, api]);

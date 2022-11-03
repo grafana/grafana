@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, toOption } from '@grafana/data';
 import { EditorField } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
@@ -15,13 +15,18 @@ export interface Props {
   api: CloudWatchAPI;
 }
 
-const allOption: SelectableValue<string> = {
+export const allOption: SelectableValue<string> = {
   label: 'All',
   value: 'all',
   description: 'Target all linked accounts',
 };
 
 export function Account({ query, onChange, api }: Props) {
+  const variableOptions = api.getVariables().map(toOption);
+  const variableOptionGroup: SelectableValue<string> = {
+    label: 'Template Variables',
+    options: variableOptions,
+  };
   const fetchAccounts = () =>
     api
       .getAccounts({ region: query.region })
@@ -32,15 +37,15 @@ export function Account({ query, onChange, api }: Props) {
         }
 
         const options = accounts.map((a) => ({
-          label: `${a.label}${a.isMonitoringAccount ? ' (Monitoring account)' : ''}`,
+          label: a.label,
           value: a.id,
           description: a.id,
         }));
 
-        if (!options.find((o) => o.value === query?.accountId)) {
+        if (![...options, ...variableOptions].find((o) => o.value === query.accountId)) {
           onChange(allOption.value);
         }
-        return options.length ? [allOption, ...options] : options;
+        return options.length ? [allOption, ...options, variableOptionGroup] : [];
       })
       .catch(() => {
         query.accountId && onChange(undefined);
@@ -63,7 +68,7 @@ export function Account({ query, onChange, api }: Props) {
     return null;
   }
 
-  const value = state.value?.find((a) => a.value === query.accountId);
+  const value = [...state.value, ...variableOptions].find((o) => o.value === query.accountId);
 
   return (
     <EditorField
@@ -72,6 +77,7 @@ export function Account({ query, onChange, api }: Props) {
       tooltip="A CloudWatch monitoring account views data from source accounts so you can centralize monitoring and troubleshooting activities across multiple accounts. Go to the CloudWatch settings page in the AWS console for more details."
     >
       <Select
+        allowCustomValue
         isLoading={state.loading}
         aria-label="Account"
         value={value}

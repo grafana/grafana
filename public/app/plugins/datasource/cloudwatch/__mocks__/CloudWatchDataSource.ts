@@ -71,7 +71,7 @@ export function setupMockedDataSource({
   if (variables) {
     templateService = setupMockedTemplateService(variables);
     if (mockGetVariableName) {
-      templateService.getVariableName = (name: string) => name;
+      templateService.getVariableName = (name: string) => name.replace('$', '');
     }
   }
 
@@ -241,4 +241,17 @@ export const periodIntervalVariable: CustomVariableModel = {
   query: '',
   hide: VariableHide.dontHide,
   type: 'custom',
+};
+
+export const accountIdVariable: CustomVariableModel = {
+  ...initialCustomVariableModelState,
+  id: 'accountId',
+  name: 'accountId',
+  current: {
+    value: 'templatedaccountId',
+    text: 'templatedaccountId',
+    selected: true,
+  },
+  options: [{ value: 'templatedRegion', text: 'templatedRegion', selected: true }],
+  multi: false,
 };

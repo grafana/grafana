@@ -391,6 +391,7 @@ export enum VariableQueryType {
   ResourceArns = 'resourceARNs',
   Statistics = 'statistics',
   LogGroups = 'logGroups',
+  Accounts = 'accounts',
 }
 
 export interface OldVariableQuery extends DataQuery {
