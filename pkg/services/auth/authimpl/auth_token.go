@@ -17,8 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const ServiceName = "UserAuthTokenService"
-
 var getTime = time.Now
 
 const urgentRotateTime = 1 * time.Minute
