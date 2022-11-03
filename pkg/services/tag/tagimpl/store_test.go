@@ -13,6 +13,8 @@ import (
 type getStore func(db.DB) store
 
 func testIntegrationSavingTags(t *testing.T, fn getStore) {
+	t.Helper()
+
 	ss := db.InitTestDB(t)
 	store := fn(ss)
 	tagPairs := []*tag.Tag{

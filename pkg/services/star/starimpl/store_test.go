@@ -13,6 +13,8 @@ import (
 type getStore func(db.DB) store
 
 func testIntegrationUserStarsDataAccess(t *testing.T, fn getStore) {
+	t.Helper()
+
 	t.Run("Testing User Stars Data Access", func(t *testing.T) {
 		ss := db.InitTestDB(t)
 		starStore := fn(ss)

@@ -53,6 +53,8 @@ func seedApiKeys(t *testing.T, store store, num int) {
 }
 
 func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
+	t.Helper()
+
 	mockTimeNow()
 	defer resetTimeNow()
 

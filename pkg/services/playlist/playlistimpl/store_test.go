@@ -13,6 +13,8 @@ import (
 type getStore func(db.DB) store
 
 func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
+	t.Helper()
+
 	ss := db.InitTestDB(t)
 	playlistStore := fn(ss)
 
