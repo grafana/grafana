@@ -123,7 +123,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
                   <TimePickerTitle>
                     <Tooltip content={<TooltipContent />} placement="bottom" theme="info">
                       <div>
-                        <Trans i18nKey="time-picker.specify-time-range.title">
+                        <Trans i18nKey="time-picker.time-range.specify">
                           Specify time range <Icon name="info-circle" />
                         </Trans>
                       </div>

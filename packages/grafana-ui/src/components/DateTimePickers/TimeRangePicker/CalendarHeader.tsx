@@ -17,7 +17,7 @@ export function Header({ onClose }: TimePickerCalendarProps) {
   return (
     <div className={styles.container}>
       <TimePickerTitle>
-        <Trans i18nKey="time-picker.calendar-select-range.title">Select a time range</Trans>
+        <Trans i18nKey="time-picker.calendar.select-time">Select a time range</Trans>
       </TimePickerTitle>
       <Button
         aria-label={selectors.components.TimePicker.calendar.closeButton}
