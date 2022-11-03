@@ -41,9 +41,10 @@ jobs:
         fetch-depth: 2
 
     - if: matrix.language == 'go'
+      name: Set go version
       uses: actions/setup-go@v3
       with:
-        go-version-file: 'go.mod'
+        go-version: '1.19.2'
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
@@ -56,6 +57,7 @@ jobs:
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
 
     - if: matrix.language == 'go'
+      name: Build go files
       run: |
         go mod verify
         make build-go

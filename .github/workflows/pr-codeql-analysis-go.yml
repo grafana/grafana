@@ -20,9 +20,10 @@ jobs:
         # a pull request then we can checkout the head.
         fetch-depth: 2
 
-    - uses: actions/setup-go@v3
+    - name: Set go version
+      uses: actions/setup-go@v3
       with:
-        go-version-file: 'go.mod'
+        go-version: '1.19.2'
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
@@ -30,7 +31,7 @@ jobs:
       with:
         languages: "go"
 
-    - name: Build Go
+    - name: Build go files
       run: |
         go mod verify
         make build-go
