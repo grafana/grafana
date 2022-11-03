@@ -14,7 +14,7 @@
 
 import fuzzy from 'fuzzy';
 import { createSelector } from 'reselect';
-import { TraceSpan, TraceSpanData } from 'src/types/trace';
+import { TraceSpan, TraceSpanData, TraceSpanReference } from 'src/types/trace';
 
 import { getProcessServiceName } from './process';
 
@@ -27,7 +27,7 @@ export const getSpanReferences = (span: TraceSpanData) => span.references || [];
 export const getSpanReferenceByType = createSelector(
   createSelector(({ span }: { span: TraceSpanData }) => span, getSpanReferences),
   ({ type }: { type: string }) => type,
-  (references, type) => references.find((ref) => ref.refType === type)
+  (references, type) => references.find((ref: TraceSpanReference) => ref.refType === type)
 );
 export const getSpanParentId = createSelector(
   (span: TraceSpanData) => getSpanReferenceByType({ span, type: 'CHILD_OF' }),
