@@ -257,7 +257,6 @@ export function addNestedQueryHandler(def: QueryBuilderOperationDef, query: Loki
 
 export function getLineFilterRenderer(operation: string) {
   return function lineFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    console.log('M', model);
     if (model.id === LokiOperationId.LineContainsInsensitive) {
       return `${innerExpr} ${operation} \`(?i)${model.params[0]}\``;
     }
