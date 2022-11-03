@@ -5,6 +5,7 @@ import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import config from 'app/core/config';
+import { getRootSectionForNode } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
@@ -39,20 +40,13 @@ export function getAppRoutes(): RouteDescriptor[] {
           path: '/monitoring',
           component: () => <NavLandingPage navId="monitoring" />,
         },
-        {
-          path: '/a/:pluginId',
-          exact: true,
-          component: SafeDynamicImport(
-            () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/components/AppRootPage')
-          ),
-        },
       ]
     : [];
 
   return [
     // Based on the Grafana configuration standalone plugin pages can even override and extend existing core pages, or they can register new routes under existing ones.
     // In order to make it possible we need to register them first due to how `<Switch>` is evaluating routes. (This will be unnecessary once/when we upgrade to React Router v6 and start using `<Routes>` instead.)
-    ...getStandalonePluginPageRoutes(),
+    ...getAppPluginRoutes(),
     {
       path: '/',
       pageClass: 'page-dashboard',
@@ -213,14 +207,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     ...topnavRoutes,
-    {
-      path: '/a/:pluginId',
-      exact: false,
-      // Someday * and will get a ReactRouter under that path!
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/components/AppRootPage')
-      ),
-    },
     {
       path: '/org',
       component: SafeDynamicImport(
@@ -546,35 +532,24 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
   ];
 }
 
-// Standalone plugin pages
-// These pages are registered by plugins and are showing up under different sections based on the Grafana configuration.
-function getStandalonePluginPageRoutes(): RouteDescriptor[] {
+function getAppPluginRoutes(): RouteDescriptor[] {
   const state = store.getState();
   const { navIndex } = state;
-  const isStandalonePage = (id: string) => id.includes('standalone-plugin-page-/');
-  const isDefaultAppRoute = (id: string) => id.includes('standalone-plugin-page-/a/'); // any page that is still served under "/a/:pluginId/*"
-  const standalonePageNavIds = Object.keys(navIndex).filter((id) => isStandalonePage(id) && !isDefaultAppRoute(id));
+  const isStandalonePluginPage = (id: string) => id.startsWith('standalone-plugin-page-/');
+  const hasPluginIdSetForNav = (id: string) => navIndex[id]?.pluginId !== undefined;
 
-  if (!standalonePageNavIds.length) {
-    return [];
-  }
+  return Object.keys(navIndex)
+    .filter(hasPluginIdSetForNav)
+    .map((navId) => {
+      const navItem = navIndex[navId];
+      const pluginNavSection = getRootSectionForNode(navItem);
+      const appPluginUrl = `/a/${navItem.pluginId}`;
+      const path = isStandalonePluginPage(navId) ? navItem.url || appPluginUrl : appPluginUrl; // Only standalone pages can use core URLs, otherwise we fall back to "/a/:pluginId"
 
-  return standalonePageNavIds.map((navId) => {
-    const { pluginId } = navIndex[navId];
-    const baseUrl = '';
-
-    return {
-      path: navIndex[navId].url || '',
-      exact: false,
-      component: ({ match, location, route, history, queryParams }) => (
-        <AppRootPage
-          route={route}
-          match={{ ...match, url: baseUrl, params: { ...match.params, pluginId } }}
-          queryParams={queryParams}
-          history={history}
-          location={location}
-        />
-      ),
-    };
-  });
+      return {
+        path,
+        exact: false, // route everything under this path to the plugin, so it can define more routes under this path
+        component: () => <AppRootPage pluginId={navItem.pluginId || ''} pluginNavSection={pluginNavSection} />,
+      };
+    });
 }
