@@ -3,14 +3,17 @@ package historian
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
@@ -22,26 +25,26 @@ type AnnotationStateHistorian struct {
 	log         log.Logger
 }
 
-func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashboards.DashboardService, log log.Logger) *AnnotationStateHistorian {
+func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashboards.DashboardService) *AnnotationStateHistorian {
 	return &AnnotationStateHistorian{
 		annotations: annotations,
-		dashboards:  newDashboardResolver(dashboards, log, defaultDashboardCacheExpiry),
-		log:         log,
+		dashboards:  newDashboardResolver(dashboards, defaultDashboardCacheExpiry),
+		log:         log.New("ngalert.state.historian"),
 	}
 }
 
-func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmodels.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData state.InstanceStateAndReason) {
-	h.log.Debug("alert state changed creating annotation", "alertRuleUID", rule.UID, "newState", currentData.String(), "oldState", previousData.String())
+func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmodels.AlertRule, currentState *state.State, evaluatedAt time.Time, currentData, previousData state.InstanceStateAndReason) {
+	logger := h.log.New(rule.GetKey().LogContext()...)
+	logger.Debug("Alert state changed creating annotation", "newState", currentData.String(), "oldState", previousData.String())
 
-	labels = removePrivateLabels(labels)
-	annotationText := fmt.Sprintf("%s {%s} - %s", rule.Title, labels.String(), currentData.String())
-
+	annotationText, annotationData := buildAnnotationTextAndData(rule, currentState)
 	item := &annotations.Item{
 		AlertId:   rule.ID,
 		OrgId:     rule.OrgID,
 		PrevState: previousData.String(),
 		NewState:  currentData.String(),
 		Text:      annotationText,
+		Data:      annotationData,
 		Epoch:     evaluatedAt.UnixNano() / int64(time.Millisecond),
 	}
 
@@ -51,13 +54,13 @@ func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmode
 
 		panelId, err := strconv.ParseInt(panelUid, 10, 64)
 		if err != nil {
-			h.log.Error("error parsing panelUID for alert annotation", "panelUID", panelUid, "alertRuleUID", rule.UID, "error", err.Error())
+			logger.Error("Error parsing panelUID for alert annotation", "panelUID", panelUid, "error", err)
 			return
 		}
 
 		dashID, err := h.dashboards.getID(ctx, rule.OrgID, dashUid)
 		if err != nil {
-			h.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", rule.UID, "error", err.Error())
+			logger.Error("Error getting dashboard for alert annotation", "dashboardUID", dashUid, "error", err)
 			return
 		}
 
@@ -66,9 +69,43 @@ func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmode
 	}
 
 	if err := h.annotations.Save(ctx, item); err != nil {
-		h.log.Error("error saving alert annotation", "alertRuleUID", rule.UID, "error", err.Error())
+		logger.Error("Error saving alert annotation", "error", err)
 		return
 	}
+}
+
+func buildAnnotationTextAndData(rule *ngmodels.AlertRule, currentState *state.State) (string, *simplejson.Json) {
+	jsonData := simplejson.New()
+	var value string
+
+	switch currentState.State {
+	case eval.Error:
+		if currentState.Error == nil {
+			jsonData.Set("error", nil)
+		} else {
+			jsonData.Set("error", currentState.Error.Error())
+		}
+		value = "Error"
+	case eval.NoData:
+		jsonData.Set("noData", true)
+		value = "No data"
+	default:
+		keys := make([]string, 0, len(currentState.Values))
+		for k := range currentState.Values {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		var values []string
+		for _, k := range keys {
+			values = append(values, fmt.Sprintf("%s=%f", k, currentState.Values[k]))
+		}
+		jsonData.Set("values", simplejson.NewFromAny(currentState.Values))
+		value = strings.Join(values, ", ")
+	}
+
+	labels := removePrivateLabels(currentState.Labels)
+	return fmt.Sprintf("%s {%s} - %s", rule.Title, labels.String(), value), jsonData
 }
 
 func removePrivateLabels(labels data.Labels) data.Labels {

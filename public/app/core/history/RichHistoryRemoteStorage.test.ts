@@ -54,14 +54,14 @@ describe('RichHistoryRemoteStorage', () => {
   });
 
   const setup = (): { richHistoryQuery: RichHistoryQuery; dto: RichHistoryRemoteStorageDTO } => {
-    const richHistoryQuery: RichHistoryQuery<any> = {
+    const richHistoryQuery: RichHistoryQuery = {
       id: '123',
       createdAt: 200 * 1000,
       datasourceUid: 'ds1',
       datasourceName: 'name-of-ds1',
       starred: true,
       comment: 'comment',
-      queries: [{ foo: 'bar ' }],
+      queries: [{ refId: 'foo' }],
     };
 
     const dto = {

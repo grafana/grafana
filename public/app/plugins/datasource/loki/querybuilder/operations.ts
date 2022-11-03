@@ -189,9 +189,9 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       explainHandler: () =>
         `This will replace log line using a specified template. The template can refer to stream labels and extracted labels.
 
-        Example: \`{{.status_code}} - {{.message}}\`
+Example: \`{{.status_code}} - {{.message}}\`
 
-        [Read the docs](https://grafana.com/docs/loki/latest/logql/log_queries/#line-format-expression) for more.
+[Read the docs](https://grafana.com/docs/loki/latest/logql/log_queries/#line-format-expression) for more.
         `,
     },
     {
@@ -210,9 +210,9 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       explainHandler: () =>
         `This will change name of label to desired new label. In the example below, label "error_level" will be renamed to "level".
 
-        Example: error_level=\`level\`
+Example: \`\`error_level=\`level\` \`\`
 
-        [Read the docs](https://grafana.com/docs/loki/latest/logql/log_queries/#labels-format-expression) for more.
+[Read the docs](https://grafana.com/docs/loki/latest/logql/log_queries/#labels-format-expression) for more.
         `,
     },
 
@@ -419,4 +419,20 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   ];
 
   return list;
+}
+
+// Keeping a local copy as an optimization measure.
+const definitions = getOperationDefinitions();
+
+/**
+ * Given an operator, return the corresponding explain.
+ * For usage within the Query Editor.
+ */
+export function explainOperator(id: LokiOperationId | string): string {
+  const definition = definitions.find((operation) => operation.id === id);
+
+  const explain = definition?.explainHandler?.({ id: '', params: ['<value>'] }) || '';
+
+  // Strip markdown links
+  return explain.replace(/\[(.*)\]\(.*\)/g, '$1');
 }
