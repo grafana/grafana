@@ -127,7 +127,9 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 						sectionForPage.Children = append(sectionForPage.Children, link)
 					}
 				}
-			} else {
+
+				// Register the page under the app only if it is not marked as a core page
+			} else if !include.IsCorePage {
 				appLink.Children = append(appLink.Children, link)
 			}
 		}

@@ -96,6 +96,10 @@
           "icon": {
             "type": "string",
             "description": "Icon to use in the side menu. For information on available icon, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)."
+          },
+          "isCorePage": {
+            "type": "boolean",
+            "description": "Marks a \"page\" type include as a route that can be used to extend or override existing Grafana pages. A page with this flag enabled will not show up under the plugins sub-pages, but can be used as a standalone plugin page using the `navigation.app_standalone_pages` Grafana setting."
           }
         }
       }
