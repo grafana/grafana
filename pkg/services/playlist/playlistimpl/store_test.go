@@ -13,10 +13,6 @@ import (
 type getStore func(db.DB) store
 
 func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	ss := db.InitTestDB(t)
 	playlistStore := fn(ss)
 
