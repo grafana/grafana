@@ -1,7 +1,7 @@
 import { config, reportInteraction } from '@grafana/runtime';
 import { InspectTab } from 'app/features/inspector/types';
 
-import { SearchLayout } from '../types';
+import { EventTrackingNamespace, SearchLayout } from '../types';
 
 interface QueryProps {
   layout: SearchLayout;
@@ -9,28 +9,26 @@ interface QueryProps {
   sortValue: string;
   query: string;
   tagCount: number;
-  includePanels: boolean;
+  includePanels?: boolean;
 }
 
-type DashboardListType = 'manage_dashboards' | 'dashboard_search';
-
-export const reportDashboardListViewed = (dashboardListType: DashboardListType, query: QueryProps) => {
-  reportInteraction(`${dashboardListType}_viewed`, getQuerySearchContext(query));
+export const reportDashboardListViewed = (eventTrackingNamespace: EventTrackingNamespace, query: QueryProps) => {
+  reportInteraction(`${eventTrackingNamespace}_viewed`, getQuerySearchContext(query));
 };
 
-export const reportSearchResultInteraction = (dashboardListType: DashboardListType, query: QueryProps) => {
-  reportInteraction(`${dashboardListType}_result_clicked`, getQuerySearchContext(query));
+export const reportSearchResultInteraction = (eventTrackingNamespace: EventTrackingNamespace, query: QueryProps) => {
+  reportInteraction(`${eventTrackingNamespace}_result_clicked`, getQuerySearchContext(query));
 };
 
-export const reportSearchQueryInteraction = (dashboardListType: DashboardListType, query: QueryProps) => {
-  reportInteraction(`${dashboardListType}_query_submitted`, getQuerySearchContext(query));
+export const reportSearchQueryInteraction = (eventTrackingNamespace: EventTrackingNamespace, query: QueryProps) => {
+  reportInteraction(`${eventTrackingNamespace}_query_submitted`, getQuerySearchContext(query));
 };
 
 export const reportSearchFailedQueryInteraction = (
-  dashboardListType: DashboardListType,
+  eventTrackingNamespace: EventTrackingNamespace,
   { error, ...query }: QueryProps & { error?: string }
 ) => {
-  reportInteraction(`${dashboardListType}_query_failed`, { ...getQuerySearchContext(query), error });
+  reportInteraction(`${eventTrackingNamespace}_query_failed`, { ...getQuerySearchContext(query), error });
 };
 
 export const reportPanelInspectInteraction = (
