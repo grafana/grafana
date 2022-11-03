@@ -101,6 +101,7 @@ type GetParentsQuery struct {
 type GetTreeQuery struct {
 	UID   string `xorm:"uid"`
 	OrgID int64  `xorm:"org_id"`
+	Depth int64
 
 	// Pagination options
 	Limit int64
