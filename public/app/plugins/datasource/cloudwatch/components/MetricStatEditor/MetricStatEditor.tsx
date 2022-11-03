@@ -59,6 +59,13 @@ export function MetricStatEditor({
   return (
     <EditorRows>
       <EditorRow>
+        {!disableExpressions && (
+          <Account
+            query={metricStat}
+            onChange={(accountId?: string) => onMetricStatChange({ ...metricStat, accountId })}
+            api={datasource.api}
+          ></Account>
+        )}
         <EditorFieldGroup>
           <EditorField label="Namespace" width={26}>
             <Select
@@ -114,13 +121,6 @@ export function MetricStatEditor({
       </EditorRow>
 
       <EditorRow>
-        {!disableExpressions && (
-          <Account
-            query={metricStat}
-            onChange={(accountId?: string) => onMetricStatChange({ ...metricStat, accountId })}
-            api={datasource.api}
-          ></Account>
-        )}
         <EditorField label="Dimensions">
           <Dimensions
             metricStat={metricStat}

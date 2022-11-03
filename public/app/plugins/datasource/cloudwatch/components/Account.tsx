@@ -66,7 +66,11 @@ export function Account({ query, onChange, api }: Props) {
   const value = state.value?.find((a) => a.value === query.accountId);
 
   return (
-    <EditorField label="Account" width={26}>
+    <EditorField
+      label="Account"
+      width={26}
+      tooltip="A CloudWatch monitoring account views data from source accounts so you can centralize monitoring and troubleshooting activities across multiple accounts. Go to the CloudWatch settings page in the AWS console for more details."
+    >
       <Select
         isLoading={state.loading}
         aria-label="Account"
