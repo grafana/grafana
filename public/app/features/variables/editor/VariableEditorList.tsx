@@ -54,6 +54,7 @@ export function VariableEditorList({
             <table
               className="filter-table filter-table--hover"
               aria-label={selectors.pages.Dashboard.Settings.Variables.List.table}
+              role="grid"
             >
               <thead>
                 <tr>

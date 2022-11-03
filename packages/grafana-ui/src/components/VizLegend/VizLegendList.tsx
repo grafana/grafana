@@ -18,7 +18,7 @@ export interface Props<T> extends VizLegendBaseProps<T> {}
 export const VizLegendList = <T extends unknown>({
   items,
   itemRenderer,
-  onLabelMouseEnter,
+  onLabelMouseOver,
   onLabelMouseOut,
   onLabelClick,
   placement,
@@ -33,7 +33,7 @@ export const VizLegendList = <T extends unknown>({
       <VizLegendListItem
         item={item}
         onLabelClick={onLabelClick}
-        onLabelMouseEnter={onLabelMouseEnter}
+        onLabelMouseOver={onLabelMouseOver}
         onLabelMouseOut={onLabelMouseOut}
         readonly={readonly}
       />

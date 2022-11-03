@@ -101,7 +101,7 @@ describe('AnnotationsSettings', () => {
   test('it renders empty list cta if only builtIn annotation', async () => {
     setup(dashboard);
 
-    expect(screen.queryByRole('table')).toBeInTheDocument();
+    expect(screen.queryByRole('grid')).toBeInTheDocument();
     expect(screen.getByRole('row', { name: /annotations & alerts \(built\-in\) grafana/i })).toBeInTheDocument();
     expect(
       screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query'))
