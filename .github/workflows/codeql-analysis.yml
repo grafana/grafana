@@ -49,5 +49,11 @@ jobs:
         # Prefix the list here with "+" to use these queries and those in the config file.
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
 
+    - if: matrix.language == 'go'
+      name: Build Go
+      run: |
+        go mod verify
+        make build-go
+
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2

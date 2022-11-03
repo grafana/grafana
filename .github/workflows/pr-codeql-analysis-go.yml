@@ -25,5 +25,10 @@ jobs:
       with:
         languages: "go"
 
+    - name: Build Go
+      run: |
+        go mod verify
+        make build-go
+
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
