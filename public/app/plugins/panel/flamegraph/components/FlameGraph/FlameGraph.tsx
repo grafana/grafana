@@ -63,6 +63,9 @@ const FlameGraph = ({
   const totalTicks = data.fields[1].values.get(0);
   const valueField =
     data.fields.find((f) => f.name === 'value') ?? data.fields.find((f) => f.type === FieldType.number);
+  if (!valueField) {
+    throw new Error('Malformed dataFrame: value field of type number is not in the query response');
+  }
 
   const [sizeRef, { width: wrapperWidth }] = useMeasure<HTMLDivElement>();
   const graphRef = useRef<HTMLCanvasElement>(null);
@@ -100,7 +103,7 @@ const FlameGraph = ({
       ctx.strokeStyle = 'white';
 
       const processor = getDisplayProcessor({
-        field: valueField!,
+        field: valueField,
         theme: createTheme() /* theme does not matter for us here */,
       });
 
@@ -147,7 +150,7 @@ const FlameGraph = ({
             tooltipRef.current.style.top = e.clientY + 'px';
 
             const bar = levels[levelIndex][barIndex];
-            const tooltipData = getTooltipData(valueField!, bar.label, bar.value, totalTicks);
+            const tooltipData = getTooltipData(valueField, bar.label, bar.value, totalTicks);
             setTooltipData(tooltipData);
             setShowTooltip(true);
           }
