@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"runtime/debug"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -91,26 +90,41 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 	g, ctx := errgroup.WithContext(ctx)
 	results := make([]backend.Responses, len(byDataSource))
 
-	// Create panic recovery function for loop
-	recoveryFn := func() {
-		if e := recover(); e != nil {
-			s.log.Error("query datasource panic", "error", e, "stack", string(debug.Stack()))
+	// Create panic recovery function for loop below
+	recoveryFn := func(results *[]backend.Responses, queries []*simplejson.Json) {
+		if r := recover(); r != nil {
+			var err error
+			s.log.Error("query datasource panic", "error", r, "stack", log.Stack(1))
+			if theErr, ok := r.(error); ok {
+				err = theErr
+			} else if theErrString, ok := r.(string); ok {
+				err = fmt.Errorf(theErrString)
+			} else {
+				err = fmt.Errorf("unexpected error, see the server log for details")
+			}
+			// Because of the panic, there is no valid response for any query. Append an error for each one.
+			*results = append(*results, buildErrorResponses(err, queries))
 		}
 	}
 
+	// Query each datasource concurrently
 	for _, queries := range byDataSource {
 		rawQueries := make([]*simplejson.Json, len(queries))
 		for i := 0; i < len(queries); i++ {
 			rawQueries[i] = queries[i].rawQuery
 		}
 		g.Go(func() error {
-			defer recoveryFn()
 			subDTO := reqDTO.CloneWithQueries(rawQueries)
+			// Handle panics in the datasource qery
+			defer recoveryFn(&results, subDTO.Queries)
 
 			subResp, err := s.QueryData(ctx, user, skipCache, subDTO)
 
 			if err == nil {
 				results = append(results, subResp.Responses)
+			} else {
+				// Because of the error, there is no valid response for any query. Append the error for each one.
+				results = append(results, buildErrorResponses(err, subDTO.Queries))
 			}
 
 			return err
@@ -128,6 +142,16 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 	}
 
 	return resp, nil
+}
+
+func buildErrorResponses(err error, queries []*simplejson.Json) backend.Responses {
+	er := backend.Responses{}
+	for _, query := range queries {
+		er[query.Get("refId").MustString("A")] = backend.DataResponse{
+			Error: err,
+		}
+	}
+	return er
 }
 
 // handleExpressions handles POST /api/ds/query when there is an expression.
