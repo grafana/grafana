@@ -1,10 +1,6 @@
 import React from 'react';
 
-import { selectors } from '@grafana/e2e-selectors/src';
-
 import { InlineField, Input, SecretInput } from '../..';
-import { FormField } from '../FormField/FormField';
-import { SecretFormField } from '../SecretFormField/SecretFormField';
 
 import { HttpSettingsProps } from './types';
 

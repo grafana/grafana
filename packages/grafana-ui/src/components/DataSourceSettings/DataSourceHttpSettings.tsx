@@ -1,11 +1,10 @@
 import { css, cx } from '@emotion/css';
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes';
-import { FormField } from '../FormField/FormField';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { InlineField } from '../Forms/InlineField';
 import { Input } from '../Forms/Legacy/Input/Input';
@@ -105,16 +104,6 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
     default:
       urlTooltip = 'Specify a complete HTTP URL (for example http://your_server:8080)';
   }
-
-  const accessSelect = (
-    <Select
-      aria-label="Access"
-      className="width-20 gf-form-input"
-      options={ACCESS_OPTIONS}
-      value={ACCESS_OPTIONS.filter((o) => o.value === dataSourceConfig.access)[0] || DEFAULT_ACCESS_OPTION}
-      onChange={(selectedValue) => onSettingsChange({ access: selectedValue.value })}
-    />
-  );
 
   const isValidUrl = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(
     dataSourceConfig.url
