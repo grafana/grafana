@@ -47,17 +47,17 @@ type sqlObjectServer struct {
 
 func getReadSelect(r *object.ReadObjectRequest) string {
 	fields := []string{
-		`"key"`, `"kind"`, `"version"`,
-		`"size"`, `"etag"`, `"errors"`, // errors are always returned
-		`"created_at"`, `"created_by"`,
-		`"updated_at"`, `"updated_by"`,
-		`"sync_src"`, `"sync_time"`}
+		"`key`", "kind", "version",
+		"size", "etag", "errors", // errors are always returned
+		"created_at", "created_by",
+		"updated_at", "updated_by",
+		"sync_src", "sync_time"}
 
 	if r.WithBody {
-		fields = append(fields, `"body"`)
+		fields = append(fields, `body`)
 	}
 	if r.WithSummary {
-		fields = append(fields, `"name"`, `"description"`, `"labels"`, `"fields"`)
+		fields = append(fields, `name`, `description`, `labels`, `fields`)
 	}
 	return "SELECT " + strings.Join(fields, ",") + " FROM object WHERE "
 }
@@ -150,7 +150,7 @@ func (s *sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest)
 	}
 
 	args := []interface{}{route.Key}
-	where := "key=?"
+	where := "`key`=?"
 
 	rows, err := s.sess.Query(ctx, getReadSelect(r)+where, args...)
 	if err != nil {
@@ -170,12 +170,12 @@ func (s *sqlObjectServer) readFromHistory(ctx context.Context, r *object.ReadObj
 	}
 
 	fields := []string{
-		`"body"`, `"size"`, `"etag"`,
-		`"updated_at"`, `"updated_by"`,
+		"body", "size", "etag",
+		"updated_at", "updated_by",
 	}
 
 	rows, err := s.sess.Query(ctx,
-		"SELECT "+strings.Join(fields, ",")+` FROM object_history WHERE "key"=? AND version=?`, route.Key, r.Version)
+		"SELECT "+strings.Join(fields, ",")+" FROM object_history WHERE `key`=? AND version=?", route.Key, r.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +233,7 @@ func (s *sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObje
 			return nil, err
 		}
 
-		where := "key=?"
+		where := "`key`=?"
 		args = append(args, route.Key)
 		if r.Version != "" {
 			return nil, fmt.Errorf("version not supported for batch read (yet?)")
@@ -296,52 +296,45 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 
 	// Make sure all parent folders exist
 	if grn.Scope == models.ObjectStoreScopeDrive {
-		//	err = s.ensureFolders(ctx, grn)
+		err = s.ensureFolders(ctx, grn)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	forUpdate := "" // TODO, MYSQL/PosgreSQL can lock the row " FOR UPDATE"
-
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-
-		rows, err := tx.Query(ctx, "SELECT etag,version,updated_at,size FROM object WHERE `key`=?"+forUpdate, key)
+		isUpdate := false
+		versionInfo, err := s.selectForUpdate(ctx, tx, key)
 		if err != nil {
 			return err
 		}
 
-		isUpdate := false
-		timestamp := time.Now().UnixMilli()
-		versionInfo := &object.ObjectVersionInfo{
-			Version: "1",
-			Comment: r.Comment,
+		// Same object
+		if versionInfo.ETag == etag {
+			rsp.Object = versionInfo
+			rsp.Status = object.WriteObjectResponse_UNCHANGED
+			return nil
 		}
 
-		// Has a result
-		if rows.Next() {
-			current := &object.ObjectVersionInfo{}
-			err = rows.Scan(&current.ETag, &current.Version, &current.Updated, &current.Size)
-			if err != nil {
-				return err
+		if r.PreviousVersion != "" {
+			if r.PreviousVersion != versionInfo.Version {
+				return fmt.Errorf("optimistic lock failed")
 			}
+		}
 
-			if current.ETag == etag {
-				rsp.Object = current // TODO more
-				rsp.Status = object.WriteObjectResponse_UNCHANGED
-				return nil
-			}
-			isUpdate = true
-
+		// Set the comment on this write
+		timestamp := time.Now().UnixMilli()
+		versionInfo.Comment = r.Comment
+		if versionInfo.Version == "" {
+			versionInfo.Version = "1"
+		} else {
 			// Increment the version
-			i, _ := strconv.ParseInt(current.Version, 0, 64)
+			i, _ := strconv.ParseInt(versionInfo.Version, 0, 64)
 			if i < 1 {
 				i = timestamp
 			}
 			versionInfo.Version = fmt.Sprintf("%d", i+1)
-		}
-		if err := rows.Close(); err != nil {
-			return err
+			isUpdate = true
 		}
 
 		if isUpdate {
@@ -442,6 +435,25 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 	return rsp, err
 }
 
+func (s *sqlObjectServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, key string) (*object.ObjectVersionInfo, error) {
+	q := "SELECT etag,version,updated_at,size FROM object WHERE `key`=?"
+	if false { // TODO, MYSQL/PosgreSQL can lock the row " FOR UPDATE"
+		q += " FOR UPDATE"
+	}
+	rows, err := tx.Query(ctx, q, key)
+	if err != nil {
+		return nil, err
+	}
+	current := &object.ObjectVersionInfo{}
+	if rows.Next() {
+		err = rows.Scan(&current.ETag, &current.Version, &current.Updated, &current.Size)
+	}
+	if err == nil {
+		err = rows.Close()
+	}
+	return current, err
+}
+
 func (s *sqlObjectServer) prepare(ctx context.Context, r *object.WriteObjectRequest) (*summarySupport, []byte, error) {
 	grn := r.GRN
 	builder := s.kinds.GetSummaryBuilder(grn.Kind)
@@ -506,11 +518,10 @@ func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRe
 		return nil, fmt.Errorf("next page not supported yet")
 	}
 
-	query := `SELECT version,size,etag,updated_at,updated_by,message
-		FROM object_history
-		WHERE "key"=? ` + page + `
-		ORDER BY updated_at DESC LIMIT 100
-	;`
+	query := "SELECT version,size,etag,updated_at,updated_by,message \n" +
+		" FROM object_history \n" +
+		" WHERE `key`=? " + page + "\n" +
+		" ORDER BY updated_at DESC LIMIT 100"
 
 	rows, err := s.sess.Query(ctx, query, args...)
 	if err != nil {
