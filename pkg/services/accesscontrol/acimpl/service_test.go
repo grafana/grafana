@@ -246,7 +246,7 @@ func TestService_RegisterFixedRoles(t *testing.T) {
 	}
 }
 
-func TestService_GetSimplifiedUsersPermissions(t *testing.T) {
+func TestService_GetUsersPermissions(t *testing.T) {
 	actionPrefix := "teams"
 	ctx := context.Background()
 	listAllPerms := map[string][]string{accesscontrol.ActionUsersPermissionsRead: {"users:*"}}
@@ -257,7 +257,7 @@ func TestService_GetSimplifiedUsersPermissions(t *testing.T) {
 		ramRoles       map[string]*accesscontrol.RoleDTO    // BasicRole => RBAC BasicRole
 		storedPerms    map[int64][]accesscontrol.Permission // UserID => Permissions
 		storedRoles    map[int64][]string                   // UserID => Roles
-		want           map[int64][]accesscontrol.SimplifiedUserPermissionDTO
+		want           map[int64][]accesscontrol.Permission
 		wantErr        bool
 	}{
 		{
@@ -275,9 +275,9 @@ func TestService_GetSimplifiedUsersPermissions(t *testing.T) {
 				1: {string(roletype.RoleEditor)},
 				2: {string(roletype.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
 			},
-			want: map[int64][]accesscontrol.SimplifiedUserPermissionDTO{
-				2: {{Action: accesscontrol.ActionTeamsRead, All: true},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, All: true}},
+			want: map[int64][]accesscontrol.Permission{
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
 			},
 		},
 		{
@@ -292,10 +292,10 @@ func TestService_GetSimplifiedUsersPermissions(t *testing.T) {
 				1: {string(roletype.RoleEditor)},
 				2: {string(roletype.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
 			},
-			want: map[int64][]accesscontrol.SimplifiedUserPermissionDTO{
-				1: {{Action: accesscontrol.ActionTeamsRead, UIDs: []string{"1"}}},
-				2: {{Action: accesscontrol.ActionTeamsRead, All: true},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, All: true}},
+			want: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
 			},
 		},
 		{
@@ -318,10 +318,12 @@ func TestService_GetSimplifiedUsersPermissions(t *testing.T) {
 				1: {string(roletype.RoleEditor)},
 				2: {string(roletype.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
 			},
-			want: map[int64][]accesscontrol.SimplifiedUserPermissionDTO{
-				1: {{Action: accesscontrol.ActionTeamsRead, UIDs: []string{"1"}}},
-				2: {{Action: accesscontrol.ActionTeamsRead, All: true},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, All: true}},
+			want: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
 			},
 		},
 		{
@@ -341,9 +343,10 @@ func TestService_GetSimplifiedUsersPermissions(t *testing.T) {
 				1: {string(roletype.RoleEditor)},
 				2: {accesscontrol.RoleGrafanaAdmin},
 			},
-			want: map[int64][]accesscontrol.SimplifiedUserPermissionDTO{
-				2: {{Action: accesscontrol.ActionTeamsRead, UIDs: []string{"1"}},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, All: true}},
+			want: map[int64][]accesscontrol.Permission{
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
 			},
 		},
 		{
@@ -356,8 +359,8 @@ func TestService_GetSimplifiedUsersPermissions(t *testing.T) {
 				}},
 			},
 			storedRoles: map[int64][]string{1: {accesscontrol.RoleGrafanaAdmin}},
-			want: map[int64][]accesscontrol.SimplifiedUserPermissionDTO{
-				1: {{Action: accesscontrol.ActionTeamsPermissionsRead, All: true}},
+			want: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
 			},
 		},
 	}
@@ -372,7 +375,7 @@ func TestService_GetSimplifiedUsersPermissions(t *testing.T) {
 			}
 
 			siu := &user.SignedInUser{OrgID: 2, Permissions: map[int64]map[string][]string{2: tt.siuPermissions}}
-			got, err := ac.GetSimplifiedUsersPermissions(ctx, siu, 2, actionPrefix)
+			got, err := ac.GetUsersPermissions(ctx, siu, 2, actionPrefix)
 			if tt.wantErr {
 				require.NotNil(t, err)
 				return

@@ -204,9 +204,9 @@ func permissionCacheKey(user *user.SignedInUser) (string, error) {
 	return fmt.Sprintf("rbac-permissions-%s", key), nil
 }
 
-// GetSimplifiedUsersPermissions returns all users' permissions filtered by action prefixes
-func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64,
-	actionPrefix string) (map[int64][]accesscontrol.SimplifiedUserPermissionDTO, error) {
+// GetUsersPermissions returns all users' permissions filtered by action prefixes
+func (s *Service) GetUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64,
+	actionPrefix string) (map[int64][]accesscontrol.Permission, error) {
 	// Filter ram permissions
 	basicPermissions := map[string][]accesscontrol.Permission{}
 	for role, basicRole := range s.roles {
@@ -253,7 +253,7 @@ func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.
 	}()
 
 	// Merge stored (DB) and basic role permissions (RAM)
-	res := map[int64][]accesscontrol.SimplifiedUserPermissionDTO{}
+	res := map[int64][]accesscontrol.Permission{}
 	for userID, perms := range usersPermissions {
 		if !canView(userID) {
 			continue
@@ -266,7 +266,7 @@ func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.
 			}
 			delete(usersRoles, userID)
 		}
-		res[userID] = accesscontrol.Simplify(perms)
+		res[userID] = append(res[userID], perms...)
 	}
 
 	// Handle the remaining users that had no stored permissions
@@ -283,7 +283,7 @@ func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.
 			perms = append(perms, basicPermission...)
 		}
 		if len(perms) > 0 {
-			res[userID] = accesscontrol.Simplify(perms)
+			res[userID] = append(res[userID], perms...)
 		}
 	}
 

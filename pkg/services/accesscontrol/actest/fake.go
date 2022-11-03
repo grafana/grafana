@@ -14,7 +14,7 @@ type FakeService struct {
 	ExpectedErr              error
 	ExpectedDisabled         bool
 	ExpectedPermissions      []accesscontrol.Permission
-	ExpectedUsersPermissions map[int64][]accesscontrol.SimplifiedUserPermissionDTO
+	ExpectedUsersPermissions map[int64][]accesscontrol.Permission
 }
 
 func (f FakeService) GetUsageStats(ctx context.Context) map[string]interface{} {
@@ -25,7 +25,7 @@ func (f FakeService) GetUserPermissions(ctx context.Context, user *user.SignedIn
 	return f.ExpectedPermissions, f.ExpectedErr
 }
 
-func (f FakeService) GetSimplifiedUsersPermissions(ctx context.Context, user *user.SignedInUser, OrgID int64, ActionPrefix string) (map[int64][]accesscontrol.SimplifiedUserPermissionDTO, error) {
+func (f FakeService) GetUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64, actionPrefix string) (map[int64][]accesscontrol.Permission, error) {
 	return f.ExpectedUsersPermissions, f.ExpectedErr
 }
 

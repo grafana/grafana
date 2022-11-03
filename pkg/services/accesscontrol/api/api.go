@@ -36,7 +36,7 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 		rr.Get("/user/permissions", middleware.ReqSignedIn, routing.Wrap(api.getUserPermissions))
 		if api.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) {
 			rr.Get("/users/permissions", authorize(middleware.ReqSignedIn,
-				ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.getSimpliedUsersPermissions))
+				ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.getUsersPermissions))
 		}
 	})
 }
@@ -66,7 +66,7 @@ func (api *AccessControlAPI) getUserPermissions(c *models.ReqContext) response.R
 }
 
 // GET /api/access-control/users/permissions
-func (api *AccessControlAPI) getSimpliedUsersPermissions(c *models.ReqContext) response.Response {
+func (api *AccessControlAPI) getUsersPermissions(c *models.ReqContext) response.Response {
 	actionPrefix := c.Query("actionPrefix")
 
 	// Validate request
@@ -75,10 +75,15 @@ func (api *AccessControlAPI) getSimpliedUsersPermissions(c *models.ReqContext) r
 	}
 
 	// Compute metadata
-	permissions, err := api.Service.GetSimplifiedUsersPermissions(c.Req.Context(), c.SignedInUser, c.OrgID, actionPrefix)
+	permissions, err := api.Service.GetUsersPermissions(c.Req.Context(), c.SignedInUser, c.OrgID, actionPrefix)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not get org user permissions", err)
 	}
 
-	return response.JSON(http.StatusOK, permissions)
+	permsByAction := map[int64]map[string][]string{}
+	for userID, userPerms := range permissions {
+		permsByAction[userID] = ac.GroupScopesByAction(userPerms)
+	}
+
+	return response.JSON(http.StatusOK, permsByAction)
 }

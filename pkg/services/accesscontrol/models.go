@@ -273,45 +273,6 @@ type GetUsersPermissionCommand struct {
 	ActionPrefix string `json:"actionPrefix"`
 }
 
-type SimplifiedUserPermissionDTO struct {
-	Action string   `json:"action"`
-	All    bool     `json:"all,omitempty"`
-	UIDs   []string `json:"uids,omitempty"`
-}
-
-func Simplify(ps []Permission) []SimplifiedUserPermissionDTO {
-	var ok bool
-	actionIndexes := map[string]int{}
-	res := []SimplifiedUserPermissionDTO{}
-	for i := range ps {
-		var actionIndex int
-		if actionIndex, ok = actionIndexes[ps[i].Action]; ok {
-			// Action already processed
-			if res[actionIndex].All {
-				// Action applied to a wildcard
-				continue
-			}
-		} else {
-			res = append(res, SimplifiedUserPermissionDTO{Action: ps[i].Action})
-			actionIndex = len(res) - 1
-			actionIndexes[ps[i].Action] = actionIndex
-		}
-		// TODO double check
-		if ps[i].Scope == "*" || strings.HasSuffix(ps[i].Scope, ":*") {
-			res[actionIndex].All = true
-			res[actionIndex].UIDs = nil
-			continue
-		}
-		// TODO double check
-		parts := strings.Split(ps[i].Scope, ":")
-		if len(parts) != maxPrefixParts+1 {
-			continue
-		}
-		res[actionIndex].UIDs = append(res[actionIndex].UIDs, parts[2])
-	}
-	return res
-}
-
 const (
 	GlobalOrgID        = 0
 	FixedRolePrefix    = "fixed:"
