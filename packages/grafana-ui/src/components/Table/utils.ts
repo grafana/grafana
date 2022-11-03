@@ -61,7 +61,8 @@ export function getColumns(
   data: DataFrame,
   availableWidth: number,
   columnMinWidth: number,
-  footerValues?: FooterItem[]
+  footerValues?: FooterItem[],
+  isCountAllSet?: boolean
 ): GrafanaTableColumn[] {
   const columns: GrafanaTableColumn[] = [];
   let fieldCountWithoutWidth = 0;
@@ -104,7 +105,7 @@ export function getColumns(
       minWidth: fieldTableOptions.minWidth ?? columnMinWidth,
       filter: memoizeOne(filterByValue(field)),
       justifyContent: getTextAlign(field),
-      Footer: getFooterValue(fieldIndex, footerValues),
+      Footer: getFooterValue(fieldIndex, footerValues, isCountAllSet),
     });
   }
 

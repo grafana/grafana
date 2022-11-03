@@ -19,7 +19,7 @@ export interface FooterRowProps {
 }
 
 export const FooterRow = (props: FooterRowProps) => {
-  const { totalColumnsWidth, footerGroups, height, isPaginationVisible } = props;
+  const { totalColumnsWidth, footerGroups, height, isPaginationVisible, isCountAllSet } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
   const tableStyles = useStyles2(getTableStyles);
 
@@ -42,7 +42,7 @@ export const FooterRow = (props: FooterRowProps) => {
             style={height ? { height: `${height}px` } : undefined}
           >
             {footerGroup.headers.map((column: ColumnInstance, index: number) =>
-              renderFooterCell(column, tableStyles, height)
+              isCountAllSet && index > 0 ? EmptyCell : renderFooterCell(column, tableStyles, height, isCountAllSet)
             )}
           </div>
         );
@@ -51,7 +51,7 @@ export const FooterRow = (props: FooterRowProps) => {
   );
 };
 
-function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, height?: number) {
+function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, height?: number, isCountAllSet?: boolean) {
   const footerProps = column.getHeaderProps();
 
   if (!footerProps) {
@@ -72,9 +72,13 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, heig
   );
 }
 
-export function getFooterValue(index: number, footerValues?: FooterItem[]) {
+export function getFooterValue(index: number, footerValues?: FooterItem[], isCountAllSet?: boolean) {
   if (footerValues === undefined) {
     return EmptyCell;
+  }
+
+  if (isCountAllSet) {
+    return FooterCell({ value: [{ Count: footerValues[index] as string }] });
   }
 
   return FooterCell({ value: footerValues[index] });

@@ -177,8 +177,8 @@ export const Table = memo((props: Props) => {
 
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () => getColumns(data, width, columnMinWidth, footerItems),
-    [data, width, columnMinWidth, footerItems]
+    () => getColumns(data, width, columnMinWidth, footerItems, footerOptions?.countAll),
+    [data, width, columnMinWidth, footerItems, footerOptions]
   );
 
   // Internal react table state reducer
@@ -239,12 +239,7 @@ export const Table = memo((props: Props) => {
         theme
       );
 
-      if (
-        props.footerOptions?.countAll &&
-        footerItems &&
-        typeof footerItems[0] === 'string' &&
-        footerItems[0].toLowerCase() === ReducerID.count
-      ) {
+      if (footerOptions.countAll && footerItems) {
         const maxCount = footerItems.reduce((max, item) => {
           if (typeof item === 'string' && !isNaN(+item)) {
             return Math.max(max, +item);
@@ -252,7 +247,7 @@ export const Table = memo((props: Props) => {
           return max;
         }, 0);
 
-        const footerItemsCountAll: FooterItem[] = [footerItems[0], maxCount.toString()];
+        const footerItemsCountAll: FooterItem[] = [maxCount.toString()];
         setFooterItems(footerItemsCountAll);
       } else {
         setFooterItems(footerItems);
