@@ -31,13 +31,15 @@ export const SharePublicDashboard = (props: Props) => {
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
   const styles = useStyles2(getStyles);
 
+  const [hasPublicDashboard, setHasPublicDashboard] = useState(props.dashboard.meta.hasPublicDashboard);
+
   const {
     isLoading: isFetchingLoading,
     data: publicDashboard,
     isError: isFetchingError,
   } = useGetPublicDashboardQuery(props.dashboard.uid, {
     // if we don't have a public dashboard, don't try to load public dashboard
-    skip: !props.dashboard.meta.hasPublicDashboard,
+    skip: !hasPublicDashboard,
   });
 
   const [createPublicDashboard, { isLoading: isSaveLoading }] = useCreatePublicDashboardMutation();
@@ -85,7 +87,7 @@ export const SharePublicDashboard = (props: Props) => {
     [hasWritePermissions, acknowledged, props.dashboard, isLoading, isFetchingError, enabledSwitch, publicDashboard]
   );
 
-  const onSavePublicConfig = () => {
+  const onSavePublicConfig = async () => {
     reportInteraction('grafana_dashboards_public_create_clicked');
 
     const req = {
@@ -94,7 +96,14 @@ export const SharePublicDashboard = (props: Props) => {
     };
 
     // create or update based on whether we have existing uid
-    props.dashboard.meta.hasPublicDashboard ? updatePublicDashboard(req) : createPublicDashboard(req);
+
+    if (hasPublicDashboard) {
+      await updatePublicDashboard(req).unwrap();
+      setHasPublicDashboard(true);
+    } else {
+      await createPublicDashboard(req).unwrap();
+      setHasPublicDashboard(true);
+    }
   };
 
   const onAcknowledge = (field: string, checked: boolean) => {
