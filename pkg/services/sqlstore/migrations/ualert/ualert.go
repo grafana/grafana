@@ -968,7 +968,7 @@ func generateNewDatasourceUid(sess *xorm.Session, orgId int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()
 
-		exists, err := sess.Table("ngalert_configuration").Where("org_id = ?", uid, orgId).Exist()
+		exists, err := sess.Table("data_source").Where("uid = ? AND org_id = ?", uid, orgId).Exist()
 		if err != nil {
 			return "", err
 		}
