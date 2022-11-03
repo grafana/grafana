@@ -374,7 +374,7 @@ func (b *aggBuilderImpl) Nested(key, field string, fn func(a *NestedAggregation,
 	})
 
 	if fn != nil {
-		builder := newAggBuilder(b.version)
+		builder := newAggBuilder()
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}

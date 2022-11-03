@@ -5,6 +5,7 @@ import {
   Histogram,
   DateHistogram,
   Terms,
+  Nested,
 } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import {
   isMetricAggregationWithField,
@@ -136,6 +137,17 @@ export class ElasticQueryBuilder {
     }
 
     return filterObj;
+  }
+
+  getNestedAgg(aggDef: Nested, queryNode: any, target: ElasticsearchQuery) {
+    if (!aggDef.field || !target || !target.metrics) {
+      return queryNode;
+    }
+    queryNode['nested'] = {
+      path: aggDef.field,
+    };
+
+    return queryNode;
   }
 
   documentQuery(query: any, size: number) {
@@ -281,6 +293,10 @@ export class ElasticQueryBuilder {
             field: aggDef.field,
             precision: aggDef.settings?.precision,
           };
+          break;
+        }
+        case 'nested': {
+          this.getNestedAgg(aggDef, esAgg, target);
           break;
         }
       }
