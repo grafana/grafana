@@ -14,7 +14,7 @@ import { CloudWatchJsonData, Dimensions, MetricRequest, MultiFilters, TSDBRespon
 export abstract class CloudWatchRequest {
   templateSrv: TemplateSrv;
   ref: DataSourceRef;
-  dsQueryEndpoint = '/api/ds/query/cloudwatch';
+  dsQueryEndpoint: string;
   debouncedCustomAlert: (title: string, message: string) => void = memoizedDebounce(
     displayCustomError,
     AppNotificationTimeout.Error
@@ -23,6 +23,7 @@ export abstract class CloudWatchRequest {
   constructor(public instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>, templateSrv: TemplateSrv) {
     this.templateSrv = templateSrv;
     this.ref = getDataSourceRef(instanceSettings);
+    this.dsQueryEndpoint = `/api/ds/query?type=${this.ref.type}&uid=${this.ref.uid}`;
   }
 
   awsRequest(url: string, data: MetricRequest, headers: Record<string, string> = {}): Observable<TSDBResponse> {

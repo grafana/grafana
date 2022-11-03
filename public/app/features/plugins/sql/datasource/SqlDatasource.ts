@@ -146,7 +146,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return lastValueFrom(
       getBackendSrv()
         .fetch<BackendDataSourceResponse>({
-          url: '/api/ds/query/sql', // ?? which SQL!
+          url: '/api/ds/query?type=sql', // ?? which SQL!
           method: 'POST',
           data: {
             from: options?.range?.from.valueOf().toString() || range.from.valueOf().toString(),
@@ -168,7 +168,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return lastValueFrom(
       getBackendSrv()
         .fetch({
-          url: '/api/ds/query/sql', //?? which SQL
+          url: '/api/ds/query?type=sql', //?? which SQL
           method: 'POST',
           data: {
             from: '5m',

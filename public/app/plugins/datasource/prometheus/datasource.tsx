@@ -771,7 +771,7 @@ export class PrometheusDatasource
     return await lastValueFrom(
       getBackendSrv()
         .fetch<BackendDataSourceResponse>({
-          url: '/api/ds/query/' + this.type,
+          url: `/api/ds/query?type=${this.type}&uid=${this.uid}`,
           method: 'POST',
           data: {
             from: (this.getPrometheusTime(options.range.from, false) * 1000).toString(),

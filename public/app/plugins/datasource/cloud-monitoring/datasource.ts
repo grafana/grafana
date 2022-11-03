@@ -108,7 +108,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       from(this.ensureGCEDefaultProject()).pipe(
         mergeMap(() => {
           return getBackendSrv().fetch<PostResponse>({
-            url: '/api/ds/query/' + this.type,
+            url: `/api/ds/query?type=${this.type}&uid=${this.uid}`,
             method: 'POST',
             data: {
               from: options.range.from.valueOf().toString(),

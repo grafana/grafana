@@ -119,13 +119,17 @@ class DataSourceWithBackend<
       targets = targets.filter((q) => this.filterQuery!(q));
     }
 
+    let uids = '';
+    let dsType = '';
+    let hasExpr = false;
     const dsTypes = new Set<string>();
+    const dsUIDs = new Set<string>();
     const queries = targets.map((q) => {
       let datasource = this.getRef();
       let datasourceId = this.id;
 
       if (isExpressionReference(q.datasource)) {
-        dsTypes.add(ExpressionDatasourceRef.type);
+        hasExpr = true;
         return {
           ...q,
           datasource: ExpressionDatasourceRef,
@@ -143,8 +147,14 @@ class DataSourceWithBackend<
         datasourceId = ds.id;
       }
 
-      if (datasource.type) {
-        dsTypes.add(datasource.type);
+      const { type, uid } = datasource;
+      if (type && !dsTypes.has(type)) {
+        dsType += '&type=' + type;
+        dsTypes.add(type);
+      }
+      if (uid && !dsUIDs.has(uid)) {
+        uids += '&uid=' + uid;
+        dsUIDs.add(uid);
       }
       return {
         ...this.applyTemplateVariables(q, request.scopedVars),
@@ -175,17 +185,9 @@ class DataSourceWithBackend<
       });
     }
 
-    const types = Array.from(dsTypes).join(',');
-    let url = '/api/ds/query';
-    if (dsTypes.size > 1) {
-      url = '/api/ds/query/mixed~' + types;
-    } else {
-      url = '/api/ds/query/' + types;
-    }
-
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
-        url,
+        url: `/api/ds/query?type=${dsType}${uids}${hasExpr ? '&expression' : ''}`,
         method: 'POST',
         data: body,
         requestId,
