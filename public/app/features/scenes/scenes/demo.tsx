@@ -1,4 +1,5 @@
 import { getDefaultTimeRange } from '@grafana/data';
+import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { Scene } from '../components/Scene';
 import { SceneCanvasText } from '../components/SceneCanvasText';
@@ -6,6 +7,7 @@ import { SceneFlexLayout } from '../components/SceneFlexLayout';
 import { ScenePanelRepeater } from '../components/ScenePanelRepeater';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { SceneToolbarInput } from '../components/SceneToolbarButton';
+import { newGraphPanel } from '../components/TypedVizPanels';
 import { VizPanel } from '../components/VizPanel';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
@@ -26,9 +28,28 @@ export function getFlexLayoutTest(): Scene {
           // size: { width: 450 },
           direction: 'column',
           children: [
-            new VizPanel({
-              pluginId: 'timeseries',
+            newGraphPanel({
               title: 'Fill height',
+              options: {
+                legend: {
+                  calcs: [],
+                  displayMode: LegendDisplayMode.List,
+                  placement: 'bottom',
+                  showLegend: true,
+                },
+                tooltip: {
+                  mode: TooltipDisplayMode.Single,
+                  sort: SortOrder.None,
+                },
+              },
+              fieldConfig: {
+                defaults: {
+                  custom: {
+                    fillOpacity: 20,
+                  },
+                },
+                overrides: [],
+              },
             }),
             new VizPanel({
               pluginId: 'timeseries',
