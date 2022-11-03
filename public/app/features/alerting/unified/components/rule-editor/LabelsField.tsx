@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { flattenDeep, compact } from 'lodash';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { useFieldArray, useFormContext } from 'react-hook-form';
+import { FieldArrayMethodProps, useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -60,6 +60,43 @@ const useGetCustomLabels = (dataSourceName: string): Record<string, string[]> =>
 function mapLabelsToOptions(items: string[] = []): Array<SelectableValue<string>> {
   return items.map((item) => ({ label: item, value: item }));
 }
+
+const RemoveButton: FC<{
+  remove: (index?: number | number[] | undefined) => void;
+  className: string;
+  index: number;
+}> = ({ remove, className, index }) => (
+  <Button
+    className={className}
+    aria-label="delete label"
+    icon="trash-alt"
+    data-testid={`delete-label-${index}`}
+    variant="secondary"
+    onClick={() => {
+      remove(index);
+    }}
+  />
+);
+
+const AddButton: FC<{
+  append: (
+    value: Partial<{ key: string; value: string }> | Array<Partial<{ key: string; value: string }>>,
+    options?: FieldArrayMethodProps | undefined
+  ) => void;
+  className: string;
+}> = ({ append, className }) => (
+  <Button
+    className={className}
+    icon="plus-circle"
+    type="button"
+    variant="secondary"
+    onClick={() => {
+      append({});
+    }}
+  >
+    Add label
+  </Button>
+);
 
 const LabelsWithSuggestions: FC<{ dataSourceName?: string | null }> = ({ dataSourceName }) => {
   const styles = useStyles2(getStyles);
@@ -141,31 +178,12 @@ const LabelsWithSuggestions: FC<{ dataSourceName?: string | null }> = ({ dataSou
                 />
               </Field>
 
-              <Button
-                className={styles.deleteLabelButton}
-                aria-label="delete label"
-                icon="trash-alt"
-                data-testid={`delete-label-${index}`}
-                variant="secondary"
-                onClick={() => {
-                  remove(index);
-                }}
-              />
+              <RemoveButton className={styles.deleteLabelButton} index={index} remove={remove} />
             </div>
           </div>
         );
       })}
-      <Button
-        className={styles.addLabelButton}
-        icon="plus-circle"
-        type="button"
-        variant="secondary"
-        onClick={() => {
-          append({});
-        }}
-      >
-        Add label
-      </Button>
+      <AddButton className={styles.addLabelButton} append={append} />
     </>
   );
 };
@@ -217,32 +235,12 @@ const LabelsWithoutSuggestions: FC = () => {
                   defaultValue={field.value}
                 />
               </Field>
-
-              <Button
-                className={styles.deleteLabelButton}
-                aria-label="delete label"
-                icon="trash-alt"
-                data-testid={`delete-label-${index}`}
-                variant="secondary"
-                onClick={() => {
-                  remove(index);
-                }}
-              />
+              <RemoveButton className={styles.deleteLabelButton} index={index} remove={remove} />
             </div>
           </div>
         );
       })}
-      <Button
-        className={styles.addLabelButton}
-        icon="plus-circle"
-        type="button"
-        variant="secondary"
-        onClick={() => {
-          append({});
-        }}
-      >
-        Add label
-      </Button>
+      <AddButton className={styles.addLabelButton} append={append} />
     </>
   );
 };
