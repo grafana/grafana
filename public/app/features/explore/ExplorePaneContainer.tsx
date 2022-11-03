@@ -3,7 +3,7 @@ import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2 } from '@grafana/data';
+import { ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2, EventBus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -50,6 +50,7 @@ interface OwnProps extends Themeable2 {
   exploreId: ExploreId;
   urlQuery: string;
   split: boolean;
+  eventBus: EventBus;
 }
 
 interface Props extends OwnProps, ConnectedProps<typeof connector> {}
@@ -143,12 +144,12 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   };
 
   render() {
-    const { theme, split, exploreId, initialized } = this.props;
+    const { theme, split, exploreId, initialized, eventBus } = this.props;
     const styles = getStyles(theme);
     const exploreClass = cx(styles.explore, split && styles.exploreSplit);
     return (
       <div className={exploreClass} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
-        {initialized && <Explore exploreId={exploreId} />}
+        {initialized && <Explore exploreId={exploreId} eventBus={eventBus} />}
       </div>
     );
   }

@@ -45,8 +45,8 @@
     "not IE 11"
   ],
   "dependencies": {
-    "@emotion/css": "11.9.0",
-    "@emotion/react": "11.9.3",
+    "@emotion/css": "11.10.5",
+    "@emotion/react": "11.10.5",
     "@grafana/data": "9.3.0-pre",
     "@grafana/e2e-selectors": "9.3.0-pre",
     "@grafana/schema": "9.3.0-pre",
@@ -95,7 +95,7 @@
     "react-popper": "2.3.0",
     "react-popper-tooltip": "^4.3.1",
     "react-router-dom": "^5.2.0",
-    "react-select": "5.5.9",
+    "react-select": "5.6.0",
     "react-select-event": "^5.1.0",
     "react-table": "7.8.0",
     "react-transition-group": "4.4.5",
@@ -114,7 +114,7 @@
     "@babel/core": "7.19.6",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@mdx-js/react": "1.6.22",
-    "@rollup/plugin-node-resolve": "13.3.0",
+    "@rollup/plugin-node-resolve": "15.0.1",
     "@storybook/addon-a11y": "6.5.12",
     "@storybook/addon-actions": "6.5.12",
     "@storybook/addon-docs": "6.5.12",
