@@ -2,14 +2,14 @@ import { useEffect } from 'react';
 import { Observer, Subject, Subscription, Unsubscribable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { BusEvent, BusEventHandler, BusEventType, EventBusSrv } from '@grafana/data';
+import { BusEvent, BusEventHandler, BusEventType, EventBusSrv, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { useForceUpdate } from '@grafana/ui';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
 import { SceneDataState, SceneObject, SceneComponent, SceneEditor, SceneTimeRange, SceneObjectState } from './types';
 
-export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
+export class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
   private _isActive = false;
   private _subject = new Subject<TState>();
   private _state: TState;
