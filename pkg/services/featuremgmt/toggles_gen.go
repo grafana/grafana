@@ -159,10 +159,6 @@ const (
 	// Enable streaming JSON parser for Prometheus datasource
 	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
 
-	// FlagPrometheusStreamingJSONParserTest
-	// Run both old and streaming requests and log differences
-	FlagPrometheusStreamingJSONParserTest = "prometheusStreamingJSONParserTest"
-
 	// FlagNewDBLibrary
 	// Use jmoiron/sqlx rather than xorm for a few backend services
 	FlagNewDBLibrary = "newDBLibrary"
