@@ -116,11 +116,15 @@ use_pkce = true
 
 Grafana always uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.
 
-### Refresh Token
+### Access token expiration check and configure refresh token
 
 > Available in Grafana v9.3 and later versions.
 
-A refresh token is a special token that is used to get new access tokens without having to ask the user to log in again. Without a refresh token the user gets logged out from Grafana (and they need to log in again) when the access token is expired, therefore it is recommended to configure refresh tokens. Generic OAuth supports obtaining access tokens by using the refresh token, but the `[auth.generic_oauth]` section should be extended with additional scopes and it should be enabled on the provider side as well.
+> **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
+
+Grafana verifies that the User's access token is not expired in case the User is logged in using an OAuth provider and it tries to obtain a new access token by using the provided refresh token (if any) if the access token is expired.
+
+A refresh token is a special token that is used to get new access tokens without having to ask the user to log in again. Without a refresh token the User gets logged out from the system after the access token is expired. Generic OAuth supports obtaining access tokens by using the refresh token, but the `[auth.generic_oauth]` section should be extended with additional scopes and it should be enabled on the provider side as well.
 
 ## Set up OAuth2 with Auth0
 

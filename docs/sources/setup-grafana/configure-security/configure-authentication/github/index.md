@@ -64,11 +64,13 @@ automatically signed up.
 
 You can also use [variable expansion]({{< relref "../../../configure-grafana/#variable-expansion" >}}) to reference environment variables and local files in your GitHub auth configuration.
 
-### Refresh Token
+### Access token expiration check and configure refresh token
 
 > Available in Grafana v9.3 and later versions.
 
-GitHub OAuth applications do not support refresh tokens, because the provided access token doesn't specify an expiry date.
+> **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
+
+GitHub OAuth applications do not support refresh tokens, because the provided access tokens do not specify an expiry date.
 
 ### team_ids
 
