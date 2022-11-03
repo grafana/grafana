@@ -63,6 +63,9 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 		foldr, err = ss.Get(ctx, folder.GetFolderQuery{
 			ID: &id,
 		})
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 	return foldr, err
@@ -109,7 +112,6 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 			uid = *cmd.NewUID
 		}
 
-		_, err := sess.ID(cmd.Folder.ID).AllCols().Update(cmd.Folder)
 		res, err := sess.Exec("UPDATE folder SET description = ?, title = ?, uid = ?, updated = ? WHERE uid = ? AND org_id = ?", description, title, uid, cmd.Folder.Updated, cmd.Folder.UID, cmd.Folder.OrgID)
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to update folder: %w", err)
@@ -199,7 +201,7 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetTreeQuery) ([]*
 		}
 		err := sess.SQL(sql.String(), q.UID, q.OrgID).Find(&folders)
 		if err != nil {
-			folder.ErrDatabaseError.Errorf("failed to get folder children: %w", err)
+			return folder.ErrDatabaseError.Errorf("failed to get folder children: %w", err)
 		}
 		return nil
 	})
