@@ -13,7 +13,7 @@ import (
 // all generated kinds.
 //
 // This generator only has output for core structured kinds.
-func CoreStructuredKindGenerator(gokindsdir string, cfg *CoreStructuredKindGeneratorConfig) KindGenStep {
+func CoreStructuredKindGenerator(gokindsdir string, cfg *CoreStructuredKindGeneratorConfig) OneToOne {
 	if cfg == nil {
 		cfg = new(CoreStructuredKindGeneratorConfig)
 	}
@@ -40,7 +40,7 @@ type genCoreStructuredKind struct {
 	cfg        *CoreStructuredKindGeneratorConfig
 }
 
-var _ KindGenStep = &genCoreStructuredKind{}
+var _ OneToOne = &genCoreStructuredKind{}
 
 func (gen *genCoreStructuredKind) Name() string {
 	return "CoreStructuredKindGenerator"

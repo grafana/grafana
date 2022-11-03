@@ -13,7 +13,7 @@ import (
 // generated registry. kindrelroot should be the repo-root-relative path to the
 // parent directory to all directories that contain generated kind bindings
 // (e.g. pkg/kind).
-func BaseCoreRegistryGenerator(path, kindrelroot string) AggregateKindGenStep {
+func BaseCoreRegistryGenerator(path, kindrelroot string) ManyToOne {
 	return &genBaseRegistry{
 		path:        path,
 		kindrelroot: kindrelroot,
@@ -25,7 +25,7 @@ type genBaseRegistry struct {
 	kindrelroot string
 }
 
-var _ AggregateKindGenStep = &genBaseRegistry{}
+var _ ManyToOne = &genBaseRegistry{}
 
 func (gen *genBaseRegistry) Name() string {
 	return "BaseCoreRegistryGenerator"

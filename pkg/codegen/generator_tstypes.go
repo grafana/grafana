@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/thema/encoding/typescript"
 )
 
-// TSTypesGenerator creates a [KindGenStep] that produces TypeScript types and
+// TSTypesGenerator creates a [OneToOne] that produces TypeScript types and
 // defaults for the latest Thema schema in a structured kind's lineage.
 //
 // At minimum, a tskindsdir must be provided. This should be the path to the parent
@@ -16,7 +16,7 @@ import (
 // should live at packages/grafana-schema/src/raw/foo, relpath should be "pkg/kind".
 //
 // This generator is a no-op for raw kinds.
-func TSTypesGenerator(tskindsdir string, cfg *TSTypesGeneratorConfig) KindGenStep {
+func TSTypesGenerator(tskindsdir string, cfg *TSTypesGeneratorConfig) OneToOne {
 	if cfg == nil {
 		cfg = new(TSTypesGeneratorConfig)
 	}
@@ -77,4 +77,4 @@ func (gen *genTSTypes) Generate(decl *DeclForGen) (*GeneratedFile, error) {
 	}, nil
 }
 
-// var _ KindGenStep = &genTSTypes{}
+var _ OneToOne = &genTSTypes{}

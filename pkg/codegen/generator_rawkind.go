@@ -13,7 +13,7 @@ import (
 // all generated kinds.
 //
 // This generator only has output for raw kinds.
-func RawKindGenerator(gokindsdir string, cfg *RawKindGeneratorConfig) KindGenStep {
+func RawKindGenerator(gokindsdir string, cfg *RawKindGeneratorConfig) OneToOne {
 	if cfg == nil {
 		cfg = new(RawKindGeneratorConfig)
 	}
@@ -34,7 +34,7 @@ type genRawKind struct {
 	cfg        *RawKindGeneratorConfig
 }
 
-var _ KindGenStep = &genRawKind{}
+var _ OneToOne = &genRawKind{}
 
 type RawKindGeneratorConfig struct {
 	// GenDirName returns the name of the directory in which the file should be

@@ -22,7 +22,7 @@ import (
 // that derives from raw and structured core kinds.
 
 // All the single-kind generators to be run for core kinds.
-var singles = []codegen.KindGenStep{
+var singles = []codegen.OneToOne{
 	codegen.GoTypesGenerator(kindsys.GoCoreKindParentPath, nil),
 	codegen.CoreStructuredKindGenerator(kindsys.GoCoreKindParentPath, nil),
 	codegen.RawKindGenerator(kindsys.GoCoreKindParentPath, nil),
@@ -35,7 +35,7 @@ var singles = []codegen.KindGenStep{
 }
 
 // All the aggregate generators to be run for core kinds.
-var multis = []codegen.AggregateKindGenStep{
+var multis = []codegen.ManyToOne{
 	codegen.BaseCoreRegistryGenerator(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
 }
 
