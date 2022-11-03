@@ -119,8 +119,6 @@ class DataSourceWithBackend<
       targets = targets.filter((q) => this.filterQuery!(q));
     }
 
-    let uids = '';
-    let dsType = '';
     let hasExpr = false;
     const dsTypes = new Set<string>();
     const dsUIDs = new Set<string>();
@@ -148,12 +146,10 @@ class DataSourceWithBackend<
       }
 
       const { type, uid } = datasource;
-      if (type && !dsTypes.has(type)) {
-        dsType += '&type=' + type;
+      if (type?.length && !dsTypes.has(type)) {
         dsTypes.add(type);
       }
-      if (uid && !dsUIDs.has(uid)) {
-        uids += '&uid=' + uid;
+      if (uid?.length && !dsUIDs.has(uid)) {
         dsUIDs.add(uid);
       }
       return {
@@ -184,10 +180,22 @@ class DataSourceWithBackend<
         body,
       });
     }
+    let pfix = '?';
+    let url = '/api/ds/query';
+    for (let v of dsTypes) {
+      url += pfix + 'type=' + v;
+      pfix = '&';
+    }
+    for (let v of dsUIDs) {
+      url += pfix + 'uid=' + v;
+    }
+    if (hasExpr) {
+      url += '&expression';
+    }
 
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
-        url: `/api/ds/query?type=${dsType}${uids}${hasExpr ? '&expression' : ''}`,
+        url,
         method: 'POST',
         data: body,
         requestId,

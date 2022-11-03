@@ -32,7 +32,10 @@ jest.mock('../services', () => ({
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => {
     return {
-      getInstanceSettings: (ref?: DataSourceRef) => ({ type: ref?.type ?? '?', uid: ref?.uid ?? '?' }),
+      getInstanceSettings: (ref?: DataSourceRef) => ({
+        type: ref?.type ?? '<mocktype>',
+        uid: ref?.uid ?? '<mockuid>',
+      }),
     };
   },
 }));
@@ -65,7 +68,7 @@ describe('DataSourceWithBackend', () => {
             Object {
               "datasource": Object {
                 "type": "sample",
-                "uid": "?",
+                "uid": "<mockuid>",
               },
               "datasourceId": undefined,
               "intervalMs": 5000,
@@ -77,7 +80,7 @@ describe('DataSourceWithBackend', () => {
         "hideFromInspector": false,
         "method": "POST",
         "requestId": undefined,
-        "url": "/api/ds/query",
+        "url": "/api/ds/query?type=dummy&type=sample&uid=abc&uid=<mockuid>",
       }
     `);
   });
@@ -110,7 +113,7 @@ describe('DataSourceWithBackend', () => {
             Object {
               "datasource": Object {
                 "type": "sample",
-                "uid": "?",
+                "uid": "<mockuid>",
               },
               "datasourceId": undefined,
               "intervalMs": 5000,
@@ -122,7 +125,7 @@ describe('DataSourceWithBackend', () => {
         "hideFromInspector": true,
         "method": "POST",
         "requestId": undefined,
-        "url": "/api/ds/query",
+        "url": "/api/ds/query?type=dummy&type=sample&uid=abc&uid=<mockuid>",
       }
     `);
   });
