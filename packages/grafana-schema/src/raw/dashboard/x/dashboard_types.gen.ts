@@ -1,3 +1,14 @@
+export interface AnnotationTarget {
+  limit: number;
+  matchAny: boolean;
+  tags: Array<string>;
+  type: string;
+}
+
+export const defaultAnnotationTarget: Partial<AnnotationTarget> = {
+  tags: [],
+};
+
 /**
  * TODO docs
  * FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
@@ -32,7 +43,7 @@ export interface AnnotationQuery {
    */
   rawQuery?: string;
   showIn: number;
-  target?: Record<string, unknown>;
+  target?: AnnotationTarget;
   type: string;
 }
 
