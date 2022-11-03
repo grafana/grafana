@@ -147,6 +147,16 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 	return cmd.Folder, err
 }
 
+func (ss *sqlStore) Move(ctx context.Context, cmd folder.MoveFolderCommand) error {
+	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Exec("UPDATE folder SET parent_uid = ? WHERE uid = ? AND org_id = ?", cmd.NewParentUID, cmd.UID, cmd.OrgID)
+		if err != nil {
+			return folder.ErrDatabaseError.Errorf("failed to update folder: %w", err)
+		}
+		return nil
+	})
+}
+
 func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error) {
 	foldr := &folder.Folder{}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
