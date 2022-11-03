@@ -4,21 +4,24 @@ import React, { useCallback, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Field, Input, InputControl, Label, Modal, TextArea, useStyles } from '@grafana/ui';
+import { Alert, Button, Field, Input, InputControl, Label, Modal, TextArea, useStyles2 } from '@grafana/ui';
 
+import { dashboardApi } from '../../api/alertingApi';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation } from '../../utils/constants';
 
 import { AnnotationKeyInput } from './AnnotationKeyInput';
-import { DashboardPicker } from './DashboardPicker';
+import { DashboardPicker, PanelDTO } from './DashboardPicker';
 
 const AnnotationsField = () => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const [showPanelSelector, setShowPanelSelector] = useToggle(false);
   const [selectedDashboard, setSelectedDashboard] = useState<string | undefined>(undefined);
   const [selectedPanel, setSelectedPanel] = useState<number | undefined>(undefined);
+
+  const { useDashboardQuery } = dashboardApi;
 
   const {
     control,
@@ -33,6 +36,15 @@ const AnnotationsField = () => {
     (index: number): string[] => annotations.filter((_, idx: number) => idx !== index).map(({ key }) => key),
     [annotations]
   );
+
+  const dashboardAnnotation = annotations.find((a) => a.key === Annotation.dashboardUID);
+  const panelAnnotation = annotations.find((a) => a.key === Annotation.panelID);
+  const { currentData: currentDashboard } = useDashboardQuery(
+    { uid: dashboardAnnotation?.value ?? '' },
+    { skip: !dashboardAnnotation }
+  );
+  const panelId = Number(panelAnnotation?.value);
+  const currentPanel: PanelDTO | undefined = currentDashboard?.dashboard?.panels?.find((p) => p.id === panelId);
 
   const { fields, append, remove } = useFieldArray({ control, name: 'annotations' });
 
@@ -138,7 +150,27 @@ const AnnotationsField = () => {
           closeOnEscape
           isOpen={showPanelSelector}
           onDismiss={setShowPanelSelector}
+          className={styles.modal}
+          contentClassName={styles.modalContent}
         >
+          {currentDashboard && (
+            <Alert
+              title="Current selection"
+              severity="info"
+              topSpacing={0}
+              bottomSpacing={1}
+              className={styles.modalAlert}
+            >
+              <div>
+                Dashboard: {currentDashboard.dashboard.title} ({currentDashboard.dashboard.uid})
+              </div>
+              {currentPanel && (
+                <div>
+                  Panel: {currentPanel.title} ({currentPanel.id})
+                </div>
+              )}
+            </Alert>
+          )}
           <DashboardPicker
             dashboardUid={selectedDashboard}
             panelId={selectedPanel}
@@ -164,7 +196,7 @@ const AnnotationsField = () => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   annotationValueInput: css`
     width: 426px;
   `,
@@ -181,7 +213,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     flex-direction: column;
   `,
   field: css`
-    margin-bottom: ${theme.spacing.xs};
+    margin-bottom: ${theme.spacing(0.5)};
   `,
   flexRow: css`
     display: flex;
@@ -189,7 +221,18 @@ const getStyles = (theme: GrafanaTheme) => ({
     justify-content: flex-start;
   `,
   flexRowItemMargin: css`
-    margin-left: ${theme.spacing.xs};
+    margin-left: ${theme.spacing(0.5)};
+  `,
+  modal: css`
+    height: 100%;
+  `,
+  modalContent: css`
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  `,
+  modalAlert: css`
+    flex-grow: 0;
   `,
 });
 

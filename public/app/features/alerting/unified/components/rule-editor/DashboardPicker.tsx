@@ -9,7 +9,7 @@ import { FilterInput, LoadingPlaceholder, useStyles2, Icon } from '@grafana/ui';
 
 import { dashboardApi } from '../../api/alertingApi';
 
-interface PanelDTO {
+export interface PanelDTO {
   id: number;
   title?: string;
 }
@@ -128,19 +128,19 @@ export const DashboardPicker = ({ dashboardUid, panelId, onDashboardChange, onPa
         </AutoSizer>
       </div>
 
-      {!isDashboardFetching && (
-        <div style={{ flex: '1 1 auto' }}>
-          <AutoSizer>
-            {({ width, height }) => (
-              <FixedSizeList itemSize={32} height={height} width={width} itemCount={filteredPanels.length}>
-                {PanelRow}
-              </FixedSizeList>
-            )}
-          </AutoSizer>
-        </div>
-      )}
-      {!dashboardUid && !isDashboardFetching && <div>Select a dashboard to get a list of available panels</div>}
-      {isDashboardFetching && <LoadingPlaceholder text="Loading dashboard..." className={styles.loadingPlaceholder} />}
+      <div style={{ flex: '1 1 auto' }}>
+        {!dashboardUid && !isDashboardFetching && <div>Select a dashboard to get a list of available panels</div>}
+        {isDashboardFetching && (
+          <LoadingPlaceholder text="Loading dashboard..." className={styles.loadingPlaceholder} />
+        )}
+        <AutoSizer>
+          {({ width, height }) => (
+            <FixedSizeList itemSize={32} height={height} width={width} itemCount={filteredPanels.length}>
+              {PanelRow}
+            </FixedSizeList>
+          )}
+        </AutoSizer>
+      </div>
     </div>
   );
 };
@@ -151,7 +151,7 @@ const getPickerStyles = (theme: GrafanaTheme2) => ({
     grid-template-columns: 1fr 1fr;
     grid-template-rows: min-content auto;
     gap: ${theme.spacing(2)};
-    height: 500px;
+    flex: 1;
   `,
   dashboardTitle: css`
     height: 22px;
