@@ -133,7 +133,7 @@
     "@types/lodash": "4.14.187",
     "@types/logfmt": "^1.2.1",
     "@types/mousetrap": "1.6.10",
-    "@types/node": "16.11.45",
+    "@types/node": "18.11.9",
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.0.6",
     "@types/papaparse": "5.3.5",
     "@types/pluralize": "^0.0.29",
