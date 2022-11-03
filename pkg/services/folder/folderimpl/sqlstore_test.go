@@ -23,9 +23,9 @@ func TestIntegrationCreate(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
 
-	orgID := createOrg(t, db)
-	t.Run("creating a folder without providing a UID should fail", func(t *testing.T) {
+	orgID := CreateOrg(t, db)
 
+	t.Run("creating a folder without providing a UID should fail", func(t *testing.T) {
 		_, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
 			Title:       "folder1",
 			Description: "folder desc",
@@ -158,7 +158,7 @@ func TestIntegrationDelete(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
 
-	orgID := createOrg(t, db)
+	orgID := CreateOrg(t, db)
 
 	/*
 		t.Run("attempt to delete unknown folder should fail", func(t *testing.T) {
@@ -167,7 +167,7 @@ func TestIntegrationDelete(t *testing.T) {
 		})
 	*/
 
-	ancestorUIDs := createSubTree(t, folderStore, orgID, accesscontrol.GeneralFolderUID, folder.MaxNestedFolderDepth, "")
+	ancestorUIDs := CreateSubTree(t, folderStore, orgID, accesscontrol.GeneralFolderUID, folder.MaxNestedFolderDepth, "")
 	require.Len(t, ancestorUIDs, folder.MaxNestedFolderDepth+1)
 
 	t.Cleanup(func() {
@@ -203,7 +203,7 @@ func TestIntegrationUpdate(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
 
-	orgID := createOrg(t, db)
+	orgID := CreateOrg(t, db)
 
 	// create folder
 	origTitle := "folder1"
@@ -305,7 +305,7 @@ func TestIntegrationGet(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
 
-	orgID := createOrg(t, db)
+	orgID := CreateOrg(t, db)
 
 	// create folder
 	title1 := "folder1"
@@ -383,7 +383,7 @@ func TestIntegrationGetParents(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
 
-	orgID := createOrg(t, db)
+	orgID := CreateOrg(t, db)
 
 	// create folder
 	title1 := "folder1"
@@ -444,7 +444,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
 
-	orgID := createOrg(t, db)
+	orgID := CreateOrg(t, db)
 
 	// create folder
 	title1 := "folder1"
@@ -458,7 +458,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	treeLeaves := createLeaves(t, folderStore, parent, 4)
+	treeLeaves := CreateLeaves(t, folderStore, parent, 4)
 
 	t.Cleanup(func() {
 		for _, uid := range treeLeaves {
@@ -562,7 +562,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 	})
 }
 
-func createOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
+func CreateOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
 	t.Helper()
 
 	orgService := orgimpl.ProvideService(db, db.Cfg)
@@ -576,7 +576,7 @@ func createOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
 	return orgID
 }
 
-func createSubTree(t *testing.T, store *sqlStore, orgID int64, parentUID string, depth int, prefix string) []string {
+func CreateSubTree(t *testing.T, store *sqlStore, orgID int64, parentUID string, depth int, prefix string) []string {
 	t.Helper()
 
 	ancestorUIDs := []string{parentUID}
@@ -611,7 +611,7 @@ func createSubTree(t *testing.T, store *sqlStore, orgID int64, parentUID string,
 	return ancestorUIDs
 }
 
-func createLeaves(t *testing.T, store *sqlStore, parent *folder.Folder, num int) []string {
+func CreateLeaves(t *testing.T, store *sqlStore, parent *folder.Folder, num int) []string {
 	t.Helper()
 
 	leaves := make([]string, 0)
