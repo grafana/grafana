@@ -148,7 +148,9 @@ func (s Series) GetLabels() data.Labels { return s.Frame.Fields[seriesTypeValIdx
 
 func (s Series) SetLabels(ls data.Labels) { s.Frame.Fields[seriesTypeValIdx].Labels = ls }
 
-func (s Series) GetName() string { return s.Frame.Fields[seriesTypeValIdx].Name }
+func (s Series) GetName() string {
+	return getFieldDisplayName(s.Frame, s.Frame.Fields[seriesTypeValIdx])
+}
 
 func (s Series) GetMeta() interface{} {
 	return s.Frame.Meta.Custom

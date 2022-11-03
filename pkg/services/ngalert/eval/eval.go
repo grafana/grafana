@@ -330,11 +330,8 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 				}
 				continue
 			}
-			var v *float64
-			if frame.Fields[0].Len() == 1 {
-				v = frame.At(0, 0).(*float64) // type checked above
-			}
-			captureVal(frame.RefID, frame.Fields[0].Labels, frame.Fields[0].Name, v)
+			number := mathexp.Number{Frame: frame}
+			captureVal(frame.RefID, number.GetLabels(), number.GetName(), number.GetFloat64Value())
 		}
 
 		if refID == c.Condition {

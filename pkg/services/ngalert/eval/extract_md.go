@@ -2,7 +2,6 @@ package eval
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -30,8 +29,7 @@ func extractEvalString(frame *data.Frame) (s string) {
 					valString = fmt.Sprintf("%.3f", *m.Value)
 				}
 			}
-			metric := formatMetric(m.Metric, m.Labels)
-			sb.WriteString(fmt.Sprintf("%s=%s", metric, valString))
+			sb.WriteString(fmt.Sprintf("%s=%s", m.Metric, valString))
 
 			if i < len(evalMatches)-1 {
 				sb.WriteString(", ")
@@ -52,8 +50,7 @@ func extractEvalString(frame *data.Frame) (s string) {
 						valString = fmt.Sprintf("%.3f", *c.Value)
 					}
 				}
-				metric := formatMetric(c.Metric, c.Labels)
-				sb.WriteString(fmt.Sprintf("%s=%s", metric, valString))
+				sb.WriteString(fmt.Sprintf("%s=%s", c.Metric, valString))
 			}
 		}
 		return sb.String()
@@ -81,7 +78,7 @@ func extractValues(frame *data.Frame) map[string]NumberValueCapture {
 		for i, match := range matches {
 			// In classic conditions we can use the condition position as a suffix to distinguish between duplicate names.
 			// We can guarantee determinism as conditions are ordered and this order is preserved when marshaling.
-			metric := formatMetric(match.Metric, match.Labels)
+			metric := match.Metric
 			if _, ok := v[metric]; ok {
 				metric += fmt.Sprintf(" [%d]", i)
 			}
@@ -99,38 +96,10 @@ func extractValues(frame *data.Frame) map[string]NumberValueCapture {
 		v := make(map[string]NumberValueCapture, len(caps))
 		for _, c := range caps {
 			if c.Var == frame.RefID {
-				metric := formatMetric(c.Metric, c.Labels)
-				v[metric] = c
+				v[c.Metric] = c
 			}
 		}
 		return v
 	}
 	return nil
-}
-
-// When a metric is "" or "Value", replace it with formatted labels.
-// Approximates the frontend auto-naming logic in getFrameDisplayName.
-func formatMetric(metric string, labels data.Labels) string {
-	if metric == "" || metric == data.TimeSeriesValueFieldName {
-		if len(labels) == 1 {
-			for _, label := range labels {
-				metric = label
-			}
-		} else if len(labels) > 1 {
-			keys := make([]string, len(labels))
-			i := 0
-			for k := range labels {
-				keys[i] = k
-				i++
-			}
-			sort.Strings(keys)
-
-			var labelStrings []string
-			for _, k := range keys {
-				labelStrings = append(labelStrings, fmt.Sprintf("%s=%s", k, labels[k]))
-			}
-			metric = fmt.Sprintf("{%s}", strings.Join(labelStrings, ", "))
-		}
-	}
-	return metric
 }

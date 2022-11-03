@@ -1,7 +1,10 @@
 package mathexp
 
 import (
+	"fmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"sort"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 )
@@ -106,7 +109,7 @@ func (n Number) Type() parse.ReturnType { return parse.TypeNumberSet }
 // Value returns the actual value allows it to fulfill the Value interface.
 func (n Number) Value() interface{} { return &n }
 
-func (n Number) GetName() string { return n.Frame.Fields[0].Name }
+func (n Number) GetName() string { return getFieldDisplayName(n.Frame, n.Frame.Fields[0]) }
 
 func (n Number) GetLabels() data.Labels { return n.Frame.Fields[0].Labels }
 
@@ -215,4 +218,49 @@ func (s NoData) AsDataFrame() *data.Frame { return s.Frame }
 
 func (s NoData) New() NoData {
 	return NoData{data.NewFrame("no data")}
+}
+
+// getFieldDisplayName approximates the frontend naming logic in fieldState.getFieldDisplayName.
+func getFieldDisplayName(frame *data.Frame, field *data.Field) string {
+	if config := field.Config; config != nil {
+		if name := config.DisplayName; name != "" {
+			return name
+		}
+		if name := config.DisplayNameFromDS; name != "" {
+			return name
+		}
+	}
+
+	name := field.Name
+
+	// When field name is "" or "Value", replace it with formatted labels.
+	if name == "" || name == data.TimeSeriesValueFieldName {
+		labels := field.Labels
+		if len(labels) == 1 {
+			for _, label := range labels {
+				name = label
+			}
+		} else if len(labels) > 1 {
+			keys := make([]string, len(labels))
+			i := 0
+			for k := range labels {
+				keys[i] = k
+				i++
+			}
+			sort.Strings(keys)
+
+			var labelStrings []string
+			for _, k := range keys {
+				labelStrings = append(labelStrings, fmt.Sprintf("%s=%s", k, labels[k]))
+			}
+			name = fmt.Sprintf("{%s}", strings.Join(labelStrings, ", "))
+		} else {
+			// if no labels, we should add frame name
+			name = frame.Name
+			if name != "" {
+				name = data.TimeSeriesValueFieldName
+			}
+		}
+	}
+	return name
 }

@@ -93,9 +93,7 @@ func (cmd *ConditionsCmd) Execute(_ context.Context, _ time.Time, vars mathexp.V
 				name = v.GetName()
 			case mathexp.Number:
 				reducedNum = v
-				if len(v.Frame.Fields) > 0 {
-					name = v.Frame.Fields[0].Name
-				}
+				name = v.GetName()
 			default:
 				return newRes, fmt.Errorf("can only reduce type series, got type %v", val.Type())
 			}
