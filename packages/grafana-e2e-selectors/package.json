@@ -37,7 +37,7 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "22.0.1",
+    "@rollup/plugin-commonjs": "23.0.2",
     "@rollup/plugin-node-resolve": "13.3.0",
     "@types/node": "16.11.45",
     "esbuild": "0.15.12",
