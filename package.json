@@ -321,7 +321,7 @@
     "framework-utils": "^1.1.0",
     "history": "4.10.1",
     "hoist-non-react-statics": "3.3.2",
-    "i18next": "^21.9.2",
+    "i18next": "^22.0.0",
     "immer": "9.0.16",
     "immutable": "4.1.0",
     "jquery": "3.6.1",
