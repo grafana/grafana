@@ -144,13 +144,11 @@ class DataSourceWithBackend<
         datasource = ds.rawRef ?? getDataSourceRef(ds);
         datasourceId = ds.id;
       }
-
-      const { type, uid } = datasource;
-      if (type?.length && !dsTypes.has(type)) {
-        dsTypes.add(type);
+      if (datasource.type?.length) {
+        dsTypes.add(datasource.type);
       }
-      if (uid?.length && !dsUIDs.has(uid)) {
-        dsUIDs.add(uid);
+      if (datasource.uid?.length) {
+        dsUIDs.add(datasource.uid);
       }
       return {
         ...this.applyTemplateVariables(q, request.scopedVars),
