@@ -10,7 +10,7 @@ func ValidatePluginPermissions(pluginID string, permissions []Permission) error 
 		if !strings.HasPrefix(permissions[i].Action, AppPluginRolePrefix) &&
 			!strings.HasPrefix(permissions[i].Action, pluginID+":") &&
 			!strings.HasPrefix(permissions[i].Action, pluginID+".") {
-			return &ErrorActionPrefixMissing{Action: permissions[i].Action, Prefixes: []string{AppPluginRolePrefix, pluginID + ":"}}
+			return &ErrorActionPrefixMissing{Action: permissions[i].Action, Prefixes: []string{AppPluginRolePrefix, pluginID + ":", pluginID+"."}}
 		}
 	}
 
