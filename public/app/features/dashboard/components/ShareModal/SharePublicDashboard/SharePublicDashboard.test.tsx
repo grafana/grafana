@@ -82,9 +82,14 @@ beforeAll(() => {
 
 beforeEach(() => {
   config.featureToggles.publicDashboards = true;
-  mockDashboard = new DashboardModel({
-    uid: 'mockDashboardUid',
-  });
+  mockDashboard = new DashboardModel(
+    {
+      uid: 'mockDashboardUid',
+    },
+    {
+      hasPublicDashboard: true,
+    }
+  );
 
   mockPanel = new PanelModel({
     id: 'mockPanelId',
