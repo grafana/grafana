@@ -96,11 +96,12 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 	}
 
 	cmd.Folder.Updated = time.Now()
+	existingUID := cmd.Folder.UID
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql := strings.Builder{}
-		columnsToUpdate := make([]string, 0)
+		sql.Write([]byte("UPDATE folder SET "))
+		columnsToUpdate := []string{"updated = ?"}
 		args := []interface{}{cmd.Folder.Updated}
-		sql.Write([]byte("UPDATE folder SET updated = ? "))
 		if cmd.NewDescription != nil {
 			columnsToUpdate = append(columnsToUpdate, "description = ?")
 			cmd.Folder.Description = *cmd.NewDescription
@@ -125,9 +126,11 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 
 		sql.Write([]byte(strings.Join(columnsToUpdate, ", ")))
 		sql.Write([]byte(" WHERE uid = ? AND org_id = ?"))
-		args = append(args, cmd.Folder.UID, cmd.Folder.OrgID)
+		args = append(args, existingUID, cmd.Folder.OrgID)
 
-		res, err := sess.Exec(sql.String(), args)
+		args = append([]interface{}{sql.String()}, args...)
+
+		res, err := sess.Exec(args...)
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to update folder: %w", err)
 		}
