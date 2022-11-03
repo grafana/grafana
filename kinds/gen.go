@@ -38,6 +38,7 @@ var singles = []codegen.OneToOne{
 // All the aggregate generators to be run for core kinds.
 var multis = []codegen.ManyToOne{
 	codegen.BaseCoreRegistryGenerator(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
+	codegen.TSVeneerIndexGenerator(filepath.Join("packages", "grafana-schema", "src")),
 }
 
 const sep = string(filepath.Separator)

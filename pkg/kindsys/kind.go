@@ -1,6 +1,8 @@
 package kindsys
 
 import (
+	"fmt"
+
 	"github.com/grafana/thema"
 )
 
@@ -8,11 +10,36 @@ import (
 type Maturity string
 
 const (
-	MaturityCommitted    Maturity = "committed"
-	MaturitySynchronized Maturity = "synchronized"
+	MaturityMerged       Maturity = "merged"
+	MaturityExperimental Maturity = "experimental"
 	MaturityStable       Maturity = "stable"
 	MaturityMature       Maturity = "mature"
 )
+
+func maturityIdx(m Maturity) int {
+	// icky to do this globally, this is effectively setting a default
+	if string(m) == "" {
+		m = MaturityMerged
+	}
+
+	for i, ms := range maturityOrder {
+		if m == ms {
+			return i
+		}
+	}
+	panic(fmt.Sprintf("unknown maturity milestone %s", m))
+}
+
+var maturityOrder = []Maturity{
+	MaturityMerged,
+	MaturityExperimental,
+	MaturityStable,
+	MaturityMature,
+}
+
+func (m Maturity) Less(om Maturity) bool {
+	return maturityIdx(m) < maturityIdx(om)
+}
 
 // TODO docs
 type Interface interface {
