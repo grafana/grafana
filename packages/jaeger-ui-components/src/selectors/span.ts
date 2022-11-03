@@ -19,8 +19,10 @@ import { TraceSpan, TraceSpanData, TraceSpanReference } from '../types/trace';
 
 import { getProcessServiceName } from './process';
 
-export const getSpanId = (span: TraceSpanData) => span.spanID;
-export const getSpanName = (span: TraceSpanData) => span.operationName;
+export const getSpanId = (span: TraceSpan) => span.spanID;
+export const getSpanName = (
+  span: TraceSpanData | { operationName: string; process: { serviceName: string }; spanID: string }
+) => span.operationName;
 export const getSpanDuration = (span: TraceSpanData) => span.duration;
 export const getSpanTimestamp = (span: TraceSpanData | { startTime: number; id: string }) => span.startTime;
 export const getSpanProcessId = (span: TraceSpanData) => span.processID;
@@ -35,7 +37,7 @@ export const getSpanParentId = createSelector(
   (childOfRef) => (childOfRef ? childOfRef.spanID : null)
 );
 
-export const getSpanProcess = (span: TraceSpan) => {
+export const getSpanProcess = (span: { operationName: string; process: { serviceName: string }; spanID: string }) => {
   if (!span.process) {
     throw new Error(
       `
@@ -81,10 +83,10 @@ const getTextFilterdSpansAsMap = createSelector(filterSpansForText, (matchingSpa
 
 // TODO: delete this function as it is not used?
 export const highlightSpansForTextFilter = createSelector(
-  ({ spans }: { spans: TraceSpanData[] }) => spans,
+  ({ spans }: { spans: TraceSpan[] }) => spans,
   getTextFilterdSpansAsMap,
-  (spans, textFilteredSpansMap: { [key: string]: TraceSpanData }) =>
-    spans.map((span: TraceSpanData) => ({
+  (spans, textFilteredSpansMap: { [key: string]: TraceSpan }) =>
+    spans.map((span: TraceSpan) => ({
       ...span,
       muted: !textFilteredSpansMap[getSpanId(span)],
     }))
