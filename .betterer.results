@@ -38,9 +38,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "e2e/cloud-plugins-suite/azure-monitor.spec.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "e2e/dashboards-suite/textbox-variables.spec.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
