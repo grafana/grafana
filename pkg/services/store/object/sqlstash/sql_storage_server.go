@@ -316,6 +316,7 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 			return nil
 		}
 
+		// Optimistic locking
 		if r.PreviousVersion != "" {
 			if r.PreviousVersion != versionInfo.Version {
 				return fmt.Errorf("optimistic lock failed")
@@ -548,19 +549,19 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 	}
 
 	fields := []string{
-		`"key"`, `"kind"`, `"version"`, `"errors"`, // errors are always returned
-		`"updated_at"`, `"updated_by"`,
-		`"name"`, `"description"`, // basic summary
+		"`key`", "kind", "version", "errors", // errors are always returned
+		"updated_at", "updated_by",
+		"name", "description", // basic summary
 	}
 
 	if r.WithBody {
-		fields = append(fields, `"body"`)
+		fields = append(fields, "body")
 	}
 	if r.WithLabels {
-		fields = append(fields, `"labels"`)
+		fields = append(fields, "labels")
 	}
 	if r.WithFields {
-		fields = append(fields, `"fields"`)
+		fields = append(fields, "fields")
 	}
 
 	selectQuery := selectQuery{

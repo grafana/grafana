@@ -98,8 +98,9 @@ func (s *objectStoreImpl) Update(ctx context.Context, cmd *playlist.UpdatePlayli
 		}
 		_, err = s.objectstore.Write(ctx, &object.WriteObjectRequest{
 			GRN: &object.GRN{
-				UID:  rsp.Uid,
-				Kind: models.StandardKindPlaylist,
+				UID:   rsp.Uid,
+				Kind:  models.StandardKindPlaylist,
+				Scope: models.ObjectStoreScopeEntity,
 			},
 			Body: body,
 		})
@@ -115,8 +116,9 @@ func (s *objectStoreImpl) Delete(ctx context.Context, cmd *playlist.DeletePlayli
 	if err == nil {
 		_, err = s.objectstore.Delete(ctx, &object.DeleteObjectRequest{
 			GRN: &object.GRN{
-				UID:  cmd.UID,
-				Kind: models.StandardKindPlaylist,
+				UID:   cmd.UID,
+				Kind:  models.StandardKindPlaylist,
+				Scope: models.ObjectStoreScopeEntity,
 			},
 		})
 		if err != nil {
@@ -146,8 +148,9 @@ func (s *objectStoreImpl) GetWithoutItems(ctx context.Context, q *playlist.GetPl
 func (s *objectStoreImpl) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.PlaylistDTO, error) {
 	rsp, err := s.objectstore.Read(ctx, &object.ReadObjectRequest{
 		GRN: &object.GRN{
-			UID:  q.UID,
-			Kind: models.StandardKindPlaylist,
+			UID:   q.UID,
+			Kind:  models.StandardKindPlaylist,
+			Scope: models.ObjectStoreScopeEntity,
 		},
 		WithBody: true,
 	})
