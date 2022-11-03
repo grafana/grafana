@@ -230,15 +230,15 @@ describe('PromQueryBuilder', () => {
   });
 
   // <ModernPrometheus>
-  it('tries to load labels when metric selected', async () => {
+  it('tries to load labels when metric selected modern prom', async () => {
     const { languageProvider } = setup(undefined, undefined, {
       jsonData: { prometheusVersion: '2.38.1', prometheusType: PromApplication.Prometheus },
     });
     await openLabelNameSelect();
-    await waitFor(() => expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{__name__="random_metric"}'));
+    await waitFor(() => expect(languageProvider.fetchSeriesLabelsMatch).toBeCalledWith('{__name__="random_metric"}'));
   });
 
-  it('tries to load variables in label field', async () => {
+  it('tries to load variables in label field modern prom', async () => {
     const { datasource } = setup(undefined, undefined, {
       jsonData: { prometheusVersion: '2.38.1', prometheusType: PromApplication.Prometheus },
     });
@@ -247,7 +247,7 @@ describe('PromQueryBuilder', () => {
     await waitFor(() => expect(datasource.getVariables).toBeCalled());
   });
 
-  it('tries to load labels when metric selected and other labels are already present', async () => {
+  it('tries to load labels when metric selected and other labels are already present modern prom', async () => {
     const { languageProvider } = setup(
       {
         ...defaultQuery,
@@ -261,7 +261,9 @@ describe('PromQueryBuilder', () => {
     );
     await openLabelNameSelect(1);
     await waitFor(() =>
-      expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{label_name="label_value", __name__="random_metric"}')
+      expect(languageProvider.fetchSeriesLabelsMatch).toBeCalledWith(
+        '{label_name="label_value", __name__="random_metric"}'
+      )
     );
   });
   //</ModernPrometheus>
