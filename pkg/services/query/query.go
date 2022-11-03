@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"runtime/debug"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -90,12 +91,20 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 	g, ctx := errgroup.WithContext(ctx)
 	results := make([]backend.Responses, len(byDataSource))
 
+	// Create panic recovery function for loop
+	recoveryFn := func() {
+		if e := recover(); e != nil {
+			s.log.Error("query datasource panic", "error", e, "stack", string(debug.Stack()))
+		}
+	}
+
 	for _, queries := range byDataSource {
 		rawQueries := make([]*simplejson.Json, len(queries))
 		for i := 0; i < len(queries); i++ {
 			rawQueries[i] = queries[i].rawQuery
 		}
 		g.Go(func() error {
+			defer recoveryFn()
 			subDTO := reqDTO.CloneWithQueries(rawQueries)
 
 			subResp, err := s.QueryData(ctx, user, skipCache, subDTO)
@@ -160,6 +169,7 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 
 // handleQuerySingleDatasource handles one or more queries to a single datasource
 func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
+	panic("ahhhh")
 	queries := parsedReq.getFlattenedQueries()
 	ds := queries[0].datasource
 	if err := s.pluginRequestValidator.Validate(ds.Url, nil); err != nil {
