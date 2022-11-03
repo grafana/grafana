@@ -1,4 +1,4 @@
-import React, { ComponentType, FC, HTMLAttributes, RefCallback } from 'react';
+import React, { FC, HTMLAttributes, RefCallback } from 'react';
 
 import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 
@@ -11,9 +11,11 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   navModel?: NavModel;
   pageNav?: NavModelItem;
   /** Can be used to place actions inline with the heading */
-  pageActions?: React.ReactNode;
-  /** Can be used to override and customize the page header */
-  pageHeader?: ComponentType<NavModelItem>;
+  stats?: PageStats[];
+  /** Can be used to place actions inline with the heading */
+  actions?: React.ReactNode;
+  /** Can be used to customize rendering of title */
+  renderTitle?: (title: string) => React.ReactNode;
   /** Can be used to customize or customize and set a page sub title */
   subTitle?: React.ReactNode;
   /** Control the page layout. */
@@ -28,6 +30,11 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   isItemPage?: boolean;
 }
 
+export interface PageStats {
+  title: string;
+  value: React.ReactNode;
+}
+
 export interface PageType extends FC<PageProps> {
   OldNavOnly: typeof OldNavOnly;
   Contents: typeof PageContents;
@@ -35,6 +42,4 @@ export interface PageType extends FC<PageProps> {
 
 export interface PageHeaderProps {
   title?: string;
-  stats?: React.ReactNode;
-  actions?: React.ReactNode;
 }

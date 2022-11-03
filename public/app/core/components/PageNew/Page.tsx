@@ -20,6 +20,8 @@ export const Page: PageType = ({
   navId,
   navModel: oldNavProp,
   pageNav,
+  renderTitle,
+  actions,
   subTitle,
   children,
   className,
