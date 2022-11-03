@@ -4795,7 +4795,7 @@ __metadata:
     react-popper: 2.3.0
     react-popper-tooltip: ^4.3.1
     react-router-dom: ^5.2.0
-    react-select: 5.5.9
+    react-select: 5.6.0
     react-select-event: ^5.1.0
     react-table: 7.8.0
     react-test-renderer: 17.0.2
@@ -21787,7 +21787,7 @@ __metadata:
     react-resizable: 3.0.4
     react-reverse-portal: 2.1.1
     react-router-dom: ^5.2.0
-    react-select: 5.5.9
+    react-select: 5.6.0
     react-select-event: 5.5.1
     react-simple-compat: 1.2.3
     react-split-pane: 0.1.92
@@ -32673,9 +32673,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-select@npm:5.5.9":
-  version: 5.5.9
-  resolution: "react-select@npm:5.5.9"
+"react-select@npm:5.6.0":
+  version: 5.6.0
+  resolution: "react-select@npm:5.6.0"
   dependencies:
     "@babel/runtime": ^7.12.0
     "@emotion/cache": ^11.4.0
@@ -32689,7 +32689,7 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: f753784d4bddbdb371150b092a7791fc025beb9ca395e9520fb73d79011994eb7f81f1991edff0e5cd9e9fa528f451c5465c8b7dba9fea9b19ab84a7e6b4d3a7
+  checksum: d0a51e618168f3f275fbf96e23eb88ac6066006bcca136e293327f6eddd0b419ef02aaa847bf1670c5f07c8e9d9fc4b975fcae833085e11fc41e29e2b802a75b
   languageName: node
   linkType: hard
 
