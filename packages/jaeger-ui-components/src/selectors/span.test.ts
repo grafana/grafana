@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { TraceResponse } from 'src/types';
+
 import traceGenerator from '../demo/trace-generators';
 
 import * as spanSelectors from './span';
 
-const generatedTrace = traceGenerator.trace({ numberOfSpans: 45 });
+const generatedTrace: TraceResponse = traceGenerator.trace({ numberOfSpans: 45 });
 
 it('getSpanId() should return the name of the span', () => {
   const span = generatedTrace.spans[0];
@@ -46,8 +48,10 @@ it('getSpanReferences() should return the span reference array', () => {
   expect(spanSelectors.getSpanReferences(generatedTrace.spans[0])).toEqual(generatedTrace.spans[0].references);
 });
 
-it('getSpanReferences() should return empty array for null references', () => {
-  expect(spanSelectors.getSpanReferences({ references: null })).toEqual([]);
+it('getSpanReferences() should return an empty array when references is undefined', () => {
+  const span = generatedTrace.spans[0];
+  span.references = undefined;
+  expect(spanSelectors.getSpanReferences(span)).toEqual([]);
 });
 
 it('getSpanReferenceByType() should return the span reference requested', () => {
@@ -55,7 +59,7 @@ it('getSpanReferenceByType() should return the span reference requested', () => 
     spanSelectors.getSpanReferenceByType({
       span: generatedTrace.spans[1],
       type: 'CHILD_OF',
-    }).refType
+    })?.refType
   ).toBe('CHILD_OF');
 });
 
@@ -70,7 +74,7 @@ it('getSpanReferenceByType() should return undefined if one does not exist', () 
 
 it('getSpanParentId() should return the spanID of the parent span', () => {
   expect(spanSelectors.getSpanParentId(generatedTrace.spans[1])).toBe(
-    generatedTrace.spans[1].references.find(({ refType }) => refType === 'CHILD_OF').spanID
+    generatedTrace.spans[1].references!.find(({ refType }: { refType: string }) => refType === 'CHILD_OF')!.spanID
   );
 });
 
@@ -85,9 +89,10 @@ it('getSpanProcessId() should return the processID of the span', () => {
 });
 
 it('getSpanProcess() should return the process of the span', () => {
+  const serviceName = 'bagel';
   const span = {
     ...generatedTrace.spans[0],
-    process: {},
+    process: { serviceName },
   };
 
   expect(spanSelectors.getSpanProcess(span)).toBe(span.process);
