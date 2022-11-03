@@ -8,6 +8,7 @@ type CommonMeta struct {
 	PluralName        string   `json:"pluralName"`
 	MachineName       string   `json:"machineName"`
 	PluralMachineName string   `json:"pluralMachineName"`
+	LineageIsGroup    bool     `json:"lineageIsGroup"`
 	Maturity          Maturity `json:"maturity"`
 }
 

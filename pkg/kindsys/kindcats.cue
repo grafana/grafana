@@ -55,6 +55,17 @@ _sharedKind: {
 	// applies to [name].
 	pluralMachineName: strings.ToLower(strings.Replace(pluralName, "-", "_", -1))
 
+	// lineageIsGroup indicates whether the lineage in this kind is "grouped". In a
+	// grouped lineage, each top-level field in the schema specifies a discrete
+	// object that is expected to exist in the wild
+	//
+	// This field is set at the framework level, and cannot be in the declaration of
+	// any individual kind.
+	//
+	// This is likely to eventually become a first-class property in Thema:
+	// https://github.com/grafana/thema/issues/62
+	lineageIsGroup: bool
+
 	maturity: #Maturity
 
 	// The kind system itself is not mature enough yet for any single
@@ -62,6 +73,7 @@ _sharedKind: {
 	// TODO remove this once system is ready https://github.com/orgs/grafana/projects/133/views/8
 	maturity: "committed" | "experimental" | "stable"
 
+	// form indicates whether the kind has a schema ("structured") or not ("raw")
 	form: "structured" | "raw"
 }
 

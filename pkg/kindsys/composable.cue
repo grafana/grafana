@@ -15,6 +15,17 @@ import "github.com/grafana/thema"
 	_sharedKind
 	form: "structured"
 
+	// TODO docs
+	// TODO unify this with the existing slots decls in pkg/framework/coremodel
+	slot: "Panel" | "Query" | "DSConfig"
+
+	// TODO unify this with the existing slots decls in pkg/framework/coremodel
+	lineageIsGroup: bool & [
+		if slot == "Panel" { true },
+		if slot == "DSConfig" { true },
+		if slot == "Query" { false },
+	][0]
+
 	// lineage is the Thema lineage containing all the schemas that have existed for this kind.
 	// It is required that lineage.name is the same as the [machineName].
 	lineage: thema.#Lineage & { name: S.machineName }

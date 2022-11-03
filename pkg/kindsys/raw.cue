@@ -7,7 +7,11 @@ package kindsys
 #Raw: {
 	_sharedKind
 	form: "raw"
+
+	// TODO docs
 	extensions?: [...string]
+
+	lineageIsGroup: false
 
 	maturity: *"experimental" | "mature" // TODO unclear if we want maturity for raw kinds
 
