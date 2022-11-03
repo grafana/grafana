@@ -42,14 +42,14 @@ export const calculateListSizes = (theme: GrafanaTheme2, allItems: CompletionIte
 };
 
 export const calculateItemHeight = (longestLabelHeight: number, theme: GrafanaTheme2) => {
-  const horizontalPadding = parseInt(theme.spacing(1), 10) * 2;
+  const horizontalPadding = theme.spacing.gridSize * 2;
   const itemHeight = longestLabelHeight + horizontalPadding;
 
   return itemHeight;
 };
 
 export const calculateListWidth = (longestLabelWidth: number, theme: GrafanaTheme2) => {
-  const verticalPadding = parseInt(theme.spacing(1), 10) + parseInt(theme.spacing(2), 10);
+  const verticalPadding = theme.spacing.gridSize * 3;
   const maxWidth = 800;
   const listWidth = Math.min(Math.max(longestLabelWidth + verticalPadding, 200), maxWidth);
 
