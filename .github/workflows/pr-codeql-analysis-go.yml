@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '**/*.go'
+  workflow_dispatch
 
 jobs:
   analyze:

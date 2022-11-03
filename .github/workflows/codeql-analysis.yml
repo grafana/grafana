@@ -16,6 +16,7 @@ on:
       - '**/*.yml'
   schedule:
     - cron: '0 4 * * 6'
+  workflow_dispatch
 
 jobs:
   analyze:
