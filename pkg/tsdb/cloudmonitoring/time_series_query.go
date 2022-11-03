@@ -22,17 +22,16 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *backend.QueryDataRequest) string {
+func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *backend.QueryDataRequest) string {
 	// GraphPeriod needs to be explicitly disabled.
 	// If not set, the default behavior is to set an automatic value
 	if timeSeriesQuery.GraphPeriod != "disabled" {
-		graphPeriod := timeSeriesQuery.GraphPeriod
-		if graphPeriod == "auto" || graphPeriod == "" {
+		if timeSeriesQuery.GraphPeriod == "auto" || timeSeriesQuery.GraphPeriod == "" {
 			intervalCalculator := intervalv2.NewCalculator(intervalv2.CalculatorOptions{})
 			interval := intervalCalculator.Calculate(req.Queries[0].TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, req.Queries[0].MaxDataPoints)
-			graphPeriod = interval.Text
+			timeSeriesQuery.GraphPeriod = interval.Text
 		}
-		return fmt.Sprintf(" | graph_period %s", graphPeriod)
+		return fmt.Sprintf(" | graph_period %s", timeSeriesQuery.GraphPeriod)
 	}
 	return ""
 }
@@ -55,7 +54,7 @@ func doRequestQueryPage(log log.Logger, requestBody map[string]interface{}, r *h
 	return dnext, nil
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, req *backend.QueryDataRequest,
+func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) run(ctx context.Context, req *backend.QueryDataRequest,
 	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
 	dr := &backend.DataResponse{}
 	projectName := timeSeriesQuery.ProjectName
@@ -116,7 +115,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	return dr, d, timeSeriesQuery.Query, nil
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *backend.DataResponse,
+func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string) error {
 	frames := data.Frames{}
 
@@ -279,7 +278,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 	}
 	if len(response.TimeSeriesData) > 0 {
 		dl := timeSeriesQuery.buildDeepLink()
-		frames = addConfigData(frames, dl, response.Unit)
+		frames = addConfigData(frames, dl, response.Unit, timeSeriesQuery.GraphPeriod)
 	}
 
 	queryRes.Frames = frames
@@ -287,7 +286,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 	return nil
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *backend.DataResponse,
+func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *backend.DataResponse,
 	data cloudMonitoringResponse, title, text string) error {
 	annotations := make([]*annotationEvent, 0)
 
@@ -339,7 +338,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRe
 	return nil
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
+func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
 	u, err := url.Parse("https://console.cloud.google.com/monitoring/metrics-explorer")
 	if err != nil {
 		timeSeriesQuery.logger.Error("Failed to generate deep link: unable to parse metrics explorer URL", "projectName", timeSeriesQuery.ProjectName, "query", timeSeriesQuery.RefID)
@@ -394,6 +393,6 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
 	return accountChooserURL.String()
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) getRefID() string {
+func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) getRefID() string {
 	return timeSeriesQuery.RefID
 }

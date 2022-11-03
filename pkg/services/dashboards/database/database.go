@@ -1017,3 +1017,18 @@ func (d *DashboardStore) GetDashboardTags(ctx context.Context, query *models.Get
 		return err
 	})
 }
+
+// This will be updated to take CountDashboardsInFolderQuery as an argument and
+// lookup dashboards using the ParentFolderUID when the NestedFolder
+// implementation is complete.
+func (d *DashboardStore) CountDashboardsInFolder(
+	ctx context.Context, req *dashboards.CountDashboardsInFolderRequest) (int64, error) {
+	var dashboards = make([]*models.Dashboard, 0)
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		session := sess.In("folder_id", req.FolderID).In("org_id", req.OrgID).
+			In("is_folder", d.store.GetDialect().BooleanStr(false))
+		err := session.Find(&dashboards)
+		return err
+	})
+	return int64(len(dashboards)), err
+}

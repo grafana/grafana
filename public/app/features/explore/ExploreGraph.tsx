@@ -18,6 +18,8 @@ import {
   LoadingState,
   SplitOpen,
   TimeZone,
+  DashboardCursorSync,
+  EventBus,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, SortOrder } from '@grafana/schema';
@@ -29,7 +31,6 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { TimeSeriesOptions } from 'app/plugins/panel/timeseries/types';
 
@@ -50,10 +51,11 @@ interface Props {
   annotations?: DataFrame[];
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
   tooltipDisplayMode?: TooltipDisplayMode;
-  splitOpenFn?: SplitOpen;
+  splitOpenFn: SplitOpen;
   onChangeTime: (timeRange: AbsoluteTimeRange) => void;
   graphStyle: ExploreGraphStyle;
   anchorToZero: boolean;
+  eventBus: EventBus;
 }
 
 export function ExploreGraph({
@@ -70,6 +72,7 @@ export function ExploreGraph({
   graphStyle,
   tooltipDisplayMode = TooltipDisplayMode.Single,
   anchorToZero,
+  eventBus,
 }: Props) {
   const theme = useTheme2();
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
@@ -142,7 +145,8 @@ export function ExploreGraph({
   const seriesToShow = showAllTimeSeries ? dataWithConfig : dataWithConfig.slice(0, MAX_NUMBER_OF_TIME_SERIES);
 
   const panelContext: PanelContext = {
-    eventBus: appEvents,
+    eventBus,
+    sync: () => DashboardCursorSync.Crosshair,
     onSplitOpen: splitOpenFn,
     onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {
       setBaseStructureRev((r) => r + 1);

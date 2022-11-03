@@ -149,6 +149,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	expectedResponse := `{
     "results": {
         "test": {
+			"status": 200,
             "frames": [
                 {
                     "schema": {
@@ -339,6 +340,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 		`{
         "results": {
           "A": {
+			"status": 200,
             "frames": [
               {
                 "data": {

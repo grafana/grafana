@@ -5,9 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/docker"
-	"github.com/grafana/grafana/pkg/build/packaging"
 	"github.com/urfave/cli/v2"
 )
 
@@ -175,48 +173,6 @@ func main() {
 			Name:  "publish",
 			Usage: "Publish packages to Grafana com and repositories",
 			Subcommands: cli.Commands{
-				{
-					Name:      "packages",
-					Usage:     "publish Grafana packages",
-					ArgsUsage: "[version]",
-					Action:    PublishPackages,
-					Flags: []cli.Flag{
-						&jobsFlag,
-						&editionFlag,
-						&buildIDFlag,
-						&dryRunFlag,
-						&gcpKeyFlag,
-						&cli.StringFlag{
-							Name:  "packages-bucket",
-							Value: config.PublicBucket,
-							Usage: "Google Cloud Storage Debian database bucket",
-						},
-						&cli.StringFlag{
-							Name:  "deb-db-bucket",
-							Value: packaging.DefaultDebDBBucket,
-							Usage: "Google Cloud Storage Debian database bucket",
-						},
-						&cli.StringFlag{
-							Name:  "deb-repo-bucket",
-							Value: packaging.DefaultDebRepoBucket,
-							Usage: "Google Cloud Storage Debian repo bucket",
-						},
-						&cli.StringFlag{
-							Name:  "rpm-repo-bucket",
-							Value: packaging.DefaultRPMRepoBucket,
-							Usage: "Google Cloud Storage RPM repo bucket",
-						},
-						&cli.StringFlag{
-							Name:  "ttl",
-							Value: packaging.DefaultTTLSeconds,
-							Usage: "Cache time to live for uploaded packages",
-						},
-						&cli.BoolFlag{
-							Name:  "simulate-release",
-							Usage: "Only simulate creating release at grafana.com",
-						},
-					},
-				},
 				{
 					Name:   "grafana-com",
 					Usage:  "Publish packages to grafana.com",
