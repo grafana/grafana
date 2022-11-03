@@ -40,7 +40,6 @@ export const Layout = ({
   wrap = false,
   width = '100%',
   height = '100%',
-  style,
   childStyle,
   ...rest
 }: LayoutProps) => {
