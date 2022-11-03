@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 	otlp "go.opentelemetry.io/collector/model/otlp"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 func TestTraceToFrame(t *testing.T) {
@@ -50,6 +51,43 @@ func TestTraceToFrame(t *testing.T) {
 		require.Equal(t, 0.094, span["duration"])
 		require.Equal(t, json.RawMessage("[{\"timestamp\":1616072924072.856,\"fields\":[{\"value\":1,\"key\":\"chunks requested\"}]},{\"timestamp\":1616072924072.9448,\"fields\":[{\"value\":1,\"key\":\"chunks fetched\"}]}]"), span["logs"])
 		require.Equal(t, json.RawMessage("[{\"value\":0,\"key\":\"status.code\"}]"), span["tags"])
+	})
+
+	t.Run("should transform correct traceID", func(t *testing.T) {
+		proto, err := os.ReadFile("testData/tempo_proto_response")
+		require.NoError(t, err)
+
+		otTrace, err := otlp.NewProtobufTracesUnmarshaler().UnmarshalTraces(proto)
+		require.NoError(t, err)
+
+		var index int
+		otTrace.ResourceSpans().RemoveIf(func(rsp pdata.ResourceSpans) bool {
+			rsp.InstrumentationLibrarySpans().RemoveIf(func(sp pdata.InstrumentationLibrarySpans) bool {
+				sp.Spans().RemoveIf(func(span pdata.Span) bool {
+					if index == 0 {
+						span.SetTraceID(pdata.NewTraceID([16]byte{0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7}))
+					}
+					if index == 1 {
+						span.SetTraceID(pdata.NewTraceID([16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7}))
+					}
+					index++
+					return false
+				})
+				return false
+			})
+			return false
+		})
+		frame, err := TraceToFrame(otTrace)
+		require.NoError(t, err)
+		bFrame := &BetterFrame{frame}
+
+		traceID128Bit := bFrame.GetRow(0)
+		require.NotNil(t, traceID128Bit)
+		require.Equal(t, "00010203040506070001020304050607", traceID128Bit["traceID"])
+
+		traceID64Bit := bFrame.GetRow(1)
+		require.NotNil(t, traceID64Bit)
+		require.Equal(t, "0001020304050607", traceID64Bit["traceID"])
 	})
 }
 

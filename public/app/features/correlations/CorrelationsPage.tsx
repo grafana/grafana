@@ -4,6 +4,7 @@ import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { CellProps, SortByFn } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { isFetchError } from '@grafana/runtime';
 import { Badge, Button, DeleteButton, HorizontalGroup, LoadingPlaceholder, useStyles2, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
@@ -14,7 +15,6 @@ import { AddCorrelationForm } from './Forms/AddCorrelationForm';
 import { EditCorrelationForm } from './Forms/EditCorrelationForm';
 import { EmptyCorrelationsCTA } from './components/EmptyCorrelationsCTA';
 import { Column, Table } from './components/Table';
-import { RemoveCorrelationParams } from './types';
 import { CorrelationData, useCorrelations } from './useCorrelations';
 
 const sortDatasource: SortByFn<CorrelationData> = (a, b, column) =>
@@ -30,10 +30,13 @@ const loaderWrapper = css`
 export default function CorrelationsPage() {
   const navModel = useNavModel('correlations');
   const [isAdding, setIsAdding] = useState(false);
-  const { remove, get } = useCorrelations();
+  const {
+    remove,
+    get: { execute: fetchCorrelations, ...get },
+  } = useCorrelations();
 
   useEffect(() => {
-    get.execute();
+    fetchCorrelations();
     // we only want to fetch data on first render
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -41,21 +44,15 @@ export default function CorrelationsPage() {
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
   const handleAdd = useCallback(() => {
-    get.execute();
+    fetchCorrelations();
     setIsAdding(false);
-  }, [get]);
+  }, [fetchCorrelations]);
 
-  const handleUpdate = useCallback(() => {
-    get.execute();
-  }, [get]);
-
-  const handleRemove = useCallback<(params: RemoveCorrelationParams) => void>(
-    async (correlation) => {
-      await remove.execute(correlation);
-      get.execute();
-    },
-    [remove, get]
-  );
+  useEffect(() => {
+    if (!remove.error && !remove.loading && remove.value) {
+      fetchCorrelations();
+    }
+  }, [remove.error, remove.loading, remove.value, fetchCorrelations]);
 
   const RowActions = useCallback(
     ({
@@ -69,11 +66,11 @@ export default function CorrelationsPage() {
       !readOnly && (
         <DeleteButton
           aria-label="delete correlation"
-          onConfirm={() => handleRemove({ sourceUID, uid })}
+          onConfirm={() => remove.execute({ sourceUID, uid })}
           closeOnConfirm
         />
       ),
-    [handleRemove]
+    [remove]
   );
 
   const columns = useMemo<Array<Column<CorrelationData>>>(
@@ -107,7 +104,7 @@ export default function CorrelationsPage() {
 
   const data = useMemo(() => get.value, [get.value]);
 
-  const showEmptyListCTA = data?.length === 0 && !isAdding && (!get.error || get.error.status === 404);
+  const showEmptyListCTA = data?.length === 0 && !isAdding && !get.error;
 
   return (
     <Page navModel={navModel}>
@@ -126,42 +123,42 @@ export default function CorrelationsPage() {
           </HorizontalGroup>
         </div>
 
-        {!data && get.loading && (
-          <div className={loaderWrapper}>
-            <LoadingPlaceholder text="loading..." />
-          </div>
-        )}
+        <div>
+          {!data && get.loading && (
+            <div className={loaderWrapper}>
+              <LoadingPlaceholder text="loading..." />
+            </div>
+          )}
 
-        {showEmptyListCTA && <EmptyCorrelationsCTA onClick={() => setIsAdding(true)} />}
+          {showEmptyListCTA && <EmptyCorrelationsCTA onClick={() => setIsAdding(true)} />}
 
-        {
-          // This error is not actionable, it'd be nice to have a recovery button
-          get.error && get.error.status !== 404 && (
-            <Alert severity="error" title="Error fetching correlation data" topSpacing={2}>
-              <HorizontalGroup>
-                {get.error.data.message ||
+          {
+            // This error is not actionable, it'd be nice to have a recovery button
+            get.error && (
+              <Alert severity="error" title="Error fetching correlation data" topSpacing={2}>
+                {(isFetchError(get.error) && get.error.data?.message) ||
                   'An unknown error occurred while fetching correlation data. Please try again.'}
-              </HorizontalGroup>
-            </Alert>
-          )
-        }
+              </Alert>
+            )
+          }
 
-        {isAdding && <AddCorrelationForm onClose={() => setIsAdding(false)} onCreated={handleAdd} />}
+          {isAdding && <AddCorrelationForm onClose={() => setIsAdding(false)} onCreated={handleAdd} />}
 
-        {data && data.length >= 1 && (
-          <Table
-            renderExpandedRow={({ target, source, ...correlation }) => (
-              <EditCorrelationForm
-                defaultValues={{ sourceUID: source.uid, ...correlation }}
-                onUpdated={handleUpdate}
-                readOnly={isSourceReadOnly({ source }) || !canWriteCorrelations}
-              />
-            )}
-            columns={columns}
-            data={data}
-            getRowId={(correlation) => `${correlation.source.uid}-${correlation.uid}`}
-          />
-        )}
+          {data && data.length >= 1 && (
+            <Table
+              renderExpandedRow={({ target, source, ...correlation }) => (
+                <EditCorrelationForm
+                  correlation={{ ...correlation, sourceUID: source.uid, targetUID: target.uid }}
+                  onUpdated={fetchCorrelations}
+                  readOnly={isSourceReadOnly({ source }) || !canWriteCorrelations}
+                />
+              )}
+              columns={columns}
+              data={data}
+              getRowId={(correlation) => `${correlation.source.uid}-${correlation.uid}`}
+            />
+          )}
+        </div>
       </Page.Contents>
     </Page>
   );
@@ -187,7 +184,7 @@ const DataSourceCell = memo(
 
     return (
       <span className={styles.root}>
-        <img src={value.meta.info.logos.small} className={styles.dsLogo} />
+        <img src={value.meta.info.logos.small} alt="" className={styles.dsLogo} />
         {value.name}
       </span>
     );

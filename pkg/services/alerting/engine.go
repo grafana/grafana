@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting/metrics"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/util/ticker"
 )
 
 // AlertEngine is the background process that
@@ -36,7 +37,7 @@ type AlertEngine struct {
 	Cfg              *setting.Cfg
 
 	execQueue          chan *Job
-	ticker             *Ticker
+	ticker             *ticker.T
 	scheduler          scheduler
 	evalHandler        evalHandler
 	ruleReader         ruleReader
@@ -48,6 +49,7 @@ type AlertEngine struct {
 	dashAlertExtractor DashAlertExtractor
 	dashboardService   dashboards.DashboardService
 	datasourceService  datasources.DataSourceService
+	annotationsRepo    annotations.Repository
 }
 
 // IsDisabled returns true if the alerting service is disabled for this instance.
@@ -59,7 +61,7 @@ func (e *AlertEngine) IsDisabled() bool {
 func ProvideAlertEngine(renderer rendering.Service, requestValidator models.PluginRequestValidator,
 	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Internal,
 	notificationService *notifications.NotificationService, tracer tracing.Tracer, store AlertStore, cfg *setting.Cfg,
-	dashAlertExtractor DashAlertExtractor, dashboardService dashboards.DashboardService, cacheService *localcache.CacheService, dsService datasources.DataSourceService) *AlertEngine {
+	dashAlertExtractor DashAlertExtractor, dashboardService dashboards.DashboardService, cacheService *localcache.CacheService, dsService datasources.DataSourceService, annotationsRepo annotations.Repository) *AlertEngine {
 	e := &AlertEngine{
 		Cfg:                cfg,
 		RenderService:      renderer,
@@ -71,6 +73,7 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator models.Plug
 		dashAlertExtractor: dashAlertExtractor,
 		dashboardService:   dashboardService,
 		datasourceService:  dsService,
+		annotationsRepo:    annotationsRepo,
 	}
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()
@@ -87,7 +90,7 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator models.Plug
 // Run starts the alerting service background process.
 func (e *AlertEngine) Run(ctx context.Context) error {
 	reg := prometheus.WrapRegistererWithPrefix("legacy_", prometheus.DefaultRegisterer)
-	e.ticker = NewTicker(clock.New(), 1*time.Second, metrics.NewTickerMetrics(reg))
+	e.ticker = ticker.New(clock.New(), 1*time.Second, ticker.NewMetrics(reg, "alerting"))
 	defer e.ticker.Stop()
 	alertGroup, ctx := errgroup.WithContext(ctx)
 	alertGroup.Go(func() error { return e.alertingTicker(ctx) })
@@ -193,7 +196,7 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	cancelChan <- cancelFn
 	alertCtx, span := e.tracer.Start(alertCtx, "alert execution")
-	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator, e.AlertStore, e.dashboardService, e.datasourceService)
+	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator, e.AlertStore, e.dashboardService, e.datasourceService, e.annotationsRepo)
 	evalContext.Ctx = alertCtx
 
 	go func() {

@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/logger"
 )
 
+var _ Manager = (*FS)(nil)
+
 var reGitBuild = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
 
 var (
@@ -61,16 +63,20 @@ func (fs *FS) Add(ctx context.Context, pluginID string, pluginArchive *zip.ReadC
 		})
 	}
 
-	fs.mu.Lock()
-	fs.store[pluginID] = pluginDir
-	fs.mu.Unlock()
-
 	return &ExtractedPluginArchive{
 		ID:           res.ID,
 		Version:      res.Info.Version,
 		Dependencies: deps,
 		Path:         pluginDir,
 	}, nil
+}
+
+func (fs *FS) Register(_ context.Context, pluginID, pluginDir string) error {
+	fs.mu.Lock()
+	fs.store[pluginID] = pluginDir
+	fs.mu.Unlock()
+
+	return nil
 }
 
 func (fs *FS) Remove(_ context.Context, pluginID string) error {

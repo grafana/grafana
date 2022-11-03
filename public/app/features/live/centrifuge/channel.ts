@@ -1,11 +1,11 @@
-import Centrifuge, {
-  JoinLeaveContext,
+import {
+  Subscription,
+  JoinContext,
+  LeaveContext,
   PublicationContext,
-  SubscribeErrorContext,
-  SubscribeSuccessContext,
-  SubscriptionEvents,
-  UnsubscribeContext,
-} from 'centrifuge/dist/centrifuge';
+  SubscriptionErrorContext,
+  SubscribedContext,
+} from 'centrifuge';
 import { Subject, of, Observable } from 'rxjs';
 
 import {
@@ -34,7 +34,7 @@ export class CentrifugeLiveChannel<T = any> {
   // Hold on to the last header with schema
   lastMessageWithSchema?: DataFrameJSON;
 
-  subscription?: Centrifuge.Subscription;
+  subscription?: Subscription;
   shutdownCallback?: () => void;
   initalized?: boolean;
 
@@ -54,46 +54,44 @@ export class CentrifugeLiveChannel<T = any> {
   }
 
   // This should only be called when centrifuge is connected
-  initalize(): SubscriptionEvents {
+  initalize(): void {
     if (this.initalized) {
       throw new Error('Channel already initalized: ' + this.id);
     }
     this.initalized = true;
 
-    const events: SubscriptionEvents = {
-      // Called when a message is received from the socket
-      publish: (ctx: PublicationContext) => {
-        try {
-          if (ctx.data) {
-            if (ctx.data.schema) {
-              this.lastMessageWithSchema = ctx.data as DataFrameJSON;
-            }
-
-            this.stream.next({
-              type: LiveChannelEventType.Message,
-              message: ctx.data,
-            });
+    this.subscription!.on('publication', (ctx: PublicationContext) => {
+      try {
+        if (ctx.data) {
+          if (ctx.data.schema) {
+            this.lastMessageWithSchema = ctx.data as DataFrameJSON;
           }
 
-          // Clear any error messages
-          if (this.currentStatus.error) {
-            this.currentStatus.timestamp = Date.now();
-            delete this.currentStatus.error;
-            this.sendStatus();
-          }
-        } catch (err) {
-          console.log('publish error', this.addr, err);
-          this.currentStatus.error = err;
+          this.stream.next({
+            type: LiveChannelEventType.Message,
+            message: ctx.data,
+          });
+        }
+
+        // Clear any error messages
+        if (this.currentStatus.error) {
           this.currentStatus.timestamp = Date.now();
+          delete this.currentStatus.error;
           this.sendStatus();
         }
-      },
-      error: (ctx: SubscribeErrorContext) => {
+      } catch (err) {
+        console.log('publish error', this.addr, err);
+        this.currentStatus.error = err;
         this.currentStatus.timestamp = Date.now();
-        this.currentStatus.error = ctx.message;
         this.sendStatus();
-      },
-      subscribe: (ctx: SubscribeSuccessContext) => {
+      }
+    })
+      .on('error', (ctx: SubscriptionErrorContext) => {
+        this.currentStatus.timestamp = Date.now();
+        this.currentStatus.error = ctx.error.message;
+        this.sendStatus();
+      })
+      .on('subscribed', (ctx: SubscribedContext) => {
         this.currentStatus.timestamp = Date.now();
         this.currentStatus.state = LiveChannelConnectionState.Connected;
         delete this.currentStatus.error;
@@ -101,23 +99,24 @@ export class CentrifugeLiveChannel<T = any> {
         if (ctx.data?.schema) {
           this.lastMessageWithSchema = ctx.data as DataFrameJSON;
         }
-
         this.sendStatus(ctx.data);
-      },
-      unsubscribe: (ctx: UnsubscribeContext) => {
+      })
+      .on('unsubscribed', () => {
         this.currentStatus.timestamp = Date.now();
         this.currentStatus.state = LiveChannelConnectionState.Disconnected;
         this.sendStatus();
-      },
-    };
-
-    events.join = (ctx: JoinLeaveContext) => {
-      this.stream.next({ type: LiveChannelEventType.Join, user: ctx.info.user });
-    };
-    events.leave = (ctx: JoinLeaveContext) => {
-      this.stream.next({ type: LiveChannelEventType.Leave, user: ctx.info.user });
-    };
-    return events;
+      })
+      .on('subscribing', () => {
+        this.currentStatus.timestamp = Date.now();
+        this.currentStatus.state = LiveChannelConnectionState.Connecting;
+        this.sendStatus();
+      })
+      .on('join', (ctx: JoinContext) => {
+        this.stream.next({ type: LiveChannelEventType.Join, user: ctx.info.user });
+      })
+      .on('leave', (ctx: LeaveContext) => {
+        this.stream.next({ type: LiveChannelEventType.Leave, user: ctx.info.user });
+      });
   }
 
   private sendStatus(message?: any) {
@@ -171,7 +170,7 @@ export class CentrifugeLiveChannel<T = any> {
 
     return this.subscription!.presence().then((v) => {
       return {
-        users: Object.keys(v.presence),
+        users: Object.keys(v.clients),
       };
     });
   }

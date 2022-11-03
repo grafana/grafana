@@ -8,9 +8,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/store"
 
 	"github.com/blugelabs/bluge"
@@ -60,11 +63,7 @@ func initTestIndexFromDashesExtended(t *testing.T, dashboards []dashboard, exten
 	dashboardLoader := &testDashboardLoader{
 		dashboards: dashboards,
 	}
-	index := newSearchIndex(
-		dashboardLoader,
-		&store.MockEntityEventsService{},
-		extender,
-		func(ctx context.Context, folderId int64) (string, error) { return "x", nil })
+	index := newSearchIndex(dashboardLoader, &store.MockEntityEventsService{}, extender, func(ctx context.Context, folderId int64) (string, error) { return "x", nil }, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.SearchSettings{})
 	require.NotNil(t, index)
 	numDashboards, err := index.buildOrgIndex(context.Background(), testOrgID)
 	require.NoError(t, err)
@@ -114,15 +113,15 @@ var testDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "test",
+		summary: &models.ObjectSummary{
+			Name: "test",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "boom",
+		summary: &models.ObjectSummary{
+			Name: "boom",
 		},
 	},
 }
@@ -163,8 +162,8 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		err := index.updateDashboard(context.Background(), testOrgID, orgIdx, dashboard{
 			id:  3,
 			uid: "3",
-			info: &extract.DashboardInfo{
-				Title: "created",
+			summary: &models.ObjectSummary{
+				Name: "created",
 			},
 		})
 		require.NoError(t, err)
@@ -182,8 +181,8 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		err := index.updateDashboard(context.Background(), testOrgID, orgIdx, dashboard{
 			id:  2,
 			uid: "2",
-			info: &extract.DashboardInfo{
-				Title: "nginx",
+			summary: &models.ObjectSummary{
+				Name: "nginx",
 			},
 		})
 		require.NoError(t, err)
@@ -198,15 +197,15 @@ var testSortDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "a-test",
+		summary: &models.ObjectSummary{
+			Name: "a-test",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "z-test",
+		summary: &models.ObjectSummary{
+			Name: "z-test",
 		},
 	},
 }
@@ -289,15 +288,15 @@ var testPrefixDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "Archer Data System",
+		summary: &models.ObjectSummary{
+			Name: "Archer Data System",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "Document Sync repo",
+		summary: &models.ObjectSummary{
+			Name: "Document Sync repo",
 		},
 	},
 }
@@ -367,8 +366,8 @@ var longPrefixDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "Eyjafjallajökull Eruption data",
+		summary: &models.ObjectSummary{
+			Name: "Eyjafjallajökull Eruption data",
 		},
 	},
 }
@@ -386,15 +385,15 @@ var scatteredTokensDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "Three can keep a secret, if two of them are dead (Benjamin Franklin)",
+		summary: &models.ObjectSummary{
+			Name: "Three can keep a secret, if two of them are dead (Benjamin Franklin)",
 		},
 	},
 	{
 		id:  3,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "A secret is powerful when it is empty (Umberto Eco)",
+		summary: &models.ObjectSummary{
+			Name: "A secret is powerful when it is empty (Umberto Eco)",
 		},
 	},
 }
@@ -419,25 +418,19 @@ var dashboardsWithFolders = []dashboard{
 		id:       1,
 		uid:      "1",
 		isFolder: true,
-		info: &extract.DashboardInfo{
-			Title: "My folder",
+		summary: &models.ObjectSummary{
+			Name: "My folder",
 		},
 	},
 	{
 		id:       2,
 		uid:      "2",
 		folderID: 1,
-		info: &extract.DashboardInfo{
-			Title: "Dashboard in folder 1",
-			Panels: []extract.PanelInfo{
-				{
-					ID:    1,
-					Title: "Panel 1",
-				},
-				{
-					ID:    2,
-					Title: "Panel 2",
-				},
+		summary: &models.ObjectSummary{
+			Name: "Dashboard in folder 1",
+			Nested: []*models.ObjectSummary{
+				newNestedPanel(1, "Panel 1"),
+				newNestedPanel(2, "Panel 2"),
 			},
 		},
 	},
@@ -445,26 +438,20 @@ var dashboardsWithFolders = []dashboard{
 		id:       3,
 		uid:      "3",
 		folderID: 1,
-		info: &extract.DashboardInfo{
-			Title: "Dashboard in folder 2",
-			Panels: []extract.PanelInfo{
-				{
-					ID:    3,
-					Title: "Panel 3",
-				},
+		summary: &models.ObjectSummary{
+			Name: "Dashboard in folder 2",
+			Nested: []*models.ObjectSummary{
+				newNestedPanel(3, "Panel 3"),
 			},
 		},
 	},
 	{
 		id:  4,
 		uid: "4",
-		info: &extract.DashboardInfo{
-			Title: "One more dash",
-			Panels: []extract.PanelInfo{
-				{
-					ID:    3,
-					Title: "Panel 4",
-				},
+		summary: &models.ObjectSummary{
+			Name: "One more dash",
+			Nested: []*models.ObjectSummary{
+				newNestedPanel(4, "Panel 4"),
 			},
 		},
 	},
@@ -518,20 +505,23 @@ var dashboardsWithPanels = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "My Dash",
-			Panels: []extract.PanelInfo{
-				{
-					ID:    1,
-					Title: "Panel 1",
-				},
-				{
-					ID:    2,
-					Title: "Panel 2",
-				},
+		summary: &models.ObjectSummary{
+			Name: "My Dash",
+			Nested: []*models.ObjectSummary{
+				newNestedPanel(1, "Panel 1"),
+				newNestedPanel(2, "Panel 2"),
 			},
 		},
 	},
+}
+
+func newNestedPanel(id int64, name string) *models.ObjectSummary {
+	summary := &models.ObjectSummary{
+		Kind: "panel",
+		UID:  fmt.Sprintf("???#%d", id),
+	}
+	summary.Name = name
+	return summary
 }
 
 func TestDashboardIndex_Panels(t *testing.T) {
@@ -563,15 +553,15 @@ var punctuationSplitNgramDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "heat-torkel",
+		summary: &models.ObjectSummary{
+			Name: "heat-torkel",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "topology heatmap",
+		summary: &models.ObjectSummary{
+			Name: "topology heatmap",
 		},
 	},
 }
@@ -596,8 +586,8 @@ var camelCaseNgramDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "heatTorkel",
+		summary: &models.ObjectSummary{
+			Name: "heatTorkel",
 		},
 	},
 }
@@ -618,8 +608,8 @@ func dashboardsWithTitles(names ...string) []dashboard {
 		out = append(out, dashboard{
 			id:  no,
 			uid: fmt.Sprintf("%d", no),
-			info: &extract.DashboardInfo{
-				Title: name,
+			summary: &models.ObjectSummary{
+				Name: name,
 			},
 		})
 	}
@@ -682,6 +672,54 @@ func TestDashboardIndex_MultiTermPrefixMatch(t *testing.T) {
 				"x not y",
 			),
 			query: "Prometheus stat",
+		},
+		{
+			dashboards: dashboardsWithTitles(
+				"Loki Tests - Bar Gauge 2",
+				"Loki 2.0",
+				"Loki 2.0 Stats",
+				"Loki 20.0",
+				"Loki Second Word",
+				"Loki Stats",
+				"dynamic (2)",
+				"Loki histogram",
+				"Loki histogram2",
+				"roci-simple-2",
+				"x not y",
+			),
+			query: "Loki 2.",
+		},
+		{
+			dashboards: dashboardsWithTitles(
+				"Loki Tests - Bar Gauge 2",
+				"Loki 2.0",
+				"Loki 2.0 Stats",
+				"Loki 20.0",
+				"Loki Second Word",
+				"Loki Stats",
+				"dynamic (2)",
+				"Loki histogram",
+				"Loki histogram2",
+				"roci-simple-2",
+				"x not y",
+			),
+			query: "Lok",
+		},
+		{
+			dashboards: dashboardsWithTitles(
+				"Loki Tests - Bar Gauge 2",
+				"Loki 2.0",
+				"Loki 2.0 Stats",
+				"Loki 20.0",
+				"Loki Second Word",
+				"Loki Stats",
+				"dynamic (2)",
+				"Loki histogram",
+				"Loki histogram2",
+				"roci-simple-2",
+				"x not y",
+			),
+			query: "Loki stats",
 		},
 	}
 

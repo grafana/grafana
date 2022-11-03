@@ -1,4 +1,5 @@
 import { config, reportInteraction } from '@grafana/runtime';
+import { InspectTab } from 'app/features/inspector/types';
 
 import { SearchLayout } from '../types';
 
@@ -30,6 +31,14 @@ export const reportSearchFailedQueryInteraction = (
   { error, ...query }: QueryProps & { error?: string }
 ) => {
   reportInteraction(`${dashboardListType}_query_failed`, { ...getQuerySearchContext(query), error });
+};
+
+export const reportPanelInspectInteraction = (
+  PanelInspectType: InspectTab,
+  name: string,
+  properties?: Record<string, boolean | string>
+) => {
+  reportInteraction(`grafana_panel_inspect_${PanelInspectType}_${name}_clicked`, properties);
 };
 
 const getQuerySearchContext = (query: QueryProps) => {

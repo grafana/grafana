@@ -6,10 +6,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
+type OrgListResponse []struct {
+	OrgID    int64
+	Response error
+}
+
 type FakeOrgService struct {
-	ExpectedOrgUserID  int64
-	ExpectedError      error
-	ExpectedUserOrgDTO []*org.UserOrgDTO
+	ExpectedOrgUserID            int64
+	ExpectedError                error
+	ExpectedUserOrgDTO           []*org.UserOrgDTO
+	ExpectedOrgs                 []*org.OrgDTO
+	ExpectedOrg                  *org.Org
+	ExpectedOrgUsers             []*org.OrgUserDTO
+	ExpectedSearchOrgUsersResult *org.SearchOrgUsersQueryResult
+	ExpectedOrgListResponse      OrgListResponse
 }
 
 func NewOrgServiceFake() *FakeOrgService {
@@ -38,4 +48,54 @@ func (f *FakeOrgService) GetUserOrgList(ctx context.Context, query *org.GetUserO
 
 func (f *FakeOrgService) UpdateOrg(ctx context.Context, cmd *org.UpdateOrgCommand) error {
 	return f.ExpectedError
+}
+
+func (f *FakeOrgService) Search(ctx context.Context, query *org.SearchOrgsQuery) ([]*org.OrgDTO, error) {
+	return f.ExpectedOrgs, f.ExpectedError
+}
+
+func (f *FakeOrgService) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) (*org.Org, error) {
+	return f.ExpectedOrg, f.ExpectedError
+}
+
+func (f *FakeOrgService) GetByName(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
+	return f.ExpectedOrg, f.ExpectedError
+}
+
+func (f *FakeOrgService) CreateWithMember(ctx context.Context, cmd *org.CreateOrgCommand) (*org.Org, error) {
+	return f.ExpectedOrg, f.ExpectedError
+}
+
+func (f *FakeOrgService) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddressCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgService) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgService) GetOrCreate(ctx context.Context, orgName string) (int64, error) {
+	return 0, f.ExpectedError
+}
+
+func (f *FakeOrgService) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgService) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgService) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
+	return f.ExpectedOrgUsers, f.ExpectedError
+}
+
+func (f *FakeOrgService) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
+	testData := f.ExpectedOrgListResponse[0]
+	f.ExpectedOrgListResponse = f.ExpectedOrgListResponse[1:]
+	return testData.Response
+}
+
+func (f *FakeOrgService) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	return f.ExpectedSearchOrgUsersResult, f.ExpectedError
 }

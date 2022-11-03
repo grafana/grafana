@@ -1,7 +1,6 @@
 import { partial } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { DeepMap, FieldError, useForm } from 'react-hook-form';
-import { useSelector } from 'react-redux';
 
 import { locationUtil, SelectableValue } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
@@ -9,7 +8,7 @@ import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup } from '@gr
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { removeDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
-import { ExploreId, AccessControlAction } from 'app/types';
+import { ExploreId, AccessControlAction, useSelector } from 'app/types';
 
 import { getExploreItemSelector } from '../state/selectors';
 
@@ -98,7 +97,7 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
     setSubmissionError(undefined);
     const dashboardUid = data.saveTarget === SaveTarget.ExistingDashboard ? data.dashboardUid : undefined;
 
-    reportInteraction('e2d_submit', {
+    reportInteraction('e_2_d_submit', {
       newTab: openInNewTab,
       saveTarget: data.saveTarget,
       queries: exploreItem.queries.length,
@@ -145,7 +144,7 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
   };
 
   useEffect(() => {
-    reportInteraction('e2d_open');
+    reportInteraction('e_2_d_open');
   }, []);
 
   return (

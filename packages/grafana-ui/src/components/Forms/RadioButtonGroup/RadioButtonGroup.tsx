@@ -2,10 +2,9 @@ import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import React, { useCallback, useEffect, useRef } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, toIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { toIconName } from '../../../types/icon';
 import { Icon } from '../../Icon/Icon';
 
 import { RadioButtonSize, RadioButton } from './RadioButton';
@@ -74,6 +73,7 @@ export function RadioButtonGroup<T>({
       {options.map((opt, i) => {
         const isItemDisabled = disabledOptions && opt.value && disabledOptions.includes(opt.value);
         const icon = opt.icon ? toIconName(opt.icon) : undefined;
+
         return (
           <RadioButton
             size={size}

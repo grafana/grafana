@@ -32,7 +32,7 @@ const RuleType: FC<Props> = (props) => {
   return (
     <Card className={cardStyles} isSelected={selected} onClick={() => onClick(value)} disabled={disabled}>
       <Card.Figure>
-        <img src={image} />
+        <img src={image} alt="" />
       </Card.Figure>
       <Card.Heading>{name}</Card.Heading>
       <Card.Description>{description}</Card.Description>

@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { getDataSourceSrv, FetchResponse, FetchError } from '@grafana/runtime';
+import { getDataSourceSrv, FetchResponse } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { Correlation, CreateCorrelationParams, RemoveCorrelationParams, UpdateCorrelationParams } from './types';
@@ -32,17 +31,13 @@ function getData<T>(response: FetchResponse<T>) {
  */
 export const useCorrelations = () => {
   const { backend } = useGrafana();
-  const [error, setError] = useState<FetchError | null>(null);
 
   const [getInfo, get] = useAsyncFn<() => Promise<CorrelationData[]>>(
     () =>
       lastValueFrom(
         backend.fetch<Correlation[]>({ url: '/api/datasources/correlations', method: 'GET', showErrorAlert: false })
       )
-        .then(getData, (e) => {
-          setError(e);
-          return [];
-        })
+        .then(getData)
         .then(toEnrichedCorrelationsData),
     [backend]
   );
@@ -78,7 +73,6 @@ export const useCorrelations = () => {
     get: {
       execute: get,
       ...getInfo,
-      error,
     },
     remove: {
       execute: remove,

@@ -73,7 +73,7 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame, skipConfi
 }
 
 /**
- * Check if all values in two arrays match the compare funciton
+ * Check if all values in two arrays match the compare function
  *
  * @beta
  */

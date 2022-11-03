@@ -5,6 +5,7 @@ aliases:
   - /docs/grafana/latest/permissions/
   - /docs/grafana/latest/permissions/organization_roles/
   - /docs/grafana/latest/permissions/overview/
+  - /docs/grafana/latest/administration/roles-and-permissions/
 description: Information about Grafana user, team, and organization roles and permissions
 title: Roles and permissions
 weight: 300
@@ -146,7 +147,7 @@ For details on managing teams, see [Team management]({{< relref "../team-managem
 
 While Grafana OSS includes a robust set of permissions and settings that you can use to manage user access to server and organization resources, you might find that you require additional capabilities.
 
-[Grafana Enterprise]({{< relref "../../enterprise/">}}) provides the following permissions-related features:
+[Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise">}}) provides the following permissions-related features:
 
 - Data source permissions
 - Role-based access control (RBAC)

@@ -23,10 +23,15 @@ const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCs
   return (
     <div className={`gf-form-select-wrapper width-20 ${customCss}`}>
       <div className="dropdown">
-        <div className="gf-form-input dropdown-toggle" data-toggle="dropdown">
+        <button
+          type="button"
+          className="gf-form-input dropdown-toggle"
+          data-toggle="dropdown"
+          style={{ textAlign: 'left' }}
+        >
           {defaultSelectedItem?.text}
-        </div>
-        <ul className="dropdown-menu dropdown-menu--menu">
+        </button>
+        <ul role="menu" className="dropdown-menu dropdown-menu--menu">
           {children.map((navItem: NavModelItem) => {
             if (navItem.hideFromTabs) {
               // TODO: Rename hideFromTabs => hideFromNav
@@ -57,14 +62,13 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
       <SelectNav customCss="page-header__select-nav">{children}</SelectNav>
       <TabsBar className="page-header__tabs" hideBorder={true}>
         {children.map((child, index) => {
-          const icon = child.icon ? toIconName(child.icon) : undefined;
           return (
             !child.hideFromTabs && (
               <Tab
                 label={child.text}
                 active={child.active}
                 key={`${child.url}-${index}`}
-                icon={icon}
+                icon={child.icon}
                 href={child.url}
                 suffix={child.tabSuffix}
               />
@@ -109,6 +113,7 @@ function renderHeaderTitle(main: NavModelItem) {
       <div className="page-header__info-block">
         {renderTitle(main.text, main.breadcrumbs ?? [], main.highlightText)}
         {main.subTitle && <div className="page-header__sub-title">{main.subTitle}</div>}
+        {main.headerExtra && <main.headerExtra />}
       </div>
     </div>
   );

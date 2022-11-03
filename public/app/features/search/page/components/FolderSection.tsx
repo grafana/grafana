@@ -3,6 +3,7 @@ import React, { FC } from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
 
 import { GrafanaTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Card, Checkbox, CollapsableSection, Icon, IconName, Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
@@ -157,6 +158,8 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
   return (
     <CollapsableSection
+      headerDataTestId={selectors.components.Search.folderHeader(section.title)}
+      contentDataTestId={selectors.components.Search.folderContent(section.title)}
       isOpen={sectionExpanded ?? false}
       onToggle={onSectionExpand}
       className={styles.wrapper}

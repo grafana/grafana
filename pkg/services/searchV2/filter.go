@@ -8,6 +8,7 @@ import (
 	"github.com/blugelabs/bluge/search/searcher"
 	"github.com/blugelabs/bluge/search/similarity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 type PermissionFilter struct {
@@ -18,10 +19,11 @@ type PermissionFilter struct {
 type entityKind string
 
 const (
-	entityKindPanel      entityKind = "panel"
-	entityKindDashboard  entityKind = "dashboard"
-	entityKindFolder     entityKind = "folder"
-	entityKindDatasource entityKind = "datasource"
+	entityKindPanel      entityKind = models.StandardKindPanel
+	entityKindDashboard  entityKind = models.StandardKindDashboard
+	entityKindFolder     entityKind = models.StandardKindFolder
+	entityKindDatasource entityKind = models.StandardKindDataSource
+	entityKindQuery      entityKind = models.StandardKindQuery
 )
 
 func (r entityKind) IsValid() bool {

@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,20 +16,17 @@ import (
 func TestFinder_Find(t *testing.T) {
 	testCases := []struct {
 		name               string
-		cfg                *setting.Cfg
 		pluginDirs         []string
 		expectedPathSuffix []string
 		err                error
 	}{
 		{
 			name:               "Dir with single plugin",
-			cfg:                setting.NewCfg(),
 			pluginDirs:         []string{"../../testdata/valid-v2-signature"},
 			expectedPathSuffix: []string{"/pkg/plugins/manager/testdata/valid-v2-signature/plugin/plugin.json"},
 		},
 		{
 			name:       "Dir with nested plugins",
-			cfg:        setting.NewCfg(),
 			pluginDirs: []string{"../../testdata/duplicate-plugins"},
 			expectedPathSuffix: []string{
 				"/pkg/plugins/manager/testdata/duplicate-plugins/nested/nested/plugin.json",
@@ -39,13 +35,11 @@ func TestFinder_Find(t *testing.T) {
 		},
 		{
 			name:               "Dir with single plugin which has symbolic link root directory",
-			cfg:                setting.NewCfg(),
 			pluginDirs:         []string{"../../testdata/symbolic-plugin-dirs"},
 			expectedPathSuffix: []string{"/pkg/plugins/manager/testdata/includes-symlinks/plugin.json"},
 		},
 		{
 			name:       "Multiple plugin dirs",
-			cfg:        setting.NewCfg(),
 			pluginDirs: []string{"../../testdata/duplicate-plugins", "../../testdata/invalid-v1-signature"},
 			expectedPathSuffix: []string{
 				"/pkg/plugins/manager/testdata/duplicate-plugins/nested/nested/plugin.json",

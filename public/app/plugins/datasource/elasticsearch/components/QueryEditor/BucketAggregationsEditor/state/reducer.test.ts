@@ -1,6 +1,6 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
 
-import { defaultBucketAgg } from 'app/plugins/datasource/elasticsearch/query_def';
+import { defaultBucketAgg } from 'app/plugins/datasource/elasticsearch/queryDef';
 import { ElasticsearchQuery } from 'app/plugins/datasource/elasticsearch/types';
 
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';

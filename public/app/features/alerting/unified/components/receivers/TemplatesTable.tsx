@@ -1,9 +1,9 @@
 import React, { FC, Fragment, useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { ConfirmModal, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
 import { Authorize } from '../../components/Authorize';
 import { deleteTemplateAction } from '../../state/actions';

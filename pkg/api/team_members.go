@@ -42,7 +42,7 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 		}
 	}
 
-	if err := hs.SQLStore.GetTeamMembers(c.Req.Context(), &query); err != nil {
+	if err := hs.teamService.GetTeamMembers(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get Team Members", err)
 	}
 
@@ -94,7 +94,7 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 		}
 	}
 
-	isTeamMember, err := hs.SQLStore.IsTeamMember(c.OrgID, cmd.TeamId, cmd.UserId)
+	isTeamMember, err := hs.teamService.IsTeamMember(c.OrgID, cmd.TeamId, cmd.UserId)
 	if err != nil {
 		return response.Error(500, "Failed to add team member.", err)
 	}
@@ -143,7 +143,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 		}
 	}
 
-	isTeamMember, err := hs.SQLStore.IsTeamMember(orgId, teamId, userId)
+	isTeamMember, err := hs.teamService.IsTeamMember(orgId, teamId, userId)
 	if err != nil {
 		return response.Error(500, "Failed to update team member.", err)
 	}

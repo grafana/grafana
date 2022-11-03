@@ -1,17 +1,19 @@
 import { SerializedError } from '@reduxjs/toolkit';
-import { render, waitFor } from '@testing-library/react';
+import { render, waitFor, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setDataSourceSrv, logInfo } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 
+import { LogMessages } from './Analytics';
 import RuleList from './RuleList';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRules } from './api/prometheus';
@@ -36,6 +38,8 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 jest.mock('./api/buildInfo');
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
+jest.mock('../../../core/hooks/useMediaQueryChange');
+jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.mock('app/core/core', () => ({
   appEvents: {
     subscribe: () => {
@@ -44,6 +48,13 @@ jest.mock('app/core/core', () => ({
     emit: () => {},
   },
 }));
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  return {
+    ...original,
+    logInfo: jest.fn(),
+  };
+});
 
 jest.spyOn(config, 'getAllDataSources');
 
@@ -200,6 +211,8 @@ describe('RuleList', () => {
       return Promise.reject(new Error(`unexpected datasourceName: ${dataSourceName}`));
     });
 
+    mocks.api.fetchRulerRules.mockRejectedValue({ status: 500, data: { message: 'Server error' } });
+
     await renderRuleList();
 
     await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(4));
@@ -226,7 +239,7 @@ describe('RuleList', () => {
 
     setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
     mocks.api.discoverFeatures.mockResolvedValue({
-      application: PromApplication.Lotex,
+      application: PromApplication.Cortex,
       features: {
         rulerApiEnabled: true,
       },
@@ -368,7 +381,7 @@ describe('RuleList', () => {
     setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
 
     mocks.api.discoverFeatures.mockResolvedValue({
-      application: PromApplication.Lotex,
+      application: PromApplication.Cortex,
       features: {
         rulerApiEnabled: true,
       },
@@ -516,7 +529,7 @@ describe('RuleList', () => {
         setDataSourceSrv(new MockDataSourceSrv(testDatasources));
 
         mocks.api.discoverFeatures.mockResolvedValue({
-          application: PromApplication.Lotex,
+          application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: true,
           },
@@ -702,7 +715,7 @@ describe('RuleList', () => {
         mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
         setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
         mocks.api.discoverFeatures.mockResolvedValue({
-          application: PromApplication.Lotex,
+          application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: true,
           },
@@ -729,7 +742,7 @@ describe('RuleList', () => {
         mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
         setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
         mocks.api.discoverFeatures.mockResolvedValue({
-          application: PromApplication.Lotex,
+          application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: true,
           },
@@ -743,6 +756,37 @@ describe('RuleList', () => {
         await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
         expect(ui.newRuleButton.get()).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Analytics', () => {
+    it('Sends log info when creating an alert rule from a scratch', async () => {
+      enableRBAC();
+
+      grantUserPermissions([
+        AccessControlAction.FoldersRead,
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingRuleRead,
+      ]);
+
+      mocks.getAllDataSourcesMock.mockReturnValue([]);
+      setDataSourceSrv(new MockDataSourceSrv({}));
+      mocks.api.fetchRules.mockResolvedValue([]);
+      mocks.api.fetchRulerRules.mockResolvedValue({});
+
+      renderRuleList();
+
+      await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
+
+      const button = screen.getByText('New alert rule');
+
+      button.addEventListener('click', (event) => event.preventDefault(), false);
+
+      expect(button).toBeEnabled();
+
+      await userEvent.click(button);
+
+      expect(logInfo).toHaveBeenCalledWith(LogMessages.alertRuleFromScratch);
     });
   });
 });

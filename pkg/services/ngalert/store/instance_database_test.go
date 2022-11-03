@@ -17,6 +17,7 @@ func BenchmarkAlertInstanceOperations(b *testing.B) {
 	b.StopTimer()
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(b, baseIntervalSeconds)
+	dbstore.FeatureToggles.(*tests.FakeFeatures).BigTransactions = false
 
 	const mainOrgID int64 = 1
 
@@ -58,7 +59,7 @@ func TestIntegrationAlertInstanceBulkWrite(t *testing.T) {
 	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	orgIDs := []int64{1, 2, 3, 4, 5}
-	counts := []int{20_000, 200, 503, 0, 1257}
+	counts := []int{20_000, 200, 503, 0, 1256}
 	instances := []models.AlertInstance{}
 	keys := []models.AlertInstanceKey{}
 
@@ -84,32 +85,35 @@ func TestIntegrationAlertInstanceBulkWrite(t *testing.T) {
 		}
 	}
 
-	err := dbstore.SaveAlertInstances(ctx, instances...)
-	require.NoError(t, err)
-	t.Log("Finished database write")
-
-	// List our instances. Make sure we have the right count.
-	for i, id := range orgIDs {
-		q := &models.ListAlertInstancesQuery{
-			RuleOrgID: id,
-		}
-		err = dbstore.ListAlertInstances(ctx, q)
+	for _, bigStmts := range []bool{false, true} {
+		dbstore.FeatureToggles.(*tests.FakeFeatures).BigTransactions = bigStmts
+		err := dbstore.SaveAlertInstances(ctx, instances...)
 		require.NoError(t, err)
-		require.Equal(t, counts[i], len(q.Result), "Org %v: Expected %v instances but got %v", id, counts[i], len(q.Result))
-	}
-	t.Log("Finished database read")
+		t.Log("Finished database write")
 
-	err = dbstore.DeleteAlertInstances(ctx, keys...)
-	require.NoError(t, err)
-	t.Log("Finished database delete")
-
-	for _, id := range orgIDs {
-		q := &models.ListAlertInstancesQuery{
-			RuleOrgID: id,
+		// List our instances. Make sure we have the right count.
+		for i, id := range orgIDs {
+			q := &models.ListAlertInstancesQuery{
+				RuleOrgID: id,
+			}
+			err = dbstore.ListAlertInstances(ctx, q)
+			require.NoError(t, err)
+			require.Equal(t, counts[i], len(q.Result), "Org %v: Expected %v instances but got %v", id, counts[i], len(q.Result))
 		}
-		err = dbstore.ListAlertInstances(ctx, q)
+		t.Log("Finished database read")
+
+		err = dbstore.DeleteAlertInstances(ctx, keys...)
 		require.NoError(t, err)
-		require.Zero(t, len(q.Result), "Org %v: Deleted instances but still had %v", id, len(q.Result))
+		t.Log("Finished database delete")
+
+		for _, id := range orgIDs {
+			q := &models.ListAlertInstancesQuery{
+				RuleOrgID: id,
+			}
+			err = dbstore.ListAlertInstances(ctx, q)
+			require.NoError(t, err)
+			require.Zero(t, len(q.Result), "Org %v: Deleted instances but still had %v", id, len(q.Result))
+		}
 	}
 }
 
@@ -150,19 +154,18 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 		err := dbstore.SaveAlertInstances(ctx, instance)
 		require.NoError(t, err)
 
-		getCmd := &models.GetAlertInstanceQuery{
+		listCmd := &models.ListAlertInstancesQuery{
 			RuleOrgID: instance.RuleOrgID,
 			RuleUID:   instance.RuleUID,
-			Labels:    models.InstanceLabels{"test": "testValue"},
 		}
-
-		err = dbstore.GetAlertInstance(ctx, getCmd)
+		err = dbstore.ListAlertInstances(ctx, listCmd)
 		require.NoError(t, err)
 
-		require.Equal(t, instance.Labels, getCmd.Result.Labels)
-		require.Equal(t, alertRule1.OrgID, getCmd.Result.RuleOrgID)
-		require.Equal(t, alertRule1.UID, getCmd.Result.RuleUID)
-		require.Equal(t, instance.CurrentReason, getCmd.Result.CurrentReason)
+		require.Len(t, listCmd.Result, 1)
+		require.Equal(t, instance.Labels, listCmd.Result[0].Labels)
+		require.Equal(t, alertRule1.OrgID, listCmd.Result[0].RuleOrgID)
+		require.Equal(t, alertRule1.UID, listCmd.Result[0].RuleUID)
+		require.Equal(t, instance.CurrentReason, listCmd.Result[0].CurrentReason)
 	})
 
 	t.Run("can save and read new alert instance with no labels", func(t *testing.T) {
@@ -180,17 +183,18 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 		err := dbstore.SaveAlertInstances(ctx, instance)
 		require.NoError(t, err)
 
-		getCmd := &models.GetAlertInstanceQuery{
+		listCmd := &models.ListAlertInstancesQuery{
 			RuleOrgID: instance.RuleOrgID,
 			RuleUID:   instance.RuleUID,
 		}
 
-		err = dbstore.GetAlertInstance(ctx, getCmd)
+		err = dbstore.ListAlertInstances(ctx, listCmd)
 		require.NoError(t, err)
 
-		require.Equal(t, alertRule2.OrgID, getCmd.Result.RuleOrgID)
-		require.Equal(t, alertRule2.UID, getCmd.Result.RuleUID)
-		require.Equal(t, instance.Labels, getCmd.Result.Labels)
+		require.Len(t, listCmd.Result, 1)
+		require.Equal(t, alertRule2.OrgID, listCmd.Result[0].RuleOrgID)
+		require.Equal(t, alertRule2.UID, listCmd.Result[0].RuleUID)
+		require.Equal(t, instance.Labels, listCmd.Result[0].Labels)
 	})
 
 	t.Run("can save two instances with same org_id, uid and different labels", func(t *testing.T) {

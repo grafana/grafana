@@ -4,13 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,7 +20,7 @@ const (
 )
 
 func ProvideService(
-	sqlStore sqlstore.Store,
+	sqlStore db.DB,
 	secretsService secrets.Service,
 	pluginsManager plugins.SecretsPluginManager,
 	kvstore kvstore.KVStore,
@@ -40,7 +40,7 @@ func ProvideService(
 		secretsPlugin, err = StartAndReturnPlugin(pluginsManager, ctx)
 		namespacedKVStore := GetNamespacedKVStore(kvstore)
 		if err != nil || secretsPlugin == nil {
-			logger.Error("failed to start remote secrets management plugin", "msg", err.Error())
+			logger.Error("failed to start remote secrets management plugin")
 			if isFatal, readErr := IsPluginStartupErrorFatal(ctx, namespacedKVStore); isFatal || readErr != nil {
 				// plugin error was fatal or there was an error determining if the error was fatal
 				logger.Error("secrets management plugin is required to start -- exiting app")

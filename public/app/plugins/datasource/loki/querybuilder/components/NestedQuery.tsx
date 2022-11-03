@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, toOption } from '@grafana/data';
-import { AutoSizeInput, EditorRows, FlexItem, IconButton, Select, useStyles2 } from '@grafana/ui';
+import { EditorRows, FlexItem } from '@grafana/experimental';
+import { AutoSizeInput, IconButton, Select, useStyles2 } from '@grafana/ui';
 
 import { LokiDatasource } from '../../datasource';
 import { binaryScalarDefs } from '../binaryScalarOperations';
@@ -29,6 +30,7 @@ export const NestedQuery = React.memo<Props>(
         <div className={styles.header}>
           <div className={styles.name}>Operator</div>
           <Select
+            aria-label="Select operator"
             width="auto"
             options={operators}
             value={toOption(nestedQuery.operator)}
@@ -70,7 +72,7 @@ export const NestedQuery = React.memo<Props>(
             />
           </div>
           <FlexItem grow={1} />
-          <IconButton name="times" size="sm" onClick={() => onRemove(index)} />
+          <IconButton ariaLabel="Remove nested query" name="times" size="sm" onClick={() => onRemove(index)} />
         </div>
         <div className={styles.body}>
           <EditorRows>

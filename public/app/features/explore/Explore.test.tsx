@@ -62,6 +62,7 @@ const dummyProps: Props = {
   scanStopAction: scanStopAction,
   setQueries: jest.fn(),
   queryKeys: [],
+  queries: [],
   isLive: false,
   syncedTimes: false,
   updateTimeRange: jest.fn(),
@@ -80,7 +81,9 @@ const dummyProps: Props = {
   showTable: true,
   showTrace: true,
   showNodeGraph: true,
+  showFlameGraph: true,
   splitOpen: (() => {}) as any,
+  splitted: false,
   changeGraphStyle: () => {},
   graphStyle: 'lines',
 };

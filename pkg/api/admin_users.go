@@ -6,10 +6,13 @@ import (
 	"net/http"
 	"strconv"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -156,7 +159,7 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	err = hs.SQLStore.UpdateUserPermissions(userID, form.IsGrafanaAdmin)
+	err = hs.userService.UpdatePermissions(c.Req.Context(), userID, form.IsGrafanaAdmin)
 	if err != nil {
 		if errors.Is(err, user.ErrLastGrafanaAdmin) {
 			return response.Error(400, user.ErrLastGrafanaAdmin.Error(), nil)
@@ -195,6 +198,65 @@ func (hs *HTTPServer) AdminDeleteUser(c *models.ReqContext) response.Response {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
+		return response.Error(500, "Failed to delete user", err)
+	}
+
+	g, ctx := errgroup.WithContext(c.Req.Context())
+	g.Go(func() error {
+		if err := hs.starService.DeleteByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.orgService.DeleteUserFromAll(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.DashboardService.DeleteACLByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.preferenceService.DeleteByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.teamGuardian.DeleteByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.userAuthService.Delete(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.userAuthService.DeleteToken(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.QuotaService.DeleteByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.accesscontrolService.DeleteUserPermissions(ctx, accesscontrol.GlobalOrgID, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err := g.Wait(); err != nil {
 		return response.Error(500, "Failed to delete user", err)
 	}
 

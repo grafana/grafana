@@ -150,6 +150,10 @@ type DeleteCorrelationResponse struct {
 func (s *CorrelationsService) updateHandler(c *models.ReqContext) response.Response {
 	cmd := UpdateCorrelationCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
+		if errors.Is(err, ErrUpdateCorrelationEmptyParams) {
+			return response.Error(http.StatusBadRequest, "At least one of label, description or config is required", err)
+		}
+
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
@@ -159,10 +163,6 @@ func (s *CorrelationsService) updateHandler(c *models.ReqContext) response.Respo
 
 	correlation, err := s.UpdateCorrelation(c.Req.Context(), cmd)
 	if err != nil {
-		if errors.Is(err, ErrUpdateCorrelationEmptyParams) {
-			return response.Error(http.StatusBadRequest, "At least one of label, description is required", err)
-		}
-
 		if errors.Is(err, ErrSourceDataSourceDoesNotExists) {
 			return response.Error(http.StatusNotFound, "Data source not found", err)
 		}
@@ -224,7 +224,7 @@ func (s *CorrelationsService) getCorrelationHandler(c *models.ReqContext) respon
 			return response.Error(http.StatusNotFound, "Source data source not found", err)
 		}
 
-		return response.Error(http.StatusInternalServerError, "Failed to update correlation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get correlation", err)
 	}
 
 	return response.JSON(http.StatusOK, correlation)
@@ -270,7 +270,7 @@ func (s *CorrelationsService) getCorrelationsBySourceUIDHandler(c *models.ReqCon
 			return response.Error(http.StatusNotFound, "Source data source not found", err)
 		}
 
-		return response.Error(http.StatusInternalServerError, "Failed to update correlation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get correlations", err)
 	}
 
 	return response.JSON(http.StatusOK, correlations)
@@ -309,7 +309,7 @@ func (s *CorrelationsService) getCorrelationsHandler(c *models.ReqContext) respo
 			return response.Error(http.StatusNotFound, "No correlation found", err)
 		}
 
-		return response.Error(http.StatusInternalServerError, "Failed to update correlation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get correlations", err)
 	}
 
 	return response.JSON(http.StatusOK, correlations)

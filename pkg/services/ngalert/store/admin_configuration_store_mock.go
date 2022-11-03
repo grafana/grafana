@@ -40,7 +40,7 @@ type AdminConfigurationStoreMock_DeleteAdminConfiguration_Call struct {
 }
 
 // DeleteAdminConfiguration is a helper method to define mock.On call
-//  - orgID int64
+//   - orgID int64
 func (_e *AdminConfigurationStoreMock_Expecter) DeleteAdminConfiguration(orgID interface{}) *AdminConfigurationStoreMock_DeleteAdminConfiguration_Call {
 	return &AdminConfigurationStoreMock_DeleteAdminConfiguration_Call{Call: _e.mock.On("DeleteAdminConfiguration", orgID)}
 }
@@ -86,7 +86,7 @@ type AdminConfigurationStoreMock_GetAdminConfiguration_Call struct {
 }
 
 // GetAdminConfiguration is a helper method to define mock.On call
-//  - orgID int64
+//   - orgID int64
 func (_e *AdminConfigurationStoreMock_Expecter) GetAdminConfiguration(orgID interface{}) *AdminConfigurationStoreMock_GetAdminConfiguration_Call {
 	return &AdminConfigurationStoreMock_GetAdminConfiguration_Call{Call: _e.mock.On("GetAdminConfiguration", orgID)}
 }
@@ -168,7 +168,7 @@ type AdminConfigurationStoreMock_UpdateAdminConfiguration_Call struct {
 }
 
 // UpdateAdminConfiguration is a helper method to define mock.On call
-//  - _a0 UpdateAdminConfigurationCmd
+//   - _a0 UpdateAdminConfigurationCmd
 func (_e *AdminConfigurationStoreMock_Expecter) UpdateAdminConfiguration(_a0 interface{}) *AdminConfigurationStoreMock_UpdateAdminConfiguration_Call {
 	return &AdminConfigurationStoreMock_UpdateAdminConfiguration_Call{Call: _e.mock.On("UpdateAdminConfiguration", _a0)}
 }

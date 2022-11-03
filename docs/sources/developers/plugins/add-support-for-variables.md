@@ -6,7 +6,7 @@ title: Add support for variables in plugins
 
 # Add support for variables in plugins
 
-Variables are placeholders for values, and can be used to create things like templated queries and dashboard or panel links. For more information on variables, refer to [Templates and variables]({{< relref "../../variables/" >}}).
+Variables are placeholders for values, and can be used to create things like templated queries and dashboard or panel links. For more information on variables, refer to [Templates and variables]({{< relref "../../dashboards/variables/" >}}).
 
 This guide explains how to leverage template variables in your panel plugins and data source plugins.
 
@@ -62,7 +62,7 @@ For data sources, you need to use the getTemplateSrv, which returns an instance 
 
 ## Format multi-value variables
 
-When a user selects multiple values for variable, the value of the interpolated variable depends on the [variable format](https://grafana.com/docs/grafana/next/variables/advanced-variable-format-options/).
+When a user selects multiple values for variable, the value of the interpolated variable depends on the [variable format]({{< relref "../../dashboards/variables/variable-syntax/#advanced-variable-format-options" >}}).
 
 A data source can define the default format option when no format is specified by adding a third argument to the interpolation function.
 
@@ -78,7 +78,7 @@ Now, when users write `$service`, the query looks like this:
 SELECT * FROM services WHERE id IN (admin,auth,billing)
 ```
 
-For more information on the available variable formats, refer to [Advanced variable format options]({{< relref "../../variables/advanced-variable-format-options/" >}}).
+For more information on the available variable formats, refer to [Advanced variable format options]({{< relref "../../dashboards/variables/variable-syntax/#advanced-variable-format-options" >}}).
 
 ## Set a variable from your plugin
 
@@ -101,7 +101,7 @@ locationService.partial({ 'var-service': 'billing' }, true);
 
 ## Add support for query variables to your data source
 
-[Query variables]({{< relref "../../variables/variable-types/add-query-variable/" >}}) is a type of variable that allows you to query a data source for the values. By adding support for query variables to your data source plugin, users can create dynamic dashboards based on data from your data source.
+[Query variables]({{< relref "../../dashboards/variables/add-template-variables/#add-a-query-variable" >}}) is a type of variable that allows you to query a data source for the values. By adding support for query variables to your data source plugin, users can create dynamic dashboards based on data from your data source.
 
 Let's start by defining a query model for the variable query.
 
@@ -199,4 +199,4 @@ Let's create a custom query editor to allow the user to edit the query model.
      .setVariableQueryEditor(VariableQueryEditor);
    ```
 
-That's it! You can now try out the plugin by adding a [query variable]({{< relref "../../variables/variable-types/add-query-variable/" >}}) to your dashboard.
+That's it! You can now try out the plugin by adding a [query variable]({{< relref "../../dashboards/variables/add-template-variables/#add-a-query-variable" >}}) to your dashboard.

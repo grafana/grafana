@@ -16,7 +16,10 @@ import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSuppo
 
 import { DataSourceRef, WithAccessControlMetadata } from '.';
 
-export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
+export interface DataSourcePluginOptionsEditorProps<
+  JSONData extends DataSourceJsonData = DataSourceJsonData,
+  SecureJSONData = {}
+> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
   onOptionsChange: (options: DataSourceSettings<JSONData, SecureJSONData>) => void;
 }
@@ -379,6 +382,7 @@ export interface QueryEditorProps<
   onRunQuery: () => void;
   onChange: (value: TVQuery) => void;
   onBlur?: () => void;
+  onAddQuery?: (query: TQuery) => void;
   /**
    * Contains query response filtered by refId of QueryResultBase and possible query error
    */
@@ -497,6 +501,9 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   // Explore state used by various datasources
   liveStreaming?: boolean;
+
+  // Make it possible to hide support queries from the inspector
+  hideFromInspector?: boolean;
 }
 
 export interface DataQueryTimings {

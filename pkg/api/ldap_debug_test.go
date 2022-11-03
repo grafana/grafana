@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -58,7 +59,7 @@ func (m *LDAPMock) User(login string) (*models.ExternalUserInfo, ldap.ServerConf
 // GetUserFromLDAP tests
 // ***
 
-func getUserFromLDAPContext(t *testing.T, requestURL string, searchOrgRst []*models.OrgDTO) *scenarioContext {
+func getUserFromLDAPContext(t *testing.T, requestURL string, searchOrgRst []*org.OrgDTO) *scenarioContext {
 	t.Helper()
 
 	sc := setupScenarioContext(t, requestURL)
@@ -67,7 +68,7 @@ func getUserFromLDAPContext(t *testing.T, requestURL string, searchOrgRst []*mod
 	setting.LDAPEnabled = true
 	t.Cleanup(func() { setting.LDAPEnabled = origLDAP })
 
-	hs := &HTTPServer{Cfg: setting.NewCfg(), ldapGroups: ldap.ProvideGroupsService(), SQLStore: &mockstore.SQLStoreMock{ExpectedSearchOrgList: searchOrgRst}}
+	hs := &HTTPServer{Cfg: setting.NewCfg(), ldapGroups: ldap.ProvideGroupsService(), orgService: &orgtest.FakeOrgService{ExpectedOrgs: searchOrgRst}}
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		sc.context = c
@@ -95,7 +96,7 @@ func TestGetUserFromLDAPAPIEndpoint_UserNotFound(t *testing.T) {
 
 	userSearchResult = nil
 
-	sc := getUserFromLDAPContext(t, "/api/admin/ldap/user-that-does-not-exist", []*models.OrgDTO{})
+	sc := getUserFromLDAPContext(t, "/api/admin/ldap/user-that-does-not-exist", []*org.OrgDTO{})
 
 	require.Equal(t, sc.resp.Code, http.StatusNotFound)
 	assert.JSONEq(t, "{\"message\":\"No user was found in the LDAP server(s) with that username\"}", sc.resp.Body.String())
@@ -133,8 +134,8 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 		},
 	}
 
-	mockOrgSearchResult := []*models.OrgDTO{
-		{Id: 1, Name: "Main Org."},
+	mockOrgSearchResult := []*org.OrgDTO{
+		{ID: 1, Name: "Main Org."},
 	}
 
 	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
@@ -188,8 +189,8 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 		},
 	}
 
-	mockOrgSearchResult := []*models.OrgDTO{
-		{Id: 1, Name: "Main Org."},
+	mockOrgSearchResult := []*org.OrgDTO{
+		{ID: 1, Name: "Main Org."},
 	}
 
 	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
@@ -258,8 +259,8 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 		},
 	}
 
-	mockOrgSearchResult := []*models.OrgDTO{
-		{Id: 1, Name: "Main Org."},
+	mockOrgSearchResult := []*org.OrgDTO{
+		{ID: 1, Name: "Main Org."},
 	}
 
 	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
@@ -610,6 +611,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			hs.userService = &usertest.FakeUserService{ExpectedUser: &user.User{}}
 			hs.authInfoService = &logintest.AuthInfoServiceFake{}
 			hs.Login = &loginservice.LoginServiceMock{}
+			hs.orgService = &orgtest.FakeOrgService{}
 			sc.resp = httptest.NewRecorder()
 			sc.req, err = http.NewRequest(test.method, test.url, nil)
 			assert.NoError(t, err)

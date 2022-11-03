@@ -9,6 +9,7 @@ import (
 
 	grafana_models "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +20,7 @@ func TestCalculateChanges(t *testing.T) {
 	orgId := int64(rand.Int31())
 
 	t.Run("detects alerts that need to be added", func(t *testing.T) {
-		fakeStore := NewFakeRuleStore(t)
+		fakeStore := fakes.NewRuleStore(t)
 
 		groupKey := models.GenerateGroupKey(orgId)
 		submitted := models.GenerateAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withOrgID(orgId), simulateSubmitted, withoutUID))
@@ -46,7 +47,7 @@ func TestCalculateChanges(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgId)
 		inDatabaseMap, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withGroupKey(groupKey)))
 
-		fakeStore := NewFakeRuleStore(t)
+		fakeStore := fakes.NewRuleStore(t)
 		fakeStore.PutRule(context.Background(), inDatabase...)
 
 		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, make([]*models.AlertRule, 0))
@@ -70,7 +71,7 @@ func TestCalculateChanges(t *testing.T) {
 		inDatabaseMap, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withGroupKey(groupKey)))
 		submittedMap, submitted := models.GenerateUniqueAlertRules(len(inDatabase), models.AlertRuleGen(simulateSubmitted, withGroupKey(groupKey), withUIDs(inDatabaseMap)))
 
-		fakeStore := NewFakeRuleStore(t)
+		fakeStore := fakes.NewRuleStore(t)
 		fakeStore.PutRule(context.Background(), inDatabase...)
 
 		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, submitted)
@@ -108,7 +109,7 @@ func TestCalculateChanges(t *testing.T) {
 			submitted = append(submitted, r)
 		}
 
-		fakeStore := NewFakeRuleStore(t)
+		fakeStore := fakes.NewRuleStore(t)
 		fakeStore.PutRule(context.Background(), inDatabase...)
 
 		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, submitted)
@@ -159,7 +160,7 @@ func TestCalculateChanges(t *testing.T) {
 
 		dbRule := models.AlertRuleGen(withOrgID(orgId))()
 
-		fakeStore := NewFakeRuleStore(t)
+		fakeStore := fakes.NewRuleStore(t)
 		fakeStore.PutRule(context.Background(), dbRule)
 
 		groupKey := models.GenerateGroupKey(orgId)
@@ -185,7 +186,7 @@ func TestCalculateChanges(t *testing.T) {
 		sourceGroupKey := models.GenerateGroupKey(orgId)
 		inDatabaseMap, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(10)+10, models.AlertRuleGen(withGroupKey(sourceGroupKey)))
 
-		fakeStore := NewFakeRuleStore(t)
+		fakeStore := fakes.NewRuleStore(t)
 		fakeStore.PutRule(context.Background(), inDatabase...)
 
 		namespace := randFolder()
@@ -221,7 +222,7 @@ func TestCalculateChanges(t *testing.T) {
 	})
 
 	t.Run("should fail when submitted rule has UID that does not exist in db", func(t *testing.T) {
-		fakeStore := NewFakeRuleStore(t)
+		fakeStore := fakes.NewRuleStore(t)
 		groupKey := models.GenerateGroupKey(orgId)
 		submitted := models.AlertRuleGen(withOrgID(orgId), simulateSubmitted)()
 		require.NotEqual(t, "", submitted.UID)
@@ -231,7 +232,7 @@ func TestCalculateChanges(t *testing.T) {
 	})
 
 	t.Run("should fail if cannot fetch current rules in the group", func(t *testing.T) {
-		fakeStore := NewFakeRuleStore(t)
+		fakeStore := fakes.NewRuleStore(t)
 		expectedErr := errors.New("TEST ERROR")
 		fakeStore.Hook = func(cmd interface{}) error {
 			switch cmd.(type) {
@@ -249,7 +250,7 @@ func TestCalculateChanges(t *testing.T) {
 	})
 
 	t.Run("should fail if cannot fetch rule by UID", func(t *testing.T) {
-		fakeStore := NewFakeRuleStore(t)
+		fakeStore := fakes.NewRuleStore(t)
 		expectedErr := errors.New("TEST ERROR")
 		fakeStore.Hook = func(cmd interface{}) error {
 			switch cmd.(type) {

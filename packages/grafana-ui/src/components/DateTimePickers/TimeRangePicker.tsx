@@ -41,6 +41,7 @@ export interface TimeRangePickerProps {
   history?: TimeRange[];
   hideQuickRanges?: boolean;
   widthOverride?: number;
+  isOnCanvas?: boolean;
 }
 
 export interface State {
@@ -64,6 +65,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     onChangeFiscalYearStartMonth,
     hideQuickRanges,
     widthOverride,
+    isOnCanvas,
   } = props;
 
   const onChange = (timeRange: TimeRange) => {
@@ -87,7 +89,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 
   const styles = useStyles2(getStyles);
   const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
-  const variant = isSynced ? 'active' : 'default';
+  const variant = isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
 
   return (
     <ButtonGroup className={styles.container}>

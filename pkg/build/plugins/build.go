@@ -18,7 +18,7 @@ type PluginSigningMode = int
 
 // BuildPlugins builds internal plugins.
 // The built plugins are placed in plugins-bundled/dist/.
-func Build(ctx context.Context, grafanaDir string, p syncutil.WorkerPool, g *errutil.Group, verMode *config.Version) error {
+func Build(ctx context.Context, grafanaDir string, p syncutil.WorkerPool, g *errutil.Group, verMode *config.BuildConfig) error {
 	log.Printf("Building plugins in %q...", grafanaDir)
 
 	root := filepath.Join(grafanaDir, "plugins-bundled", "internal")

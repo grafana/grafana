@@ -1,0 +1,17 @@
+name: Observability Experience test code coverage
+on:
+  pull_request:
+    paths:
+      - 'pkg/services/queryhistory/**'
+      - 'public/app/features/explore/**'
+      - 'public/app/features/correlations/**'
+    branches-ignore:
+      - dependabot/**
+      - backport-*
+
+jobs:
+  workflow-call:
+    uses: grafana/code-coverage/.github/workflows/code-coverage.yml@v0.1.12
+    with:
+      frontend-path-regexp: public\/app\/features\/(explore|correlations)
+      backend-path-regexp: pkg\/services\/(queryhistory)

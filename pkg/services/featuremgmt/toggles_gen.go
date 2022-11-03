@@ -7,6 +7,10 @@
 package featuremgmt
 
 const (
+	// FlagAlertingBigTransactions
+	// Use big transactions for alerting database writes
+	FlagAlertingBigTransactions = "alertingBigTransactions"
+
 	// FlagTrimDefaults
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
@@ -75,6 +79,10 @@ const (
 	// use experimental loki api for websocket streaming (early prototype)
 	FlagLokiDataframeApi = "lokiDataframeApi"
 
+	// FlagLokiMonacoEditor
+	// Access to Monaco query editor for Loki
+	FlagLokiMonacoEditor = "lokiMonacoEditor"
+
 	// FlagSwaggerUi
 	// Serves swagger UI
 	FlagSwaggerUi = "swaggerUi"
@@ -127,6 +135,10 @@ const (
 	// Enable command palette
 	FlagCommandPalette = "commandPalette"
 
+	// FlagCorrelations
+	// Correlations page
+	FlagCorrelations = "correlations"
+
 	// FlagCloudWatchDynamicLabels
 	// Use dynamic labels instead of alias patterns in CloudWatch datasource
 	FlagCloudWatchDynamicLabels = "cloudWatchDynamicLabels"
@@ -146,6 +158,10 @@ const (
 	// FlagPrometheusStreamingJSONParserTest
 	// Run both old and streaming requests and log differences
 	FlagPrometheusStreamingJSONParserTest = "prometheusStreamingJSONParserTest"
+
+	// FlagNewDBLibrary
+	// Use jmoiron/sqlx rather than xorm for a few backend services
+	FlagNewDBLibrary = "newDBLibrary"
 
 	// FlagValidateDashboardsOnSave
 	// Validate dashboard JSON POSTed to api/dashboards/db
@@ -171,10 +187,6 @@ const (
 	// Continue to use the angular/flot based heatmap panel
 	FlagUseLegacyHeatmapPanel = "useLegacyHeatmapPanel"
 
-	// FlagCloudMonitoringExperimentalUI
-	// Use grafana-experimental UI in Cloud Monitoring
-	FlagCloudMonitoringExperimentalUI = "cloudMonitoringExperimentalUI"
-
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
 	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
@@ -184,7 +196,7 @@ const (
 	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
 
 	// FlagDataConnectionsConsole
-	// Enables a new top-level page called Data Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.
+	// Enables a new top-level page called Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.
 	FlagDataConnectionsConsole = "dataConnectionsConsole"
 
 	// FlagInternationalization
@@ -195,13 +207,21 @@ const (
 	// New top nav and page layouts
 	FlagTopnav = "topnav"
 
-	// FlagCustomBranding
-	// Replaces whitelabeling with the new custom branding feature
-	FlagCustomBranding = "customBranding"
+	// FlagGrpcServer
+	// Run GRPC server
+	FlagGrpcServer = "grpcServer"
+
+	// FlagObjectStore
+	// SQL based object store
+	FlagObjectStore = "objectStore"
 
 	// FlagTraceqlEditor
 	// Show the TraceQL editor in the explore page
 	FlagTraceqlEditor = "traceqlEditor"
+
+	// FlagFlameGraph
+	// Show the flame graph
+	FlagFlameGraph = "flameGraph"
 
 	// FlagRedshiftAsyncQueryDataSupport
 	// Enable async query data support for Redshift
@@ -210,4 +230,40 @@ const (
 	// FlagAthenaAsyncQueryDataSupport
 	// Enable async query data support for Athena
 	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
+
+	// FlagIncreaseInMemDatabaseQueryCache
+	// Enable more in memory caching for database queries
+	FlagIncreaseInMemDatabaseQueryCache = "increaseInMemDatabaseQueryCache"
+
+	// FlagInterFont
+	// Switch to inter font
+	FlagInterFont = "interFont"
+
+	// FlagNewPanelChromeUI
+	// Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu
+	FlagNewPanelChromeUI = "newPanelChromeUI"
+
+	// FlagQueryLibrary
+	// Reusable query library
+	FlagQueryLibrary = "queryLibrary"
+
+	// FlagShowDashboardValidationWarnings
+	// Show warnings when Dashboards do not validate against the schema
+	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
+
+	// FlagMysqlAnsiQuotes
+	// Use double quote to escape keyword in Mysql query
+	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
+
+	// FlagDatasourceLogger
+	// Logs all datasource requests
+	FlagDatasourceLogger = "datasourceLogger"
+
+	// FlagAccessControlOnCall
+	// Access control primitives for OnCall
+	FlagAccessControlOnCall = "accessControlOnCall"
+
+	// FlagNestedFolders
+	// Enable folder nesting
+	FlagNestedFolders = "nestedFolders"
 )

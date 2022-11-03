@@ -30,7 +30,7 @@ func startDummyExportJob(cfg ExportConfig, broadcaster statusBroadcaster) (Job, 
 		broadcaster: broadcaster,
 		status: ExportStatus{
 			Running: true,
-			Target:  "git export",
+			Target:  "dummy export",
 			Started: time.Now().UnixMilli(),
 			Count:   make(map[string]int, 10),
 			Index:   0,

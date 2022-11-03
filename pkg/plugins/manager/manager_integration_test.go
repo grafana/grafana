@@ -3,23 +3,25 @@ package manager
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace"
-	"gopkg.in/ini.v1"
-
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/tsdb/parca"
+	"github.com/grafana/grafana/pkg/tsdb/phlare"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
@@ -28,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/searchV2"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
@@ -47,7 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
-func TestIntegrationPluginManager_Run(t *testing.T) {
+func TestIntegrationPluginManager(t *testing.T) {
 	t.Helper()
 
 	staticRootPath, err := filepath.Abs("../../../public/")
@@ -56,28 +57,31 @@ func TestIntegrationPluginManager_Run(t *testing.T) {
 	bundledPluginsPath, err := filepath.Abs("../../../plugins-bundled/internal")
 	require.NoError(t, err)
 
-	features := featuremgmt.WithFeatures()
+	// We use the raw config here as it forms the basis for the setting.Provider implementation
+	// The plugin manager also relies directly on the setting.Cfg struct to provide Grafana specific
+	// properties such as the loading paths
+	raw, err := ini.Load([]byte(`
+		app_mode = production
+
+		[plugin.test-app]
+		path=testdata/test-app
+
+		[plugin.test-panel]
+		not=included
+		`),
+	)
+	require.NoError(t, err)
+
 	cfg := &setting.Cfg{
-		Raw:                    ini.Empty(),
-		Env:                    setting.Prod,
+		Raw:                    raw,
 		StaticRootPath:         staticRootPath,
 		BundledPluginsPath:     bundledPluginsPath,
-		IsFeatureToggleEnabled: features.IsEnabled,
-		PluginSettings: map[string]map[string]string{
-			"plugin.test-app": {
-				"path": "testdata/test-app",
-			},
-			"plugin.test-panel": {
-				"not": "included",
-			},
-		},
+		Azure:                  &azsettings.AzureSettings{},
+		IsFeatureToggleEnabled: func(_ string) bool { return false },
 	}
 
-	tracer := &fakeTracer{}
-
-	license := &licensing.OSSLicensingService{
-		Cfg: cfg,
-	}
+	tracer := tracing.InitializeTracerForTest()
+	features := featuremgmt.WithFeatures()
 
 	hcp := httpclient.NewProvider()
 	am := azuremonitor.ProvideService(cfg, hcp, tracer)
@@ -94,24 +98,25 @@ func TestIntegrationPluginManager_Run(t *testing.T) {
 	pg := postgres.ProvideService(cfg)
 	my := mysql.ProvideService(cfg, hcp)
 	ms := mssql.ProvideService(cfg)
-	sv2 := searchV2.ProvideService(cfg, sqlstore.InitTestDB(t), nil, nil)
-	graf := grafanads.ProvideService(cfg, sv2, nil)
+	sv2 := searchV2.ProvideService(cfg, db.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil)
+	graf := grafanads.ProvideService(sv2, nil)
+	phlare := phlare.ProvideService(hcp)
+	parca := parca.ProvideService(hcp)
 
-	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
+	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, phlare, parca)
 
-	pmCfg := plugins.FromGrafanaCfg(cfg)
+	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
 	reg := registry.ProvideService()
-	pm, err := ProvideService(cfg, reg, loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
-		provider.ProvideService(coreRegistry)), nil)
+	l := loader.ProvideService(pCfg, &licensing.OSSLicensingService{Cfg: cfg}, signature.NewUnsignedAuthorizer(pCfg), reg, provider.ProvideService(coreRegistry))
+	ps, err := store.ProvideService(cfg, pCfg, reg, l)
 	require.NoError(t, err)
-	ps := store.ProvideService(reg)
 
 	ctx := context.Background()
 	verifyCorePluginCatalogue(t, ctx, ps)
 	verifyBundledPlugins(t, ctx, ps)
 	verifyPluginStaticRoutes(t, ctx, ps)
-	verifyBackendProcesses(t, pm.pluginRegistry.Plugins(ctx))
-	verifyPluginQuery(t, ctx, client.ProvideService(reg))
+	verifyBackendProcesses(t, reg.Plugins(ctx))
+	verifyPluginQuery(t, ctx, client.ProvideService(reg, pCfg))
 }
 
 func verifyPluginQuery(t *testing.T, ctx context.Context, c plugins.Client) {
@@ -164,6 +169,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"candlestick":    {},
 		"news":           {},
 		"nodeGraph":      {},
+		"flamegraph":     {},
 		"traces":         {},
 		"piechart":       {},
 		"stat":           {},
@@ -199,6 +205,8 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"jaeger":                           {},
 		"mixed":                            {},
 		"zipkin":                           {},
+		"phlare":                           {},
+		"parca":                            {},
 	}
 
 	expApps := map[string]struct{}{
@@ -284,20 +292,4 @@ func verifyBackendProcesses(t *testing.T, ps []*plugins.Plugin) {
 			require.NotNil(t, pc)
 		}
 	}
-}
-
-type fakeTracer struct {
-	tracing.Tracer
-}
-
-func (ft *fakeTracer) Run(context.Context) error {
-	return nil
-}
-
-func (ft *fakeTracer) Start(ctx context.Context, _ string, _ ...trace.SpanStartOption) (context.Context, tracing.Span) {
-	return ctx, nil
-}
-
-func (ft *fakeTracer) Inject(context.Context, http.Header, tracing.Span) {
-
 }

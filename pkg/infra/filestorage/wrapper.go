@@ -240,7 +240,7 @@ func (b wrapper) listOptionsWithDefaults(options *ListOptions) *ListOptions {
 
 	var filter PathFilter
 	if options.Filter != nil {
-		filter = newAndPathFilter(b.filter, wrapPathFilter(options.Filter, b.rootFolder))
+		filter = NewAndPathFilter(b.filter, wrapPathFilter(options.Filter, b.rootFolder))
 	} else {
 		filter = b.filter
 	}
@@ -283,7 +283,7 @@ func (b wrapper) deleteFolderOptionsWithDefaults(options *DeleteFolderOptions) *
 
 	var filter PathFilter
 	if options.AccessFilter != nil {
-		filter = newAndPathFilter(b.filter, wrapPathFilter(options.AccessFilter, b.rootFolder))
+		filter = NewAndPathFilter(b.filter, wrapPathFilter(options.AccessFilter, b.rootFolder))
 	} else {
 		filter = b.filter
 	}

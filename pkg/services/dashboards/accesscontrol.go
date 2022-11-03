@@ -28,8 +28,7 @@ const (
 	ActionDashboardsDelete           = "dashboards:delete"
 	ActionDashboardsPermissionsRead  = "dashboards.permissions:read"
 	ActionDashboardsPermissionsWrite = "dashboards.permissions:write"
-
-	ActionDashboardPublicWrite = "dashboards.public:write"
+	ActionDashboardsPublicWrite      = "dashboards.public:write"
 )
 
 var (

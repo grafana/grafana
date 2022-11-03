@@ -2,7 +2,7 @@ import { DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta, 
 
 import { getDerivedFields } from './getDerivedFields';
 import { makeTableFrames } from './makeTableFrames';
-import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
+import { formatQuery, getHighlighterExpressionsFromQuery } from './queryUtils';
 import { dataFrameHasLokiError } from './responseUtils';
 import { DerivedFieldConfig, LokiQuery, LokiQueryType } from './types';
 

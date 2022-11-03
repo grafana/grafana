@@ -16,6 +16,10 @@ datasources:
       - targetUID: a target
         label: a label
         description: a description
+        config:
+          field: "fieldName"
+          target:
+            target: "test.query"
     jsonData:
       graphiteVersion: "1.1"
       tlsAuth: true

@@ -1,10 +1,10 @@
-import { getTemplateSrv } from '@grafana/runtime';
 import { Monaco, monacoTypes } from '@grafana/ui';
 
+import { setupMockedTemplateService } from '../../__mocks__/CloudWatchDataSource';
 import * as MetricMathTestData from '../../__mocks__/metric-math-test-data';
 import MonacoMock from '../../__mocks__/monarch/Monaco';
 import TextModel from '../../__mocks__/monarch/TextModel';
-import { CloudWatchDatasource } from '../../datasource';
+import { CloudWatchAPI } from '../../api';
 import cloudWatchMetricMathLanguageDefinition from '../definition';
 import {
   METRIC_MATH_FNS,
@@ -19,10 +19,9 @@ import { MetricMathCompletionItemProvider } from './CompletionItemProvider';
 const getSuggestions = async (value: string, position: monacoTypes.IPosition) => {
   const setup = new MetricMathCompletionItemProvider(
     {
-      getVariables: () => [],
       getActualRegion: () => 'us-east-2',
-    } as any as CloudWatchDatasource,
-    getTemplateSrv()
+    } as CloudWatchAPI,
+    setupMockedTemplateService([])
   );
   const monaco = MonacoMock as Monaco;
   const provider = setup.getCompletionProvider(monaco, cloudWatchMetricMathLanguageDefinition);

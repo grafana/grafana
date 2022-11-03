@@ -143,14 +143,14 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int6
 		if err != nil {
 			return fmt.Errorf("failed to list alert rules: %w", err)
 		}
-		updateRules := make([]store.UpdateRule, 0, len(query.Result))
+		updateRules := make([]models.UpdateRule, 0, len(query.Result))
 		for _, rule := range query.Result {
 			if rule.IntervalSeconds == intervalSeconds {
 				continue
 			}
 			newRule := *rule
 			newRule.IntervalSeconds = intervalSeconds
-			updateRules = append(updateRules, store.UpdateRule{
+			updateRules = append(updateRules, models.UpdateRule{
 				Existing: rule,
 				New:      newRule,
 			})
@@ -216,7 +216,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 			}
 		}
 
-		updates := make([]store.UpdateRule, 0, len(delta.Update))
+		updates := make([]models.UpdateRule, 0, len(delta.Update))
 		for _, update := range delta.Update {
 			// check that provenance is not changed in a invalid way
 			storedProvenance, err := service.provenanceStore.GetProvenance(ctx, update.New, orgID)
@@ -226,7 +226,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 			if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
 				return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
 			}
-			updates = append(updates, store.UpdateRule{
+			updates = append(updates, models.UpdateRule{
 				Existing: update.Existing,
 				New:      *update.New,
 			})
@@ -281,7 +281,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 		return models.AlertRule{}, err
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err := service.ruleStore.UpdateAlertRules(ctx, []store.UpdateRule{
+		err := service.ruleStore.UpdateAlertRules(ctx, []models.UpdateRule{
 			{
 				Existing: &storedRule,
 				New:      rule,
