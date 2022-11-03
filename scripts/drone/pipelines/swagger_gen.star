@@ -75,7 +75,7 @@ def swagger_gen_step(edition, ver_mode):
             'cd grafana',
 	        'make clean-api-spec && make openapi3-gen',
 	        'for f in public/api-spec.json public/api-merged.json public/openapi3.json; do git add $f; done',
-	        'if git diff --name-only --cached; then git commit -m "Update OpenAPI and Swagger" --author="Grot (@grafanabot) <43478413+grafanabot@users.noreply.github.com>" && git push {} {}; else echo "Everything seems up to date!"; fi'.format("https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git", committish),
+	        'if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to date!"; else git commit -m "Update OpenAPI and Swagger" --author="Grot (@grafanabot) <43478413+grafanabot@users.noreply.github.com>" && git push {} {}; fi'.format("https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git", committish),
         ],
         'depends_on': [
             'clone-pr-enterprise-branch',

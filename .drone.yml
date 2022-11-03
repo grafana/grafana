@@ -859,10 +859,10 @@ steps:
   - make clean-api-spec && make openapi3-gen
   - for f in public/api-spec.json public/api-merged.json public/openapi3.json; do
     git add $f; done
-  - if git diff --name-only --cached; then git commit -m "Update OpenAPI and Swagger"
-    --author="Grot (@grafanabot) <43478413+grafanabot@users.noreply.github.com>" &&
-    git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git ${DRONE_SOURCE_BRANCH};
-    else echo "Everything seems up to date!"; fi
+  - if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to
+    date!"; else git commit -m "Update OpenAPI and Swagger" --author="Grot (@grafanabot)
+    <43478413+grafanabot@users.noreply.github.com>" && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
+    ${DRONE_SOURCE_BRANCH}; fi
   depends_on:
   - clone-pr-enterprise-branch
   environment:
@@ -5487,6 +5487,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: ec429cd6f8de0f3c55a2e4e334e57c337151c3f99ac4a4d530f256ec12c448a7
+hmac: c119a671fc14ababb084c30fdd0c9ed6172bbef2042b3e347f34b304afb5331e
 
 ...
