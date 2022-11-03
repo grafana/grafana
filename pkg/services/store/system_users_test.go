@@ -1,9 +1,9 @@
 package store
 
 import (
-	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
@@ -21,6 +21,7 @@ func TestRetrievalOfNotInitializedOrg(t *testing.T) {
 	require.Equal(t, orgID, user.OrgID)
 
 	userFromSubsequentCall, err := service.GetUser(admin, orgID)
+	require.NoError(t, err)
 	require.Same(t, user, userFromSubsequentCall)
 }
 
