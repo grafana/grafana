@@ -35,10 +35,10 @@ const getConfigError = (err: { status: number }) => ({ error: err.status !== 404
 export const publicDashboardApi = createApi({
   reducerPath: 'publicDashboardApi',
   baseQuery: retry(backendSrvBaseQuery({ baseUrl: '/api/dashboards' }), { maxRetries: 0 }),
-  tagTypes: ['Config', 'PublicDashboards'],
+  tagTypes: ['PublicDashboard', 'AuditTablePublicDashboard'],
   keepUnusedDataFor: 0,
   endpoints: (builder) => ({
-    getConfig: builder.query<PublicDashboard, string>({
+    getPublicDashboard: builder.query<PublicDashboard, string>({
       query: (dashboardUid) => ({
         url: `/uid/${dashboardUid}/public-dashboards`,
         manageError: getConfigError,
@@ -53,9 +53,9 @@ export const publicDashboardApi = createApi({
           dispatch(notifyApp(createErrorNotification(customError?.error?.data?.message)));
         }
       },
-      providesTags: ['Config'],
+      providesTags: ['PublicDashboard'],
     }),
-    saveConfig: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
+    createPublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({
         url: `/uid/${params.dashboard.uid}/public-dashboards`,
         method: 'POST',
@@ -63,21 +63,42 @@ export const publicDashboardApi = createApi({
       }),
       async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
-        dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
+        dispatch(notifyApp(createSuccessNotification('Public dashboard created!')));
 
         // Update runtime meta flag
         dashboard.updateMeta({
+          hasPublicDashboard: true,
           publicDashboardUid: data.uid,
           publicDashboardEnabled: data.isEnabled,
         });
       },
-      invalidatesTags: ['Config'],
+      invalidatesTags: ['PublicDashboard'],
+    }),
+    updatePublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
+      query: (params) => ({
+        url: `/uid/${params.dashboard.uid}/public-dashboards/${params.payload.uid}`,
+        method: 'PUT',
+        data: params.payload,
+      }),
+      extraOptions: { maxRetries: 0 },
+      async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
+        const { data } = await queryFulfilled;
+        dispatch(notifyApp(createSuccessNotification('Public dashboard updated!')));
+
+        // Update runtime meta flag
+        dashboard.updateMeta({
+          hasPublicDashboard: true,
+          publicDashboardUid: data.uid,
+          publicDashboardEnabled: data.isEnabled,
+        });
+      },
+      invalidatesTags: ['PublicDashboard'],
     }),
     listPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
       query: () => ({
         url: '/public-dashboards',
       }),
-      providesTags: ['PublicDashboards'],
+      providesTags: ['AuditTablePublicDashboard'],
     }),
     deletePublicDashboard: builder.mutation<void, { dashboardTitle: string; dashboardUid: string; uid: string }>({
       query: (params) => ({
@@ -97,14 +118,15 @@ export const publicDashboardApi = createApi({
           )
         );
       },
-      invalidatesTags: ['PublicDashboards'],
+      invalidatesTags: ['AuditTablePublicDashboard'],
     }),
   }),
 });
 
 export const {
-  useGetConfigQuery,
-  useSaveConfigMutation,
+  useGetPublicDashboardQuery,
+  useCreatePublicDashboardMutation,
+  useUpdatePublicDashboardMutation,
   useDeletePublicDashboardMutation,
   useListPublicDashboardsQuery,
 } = publicDashboardApi;
