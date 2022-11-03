@@ -19,7 +19,9 @@ import { TraceSpan, TraceSpanData, TraceSpanReference } from '../types/trace';
 
 import { getProcessServiceName } from './process';
 
-export const getSpanId = (span: TraceSpan) => span.spanID;
+export const getSpanId = (
+  span: TraceSpan | { operationName: string; process: { serviceName: string }; spanID: string }
+) => span.spanID;
 export const getSpanName = (
   span: TraceSpanData | { operationName: string; process: { serviceName: string }; spanID: string }
 ) => span.operationName;
@@ -61,7 +63,11 @@ export const filterSpansForTimestamps = createSelector(
 );
 
 export const filterSpansForText = createSelector(
-  ({ spans }: { spans: TraceSpan[] }) => spans,
+  ({
+    spans,
+  }: {
+    spans: TraceSpan[] | Array<{ operationName: string; process: { serviceName: string }; spanID: string }>;
+  }) => spans,
   ({ text }: { text: string }) => text,
   (spans, text) =>
     fuzzy
