@@ -17,6 +17,7 @@ import AlertLabelDropdown from '../AlertLabelDropdown';
 interface Props {
   className?: string;
   suggest: boolean;
+  dataSourceName?: string | null;
 }
 
 const useGetCustomLabels = (dataSourceName: string): Record<string, string[]> => {
@@ -60,7 +61,7 @@ function mapLabelsToOptions(items: string[] = []): Array<SelectableValue<string>
   return items.map((item) => ({ label: item, value: item }));
 }
 
-const LabelsWithSuggestions: FC = () => {
+const LabelsWithSuggestions: FC<{ dataSourceName?: string | null }> = ({ dataSourceName }) => {
   const styles = useStyles2(getStyles);
   const {
     register,
@@ -72,8 +73,6 @@ const LabelsWithSuggestions: FC = () => {
 
   const labels = watch('labels');
   const { fields, remove, append } = useFieldArray({ control, name: 'labels' });
-
-  const dataSourceName = watch('dataSourceName');
 
   const labelsByKey = useGetCustomLabels(dataSourceName || RuleFormType.grafana);
 
@@ -248,7 +247,7 @@ const LabelsWithoutSuggestions: FC = () => {
   );
 };
 
-const LabelsField: FC<Props> = ({ className, suggest }) => {
+const LabelsField: FC<Props> = ({ className, suggest, dataSourceName }) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -272,7 +271,7 @@ const LabelsField: FC<Props> = ({ className, suggest }) => {
         <div className={styles.flexRow}>
           <InlineLabel width={18}>Labels</InlineLabel>
           <div className={styles.flexColumn}>
-            {suggest && <LabelsWithSuggestions />}
+            {suggest && <LabelsWithSuggestions dataSourceName={dataSourceName} />}
             {!suggest && <LabelsWithoutSuggestions />}
           </div>
         </div>
