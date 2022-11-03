@@ -82,14 +82,9 @@ beforeAll(() => {
 
 beforeEach(() => {
   config.featureToggles.publicDashboards = true;
-  mockDashboard = new DashboardModel(
-    {
-      uid: 'mockDashboardUid',
-    },
-    {
-      hasPublicDashboard: true,
-    }
-  );
+  mockDashboard = new DashboardModel({
+    uid: 'mockDashboardUid',
+  });
 
   mockPanel = new PanelModel({
     id: 'mockPanelId',
@@ -152,6 +147,7 @@ describe('SharePublic', () => {
     expect(screen.getByText('2022-08-30 00:00:00 to 2022-09-04 01:59:59')).toBeInTheDocument();
   });
   it('when modal is opened, then loader spinner appears and inputs are disabled', async () => {
+    mockDashboard.meta.hasPublicDashboard = true;
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
 
     expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
@@ -163,6 +159,7 @@ describe('SharePublic', () => {
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
   });
   it('when fetch errors happen, then all inputs remain disabled', async () => {
+    mockDashboard.meta.hasPublicDashboard = true;
     server.use(
       rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
         return res(ctx.status(500));
@@ -170,7 +167,7 @@ describe('SharePublic', () => {
     );
 
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'), { timeout: 7000 });
+    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
 
     expect(screen.getByTestId(selectors.WillBePublicCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.LimitedDSCheckbox)).toBeDisabled();
@@ -183,13 +180,16 @@ describe('SharePublic', () => {
 });
 
 describe('SharePublic - New config setup', () => {
+  beforeEach(() => {
+    mockDashboard.meta.hasPublicDashboard = false;
+  });
   it('when modal is opened, then save button is disabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
   });
-  it('when fetch is done, then loader spinner is gone, inputs are enabled and save button is disabled', async () => {
+  it('when fetch is done, then no loader spinner appears, inputs are enabled and save button is disabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
 
     expect(screen.getByTestId(selectors.WillBePublicCheckbox)).toBeEnabled();
     expect(screen.getByTestId(selectors.LimitedDSCheckbox)).toBeEnabled();
@@ -201,7 +201,7 @@ describe('SharePublic - New config setup', () => {
   });
   it('when checkboxes are filled, then save button remains disabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId(selectors.WillBePublicCheckbox));
     fireEvent.click(screen.getByTestId(selectors.LimitedDSCheckbox));
@@ -211,7 +211,7 @@ describe('SharePublic - New config setup', () => {
   });
   it('when checkboxes and switch are filled, then save button is enabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId(selectors.WillBePublicCheckbox));
     fireEvent.click(screen.getByTestId(selectors.LimitedDSCheckbox));
@@ -224,6 +224,7 @@ describe('SharePublic - New config setup', () => {
 
 describe('SharePublic - Already persisted', () => {
   beforeEach(() => {
+    mockDashboard.meta.hasPublicDashboard = true;
     server.use(
       rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
         return res(
