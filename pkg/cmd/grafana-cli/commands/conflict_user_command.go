@@ -230,7 +230,6 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 			previouslySeenLogins[strings.ToLower(u.Login)] = true
 		}
 	}
-
 	// tested in https://regex101.com/r/una3zC/1
 	diffPattern := `^[+-]`
 	// compiling since in a loop
@@ -238,23 +237,33 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 	if err != nil {
 		return fmt.Errorf("unable to compile regex %s: %w", diffPattern, err)
 	}
+	counterKeepUsersForBlock := map[string]int{}
+	currentBlock := ""
 	for _, row := range strings.Split(string(b), "\n") {
+		// end of file
 		if row == "" {
-			// end of file
 			break
 		}
 		// if the row starts with a #, it is a comment
 		if row[0] == '#' {
-			// comment
-			continue
-		}
-		entryRow := matchingExpression.Match([]byte(row))
-		if !entryRow {
-			// block row
-			// conflict: hej
 			continue
 		}
 
+		entryRow := matchingExpression.Match([]byte(row))
+		// not and entry row -> is a conflict block row
+		if !entryRow {
+			// conflict: hej
+			currentBlock = row
+			continue
+		}
+		// if the row starts with a + or -, it is a diff
+		if (row[0] != '-') && (row[0] != '+') {
+			return fmt.Errorf("invalid start character (expected '+,-') found %c for row %s", row[0], row)
+		}
+		// need to track how many keep users we have for a block
+		if row[0] == '+' {
+			counterKeepUsersForBlock[currentBlock] += 1
+		}
 		newUser := &ConflictingUser{}
 		err := newUser.Marshal(row)
 		if err != nil {
@@ -268,6 +277,12 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 		}
 		// valid entry
 		newConflicts = append(newConflicts, *newUser)
+	}
+	for _, count := range counterKeepUsersForBlock {
+		// check if we only have one addition for each block
+		if count != 1 {
+			return fmt.Errorf("invalid number of users to keep, expected 1, got %d", count)
+		}
 	}
 	r.ValidUsers = newConflicts
 	r.BuildConflictBlocks(newConflicts, fmt.Sprintf)
