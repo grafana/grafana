@@ -5,7 +5,7 @@ import { FieldArrayMethodProps, useFieldArray, useFormContext } from 'react-hook
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Field, InlineLabel, Label, useStyles2, Tooltip, Icon, Input } from '@grafana/ui';
+import { Button, Field, InlineLabel, Label, useStyles2, Tooltip, Icon, Input, LoadingPlaceholder } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -20,7 +20,7 @@ interface Props {
   dataSourceName?: string | null;
 }
 
-const useGetCustomLabels = (dataSourceName: string): Record<string, string[]> => {
+const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsByKey: Record<string, string[]> } => {
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -31,8 +31,12 @@ const useGetCustomLabels = (dataSourceName: string): Record<string, string[]> =>
 
   const rulerRequest = rulerRuleRequests[dataSourceName];
 
-  if (!rulerRequest || rulerRequest.loading) {
-    return {};
+  if (!rulerRequest) {
+    return { loading: false, labelsByKey: {} };
+  }
+
+  if (rulerRequest.loading) {
+    return { loading: true, labelsByKey: {} };
   }
 
   const result = rulerRequest.result || {};
@@ -54,7 +58,7 @@ const useGetCustomLabels = (dataSourceName: string): Record<string, string[]> =>
     });
   });
 
-  return labelsByKey;
+  return { loading: false, labelsByKey };
 };
 
 function mapLabelsToOptions(items: string[] = []): Array<SelectableValue<string>> {
@@ -111,7 +115,7 @@ const LabelsWithSuggestions: FC<{ dataSourceName?: string | null }> = ({ dataSou
   const labels = watch('labels');
   const { fields, remove, append } = useFieldArray({ control, name: 'labels' });
 
-  const labelsByKey = useGetCustomLabels(dataSourceName || RuleFormType.grafana);
+  const { loading, labelsByKey } = useGetCustomLabels(dataSourceName || RuleFormType.grafana);
 
   const [selectedKey, setSelectedKey] = useState('');
 
@@ -132,58 +136,63 @@ const LabelsWithSuggestions: FC<{ dataSourceName?: string | null }> = ({ dataSou
 
   return (
     <>
-      {fields.map((field, index) => {
-        return (
-          <div key={field.id}>
-            <div className={cx(styles.flexRow, styles.centerAlignRow)}>
-              <Field
-                className={styles.labelInput}
-                invalid={Boolean(errors.labels?.[index]?.key?.message)}
-                error={errors.labels?.[index]?.key?.message}
-                data-testid={`label-key-${index}`}
-              >
-                <AlertLabelDropdown
-                  {...register(`labels.${index}.key`, {
-                    required: { value: Boolean(labels[index]?.value), message: 'Required.' },
-                  })}
-                  defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
-                  options={keys}
-                  onChange={(newValue: SelectableValue) => {
-                    setValue(`labels.${index}.key`, newValue.value);
-                    setSelectedKey(newValue.value);
-                  }}
-                  type="key"
-                />
-              </Field>
-              <InlineLabel className={styles.equalSign}>=</InlineLabel>
-              <Field
-                className={styles.labelInput}
-                invalid={Boolean(errors.labels?.[index]?.value?.message)}
-                error={errors.labels?.[index]?.value?.message}
-                data-testid={`label-value-${index}`}
-              >
-                <AlertLabelDropdown
-                  {...register(`labels.${index}.value`, {
-                    required: { value: Boolean(labels[index]?.key), message: 'Required.' },
-                  })}
-                  defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
-                  options={values}
-                  onChange={(newValue: SelectableValue) => {
-                    setValue(`labels.${index}.value`, newValue.value);
-                  }}
-                  onOpenMenu={() => {
-                    setSelectedKey(labels[index].key);
-                  }}
-                  type="value"
-                />
-              </Field>
+      {loading && <LoadingPlaceholder text="Loading" />}
+      {!loading && (
+        <>
+          {fields.map((field, index) => {
+            return (
+              <div key={field.id}>
+                <div className={cx(styles.flexRow, styles.centerAlignRow)}>
+                  <Field
+                    className={styles.labelInput}
+                    invalid={Boolean(errors.labels?.[index]?.key?.message)}
+                    error={errors.labels?.[index]?.key?.message}
+                    data-testid={`label-key-${index}`}
+                  >
+                    <AlertLabelDropdown
+                      {...register(`labels.${index}.key`, {
+                        required: { value: Boolean(labels[index]?.value), message: 'Required.' },
+                      })}
+                      defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
+                      options={keys}
+                      onChange={(newValue: SelectableValue) => {
+                        setValue(`labels.${index}.key`, newValue.value);
+                        setSelectedKey(newValue.value);
+                      }}
+                      type="key"
+                    />
+                  </Field>
+                  <InlineLabel className={styles.equalSign}>=</InlineLabel>
+                  <Field
+                    className={styles.labelInput}
+                    invalid={Boolean(errors.labels?.[index]?.value?.message)}
+                    error={errors.labels?.[index]?.value?.message}
+                    data-testid={`label-value-${index}`}
+                  >
+                    <AlertLabelDropdown
+                      {...register(`labels.${index}.value`, {
+                        required: { value: Boolean(labels[index]?.key), message: 'Required.' },
+                      })}
+                      defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
+                      options={values}
+                      onChange={(newValue: SelectableValue) => {
+                        setValue(`labels.${index}.value`, newValue.value);
+                      }}
+                      onOpenMenu={() => {
+                        setSelectedKey(labels[index].key);
+                      }}
+                      type="value"
+                    />
+                  </Field>
 
-              <RemoveButton className={styles.deleteLabelButton} index={index} remove={remove} />
-            </div>
-          </div>
-        );
-      })}
-      <AddButton className={styles.addLabelButton} append={append} />
+                  <RemoveButton className={styles.deleteLabelButton} index={index} remove={remove} />
+                </div>
+              </div>
+            );
+          })}
+          <AddButton className={styles.addLabelButton} append={append} />
+        </>
+      )}
     </>
   );
 };
