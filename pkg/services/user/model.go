@@ -283,15 +283,20 @@ func (u *SignedInUser) IsRealUser() bool {
 	// checking if userId the user is a real user
 	// previously we used to check if the UserId was 0 or -1
 	// and not a service account
-	return u.UserID > 0 && !u.IsServiceAccount
+	return u.UserID > 0 && !u.IsServiceAccountUser()
 }
 
 func (u *SignedInUser) IsApiKeyUser() bool {
 	return u.ApiKeyID > 0
 }
 
+// IsServiceAccountUser returns true if the user is a service account
+func (u *SignedInUser) IsServiceAccountUser() bool {
+	return u.IsServiceAccount
+}
+
 func (u *SignedInUser) HasUniqueId() bool {
-	return u.IsRealUser() || u.IsApiKeyUser()
+	return u.IsRealUser() || u.IsApiKeyUser() || u.IsServiceAccountUser()
 }
 
 func (u *SignedInUser) GetCacheKey() (string, error) {
