@@ -9,19 +9,14 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
-import {
-  RulerRulesConfigDTO,
-  RulerRuleGroupDTO,
-  RulerRuleDTO,
-  RulerGrafanaRuleDTO,
-  RulerAlertingRuleDTO,
-} from 'app/types/unified-alerting-dto';
+import { RulerRulesConfigDTO, RulerRuleGroupDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { rulesInSameGroupHaveInvalidFor, updateLotexNamespaceAndGroupAction } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { getRulesSourceName } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
+import { isAlertingRulerRule, isGrafanaRulerRule } from '../../utils/rules';
 import { parsePrometheusDuration } from '../../utils/time';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { InfoIcon } from '../InfoIcon';
@@ -52,23 +47,20 @@ export const getNumberEvaluationsToStartAlerting = (forDuration: string, current
   }
 };
 
-export const isRulerGrafanaRuleDTO = (rule: RulerRuleDTO): rule is RulerGrafanaRuleDTO => 'grafana_alert' in rule;
-export const isAlertingRuleDTO = (rule: RulerRuleDTO): rule is RulerAlertingRuleDTO => 'alert' in rule;
-
 export const getAlertInfo = (alert: RulerRuleDTO, currentEvaluation: string): AlertInfo => {
   const emptyAlert: AlertInfo = {
     alertName: '',
     forDuration: '0s',
     evaluationsToFire: 0,
   };
-  if (isRulerGrafanaRuleDTO(alert)) {
+  if (isGrafanaRulerRule(alert)) {
     return {
       alertName: alert.grafana_alert.title,
       forDuration: alert.for,
       evaluationsToFire: getNumberEvaluationsToStartAlerting(alert.for, currentEvaluation),
     };
   }
-  if (isAlertingRuleDTO(alert)) {
+  if (isAlertingRulerRule(alert)) {
     return {
       alertName: alert.alert,
       forDuration: alert.for ?? '1m',
