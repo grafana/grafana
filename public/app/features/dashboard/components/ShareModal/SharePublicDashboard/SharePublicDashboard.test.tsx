@@ -17,20 +17,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import { ShareModal } from '../ShareModal';
 
-const server = setupServer(
-  rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (_, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json({
-        isEnabled: false,
-        annotationsEnabled: false,
-        uid: undefined,
-        dashboardUid: undefined,
-        accessToken: 'an-access-token',
-      })
-    );
-  })
-);
+const server = setupServer();
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
