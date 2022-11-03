@@ -1,10 +1,10 @@
-import { uniqBy } from 'lodash';
+import { debounce } from 'lodash';
 import React, { useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
-import { Select } from '@grafana/ui';
+import { AsyncSelect, Select } from '@grafana/ui';
 
 import { QueryBuilderLabelFilter } from './types';
 
@@ -17,6 +17,8 @@ export interface Props {
   onDelete: () => void;
   invalidLabel?: boolean;
   invalidValue?: boolean;
+  getLabelNames: (query?: string) => Promise<SelectableValue[]>;
+  getLabelValues: (query?: string) => Promise<SelectableValue[]>;
 }
 
 export function LabelFilterItem({
@@ -28,6 +30,8 @@ export function LabelFilterItem({
   onGetLabelValues,
   invalidLabel,
   invalidValue,
+  getLabelNames,
+  getLabelValues,
 }: Props) {
   const [state, setState] = useState<{
     labelNames?: SelectableValue[];
@@ -50,18 +54,21 @@ export function LabelFilterItem({
     return [];
   };
 
-  const getOptions = (): SelectableValue[] => {
-    const labelValues = state.labelValues ? [...state.labelValues] : [];
-    const selectedOptions = getSelectOptionsFromString(item?.value).map(toOption);
+  // const getOptions = (): SelectableValue[] => {
+  //   const labelValues = state.labelValues ? [...state.labelValues] : [];
+  //   const selectedOptions = getSelectOptionsFromString(item?.value).map(toOption);
+  //
+  //   // Remove possible duplicated values
+  //   return uniqBy([...selectedOptions, ...labelValues], 'value');
+  // };
 
-    // Remove possible duplicated values
-    return uniqBy([...selectedOptions, ...labelValues], 'value');
-  };
+  const labelNameSearch = debounce((query: string) => getLabelNames(query), 300);
+  const labelValueSearch = debounce((query: string) => getLabelValues(query), 300);
 
   return (
     <div data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
-        <Select
+        <AsyncSelect
           placeholder="Select label"
           aria-label={selectors.components.QueryBuilder.labelSelect}
           inputId="prometheus-dimensions-filter-item-key"
@@ -74,7 +81,7 @@ export function LabelFilterItem({
             setState({ labelNames, isLoadingLabelNames: undefined });
           }}
           isLoading={state.isLoadingLabelNames}
-          options={state.labelNames}
+          loadOptions={labelNameSearch}
           onChange={(change) => {
             if (change.label) {
               onChange({
@@ -103,7 +110,7 @@ export function LabelFilterItem({
           }}
         />
 
-        <Select
+        <AsyncSelect
           placeholder="Select value"
           aria-label={selectors.components.QueryBuilder.valueSelect}
           inputId="prometheus-dimensions-filter-item-value"
@@ -125,7 +132,8 @@ export function LabelFilterItem({
           }}
           isMulti={isMultiSelect()}
           isLoading={state.isLoadingLabelValues}
-          options={getOptions()}
+          // options={getOptions()}
+          loadOptions={labelValueSearch}
           onChange={(change) => {
             if (change.value) {
               onChange({

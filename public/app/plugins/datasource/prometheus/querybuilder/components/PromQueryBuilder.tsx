@@ -72,6 +72,22 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
       .map((k) => ({ value: k }));
   };
 
+  const getLabelValues = (query?: string): Promise<SelectableValue[]> => {
+    return onGetLabelValues({
+      label: '__name__',
+      op: '=~',
+      value: query,
+    }).then((labelValues) => labelValues.map((labelValue) => ({ value: labelValue })));
+  };
+
+  const getLabelNames = (query?: string): Promise<SelectableValue[]> => {
+    return onGetLabelNames({
+      label: '__name__',
+      op: '=~',
+      value: query,
+    }).then((labelNames) => labelNames.map((labelName) => ({ value: labelName })));
+  };
+
   const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {
     if (!forLabel.label) {
       return [];
@@ -107,6 +123,8 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
           labelsFilters={query.labels}
         />
         <LabelFilters
+          getLabelNames={getLabelNames}
+          getLabelValues={getLabelValues}
           labelsFilters={query.labels}
           onChange={onChangeLabels}
           onGetLabelNames={(forLabel: Partial<QueryBuilderLabelFilter>) =>
