@@ -9,7 +9,7 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Alert, HorizontalGroup, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Alert, HorizontalGroup, Icon, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { FrameGeometryField, getGeometryField, getLocationMatchers } from '../utils/location';
 
@@ -41,6 +41,8 @@ interface ModeEditorSettings {
   source?: FrameGeometrySource;
 }
 
+const helpUrl = 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/geomap/#location';
+
 export const LocationModeEditor = ({
   value,
   onChange,
@@ -65,7 +67,20 @@ export const LocationModeEditor = ({
   // TODO extend for other cases, for example auto when it's happy
   const dataValidation = () => {
     if (info && info.warning) {
-      return <Alert title={info.warning} severity="warning" className={styles.alert} />;
+      return (
+        <Alert
+          title={info.warning}
+          severity="warning"
+          className={styles.alert}
+          buttonContent={<Icon name="question-circle" size="xl" />}
+          onRemove={() => {
+            const newWindow = window.open(helpUrl, '_blank', 'noopener,noreferrer');
+            if (newWindow) {
+              newWindow.opener = null;
+            }
+          }}
+        />
+      );
     } else {
       return null;
     }
