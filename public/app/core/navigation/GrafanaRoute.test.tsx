@@ -67,7 +67,7 @@ describe('GrafanaRoute', () => {
 
     setup({ route: { component: PageComponent, path: '' } });
 
-    expect(await screen.findByRole('heading', { name: 'An unexpected error happend' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'An unexpected error happened' })).toBeInTheDocument();
     expect(consoleError).toHaveBeenCalled();
   });
 });

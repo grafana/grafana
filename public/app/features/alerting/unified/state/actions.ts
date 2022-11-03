@@ -1,7 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
-import { locationService, logInfo } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -13,7 +13,7 @@ import {
   SilenceCreatePayload,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
-import { ContactPointsState, FolderDTO, NotifierDTO, StoreState, ThunkResult } from 'app/types';
+import { FolderDTO, NotifierDTO, StoreState, ThunkResult } from 'app/types';
 import {
   CombinedRuleGroup,
   CombinedRuleNamespace,
@@ -32,7 +32,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
-import { LogMessages } from '../Analytics';
+import { logInfo, LogMessages, withPerformanceLogging } from '../Analytics';
 import {
   addAlertManagers,
   createOrUpdateSilence,
@@ -51,7 +51,7 @@ import {
 import { fetchAnnotations } from '../api/annotations';
 import { discoverFeatures } from '../api/buildInfo';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { fetchContactPointsState, fetchNotifiers } from '../api/grafana';
+import { fetchNotifiers } from '../api/grafana';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import {
   deleteNamespace,
@@ -103,7 +103,13 @@ export const fetchPromRulesAction = createAsyncThunk(
     thunkAPI
   ): Promise<RuleNamespace[]> => {
     await thunkAPI.dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
-    return await withSerializedError(fetchRules(rulesSourceName, filter));
+
+    const fetchRulesWithLogging = withPerformanceLogging(fetchRules, `[${rulesSourceName}] Prometheus rules loaded`, {
+      dataSourceName: rulesSourceName,
+      thunk: 'unifiedalerting/fetchPromRules',
+    });
+
+    return await withSerializedError(fetchRulesWithLogging(rulesSourceName, filter));
   }
 );
 
@@ -127,9 +133,17 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
         );
 
         const lazyConfigInitSupported = amFeatures?.lazyConfigInit ?? false;
+        const fetchAMconfigWithLogging = withPerformanceLogging(
+          fetchAlertManagerConfig,
+          `[${alertManagerSourceName}] Alertmanager config loaded`,
+          {
+            dataSourceName: alertManagerSourceName,
+            thunk: 'unifiedalerting/fetchAmConfig',
+          }
+        );
 
         return retryWhile(
-          () => fetchAlertManagerConfig(alertManagerSourceName),
+          () => fetchAMconfigWithLogging(alertManagerSourceName),
           // if config has been recently deleted, it takes a while for cortex start returning the default one.
           // retry for a short while instead of failing
           (e) => !!messageFromError(e)?.includes('alertmanager storage object not found') && !lazyConfigInitSupported,
@@ -195,7 +209,17 @@ export const fetchRulerRulesAction = createAsyncThunk(
   ): Promise<RulerRulesConfigDTO | null> => {
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const rulerConfig = getDataSourceRulerConfig(getState, rulesSourceName);
-    return await withSerializedError(fetchRulerRules(rulerConfig, filter));
+
+    const fetchRulerRulesWithLogging = withPerformanceLogging(
+      fetchRulerRules,
+      `[${rulesSourceName}] Ruler rules loaded`,
+      {
+        dataSourceName: rulesSourceName,
+        thunk: 'unifiedalerting/fetchRulerRules',
+      }
+    );
+
+    return await withSerializedError(fetchRulerRulesWithLogging(rulerConfig, filter));
   }
 );
 
@@ -214,7 +238,16 @@ export function fetchPromAndRulerRulesAction({ rulesSourceName }: { rulesSourceN
 export const fetchSilencesAction = createAsyncThunk(
   'unifiedalerting/fetchSilences',
   (alertManagerSourceName: string): Promise<Silence[]> => {
-    return withSerializedError(fetchSilences(alertManagerSourceName));
+    const fetchSilencesWithLogging = withPerformanceLogging(
+      fetchSilences,
+      `[${alertManagerSourceName}] Silences loaded`,
+      {
+        dataSourceName: alertManagerSourceName,
+        thunk: 'unifiedalerting/fetchSilences',
+      }
+    );
+
+    return withSerializedError(fetchSilencesWithLogging(alertManagerSourceName));
   }
 );
 
@@ -261,12 +294,22 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
         }
 
         const { id, name } = ds;
-        const buildInfo = await discoverFeatures(name);
+
+        const discoverFeaturesWithLogging = withPerformanceLogging(
+          discoverFeatures,
+          `[${rulesSourceName}] Rules source features discovered`,
+          {
+            dataSourceName: rulesSourceName,
+            thunk: 'unifiedalerting/fetchPromBuildinfo',
+          }
+        );
+
+        const buildInfo = await discoverFeaturesWithLogging(name);
 
         const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerApiEnabled
           ? {
               dataSourceName: name,
-              apiVersion: buildInfo.application === PromApplication.Lotex ? 'legacy' : 'config',
+              apiVersion: buildInfo.application === PromApplication.Cortex ? 'legacy' : 'config',
             }
           : undefined;
 
@@ -290,9 +333,11 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
   }
 );
 
-export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void> {
+export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
-    return Promise.all(
+    const allStartLoadingTs = performance.now();
+
+    await Promise.allSettled(
       getAllRulesSourceNames().map(async (rulesSourceName) => {
         await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
 
@@ -303,14 +348,20 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void
           return;
         }
 
-        if (force || !promRules[rulesSourceName]?.loading) {
-          dispatch(fetchPromRulesAction({ rulesSourceName }));
-        }
-        if ((force || !rulerRules[rulesSourceName]?.loading) && dataSourceConfig.rulerConfig) {
-          dispatch(fetchRulerRulesAction({ rulesSourceName }));
-        }
+        const shouldLoadProm = force || !promRules[rulesSourceName]?.loading;
+        const shouldLoadRuler =
+          (force || !rulerRules[rulesSourceName]?.loading) && Boolean(dataSourceConfig.rulerConfig);
+
+        await Promise.allSettled([
+          shouldLoadProm && dispatch(fetchPromRulesAction({ rulesSourceName })),
+          shouldLoadRuler && dispatch(fetchRulerRulesAction({ rulesSourceName })),
+        ]);
       })
     );
+
+    logInfo('All Prom and Ruler rules loaded', {
+      loadTimeMs: (performance.now() - allStartLoadingTs).toFixed(0),
+    });
   };
 }
 
@@ -456,12 +507,6 @@ export const saveRuleFormAction = createAsyncThunk(
 export const fetchGrafanaNotifiersAction = createAsyncThunk(
   'unifiedalerting/fetchGrafanaNotifiers',
   (): Promise<NotifierDTO[]> => withSerializedError(fetchNotifiers())
-);
-
-export const fetchContactPointsStateAction = createAsyncThunk(
-  'unifiedalerting/fetchContactPointsState',
-  (alertManagerSourceName: string): Promise<ContactPointsState> =>
-    withSerializedError(fetchContactPointsState(alertManagerSourceName))
 );
 
 export const fetchGrafanaAnnotationsAction = createAsyncThunk(

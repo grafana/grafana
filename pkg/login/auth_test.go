@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,6 +33,21 @@ func TestAuthenticateUser(t *testing.T) {
 		assert.False(t, sc.grafanaLoginWasCalled)
 		assert.False(t, sc.ldapLoginWasCalled)
 		assert.Empty(t, sc.loginUserQuery.AuthModule)
+	})
+
+	authScenario(t, "When user authenticates with no auth provider enabled", func(sc *authScenarioContext) {
+		mockLoginAttemptValidation(nil, sc)
+		sc.loginUserQuery.Cfg.DisableLogin = true
+
+		a := AuthenticatorService{loginAttemptService: nil, loginService: &logintest.LoginServiceFake{}}
+		err := a.AuthenticateUser(context.Background(), sc.loginUserQuery)
+
+		require.EqualError(t, err, ErrNoAuthProvider.Error())
+		assert.True(t, sc.loginAttemptValidationWasCalled)
+		assert.False(t, sc.grafanaLoginWasCalled)
+		assert.False(t, sc.ldapLoginWasCalled)
+		assert.False(t, sc.saveInvalidLoginAttemptWasCalled)
+		assert.Equal(t, "", sc.loginUserQuery.AuthModule)
 	})
 
 	authScenario(t, "When a user authenticates having too many login attempts", func(sc *authScenarioContext) {
@@ -218,12 +234,13 @@ func authScenario(t *testing.T, desc string, fn authScenarioFunc) {
 		origLoginUsingLDAP := loginUsingLDAP
 		origValidateLoginAttempts := validateLoginAttempts
 		origSaveInvalidLoginAttempt := saveInvalidLoginAttempt
-
+		cfg := setting.Cfg{DisableLogin: false}
 		sc := &authScenarioContext{
 			loginUserQuery: &models.LoginUserQuery{
 				Username:  "user",
 				Password:  "pwd",
 				IpAddress: "192.168.1.1:56433",
+				Cfg:       &cfg,
 			},
 		}
 

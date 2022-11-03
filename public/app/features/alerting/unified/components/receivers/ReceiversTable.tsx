@@ -3,11 +3,13 @@ import pluralize from 'pluralize';
 import React, { FC, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
-import { Button, ConfirmModal, Modal, useStyles2, Badge, Icon, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Button, ConfirmModal, Modal, useStyles2, Badge, Icon } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch, AccessControlAction, ContactPointsState, NotifiersState, ReceiversState } from 'app/types';
 
+import { useGetContactPointsState } from '../../api/receiversApi';
 import { Authorize } from '../../components/Authorize';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteReceiverAction } from '../../state/actions';
@@ -17,7 +19,6 @@ import { isReceiverUsed } from '../../utils/alertmanager';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { extractNotifierTypeCounts } from '../../utils/receivers';
-import { initialAsyncRequestState } from '../../utils/redux';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { ProvisioningBadge } from '../Provisioning';
 import { ActionIcon } from '../rules/ActionIcon';
@@ -79,34 +80,45 @@ function ViewAction({ permissions, alertManagerName, receiverName }: ActionProps
 interface ReceiverErrorProps {
   errorCount: number;
   errorDetail?: string;
+  showErrorCount: boolean;
 }
 
-function ReceiverError({ errorCount, errorDetail }: ReceiverErrorProps) {
-  return (
-    <Badge
-      color="orange"
-      icon="exclamation-triangle"
-      text={`${errorCount} ${pluralize('error', errorCount)}`}
-      tooltip={errorDetail}
-    />
+function ReceiverError({ errorCount, errorDetail, showErrorCount }: ReceiverErrorProps) {
+  const text = showErrorCount ? `${errorCount} ${pluralize('error', errorCount)}` : 'Error';
+  return <Badge color="orange" icon="exclamation-triangle" text={text} tooltip={errorDetail ?? 'Error'} />;
+}
+interface NotifierHealthProps {
+  errorsByNotifier: number;
+  errorDetail?: string;
+  lastNotify: string;
+}
+
+function NotifierHealth({ errorsByNotifier, errorDetail, lastNotify }: NotifierHealthProps) {
+  const noErrorsColor = isLastNotifyNullDate(lastNotify) ? 'orange' : 'green';
+  const noErrorsText = isLastNotifyNullDate(lastNotify) ? 'No attempts' : 'OK';
+  return errorsByNotifier > 0 ? (
+    <ReceiverError errorCount={errorsByNotifier} errorDetail={errorDetail} showErrorCount={false} />
+  ) : (
+    <Badge color={noErrorsColor} text={noErrorsText} tooltip="" />
   );
 }
+
 interface ReceiverHealthProps {
   errorsByReceiver: number;
-  errorDetail?: string;
+  someWithNoAttempt: boolean;
 }
 
-function ReceiverHealth({ errorsByReceiver, errorDetail }: ReceiverHealthProps) {
+function ReceiverHealth({ errorsByReceiver, someWithNoAttempt }: ReceiverHealthProps) {
+  const noErrorsColor = someWithNoAttempt ? 'orange' : 'green';
+  const noErrorsText = someWithNoAttempt ? 'No attempts' : 'OK';
   return errorsByReceiver > 0 ? (
-    <ReceiverError errorCount={errorsByReceiver} errorDetail={errorDetail} />
+    <ReceiverError errorCount={errorsByReceiver} showErrorCount={true} />
   ) : (
-    <Badge color="green" text="OK" tooltip="No errors detected" />
+    <Badge color={noErrorsColor} text={noErrorsText} tooltip="" />
   );
 }
-
 const useContactPointsState = (alertManagerName: string) => {
-  const contactPointsStateRequest = useUnifiedAlertingSelector((state) => state.contactPointsState);
-  const { result: contactPointsState } = (alertManagerName && contactPointsStateRequest) || initialAsyncRequestState;
+  const contactPointsState = useGetContactPointsState(alertManagerName ?? '');
   const receivers: ReceiversState = contactPointsState?.receivers ?? {};
   const errorStateAvailable = Object.keys(receivers).length > 0; // this logic can change depending on how we implement this in the BE
   return { contactPointsState, errorStateAvailable };
@@ -135,11 +147,10 @@ type NotifierItemTableProps = DynamicTableItemProps<NotifierStatus>;
 interface NotifiersTableProps {
   notifiersState: NotifiersState;
 }
+const isLastNotifyNullDate = (lastNotify: string) => lastNotify === '0001-01-01T00:00:00.000Z';
 
 function LastNotify({ lastNotifyDate }: { lastNotifyDate: string }) {
-  const isLastNotifyNullDate = lastNotifyDate === '0001-01-01T00:00:00.000Z';
-
-  if (isLastNotifyNullDate) {
+  if (isLastNotifyNullDate(lastNotifyDate)) {
     return <>{'-'}</>;
   } else {
     return (
@@ -152,14 +163,23 @@ function LastNotify({ lastNotifyDate }: { lastNotifyDate: string }) {
   }
 }
 
+const possibleNullDurations = ['', '0', '0ms', '0s', '0m', '0h', '0d', '0w', '0y'];
+const durationIsNull = (duration: string) => possibleNullDurations.includes(duration);
+
 function NotifiersTable({ notifiersState }: NotifiersTableProps) {
   function getNotifierColumns(): NotifierTableColumnProps[] {
     return [
       {
         id: 'health',
         label: 'Health',
-        renderCell: ({ data: { lastError } }) => {
-          return <ReceiverHealth errorsByReceiver={lastError ? 1 : 0} errorDetail={lastError ?? undefined} />;
+        renderCell: ({ data: { lastError, lastNotify } }) => {
+          return (
+            <NotifierHealth
+              errorsByNotifier={lastError ? 1 : 0}
+              errorDetail={lastError ?? undefined}
+              lastNotify={lastNotify}
+            />
+          );
         },
         size: 0.5,
       },
@@ -178,7 +198,9 @@ function NotifiersTable({ notifiersState }: NotifiersTableProps) {
       {
         id: 'lastNotifyDuration',
         label: 'Last duration',
-        renderCell: ({ data: { lastNotifyDuration } }) => <>{lastNotifyDuration}</>,
+        renderCell: ({ data: { lastNotify, lastNotifyDuration } }) => (
+          <>{isLastNotifyNullDate(lastNotify) && durationIsNull(lastNotifyDuration) ? '-' : lastNotifyDuration}</>
+        ),
         size: 1,
       },
       {
@@ -190,16 +212,18 @@ function NotifiersTable({ notifiersState }: NotifiersTableProps) {
     ];
   }
   const notifierRows: NotifierItemTableProps[] = Object.entries(notifiersState).flatMap((typeState) =>
-    typeState[1].map((notifierStatus, index) => ({
-      id: index,
-      data: {
-        type: typeState[0],
-        lastError: notifierStatus.lastNotifyAttemptError,
-        lastNotify: notifierStatus.lastNotifyAttempt,
-        lastNotifyDuration: notifierStatus.lastNotifyAttemptDuration,
-        sendResolved: notifierStatus.sendResolved,
-      },
-    }))
+    typeState[1].map((notifierStatus, index) => {
+      return {
+        id: index,
+        data: {
+          type: typeState[0],
+          lastError: notifierStatus.lastNotifyAttemptError,
+          lastNotify: notifierStatus.lastNotifyAttempt,
+          lastNotifyDuration: notifierStatus.lastNotifyAttemptDuration,
+          sendResolved: notifierStatus.sendResolved,
+        },
+      };
+    })
   );
 
   return <DynamicTable items={notifierRows} cols={getNotifierColumns()} />;
@@ -317,6 +341,15 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
     </ReceiversSection>
   );
 };
+const errorsByReceiver = (contactPointsState: ContactPointsState, receiverName: string) =>
+  contactPointsState?.receivers[receiverName]?.errorCount ?? 0;
+
+const someNotifiersWithNoAttempt = (contactPointsState: ContactPointsState, receiverName: string) => {
+  const notifiers = Object.values(contactPointsState?.receivers[receiverName]?.notifiers ?? {});
+  const hasSomeWitNoAttempt =
+    notifiers.length === 0 || notifiers.flat().some((status) => isLastNotifyNullDate(status.lastNotifyAttempt));
+  return hasSomeWitNoAttempt;
+};
 
 function useGetColumns(
   alertManagerName: string,
@@ -354,9 +387,14 @@ function useGetColumns(
     id: 'health',
     label: 'Health',
     renderCell: ({ data: { name } }) => {
-      const errorsByReceiver = (contactPointsState: ContactPointsState, receiverName: string) =>
-        contactPointsState?.receivers[receiverName]?.errorCount ?? 0;
-      return contactPointsState && <ReceiverHealth errorsByReceiver={errorsByReceiver(contactPointsState, name)} />;
+      return (
+        contactPointsState && (
+          <ReceiverHealth
+            errorsByReceiver={errorsByReceiver(contactPointsState, name)}
+            someWithNoAttempt={someNotifiersWithNoAttempt(contactPointsState, name)}
+          />
+        )
+      );
     },
     size: 1,
   };

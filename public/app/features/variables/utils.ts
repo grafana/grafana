@@ -193,9 +193,10 @@ export function getVariableTypes(): Array<{ label: string; value: VariableType }
   return variableAdapters
     .list()
     .filter((v) => v.id !== 'system')
-    .map(({ id, name }) => ({
+    .map(({ id, name, description }) => ({
       label: name,
       value: id,
+      description,
     }));
 }
 

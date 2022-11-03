@@ -13,8 +13,11 @@ type FakeUserService struct {
 	ExpectedSetUsingOrgError error
 	ExpectedSearchUsers      user.SearchUserQueryResult
 	ExpectedUserProfileDTO   *user.UserProfileDTO
+	ExpectedUserProfileDTOs  []*user.UserProfileDTO
 
 	GetSignedInUserFn func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
+
+	counter int
 }
 
 func NewUserServiceFake() *FakeUserService {
@@ -92,5 +95,14 @@ func (f *FakeUserService) SetUserHelpFlag(ctx context.Context, cmd *user.SetUser
 }
 
 func (f *FakeUserService) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
-	return f.ExpectedUserProfileDTO, f.ExpectedError
+	if f.ExpectedUserProfileDTO != nil {
+		return f.ExpectedUserProfileDTO, f.ExpectedError
+	}
+
+	if f.ExpectedUserProfileDTOs == nil {
+		return nil, f.ExpectedError
+	}
+
+	f.counter++
+	return f.ExpectedUserProfileDTOs[f.counter-1], f.ExpectedError
 }

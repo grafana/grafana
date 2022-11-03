@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/provisioning/utils"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 type Store interface {
@@ -34,8 +34,8 @@ var (
 
 // Provision scans a directory for provisioning config files
 // and provisions the datasource in those files.
-func Provision(ctx context.Context, configDirectory string, store Store, correlationsStore CorrelationsStore, orgStore utils.OrgStore) error {
-	dc := newDatasourceProvisioner(log.New("provisioning.datasources"), store, correlationsStore, orgStore)
+func Provision(ctx context.Context, configDirectory string, store Store, correlationsStore CorrelationsStore, orgService org.Service) error {
+	dc := newDatasourceProvisioner(log.New("provisioning.datasources"), store, correlationsStore, orgService)
 	return dc.applyChanges(ctx, configDirectory)
 }
 
@@ -48,10 +48,10 @@ type DatasourceProvisioner struct {
 	correlationsStore CorrelationsStore
 }
 
-func newDatasourceProvisioner(log log.Logger, store Store, correlationsStore CorrelationsStore, orgStore utils.OrgStore) DatasourceProvisioner {
+func newDatasourceProvisioner(log log.Logger, store Store, correlationsStore CorrelationsStore, orgService org.Service) DatasourceProvisioner {
 	return DatasourceProvisioner{
 		log:               log,
-		cfgProvider:       &configReader{log: log, orgStore: orgStore},
+		cfgProvider:       &configReader{log: log, orgService: orgService},
 		store:             store,
 		correlationsStore: correlationsStore,
 	}

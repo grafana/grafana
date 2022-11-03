@@ -80,24 +80,4 @@ describe('NavLandingPage', () => {
     expect(screen.getByText(mockChild1.subTitle)).toBeInTheDocument();
     expect(screen.getByText(mockChild2.subTitle)).toBeInTheDocument();
   });
-
-  it('renders the heading for nested sections', () => {
-    setup();
-    expect(screen.getByRole('heading', { name: mockChild3.text })).toBeInTheDocument();
-  });
-
-  it('renders the subTitle for a nested section', () => {
-    setup();
-    expect(screen.getByText(mockChild3.subTitle)).toBeInTheDocument();
-  });
-
-  it('renders a link for a nested child', () => {
-    setup();
-    expect(screen.getByRole('link', { name: mockChild3.children[0].text })).toBeInTheDocument();
-  });
-
-  it('renders the subTitle for a nested child', () => {
-    setup();
-    expect(screen.getByText(mockChild3.children[0].subTitle)).toBeInTheDocument();
-  });
 });

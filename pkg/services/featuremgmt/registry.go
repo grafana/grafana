@@ -214,6 +214,11 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
+			Name:        "newDBLibrary",
+			Description: "Use jmoiron/sqlx rather than xorm for a few backend services",
+			State:       FeatureStateBeta,
+		},
+		{
 			Name:            "validateDashboardsOnSave",
 			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
 			State:           FeatureStateAlpha,
@@ -290,6 +295,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "flameGraph",
+			Description: "Show the flame graph",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:         "redshiftAsyncQueryDataSupport",
 			Description:  "Enable async query data support for Redshift",
 			State:        FeatureStateAlpha,
@@ -304,6 +314,47 @@ var (
 		{
 			Name:        "increaseInMemDatabaseQueryCache",
 			Description: "Enable more in memory caching for database queries",
+		},
+		{
+			Name:        "interFont",
+			Description: "Switch to inter font",
+		},
+		{
+			Name:         "newPanelChromeUI",
+			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:            "queryLibrary",
+			Description:     "Reusable query library",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:        "showDashboardValidationWarnings",
+			Description: "Show warnings when Dashboards do not validate against the schema",
+		},
+		{
+			Name:        "mysqlAnsiQuotes",
+			Description: "Use double quote to escape keyword in Mysql query",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "datasourceLogger",
+			Description: "Logs all datasource requests",
+		},
+		{
+			Name:            "accessControlOnCall",
+			Description:     "Access control primitives for OnCall",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:            "nestedFolders",
+			Description:     "Enable folder nesting",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
 		},
 	}
 )
