@@ -181,9 +181,6 @@ var (
 	// StatsTotalDashboardVersions is a metric of total number of dashboard versions stored in Grafana.
 	StatsTotalDashboardVersions prometheus.Gauge
 
-	// grafanaBuildVersion is a metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built
-	grafanaBuildVersion *prometheus.GaugeVec
-
 	grafanaPluginBuildInfoDesc *prometheus.GaugeVec
 
 	// StatsTotalLibraryPanels is a metric of total number of library panels stored in Grafana.
@@ -507,12 +504,6 @@ func init() {
 		Namespace: ExporterName,
 	}, []string{"plugin_id"})
 
-	grafanaBuildVersion = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name:      "build_info",
-		Help:      "A metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built",
-		Namespace: ExporterName,
-	}, []string{"version", "revision", "branch", "goversion", "edition"})
-
 	grafanaPluginBuildInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "plugin_build_info",
 		Help:      "A metric with a constant '1' value labeled by pluginId, pluginType and version from which Grafana plugin was built",
@@ -581,13 +572,28 @@ func init() {
 }
 
 // SetBuildInformation sets the build information for this binary
-func SetBuildInformation(version, revision, branch string) {
+func SetBuildInformation(version, revision, branch string, buildTimestamp int64) {
 	edition := "oss"
 	if setting.IsEnterprise {
 		edition = "enterprise"
 	}
 
+	grafanaBuildVersion := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "build_info",
+		Help:      "A metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built",
+		Namespace: ExporterName,
+	}, []string{"version", "revision", "branch", "goversion", "edition"})
+
+	grafanaBuildTimestamp := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "build_timestamp",
+		Help:      "A metric exposing when the binary was built in epoch",
+		Namespace: ExporterName,
+	}, []string{"version", "revision", "branch", "goversion", "edition"})
+
+	prometheus.MustRegister(grafanaBuildVersion, grafanaBuildTimestamp)
+
 	grafanaBuildVersion.WithLabelValues(version, revision, branch, runtime.Version(), edition).Set(1)
+	grafanaBuildTimestamp.WithLabelValues(version, revision, branch, runtime.Version(), edition).Set(float64(buildTimestamp))
 }
 
 // SetEnvironmentInformation exposes environment values provided by the operators as an `_info` metric.
@@ -664,7 +670,6 @@ func initMetricVars() {
 		StatsTotalActiveEditors,
 		StatsTotalActiveAdmins,
 		StatsTotalDataSources,
-		grafanaBuildVersion,
 		grafanaPluginBuildInfoDesc,
 		StatsTotalDashboardVersions,
 		StatsTotalAnnotations,

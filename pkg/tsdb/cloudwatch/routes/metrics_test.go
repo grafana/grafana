@@ -8,11 +8,12 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_Metrics_Route(t *testing.T) {
@@ -24,7 +25,7 @@ func Test_Metrics_Route(t *testing.T) {
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/metrics?region=us-east-2&namespace=customNamespace", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(MetricsHandler, nil))
+		handler := http.HandlerFunc(ResourceRequestMiddleware(MetricsHandler, logger, nil))
 		handler.ServeHTTP(rr, req)
 		mockListMetricsService.AssertNumberOfCalls(t, "GetMetricsByNamespace", 1)
 	})
@@ -41,7 +42,7 @@ func Test_Metrics_Route(t *testing.T) {
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/metrics?region=us-east-2", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(MetricsHandler, nil))
+		handler := http.HandlerFunc(ResourceRequestMiddleware(MetricsHandler, logger, nil))
 		handler.ServeHTTP(rr, req)
 		res := []models.Metric{}
 		err := json.Unmarshal(rr.Body.Bytes(), &res)
@@ -63,7 +64,7 @@ func Test_Metrics_Route(t *testing.T) {
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/metrics?region=us-east-2&namespace=AWS/DMS", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(MetricsHandler, nil))
+		handler := http.HandlerFunc(ResourceRequestMiddleware(MetricsHandler, logger, nil))
 		handler.ServeHTTP(rr, req)
 		res := []models.Metric{}
 		err := json.Unmarshal(rr.Body.Bytes(), &res)
@@ -80,7 +81,7 @@ func Test_Metrics_Route(t *testing.T) {
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/metrics?region=us-east-2&namespace=customNamespace", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(MetricsHandler, nil))
+		handler := http.HandlerFunc(ResourceRequestMiddleware(MetricsHandler, logger, nil))
 		handler.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 		assert.Equal(t, `{"Message":"error in MetricsHandler: some error","Error":"some error","StatusCode":500}`, rr.Body.String())
