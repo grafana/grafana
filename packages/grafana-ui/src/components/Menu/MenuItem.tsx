@@ -41,7 +41,7 @@ export interface MenuItemProps<T = any> {
   /** List of menu items for the subMenu */
   childItems?: Array<ReactElement<MenuItemProps>>;
   /** Custom style for SubMenu */
-  customStyle?: CSSProperties;
+  customSubMenuContainerStyles?: CSSProperties;
 }
 
 /** @internal */
@@ -61,7 +61,7 @@ export const MenuItem = React.memo(
       childItems,
       role = 'menuitem',
       tabIndex = -1,
-      customStyle,
+      customSubMenuContainerStyles,
     } = props;
     const styles = useStyles2(getStyles);
     const [isActive, setIsActive] = useState(active);
@@ -141,7 +141,7 @@ export const MenuItem = React.memo(
             openedWithArrow={openedWithArrow}
             setOpenedWithArrow={setOpenedWithArrow}
             close={closeSubMenu}
-            customStyle={customStyle}
+            customStyle={customSubMenuContainerStyles}
           />
         )}
       </ItemElement>

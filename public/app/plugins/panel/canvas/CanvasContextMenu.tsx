@@ -123,7 +123,7 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
         label="Add item"
         className={styles.menuItem}
         childItems={getTypeOptionsSubmenu()}
-        customStyle={{ maxHeight: '150px', overflowY: 'auto' }}
+        customSubMenuContainerStyles={{ maxHeight: '150px', overflowY: 'auto' }}
       />
     );
 
