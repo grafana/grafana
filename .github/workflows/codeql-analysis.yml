@@ -40,6 +40,11 @@ jobs:
         # a pull request then we can checkout the head.
         fetch-depth: 2
 
+    - if: matrix.language == 'go'
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: 'go.mod'
+
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2
@@ -51,7 +56,6 @@ jobs:
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
 
     - if: matrix.language == 'go'
-      name: Build Go
       run: |
         go mod verify
         make build-go
