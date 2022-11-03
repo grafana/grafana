@@ -163,6 +163,10 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
       publicPath: '/',
     },
 
+    watchOptions: {
+      ignored: ['**/node_modules', '**/dist'],
+    },
+
     performance: { hints: false },
     externals: [
       'lodash',
