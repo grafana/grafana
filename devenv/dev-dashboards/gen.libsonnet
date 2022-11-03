@@ -9,153 +9,6 @@ local dashboard = grafana.dashboard;
 {
   folders: [grafana.folder.new('dev-dashboards', 'dev-dashboards')],
   dashboards: [
-    dashboard.new('testdata_alerts', import 'alerting/testdata_alerts.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('all-panels', import 'all-panels.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('elasticsearch_compare', import 'datasource-elasticsearch/elasticsearch_compare.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('elasticsearch_v7', import 'datasource-elasticsearch/elasticsearch_v7.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('elasticsearch_v7_filebeat', import 'datasource-elasticsearch/elasticsearch_v7_filebeat.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('influxdb-logs', import 'datasource-influxdb/influxdb-logs.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('influxdb-templated', import 'datasource-influxdb/influxdb-templated.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('loki_fakedata', import 'datasource-loki/loki_fakedata.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('mssql_fakedata', import 'datasource-mssql/mssql_fakedata.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('mssql_unittest', import 'datasource-mssql/mssql_unittest.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('mysql_fakedata', import 'datasource-mysql/mysql_fakedata.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('mysql_unittest', import 'datasource-mysql/mysql_unittest.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('opentsdb', import 'datasource-opentsdb/opentsdb.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('opentsdb_v23', import 'datasource-opentsdb/opentsdb_v23.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('postgres_fakedata', import 'datasource-postgres/postgres_fakedata.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('postgres_unittest', import 'datasource-postgres/postgres_unittest.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('bar-gauge-demo2', import 'datasource-testdata/bar-gauge-demo2.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('demo1', import 'datasource-testdata/demo1.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('new_features_in_v62', import 'datasource-testdata/new_features_in_v62.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('new_features_in_v74', import 'datasource-testdata/new_features_in_v74.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('new_features_in_v8', import 'datasource-testdata/new_features_in_v8.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
     dashboard.new('Repeating-Kitchen-Sink', import 'e2e-repeats/Repeating-Kitchen-Sink.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -219,84 +72,21 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('global-variables-and-interpolation', import 'feature-templating/global-variables-and-interpolation.json') +
+    dashboard.new('all-panels', import 'all-panels.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
         id: 0,
       }
     },
-    dashboard.new('templating-dashboard-links-and-variables', import 'feature-templating/templating-dashboard-links-and-variables.json') +
+    dashboard.new('auto_decimals', import 'panel-common/auto_decimals.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
         id: 0,
       }
     },
-    dashboard.new('templating-textbox-e2e-scenarios', import 'feature-templating/templating-textbox-e2e-scenarios.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('testdata-datalinks', import 'feature-templating/testdata-datalinks.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('testdata-nested-variables-drilldown', import 'feature-templating/testdata-nested-variables-drilldown.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('testdata-nested-variables', import 'feature-templating/testdata-nested-variables.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('testdata-repeating', import 'feature-templating/testdata-repeating.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('testdata-test-variable-output', import 'feature-templating/testdata-test-variable-output.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('testdata-variables-textbox', import 'feature-templating/testdata-variables-textbox.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('testdata-variables-that-update-on-time-c', import 'feature-templating/testdata-variables-that-update-on-time-change.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('home', import 'home.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('barchart-autosizing', import 'panel-barchart/barchart-autosizing.json') +
+    dashboard.new('bar-gauge-demo2', import 'datasource-testdata/bar-gauge-demo2.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
@@ -310,14 +100,7 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('panel_tests_bar_gauge', import 'panel-bargauge/panel_tests_bar_gauge.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('panel_tests_bar_gauge2', import 'panel-bargauge/panel_tests_bar_gauge2.json') +
+    dashboard.new('barchart-autosizing', import 'panel-barchart/barchart-autosizing.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
@@ -338,13 +121,6 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('auto_decimals', import 'panel-common/auto_decimals.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
     dashboard.new('color_modes', import 'panel-common/color_modes.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -352,28 +128,35 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('lazy_loading', import 'panel-common/lazy_loading.json') +
+    dashboard.new('config-from-query', import 'transforms/config-from-query.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
         id: 0,
       }
     },
-    dashboard.new('linked-viz', import 'panel-common/linked-viz.json') +
+    dashboard.new('demo1', import 'datasource-testdata/demo1.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
         id: 0,
       }
     },
-    dashboard.new('panels_without_title', import 'panel-common/panels_without_title.json') +
+    dashboard.new('elasticsearch_compare', import 'datasource-elasticsearch/elasticsearch_compare.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
         id: 0,
       }
     },
-    dashboard.new('shared_queries', import 'panel-common/shared_queries.json') +
+    dashboard.new('elasticsearch_v7', import 'datasource-elasticsearch/elasticsearch_v7.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('elasticsearch_v7_filebeat', import 'datasource-elasticsearch/elasticsearch_v7_filebeat.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
@@ -422,7 +205,7 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('panel-geomap', import 'panel-geomap/panel-geomap.json') +
+    dashboard.new('global-variables-and-interpolation', import 'feature-templating/global-variables-and-interpolation.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
@@ -485,7 +268,161 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('home', import 'home.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('influxdb-logs', import 'datasource-influxdb/influxdb-logs.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('influxdb-templated', import 'datasource-influxdb/influxdb-templated.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('join-by-field', import 'transforms/join-by-field.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('join-by-labels', import 'transforms/join-by-labels.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('lazy_loading', import 'panel-common/lazy_loading.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('linked-viz', import 'panel-common/linked-viz.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('loki_fakedata', import 'datasource-loki/loki_fakedata.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('mssql_fakedata', import 'datasource-mssql/mssql_fakedata.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('mssql_unittest', import 'datasource-mssql/mssql_unittest.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('mysql_fakedata', import 'datasource-mysql/mysql_fakedata.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('mysql_unittest', import 'datasource-mysql/mysql_unittest.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('new_features_in_v62', import 'datasource-testdata/new_features_in_v62.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('new_features_in_v74', import 'datasource-testdata/new_features_in_v74.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('new_features_in_v8', import 'datasource-testdata/new_features_in_v8.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('opentsdb', import 'datasource-opentsdb/opentsdb.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('opentsdb_v23', import 'datasource-opentsdb/opentsdb_v23.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('panel-geomap', import 'panel-geomap/panel-geomap.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('panel-stat-tests', import 'panel-stat/panel-stat-tests.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('panel_test_piechart', import 'panel-piechart/panel_test_piechart.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('panel_tests_bar_gauge', import 'panel-bargauge/panel_tests_bar_gauge.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('panel_tests_bar_gauge2', import 'panel-bargauge/panel_tests_bar_gauge2.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('panels_without_title', import 'panel-common/panels_without_title.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
@@ -499,7 +436,42 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('panel-stat-tests', import 'panel-stat/panel-stat-tests.json') +
+    dashboard.new('postgres_fakedata', import 'datasource-postgres/postgres_fakedata.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('postgres_unittest', import 'datasource-postgres/postgres_unittest.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('reuse', import 'transforms/reuse.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('rows-to-fields', import 'transforms/rows-to-fields.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('shared_queries', import 'panel-common/shared_queries.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('slow_queries_and_annotations', import 'scenarios/slow_queries_and_annotations.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
@@ -527,7 +499,84 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('templating-dashboard-links-and-variables', import 'feature-templating/templating-dashboard-links-and-variables.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('templating-textbox-e2e-scenarios', import 'feature-templating/templating-textbox-e2e-scenarios.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('testdata-datalinks', import 'feature-templating/testdata-datalinks.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('testdata-nested-variables', import 'feature-templating/testdata-nested-variables.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('testdata-nested-variables-drilldown', import 'feature-templating/testdata-nested-variables-drilldown.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('testdata-repeating', import 'feature-templating/testdata-repeating.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('testdata-test-variable-output', import 'feature-templating/testdata-test-variable-output.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('testdata-variables-textbox', import 'feature-templating/testdata-variables-textbox.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('testdata-variables-that-update-on-time-c', import 'feature-templating/testdata-variables-that-update-on-time-change.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('testdata_alerts', import 'alerting/testdata_alerts.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('text-options', import 'panel-text/text-options.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('time_zone_support', import 'scenarios/time_zone_support.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
@@ -542,6 +591,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('timeline-modes', import 'panel-timeline/timeline-modes.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('timeseries', import 'panel-timeseries/timeseries.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
@@ -633,62 +689,6 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('timeseries-yaxis-ticks', import 'panel-timeseries/timeseries-yaxis-ticks.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('timeseries', import 'panel-timeseries/timeseries.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('slow_queries_and_annotations', import 'scenarios/slow_queries_and_annotations.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('time_zone_support', import 'scenarios/time_zone_support.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('config-from-query', import 'transforms/config-from-query.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('join-by-field', import 'transforms/join-by-field.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('join-by-labels', import 'transforms/join-by-labels.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('reuse', import 'transforms/reuse.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('rows-to-fields', import 'transforms/rows-to-fields.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {

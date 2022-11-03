@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -69,11 +70,16 @@ func newGen() *libjsonnetGen {
 }
 
 func (g *libjsonnetGen) generate() (string, error) {
+	buf := new(bytes.Buffer)
+
 	if err := g.readDir("."); err != nil {
 		return "", err
 	}
 
-	buf := new(bytes.Buffer)
+	sort.Slice(g.dashboards, func(i, j int) bool {
+		return g.dashboards[i].Name < g.dashboards[j].Name
+	})
+
 	vars := struct {
 		Dashboards []devDashboard
 	}{g.dashboards}
