@@ -35,7 +35,7 @@ const getConfigError = (err: { status: number }) => ({ error: err.status !== 404
 export const publicDashboardApi = createApi({
   reducerPath: 'publicDashboardApi',
   baseQuery: retry(backendSrvBaseQuery({ baseUrl: '/api/dashboards' }), { maxRetries: 0 }),
-  tagTypes: ['Config', 'PublicDashboards'],
+  tagTypes: ['PublicDashboard', 'PublicDashboards'],
   refetchOnMountOrArgChange: true,
   endpoints: (builder) => ({
     getConfig: builder.query<PublicDashboard, string>({
@@ -53,7 +53,7 @@ export const publicDashboardApi = createApi({
           dispatch(notifyApp(createErrorNotification(customError?.error?.data?.message)));
         }
       },
-      providesTags: (result, error, dashboardUid) => [{ type: 'Config', id: dashboardUid }],
+      providesTags: (result, error, dashboardUid) => [{ type: 'PublicDashboard', id: dashboardUid }],
     }),
     saveConfig: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({
@@ -71,7 +71,7 @@ export const publicDashboardApi = createApi({
           publicDashboardEnabled: data.isEnabled,
         });
       },
-      invalidatesTags: (result, error, { payload }) => [{ type: 'Config', id: payload.dashboardUid }],
+      invalidatesTags: (result, error, { payload }) => [{ type: 'PublicDashboard', id: payload.dashboardUid }],
     }),
     listPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
       query: () => ({
@@ -105,7 +105,10 @@ export const publicDashboardApi = createApi({
           publicDashboardEnabled: false,
         });
       },
-      invalidatesTags: (result, error, { dashboardUid }) => [{ type: 'Config', id: dashboardUid }, 'PublicDashboards'],
+      invalidatesTags: (result, error, { dashboardUid }) => [
+        { type: 'PublicDashboard', id: dashboardUid },
+        'PublicDashboards',
+      ],
     }),
   }),
 });
