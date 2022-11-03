@@ -160,14 +160,17 @@ message WriteObjectResponse {
   // Error info -- if exists, the save did not happen
   ObjectErrorInfo error = 1;
 
+  // Object identifier
+  GRN GRN = 2;
+
   // Object details with the body removed
-  ObjectVersionInfo object = 2; 
+  ObjectVersionInfo object = 3; 
 
   // Object summary as JSON
-  bytes summary_json = 3;
+  bytes summary_json = 4;
 
   // Status code
-  Status status = 4;
+  Status status = 5;
 
   // Status enumeration
   enum Status {
@@ -210,11 +213,14 @@ message ObjectHistoryRequest {
 }
 
 message ObjectHistoryResponse {
+  // Object identifier
+  GRN GRN = 1;
+
   // Object metadata without the raw bytes
-  repeated ObjectVersionInfo versions = 1;
+  repeated ObjectVersionInfo versions = 2;
 
   // More results exist... pass this in the next request
-  string next_page_token = 2;
+  string next_page_token = 3;
 }
 
 

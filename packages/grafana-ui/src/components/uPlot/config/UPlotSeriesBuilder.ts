@@ -49,6 +49,8 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   dataFrameFieldIndex?: DataFrameFieldIndex;
   theme: GrafanaTheme2;
   value?: uPlot.Series.Value;
+
+  gapsRefiner?: uPlot.Series.GapsRefiner;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
@@ -71,6 +73,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       pxAlign,
       spanNulls,
       show = true,
+      gapsRefiner,
     } = this.props;
 
     let lineConfig: Partial<Series> = {};
@@ -145,6 +148,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       pxAlign,
       show,
       fill: this.getFill(),
+      gaps: gapsRefiner ?? ((u, seriesIdx, idx0, idx1, gaps) => gaps),
       ...lineConfig,
       ...pointsConfig,
     };
