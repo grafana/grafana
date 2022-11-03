@@ -35,7 +35,7 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "dependencies": {
-    "@grafana/agent-web": "^0.4.0",
+    "@grafana/agent-web": "^0.6.0",
     "@grafana/data": "9.3.0-pre",
     "@grafana/e2e-selectors": "9.3.0-pre",
     "@grafana/ui": "9.3.0-pre",
