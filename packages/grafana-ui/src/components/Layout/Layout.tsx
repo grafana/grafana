@@ -21,6 +21,7 @@ export interface LayoutProps extends Omit<HTMLProps<HTMLDivElement>, 'align' | '
   align?: Align;
   width?: string;
   wrap?: boolean;
+  childStyle?: React.CSSProperties;
 }
 
 export interface ContainerProps {
@@ -39,6 +40,8 @@ export const Layout = ({
   wrap = false,
   width = '100%',
   height = '100%',
+  style,
+  childStyle,
   ...rest
 }: LayoutProps) => {
   const styles = useStyles2(
@@ -54,7 +57,7 @@ export const Layout = ({
         .filter(Boolean)
         .map((child, index) => {
           return (
-            <div className={styles.childWrapper} key={index}>
+            <div style={childStyle} className={styles.childWrapper} key={index}>
               {child}
             </div>
           );
@@ -71,6 +74,7 @@ export const HorizontalGroup = ({
   wrap,
   width,
   height,
+  childStyle,
 }: Omit<LayoutProps, 'orientation'>) => (
   <Layout
     spacing={spacing}
@@ -80,6 +84,7 @@ export const HorizontalGroup = ({
     width={width}
     height={height}
     wrap={wrap}
+    childStyle={childStyle}
   >
     {children}
   </Layout>

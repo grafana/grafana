@@ -126,16 +126,6 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
 
   const inputStyle = cx({ [notValidStyle]: !isValidUrl });
 
-  const urlInput = (
-    <Input
-      className={inputStyle}
-      placeholder={defaultUrl}
-      value={dataSourceConfig.url}
-      aria-label={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
-      onChange={(event) => onSettingsChange({ url: event.currentTarget.value })}
-    />
-  );
-
   const azureAuthEnabled: boolean =
     (azureAuthSettings?.azureAuthSupported && azureAuthSettings.getAzureAuthEnabled(dataSourceConfig)) || false;
 
@@ -145,20 +135,44 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
         <h3 className="page-heading">HTTP</h3>
         <div className="gf-form-group">
           <div className="gf-form">
-            <FormField
-              className={'gf-form--flex'}
+            <InlineField
+              style={{ maxWidth: '600px', marginRight: 0 }}
               label="URL"
-              labelWidth={13}
+              labelWidth={LABEL_WIDTH}
               tooltip={urlTooltip}
-              inputEl={urlInput}
-            />
+              grow={true}
+            >
+              <Input
+                className={inputStyle}
+                placeholder={defaultUrl}
+                value={dataSourceConfig.url}
+                aria-label={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
+                onChange={(event) => onSettingsChange({ url: event.currentTarget.value })}
+              />
+            </InlineField>
           </div>
 
           {showAccessOptions && (
             <>
               <div className="gf-form-inline">
                 <div className="gf-form">
-                  <FormField label="Access" labelWidth={13} inputWidth={20} inputEl={accessSelect} />
+                  <InlineField
+                    style={{ maxWidth: '600px' }}
+                    label="Access"
+                    labelWidth={13}
+                    tooltip={urlTooltip}
+                    grow={true}
+                  >
+                    <Select
+                      aria-label="Access"
+                      className="width-20 gf-form-input"
+                      options={ACCESS_OPTIONS}
+                      value={
+                        ACCESS_OPTIONS.filter((o) => o.value === dataSourceConfig.access)[0] || DEFAULT_ACCESS_OPTION
+                      }
+                      onChange={(selectedValue) => onSettingsChange({ access: selectedValue.value })}
+                    />
+                  </InlineField>
                 </div>
                 <div className="gf-form">
                   <label
@@ -191,21 +205,26 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
                 />
               </div>
               <div className="gf-form">
-                <FormField
-                  className={'gf-form--flex'}
+                <InlineField
+                  style={{ maxWidth: '600px', marginRight: 0 }}
                   label="Timeout"
-                  type="number"
-                  labelWidth={13}
+                  labelWidth={LABEL_WIDTH}
                   tooltip="HTTP request timeout in seconds"
-                  placeholder="Timeout in seconds"
-                  aria-label="Timeout in seconds"
-                  value={dataSourceConfig.jsonData.timeout}
-                  onChange={(event) => {
-                    onSettingsChange({
-                      jsonData: { ...dataSourceConfig.jsonData, timeout: parseInt(event.currentTarget.value, 10) },
-                    });
-                  }}
-                />
+                  grow={true}
+                >
+                  <Input
+                    type="number"
+                    className={inputStyle}
+                    placeholder="Timeout in seconds"
+                    value={dataSourceConfig.jsonData.timeout}
+                    aria-label="Timeout in seconds"
+                    onChange={(event) => {
+                      onSettingsChange({
+                        jsonData: { ...dataSourceConfig.jsonData, timeout: parseInt(event.currentTarget.value, 10) },
+                      });
+                    }}
+                  />
+                </InlineField>
               </div>
             </div>
           )}

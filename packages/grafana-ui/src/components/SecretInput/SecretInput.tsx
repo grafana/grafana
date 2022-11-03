@@ -15,7 +15,7 @@ export const CONFIGURED_TEXT = 'configured';
 export const RESET_BUTTON_TEXT = 'Reset';
 
 export const SecretInput = ({ isConfigured, onReset, ...props }: Props) => (
-  <HorizontalGroup>
+  <HorizontalGroup childStyle={{ width: '100%' }}>
     {!isConfigured && <Input {...props} type="password" />}
     {isConfigured && <Input {...props} type="text" disabled={true} value={CONFIGURED_TEXT} />}
     {isConfigured && (

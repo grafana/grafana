@@ -1,6 +1,8 @@
 import React from 'react';
 
-import { InlineField } from '../..';
+import { selectors } from '@grafana/e2e-selectors/src';
+
+import { InlineField, Input, SecretInput } from '../..';
 import { FormField } from '../FormField/FormField';
 import { SecretFormField } from '../SecretFormField/SecretFormField';
 
@@ -35,22 +37,18 @@ export const BasicAuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
 
   return (
     <>
-      <InlineField>
-        <FormField
+      <InlineField style={{ maxWidth: '600px', marginRight: 0 }} label="User" labelWidth={10} grow={true}>
+        <Input
           label="User"
-          labelWidth={10}
-          inputWidth={18}
           placeholder="user"
           value={dataSourceConfig.basicAuthUser}
           onChange={(event) => onChange({ ...dataSourceConfig, basicAuthUser: event.currentTarget.value })}
         />
       </InlineField>
-      <InlineField>
-        <SecretFormField
+      <InlineField style={{ maxWidth: '600px', width: '100%' }} label={'Password'} labelWidth={10} grow={true}>
+        <SecretInput
           isConfigured={!!(dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.basicAuthPassword)}
           value={password || ''}
-          inputWidth={18}
-          labelWidth={10}
           onReset={onPasswordReset}
           onChange={onPasswordChange}
         />
