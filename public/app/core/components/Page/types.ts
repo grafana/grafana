@@ -1,8 +1,6 @@
-import React, { FC, HTMLAttributes, RefCallback } from 'react';
+import React, { ComponentType, FC, HTMLAttributes, RefCallback } from 'react';
 
 import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
-
-import { PageHeader } from '../PageHeader/PageHeader';
 
 import { OldNavOnly } from './OldNavOnly';
 import { PageContents } from './PageContents';
@@ -15,7 +13,7 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   /** Can be used to place actions inline with the heading */
   pageActions?: React.ReactNode;
   /** Can be used to override and customize the page header */
-  pageHeader?: React.ReactNode;
+  pageHeader?: ComponentType<NavModelItem>;
   /** Can be used to customize or customize and set a page sub title */
   subTitle?: React.ReactNode;
   /** Control the page layout. */
@@ -26,10 +24,17 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   scrollRef?: RefCallback<HTMLDivElement>;
   /** Can be used to update the current scroll position */
   scrollTop?: number;
+  /** isItemPage will let Grafana know it's an item and make it add a go back action */
+  isItemPage?: boolean;
 }
 
 export interface PageType extends FC<PageProps> {
-  Header: typeof PageHeader;
   OldNavOnly: typeof OldNavOnly;
   Contents: typeof PageContents;
+}
+
+export interface PageHeaderProps {
+  title?: string;
+  stats?: React.ReactNode;
+  actions?: React.ReactNode;
 }

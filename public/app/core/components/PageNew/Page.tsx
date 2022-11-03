@@ -81,12 +81,11 @@ export const Page: PageType = ({
   );
 };
 
-const OldNavOnly = () => null;
-OldNavOnly.displayName = 'OldNavOnly';
-
-Page.Header = PageHeader;
 Page.Contents = PageContents;
-Page.OldNavOnly = OldNavOnly;
+
+Page.OldNavOnly = function OldNavOnly() {
+  return null;
+};
 
 const getStyles = (theme: GrafanaTheme2) => {
   const shadow = theme.isDark

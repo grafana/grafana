@@ -67,7 +67,6 @@ export const OldPage: PageType = ({
   );
 };
 
-OldPage.Header = PageHeader;
 OldPage.Contents = PageContents;
 OldPage.OldNavOnly = OldNavOnly;
 
