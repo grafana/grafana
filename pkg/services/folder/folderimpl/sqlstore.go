@@ -97,22 +97,37 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 
 	cmd.Folder.Updated = time.Now()
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		description := cmd.Folder.Description
+		sql := strings.Builder{}
+		columnsToUpdate := make([]string, 0)
+		args := []interface{}{cmd.Folder.Updated}
+		sql.Write([]byte("UPDATE folder SET updated = ? "))
 		if cmd.NewDescription != nil {
-			description = *cmd.NewDescription
+			columnsToUpdate = append(columnsToUpdate, "description = ?")
+			cmd.Folder.Description = *cmd.NewDescription
+			args = append(args, cmd.Folder.Description)
 		}
 
-		title := cmd.Folder.Title
 		if cmd.NewTitle != nil {
-			title = *cmd.NewTitle
+			columnsToUpdate = append(columnsToUpdate, "title = ?")
+			cmd.Folder.Title = *cmd.NewTitle
+			args = append(args, cmd.Folder.Title)
 		}
 
-		uid := cmd.Folder.UID
 		if cmd.NewUID != nil {
-			uid = *cmd.NewUID
+			columnsToUpdate = append(columnsToUpdate, "uid = ?")
+			cmd.Folder.UID = *cmd.NewUID
+			args = append(args, cmd.Folder.UID)
 		}
 
-		res, err := sess.Exec("UPDATE folder SET description = ?, title = ?, uid = ?, updated = ? WHERE uid = ? AND org_id = ?", description, title, uid, cmd.Folder.Updated, cmd.Folder.UID, cmd.Folder.OrgID)
+		if len(columnsToUpdate) == 0 {
+			return folder.ErrBadRequest.Errorf("no columns to update")
+		}
+
+		sql.Write([]byte(strings.Join(columnsToUpdate, ", ")))
+		sql.Write([]byte(" WHERE uid = ? AND org_id = ?"))
+		args = append(args, cmd.Folder.UID, cmd.Folder.OrgID)
+
+		res, err := sess.Exec(sql.String(), args)
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to update folder: %w", err)
 		}
@@ -124,10 +139,6 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 		if affected == 0 {
 			return folder.ErrInternal.Errorf("no folders are updated")
 		}
-
-		cmd.Folder.Description = description
-		cmd.Folder.Title = title
-		cmd.Folder.UID = uid
 		return nil
 	})
 
