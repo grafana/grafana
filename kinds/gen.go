@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	"cuelang.org/go/cue/errors"
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/kindsys"
@@ -69,7 +70,7 @@ func main() {
 		rel := filepath.Join(kindsys.CoreStructuredDeclParentPath, ent.Name())
 		decl, err := kindsys.LoadCoreKind[kindsys.CoreStructuredMeta](rel, rt.Context(), nil)
 		if err != nil {
-			die(fmt.Errorf("kind at %s is invalid: %w", rel, err))
+			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
 		}
 		if decl.Meta.MachineName != ent.Name() {
 			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, decl.Meta.Name, ent.Name()))
@@ -88,7 +89,7 @@ func main() {
 		rel := filepath.Join(kindsys.RawDeclParentPath, ent.Name())
 		decl, err := kindsys.LoadCoreKind[kindsys.RawMeta](rel, rt.Context(), nil)
 		if err != nil {
-			die(fmt.Errorf("raw kind at %s is invalid: %w", rel, err))
+			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
 		}
 		if decl.Meta.MachineName != ent.Name() {
 			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, decl.Meta.Name, ent.Name()))

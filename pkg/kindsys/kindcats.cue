@@ -69,9 +69,9 @@ _sharedKind: {
 	maturity: #Maturity
 
 	// The kind system itself is not mature enough yet for any single
-	// kind to be called "mature."
-	// TODO remove this once system is ready https://github.com/orgs/grafana/projects/133/views/8
-	maturity: "committed" | "experimental" | "stable"
+	// kind to advance beyond "experimental"
+	// TODO allow more maturity stages once system is ready https://github.com/orgs/grafana/projects/133/views/8
+	maturity: *"merged" | "experimental"
 
 	// form indicates whether the kind has a schema ("structured") or not ("raw")
 	form: "structured" | "raw"
@@ -79,7 +79,7 @@ _sharedKind: {
 
 // Maturity indicates the how far a given kind declaration is in its initial
 // journey. Mature kinds still evolve, but with guarantees about compatibility.
-#Maturity: "committed" | "experimental" | "stable" | "mature"
+#Maturity: "merged" | "experimental" | "stable" | "mature"
 
 // Structured encompasses all three of the structured kind categories, in which
 // a schema specifies validity rules for the byte sequence. These represent all
@@ -115,8 +115,6 @@ _sharedKind: {
 
 	lineageIsGroup: false
 
-	maturity: *"experimental" | "mature" // TODO unclear if we want maturity for raw kinds
-
 	// known TODOs
 	// - sanitize function
 	// - get summary
@@ -127,8 +125,6 @@ _sharedKind: {
 	#Structured
 
 	lineageIsGroup: false
-
-	maturity: *"experimental" | "mature"
 	...
 }
 
@@ -137,8 +133,6 @@ _sharedKind: {
 	#Structured
 
 	lineageIsGroup: false
-
-	maturity: *"committed" | "experimental" | "stable" | "mature"
 }
 
 // Composable is a category of structured kind that provides schema elements for
@@ -168,6 +162,4 @@ _sharedKind: {
 	// lineage is the Thema lineage containing all the schemas that have existed for this kind.
 	// It is required that lineage.name is the same as the [machineName].
 	lineage: thema.#Lineage & { name: S.machineName }
-
-	maturity: *"experimental" | "mature"
 }

@@ -1,7 +1,7 @@
 package kind
 
 name: "Playlist"
-maturity: "committed"
+maturity: "merged"
 
 lineage: seqs: [
 	{
