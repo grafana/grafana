@@ -12,6 +12,7 @@ import (
 )
 
 const timeout = 4 * time.Second
+const maxTokensPerRequest = 100
 
 // SecretScan Client is grafana's client for checking leaked keys.
 // Don't use this client directly,
@@ -51,6 +52,28 @@ func newClient(url, version string) *client {
 // checkTokens checks if any leaked tokens exist.
 // Returns list of leaked tokens.
 func (c *client) CheckTokens(ctx context.Context, keyHashes []string) ([]Token, error) {
+	// decode response body
+	tokens := make([]Token, 0, len(keyHashes))
+
+	// batch requests to secretscan server
+	err := batch(len(keyHashes), maxTokensPerRequest, func(start, end int) error {
+		bTokens, err := c.checkTokens(ctx, keyHashes[start:end])
+		if err != nil {
+			return err
+		}
+
+		tokens = append(tokens, bTokens...)
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return tokens, nil
+}
+
+func (c *client) checkTokens(ctx context.Context, keyHashes []string) ([]Token, error) {
 	// create request body
 	values := secretscanRequest{KeyHashes: keyHashes}
 
@@ -92,4 +115,21 @@ func (c *client) CheckTokens(ctx context.Context, keyHashes []string) ([]Token, 
 	}
 
 	return tokens, nil
+}
+
+func batch(count, size int, eachFn func(start, end int) error) error {
+	for i := 0; i < count; {
+		end := i + size
+		if end > count {
+			end = count
+		}
+
+		if err := eachFn(i, end); err != nil {
+			return err
+		}
+
+		i = end
+	}
+
+	return nil
 }
