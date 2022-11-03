@@ -19,7 +19,7 @@ func RawKindGenerator(gokindsdir string, cfg *RawKindGeneratorConfig) OneToOne {
 	}
 	if cfg.GenDirName == nil {
 		cfg.GenDirName = func(decl *DeclForGen) string {
-			return machineNameFor(decl.Meta)
+			return decl.Meta.Common().MachineName
 		}
 	}
 
@@ -51,7 +51,7 @@ func (gen *genRawKind) Generate(decl *DeclForGen) (*GeneratedFile, error) {
 		return nil, nil
 	}
 
-	path := filepath.Join(gen.gokindsdir, gen.cfg.GenDirName(decl), machineNameFor(decl.Meta)+"_kind_gen.go")
+	path := filepath.Join(gen.gokindsdir, gen.cfg.GenDirName(decl), decl.Meta.Common().MachineName+"_kind_gen.go")
 	buf := new(bytes.Buffer)
 	if err := tmpls.Lookup("kind_raw.tmpl").Execute(buf, decl); err != nil {
 		return nil, fmt.Errorf("failed executing kind_raw template for %s: %w", path, err)

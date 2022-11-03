@@ -24,7 +24,7 @@ func GoTypesGenerator(gokindsdir string, cfg *GoTypesGeneratorConfig) OneToOne {
 	}
 	if cfg.GenDirName == nil {
 		cfg.GenDirName = func(decl *DeclForGen) string {
-			return machineNameFor(decl.Meta)
+			return decl.Meta.Common().MachineName
 		}
 	}
 

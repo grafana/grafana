@@ -29,7 +29,7 @@ var singles = []codegen.OneToOne{
 	codegen.TSTypesGenerator(kindsys.TSCoreKindParentPath, &codegen.TSTypesGeneratorConfig{
 		GenDirName: func(decl *codegen.DeclForGen) string {
 			// FIXME this hardcodes always generating to experimental dir. OK for now, but need generator fanout
-			return filepath.Join(decl.MachineName(), "x")
+			return filepath.Join(decl.Meta.Common().MachineName, "x")
 		},
 	}),
 }

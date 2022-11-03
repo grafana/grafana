@@ -23,7 +23,7 @@ func TSTypesGenerator(tskindsdir string, cfg *TSTypesGeneratorConfig) OneToOne {
 	}
 	if cfg.GenDirName == nil {
 		cfg.GenDirName = func(decl *DeclForGen) string {
-			return machineNameFor(decl.Meta)
+			return decl.Meta.Common().MachineName
 		}
 	}
 	if cfg.IsGroup == nil {
@@ -79,7 +79,7 @@ func (gen *genTSTypes) Generate(decl *DeclForGen) (*GeneratedFile, error) {
 
 	// TODO allow using name instead of machine name in thema generator
 	f, err := typescript.GenerateTypes(sch, &typescript.TypeConfig{
-		RootName: nameFor(decl.Meta),
+		RootName: decl.Meta.Common().Name,
 		Group:    gen.cfg.IsGroup(decl),
 	})
 	if err != nil {
