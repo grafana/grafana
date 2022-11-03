@@ -4329,7 +4329,7 @@ __metadata:
     "@grafana/schema": 9.3.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 23.0.2
-    "@rollup/plugin-json": 4.1.0
+    "@rollup/plugin-json": 5.0.1
     "@rollup/plugin-node-resolve": 13.3.0
     "@swc/helpers": 0.4.12
     "@testing-library/dom": 8.13.0
@@ -4558,7 +4558,7 @@ __metadata:
   dependencies:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 23.0.2
-    "@rollup/plugin-json": 4.1.0
+    "@rollup/plugin-json": 5.0.1
     "@rollup/plugin-node-resolve": 13.3.0
     "@swc/helpers": 0.4.12
     esbuild: 0.15.12
@@ -8063,14 +8063,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/plugin-json@npm:4.1.0":
-  version: 4.1.0
-  resolution: "@rollup/plugin-json@npm:4.1.0"
+"@rollup/plugin-json@npm:5.0.1":
+  version: 5.0.1
+  resolution: "@rollup/plugin-json@npm:5.0.1"
   dependencies:
-    "@rollup/pluginutils": ^3.0.8
+    "@rollup/pluginutils": ^5.0.1
   peerDependencies:
-    rollup: ^1.20.0 || ^2.0.0
-  checksum: 867bc9339b4ccf0b9ff3b2617a95b3b8920115163f86c8e3b1f068a14ca25949472d3c05b09a5ac38ca0fe2185756e34617eaeb219d4a2b6e2307c501c7d4552
+    rollup: ^1.20.0||^2.0.0||^3.0.0
+  peerDependenciesMeta:
+    rollup:
+      optional: true
+  checksum: 1b2f45f49cd3f3dcf2bd1b5987f330cc23bb1abfe049d8ca3d441eacbb8f9a052692b3f062023e175359de7db6dd55ef804393beab15d90aeb3fbf540494a036
   languageName: node
   linkType: hard
 
@@ -8090,7 +8093,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/pluginutils@npm:^3.0.8, @rollup/pluginutils@npm:^3.0.9, @rollup/pluginutils@npm:^3.1.0":
+"@rollup/pluginutils@npm:^3.0.9, @rollup/pluginutils@npm:^3.1.0":
   version: 3.1.0
   resolution: "@rollup/pluginutils@npm:3.1.0"
   dependencies:
