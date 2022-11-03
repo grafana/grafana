@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -411,7 +412,7 @@ func (hs *HTTPServer) AdminGetUserAuthTokens(c *models.ReqContext) response.Resp
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext) response.Response {
-	cmd := models.RevokeAuthTokenCmd{}
+	cmd := auth.RevokeAuthTokenCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -471,7 +472,7 @@ type AdminLogoutUserParams struct {
 type AdminRevokeUserAuthTokenParams struct {
 	// in:body
 	// required:true
-	Body models.RevokeAuthTokenCmd `json:"body"`
+	Body auth.RevokeAuthTokenCmd `json:"body"`
 	// in:path
 	// required:true
 	UserID int64 `json:"user_id"`

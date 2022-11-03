@@ -54,7 +54,3 @@ type UserToken struct {
 	RevokedAt     int64
 	UnhashedToken string
 }
-
-type RevokeAuthTokenCmd struct {
-	AuthTokenId int64 `json:"authTokenId"`
-}

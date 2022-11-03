@@ -65,7 +65,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When a server admin attempts to revoke an auth token for a non-existing user", func(t *testing.T) {
-		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
+		cmd := auth.RevokeAuthTokenCmd{AuthTokenId: 2}
 		mockUser := usertest.NewUserServiceFake()
 		mockUser.ExpectedError = user.ErrUserNotFound
 		adminRevokeUserAuthTokenScenario(t, "Should return not found when calling POST on",
@@ -285,7 +285,7 @@ func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern
 	})
 }
 
-func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd models.RevokeAuthTokenCmd, fn scenarioFunc, userService user.Service) {
+func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd auth.RevokeAuthTokenCmd, fn scenarioFunc, userService user.Service) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 

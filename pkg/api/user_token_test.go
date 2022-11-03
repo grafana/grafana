@@ -20,7 +20,7 @@ import (
 func TestUserTokenAPIEndpoint(t *testing.T) {
 	userMock := usertest.NewUserServiceFake()
 	t.Run("When current user attempts to revoke an auth token for a non-existing user", func(t *testing.T) {
-		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
+		cmd := auth.RevokeAuthTokenCmd{AuthTokenId: 2}
 		userMock.ExpectedError = user.ErrUserNotFound
 		revokeUserAuthTokenScenario(t, "Should return not found when calling POST on", "/api/user/revoke-auth-token",
 			"/api/user/revoke-auth-token", cmd, 200, func(sc *scenarioContext) {
@@ -59,7 +59,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When revoke an auth token for a user", func(t *testing.T) {
-		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
+		cmd := auth.RevokeAuthTokenCmd{AuthTokenId: 2}
 		token := &models.UserToken{Id: 1}
 		mockUser := &usertest.FakeUserService{
 			ExpectedUser: &user.User{ID: 200},
@@ -75,7 +75,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When revoke the active auth token used by himself", func(t *testing.T) {
-		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
+		cmd := auth.RevokeAuthTokenCmd{AuthTokenId: 2}
 		token := &models.UserToken{Id: 2}
 		mockUser := usertest.NewUserServiceFake()
 		revokeUserAuthTokenInternalScenario(t, "Should not be successful", cmd, testUserID, token, func(sc *scenarioContext) {
@@ -145,7 +145,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	})
 }
 
-func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd models.RevokeAuthTokenCmd,
+func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd auth.RevokeAuthTokenCmd,
 	userId int64, fn scenarioFunc, userService user.Service) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
@@ -222,7 +222,7 @@ func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId 
 	})
 }
 
-func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd models.RevokeAuthTokenCmd, userId int64,
+func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd auth.RevokeAuthTokenCmd, userId int64,
 	token *models.UserToken, fn scenarioFunc, userService user.Service) {
 	t.Run(desc, func(t *testing.T) {
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
