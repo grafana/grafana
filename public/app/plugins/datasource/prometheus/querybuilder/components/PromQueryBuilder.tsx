@@ -53,6 +53,11 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     [datasource]
   );
 
+  /**
+   * Function kicked off when user interacts with label in label filters.
+   * Formats a promQL expression and passes that off to helper functions depending on API support
+   * @param forLabel
+   */
   const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<Array<{ value: string }>> => {
     // If no metric we need to use a different method
     if (!query.metric) {
@@ -78,7 +83,12 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
       .map((k) => ({ value: k }));
   };
 
-  const getLabelValuesFromSeries = async (forLabel: Partial<QueryBuilderLabelFilter>, promQLExpression: string) => {
+  /**
+   * Helper function to fetch and format label value results from legacy API
+   * @param forLabel
+   * @param promQLExpression
+   */
+  const getLabelValuesFromSeriesAPI = async (forLabel: Partial<QueryBuilderLabelFilter>, promQLExpression: string) => {
     if (!forLabel.label) {
       return [];
     }
@@ -87,7 +97,12 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     return result[forLabelInterpolated].map((v) => ({ value: v })) ?? [];
   };
 
-  const getLabelValuesFromLabelValues = async (
+  /**
+   * Helper function to fetch label values from a promql string expression and a label
+   * @param forLabel
+   * @param promQLExpression
+   */
+  const getLabelValuesFromLabelValuesAPI = async (
     forLabel: Partial<QueryBuilderLabelFilter>,
     promQLExpression: string
   ) => {
@@ -99,6 +114,11 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     }));
   };
 
+  /**
+   * Function kicked off when users interact with the value of the label filters
+   * Formats a promQL expression and passes that into helper functions depending on API support
+   * @param forLabel
+   */
   const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {
     if (!forLabel.label) {
       return [];
@@ -113,9 +133,9 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     const expr = promQueryModeller.renderLabels(labelsToConsider);
 
     if (datasource.hasLabelsMatchAPISupport()) {
-      return getLabelValuesFromLabelValues(forLabel, expr);
+      return getLabelValuesFromLabelValuesAPI(forLabel, expr);
     } else {
-      return getLabelValuesFromSeries(forLabel, expr);
+      return getLabelValuesFromSeriesAPI(forLabel, expr);
     }
   };
 

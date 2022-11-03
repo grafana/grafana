@@ -1,4 +1,4 @@
-import { once, chain, difference } from 'lodash';
+import { chain, difference, once } from 'lodash';
 import LRU from 'lru-cache';
 import Prism from 'prismjs';
 import { Value } from 'slate';
@@ -501,6 +501,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return [];
   }
 
+  /**
+   * Fetches all values for a label, with optional match[]
+   * @param name
+   * @param match
+   */
   fetchSeriesValues = async (name: string, match?: string): Promise<string[]> => {
     const interpolatedName = match ? this.datasource.interpolateString(match) : null;
     const range = this.datasource.getTimeRangeParams();
@@ -508,13 +513,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       ...range,
       ...(interpolatedName && { 'match[]': interpolatedName }),
     };
-    const url = `/api/v1/label/${name}/values`;
-    const data = await this.request(url, [], urlParams);
-    return data;
+    return await this.request(`/api/v1/label/${name}/values`, [], urlParams);
   };
 
   /**
-   * Fetch labels for a series. This is cached by its args but also by the global timeRange currently selected as
+   * Fetch labels for a series using /series endpoint. This is cached by its args but also by the global timeRange currently selected as
    * they can change over requested time.
    * @param name
    * @param withName
@@ -550,7 +553,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   /**
-   *
+   * Fetch labels for a series using /labels endpoint.  This is cached by its args but also by the global timeRange currently selected as
+   * they can change over requested time.
    * @param name
    * @param withName
    */
