@@ -1,11 +1,11 @@
 name: "CodeQL for PR / go"
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main]
     paths:
       - '**/*.go'
-  workflow_dispatch:
 
 jobs:
   analyze:
