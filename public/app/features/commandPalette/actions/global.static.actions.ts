@@ -1,10 +1,8 @@
 import { Action, Priority } from 'kbar';
-import { flatMapDeep } from 'lodash';
 
 import { NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-
-import { alertingCommandPaletteStaticActions } from './alerting.static.actions';
+import { isTruthy } from 'app/core/utils/types';
 
 export interface NavBarActions {
   url: string;
@@ -14,19 +12,19 @@ export interface NavBarActions {
 export default (navBarTree: NavModelItem[]) => {
   const globalActions: Action[] = [
     {
+      id: 'go/dashboard',
+      name: 'Dashboards...',
+      keywords: 'navigate',
+      section: 'Navigation',
+      priority: Priority.NORMAL,
+    },
+    {
       id: 'go/search',
-      name: 'Go to dashboard search',
+      name: 'Go to Search',
       keywords: 'navigate',
       perform: () => locationService.push('?search=open'),
       section: 'Navigation',
       shortcut: ['s', 'o'],
-    },
-    {
-      id: 'go/dashboard',
-      name: 'Go to dashboard...',
-      keywords: 'navigate',
-      section: 'Navigation',
-      priority: Priority.NORMAL,
     },
     {
       id: 'preferences/theme',
@@ -59,95 +57,50 @@ export default (navBarTree: NavModelItem[]) => {
     },
   ];
 
-  // this maps actions to navbar by URL items for showing/hiding
-  // actions is an array for multiple child actions that would be under one navbar item
-  const navBarActionMap: NavBarActions[] = [
-    {
-      url: '/dashboard/new',
-      actions: [
-        {
-          id: 'management/create-folder',
-          name: 'Create folder',
-          keywords: 'new add',
-          perform: () => locationService.push('/dashboards/folder/new'),
-          section: 'Management',
-        },
-        {
-          id: 'management/create-dashboard',
-          name: 'Create dashboard',
-          keywords: 'new add',
-          perform: () => locationService.push('/dashboard/new'),
-          section: 'Management',
-        },
-      ],
-    },
-    {
-      url: '/',
-      actions: [
-        {
-          id: 'go/home',
-          name: 'Go to home',
-          keywords: 'navigate',
-          perform: () => locationService.push('/'),
-          section: 'Navigation',
-          shortcut: ['g', 'h'],
-          priority: Priority.HIGH,
-        },
-      ],
-    },
-    {
-      url: '/explore',
-      actions: [
-        {
-          id: 'go/explore',
-          name: 'Go to explore',
-          keywords: 'navigate',
-          perform: () => locationService.push('/explore'),
-          section: 'Navigation',
-          priority: Priority.NORMAL,
-        },
-      ],
-    },
-    ...alertingCommandPaletteStaticActions,
-    {
-      url: '/profile',
-      actions: [
-        {
-          id: 'go/profile',
-          name: 'Go to profile',
-          keywords: 'navigate preferences',
-          perform: () => locationService.push('/profile'),
-          section: 'Navigation',
-          shortcut: ['g', 'p'],
-          priority: Priority.LOW,
-        },
-      ],
-    },
-    {
-      url: '/datasources',
-      actions: [
-        {
-          id: 'go/configuration',
-          name: 'Go to data sources configuration',
-          keywords: 'navigate settings ds',
-          perform: () => locationService.push('/datasources'),
-          section: 'Navigation',
-        },
-      ],
-    },
-  ];
+  interface NavItemWithParent extends NavModelItem {
+    parent?: NavModelItem;
+  }
 
-  const navBarActions: Action[] = [];
-  const navBarFlatUrls = flatMapDeep(navBarTree, (nbt) => nbt.children)
-    .map((nbf) => nbf?.url)
-    .filter((url) => url !== undefined);
-
-  navBarActionMap.forEach((navBarAction) => {
-    const navBarItem = navBarFlatUrls.find((url) => navBarAction.url === url);
-    if (navBarItem) {
-      navBarActions.push(...navBarAction.actions);
+  const flatNavTree = navBarTree.flatMap<NavItemWithParent>((navItem) => {
+    // exclude parent items without URLs because we can't navigate to them
+    if (!navItem.url) {
+      return [];
     }
+
+    const children = (navItem.children ?? []).map((childNavItem) => {
+      const grandchild: NavItemWithParent = {
+        ...childNavItem,
+        parent: navItem,
+      };
+
+      return grandchild;
+    });
+
+    const parent: NavItemWithParent = navItem;
+
+    return [parent, ...children];
   });
+
+  function idFromNavItem(navItem: NavModelItem) {
+    return 'navModelItem.' + (navItem.id ?? navItem.url);
+  }
+
+  const navBarActions = flatNavTree
+    .map<Action | undefined>((navItem) => {
+      const { url, id, text } = navItem ?? {};
+      if (!url || !id || !text) {
+        return;
+      }
+
+      return {
+        id: idFromNavItem(navItem),
+        name: `Go to ${text}`,
+        perform: () => locationService.push(url),
+        parent: navItem.parent && idFromNavItem(navItem.parent),
+        section: 'Navigation',
+      };
+    })
+    .filter(isTruthy);
 
   return [...globalActions, ...navBarActions];
 };
