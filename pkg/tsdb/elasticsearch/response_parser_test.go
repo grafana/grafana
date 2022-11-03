@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var update = flag.Bool("update", true, "update golden files")
+
 func TestResponseParser(t *testing.T) {
 	t.Run("Elasticsearch response parser test", func(t *testing.T) {
 		t.Run("Simple query and count", func(t *testing.T) {
@@ -1216,5 +1218,3 @@ func newResponseParserForTest(tsdbQueries map[string]string, responseBody string
 
 	return newResponseParser(response.Responses, queries, nil), nil
 }
-
-var update = flag.Bool("update", true, "update golden files")
