@@ -29,21 +29,40 @@ func ProvideStore(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureManage
 }
 
 func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
-	foldr := &folder.Folder{
-		OrgID:       cmd.OrgID,
-		UID:         cmd.UID,
-		ParentUID:   cmd.ParentUID,
-		Title:       cmd.Title,
-		Description: cmd.Description,
-		Created:     time.Now(),
-		Updated:     time.Now(),
+	if cmd.UID == "" {
+		return nil, folder.ErrBadRequest.Errorf("missing UID")
 	}
+
+	var foldr *folder.Folder
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		folderID, err := sess.Insert(foldr)
+		var sqlOrArgs []interface{}
+		if cmd.ParentUID == "" {
+			sql := "INSERT INTO folder(org_id, uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?)"
+			sqlOrArgs = []interface{}{sql, cmd.OrgID, cmd.UID, cmd.Title, cmd.Description, time.Now(), time.Now()}
+		} else {
+			if cmd.ParentUID != folder.GeneralFolderUID {
+				if _, err := ss.Get(ctx, folder.GetFolderQuery{
+					UID:   &cmd.ParentUID,
+					OrgID: cmd.OrgID,
+				}); err != nil {
+					return err
+				}
+			}
+			sql := "INSERT INTO folder(org_id, uid, parent_uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?, ?)"
+			sqlOrArgs = []interface{}{sql, cmd.OrgID, cmd.UID, cmd.ParentUID, cmd.Title, cmd.Description, time.Now(), time.Now()}
+		}
+		res, err := sess.Exec(sqlOrArgs...)
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to insert folder: %w", err)
 		}
-		foldr.ID = folderID
+		id, err := res.LastInsertId()
+		if err != nil {
+			return folder.ErrDatabaseError.Errorf("failed to get last inserted id: %w", err)
+		}
+
+		foldr, err = ss.Get(ctx, folder.GetFolderQuery{
+			ID: &id,
+		})
 		return nil
 	})
 	return foldr, err
