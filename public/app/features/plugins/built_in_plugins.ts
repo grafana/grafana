@@ -39,6 +39,10 @@ const tempoPlugin = async () =>
   await import(/* webpackChunkName: "tempoPlugin" */ 'app/plugins/datasource/tempo/module');
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
+const phlarePlugin = async () =>
+  await import(/* webpackChunkName: "phlarePlugin" */ 'app/plugins/datasource/phlare/module');
+const parcaPlugin = async () =>
+  await import(/* webpackChunkName: "parcaPlugin" */ 'app/plugins/datasource/parca/module');
 
 import { config } from '@grafana/runtime';
 import * as alertGroupsPanel from 'app/plugins/panel/alertGroups/module';
@@ -49,6 +53,7 @@ import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 import * as candlestickPanel from 'app/plugins/panel/candlestick/module';
 import * as dashListPanel from 'app/plugins/panel/dashlist/module';
 import * as debugPanel from 'app/plugins/panel/debug/module';
+import * as flamegraphPanel from 'app/plugins/panel/flamegraph/module';
 import * as gaugePanel from 'app/plugins/panel/gauge/module';
 import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
 import * as histogramPanel from 'app/plugins/panel/histogram/module';
@@ -112,6 +117,8 @@ const builtInPlugins: any = {
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
   'app/plugins/datasource/tempo/module': tempoPlugin,
   'app/plugins/datasource/alertmanager/module': alertmanagerPlugin,
+  'app/plugins/datasource/phlare/module': phlarePlugin,
+  'app/plugins/datasource/parca/module': parcaPlugin,
 
   'app/plugins/panel/text/module': textPanel,
   'app/plugins/panel/timeseries/module': timeseriesPanel,
@@ -133,6 +140,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/live/module': livePanel,
   'app/plugins/panel/stat/module': statPanel,
   'app/plugins/panel/debug/module': debugPanel,
+  'app/plugins/panel/flamegraph/module': flamegraphPanel,
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,
   'app/plugins/panel/gauge/module': gaugePanel,
   'app/plugins/panel/piechart/module': pieChartPanel,

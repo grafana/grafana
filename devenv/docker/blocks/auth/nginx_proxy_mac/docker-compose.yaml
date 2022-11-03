@@ -5,7 +5,7 @@
 # root_url = %(protocol)s://%(domain)s:10080/grafana/
 
   nginxproxy:
-    build: docker/blocks/nginx_proxy_mac
+    build: docker/blocks/auth/nginx_proxy_mac
     ports:
       - "10080:10080"
 

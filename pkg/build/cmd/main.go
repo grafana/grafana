@@ -11,7 +11,6 @@ import (
 
 func main() {
 	app := cli.NewApp()
-	app.Before = GenerateVersions
 	app.Commands = cli.Commands{
 		{
 			Name:      "build-backend",
@@ -23,6 +22,18 @@ func main() {
 				&variantsFlag,
 				&editionFlag,
 				&buildIDFlag,
+			},
+		},
+		{
+			Name:      "build-frontend-packages",
+			Usage:     "Build front-end packages",
+			ArgsUsage: "[version]",
+			Action:    BuildFrontendPackages,
+			Flags: []cli.Flag{
+				&jobsFlag,
+				&editionFlag,
+				&buildIDFlag,
+				&noInstallDepsFlag,
 			},
 		},
 		{
@@ -95,6 +106,114 @@ func main() {
 				&signingAdminFlag,
 				&signFlag,
 				&noInstallDepsFlag,
+			},
+		},
+		{
+			Name:      "publish-metrics",
+			Usage:     "Publish a set of metrics from stdin",
+			ArgsUsage: "<api-key>",
+			Action:    ArgCountWrapper(1, PublishMetrics),
+		},
+		{
+			Name:   "verify-drone",
+			Usage:  "Verify Drone configuration",
+			Action: VerifyDrone,
+		},
+		{
+			Name:   "export-version",
+			Usage:  "Exports version in dist/grafana.version",
+			Action: ExportVersion,
+		},
+		{
+			Name:      "package",
+			Usage:     "Package one or more Grafana variants",
+			ArgsUsage: "[version]",
+			Action:    ArgCountWrapper(1, Package),
+			Flags: []cli.Flag{
+				&jobsFlag,
+				&variantsFlag,
+				&editionFlag,
+				&buildIDFlag,
+				&signFlag,
+			},
+		},
+		{
+			Name:   "store-storybook",
+			Usage:  "Integrity check for storybook build",
+			Action: StoreStorybook,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:  "deployment",
+					Usage: "Kind of deployment (e.g. canary/latest)",
+				},
+			},
+		},
+		{
+			Name:  "artifacts",
+			Usage: "Handle Grafana artifacts",
+			Subcommands: cli.Commands{
+				{
+					Name:  "docker",
+					Usage: "Handle Grafana Docker images",
+					Subcommands: cli.Commands{
+						{
+							Name:      "fetch",
+							Usage:     "Fetch Grafana Docker images",
+							ArgsUsage: "[version]",
+							Action:    ArgCountWrapper(1, FetchImages),
+							Flags: []cli.Flag{
+								&editionFlag,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			Name:  "publish",
+			Usage: "Publish packages to Grafana com and repositories",
+			Subcommands: cli.Commands{
+				{
+					Name:   "grafana-com",
+					Usage:  "Publish packages to grafana.com",
+					Action: GrafanaCom,
+					Flags: []cli.Flag{
+						&editionFlag,
+						&buildIDFlag,
+						&dryRunFlag,
+						&cli.StringFlag{
+							Name:  "src-bucket",
+							Value: "grafana-downloads",
+							Usage: "Google Cloud Storage bucket",
+						},
+					},
+				},
+				{
+					Name:   "github",
+					Usage:  "Publish packages to GitHub releases",
+					Action: PublishGitHub,
+					Flags: []cli.Flag{
+						&dryRunFlag,
+						&cli.StringFlag{
+							Name:     "path",
+							Required: true,
+							Usage:    "Path to the asset to be published",
+						},
+						&cli.StringFlag{
+							Name:     "repo",
+							Required: true,
+							Usage:    "GitHub repository",
+						},
+						&cli.StringFlag{
+							Name:  "tag",
+							Usage: "Release tag (default from metadata)ß",
+						},
+						&cli.BoolFlag{
+							Name:  "create",
+							Usage: "Create release if it doesn't exist",
+						},
+					},
+				},
 			},
 		},
 	}

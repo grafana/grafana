@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -33,7 +34,7 @@ func (e *AlertEngine) AlertTest(orgID int64, dashboard *simplejson.Json, panelID
 
 		handler := NewEvalHandler(e.DataService)
 
-		context := NewEvalContext(context.Background(), rule, fakeRequestValidator{}, e.AlertStore, nil, e.datasourceService)
+		context := NewEvalContext(context.Background(), rule, fakeRequestValidator{}, e.AlertStore, nil, e.datasourceService, annotationstest.NewFakeAnnotationsRepo())
 		context.IsTestRun = true
 		context.IsDebug = true
 

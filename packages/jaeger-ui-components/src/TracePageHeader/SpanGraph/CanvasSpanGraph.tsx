@@ -50,7 +50,7 @@ export class UnthemedCanvasSpanGraph extends React.PureComponent<CanvasSpanGraph
     this._canvasElm = undefined;
   }
 
-  getColor = (key: string) => getRgbColorByKey(key);
+  getColor = (key: string) => getRgbColorByKey(key, this.props.theme);
 
   componentDidMount() {
     this._draw();

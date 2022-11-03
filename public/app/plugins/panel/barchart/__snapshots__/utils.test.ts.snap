@@ -105,6 +105,7 @@ Object {
   ],
   "scales": Object {
     "m/s": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -114,6 +115,7 @@ Object {
       "time": undefined,
     },
     "x": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": -1,
       "distr": 2,
@@ -131,6 +133,7 @@ Object {
     Object {
       "facets": undefined,
       "fill": [Function],
+      "gaps": [Function],
       "paths": [Function],
       "points": Object {
         "fill": "#808080",
@@ -256,6 +259,7 @@ Object {
   ],
   "scales": Object {
     "m/s": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -265,6 +269,7 @@ Object {
       "time": undefined,
     },
     "x": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": -1,
       "distr": 2,
@@ -282,6 +287,7 @@ Object {
     Object {
       "facets": undefined,
       "fill": [Function],
+      "gaps": [Function],
       "paths": [Function],
       "points": Object {
         "fill": "#808080",
@@ -407,6 +413,7 @@ Object {
   ],
   "scales": Object {
     "m/s": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -416,6 +423,7 @@ Object {
       "time": undefined,
     },
     "x": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 2,
@@ -433,6 +441,7 @@ Object {
     Object {
       "facets": undefined,
       "fill": [Function],
+      "gaps": [Function],
       "paths": [Function],
       "points": Object {
         "fill": "#808080",
@@ -558,6 +567,7 @@ Object {
   ],
   "scales": Object {
     "m/s": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -567,6 +577,7 @@ Object {
       "time": undefined,
     },
     "x": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": -1,
       "distr": 2,
@@ -584,6 +595,7 @@ Object {
     Object {
       "facets": undefined,
       "fill": [Function],
+      "gaps": [Function],
       "paths": [Function],
       "points": Object {
         "fill": "#808080",
@@ -709,6 +721,7 @@ Object {
   ],
   "scales": Object {
     "m/s": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -718,6 +731,7 @@ Object {
       "time": undefined,
     },
     "x": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": -1,
       "distr": 2,
@@ -735,6 +749,7 @@ Object {
     Object {
       "facets": undefined,
       "fill": [Function],
+      "gaps": [Function],
       "paths": [Function],
       "points": Object {
         "fill": "#808080",
@@ -860,6 +875,7 @@ Object {
   ],
   "scales": Object {
     "m/s": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -869,6 +885,7 @@ Object {
       "time": undefined,
     },
     "x": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": -1,
       "distr": 2,
@@ -886,6 +903,7 @@ Object {
     Object {
       "facets": undefined,
       "fill": [Function],
+      "gaps": [Function],
       "paths": [Function],
       "points": Object {
         "fill": "#808080",
@@ -1011,6 +1029,7 @@ Object {
   ],
   "scales": Object {
     "m/s": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -1020,6 +1039,7 @@ Object {
       "time": undefined,
     },
     "x": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": -1,
       "distr": 2,
@@ -1037,6 +1057,7 @@ Object {
     Object {
       "facets": undefined,
       "fill": [Function],
+      "gaps": [Function],
       "paths": [Function],
       "points": Object {
         "fill": "#808080",
@@ -1162,6 +1183,7 @@ Object {
   ],
   "scales": Object {
     "m/s": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -1171,6 +1193,7 @@ Object {
       "time": undefined,
     },
     "x": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": -1,
       "distr": 2,
@@ -1188,6 +1211,7 @@ Object {
     Object {
       "facets": undefined,
       "fill": [Function],
+      "gaps": [Function],
       "paths": [Function],
       "points": Object {
         "fill": "#808080",

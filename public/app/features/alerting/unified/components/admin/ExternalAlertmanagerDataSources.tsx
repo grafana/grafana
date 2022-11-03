@@ -93,7 +93,7 @@ export function ExternalAMdataSourceCard({ alertmanager, inactive }: ExternalAMd
       <Card.Meta>{url}</Card.Meta>
       <Card.Actions>
         <LinkButton href={makeDataSourceLink(dataSource)} size="sm" variant="secondary">
-          Go to datasouce
+          Go to datasource
         </LinkButton>
       </Card.Actions>
     </Card>

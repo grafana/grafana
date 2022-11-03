@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 type Service struct {

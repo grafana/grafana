@@ -118,10 +118,14 @@ export class PanelOptionsChangedEvent extends BusEventBase {
 }
 
 /**
- * Used internally by DashboardModel to commmunicate with DashboardGrid that it needs to re-render
+ * Used internally by DashboardModel to communicate with DashboardGrid that it needs to re-render
  */
 export class DashboardPanelsChangedEvent extends BusEventBase {
   static type = 'dashboard-panels-changed';
+}
+
+export class DashboardMetaChangedEvent extends BusEventBase {
+  static type = 'dashboard-meta-changed';
 }
 
 export class PanelDirectiveReadyEvent extends BusEventBase {

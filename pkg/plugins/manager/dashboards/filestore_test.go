@@ -190,10 +190,11 @@ func setupPluginDashboardsForTest(t *testing.T) *FileStoreManager {
 	t.Helper()
 
 	return &FileStoreManager{
-		pluginStore: &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				"pluginWithoutDashboards": {
+		pluginStore: &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{
+				{
 					JSONData: plugins.JSONData{
+						ID: "pluginWithoutDashboards",
 						Includes: []*plugins.Includes{
 							{
 								Type: "page",
@@ -201,9 +202,10 @@ func setupPluginDashboardsForTest(t *testing.T) *FileStoreManager {
 						},
 					},
 				},
-				"pluginWithDashboards": {
+				{
 					PluginDir: "plugins/plugin-id",
 					JSONData: plugins.JSONData{
+						ID: "pluginWithDashboards",
 						Includes: []*plugins.Includes{
 							{
 								Type: "page",
@@ -222,21 +224,4 @@ func setupPluginDashboardsForTest(t *testing.T) *FileStoreManager {
 			},
 		},
 	}
-}
-
-type fakePluginStore struct {
-	plugins map[string]plugins.PluginDTO
-}
-
-func (pr fakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
-	p, exists := pr.plugins[pluginID]
-	return p, exists
-}
-
-func (pr fakePluginStore) Plugins(_ context.Context, _ ...plugins.Type) []plugins.PluginDTO {
-	var result []plugins.PluginDTO
-	for _, v := range pr.plugins {
-		result = append(result, v)
-	}
-	return result
 }

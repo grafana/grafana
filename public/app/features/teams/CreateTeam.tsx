@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 
+import { NavModelItem } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, Form, Field, Input, FieldSet } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -13,6 +14,14 @@ interface TeamDTO {
   email: string;
   name: string;
 }
+
+const pageNav: NavModelItem = {
+  icon: 'users-alt',
+  id: 'team-new',
+  text: 'New team',
+  subTitle: 'Create a new team. Teams let you grant permissions to a group of users.',
+  breadcrumbs: [{ title: 'Configuration', url: 'org/teams' }],
+};
 
 export const CreateTeam = (): JSX.Element => {
   const currentOrgId = contextSrv.user.orgId;
@@ -39,11 +48,11 @@ export const CreateTeam = (): JSX.Element => {
   };
 
   return (
-    <Page navId="teams">
+    <Page navId="teams" pageNav={pageNav}>
       <Page.Contents>
         <Form onSubmit={createTeam}>
           {({ register, errors }) => (
-            <FieldSet label="New Team">
+            <FieldSet>
               <Field label="Name" required invalid={!!errors.name} error="Team name is required">
                 <Input {...register('name', { required: true })} id="team-name" />
               </Field>

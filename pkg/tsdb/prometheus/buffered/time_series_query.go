@@ -13,18 +13,21 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdkHTTPClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
-	"github.com/grafana/grafana/pkg/util/maputil"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/middleware"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
+	"github.com/grafana/grafana/pkg/util/maputil"
 )
 
-//Internal interval and range variables
+// Internal interval and range variables
 const (
 	varInterval     = "$__interval"
 	varIntervalMs   = "$__interval_ms"
@@ -34,8 +37,8 @@ const (
 	varRateInterval = "$__rate_interval"
 )
 
-//Internal interval and range variables with {} syntax
-//Repetitive code, we should have functionality to unify these
+// Internal interval and range variables with {} syntax
+// Repetitive code, we should have functionality to unify these
 const (
 	varIntervalAlt     = "${__interval}"
 	varIntervalMsAlt   = "${__interval_ms}"
@@ -92,6 +95,17 @@ func New(roundTripper http.RoundTripper, tracer tracing.Tracer, settings backend
 }
 
 func (b *Buffered) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	// Add headers from the request to context so they are added later on by a context middleware. This is because
+	// prom client does not allow us to do this directly.
+
+	addHeaders := make(map[string]string)
+
+	if req.Headers["FromAlert"] == "true" {
+		addHeaders["FromAlert"] = "true"
+	}
+
+	ctxWithHeaders := sdkHTTPClient.WithContextualMiddleware(ctx, middleware.ReqHeadersMiddleware(addHeaders))
+
 	queries, err := b.parseTimeSeriesQuery(req)
 	if err != nil {
 		result := backend.QueryDataResponse{
@@ -100,80 +114,85 @@ func (b *Buffered) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.Quer
 		return &result, fmt.Errorf("error parsing time series query: %v", err)
 	}
 
-	return b.runQueries(ctx, queries)
+	return b.runQueries(ctxWithHeaders, queries)
 }
 
 func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
-
 	for _, query := range queries {
-		b.log.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
-
-		ctx, endSpan := utils.StartTrace(ctx, b.tracer, "datasource.prometheus", []utils.Attribute{
-			{Key: "expr", Value: query.Expr, Kv: attribute.Key("expr").String(query.Expr)},
-			{Key: "start_unixnano", Value: query.Start, Kv: attribute.Key("start_unixnano").Int64(query.Start.UnixNano())},
-			{Key: "stop_unixnano", Value: query.End, Kv: attribute.Key("stop_unixnano").Int64(query.End.UnixNano())},
-		})
-		defer endSpan()
-
-		response := make(map[TimeSeriesQueryType]interface{})
-
-		timeRange := apiv1.Range{
-			Step: query.Step,
-			// Align query range to step. It rounds start and end down to a multiple of step.
-			Start: alignTimeRange(query.Start, query.Step, query.UtcOffsetSec),
-			End:   alignTimeRange(query.End, query.Step, query.UtcOffsetSec),
-		}
-
-		if query.RangeQuery {
-			rangeResponse, _, err := b.client.QueryRange(ctx, query.Expr, timeRange)
-			if err != nil {
-				b.log.Error("Range query failed", "query", query.Expr, "err", err)
-				result.Responses[query.RefId] = backend.DataResponse{Error: err}
-				continue
-			}
-			response[RangeQueryType] = rangeResponse
-		}
-
-		if query.InstantQuery {
-			instantResponse, _, err := b.client.Query(ctx, query.Expr, query.End)
-			if err != nil {
-				b.log.Error("Instant query failed", "query", query.Expr, "err", err)
-				result.Responses[query.RefId] = backend.DataResponse{Error: err}
-				continue
-			}
-			response[InstantQueryType] = instantResponse
-		}
-
-		// This is a special case
-		// If exemplar query returns error, we want to only log it and continue with other results processing
-		if query.ExemplarQuery {
-			exemplarResponse, err := b.client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
-			if err != nil {
-				b.log.Error("Exemplar query failed", "query", query.Expr, "err", err)
-			} else {
-				response[ExemplarQueryType] = exemplarResponse
-			}
-		}
-
-		frames, err := parseTimeSeriesResponse(response, query)
+		response, err := b.runQuery(ctx, query)
 		if err != nil {
 			return &result, err
 		}
+		result.Responses[query.RefId] = response
+	}
+	return &result, nil
+}
 
-		// The ExecutedQueryString can be viewed in QueryInspector in UI
-		for _, frame := range frames {
-			frame.Meta.ExecutedQueryString = "Expr: " + query.Expr + "\n" + "Step: " + query.Step.String()
+func (b *Buffered) runQuery(ctx context.Context, query *PrometheusQuery) (backend.DataResponse, error) {
+	ctx, endSpan := utils.StartTrace(ctx, b.tracer, "datasource.prometheus", []utils.Attribute{
+		{Key: "expr", Value: query.Expr, Kv: attribute.Key("expr").String(query.Expr)},
+		{Key: "start_unixnano", Value: query.Start, Kv: attribute.Key("start_unixnano").Int64(query.Start.UnixNano())},
+		{Key: "stop_unixnano", Value: query.End, Kv: attribute.Key("stop_unixnano").Int64(query.End.UnixNano())},
+	})
+	defer endSpan()
+
+	logger := b.log.FromContext(ctx) // read trace-id and other info from the context
+	logger.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
+
+	response := make(map[TimeSeriesQueryType]interface{})
+
+	timeRange := apiv1.Range{
+		Step: query.Step,
+		// Align query range to step. It rounds start and end down to a multiple of step.
+		Start: alignTimeRange(query.Start, query.Step, query.UtcOffsetSec),
+		End:   alignTimeRange(query.End, query.Step, query.UtcOffsetSec),
+	}
+
+	if query.RangeQuery {
+		rangeResponse, _, err := b.client.QueryRange(ctx, query.Expr, timeRange)
+		if err != nil {
+			logger.Error("Range query failed", "query", query.Expr, "err", err)
+			return backend.DataResponse{Error: err}, nil
 		}
+		response[RangeQueryType] = rangeResponse
+	}
 
-		result.Responses[query.RefId] = backend.DataResponse{
-			Frames: frames,
+	if query.InstantQuery {
+		instantResponse, _, err := b.client.Query(ctx, query.Expr, query.End)
+		if err != nil {
+			logger.Error("Instant query failed", "query", query.Expr, "err", err)
+			return backend.DataResponse{Error: err}, nil
+		}
+		response[InstantQueryType] = instantResponse
+	}
+
+	// This is a special case
+	// If exemplar query returns error, we want to only log it and continue with other results processing
+	if query.ExemplarQuery {
+		exemplarResponse, err := b.client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
+		if err != nil {
+			logger.Error("Exemplar query failed", "query", query.Expr, "err", err)
+		} else {
+			response[ExemplarQueryType] = exemplarResponse
 		}
 	}
 
-	return &result, nil
+	frames, err := parseTimeSeriesResponse(response, query)
+	if err != nil {
+		return backend.DataResponse{}, err
+	}
+
+	// The ExecutedQueryString can be viewed in QueryInspector in UI
+	for _, frame := range frames {
+		frame.Meta.ExecutedQueryString = "Expr: " + query.Expr + "\n" + "Step: " + query.Step.String()
+	}
+
+	return backend.DataResponse{
+		Frames: frames,
+	}, nil
 }
 
 func formatLegend(metric model.Metric, query *PrometheusQuery) string {
@@ -366,11 +385,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 
 		for i, k := range v.Values {
 			timeField.Set(i, k.Timestamp.Time().UTC())
-			value := float64(k.Value)
-
-			if !math.IsNaN(value) {
-				valueField.Set(i, value)
-			}
+			valueField.Set(i, float64(k.Value))
 		}
 
 		name := formatLegend(v.Metric, query)
@@ -555,6 +570,10 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 		}
 	}
 
+	sort.SliceStable(sampleExemplars, func(i, j int) bool {
+		return sampleExemplars[i].Time.Before(sampleExemplars[j].Time)
+	})
+
 	// Create DF from sampled exemplars
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(sampleExemplars))
 	timeField.Name = "Time"
@@ -584,7 +603,11 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 		dataFields = append(dataFields, data.NewField(label, nil, labelsVector[label]))
 	}
 
-	return append(frames, newDataFrame("exemplar", "exemplar", dataFields...))
+	newFrame := newDataFrame("exemplar", "exemplar", dataFields...)
+	// unset on exemplars (ugly but this client will be deprecated soon)
+	newFrame.Meta.Type = ""
+
+	return append(frames, newFrame)
 }
 
 func sortedLabels(labelsVector map[string][]string) []string {

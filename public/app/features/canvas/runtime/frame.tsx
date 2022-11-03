@@ -13,6 +13,9 @@ import { ElementState } from './element';
 import { RootElement } from './root';
 import { Scene } from './scene';
 
+const DEFAULT_OFFSET = 10;
+const HORIZONTAL_OFFSET = 50;
+
 export const frameItemDummy: CanvasElementItem = {
   id: 'frame',
   name: 'Frame',
@@ -129,36 +132,70 @@ export class FrameState extends ElementState {
 
           switch (vertical) {
             case VerticalConstraint.Top:
-            case VerticalConstraint.TopBottom:
               if (placement.top == null) {
                 placement.top = 25;
               } else {
-                placement.top += 10;
+                placement.top += DEFAULT_OFFSET;
               }
               break;
             case VerticalConstraint.Bottom:
               if (placement.bottom == null) {
                 placement.bottom = 100;
               } else {
-                placement.bottom -= 10;
+                placement.bottom -= DEFAULT_OFFSET;
+              }
+              break;
+            case VerticalConstraint.TopBottom:
+              if (placement.top == null) {
+                placement.top = 25;
+              } else {
+                placement.top += DEFAULT_OFFSET;
+              }
+
+              if (placement.bottom == null) {
+                placement.bottom = 100;
+              } else {
+                placement.bottom -= DEFAULT_OFFSET;
+              }
+              break;
+            case VerticalConstraint.Center:
+              if (placement.top != null) {
+                placement.top -= DEFAULT_OFFSET;
               }
               break;
           }
 
           switch (horizontal) {
             case HorizontalConstraint.Left:
-            case HorizontalConstraint.LeftRight:
               if (placement.left == null) {
-                placement.left = 50;
+                placement.left = HORIZONTAL_OFFSET;
               } else {
-                placement.left += 10;
+                placement.left += DEFAULT_OFFSET;
               }
               break;
             case HorizontalConstraint.Right:
               if (placement.right == null) {
-                placement.right = 50;
+                placement.right = HORIZONTAL_OFFSET;
               } else {
-                placement.right -= 10;
+                placement.right -= DEFAULT_OFFSET;
+              }
+              break;
+            case HorizontalConstraint.LeftRight:
+              if (placement.left == null) {
+                placement.left = HORIZONTAL_OFFSET;
+              } else {
+                placement.left += DEFAULT_OFFSET;
+              }
+
+              if (placement.right == null) {
+                placement.right = HORIZONTAL_OFFSET;
+              } else {
+                placement.right -= DEFAULT_OFFSET;
+              }
+              break;
+            case HorizontalConstraint.Center:
+              if (placement.left != null) {
+                placement.left -= DEFAULT_OFFSET;
               }
               break;
           }

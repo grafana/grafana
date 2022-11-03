@@ -29,7 +29,7 @@ import {
   RenderEvent,
 } from 'app/types/events';
 
-import { PanelModelLibraryPanel } from '../../library-panels/types';
+import { LibraryElementDTO, LibraryPanelRef } from '../../library-panels/types';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 import { getTimeSrv } from '../services/TimeSrv';
@@ -70,6 +70,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   queryRunner: true,
   replaceVariables: true,
   configRev: true,
+  hasSavedPanelEditChange: true,
   getDisplayTitle: true,
   dataSupport: true,
   key: true,
@@ -170,7 +171,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   links?: DataLink[];
   declare transparent: boolean;
 
-  libraryPanel?: { uid: undefined; name: string } | PanelModelLibraryPanel;
+  libraryPanel?: LibraryPanelRef | LibraryElementDTO;
 
   autoMigrateFrom?: string;
 
@@ -179,6 +180,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   isEditing = false;
   isInView = false;
   configRev = 0; // increments when configs change
+  hasSavedPanelEditChange?: boolean;
   hasRefreshed?: boolean;
   cacheTimeout?: string | null;
   cachedPluginOptions: Record<string, PanelOptionsCache> = {};
@@ -656,6 +658,25 @@ export class PanelModel implements DataConfigSource, IPanelModel {
    * */
   getDisplayTitle(): string {
     return this.replaceVariables(this.title, undefined, 'text');
+  }
+
+  initLibraryPanel(libPanel: LibraryElementDTO) {
+    for (const [key, val] of Object.entries(libPanel.model)) {
+      switch (key) {
+        case 'id':
+        case 'gridPos':
+        case 'libraryPanel': // recursive?
+          continue;
+      }
+      (this as any)[key] = val; // :grimmice:
+    }
+    this.libraryPanel = libPanel;
+  }
+
+  unlinkLibraryPanel() {
+    delete this.libraryPanel;
+    this.configRev++;
+    this.render();
   }
 }
 

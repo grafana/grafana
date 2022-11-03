@@ -1,4 +1,6 @@
-import { DataFrame, FieldType, getParser, Labels, LogsParsers } from '@grafana/data';
+import { DataFrame, FieldType, Labels } from '@grafana/data';
+
+import { getParser, LogsParsers } from '../../../features/logs/utils';
 
 export function dataFrameHasLokiError(frame: DataFrame): boolean {
   const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values.toArray() ?? [];

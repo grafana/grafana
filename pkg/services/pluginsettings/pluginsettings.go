@@ -6,7 +6,7 @@ import (
 
 type Service interface {
 	// GetPluginSettings returns all Plugin Settings for the provided Org
-	GetPluginSettings(ctx context.Context, args *GetArgs) ([]*DTO, error)
+	GetPluginSettings(ctx context.Context, args *GetArgs) ([]*InfoDTO, error)
 	// GetPluginSettingByPluginID returns a Plugin Settings by Plugin ID
 	GetPluginSettingByPluginID(ctx context.Context, args *GetByPluginIDArgs) (*DTO, error)
 	// UpdatePluginSetting updates a Plugin Setting

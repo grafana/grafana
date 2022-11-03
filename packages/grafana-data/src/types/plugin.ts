@@ -1,6 +1,7 @@
 import { ComponentType } from 'react';
 
 import { KeyValue } from './data';
+import { IconName } from './icon';
 
 /** Describes plugins life cycle status */
 export enum PluginState {
@@ -68,6 +69,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   // Filled in by the backend
   jsonData?: T;
   secureJsonData?: KeyValue;
+  secureJsonFields?: KeyValue<boolean>;
   enabled?: boolean;
   defaultNavUrl?: string;
   hasUpdate?: boolean;
@@ -158,7 +160,7 @@ export interface PluginConfigPageProps<T extends PluginMeta> {
 
 export interface PluginConfigPage<T extends PluginMeta> {
   title: string; // Display
-  icon?: string;
+  icon?: IconName;
   id: string; // Unique, in URL
 
   body: ComponentType<PluginConfigPageProps<T>>;

@@ -27,11 +27,17 @@ func exportSystemPlaylists(helper *commitHelper, job *gitExportJob) error {
 		comment: "Export playlists",
 	}
 
-	for _, playlist := range res {
-		// TODO: fix the playlist API so it returns the json we need :)
+	for _, item := range res {
+		playlist, err := job.playlistService.Get(helper.ctx, &playlist.GetPlaylistByUidQuery{
+			UID:   item.UID,
+			OrgId: helper.orgID,
+		})
+		if err != nil {
+			return err
+		}
 
 		gitcmd.body = append(gitcmd.body, commitBody{
-			fpath: filepath.Join(helper.orgDir, "system", "playlists", fmt.Sprintf("%s-playlist.json", playlist.UID)),
+			fpath: filepath.Join(helper.orgDir, "system", "playlists", fmt.Sprintf("%s-playlist.json", playlist.Uid)),
 			body:  prettyJSON(playlist),
 		})
 	}

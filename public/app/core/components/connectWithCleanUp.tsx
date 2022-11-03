@@ -1,6 +1,8 @@
 import hoistNonReactStatics from 'hoist-non-react-statics';
 import React, { ComponentType, FunctionComponent, useEffect } from 'react';
-import { connect, MapDispatchToPropsParam, MapStateToPropsParam, useDispatch } from 'react-redux';
+import { connect, MapDispatchToPropsParam, MapStateToPropsParam } from 'react-redux';
+
+import { useDispatch } from 'app/types';
 
 import { cleanUpAction, CleanUpAction } from '../actions/cleanUp';
 

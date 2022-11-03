@@ -4,6 +4,7 @@ import {
   CartesianCoords2D,
   compareDataFrameStructures,
   DataFrame,
+  Field,
   getFieldDisplayName,
   PanelProps,
   TimeRange,
@@ -81,6 +82,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   const [coords, setCoords] = useState<{ viewport: CartesianCoords2D; canvas: CartesianCoords2D } | null>(null);
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
+  const [isActive, setIsActive] = useState<boolean>(false);
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
 
   const onCloseToolTip = () => {
@@ -97,8 +99,12 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   };
 
   const frame0Ref = useRef<DataFrame>();
+  const colorByFieldRef = useRef<Field>();
+
   const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
   const chartDisplay = 'viz' in info ? info : null;
+
+  colorByFieldRef.current = chartDisplay?.colorByField;
 
   const structureRef = useRef(10000);
 
@@ -226,7 +232,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     const disp = colorByField.display!;
     fillOpacity = (colorByField.config.custom.fillOpacity ?? 100) / 100;
     // gradientMode? ignore?
-    getColor = (seriesIdx: number, valueIdx: number) => disp(colorByField.values.get(valueIdx)).color!;
+    getColor = (seriesIdx: number, valueIdx: number) => disp(colorByFieldRef.current?.values.get(valueIdx)).color!;
   }
 
   const prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
@@ -246,6 +252,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       getTimeRange,
+      timeZone,
       theme,
       timeZones: [timeZone],
       eventBus,
@@ -293,6 +300,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
             setCoords,
             setHover,
             isToolTipOpen,
+            isActive,
+            setIsActive,
           });
         }
 
@@ -302,7 +311,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
 
         return (
           <Portal>
-            {hover && coords && (
+            {hover && coords && focusedSeriesIdx && (
               <VizTooltipContainer
                 position={{ x: coords.viewport.x, y: coords.viewport.y }}
                 offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}

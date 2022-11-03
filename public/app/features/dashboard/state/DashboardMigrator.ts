@@ -793,7 +793,11 @@ export class DashboardMigrator {
 
     if (oldVersion < 37) {
       panelUpgrades.push((panel: PanelModel) => {
-        if (panel.options?.legend && panel.options.legend.displayMode === 'hidden') {
+        if (
+          panel.options?.legend &&
+          // There were two ways to hide the legend, this normalizes to `legend.showLegend`
+          (panel.options.legend.displayMode === 'hidden' || panel.options.legend.showLegend === false)
+        ) {
           panel.options.legend.displayMode = 'list';
           panel.options.legend.showLegend = false;
         } else if (panel.options?.legend) {

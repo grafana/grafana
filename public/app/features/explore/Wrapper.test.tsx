@@ -464,6 +464,35 @@ describe('Wrapper', () => {
         'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
       );
     });
+
+    it('Datasource in root not found and no queries changes to default', async () => {
+      setupExplore({
+        urlParams: 'orgId=1&left={"datasource":"asdasdasd","range":{"from":"now-1h","to":"now"}}',
+        prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+      });
+      await waitForExplore();
+      const urlParams = decodeURIComponent(locationService.getSearch().toString());
+      expect(urlParams).toBe(
+        'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
+      );
+    });
+
+    it('Datasource root is mixed and there are two queries, one with datasource not found, only one query remains with root datasource as that datasource', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      setupExplore({
+        urlParams:
+          'orgId=1&left={"datasource":"-- Mixed --","queries":[{"refId":"A","datasource":{"type":"asdf","uid":"asdf"}},{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}',
+        prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+      });
+      await waitForExplore();
+      const urlParams = decodeURIComponent(locationService.getSearch().toString());
+      expect(urlParams).toBe(
+        'orgId=1&left={"datasource":"elastic-uid","queries":[{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}'
+      );
+      expect(consoleErrorSpy).toBeCalledTimes(1);
+
+      consoleErrorSpy.mockRestore();
+    });
   });
 
   it('removes `from` and `to` parameters from url when first mounted', async () => {

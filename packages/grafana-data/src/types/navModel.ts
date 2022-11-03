@@ -1,21 +1,28 @@
 import { ComponentType } from 'react';
 
+import { LinkTarget } from './dataLink';
+import { IconName } from './icon';
+
 export interface NavLinkDTO {
   id?: string;
   text: string;
   description?: string;
   section?: NavSection;
   subTitle?: string;
-  icon?: string;
+  icon?: IconName;
   img?: string;
   url?: string;
-  target?: string;
+  target?: LinkTarget;
   sortWeight?: number;
   divider?: boolean;
   hideFromMenu?: boolean;
   hideFromTabs?: boolean;
   showIconInNavbar?: boolean;
   roundIcon?: boolean;
+  /**
+   * This is true for some sections that have no children (but is still a section)
+   **/
+  isSection?: boolean;
   children?: NavLinkDTO[];
   highlightText?: string;
   emptyMessageId?: string;
@@ -33,6 +40,8 @@ export interface NavModelItem extends NavLinkDTO {
   highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
   hideFromBreadcrumbs?: boolean;
+  /** To render custom things between title and child tabs */
+  headerExtra?: ComponentType;
 }
 
 export enum NavSection {
@@ -70,4 +79,5 @@ export type NavIndex = { [s: string]: NavModelItem };
 export enum PageLayoutType {
   Standard,
   Canvas,
+  Custom,
 }

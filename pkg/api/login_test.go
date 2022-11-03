@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	loginservice "github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -43,7 +44,7 @@ func fakeSetIndexViewData(t *testing.T) {
 		data := &dtos.IndexViewData{
 			User:     &dtos.CurrentUser{},
 			Settings: map[string]interface{}{},
-			NavTree:  []*dtos.NavLink{},
+			NavTree:  &navtree.NavTreeRoot{},
 		}
 		return data, nil
 	}

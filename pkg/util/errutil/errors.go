@@ -6,7 +6,7 @@ import (
 )
 
 // Base represents the static information about a specific error.
-// Always use NewBase to create new instances of Base.
+// Always use [NewBase] to create new instances of Base.
 type Base struct {
 	// Because Base is typically instantiated as a package or global
 	// variable, having private members reduces the probability of a
@@ -17,15 +17,16 @@ type Base struct {
 	logLevel      LogLevel
 }
 
-// NewBase initializes a Base that is used to construct Error:s.
+// NewBase initializes a [Base] that is used to construct [Error].
 // The reason is used to determine the status code that should be
 // returned for the error, and the msgID is passed to the caller
 // to serve as the base for user facing error messages.
 //
-// msgID should be structured as component.error-brief, for example
-//   login.failed-authentication
-//   dashboards.validation-error
-//   dashboards.uid-already-exists
+// msgID should be structured as component.errorBrief, for example
+//
+//	login.failedAuthentication
+//	dashboards.validationError
+//	dashboards.uidAlreadyExists
 func NewBase(reason StatusReason, msgID string, opts ...BaseOpt) Base {
 	b := Base{
 		reason:    reason,
@@ -43,9 +44,9 @@ func NewBase(reason StatusReason, msgID string, opts ...BaseOpt) Base {
 type BaseOpt func(Base) Base
 
 // WithLogLevel sets a custom log level for all errors instantiated from
-// this Base.
+// this [Base].
 //
-// Used as a functional option to NewBase.
+// Used as a functional option to [NewBase].
 func WithLogLevel(lvl LogLevel) BaseOpt {
 	return func(b Base) Base {
 		b.logLevel = lvl
@@ -54,9 +55,9 @@ func WithLogLevel(lvl LogLevel) BaseOpt {
 }
 
 // WithPublicMessage sets the default public message that will be used
-// for errors based on this Base.
+// for errors based on this [Base].
 //
-// Used as a functional option to NewBase.
+// Used as a functional option to [NewBase].
 func WithPublicMessage(message string) BaseOpt {
 	return func(b Base) Base {
 		b.publicMessage = message
@@ -64,9 +65,9 @@ func WithPublicMessage(message string) BaseOpt {
 	}
 }
 
-// Errorf creates a new Error with the Reason and MessageID from
-// Base, and Message and Underlying will be populated using
-// the rules of fmt.Errorf.
+// Errorf creates a new [Error] with Reason and MessageID from [Base],
+// and Message and Underlying will be populated using the rules of
+// [fmt.Errorf].
 func (b Base) Errorf(format string, args ...interface{}) Error {
 	err := fmt.Errorf(format, args...)
 
@@ -94,8 +95,10 @@ func (b Base) Status() StatusReason {
 	return b.reason.Status()
 }
 
-// Is validates that an Error has the same reason and messageID as the
+// Is validates that an [Error] has the same reason and messageID as the
 // Base.
+//
+// Implements the interface used by [errors.Is].
 func (b Base) Is(err error) bool {
 	// The linter complains that it wants to use errors.As because it
 	// handles unwrapping, we don't want to do that here since we want
@@ -121,24 +124,61 @@ func (b Base) Is(err error) bool {
 // boilerplate error handling for status codes and internationalization
 // support.
 //
+// Use [Base.Errorf] or [Template.Build] to construct errors:
+//
+//	// package-level
+//	var errMonthlyQuota = NewBase(errutil.StatusTooManyRequests, "service.monthlyQuotaReached")
+//	// in function
+//	err := errMonthlyQuota.Errorf("user '%s' reached their monthly quota for service", userUID)
+//
+// or
+//
+//	// package-level
+//	var errRateLimited = NewBase(errutil.StatusTooManyRequests, "service.backoff").MustTemplate(
+//		"quota reached for user {{ .Private.user }}, rate limited until {{ .Public.time }}",
+//		errutil.WithPublic("Too many requests, try again after {{ .Public.time }}"),
+//	)
+//	// in function
+//	err := errRateLimited.Build(TemplateData{
+//		Private: map[string]interface{ "user": userUID },
+//		Public: map[string]interface{ "time": rateLimitUntil },
+//	})
+//
 // Error implements Unwrap and Is to natively support Go 1.13 style
 // errors as described in https://go.dev/blog/go1.13-errors .
 type Error struct {
-	Reason        StatusReason
-	MessageID     string
-	LogMessage    string
-	Underlying    error
+	// Reason provides the Grafana abstracted reason which can be turned
+	// into an upstream status code depending on the protocol. This
+	// allows us to use the same errors across HTTP, gRPC, and other
+	// protocols.
+	Reason StatusReason
+	// A MessageID together with PublicPayload should suffice to
+	// create the PublicMessage. This lets a localization aware client
+	// construct messages based on structured data.
+	MessageID string
+	// LogMessage will be displayed in the server logs or wherever
+	// [Error.Error] is called.
+	LogMessage string
+	// Underlying is the wrapped error returned by [Error.Unwrap].
+	Underlying error
+	// PublicMessage is constructed from the template uniquely
+	// identified by MessageID and the values in PublicPayload (if any)
+	// to provide the end-user with information that they can use to
+	// resolve the issue.
 	PublicMessage string
+	// PublicPayload provides fields for passing structured data to
+	// construct localized error messages in the client.
 	PublicPayload map[string]interface{}
-	LogLevel      LogLevel
+	// LogLevel provides a suggested level of logging for the error.
+	LogLevel LogLevel
 }
 
-// MarshalJSON returns an error, we do not want raw Error:s being
+// MarshalJSON returns an error, we do not want raw [Error]s being
 // marshaled into JSON.
 //
-// Use Public to convert the Error into a PublicError which can be
-// marshaled. This is not done automatically, as that conversion is
-// lossy.
+// Use [Error.Public] to convert the Error into a [PublicError] which
+// can safely be marshaled into JSON. This is not done automatically,
+// as that conversion is lossy.
 func (e Error) MarshalJSON() ([]byte, error) {
 	return nil, fmt.Errorf("errutil.Error cannot be directly marshaled into JSON")
 }
@@ -154,8 +194,10 @@ func (e Error) Unwrap() error {
 	return e.Underlying
 }
 
-// Is is used by errors.Is to allow for custom definitions of equality
-// between two errors.
+// Is checks whether an error is derived from the error passed as an
+// argument.
+//
+// Implements the interface used by [errors.Is].
 func (e Error) Is(other error) bool {
 	// The linter complains that it wants to use errors.As because it
 	// handles unwrapping, we don't want to do that here since we want
@@ -165,12 +207,16 @@ func (e Error) Is(other error) bool {
 	o, isGrafanaError := other.(Error)
 	//nolint:errorlint
 	base, isBase := other.(Base)
+	//nolint:errorlint
+	templateErr, isTemplateErr := other.(Template)
 
 	switch {
 	case isGrafanaError:
 		return o.Reason == e.Reason && o.MessageID == e.MessageID && o.Error() == e.Error()
 	case isBase:
 		return base.Is(e)
+	case isTemplateErr:
+		return templateErr.Base.Is(e)
 	default:
 		return false
 	}

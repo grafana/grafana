@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type sqlStorage struct {
-	sql *sqlstore.SQLStore
+	sql db.DB
 }
 
 func checkObjectType(contentType string) bool {
@@ -34,7 +34,7 @@ func (s *sqlStorage) Create(ctx context.Context, orgID int64, objectType string,
 
 	var result *commentmodel.Comment
 
-	return result, s.sql.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	return result, s.sql.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
 		var group commentmodel.CommentGroup
 		has, err := dbSession.NoAutoCondition().Where(
 			"org_id=? AND object_type=? AND object_id=?",
@@ -96,7 +96,7 @@ func (s *sqlStorage) Get(ctx context.Context, orgID int64, objectType string, ob
 		}
 	}
 
-	return result, s.sql.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	return result, s.sql.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
 		var group commentmodel.CommentGroup
 		has, err := dbSession.NoAutoCondition().Where(
 			"org_id=? AND object_type=? AND object_id=?",

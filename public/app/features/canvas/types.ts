@@ -1,4 +1,4 @@
-import { ColorDimensionConfig, ResourceDimensionConfig } from 'app/features/dimensions/types';
+import { ColorDimensionConfig, ResourceDimensionConfig, TextDimensionConfig } from 'app/features/dimensions/types';
 
 export interface Placement {
   top?: number;
@@ -57,4 +57,32 @@ export enum QuickPlacement {
   Right = 'right',
   HorizontalCenter = 'hcenter',
   VerticalCenter = 'vcenter',
+}
+
+export enum Align {
+  Left = 'left',
+  Center = 'center',
+  Right = 'right',
+}
+
+export enum VAlign {
+  Top = 'top',
+  Middle = 'middle',
+  Bottom = 'bottom',
+}
+
+export interface TextData {
+  text?: string;
+  color?: string;
+  size?: number; // 0 or missing will "auto size"
+  align: Align;
+  valign: VAlign;
+}
+
+export interface TextConfig {
+  text?: TextDimensionConfig;
+  color?: ColorDimensionConfig;
+  size?: number; // 0 or missing will "auto size"
+  align: Align;
+  valign: VAlign;
 }

@@ -11,5 +11,5 @@
       - 636:636
     restart: unless-stopped
     volumes:
-      - ./docker/blocks/openldap-mac/prepopulate/:/tmp/smt/
-      - ./docker/blocks/openldap-mac/modules/:/tmp/smt/
+      - ./docker/blocks/auth/openldap-mac/prepopulate/:/tmp/smt/
+      - ./docker/blocks/auth/openldap-mac/modules/:/tmp/smt/

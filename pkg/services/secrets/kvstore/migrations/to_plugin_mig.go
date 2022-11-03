@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,7 +20,7 @@ var errSecretStoreIsNotPlugin = errors.New("SecretsKVStore is not a SecretsKVSto
 type MigrateToPluginService struct {
 	secretsStore   secretskvs.SecretsKVStore
 	cfg            *setting.Cfg
-	sqlStore       sqlstore.Store
+	sqlStore       db.DB
 	secretsService secrets.Service
 	kvstore        kvstore.KVStore
 	manager        plugins.SecretsPluginManager
@@ -29,7 +29,7 @@ type MigrateToPluginService struct {
 func ProvideMigrateToPluginService(
 	secretsStore secretskvs.SecretsKVStore,
 	cfg *setting.Cfg,
-	sqlStore sqlstore.Store,
+	sqlStore db.DB,
 	secretsService secrets.Service,
 	kvstore kvstore.KVStore,
 	manager plugins.SecretsPluginManager,
@@ -45,7 +45,9 @@ func ProvideMigrateToPluginService(
 }
 
 func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
-	if err := secretskvs.EvaluateRemoteSecretsPlugin(ctx, s.manager, s.cfg); err == nil {
+	err := secretskvs.EvaluateRemoteSecretsPlugin(ctx, s.manager, s.cfg)
+	hasStarted := secretskvs.HasPluginStarted(ctx, s.manager)
+	if err == nil && hasStarted {
 		logger.Debug("starting migration of unified secrets to the plugin")
 		// we need to get the fallback store since in this scenario the secrets store would be the plugin.
 		tmpStore, err := secretskvs.GetUnwrappedStoreFromCache(s.secretsStore)

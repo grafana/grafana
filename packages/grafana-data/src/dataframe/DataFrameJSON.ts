@@ -20,6 +20,8 @@ export interface DataFrameJSON {
   data?: DataFrameData;
 }
 
+type FieldValues = unknown[];
+
 /**
  * @alpha
  */
@@ -27,7 +29,7 @@ export interface DataFrameData {
   /**
    * A columnar store that matches fields defined by schema.
    */
-  values: any[][];
+  values: FieldValues[];
 
   /**
    * Since JSON cannot encode NaN, Inf, -Inf, and undefined, these entities
@@ -48,10 +50,12 @@ export interface DataFrameData {
   factors?: number[];
 
   /**
-   * Holds enums per field so we can encode recurring values as ints
+   * Holds enums per field so we can encode recurring string values as ints
    * e.g. ["foo", "foo", "baz", "foo"] -> ["foo", "baz"] + [0,0,1,0]
+   *
+   * NOTE: currently only decoding is implemented
    */
-  enums?: any[][];
+  enums?: Array<string[] | null>;
 }
 
 /**
@@ -117,10 +121,7 @@ const ENTITY_MAP: Record<keyof FieldValueEntityLookup, any> = {
 /**
  * @internal use locally
  */
-export function decodeFieldValueEntities(lookup: FieldValueEntityLookup, values: any[]) {
-  if (!lookup || !values) {
-    return;
-  }
+export function decodeFieldValueEntities(lookup: FieldValueEntityLookup, values: FieldValues) {
   for (const key in lookup) {
     const repl = ENTITY_MAP[key as keyof FieldValueEntityLookup];
     for (const idx of lookup[key as keyof FieldValueEntityLookup]!) {
@@ -131,7 +132,16 @@ export function decodeFieldValueEntities(lookup: FieldValueEntityLookup, values:
   }
 }
 
-function guessFieldType(name: string, values: any[]): FieldType {
+/**
+ * @internal use locally
+ */
+export function decodeFieldValueEnums(lookup: string[], values: FieldValues) {
+  for (let i = 0; i < values.length; i++) {
+    values[i] = lookup[values[i] as number];
+  }
+}
+
+function guessFieldType(name: string, values: FieldValues): FieldType {
   for (const v of values) {
     if (v != null) {
       return guessFieldTypeFromNameAndValue(name, v);
@@ -157,6 +167,7 @@ export function dataFrameFromJSON(dto: DataFrameJSON): DataFrame {
   const fields = schema.fields.map((f, index) => {
     let buffer = data ? data.values[index] : [];
     let origLen = buffer.length;
+    let type = f.type;
 
     if (origLen !== length) {
       buffer.length = length;
@@ -164,17 +175,24 @@ export function dataFrameFromJSON(dto: DataFrameJSON): DataFrame {
       buffer.fill(undefined, origLen);
     }
 
-    let entities: FieldValueEntityLookup | undefined | null;
+    let entities = data?.entities?.[index];
 
-    if ((entities = data && data.entities && data.entities[index])) {
+    if (entities) {
       decodeFieldValueEntities(entities, buffer);
     }
 
-    // TODO: expand arrays further using bases,factors,enums
+    let enums = data?.enums?.[index];
+
+    if (enums) {
+      decodeFieldValueEnums(enums, buffer);
+      type = FieldType.string;
+    }
+
+    // TODO: expand arrays further using bases,factors
 
     return {
       ...f,
-      type: f.type ?? guessFieldType(f.name, buffer),
+      type: type ?? guessFieldType(f.name, buffer),
       config: f.config ?? {},
       values: new ArrayVector(buffer),
       // the presence of this prop is an optimization signal & lookup for consumers

@@ -2,15 +2,16 @@ import { within } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import { Router } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { locationService } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
 import { DashboardModel } from '../../state';
 
-import { LinksSettings } from './LinksSettings';
+import { DashboardSettings } from './DashboardSettings';
 
 function setup(dashboard: DashboardModel) {
   const sectionNav = {
@@ -20,11 +21,12 @@ function setup(dashboard: DashboardModel) {
     },
   };
 
+  // Need to use DashboardSettings here as it's responsible for fetching the state back from location
   return render(
     <GrafanaContext.Provider value={getGrafanaContextMock()}>
-      <BrowserRouter>
-        <LinksSettings dashboard={dashboard} sectionNav={sectionNav} />
-      </BrowserRouter>
+      <Router history={locationService.getHistory()}>
+        <DashboardSettings editview="links" dashboard={dashboard} sectionNav={sectionNav} pageNav={sectionNav.node} />
+      </Router>
     </GrafanaContext.Provider>
   );
 }

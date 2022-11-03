@@ -30,14 +30,21 @@ export const GraphiteVariableEditor = (props: Props) => {
           width={25}
           value={value.queryType ?? GraphiteQueryType.Default}
           onChange={(selectableValue) => {
-            onChange({
+            setValue({
               ...value,
               queryType: selectableValue.value,
             });
+
+            if (value.target) {
+              onChange({
+                ...value,
+                queryType: selectableValue.value,
+              });
+            }
           }}
         />
       </InlineField>
-      <InlineField label="Select query type" labelWidth={20} grow>
+      <InlineField label="Query" labelWidth={20} grow>
         <Input
           aria-label="Variable editor query input"
           value={value.target}

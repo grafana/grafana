@@ -1,6 +1,7 @@
 package log
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -108,6 +109,79 @@ func TestLogger(t *testing.T) {
 			require.Len(t, ctx.loggedArgs, 5)
 			require.Len(t, swappedLoggedArgs, 7, "expected 4 messages for AllowAll logger and 3 messages for AllowInfo logger")
 		})
+	})
+
+	newLoggerScenario(t, "Logger with contextual arguments", func(t *testing.T, sCtx *scenarioContext) {
+		ctx := context.Background()
+		rootLogger := New("root")
+		rootLoggerCtx := rootLogger.FromContext(ctx)
+		rootLoggerCtx.Debug("hello root")
+		childLogger := rootLogger.New("childKey", "childValue")
+		childLoggerCtx := childLogger.FromContext(ctx)
+		childLoggerCtx.Error("hello child")
+
+		RegisterContextualLogProvider(func(ctx context.Context) ([]interface{}, bool) {
+			return []interface{}{"ctxKey", "ctxValue"}, true
+		})
+
+		rootLoggerCtx = rootLogger.FromContext(ctx)
+		rootLoggerCtx.Debug("hello contextual root")
+		childLoggerCtx = childLogger.FromContext(ctx)
+		childLoggerCtx.Error("hello contextual child")
+
+		newRootLogger := New("root")
+		newRootLogger.Debug("hello root")
+
+		require.Len(t, sCtx.loggedArgs, 5)
+		require.Len(t, sCtx.loggedArgs[0], 8)
+		require.Equal(t, "logger", sCtx.loggedArgs[0][0].(string))
+		require.Equal(t, "root", sCtx.loggedArgs[0][1].(string))
+		require.Equal(t, "t", sCtx.loggedArgs[0][2].(string))
+		require.Equal(t, sCtx.mockedTime.Format(time.RFC3339Nano), sCtx.loggedArgs[0][3].(fmt.Stringer).String())
+		require.Equal(t, level.Key().(string), sCtx.loggedArgs[0][4].(string))
+		require.Equal(t, level.DebugValue(), sCtx.loggedArgs[0][5].(level.Value))
+		require.Equal(t, "msg", sCtx.loggedArgs[0][6].(string))
+		require.Equal(t, "hello root", sCtx.loggedArgs[0][7].(string))
+
+		require.Len(t, sCtx.loggedArgs[1], 10)
+		require.Equal(t, "logger", sCtx.loggedArgs[1][0].(string))
+		require.Equal(t, "root", sCtx.loggedArgs[1][1].(string))
+		require.Equal(t, "childKey", sCtx.loggedArgs[1][2].(string))
+		require.Equal(t, "childValue", sCtx.loggedArgs[1][3].(string))
+		require.Equal(t, "t", sCtx.loggedArgs[1][4].(string))
+		require.Equal(t, sCtx.mockedTime.Format(time.RFC3339Nano), sCtx.loggedArgs[1][5].(fmt.Stringer).String())
+		require.Equal(t, level.Key().(string), sCtx.loggedArgs[1][6].(string))
+		require.Equal(t, level.ErrorValue(), sCtx.loggedArgs[1][7].(level.Value))
+		require.Equal(t, "msg", sCtx.loggedArgs[1][8].(string))
+		require.Equal(t, "hello child", sCtx.loggedArgs[1][9].(string))
+
+		require.Len(t, sCtx.loggedArgs[2], 10)
+		require.Equal(t, "logger", sCtx.loggedArgs[2][0].(string))
+		require.Equal(t, "root", sCtx.loggedArgs[2][1].(string))
+		require.Equal(t, "ctxKey", sCtx.loggedArgs[2][2].(string))
+		require.Equal(t, "ctxValue", sCtx.loggedArgs[2][3].(string))
+		require.Equal(t, "t", sCtx.loggedArgs[2][4].(string))
+		require.Equal(t, sCtx.mockedTime.Format(time.RFC3339Nano), sCtx.loggedArgs[2][5].(fmt.Stringer).String())
+		require.Equal(t, level.Key().(string), sCtx.loggedArgs[2][6].(string))
+		require.Equal(t, level.DebugValue(), sCtx.loggedArgs[2][7].(level.Value))
+		require.Equal(t, "msg", sCtx.loggedArgs[2][8].(string))
+		require.Equal(t, "hello contextual root", sCtx.loggedArgs[2][9].(string))
+
+		require.Len(t, sCtx.loggedArgs[3], 12)
+		require.Equal(t, "logger", sCtx.loggedArgs[3][0].(string))
+		require.Equal(t, "root", sCtx.loggedArgs[3][1].(string))
+		require.Equal(t, "childKey", sCtx.loggedArgs[3][2].(string))
+		require.Equal(t, "childValue", sCtx.loggedArgs[3][3].(string))
+		require.Equal(t, "ctxKey", sCtx.loggedArgs[3][4].(string))
+		require.Equal(t, "ctxValue", sCtx.loggedArgs[3][5].(string))
+		require.Equal(t, "t", sCtx.loggedArgs[3][6].(string))
+		require.Equal(t, sCtx.mockedTime.Format(time.RFC3339Nano), sCtx.loggedArgs[3][7].(fmt.Stringer).String())
+		require.Equal(t, level.Key().(string), sCtx.loggedArgs[3][8].(string))
+		require.Equal(t, level.ErrorValue(), sCtx.loggedArgs[3][9].(level.Value))
+		require.Equal(t, "msg", sCtx.loggedArgs[3][10].(string))
+		require.Equal(t, "hello contextual child", sCtx.loggedArgs[3][11].(string))
+
+		require.Len(t, sCtx.loggedArgs[4], 8)
 	})
 }
 

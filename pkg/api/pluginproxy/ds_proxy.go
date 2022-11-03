@@ -86,7 +86,6 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		return
 	}
 
-	traceID := tracing.TraceIDFromContext(proxy.ctx.Req.Context(), false)
 	proxyErrorLogger := logger.New(
 		"userId", proxy.ctx.UserID,
 		"orgId", proxy.ctx.OrgID,
@@ -94,7 +93,6 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		"path", proxy.ctx.Req.URL.Path,
 		"remote_addr", proxy.ctx.RemoteAddr(),
 		"referer", proxy.ctx.Req.Referer(),
-		"traceID", traceID,
 	)
 
 	transport, err := proxy.dataSourcesService.GetHTTPTransport(proxy.ctx.Req.Context(), proxy.ds, proxy.clientProvider)
@@ -112,7 +110,8 @@ func (proxy *DataSourceProxy) HandleRequest() {
 			}
 			_ = resp.Body.Close()
 
-			proxyErrorLogger.Info("Authentication to data source failed", "body", string(body), "statusCode",
+			ctxLogger := proxyErrorLogger.FromContext(resp.Request.Context())
+			ctxLogger.Info("Authentication to data source failed", "body", string(body), "statusCode",
 				resp.StatusCode)
 			msg := "Authentication to data source failed"
 			*resp = http.Response{
@@ -167,11 +166,13 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	reqQueryVals := req.URL.Query()
 
+	ctxLogger := logger.FromContext(req.Context())
+
 	switch proxy.ds.Type {
 	case datasources.DS_INFLUXDB_08:
 		password, err := proxy.dataSourcesService.DecryptedPassword(req.Context(), proxy.ds)
 		if err != nil {
-			logger.Error("Error interpolating proxy url", "error", err)
+			ctxLogger.Error("Error interpolating proxy url", "error", err)
 			return
 		}
 
@@ -182,7 +183,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	case datasources.DS_INFLUXDB:
 		password, err := proxy.dataSourcesService.DecryptedPassword(req.Context(), proxy.ds)
 		if err != nil {
-			logger.Error("Error interpolating proxy url", "error", err)
+			ctxLogger.Error("Error interpolating proxy url", "error", err)
 			return
 		}
 		req.URL.RawPath = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
@@ -199,7 +200,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	unescapedPath, err := url.PathUnescape(req.URL.RawPath)
 	if err != nil {
-		logger.Error("Failed to unescape raw path", "rawPath", req.URL.RawPath, "error", err)
+		ctxLogger.Error("Failed to unescape raw path", "rawPath", req.URL.RawPath, "error", err)
 		return
 	}
 
@@ -208,7 +209,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	if proxy.ds.BasicAuth {
 		password, err := proxy.dataSourcesService.DecryptedBasicAuthPassword(req.Context(), proxy.ds)
 		if err != nil {
-			logger.Error("Error interpolating proxy url", "error", err)
+			ctxLogger.Error("Error interpolating proxy url", "error", err)
 			return
 		}
 		req.Header.Set("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser,
@@ -223,14 +224,14 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	applyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
 
-	proxyutil.ClearCookieHeader(req, proxy.ds.AllowedCookies())
+	proxyutil.ClearCookieHeader(req, proxy.ds.AllowedCookies(), []string{proxy.cfg.LoginCookieName})
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 	jsonData := make(map[string]interface{})
 	if proxy.ds.JsonData != nil {
 		jsonData, err = proxy.ds.JsonData.Map()
 		if err != nil {
-			logger.Error("Failed to get json data as map", "jsonData", proxy.ds.JsonData, "error", err)
+			ctxLogger.Error("Failed to get json data as map", "jsonData", proxy.ds.JsonData, "error", err)
 			return
 		}
 	}
@@ -238,7 +239,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	if proxy.matchedRoute != nil {
 		decryptedValues, err := proxy.dataSourcesService.DecryptedValues(req.Context(), proxy.ds)
 		if err != nil {
-			logger.Error("Error interpolating proxy url", "error", err)
+			ctxLogger.Error("Error interpolating proxy url", "error", err)
 			return
 		}
 
@@ -331,7 +332,8 @@ func (proxy *DataSourceProxy) logRequest() {
 		}
 	}
 
-	logger.Info("Proxying incoming request",
+	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
+	ctxLogger.Info("Proxying incoming request",
 		"userid", proxy.ctx.UserID,
 		"orgid", proxy.ctx.OrgID,
 		"username", proxy.ctx.Login,

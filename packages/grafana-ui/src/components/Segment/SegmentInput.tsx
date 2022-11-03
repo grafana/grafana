@@ -10,7 +10,9 @@ import { getSegmentStyles } from './styles';
 
 import { useExpandableLabel, SegmentProps } from '.';
 
-export interface SegmentInputProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLInputElement>, 'value' | 'onChange'> {
+export interface SegmentInputProps<T>
+  extends Omit<SegmentProps<T>, 'allowCustomValue' | 'allowEmptyValue'>,
+    Omit<HTMLProps<HTMLInputElement>, 'value' | 'onChange'> {
   value: string | number;
   onChange: (text: string | number) => void;
 }
@@ -72,6 +74,8 @@ export function SegmentInput<T>({
     <input
       {...rest}
       ref={ref}
+      // this needs to autofocus, but it's ok as it's only rendered by choice
+      // eslint-disable-next-line jsx-a11y/no-autofocus
       autoFocus
       className={cx(`gf-form gf-form-input`, inputWidthStyle)}
       value={value}

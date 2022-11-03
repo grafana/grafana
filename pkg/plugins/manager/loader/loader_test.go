@@ -7,21 +7,17 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/services/org"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -39,20 +35,17 @@ func TestLoader_Load(t *testing.T) {
 		return
 	}
 	tests := []struct {
-		name            string
-		class           plugins.Class
-		cfg             *plugins.Cfg
-		pluginPaths     []string
-		existingPlugins map[string]struct{}
-		want            []*plugins.Plugin
-		pluginErrors    map[string]*plugins.Error
+		name         string
+		class        plugins.Class
+		cfg          *config.Cfg
+		pluginPaths  []string
+		want         []*plugins.Plugin
+		pluginErrors map[string]*plugins.Error
 	}{
 		{
-			name:  "Load a Core plugin",
-			class: plugins.Core,
-			cfg: &plugins.Cfg{
-				PluginsPath: corePluginDir,
-			},
+			name:        "Load a Core plugin",
+			class:       plugins.Core,
+			cfg:         &config.Cfg{},
 			pluginPaths: []string{filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")},
 			want: []*plugins.Plugin{
 				{
@@ -99,11 +92,9 @@ func TestLoader_Load(t *testing.T) {
 			},
 		},
 		{
-			name:  "Load a Bundled plugin",
-			class: plugins.Bundled,
-			cfg: &plugins.Cfg{
-				PluginsPath: filepath.Join(parentDir, "testdata"),
-			},
+			name:        "Load a Bundled plugin",
+			class:       plugins.Bundled,
+			cfg:         &config.Cfg{},
 			pluginPaths: []string{"../testdata/valid-v2-signature"},
 			want: []*plugins.Plugin{
 				{
@@ -141,11 +132,9 @@ func TestLoader_Load(t *testing.T) {
 				},
 			},
 		}, {
-			name:  "Load plugin with symbolic links",
-			class: plugins.External,
-			cfg: &plugins.Cfg{
-				PluginsPath: filepath.Join(parentDir),
-			},
+			name:        "Load plugin with symbolic links",
+			class:       plugins.External,
+			cfg:         &config.Cfg{},
 			pluginPaths: []string{"../testdata/symbolic-plugin-dirs"},
 			want: []*plugins.Plugin{
 				{
@@ -221,9 +210,8 @@ func TestLoader_Load(t *testing.T) {
 		}, {
 			name:  "Load an unsigned plugin (development)",
 			class: plugins.External,
-			cfg: &plugins.Cfg{
-				DevMode:     true,
-				PluginsPath: filepath.Join(parentDir),
+			cfg: &config.Cfg{
+				DevMode: true,
 			},
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
 			want: []*plugins.Plugin{
@@ -258,11 +246,9 @@ func TestLoader_Load(t *testing.T) {
 				},
 			},
 		}, {
-			name:  "Load an unsigned plugin (production)",
-			class: plugins.External,
-			cfg: &plugins.Cfg{
-				PluginsPath: filepath.Join(parentDir),
-			},
+			name:        "Load an unsigned plugin (production)",
+			class:       plugins.External,
+			cfg:         &config.Cfg{},
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
@@ -275,8 +261,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:  "Load an unsigned plugin using PluginsAllowUnsigned config (production)",
 			class: plugins.External,
-			cfg: &plugins.Cfg{
-				PluginsPath:          filepath.Join(parentDir),
+			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
 			},
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
@@ -313,25 +298,22 @@ func TestLoader_Load(t *testing.T) {
 			},
 		},
 		{
-			name:  "Load an unsigned plugin with modified signature (production)",
-			class: plugins.External,
-			cfg: &plugins.Cfg{
-				PluginsPath: filepath.Join(parentDir),
-			},
+			name:        "Load a plugin with v1 manifest should return signatureInvalid",
+			class:       plugins.External,
+			cfg:         &config.Cfg{},
 			pluginPaths: []string{"../testdata/lacking-files"},
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
 					PluginID:  "test-datasource",
-					ErrorCode: "signatureModified",
+					ErrorCode: "signatureInvalid",
 				},
 			},
 		},
 		{
-			name:  "Load an unsigned plugin with modified signature using PluginsAllowUnsigned config (production) still includes a signing error",
+			name:  "Load a plugin with v1 manifest using PluginsAllowUnsigned config (production) should return signatureInvali",
 			class: plugins.External,
-			cfg: &plugins.Cfg{
-				PluginsPath:          filepath.Join(parentDir),
+			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
 			},
 			pluginPaths: []string{"../testdata/lacking-files"},
@@ -339,15 +321,14 @@ func TestLoader_Load(t *testing.T) {
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
 					PluginID:  "test-datasource",
-					ErrorCode: "signatureModified",
+					ErrorCode: "signatureInvalid",
 				},
 			},
 		},
 		{
 			name:  "Load a plugin with manifest which has a file not found in plugin folder",
 			class: plugins.External,
-			cfg: &plugins.Cfg{
-				PluginsPath:          filepath.Join(parentDir),
+			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
 			},
 			pluginPaths: []string{"../testdata/invalid-v2-missing-file"},
@@ -362,8 +343,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:  "Load a plugin with file which is missing from the manifest",
 			class: plugins.External,
-			cfg: &plugins.Cfg{
-				PluginsPath:          filepath.Join(parentDir),
+			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
 			},
 			pluginPaths: []string{"../testdata/invalid-v2-extra-file"},
@@ -378,8 +358,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:  "Load an app with includes",
 			class: plugins.External,
-			cfg: &plugins.Cfg{
-				PluginsPath:          filepath.Join(parentDir),
+			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-app"},
 			},
 			pluginPaths: []string{"../testdata/test-app-with-includes"},
@@ -427,19 +406,31 @@ func TestLoader_Load(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		l := newLoader(tt.cfg)
+		reg := fakes.NewFakePluginRegistry()
+		storage := fakes.NewFakePluginStorage()
+		procPrvdr := fakes.NewFakeBackendProcessProvider()
+		procMgr := fakes.NewFakeProcessManager()
+		l := newLoader(tt.cfg, func(l *Loader) {
+			l.pluginRegistry = reg
+			l.pluginStorage = storage
+			l.processManager = procMgr
+			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, &fakes.FakeLicensingService{})
+		})
+
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := l.Load(context.Background(), tt.class, tt.pluginPaths, tt.existingPlugins)
+			got, err := l.Load(context.Background(), tt.class, tt.pluginPaths)
 			require.NoError(t, err)
 			if !cmp.Equal(got, tt.want, compareOpts) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
 			}
 
 			pluginErrs := l.PluginErrors()
-			assert.Equal(t, len(tt.pluginErrors), len(pluginErrs))
+			require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
 			for _, pluginErr := range pluginErrs {
-				assert.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
+				require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
 			}
+
+			verifyState(t, tt.want, reg, procPrvdr, storage, procMgr)
 		})
 	}
 }
@@ -509,7 +500,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 	t.Run("Load multiple", func(t *testing.T) {
 		tests := []struct {
 			name            string
-			cfg             *plugins.Cfg
+			cfg             *config.Cfg
 			pluginPaths     []string
 			appURL          string
 			existingPlugins map[string]struct{}
@@ -517,10 +508,8 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 			pluginErrors    map[string]*plugins.Error
 		}{
 			{
-				name: "Load multiple plugins (broken, valid, unsigned)",
-				cfg: &plugins.Cfg{
-					PluginsPath: filepath.Join(parentDir),
-				},
+				name:   "Load multiple plugins (broken, valid, unsigned)",
+				cfg:    &config.Cfg{},
 				appURL: "http://localhost:3000",
 				pluginPaths: []string{
 					"../testdata/invalid-plugin-json",    // test-app
@@ -572,7 +561,16 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			l := newLoader(tt.cfg)
+			reg := fakes.NewFakePluginRegistry()
+			storage := fakes.NewFakePluginStorage()
+			procPrvdr := fakes.NewFakeBackendProcessProvider()
+			procMgr := fakes.NewFakeProcessManager()
+			l := newLoader(tt.cfg, func(l *Loader) {
+				l.pluginRegistry = reg
+				l.pluginStorage = storage
+				l.processManager = procMgr
+				l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService())
+			})
 			t.Run(tt.name, func(t *testing.T) {
 				origAppURL := setting.AppUrl
 				t.Cleanup(func() {
@@ -580,7 +578,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				})
 				setting.AppUrl = tt.appURL
 
-				got, err := l.Load(context.Background(), plugins.External, tt.pluginPaths, tt.existingPlugins)
+				got, err := l.Load(context.Background(), plugins.External, tt.pluginPaths)
 				require.NoError(t, err)
 				sort.SliceStable(got, func(i, j int) bool {
 					return got[i].ID < got[j].ID
@@ -593,12 +591,13 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				for _, pluginErr := range pluginErrs {
 					require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
 				}
+				verifyState(t, tt.want, reg, procPrvdr, storage, procMgr)
 			})
 		}
 	})
 }
 
-func TestLoader_Signature_RootURL(t *testing.T) {
+func TestLoader_Load_Signature_RootURL(t *testing.T) {
 	const defaultAppURL = "http://localhost:3000/grafana"
 
 	parentDir, err := filepath.Abs("../")
@@ -648,13 +647,23 @@ func TestLoader_Signature_RootURL(t *testing.T) {
 			},
 		}
 
-		l := newLoader(&plugins.Cfg{PluginsPath: filepath.Join(parentDir)})
-		got, err := l.Load(context.Background(), plugins.External, paths, map[string]struct{}{})
-		assert.NoError(t, err)
+		reg := fakes.NewFakePluginRegistry()
+		storage := fakes.NewFakePluginStorage()
+		procPrvdr := fakes.NewFakeBackendProcessProvider()
+		procMgr := fakes.NewFakeProcessManager()
+		l := newLoader(&config.Cfg{}, func(l *Loader) {
+			l.pluginRegistry = reg
+			l.pluginStorage = storage
+			l.processManager = procMgr
+			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
+		})
+		got, err := l.Load(context.Background(), plugins.External, paths)
+		require.NoError(t, err)
 
 		if !cmp.Equal(got, expected, compareOpts) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
 		}
+		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
 	})
 }
 
@@ -717,20 +726,28 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 			},
 		}
 
-		l := newLoader(&plugins.Cfg{
-			PluginsPath: filepath.Dir(pluginDir),
+		reg := fakes.NewFakePluginRegistry()
+		storage := fakes.NewFakePluginStorage()
+		procPrvdr := fakes.NewFakeBackendProcessProvider()
+		procMgr := fakes.NewFakeProcessManager()
+		l := newLoader(&config.Cfg{}, func(l *Loader) {
+			l.pluginRegistry = reg
+			l.pluginStorage = storage
+			l.processManager = procMgr
+			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
-
-		got, err := l.Load(context.Background(), plugins.External, []string{pluginDir, pluginDir}, map[string]struct{}{})
-		assert.NoError(t, err)
+		got, err := l.Load(context.Background(), plugins.External, []string{pluginDir, pluginDir})
+		require.NoError(t, err)
 
 		if !cmp.Equal(got, expected, compareOpts) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
 		}
+
+		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
 	})
 }
 
-func TestLoader_loadNestedPlugins(t *testing.T) {
+func TestLoader_Load_NestedPlugins(t *testing.T) {
 	rootDir, err := filepath.Abs("../")
 	if err != nil {
 		t.Errorf("could not construct absolute path of root dir")
@@ -805,46 +822,47 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 	child.Parent = parent
 
 	t.Run("Load nested External plugins", func(t *testing.T) {
+		reg := fakes.NewFakePluginRegistry()
+		storage := fakes.NewFakePluginStorage()
+		procPrvdr := fakes.NewFakeBackendProcessProvider()
+		procMgr := fakes.NewFakeProcessManager()
+		l := newLoader(&config.Cfg{}, func(l *Loader) {
+			l.pluginRegistry = reg
+			l.pluginStorage = storage
+			l.processManager = procMgr
+			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
+		})
+
+		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"})
+		require.NoError(t, err)
+
+		// to ensure we can compare with expected
+		sort.SliceStable(got, func(i, j int) bool {
+			return got[i].ID < got[j].ID
+		})
+
 		expected := []*plugins.Plugin{parent, child}
-		l := newLoader(&plugins.Cfg{
-			PluginsPath: rootDir,
-		})
-
-		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"}, map[string]struct{}{})
-		assert.NoError(t, err)
-
-		// to ensure we can compare with expected
-		sort.SliceStable(got, func(i, j int) bool {
-			return got[i].ID < got[j].ID
-		})
-
 		if !cmp.Equal(got, expected, compareOpts) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
 		}
-	})
 
-	t.Run("Load will exclude plugins that already exist", func(t *testing.T) {
-		// parent/child links will not be created when either plugins are provided in the existingPlugins map
-		parent.Children = nil
-		expected := []*plugins.Plugin{parent}
+		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
 
-		l := newLoader(&plugins.Cfg{
-			PluginsPath: rootDir,
+		t.Run("Load will exclude plugins that already exist", func(t *testing.T) {
+			got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"})
+			require.NoError(t, err)
+
+			// to ensure we can compare with expected
+			sort.SliceStable(got, func(i, j int) bool {
+				return got[i].ID < got[j].ID
+			})
+
+			if !cmp.Equal(got, []*plugins.Plugin{}, compareOpts) {
+				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+			}
+
+			verifyState(t, expected, reg, procPrvdr, storage, procMgr)
 		})
-
-		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"}, map[string]struct{}{
-			"test-panel": {},
-		})
-		assert.NoError(t, err)
-
-		// to ensure we can compare with expected
-		sort.SliceStable(got, func(i, j int) bool {
-			return got[i].ID < got[j].ID
-		})
-
-		if !cmp.Equal(got, expected, compareOpts) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
-		}
 	})
 
 	t.Run("Plugin child field `IncludedInAppID` is set to parent app's plugin ID", func(t *testing.T) {
@@ -968,14 +986,20 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 
 		parent.Children = []*plugins.Plugin{child}
 		child.Parent = parent
-
 		expected := []*plugins.Plugin{parent, child}
-		l := newLoader(&plugins.Cfg{
-			PluginsPath: rootDir,
-		})
 
-		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/app-with-child"}, map[string]struct{}{})
-		assert.NoError(t, err)
+		reg := fakes.NewFakePluginRegistry()
+		storage := fakes.NewFakePluginStorage()
+		procPrvdr := fakes.NewFakeBackendProcessProvider()
+		procMgr := fakes.NewFakeProcessManager()
+		l := newLoader(&config.Cfg{}, func(l *Loader) {
+			l.pluginRegistry = reg
+			l.pluginStorage = storage
+			l.processManager = procMgr
+			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
+		})
+		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/app-with-child"})
+		require.NoError(t, err)
 
 		// to ensure we can compare with expected
 		sort.SliceStable(got, func(i, j int) bool {
@@ -986,14 +1010,24 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
 		}
 
+		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
+
 		t.Run("order of loaded parent and child plugins gives same output", func(t *testing.T) {
 			parentPluginJSON := filepath.Join(rootDir, "testdata/app-with-child/dist/plugin.json")
 			childPluginJSON := filepath.Join(rootDir, "testdata/app-with-child/dist/child/plugin.json")
 
-			got, err := l.loadPlugins(context.Background(), plugins.External, []string{
-				parentPluginJSON, childPluginJSON},
-				map[string]struct{}{})
-			assert.NoError(t, err)
+			reg = fakes.NewFakePluginRegistry()
+			storage = fakes.NewFakePluginStorage()
+			procPrvdr = fakes.NewFakeBackendProcessProvider()
+			procMgr = fakes.NewFakeProcessManager()
+			l = newLoader(&config.Cfg{}, func(l *Loader) {
+				l.pluginRegistry = reg
+				l.pluginStorage = storage
+				l.processManager = procMgr
+				l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
+			})
+			got, err = l.loadPlugins(context.Background(), plugins.External, []string{parentPluginJSON, childPluginJSON})
+			require.NoError(t, err)
 
 			// to ensure we can compare with expected
 			sort.SliceStable(got, func(i, j int) bool {
@@ -1004,10 +1038,20 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
 			}
 
-			got, err = l.loadPlugins(context.Background(), plugins.External, []string{
-				childPluginJSON, parentPluginJSON},
-				map[string]struct{}{})
-			assert.NoError(t, err)
+			verifyState(t, expected, reg, procPrvdr, storage, procMgr)
+
+			reg = fakes.NewFakePluginRegistry()
+			storage = fakes.NewFakePluginStorage()
+			procPrvdr = fakes.NewFakeBackendProcessProvider()
+			procMgr = fakes.NewFakeProcessManager()
+			l = newLoader(&config.Cfg{}, func(l *Loader) {
+				l.pluginRegistry = reg
+				l.pluginStorage = storage
+				l.processManager = procMgr
+				l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
+			})
+			got, err = l.loadPlugins(context.Background(), plugins.External, []string{childPluginJSON, parentPluginJSON})
+			require.NoError(t, err)
 
 			// to ensure we can compare with expected
 			sort.SliceStable(got, func(i, j int) bool {
@@ -1017,6 +1061,8 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			if !cmp.Equal(got, expected, compareOpts) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
 			}
+
+			verifyState(t, expected, reg, procPrvdr, storage, procMgr)
 		})
 	})
 }
@@ -1163,56 +1209,48 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 
 		configureAppChildOPlugin(parent, child)
 
-		assert.Equal(t, "app/plugins/app/testdata-app/datasources/datasource/module", child.Module)
-		assert.Equal(t, "testdata-app", child.IncludedInAppID)
-		assert.Equal(t, "public/app/plugins/app/testdata-app", child.BaseURL)
+		require.Equal(t, "app/plugins/app/testdata-app/datasources/datasource/module", child.Module)
+		require.Equal(t, "testdata-app", child.IncludedInAppID)
+		require.Equal(t, "public/app/plugins/app/testdata-app", child.BaseURL)
 	})
 }
 
-func newLoader(cfg *plugins.Cfg) *Loader {
-	return &Loader{
-		cfg:                cfg,
-		pluginFinder:       finder.New(),
-		pluginInitializer:  initializer.New(cfg, provider.ProvideService(coreplugin.NewRegistry(make(map[string]backendplugin.PluginFactoryFunc))), &fakeLicensingService{}),
-		signatureValidator: signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)),
-		errs:               make(map[string]*plugins.SignatureError),
-		log:                &logtest.Fake{},
+func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
+	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
+		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage())
+
+	for _, cb := range cbs {
+		cb(l)
 	}
+
+	return l
 }
 
-type fakeLicensingService struct {
-	edition  string
-	tokenRaw string
-}
+func verifyState(t *testing.T, ps []*plugins.Plugin, reg *fakes.FakePluginRegistry,
+	procPrvdr *fakes.FakeBackendProcessProvider, storage *fakes.FakePluginStorage, procMngr *fakes.FakeProcessManager) {
+	t.Helper()
 
-func (t *fakeLicensingService) Expiry() int64 {
-	return 0
-}
+	for _, p := range ps {
+		if !cmp.Equal(p, reg.Store[p.ID], compareOpts) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(p, reg.Store[p.ID], compareOpts))
+		}
 
-func (t *fakeLicensingService) Edition() string {
-	return t.edition
-}
+		if p.Backend {
+			require.Equal(t, 1, procPrvdr.Requested[p.ID])
+			require.Equal(t, 1, procPrvdr.Invoked[p.ID])
+		} else {
+			require.Zero(t, procPrvdr.Requested[p.ID])
+			require.Zero(t, procPrvdr.Invoked[p.ID])
+		}
 
-func (t *fakeLicensingService) StateInfo() string {
-	return ""
-}
+		_, exists := storage.Store[p.ID]
+		if p.IsExternalPlugin() {
+			require.True(t, exists)
+		} else {
+			require.False(t, exists)
+		}
 
-func (t *fakeLicensingService) ContentDeliveryPrefix() string {
-	return ""
-}
-
-func (t *fakeLicensingService) LicenseURL(_ bool) string {
-	return ""
-}
-
-func (t *fakeLicensingService) Environment() map[string]string {
-	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.tokenRaw}
-}
-
-func (*fakeLicensingService) EnabledFeatures() map[string]bool {
-	return map[string]bool{}
-}
-
-func (*fakeLicensingService) FeatureEnabled(feature string) bool {
-	return false
+		require.Equal(t, 1, procMngr.Started[p.ID])
+		require.Zero(t, procMngr.Stopped[p.ID])
+	}
 }

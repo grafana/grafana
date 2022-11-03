@@ -54,10 +54,14 @@ func TestOrgService(t *testing.T) {
 }
 
 type FakeOrgStore struct {
-	ExpectedOrg    *org.Org
-	ExpectedOrgID  int64
-	ExpectedUserID int64
-	ExpectedError  error
+	ExpectedOrg                       *org.Org
+	ExpectedOrgID                     int64
+	ExpectedUserID                    int64
+	ExpectedError                     error
+	ExpectedUserOrgs                  []*org.UserOrgDTO
+	ExpectedOrgs                      []*org.OrgDTO
+	ExpectedOrgUsers                  []*org.OrgUserDTO
+	ExpectedSearchOrgUsersQueryResult *org.SearchOrgUsersQueryResult
 }
 
 func newOrgStoreFake() *FakeOrgStore {
@@ -81,5 +85,53 @@ func (f *FakeOrgStore) DeleteUserFromAll(ctx context.Context, userID int64) erro
 }
 
 func (f *FakeOrgStore) Update(ctx context.Context, cmd *org.UpdateOrgCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgStore) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddressCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgStore) GetUserOrgList(ctx context.Context, query *org.GetUserOrgListQuery) ([]*org.UserOrgDTO, error) {
+	return f.ExpectedUserOrgs, f.ExpectedError
+}
+
+func (f *FakeOrgStore) Search(ctx context.Context, query *org.SearchOrgsQuery) ([]*org.OrgDTO, error) {
+	return f.ExpectedOrgs, f.ExpectedError
+}
+
+func (f *FakeOrgStore) CreateWithMember(ctx context.Context, cmd *org.CreateOrgCommand) (*org.Org, error) {
+	return f.ExpectedOrg, f.ExpectedError
+}
+
+func (f *FakeOrgStore) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgStore) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgStore) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
+	return f.ExpectedOrgUsers, f.ExpectedError
+}
+
+func (f *FakeOrgStore) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) (*org.Org, error) {
+	return f.ExpectedOrg, f.ExpectedError
+}
+
+func (f *FakeOrgStore) GetByName(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
+	return f.ExpectedOrg, f.ExpectedError
+}
+
+func (f *FakeOrgStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	return f.ExpectedSearchOrgUsersQueryResult, f.ExpectedError
+}
+
+func (f *FakeOrgStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
 	return f.ExpectedError
 }

@@ -9,20 +9,16 @@ import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
-import { getRoutes as getDataConnectionsRoutes } from 'app/features/data-connections/routes';
+import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
-import AppRootPage from 'app/features/plugins/components/AppRootPage';
 import { getProfileRoutes } from 'app/features/profile/routes';
-import { ServiceAccountPage } from 'app/features/serviceaccounts/ServiceAccountPage';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
-
-import { pluginHasRootPage } from './utils';
 
 export const extraRoutes: RouteDescriptor[] = [];
 
@@ -34,17 +30,19 @@ export function getAppRoutes(): RouteDescriptor[] {
           component: () => <NavLandingPage navId="apps" />,
         },
         {
+          path: '/alerts-and-incidents',
+          component: () => <NavLandingPage navId="alerts-and-incidents" />,
+        },
+        {
+          path: '/monitoring',
+          component: () => <NavLandingPage navId="monitoring" />,
+        },
+        {
           path: '/a/:pluginId',
           exact: true,
-          component: (props) => {
-            const hasRoot = pluginHasRootPage(props.match.params.pluginId, config.bootData.navTree);
-            const hasQueryParams = Object.keys(props.queryParams).length > 0;
-            return hasRoot || hasQueryParams ? (
-              <AppRootPage {...props} />
-            ) : (
-              <NavLandingPage navId={`plugin-page-${props.match.params.pluginId}`} />
-            );
-          },
+          component: SafeDynamicImport(
+            () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/components/AppRootPage')
+          ),
         },
       ]
     : [];
@@ -145,8 +143,12 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/datasources/correlations',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "CorrelationsPage" */ 'app/features/correlations/CorrelationsPage')
+      component: SafeDynamicImport(() =>
+        config.featureToggles.correlations
+          ? import(/* webpackChunkName: "CorrelationsPage" */ 'app/features/correlations/CorrelationsPage')
+          : import(
+              /* webpackChunkName: "CorrelationsFeatureToggle" */ 'app/features/correlations/CorrelationsFeatureToggle'
+            )
       ),
     },
     {
@@ -266,7 +268,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/serviceaccounts/:id',
-      component: ServiceAccountPage,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ServiceAccountPage" */ 'app/features/serviceaccounts/ServiceAccountPage')
+      ),
     },
     {
       path: '/org/teams',
@@ -296,10 +300,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
     },
     // ADMIN
-
     {
       path: '/admin',
       component: () => (config.featureToggles.topnav ? <NavLandingPage navId="cfg" /> : <Redirect to="/admin/users" />),
+    },
+    {
+      path: '/admin/server',
+      component: () =>
+        config.featureToggles.topnav ? <NavLandingPage navId="admin" /> : <Redirect to="/admin/users" />,
     },
     {
       path: '/admin/settings',

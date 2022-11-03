@@ -61,8 +61,8 @@ describe('RuleViewer', () => {
     });
     await renderRuleViewer();
 
-    expect(screen.getByText('Alerting / View rule')).toBeInTheDocument();
-    expect(screen.getByText('Test alert')).toBeInTheDocument();
+    expect(screen.getByText(/view rule/i)).toBeInTheDocument();
+    expect(screen.getByText(/test alert/i)).toBeInTheDocument();
   });
 
   it('should render page with cloud alert', async () => {
@@ -74,8 +74,8 @@ describe('RuleViewer', () => {
       error: undefined,
     });
     await renderRuleViewer();
-    expect(screen.getByText('Alerting / View rule')).toBeInTheDocument();
-    expect(screen.getByText('Cloud test alert')).toBeInTheDocument();
+    expect(screen.getByText(/view rule/i)).toBeInTheDocument();
+    expect(screen.getByText(/cloud test alert/i)).toBeInTheDocument();
   });
 });
 

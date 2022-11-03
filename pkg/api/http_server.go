@@ -15,6 +15,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/querylibrary"
+	"github.com/grafana/grafana/pkg/services/searchV2"
+	"github.com/grafana/grafana/pkg/services/store/object/httpobjectstore"
+	"github.com/grafana/grafana/pkg/services/userauth"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -37,12 +43,12 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/correlations"
-	dashboardThumbs "github.com/grafana/grafana/pkg/services/dashboard_thumbs"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
@@ -60,12 +66,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
 	loginAttempt "github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
+	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -83,6 +90,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/tag"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	tempUser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/thumbs"
@@ -108,6 +117,7 @@ type HTTPServer struct {
 	Features                     *featuremgmt.FeatureManager
 	SettingsProvider             setting.Provider
 	HooksService                 *hooks.HooksService
+	navTreeService               navtree.Service
 	CacheService                 *localcache.CacheService
 	DataSourceCache              datasources.CacheService
 	AuthTokenService             models.UserTokenService
@@ -121,7 +131,7 @@ type HTTPServer struct {
 	PluginRequestValidator       models.PluginRequestValidator
 	pluginClient                 plugins.Client
 	pluginStore                  plugins.Store
-	pluginManager                plugins.Manager
+	pluginInstaller              plugins.Installer
 	pluginDashboardService       plugindashboards.Service
 	pluginStaticRouteResolver    plugins.StaticRouteResolver
 	pluginErrorResolver          plugins.ErrorResolver
@@ -134,6 +144,10 @@ type HTTPServer struct {
 	ThumbService                 thumbs.Service
 	ExportService                export.ExportService
 	StorageService               store.StorageService
+	httpObjectStore              httpobjectstore.HTTPObjectStore
+	SearchV2HTTPService          searchV2.SearchHTTPService
+	QueryLibraryHTTPService      querylibrary.HTTPService
+	QueryLibraryService          querylibrary.Service
 	ContextHandler               *contexthandler.ContextHandler
 	SQLStore                     sqlstore.Store
 	AlertEngine                  *alerting.AlertEngine
@@ -147,7 +161,7 @@ type HTTPServer struct {
 	secretsPluginManager         plugins.SecretsPluginManager
 	secretsStore                 secretsKV.SecretsKVStore
 	secretsMigrator              secrets.Migrator
-	secretsPluginMigrator        *spm.SecretMigrationServiceImpl
+	secretsPluginMigrator        spm.SecretMigrationProvider
 	DataSourcesService           datasources.DataSourceService
 	cleanUpService               *cleanup.CleanUpService
 	tracer                       tracing.Tracer
@@ -164,12 +178,12 @@ type HTTPServer struct {
 	NotificationService          *notifications.NotificationService
 	DashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
-	folderService                dashboards.FolderService
+	folderService                folder.Service
 	DatasourcePermissionsService permissions.DatasourcePermissionsService
 	commentsService              *comments.Service
 	AlertNotificationService     *alerting.AlertNotificationService
 	dashboardsnapshotsService    dashboardsnapshots.Service
-	PluginSettings               *pluginSettings.Service
+	PluginSettings               pluginSettings.Service
 	AvatarCacheServer            *avatar.AvatarCacheServer
 	preferenceService            pref.Service
 	Csrf                         csrf.Service
@@ -185,10 +199,15 @@ type HTTPServer struct {
 
 	userService            user.Service
 	tempUserService        tempUser.Service
-	dashboardThumbsService dashboardThumbs.Service
+	dashboardThumbsService thumbs.DashboardThumbService
 	loginAttemptService    loginAttempt.Service
 	orgService             org.Service
+	teamService            team.Service
 	accesscontrolService   accesscontrol.Service
+	annotationsRepo        annotations.Repository
+	tagService             tag.Service
+	userAuthService        userauth.Service
+	oauthTokenService      oauthtoken.OAuthTokenService
 }
 
 type ServerOptions struct {
@@ -200,7 +219,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore, alertEngine *alerting.AlertEngine,
 	pluginRequestValidator models.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
-	pluginErrorResolver plugins.ErrorResolver, pluginManager plugins.Manager, settingsProvider setting.Provider,
+	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service, correlationsService correlations.Service,
 	thumbService thumbs.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
@@ -214,20 +233,24 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, queryDataService *query.Service,
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
-	authInfoService login.AuthInfoService, storageService store.StorageService,
+	authInfoService login.AuthInfoService, storageService store.StorageService, httpObjectStore httpobjectstore.HTTPObjectStore,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
-	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
+	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
-	dashboardsnapshotsService dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings *pluginSettings.Service,
+	dashboardsnapshotsService dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, coremodels *registry.Base,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
 	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsService secrets.Service,
-	secretsPluginMigrator *spm.SecretMigrationServiceImpl, secretsStore secretsKV.SecretsKVStore,
-	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service, loginAttemptService loginAttempt.Service, orgService org.Service,
-	accesscontrolService accesscontrol.Service, dashboardThumbsService dashboardThumbs.Service,
+	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
+	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
+	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
+	accesscontrolService accesscontrol.Service, dashboardThumbsService thumbs.DashboardThumbService, navTreeService navtree.Service,
+	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
+	userAuthService userauth.Service, queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service,
+	oauthTokenService oauthtoken.OAuthTokenService,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -243,7 +266,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SQLStore:                     sqlStore,
 		AlertEngine:                  alertEngine,
 		PluginRequestValidator:       pluginRequestValidator,
-		pluginManager:                pluginManager,
+		pluginInstaller:              pluginInstaller,
 		pluginClient:                 pluginClient,
 		pluginStore:                  pluginStore,
 		pluginStaticRouteResolver:    pluginStaticRouteResolver,
@@ -266,6 +289,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		Login:                        loginService,
 		AccessControl:                accessControl,
 		DataProxy:                    dataSourceProxy,
+		SearchV2HTTPService:          searchv2HTTPService,
 		SearchService:                searchService,
 		ExportService:                exportService,
 		Live:                         live,
@@ -287,6 +311,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		secretsMigrator:              secretsMigrator,
 		secretsPluginMigrator:        secretsPluginMigrator,
 		secretsStore:                 secretsStore,
+		httpObjectStore:              httpObjectStore,
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,
 		ldapGroups:                   ldapGroups,
@@ -322,7 +347,15 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardThumbsService:       dashboardThumbsService,
 		loginAttemptService:          loginAttemptService,
 		orgService:                   orgService,
+		teamService:                  teamService,
+		navTreeService:               navTreeService,
 		accesscontrolService:         accesscontrolService,
+		annotationsRepo:              annotationRepo,
+		tagService:                   tagService,
+		userAuthService:              userAuthService,
+		QueryLibraryHTTPService:      queryLibraryHTTPService,
+		QueryLibraryService:          queryLibraryService,
+		oauthTokenService:            oauthTokenService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -330,7 +363,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	hs.registerRoutes()
 
 	// Register access control scope resolver for annotations
-	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver())
+	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo))
 
 	if err := hs.declareFixedRoles(); err != nil {
 		return nil, err
@@ -437,8 +470,14 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 
 		// Make socket writable by group
 		// nolint:gosec
-		if err := os.Chmod(hs.Cfg.SocketPath, 0660); err != nil {
-			return nil, fmt.Errorf("failed to change socket permissions: %w", err)
+		if err := os.Chmod(hs.Cfg.SocketPath, os.FileMode(hs.Cfg.SocketMode)); err != nil {
+			return nil, fmt.Errorf("failed to change socket mode %d: %w", hs.Cfg.SocketMode, err)
+		}
+
+		// golang.org/pkg/os does not have chgrp
+		// Changing the gid of a file without privileges requires that the target group is in the group of the process and that the process is the file owner
+		if err := os.Chown(hs.Cfg.SocketPath, -1, hs.Cfg.SocketGid); err != nil {
+			return nil, fmt.Errorf("failed to change socket group id %d: %w", hs.Cfg.SocketGid, err)
 		}
 
 		return listener, nil
@@ -572,9 +611,10 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(hs.apiHealthHandler)
 	m.Use(hs.metricsEndpoint)
 	m.Use(hs.pluginMetricsEndpoint)
+	m.Use(hs.frontendLogEndpoints())
 
 	m.UseMiddleware(hs.ContextHandler.Middleware)
-	m.Use(middleware.OrgRedirect(hs.Cfg, hs.SQLStore))
+	m.Use(middleware.OrgRedirect(hs.Cfg, hs.userService))
 	m.Use(accesscontrol.LoadPermissionsMiddleware(hs.accesscontrolService))
 
 	// needs to be after context handler

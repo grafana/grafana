@@ -24,7 +24,7 @@ import { changeFilter, changePage, changeQuery, fetchUsers } from './state/actio
 
 export interface FilterProps {
   filters: UserFilter[];
-  onChange: (filter: any) => void;
+  onChange: (filter: UserFilter) => void;
   className?: string;
 }
 const extraFilters: Array<ComponentType<FilterProps>> = [];
@@ -77,7 +77,7 @@ const UserListAdminPageUnConnected = ({
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
 
   return (
-    <Page navId="global-users" subTitle="Manage and create users across the whole Grafana server.">
+    <Page navId="global-users">
       <Page.Contents>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">

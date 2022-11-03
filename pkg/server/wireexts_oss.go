@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/server/usagestatssvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -74,8 +73,6 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
 	provider.ProvideService,
 	wire.Bind(new(plugins.BackendFactoryProvider), new(*provider.Service)),
-	acdb.ProvideService,
-	wire.Bind(new(accesscontrol.Store), new(*acdb.AccessControlStore)),
 	osskmsproviders.ProvideService,
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
 	ldap.ProvideGroupsService,

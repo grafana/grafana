@@ -1,7 +1,6 @@
-import React, { FC, memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Cell,
-  Column,
   TableState,
   useAbsoluteLayout,
   useFilters,
@@ -12,9 +11,9 @@ import {
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
 
-import { DataFrame, getFieldDisplayName } from '@grafana/data';
+import { DataFrame, getFieldDisplayName, Field } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../Pagination/Pagination';
 
@@ -28,8 +27,10 @@ import {
   FooterItem,
   TableSortByActionCallback,
   TableSortByFieldState,
+  TableFooterCalc,
+  GrafanaTableColumn,
 } from './types';
-import { getColumns, sortCaseInsensitive, sortNumber } from './utils';
+import { getColumns, sortCaseInsensitive, sortNumber, getFooterItems, createFooterCalculationValues } from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
 
@@ -47,13 +48,14 @@ export interface Props {
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
+  footerOptions?: TableFooterCalc;
   footerValues?: FooterItem[];
   enablePagination?: boolean;
 }
 
 function useTableStateReducer({ onColumnResize, onSortByChange, data }: Props) {
   return useCallback(
-    (newState: TableState, action: any) => {
+    (newState: TableState, action: { type: string }) => {
       switch (action.type) {
         case 'columnDoneResizing':
           if (onColumnResize) {
@@ -97,7 +99,7 @@ function useTableStateReducer({ onColumnResize, onSortByChange, data }: Props) {
   );
 }
 
-function getInitialState(initialSortBy: Props['initialSortBy'], columns: Column[]): Partial<TableState> {
+function getInitialState(initialSortBy: Props['initialSortBy'], columns: GrafanaTableColumn[]): Partial<TableState> {
   const state: Partial<TableState> = {};
 
   if (initialSortBy) {
@@ -106,7 +108,7 @@ function getInitialState(initialSortBy: Props['initialSortBy'], columns: Column[
     for (const sortBy of initialSortBy) {
       for (const col of columns) {
         if (col.Header === sortBy.displayName) {
-          state.sortBy.push({ id: col.id as string, desc: sortBy.desc });
+          state.sortBy.push({ id: col.id!, desc: sortBy.desc });
         }
       }
     }
@@ -115,7 +117,7 @@ function getInitialState(initialSortBy: Props['initialSortBy'], columns: Column[
   return state;
 }
 
-export const Table: FC<Props> = memo((props: Props) => {
+export const Table = memo((props: Props) => {
   const {
     ariaLabel,
     data,
@@ -126,24 +128,29 @@ export const Table: FC<Props> = memo((props: Props) => {
     noHeader,
     resizable = true,
     initialSortBy,
-    footerValues,
+    footerOptions,
     showTypeIcons,
+    footerValues,
     enablePagination,
   } = props;
 
   const listRef = useRef<FixedSizeList>(null);
+  const tableDivRef = useRef<HTMLDivElement>(null);
+  const fixedSizeListScrollbarRef = useRef<HTMLDivElement>(null);
   const tableStyles = useStyles2(getTableStyles);
+  const theme = useTheme2();
   const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
+  const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
 
   const footerHeight = useMemo(() => {
     const EXTENDED_ROW_HEIGHT = 33;
     let length = 0;
 
-    if (!footerValues) {
+    if (!footerItems) {
       return 0;
     }
 
-    for (const fv of footerValues) {
+    for (const fv of footerItems) {
       if (Array.isArray(fv) && fv.length > length) {
         length = fv.length;
       }
@@ -154,7 +161,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     }
 
     return EXTENDED_ROW_HEIGHT;
-  }, [footerValues]);
+  }, [footerItems]);
 
   // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
   // The cells use the field to look up values
@@ -170,8 +177,8 @@ export const Table: FC<Props> = memo((props: Props) => {
 
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () => getColumns(data, width, columnMinWidth, footerValues),
-    [data, width, columnMinWidth, footerValues]
+    () => getColumns(data, width, columnMinWidth, footerItems),
+    [data, width, columnMinWidth, footerItems]
   );
 
   // Internal react table state reducer
@@ -207,6 +214,38 @@ export const Table: FC<Props> = memo((props: Props) => {
     pageOptions,
   } = useTable(options, useFilters, useSortBy, usePagination, useAbsoluteLayout, useResizeColumns);
 
+  /*
+    Footer value calculation is being moved in the Table component and the footerValues prop will be deprecated.
+    The footerValues prop is still used in the Table component for backwards compatibility. Adding the
+    footerOptions prop will switch the Table component to use the new footer calculation. Using both props will
+    result in the footerValues prop being ignored.
+  */
+  useEffect(() => {
+    if (!footerOptions) {
+      setFooterItems(footerValues);
+    }
+  }, [footerValues, footerOptions]);
+
+  useEffect(() => {
+    if (!footerOptions) {
+      return;
+    }
+
+    if (footerOptions.show) {
+      setFooterItems(
+        getFooterItems(
+          headerGroups[0].headers as unknown as Array<{ field: Field }>,
+          createFooterCalculationValues(rows),
+          footerOptions,
+          theme
+        )
+      );
+    } else {
+      setFooterItems(undefined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [footerOptions, theme, state.filters, data]);
+
   let listHeight = height - (headerHeight + footerHeight);
 
   if (enablePagination) {
@@ -221,8 +260,31 @@ export const Table: FC<Props> = memo((props: Props) => {
     setPageSize(pageSize);
   }, [pageSize, setPageSize]);
 
+  useEffect(() => {
+    // To have the custom vertical scrollbar always visible (https://github.com/grafana/grafana/issues/52136),
+    // we need to bring the element from the FixedSizeList scope to the outer Table container scope,
+    // because the FixedSizeList scope has overflow. By moving scrollbar to container scope we will have
+    // it always visible since the entire width is in view.
+
+    // Select the scrollbar element from the FixedSizeList scope
+    const listVerticalScrollbarHTML = (fixedSizeListScrollbarRef.current as HTMLDivElement)?.querySelector(
+      '.track-vertical'
+    );
+
+    // Select Table custom scrollbars
+    const tableScrollbarView = (tableDivRef.current as HTMLDivElement)?.firstChild;
+
+    //If they exists, move the scrollbar element to the Table container scope
+    if (tableScrollbarView && listVerticalScrollbarHTML) {
+      listVerticalScrollbarHTML?.remove();
+      (tableScrollbarView as HTMLDivElement).querySelector(':scope > .track-vertical')?.remove();
+
+      (tableScrollbarView as HTMLDivElement).append(listVerticalScrollbarHTML as Node);
+    }
+  });
+
   const RenderRow = React.useCallback(
-    ({ index: rowIndex, style }) => {
+    ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
       let row = rows[rowIndex];
       if (enablePagination) {
         row = page[rowIndex];
@@ -291,31 +353,35 @@ export const Table: FC<Props> = memo((props: Props) => {
   };
 
   return (
-    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table">
-      <CustomScrollbar onScroll={handleScroll}>
+    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table" ref={tableDivRef}>
+      <CustomScrollbar hideVerticalTrack={true}>
         <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
           {!noHeader && <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
           {itemCount > 0 ? (
-            <FixedSizeList
-              height={listHeight}
-              itemCount={itemCount}
-              itemSize={tableStyles.rowHeight}
-              width={'100%'}
-              ref={listRef}
-              style={{ overflow: undefined }}
-            >
-              {RenderRow}
-            </FixedSizeList>
+            <div ref={fixedSizeListScrollbarRef}>
+              <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true}>
+                <FixedSizeList
+                  height={listHeight}
+                  itemCount={itemCount}
+                  itemSize={tableStyles.rowHeight}
+                  width={'100%'}
+                  ref={listRef}
+                  style={{ overflow: undefined }}
+                >
+                  {RenderRow}
+                </FixedSizeList>
+              </CustomScrollbar>
+            </div>
           ) : (
             <div style={{ height: height - headerHeight }} className={tableStyles.noData}>
               No data
             </div>
           )}
-          {footerValues && (
+          {footerItems && (
             <FooterRow
               height={footerHeight}
               isPaginationVisible={Boolean(enablePagination)}
-              footerValues={footerValues}
+              footerValues={footerItems}
               footerGroups={footerGroups}
               totalColumnsWidth={totalColumnsWidth}
             />

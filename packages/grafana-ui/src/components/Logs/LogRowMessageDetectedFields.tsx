@@ -8,6 +8,7 @@ import { Themeable2 } from '../../types/theme';
 
 import { getAllFields } from './logParser';
 
+/** @deprecated will be removed in the next major version */
 export interface Props extends Themeable2 {
   row: LogRowModel;
   showDetectedFields: string[];
@@ -45,5 +46,6 @@ class UnThemedLogRowMessageDetectedFields extends PureComponent<Props> {
   }
 }
 
+/** @deprecated will be removed in the next major version */
 export const LogRowMessageDetectedFields = withTheme2(UnThemedLogRowMessageDetectedFields);
 LogRowMessageDetectedFields.displayName = 'LogRowMessageDetectedFields';

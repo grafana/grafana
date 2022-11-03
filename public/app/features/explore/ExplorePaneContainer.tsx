@@ -26,8 +26,9 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 
 import Explore from './Explore';
 import { initializeExplore, refreshExplore } from './state/explorePane';
-import { lastSavedUrl, cleanupPaneAction, stateSave } from './state/main';
+import { lastSavedUrl, stateSave } from './state/main';
 import { importQueries } from './state/query';
+import { loadAndInitDatasource } from './state/utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -70,7 +71,7 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   }
 
   async componentDidMount() {
-    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, panelsState } = this.props;
+    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, panelsState, orgId } = this.props;
     const width = this.el?.offsetWidth ?? 0;
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
@@ -81,8 +82,8 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
         const isDSMixed =
           initialDatasource === MIXED_DATASOURCE_NAME || initialDatasource.uid === MIXED_DATASOURCE_NAME;
         if (!isDSMixed) {
-          const datasource = await getDatasourceSrv().get(initialDatasource);
-          queriesDatasourceOverride = datasource.getRef();
+          const { instance } = await loadAndInitDatasource(orgId, initialDatasource);
+          queriesDatasourceOverride = instance.getRef();
         }
       }
 
@@ -122,7 +123,6 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
 
   componentWillUnmount() {
     this.exploreEvents.removeAllListeners();
-    this.props.cleanupPaneAction({ exploreId: this.props.exploreId });
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -173,13 +173,13 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
     initialQueries: queries,
     initialRange,
     panelsState,
+    orgId: state.user.orgId,
   };
 }
 
 const mapDispatchToProps = {
   initializeExplore,
   refreshExplore,
-  cleanupPaneAction,
   importQueries,
   stateSave,
 };

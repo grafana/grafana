@@ -26,7 +26,7 @@ import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { TooltipView } from './TooltipView';
-import { XYChartOptions } from './models.gen';
+import { SeriesMapping, XYChartOptions } from './models.gen';
 import { prepData, prepScatter, ScatterPanelInfo } from './scatter';
 import { ScatterHoverEvent, ScatterSeries } from './types';
 
@@ -73,7 +73,9 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
       isToolTipOpen
     );
 
-    if (info.series.length && props.data.series) {
+    if (info.error) {
+      setError(info.error);
+    } else if (info.series.length && props.data.series) {
       setBuilder(info.builder);
       setSeries(info.series);
       setFacets(() => prepData(info, props.data.series));
@@ -99,10 +101,11 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
     const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
     const theme = config.theme2;
 
-    for (const s of series) {
+    for (let si = 0; si < series.length; si++) {
+      const s = series[si];
       const frame = s.frame(props.data.series);
       if (frame) {
-        for (const item of s.legend(frame)) {
+        for (const item of s.legend()) {
           item.getDisplayValues = () => {
             const calcs = props.options.legend.calcs;
 
@@ -166,6 +169,10 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
           };
 
           item.disabled = !(s.show ?? true);
+
+          if (props.options.seriesMapping === SeriesMapping.Manual) {
+            item.label = props.options.series?.[si]?.name ?? `Series ${si + 1}`;
+          }
 
           items.push(item);
         }
@@ -240,6 +247,8 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
             <TooltipView
               options={props.options.tooltip}
               allSeries={series}
+              manualSeriesConfigs={props.options.series}
+              seriesMapping={props.options.seriesMapping!}
               rowIndex={hover.xIndex}
               hoveredPointIndex={hover.scatterIndex}
               data={props.data.series}

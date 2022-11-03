@@ -33,7 +33,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		return response.Error(403, "Not allowed to create team.", nil)
 	}
 
-	team, err := hs.SQLStore.CreateTeam(cmd.Name, cmd.Email, c.OrgID)
+	team, err := hs.teamService.CreateTeam(cmd.Name, cmd.Email, c.OrgID)
 	if err != nil {
 		if errors.Is(err, models.ErrTeamNameTaken) {
 			return response.Error(409, "Team name taken", err)
@@ -88,7 +88,7 @@ func (hs *HTTPServer) UpdateTeam(c *models.ReqContext) response.Response {
 		}
 	}
 
-	if err := hs.SQLStore.UpdateTeam(c.Req.Context(), &cmd); err != nil {
+	if err := hs.teamService.UpdateTeam(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrTeamNameTaken) {
 			return response.Error(400, "Team name taken", err)
 		}
@@ -122,7 +122,7 @@ func (hs *HTTPServer) DeleteTeamByID(c *models.ReqContext) response.Response {
 		}
 	}
 
-	if err := hs.SQLStore.DeleteTeam(c.Req.Context(), &models.DeleteTeamCommand{OrgId: orgId, Id: teamId}); err != nil {
+	if err := hs.teamService.DeleteTeam(c.Req.Context(), &models.DeleteTeamCommand{OrgId: orgId, Id: teamId}); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Failed to delete Team. ID not found", nil)
 		}
@@ -167,7 +167,7 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 		HiddenUsers:  hs.Cfg.HiddenUsers,
 	}
 
-	if err := hs.SQLStore.SearchTeams(c.Req.Context(), &query); err != nil {
+	if err := hs.teamService.SearchTeams(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to search Teams", err)
 	}
 
@@ -231,7 +231,7 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 		UserIdFilter: userIdFilter,
 	}
 
-	if err := hs.SQLStore.GetTeamById(c.Req.Context(), &query); err != nil {
+	if err := hs.teamService.GetTeamById(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", err)
 		}
