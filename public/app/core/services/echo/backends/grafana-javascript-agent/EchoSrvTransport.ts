@@ -1,4 +1,4 @@
-import { BaseTransport, TransportItem } from '@grafana/agent-core';
+import { BaseTransport, TransportItem } from '@grafana/faro-core';
 import { getEchoSrv, EchoEventType } from '@grafana/runtime';
 export class EchoSrvTransport extends BaseTransport {
   send(event: TransportItem) {

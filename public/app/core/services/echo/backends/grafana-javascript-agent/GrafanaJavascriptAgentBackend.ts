@@ -1,4 +1,5 @@
-import { BaseTransport } from '@grafana/agent-core';
+import { BuildInfo } from '@grafana/data';
+import { BaseTransport } from '@grafana/faro-core';
 import {
   initializeAgent,
   defaultMetas,
@@ -7,8 +8,7 @@ import {
   ConsoleInstrumentation,
   WebVitalsInstrumentation,
   FetchTransport,
-} from '@grafana/agent-web';
-import { BuildInfo } from '@grafana/data';
+} from '@grafana/faro-web-sdk';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
