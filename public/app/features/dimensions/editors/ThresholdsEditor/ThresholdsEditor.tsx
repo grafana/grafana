@@ -8,7 +8,7 @@ import {
   ThresholdsConfig,
   ThresholdsMode,
   SelectableValue,
-  GrafanaTheme,
+  GrafanaTheme2,
 } from '@grafana/data';
 import {
   Input,
@@ -216,7 +216,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     return (
       <ThemeContext.Consumer>
         {(theme) => {
-          const styles = getStyles(theme.v1);
+          const styles = getStyles(theme);
           return (
             <div className={styles.wrapper}>
               <Button
@@ -296,7 +296,7 @@ interface ThresholdStyles {
   trashIcon: string;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme): ThresholdStyles => {
+const getStyles = stylesFactory((theme: GrafanaTheme2): ThresholdStyles => {
   return {
     wrapper: css`
       display: flex;
@@ -305,31 +305,31 @@ const getStyles = stylesFactory((theme: GrafanaTheme): ThresholdStyles => {
     thresholds: css`
       display: flex;
       flex-direction: column;
-      margin-bottom: ${theme.spacing.formSpacingBase * 2}px;
+      margin-bottom: ${theme.spacing(2)};
     `,
     item: css`
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing(1)};
 
       &:last-child {
         margin-bottom: 0;
       }
     `,
     colorPicker: css`
-      padding: 0 ${theme.spacing.sm};
+      padding: 0 ${theme.spacing(1)};
     `,
     addButton: css`
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing(1)};
     `,
     percentIcon: css`
-      font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.textWeak};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      color: ${theme.colors.text.secondary};
     `,
     inputPrefix: css`
       display: flex;
       align-items: center;
     `,
     trashIcon: css`
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
       cursor: pointer;
       margin-right: 0;
 

@@ -243,7 +243,9 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	shouldUpdateAnnotation := oldState != currentState.State || oldReason != currentState.StateReason
 	if shouldUpdateAnnotation && st.historian != nil {
-		go st.historian.RecordState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, InstanceStateAndReason{State: currentState.State, Reason: currentState.StateReason}, InstanceStateAndReason{State: oldState, Reason: oldReason})
+		go st.historian.RecordState(ctx, alertRule, currentState, result.EvaluatedAt,
+			InstanceStateAndReason{State: currentState.State, Reason: currentState.StateReason},
+			InstanceStateAndReason{State: oldState, Reason: oldReason})
 	}
 	return currentState
 }
@@ -387,7 +389,7 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 				s.EndsAt = evaluatedAt
 				s.Resolved = true
 				if st.historian != nil {
-					st.historian.RecordState(ctx, alertRule, s.Labels, evaluatedAt,
+					st.historian.RecordState(ctx, alertRule, s, evaluatedAt,
 						InstanceStateAndReason{State: eval.Normal, Reason: s.StateReason},
 						previousState,
 					)
