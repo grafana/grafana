@@ -11,7 +11,7 @@ import {
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
 
-import { DataFrame, getFieldDisplayName, Field, ReducerID } from '@grafana/data';
+import { DataFrame, getFieldDisplayName, Field } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
