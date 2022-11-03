@@ -183,11 +183,14 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 
 	changedStates := make([]StateTransition, 0, len(states))
 	for _, s := range states {
-		if stateTransitioned(s) {
+		if s.changed() {
 			changedStates = append(changedStates, s)
 		}
 	}
-	st.historian.RecordStates(ctx, alertRule, changedStates)
+
+	if st.historian != nil {
+		st.historian.RecordStates(ctx, alertRule, changedStates)
+	}
 
 	deltas := append(states, resolvedStates...)
 	nextStates := make([]*State, 0, len(states))
@@ -297,11 +300,12 @@ func (st *Manager) Put(states []*State) {
 
 // TODO: Is the `State` type necessary? Should it embed the instance?
 func (st *Manager) saveAlertStates(ctx context.Context, states ...StateTransition) (saved, failed int) {
+	logger := st.log.FromContext(ctx)
 	if st.instanceStore == nil {
 		return 0, 0
 	}
 
-	st.log.Debug("Saving alert states", "count", len(states))
+	logger.Debug("Saving alert states", "count", len(states))
 	instances := make([]ngModels.AlertInstance, 0, len(states))
 
 	type debugInfo struct {
@@ -317,7 +321,7 @@ func (st *Manager) saveAlertStates(ctx context.Context, states ...StateTransitio
 		_, hash, err := labels.StringAndHash()
 		if err != nil {
 			debug = append(debug, debugInfo{s.OrgID, s.AlertRuleUID, s.State.State.String(), s.Labels.String()})
-			st.log.Error("Failed to save alert instance with invalid labels", "orgID", s.OrgID, "ruleUID", s.AlertRuleUID, "error", err)
+			logger.Error("Failed to save alert instance with invalid labels", "error", err)
 			continue
 		}
 		fields := ngModels.AlertInstance{
@@ -340,7 +344,7 @@ func (st *Manager) saveAlertStates(ctx context.Context, states ...StateTransitio
 		for _, inst := range instances {
 			debug = append(debug, debugInfo{inst.RuleOrgID, inst.RuleUID, string(inst.CurrentState), data.Labels(inst.Labels).String()})
 		}
-		st.log.Error("Failed to save alert states", "states", debug, "error", err)
+		logger.Error("Failed to save alert states", "states", debug, "error", err)
 		return 0, len(debug)
 	}
 
@@ -428,8 +432,4 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 
 func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
 	return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
-}
-
-func stateTransitioned(s StateTransition) bool {
-	return s.PreviousState != s.State.State || s.PreviousStateReason != s.State.StateReason
 }

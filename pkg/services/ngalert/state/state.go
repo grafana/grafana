@@ -88,6 +88,10 @@ func (c StateTransition) PreviousFormatted() string {
 	return FormatStateAndReason(c.PreviousState, c.PreviousStateReason)
 }
 
+func (c StateTransition) changed() bool {
+	return c.PreviousState != c.State.State || c.PreviousStateReason != c.State.StateReason
+}
+
 type Evaluation struct {
 	EvaluationTime  time.Time
 	EvaluationState eval.State

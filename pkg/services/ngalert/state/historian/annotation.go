@@ -35,7 +35,7 @@ func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashb
 
 // RecordStates writes a number of state transitions for a given rule to state history.
 func (h *AnnotationStateHistorian) RecordStates(ctx context.Context, rule *ngmodels.AlertRule, states []state.StateTransition) {
-	logger := h.log.New(rule.GetKey().LogContext()...)
+	logger := h.log.FromContext(ctx)
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
 	annotations := h.buildAnnotations(rule, states, logger)
 	panel := parsePanelKey(rule, logger)
@@ -107,6 +107,8 @@ func (h *AnnotationStateHistorian) recordAnnotationsSync(ctx context.Context, pa
 	if err := h.annotations.SaveMany(ctx, annotations); err != nil {
 		logger.Error("Error saving alert annotation batch", "error", err)
 	}
+
+	logger.Debug("Done saving alert annotation batch")
 }
 
 func buildAnnotationTextAndData(rule *ngmodels.AlertRule, currentState *state.State) (string, *simplejson.Json) {
