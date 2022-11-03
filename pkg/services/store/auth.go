@@ -44,11 +44,17 @@ func GetUserIDString(user *user.SignedInUser) string {
 	if user == nil {
 		return ""
 	}
+	if user.IsAnonymous {
+		return "anon"
+	}
+	if user.ApiKeyID > 0 {
+		return fmt.Sprintf("key:%d:%s", user.UserID, user.Login)
+	}
 	if user.IsRealUser() {
 		return fmt.Sprintf("user:%d:%s", user.UserID, user.Login)
 	}
 	if user.UserID == 0 {
-		return "sys:0:admin" // default is ?
+		return "sys:0:admin" // default is "?""
 	}
 	return fmt.Sprintf("sys:%d:%s", user.UserID, user.Login)
 }
