@@ -165,7 +165,7 @@ describe('MetricStatEditor', () => {
       expect(screen.getByText('n2')).toBeInTheDocument();
       expect(screen.getByText('oldNamespaceMetric')).toBeInTheDocument();
 
-      await selectEvent.select(namespaceSelect, 'n1', { container: document.body });
+      await waitFor(() => selectEvent.select(namespaceSelect, 'n1', { container: document.body }));
 
       expect(onChange.mock.calls).toEqual([[{ ...propsNamespaceMetrics.metricStat, metricName: '', namespace: 'n1' }]]);
     });
@@ -181,7 +181,7 @@ describe('MetricStatEditor', () => {
       expect(screen.getByText('n1')).toBeInTheDocument();
       expect(screen.getByText('m1')).toBeInTheDocument();
 
-      await selectEvent.select(namespaceSelect, 'n2', { container: document.body });
+      await waitFor(() => selectEvent.select(namespaceSelect, 'n2', { container: document.body }));
 
       expect(onChange).toHaveBeenCalledTimes(1);
       expect(onChange.mock.calls).toEqual([

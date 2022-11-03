@@ -4,11 +4,11 @@ import React from 'react';
 import {
   DataSourceJsonData,
   DataSourcePluginOptionsEditorProps,
-  GrafanaTheme,
+  GrafanaTheme2,
   toOption,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { InlineField, InlineFieldRow, Input, Select, useStyles } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
 
 export interface SpanBarOptions {
   type?: string;
@@ -26,7 +26,7 @@ export const TAG = 'Tag';
 interface Props extends DataSourcePluginOptionsEditorProps<SpanBarOptionsData> {}
 
 export default function SpanBarSettings({ options, onOptionsChange }: Props) {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const selectOptions = [NONE, DURATION, TAG].map(toOption);
 
   return (
@@ -76,11 +76,11 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css`
     label: infoText;
-    padding-bottom: ${theme.spacing.md};
-    color: ${theme.colors.textSemiWeak};
+    padding-bottom: ${theme.spacing(2)};
+    color: ${theme.colors.text.secondary};
   `,
 
   row: css`
