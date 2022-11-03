@@ -112,15 +112,15 @@ it('filterSpansForTimestamps() should return a filtered list of spans between th
   const spans = [
     {
       startTime: now - 1000,
-      id: 'start-time-1',
+      spanID: 'start-time-1',
     },
     {
       startTime: now,
-      id: 'start-time-2',
+      spanID: 'start-time-2',
     },
     {
       startTime: now + 1000,
-      id: 'start-time-3',
+      spanID: 'start-time-3',
     },
   ];
 
@@ -164,21 +164,21 @@ it('filterSpansForText() should return a filtered list of spans between the time
       process: {
         serviceName: 'alpha',
       },
-      id: 'start-time-1',
+      spanID: 'start-time-1',
     },
     {
       operationName: 'GET /another',
       process: {
         serviceName: 'beta',
       },
-      id: 'start-time-1',
+      spanID: 'start-time-1',
     },
     {
       operationName: 'POST /mything',
       process: {
         serviceName: 'alpha',
       },
-      id: 'start-time-1',
+      spanID: 'start-time-1',
     },
   ];
 

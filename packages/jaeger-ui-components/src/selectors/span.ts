@@ -26,7 +26,7 @@ export const getSpanName = (
   span: TraceSpanData | { operationName: string; process: { serviceName: string }; spanID: string }
 ) => span.operationName;
 export const getSpanDuration = (span: TraceSpanData) => span.duration;
-export const getSpanTimestamp = (span: TraceSpanData | { startTime: number; id: string }) => span.startTime;
+export const getSpanTimestamp = (span: TraceSpanData | { startTime: number; spanID: string }) => span.startTime;
 export const getSpanProcessId = (span: TraceSpanData) => span.processID;
 export const getSpanReferences = (span: TraceSpanData) => span.references || [];
 export const getSpanReferenceByType = createSelector(
@@ -55,7 +55,7 @@ export const getSpanProcess = (span: { operationName: string; process: { service
 export const getSpanServiceName = createSelector(getSpanProcess, getProcessServiceName);
 
 export const filterSpansForTimestamps = createSelector(
-  ({ spans }: { spans: Array<{ startTime: number; id: string }> }) => spans,
+  ({ spans }: { spans: Array<{ startTime: number; spanID: string }> }) => spans,
   ({ leftBound }: { leftBound: number }) => leftBound,
   ({ rightBound }: { rightBound: number }) => rightBound,
   (spans, leftBound, rightBound) =>
