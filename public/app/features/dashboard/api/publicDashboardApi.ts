@@ -35,7 +35,7 @@ const getConfigError = (err: { status: number }) => ({ error: err.status !== 404
 export const publicDashboardApi = createApi({
   reducerPath: 'publicDashboardApi',
   baseQuery: retry(backendSrvBaseQuery({ baseUrl: '/api/dashboards' }), { maxRetries: 0 }),
-  tagTypes: ['Config', 'PublicDashboards'],
+  tagTypes: ['PublicDashboard', 'AuditTablePublicDashboard'],
   keepUnusedDataFor: 0,
   endpoints: (builder) => ({
     getPublicDashboard: builder.query<PublicDashboard, string>({
@@ -53,7 +53,7 @@ export const publicDashboardApi = createApi({
           dispatch(notifyApp(createErrorNotification(customError?.error?.data?.message)));
         }
       },
-      providesTags: ['PublicDashboards'],
+      providesTags: ['PublicDashboard'],
     }),
     createPublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({
@@ -72,7 +72,7 @@ export const publicDashboardApi = createApi({
           publicDashboardEnabled: data.isEnabled,
         });
       },
-      invalidatesTags: ['PublicDashboards'],
+      invalidatesTags: ['PublicDashboard'],
     }),
     updatePublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({
@@ -92,13 +92,13 @@ export const publicDashboardApi = createApi({
           publicDashboardEnabled: data.isEnabled,
         });
       },
-      invalidatesTags: ['PublicDashboards'],
+      invalidatesTags: ['PublicDashboard'],
     }),
     listPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
       query: () => ({
         url: '/public-dashboards',
       }),
-      providesTags: ['PublicDashboards'],
+      providesTags: ['AuditTablePublicDashboard'],
     }),
     deletePublicDashboard: builder.mutation<void, { dashboardTitle: string; dashboardUid: string; uid: string }>({
       query: (params) => ({
@@ -118,7 +118,7 @@ export const publicDashboardApi = createApi({
           )
         );
       },
-      invalidatesTags: ['PublicDashboards'],
+      invalidatesTags: ['AuditTablePublicDashboard'],
     }),
   }),
 });
