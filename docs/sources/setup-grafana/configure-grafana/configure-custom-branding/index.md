@@ -105,7 +105,7 @@ If you specify `footer_links` or `GF_WHITE_LABELING_FOOTER_LINKS`, then all othe
 ## Custom branding for Public Dashboards
 
 In addition to the customizations described below, as an Enterprise user, you can customize the footer of your public dashboards.
-To do this, you can add a new section on your `grafana.ini` file.
+To customize the footer of a public dashboard, add the following section to the `grafana.ini` file.
 
 ```ini
 [white_labeling.public_dashboards]
