@@ -60,6 +60,7 @@ type CloudWatchQuery struct {
 	TimezoneUTCOffset string
 	MetricQueryType   MetricQueryType
 	MetricEditorMode  MetricEditorMode
+	AccountId         *string
 }
 
 func (q *CloudWatchQuery) GetGMDAPIMode(logger log.Logger) GMDApiMode {
@@ -93,6 +94,10 @@ func (q *CloudWatchQuery) IsUserDefinedSearchExpression() bool {
 func (q *CloudWatchQuery) IsInferredSearchExpression() bool {
 	if q.MetricQueryType != MetricQueryTypeSearch || q.MetricEditorMode != MetricEditorModeBuilder {
 		return false
+	}
+
+	if q.AccountId != nil && *q.AccountId == "all" {
+		return true
 	}
 
 	if len(q.Dimensions) == 0 {
@@ -214,6 +219,7 @@ type metricsDataQuery struct {
 	QueryType         string                 `json:"type"`
 	Hide              *bool                  `json:"hide"`
 	Alias             string                 `json:"alias"`
+	AccountId         *string                `json:"accountId"`
 }
 
 // ParseMetricDataQueries decodes the metric data queries json, validates, sets default values and returns an array of CloudWatchQueries.
@@ -248,6 +254,7 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 			SqlExpression:     mdq.SqlExpression,
 			TimezoneUTCOffset: mdq.TimezoneUTCOffset,
 			Expression:        mdq.Expression,
+			AccountId:         mdq.AccountId,
 		}
 
 		if err := cwQuery.validateAndSetDefaults(refId, mdq, startTime, endTime); err != nil {

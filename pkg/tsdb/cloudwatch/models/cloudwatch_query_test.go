@@ -620,6 +620,18 @@ func Test_ParseMetricDataQueries_query_type_and_metric_editor_mode_and_GMD_query
 			expectedMetricEditorMode: dummyTestEditorMode,
 			expectedGMDApiMode:       GMDApiModeMetricStat,
 		},
+		"no dimensions, matchExact is false": {
+			extraDataQueryJson:       `"matchExact":false,`,
+			expectedMetricQueryType:  MetricQueryTypeSearch,
+			expectedMetricEditorMode: MetricEditorModeBuilder,
+			expectedGMDApiMode:       GMDApiModeInferredSearchExpression,
+		},
+		"query metricQueryType": {
+			extraDataQueryJson:       `"metricQueryType":1,`,
+			expectedMetricQueryType:  MetricQueryTypeQuery,
+			expectedMetricEditorMode: MetricEditorModeBuilder,
+			expectedGMDApiMode:       GMDApiModeSQLExpression,
+		},
 	}
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
@@ -1104,4 +1116,19 @@ func Test_ParseMetricDataQueries_statistics_and_query_type_validation_and_MatchE
 		assert.NotNil(t, actual[0])
 		assert.False(t, actual[0].MatchExact)
 	})
+}
+
+func Test_ParseMetricDataQueries_sets_account_id(t *testing.T) {
+	actual, err := ParseMetricDataQueries(
+		[]backend.DataQuery{
+			{
+				JSON: []byte(`{"accountId":"some account id", "statistic":"Average"}`),
+			},
+		}, time.Now(), time.Now(), false)
+	assert.NoError(t, err)
+
+	require.Len(t, actual, 1)
+	require.NotNil(t, actual[0])
+	require.NotNil(t, actual[0].AccountId)
+	assert.Equal(t, "some account id", *actual[0].AccountId)
 }
