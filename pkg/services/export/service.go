@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -223,6 +224,7 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 		return response.Error(http.StatusLocked, "export already running", nil)
 	}
 
+	user := store.UserFromContext(c.Req.Context())
 	var job Job
 	broadcast := func(s ExportStatus) {
 		ex.broadcastStatus(c.OrgID, s)
@@ -231,7 +233,7 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 	case "dummy":
 		job, err = startDummyExportJob(cfg, broadcast)
 	case "objectStore":
-		job, err = startObjectStoreJob(cfg, broadcast, ex.db, ex.playlistService, ex.store)
+		job, err = startObjectStoreJob(user, cfg, broadcast, ex.db, ex.playlistService, ex.store, ex.dashboardsnapshotsService)
 	case "git":
 		dir := filepath.Join(ex.dataDir, "export_git", fmt.Sprintf("git_%d", time.Now().Unix()))
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {

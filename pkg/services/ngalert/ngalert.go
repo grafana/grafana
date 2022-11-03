@@ -180,13 +180,14 @@ func (ng *AlertNG) init() error {
 
 	ng.AlertsRouter = alertsRouter
 
+	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
 	schedCfg := schedule.SchedulerCfg{
-		Cfg:         ng.Cfg.UnifiedAlerting,
-		C:           clk,
-		Evaluator:   eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.ExpressionService),
-		RuleStore:   store,
-		Metrics:     ng.Metrics.GetSchedulerMetrics(),
-		AlertSender: alertsRouter,
+		Cfg:              ng.Cfg.UnifiedAlerting,
+		C:                clk,
+		EvaluatorFactory: evalFactory,
+		RuleStore:        store,
+		Metrics:          ng.Metrics.GetSchedulerMetrics(),
+		AlertSender:      alertsRouter,
 	}
 
 	historian := historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService)
@@ -215,7 +216,6 @@ func (ng *AlertNG) init() error {
 		DatasourceCache:      ng.DataSourceCache,
 		DatasourceService:    ng.DataSourceService,
 		RouteRegister:        ng.RouteRegister,
-		ExpressionService:    ng.ExpressionService,
 		Schedule:             ng.schedule,
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
@@ -233,8 +233,17 @@ func (ng *AlertNG) init() error {
 		MuteTimings:          muteTimingService,
 		AlertRules:           alertRuleService,
 		AlertsRouter:         alertsRouter,
+		EvaluatorFactory:     evalFactory,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
+
+	log.RegisterContextualLogProvider(func(ctx context.Context) ([]interface{}, bool) {
+		key, ok := models.RuleKeyFromContext(ctx)
+		if !ok {
+			return nil, false
+		}
+		return key.LogContext(), true
+	})
 
 	return DeclareFixedRoles(ng.accesscontrolService)
 }

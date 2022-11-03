@@ -29,8 +29,9 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
+var logger = log.New("tsdb.graphite")
+
 type Service struct {
-	logger log.Logger
 	im     instancemgmt.InstanceManager
 	tracer tracing.Tracer
 }
@@ -42,7 +43,6 @@ const (
 
 func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
 	return &Service{
-		logger: log.New("tsdb.graphite"),
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		tracer: tracer,
 	}
@@ -90,6 +90,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, fmt.Errorf("query contains no queries")
 	}
 
+	logger := logger.FromContext(ctx)
+
 	// get datasource info from context
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
@@ -119,7 +121,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		if err != nil {
 			return nil, err
 		}
-		s.logger.Debug("graphite", "query", model)
+		logger.Debug("graphite", "query", model)
 		currTarget := ""
 		if fullTarget, err := model.Get(TargetFullModelField).String(); err == nil {
 			currTarget = fullTarget
@@ -127,7 +129,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			currTarget = model.Get(TargetModelField).MustString()
 		}
 		if currTarget == "" {
-			s.logger.Debug("graphite", "empty query target", model)
+			logger.Debug("graphite", "empty query target", model)
 			emptyQueries = append(emptyQueries, fmt.Sprintf("Query: %v has no target", model))
 			continue
 		}
@@ -137,17 +139,17 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	var result = backend.QueryDataResponse{}
 
 	if target == "" {
-		s.logger.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
+		logger.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
 		return &result, errors.New("no query target found for the alert rule")
 	}
 
 	formData["target"] = []string{target}
 
 	if setting.Env == setting.Dev {
-		s.logger.Debug("Graphite request", "params", formData)
+		logger.Debug("Graphite request", "params", formData)
 	}
 
-	graphiteReq, err := s.createRequest(ctx, dsInfo, formData)
+	graphiteReq, err := s.createRequest(ctx, logger, dsInfo, formData)
 	if err != nil {
 		return &result, err
 	}
@@ -173,7 +175,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &result, err
 	}
 
-	frames, err := s.toDataFrames(res)
+	frames, err := s.toDataFrames(logger, res)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -191,34 +193,34 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return &result, nil
 }
 
-func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
+func (s *Service) parseResponse(logger log.Logger, res *http.Response) ([]TargetResponseDTO, error) {
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			s.logger.Warn("Failed to close response body", "err", err)
+			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
 	if res.StatusCode/100 != 2 {
-		s.logger.Info("Request failed", "status", res.Status, "body", string(body))
+		logger.Info("Request failed", "status", res.Status, "body", string(body))
 		return nil, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	var data []TargetResponseDTO
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		s.logger.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
+		logger.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
 		return nil, err
 	}
 
 	return data, nil
 }
 
-func (s *Service) toDataFrames(response *http.Response) (frames data.Frames, error error) {
-	responseData, err := s.parseResponse(response)
+func (s *Service) toDataFrames(logger log.Logger, response *http.Response) (frames data.Frames, error error) {
+	responseData, err := s.parseResponse(logger, response)
 	if err != nil {
 		return nil, err
 	}
@@ -253,13 +255,13 @@ func (s *Service) toDataFrames(response *http.Response) (frames data.Frames, err
 			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
 
 		if setting.Env == setting.Dev {
-			s.logger.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
+			logger.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
 		}
 	}
 	return frames, nil
 }
 
-func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {
+func (s *Service) createRequest(ctx context.Context, l log.Logger, dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
@@ -268,7 +270,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, dat
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(data.Encode()))
 	if err != nil {
-		s.logger.Info("Failed to create request", "error", err)
+		logger.Info("Failed to create request", "error", err)
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 

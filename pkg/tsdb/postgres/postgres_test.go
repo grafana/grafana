@@ -223,9 +223,7 @@ func TestIntegrationPostgres(t *testing.T) {
 		RowLimit:          1000000,
 	}
 
-	queryResultTransformer := postgresQueryResultTransformer{
-		log: logger,
-	}
+	queryResultTransformer := postgresQueryResultTransformer{}
 
 	exe, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
 		logger)
@@ -1267,9 +1265,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				RowLimit:          1,
 			}
 
-			queryResultTransformer := postgresQueryResultTransformer{
-				log: logger,
-			}
+			queryResultTransformer := postgresQueryResultTransformer{}
 
 			handler, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newPostgresMacroEngine(false), logger)
 			require.NoError(t, err)

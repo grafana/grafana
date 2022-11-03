@@ -82,7 +82,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
       folderTitle,
     }));
     return v;
-  }, [sectionExpanded, section, tags]);
+  }, [sectionExpanded, tags]);
 
   const onSectionExpand = () => {
     setSectionExpanded(!sectionExpanded);
