@@ -65,6 +65,7 @@ export enum LokiOperationId {
   TopK = 'topk',
   BottomK = 'bottomk',
   LineContains = '__line_contains',
+  LineContainsInsensitive = '__line_contains_insensitive',
   LineContainsNot = '__line_contains_not',
   LineMatchesRegex = '__line_matches_regex',
   LineMatchesRegexNot = '__line_matches_regex_not',
