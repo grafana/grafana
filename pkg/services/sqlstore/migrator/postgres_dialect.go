@@ -45,6 +45,10 @@ func (db *PostgresDialect) BooleanStr(value bool) string {
 	return strconv.FormatBool(value)
 }
 
+func (db *PostgresDialect) BatchSize() int {
+	return 1000
+}
+
 func (db *PostgresDialect) Default(col *Column) string {
 	if col.Type == DB_Bool {
 		if col.Default == "0" {
