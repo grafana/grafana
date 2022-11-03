@@ -239,6 +239,28 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       explainHandler: (op) => `Return log lines that contain string \`${op.params[0]}\`.`,
     },
     {
+      id: LokiOperationId.LineContainsInsensitive,
+      name: 'Line contains case insensitive',
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: 'Text to find',
+          description: 'Find log lines that contains this text',
+          minWidth: 20,
+          runQueryOnEnter: true,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'line filter',
+      category: LokiVisualQueryOperationCategory.LineFilters,
+      orderRank: LokiOperationOrder.LineFilters,
+      renderer: getLineFilterRenderer('|~'),
+      addOperationHandler: addLokiOperation,
+      explainHandler: (op) => `Return log lines that contain string \`${op.params[0]}\`.`,
+    },
+    {
       id: LokiOperationId.LineContainsNot,
       name: 'Line does not contain',
       params: [
