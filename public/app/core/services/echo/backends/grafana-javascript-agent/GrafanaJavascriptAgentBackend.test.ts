@@ -7,7 +7,7 @@ import { EchoEventType, EchoMeta } from '@grafana/runtime';
 import { GrafanaJavascriptAgentBackend, GrafanaJavascriptAgentBackendOptions } from './GrafanaJavascriptAgentBackend';
 import { GrafanaJavascriptAgentEchoEvent } from './types';
 
-jest.mock('@grafana/agent-web', () => {
+jest.mock('@grafana/faro-web-sdk', () => {
   const originalModule = jest.requireActual('@grafana/faro-web-sdk');
   return {
     __esModule: true,
@@ -52,7 +52,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
 
   it('will set up FetchTransport if customEndpoint is provided', async () => {
     // arrange
-    const originalModule = jest.requireActual('@grafana/agent-web');
+    const originalModule = jest.requireActual('@grafana/faro-web-sdk');
     jest.mocked(initializeAgent).mockImplementation(originalModule.initializeAgent);
 
     //act

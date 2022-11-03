@@ -1,4 +1,4 @@
-import { agent, LogLevel as GrafanaLogLevel } from '@grafana/agent-web';
+import { agent, LogLevel as GrafanaLogLevel } from '@grafana/faro-web-sdk';
 import { config } from '@grafana/runtime/src';
 
 export const LogMessages = {
