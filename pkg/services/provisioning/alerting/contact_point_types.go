@@ -68,7 +68,7 @@ type ReceiverV1 struct {
 	UID                   values.StringValue `json:"uid" yaml:"uid"`
 	Type                  values.StringValue `json:"type" yaml:"type"`
 	Settings              values.JSONValue   `json:"settings" yaml:"settings"`
-	DisableResolveMessage values.BoolValue   `json:"disableResolveMessage"`
+	DisableResolveMessage values.BoolValue   `json:"disableResolveMessage" yaml:"disableResolveMessage"`
 }
 
 func (config *ReceiverV1) mapToModel(name string) (definitions.EmbeddedContactPoint, error) {
@@ -83,7 +83,7 @@ func (config *ReceiverV1) mapToModel(name string) (definitions.EmbeddedContactPo
 	if len(config.Settings.Value()) == 0 {
 		return definitions.EmbeddedContactPoint{}, fmt.Errorf("no settings are set")
 	}
-	settings := simplejson.NewFromAny(config.Settings.Raw)
+	settings := simplejson.NewFromAny(config.Settings.Value())
 	cp := definitions.EmbeddedContactPoint{
 		UID:                   uid,
 		Name:                  name,

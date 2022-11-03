@@ -32,7 +32,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
         break;
       }
 
-      if (element.parent) {
+      if (element && element.parent) {
         scene.currentLayer = element.parent;
         break;
       }

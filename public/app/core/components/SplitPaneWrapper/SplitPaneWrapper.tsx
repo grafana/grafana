@@ -2,8 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { createRef, MutableRefObject, PureComponent, ReactNode } from 'react';
 import SplitPane from 'react-split-pane';
 
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
 
 enum Pane {
@@ -68,7 +67,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
 
   renderHorizontalSplit() {
     const { leftPaneComponents, uiState } = this.props;
-    const styles = getStyles(config.theme);
+    const styles = getStyles(config.theme2);
     const topPaneSize = uiState.topPaneSize >= 1 ? uiState.topPaneSize : uiState.topPaneSize * window.innerHeight;
 
     /*
@@ -94,13 +93,13 @@ export class SplitPaneWrapper extends PureComponent<Props> {
       );
     }
 
-    return leftPaneComponents;
+    return <div className={styles.singleLeftPane}>{leftPaneComponents}</div>;
   }
 
   render() {
     const { rightPaneVisible, rightPaneComponents, uiState } = this.props;
     // Limit options pane width to 90% of screen.
-    const styles = getStyles(config.theme);
+    const styles = getStyles(config.theme2);
 
     // Need to handle when width is relative. ie a percentage of the viewport
     const rightPaneSize =
@@ -127,9 +126,9 @@ export class SplitPaneWrapper extends PureComponent<Props> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const handleColor = theme.palette.blue95;
-  const paneSpacing = theme.spacing.md;
+const getStyles = (theme: GrafanaTheme2) => {
+  const handleColor = theme.v1.palette.blue95;
+  const paneSpacing = theme.spacing(2);
 
   const resizer = css`
     position: relative;
@@ -141,7 +140,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     }
 
     &::after {
-      background: ${theme.colors.panelBorder};
+      background: ${theme.components.panel.borderColor};
       content: '';
       position: absolute;
       left: 50%;
@@ -163,6 +162,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   `;
 
   return {
+    singleLeftPane: css`
+      height: 100%;
+      position: absolute;
+      overflow: hidden;
+      width: 100%;
+    `,
     resizerV: cx(
       resizer,
       css`
@@ -203,4 +208,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       `
     ),
   };
-});
+};

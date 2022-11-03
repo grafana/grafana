@@ -10,6 +10,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   collapse: css`
     label: collapse;
     margin-bottom: ${theme.spacing(1)};
+    background-color: ${theme.colors.background.primary};
+    border: 1px solid ${theme.colors.border.medium};
+    position: relative;
+    border-radius: 3px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
   `,
   collapseBody: css`
     label: collapse__body;
@@ -115,7 +123,7 @@ export const ControlledCollapse: FunctionComponent<Props> = ({ isOpen, onToggle,
   );
 };
 
-export const Collapse: FunctionComponent<Props> = ({
+export const Collapse = ({
   isOpen,
   label,
   loading,
@@ -123,7 +131,7 @@ export const Collapse: FunctionComponent<Props> = ({
   onToggle,
   className,
   children,
-}) => {
+}: React.PropsWithChildren<Props>) => {
   const style = useStyles2(getStyles);
   const onClickToggle = () => {
     if (onToggle) {
@@ -131,7 +139,7 @@ export const Collapse: FunctionComponent<Props> = ({
     }
   };
 
-  const panelClass = cx([style.collapse, 'panel-container', className]);
+  const panelClass = cx([style.collapse, className]);
   const loaderClass = loading ? cx([style.loader, style.loaderActive]) : cx([style.loader]);
   const headerClass = collapsible ? cx([style.header]) : cx([style.headerCollapsed]);
 

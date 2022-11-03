@@ -23,7 +23,7 @@ export const ServiceAccountRoleRow = ({ label, serviceAccount, roleOptions, onRo
         <Label htmlFor={inputId}>{label}</Label>
       </td>
       {contextSrv.licensedAccessControlEnabled() ? (
-        <td className="width-25" colSpan={3}>
+        <td colSpan={3}>
           <UserRolePicker
             userId={serviceAccount.id}
             orgId={serviceAccount.orgId}

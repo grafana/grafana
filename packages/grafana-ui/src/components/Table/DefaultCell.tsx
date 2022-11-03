@@ -4,7 +4,7 @@ import tinycolor from 'tinycolor2';
 
 import { DisplayValue, Field, formattedValueToString } from '@grafana/data';
 
-import { getTextColorForBackground, getCellLinks } from '../../utils';
+import { getCellLinks, getTextColorForAlphaBackground } from '../../utils';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
@@ -63,7 +63,7 @@ function getCellStyle(
 
   if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackgroundSolid) {
     const bgColor = tinycolor(displayValue.color);
-    const textColor = getTextColorForBackground(displayValue.color!);
+    const textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
     return tableStyles.buildCellContainerStyle(textColor, bgColor.toRgbString(), !disableOverflowOnHover);
   }
 
@@ -74,7 +74,7 @@ function getCellStyle(
       .spin(5)
       .toRgbString();
 
-    const textColor = getTextColorForBackground(displayValue.color!);
+    const textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
 
     return tableStyles.buildCellContainerStyle(
       textColor,

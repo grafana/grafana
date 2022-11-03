@@ -2,7 +2,7 @@ import { isEqual } from 'lodash';
 import React, { useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorList } from '@grafana/ui';
+import { EditorList } from '@grafana/experimental';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { Dimensions as DimensionsType, MetricStat } from '../../types';
@@ -45,13 +45,7 @@ const filterConditionsToDimensions = (filters: DimensionFilterCondition[]) => {
   }, {});
 };
 
-export const Dimensions: React.FC<Props> = ({
-  metricStat,
-  datasource,
-  dimensionKeys,
-  disableExpressions,
-  onChange,
-}) => {
+export const Dimensions = ({ metricStat, datasource, dimensionKeys, disableExpressions, onChange }: Props) => {
   const dimensionFilters = useMemo(() => dimensionsToFilterConditions(metricStat.dimensions), [metricStat.dimensions]);
   const [items, setItems] = useState<DimensionFilterCondition[]>(dimensionFilters);
   const onDimensionsChange = (newItems: Array<Partial<DimensionFilterCondition>>) => {

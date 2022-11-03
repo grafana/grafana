@@ -13,6 +13,7 @@ export const createMockInstanceSetttings = (
   access: 'proxy',
   meta: {} as DataSourcePluginMeta,
   name: 'stackdriver',
+  readOnly: false,
 
   jsonData: {
     authenticationType: GoogleAuthType.JWT,

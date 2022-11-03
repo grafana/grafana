@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardSearchHit } from 'app/features/search/types';
+import { DashboardSearchItem } from 'app/features/search/types';
 import { DashboardDTO } from 'app/types';
 
 interface Props extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'onChange' | 'loadOptions' | ''> {
@@ -17,9 +17,9 @@ export type DashboardPickerDTO = Pick<DashboardDTO['dashboard'], 'uid' | 'title'
 
 const formatLabel = (folderTitle = 'General', dashboardTitle: string) => `${folderTitle}/${dashboardTitle}`;
 
-const getDashboards = debounce((query = ''): Promise<Array<SelectableValue<DashboardPickerDTO>>> => {
-  return backendSrv.search({ type: 'dash-db', query, limit: 100 }).then((result: DashboardSearchHit[]) => {
-    return result.map((item: DashboardSearchHit) => ({
+async function findDashboards(query = '') {
+  return backendSrv.search({ type: 'dash-db', query, limit: 100 }).then((result: DashboardSearchItem[]) => {
+    return result.map((item: DashboardSearchItem) => ({
       value: {
         // dashboards uid here is always defined as this endpoint does not return the default home dashboard
         uid: item.uid!,
@@ -30,7 +30,9 @@ const getDashboards = debounce((query = ''): Promise<Array<SelectableValue<Dashb
       label: formatLabel(item?.folderTitle, item.title),
     }));
   });
-}, 300);
+}
+
+const getDashboards = debounce(findDashboards, 250, { leading: true });
 
 // TODO: this component should provide a way to apply different filters to the search APIs
 export const DashboardPicker = ({
@@ -53,15 +55,17 @@ export const DashboardPicker = ({
       // value was manually changed from outside or we are rendering for the first time.
       // We need to fetch dashboard information.
       const res = await backendSrv.getDashboardByUid(value);
-      setCurrent({
-        value: {
-          uid: res.dashboard.uid,
-          title: res.dashboard.title,
-          folderTitle: res.meta.folderTitle,
-          folderUid: res.meta.folderUid,
-        },
-        label: formatLabel(res.meta?.folderTitle, res.dashboard.title),
-      });
+      if (res.dashboard) {
+        setCurrent({
+          value: {
+            uid: res.dashboard.uid,
+            title: res.dashboard.title,
+            folderTitle: res.meta.folderTitle,
+            folderUid: res.meta.folderUid,
+          },
+          label: formatLabel(res.meta?.folderTitle, res.dashboard.title),
+        });
+      }
     })();
     // we don't need to rerun this effect every time `current` changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -82,6 +86,7 @@ export const DashboardPicker = ({
       placeholder={placeholder}
       noOptionsMessage={noOptionsMessage}
       value={current}
+      defaultOptions={true}
       {...props}
     />
   );

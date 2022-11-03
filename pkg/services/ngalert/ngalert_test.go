@@ -9,13 +9,14 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	busmock "github.com/grafana/grafana/pkg/bus/mock"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -28,13 +29,13 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 	}
 	rules := models.GenerateAlertRules(5, models.AlertRuleGen(models.WithOrgID(orgID), models.WithNamespace(folder)))
 
-	bus := busmock.New()
-	db := store.NewFakeRuleStore(t)
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
+	db := fakes.NewRuleStore(t)
 	db.Folders[orgID] = append(db.Folders[orgID], folder)
 	db.PutRule(context.Background(), rules...)
 
 	scheduler := &schedule.FakeScheduleService{}
-	scheduler.EXPECT().UpdateAlertRule(mock.Anything, mock.Anything).Return()
+	scheduler.On("UpdateAlertRule", mock.Anything, mock.Anything).Return()
 
 	subscribeToFolderChanges(log.New("test"), bus, db, scheduler)
 
@@ -49,7 +50,7 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 
 	require.Eventuallyf(t, func() bool {
 		return len(db.GetRecordedCommands(func(cmd interface{}) (interface{}, bool) {
-			c, ok := cmd.(store.GenericRecordedQuery)
+			c, ok := cmd.(fakes.GenericRecordedQuery)
 			if !ok || c.Name != "IncreaseVersionForAllRulesInNamespace" {
 				return nil, false
 			}

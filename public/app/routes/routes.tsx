@@ -1,6 +1,7 @@
 import React from 'react';
 import { Redirect } from 'react-router-dom';
 
+import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import config from 'app/core/config';
@@ -8,12 +9,11 @@ import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
-import { getRoutes as getDataConnectionsRoutes } from 'app/features/data-connections/routes';
+import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
-import { ServiceAccountPage } from 'app/features/serviceaccounts/ServiceAccountPage';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
@@ -23,6 +23,30 @@ import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
+  const topnavRoutes: RouteDescriptor[] = config.featureToggles.topnav
+    ? [
+        {
+          path: '/apps',
+          component: () => <NavLandingPage navId="apps" />,
+        },
+        {
+          path: '/alerts-and-incidents',
+          component: () => <NavLandingPage navId="alerts-and-incidents" />,
+        },
+        {
+          path: '/monitoring',
+          component: () => <NavLandingPage navId="monitoring" />,
+        },
+        {
+          path: '/a/:pluginId',
+          exact: true,
+          component: SafeDynamicImport(
+            () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/components/AppRootPage')
+          ),
+        },
+      ]
+    : [];
+
   return [
     {
       path: '/',
@@ -118,6 +142,16 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/datasources/correlations',
+      component: SafeDynamicImport(() =>
+        config.featureToggles.correlations
+          ? import(/* webpackChunkName: "CorrelationsPage" */ 'app/features/correlations/CorrelationsPage')
+          : import(
+              /* webpackChunkName: "CorrelationsFeatureToggle" */ 'app/features/correlations/CorrelationsFeatureToggle'
+            )
+      ),
+    },
+    {
       path: '/dashboards',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
@@ -173,8 +207,9 @@ export function getAppRoutes(): RouteDescriptor[] {
           : import(/* webpackChunkName: "explore-feature-toggle-page" */ 'app/features/explore/FeatureTogglePage')
       ),
     },
+    ...topnavRoutes,
     {
-      path: '/a/:pluginId/',
+      path: '/a/:pluginId',
       exact: false,
       // Someday * and will get a ReactRouter under that path!
       component: SafeDynamicImport(
@@ -233,7 +268,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/serviceaccounts/:id',
-      component: ServiceAccountPage,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ServiceAccountPage" */ 'app/features/serviceaccounts/ServiceAccountPage')
+      ),
     },
     {
       path: '/org/teams',
@@ -263,11 +300,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
     },
     // ADMIN
-
     {
       path: '/admin',
-      // eslint-disable-next-line react/display-name
-      component: () => <Redirect to="/admin/users" />,
+      component: () => (config.featureToggles.topnav ? <NavLandingPage navId="cfg" /> : <Redirect to="/admin/users" />),
+    },
+    {
+      path: '/admin/server',
+      component: () =>
+        config.featureToggles.topnav ? <NavLandingPage navId="admin" /> : <Redirect to="/admin/users" />,
     },
     {
       path: '/admin/settings',

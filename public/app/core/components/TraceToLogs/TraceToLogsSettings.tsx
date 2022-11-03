@@ -5,12 +5,12 @@ import {
   DataSourceJsonData,
   DataSourceInstanceSettings,
   DataSourcePluginOptionsEditorProps,
-  GrafanaTheme,
+  GrafanaTheme2,
   KeyValue,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, Input, TagsInput, useStyles, InlineSwitch } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, TagsInput, useStyles2, InlineSwitch } from '@grafana/ui';
 
 import KeyValueInput from './KeyValueInput';
 
@@ -33,7 +33,7 @@ export interface TraceToLogsData extends DataSourceJsonData {
 interface Props extends DataSourcePluginOptionsEditorProps<TraceToLogsData> {}
 
 export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={css({ width: '100%' })}>
@@ -216,9 +216,9 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css`
-    padding-bottom: ${theme.spacing.md};
-    color: ${theme.colors.textSemiWeak};
+    padding-bottom: ${theme.spacing(2)};
+    color: ${theme.colors.text.secondary};
   `,
 });

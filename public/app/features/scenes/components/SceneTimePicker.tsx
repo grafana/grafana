@@ -24,7 +24,7 @@ function SceneTimePickerRenderer({ model }: SceneComponentProps<SceneTimePicker>
   }
 
   return (
-    <ToolbarButtonRow>
+    <ToolbarButtonRow alignment="right">
       <TimePickerWithHistory
         value={timeRangeState}
         onChange={timeRange.onTimeRangeChange}

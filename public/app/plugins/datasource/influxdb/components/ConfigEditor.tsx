@@ -17,12 +17,12 @@ const { Input, SecretFormField } = LegacyForms;
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
 import { InfluxOptions, InfluxSecureJsonData, InfluxVersion } from '../types';
 
-const httpModes = [
+const httpModes: SelectableValue[] = [
   { label: 'GET', value: 'GET' },
   { label: 'POST', value: 'POST' },
-] as SelectableValue[];
+];
 
-const versions = [
+const versions: Array<SelectableValue<InfluxVersion>> = [
   {
     label: 'InfluxQL',
     value: InfluxVersion.InfluxQL,
@@ -33,7 +33,7 @@ const versions = [
     value: InfluxVersion.Flux,
     description: 'Advanced data scripting and query language.  Supported in InfluxDB 2.x and 1.8+',
   },
-] as Array<SelectableValue<InfluxVersion>>;
+];
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 type State = {
@@ -112,7 +112,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         <div className="gf-form-inline">
           <div className="gf-form">
             <SecretFormField
-              isConfigured={(secureJsonFields && secureJsonFields.token) as boolean}
+              isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
               value={secureJsonData.token || ''}
               label="Token"
               aria-label="Token"
@@ -213,7 +213,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         <div className="gf-form-inline">
           <div className="gf-form">
             <SecretFormField
-              isConfigured={(secureJsonFields && secureJsonFields.password) as boolean}
+              isConfigured={Boolean(secureJsonFields && secureJsonFields.password)}
               value={secureJsonData.password || ''}
               label="Password"
               aria-label="Password"

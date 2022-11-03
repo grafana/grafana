@@ -40,6 +40,7 @@ func (a *api) registerEndpoints() {
 		scope := accesscontrol.Scope(a.service.options.Resource, a.service.options.ResourceAttribute, accesscontrol.Parameter(":resourceID"))
 		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
 		r.Get("/:resourceID", auth(disable, accesscontrol.EvalPermission(actionRead, scope)), routing.Wrap(a.getPermissions))
+		r.Post("/:resourceID", auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setPermissions))
 		if a.service.options.Assignments.Users {
 			r.Post("/:resourceID/users/:userID", auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setUserPermission))
 		}
@@ -74,6 +75,7 @@ type resourcePermissionDTO struct {
 	ID            int64    `json:"id"`
 	RoleName      string   `json:"roleName"`
 	IsManaged     bool     `json:"isManaged"`
+	IsInherited   bool     `json:"isInherited"`
 	UserID        int64    `json:"userId,omitempty"`
 	UserLogin     string   `json:"userLogin,omitempty"`
 	UserAvatarUrl string   `json:"userAvatarUrl,omitempty"`
@@ -122,6 +124,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 				Actions:       p.Actions,
 				Permission:    permission,
 				IsManaged:     p.IsManaged,
+				IsInherited:   p.IsInherited,
 			})
 		}
 	}
@@ -131,6 +134,10 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 
 type setPermissionCommand struct {
 	Permission string `json:"permission"`
+}
+
+type setPermissionsCommand struct {
+	Permissions []accesscontrol.SetResourcePermissionCommand `json:"permissions"`
 }
 
 func (a *api) setUserPermission(c *models.ReqContext) response.Response {
@@ -188,6 +195,22 @@ func (a *api) setBuiltinRolePermission(c *models.ReqContext) response.Response {
 	}
 
 	return permissionSetResponse(cmd)
+}
+
+func (a *api) setPermissions(c *models.ReqContext) response.Response {
+	resourceID := web.Params(c.Req)[":resourceID"]
+
+	cmd := setPermissionsCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	_, err := a.service.SetPermissions(c.Req.Context(), c.OrgID, resourceID, cmd.Permissions...)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "failed to set permissions", err)
+	}
+
+	return response.Success("Permissions updated")
 }
 
 func permissionSetResponse(cmd setPermissionCommand) response.Response {

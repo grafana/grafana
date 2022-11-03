@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -67,23 +66,24 @@ type LDAPServerDTO struct {
 }
 
 // FetchOrgs fetches the organization(s) information by executing a single query to the database. Then, populating the DTO with the information retrieved.
-func (user *LDAPUserDTO) FetchOrgs(ctx context.Context, sqlstore sqlstore.Store) error {
+func (user *LDAPUserDTO) FetchOrgs(ctx context.Context, orga org.Service) error {
 	orgIds := []int64{}
 
 	for _, or := range user.OrgRoles {
 		orgIds = append(orgIds, or.OrgId)
 	}
 
-	q := &models.SearchOrgsQuery{}
-	q.Ids = orgIds
+	q := &org.SearchOrgsQuery{}
+	q.IDs = orgIds
 
-	if err := sqlstore.SearchOrgs(ctx, q); err != nil {
+	result, err := orga.Search(ctx, q)
+	if err != nil {
 		return err
 	}
 
 	orgNamesById := map[int64]string{}
-	for _, org := range q.Result {
-		orgNamesById[org.Id] = org.Name
+	for _, org := range result {
+		orgNamesById[org.ID] = org.Name
 	}
 
 	for i, orgDTO := range user.OrgRoles {
@@ -355,7 +355,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 	}
 
 	ldapLogger.Debug("mapping org roles", "orgsRoles", u.OrgRoles)
-	if err := u.FetchOrgs(c.Req.Context(), hs.SQLStore); err != nil {
+	if err := u.FetchOrgs(c.Req.Context(), hs.orgService); err != nil {
 		return response.Error(http.StatusBadRequest, "An organization was not found - Please verify your LDAP configuration", err)
 	}
 

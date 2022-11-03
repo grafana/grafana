@@ -25,6 +25,7 @@ describe('LokiQueryBuilderContainer', () => {
           url: '',
           jsonData: {},
           meta: {} as DataSourcePluginMeta,
+          readOnly: false,
         },
         undefined,
         undefined

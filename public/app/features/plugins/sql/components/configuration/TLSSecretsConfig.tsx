@@ -9,14 +9,14 @@ import {
 } from '@grafana/data';
 import { InlineField, SecretTextArea } from '@grafana/ui';
 
-export interface Props<T, S> {
+export interface Props<T extends DataSourceJsonData, S> {
   editorProps: DataSourcePluginOptionsEditorProps<T, S>;
   showCACert?: boolean;
   secureJsonFields?: KeyValue<Boolean>;
   labelWidth?: number;
 }
 
-export const TLSSecretsConfig = <T extends DataSourceJsonData, S = {}>(props: Props<T, S>) => {
+export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}>(props: Props<T, S>) => {
   const { labelWidth, editorProps, showCACert } = props;
   const { secureJsonFields } = editorProps.options;
   return (

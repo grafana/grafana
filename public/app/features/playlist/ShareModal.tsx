@@ -2,17 +2,16 @@ import React, { useState } from 'react';
 
 import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
 import { Checkbox, ClipboardButton, Field, FieldSet, Input, Modal, RadioButtonGroup } from '@grafana/ui';
-
-import { buildBaseUrl } from '../dashboard/components/ShareModal/utils';
+import { buildBaseUrl } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { PlaylistMode } from './types';
 
-interface ShareModalProps {
+interface Props {
   playlistUid: string;
   onDismiss: () => void;
 }
 
-export const ShareModal = ({ playlistUid, onDismiss }: ShareModalProps) => {
+export const ShareModal = ({ playlistUid, onDismiss }: Props) => {
   const [mode, setMode] = useState<PlaylistMode>(false);
   const [autoFit, setAutofit] = useState(false);
 

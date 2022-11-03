@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { Field, PanelProps } from '@grafana/data';
+import { Field, PanelProps, getLinksSupplier } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin, KeyboardPlugin } from '@grafana/ui';
@@ -37,7 +37,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   };
 
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
-  const timezones = useMemo(() => getTimezones(options.timezones, timeZone), [options.timezones, timeZone]);
+  const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
 
   if (!frames) {
     return (
@@ -58,13 +58,23 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
-      timeZones={timezones}
+      timeZone={timezones}
       width={width}
       height={height}
       legend={options.legend}
       options={options}
     >
       {(config, alignedDataFrame) => {
+        alignedDataFrame.fields.forEach((field) => {
+          field.getLinks = getLinksSupplier(
+            alignedDataFrame,
+            field,
+            field.state!.scopedVars!,
+            replaceVariables,
+            timeZone
+          );
+        });
+
         return (
           <>
             <KeyboardPlugin config={config} />

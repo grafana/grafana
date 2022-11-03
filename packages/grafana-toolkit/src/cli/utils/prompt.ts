@@ -1,4 +1,4 @@
-import {
+import inquirer, {
   Question,
   InputQuestion,
   CheckboxQuestion,
@@ -10,21 +10,21 @@ import {
   ChoiceOptions,
 } from 'inquirer';
 
-type QuestionWithValidation<A = any> =
+type QuestionWithValidation<A extends inquirer.Answers = inquirer.Answers> =
   | InputQuestion<A>
   | CheckboxQuestion<A>
   | NumberQuestion<A>
   | PasswordQuestion<A>
   | EditorQuestion<A>;
 
-export const answerRequired = (question: QuestionWithValidation): Question<any> => {
+export const answerRequired = <A extends inquirer.Answers>(question: QuestionWithValidation<A>): Question<A> => {
   return {
     ...question,
-    validate: (answer: any) => answer.trim() !== '' || `${question.name} is required`,
+    validate: (answer: A) => answer.trim() !== '' || `${question.name} is required`,
   };
 };
 
-export const promptInput = <A>(
+export const promptInput = <A extends inquirer.Answers>(
   name: string,
   message: string | ((answers: A) => string),
   required = false,
@@ -42,7 +42,7 @@ export const promptInput = <A>(
   return required ? answerRequired(model) : model;
 };
 
-export const promptList = <A>(
+export const promptList = <A extends inquirer.Answers>(
   name: string,
   message: string | ((answers: A) => string),
   choices: () => ChoiceOptions[],
@@ -61,7 +61,7 @@ export const promptList = <A>(
   return model;
 };
 
-export const promptConfirm = <A>(
+export const promptConfirm = <A extends inquirer.Answers>(
   name: string,
   message: string | ((answers: A) => string),
   def: any = undefined,

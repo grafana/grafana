@@ -2,16 +2,13 @@ load(
     'scripts/drone/steps/lib.star',
     'identify_runner_step',
     'download_grabpl_step',
-    'gen_version_step',
     'wire_install_step',
-    'codespell_step',
-    'shellcheck_step',
-    'lint_backend_step',
-    'lint_drone_step',
     'test_backend_step',
     'test_backend_integration_step',
     'verify_gen_cue_step',
     'compile_build_cmd',
+    'clone_enterprise_step',
+    'init_enterprise_step',
 )
 
 load(
@@ -19,25 +16,25 @@ load(
     'pipeline',
 )
 
-def test_backend(trigger, ver_mode):
-    init_steps = [
+def test_backend(trigger, ver_mode, edition="oss"):
+    environment = {'EDITION': edition}
+    init_steps = []
+    if edition != 'oss':
+        init_steps.extend([clone_enterprise_step(ver_mode), download_grabpl_step(), init_enterprise_step(ver_mode),])
+    init_steps.extend([
         identify_runner_step(),
-        download_grabpl_step(),
-        compile_build_cmd(),
-        gen_version_step(ver_mode),
-        verify_gen_cue_step(edition="oss"),
+        compile_build_cmd(edition),
+        verify_gen_cue_step(edition),
         wire_install_step(),
-    ]
+    ])
     test_steps = [
-        codespell_step(),
-        shellcheck_step(),
-        lint_backend_step(edition="oss"),
-        test_backend_step(edition="oss"),
-        test_backend_integration_step(edition="oss"),
+        test_backend_step(edition),
+        test_backend_integration_step(edition),
     ]
-    if ver_mode == 'main':
-        test_steps.extend([lint_drone_step()])
 
+    pipeline_name = '{}-test-backend'.format(ver_mode)
+    if ver_mode in ("release-branch", "release"):
+        pipeline_name = '{}-{}-test-backend'.format(ver_mode, edition)
     return pipeline(
-        name='{}-test-backend'.format(ver_mode), edition="oss", trigger=trigger, services=[], steps=init_steps + test_steps,
+        name=pipeline_name, edition=edition, trigger=trigger, services=[], steps=init_steps + test_steps, environment=environment
     )

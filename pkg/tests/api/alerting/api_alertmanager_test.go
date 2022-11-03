@@ -239,13 +239,11 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "editor request should succeed",
 				url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusAccepted,
-				expBody:   `{"id":"0","message":"silence created"}`,
 			},
 			{
 				desc:      "admin request should succeed",
 				url:       "http://admin:admin@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusAccepted,
-				expBody:   `{"id":"0","message":"silence created"}`,
 			},
 		}
 
@@ -263,8 +261,10 @@ func TestAMConfigAccess(t *testing.T) {
 				b, err := io.ReadAll(resp.Body)
 				require.NoError(t, err)
 				if tc.expStatus == http.StatusAccepted {
-					re := regexp.MustCompile(`"id":"([\w|-]+)"`)
-					b = re.ReplaceAll(b, []byte(`"id":"0"`))
+					response := apimodels.PostSilencesOKBody{}
+					require.NoError(t, json.Unmarshal(b, &response))
+					require.NotEmpty(t, response.SilenceID)
+					return
 				}
 				require.Contains(t, string(b), tc.expBody)
 			})
@@ -1026,7 +1026,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedMessage: "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring: invalid query A: data source not found: unknown",
+				expectedMessage: "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring: failed to build query 'A': data source not found",
 			},
 			{
 				desc:      "alert rule with invalid condition",
@@ -1056,7 +1056,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedMessage: "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring: condition B not found in any query or expression: it should be one of: [A]",
+				expectedMessage: "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring: condition B does not exist, must be one of [A]",
 			},
 		}
 
@@ -1074,8 +1074,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 				err = json.Unmarshal([]byte(body), &res)
 				require.NoError(t, err)
 
-				assert.Equal(t, res.Message, tc.expectedMessage)
-				assert.NotEmpty(t, res.TraceID)
+				assert.Equal(t, tc.expectedMessage, res.Message)
 
 				assert.Equal(t, http.StatusBadRequest, status)
 			})
@@ -2265,7 +2264,7 @@ func TestEval(t *testing.T) {
 			`,
 			expectedStatusCode: func() int { return http.StatusBadRequest },
 			expectedMessage: func() string {
-				return "invalid condition: condition B not found in any query or expression: it should be one of: [A]"
+				return "invalid condition: condition B does not exist, must be one of [A]"
 			},
 			expectedResponse: func() string { return "" },
 		},
@@ -2301,7 +2300,7 @@ func TestEval(t *testing.T) {
 				if setting.IsEnterprise {
 					return "user is not authorized to query one or many data sources used by the rule"
 				}
-				return "invalid condition: invalid query A: data source not found: unknown"
+				return "invalid condition: failed to build query 'A': data source not found"
 			},
 			expectedResponse: func() string { return "" },
 		},
@@ -2330,7 +2329,6 @@ func TestEval(t *testing.T) {
 			}
 			if tc.expectedMessage() != "" {
 				assert.Equal(t, tc.expectedMessage(), res.Message)
-				assert.NotEmpty(t, res.TraceID)
 			}
 		})
 	}
@@ -2485,7 +2483,7 @@ func TestEval(t *testing.T) {
 				if setting.IsEnterprise {
 					return "user is not authorized to query one or many data sources used by the rule"
 				}
-				return "invalid queries or expressions: invalid query A: data source not found: unknown"
+				return "Failed to build evaluator for queries and expressions: failed to build query 'A': data source not found"
 			},
 		},
 	}
@@ -2513,7 +2511,6 @@ func TestEval(t *testing.T) {
 			}
 			if tc.expectedMessage() != "" {
 				require.Equal(t, tc.expectedMessage(), res.Message)
-				require.NotEmpty(t, res.TraceID)
 			}
 		})
 	}

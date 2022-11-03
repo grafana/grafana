@@ -180,7 +180,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                       setValue('groupBy', [...field.value, opt]);
                     }}
                     onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
-                    options={[...commonGroupByOptions, groupByOptions]}
+                    options={[...commonGroupByOptions, ...groupByOptions]}
                   />
                 )}
                 control={control}

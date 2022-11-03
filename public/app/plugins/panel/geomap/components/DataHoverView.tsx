@@ -34,7 +34,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode }: 
     return null;
   }
 
-  const displayValues: Array<[string, any, string]> = [];
+  const displayValues: Array<[string, unknown, string]> = [];
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 

@@ -86,7 +86,7 @@ const Advanced = ({ resource, onChange }: ResourcePickerProps<string | AzureMetr
               />
             </InlineField>
             <InlineField
-              label="Metric Namespace"
+              label="Namespace"
               grow
               transparent
               htmlFor="input-advanced-resource-picker-metricNamespace"

@@ -9,8 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/validations"
 
 	"github.com/stretchr/testify/require"
@@ -82,7 +84,7 @@ func TestOpsGenieNotifier(t *testing.T) {
           "apiKey": "abcdefgh0123456789"
 				}`
 
-			tagPairs := []*models.Tag{
+			tagPairs := []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "aKey", Value: "aValue"},
 			}
@@ -105,7 +107,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Message:       "someMessage",
 				State:         models.AlertStateAlerting,
 				AlertRuleTags: tagPairs,
-			}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
+			}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			evalContext.IsTestRun = true
 
 			tags := make([]string, 0)
@@ -131,7 +133,7 @@ func TestOpsGenieNotifier(t *testing.T) {
           "sendTagsAs": "details"
 				}`
 
-			tagPairs := []*models.Tag{
+			tagPairs := []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "aKey", Value: "aValue"},
 			}
@@ -154,7 +156,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Message:       "someMessage",
 				State:         models.AlertStateAlerting,
 				AlertRuleTags: tagPairs,
-			}, nil, nil, nil, nil)
+			}, nil, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			evalContext.IsTestRun = true
 
 			tags := make([]string, 0)
@@ -180,7 +182,7 @@ func TestOpsGenieNotifier(t *testing.T) {
           "sendTagsAs": "both"
 				}`
 
-			tagPairs := []*models.Tag{
+			tagPairs := []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "aKey", Value: "aValue"},
 			}
@@ -203,7 +205,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Message:       "someMessage",
 				State:         models.AlertStateAlerting,
 				AlertRuleTags: tagPairs,
-			}, nil, nil, nil, nil)
+			}, nil, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			evalContext.IsTestRun = true
 
 			tags := make([]string, 0)

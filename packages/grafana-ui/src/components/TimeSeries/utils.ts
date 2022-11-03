@@ -173,13 +173,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
 
-    const config = {
+    const config: FieldConfig<GraphFieldConfig> = {
       ...field.config,
       custom: {
         ...defaultConfig,
         ...field.config.custom,
       },
-    } as FieldConfig<GraphFieldConfig>;
+    };
 
     const customConfig: GraphFieldConfig = config.custom!;
 
@@ -217,11 +217,21 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           direction: ScaleDirection.Up,
           distribution: customConfig.scaleDistribution?.type,
           log: customConfig.scaleDistribution?.log,
+          linearThreshold: customConfig.scaleDistribution?.linearThreshold,
           min: field.config.min,
           max: field.config.max,
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
           centeredZero: customConfig.axisCenteredZero,
+          range:
+            customConfig.stacking?.mode === StackingMode.Percent
+              ? (u: uPlot, dataMin: number, dataMax: number) => {
+                  dataMin = dataMin < 0 ? -1 : 0;
+                  dataMax = dataMax > 0 ? 1 : 0;
+                  return [dataMin, dataMax];
+                }
+              : undefined,
+          decimals: field.config.decimals,
         },
         field
       )
@@ -269,9 +279,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             label: customConfig.axisLabel,
             size: customConfig.axisWidth,
             placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-            formatValue: (v, decimals) => formattedValueToString(fmt(v, config.decimals ?? decimals)),
+            formatValue: (v, decimals) => formattedValueToString(fmt(v, decimals)),
             theme,
             grid: { show: customConfig.axisGridShow },
+            decimals: field.config.decimals,
+            distr: customConfig.scaleDistribution?.type,
             ...axisColorOpts,
           },
           field
@@ -284,7 +296,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
     let pointsFilter: uPlot.Series.Points.Filter = () => null;
 
-    if (customConfig.spanNulls !== true) {
+    if (customConfig.spanNulls !== true && showPoints !== VisibilityMode.Always) {
       pointsFilter = (u, seriesIdx, show, gaps) => {
         let filtered = [];
 
@@ -388,8 +400,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       }
 
       if (customConfig.fillBelowTo) {
+        const fillBelowToField = frame.fields.find((f) => f.name === customConfig.fillBelowTo);
+        const fillBelowDispName = getFieldDisplayName(fillBelowToField!, frame, allFrames);
+
         const t = indexByName.get(dispName);
-        const b = indexByName.get(customConfig.fillBelowTo);
+        const b = indexByName.get(fillBelowDispName);
         if (isNumber(b) && isNumber(t)) {
           builder.addBand({
             series: [t, b],
@@ -411,7 +426,40 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       dynamicSeriesColor = (seriesIdx) => getFieldSeriesColor(alignedFrame.fields[seriesIdx], theme).color;
     }
 
+    // this adds leading and trailing gaps when datasets have leading and trailing nulls
+    // it will cause additional unnecessary clips, but we also use adjacent gaps to show single points
+    // when not connecting across gaps, e.g. null,100,null,null,50,50,50,null,50,null,null
+    const gapsRefiner: uPlot.Series.GapsRefiner = (u, seriesIdx, idx0, idx1, gaps) => {
+      let yData = u.data[seriesIdx];
+
+      // @ts-ignore
+      let xData = u._data[0];
+
+      // scan to first and last non-null vals
+      let first = idx0,
+        last = idx1;
+
+      while (first <= last && yData[first] == null) {
+        first++;
+      }
+
+      while (last > first && yData[last] == null) {
+        last--;
+      }
+
+      if (first !== idx0) {
+        gaps.unshift([u.bbox.left, Math.round(u.valToPos(xData[first]!, 'x', true))]);
+      }
+
+      if (last !== idx1) {
+        gaps.push([Math.round(u.valToPos(xData[last]!, 'x', true)), u.bbox.left + u.bbox.width]);
+      }
+
+      return gaps;
+    };
+
     builder.addSeries({
+      gapsRefiner,
       pathBuilder,
       pointsBuilder,
       scaleKey,

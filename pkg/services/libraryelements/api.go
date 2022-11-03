@@ -133,14 +133,15 @@ func (l *LibraryElementService) getHandler(c *models.ReqContext) response.Respon
 // 500: internalServerError
 func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Response {
 	query := searchLibraryElementsQuery{
-		perPage:       c.QueryInt("perPage"),
-		page:          c.QueryInt("page"),
-		searchString:  c.Query("searchString"),
-		sortDirection: c.Query("sortDirection"),
-		kind:          c.QueryInt("kind"),
-		typeFilter:    c.Query("typeFilter"),
-		excludeUID:    c.Query("excludeUid"),
-		folderFilter:  c.Query("folderFilter"),
+		perPage:          c.QueryInt("perPage"),
+		page:             c.QueryInt("page"),
+		searchString:     c.Query("searchString"),
+		sortDirection:    c.Query("sortDirection"),
+		kind:             c.QueryInt("kind"),
+		typeFilter:       c.Query("typeFilter"),
+		excludeUID:       c.Query("excludeUid"),
+		folderFilter:     c.Query("folderFilter"),
+		folderFilterUIDs: c.Query("folderFilterUIDs"),
 	}
 	elementsResult, err := l.getAllLibraryElements(c.Req.Context(), c.SignedInUser, query)
 	if err != nil {

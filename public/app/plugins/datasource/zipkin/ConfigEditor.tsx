@@ -10,7 +10,7 @@ import { TraceToMetricsSettings } from 'app/core/components/TraceToMetrics/Trace
 
 export type Props = DataSourcePluginOptionsEditorProps;
 
-export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
+export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
   return (
     <>
       <DataSourceHttpSettings

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
@@ -22,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -50,7 +48,8 @@ type Alertmanager interface {
 	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
 	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
 
-	// Testing
+	// Receivers
+	GetReceivers(ctx context.Context) []apimodels.Receiver
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
 }
 
@@ -64,19 +63,16 @@ type API struct {
 	DatasourceCache      datasources.CacheService
 	DatasourceService    datasources.DataSourceService
 	RouteRegister        routing.RouteRegister
-	ExpressionService    *expr.Service
 	QuotaService         quota.Service
 	Schedule             schedule.ScheduleService
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
-	RuleStore            store.RuleStore
-	InstanceStore        store.InstanceStore
+	RuleStore            RuleStore
 	AlertingStore        AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
-	SecretsService       secrets.Service
 	AccessControl        accesscontrol.AccessControl
 	Policies             *provisioning.NotificationPolicyService
 	ContactPointService  *provisioning.ContactPointService
@@ -84,6 +80,7 @@ type API struct {
 	MuteTimings          *provisioning.MuteTimingService
 	AlertRules           *provisioning.AlertRuleService
 	AlertsRouter         *sender.AlertsRouter
+	EvaluatorFactory     eval.EvaluatorFactory
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -111,15 +108,15 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
 		&RulerSrv{
-			DatasourceCache: api.DatasourceCache,
-			QuotaService:    api.QuotaService,
-			scheduleService: api.Schedule,
-			store:           api.RuleStore,
-			provenanceStore: api.ProvenanceStore,
-			xactManager:     api.TransactionManager,
-			log:             logger,
-			cfg:             &api.Cfg.UnifiedAlerting,
-			ac:              api.AccessControl,
+			conditionValidator: api.EvaluatorFactory,
+			QuotaService:       api.QuotaService,
+			scheduleService:    api.Schedule,
+			store:              api.RuleStore,
+			provenanceStore:    api.ProvenanceStore,
+			xactManager:        api.TransactionManager,
+			log:                logger,
+			cfg:                &api.Cfg.UnifiedAlerting,
+			ac:                 api.AccessControl,
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(
@@ -128,7 +125,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			DatasourceCache: api.DatasourceCache,
 			log:             logger,
 			accessControl:   api.AccessControl,
-			evaluator:       eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.SecretsService, api.ExpressionService),
+			evaluator:       api.EvaluatorFactory,
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewConfiguration(
 		&ConfigSrv{

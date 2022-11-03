@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"path"
 	"strconv"
@@ -12,9 +13,26 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
+
+func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) doRequestFilterPage(ctx context.Context, r *http.Request, dsInfo datasourceInfo) (cloudMonitoringResponse, error) {
+	r.URL.RawQuery = timeSeriesFilter.Params.Encode()
+	r = r.WithContext(ctx)
+	res, err := dsInfo.services[cloudMonitor].client.Do(r)
+	if err != nil {
+		return cloudMonitoringResponse{}, err
+	}
+
+	dnext, err := unmarshalResponse(res)
+	if err != nil {
+		return cloudMonitoringResponse{}, err
+	}
+
+	return dnext, nil
+}
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context, req *backend.QueryDataRequest,
 	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
@@ -29,16 +47,12 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 		}
 		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
 	}
-
 	r, err := s.createRequest(ctx, &dsInfo, path.Join("/v3/projects", projectName, "timeSeries"), nil)
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
 	}
-
-	r.URL.RawQuery = timeSeriesFilter.Params.Encode()
 	alignmentPeriod, ok := r.URL.Query()["aggregation.alignmentPeriod"]
-
 	if ok {
 		seconds, err := strconv.ParseInt(alignmentPeriodRe.FindString(alignmentPeriod[0]), 10, 64)
 		if err == nil {
@@ -62,27 +76,30 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
 	span.SetAttributes("datasource_id", dsInfo.id, attribute.Key("datasource_id").Int64(dsInfo.id))
 	span.SetAttributes("org_id", req.PluginContext.OrgID, attribute.Key("org_id").Int64(req.PluginContext.OrgID))
-
 	defer span.End()
 	tracer.Inject(ctx, r.Header, span)
 
-	r = r.WithContext(ctx)
-	res, err := dsInfo.services[cloudMonitor].client.Do(r)
+	d, err := timeSeriesFilter.doRequestFilterPage(ctx, r, dsInfo)
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
 	}
-
-	d, err := unmarshalResponse(res)
-	if err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
+	nextPageToken := d.NextPageToken
+	for nextPageToken != "" {
+		timeSeriesFilter.Params["pageToken"] = []string{d.NextPageToken}
+		nextPage, err := timeSeriesFilter.doRequestFilterPage(ctx, r, dsInfo)
+		if err != nil {
+			dr.Error = err
+			return dr, cloudMonitoringResponse{}, "", nil
+		}
+		d.TimeSeries = append(d.TimeSeries, nextPage.TimeSeries...)
+		nextPageToken = nextPage.NextPageToken
 	}
 
 	return dr, d, r.URL.RawQuery, nil
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string) error {
 	frames := data.Frames{}
@@ -210,7 +227,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 	}
 	if len(response.TimeSeries) > 0 {
 		dl := timeSeriesFilter.buildDeepLink()
-		frames = addConfigData(frames, dl, response.Unit)
+		frames = addConfigData(frames, dl, response.Unit, timeSeriesFilter.Params.Get("aggregation.alignmentPeriod"))
 	}
 
 	queryRes.Frames = frames

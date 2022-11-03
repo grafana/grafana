@@ -1,11 +1,12 @@
-import { css } from '@emotion/css';
-import classNames from 'classnames';
-import React, { FC, RefCallback, useCallback, useEffect, useRef } from 'react';
+import { css, cx } from '@emotion/css';
+import React, { RefCallback, useCallback, useEffect, useRef } from 'react';
 import Scrollbars, { positionValues } from 'react-custom-scrollbars-2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
+
+import { ScrollIndicators } from './ScrollIndicators';
 
 export type ScrollbarPosition = positionValues;
 
@@ -21,14 +22,16 @@ interface Props {
   scrollRefCallback?: RefCallback<HTMLDivElement>;
   scrollTop?: number;
   setScrollTop?: (position: ScrollbarPosition) => void;
+  showScrollIndicators?: boolean;
   autoHeightMin?: number | string;
   updateAfterMountMs?: number;
+  onScroll?: React.UIEventHandler;
 }
 
 /**
  * Wraps component into <Scrollbars> component from `react-custom-scrollbars`
  */
-export const CustomScrollbar: FC<Props> = ({
+export const CustomScrollbar = ({
   autoHide = false,
   autoHideTimeout = 200,
   setScrollTop,
@@ -40,10 +43,12 @@ export const CustomScrollbar: FC<Props> = ({
   hideHorizontalTrack,
   hideVerticalTrack,
   scrollRefCallback,
+  showScrollIndicators = false,
   updateAfterMountMs,
   scrollTop,
+  onScroll,
   children,
-}) => {
+}: React.PropsWithChildren<Props>) => {
   const ref = useRef<Scrollbars & { view: HTMLDivElement }>(null);
   const styles = useStyles2(getStyles);
 
@@ -75,7 +80,7 @@ export const CustomScrollbar: FC<Props> = ({
     }, updateAfterMountMs);
   }, [updateAfterMountMs]);
 
-  function renderTrack(className: string, hideTrack: boolean | undefined, passedProps: any) {
+  function renderTrack(className: string, hideTrack: boolean | undefined, passedProps: JSX.IntrinsicElements['div']) {
     if (passedProps.style && hideTrack) {
       passedProps.style.display = 'none';
     }
@@ -84,28 +89,28 @@ export const CustomScrollbar: FC<Props> = ({
   }
 
   const renderTrackHorizontal = useCallback(
-    (passedProps: any) => {
+    (passedProps: JSX.IntrinsicElements['div']) => {
       return renderTrack('track-horizontal', hideHorizontalTrack, passedProps);
     },
     [hideHorizontalTrack]
   );
 
   const renderTrackVertical = useCallback(
-    (passedProps: any) => {
+    (passedProps: JSX.IntrinsicElements['div']) => {
       return renderTrack('track-vertical', hideVerticalTrack, passedProps);
     },
     [hideVerticalTrack]
   );
 
-  const renderThumbHorizontal = useCallback((passedProps: any) => {
+  const renderThumbHorizontal = useCallback((passedProps: JSX.IntrinsicElements['div']) => {
     return <div {...passedProps} className="thumb-horizontal" />;
   }, []);
 
-  const renderThumbVertical = useCallback((passedProps: any) => {
+  const renderThumbVertical = useCallback((passedProps: JSX.IntrinsicElements['div']) => {
     return <div {...passedProps} className="thumb-vertical" />;
   }, []);
 
-  const renderView = useCallback((passedProps: any) => {
+  const renderView = useCallback((passedProps: JSX.IntrinsicElements['div']) => {
     return <div {...passedProps} className="scrollbar-view" />;
   }, []);
 
@@ -117,7 +122,9 @@ export const CustomScrollbar: FC<Props> = ({
     <Scrollbars
       data-testid={testId}
       ref={ref}
-      className={classNames(styles.customScrollbar, className)}
+      className={cx(styles.customScrollbar, className, {
+        [styles.scrollbarWithScrollIndicators]: showScrollIndicators,
+      })}
       onScrollStop={onScrollStop}
       autoHeight={true}
       autoHide={autoHide}
@@ -132,8 +139,9 @@ export const CustomScrollbar: FC<Props> = ({
       renderThumbHorizontal={renderThumbHorizontal}
       renderThumbVertical={renderThumbVertical}
       renderView={renderView}
+      onScroll={onScroll}
     >
-      {children}
+      {showScrollIndicators ? <ScrollIndicators>{children}</ScrollIndicators> : children}
     </Scrollbars>
   );
 };
@@ -183,6 +191,15 @@ const getStyles = (theme: GrafanaTheme2) => {
           opacity: 1;
           transition: opacity 0.3s ease-in-out;
         }
+      }
+    `,
+    // override the scroll container position so that the scroll indicators
+    // are positioned at the top and bottom correctly.
+    // react-custom-scrollbars doesn't provide any way for us to hook in nicely,
+    // so we have to override with !important. feelsbad.
+    scrollbarWithScrollIndicators: css`
+      .scrollbar-view {
+        position: static !important;
       }
     `,
   };

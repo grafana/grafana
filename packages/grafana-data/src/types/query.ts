@@ -98,7 +98,7 @@ export interface DataSourceWithQueryExportSupport<TQuery extends DataQuery> {
  * @internal
  */
 export const hasQueryImportSupport = <TQuery extends DataQuery>(
-  datasource: any
+  datasource: unknown
 ): datasource is DataSourceWithQueryImportSupport<TQuery> => {
   return (datasource as DataSourceWithQueryImportSupport<TQuery>).importFromAbstractQueries !== undefined;
 };
@@ -107,7 +107,7 @@ export const hasQueryImportSupport = <TQuery extends DataQuery>(
  * @internal
  */
 export const hasQueryExportSupport = <TQuery extends DataQuery>(
-  datasource: any
+  datasource: unknown
 ): datasource is DataSourceWithQueryExportSupport<TQuery> => {
   return (datasource as DataSourceWithQueryExportSupport<TQuery>).exportToAbstractQueries !== undefined;
 };

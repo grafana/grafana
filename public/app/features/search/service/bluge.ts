@@ -1,21 +1,39 @@
-import { lastValueFrom } from 'rxjs';
-
-import { ArrayVector, DataFrame, DataFrameView, getDisplayProcessor, SelectableValue } from '@grafana/data';
+import {
+  ArrayVector,
+  DataFrame,
+  DataFrameJSON,
+  DataFrameView,
+  getDisplayProcessor,
+  SelectableValue,
+  toDataFrame,
+} from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
-import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { replaceCurrentFolderQuery } from './utils';
 
 import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, SearchResultMeta } from '.';
 
+// The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
+// and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
+const loadingFrameName = 'Loading';
+
+const searchURI = 'api/search-v2';
+
+type SearchAPIResponse = {
+  frames: DataFrameJSON[];
+};
+
+const folderViewSort = 'name_sort';
+
 export class BlugeSearcher implements GrafanaSearcher {
+  constructor(private fallbackSearcher: GrafanaSearcher) {}
+
   async search(query: SearchQuery): Promise<QueryResponse> {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
-    return doSearchQuery(query);
+    return this.doSearchQuery(query);
   }
 
   async starred(query: SearchQuery): Promise<QueryResponse> {
@@ -28,42 +46,38 @@ export class BlugeSearcher implements GrafanaSearcher {
       uid: starsUIDS,
       query: query.query ?? '*',
     };
-    return doSearchQuery(starredQuery);
+    return this.doSearchQuery(starredQuery);
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
-    const ds = await getGrafanaDatasource();
-    const target = {
-      refId: 'TagsQuery',
-      queryType: GrafanaQueryType.Search,
-      search: {
-        ...query,
-        query: query.query ?? '*',
-        sort: undefined, // no need to sort the initial query results (not used)
-        facet: [{ field: 'tag' }],
-        limit: 1, // 0 would be better, but is ignored by the backend
-      },
+    const req = {
+      ...query,
+      query: query.query ?? '*',
+      sort: undefined, // no need to sort the initial query results (not used)
+      facet: [{ field: 'tag' }],
+      limit: 1, // 0 would be better, but is ignored by the backend
     };
 
-    const data = (
-      await lastValueFrom(
-        ds.query({
-          targets: [target],
-        } as any)
-      )
-    ).data as DataFrame[];
-    for (const frame of data) {
+    const resp = await getBackendSrv().post<SearchAPIResponse>(searchURI, req);
+    const frames = resp.frames.map((f) => toDataFrame(f));
+
+    if (frames[0]?.name === loadingFrameName) {
+      return this.fallbackSearcher.tags(query);
+    }
+
+    for (const frame of frames) {
       if (frame.fields[0].name === 'tag') {
         return getTermCountsFrom(frame);
       }
     }
+
     return [];
   }
 
   // This should eventually be filled by an API call, but hardcoded is a good start
   getSortOptions(): Promise<SelectableValue[]> {
     const opts: SelectableValue[] = [
-      { value: 'name_sort', label: 'Alphabetically (A-Z)' },
+      { value: folderViewSort, label: 'Alphabetically (A-Z)' },
       { value: '-name_sort', label: 'Alphabetically (Z-A)' },
     ];
 
@@ -80,131 +94,121 @@ export class BlugeSearcher implements GrafanaSearcher {
 
     return Promise.resolve(opts);
   }
-}
 
-const firstPageSize = 50;
-const nextPageSizes = 100;
-
-async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
-  query = await replaceCurrentFolderQuery(query);
-  const ds = await getGrafanaDatasource();
-  const target = {
-    refId: 'Search',
-    queryType: GrafanaQueryType.Search,
-    search: {
+  async doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
+    query = await replaceCurrentFolderQuery(query);
+    const req = {
       ...query,
       query: query.query ?? '*',
       limit: query.limit ?? firstPageSize,
-    },
-  };
-  const rsp = await lastValueFrom(
-    ds.query({
-      targets: [target],
-    } as any)
-  );
+    };
 
-  const first = (rsp.data?.[0] as DataFrame) ?? { fields: [], length: 0 };
-  for (const field of first.fields) {
-    field.display = getDisplayProcessor({ field, theme: config.theme2 });
-  }
+    const rsp = await getBackendSrv().post<SearchAPIResponse>(searchURI, req);
+    const frames = rsp.frames.map((f) => toDataFrame(f));
 
-  // Make sure the object exists
-  if (!first.meta?.custom) {
-    first.meta = {
-      ...first.meta,
-      custom: {
-        count: first.length,
-        max_score: 1,
+    const first = frames.length ? toDataFrame(frames[0]) : { fields: [], length: 0 };
+
+    if (first.name === loadingFrameName) {
+      return this.fallbackSearcher.search(query);
+    }
+
+    for (const field of first.fields) {
+      field.display = getDisplayProcessor({ field, theme: config.theme2 });
+    }
+
+    // Make sure the object exists
+    if (!first.meta?.custom) {
+      first.meta = {
+        ...first.meta,
+        custom: {
+          count: first.length,
+          max_score: 1,
+        },
+      };
+    }
+
+    const meta = first.meta.custom as SearchResultMeta;
+    if (!meta.locationInfo) {
+      meta.locationInfo = {}; // always set it so we can append
+    }
+
+    // Set the field name to a better display name
+    if (meta.sortBy?.length) {
+      const field = first.fields.find((f) => f.name === meta.sortBy);
+      if (field) {
+        const name = getSortFieldDisplayName(field.name);
+        meta.sortBy = name;
+        field.name = name; // make it look nicer
+      }
+    }
+
+    let loadMax = 0;
+    let pending: Promise<void> | undefined = undefined;
+    const getNextPage = async () => {
+      while (loadMax > view.dataFrame.length) {
+        const from = view.dataFrame.length;
+        if (from >= meta.count) {
+          return;
+        }
+        const resp = await getBackendSrv().post<SearchAPIResponse>(searchURI, {
+          ...(req ?? {}),
+          from,
+          limit: nextPageSizes,
+        });
+        const frame = toDataFrame(resp.frames[0]);
+
+        if (!frame) {
+          console.log('no results', frame);
+          return;
+        }
+        if (frame.fields.length !== view.dataFrame.fields.length) {
+          console.log('invalid shape', frame, view.dataFrame);
+          return;
+        }
+
+        // Append the raw values to the same array buffer
+        const length = frame.length + view.dataFrame.length;
+        for (let i = 0; i < frame.fields.length; i++) {
+          const values = (view.dataFrame.fields[i].values as ArrayVector).buffer;
+          values.push(...frame.fields[i].values.toArray());
+        }
+        view.dataFrame.length = length;
+
+        // Add all the location lookup info
+        const submeta = frame.meta?.custom as SearchResultMeta;
+        if (submeta?.locationInfo && meta) {
+          for (const [key, value] of Object.entries(submeta.locationInfo)) {
+            meta.locationInfo[key] = value;
+          }
+        }
+      }
+      pending = undefined;
+    };
+
+    const view = new DataFrameView<DashboardQueryResult>(first);
+    return {
+      totalRows: meta.count ?? first.length,
+      view,
+      loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
+        loadMax = Math.max(loadMax, stopIndex);
+        if (!pending) {
+          pending = getNextPage();
+        }
+        return pending;
+      },
+      isItemLoaded: (index: number): boolean => {
+        return index < view.dataFrame.length;
       },
     };
   }
 
-  const meta = first.meta.custom as SearchResultMeta;
-  if (!meta.locationInfo) {
-    meta.locationInfo = {}; // always set it so we can append
+  getFolderViewSort(): string {
+    return 'name_sort';
   }
-
-  // Set the field name to a better display name
-  if (meta.sortBy?.length) {
-    const field = first.fields.find((f) => f.name === meta.sortBy);
-    if (field) {
-      const name = getSortFieldDisplayName(field.name);
-      meta.sortBy = name;
-      field.name = name; // make it look nicer
-    }
-  }
-
-  let loadMax = 0;
-  let pending: Promise<void> | undefined = undefined;
-  const getNextPage = async () => {
-    while (loadMax > view.dataFrame.length) {
-      const from = view.dataFrame.length;
-      if (from >= meta.count) {
-        return;
-      }
-      const frame = (
-        await lastValueFrom(
-          ds.query({
-            targets: [
-              {
-                ...target,
-                search: {
-                  ...(target?.search ?? {}),
-                  from,
-                  limit: nextPageSizes,
-                },
-                refId: 'Page',
-                facet: undefined,
-              },
-            ],
-          } as any)
-        )
-      ).data?.[0] as DataFrame;
-
-      if (!frame) {
-        console.log('no results', frame);
-        return;
-      }
-      if (frame.fields.length !== view.dataFrame.fields.length) {
-        console.log('invalid shape', frame, view.dataFrame);
-        return;
-      }
-
-      // Append the raw values to the same array buffer
-      const length = frame.length + view.dataFrame.length;
-      for (let i = 0; i < frame.fields.length; i++) {
-        const values = (view.dataFrame.fields[i].values as ArrayVector).buffer;
-        values.push(...frame.fields[i].values.toArray());
-      }
-      view.dataFrame.length = length;
-
-      // Add all the location lookup info
-      const submeta = frame.meta?.custom as SearchResultMeta;
-      if (submeta?.locationInfo && meta) {
-        for (const [key, value] of Object.entries(submeta.locationInfo)) {
-          meta.locationInfo[key] = value;
-        }
-      }
-    }
-    pending = undefined;
-  };
-
-  const view = new DataFrameView<DashboardQueryResult>(first);
-  return {
-    totalRows: meta.count ?? first.length,
-    view,
-    loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
-      loadMax = Math.max(loadMax, stopIndex);
-      if (!pending) {
-        pending = getNextPage();
-      }
-      return pending;
-    },
-    isItemLoaded: (index: number): boolean => {
-      return index < view.dataFrame.length;
-    },
-  };
 }
+
+const firstPageSize = 50;
+const nextPageSizes = 100;
 
 function getTermCountsFrom(frame: DataFrame): TermCount[] {
   const keys = frame.fields[0].values;

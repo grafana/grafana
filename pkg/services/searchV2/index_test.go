@@ -6,10 +6,14 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/store"
 
 	"github.com/blugelabs/bluge"
@@ -59,11 +63,7 @@ func initTestIndexFromDashesExtended(t *testing.T, dashboards []dashboard, exten
 	dashboardLoader := &testDashboardLoader{
 		dashboards: dashboards,
 	}
-	index := newSearchIndex(
-		dashboardLoader,
-		&store.MockEntityEventsService{},
-		extender,
-		func(ctx context.Context, folderId int64) (string, error) { return "x", nil })
+	index := newSearchIndex(dashboardLoader, &store.MockEntityEventsService{}, extender, func(ctx context.Context, folderId int64) (string, error) { return "x", nil }, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.SearchSettings{})
 	require.NotNil(t, index)
 	numDashboards, err := index.buildOrgIndex(context.Background(), testOrgID)
 	require.NoError(t, err)
@@ -82,19 +82,46 @@ func checkSearchResponseExtended(t *testing.T, fileName string, index *orgIndex,
 	experimental.CheckGoldenJSONResponse(t, "testdata", fileName, resp, true)
 }
 
+func getFrameWithNames(resp *backend.DataResponse) *data.Frame {
+	if resp == nil || len(resp.Frames) == 0 {
+		return nil
+	}
+
+	frame := resp.Frames[0]
+	nameField, idx := frame.FieldByName(documentFieldName)
+	if nameField.Len() == 0 || idx == -1 {
+		return nil
+	}
+
+	scoreField, _ := frame.FieldByName("score")
+	return data.NewFrame("ordering frame", nameField, scoreField)
+}
+
+func checkSearchResponseOrdering(t *testing.T, fileName string, index *orgIndex, filter ResourceFilter, query DashboardQuery) {
+	t.Helper()
+	checkSearchResponseOrderingExtended(t, fileName, index, filter, query, &NoopQueryExtender{})
+}
+
+func checkSearchResponseOrderingExtended(t *testing.T, fileName string, index *orgIndex, filter ResourceFilter, query DashboardQuery, extender QueryExtender) {
+	t.Helper()
+	query.Explain = true
+	resp := doSearchQuery(context.Background(), testLogger, index, filter, query, extender, "/pfix")
+	experimental.CheckGoldenJSONFrame(t, "testdata", fileName, getFrameWithNames(resp), true)
+}
+
 var testDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "test",
+		summary: &models.ObjectSummary{
+			Name: "test",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "boom",
+		summary: &models.ObjectSummary{
+			Name: "boom",
 		},
 	},
 }
@@ -135,8 +162,8 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		err := index.updateDashboard(context.Background(), testOrgID, orgIdx, dashboard{
 			id:  3,
 			uid: "3",
-			info: &extract.DashboardInfo{
-				Title: "created",
+			summary: &models.ObjectSummary{
+				Name: "created",
 			},
 		})
 		require.NoError(t, err)
@@ -154,8 +181,8 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		err := index.updateDashboard(context.Background(), testOrgID, orgIdx, dashboard{
 			id:  2,
 			uid: "2",
-			info: &extract.DashboardInfo{
-				Title: "nginx",
+			summary: &models.ObjectSummary{
+				Name: "nginx",
 			},
 		})
 		require.NoError(t, err)
@@ -170,15 +197,15 @@ var testSortDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "a-test",
+		summary: &models.ObjectSummary{
+			Name: "a-test",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "z-test",
+		summary: &models.ObjectSummary{
+			Name: "z-test",
 		},
 	},
 }
@@ -261,15 +288,15 @@ var testPrefixDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "Archer Data System",
+		summary: &models.ObjectSummary{
+			Name: "Archer Data System",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "Document Sync repo",
+		summary: &models.ObjectSummary{
+			Name: "Document Sync repo",
 		},
 	},
 }
@@ -339,8 +366,8 @@ var longPrefixDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "Eyjafjallajökull Eruption data",
+		summary: &models.ObjectSummary{
+			Name: "Eyjafjallajökull Eruption data",
 		},
 	},
 }
@@ -358,15 +385,15 @@ var scatteredTokensDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "Three can keep a secret, if two of them are dead (Benjamin Franklin)",
+		summary: &models.ObjectSummary{
+			Name: "Three can keep a secret, if two of them are dead (Benjamin Franklin)",
 		},
 	},
 	{
 		id:  3,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "A secret is powerful when it is empty (Umberto Eco)",
+		summary: &models.ObjectSummary{
+			Name: "A secret is powerful when it is empty (Umberto Eco)",
 		},
 	},
 }
@@ -391,25 +418,19 @@ var dashboardsWithFolders = []dashboard{
 		id:       1,
 		uid:      "1",
 		isFolder: true,
-		info: &extract.DashboardInfo{
-			Title: "My folder",
+		summary: &models.ObjectSummary{
+			Name: "My folder",
 		},
 	},
 	{
 		id:       2,
 		uid:      "2",
 		folderID: 1,
-		info: &extract.DashboardInfo{
-			Title: "Dashboard in folder 1",
-			Panels: []extract.PanelInfo{
-				{
-					ID:    1,
-					Title: "Panel 1",
-				},
-				{
-					ID:    2,
-					Title: "Panel 2",
-				},
+		summary: &models.ObjectSummary{
+			Name: "Dashboard in folder 1",
+			Nested: []*models.ObjectSummary{
+				newNestedPanel(1, "Panel 1"),
+				newNestedPanel(2, "Panel 2"),
 			},
 		},
 	},
@@ -417,26 +438,20 @@ var dashboardsWithFolders = []dashboard{
 		id:       3,
 		uid:      "3",
 		folderID: 1,
-		info: &extract.DashboardInfo{
-			Title: "Dashboard in folder 2",
-			Panels: []extract.PanelInfo{
-				{
-					ID:    3,
-					Title: "Panel 3",
-				},
+		summary: &models.ObjectSummary{
+			Name: "Dashboard in folder 2",
+			Nested: []*models.ObjectSummary{
+				newNestedPanel(3, "Panel 3"),
 			},
 		},
 	},
 	{
 		id:  4,
 		uid: "4",
-		info: &extract.DashboardInfo{
-			Title: "One more dash",
-			Panels: []extract.PanelInfo{
-				{
-					ID:    3,
-					Title: "Panel 4",
-				},
+		summary: &models.ObjectSummary{
+			Name: "One more dash",
+			Nested: []*models.ObjectSummary{
+				newNestedPanel(4, "Panel 4"),
 			},
 		},
 	},
@@ -490,20 +505,23 @@ var dashboardsWithPanels = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "My Dash",
-			Panels: []extract.PanelInfo{
-				{
-					ID:    1,
-					Title: "Panel 1",
-				},
-				{
-					ID:    2,
-					Title: "Panel 2",
-				},
+		summary: &models.ObjectSummary{
+			Name: "My Dash",
+			Nested: []*models.ObjectSummary{
+				newNestedPanel(1, "Panel 1"),
+				newNestedPanel(2, "Panel 2"),
 			},
 		},
 	},
+}
+
+func newNestedPanel(id int64, name string) *models.ObjectSummary {
+	summary := &models.ObjectSummary{
+		Kind: "panel",
+		UID:  fmt.Sprintf("???#%d", id),
+	}
+	summary.Name = name
+	return summary
 }
 
 func TestDashboardIndex_Panels(t *testing.T) {
@@ -535,15 +553,15 @@ var punctuationSplitNgramDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "heat-torkel",
+		summary: &models.ObjectSummary{
+			Name: "heat-torkel",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "topology heatmap",
+		summary: &models.ObjectSummary{
+			Name: "topology heatmap",
 		},
 	},
 }
@@ -568,8 +586,8 @@ var camelCaseNgramDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "heatTorkel",
+		summary: &models.ObjectSummary{
+			Name: "heatTorkel",
 		},
 	},
 }
@@ -581,4 +599,136 @@ func TestDashboardIndex_CamelCaseNgram(t *testing.T) {
 			DashboardQuery{Query: "tork"},
 		)
 	})
+}
+
+func dashboardsWithTitles(names ...string) []dashboard {
+	out := make([]dashboard, 0)
+	for i, name := range names {
+		no := int64(i + 1)
+		out = append(out, dashboard{
+			id:  no,
+			uid: fmt.Sprintf("%d", no),
+			summary: &models.ObjectSummary{
+				Name: name,
+			},
+		})
+	}
+
+	return out
+}
+
+func TestDashboardIndex_MultiTermPrefixMatch(t *testing.T) {
+	var tests = []struct {
+		dashboards []dashboard
+		query      string
+	}{
+		{
+			dashboards: dashboardsWithTitles(
+				"Panel Tests - Bar Gauge 2",
+				"Prometheus 2.0",
+				"Prometheus 2.0 Stats",
+				"Prometheus 20.0",
+				"Prometheus Second Word",
+				"Prometheus Stats",
+				"dynamic (2)",
+				"prometheus histogram",
+				"prometheus histogram2",
+				"roci-simple-2",
+				"x not y",
+			),
+			query: "Prometheus 2.",
+		},
+		{
+			dashboards: dashboardsWithTitles(
+				"From AAA",
+				"Grafana Dev Overview & Home",
+				"Home automation",
+				"Prometheus 2.0",
+				"Prometheus 2.0 Stats",
+				"Prometheus 20.0",
+				"Prometheus Stats",
+				"Transforms - config from query",
+				"iot-testing",
+				"prom style with exemplars",
+				"prop history",
+				"simple frame",
+				"with-hide-from",
+				"xy broke",
+			),
+			query: "Prome",
+		},
+		{
+			dashboards: dashboardsWithTitles(
+				"Panel Tests - Bar Gauge 2",
+				"Prometheus 2.0",
+				"Prometheus 2.0 Stats",
+				"Prometheus 20.0",
+				"Prometheus Second Word",
+				"Prometheus Stats",
+				"dynamic (2)",
+				"prometheus histogram",
+				"prometheus histogram2",
+				"roci-simple-2",
+				"x not y",
+			),
+			query: "Prometheus stat",
+		},
+		{
+			dashboards: dashboardsWithTitles(
+				"Loki Tests - Bar Gauge 2",
+				"Loki 2.0",
+				"Loki 2.0 Stats",
+				"Loki 20.0",
+				"Loki Second Word",
+				"Loki Stats",
+				"dynamic (2)",
+				"Loki histogram",
+				"Loki histogram2",
+				"roci-simple-2",
+				"x not y",
+			),
+			query: "Loki 2.",
+		},
+		{
+			dashboards: dashboardsWithTitles(
+				"Loki Tests - Bar Gauge 2",
+				"Loki 2.0",
+				"Loki 2.0 Stats",
+				"Loki 20.0",
+				"Loki Second Word",
+				"Loki Stats",
+				"dynamic (2)",
+				"Loki histogram",
+				"Loki histogram2",
+				"roci-simple-2",
+				"x not y",
+			),
+			query: "Lok",
+		},
+		{
+			dashboards: dashboardsWithTitles(
+				"Loki Tests - Bar Gauge 2",
+				"Loki 2.0",
+				"Loki 2.0 Stats",
+				"Loki 20.0",
+				"Loki Second Word",
+				"Loki Stats",
+				"dynamic (2)",
+				"Loki histogram",
+				"Loki histogram2",
+				"roci-simple-2",
+				"x not y",
+			),
+			query: "Loki stats",
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("ordering-tests-%d-[%s]", i+1, tt.query), func(t *testing.T) {
+			index := initTestOrgIndexFromDashes(t, tt.dashboards)
+			checkSearchResponseOrdering(t, filepath.Base(t.Name()), index, testAllowAllFilter,
+				DashboardQuery{Query: tt.query},
+			)
+		})
+	}
 }

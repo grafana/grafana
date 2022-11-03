@@ -1,7 +1,8 @@
 // Libraries
 import React, { FC } from 'react';
 
-import { Card, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Card } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 // Types

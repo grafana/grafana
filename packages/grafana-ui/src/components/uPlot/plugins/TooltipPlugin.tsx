@@ -217,7 +217,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       let series: SeriesTableRowProps[] = [];
       const frame = otherProps.data;
       const fields = frame.fields;
-      const sortIdx: any[] = [];
+      const sortIdx: unknown[] = [];
 
       for (let i = 0; i < fields.length; i++) {
         const field = frame.fields[i];

@@ -3,7 +3,8 @@ import React, { FunctionComponent, useMemo } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton, InputGroup, Select, stylesFactory, useTheme2 } from '@grafana/ui';
+import { AccessoryButton, InputGroup } from '@grafana/experimental';
+import { Select, stylesFactory, useTheme2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { Dimensions, MetricStat } from '../../types';
@@ -50,10 +51,16 @@ export const FilterItem: FunctionComponent<Props> = ({
       return [];
     }
 
-    return datasource
-      .getDimensionValues(region, namespace, metricName, filter.key, dimensionsExcludingCurrentKey)
+    return datasource.api
+      .getDimensionValues({
+        dimensionKey: filter.key,
+        dimensionFilters: dimensionsExcludingCurrentKey,
+        region,
+        namespace,
+        metricName,
+      })
       .then((result: Array<SelectableValue<string>>) => {
-        if (result.length && !disableExpressions) {
+        if (result.length && !disableExpressions && !result.some((o) => o.value === wildcardOption.value)) {
           result.unshift(wildcardOption);
         }
         return appendTemplateVariables(datasource, result);

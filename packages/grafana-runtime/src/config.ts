@@ -1,6 +1,7 @@
 import { merge } from 'lodash';
 
 import {
+  AuthSettings,
   BootData,
   BuildInfo,
   createTheme,
@@ -16,6 +17,7 @@ import {
   PreloadPlugin,
   systemDateFormats,
   SystemDateFormatSettings,
+  NewThemeOptions,
 } from '@grafana/data';
 
 export interface AzureSettings {
@@ -27,6 +29,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   isPublicDashboardView: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
+  auth: AuthSettings = {};
   minRefreshInterval = '';
   appUrl = '';
   appSubUrl = '';
@@ -66,7 +69,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   loginHint = '';
   passwordHint = '';
   loginError = undefined;
-  navTree: any;
   viewersCanEdit = false;
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
@@ -108,7 +110,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
   expressionsEnabled = false;
-  customTheme?: any;
+  customTheme?: undefined;
   awsAllowedAuthProviders: string[] = [];
   awsAssumeRoleEnabled = false;
   azure: AzureSettings = {
@@ -133,15 +135,13 @@ export class GrafanaBootConfig implements GrafanaConfig {
     enabled: true,
   };
   googleAnalyticsId: undefined;
+  googleAnalytics4Id: undefined;
   rudderstackWriteKey: undefined;
   rudderstackDataPlaneUrl: undefined;
   rudderstackSdkUrl: undefined;
   rudderstackConfigUrl: undefined;
 
   constructor(options: GrafanaBootConfig) {
-    const mode = options.bootData.user.lightTheme ? 'light' : 'dark';
-    this.theme2 = createTheme({ colors: { mode } });
-    this.theme = this.theme2.v1;
     this.bootData = options.bootData;
     this.isPublicDashboardView = options.bootData.settings.isPublicDashboardView;
 
@@ -174,9 +174,26 @@ export class GrafanaBootConfig implements GrafanaConfig {
 
     overrideFeatureTogglesFromUrl(this);
 
+    // Creating theme after apply feature toggle overrides as the code below is checking a feature toggle right now
+    this.theme2 = createTheme(getThemeCustomizations(this));
+
+    this.theme = this.theme2.v1;
     // Special feature toggle that impact theme/component looks
     this.theme2.flags.topnav = this.featureToggles.topnav;
   }
+}
+
+function getThemeCustomizations(config: GrafanaBootConfig) {
+  const mode = config.bootData.user.lightTheme ? 'light' : 'dark';
+  const themeOptions: NewThemeOptions = {
+    colors: { mode },
+  };
+
+  if (config.featureToggles.interFont) {
+    themeOptions.typography = { fontFamily: '"Inter", "Helvetica", "Arial", sans-serif' };
+  }
+
+  return themeOptions;
 }
 
 function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {

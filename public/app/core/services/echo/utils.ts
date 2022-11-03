@@ -14,6 +14,15 @@ export function getUserIdentifier(user: CurrentUserDTO) {
   return user.email;
 }
 
+export function loadScript(url: string) {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.onload = resolve;
+    script.src = url;
+    document.head.appendChild(script);
+  });
+}
+
 /** @internal */
 export const echoLogger = createLogger('EchoSrv');
 export const echoLog = echoLogger.logger;

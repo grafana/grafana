@@ -18,6 +18,7 @@ import {
 } from '@grafana/data';
 
 import { createGraphFrames } from './graphTransform';
+import { Span, TraceSearchMetadata } from './types';
 
 export function createTableFrame(
   logsFrame: DataFrame,
@@ -549,15 +550,7 @@ export function transformTrace(response: DataQueryResponse, nodeGraph = false): 
   };
 }
 
-export type SearchResponse = {
-  traceID: string;
-  rootServiceName: string;
-  rootTraceName: string;
-  startTimeUnixNano: string;
-  durationMs: number;
-};
-
-export function createTableFrameFromSearch(data: SearchResponse[], instanceSettings: DataSourceInstanceSettings) {
+export function createTableFrameFromSearch(data: TraceSearchMetadata[], instanceSettings: DataSourceInstanceSettings) {
   const frame = new MutableDataFrame({
     fields: [
       {
@@ -584,7 +577,7 @@ export function createTableFrameFromSearch(data: SearchResponse[], instanceSetti
       },
       { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' } },
       { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
-      { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
+      { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ns' } },
     ],
     meta: {
       preferredVisualisationType: 'table',
@@ -605,7 +598,7 @@ export function createTableFrameFromSearch(data: SearchResponse[], instanceSetti
   return frame;
 }
 
-function transformToTraceData(data: SearchResponse) {
+function transformToTraceData(data: TraceSearchMetadata) {
   let traceName = '';
   if (data.rootServiceName) {
     traceName += data.rootServiceName + ' ';
@@ -616,7 +609,7 @@ function transformToTraceData(data: SearchResponse) {
 
   const traceStartTime = parseInt(data.startTimeUnixNano!, 10) / 1000000;
 
-  let startTime = dateTimeFormat(traceStartTime);
+  let startTime = !isNaN(traceStartTime) ? dateTimeFormat(traceStartTime) : '';
 
   if (Math.abs(differenceInHours(new Date(traceStartTime), Date.now())) <= 1) {
     startTime = formatDistance(new Date(traceStartTime), Date.now(), {
@@ -628,9 +621,144 @@ function transformToTraceData(data: SearchResponse) {
   return {
     traceID: data.traceID,
     startTime: startTime,
-    duration: data.durationMs,
+    duration: data.durationMs?.toString(),
     traceName,
   };
+}
+
+export function createTableFrameFromTraceQlQuery(
+  data: TraceSearchMetadata[],
+  instanceSettings: DataSourceInstanceSettings
+) {
+  const frame = new MutableDataFrame({
+    fields: [
+      {
+        name: 'traceID',
+        type: FieldType.string,
+        config: {
+          unit: 'string',
+          displayNameFromDS: 'Trace ID',
+          links: [
+            {
+              title: 'Trace: ${__value.raw}',
+              url: '',
+              internal: {
+                datasourceUid: instanceSettings.uid,
+                datasourceName: instanceSettings.name,
+                query: {
+                  query: '${__value.raw}',
+                  queryType: 'traceId',
+                },
+              },
+            },
+          ],
+        },
+      },
+      {
+        name: 'traceIdHidden',
+        config: {
+          custom: { hidden: true },
+        },
+      },
+      {
+        name: 'spanID',
+        type: FieldType.string,
+        config: {
+          unit: 'string',
+          displayNameFromDS: 'Span ID',
+          links: [
+            {
+              title: 'Span: ${__value.raw}',
+              url: '',
+              internal: {
+                datasourceUid: instanceSettings.uid,
+                datasourceName: instanceSettings.name,
+                query: {
+                  query: '${__data.fields.traceIdHidden}',
+                  queryType: 'traceId',
+                },
+              },
+            },
+          ],
+        },
+      },
+      { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' } },
+      // { name: 'attributes', type: FieldType.string, config: { displayNameFromDS: 'Attributes' } },
+      { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
+      { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ns' } },
+    ],
+    meta: {
+      preferredVisualisationType: 'table',
+    },
+  });
+  if (!data?.length) {
+    return frame;
+  }
+
+  const attributesAdded: string[] = [];
+
+  data.forEach((trace) => {
+    trace.spanSet?.spans.forEach((span) => {
+      span.attributes?.forEach((attr) => {
+        if (!attributesAdded.includes(attr.key)) {
+          frame.addField({ name: attr.key, type: FieldType.string, config: { displayNameFromDS: attr.key } });
+          attributesAdded.push(attr.key);
+        }
+      });
+    });
+  });
+
+  const tableRows = data
+    // Show the most recent traces
+    .sort((a, b) => parseInt(b?.startTimeUnixNano!, 10) / 1000000 - parseInt(a?.startTimeUnixNano!, 10) / 1000000)
+    .reduce((rows: TraceTableData[], trace) => {
+      const traceData: TraceTableData = transformToTraceData(trace);
+      rows.push(traceData);
+      trace.spanSet?.spans.forEach((span) => {
+        rows.push(transformSpanToTraceData(span, trace.traceID));
+      });
+      return rows;
+    }, []);
+
+  for (const row of tableRows) {
+    frame.add(row);
+  }
+
+  return frame;
+}
+
+interface TraceTableData {
+  [key: string]: string | number | undefined; // dynamic attribute name
+  traceID?: string;
+  spanID?: string;
+  //attributes?: string;
+  startTime?: string;
+  duration?: string;
+}
+
+function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
+  const spanStartTimeUnixMs = parseInt(span.startTimeUnixNano, 10) / 1000000;
+  let spanStartTime = dateTimeFormat(spanStartTimeUnixMs);
+
+  if (Math.abs(differenceInHours(new Date(spanStartTime), Date.now())) <= 1) {
+    spanStartTime = formatDistance(new Date(spanStartTime), Date.now(), {
+      addSuffix: true,
+      includeSeconds: true,
+    });
+  }
+
+  const data: TraceTableData = {
+    traceIdHidden: traceID,
+    spanID: span.spanID,
+    startTime: spanStartTime,
+    duration: span.durationNanos,
+  };
+
+  span.attributes?.forEach((attr) => {
+    data[attr.key] = attr.value.stringValue;
+  });
+
+  return data;
 }
 
 const emptyDataQueryResponse = {

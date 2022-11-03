@@ -7,11 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	rs "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -79,9 +82,9 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store, permissionStore, sql := setupTestEnv(t)
+			store, permissionStore, sql, teamSvc := setupTestEnv(t)
 
-			user, team := createUserAndTeam(t, sql, tt.orgID)
+			user, team := createUserAndTeam(t, sql, teamSvc, tt.orgID)
 
 			for _, id := range tt.userPermissions {
 				_, err := permissionStore.SetUserResourcePermission(context.Background(), tt.orgID, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
@@ -142,8 +145,8 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 
 func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	t.Run("expect permissions in all orgs to be deleted", func(t *testing.T) {
-		store, permissionsStore, sql := setupTestEnv(t)
-		user, _ := createUserAndTeam(t, sql, 1)
+		store, permissionsStore, sql, teamSvc := setupTestEnv(t)
+		user, _ := createUserAndTeam(t, sql, teamSvc, 1)
 
 		// generate permissions in org 1
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
@@ -182,8 +185,8 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	})
 
 	t.Run("expect permissions in org 1 to be deleted", func(t *testing.T) {
-		store, permissionsStore, sql := setupTestEnv(t)
-		user, _ := createUserAndTeam(t, sql, 1)
+		store, permissionsStore, sql, teamSvc := setupTestEnv(t)
+		user, _ := createUserAndTeam(t, sql, teamSvc, 1)
 
 		// generate permissions in org 1
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
@@ -222,7 +225,7 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	})
 }
 
-func createUserAndTeam(t *testing.T, sql *sqlstore.SQLStore, orgID int64) (*user.User, models.Team) {
+func createUserAndTeam(t *testing.T, sql *sqlstore.SQLStore, teamSvc team.Service, orgID int64) (*user.User, models.Team) {
 	t.Helper()
 
 	user, err := sql.CreateUser(context.Background(), user.CreateUserCommand{
@@ -231,18 +234,19 @@ func createUserAndTeam(t *testing.T, sql *sqlstore.SQLStore, orgID int64) (*user
 	})
 	require.NoError(t, err)
 
-	team, err := sql.CreateTeam("team", "", orgID)
+	team, err := teamSvc.CreateTeam("team", "", orgID)
 	require.NoError(t, err)
 
-	err = sql.AddTeamMember(user.ID, orgID, team.Id, false, models.PERMISSION_VIEW)
+	err = teamSvc.AddTeamMember(user.ID, orgID, team.Id, false, models.PERMISSION_VIEW)
 	require.NoError(t, err)
 
 	return user, team
 }
 
-func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, *sqlstore.SQLStore) {
-	sql := sqlstore.InitTestDB(t)
+func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, *sqlstore.SQLStore, team.Service) {
+	sql, cfg := db.InitTestDBwithCfg(t)
 	acstore := ProvideService(sql)
 	permissionStore := rs.NewStore(sql)
-	return acstore, permissionStore, sql
+	teamService := teamimpl.ProvideService(sql, cfg)
+	return acstore, permissionStore, sql, teamService
 }

@@ -42,6 +42,8 @@ func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
 //
 // Stars the given Dashboard for the actual user.
 //
+// Deprecated: true
+//
 // Responses:
 // 200: okResponse
 // 400: badRequestError
@@ -51,16 +53,48 @@ func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) StarDashboard(c *models.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "id is invalid", err)
+		return response.Error(http.StatusBadRequest, "Invalid dashboard ID", nil)
 	}
-	cmd := star.StarDashboardCommand{UserID: c.UserID, DashboardID: id}
 
+	cmd := star.StarDashboardCommand{UserID: c.UserID, DashboardID: id}
 	if cmd.DashboardID <= 0 {
 		return response.Error(400, "Missing dashboard id", nil)
 	}
 
 	if err := hs.starService.Add(c.Req.Context(), &cmd); err != nil {
-		return response.Error(500, "Failed to star dashboard", err)
+		return response.Error(http.StatusInternalServerError, "Failed to star dashboard", err)
+	}
+
+	return response.Success("Dashboard starred!")
+}
+
+// swagger:route POST /user/stars/dashboard/uid/{dashboard_uid} signed_in_user starDashboardByUID
+//
+// Star a dashboard.
+//
+// Stars the given Dashboard for the actual user.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) StarDashboardByUID(c *models.ReqContext) response.Response {
+	uid := web.Params(c.Req)[":uid"]
+	if uid == "" {
+		return response.Error(http.StatusBadRequest, "Invalid dashboard UID", nil)
+	}
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, 0, uid)
+
+	if rsp != nil {
+		return rsp
+	}
+
+	cmd := star.StarDashboardCommand{UserID: c.UserID, DashboardID: dash.Id}
+
+	if err := hs.starService.Add(c.Req.Context(), &cmd); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to star dashboard", err)
 	}
 
 	return response.Success("Dashboard starred!")
@@ -72,6 +106,10 @@ func (hs *HTTPServer) StarDashboard(c *models.ReqContext) response.Response {
 //
 // Deletes the starring of the given Dashboard for the actual user.
 //
+// Deprecated: true
+//
+// Please refer to the [new](#/signed_in_user/unstarDashboardByUID) API instead
+//
 // Responses:
 // 200: okResponse
 // 400: badRequestError
@@ -81,16 +119,47 @@ func (hs *HTTPServer) StarDashboard(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) UnstarDashboard(c *models.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "id is invalid", err)
+		return response.Error(http.StatusBadRequest, "Invalid dashboard ID", nil)
 	}
-	cmd := star.UnstarDashboardCommand{UserID: c.UserID, DashboardID: id}
 
+	cmd := star.UnstarDashboardCommand{UserID: c.UserID, DashboardID: id}
 	if cmd.DashboardID <= 0 {
 		return response.Error(400, "Missing dashboard id", nil)
 	}
 
 	if err := hs.starService.Delete(c.Req.Context(), &cmd); err != nil {
-		return response.Error(500, "Failed to unstar dashboard", err)
+		return response.Error(http.StatusInternalServerError, "Failed to unstar dashboard", err)
+	}
+
+	return response.Success("Dashboard unstarred")
+}
+
+// swagger:route DELETE /user/stars/dashboard/uid/{dashboard_uid} signed_in_user unstarDashboardByUID
+//
+// Unstar a dashboard.
+//
+// Deletes the starring of the given Dashboard for the actual user.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) UnstarDashboardByUID(c *models.ReqContext) response.Response {
+	uid := web.Params(c.Req)[":uid"]
+	if uid == "" {
+		return response.Error(http.StatusBadRequest, "Invalid dashboard UID", nil)
+	}
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, 0, uid)
+	if rsp != nil {
+		return rsp
+	}
+
+	cmd := star.UnstarDashboardCommand{UserID: c.UserID, DashboardID: dash.Id}
+
+	if err := hs.starService.Delete(c.Req.Context(), &cmd); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to unstar dashboard", err)
 	}
 
 	return response.Success("Dashboard unstarred")
@@ -103,9 +172,23 @@ type StarDashboardParams struct {
 	DashboardID string `json:"dashboard_id"`
 }
 
+// swagger:parameters starDashboardByUID
+type StarDashboardByUIDParams struct {
+	// in:path
+	// required:true
+	DashboardUID string `json:"dashboard_uid"`
+}
+
 // swagger:parameters unstarDashboard
 type UnstarDashboardParams struct {
 	// in:path
 	// required:true
 	DashboardID string `json:"dashboard_id"`
+}
+
+// swagger:parameters unstarDashboardByUID
+type UnstarDashboardByUIDParams struct {
+	// in:path
+	// required:true
+	DashboardUID string `json:"dashboard_uid"`
 }

@@ -111,13 +111,13 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 
 	if cmd.External {
 		if !setting.ExternalEnabled {
-			c.JsonApiErr(403, "External dashboard creation is disabled", nil)
+			c.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
 			return nil
 		}
 
 		response, err := createExternalDashboardSnapshot(cmd)
 		if err != nil {
-			c.JsonApiErr(500, "Failed to create external snapshot", err)
+			c.JsonApiErr(http.StatusInternalServerError, "Failed to create external snapshot", err)
 			return nil
 		}
 
@@ -130,11 +130,16 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 
 		metrics.MApiDashboardSnapshotExternal.Inc()
 	} else {
+		if cmd.Dashboard.Get("id").MustInt64() == 0 {
+			c.JSON(http.StatusBadRequest, "Creating a local snapshot requires a dashboard")
+			return nil
+		}
+
 		if cmd.Key == "" {
 			var err error
 			cmd.Key, err = util.GetRandomString(32)
 			if err != nil {
-				c.JsonApiErr(500, "Could not generate random string", err)
+				c.JsonApiErr(http.StatusInternalServerError, "Could not generate random string", err)
 				return nil
 			}
 		}
@@ -143,7 +148,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 			var err error
 			cmd.DeleteKey, err = util.GetRandomString(32)
 			if err != nil {
-				c.JsonApiErr(500, "Could not generate random string", err)
+				c.JsonApiErr(http.StatusInternalServerError, "Could not generate random string", err)
 				return nil
 			}
 		}
@@ -154,7 +159,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 	}
 
 	if err := hs.dashboardsnapshotsService.CreateDashboardSnapshot(c.Req.Context(), &cmd); err != nil {
-		c.JsonApiErr(500, "Failed to create snapshot", err)
+		c.JsonApiErr(http.StatusInternalServerError, "Failed to create snapshot", err)
 		return nil
 	}
 
@@ -300,7 +305,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) r
 func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Response {
 	key := web.Params(c.Req)[":key"]
 	if len(key) == 0 {
-		return response.Error(404, "Snapshot not found", nil)
+		return response.Error(http.StatusNotFound, "Snapshot not found", nil)
 	}
 
 	query := &dashboardsnapshots.GetDashboardSnapshotQuery{Key: key}
@@ -310,37 +315,39 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 		return response.Err(err)
 	}
 	if query.Result == nil {
-		return response.Error(404, "Failed to get dashboard snapshot", nil)
+		return response.Error(http.StatusNotFound, "Failed to get dashboard snapshot", nil)
 	}
 
 	if query.Result.External {
 		err := deleteExternalDashboardSnapshot(query.Result.ExternalDeleteUrl)
 		if err != nil {
-			return response.Error(500, "Failed to delete external dashboard", err)
+			return response.Error(http.StatusInternalServerError, "Failed to delete external dashboard", err)
 		}
-	} else {
-		// When creating an external snapshot, its dashboard content is empty. This means that the mustInt here returns a 0,
-		// which before RBAC would result in a dashboard which has no ACL. A dashboard without an ACL would fallback
-		// to the user’s org role, which for editors and admins would essentially always be allowed here. With RBAC,
-		// all permissions must be explicit, so the lack of a rule for dashboard 0 means the guardian will reject.
-		dashboardID := query.Result.Dashboard.Get("id").MustInt64()
+	}
 
+	// Dashboard can be empty (creation error or external snapshot). This means that the mustInt here returns a 0,
+	// which before RBAC would result in a dashboard which has no ACL. A dashboard without an ACL would fallback
+	// to the user’s org role, which for editors and admins would essentially always be allowed here. With RBAC,
+	// all permissions must be explicit, so the lack of a rule for dashboard 0 means the guardian will reject.
+	dashboardID := query.Result.Dashboard.Get("id").MustInt64()
+
+	if dashboardID != 0 {
 		guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
 		canEdit, err := guardian.CanEdit()
-		// check for permissions only if the dahboard is found
+		// check for permissions only if the dashboard is found
 		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
-			return response.Error(500, "Error while checking permissions for snapshot", err)
+			return response.Error(http.StatusInternalServerError, "Error while checking permissions for snapshot", err)
 		}
 
 		if !canEdit && query.Result.UserId != c.SignedInUser.UserID && !errors.Is(err, dashboards.ErrDashboardNotFound) {
-			return response.Error(403, "Access denied to this snapshot", nil)
+			return response.Error(http.StatusForbidden, "Access denied to this snapshot", nil)
 		}
 	}
 
 	cmd := &dashboardsnapshots.DeleteDashboardSnapshotCommand{DeleteKey: query.Result.DeleteKey}
 
 	if err := hs.dashboardsnapshotsService.DeleteDashboardSnapshot(c.Req.Context(), cmd); err != nil {
-		return response.Error(500, "Failed to delete dashboard snapshot", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete dashboard snapshot", err)
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{

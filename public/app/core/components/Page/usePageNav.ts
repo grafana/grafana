@@ -1,10 +1,9 @@
-import { useSelector } from 'react-redux';
 import { createSelector } from 'reselect';
 
 import { NavModel } from '@grafana/data';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { store } from 'app/store/store';
-import { StoreState } from 'app/types';
+import { StoreState, useSelector } from 'app/types';
 
 export function usePageNav(navId?: string, oldProp?: NavModel): NavModel | undefined {
   if (oldProp) {

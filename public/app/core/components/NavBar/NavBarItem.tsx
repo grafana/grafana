@@ -1,18 +1,17 @@
 import { css, cx } from '@emotion/css';
-import { useLingui } from '@lingui/react';
 import { Item } from '@react-stately/collections';
 import React from 'react';
 
 import { GrafanaTheme2, locationUtil, NavMenuItemType, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { IconName, useTheme2 } from '@grafana/ui';
+import { toIconName, useTheme2 } from '@grafana/ui';
 
 import { NavBarItemMenu } from './NavBarItemMenu';
 import { NavBarItemMenuTrigger } from './NavBarItemMenuTrigger';
 import { getNavBarItemWithoutMenuStyles } from './NavBarItemWithoutMenu';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { useNavBarContext } from './context';
-import menuItemTranslations from './navBarItem-translations';
+import { getNavTitle } from './navBarItem-translations';
 import { getNavModelItemKey } from './utils';
 
 export interface Props {
@@ -23,7 +22,6 @@ export interface Props {
 }
 
 const NavBarItem = ({ isActive = false, className, reverseMenuDirection = false, link }: Props) => {
-  const { i18n } = useLingui();
   const theme = useTheme2();
   const menuItems = link.children ?? [];
   const { menuIdOpen } = useNavBarContext();
@@ -55,8 +53,7 @@ const NavBarItem = ({ isActive = false, className, reverseMenuDirection = false,
     }
   };
 
-  const translationKey = link.id && menuItemTranslations[link.id];
-  const linkText = translationKey ? i18n._(translationKey) : link.text;
+  const linkText = getNavTitle(link.id) ?? link.text;
 
   return (
     <li className={cx(styles.container, { [styles.containerHover]: section.id === menuIdOpen }, className)}>
@@ -75,10 +72,10 @@ const NavBarItem = ({ isActive = false, className, reverseMenuDirection = false,
           onNavigate={onNavigate}
         >
           {(item: NavModelItem) => {
-            const translationKey = item.id && menuItemTranslations[item.id];
-            const itemText = translationKey ? i18n._(translationKey) : item.text;
+            const itemText = getNavTitle(item.id) ?? item.text;
             const isSection = item.menuItemType === NavMenuItemType.Section;
-            const icon = item.showIconInNavbar && !isSection ? (item.icon as IconName) : undefined;
+            const iconName = item.icon ? toIconName(item.icon) : undefined;
+            const icon = item.showIconInNavbar && !isSection ? iconName : undefined;
 
             return (
               <Item key={getNavModelItemKey(item)} textValue={item.text}>

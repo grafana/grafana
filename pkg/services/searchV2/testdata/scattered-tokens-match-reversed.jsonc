@@ -3,19 +3,17 @@
 //  Frame[0] {
 //      "type": "search-results",
 //      "custom": {
-//          "count": 2
+//          "count": 0
 //      }
 //  }
 //  Name: Query results
-//  Dimensions: 8 Fields by 2 Rows
-//  +----------------+----------------+----------------------------------------------------------------------+------------------+----------------+--------------------------+-------------------------+----------------+
-//  | Name: kind     | Name: uid      | Name: name                                                           | Name: panel_type | Name: url      | Name: tags               | Name: ds_uid            | Name: location |
-//  | Labels:        | Labels:        | Labels:                                                              | Labels:          | Labels:        | Labels:                  | Labels:                 | Labels:        |
-//  | Type: []string | Type: []string | Type: []string                                                       | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []json.RawMessage | Type: []string |
-//  +----------------+----------------+----------------------------------------------------------------------+------------------+----------------+--------------------------+-------------------------+----------------+
-//  | dashboard      | 2              | A secret is powerful when it is empty (Umberto Eco)                  |                  | /pfix/d/2/     | null                     | []                      |                |
-//  | dashboard      | 1              | Three can keep a secret, if two of them are dead (Benjamin Franklin) |                  | /pfix/d/1/     | null                     | []                      |                |
-//  +----------------+----------------+----------------------------------------------------------------------+------------------+----------------+--------------------------+-------------------------+----------------+
+//  Dimensions: 8 Fields by 0 Rows
+//  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
+//  | Name: kind     | Name: uid      | Name: name     | Name: panel_type | Name: url      | Name: tags               | Name: ds_uid            | Name: location |
+//  | Labels:        | Labels:        | Labels:        | Labels:          | Labels:        | Labels:                  | Labels:                 | Labels:        |
+//  | Type: []string | Type: []string | Type: []string | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []json.RawMessage | Type: []string |
+//  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
+//  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -27,7 +25,7 @@
         "meta": {
           "type": "search-results",
           "custom": {
-            "count": 2
+            "count": 0
           }
         },
         "fields": [
@@ -100,38 +98,14 @@
       },
       "data": {
         "values": [
-          [
-            "dashboard",
-            "dashboard"
-          ],
-          [
-            "2",
-            "1"
-          ],
-          [
-            "A secret is powerful when it is empty (Umberto Eco)",
-            "Three can keep a secret, if two of them are dead (Benjamin Franklin)"
-          ],
-          [
-            "",
-            ""
-          ],
-          [
-            "/pfix/d/2/",
-            "/pfix/d/1/"
-          ],
-          [
-            null,
-            null
-          ],
-          [
-            [],
-            []
-          ],
-          [
-            "",
-            ""
-          ]
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
         ]
       }
     }

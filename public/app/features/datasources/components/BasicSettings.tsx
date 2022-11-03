@@ -3,7 +3,6 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { InlineField, InlineSwitch, Input, Badge, useStyles2 } from '@grafana/ui';
 
 export interface Props {
@@ -11,15 +10,13 @@ export interface Props {
   isDefault: boolean;
   onNameChange: (name: string) => void;
   onDefaultChange: (value: boolean) => void;
+  alertingSupported: boolean;
 }
 
-export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNameChange }: Props) {
-  const ds = getDataSourceSrv()?.getInstanceSettings(dataSourceName);
-  const hasAlertingEnabled = Boolean(ds?.meta?.alerting ?? false);
-
+export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNameChange, alertingSupported }: Props) {
   return (
     <>
-      <AlertingEnabled enabled={hasAlertingEnabled} />
+      {<AlertingEnabled enabled={alertingSupported} />}
       <div className="gf-form-group" aria-label="Datasource settings page basic settings">
         <div className="gf-form-inline">
           {/* Name */}

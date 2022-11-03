@@ -51,6 +51,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
+/** @deprecated will be removed in the next major version */
 export interface Props {
   active?: boolean;
   count: number;
@@ -58,6 +59,7 @@ export interface Props {
   value?: string;
 }
 
+/** @deprecated will be removed in the next major version */
 export const LogLabelStatsRow: FunctionComponent<Props> = ({ active, count, proportion, value }) => {
   const style = useStyles2(getStyles);
   const percent = `${Math.round(proportion * 100)}%`;

@@ -29,7 +29,7 @@ const mockPost = jest.fn(() => {
 
 setBackendSrv({
   post: mockPost,
-} as any as BackendSrv);
+} as unknown as BackendSrv);
 
 const setup = () => {
   return render(<CreateTeam />);
@@ -38,7 +38,9 @@ const setup = () => {
 describe('Create team', () => {
   it('should render component', () => {
     setup();
-    expect(screen.getByText(/new team/i)).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /name/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByRole('button')).toBeInTheDocument();
   });
 
   it('should send correct data to the server', async () => {

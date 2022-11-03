@@ -9,7 +9,7 @@ interface Props {
   title: string | ReactNode;
 }
 
-export const TimeZoneTitle: React.FC<Props> = ({ title }) => {
+export const TimeZoneTitle = ({ title }: Props) => {
   const styles = useStyles2(getStyles);
 
   if (!title) {

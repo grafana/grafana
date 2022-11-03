@@ -429,7 +429,13 @@ func buildFilterString(metricType string, filterParts []string) string {
 }
 
 func buildSLOFilterExpression(q sloQuery) string {
-	return fmt.Sprintf(`%s("projects/%s/services/%s/serviceLevelObjectives/%s")`, q.SelectorName, q.ProjectName, q.ServiceId, q.SloId)
+	sloName := fmt.Sprintf("projects/%s/services/%s/serviceLevelObjectives/%s", q.ProjectName, q.ServiceId, q.SloId)
+
+	if q.SelectorName == "select_slo_burn_rate" {
+		return fmt.Sprintf(`%s("%s", "%s")`, q.SelectorName, sloName, q.LookbackPeriod)
+	} else {
+		return fmt.Sprintf(`%s("%s")`, q.SelectorName, sloName)
+	}
 }
 
 func setMetricAggParams(params *url.Values, query *metricQuery, durationSeconds int, intervalMs int64) {
@@ -590,7 +596,12 @@ func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 	case bucketOptions.ExponentialBuckets != nil:
 		bucketBound = strconv.FormatInt(int64(bucketOptions.ExponentialBuckets.Scale*math.Pow(bucketOptions.ExponentialBuckets.GrowthFactor, float64(n-1))), 10)
 	case bucketOptions.ExplicitBuckets != nil:
-		bucketBound = fmt.Sprintf("%g", bucketOptions.ExplicitBuckets.Bounds[n])
+		if n < len(bucketOptions.ExplicitBuckets.Bounds) {
+			bucketBound = fmt.Sprintf("%g", bucketOptions.ExplicitBuckets.Bounds[n])
+		} else {
+			lastBound := bucketOptions.ExplicitBuckets.Bounds[len(bucketOptions.ExplicitBuckets.Bounds)-1]
+			bucketBound = fmt.Sprintf("%g+", lastBound)
+		}
 	}
 	return bucketBound
 }
@@ -652,7 +663,7 @@ func unmarshalResponse(res *http.Response) (cloudMonitoringResponse, error) {
 	return data, nil
 }
 
-func addConfigData(frames data.Frames, dl string, unit string) data.Frames {
+func addConfigData(frames data.Frames, dl string, unit string, period string) data.Frames {
 	for i := range frames {
 		if frames[i].Fields[1].Config == nil {
 			frames[i].Fields[1].Config = &data.FieldConfig{}
@@ -668,6 +679,15 @@ func addConfigData(frames data.Frames, dl string, unit string) data.Frames {
 		if len(unit) > 0 {
 			if val, ok := cloudMonitoringUnitMappings[unit]; ok {
 				frames[i].Fields[1].Config.Unit = val
+			}
+		}
+		if frames[i].Fields[0].Config == nil {
+			frames[i].Fields[0].Config = &data.FieldConfig{}
+		}
+		if period != "" {
+			err := addInterval(period, frames[i].Fields[0])
+			if err != nil {
+				slog.Error("Failed to add interval", "error", err)
 			}
 		}
 	}

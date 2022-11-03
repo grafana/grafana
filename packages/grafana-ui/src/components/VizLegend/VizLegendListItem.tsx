@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles } from '../../themes';
+import { useStyles2 } from '../../themes';
 
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendStatsList } from './VizLegendStatsList';
@@ -22,7 +22,7 @@ export interface Props<T> {
 /**
  * @internal
  */
-export const VizLegendListItem = <T extends unknown = any>({
+export const VizLegendListItem = <T = unknown,>({
   item,
   onLabelClick,
   onLabelMouseEnter,
@@ -30,7 +30,7 @@ export const VizLegendListItem = <T extends unknown = any>({
   className,
   readonly,
 }: Props<T>) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const onMouseEnter = useCallback(
     (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -81,7 +81,7 @@ export const VizLegendListItem = <T extends unknown = any>({
 
 VizLegendListItem.displayName = 'VizLegendListItem';
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   label: css`
     label: LegendLabel;
     white-space: nowrap;
@@ -92,7 +92,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   itemDisabled: css`
     label: LegendLabelDisabled;
-    color: ${theme.colors.linkDisabled};
+    color: ${theme.colors.text.disabled};
   `,
   itemWrapper: css`
     label: LegendItemWrapper;
@@ -105,6 +105,6 @@ const getStyles = (theme: GrafanaTheme) => ({
     text-align: right;
   `,
   yAxisLabel: css`
-    color: ${theme.palette.gray2};
+    color: ${theme.v1.palette.gray2};
   `,
 });

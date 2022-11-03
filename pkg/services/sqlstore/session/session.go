@@ -30,6 +30,10 @@ func (gs *SessionDB) Select(ctx context.Context, dest interface{}, query string,
 	return gs.sqlxdb.SelectContext(ctx, dest, gs.sqlxdb.Rebind(query), args...)
 }
 
+func (gs *SessionDB) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+	return gs.sqlxdb.QueryContext(ctx, gs.sqlxdb.Rebind(query), args...)
+}
+
 func (gs *SessionDB) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	return gs.sqlxdb.ExecContext(ctx, gs.sqlxdb.Rebind(query), args...)
 }
@@ -48,6 +52,8 @@ func (gs *SessionDB) Beginx() (*SessionTx, error) {
 }
 
 func (gs *SessionDB) WithTransaction(ctx context.Context, callback func(*SessionTx) error) error {
+	// Instead of begin a transaction, we need to check the transaction in context, if it exists,
+	// we can reuse it.
 	tx, err := gs.Beginx()
 	if err != nil {
 		return err
@@ -76,6 +82,10 @@ func (gtx *SessionTx) NamedExec(ctx context.Context, query string, arg interface
 
 func (gtx *SessionTx) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	return gtx.sqlxtx.ExecContext(ctx, gtx.sqlxtx.Rebind(query), args...)
+}
+
+func (gtx *SessionTx) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+	return gtx.sqlxtx.QueryContext(ctx, gtx.sqlxtx.Rebind(query), args...)
 }
 
 func (gtx *SessionTx) Get(ctx context.Context, dest interface{}, query string, args ...interface{}) error {

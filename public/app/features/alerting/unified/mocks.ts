@@ -58,7 +58,8 @@ export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData
         },
       },
       ...meta,
-    } as any as DataSourcePluginMeta,
+    } as unknown as DataSourcePluginMeta,
+    readOnly: false,
     ...partial,
   };
 }

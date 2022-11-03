@@ -1,5 +1,5 @@
 import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
-import { DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
+import { DataFrame, DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 
 import {
   QueryEditorArrayExpression,
@@ -77,6 +77,7 @@ export interface CloudWatchMathExpressionQuery extends DataQuery {
 
 export type LogAction =
   | 'DescribeLogGroups'
+  | 'DescribeAllLogGroups'
   | 'GetQueryResults'
   | 'GetLogGroupFields'
   | 'GetLogEvents'
@@ -243,6 +244,7 @@ export interface TSDBQueryResult<T = any> {
   refId: string;
   series: TSDBTimeSeries[];
   tables: Array<TSDBTable<T>>;
+  frames: DataFrame[];
 
   error?: string;
   meta?: any;
@@ -251,6 +253,15 @@ export interface TSDBQueryResult<T = any> {
 export interface TSDBTable<T = any> {
   columns: Array<{ text: string }>;
   rows: T[];
+}
+
+export interface DataQueryError<CloudWatchMetricsQuery> {
+  data?: {
+    message?: string;
+    error?: string;
+    results: Record<string, TSDBQueryResult<CloudWatchMetricsQuery>>;
+  };
+  message?: string;
 }
 
 export interface TSDBTimeSeries {
@@ -438,4 +449,30 @@ export interface LegacyAnnotationQuery extends MetricStat, DataQuery {
     type: string;
   };
   type: string;
+}
+
+export interface MetricResponse {
+  name: string;
+  namespace: string;
+}
+
+export interface ResourceRequest {
+  region: string;
+}
+
+export interface GetDimensionKeysRequest extends ResourceRequest {
+  metricName?: string;
+  namespace?: string;
+  dimensionFilters?: Dimensions;
+}
+
+export interface GetDimensionValuesRequest extends ResourceRequest {
+  dimensionKey: string;
+  namespace: string;
+  metricName?: string;
+  dimensionFilters?: Dimensions;
+}
+
+export interface GetMetricsRequest extends ResourceRequest {
+  namespace?: string;
 }

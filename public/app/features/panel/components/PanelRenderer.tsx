@@ -1,6 +1,16 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { usePrevious } from 'react-use';
 
-import { applyFieldOverrides, FieldConfigSource, getTimeZone, PanelData, PanelPlugin } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  FieldConfigSource,
+  getTimeZone,
+  PanelData,
+  PanelPlugin,
+  compareArrayValues,
+  compareDataFrameStructures,
+  PluginContextProvider,
+} from '@grafana/data';
 import { PanelRendererProps } from '@grafana/runtime';
 import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
@@ -64,24 +74,26 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
 
   return (
     <ErrorBoundaryAlert dependencies={[plugin, data]}>
-      <PanelComponent
-        id={1}
-        data={dataWithOverrides}
-        title={title}
-        timeRange={dataWithOverrides.timeRange}
-        timeZone={timeZone}
-        options={optionsWithDefaults!.options}
-        fieldConfig={fieldConfig}
-        transparent={false}
-        width={width}
-        height={height}
-        renderCounter={0}
-        replaceVariables={(str: string) => str}
-        onOptionsChange={onOptionsChange}
-        onFieldConfigChange={onFieldConfigChange}
-        onChangeTimeRange={onChangeTimeRange}
-        eventBus={appEvents}
-      />
+      <PluginContextProvider meta={plugin.meta}>
+        <PanelComponent
+          id={1}
+          data={dataWithOverrides}
+          title={title}
+          timeRange={dataWithOverrides.timeRange}
+          timeZone={timeZone}
+          options={optionsWithDefaults!.options}
+          fieldConfig={fieldConfig}
+          transparent={false}
+          width={width}
+          height={height}
+          renderCounter={0}
+          replaceVariables={(str: string) => str}
+          onOptionsChange={onOptionsChange}
+          onFieldConfigChange={onFieldConfigChange}
+          onChangeTimeRange={onChangeTimeRange}
+          eventBus={appEvents}
+        />
+      </PluginContextProvider>
     </ErrorBoundaryAlert>
   );
 }
@@ -112,18 +124,29 @@ function useFieldOverrides(
   timeZone: string
 ): PanelData | undefined {
   const fieldConfig = defaultOptions?.fieldConfig;
-  const series = data?.series;
   const fieldConfigRegistry = plugin?.fieldConfigRegistry;
   const theme = useTheme2();
   const structureRev = useRef(0);
+  const prevSeries = usePrevious(data?.series);
 
   return useMemo(() => {
     if (!fieldConfigRegistry || !fieldConfig || !data) {
       return;
     }
-    structureRev.current = structureRev.current + 1;
+
+    const series = data?.series;
+
+    if (
+      data.structureRev == null &&
+      series &&
+      prevSeries &&
+      !compareArrayValues(series, prevSeries, compareDataFrameStructures)
+    ) {
+      structureRev.current++;
+    }
 
     return {
+      structureRev: structureRev.current,
       ...data,
       series: applyFieldOverrides({
         data: series,
@@ -133,7 +156,6 @@ function useFieldOverrides(
         theme,
         timeZone,
       }),
-      structureRev: structureRev.current,
     };
-  }, [fieldConfigRegistry, fieldConfig, data, series, timeZone, theme]);
+  }, [fieldConfigRegistry, fieldConfig, data, prevSeries, timeZone, theme]);
 }

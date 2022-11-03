@@ -1,6 +1,8 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { NavModelItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Button, Input, Form, Field } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -39,11 +41,17 @@ export class NewDashboardsFolder extends PureComponent<Props> {
       });
   };
 
+  pageNav: NavModelItem = {
+    text: 'Create a new folder',
+    subTitle: 'Folders provide a way to group dashboards and alert rules.',
+    breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
+  };
+
   render() {
     return (
-      <Page navId="dashboards/folder/new">
+      <Page navId="dashboards/browse" pageNav={this.pageNav}>
         <Page.Contents>
-          <h3>New dashboard folder</h3>
+          {!config.featureToggles.topnav && <h3>New dashboard folder</h3>}
           <Form defaultValues={initialFormModel} onSubmit={this.onSubmit}>
             {({ register, errors }) => (
               <>

@@ -1,10 +1,10 @@
-import { t, Trans } from '@lingui/macro';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
 import { isFetchError } from '@grafana/runtime';
 import { Button, Field, Input, Modal } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { t, Trans } from 'app/core/internationalization';
 
 import { PanelModel } from '../../../dashboard/state';
 import { getLibraryPanelByName } from '../../state/api';
@@ -27,7 +27,7 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
 
   const { saveLibraryPanel } = usePanelSave();
   const onCreate = useCallback(() => {
-    panel.libraryPanel = { uid: undefined, name: panelName };
+    panel.libraryPanel = { uid: '', name: panelName };
     saveLibraryPanel(panel, folderId!).then((res) => {
       if (!(res instanceof Error)) {
         onDismiss();
@@ -53,13 +53,9 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
   return (
     <>
       <Field
-        label={t({ id: 'library-panel.add-modal.name', message: 'Library panel name' })}
+        label={t('library-panel.add-modal.name', 'Library panel name')}
         invalid={invalidInput}
-        error={
-          invalidInput
-            ? t({ id: 'library-panel.add-modal.error', message: 'Library panel with this name already exists' })
-            : ''
-        }
+        error={invalidInput ? t('library-panel.add-modal.error', 'Library panel with this name already exists') : ''}
       >
         <Input
           id="share-panel-library-panel-name-input"
@@ -69,11 +65,11 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
         />
       </Field>
       <Field
-        label={t({ id: 'library-panel.add-modal.folder', message: 'Save in folder' })}
-        description={t({
-          id: 'library-panel.add-modal.folder-description',
-          message: 'Library panel permissions are derived from the folder permissions',
-        })}
+        label={t('library-panel.add-modal.folder', 'Save in folder')}
+        description={t(
+          'library-panel.add-modal.folder-description',
+          'Library panel permissions are derived from the folder permissions'
+        )}
       >
         <FolderPicker
           onChange={({ id }) => setFolderId(id)}
@@ -84,10 +80,10 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
 
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={onDismiss} fill="outline">
-          <Trans id="library-panel.add-modal.cancel">Cancel</Trans>
+          <Trans i18nKey="library-panel.add-modal.cancel">Cancel</Trans>
         </Button>
         <Button onClick={onCreate} disabled={invalidInput}>
-          <Trans id="library-panel.add-modal.create">Create library panel</Trans>
+          <Trans i18nKey="library-panel.add-modal.create">Create library panel</Trans>
         </Button>
       </Modal.ButtonRow>
     </>
@@ -98,7 +94,7 @@ interface Props extends AddLibraryPanelContentsProps {
   isOpen?: boolean;
 }
 
-export const AddLibraryPanelModal: React.FC<Props> = ({ isOpen = false, panel, initialFolderId, ...props }) => {
+export const AddLibraryPanelModal = ({ isOpen = false, panel, initialFolderId, ...props }: Props) => {
   return (
     <Modal title="Create library panel" isOpen={isOpen} onDismiss={props.onDismiss}>
       <AddLibraryPanelContents panel={panel} initialFolderId={initialFolderId} onDismiss={props.onDismiss} />

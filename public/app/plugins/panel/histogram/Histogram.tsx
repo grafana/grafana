@@ -23,7 +23,7 @@ import {
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
 
-import { PanelOptions } from './models.gen';
+import { defaultPanelFieldConfig, PanelFieldConfig, PanelOptions } from './models.gen';
 
 function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
@@ -153,7 +153,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     scaleKey: 'y',
     isTime: false,
     placement: AxisPlacement.Left,
-    formatValue: (v, decimals) => formattedValueToString(dispY!(v, countField.config.decimals ?? decimals)),
+    formatValue: (v, decimals) => formattedValueToString(dispY!(v, decimals)),
     //splits: config.xSplits,
     //values: config.xValues,
     //grid: false,
@@ -182,7 +182,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     field.state = field.state ?? {};
     field.state.seriesIndex = seriesIndex++;
 
-    const customConfig = { ...field.config.custom };
+    const customConfig: PanelFieldConfig = { ...defaultPanelFieldConfig, ...field.config.custom };
 
     const scaleKey = 'y';
     const colorMode = getFieldColorModeForField(field);

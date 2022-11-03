@@ -5,12 +5,14 @@ import { LocationService } from '@grafana/runtime/src/services/LocationService';
 import { BackendSrv } from '@grafana/runtime/src/services/backendSrv';
 
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
+import { KeybindingSrv } from '../services/keybindingSrv';
 
 export interface GrafanaContextType {
   backend: BackendSrv;
   location: LocationService;
   config: GrafanaConfig;
   chrome: AppChromeService;
+  keybindings: KeybindingSrv;
 }
 
 export const GrafanaContext = React.createContext<GrafanaContextType | undefined>(undefined);

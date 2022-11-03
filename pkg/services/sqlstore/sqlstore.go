@@ -11,10 +11,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dlmiddlecote/sqlstats"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
+	"xorm.io/core"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -24,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -57,17 +58,6 @@ type SQLStore struct {
 	skipEnsureDefaultOrgAndUser bool
 	migrations                  registry.DatabaseMigrator
 	tracer                      tracing.Tracer
-	metrics                     struct {
-		maxOpenConnections prometheus.Gauge
-		openConnections    prometheus.Gauge
-		inUse              prometheus.Gauge
-		idle               prometheus.Gauge
-		waitCount          prometheus.Counter
-		waitDuration       prometheus.Counter
-		maxIdleClosed      prometheus.Counter
-		maxIdleTimeClosed  prometheus.Counter
-		maxLifetimeClosed  prometheus.Counter
-	}
 }
 
 func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
@@ -89,9 +79,13 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 	}
 	s.tracer = tracer
 
-	s.initMetrics()
+	// initialize and register metrics wrapper around the *sql.DB
+	db := s.engine.DB().DB
 
-	prometheus.MustRegister(s)
+	// register the go_sql_stats_connections_* metrics
+	prometheus.MustRegister(sqlstats.NewStatsCollector("grafana", db))
+	// TODO: deprecate/remove these metrics
+	prometheus.MustRegister(newSQLStoreMetrics(db))
 
 	return s, nil
 }
@@ -124,10 +118,6 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine
 	ss.Dialect = migrator.NewDialect(ss.engine)
 
 	dialect = ss.Dialect
-
-	// Init repo instances
-	annotations.SetRepository(&SQLAnnotationRepo{sql: ss})
-	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: ss.Cfg.AnnotationCleanupJobBatchSize, log: log.New("annotationcleaner"), sqlstore: ss})
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
@@ -182,6 +172,10 @@ func (ss *SQLStore) GetDialect() migrator.Dialect {
 	return ss.Dialect
 }
 
+func (ss *SQLStore) GetDBType() core.DbType {
+	return ss.engine.Dialect().DBType()
+}
+
 func (ss *SQLStore) Bus() bus.Bus {
 	return ss.bus
 }
@@ -214,7 +208,7 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 			ss.log.Debug("Creating default admin user")
 			if _, err := ss.createUser(ctx, sess, user.CreateUserCommand{
 				Login:    ss.Cfg.AdminUser,
-				Email:    ss.Cfg.AdminUser + "@localhost",
+				Email:    ss.Cfg.AdminEmail,
 				Password: ss.Cfg.AdminPassword,
 				IsAdmin:  true,
 			}); err != nil {
@@ -295,11 +289,11 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			cnnstr += fmt.Sprintf("&tx_isolation=%s", val)
 		}
 
-		if ss.Cfg.IsFeatureToggleEnabled("mysqlAnsiQuotes") || ss.Cfg.IsFeatureToggleEnabled("newDBLibrary") {
+		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagMysqlAnsiQuotes) || ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
 			cnnstr += "&sql_mode='ANSI_QUOTES'"
 		}
 
-		if ss.Cfg.IsFeatureToggleEnabled("newDBLibrary") {
+		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
 			cnnstr += "&parseTime=true"
 		}
 
@@ -461,119 +455,10 @@ func (ss *SQLStore) readConfig() error {
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
 	ss.dbCfg.MigrationLockAttemptTimeout = sec.Key("locking_attempt_timeout_sec").MustInt()
+
+	ss.dbCfg.QueryRetries = sec.Key("query_retries").MustInt()
+	ss.dbCfg.TransactionRetries = sec.Key("transaction_retries").MustInt(5)
 	return nil
-}
-
-// initMetrics initializes the database connection metrics
-func (ss *SQLStore) initMetrics() {
-	namespace := "grafana"
-	subsystem := "database"
-
-	ss.metrics.maxOpenConnections = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_max_open",
-		Help:      "Maximum number of open connections to the database",
-	})
-
-	ss.metrics.openConnections = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_open",
-		Help:      "The number of established connections both in use and idle",
-	})
-
-	ss.metrics.inUse = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_in_use",
-		Help:      "The number of connections currently in use",
-	})
-
-	ss.metrics.idle = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_idle",
-		Help:      "The number of idle connections",
-	})
-
-	ss.metrics.waitCount = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_wait_count_total",
-		Help:      "The total number of connections waited for",
-	})
-
-	ss.metrics.waitDuration = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_wait_duration_seconds",
-		Help:      "The total time blocked waiting for a new connection",
-	})
-
-	ss.metrics.maxIdleClosed = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_max_idle_closed_total",
-		Help:      "The total number of connections closed due to SetMaxIdleConns",
-	})
-
-	ss.metrics.maxIdleTimeClosed = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_max_idle_closed_seconds",
-		Help:      "The total number of connections closed due to SetConnMaxIdleTime",
-	})
-
-	ss.metrics.maxLifetimeClosed = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_max_lifetime_closed_total",
-		Help:      "The total number of connections closed due to SetConnMaxLifetime",
-	})
-}
-
-// collectDBStats instruments connections stats from the database.
-func (ss *SQLStore) collectDBstats() {
-	dbstats := ss.engine.DB().Stats()
-	ss.metrics.maxOpenConnections.Set(float64(dbstats.MaxOpenConnections))
-	ss.metrics.openConnections.Set(float64(dbstats.MaxOpenConnections))
-	ss.metrics.inUse.Set(float64(dbstats.InUse))
-	ss.metrics.idle.Set(float64(dbstats.Idle))
-
-	ss.metrics.waitCount.Add(float64(dbstats.WaitCount))
-	ss.metrics.waitDuration.Add(float64(dbstats.WaitDuration / time.Second))
-	ss.metrics.maxIdleClosed.Add(float64(dbstats.MaxIdleClosed))
-	ss.metrics.maxIdleTimeClosed.Add(float64(dbstats.MaxIdleTimeClosed))
-	ss.metrics.maxLifetimeClosed.Add(float64(dbstats.MaxLifetimeClosed))
-}
-
-// Collect implements Prometheus.Collector.
-func (ss *SQLStore) Collect(ch chan<- prometheus.Metric) {
-	ss.collectDBstats()
-
-	ss.metrics.maxOpenConnections.Collect(ch)
-	ss.metrics.openConnections.Collect(ch)
-	ss.metrics.inUse.Collect(ch)
-	ss.metrics.idle.Collect(ch)
-	ss.metrics.waitCount.Collect(ch)
-	ss.metrics.waitDuration.Collect(ch)
-	ss.metrics.maxIdleClosed.Collect(ch)
-	ss.metrics.maxIdleTimeClosed.Collect(ch)
-	ss.metrics.maxLifetimeClosed.Collect(ch)
-}
-
-// Describe implements Prometheus.Collector.
-func (ss *SQLStore) Describe(ch chan<- *prometheus.Desc) {
-	ss.metrics.maxOpenConnections.Describe(ch)
-	ss.metrics.openConnections.Describe(ch)
-	ss.metrics.inUse.Describe(ch)
-	ss.metrics.idle.Describe(ch)
-	ss.metrics.waitCount.Describe(ch)
-	ss.metrics.waitDuration.Describe(ch)
-	ss.metrics.maxIdleClosed.Describe(ch)
-	ss.metrics.maxIdleTimeClosed.Describe(ch)
-	ss.metrics.maxLifetimeClosed.Describe(ch)
 }
 
 // ITestDB is an interface of arguments for testing db
@@ -618,6 +503,11 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
 	return store
+}
+
+func InitTestDBWithCfg(t ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
+	store := InitTestDB(t, opts...)
+	return store, store.Cfg
 }
 
 func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
@@ -789,4 +679,8 @@ type DatabaseConfig struct {
 	UrlQueryParams              map[string][]string
 	SkipMigrations              bool
 	MigrationLockAttemptTimeout int
+	// SQLite only
+	QueryRetries int
+	// SQLite only
+	TransactionRetries int
 }

@@ -34,57 +34,56 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
 
   return (
-    <VerticalGroup>
-      <FieldSet label="Team details">
-        <Form
-          defaultValues={{ ...team }}
-          onSubmit={async (formTeam: Team) => {
-            if (contextSrv.licensedAccessControlEnabled() && canUpdateRoles) {
-              await updateTeamRoles(pendingRoles, team.id);
-            }
-            updateTeam(formTeam.name, formTeam.email);
-          }}
-          disabled={!canWriteTeamSettings}
-        >
-          {({ register, errors }) => (
-            <>
-              <Field
-                label="Name"
-                disabled={!canWriteTeamSettings}
-                required
-                invalid={!!errors.name}
-                error="Name is required"
-              >
-                <Input {...register('name', { required: true })} id="name-input" />
-              </Field>
+    <VerticalGroup spacing="lg">
+      <Form
+        defaultValues={{ ...team }}
+        onSubmit={async (formTeam: Team) => {
+          if (contextSrv.licensedAccessControlEnabled() && canUpdateRoles) {
+            await updateTeamRoles(pendingRoles, team.id);
+          }
+          updateTeam(formTeam.name, formTeam.email);
+        }}
+        disabled={!canWriteTeamSettings}
+      >
+        {({ register, errors }) => (
+          <FieldSet label="Team details">
+            <Field
+              label="Name"
+              disabled={!canWriteTeamSettings}
+              required
+              invalid={!!errors.name}
+              error="Name is required"
+            >
+              <Input {...register('name', { required: true })} id="name-input" />
+            </Field>
 
-              {contextSrv.licensedAccessControlEnabled() && (
-                <Field label="Role">
-                  <TeamRolePicker
-                    teamId={team.id}
-                    roleOptions={roleOptions}
-                    disabled={false}
-                    apply={true}
-                    onApplyRoles={setPendingRoles}
-                    pendingRoles={pendingRoles}
-                  />
-                </Field>
-              )}
-
-              <Field
-                label="Email"
-                description="This is optional and is primarily used to set the team profile avatar (via gravatar service)."
-                disabled={!canWriteTeamSettings}
-              >
-                <Input {...register('email')} placeholder="team@email.com" type="email" id="email-input" />
+            {contextSrv.licensedAccessControlEnabled() && (
+              <Field label="Role">
+                <TeamRolePicker
+                  teamId={team.id}
+                  roleOptions={roleOptions}
+                  disabled={false}
+                  apply={true}
+                  onApplyRoles={setPendingRoles}
+                  pendingRoles={pendingRoles}
+                  maxWidth="100%"
+                />
               </Field>
-              <Button type="submit" disabled={!canWriteTeamSettings}>
-                Update
-              </Button>
-            </>
-          )}
-        </Form>
-      </FieldSet>
+            )}
+
+            <Field
+              label="Email"
+              description="This is optional and is primarily used to set the team profile avatar (via gravatar service)."
+              disabled={!canWriteTeamSettings}
+            >
+              <Input {...register('email')} placeholder="team@email.com" type="email" id="email-input" />
+            </Field>
+            <Button type="submit" disabled={!canWriteTeamSettings}>
+              Update
+            </Button>
+          </FieldSet>
+        )}
+      </Form>
       <SharedPreferences resourceUri={`teams/${team.id}`} disabled={!canWriteTeamSettings} />
     </VerticalGroup>
   );

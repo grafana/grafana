@@ -4,6 +4,7 @@ import { GrafanaTheme2, LogLevel } from '@grafana/data';
 
 import { styleMixins } from '../../themes';
 
+/** @deprecated will be removed in the next major version */
 export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
   let logColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.gray2;
   const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);

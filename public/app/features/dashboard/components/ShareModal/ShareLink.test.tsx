@@ -1,7 +1,9 @@
-import { shallow, ShallowWrapper } from 'enzyme';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { getDefaultTimeRange } from '@grafana/data';
+import { BootData, getDefaultTimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { setEchoSrv, setTemplateSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 
@@ -11,7 +13,7 @@ import { variableAdapters } from '../../../variables/adapters';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { DashboardModel, PanelModel } from '../../state';
 
-import { Props, ShareLink, State } from './ShareLink';
+import { Props, ShareLink } from './ShareLink';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: () => ({
@@ -65,42 +67,9 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-interface ScenarioContext {
-  wrapper?: ShallowWrapper<Props, State, ShareLink>;
-  mount: (propOverrides?: Partial<Props>) => void;
-  setup: (fn: () => void) => void;
-}
-
-function shareLinkScenario(description: string, scenarioFn: (ctx: ScenarioContext) => void) {
-  describe(description, () => {
-    let setupFn: () => void;
-
-    const ctx: any = {
-      setup: (fn: any) => {
-        setupFn = fn;
-      },
-      mount: (propOverrides?: any) => {
-        const props: any = {
-          panel: undefined,
-          dashboard: { time: getDefaultTimeRange() },
-        };
-
-        Object.assign(props, propOverrides);
-        ctx.wrapper = shallow(<ShareLink {...props} />);
-      },
-    };
-
-    beforeEach(() => {
-      setUTCTimeZone();
-      setupFn();
-    });
-
-    scenarioFn(ctx);
-  });
-}
-
 describe('ShareModal', () => {
   let templateSrv = initTemplateSrv('key', []);
+  let props: Props;
 
   beforeAll(() => {
     setEchoSrv(new Echo());
@@ -108,106 +77,97 @@ describe('ShareModal', () => {
     setTemplateSrv(templateSrv);
   });
 
-  shareLinkScenario('shareUrl with current time range and panel', (ctx) => {
-    ctx.setup(() => {
-      mockLocationHref('http://server/#!/test');
-      config.bootData = {
-        user: {
-          orgId: 1,
-        },
-      } as any;
-      ctx.mount({
-        panel: new PanelModel({ id: 22, options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
-      });
-    });
+  beforeEach(() => {
+    setUTCTimeZone();
+    mockLocationHref('http://server/#!/test');
+    config.rendererAvailable = true;
+    config.bootData.user.orgId = 1;
+    props = {
+      panel: new PanelModel({ id: 22, options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
+      dashboard: new DashboardModel({ time: getDefaultTimeRange(), id: 1 }),
+    };
+  });
 
+  describe('with current time range and panel', () => {
     it('should generate share url absolute time', async () => {
-      await ctx.wrapper?.instance().buildUrl();
-      const state = ctx.wrapper?.state();
-      expect(state?.shareUrl).toBe('http://server/#!/test?from=1000&to=2000&orgId=1&viewPanel=22');
+      render(<ShareLink {...props} />);
+      expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
+        'http://server/#!/test?from=1000&to=2000&orgId=1&viewPanel=22'
+      );
     });
 
     it('should generate render url', async () => {
       mockLocationHref('http://dashboards.grafana.com/d/abcdefghi/my-dash');
-      ctx.mount({
-        panel: new PanelModel({ id: 22, options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
-      });
+      render(<ShareLink {...props} />);
 
-      await ctx.wrapper?.instance().buildUrl();
-      const state = ctx.wrapper?.state();
       const base = 'http://dashboards.grafana.com/render/d-solo/abcdefghi/my-dash';
       const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
-      expect(state?.imageUrl).toContain(base + params);
+      expect(
+        await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
+      ).toHaveAttribute('href', base + params);
     });
 
     it('should generate render url for scripted dashboard', async () => {
       mockLocationHref('http://dashboards.grafana.com/dashboard/script/my-dash.js');
-      ctx.mount({
-        panel: new PanelModel({ id: 22, options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
-      });
+      render(<ShareLink {...props} />);
 
-      await ctx.wrapper?.instance().buildUrl();
-      const state = ctx.wrapper?.state();
       const base = 'http://dashboards.grafana.com/render/dashboard-solo/script/my-dash.js';
       const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
-      expect(state?.imageUrl).toContain(base + params);
+      expect(
+        await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
+      ).toHaveAttribute('href', base + params);
     });
 
     it('should remove panel id when no panel in scope', async () => {
-      ctx.mount({
-        panel: undefined,
-      });
-
-      await ctx.wrapper?.instance().buildUrl();
-      const state = ctx.wrapper?.state();
-      expect(state?.shareUrl).toBe('http://server/#!/test?from=1000&to=2000&orgId=1');
+      props.panel = undefined;
+      render(<ShareLink {...props} />);
+      expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
+        'http://server/#!/test?from=1000&to=2000&orgId=1'
+      );
     });
 
     it('should add theme when specified', async () => {
-      ctx.wrapper?.setProps({ panel: undefined });
-      ctx.wrapper?.setState({ selectedTheme: 'light' });
+      props.panel = undefined;
+      render(<ShareLink {...props} />);
 
-      await ctx.wrapper?.instance().buildUrl();
-      const state = ctx.wrapper?.state();
-      expect(state?.shareUrl).toBe('http://server/#!/test?from=1000&to=2000&orgId=1&theme=light');
+      await userEvent.click(screen.getByLabelText('Light'));
+      expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
+        'http://server/#!/test?from=1000&to=2000&orgId=1&theme=light'
+      );
     });
 
     it('should remove editPanel from image url when is first param in querystring', async () => {
       mockLocationHref('http://server/#!/test?editPanel=1');
-      ctx.mount({
-        panel: new PanelModel({ id: 1, options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
-      });
+      render(<ShareLink {...props} />);
 
-      await ctx.wrapper?.instance().buildUrl();
-      const state = ctx.wrapper?.state();
-      expect(state?.shareUrl).toContain('?editPanel=1&from=1000&to=2000&orgId=1');
-      expect(state?.imageUrl).toContain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
+      const base = 'http://server/#!/test';
+      expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
+        base + '?editPanel=1&from=1000&to=2000&orgId=1'
+      );
+      expect(
+        await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
+      ).toHaveAttribute('href', base + '?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
     });
 
-    it('should shorten url', () => {
-      mockLocationHref('http://server/#!/test');
-      ctx.mount();
-      ctx.wrapper?.setState({ useShortUrl: true }, async () => {
-        await ctx.wrapper?.instance().buildUrl();
-        const state = ctx.wrapper?.state();
-        expect(state?.shareUrl).toContain(`/goto/${mockUid}`);
-      });
+    it('should shorten url', async () => {
+      render(<ShareLink {...props} />);
+
+      await userEvent.click(await screen.findByLabelText('Shorten URL'));
+      expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
+        `http://localhost:3000/goto/${mockUid}`
+      );
     });
   });
 });
 
-describe('when default_home_dashboard_path is set in the grafana config', () => {
-  let originalBootData: any;
+describe('when appUrl is set in the grafana config', () => {
+  let originalBootData: BootData;
 
   beforeAll(() => {
     originalBootData = config.bootData;
     config.appUrl = 'http://dashboards.grafana.com/';
-
-    config.bootData = {
-      user: {
-        orgId: 1,
-      },
-    } as any;
+    config.rendererAvailable = true;
+    config.bootData.user.orgId = 1;
   });
 
   afterAll(() => {
@@ -217,16 +177,22 @@ describe('when default_home_dashboard_path is set in the grafana config', () => 
   it('should render the correct link', async () => {
     const mockDashboard = new DashboardModel({
       uid: 'mockDashboardUid',
+      id: 1,
     });
     const mockPanel = new PanelModel({
       id: 'mockPanelId',
     });
+    const props: Props = {
+      dashboard: mockDashboard,
+      panel: mockPanel,
+    };
     mockLocationHref('http://dashboards.grafana.com/?orgId=1');
-    const test: ShallowWrapper<Props, State, ShareLink> = shallow(
-      <ShareLink dashboard={mockDashboard} panel={mockPanel} />
-    );
-    await test.instance().buildUrl();
-    expect(test.state().imageUrl).toBe(
+    render(<ShareLink {...props} />);
+
+    expect(
+      await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
+    ).toHaveAttribute(
+      'href',
       `http://dashboards.grafana.com/render/d-solo/${mockDashboard.uid}?orgId=1&from=1000&to=2000&panelId=${mockPanel.id}&width=1000&height=500&tz=UTC`
     );
   });

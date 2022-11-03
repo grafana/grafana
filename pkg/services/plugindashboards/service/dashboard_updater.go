@@ -8,12 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func ProvideDashboardUpdater(bus bus.Bus, pluginStore plugins.Store, pluginDashboardService plugindashboards.Service,
@@ -171,8 +171,11 @@ func (du *DashboardUpdater) autoUpdateAppDashboard(ctx context.Context, pluginDa
 	du.logger.Info("Auto updating App dashboard", "dashboard", resp.Dashboard.Title, "newRev",
 		pluginDashInfo.Revision, "oldRev", pluginDashInfo.ImportedRevision)
 	_, err = du.dashboardImportService.ImportDashboard(ctx, &dashboardimport.ImportDashboardRequest{
-		PluginId:  pluginDashInfo.PluginId,
-		User:      &user.SignedInUser{UserID: 0, OrgRole: org.RoleAdmin, OrgID: orgID},
+		PluginId: pluginDashInfo.PluginId,
+		User: accesscontrol.BackgroundUser("dashboard_updater", orgID, org.RoleAdmin, []accesscontrol.Permission{
+			{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
+			{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
+		}),
 		Path:      pluginDashInfo.Reference,
 		FolderId:  0,
 		Dashboard: resp.Dashboard.Data,

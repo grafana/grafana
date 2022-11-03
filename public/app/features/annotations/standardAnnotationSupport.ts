@@ -16,6 +16,7 @@ import {
   KeyValue,
   standardTransformers,
 } from '@grafana/data';
+import { config } from 'app/core/config';
 
 export const standardAnnotationSupport: AnnotationSupport = {
   /**
@@ -112,9 +113,22 @@ export const annotationEventNames: AnnotationFieldInfo[] = [
   },
 ];
 
+export const publicDashboardEventNames: AnnotationFieldInfo[] = [
+  {
+    key: 'color',
+  },
+  {
+    key: 'isRegion',
+  },
+  {
+    key: 'source',
+  },
+];
+
 // Given legacy infrastructure, alert events are passed though the same annotation
 // pipeline, but include fields that should not be exposed generally
 const alertEventAndAnnotationFields: AnnotationFieldInfo[] = [
+  ...(config.isPublicDashboardView ? publicDashboardEventNames : []),
   ...annotationEventNames,
   { key: 'userId' },
   { key: 'login' },
@@ -185,7 +199,8 @@ export function getAnnotationsFromData(
       }
 
       if (!hasTime || !hasText) {
-        return []; // throw an error?
+        console.error('Cannot process annotation fields. No time or text present.');
+        return [];
       }
 
       // Add each value to the string

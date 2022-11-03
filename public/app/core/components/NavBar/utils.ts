@@ -1,13 +1,14 @@
 import { Location } from 'history';
 
 import { locationUtil, NavModelItem, NavSection } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { getConfig } from 'app/core/config';
+import { config, reportInteraction } from '@grafana/runtime';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ShowModalReactEvent } from '../../../types/events';
 import appEvents from '../../app_events';
 import { getFooterLinks } from '../Footer/Footer';
+import { OrgSwitcher } from '../OrgSwitcher';
 import { HelpModal } from '../help/HelpModal';
 
 export const SEARCH_ITEM_ID = 'search';
@@ -15,45 +16,38 @@ export const NAV_MENU_PORTAL_CONTAINER_ID = 'navbar-menu-portal-container';
 
 export const getNavMenuPortalContainer = () => document.getElementById(NAV_MENU_PORTAL_CONTAINER_ID) ?? document.body;
 
-export const getForcedLoginUrl = (url: string) => {
-  const queryParams = new URLSearchParams(url.split('?')[1]);
-  queryParams.append('forceLogin', 'true');
-
-  return `${getConfig().appSubUrl}${url.split('?')[0]}?${queryParams.toString()}`;
-};
-
-export const enrichConfigItems = (
-  items: NavModelItem[],
-  location: Location<unknown>,
-  toggleOrgSwitcher: () => void
-) => {
+export const enrichConfigItems = (items: NavModelItem[], location: Location<unknown>) => {
   const { isSignedIn, user } = contextSrv;
   const onOpenShortcuts = () => {
     appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
   };
 
-  if (user && user.orgCount > 1) {
+  const onOpenOrgSwitcher = () => {
+    appEvents.publish(new ShowModalReactEvent({ component: OrgSwitcher }));
+  };
+
+  if (!config.featureToggles.topnav && user && user.orgCount > 1) {
     const profileNode = items.find((bottomNavItem) => bottomNavItem.id === 'profile');
     if (profileNode) {
       profileNode.showOrgSwitcher = true;
-      profileNode.subTitle = `Current Org.: ${user?.orgName}`;
+      profileNode.subTitle = `Organization: ${user?.orgName}`;
     }
   }
 
-  if (!isSignedIn) {
-    const forcedLoginUrl = getForcedLoginUrl(location.pathname + location.search);
+  if (!isSignedIn && !config.featureToggles.topnav) {
+    const loginUrl = locationUtil.getUrlForPartial(location, { forceLogin: 'true' });
 
     items.unshift({
       icon: 'signout',
-      id: 'signin',
+      id: 'sign-in',
       section: NavSection.Config,
       target: '_self',
-      text: 'Sign in',
-      url: forcedLoginUrl,
+      text: t('nav.sign-in', 'Sign in'),
+      url: loginUrl,
     });
   }
 
-  items.forEach((link, index) => {
+  items.forEach((link) => {
     let menuItems = link.children || [];
 
     if (link.id === 'help') {
@@ -61,21 +55,21 @@ export const enrichConfigItems = (
         ...getFooterLinks(),
         {
           id: 'keyboard-shortcuts',
-          text: 'Keyboard shortcuts',
+          text: t('nav.help/keyboard-shortcuts', 'Keyboard shortcuts'),
           icon: 'keyboard',
           onClick: onOpenShortcuts,
         },
       ];
     }
 
-    if (link.showOrgSwitcher) {
+    if (!config.featureToggles.topnav && link.showOrgSwitcher) {
       link.children = [
         ...menuItems,
         {
           id: 'switch-organization',
-          text: 'Switch organization',
+          text: t('nav.profile/switch-org', 'Switch organization'),
           icon: 'arrow-random',
-          onClick: toggleOrgSwitcher,
+          onClick: onOpenOrgSwitcher,
         },
       ];
     }
@@ -99,7 +93,19 @@ export const enrichWithInteractionTracking = (item: NavModelItem, expandedState:
 };
 
 export const isMatchOrChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem) => {
-  return Boolean(itemToCheck === searchItem || itemToCheck.children?.some((child) => child === searchItem));
+  return Boolean(itemToCheck === searchItem || hasChildMatch(itemToCheck, searchItem));
+};
+
+export const hasChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem): boolean => {
+  return Boolean(
+    itemToCheck.children?.some((child) => {
+      if (child === searchItem) {
+        return true;
+      } else {
+        return hasChildMatch(child, searchItem);
+      }
+    })
+  );
 };
 
 const stripQueryParams = (url?: string) => {

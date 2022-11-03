@@ -5,6 +5,7 @@
 package log
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -31,6 +32,7 @@ var (
 	root            *logManager
 	now             = time.Now
 	logTimeFormat   = time.RFC3339Nano
+	ctxLogProviders = []ContextualLogProviderFunc{}
 )
 
 const (
@@ -190,6 +192,22 @@ func (cl *ConcreteLogger) log(msg string, logLevel level.Value, args ...interfac
 	return cl.Log(append([]interface{}{level.Key(), logLevel, "msg", msg}, args...)...)
 }
 
+func (cl *ConcreteLogger) FromContext(ctx context.Context) Logger {
+	args := []interface{}{}
+
+	for _, p := range ctxLogProviders {
+		if pArgs, exists := p(ctx); exists {
+			args = append(args, pArgs...)
+		}
+	}
+
+	if len(args) > 0 {
+		return cl.New(args...)
+	}
+
+	return cl
+}
+
 func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
 	if len(ctx) == 0 {
 		root.New()
@@ -241,6 +259,15 @@ func WithPrefix(ctxLogger *ConcreteLogger, ctx ...interface{}) *ConcreteLogger {
 // WithSuffix adds context that will be appended at the end of the log message
 func WithSuffix(ctxLogger *ConcreteLogger, ctx ...interface{}) *ConcreteLogger {
 	return with(ctxLogger, gokitlog.WithSuffix, ctx)
+}
+
+// ContextualLogProviderFunc contextual log provider function definition.
+type ContextualLogProviderFunc func(ctx context.Context) ([]interface{}, bool)
+
+// RegisterContextualLogProvider registers a ContextualLogProviderFunc
+// that will be used to provide context when Logger.FromContext is called.
+func RegisterContextualLogProvider(mw ContextualLogProviderFunc) {
+	ctxLogProviders = append(ctxLogProviders, mw)
 }
 
 var logLevels = map[string]level.Option{
