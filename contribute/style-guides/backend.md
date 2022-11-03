@@ -44,7 +44,7 @@ In the `sqlstore` package we do database operations in tests and while some migh
 
 We run unit and integration tests separately, to help keep our CI pipeline running smoothly and provide a better developer experience.
 
-To properly mark a test as being an integration test, you must format your test function definition as follows:
+To properly mark a test as being an integration test, you must format your test function definition as follows, with the function name starting with `TestIntegration` and the check for `testing.Short()`:
 
 ```
 func TestIntegrationFoo(t *testing.T) {
