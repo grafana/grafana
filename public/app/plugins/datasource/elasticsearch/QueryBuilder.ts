@@ -139,13 +139,11 @@ export class ElasticQueryBuilder {
     return filterObj;
   }
 
-  getNestedAgg(aggDef: Nested, queryNode: any, target: ElasticsearchQuery) {
+  getNestedAgg(aggDef: Nested, queryNode: { nested?: {path?: string}; aggs?: any }, target: ElasticsearchQuery) {
     if (!aggDef.field || !target || !target.metrics) {
       return queryNode;
     }
-    queryNode['nested'] = {
-      path: aggDef.field,
-    };
+    queryNode.nested = { path: aggDef.field };
 
     return queryNode;
   }
