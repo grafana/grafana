@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const baseIntervalSeconds = 10
@@ -126,6 +127,16 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	const mainOrgID int64 = 1
+
+	containsHash := func(t *testing.T, instances []*models.AlertInstance, hash string) {
+		t.Helper()
+		for _, i := range instances {
+			if i.LabelsHash == hash {
+				return
+			}
+		}
+		require.Fail(t, "%v does not contain an instance with hash %s", instances, hash)
+	}
 
 	alertRule1 := tests.CreateTestAlertRule(t, ctx, dbstore, 60, mainOrgID)
 	orgID := alertRule1.OrgID
@@ -250,16 +261,56 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 		require.Len(t, listQuery.Result, 4)
 	})
 
-	t.Run("can list all added instances in org filtered by current state", func(t *testing.T) {
-		listQuery := &models.ListAlertInstancesQuery{
-			RuleOrgID: orgID,
-			State:     models.InstanceStateNormal,
+	t.Run("should ignore Normal state with no reason if feature flag is enabled", func(t *testing.T) {
+		labels := models.InstanceLabels{"test": util.GenerateShortUID()}
+		instance1 := models.AlertInstance{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  orgID,
+				RuleUID:    util.GenerateShortUID(),
+				LabelsHash: util.GenerateShortUID(),
+			},
+			CurrentState:  models.InstanceStateNormal,
+			CurrentReason: "",
+			Labels:        labels,
 		}
-
-		err := dbstore.ListAlertInstances(ctx, listQuery)
+		instance2 := models.AlertInstance{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  orgID,
+				RuleUID:    util.GenerateShortUID(),
+				LabelsHash: util.GenerateShortUID(),
+			},
+			CurrentState:  models.InstanceStateNormal,
+			CurrentReason: models.StateReasonError,
+			Labels:        labels,
+		}
+		err := dbstore.SaveAlertInstances(ctx, instance1, instance2)
 		require.NoError(t, err)
 
-		require.Len(t, listQuery.Result, 1)
+		listQuery := &models.ListAlertInstancesQuery{
+			RuleOrgID: orgID,
+		}
+
+		err = dbstore.ListAlertInstances(ctx, listQuery)
+		require.NoError(t, err)
+
+		containsHash(t, listQuery.Result, instance1.LabelsHash)
+
+		f := dbstore.FeatureToggles
+		dbstore.FeatureToggles = &fakes.FakeFeatures{NoNormalState: true}
+		t.Cleanup(func() {
+			dbstore.FeatureToggles = f
+		})
+
+		err = dbstore.ListAlertInstances(ctx, listQuery)
+		require.NoError(t, err)
+
+		containsHash(t, listQuery.Result, instance2.LabelsHash)
+
+		for _, instance := range listQuery.Result {
+			if instance.CurrentState == models.InstanceStateNormal && instance.CurrentReason == "" {
+				require.Fail(t, "List operation expected to return all states except Normal but the result contains Normal states")
+			}
+		}
 	})
 
 	t.Run("update instance with same org_id, uid and different state", func(t *testing.T) {

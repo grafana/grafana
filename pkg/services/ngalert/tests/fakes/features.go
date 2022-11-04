@@ -4,12 +4,15 @@ import "github.com/grafana/grafana/pkg/services/featuremgmt"
 
 type FakeFeatures struct {
 	BigTransactions bool
+	NoNormalState   bool
 }
 
 func (f *FakeFeatures) IsEnabled(feature string) bool {
-	if feature == featuremgmt.FlagAlertingBigTransactions {
+	switch feature {
+	case featuremgmt.FlagAlertingBigTransactions:
 		return f.BigTransactions
+	case featuremgmt.FlagAlertingNoNormalState:
+		return f.NoNormalState
 	}
-
 	return false
 }
