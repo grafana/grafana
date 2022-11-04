@@ -411,6 +411,13 @@
     "absolute": {
       "recent-title": "最近使用的绝对范围",
       "title": "绝对时间范围"
+    },
+    "calendar": {
+      "select-time": ""
+    },
+    "time-range": {
+      "example-title": "",
+      "specify": ""
     }
   },
   "user-orgs": {

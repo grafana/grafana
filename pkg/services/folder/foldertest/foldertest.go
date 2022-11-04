@@ -67,7 +67,7 @@ func modelsToFolders(m []*models.Folder) []*folder.Folder {
 			Description: "", // model.Folder does not have a description
 			Created:     f.Created,
 			Updated:     f.Updated,
-			UpdatedBy:   f.UpdatedBy,
+			//UpdatedBy:   f.UpdatedBy,
 		}
 	}
 	return ret
