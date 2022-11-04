@@ -53,6 +53,11 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     [datasource]
   );
 
+  /**
+   * Function kicked off when user interacts with label in label filters.
+   * Formats a promQL expression and passes that off to helper functions depending on API support
+   * @param forLabel
+   */
   const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<Array<{ value: string }>> => {
     // If no metric we need to use a different method
     if (!query.metric) {
@@ -64,7 +69,13 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
     labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     const expr = promQueryModeller.renderLabels(labelsToConsider);
-    const labelsIndex = await datasource.languageProvider.fetchSeriesLabels(expr);
+
+    let labelsIndex;
+    if (datasource.hasLabelsMatchAPISupport()) {
+      labelsIndex = await datasource.languageProvider.fetchSeriesLabelsMatch(expr);
+    } else {
+      labelsIndex = await datasource.languageProvider.fetchSeriesLabels(expr);
+    }
 
     // filter out already used labels
     return Object.keys(labelsIndex)
@@ -88,12 +99,47 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     }).then((labelNames) => labelNames.map((labelName) => ({ value: labelName })));
   };
 
+  /**
+   * Helper function to fetch and format label value results from legacy API
+   * @param forLabel
+   * @param promQLExpression
+   */
+  const getLabelValuesFromSeriesAPI = async (forLabel: Partial<QueryBuilderLabelFilter>, promQLExpression: string) => {
+    if (!forLabel.label) {
+      return [];
+    }
+    const result = await datasource.languageProvider.fetchSeriesLabels(promQLExpression);
+    const forLabelInterpolated = datasource.interpolateString(forLabel.label);
+    return result[forLabelInterpolated].map((v) => ({ value: v })) ?? [];
+  };
+
+  /**
+   * Helper function to fetch label values from a promql string expression and a label
+   * @param forLabel
+   * @param promQLExpression
+   */
+  const getLabelValuesFromLabelValuesAPI = async (
+    forLabel: Partial<QueryBuilderLabelFilter>,
+    promQLExpression: string
+  ) => {
+    if (!forLabel.label) {
+      return [];
+    }
+    return (await datasource.languageProvider.fetchSeriesValues(forLabel.label, promQLExpression)).map((v) => ({
+      value: v,
+    }));
+  };
+
+  /**
+   * Function kicked off when users interact with the value of the label filters
+   * Formats a promQL expression and passes that into helper functions depending on API support
+   * @param forLabel
+   */
   const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {
     if (!forLabel.label) {
       return [];
     }
-
-    // If no metric we need to use a different method
+    // If no metric is selected, we can get the raw list of labels
     if (!query.metric) {
       return (await datasource.languageProvider.getLabelValues(forLabel.label)).map((v) => ({ value: v }));
     }
@@ -101,9 +147,12 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
     labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     const expr = promQueryModeller.renderLabels(labelsToConsider);
-    const result = await datasource.languageProvider.fetchSeriesLabels(expr);
-    const forLabelInterpolated = datasource.interpolateString(forLabel.label);
-    return result[forLabelInterpolated].map((v) => ({ value: v })) ?? [];
+
+    if (datasource.hasLabelsMatchAPISupport()) {
+      return getLabelValuesFromLabelValuesAPI(forLabel, expr);
+    } else {
+      return getLabelValuesFromSeriesAPI(forLabel, expr);
+    }
   };
 
   const onGetMetrics = useCallback(() => {

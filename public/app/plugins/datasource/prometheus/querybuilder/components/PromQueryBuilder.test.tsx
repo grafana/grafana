@@ -11,9 +11,11 @@ import {
   TimeRange,
 } from '@grafana/data';
 
+import { PromApplication } from '../../../../../types/unified-alerting-dto';
 import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
+import { PromOptions } from '../../types';
 import { getLabelSelects } from '../testUtils';
 import { PromVisualQuery } from '../types';
 
@@ -101,6 +103,7 @@ describe('PromQueryBuilder', () => {
     await waitFor(() => expect(datasource.getVariables).toBeCalled());
   });
 
+  // <LegacyPrometheus>
   it('tries to load labels when metric selected', async () => {
     const { languageProvider } = setup();
     await openLabelNameSelect();
@@ -127,6 +130,7 @@ describe('PromQueryBuilder', () => {
       expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{label_name="label_value", __name__="random_metric"}')
     );
   });
+  //</LegacyPrometheus>
 
   it('tries to load labels when metric is not selected', async () => {
     const { languageProvider } = setup({
@@ -224,16 +228,56 @@ describe('PromQueryBuilder', () => {
     );
     expect(await screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
   });
+
+  // <ModernPrometheus>
+  it('tries to load labels when metric selected modern prom', async () => {
+    const { languageProvider } = setup(undefined, undefined, {
+      jsonData: { prometheusVersion: '2.38.1', prometheusType: PromApplication.Prometheus },
+    });
+    await openLabelNameSelect();
+    await waitFor(() => expect(languageProvider.fetchSeriesLabelsMatch).toBeCalledWith('{__name__="random_metric"}'));
+  });
+
+  it('tries to load variables in label field modern prom', async () => {
+    const { datasource } = setup(undefined, undefined, {
+      jsonData: { prometheusVersion: '2.38.1', prometheusType: PromApplication.Prometheus },
+    });
+    datasource.getVariables = jest.fn().mockReturnValue([]);
+    await openLabelNameSelect();
+    await waitFor(() => expect(datasource.getVariables).toBeCalled());
+  });
+
+  it('tries to load labels when metric selected and other labels are already present modern prom', async () => {
+    const { languageProvider } = setup(
+      {
+        ...defaultQuery,
+        labels: [
+          { label: 'label_name', op: '=', value: 'label_value' },
+          { label: 'foo', op: '=', value: 'bar' },
+        ],
+      },
+      undefined,
+      { jsonData: { prometheusVersion: '2.38.1', prometheusType: PromApplication.Prometheus } }
+    );
+    await openLabelNameSelect(1);
+    await waitFor(() =>
+      expect(languageProvider.fetchSeriesLabelsMatch).toBeCalledWith(
+        '{label_name="label_value", __name__="random_metric"}'
+      )
+    );
+  });
+  //</ModernPrometheus>
 });
 
-function createDatasource() {
+function createDatasource(options?: Partial<DataSourceInstanceSettings<PromOptions>>) {
   const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
   const datasource = new PrometheusDatasource(
     {
       url: '',
       jsonData: {},
       meta: {} as DataSourcePluginMeta,
-    } as DataSourceInstanceSettings,
+      ...options,
+    } as DataSourceInstanceSettings<PromOptions>,
     undefined,
     undefined,
     languageProvider
@@ -251,8 +295,12 @@ function createProps(datasource: PrometheusDatasource, data?: PanelData) {
   };
 }
 
-function setup(query: PromVisualQuery = defaultQuery, data?: PanelData) {
-  const { datasource, languageProvider } = createDatasource();
+function setup(
+  query: PromVisualQuery = defaultQuery,
+  data?: PanelData,
+  datasourceOptionsOverride?: Partial<DataSourceInstanceSettings<PromOptions>>
+) {
+  const { datasource, languageProvider } = createDatasource(datasourceOptionsOverride);
   const props = createProps(datasource, data);
   const { container } = render(<PromQueryBuilder {...props} query={query} />);
   return { languageProvider, datasource, container };
