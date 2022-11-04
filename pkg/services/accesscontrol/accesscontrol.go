@@ -190,21 +190,21 @@ func GroupScopesByAction(permissions []Permission) map[string][]string {
 }
 
 func Reduce(ps []Permission) map[string][]string {
-	m := make(map[string][]string)
-	s := make(map[string]map[string]bool)
-	w := make(map[string]map[string]bool)
+	reduced := make(map[string][]string)
+	scopesByAction := make(map[string]map[string]bool)
+	wildcardsByAction := make(map[string]map[string]bool)
 
 	// helpers
-	add := func(t map[string]map[string]bool, a, s string) {
-		if _, ok := t[a]; !ok {
-			t[a] = map[string]bool{s: true}
+	add := func(scopesByAction map[string]map[string]bool, action, scope string) {
+		if _, ok := scopesByAction[action]; !ok {
+			scopesByAction[action] = map[string]bool{scope: true}
 			return
 		}
-		t[a][s] = true
+		scopesByAction[action][scope] = true
 	}
-	includes := func(w map[string]bool, s string) bool {
-		for wildcard := range w {
-			if wildcard == "*" || strings.HasPrefix(s, wildcard[:len(wildcard)-1]) {
+	includes := func(wildcardsSet map[string]bool, scope string) bool {
+		for wildcard := range wildcardsSet {
+			if wildcard == "*" || strings.HasPrefix(scope, wildcard[:len(wildcard)-1]) {
 				return true
 			}
 		}
@@ -214,43 +214,43 @@ func Reduce(ps []Permission) map[string][]string {
 	// Sort permissions (scopeless, wildcard, specific)
 	for i := range ps {
 		if ps[i].Scope == "" {
-			if _, ok := m[ps[i].Action]; !ok {
-				m[ps[i].Action] = nil
+			if _, ok := reduced[ps[i].Action]; !ok {
+				reduced[ps[i].Action] = nil
 			}
 			continue
 		}
 		if isWildcard(ps[i].Scope) {
-			add(w, ps[i].Action, ps[i].Scope)
+			add(wildcardsByAction, ps[i].Action, ps[i].Scope)
 			continue
 		}
-		add(s, ps[i].Action, ps[i].Scope)
+		add(scopesByAction, ps[i].Action, ps[i].Scope)
 	}
 
 	// Reduce wildcards
-	for action, wildcards := range w {
+	for action, wildcards := range wildcardsByAction {
 		for wildcard := range wildcards {
 			if wildcard == "*" {
-				m[action] = []string{wildcard}
+				reduced[action] = []string{wildcard}
 				break
 			}
-			if includes(w[action], wildcard[:len(wildcard)-2]) {
+			if includes(wildcardsByAction[action], wildcard[:len(wildcard)-2]) {
 				continue
 			}
-			m[action] = append(m[action], wildcard)
+			reduced[action] = append(reduced[action], wildcard)
 		}
 	}
 
 	// Reduce specific
-	for action, scopes := range s {
+	for action, scopes := range scopesByAction {
 		for scope := range scopes {
-			if includes(w[action], scope) {
+			if includes(wildcardsByAction[action], scope) {
 				continue
 			}
-			m[action] = append(m[action], scope)
+			reduced[action] = append(reduced[action], scope)
 		}
 	}
 
-	return m
+	return reduced
 }
 
 func ValidateScope(scope string) bool {
