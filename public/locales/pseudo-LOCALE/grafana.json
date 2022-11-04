@@ -412,9 +412,14 @@
       "recent-title": "Ŗęčęŉŧľy ūşęđ äþşőľūŧę řäŉģęş",
       "title": "Åþşőľūŧę ŧįmę řäŉģę"
     },
+    "calendar": {
+      "select-time": "Ŝęľęčŧ ä ŧįmę řäŉģę"
+    },
     "time-range": {
       "aria-role": "Ŧįmę řäŉģę şęľęčŧįőŉ",
-      "default-title": "Ŧįmę řäŉģęş"
+      "default-title": "Ŧįmę řäŉģęş",
+      "example-title": "Ēχämpľę ŧįmę řäŉģęş",
+      "specify": "Ŝpęčįƒy ŧįmę řäŉģę <1></1>"
     }
   },
   "user-orgs": {

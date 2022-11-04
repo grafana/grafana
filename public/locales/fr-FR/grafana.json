@@ -412,9 +412,14 @@
       "recent-title": "Périodes absolues récemment utilisées",
       "title": "Période temporelle absolue"
     },
+    "calendar": {
+      "select-time": ""
+    },
     "time-range": {
       "aria-role": "",
-      "default-title": ""
+      "default-title": "",
+      "example-title": "",
+      "specify": ""
     }
   },
   "user-orgs": {
@@ -430,7 +435,7 @@
       "email-label": "Adresse e-mail",
       "name-error": "Un nom est obligatoire",
       "name-label": "Nom",
-      "username-label": "Nom d’utilisateur"
+      "username-label": "Nom d´utilisateur"
     },
     "title": "Modifier le profil"
   },
