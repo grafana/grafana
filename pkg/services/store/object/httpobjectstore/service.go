@@ -53,6 +53,7 @@ func (s *httpObjectStore) RegisterHTTPRoutes(route routing.RouteRegister) {
 	route.Delete("/store/*", reqGrafanaAdmin, routing.Wrap(s.doDeleteObject))
 	route.Get("/raw/*", reqGrafanaAdmin, routing.Wrap(s.doGetRawObject))
 	route.Get("/history/*", reqGrafanaAdmin, routing.Wrap(s.doGetHistory))
+	route.Get("/list", reqGrafanaAdmin, routing.Wrap(s.doListRoots))
 	route.Get("/list/*", reqGrafanaAdmin, routing.Wrap(s.doListFolder)) // Simplified version of search -- path is prefix
 	route.Get("/search", reqGrafanaAdmin, routing.Wrap(s.doSearch))
 
@@ -314,8 +315,55 @@ func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
 	return response.JSON(200, rsp)
 }
 
+func (s *httpObjectStore) doListRoots(c *models.ReqContext) response.Response {
+	rsp := &object.ObjectSearchResponse{}
+	rsp.Results = append(rsp.Results, &object.ObjectSearchResult{
+		GRN: &object.GRN{
+			UID:  models.ObjectStoreScopeEntity,
+			Kind: models.StandardKindFolder,
+		},
+		Name:        "Entity",
+		Description: "Objects organized by kind",
+	})
+
+	rsp.Results = append(rsp.Results, &object.ObjectSearchResult{
+		GRN: &object.GRN{
+			UID:  models.ObjectStoreScopeDrive,
+			Kind: models.StandardKindFolder,
+		},
+		Name:        "Drive",
+		Description: "Objects organized in nested folders",
+	})
+	return response.JSON(200, rsp)
+}
+
 func (s *httpObjectStore) doListFolder(c *models.ReqContext) response.Response {
-	return response.JSON(501, "Not implemented yet")
+	params := web.Params(c.Req)
+	vals := c.Req.URL.Query()
+	req := &object.ObjectSearchRequest{
+		WithBody:   false,
+		WithLabels: true,
+		WithFields: true,
+		Kind:       vals["kind"],
+		Folder:     params["*"],
+		Sort:       vals["sort"],
+	}
+	if req.Folder == "" {
+		req.Folder = "*" // root
+	}
+
+	if vals.Has("limit") {
+		limit, err := strconv.ParseInt(vals.Get("limit"), 10, 64)
+		if err != nil {
+			return response.Error(400, "bad limit", err)
+		}
+		req.Limit = limit
+	}
+	rsp, err := s.store.Search(c.Req.Context(), req)
+	if err != nil {
+		return response.Error(500, "?", err)
+	}
+	return response.JSON(200, resultsToFrame(rsp))
 }
 
 func (s *httpObjectStore) doSearch(c *models.ReqContext) response.Response {
@@ -342,7 +390,8 @@ func (s *httpObjectStore) doSearch(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(500, "?", err)
 	}
-	return response.JSON(200, rsp)
+
+	return response.JSON(200, resultsToFrame(rsp))
 }
 
 func asBoolean(key string, vals url.Values, defaultValue bool) bool {

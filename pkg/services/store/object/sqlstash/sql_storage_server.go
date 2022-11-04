@@ -585,6 +585,10 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 
 	// Locked to a folder or prefix
 	if r.Folder != "" {
+		if r.Folder == models.ObjectStoreScopeEntity {
+			return s.listEntityKinds(ctx)
+		}
+
 		if strings.HasSuffix(r.Folder, "/") {
 			return nil, fmt.Errorf("folder should not end with slash")
 		}
@@ -674,6 +678,29 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 		}
 
 		rsp.Results = append(rsp.Results, result)
+	}
+	return rsp, err
+}
+
+// This supports browsing the entity folder view
+func (s *sqlObjectServer) listEntityKinds(ctx context.Context) (*object.ObjectSearchResponse, error) {
+	kinds := []string{}
+
+	rsp := &object.ObjectSearchResponse{}
+	user := store.UserFromContext(ctx)
+	query := `SELECT DISTINCT(kind) FROM object WHERE parent_folder_key LIKE "` + fmt.Sprintf("%d/%s", user.OrgID, models.ObjectStoreScopeEntity) + `%"`
+	err := s.sess.Select(ctx, &kinds, query)
+	if err == nil {
+		for _, kind := range kinds {
+			rsp.Results = append(rsp.Results, &object.ObjectSearchResult{
+				GRN: &object.GRN{
+					Scope: models.ObjectStoreScopeEntity,
+					Kind:  models.StandardKindFolder,
+					UID:   kind,
+				},
+				Name: kind,
+			})
+		}
 	}
 	return rsp, err
 }
