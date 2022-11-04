@@ -72,11 +72,19 @@ func TestAddAppLinks(t *testing.T) {
 			Type: plugins.App,
 			Includes: []*plugins.Includes{
 				{
-					Name:       "Hello",
+					Name:       "Random page",
+					Path:       "/a/test-app3/random-page",
+					Type:       "page",
+					AddToNav:   true,
+					DefaultNav: true,
+				},
+				{
+					Name:       "Connect data",
 					Path:       "/connections/connect-data",
 					Type:       "page",
 					AddToNav:   true,
 					DefaultNav: true,
+					IsCorePage: true,
 				},
 			},
 		},
@@ -205,11 +213,42 @@ func TestAddAppLinks(t *testing.T) {
 		require.Equal(t, "", treeRoot.Children[0].Children[1].PluginID)
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
+
+		// Check if the standalone plugin page appears under the section where we registered it
 		require.NoError(t, err)
 		require.Equal(t, "Connections", treeRoot.Children[0].Text)
 		require.Equal(t, "Connect Data", treeRoot.Children[0].Children[1].Text)
 		require.Equal(t, "standalone-plugin-page-/connections/connect-data", treeRoot.Children[0].Children[1].Id)
 		require.Equal(t, "test-app3", treeRoot.Children[0].Children[1].PluginID)
+
+		// Check if the page does not appear under the apps section
+		require.Equal(t, "Connect Data", treeRoot.Children[0].Children[1].Text)
+	})
+
+	t.Run("Should not register isCorePage=true pages under the app plugin section by default", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav, featuremgmt.FlagDataConnectionsConsole)
+		service.navigationAppPathConfig = map[string]NavigationAppConfig{} // We don't configure it as a standalone plugin page
+
+		treeRoot := navtree.NavTreeRoot{}
+		treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx))
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		// The original core page should exist under the section
+		connectDataNode := treeRoot.FindById("connections-connect-data")
+		require.Equal(t, "connections-connect-data", connectDataNode.Id)
+		require.Equal(t, "", connectDataNode.PluginID)
+
+		// The standalone plugin page should not be found in the navtree at all
+		standaloneConnectDataNode := treeRoot.FindById("standalone-plugin-page-/connections/connect-data")
+		require.Nil(t, standaloneConnectDataNode)
+
+		// The plugin page without "isCorePage=true" still appears under the plugin navigation
+		app3Node := treeRoot.FindById("plugin-page-test-app3")
+		require.NotNil(t, app3Node)
+		require.Len(t, app3Node.Children, 1) // It should only have a single child now
+		require.Equal(t, "Random page", app3Node.Children[0].Text)
+
 	})
 }
 
