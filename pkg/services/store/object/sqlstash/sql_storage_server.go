@@ -374,9 +374,10 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 
 		// 2. Add the labels rows
 		for k, v := range summary.model.Labels {
-			_, err = tx.Exec(ctx, `INSERT INTO object_labels (`+
-				"path, label, value) "+
-				`VALUES (?, ?, ?)`,
+			_, err = tx.Exec(ctx,
+				`INSERT INTO object_labels `+
+					"(path, label, value) "+
+					`VALUES (?, ?, ?)`,
 				path, k, v,
 			)
 			if err != nil {
@@ -442,12 +443,12 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 	return rsp, err
 }
 
-func (s *sqlObjectServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, key string) (*object.ObjectVersionInfo, error) {
+func (s *sqlObjectServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, path string) (*object.ObjectVersionInfo, error) {
 	q := "SELECT etag,version,updated_at,size FROM object WHERE path=?"
 	if false { // TODO, MYSQL/PosgreSQL can lock the row " FOR UPDATE"
 		q += " FOR UPDATE"
 	}
-	rows, err := tx.Query(ctx, q, key)
+	rows, err := tx.Query(ctx, q, path)
 	if err != nil {
 		return nil, err
 	}
@@ -485,11 +486,11 @@ func (s *sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequ
 	if err != nil {
 		return nil, err
 	}
-	key := route.Key
+	path := route.Key
 
 	rsp := &object.DeleteObjectResponse{}
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		results, err := tx.Exec(ctx, "DELETE FROM object WHERE path=?", key)
+		results, err := tx.Exec(ctx, "DELETE FROM object WHERE path=?", path)
 		if err != nil {
 			return err
 		}
@@ -502,9 +503,9 @@ func (s *sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequ
 		}
 
 		// TODO: keep history? would need current version bump, and the "write" would have to get from history
-		_, _ = tx.Exec(ctx, "DELETE FROM object_history WHERE path=?", key)
-		_, _ = tx.Exec(ctx, "DELETE FROM object_labels WHERE path=?", key)
-		_, _ = tx.Exec(ctx, "DELETE FROM object_ref WHERE path=?", key)
+		_, _ = tx.Exec(ctx, "DELETE FROM object_history WHERE path=?", path)
+		_, _ = tx.Exec(ctx, "DELETE FROM object_labels WHERE path=?", path)
+		_, _ = tx.Exec(ctx, "DELETE FROM object_ref WHERE path=?", path)
 		return nil
 	})
 	return rsp, err
@@ -515,10 +516,10 @@ func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRe
 	if err != nil {
 		return nil, err
 	}
-	key := route.Key
+	path := route.Key
 
 	page := ""
-	args := []interface{}{key}
+	args := []interface{}{path}
 	if r.NextPageToken != "" {
 		// args = append(args, r.NextPageToken) // TODO, need to get time from the version
 		// page = "AND updated <= ?"
@@ -590,14 +591,14 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 		}
 		if strings.HasSuffix(r.Folder, "*") {
 			keyPrefix := fmt.Sprintf("%d/%s", user.OrgID, strings.ReplaceAll(r.Folder, "*", ""))
-			selectQuery.addWherePrefix("key", keyPrefix)
+			selectQuery.addWherePrefix("path", keyPrefix)
 		} else {
 			keyPrefix := fmt.Sprintf("%d/%s", user.OrgID, r.Folder)
-			selectQuery.addWhere("parent_folder_key", keyPrefix)
+			selectQuery.addWhere("parent_folder_path", keyPrefix)
 		}
 	} else {
 		keyPrefix := fmt.Sprintf("%d/", user.OrgID)
-		selectQuery.addWherePrefix("key", keyPrefix)
+		selectQuery.addWherePrefix("path", keyPrefix)
 	}
 
 	query, args := selectQuery.toQuery()
