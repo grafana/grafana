@@ -45,7 +45,7 @@ type sqlObjectServer struct {
 
 func getReadSelect(r *object.ReadObjectRequest) string {
 	fields := []string{
-		"`key`", "kind", "version",
+		"path", "kind", "version",
 		"size", "etag", "errors", // errors are always returned
 		"created_at", "created_by",
 		"updated_at", "updated_by",
@@ -61,7 +61,7 @@ func getReadSelect(r *object.ReadObjectRequest) string {
 }
 
 func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql.Rows, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
-	key := "" // string (extract UID?)
+	path := "" // string (extract UID?)
 	var syncSrc sql.NullString
 	var syncTime sql.NullTime
 	raw := &object.RawObject{
@@ -70,7 +70,7 @@ func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql
 
 	summaryjson := &summarySupport{}
 	args := []interface{}{
-		&key, &raw.GRN.Kind, &raw.Version,
+		&path, &raw.GRN.Kind, &raw.Version,
 		&raw.Size, &raw.ETag, &summaryjson.errors,
 		&raw.Created, &raw.CreatedBy,
 		&raw.Updated, &raw.UpdatedBy,
@@ -96,7 +96,7 @@ func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql
 	}
 
 	// Get the GRN from key.  TODO? save each part as a column?
-	info, _ := s.router.RouteFromKey(ctx, key)
+	info, _ := s.router.RouteFromKey(ctx, path)
 	if info.GRN != nil {
 		raw.GRN = info.GRN
 	}
@@ -148,7 +148,7 @@ func (s *sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest)
 	}
 
 	args := []interface{}{route.Key}
-	where := "`key`=?"
+	where := "path=?"
 
 	rows, err := s.sess.Query(ctx, getReadSelect(r)+where, args...)
 	if err != nil {
@@ -176,7 +176,7 @@ func (s *sqlObjectServer) readFromHistory(ctx context.Context, r *object.ReadObj
 
 	rows, err := s.sess.Query(ctx,
 		"SELECT "+strings.Join(fields, ",")+
-			" FROM object_history WHERE `key`=? AND version=?", route.Key, r.Version)
+			" FROM object_history WHERE path=? AND version=?", route.Key, r.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -244,7 +244,7 @@ func (s *sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObje
 			return nil, err
 		}
 
-		where := "`key`=?"
+		where := "path=?"
 		args = append(args, route.Key)
 		if r.Version != "" {
 			return nil, fmt.Errorf("version not supported for batch read (yet?)")
@@ -293,7 +293,7 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 	}
 
 	etag := createContentsHash(body)
-	key := route.Key
+	path := route.Key
 
 	rsp := &object.WriteObjectResponse{
 		GRN:    grn,
@@ -310,7 +310,7 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
 		isUpdate := false
-		versionInfo, err := s.selectForUpdate(ctx, tx, key)
+		versionInfo, err := s.selectForUpdate(ctx, tx, path)
 		if err != nil {
 			return err
 		}
@@ -346,10 +346,10 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 
 		if isUpdate {
 			// Clear the labels+refs
-			if _, err := tx.Exec(ctx, "DELETE FROM object_labels WHERE `key`= ?", key); err != nil {
+			if _, err := tx.Exec(ctx, "DELETE FROM object_labels WHERE path=?", path); err != nil {
 				return err
 			}
-			if _, err := tx.Exec(ctx, "DELETE FROM object_ref WHERE `key`= ?", key); err != nil {
+			if _, err := tx.Exec(ctx, "DELETE FROM object_ref WHERE path=?", path); err != nil {
 				return err
 			}
 		}
@@ -360,11 +360,11 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 		versionInfo.Updated = timestamp
 		versionInfo.UpdatedBy = store.GetUserIDString(modifier)
 		_, err = tx.Exec(ctx, `INSERT INTO object_history (`+
-			"`key`, `version`, `message`, "+
-			"`size`, `body`, `etag`, "+
-			"`updated_at`, `updated_by`) "+
+			"path, version, message, "+
+			"size, body, etag, "+
+			"updated_at, updated_by) "+
 			"VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-			key, versionInfo.Version, versionInfo.Comment,
+			path, versionInfo.Version, versionInfo.Comment,
 			versionInfo.Size, body, versionInfo.ETag,
 			timestamp, versionInfo.UpdatedBy,
 		)
@@ -375,9 +375,9 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 		// 2. Add the labels rows
 		for k, v := range summary.model.Labels {
 			_, err = tx.Exec(ctx, `INSERT INTO object_labels (`+
-				"`key`, `label`, `value`) "+
+				"path, label, value) "+
 				`VALUES (?, ?, ?)`,
-				key, k, v,
+				path, k, v,
 			)
 			if err != nil {
 				return err
@@ -391,10 +391,10 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 				return err
 			}
 			_, err = tx.Exec(ctx, `INSERT INTO object_ref (`+
-				"`key`, `kind`, `type`, `uid`, "+
-				"`resolved_ok`, `resolved_to`, `resolved_warning`, `resolved_time`) "+
+				"path, kind, type, uid, "+
+				"resolved_ok, resolved_to, resolved_warning, resolved_time) "+
 				`VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-				key, ref.Kind, ref.Type, ref.UID,
+				path, ref.Kind, ref.Type, ref.UID,
 				resolved.OK, resolved.Key, resolved.Warning, resolved.Timestamp,
 			)
 			if err != nil {
@@ -407,28 +407,28 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 		if isUpdate {
 			rsp.Status = object.WriteObjectResponse_UPDATED
 			_, err = tx.Exec(ctx, "UPDATE object SET "+
-				"`body`=?, `size`=?, `etag`=?, `version`=?, "+
-				"`updated_at`=?, `updated_by`=?,"+
-				"`name`=?, `description`=?,"+
-				"`labels`=?, `fields`=?, `errors`=? "+
-				"WHERE `key`=?",
+				"body=?, size=?, etag=?, version=?, "+
+				"updated_at=?, updated_by=?,"+
+				"name=?, description=?,"+
+				"labels=?, fields=?, errors=? "+
+				"WHERE path=?",
 				body, versionInfo.Size, etag, versionInfo.Version,
 				timestamp, versionInfo.UpdatedBy,
 				summary.model.Name, summary.model.Description,
 				summary.labels, summary.fields, summary.errors,
-				key,
+				path,
 			)
 			return err
 		}
 
 		// Insert the new row
 		_, err = tx.Exec(ctx, "INSERT INTO object ("+
-			"`key`, `parent_folder_key`, `kind`, `size`, `body`, `etag`, `version`,"+
-			"`updated_at`, `updated_by`, `created_at`, `created_by`,"+
-			"`name`, `description`,"+
-			"`labels`, `fields`, `errors`) "+
+			"path, parent_folder_path, kind, size, body, etag, version,"+
+			"updated_at, updated_by, created_at, created_by,"+
+			"name, description,"+
+			"labels, fields, errors) "+
 			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-			key, getParentFolderKey(grn.Kind, key), grn.Kind, versionInfo.Size, body, etag, versionInfo.Version,
+			path, getParentFolderKey(grn.Kind, path), grn.Kind, versionInfo.Size, body, etag, versionInfo.Version,
 			timestamp, versionInfo.UpdatedBy, timestamp, versionInfo.UpdatedBy, // created + updated are the same
 			summary.model.Name, summary.model.Description,
 			summary.labels, summary.fields, summary.errors,
@@ -443,7 +443,7 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 }
 
 func (s *sqlObjectServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, key string) (*object.ObjectVersionInfo, error) {
-	q := "SELECT etag,version,updated_at,size FROM object WHERE `key`=?"
+	q := "SELECT etag,version,updated_at,size FROM object WHERE path=?"
 	if false { // TODO, MYSQL/PosgreSQL can lock the row " FOR UPDATE"
 		q += " FOR UPDATE"
 	}
@@ -489,7 +489,7 @@ func (s *sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequ
 
 	rsp := &object.DeleteObjectResponse{}
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		results, err := tx.Exec(ctx, "DELETE FROM object WHERE `key`=?", key)
+		results, err := tx.Exec(ctx, "DELETE FROM object WHERE path=?", key)
 		if err != nil {
 			return err
 		}
@@ -502,9 +502,9 @@ func (s *sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequ
 		}
 
 		// TODO: keep history? would need current version bump, and the "write" would have to get from history
-		_, _ = tx.Exec(ctx, "DELETE FROM object_history WHERE `key`=?", key)
-		_, _ = tx.Exec(ctx, "DELETE FROM object_labels WHERE `key`=?", key)
-		_, _ = tx.Exec(ctx, "DELETE FROM object_ref WHERE `key`=?", key)
+		_, _ = tx.Exec(ctx, "DELETE FROM object_history WHERE path=?", key)
+		_, _ = tx.Exec(ctx, "DELETE FROM object_labels WHERE path=?", key)
+		_, _ = tx.Exec(ctx, "DELETE FROM object_ref WHERE path=?", key)
 		return nil
 	})
 	return rsp, err
@@ -527,7 +527,7 @@ func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRe
 
 	query := "SELECT version,size,etag,updated_at,updated_by,message \n" +
 		" FROM object_history \n" +
-		" WHERE `key`=? " + page + "\n" +
+		" WHERE path=? " + page + "\n" +
 		" ORDER BY updated_at DESC LIMIT 100"
 
 	rows, err := s.sess.Query(ctx, query, args...)
@@ -556,7 +556,7 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 	}
 
 	fields := []string{
-		"`key`", "kind", "version", "errors", // errors are always returned
+		"path", "kind", "version", "errors", // errors are always returned
 		"updated_at", "updated_by",
 		"name", "description", // basic summary
 	}
@@ -698,7 +698,7 @@ func (s *sqlObjectServer) ensureFolders(ctx context.Context, objectgrn *object.G
 
 		// Not super efficient, but maybe it is OK?
 		results := []int64{}
-		err = s.sess.Select(ctx, &results, "SELECT 1 from object WHERE `key`=?", fr.Key)
+		err = s.sess.Select(ctx, &results, "SELECT 1 from object WHERE path=?", fr.Key)
 		if err != nil {
 			return err
 		}
