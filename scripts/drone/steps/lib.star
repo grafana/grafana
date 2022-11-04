@@ -1158,6 +1158,21 @@ def verify_gen_cue_step(edition):
         ],
     }
 
+def verify_gen_jsonnet_step(edition):
+    deps = []
+    if edition in ('enterprise', 'enterprise2'):
+        deps.extend(['init-enterprise'])
+    return {
+        'name': 'verify-gen-jsonnet',
+        'image': build_image,
+        'depends_on': deps,
+        'commands': [
+            '# It is required that generated jsonnet is committed and in sync with its inputs.',
+            '# The following command will fail if running code generators produces any diff in output.',
+            'CODEGEN_VERIFY=1 make gen-jsonnet',
+        ],
+    }
+
 def trigger_test_release():
     return {
         'name': 'trigger-test-release',

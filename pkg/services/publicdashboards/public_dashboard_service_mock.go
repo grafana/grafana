@@ -25,6 +25,29 @@ type FakePublicDashboardService struct {
 	mock.Mock
 }
 
+// Create provides a mock function with given fields: ctx, u, dto
+func (_m *FakePublicDashboardService) Create(ctx context.Context, u *user.SignedInUser, dto *models.SavePublicDashboardDTO) (*models.PublicDashboard, error) {
+	ret := _m.Called(ctx, u, dto)
+
+	var r0 *models.PublicDashboard
+	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, *models.SavePublicDashboardDTO) *models.PublicDashboard); ok {
+		r0 = rf(ctx, u, dto)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.PublicDashboard)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *user.SignedInUser, *models.SavePublicDashboardDTO) error); ok {
+		r1 = rf(ctx, u, dto)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Delete provides a mock function with given fields: ctx, orgId, uid
 func (_m *FakePublicDashboardService) Delete(ctx context.Context, orgId int64, uid string) error {
 	ret := _m.Called(ctx, orgId, uid)
@@ -312,8 +335,8 @@ func (_m *FakePublicDashboardService) NewPublicDashboardUid(ctx context.Context)
 	return r0, r1
 }
 
-// Save provides a mock function with given fields: ctx, u, dto
-func (_m *FakePublicDashboardService) Save(ctx context.Context, u *user.SignedInUser, dto *models.SavePublicDashboardDTO) (*models.PublicDashboard, error) {
+// Update provides a mock function with given fields: ctx, u, dto
+func (_m *FakePublicDashboardService) Update(ctx context.Context, u *user.SignedInUser, dto *models.SavePublicDashboardDTO) (*models.PublicDashboard, error) {
 	ret := _m.Called(ctx, u, dto)
 
 	var r0 *models.PublicDashboard
