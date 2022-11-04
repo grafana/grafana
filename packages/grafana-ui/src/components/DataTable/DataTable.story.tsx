@@ -1,7 +1,7 @@
 import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useMemo } from 'react';
 
-import { DataTable, Column, Badge } from '@grafana/ui';
+import { DataTable, Column, CellProps, LinkButton } from '@grafana/ui';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
@@ -39,11 +39,6 @@ export const Basic: ComponentStory<typeof DataTable> = (args) => {
         id: 'noheader',
         sortType: 'number',
       },
-      {
-        id: 'customcontent',
-        header: 'Not Sortable',
-        cell: () => <Badge color="green" text="I'm custom content!" />,
-      },
     ],
     []
   );
@@ -56,14 +51,7 @@ export const Basic: ComponentStory<typeof DataTable> = (args) => {
     []
   );
 
-  return (
-    <DataTable
-      columns={columns}
-      data={data}
-      getRowId={(r) => r.header1}
-      renderExpandedRow={() => <>Expanded content</>}
-    />
-  );
+  return <DataTable columns={columns} data={data} getRowId={(r) => r.header1} />;
 };
 
 interface WithRowExpansionData {
@@ -71,6 +59,10 @@ interface WithRowExpansionData {
   repo: string;
   description: string;
 }
+
+const ExpandedCell = ({ description }: WithRowExpansionData) => {
+  return <p>{description}</p>;
+};
 
 export const WithRowExpansion: ComponentStory<typeof DataTable> = (args) => {
   const tableData: WithRowExpansionData[] = [
@@ -96,13 +88,50 @@ export const WithRowExpansion: ComponentStory<typeof DataTable> = (args) => {
     { id: 'repo', header: 'Repo' },
   ];
 
-  const ExpandedCell = ({ description }: WithRowExpansionData) => {
-    return <p>{description}</p>;
-  };
-
   return (
     <DataTable columns={columns} data={tableData} getRowId={(r) => r.datasource} renderExpandedRow={ExpandedCell} />
   );
+};
+
+interface WithCustomCellData {
+  datasource: string;
+  repo: string;
+}
+
+const RepoCell = ({
+  row: {
+    original: { repo },
+  },
+}: CellProps<WithCustomCellData, void>) => {
+  return (
+    <LinkButton href={repo} size="sm" icon="external-link-alt">
+      Open on GithHub
+    </LinkButton>
+  );
+};
+
+export const WithCustomCell: ComponentStory<typeof DataTable> = (args) => {
+  const tableData: WithCustomCellData[] = [
+    {
+      datasource: 'Prometheus',
+      repo: 'https://github.com/prometheus/prometheus',
+    },
+    {
+      datasource: 'Loki',
+      repo: 'https://github.com/grafana/loki',
+    },
+    {
+      datasource: 'Tempo',
+      repo: 'https://github.com/grafana/tempo',
+    },
+  ];
+
+  const columns: Array<Column<WithCustomCellData>> = [
+    { id: 'datasource', header: 'Data Source' },
+    { id: 'repo', header: 'Repo', cell: RepoCell },
+  ];
+
+  return <DataTable columns={columns} data={tableData} getRowId={(r) => r.datasource} />;
 };
 
 export default meta;

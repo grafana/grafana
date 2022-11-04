@@ -58,9 +58,58 @@ const ExpandedCell = ({ description }: TableData) => {
   return <p>{description}</p>;
 };
 
-export const WithRowExpansion: ComponentStory<typeof DataTable> = (args) => {
+export const MyComponent = () => {
   return (
     <DataTable columns={columns} data={tableData} getRowId={(r) => r.datasource} renderExpandedRow={ExpandedCell} />
   );
+};
+```
+
+### Custom Cell Rendering
+
+Individual cells can be rendered using custom content dy defining a `cell` property on the column definition.
+
+<Story id="experimental-datatable--with-custom-cell" />
+
+```tsx
+interface TableData {
+  datasource: string;
+  repo: string;
+}
+
+const RepoCell = ({
+  row: {
+    original: { repo },
+  },
+}: CellProps<WithCustomCellData, void>) => {
+  return (
+    <LinkButton href={repo} size="sm" icon="external-link-alt">
+      Open on GitHub
+    </LinkButton>
+  );
+};
+
+const tableData: WithCustomCellData[] = [
+  {
+    datasource: 'Prometheus',
+    repo: 'https://github.com/prometheus/prometheus',
+  },
+  {
+    datasource: 'Loki',
+    repo: 'https://github.com/grafana/loki',
+  },
+  {
+    datasource: 'Tempo',
+    repo: 'https://github.com/grafana/tempo',
+  },
+];
+
+const columns: Array<Column<WithCustomCellData>> = [
+  { id: 'datasource', header: 'Data Source' },
+  { id: 'repo', header: 'Repo', cell: RepoCell },
+];
+
+export const MyComponent = () => {
+  return <DataTable columns={columns} data={tableData} getRowId={(r) => r.datasource} />;
 };
 ```
