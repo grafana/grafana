@@ -40,6 +40,7 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 		}
 
 		folderService.ExpectedFolder = &models.Folder{Id: 1, Uid: "uid", Title: "Folder"}
+		folderService.NewExpectedFolder = &folder.Folder{ID: 1, UID: "uid", Title: "Folder"}
 
 		createFolderScenario(t, "When calling POST on", "/api/folders", "/api/folders", folderService, cmd,
 			func(sc *scenarioContext) {
@@ -95,6 +96,7 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 		}
 
 		folderService.ExpectedFolder = &models.Folder{Id: 1, Uid: "uid", Title: "Folder upd"}
+		folderService.NewExpectedFolder = &folder.Folder{ID: 1, UID: "uid", Title: "Folder upd"}
 
 		updateFolderScenario(t, "When calling PUT on", "/api/folders/uid", "/api/folders/:uid", folderService, cmd,
 			func(sc *scenarioContext) {

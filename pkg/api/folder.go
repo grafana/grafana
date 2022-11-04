@@ -125,6 +125,11 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 	}
 	// one place outside service layer we need to convert folder.Folder to models.Folder
 	// modelFolder := &models.Folder{Id: folder.ID, Uid: folder.UID, Title: folder.Title}
+	// make service return model.folder, see if tests work
+	// why is f nil and is it supposed to be; maybe mock is returning nil
+	if f == nil {
+		return nil
+	}
 	modelFolder := folder.ConvertFolderToModelFolder(f)
 	g := guardian.New(c.Req.Context(), f.ID, c.OrgID, c.SignedInUser)
 	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, modelFolder))

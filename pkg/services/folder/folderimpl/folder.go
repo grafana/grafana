@@ -186,7 +186,9 @@ func (s *Service) CreateFolder(ctx context.Context, cmd *folder.CreateFolderComm
 	if err != nil {
 		return nil, err
 	}
-
+	if modelFolder == nil {
+		return nil, nil
+	}
 	folder := f.ConvertModelFolderToFolder(modelFolder)
 
 	var permissionErr error
@@ -253,6 +255,9 @@ func (s *Service) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderComm
 	if err != nil {
 		return nil, err
 	}
+	if modelFolder == nil {
+		return nil, nil
+	}
 	folder := f.ConvertModelFolderToFolder(modelFolder)
 	cmd.Folder = folder
 
@@ -285,10 +290,12 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 		}
 		return nil, dashboards.ErrFolderAccessDenied
 	}
-
+	if dashFolder == nil {
+		return nil, nil
+	}
 	folder := f.ConvertModelFolderToFolder(dashFolder)
 
-	deleteCmd := models.DeleteDashboardCommand{OrgId: user.OrgID, Id: dashFolder.Id, ForceDeleteFolderRules: forceDeleteRules} // how can i get forceDeleteRules from?
+	deleteCmd := models.DeleteDashboardCommand{OrgId: user.OrgID, Id: dashFolder.Id, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 
 	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 		return nil, toFolderError(err)

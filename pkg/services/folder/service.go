@@ -20,6 +20,9 @@ type Service interface {
 
 // TODO: remove when nested folder refactor is done.
 func ConvertModelFolderToFolder(folder *models.Folder) *Folder {
+	if folder == nil {
+		return nil
+	}
 	return &Folder{
 		ID:    folder.Id,
 		UID:   folder.Uid,
@@ -30,6 +33,9 @@ func ConvertModelFolderToFolder(folder *models.Folder) *Folder {
 
 // TODO: remove when nested folder refactor is done.
 func ConvertFolderToModelFolder(folder *Folder) *models.Folder {
+	if folder == nil {
+		return nil
+	}
 	return &models.Folder{
 		Id:    folder.ID,
 		Uid:   folder.UID,
