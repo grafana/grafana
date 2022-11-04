@@ -44,6 +44,10 @@ func (db *MySQLDialect) BooleanStr(value bool) string {
 	return "0"
 }
 
+func (db *MySQLDialect) BatchSize() int {
+	return 1000
+}
+
 func (db *MySQLDialect) SQLType(c *Column) string {
 	var res string
 	switch c.Type {

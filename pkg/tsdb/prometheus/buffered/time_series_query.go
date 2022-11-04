@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkHTTPClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"go.opentelemetry.io/otel/attribute"
@@ -68,7 +69,7 @@ type Buffered struct {
 // New creates and object capable of executing and parsing a Prometheus queries. It's "buffered" because there is
 // another implementation capable of streaming parse the response.
 func New(roundTripper http.RoundTripper, tracer tracing.Tracer, settings backend.DataSourceInstanceSettings, plog log.Logger) (*Buffered, error) {
-	promClient, err := CreateClient(roundTripper, settings.URL)
+	promClient, err := client.CreateAPIClient(roundTripper, settings.URL)
 	if err != nil {
 		return nil, fmt.Errorf("error creating prom client: %v", err)
 	}
@@ -232,7 +233,7 @@ func (b *Buffered) parseTimeSeriesQuery(req *backend.QueryDataRequest) ([]*Prome
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshaling query model: %v", err)
 		}
-		//Final interval value
+		// Final interval value
 		interval, err := calculatePrometheusInterval(model, b.TimeInterval, query, b.intervalCalculator)
 		if err != nil {
 			return nil, fmt.Errorf("error calculating interval: %v", err)
@@ -301,7 +302,7 @@ func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *P
 func calculatePrometheusInterval(model *QueryModel, timeInterval string, query backend.DataQuery, intervalCalculator intervalv2.Calculator) (time.Duration, error) {
 	queryInterval := model.Interval
 
-	//If we are using variable for interval/step, we will replace it with calculated interval
+	// If we are using variable for interval/step, we will replace it with calculated interval
 	if isVariableInterval(queryInterval) {
 		queryInterval = ""
 	}
@@ -656,7 +657,7 @@ func isVariableInterval(interval string) bool {
 	if interval == varInterval || interval == varIntervalMs || interval == varRateInterval {
 		return true
 	}
-	//Repetitive code, we should have functionality to unify these
+	// Repetitive code, we should have functionality to unify these
 	if interval == varIntervalAlt || interval == varIntervalMsAlt || interval == varRateIntervalAlt {
 		return true
 	}
