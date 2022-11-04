@@ -3,7 +3,6 @@ package sender
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"math/rand"
 	"net/url"
 	"testing"
@@ -15,6 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fake_ds "github.com/grafana/grafana/pkg/services/datasources/fakes"
