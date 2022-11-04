@@ -5,7 +5,6 @@ import {
   FieldCache,
   FieldColorModeId,
   FieldType,
-  GrafanaTheme2,
   MutableDataFrame,
   NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
@@ -36,7 +35,18 @@ export function shortenLine(line: Line, length: number): Line {
   };
 }
 
-export function getNodeFields(nodes: DataFrame) {
+export type NodeFields = {
+  id?: Field;
+  title?: Field;
+  subTitle?: Field;
+  mainStat?: Field;
+  secondaryStat?: Field;
+  arc: Field[];
+  details: Field[];
+  color?: Field;
+};
+
+export function getNodeFields(nodes: DataFrame): NodeFields {
   const normalizedFrames = {
     ...nodes,
     fields: nodes.fields.map((field) => ({ ...field, name: field.name.toLowerCase() })),
@@ -54,7 +64,16 @@ export function getNodeFields(nodes: DataFrame) {
   };
 }
 
-export function getEdgeFields(edges: DataFrame) {
+export type EdgeFields = {
+  id?: Field;
+  source?: Field;
+  target?: Field;
+  mainStat?: Field;
+  secondaryStat?: Field;
+  details: Field[];
+};
+
+export function getEdgeFields(edges: DataFrame): EdgeFields {
   const normalizedFrames = {
     ...edges,
     fields: edges.fields.map((field) => ({ ...field, name: field.name.toLowerCase() })),
@@ -70,7 +89,7 @@ export function getEdgeFields(edges: DataFrame) {
   };
 }
 
-function findFieldsByPrefix(frame: DataFrame, prefix: string) {
+function findFieldsByPrefix(frame: DataFrame, prefix: string): Field[] {
   return frame.fields.filter((f) => f.name.match(new RegExp('^' + prefix)));
 }
 
@@ -79,8 +98,7 @@ function findFieldsByPrefix(frame: DataFrame, prefix: string) {
  */
 export function processNodes(
   nodes: DataFrame | undefined,
-  edges: DataFrame | undefined,
-  theme: GrafanaTheme2
+  edges: DataFrame | undefined
 ): {
   nodes: NodeDatum[];
   edges: EdgeDatum[];
@@ -89,65 +107,130 @@ export function processNodes(
     name: string;
   }>;
 } {
-  if (!nodes) {
+  if (!(edges || nodes)) {
     return { nodes: [], edges: [] };
   }
 
-  const nodeFields = getNodeFields(nodes);
-  if (!nodeFields.id) {
-    throw new Error('id field is required for nodes data frame.');
-  }
+  if (nodes) {
+    const nodeFields = getNodeFields(nodes);
+    if (!nodeFields.id) {
+      throw new Error('id field is required for nodes data frame.');
+    }
 
-  const nodesMap =
-    nodeFields.id.values.toArray().reduce<{ [id: string]: NodeDatum }>((acc, id, index) => {
-      acc[id] = {
-        id: id,
-        title: nodeFields.title?.values.get(index) || '',
-        subTitle: nodeFields.subTitle ? nodeFields.subTitle.values.get(index) : '',
-        dataFrameRowIndex: index,
-        incoming: 0,
-        mainStat: nodeFields.mainStat,
-        secondaryStat: nodeFields.secondaryStat,
-        arcSections: nodeFields.arc,
-        color: nodeFields.color,
-      };
-      return acc;
-    }, {}) || {};
+    const nodesMap: { [id: string]: NodeDatum } = {};
+    for (let i = 0; i < nodeFields.id.values.length; i++) {
+      const id = nodeFields.id.values.get(i);
+      nodesMap[id] = makeNodeDatum(id, nodeFields, i);
+    }
 
-  let edgesMapped: EdgeDatum[] = [];
-  // We may not have edges in case of single node
-  if (edges) {
+    let edgesMapped: EdgeDatum[] = [];
+    // We may not have edges in case of single node
+    if (edges) {
+      const edgeFields = getEdgeFields(edges);
+      if (!edgeFields.id) {
+        throw new Error('id field is required for edges data frame.');
+      }
+
+      edgesMapped = edgeFields.id.values.toArray().map((id, index) => {
+        const target = edgeFields.target?.values.get(index);
+        const source = edgeFields.source?.values.get(index);
+        // We are adding incoming edges count, so we can later on find out which nodes are the roots
+        nodesMap[target].incoming++;
+
+        return {
+          id,
+          dataFrameRowIndex: index,
+          source,
+          target,
+          mainStat: edgeFields.mainStat ? statToString(edgeFields.mainStat, index) : '',
+          secondaryStat: edgeFields.secondaryStat ? statToString(edgeFields.secondaryStat, index) : '',
+        } as EdgeDatum;
+      });
+    }
+
+    return {
+      nodes: Object.values(nodesMap),
+      edges: edgesMapped || [],
+      legend: nodeFields.arc.map((f) => {
+        return {
+          color: f.config.color?.fixedColor ?? '',
+          name: f.config.displayName || f.name,
+        };
+      }),
+    };
+  } else {
+    // We have only edges here, so we have to construct also nodes out of them
+
+    // We checked that either node || edges has to be defined and if nodes aren't edges has to be defined
+    edges = edges!;
     const edgeFields = getEdgeFields(edges);
     if (!edgeFields.id) {
       throw new Error('id field is required for edges data frame.');
     }
 
-    edgesMapped = edgeFields.id.values.toArray().map((id, index) => {
-      const target = edgeFields.target?.values.get(index);
-      const source = edgeFields.source?.values.get(index);
-      // We are adding incoming edges count so we can later on find out which nodes are the roots
-      nodesMap[target].incoming++;
+    const nodesMap: { [id: string]: NodeDatum } = {};
+    const edgeDatums: EdgeDatum[] = [];
 
-      return {
-        id,
-        dataFrameRowIndex: index,
-        source,
-        target,
-        mainStat: edgeFields.mainStat ? statToString(edgeFields.mainStat, index) : '',
-        secondaryStat: edgeFields.secondaryStat ? statToString(edgeFields.secondaryStat, index) : '',
-      } as EdgeDatum;
-    });
+    for (let i = 0; i < edgeFields.id.values.length; i++) {
+      const { source, target } = makeNodeDatumsFromEdge(edgeFields, i);
+
+      nodesMap[target.id] = nodesMap[target.id] || target;
+      nodesMap[source.id] = nodesMap[source.id] || source;
+
+      // We are adding incoming edges count, so we can later on find out which nodes are the roots
+      nodesMap[target.id].incoming++;
+
+      edgeDatums.push({
+        id: edgeFields.id.values.get(i),
+        dataFrameRowIndex: i,
+        source: source.id,
+        target: target.id,
+        mainStat: edgeFields.mainStat ? statToString(edgeFields.mainStat, i) : '',
+        secondaryStat: edgeFields.secondaryStat ? statToString(edgeFields.secondaryStat, i) : '',
+      });
+    }
+
+    return {
+      nodes: Object.values(nodesMap),
+      edges: edgeDatums,
+    };
   }
+}
 
+function makeNodeDatumsFromEdge(edgeFields: EdgeFields, index: number) {
+  const targetId = edgeFields.target?.values.get(index);
+  const sourceId = edgeFields.source?.values.get(index);
   return {
-    nodes: Object.values(nodesMap),
-    edges: edgesMapped || [],
-    legend: nodeFields.arc.map((f) => {
-      return {
-        color: f.config.color?.fixedColor ?? '',
-        name: f.config.displayName || f.name,
-      };
-    }),
+    target: makeSimpleNodeDatum(targetId, index),
+    source: makeSimpleNodeDatum(sourceId, index),
+  };
+}
+
+function makeSimpleNodeDatum(name: string, index: number) {
+  return {
+    id: name,
+    title: name,
+    subTitle: '',
+    dataFrameRowIndex: index,
+    incoming: 0,
+    // TODO: need to be summed from edges
+    // mainStat: nodeFields.mainStat,
+    // secondaryStat: nodeFields.secondaryStat,
+    arcSections: [],
+  };
+}
+
+function makeNodeDatum(id: string, nodeFields: NodeFields, index: number) {
+  return {
+    id: id,
+    title: nodeFields.title?.values.get(index) || '',
+    subTitle: nodeFields.subTitle ? nodeFields.subTitle.values.get(index) : '',
+    dataFrameRowIndex: index,
+    incoming: 0,
+    mainStat: nodeFields.mainStat,
+    secondaryStat: nodeFields.secondaryStat,
+    arcSections: nodeFields.arc,
+    color: nodeFields.color,
   };
 }
 

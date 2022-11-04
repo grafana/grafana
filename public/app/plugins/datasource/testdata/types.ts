@@ -29,7 +29,7 @@ export interface TestDataQuery extends DataQuery {
 }
 
 export interface NodesQuery {
-  type?: 'random' | 'response';
+  type?: 'random' | 'response' | 'random edges';
   count?: number;
 }
 

@@ -19,7 +19,7 @@ import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 
 import { queryMetricTree } from './metricTree';
-import { generateRandomNodes, savedNodesResponse } from './nodeGraphUtils';
+import { generateRandomEdges, generateRandomNodes, savedNodesResponse } from './nodeGraphUtils';
 import { runStream } from './runStreams';
 import { flameGraphData } from './testData/flameGraphResponse';
 import { Scenario, TestDataQuery } from './types';
@@ -209,6 +209,9 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
         break;
       case 'response':
         frames = savedNodesResponse();
+        break;
+      case 'random edges':
+        frames = [generateRandomEdges(target.nodes?.count)];
         break;
       default:
         throw new Error(`Unknown node_graph sub type ${type}`);
