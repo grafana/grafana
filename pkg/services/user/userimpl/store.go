@@ -344,7 +344,8 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 		user_auth.auth_id     as external_auth_id,
 		org.name              as org_name,
 		org_user.role         as org_role,
-		org.id                as org_id
+		org.id                as org_id,
+		u.is_service_account  as is_service_account
 		FROM ` + ss.dialect.Quote("user") + ` as u
 		LEFT OUTER JOIN user_auth on user_auth.user_id = u.id
 		LEFT OUTER JOIN org_user on org_user.org_id = ` + orgId + ` and org_user.user_id = u.id
