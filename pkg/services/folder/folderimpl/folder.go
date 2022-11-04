@@ -411,19 +411,28 @@ func (s *Service) GetTree(ctx context.Context, cmd *folder.GetTreeQuery) ([]*fol
 }
 
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
+	// check the flag, if old - do whatever did before
+	//  for new only the store
 	cmd.UID = util.GenerateShortUID()
 	return s.store.Create(ctx, *cmd)
 }
 
 func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
+	// check the flag, if old - do whatever did before
+	//  for new only the store
 	return s.store.Update(ctx, *cmd)
 }
 
 func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
+	// check the flag, if old - do whatever did before
+	//  for new only the store
+	//  use Update
 	return nil, s.store.Move(ctx, *cmd)
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) (*folder.Folder, error) {
+	// check the flag, if old - do whatever did before
+	//  for new only the store
 	// check if dashboard exists
 
 	// check if subfolders exist
@@ -431,14 +440,20 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) (
 }
 
 func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
+	// check the flag, if old - do whatever did before
+	//  for new only the store
 	return s.store.Get(ctx, *cmd)
 }
 
 func (s *Service) GetParents(ctx context.Context, cmd *folder.GetParentsQuery) ([]*folder.Folder, error) {
+	// check the flag, if old - do whatever did before
+	//  for new only the store
 	return s.store.GetParents(ctx, *cmd)
 }
 
 func (s *Service) GetTree(ctx context.Context, cmd *folder.GetTreeQuery) (map[string][]*folder.Folder, error) {
+	// check the flag, if old - do whatever did before
+	//  for new only the store
 	result := make(map[string][]*folder.Folder)
 	depth := cmd.Depth
 	UID := cmd.UID
@@ -454,6 +469,9 @@ func (s *Service) getTree(
 	UID string,
 	result map[string][]*folder.Folder,
 ) (map[string][]*folder.Folder, error) {
+	if depth == 0 {
+		return result, nil
+	}
 
 	children, err := s.store.GetChildren(ctx, folder.GetTreeQuery{
 		OrgID: orgID,
