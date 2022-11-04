@@ -240,7 +240,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     },
     {
       id: LokiOperationId.LineContainsInsensitive,
-      name: 'Line contains case insensitive',
+      name: 'Line contains (insensitive)',
       params: [
         {
           name: 'String',
@@ -248,7 +248,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
           hideName: true,
           placeholder: 'Text to find',
           description: 'Find log lines that contains this text',
-          minWidth: 20,
+          minWidth: 29,
           runQueryOnEnter: true,
         },
       ],
