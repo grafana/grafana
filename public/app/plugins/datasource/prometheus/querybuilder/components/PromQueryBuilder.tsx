@@ -59,7 +59,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
    * Formats a promQL expression and passes that off to helper functions depending on API support
    * @param forLabel
    */
-  const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<Array<{ value: string }>> => {
+  const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<SelectableValue[]> => {
     // If no metric we need to use a different method
     if (!query.metric) {
       // Todo add caching but inside language provider!
@@ -123,7 +123,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   const getLabelValuesFromSeriesAPI = (
     forLabel: Partial<QueryBuilderLabelFilter>,
     promQLExpression: string
-  ): Promise<Array<{ value: string }>> => {
+  ): Promise<SelectableValue[]> => {
     if (!forLabel.label) {
       return Promise.resolve([]);
     }
