@@ -149,7 +149,7 @@ e2e.scenario({
           .input()
           .wait(100)
           .type('azmonmetricstest')
-          .wait(500)
+          .wait(1000)
           .type('{enter}');
         e2e().contains('azmonmetricstest').click();
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
@@ -168,7 +168,7 @@ e2e.scenario({
           .input()
           .wait(100)
           .type('azmonlogstest')
-          .wait(500)
+          .wait(1000)
           .type('{enter}');
         e2e().contains('azmonlogstest').click();
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
