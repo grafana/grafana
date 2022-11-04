@@ -46,9 +46,10 @@ func NewClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
 	pluginRegistry registry.Service,
 	oAuthTokenService oauthtoken.OAuthTokenService) (*client.Decorator, error) {
 	c := client.ProvideService(pluginRegistry, pCfg)
+	skipCookiesNames := []string{cfg.LoginCookieName}
 	clientMiddlewares := []plugins.ClientMiddleware{
 		clientmiddleware.NewForwardOAuthTokenMiddleware(oAuthTokenService),
-		clientmiddleware.NewForwardCookiesMiddleware(cfg),
+		clientmiddleware.NewForwardCookiesMiddleware(skipCookiesNames),
 	}
 
 	return client.NewDecorator(c, clientMiddlewares...)
