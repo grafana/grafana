@@ -283,6 +283,28 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       explainHandler: (op) => `Return log lines that does not contain string \`${op.params[0]}\`.`,
     },
     {
+      id: LokiOperationId.LineContainsNotInsensitive,
+      name: 'Line does not contain (insensitive)',
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: 'Text to exclude',
+          description: 'Find log lines that does not contain this text',
+          minWidth: 35,
+          runQueryOnEnter: true,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'line filter',
+      category: LokiVisualQueryOperationCategory.LineFilters,
+      orderRank: LokiOperationOrder.LineFilters,
+      renderer: getLineFilterRenderer('!~'),
+      addOperationHandler: addLokiOperation,
+      explainHandler: (op) => `Return log lines that does not match regex \`(?i)${op.params[0]}\`.`,
+    },
+    {
       id: LokiOperationId.LineMatchesRegex,
       name: 'Line contains regex match',
       params: [
