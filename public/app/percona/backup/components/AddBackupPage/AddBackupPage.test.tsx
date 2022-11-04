@@ -65,7 +65,6 @@ describe('AddBackupPage', () => {
     expect(screen.getAllByTestId('service-select-label')).toHaveLength(1);
     const textboxes = screen.getAllByRole('textbox');
     expect(textboxes.filter((textbox) => textbox.tagName === 'INPUT')).toHaveLength(2);
-    expect(textboxes.filter((textbox) => textbox.tagName === 'TEXTAREA')).toHaveLength(1);
     expect(screen.queryByTestId('advanced-backup-fields')).not.toBeInTheDocument();
 
     expect(screen.queryByText(Messages.advanceSettings)).toBeInTheDocument();

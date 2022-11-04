@@ -25,7 +25,7 @@ export interface AddBackupFormProps {
   service: SelectableValue<SelectableService> | null;
   dataModel: DataModel;
   backupName: string;
-  description: string;
+  description?: string;
   location: SelectableValue<string> | null;
   retention?: number;
   retryMode?: RetryMode;

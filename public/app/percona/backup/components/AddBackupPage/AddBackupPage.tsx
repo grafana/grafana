@@ -271,13 +271,15 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
                           )}
                         </Field>
                       </span>
-                      <span className={styles.wideField}>
-                        <TextareaInputField
-                          fieldClassName={styles.textAreaField}
-                          name="description"
-                          label={Messages.description}
-                        />
-                      </span>
+                      {scheduleMode && (
+                        <span className={styles.wideField}>
+                          <TextareaInputField
+                            fieldClassName={styles.textAreaField}
+                            name="description"
+                            label={Messages.description}
+                          />
+                        </span>
+                      )}
                       <span className={cx(styles.radioButtonField, styles.backupTypeField)}>
                         {values.type === BackupType.SCHEDULED && (
                           <RadioButtonGroupField
