@@ -4750,7 +4750,7 @@ __metadata:
     "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
     "@types/uuid": 8.3.4
-    "@wojtekmaj/enzyme-adapter-react-17": 0.6.7
+    "@wojtekmaj/enzyme-adapter-react-17": 0.7.0
     ansicolor: 1.1.100
     calculate-size: 1.1.1
     classnames: 2.3.2
@@ -12776,9 +12776,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wojtekmaj/enzyme-adapter-react-17@npm:0.6.7":
-  version: 0.6.7
-  resolution: "@wojtekmaj/enzyme-adapter-react-17@npm:0.6.7"
+"@wojtekmaj/enzyme-adapter-react-17@npm:0.7.0":
+  version: 0.7.0
+  resolution: "@wojtekmaj/enzyme-adapter-react-17@npm:0.7.0"
   dependencies:
     "@wojtekmaj/enzyme-adapter-utils": ^0.1.4
     enzyme-shallow-equal: ^1.0.0
@@ -12790,7 +12790,7 @@ __metadata:
     enzyme: ^3.0.0
     react: ^17.0.0-0
     react-dom: ^17.0.0-0
-  checksum: 5cd4c01adf0d778c5ef749964ae971422f0d445be11f9585de6a077edc32ea7ca74f14c240cf5f0848a8147596d84ed133820c91fc98d33f02b9dc6eee3fd158
+  checksum: aa0f823753e3d5438044ed1fc23be2d5158f62dc73e95ae6e621a91e301b9be118b9effb9971345200b77e7cb213d36a1cdc20271e327101eb680e666b041df2
   languageName: node
   linkType: hard
 
@@ -21637,7 +21637,7 @@ __metadata:
     "@visx/shape": 2.12.2
     "@visx/tooltip": 2.16.0
     "@welldone-software/why-did-you-render": 7.0.1
-    "@wojtekmaj/enzyme-adapter-react-17": 0.6.7
+    "@wojtekmaj/enzyme-adapter-react-17": 0.7.0
     angular: 1.8.3
     angular-bindonce: 0.3.1
     angular-route: 1.8.3
