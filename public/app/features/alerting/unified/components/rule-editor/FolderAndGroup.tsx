@@ -111,6 +111,8 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
     dispatch(fetchRulerRulesIfNotFetchedYet(GRAFANA_RULES_SOURCE_NAME));
   }, [dispatch]);
 
+  useEffect(() => setSelectedGroup(group), [group, setSelectedGroup]);
+
   const resetGroup = useCallback(() => {
     if (group && !initialRender.current && folder?.title) {
       setSelectedGroup('');

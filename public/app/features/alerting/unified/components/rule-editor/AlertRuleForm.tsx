@@ -19,7 +19,6 @@ import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { getDefaultFormValues, getDefaultQueries, rulerRuleToFormValues } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
-import { parseDurationToMilliseconds } from '../../utils/time';
 
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
 import { DetailsStep } from './DetailsStep';
@@ -77,6 +76,8 @@ const AlertRuleNameInput = () => {
   );
 };
 
+export const MINUTE = '1m';
+
 type Props = {
   existing?: RuleWithLocation;
 };
@@ -87,6 +88,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   const notifyApp = useAppNotification();
   const [queryParams] = useQueryParams();
   const [showEditYaml, setShowEditYaml] = useState(false);
+  const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? MINUTE);
 
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
@@ -101,8 +103,9 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
       condition: 'C',
       ...(queryParams['defaults'] ? JSON.parse(queryParams['defaults'] as string) : {}),
       type: RuleFormType.grafana,
+      evaluateEvery: evaluateEvery,
     };
-  }, [existing, queryParams]);
+  }, [existing, queryParams, evaluateEvery]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
@@ -138,6 +141,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
         existing,
         redirectOnSave: exitOnSave ? returnTo : undefined,
         initialAlertRuleName: defaultValues.name,
+        evaluateEvery: evaluateEvery,
       })
     );
   };
@@ -218,8 +222,8 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
                   {type === RuleFormType.grafana ? (
                     <GrafanaEvaluationBehavior
                       initialFolder={defaultValues.folder}
-                      initialRuleName={defaultValues.name}
-                      initialEvaluateEvery={parseDurationToMilliseconds(defaultValues.evaluateEvery)}
+                      evaluateEvery={evaluateEvery}
+                      setEvaluateEvery={setEvaluateEvery}
                     />
                   ) : (
                     <CloudEvaluationBehavior />
