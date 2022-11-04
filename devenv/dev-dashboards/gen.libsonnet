@@ -44,7 +44,7 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('Repeating-a-row-with-a-non-repeating-pan', import 'e2e-repeats/Repeating-a-row-with-a-non-repeating-panel-and-vertical-repeating-panel.json') +
+    dashboard.new('Repeating-a-row-with-a-non-repeating-pan', import 'e2e-repeats/Repeating-a-row-with-a-non-repeating-panel') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
