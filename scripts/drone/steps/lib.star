@@ -742,7 +742,7 @@ def cloud_plugins_e2e_tests_step(suite, edition, cloud, port=3001, video="false"
             'HOST': 'grafana-server' + enterprise2_suffix(edition),
             'GITHUB_TOKEN': from_secret('github_token_pr'),
             'AZURE_SP_APP_ID': from_secret('azure_sp_app_id'),
-            'AZURE_SP_PASSWORD': from_secret('azure_sp_pw'),
+            'AZURE_SP_PASSWORD': from_secret('azure_sp_app_pw'),
             'AZURE_TENANT': from_secret('azure_tenant')
         }
         when= dict(when, paths={
