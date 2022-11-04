@@ -13,8 +13,8 @@ export const MISSING_LABEL_FILTER_ERROR_MESSAGE = 'Select at least 1 label filte
 export interface Props {
   labelsFilters: QueryBuilderLabelFilter[];
   onChange: (labelFilters: Array<Partial<QueryBuilderLabelFilter>>) => void;
-  onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
-  onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
+  onGetLabelNames: (forLabel: QueryBuilderLabelFilter) => Promise<SelectableValue[]>;
+  onGetLabelValues: (forLabel: QueryBuilderLabelFilter) => Promise<SelectableValue[]>;
   /** If set to true, component will show error message until at least 1 filter is selected */
   labelFilterRequired?: boolean;
   getLabelValuesAutofillSuggestions: (query: string, labelName?: string) => Promise<SelectableValue[]>;
@@ -63,7 +63,7 @@ export function LabelFilters({
           onChange={onLabelsChange}
           renderItem={(item, onChangeItem, onDelete) => (
             <LabelFilterItem
-              item={item}
+              item={item as QueryBuilderLabelFilter}
               defaultOp={defaultOp}
               onChange={onChangeItem}
               onDelete={onDelete}

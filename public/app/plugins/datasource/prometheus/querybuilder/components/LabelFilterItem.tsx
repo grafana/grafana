@@ -11,10 +11,10 @@ import { QueryBuilderLabelFilter } from '../shared/types';
 
 export interface Props {
   defaultOp: string;
-  item: Partial<QueryBuilderLabelFilter>;
-  onChange: (value: Partial<QueryBuilderLabelFilter>) => void;
-  onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
-  onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
+  item: QueryBuilderLabelFilter;
+  onChange: (value: QueryBuilderLabelFilter) => void;
+  onGetLabelNames: (forLabel: QueryBuilderLabelFilter) => Promise<SelectableValue[]>;
+  onGetLabelValues: (forLabel: QueryBuilderLabelFilter) => Promise<SelectableValue[]>;
   onDelete: () => void;
   invalidLabel?: boolean;
   invalidValue?: boolean;

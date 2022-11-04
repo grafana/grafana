@@ -43,7 +43,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
    * Map metric metadata to SelectableValue for Select component and also adds defined template variables to the list.
    */
   const withTemplateVariableOptions = useCallback(
-    async (optionsPromise: Promise<Array<{ value: string; description?: string }>>): Promise<SelectableValue[]> => {
+    async (optionsPromise: Promise<SelectableValue[]>): Promise<SelectableValue[]> => {
       const variables = datasource.getVariables();
       const options = await optionsPromise;
       return [
@@ -149,7 +149,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   const getLabelValuesFromLabelValuesAPI = (
     forLabel: Partial<QueryBuilderLabelFilter>,
     promQLExpression: string
-  ): Promise<Array<{ value: string }>> => {
+  ): Promise<SelectableValue[]> => {
     if (!forLabel.label) {
       return Promise.resolve([]);
     }
@@ -166,7 +166,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
    * Formats a promQL expression and passes that into helper functions depending on API support
    * @param forLabel
    */
-  const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<Array<{ value: string }>> => {
+  const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<SelectableValue[]> => {
     if (!forLabel.label) {
       return [];
     }
@@ -205,11 +205,11 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
         <LabelFilters
           getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
           labelsFilters={query.labels}
-          onChange={onChangeLabels}
-          onGetLabelNames={(forLabel: Partial<QueryBuilderLabelFilter>) =>
+          onChange={onChangeLabels as (labelFilters: Array<Partial<QueryBuilderLabelFilter>>) => void}
+          onGetLabelNames={(forLabel: QueryBuilderLabelFilter) =>
             withTemplateVariableOptions(onGetLabelNames(forLabel))
           }
-          onGetLabelValues={(forLabel: Partial<QueryBuilderLabelFilter>) =>
+          onGetLabelValues={(forLabel: QueryBuilderLabelFilter) =>
             withTemplateVariableOptions(onGetLabelValues(forLabel))
           }
         />
