@@ -5,7 +5,7 @@ import { AGGREGATION_OPERATORS, RANGE_VEC_FUNCTIONS } from '../../../syntax';
 
 import { CompletionDataProvider } from './CompletionDataProvider';
 import { NeverCaseError } from './NeverCaseError';
-import { Situation, Label, getSituation } from './situation';
+import type { Situation, Label } from './situation';
 
 export type CompletionType =
   | 'HISTORY'
@@ -249,16 +249,9 @@ async function getLabelValuesForMetricCompletions(
 }
 
 export async function getCompletions(
-  query: string,
-  offset: number,
+  situation: Situation,
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
-  const situation = getSituation(query, offset);
-
-  if (!situation) {
-    return [];
-  }
-
   switch (situation.type) {
     case 'EMPTY':
     case 'AT_ROOT':
