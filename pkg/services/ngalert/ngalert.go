@@ -127,6 +127,7 @@ type AlertNG struct {
 	accesscontrol        accesscontrol.AccessControl
 	accesscontrolService accesscontrol.Service
 	annotationsRepo      annotations.Repository
+	store                *store.DBstore
 
 	bus bus.Bus
 }
@@ -143,6 +144,7 @@ func (ng *AlertNG) init() error {
 		AccessControl:    ng.accesscontrol,
 		DashboardService: ng.dashboardService,
 	}
+	ng.store = store
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
@@ -191,7 +193,7 @@ func (ng *AlertNG) init() error {
 	}
 
 	historian := historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService)
-	stateManager := state.NewManager(ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.imageService, clk, historian)
+	stateManager := state.NewManager(ng.Metrics.GetStateMetrics(), appUrl, store, ng.imageService, clk, historian)
 	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
@@ -276,7 +278,7 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 // Run starts the scheduler and Alertmanager.
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("Starting")
-	ng.stateManager.Warm(ctx)
+	ng.stateManager.Warm(ctx, ng.store)
 
 	children, subCtx := errgroup.WithContext(ctx)
 

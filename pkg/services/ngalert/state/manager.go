@@ -34,21 +34,18 @@ type Manager struct {
 	cache       *cache
 	ResendDelay time.Duration
 
-	ruleStore     RuleReader
 	instanceStore InstanceStore
 	imageService  image.ImageService
 	historian     Historian
 	externalURL   *url.URL
 }
 
-func NewManager(metrics *metrics.State, externalURL *url.URL,
-	ruleStore RuleReader, instanceStore InstanceStore, imageService image.ImageService, clock clock.Clock, historian Historian) *Manager {
+func NewManager(metrics *metrics.State, externalURL *url.URL, instanceStore InstanceStore, imageService image.ImageService, clock clock.Clock, historian Historian) *Manager {
 	return &Manager{
 		cache:         newCache(),
 		ResendDelay:   ResendDelay, // TODO: make this configurable
 		log:           log.New("ngalert.state.manager"),
 		metrics:       metrics,
-		ruleStore:     ruleStore,
 		instanceStore: instanceStore,
 		imageService:  imageService,
 		historian:     historian,
@@ -72,12 +69,10 @@ func (st *Manager) Run(ctx context.Context) error {
 	}
 }
 
-func (st *Manager) Warm(ctx context.Context) {
+func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 	if st.instanceStore == nil {
 		st.log.Info("Skip warming the state because instance store is not configured")
-	}
-	if st.ruleStore == nil {
-		st.log.Info("Skip warming the state because rule store is not configured")
+		return
 	}
 	startTime := time.Now()
 	st.log.Info("Warming state cache for startup")
@@ -94,7 +89,7 @@ func (st *Manager) Warm(ctx context.Context) {
 		ruleCmd := ngModels.ListAlertRulesQuery{
 			OrgID: orgId,
 		}
-		if err := st.ruleStore.ListAlertRules(ctx, &ruleCmd); err != nil {
+		if err := rulesReader.ListAlertRules(ctx, &ruleCmd); err != nil {
 			st.log.Error("Unable to fetch previous state", "error", err)
 		}
 
