@@ -815,7 +815,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
     else:
         mode = ''
 
-    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {} --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7'.format(
+    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {}'.format(
         mode, docker_repo)
 
     if ver_mode == 'release':
@@ -1155,6 +1155,21 @@ def verify_gen_cue_step(edition):
             '# It is required that code generated from Thema/CUE be committed and in sync with its inputs.',
             '# The following command will fail if running code generators produces any diff in output.',
             'CODEGEN_VERIFY=1 make gen-cue',
+        ],
+    }
+
+def verify_gen_jsonnet_step(edition):
+    deps = []
+    if edition in ('enterprise', 'enterprise2'):
+        deps.extend(['init-enterprise'])
+    return {
+        'name': 'verify-gen-jsonnet',
+        'image': build_image,
+        'depends_on': deps,
+        'commands': [
+            '# It is required that generated jsonnet is committed and in sync with its inputs.',
+            '# The following command will fail if running code generators produces any diff in output.',
+            'CODEGEN_VERIFY=1 make gen-jsonnet',
         ],
     }
 

@@ -28,7 +28,7 @@ import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { PubdashFooter } from '../components/PubdashFooter/PubdashFooter';
+import { PublicDashboardFooter } from '../components/PublicDashboardFooter/PublicDashboardsFooter';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
@@ -415,7 +415,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         )}
         {
           // TODO: assess if there are other places where we may want a footer, which may reveal a better place to add this
-          isPublic && <PubdashFooter />
+          isPublic && <PublicDashboardFooter />
         }
       </>
     );

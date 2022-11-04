@@ -4,16 +4,16 @@ import React from 'react';
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-export interface PublicDashboardFooter {
+export interface PublicDashboardFooterCfg {
   hide: boolean;
   text: string;
   logo: string;
   link: string;
 }
 
-export const PubdashFooter = function () {
+export const PublicDashboardFooter = function () {
   const styles = useStyles2(getStyles);
-  const conf = getPubdashFooterConfig();
+  const conf = getPublicDashboardFooterConfig();
 
   return conf.hide ? null : (
     <div className={styles.footer}>
@@ -26,10 +26,10 @@ export const PubdashFooter = function () {
   );
 };
 
-export function setPubdashFooterConfigFn(fn: typeof getPubdashFooterConfig) {
-  getPubdashFooterConfig = fn;
+export function setPublicDashboardFooterConfigFn(fn: typeof getPublicDashboardFooterConfig) {
+  getPublicDashboardFooterConfig = fn;
 }
-export let getPubdashFooterConfig = (): PublicDashboardFooter => ({
+export let getPublicDashboardFooterConfig = (): PublicDashboardFooterCfg => ({
   hide: false,
   text: 'powered by Grafana',
   logo: 'public/img/grafana_icon.svg',
