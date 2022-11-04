@@ -71,6 +71,7 @@ describe('hashRulerRule', () => {
     const encodedIdentifier = encodeURIComponent(stringifyIdentifier(identifier));
 
     expect(encodedIdentifier).toBe('pri%24my-datasource%24folder1%1Ffolder2%24group1%1Fgroup2%24abc123');
+    expect(encodedIdentifier).not.toContain('%2F');
     expect(parse(encodedIdentifier, true)).toStrictEqual(identifier);
   });
 
@@ -97,5 +98,13 @@ describe('hashRulerRule', () => {
 
     expect(encodedIdentifier).toBe('pri%24my-datasource%24folder1%1Efolder2%24group1%1Egroup2%24abc123');
     expect(parse(encodedIdentifier, true)).toStrictEqual(identifier);
+  });
+
+  it('should correctly decode a Grafana managed rule id', () => {
+    expect(parse('abc123', false)).toStrictEqual({ uid: 'abc123', ruleSourceName: 'grafana' });
+  });
+
+  it('should throw for malformed identifier', () => {
+    expect(() => parse('foo$bar$baz', false)).toThrow(/failed to parse/i);
   });
 });
