@@ -13,18 +13,18 @@ import (
 
 // WireSet provides a wire.ProviderSet of plugin providers.
 var WireSet = wire.NewSet(
-	ProvideClientProvider,
-	wire.Bind(new(plugins.Client), new(*client.Provider)),
+	ProvideClientDecorator,
+	wire.Bind(new(plugins.Client), new(*client.Decorator)),
 )
 
-func ProvideClientProvider(cfg *setting.Cfg, pCfg *config.Cfg,
+func ProvideClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
 	pluginRegistry registry.Service,
-	oAuthTokenService oauthtoken.OAuthTokenService) (*client.Provider, error) {
+	oAuthTokenService oauthtoken.OAuthTokenService) (*client.Decorator, error) {
 	c := client.ProvideService(pluginRegistry, pCfg)
 	clientMiddlewares := []plugins.ClientMiddleware{
 		clientmiddleware.NewForwardOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewForwardCookiesMiddleware(cfg),
 	}
 
-	return client.NewProvider(c, clientMiddlewares...)
+	return client.NewDecorator(c, clientMiddlewares...)
 }
