@@ -1,6 +1,6 @@
 import { BuildInfo } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
-import { BaseTransport } from '@grafana/faro-core';
+import { BaseTransport, Instrumentation, InternalLoggerLevel } from '@grafana/faro-core';
 import { FetchTransport, initializeFaro } from '@grafana/faro-web-sdk';
 import { EchoEventType, EchoMeta } from '@grafana/runtime';
 
@@ -66,6 +66,19 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
   it('will initialize GrafanaJavascriptAgent and set user', async () => {
     // arrange
     const mockedSetUser = jest.fn();
+    const mockedInstrumentationsForConfig: Instrumentation[] = [];
+    const mockedInstrumentations = {
+      add: jest.fn(),
+      instrumentations: mockedInstrumentationsForConfig,
+      remove: jest.fn(),
+    };
+    const mockedInternalLogger = {
+      prefix: 'Faro',
+      debug: jest.fn(),
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    };
     const mockedAgent = () => {
       return {
         api: {
@@ -75,24 +88,38 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
           pushError: jest.fn(),
           pushMeasurement: jest.fn(),
           pushTraces: jest.fn(),
+          pushEvent: jest.fn(),
           initOTEL: jest.fn(),
           getOTEL: jest.fn(),
           getTraceContext: jest.fn(),
+          changeStacktraceParser: jest.fn(),
+          getStacktraceParser: jest.fn(),
+          isOTELInitialized: jest.fn(),
+          setSession: jest.fn(),
+          getSession: jest.fn(),
+          resetUser: jest.fn(),
+          resetSession: jest.fn(),
         },
         config: {
           globalObjectKey: '',
-          instrumentations: [],
           preventGlobalExposure: false,
           transports: [],
+          instrumentations: mockedInstrumentationsForConfig,
           metas: [],
           parseStacktrace: jest.fn(),
           app: jest.fn(),
           paused: false,
+          dedupe: true,
+          isolate: false,
+          internalLoggerLevel: InternalLoggerLevel.ERROR,
+          unpatchedConsole: { ...console },
         },
         metas: {
           add: jest.fn(),
           remove: jest.fn(),
           value: {},
+          addListener: jest.fn(),
+          removeListener: jest.fn(),
         },
         transports: {
           add: jest.fn(),
@@ -100,9 +127,18 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
           transports: [],
           pause: jest.fn(),
           unpause: jest.fn(),
+          addBeforeSendHooks: jest.fn(),
+          addIgnoreErrorsPatterns: jest.fn(),
+          getBeforeSendHooks: jest.fn(),
+          isPaused: jest.fn(),
+          remove: jest.fn(),
+          removeBeforeSendHooks: jest.fn(),
         },
         pause: jest.fn(),
         unpause: jest.fn(),
+        instrumentations: mockedInstrumentations,
+        internalLogger: mockedInternalLogger,
+        unpatchedConsole: { ...console },
       };
     };
     jest.mocked(initializeFaro).mockImplementation(mockedAgent);
@@ -124,6 +160,19 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
   it('will forward events to transports', async () => {
     //arrange
     const mockedSetUser = jest.fn();
+    const mockedInstrumentationsForConfig: Instrumentation[] = [];
+    const mockedInstrumentations = {
+      add: jest.fn(),
+      instrumentations: mockedInstrumentationsForConfig,
+      remove: jest.fn(),
+    };
+    const mockedInternalLogger = {
+      prefix: 'Faro',
+      debug: jest.fn(),
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    };
     const mockedAgent = () => {
       return {
         api: {
@@ -133,24 +182,38 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
           pushError: jest.fn(),
           pushMeasurement: jest.fn(),
           pushTraces: jest.fn(),
+          pushEvent: jest.fn(),
           initOTEL: jest.fn(),
           getOTEL: jest.fn(),
           getTraceContext: jest.fn(),
+          changeStacktraceParser: jest.fn(),
+          getStacktraceParser: jest.fn(),
+          isOTELInitialized: jest.fn(),
+          setSession: jest.fn(),
+          getSession: jest.fn(),
+          resetUser: jest.fn(),
+          resetSession: jest.fn(),
         },
         config: {
           globalObjectKey: '',
-          instrumentations: [],
           preventGlobalExposure: false,
           transports: [],
+          instrumentations: mockedInstrumentationsForConfig,
           metas: [],
           parseStacktrace: jest.fn(),
           app: jest.fn(),
           paused: false,
+          dedupe: true,
+          isolate: false,
+          internalLoggerLevel: InternalLoggerLevel.ERROR,
+          unpatchedConsole: { ...console },
         },
         metas: {
           add: jest.fn(),
           remove: jest.fn(),
           value: {},
+          addListener: jest.fn(),
+          removeListener: jest.fn(),
         },
         transports: {
           add: jest.fn(),
@@ -158,9 +221,18 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
           transports: [],
           pause: jest.fn(),
           unpause: jest.fn(),
+          addBeforeSendHooks: jest.fn(),
+          addIgnoreErrorsPatterns: jest.fn(),
+          getBeforeSendHooks: jest.fn(),
+          isPaused: jest.fn(),
+          remove: jest.fn(),
+          removeBeforeSendHooks: jest.fn(),
         },
         pause: jest.fn(),
         unpause: jest.fn(),
+        instrumentations: mockedInstrumentations,
+        internalLogger: mockedInternalLogger,
+        unpatchedConsole: { ...console },
       };
     };
 
