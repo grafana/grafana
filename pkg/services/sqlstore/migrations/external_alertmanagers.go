@@ -2,14 +2,15 @@ package migrations
 
 import (
 	"fmt"
+	"net/url"
+	"time"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
-	"net/url"
-	"time"
 	"xorm.io/xorm"
 )
 
