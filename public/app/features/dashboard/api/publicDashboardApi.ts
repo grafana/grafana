@@ -36,7 +36,7 @@ export const publicDashboardApi = createApi({
   reducerPath: 'publicDashboardApi',
   baseQuery: retry(backendSrvBaseQuery({ baseUrl: '/api/dashboards' }), { maxRetries: 0 }),
   tagTypes: ['PublicDashboard', 'AuditTablePublicDashboard'],
-  keepUnusedDataFor: 0,
+  refetchOnMountOrArgChange: true,
   endpoints: (builder) => ({
     getPublicDashboard: builder.query<PublicDashboard, string>({
       query: (dashboardUid) => ({
@@ -53,7 +53,7 @@ export const publicDashboardApi = createApi({
           dispatch(notifyApp(createErrorNotification(customError?.error?.data?.message)));
         }
       },
-      providesTags: ['PublicDashboard'],
+      providesTags: (result, error, dashboardUid) => [{ type: 'PublicDashboard', id: dashboardUid }],
     }),
     createPublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({
@@ -72,7 +72,7 @@ export const publicDashboardApi = createApi({
           publicDashboardEnabled: data.isEnabled,
         });
       },
-      invalidatesTags: ['PublicDashboard'],
+      invalidatesTags: (result, error, { payload }) => [{ type: 'PublicDashboard', id: payload.dashboardUid }],
     }),
     updatePublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({
@@ -92,7 +92,7 @@ export const publicDashboardApi = createApi({
           publicDashboardEnabled: data.isEnabled,
         });
       },
-      invalidatesTags: ['PublicDashboard'],
+      invalidatesTags: (result, error, { payload }) => [{ type: 'PublicDashboard', id: payload.dashboardUid }],
     }),
     listPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
       query: () => ({
@@ -100,25 +100,25 @@ export const publicDashboardApi = createApi({
       }),
       providesTags: ['AuditTablePublicDashboard'],
     }),
-    deletePublicDashboard: builder.mutation<void, { dashboardTitle: string; dashboardUid: string; uid: string }>({
+    deletePublicDashboard: builder.mutation<void, { dashboard?: DashboardModel; dashboardUid: string; uid: string }>({
       query: (params) => ({
         url: `/uid/${params.dashboardUid}/public-dashboards/${params.uid}`,
         method: 'DELETE',
       }),
-      async onQueryStarted({ dashboardTitle }, { dispatch, queryFulfilled }) {
+      async onQueryStarted({ dashboard, uid }, { dispatch, queryFulfilled }) {
         await queryFulfilled;
-        dispatch(
-          notifyApp(
-            createSuccessNotification(
-              'Public dashboard deleted',
-              !!dashboardTitle
-                ? `Public dashboard for ${dashboardTitle} has been deleted`
-                : `Public dashboard has been deleted`
-            )
-          )
-        );
+        dispatch(notifyApp(createSuccessNotification('Public dashboard deleted!')));
+
+        dashboard?.updateMeta({
+          hasPublicDashboard: false,
+          publicDashboardUid: uid,
+          publicDashboardEnabled: false,
+        });
       },
-      invalidatesTags: ['AuditTablePublicDashboard'],
+      invalidatesTags: (result, error, { dashboardUid }) => [
+        { type: 'PublicDashboard', id: dashboardUid },
+        'AuditTablePublicDashboard',
+      ],
     }),
   }),
 });
