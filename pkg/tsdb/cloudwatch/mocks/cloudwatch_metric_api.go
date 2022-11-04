@@ -10,18 +10,9 @@ import (
 
 type FakeMetricsAPI struct {
 	cloudwatchiface.CloudWatchAPI
-	cloudwatch.GetMetricDataOutput
 
 	Metrics        []*cloudwatch.Metric
 	MetricsPerPage int
-
-	CallsGetMetricDataWithContext []*cloudwatch.GetMetricDataInput
-}
-
-func (c *FakeMetricsAPI) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
-	c.CallsGetMetricDataWithContext = append(c.CallsGetMetricDataWithContext, input)
-
-	return &c.GetMetricDataOutput, nil
 }
 
 func (c *FakeMetricsAPI) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
