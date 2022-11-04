@@ -6,6 +6,11 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
+var ErrMaximumDepthReached = errutil.NewBase(errutil.StatusBadRequest, "folder.maximum-depth-reached", errutil.WithPublicMessage("Maximum nested folder depth reached"))
+var ErrBadRequest = errutil.NewBase(errutil.StatusBadRequest, "folder.bad-request")
+var ErrDatabaseError = errutil.NewBase(errutil.StatusInternal, "folder.database-error")
+var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
+
 const (
 	GeneralFolderUID     = "general"
 	MaxNestedFolderDepth = 8
@@ -14,10 +19,10 @@ const (
 var ErrFolderNotFound = errutil.NewBase(errutil.StatusNotFound, "folder.notFound")
 
 type Folder struct {
-	ID          int64
-	OrgID       int64
-	UID         string
-	ParentUID   string
+	ID          int64  `xorm:"pk autoincr 'id'"`
+	OrgID       int64  `xorm:"org_id"`
+	UID         string `xorm:"uid"`
+	ParentUID   string `xorm:"parent_uid"`
 	Title       string
 	Description string
 
@@ -25,7 +30,8 @@ type Folder struct {
 	Updated time.Time
 
 	// TODO: validate if this field is required/relevant to folders.
-	UpdatedBy int64
+	// currently there is no such column
+	// UpdatedBy int64
 }
 
 // NewFolder tales a title and returns a Folder with the Created and Updated
@@ -42,11 +48,11 @@ func NewFolder(title string, description string) *Folder {
 // CreateFolderCommand captures the information required by the folder service
 // to create a folder.
 type CreateFolderCommand struct {
-	UID         string `json:"uid" xorm:"uid"`
-	OrgID       int64  `json:"orgId" xorm:"org_id"`
+	UID         string `json:"uid"`
+	OrgID       int64  `json:"orgId"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	ParentUID   string `json:"parent_uid" xorm:"parent_uid"`
+	ParentUID   string `json:"parent_uid"`
 }
 
 // UpdateFolderCommand captures the information required by the folder service
@@ -77,14 +83,16 @@ type DeleteFolderCommand struct {
 // Title.
 type GetFolderQuery struct {
 	UID   *string
-	ID    *int
+	ID    *int64
 	Title *string
+	OrgID int64
 }
 
 // GetParentsQuery captures the information required by the folder service to
 // return a list of all parent folders of a given folder.
 type GetParentsQuery struct {
-	UID string `xorm:"uid"`
+	UID   string `xorm:"uid"`
+	OrgID int64  `xorm:"org_id"`
 }
 
 // GetTreeCommand captures the information required by the folder service to

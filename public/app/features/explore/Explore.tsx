@@ -1,18 +1,28 @@
 import { css, cx } from '@emotion/css';
+import { get } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { createRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { compose } from 'redux';
 import { Unsubscribable } from 'rxjs';
 
-import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, QueryFixAction, RawTimeRange } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  DataQuery,
+  GrafanaTheme2,
+  LoadingState,
+  QueryFixAction,
+  RawTimeRange,
+  EventBus,
+  SplitOpenOptions,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';
 import { AbsoluteTimeEvent } from 'app/types/events';
@@ -77,6 +87,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 export interface ExploreProps extends Themeable2 {
   exploreId: ExploreId;
   theme: GrafanaTheme2;
+  eventBus: EventBus;
 }
 
 enum ExploreDrawer {
@@ -118,12 +129,16 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   absoluteTimeUnsubsciber: Unsubscribable | undefined;
   topOfViewRef = createRef<HTMLDivElement>();
+  graphEventBus: EventBus;
+  logsEventBus: EventBus;
 
   constructor(props: Props) {
     super(props);
     this.state = {
       openDrawer: undefined,
     };
+    this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
+    this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
   }
 
   componentDidMount() {
@@ -228,6 +243,27 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     });
   };
 
+  onSplitOpen = (panelType: string) => {
+    return async (options?: SplitOpenOptions<DataQuery>) => {
+      this.props.splitOpen(options);
+      if (options && this.props.datasourceInstance) {
+        const target = (await getDataSourceSrv().get(options.datasourceUid)).type;
+        const source =
+          this.props.datasourceInstance.uid === MIXED_DATASOURCE_NAME
+            ? get(this.props.queries, '0.datasource.type')
+            : this.props.datasourceInstance.type;
+        const tracking = {
+          origin: 'panel',
+          panelType,
+          source,
+          target,
+          exploreId: this.props.exploreId,
+        };
+        reportInteraction('grafana_explore_split_view_opened', tracking);
+      }
+    };
+  };
+
   renderEmptyState(exploreContainerStyles: string) {
     return (
       <div className={cx(exploreContainerStyles)}>
@@ -241,17 +277,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const {
-      graphResult,
-      absoluteRange,
-      timeZone,
-      splitOpen,
-      queryResponse,
-      loading,
-      theme,
-      graphStyle,
-      showFlameGraph,
-    } = this.props;
+    const { graphResult, absoluteRange, timeZone, queryResponse, loading, theme, graphStyle, showFlameGraph } =
+      this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     const label = <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={this.onChangeGraphStyle} />;
 
@@ -266,9 +293,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           onChangeTime={this.onUpdateTimeRange}
           timeZone={timeZone}
           annotations={queryResponse.annotations}
-          splitOpenFn={splitOpen}
+          splitOpenFn={this.onSplitOpen('graph')}
           loadingState={queryResponse.state}
           anchorToZero={false}
+          eventBus={this.graphEventBus}
         />
       </Collapse>
     );
@@ -283,6 +311,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         exploreId={exploreId}
         onCellFilterAdded={this.onCellFilterAdded}
         timeZone={timeZone}
+        splitOpenFn={this.onSplitOpen('table')}
       />
     );
   }
@@ -301,6 +330,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         onStartScanning={this.onStartScanning}
         onStopScanning={this.onStopScanning}
         scrollElement={this.scrollElement}
+        eventBus={this.logsEventBus}
+        splitOpenFn={this.onSplitOpen('logs')}
       />
     );
   }
@@ -315,6 +346,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         exploreId={exploreId}
         withTraceView={showTrace}
         datasourceType={datasourceType}
+        splitOpenFn={this.onSplitOpen('nodeGraph')}
       />
     );
   }
@@ -327,7 +359,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderTraceViewPanel() {
-    const { queryResponse, splitOpen, exploreId } = this.props;
+    const { queryResponse, exploreId } = this.props;
     const dataFrames = queryResponse.series.filter((series) => series.meta?.preferredVisualisationType === 'trace');
 
     return (
@@ -336,7 +368,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         <TraceViewContainer
           exploreId={exploreId}
           dataFrames={dataFrames}
-          splitOpenFn={splitOpen}
+          splitOpenFn={this.onSplitOpen('traceView')}
           scrollElement={this.scrollElement}
           queryResponse={queryResponse}
           topOfViewRef={this.topOfViewRef}
@@ -470,6 +502,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     datasourceInstance,
     datasourceMissing,
     queryKeys,
+    queries,
     isLive,
     graphResult,
     logsResult,
@@ -489,6 +522,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     datasourceInstance,
     datasourceMissing,
     queryKeys,
+    queries,
     isLive,
     graphResult,
     logsResult: logsResult ?? undefined,
@@ -523,4 +557,4 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export default compose(connector, withTheme2)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;
+export default withTheme2(connector(Explore));
