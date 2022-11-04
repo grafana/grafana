@@ -1,7 +1,6 @@
 import React from 'react';
 import { Observable, Subject } from 'rxjs';
 
-import { LoadingState, SelectableValue } from '@grafana/data';
 import { queryMetricTree } from 'app/plugins/datasource/testdata/metricTree';
 
 import { SceneComponentProps } from '../../core/types';

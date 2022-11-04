@@ -1,7 +1,5 @@
 import { Subscription, Unsubscribable } from 'rxjs';
 
-import { LoadingState } from '@grafana/data';
-
 import { SceneVariable, SceneVariables, VariableValueOption } from '../types';
 
 export interface VariableUpdateInProgress {

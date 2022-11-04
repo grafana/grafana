@@ -1,7 +1,6 @@
 import { isArray } from 'lodash';
 import React from 'react';
 
-import { LoadingState } from '@grafana/data';
 import { Select, MultiSelect } from '@grafana/ui';
 
 import { SceneComponentProps } from '../../core/types';
