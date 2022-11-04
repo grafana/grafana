@@ -46,6 +46,7 @@ export function getVariablesDemo(): Scene {
           query: 'A.$server.$pod.*',
           value: 'handler',
           delayMs: 1000,
+          isMulti: true,
           text: '',
           options: [],
         }),

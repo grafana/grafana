@@ -22,8 +22,12 @@ export abstract class MultiValueVariable<
     test.setState(state);
   }
 
-  onValueChange = (value: SelectableValue<string>) => {
-    this.setStateHelper({ value: value.value });
+  onSingleValueChange = (value: SelectableValue<string>) => {
+    this.setStateHelper({ value: value.value, text: value.label });
+  };
+
+  onMultiValueChange = (value: Array<SelectableValue<string>>) => {
+    this.setStateHelper({ value: value.map((v) => v.value!), text: value.map((v) => v.label!) });
   };
 
   onFilterOrSearchOptions = (value: string) => {};

@@ -1,16 +1,29 @@
+import { isArray } from 'lodash';
 import React from 'react';
 
-import { LoadingState, VariableHide } from '@grafana/data';
-import { AsyncSelect, ClickOutsideWrapper, Select } from '@grafana/ui';
-import { VariableInput } from 'app/features/variables/pickers/shared/VariableInput';
-import { VariableLink } from 'app/features/variables/pickers/shared/VariableLink';
-import VariableOptions from 'app/features/variables/pickers/shared/VariableOptions';
+import { LoadingState } from '@grafana/data';
+import { Select, MultiSelect } from '@grafana/ui';
 
 import { SceneComponentProps } from '../../core/types';
 import { MultiValueVariable } from '../variants/MultiValueVariable';
 
 export function VariableValueSelect({ model }: SceneComponentProps<MultiValueVariable>) {
   const { value, key, state, isMulti, options } = model.useState();
+
+  if (isMulti) {
+    return (
+      <MultiSelect
+        id={key}
+        placeholder="Select value"
+        width="auto"
+        value={isArray(value) ? value : [value]}
+        allowCustomValue
+        isLoading={state === LoadingState.Loading}
+        options={options}
+        onChange={model.onMultiValueChange}
+      />
+    );
+  }
 
   return (
     <Select
@@ -21,7 +34,7 @@ export function VariableValueSelect({ model }: SceneComponentProps<MultiValueVar
       allowCustomValue
       isLoading={state === LoadingState.Loading}
       options={options}
-      onChange={model.onValueChange}
+      onChange={model.onSingleValueChange}
     />
   );
 }

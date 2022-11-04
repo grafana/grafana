@@ -62,10 +62,6 @@ export class TestVariable extends MultiValueVariable<TestVariableState> {
     return options;
   }
 
-  onValueChange = (value: SelectableValue<string>) => {
-    this.setState({ value: value.value });
-  };
-
   /** Useful from tests */
   signalUpdateCompleted() {
     this.completeUpdate.next(1);

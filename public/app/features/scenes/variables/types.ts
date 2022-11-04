@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 
-import { LoadingState, SelectableValue } from '@grafana/data';
+import { LoadingState } from '@grafana/data';
 import { VariableHide } from 'app/features/variables/types';
 
 import { SceneObject, SceneObjectStatePlain } from '../core/types';
@@ -30,7 +30,11 @@ export interface SceneVariable<TState extends SceneVariableState = SceneVariable
   getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]>;
 }
 
-export type VariableValueOption = SelectableValue<string>;
+export interface VariableValueOption {
+  label: string;
+  value: string;
+}
+
 export interface VariableGetOptionsArgs {
   searchFilter?: string;
 }
