@@ -353,6 +353,12 @@ type ListAlertRulesQuery struct {
 	Result RulesGroup
 }
 
+// CountAlertRulesQuery is the query for counting alert rules
+type CountAlertRulesQuery struct {
+	OrgID        int64
+	NamespaceUID string
+}
+
 type GetAlertRulesForSchedulingQuery struct {
 	PopulateFolders bool
 
