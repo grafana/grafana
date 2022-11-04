@@ -4,14 +4,17 @@ import React, { useEffect } from 'react';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation, useParams } from 'react-router-dom';
 
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
-import { Alert, LoadingPlaceholder, withErrorBoundary, useStyles2, Icon, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Alert, LoadingPlaceholder, withErrorBoundary, useStyles2, Icon } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
-import { ContactPointsState } from '../../../types/alerting';
+import { ContactPointsState } from '../../../types';
 
+import { alertmanagerApi } from './api/alertmanagerApi';
 import { useGetContactPointsState } from './api/receiversApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import { EditReceiverView } from './components/receivers/EditReceiverView';
 import { EditTemplateView } from './components/receivers/EditTemplateView';
@@ -48,13 +51,15 @@ function NotificationError({ errorCount }: NotificationErrorProps) {
   );
 }
 
+type PageType = 'receivers' | 'templates' | 'global-config';
+
 const Receivers = () => {
+  const { useGetAlertmanagerChoiceQuery } = alertmanagerApi;
+
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
-
-  type PageType = 'receivers' | 'templates' | 'global-config';
 
   const { id, type } = useParams<{ id?: string; type?: PageType }>();
   const location = useLocation();
@@ -87,31 +92,15 @@ const Receivers = () => {
       dispatch(fetchGrafanaNotifiersAction());
     }
   }, [alertManagerSourceName, dispatch, receiverTypes]);
+
   const contactPointsState: ContactPointsState = useGetContactPointsState(alertManagerSourceName ?? '');
   const integrationsErrorCount = contactPointsState?.errorCount ?? 0;
 
+  const { data: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
+
   const disableAmSelect = !isRoot;
 
-  let pageNav: NavModelItem | undefined;
-  if (type === 'receivers' || type === 'templates') {
-    const objectText = type === 'receivers' ? 'contact point' : 'message template';
-    if (id) {
-      pageNav = {
-        text: id,
-        subTitle: `Edit the settings for a specific ${objectText}`,
-      };
-    } else {
-      pageNav = {
-        text: `New ${objectText}`,
-        subTitle: `Create a new ${objectText} for your notifications`,
-      };
-    }
-  } else if (type === 'global-config') {
-    pageNav = {
-      text: 'Global config',
-      subTitle: 'Manage your global configuration',
-    };
-  }
+  let pageNav = getPageNavigationModel(type, id);
 
   if (!alertManagerSourceName) {
     return isRoot ? (
@@ -141,6 +130,10 @@ const Receivers = () => {
           {error.message || 'Unknown error.'}
         </Alert>
       )}
+      <GrafanaAlertmanagerDeliveryWarning
+        alertmanagerChoice={alertmanagerChoice}
+        currentAlertmanager={alertManagerSourceName}
+      />
       {loading && !config && <LoadingPlaceholder text="loading configuration..." />}
       {config && !error && (
         <Switch>
@@ -183,6 +176,30 @@ const Receivers = () => {
     </AlertingPageWrapper>
   );
 };
+
+function getPageNavigationModel(type: PageType | undefined, id: string | undefined) {
+  let pageNav: NavModelItem | undefined;
+  if (type === 'receivers' || type === 'templates') {
+    const objectText = type === 'receivers' ? 'contact point' : 'message template';
+    if (id) {
+      pageNav = {
+        text: id,
+        subTitle: `Edit the settings for a specific ${objectText}`,
+      };
+    } else {
+      pageNav = {
+        text: `New ${objectText}`,
+        subTitle: `Create a new ${objectText} for your notifications`,
+      };
+    }
+  } else if (type === 'global-config') {
+    pageNav = {
+      text: 'Global config',
+      subTitle: 'Manage your global configuration',
+    };
+  }
+  return pageNav;
+}
 
 export default withErrorBoundary(Receivers, { style: 'page' });
 

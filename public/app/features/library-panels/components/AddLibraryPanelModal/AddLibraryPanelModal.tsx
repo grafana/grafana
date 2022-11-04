@@ -27,7 +27,7 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
 
   const { saveLibraryPanel } = usePanelSave();
   const onCreate = useCallback(() => {
-    panel.libraryPanel = { uid: undefined, name: panelName };
+    panel.libraryPanel = { uid: '', name: panelName };
     saveLibraryPanel(panel, folderId!).then((res) => {
       if (!(res instanceof Error)) {
         onDismiss();

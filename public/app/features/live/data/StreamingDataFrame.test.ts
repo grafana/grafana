@@ -663,7 +663,7 @@ describe('Streaming JSON', () => {
     expect(val).toEqual(200);
     expect(stream.length).toEqual(2);
 
-    const copy = { ...stream } as any as DataFrame;
+    const copy = { ...stream } as unknown as DataFrame;
     expect(copy.length).toEqual(2);
   });
 

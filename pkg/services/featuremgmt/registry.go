@@ -15,6 +15,13 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:         "promQueryBuilder",
+			Description:  "Show prometheus query builder",
+			State:        FeatureStateStable,
+			Expression:   "true", // on by default
+			FrontendOnly: true,
+		},
+		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
@@ -162,7 +169,8 @@ var (
 		{
 			Name:         "explore2Dashboard",
 			Description:  "Experimental Explore to Dashboard workflow",
-			State:        FeatureStateBeta,
+			State:        FeatureStateStable,
+			Expression:   "true", // enabled by default
 			FrontendOnly: true,
 		},
 		{
@@ -178,9 +186,11 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "commandPalette",
-			Description: "Enable command palette",
-			State:       FeatureStateAlpha,
+			Name:         "commandPalette",
+			Description:  "Enable command palette",
+			State:        FeatureStateStable,
+			Expression:   "true", // enabled by default
+			FrontendOnly: true,
 		},
 		{
 			Name:        "correlations",
@@ -191,6 +201,7 @@ var (
 			Name:        "cloudWatchDynamicLabels",
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "datasourceQueryMultiStatus",
@@ -211,6 +222,11 @@ var (
 		{
 			Name:        "prometheusStreamingJSONParserTest",
 			Description: "Run both old and streaming requests and log differences",
+			State:       FeatureStateBeta,
+		},
+		{
+			Name:        "newDBLibrary",
+			Description: "Use jmoiron/sqlx rather than xorm for a few backend services",
 			State:       FeatureStateBeta,
 		},
 		{
@@ -336,8 +352,18 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "datasourceLogger",
+			Description: "Logs all datasource requests",
+		},
+		{
 			Name:            "accessControlOnCall",
 			Description:     "Access control primitives for OnCall",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:            "nestedFolders",
+			Description:     "Enable folder nesting",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},

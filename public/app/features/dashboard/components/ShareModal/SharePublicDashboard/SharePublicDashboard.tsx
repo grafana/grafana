@@ -6,7 +6,11 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { reportInteraction } from '@grafana/runtime/src';
 import { Alert, Button, ClipboardButton, Field, HorizontalGroup, Input, useStyles2, Spinner } from '@grafana/ui/src';
 import { contextSrv } from 'app/core/services/context_srv';
-import { useGetConfigQuery, useSaveConfigMutation } from 'app/features/dashboard/api/publicDashboardApi';
+import {
+  useGetPublicDashboardQuery,
+  useCreatePublicDashboardMutation,
+  useUpdatePublicDashboardMutation,
+} from 'app/features/dashboard/api/publicDashboardApi';
 import { AcknowledgeCheckboxes } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/AcknowledgeCheckboxes';
 import { Configuration } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/Configuration';
 import { Description } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/Description';
@@ -27,13 +31,19 @@ export const SharePublicDashboard = (props: Props) => {
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
   const styles = useStyles2(getStyles);
 
+  const [hasPublicDashboard, setHasPublicDashboard] = useState(props.dashboard.meta.hasPublicDashboard);
+
   const {
     isLoading: isFetchingLoading,
     data: publicDashboard,
     isError: isFetchingError,
-  } = useGetConfigQuery(props.dashboard.uid);
+  } = useGetPublicDashboardQuery(props.dashboard.uid, {
+    // if we don't have a public dashboard, don't try to load public dashboard
+    skip: !hasPublicDashboard,
+  });
 
-  const [saveConfig, { isLoading: isSaveLoading }] = useSaveConfigMutation();
+  const [createPublicDashboard, { isLoading: isSaveLoading }] = useCreatePublicDashboardMutation();
+  const [updatePublicDashboard, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
 
   const [acknowledgements, setAcknowledgements] = useState<Acknowledgements>({
     public: false,
@@ -44,6 +54,7 @@ export const SharePublicDashboard = (props: Props) => {
     isEnabled: false,
     wasTouched: false,
   });
+  const [annotationsEnabled, setAnnotationsEnabled] = useState(false);
 
   useEffect(() => {
     reportInteraction('grafana_dashboards_public_share_viewed');
@@ -56,12 +67,13 @@ export const SharePublicDashboard = (props: Props) => {
         datasources: true,
         usage: true,
       });
+      setAnnotationsEnabled(!!publicDashboard?.annotationsEnabled);
     }
 
     setEnabledSwitch((prevState) => ({ ...prevState, isEnabled: !!publicDashboard?.isEnabled }));
   }, [publicDashboard]);
 
-  const isLoading = isFetchingLoading || isSaveLoading;
+  const isLoading = isFetchingLoading || isSaveLoading || isUpdateLoading;
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const acknowledged = acknowledgements.public && acknowledgements.datasources && acknowledgements.usage;
   const isSaveEnabled = useMemo(
@@ -75,13 +87,23 @@ export const SharePublicDashboard = (props: Props) => {
     [hasWritePermissions, acknowledged, props.dashboard, isLoading, isFetchingError, enabledSwitch, publicDashboard]
   );
 
-  const onSavePublicConfig = () => {
+  const onSavePublicConfig = async () => {
     reportInteraction('grafana_dashboards_public_create_clicked');
 
-    saveConfig({
+    const req = {
       dashboard: props.dashboard,
-      payload: { ...publicDashboard!, isEnabled: enabledSwitch.isEnabled },
-    });
+      payload: { ...publicDashboard!, isEnabled: enabledSwitch.isEnabled, annotationsEnabled },
+    };
+
+    // create or update based on whether we have existing uid
+
+    if (hasPublicDashboard) {
+      await updatePublicDashboard(req).unwrap();
+      setHasPublicDashboard(true);
+    } else {
+      await createPublicDashboard(req).unwrap();
+      setHasPublicDashboard(true);
+    }
   };
 
   const onAcknowledge = (field: string, checked: boolean) => {
@@ -124,12 +146,14 @@ export const SharePublicDashboard = (props: Props) => {
             </div>
             <hr />
             <Configuration
+              isAnnotationsEnabled={annotationsEnabled}
               dashboard={props.dashboard}
               disabled={!hasWritePermissions || isLoading || isFetchingError}
               isPubDashEnabled={enabledSwitch.isEnabled}
               onToggleEnabled={() =>
                 setEnabledSwitch((prevState) => ({ isEnabled: !prevState.isEnabled, wasTouched: true }))
               }
+              onToggleAnnotations={() => setAnnotationsEnabled((prevState) => !prevState)}
             />
             {publicDashboardPersisted(publicDashboard) && enabledSwitch.isEnabled && (
               <Field label="Link URL" className={styles.publicUrl}>

@@ -32,7 +32,7 @@ type RawObjectWithHistory struct {
 
 var (
 	// increment when RawObject changes
-	rawObjectVersion = 6
+	rawObjectVersion = 8
 )
 
 func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry) object.ObjectStoreServer {
@@ -51,18 +51,18 @@ type dummyObjectServer struct {
 	kinds      kind.KindRegistry
 }
 
-func namespaceFromUID(uid string) string {
+func namespaceFromUID(grn *object.GRN) string {
 	// TODO
 	return "orgId-1"
 }
 
-func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind string, version string) (*RawObjectWithHistory, *object.RawObject, error) {
-	if uid == "" {
-		return nil, nil, errors.New("UID must not be empty")
+func (i *dummyObjectServer) findObject(ctx context.Context, grn *object.GRN, version string) (*RawObjectWithHistory, *object.RawObject, error) {
+	if grn == nil {
+		return nil, nil, errors.New("GRN must not be nil")
 	}
 
-	obj, err := i.collection.FindFirst(ctx, namespaceFromUID(uid), func(i *RawObjectWithHistory) (bool, error) {
-		return i.Object.UID == uid && i.Object.Kind == kind, nil
+	obj, err := i.collection.FindFirst(ctx, namespaceFromUID(grn), func(i *RawObjectWithHistory) (bool, error) {
+		return grn.Equals(i.Object.GRN), nil
 	})
 
 	if err != nil {
@@ -81,8 +81,7 @@ func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind stri
 	for _, objVersion := range obj.History {
 		if objVersion.Version == version {
 			copy := &object.RawObject{
-				UID:       obj.Object.UID,
-				Kind:      obj.Object.Kind,
+				GRN:       obj.Object.GRN,
 				Created:   obj.Object.Created,
 				CreatedBy: obj.Object.CreatedBy,
 				Updated:   objVersion.Updated,
@@ -101,8 +100,9 @@ func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind stri
 	return obj, nil, nil
 }
 
-func (i dummyObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
-	_, objVersion, err := i.findObject(ctx, r.UID, r.Kind, r.Version)
+func (i *dummyObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
+	grn := getFullGRN(ctx, r.GRN)
+	_, objVersion, err := i.findObject(ctx, grn, r.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -119,9 +119,9 @@ func (i dummyObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest
 	}
 	if r.WithSummary {
 		// Since we do not store the summary, we can just recreate on demand
-		builder := i.kinds.GetSummaryBuilder(r.Kind)
+		builder := i.kinds.GetSummaryBuilder(r.GRN.Kind)
 		if builder != nil {
-			summary, _, e2 := builder(ctx, r.UID, objVersion.Body)
+			summary, _, e2 := builder(ctx, r.GRN.UID, objVersion.Body)
 			if e2 != nil {
 				return nil, e2
 			}
@@ -131,7 +131,7 @@ func (i dummyObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest
 	return rsp, err
 }
 
-func (i dummyObjectServer) BatchRead(ctx context.Context, batchR *object.BatchReadObjectRequest) (*object.BatchReadObjectResponse, error) {
+func (i *dummyObjectServer) BatchRead(ctx context.Context, batchR *object.BatchReadObjectRequest) (*object.BatchReadObjectResponse, error) {
 	results := make([]*object.ReadObjectResponse, 0)
 	for _, r := range batchR.Batch {
 		resp, err := i.Read(ctx, r)
@@ -149,16 +149,15 @@ func createContentsHash(contents []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
-	builder := i.kinds.GetSummaryBuilder(r.Kind)
+func (i *dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
+	builder := i.kinds.GetSummaryBuilder(r.GRN.Kind)
 	if builder == nil {
-		return nil, fmt.Errorf("unsupported kind: " + r.Kind)
+		return nil, fmt.Errorf("unsupported kind: " + r.GRN.Kind)
 	}
 	rsp := &object.WriteObjectResponse{}
 
 	updatedCount, err := i.collection.Update(ctx, namespace, func(i *RawObjectWithHistory) (bool, *RawObjectWithHistory, error) {
-		match := i.Object.UID == r.UID && i.Object.Kind == r.Kind
-		if !match {
+		if !r.GRN.Equals(i.Object.GRN) {
 			return false, nil, nil
 		}
 
@@ -174,11 +173,10 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 		modifier := store.UserFromContext(ctx)
 
 		updated := &object.RawObject{
-			UID:       r.UID,
-			Kind:      r.Kind,
+			GRN:       r.GRN,
 			Created:   i.Object.Created,
 			CreatedBy: i.Object.CreatedBy,
-			Updated:   time.Now().Unix(),
+			Updated:   time.Now().UnixMilli(),
 			UpdatedBy: store.GetUserIDString(modifier),
 			Size:      int64(len(r.Body)),
 			ETag:      createContentsHash(r.Body),
@@ -218,19 +216,18 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 	}
 
 	if updatedCount == 0 && rsp.Object == nil {
-		return nil, fmt.Errorf("could not find object with uid %s and kind %s", r.UID, r.Kind)
+		return nil, fmt.Errorf("could not find object: %v", r.GRN)
 	}
 
 	return rsp, nil
 }
 
-func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
+func (i *dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
 	modifier := store.GetUserIDString(store.UserFromContext(ctx))
 	rawObj := &object.RawObject{
-		UID:       r.UID,
-		Kind:      r.Kind,
-		Updated:   time.Now().Unix(),
-		Created:   time.Now().Unix(),
+		GRN:       r.GRN,
+		Updated:   time.Now().UnixMilli(),
+		Created:   time.Now().UnixMilli(),
 		CreatedBy: modifier,
 		UpdatedBy: modifier,
 		Size:      int64(len(r.Body)),
@@ -268,13 +265,14 @@ func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequ
 	}, nil
 }
 
-func (i dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
-	namespace := namespaceFromUID(r.UID)
+func (i *dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
+	grn := getFullGRN(ctx, r.GRN)
+	namespace := namespaceFromUID(grn)
 	obj, err := i.collection.FindFirst(ctx, namespace, func(i *RawObjectWithHistory) (bool, error) {
 		if i == nil || r == nil {
 			return false, nil
 		}
-		return i.Object.UID == r.UID, nil
+		return grn.Equals(i.Object.GRN), nil
 	})
 	if err != nil {
 		return nil, err
@@ -287,10 +285,10 @@ func (i dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectReque
 	return i.update(ctx, r, namespace)
 }
 
-func (i dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
-	_, err := i.collection.Delete(ctx, namespaceFromUID(r.UID), func(i *RawObjectWithHistory) (bool, error) {
-		match := i.Object.UID == r.UID && i.Object.Kind == r.Kind
-		if match {
+func (i *dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
+	grn := getFullGRN(ctx, r.GRN)
+	_, err := i.collection.Delete(ctx, namespaceFromUID(grn), func(i *RawObjectWithHistory) (bool, error) {
+		if grn.Equals(i.Object.GRN) {
 			if r.PreviousVersion != "" && i.Object.Version != r.PreviousVersion {
 				return false, fmt.Errorf("expected the previous version to be %s, but was %s", r.PreviousVersion, i.Object.Version)
 			}
@@ -310,8 +308,9 @@ func (i dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectReq
 	}, nil
 }
 
-func (i dummyObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
-	obj, _, err := i.findObject(ctx, r.UID, r.Kind, "")
+func (i *dummyObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
+	grn := getFullGRN(ctx, r.GRN)
+	obj, _, err := i.findObject(ctx, grn, "")
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +326,7 @@ func (i dummyObjectServer) History(ctx context.Context, r *object.ObjectHistoryR
 	return rsp, nil
 }
 
-func (i dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
+func (i *dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
 	var kindMap map[string]bool
 	if len(r.Kind) != 0 {
 		kindMap = make(map[string]bool)
@@ -337,9 +336,9 @@ func (i dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchReq
 	}
 
 	// TODO more filters
-	objects, err := i.collection.Find(ctx, namespaceFromUID("TODO"), func(i *RawObjectWithHistory) (bool, error) {
+	objects, err := i.collection.Find(ctx, namespaceFromUID(&object.GRN{}), func(i *RawObjectWithHistory) (bool, error) {
 		if len(r.Kind) != 0 {
-			if _, ok := kindMap[i.Object.Kind]; !ok {
+			if _, ok := kindMap[i.Object.GRN.Kind]; !ok {
 				return false, nil
 			}
 		}
@@ -351,18 +350,36 @@ func (i dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchReq
 
 	searchResults := make([]*object.ObjectSearchResult, 0)
 	for _, o := range objects {
+		builder := i.kinds.GetSummaryBuilder(o.Object.GRN.Kind)
+		if builder == nil {
+			continue
+		}
+		summary, clean, e2 := builder(ctx, o.Object.GRN.UID, o.Object.Body)
+		if e2 != nil {
+			continue
+		}
+
 		searchResults = append(searchResults, &object.ObjectSearchResult{
-			UID:       o.Object.UID,
-			Kind:      o.Object.Kind,
-			Version:   o.Object.Version,
-			Updated:   o.Object.Updated,
-			UpdatedBy: o.Object.UpdatedBy,
-			Name:      "? name from summary",
-			Body:      o.Object.Body,
+			GRN:         o.Object.GRN,
+			Version:     o.Object.Version,
+			Updated:     o.Object.Updated,
+			UpdatedBy:   o.Object.UpdatedBy,
+			Name:        summary.Name,
+			Description: summary.Description,
+			Body:        clean,
 		})
 	}
 
 	return &object.ObjectSearchResponse{
 		Results: searchResults,
 	}, nil
+}
+
+// This sets the TenantId on the request GRN
+func getFullGRN(ctx context.Context, grn *object.GRN) *object.GRN {
+	if grn.TenantId == 0 {
+		modifier := store.UserFromContext(ctx)
+		grn.TenantId = modifier.OrgID
+	}
+	return grn
 }

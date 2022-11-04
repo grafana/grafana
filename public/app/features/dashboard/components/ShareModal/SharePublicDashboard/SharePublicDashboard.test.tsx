@@ -17,19 +17,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import { ShareModal } from '../ShareModal';
 
-const server = setupServer(
-  rest.get('/api/dashboards/uid/:uId/public-config', (_, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json({
-        isEnabled: false,
-        uid: undefined,
-        dashboardUid: undefined,
-        accessToken: 'an-access-token',
-      })
-    );
-  })
-);
+const server = setupServer();
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
@@ -146,6 +134,7 @@ describe('SharePublic', () => {
     expect(screen.getByText('2022-08-30 00:00:00 to 2022-09-04 01:59:59')).toBeInTheDocument();
   });
   it('when modal is opened, then loader spinner appears and inputs are disabled', async () => {
+    mockDashboard.meta.hasPublicDashboard = true;
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
 
     expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
@@ -157,43 +146,49 @@ describe('SharePublic', () => {
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
   });
   it('when fetch errors happen, then all inputs remain disabled', async () => {
+    mockDashboard.meta.hasPublicDashboard = true;
     server.use(
-      rest.get('/api/dashboards/uid/:uId/public-config', (req, res, ctx) => {
+      rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
         return res(ctx.status(500));
       })
     );
 
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'), { timeout: 7000 });
+    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
 
     expect(screen.getByTestId(selectors.WillBePublicCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.LimitedDSCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.CostIncreaseCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeDisabled();
+    expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeDisabled();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
   });
   // test checking if current version of dashboard in state is persisted to db
 });
 
 describe('SharePublic - New config setup', () => {
+  beforeEach(() => {
+    mockDashboard.meta.hasPublicDashboard = false;
+  });
   it('when modal is opened, then save button is disabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
   });
-  it('when fetch is done, then loader spinner is gone, inputs are enabled and save button is disabled', async () => {
+  it('when fetch is done, then no loader spinner appears, inputs are enabled and save button is disabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
 
     expect(screen.getByTestId(selectors.WillBePublicCheckbox)).toBeEnabled();
     expect(screen.getByTestId(selectors.LimitedDSCheckbox)).toBeEnabled();
     expect(screen.getByTestId(selectors.CostIncreaseCheckbox)).toBeEnabled();
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeEnabled();
+    expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeEnabled();
 
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
   });
   it('when checkboxes are filled, then save button remains disabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId(selectors.WillBePublicCheckbox));
     fireEvent.click(screen.getByTestId(selectors.LimitedDSCheckbox));
@@ -203,7 +198,7 @@ describe('SharePublic - New config setup', () => {
   });
   it('when checkboxes and switch are filled, then save button is enabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId(selectors.WillBePublicCheckbox));
     fireEvent.click(screen.getByTestId(selectors.LimitedDSCheckbox));
@@ -216,14 +211,16 @@ describe('SharePublic - New config setup', () => {
 
 describe('SharePublic - Already persisted', () => {
   beforeEach(() => {
+    mockDashboard.meta.hasPublicDashboard = true;
     server.use(
-      rest.get('/api/dashboards/uid/:uId/public-config', (req, res, ctx) => {
+      rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
         return res(
           ctx.status(200),
           ctx.json({
             isEnabled: true,
+            annotationsEnabled: true,
             uid: 'a-uid',
-            dashboardUid: req.params.uId,
+            dashboardUid: req.params.dashboardUid,
             accessToken: 'an-access-token',
           })
         );
@@ -236,6 +233,13 @@ describe('SharePublic - Already persisted', () => {
     await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
 
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeEnabled();
+  });
+  it('when modal is opened, then annotations toggle is enabled and checked when its enabled in the db', async () => {
+    await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
+    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+
+    expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeEnabled();
+    expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeChecked();
   });
   it('when fetch is done, then loader spinner is gone, inputs are disabled and save button is enabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
@@ -253,15 +257,16 @@ describe('SharePublic - Already persisted', () => {
     await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
     expect(screen.getByTestId(selectors.CopyUrlInput)).toBeInTheDocument();
   });
-  it('when pubdash is disabled in the db, then link url is not available', async () => {
+  it('when pubdash is disabled in the db, then link url is not available and annotations toggle is disabled', async () => {
     server.use(
-      rest.get('/api/dashboards/uid/:uId/public-config', (req, res, ctx) => {
+      rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
         return res(
           ctx.status(200),
           ctx.json({
             isEnabled: false,
+            annotationsEnabled: false,
             uid: 'a-uid',
-            dashboardUid: req.params.uId,
+            dashboardUid: req.params.dashboardUid,
             accessToken: 'an-access-token',
           })
         );
@@ -272,6 +277,7 @@ describe('SharePublic - Already persisted', () => {
     await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
 
     expect(screen.queryByTestId(selectors.CopyUrlInput)).not.toBeInTheDocument();
+    expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).not.toBeChecked();
   });
   it('when pubdash is disabled by the user, then link url is not available', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });

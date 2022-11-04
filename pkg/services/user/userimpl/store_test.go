@@ -202,6 +202,47 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.Error(t, err)
 		})
 
+		t.Run("GetByLogin - user2 uses user1.email as login", func(t *testing.T) {
+			// create user_1
+			user1 := &user.User{
+				Email:      "user_1@mail.com",
+				Name:       "user_1",
+				Login:      "user_1",
+				Password:   "user_1_password",
+				Created:    time.Now(),
+				Updated:    time.Now(),
+				IsDisabled: true,
+			}
+			_, err := userStore.Insert(context.Background(), user1)
+			require.Nil(t, err)
+
+			// create user_2
+			user2 := &user.User{
+				Email:      "user_2@mail.com",
+				Name:       "user_2",
+				Login:      "user_1@mail.com",
+				Password:   "user_2_password",
+				Created:    time.Now(),
+				Updated:    time.Now(),
+				IsDisabled: true,
+			}
+			_, err = userStore.Insert(context.Background(), user2)
+			require.Nil(t, err)
+
+			// query user database for user_1 email
+			query := user.GetUserByLoginQuery{LoginOrEmail: "user_1@mail.com"}
+			result, err := userStore.GetByLogin(context.Background(), &query)
+			require.Nil(t, err)
+
+			// expect user_1 as result
+			require.Equal(t, user1.Email, result.Email)
+			require.Equal(t, user1.Login, result.Login)
+			require.Equal(t, user1.Name, result.Name)
+			require.NotEqual(t, user2.Email, result.Email)
+			require.NotEqual(t, user2.Login, result.Login)
+			require.NotEqual(t, user2.Name, result.Name)
+		})
+
 		ss.Cfg.CaseInsensitiveLogin = false
 	})
 
@@ -270,11 +311,11 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		require.Equal(t, user.ErrLastGrafanaAdmin, updatePermsError)
 
-		query := models.GetUserByIdQuery{Id: usr.ID}
-		getUserError := ss.GetUserById(context.Background(), &query)
+		query := user.GetUserByIDQuery{ID: usr.ID}
+		queryResult, getUserError := userStore.GetByID(context.Background(), query.ID)
 		require.Nil(t, getUserError)
 
-		require.True(t, query.Result.IsAdmin)
+		require.True(t, queryResult.IsAdmin)
 
 		// One user
 		const email = "user@test.com"

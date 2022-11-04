@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue } from '@grafana/data';
-import { EditorRow } from '@grafana/ui';
+import { EditorRow } from '@grafana/experimental';
 import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
 import { OperationExplainedBox } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationExplainedBox';
 import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
@@ -14,6 +14,7 @@ import {
   QueryBuilderOperation,
 } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
+import { testIds } from '../../components/LokiQueryEditor';
 import { LokiDatasource } from '../../datasource';
 import { escapeLabelValueInSelector } from '../../languageUtils';
 import logqlGrammar from '../../syntax';
@@ -107,7 +108,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
 
   const lang = { grammar: logqlGrammar, name: 'logql' };
   return (
-    <>
+    <div data-testid={testIds.editor}>
       <EditorRow>
         <LabelFilters
           onGetLabelNames={(forLabel: Partial<QueryBuilderLabelFilter>) =>
@@ -170,7 +171,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           showExplain={showExplain}
         />
       )}
-    </>
+    </div>
   );
 });
 

@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { EditorHeader, FlexItem, InlineSelect, RadioButtonGroup } from '@grafana/ui';
+import { EditorHeader, FlexItem, InlineSelect } from '@grafana/experimental';
+import { RadioButtonGroup } from '@grafana/ui';
 
 import { QUERY_TYPES } from '../constants';
 import { EditorMode, CloudMonitoringQuery, QueryType, SLOQuery, MetricQuery } from '../types';
