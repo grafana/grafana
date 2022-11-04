@@ -169,7 +169,7 @@
     "@types/testing-library__react-hooks": "^3.2.0",
     "@types/tinycolor2": "1.4.3",
     "@types/uuid": "8.3.4",
-    "@wojtekmaj/enzyme-adapter-react-17": "0.6.7",
+    "@wojtekmaj/enzyme-adapter-react-17": "0.7.0",
     "common-tags": "1.8.2",
     "css-loader": "6.7.1",
     "csstype": "3.1.1",
