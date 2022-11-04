@@ -19,6 +19,10 @@ func NewFakeStore() *FakeStore {
 	return &FakeStore{}
 }
 
+func NewFakeStore() *FakeStore {
+	return &FakeStore{}
+}
+
 var _ store = (*FakeStore)(nil)
 
 func (f *FakeStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
