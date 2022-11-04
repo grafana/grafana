@@ -1,7 +1,7 @@
 import { BuildInfo } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { BaseTransport } from '@grafana/faro-core';
-import { FetchTransport, initializeAgent } from '@grafana/faro-web-sdk';
+import { FetchTransport, initializeFaro } from '@grafana/faro-web-sdk';
 import { EchoEventType, EchoMeta } from '@grafana/runtime';
 
 import { GrafanaJavascriptAgentBackend, GrafanaJavascriptAgentBackendOptions } from './GrafanaJavascriptAgentBackend';
@@ -12,7 +12,7 @@ jest.mock('@grafana/faro-web-sdk', () => {
   return {
     __esModule: true,
     ...originalModule,
-    initializeAgent: jest.fn(),
+    initializeFaro: jest.fn(),
   };
 });
 
@@ -53,7 +53,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
   it('will set up FetchTransport if customEndpoint is provided', async () => {
     // arrange
     const originalModule = jest.requireActual('@grafana/faro-web-sdk');
-    jest.mocked(initializeAgent).mockImplementation(originalModule.initializeAgent);
+    jest.mocked(initializeFaro).mockImplementation(originalModule.initializeFaro);
 
     //act
     const backend = new GrafanaJavascriptAgentBackend(options);
@@ -105,13 +105,13 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
         unpause: jest.fn(),
       };
     };
-    jest.mocked(initializeAgent).mockImplementation(mockedAgent);
+    jest.mocked(initializeFaro).mockImplementation(mockedAgent);
 
     //act
     new GrafanaJavascriptAgentBackend(options);
 
     //assert
-    expect(initializeAgent).toHaveBeenCalledTimes(1);
+    expect(initializeFaro).toHaveBeenCalledTimes(1);
     expect(mockedSetUser).toHaveBeenCalledTimes(1);
     expect(mockedSetUser).toHaveBeenCalledWith({
       id: '504',
@@ -164,7 +164,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
       };
     };
 
-    jest.mocked(initializeAgent).mockImplementation(mockedAgent);
+    jest.mocked(initializeFaro).mockImplementation(mockedAgent);
     const backend = new GrafanaJavascriptAgentBackend({
       ...options,
       preventGlobalExposure: true,
@@ -195,8 +195,8 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
   //     // use actual GrafanaJavascriptAgent & mock window.fetch
 
   //     // arrange
-  //     const originalModule = jest.requireActual('@grafana/agent-web');
-  //     jest.mocked(initializeAgent).mockImplementation(originalModule.initializeAgent);
+  //     const originalModule = jest.requireActual('@grafana/faro-web-sdk');
+  //     jest.mocked(initializeFaro).mockImplementation(originalModule.initializeFaro);
   //     const fetchSpy = (window.fetch = jest.fn());
   //     fetchSpy.mockResolvedValue({ status: 200 } as Response);
   //     const echo = new Echo({ debug: true });
