@@ -25,7 +25,7 @@ func TestValidatePublicDashboard(t *testing.T) {
 		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
 
 		err := ValidatePublicDashboard(dto, dashboard)
-		require.ErrorContains(t, err, ErrPublicDashboardHasTemplateVariables.Reason)
+		require.ErrorContains(t, err, ErrPublicDashboardHasTemplateVariables.Error())
 	})
 
 	t.Run("Returns no validation error when dashboard has no template variables", func(t *testing.T) {

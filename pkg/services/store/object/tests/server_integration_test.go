@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
@@ -120,7 +121,7 @@ func TestIntegrationObjectServer(t *testing.T) {
 	testCtx := createTestContext(t)
 	ctx := metadata.AppendToOutgoingContext(testCtx.ctx, "authorization", fmt.Sprintf("Bearer %s", testCtx.authToken))
 
-	fakeUser := fmt.Sprintf("user:%d:%s", testCtx.user.UserID, testCtx.user.Login)
+	fakeUser := store.GetUserIDString(testCtx.user)
 	firstVersion := "1"
 	kind := models.StandardKindJSONObj
 	grn := &object.GRN{
