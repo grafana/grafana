@@ -302,19 +302,14 @@ func (st *Manager) saveAlertStates(ctx context.Context, states ...StateTransitio
 	debug := make([]debugInfo, 0)
 
 	for _, s := range states {
-		labels := ngModels.InstanceLabels(s.Labels)
-		_, hash, err := labels.StringAndHash()
+		key, err := s.GetAlertInstanceKey()
 		if err != nil {
 			debug = append(debug, debugInfo{s.OrgID, s.AlertRuleUID, s.State.State.String(), s.Labels.String()})
 			logger.Error("Failed to save alert instance with invalid labels", "error", err)
 			continue
 		}
 		fields := ngModels.AlertInstance{
-			AlertInstanceKey: ngModels.AlertInstanceKey{
-				RuleOrgID:  s.OrgID,
-				RuleUID:    s.AlertRuleUID,
-				LabelsHash: hash,
-			},
+			AlertInstanceKey:  key,
 			Labels:            ngModels.InstanceLabels(s.Labels),
 			CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
 			CurrentReason:     s.StateReason,
@@ -362,13 +357,13 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 		if _, ok := states[s.CacheID]; !ok && stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
 			logger.Info("Removing stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
 			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheID)
-			ilbs := ngModels.InstanceLabels(s.Labels)
-			_, labelsHash, err := ilbs.StringAndHash()
+
+			key, err := s.GetAlertInstanceKey()
 			if err != nil {
 				logger.Error("Unable to get labelsHash", "error", err.Error(), s.AlertRuleUID)
 			}
 
-			toDelete = append(toDelete, ngModels.AlertInstanceKey{RuleOrgID: s.OrgID, RuleUID: s.AlertRuleUID, LabelsHash: labelsHash})
+			toDelete = append(toDelete, key)
 
 			if s.State == eval.Alerting {
 				oldState := s.State
