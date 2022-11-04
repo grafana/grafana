@@ -157,7 +157,6 @@ func (api *Api) UpdatePublicDashboard(c *models.ReqContext) response.Response {
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if !tokens.IsValidShortUID(dashboardUid) {
 		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid dashboard Uid %s", dashboardUid))
-
 	}
 
 	uid := web.Params(c.Req)[":uid"]
