@@ -18,6 +18,9 @@ import (
 )
 
 func TestIntegrationUpdateAlertRules(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlStore := db.InitTestDB(t)
 	store := DBstore{
 		SQLStore: sqlStore,
@@ -94,6 +97,9 @@ func withIntervalMatching(baseInterval time.Duration) func(*models.AlertRule) {
 }
 
 func TestIntegration_getFilterByOrgsString(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testCases := []struct {
 		testName       string
 		orgs           map[int64]struct{}

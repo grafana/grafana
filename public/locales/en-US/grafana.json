@@ -416,6 +416,8 @@
       "select-time": "Select a time range"
     },
     "time-range": {
+      "aria-role": "Time range selection",
+      "default-title": "Time ranges",
       "example-title": "Example time ranges",
       "specify": "Specify time range <1></1>"
     }

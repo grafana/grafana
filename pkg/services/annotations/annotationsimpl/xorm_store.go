@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/tag"
@@ -63,9 +64,64 @@ func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) er
 		if _, err := sess.Table("annotation").Insert(item); err != nil {
 			return err
 		}
+		return r.synchronizeTags(ctx, item)
+	})
+}
 
+// AddMany inserts large batches of annotations at once.
+// It does not return IDs associated with created annotations, and it does not support annotations with tags. If you need this functionality, use the single-item Add instead.
+// This is due to a limitation with some supported databases:
+// We cannot correlate the IDs of batch-inserted records without acquiring a full table lock in MySQL.
+// Annotations have no other uniquifier field, so we also cannot re-query for them after the fact.
+// So, callers can only reliably use this endpoint if they don't care about returned IDs.
+func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.Item) error {
+	hasTags := make([]annotations.Item, 0)
+	hasNoTags := make([]annotations.Item, 0)
+
+	for i, item := range items {
+		tags := tag.ParseTagPairs(item.Tags)
+		item.Tags = tag.JoinTagPairs(tags)
+		item.Created = timeNow().UnixNano() / int64(time.Millisecond)
+		item.Updated = item.Created
+		if item.Epoch == 0 {
+			item.Epoch = item.Created
+		}
+		if err := r.validateItem(&items[i]); err != nil {
+			return err
+		}
+
+		if len(item.Tags) > 0 {
+			hasTags = append(hasTags, item)
+		} else {
+			hasNoTags = append(hasNoTags, item)
+		}
+	}
+
+	return r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// We can batch-insert every annotation with no tags. If an annotation has tags, we need the ID.
+		opts := sqlstore.NativeSettingsForDialect(r.db.GetDialect())
+		if _, err := sess.BulkInsert("annotation", hasNoTags, opts); err != nil {
+			return err
+		}
+
+		for i, item := range hasTags {
+			if _, err := sess.Table("annotation").Insert(item); err != nil {
+				return err
+			}
+			if err := r.synchronizeTags(ctx, &hasTags[i]); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+func (r *xormRepositoryImpl) synchronizeTags(ctx context.Context, item *annotations.Item) error {
+	// Will re-use session if one has already been opened with the same ctx.
+	return r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if item.Tags != nil {
-			tags, err := r.tagService.EnsureTagsExist(ctx, tags)
+			tags, err := r.tagService.EnsureTagsExist(ctx, tag.ParseTagPairs(item.Tags))
 			if err != nil {
 				return err
 			}
