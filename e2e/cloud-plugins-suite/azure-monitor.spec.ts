@@ -183,7 +183,6 @@ e2e.scenario({
       queriesForm: () => {
         e2eSelectors.queryEditor.header.select().find('input').type('Azure Resource Graph{enter}');
         e2e().wait(1000); // Need to wait for code editor to completely load
-        e2e().get('[aria-label="Remove Primary Subscription"]').click();
         e2eSelectors.queryEditor.argsQueryEditor.subscriptions.input().find('input').type('datasources{enter}');
         e2e.components.CodeEditor.container().type(
           "Resources | where resourceGroup == 'cloud-plugins-e2e-test' | project name, resourceGroup"
