@@ -188,7 +188,7 @@ export const getSortedSpans = createSelector(
   }: {
     sort: {
       dir: number;
-      comparator: (itemA: TraceSpanData, itemB: TraceResponse) => number;
+      comparator: (itemA: number, itemB: number) => number;
       selector: (itemA: TraceSpanData, itemB: TraceResponse) => number;
     };
   }) => sort,
@@ -233,7 +233,7 @@ export const getTraceName = createSelector(
 );
 
 export const omitCollapsedSpans = createSelector(
-  ({ spans }: { spans: TraceSpan[] }) => spans,
+  ({ spans }: { spans: TraceSpanData[] }) => spans,
   createSelector(({ trace }: { trace: TraceResponse }) => trace, getTraceSpanIdsAsTree),
   ({ collapsed }: { collapsed: string[] }) => collapsed,
   (spans, tree, collapse) => {
