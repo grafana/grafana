@@ -536,20 +536,25 @@ function getAppPluginRoutes(): RouteDescriptor[] {
   const state = store.getState();
   const { navIndex } = state;
   const isStandalonePluginPage = (id: string) => id.startsWith('standalone-plugin-page-/');
-  const hasPluginIdSetForNav = (id: string) => navIndex[id]?.pluginId !== undefined;
+  const isPluginNavModelItem = (model: NavModelItem): model is PluginNavModelItem =>
+    'pluginId' in model && 'id' in model;
 
-  return Object.keys(navIndex)
-    .filter(hasPluginIdSetForNav)
-    .map((navId) => {
-      const navItem = navIndex[navId];
+  return Object.values(navIndex)
+    .filter<PluginNavModelItem>(isPluginNavModelItem)
+    .map((navItem) => {
       const pluginNavSection = getRootSectionForNode(navItem);
       const appPluginUrl = `/a/${navItem.pluginId}`;
-      const path = isStandalonePluginPage(navId) ? navItem.url || appPluginUrl : appPluginUrl; // Only standalone pages can use core URLs, otherwise we fall back to "/a/:pluginId"
+      const path = isStandalonePluginPage(navItem.id) ? navItem.url || appPluginUrl : appPluginUrl; // Only standalone pages can use core URLs, otherwise we fall back to "/a/:pluginId"
 
       return {
         path,
         exact: false, // route everything under this path to the plugin, so it can define more routes under this path
-        component: () => <AppRootPage pluginId={navItem.pluginId || ''} pluginNavSection={pluginNavSection} />,
+        component: () => <AppRootPage pluginId={navItem.pluginId} pluginNavSection={pluginNavSection} />,
       };
     });
+}
+
+interface PluginNavModelItem extends Omit<NavModelItem, 'pluginId' | 'id'> {
+  pluginId: string;
+  id: string;
 }
