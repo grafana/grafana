@@ -107,14 +107,16 @@ export function ExploreGraph({
 
   const styledFieldConfig = useMemo(() => applyGraphStyle(fieldConfig, graphStyle), [fieldConfig, graphStyle]);
 
-  const dataWithConfig = applyFieldOverrides({
-    fieldConfig: styledFieldConfig,
-    data,
-    timeZone,
-    replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
-    theme,
-    fieldConfigRegistry,
-  });
+  const dataWithConfig = useMemo(() => {
+    return applyFieldOverrides({
+      fieldConfig: styledFieldConfig,
+      data,
+      timeZone,
+      replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
+      theme,
+      fieldConfigRegistry,
+    });
+  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig]);
 
   // structureRev should be incremented when either the number of series or the config changes.
   // like useEffect, but runs before rendering.
