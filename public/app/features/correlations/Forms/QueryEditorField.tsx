@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
+import { DataQuery, getDefaultTimeRange } from '@grafana/data';
 import { createQueryRunner, getDataSourceSrv } from '@grafana/runtime';
 import { Field, LoadingPlaceholder, Alert, Button, HorizontalGroup, Icon, useTheme2 } from '@grafana/ui';
 
@@ -14,8 +15,10 @@ interface Props {
 }
 
 export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
-  const [isValidQuery, setIsValidQuery] = useState(false);
+  const [isValidQuery, setIsValidQuery] = useState('undefined');
   const theme = useTheme2();
+
+  const runner = useMemo(() => createQueryRunner(), []);
 
   const styles = useMemo(() => {
     return {
@@ -40,26 +43,26 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
   }, [dsUid]);
   const QueryEditor = datasource?.components?.QueryEditor;
 
-  const handleValidation = (value) => {
-    // TODO: TS7006: Parameter 'value' implicitly has an 'any' type.
-    // TODO: value is not the right thing to use as it doesn't provide the right data structure for queries below, see packages/grafana-data/src/types/queryRunner.ts
-    // trigger query
-    const runner = createQueryRunner();
+  const handleValidation = async (value: DataQuery) => {
     if (datasource) {
       runner.run({
         datasource: datasource,
-        queries: value /*, timezone: TimeZoneUtc, timeRange, maxDataPoints: 100, minInterval: null*/,
+        queries: [value],
+        timezone: 'utc',
+        timeRange: getDefaultTimeRange(),
+        maxDataPoints: 100,
+        minInterval: null,
       });
-      // TODO:TS2345: Argument of type '{ datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}>; queries: any; }'
-      //  is not assignable to parameter of type 'QueryRunnerOptions'.
-      //  Type '{ datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}>; queries: any; }' is missing the following
-      //  properties from type 'QueryRunnerOptions': timezone, timeRange, maxDataPoints, minInterval
     }
-    // TODO: Check whether value works for queries?
-    // runner.get() // maybe this as well => .subscribe()
-    // filter result as we only need to know whether it was successful or not
-    // if it was successful change state for isValidQuery to true
-    setIsValidQuery(true);
+    await runner.get().subscribe((panelData) => {
+      if (panelData.state === 'Done') {
+        setIsValidQuery('true');
+      } else if (panelData.state === 'Error') {
+        setIsValidQuery('false');
+      } else {
+        setIsValidQuery('undefined');
+      }
+    });
   };
 
   return (
@@ -89,28 +92,27 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
           if (!QueryEditor) {
             return <Alert title="Data source does not export a query editor."></Alert>;
           }
-          // TODO: Check whether datasource.type === 'loki' || 'prometheus' is necessary
+          // TODO: isValidQuery needs to be undefined as soon as the query is changed
           return (
             <>
               <QueryEditor
-                onRunQuery={datasource.type === 'loki' || 'prometheus' ? () => handleValidation(value) : () => {}}
+                onRunQuery={() => handleValidation(value)}
                 onChange={onChange}
                 datasource={datasource}
                 query={value}
               />
               <HorizontalGroup justify="flex-end">
-                {
-                  // TODO: No need to show anything until button is clicked. Introduce another state or use something that's already there
-                  isValidQuery ? (
-                    <div className={styles.valid}>
-                      <Icon name="check" /> This query is valid.
-                    </div>
-                  ) : (
-                    <div className={styles.error}>
-                      <Icon name="exclamation-triangle" /> This query is not valid.
-                    </div>
-                  )
-                }
+                {isValidQuery === 'true' ? (
+                  <div className={styles.valid}>
+                    <Icon name="check" /> This query is valid.
+                  </div>
+                ) : isValidQuery === 'false' ? (
+                  <div className={styles.error}>
+                    <Icon name="exclamation-triangle" /> This query is not valid.
+                  </div>
+                ) : (
+                  <div />
+                )}
                 <Button variant="primary" icon={'check'} type="button" onClick={() => handleValidation(value)}>
                   Validate query
                 </Button>
