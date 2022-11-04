@@ -240,7 +240,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     },
     {
       id: LokiOperationId.LineContainsInsensitive,
-      name: 'Line contains (insensitive)',
+      name: 'Line contains (case insensitive)',
       params: [
         {
           name: 'String',
@@ -248,7 +248,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
           hideName: true,
           placeholder: 'Text to find',
           description: 'Find log lines that contains this text',
-          minWidth: 29,
+          minWidth: 33,
           runQueryOnEnter: true,
         },
       ],
@@ -284,7 +284,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     },
     {
       id: LokiOperationId.LineContainsNotInsensitive,
-      name: 'Line does not contain (insensitive)',
+      name: 'Line does not contain (case insensitive)',
       params: [
         {
           name: 'String',
@@ -292,7 +292,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
           hideName: true,
           placeholder: 'Text to exclude',
           description: 'Find log lines that does not contain this text',
-          minWidth: 35,
+          minWidth: 40,
           runQueryOnEnter: true,
         },
       ],
