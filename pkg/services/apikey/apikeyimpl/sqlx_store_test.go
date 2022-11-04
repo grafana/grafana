@@ -8,6 +8,9 @@ import (
 )
 
 func TestIntegrationSQLxApiKeyDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testIntegrationApiKeyDataAccess(t, func(ss db.DB, cfg *setting.Cfg) store {
 		return &sqlxStore{sess: ss.GetSqlxSession(), cfg: cfg}
 	})

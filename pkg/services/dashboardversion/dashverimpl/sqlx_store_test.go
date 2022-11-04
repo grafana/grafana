@@ -7,6 +7,9 @@ import (
 )
 
 func TestIntegrationSQLxGetDashboardVersion(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testIntegrationGetDashboardVersion(t, func(ss db.DB) store {
 		return &sqlxStore{
 			sess: ss.GetSqlxSession(),
