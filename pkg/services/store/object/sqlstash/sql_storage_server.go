@@ -156,10 +156,12 @@ func (s *sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	if !rows.Next() {
 		return &object.ReadObjectResponse{}, nil
 	}
+
 	return s.rowToReadObjectResponse(ctx, rows, r)
 }
 
@@ -175,10 +177,12 @@ func (s *sqlObjectServer) readFromHistory(ctx context.Context, r *object.ReadObj
 	}
 
 	rows, err := s.sess.Query(ctx,
-		"SELECT "+strings.Join(fields, ",")+" FROM object_history WHERE `key`=? AND version=?", route.Key, r.Version)
+		"SELECT "+strings.Join(fields, ",")+
+			" FROM object_history WHERE `key`=? AND version=?", route.Key, r.Version)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	// Version or key not found
 	if !rows.Next() {
@@ -224,10 +228,19 @@ func (s *sqlObjectServer) readFromHistory(ctx context.Context, r *object.ReadObj
 }
 
 func (s *sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObjectRequest) (*object.BatchReadObjectResponse, error) {
+	if len(b.Batch) < 1 {
+		return nil, fmt.Errorf("missing querires")
+	}
+
+	first := b.Batch[0]
 	args := []interface{}{}
 	constraints := []string{}
 
 	for _, r := range b.Batch {
+		if r.WithBody != first.WithBody || r.WithSummary != first.WithSummary {
+			return nil, fmt.Errorf("requests must want the same things")
+		}
+
 		route, err := s.getObjectKey(ctx, r.GRN)
 		if err != nil {
 			return nil, err
@@ -241,13 +254,13 @@ func (s *sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObje
 		constraints = append(constraints, where)
 	}
 
-	// TODO, validate everything has same WithBody/WithSummary
 	req := b.Batch[0]
 	query := getReadSelect(req) + strings.Join(constraints, " OR ")
 	rows, err := s.sess.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	// TODO? make sure the results are in order?
 	rsp := &object.BatchReadObjectResponse{}
@@ -528,6 +541,7 @@ func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRe
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	rsp := &object.ObjectHistoryResponse{
 		GRN: route.GRN,
 	}
@@ -604,8 +618,8 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	key := ""
-
 	rsp := &object.ObjectSearchResponse{}
 	for rows.Next() {
 		result := &object.ObjectSearchResult{
@@ -690,14 +704,14 @@ func (s *sqlObjectServer) ensureFolders(ctx context.Context, objectgrn *object.G
 		}
 
 		// Not super efficient, but maybe it is OK?
-		rows, err := s.sess.Query(ctx, "SELECT 1 from object WHERE `key`=?", fr.Key)
+		results := []int64{}
+		err = s.sess.Select(ctx, &results, "SELECT 1 from object WHERE `key`=?", fr.Key)
 		if err != nil {
 			return err
 		}
-		if !rows.Next() {
+		if len(results) == 0 {
 			missing = append([]*object.GRN{grn}, missing...)
 		}
-		_ = rows.Close()
 		idx = strings.LastIndex(parent, "/")
 	}
 
@@ -706,7 +720,7 @@ func (s *sqlObjectServer) ensureFolders(ctx context.Context, objectgrn *object.G
 		f := &folder.Model{
 			Name: store.GuessNameFromUID(grn.UID),
 		}
-		fmt.Printf("CREATE:%s\n", grn.UID)
+		fmt.Printf("CREATE Folder: %s\n", grn.UID)
 		body, err := json.Marshal(f)
 		if err != nil {
 			return err
