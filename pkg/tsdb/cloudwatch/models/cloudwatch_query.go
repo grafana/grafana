@@ -14,7 +14,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 type (
@@ -61,7 +62,7 @@ type CloudWatchQuery struct {
 	MetricEditorMode  MetricEditorMode
 }
 
-func (q *CloudWatchQuery) GetGMDAPIMode() GMDApiMode {
+func (q *CloudWatchQuery) GetGMDAPIMode(logger log.Logger) GMDApiMode {
 	if q.MetricQueryType == MetricQueryTypeSearch && q.MetricEditorMode == MetricEditorModeBuilder {
 		if q.IsInferredSearchExpression() {
 			return GMDApiModeInferredSearchExpression
@@ -73,7 +74,7 @@ func (q *CloudWatchQuery) GetGMDAPIMode() GMDApiMode {
 		return GMDApiModeSQLExpression
 	}
 
-	cwlog.Warn("could not resolve CloudWatch metric query type. Falling back to metric stat.", "query", q)
+	logger.Warn("could not resolve CloudWatch metric query type. Falling back to metric stat.", "query", q)
 	return GMDApiModeMetricStat
 }
 

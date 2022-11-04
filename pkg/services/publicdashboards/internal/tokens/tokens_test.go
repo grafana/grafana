@@ -36,3 +36,19 @@ func TestValidAccessToken(t *testing.T) {
 		assert.False(t, IsValidAccessToken("0123456789012345678901234567890123456789"))
 	})
 }
+
+// we just check base cases since this wraps utils.IsValidShortUID which has
+// test coverage
+func TestValidUid(t *testing.T) {
+	t.Run("true", func(t *testing.T) {
+		assert.True(t, IsValidShortUID("afqrz7jZZ"))
+	})
+
+	t.Run("false when blank", func(t *testing.T) {
+		assert.False(t, IsValidShortUID(""))
+	})
+
+	t.Run("false when invalid chars", func(t *testing.T) {
+		assert.False(t, IsValidShortUID("afqrz7j%%"))
+	})
+}
