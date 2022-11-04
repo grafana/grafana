@@ -193,6 +193,13 @@ class DataSourceWithBackend<
       url += pfix + 'expression=true';
     }
 
+    const headers: Record<string, string | number> = {};
+    if (request.dashboardUID) {
+      headers['X-Dashboard-UID'] = request.dashboardUID;
+    }
+    if (request.panelId) {
+      headers['X-Panel-Id'] = request.panelId;
+    }
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
         url,
@@ -200,6 +207,7 @@ class DataSourceWithBackend<
         data: body,
         requestId,
         hideFromInspector,
+        headers,
       })
       .pipe(
         switchMap((raw) => {
