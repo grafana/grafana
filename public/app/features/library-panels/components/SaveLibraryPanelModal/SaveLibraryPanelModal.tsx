@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
-import { Button, Icon, Input, Modal, useStyles } from '@grafana/ui';
+import { Button, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
 
 import { getConnectedDashboards } from '../../state/api';
 import { getModalStyles } from '../../styles';
@@ -44,7 +44,7 @@ export const SaveLibraryPanelModal = ({ panel, folderId, isUnsavedPrompt, onDism
   );
 
   const { saveLibraryPanel } = usePanelSave();
-  const styles = useStyles(getModalStyles);
+  const styles = useStyles2(getModalStyles);
   const discardAndClose = useCallback(() => {
     onDiscard();
   }, [onDiscard]);

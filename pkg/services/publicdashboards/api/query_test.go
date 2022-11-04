@@ -149,6 +149,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	expectedResponse := `{
     "results": {
         "test": {
+			"status": 200,
             "frames": [
                 {
                     "schema": {
@@ -315,7 +316,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	ac := acmock.New()
 	cfg.RBACEnabled = false
 	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac)
-	pubdash, err := service.Save(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
+	pubdash, err := service.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 
 	// setup test server
@@ -339,6 +340,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 		`{
         "results": {
           "A": {
+			"status": 200,
             "frames": [
               {
                 "data": {

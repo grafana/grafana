@@ -17,7 +17,11 @@ import {
 } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { contextSrv } from 'app/core/services/context_srv';
-import { useGetConfigQuery, useSaveConfigMutation } from 'app/features/dashboard/api/publicDashboardApi';
+import {
+  useGetPublicDashboardQuery,
+  useCreatePublicDashboardMutation,
+  useUpdatePublicDashboardMutation,
+} from 'app/features/dashboard/api/publicDashboardApi';
 import { AcknowledgeCheckboxes } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/AcknowledgeCheckboxes';
 import { Configuration } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/Configuration';
 import { Description } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/Description';
@@ -44,14 +48,20 @@ export const SharePublicDashboard = (props: Props) => {
   const { showModal, hideModal } = useContext(ModalsContext);
   const isDesktop = useIsDesktop();
 
+  const [hasPublicDashboard, setHasPublicDashboard] = useState(props.dashboard.meta.hasPublicDashboard);
+
   const {
     isLoading: isGetLoading,
     data: publicDashboard,
     isError: isGetError,
     isFetching,
-  } = useGetConfigQuery(props.dashboard.uid);
+  } = useGetPublicDashboardQuery(props.dashboard.uid, {
+    // if we don't have a public dashboard, don't try to load public dashboard
+    skip: !hasPublicDashboard,
+  });
 
-  const [saveConfig, { isLoading: isSaveLoading }] = useSaveConfigMutation();
+  const [createPublicDashboard, { isLoading: isSaveLoading }] = useCreatePublicDashboardMutation();
+  const [updatePublicDashboard, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
 
   const [acknowledgements, setAcknowledgements] = useState<Acknowledgements>({
     public: false,
@@ -81,7 +91,7 @@ export const SharePublicDashboard = (props: Props) => {
     setEnabledSwitch((prevState) => ({ ...prevState, isEnabled: !!publicDashboard?.isEnabled }));
   }, [publicDashboard]);
 
-  const isLoading = isGetLoading || isSaveLoading;
+  const isLoading = isGetLoading || isSaveLoading || isUpdateLoading;
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const acknowledged = acknowledgements.public && acknowledgements.datasources && acknowledgements.usage;
   const isSaveDisabled = useMemo(
@@ -106,13 +116,23 @@ export const SharePublicDashboard = (props: Props) => {
   );
   const isDeleteDisabled = isLoading || isFetching || isGetError;
 
-  const onSavePublicConfig = () => {
+  const onSavePublicConfig = async () => {
     reportInteraction('grafana_dashboards_public_create_clicked');
 
-    saveConfig({
+    const req = {
       dashboard: props.dashboard,
       payload: { ...publicDashboard!, isEnabled: enabledSwitch.isEnabled, annotationsEnabled },
-    });
+    };
+
+    // create or update based on whether we have existing uid
+
+    if (hasPublicDashboard) {
+      await updatePublicDashboard(req).unwrap();
+      setHasPublicDashboard(true);
+    } else {
+      await createPublicDashboard(req).unwrap();
+      setHasPublicDashboard(true);
+    }
   };
 
   const onAcknowledge = (field: string, checked: boolean) => {

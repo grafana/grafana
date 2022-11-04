@@ -815,7 +815,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
     else:
         mode = ''
 
-    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {} --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7'.format(
+    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {}'.format(
         mode, docker_repo)
 
     if ver_mode == 'release':
@@ -974,37 +974,6 @@ def upload_packages_step(edition, ver_mode, trigger=None):
     return step
 
 
-def publish_packages_step(edition, ver_mode):
-    if ver_mode == 'release':
-        cmd = './bin/build publish packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
-            edition,
-        )
-    elif ver_mode == 'main':
-        build_no = '${DRONE_BUILD_NUMBER}'
-        cmd = './bin/build publish packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
-            edition, build_no,
-        )
-    else:
-        fail('Unexpected version mode {}'.format(ver_mode))
-
-    return {
-        'name': 'publish-packages-{}'.format(edition),
-        'image': publish_image,
-        'depends_on': [
-            'compile-build-cmd',
-        ],
-        'environment': {
-            'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
-            'GCP_KEY': from_secret('gcp_key'),
-            'GPG_PRIV_KEY': from_secret('gpg_priv_key'),
-            'GPG_PUB_KEY': from_secret('gpg_pub_key'),
-            'GPG_KEY_PASSWORD': from_secret('gpg_key_password'),
-        },
-        'commands': [
-            cmd,
-        ],
-    }
-
 def publish_grafanacom_step(edition, ver_mode):
     if ver_mode == 'release':
         cmd = './bin/build publish grafana-com --edition {} ${{DRONE_TAG}}'.format(
@@ -1022,7 +991,8 @@ def publish_grafanacom_step(edition, ver_mode):
         'name': 'publish-grafanacom-{}'.format(edition),
         'image': publish_image,
         'depends_on': [
-            'publish-packages-{}'.format(edition),
+            'publish-linux-packages-deb',
+            'publish-linux-packages-rpm',
         ],
         'environment': {
             'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
@@ -1042,7 +1012,6 @@ def publish_linux_packages_step(edition, package_manager='deb'):
             'grabpl'
         ],
         'privileged': True,
-        'failure': 'ignore', # While we're testing it
         'settings': {
             'access_key_id': from_secret('packages_access_key_id'),
             'secret_access_key': from_secret('packages_secret_access_key'),
@@ -1186,6 +1155,21 @@ def verify_gen_cue_step(edition):
             '# It is required that code generated from Thema/CUE be committed and in sync with its inputs.',
             '# The following command will fail if running code generators produces any diff in output.',
             'CODEGEN_VERIFY=1 make gen-cue',
+        ],
+    }
+
+def verify_gen_jsonnet_step(edition):
+    deps = []
+    if edition in ('enterprise', 'enterprise2'):
+        deps.extend(['init-enterprise'])
+    return {
+        'name': 'verify-gen-jsonnet',
+        'image': build_image,
+        'depends_on': deps,
+        'commands': [
+            '# It is required that generated jsonnet is committed and in sync with its inputs.',
+            '# The following command will fail if running code generators produces any diff in output.',
+            'CODEGEN_VERIFY=1 make gen-jsonnet',
         ],
     }
 

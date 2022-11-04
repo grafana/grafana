@@ -203,6 +203,14 @@ steps:
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
+- commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
@@ -342,6 +350,14 @@ steps:
   depends_on: []
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -643,6 +659,14 @@ steps:
   depends_on: []
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -1036,6 +1060,14 @@ steps:
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
+- commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
@@ -1168,6 +1200,14 @@ steps:
   depends_on: []
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -1407,8 +1447,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana --base
-    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana
   depends_on:
   - build-docker-images
   - build-docker-images-ubuntu
@@ -1428,8 +1467,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-oss --base
-    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-oss
   depends_on:
   - build-docker-images
   - build-docker-images-ubuntu
@@ -1569,6 +1607,14 @@ steps:
   depends_on: []
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -1730,78 +1776,8 @@ type: docker
 clone:
   retries: 3
 depends_on:
-- main-test-frontend
-- main-test-backend
 - main-build-e2e-publish
 - main-integration-tests
-- main-windows
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: main-publish
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.15/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.19.2
-  name: compile-build-cmd
-- commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
-  name: identify-runner
-- commands:
-  - ./bin/build publish packages --edition oss --gcp-key /tmp/gcpkey.json --build-id
-    ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - compile-build-cmd
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
-    GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
-    GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
-    GPG_PUB_KEY:
-      from_secret: gpg_pub_key
-    GRAFANA_COM_API_KEY:
-      from_secret: grafana_api_key
-  image: grafana/grafana-ci-deploy:1.3.3
-  name: publish-packages-oss
-trigger:
-  branch: main
-  event:
-  - push
-  paths:
-    exclude:
-    - '*.md'
-    - docs/**
-    - latest.json
-  repo:
-  - grafana/grafana
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on:
-- main-publish
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -1847,7 +1823,6 @@ depends_on:
 - main-build-e2e-publish
 - main-integration-tests
 - main-windows
-- main-publish
 kind: pipeline
 name: main-notify
 platform:
@@ -2276,6 +2251,14 @@ steps:
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
+- commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
@@ -2360,6 +2343,14 @@ steps:
   depends_on: []
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -2561,6 +2552,15 @@ steps:
   - init-enterprise
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - ./bin/build build-backend --jobs 8 --edition enterprise ${DRONE_TAG}
   depends_on:
@@ -2981,6 +2981,15 @@ steps:
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
+- commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
@@ -3097,6 +3106,15 @@ steps:
   - init-enterprise
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -3299,8 +3317,8 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana --base
-    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag ${TAG}
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana --version-tag
+    ${TAG}
   depends_on:
   - fetch-images-oss
   environment:
@@ -3316,8 +3334,8 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-oss --base
-    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag ${TAG}
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-oss --version-tag
+    ${TAG}
   depends_on:
   - fetch-images-oss
   environment:
@@ -3388,8 +3406,7 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-enterprise
-    --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag
-    ${TAG}
+    --version-tag ${TAG}
   depends_on:
   - fetch-images-enterprise
   environment:
@@ -3460,8 +3477,7 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl artifacts docker publish --security --dockerhub-repo grafana/grafana-enterprise
-    --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag
-    ${TAG}
+    --version-tag ${TAG}
   depends_on:
   - fetch-images-enterprise
   environment:
@@ -3659,37 +3675,8 @@ steps:
     CGO_ENABLED: 0
   image: golang:1.19.2
   name: compile-build-cmd
-- commands:
-  - ./bin/build publish packages --edition oss --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
-  depends_on:
-  - compile-build-cmd
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
-    GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
-    GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
-    GPG_PUB_KEY:
-      from_secret: gpg_pub_key
-    GRAFANA_COM_API_KEY:
-      from_secret: grafana_api_key
-  image: grafana/grafana-ci-deploy:1.3.3
-  name: publish-packages-oss
-- commands:
-  - ./bin/build publish grafana-com --edition oss ${DRONE_TAG}
-  depends_on:
-  - publish-packages-oss
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
-    GRAFANA_COM_API_KEY:
-      from_secret: grafana_api_key
-  image: grafana/grafana-ci-deploy:1.3.3
-  name: publish-grafanacom-oss
 - depends_on:
   - grabpl
-  failure: ignore
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages-deb
   privileged: true
@@ -3711,7 +3698,6 @@ steps:
     target_bucket: grafana-packages
 - depends_on:
   - grabpl
-  failure: ignore
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages-rpm
   privileged: true
@@ -3731,6 +3717,18 @@ steps:
     service_account_json:
       from_secret: packages_service_account
     target_bucket: grafana-packages
+- commands:
+  - ./bin/build publish grafana-com --edition oss ${DRONE_TAG}
+  depends_on:
+  - publish-linux-packages-deb
+  - publish-linux-packages-rpm
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    GRAFANA_COM_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/grafana-ci-deploy:1.3.3
+  name: publish-grafanacom-oss
 trigger:
   event:
   - promote
@@ -3772,37 +3770,8 @@ steps:
     CGO_ENABLED: 0
   image: golang:1.19.2
   name: compile-build-cmd
-- commands:
-  - ./bin/build publish packages --edition enterprise --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
-  depends_on:
-  - compile-build-cmd
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
-    GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
-    GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
-    GPG_PUB_KEY:
-      from_secret: gpg_pub_key
-    GRAFANA_COM_API_KEY:
-      from_secret: grafana_api_key
-  image: grafana/grafana-ci-deploy:1.3.3
-  name: publish-packages-enterprise
-- commands:
-  - ./bin/build publish grafana-com --edition enterprise ${DRONE_TAG}
-  depends_on:
-  - publish-packages-enterprise
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
-    GRAFANA_COM_API_KEY:
-      from_secret: grafana_api_key
-  image: grafana/grafana-ci-deploy:1.3.3
-  name: publish-grafanacom-enterprise
 - depends_on:
   - grabpl
-  failure: ignore
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages-deb
   privileged: true
@@ -3824,7 +3793,6 @@ steps:
     target_bucket: grafana-packages
 - depends_on:
   - grabpl
-  failure: ignore
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages-rpm
   privileged: true
@@ -3844,6 +3812,18 @@ steps:
     service_account_json:
       from_secret: packages_service_account
     target_bucket: grafana-packages
+- commands:
+  - ./bin/build publish grafana-com --edition enterprise ${DRONE_TAG}
+  depends_on:
+  - publish-linux-packages-deb
+  - publish-linux-packages-rpm
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    GRAFANA_COM_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/grafana-ci-deploy:1.3.3
+  name: publish-grafanacom-enterprise
 trigger:
   event:
   - promote
@@ -4262,6 +4242,14 @@ steps:
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
+- commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
@@ -4343,6 +4331,14 @@ steps:
   depends_on: []
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -4533,6 +4529,15 @@ steps:
   - init-enterprise
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - ./bin/build build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
@@ -4943,6 +4948,15 @@ steps:
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
+- commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
@@ -5055,6 +5069,15 @@ steps:
   - init-enterprise
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.6.3
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -5423,6 +5446,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: bbc179e84a651150c80ff37442ae77605613dfdda47aa72604016b090715a12b
+hmac: c05242e46e10d9e2af78c038a72879351ab553787b2732c8afaf32c706e45096
 
 ...
