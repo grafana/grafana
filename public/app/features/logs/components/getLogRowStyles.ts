@@ -70,8 +70,8 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       > td:not(.log-row-menu-cell) {
         position: relative;
         padding-right: ${theme.spacing(1)};
-        border-top: ${theme.spacing(0.125)} solid transparent;
-        border-bottom: ${theme.spacing(0.125)} solid transparent;
+        border-top: 1px solid transparent;
+        border-bottom: 1px solid transparent;
         height: 100%;
       }
     `,
@@ -89,9 +89,9 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
         content: '';
         display: block;
         position: absolute;
-        top: ${theme.spacing(0.125)};
-        bottom: ${theme.spacing(0.125)};
-        width: ${theme.spacing(0.375)};
+        top: 1px;
+        bottom: 1px;
+        width: 3px;
         left: ${theme.spacing(0.5)};
         background-color: ${logColor};
       }
@@ -102,8 +102,8 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
     logsRowToggleDetails: css`
       label: logs-row-toggle-details__level;
       font-size: 9px;
-      padding-top: ${theme.spacing(0.625)};
-      max-width: ${theme.spacing(1.875)};
+      padding-top: 5px;
+      max-width: 15px;
     `,
     logsRowLocalTime: css`
       label: logs-row__localtime;
@@ -116,7 +116,7 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
 
       /* This is to make the labels vertical align */
       > span {
-        margin-top: ${theme.spacing(0.094)};
+        margin-top: 0.75px;
       }
     `,
     logsRowMessage: css`
@@ -128,7 +128,7 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
     //Log details specific CSS
     logDetailsContainer: css`
       label: logs-row-details-table;
-      border: ${theme.spacing(0.125)} solid ${theme.colors.border.medium};
+      border: 1px solid ${theme.colors.border.medium};
       padding: 0 ${theme.spacing(1)} ${theme.spacing(1)};
       border-radius: ${theme.shape.borderRadius(1.5)};
       margin: ${theme.spacing(2.5)} ${theme.spacing(1)} ${theme.spacing(2.5)} ${theme.spacing(2)};

@@ -35,7 +35,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     logsRowLevelDetails: css`
       label: logs-row__level_details;
       &::after {
-        top: -${theme.spacing(0.375)};
+        top: -3px;
       }
     `,
     logDetails: css`

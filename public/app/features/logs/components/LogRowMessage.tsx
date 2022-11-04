@@ -74,11 +74,7 @@ const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboa
     `,
     logRowMenuCell: css`
       position: absolute;
-      right: ${isInDashboard
-        ? theme.spacing(5)
-        : `calc(${theme.spacing(9.375)} + ${theme.spacing()} + ${
-            showContextButton ? theme.spacing(10) : theme.spacing(5)
-          })`};
+      right: ${isInDashboard ? '40px' : `calc(75px + ${theme.spacing()} + ${showContextButton ? '80px' : '40px'})`};
       margin-top: -${theme.spacing(0.125)};
     `,
   };

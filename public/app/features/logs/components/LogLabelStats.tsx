@@ -21,7 +21,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     logsStatsHeader: css`
       label: logs-stats__header;
-      border-bottom: ${theme.spacing(0.125)} solid ${theme.colors.border.medium};
+      border-bottom: 1px solid ${theme.colors.border.medium};
       display: flex;
     `,
     logsStatsTitle: css`
@@ -39,7 +39,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     logsStatsBody: css`
       label: logs-stats__body;
-      padding: ${theme.spacing(0.625, 0)};
+      padding: 5px 0px;
     `,
   };
 });

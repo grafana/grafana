@@ -17,7 +17,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   logsStatsRowLabel: css`
     label: logs-stats-row__label;
     display: flex;
-    margin-bottom: ${theme.spacing(0.125)};
+    margin-bottom: 1px;
   `,
   logsStatsRowValue: css`
     label: logs-stats-row__value;
