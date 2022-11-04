@@ -269,7 +269,7 @@ func TestAddAppLinks(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "Connections", connectionsNode.Text)
 		require.Equal(t, "Connect Data", connectionsNode.Children[1].Text)
-		require.Equal(t, "standalone-plugin-page-/connections/connect-data", connectionsNode.Children[1].Id) // Overriden "Connect Data" page
+		require.Equal(t, "standalone-plugin-page-/connections/connect-data", connectionsNode.Children[1].Id) // Overridden "Connect Data" page
 		require.Equal(t, "test-app3", connectionsNode.Children[1].PluginID)
 
 		// Check if the standalone plugin page does not appear under the app section anymore
@@ -302,7 +302,6 @@ func TestAddAppLinks(t *testing.T) {
 		require.NotNil(t, app3Node)
 		require.Len(t, app3Node.Children, 1) // It should only have a single child now
 		require.Equal(t, "Random page", app3Node.Children[0].Text)
-
 	})
 }
 
