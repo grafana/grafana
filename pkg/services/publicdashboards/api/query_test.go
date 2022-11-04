@@ -253,6 +253,9 @@ func getValidQueryPath(accessToken string) string {
 }
 
 func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	db := db.InitTestDB(t)
 
 	cacheService := datasourcesService.ProvideCacheService(localcache.ProvideService(), db)

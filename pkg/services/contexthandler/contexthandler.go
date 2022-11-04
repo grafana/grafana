@@ -312,7 +312,8 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	}
 
 	if apikey.ServiceAccountId == nil || *apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
-		//Use the old APIkey method.  This provides backwards compatibility.
+		// Use the old APIkey method.  This provides backwards compatibility.
+		// will probably have to be supported for a long time.
 		reqContext.SignedInUser = &user.SignedInUser{}
 		reqContext.OrgRole = apikey.Role
 		reqContext.ApiKeyID = apikey.Id
