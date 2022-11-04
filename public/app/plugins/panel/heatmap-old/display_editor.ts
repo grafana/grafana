@@ -2,7 +2,8 @@ export class HeatmapDisplayEditorCtrl {
   panel: any;
   panelCtrl: any;
 
-  /** @ngInject */
+  static $inject = ['$scope'];
+
   constructor($scope: any) {
     $scope.editor = this;
     this.panelCtrl = $scope.ctrl;
@@ -10,7 +11,6 @@ export class HeatmapDisplayEditorCtrl {
   }
 }
 
-/** @ngInject */
 export function heatmapDisplayEditor() {
   'use strict';
   return {

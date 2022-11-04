@@ -5,7 +5,8 @@ export class AxesEditorCtrl {
   dataFormats: any;
   yBucketBoundModes: any;
 
-  /** @ngInject */
+  static $inject = ['$scope', 'uiSegmentSrv'];
+
   constructor($scope: any, uiSegmentSrv: any) {
     $scope.editor = this;
     this.panelCtrl = $scope.ctrl;
@@ -38,7 +39,6 @@ export class AxesEditorCtrl {
   };
 }
 
-/** @ngInject */
 export function axesEditor() {
   'use strict';
   return {

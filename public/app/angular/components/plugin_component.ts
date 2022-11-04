@@ -8,7 +8,8 @@ import config from 'app/core/config';
 import { importPanelPlugin } from '../../features/plugins/importPanelPlugin';
 import { importDataSourcePlugin, importAppPlugin } from '../../features/plugins/plugin_loader';
 
-/** @ngInject */
+coreModule.directive('pluginComponent', ['$compile', '$http', '$templateCache', '$location', pluginDirectiveLoader]);
+
 function pluginDirectiveLoader($compile: any, $http: any, $templateCache: any, $location: ILocationService) {
   function getTemplate(component: { template: any; templateUrl: any }) {
     if (component.template) {
@@ -245,5 +246,3 @@ function pluginDirectiveLoader($compile: any, $http: any, $templateCache: any, $
     },
   };
 }
-
-coreModule.directive('pluginComponent', pluginDirectiveLoader);

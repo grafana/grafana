@@ -130,7 +130,8 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
   processor: DataProcessor; // Shared with graph panel
 
-  /** @ngInject */
+  static $inject = ['$scope', '$injector', 'templateSrv', 'timeSrv'];
+
   constructor($scope: any, $injector: auto.IInjectorService, templateSrv: TemplateSrv, timeSrv: TimeSrv) {
     super($scope, $injector);
 

@@ -18,7 +18,8 @@ import { UtilSrv } from './services/UtilSrv';
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
 export class GrafanaCtrl {
-  /** @ngInject */
+  static $inject = ['$scope', 'utilSrv', '$rootScope', 'contextSrv', 'angularLoader', '$injector'];
+
   constructor(
     $scope: any,
     utilSrv: UtilSrv,
@@ -79,7 +80,6 @@ export class GrafanaCtrl {
   }
 }
 
-/** @ngInject */
 export function grafanaAppDirective() {
   return {
     restrict: 'E',
