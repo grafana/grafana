@@ -32,7 +32,7 @@ func (m *ForwardOAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backe
 	reqCtx := contexthandler.FromContext(ctx)
 	// if request not for a datasource or no HTTP request context skip middleware
 	if req == nil || pCtx.DataSourceInstanceSettings == nil || reqCtx == nil || reqCtx.Req == nil {
-		return nil, nil
+		return ctx, nil
 	}
 
 	settings := pCtx.DataSourceInstanceSettings
