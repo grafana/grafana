@@ -90,8 +90,7 @@ func (m *FileStoreManager) GetPluginDashboardFileContents(ctx context.Context, a
 		return nil, err
 	}
 
-	dashboardFilePath := filepath.Join(plugin.PluginDir, cleanPath)
-	file, err := openDashboardFile(dashboardFilePath)
+	file, _, err := plugin.File(cleanPath)
 	if err != nil {
 		return nil, err
 	}

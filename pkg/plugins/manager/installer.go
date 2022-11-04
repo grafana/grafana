@@ -51,8 +51,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 
 		if plugin.Info.Version == version {
 			return plugins.DuplicateError{
-				PluginID:          plugin.ID,
-				ExistingPluginDir: plugin.PluginDir,
+				PluginID: plugin.ID,
 			}
 		}
 
@@ -65,8 +64,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		// if existing plugin version is the same as the target update version
 		if dlOpts.Version == plugin.Info.Version {
 			return plugins.DuplicateError{
-				PluginID:          plugin.ID,
-				ExistingPluginDir: plugin.PluginDir,
+				PluginID: plugin.ID,
 			}
 		}
 

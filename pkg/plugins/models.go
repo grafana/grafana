@@ -26,12 +26,11 @@ func (e NotFoundError) Error() string {
 }
 
 type DuplicateError struct {
-	PluginID          string
-	ExistingPluginDir string
+	PluginID string
 }
 
 func (e DuplicateError) Error() string {
-	return fmt.Sprintf("plugin with ID '%s' already exists in '%s'", e.PluginID, e.ExistingPluginDir)
+	return fmt.Sprintf("plugin with ID '%s' already exists", e.PluginID)
 }
 
 func (e DuplicateError) Is(err error) bool {

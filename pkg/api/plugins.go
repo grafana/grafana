@@ -4,19 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
-	"os"
 	"path"
 	"path/filepath"
 	"runtime"
 	"sort"
-	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -27,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -317,50 +312,14 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	if !plugin.IncludedInSignature(rel) {
-		hs.log.Warn("Access to requested plugin file will be forbidden in upcoming Grafana versions as the file "+
-			"is not included in the plugin signature", "file", requestedFile)
-	}
-
-	absPluginDir, err := filepath.Abs(plugin.PluginDir)
+	f, mod, err := plugin.File(rel)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to get plugin absolute path", nil)
+		// slash is prepended above therefore this is not expected to fail
+		c.JsonApiErr(500, "Failed to get the relative path", err)
 		return
 	}
 
-	pluginFilePath := filepath.Join(absPluginDir, rel)
-
-	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
-	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	// nolint:gosec
-	f, err := os.Open(pluginFilePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			c.JsonApiErr(404, "Plugin file not found", err)
-			return
-		}
-		c.JsonApiErr(500, "Could not open plugin file", err)
-		return
-	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			hs.log.Error("Failed to close file", "err", err)
-		}
-	}()
-
-	fi, err := f.Stat()
-	if err != nil {
-		c.JsonApiErr(500, "Plugin file exists but could not open", err)
-		return
-	}
-
-	if hs.Cfg.Env == setting.Dev {
-		c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
-	} else {
-		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
-	}
-
-	http.ServeContent(c.Resp, c.Req, pluginFilePath, fi.ModTime(), f)
+	http.ServeContent(c.Resp, c.Req, rel, mod, f)
 }
 
 // CheckHealth returns the health of a plugin.
@@ -496,36 +455,5 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 		return nil, plugins.NotFoundError{PluginID: pluginId}
 	}
 
-	// nolint:gosec
-	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
-	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	path := filepath.Join(plugin.PluginDir, mdFilepath(strings.ToUpper(name)))
-	exists, err := fs.Exists(path)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		path = filepath.Join(plugin.PluginDir, mdFilepath(strings.ToLower(name)))
-	}
-
-	exists, err = fs.Exists(path)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return make([]byte, 0), nil
-	}
-
-	// nolint:gosec
-	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
-	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-func mdFilepath(mdFilename string) string {
-	return filepath.Clean(filepath.Join("/", fmt.Sprintf("%s.md", mdFilename)))
+	return plugin.Markdown(name), nil
 }
