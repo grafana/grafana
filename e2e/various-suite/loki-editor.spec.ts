@@ -43,7 +43,7 @@ describe('Loki Editor', () => {
 
     // adds closing braces around empty value
     e2e().contains('Code').click();
-    const queryField = e2e().get('.monaco-editor');
+    const queryField = e2e().get('[role="code"]');
     const queryFieldValue = e2e().get('.monaco-editor textarea:first');
     queryField.type('time(');
     queryFieldValue.should(($el) => {
@@ -74,35 +74,14 @@ describe('Loki Editor', () => {
       expect($el.val()).to.eq('))');
     });
 
-    /** Clear Plugin */
-
-    //does not change the empty value
-    queryField.type(`{selectall}{backspace}{ctrl+k}`);
-    queryFieldValue.should(($el) => {
-      expect($el.val()).to.match(/Enter a Loki query/);
-    });
-
-    // clears to the end of the line
-    queryField.type(`{selectall}{backspace}foo{leftArrow}{leftArrow}{leftArrow}{ctrl+k}`);
-    queryFieldValue.should(($el) => {
-      expect($el.val()).to.match(/Enter a Loki query/);
-    });
-
-    // clears from the middle to the end of the line
-    queryField.type(`{selectall}{backspace}foo bar{leftArrow}{leftArrow}{leftArrow}{leftArrow}{ctrl+k}`);
-    queryFieldValue.should(($el) => {
-      expect($el.val()).to.eq('foo');
-    });
-
     /** Runner plugin */
 
-    //should execute query when enter with shift is pressed
-    queryField.clear();
-    queryField.type('{shift+enter}');
+    // Should execute the query when enter with shift is pressed
+    queryField.type(`{selectall}{backspace}{shift+enter}`);
     e2e().get('[data-testid="explore-no-data"]').should('be.visible');
 
     /** Suggestions plugin */
-    e2e().get('.monaco-editor').type(`{selectall}av`);
-    e2e().get('.slate-typeahead').should('be.visible').contains('avg_over_time');
+    e2e().get('[role="code"]').type(`{selectall}av`);
+    e2e().contains('avg_over_time').should('be.visible');
   });
 });
