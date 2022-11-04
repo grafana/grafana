@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import { pickBy } from 'lodash';
 import React from 'react';
 
-import { GrafanaTheme, GrafanaTheme2, DEFAULT_SAML_NAME } from '@grafana/data';
-import { Icon, IconName, LinkButton, useStyles, useTheme2, VerticalGroup } from '@grafana/ui';
+import { GrafanaTheme2, DEFAULT_SAML_NAME } from '@grafana/data';
+import { Icon, IconName, LinkButton, useStyles2, useTheme2, VerticalGroup } from '@grafana/ui';
 import config from 'app/core/config';
 
 export interface LoginService {
@@ -75,7 +75,7 @@ const loginServices: () => LoginServices = () => {
   };
 };
 
-const getServiceStyles = (theme: GrafanaTheme) => {
+const getServiceStyles = (theme: GrafanaTheme2) => {
   return {
     button: css`
       color: #d8d9da;
@@ -83,7 +83,7 @@ const getServiceStyles = (theme: GrafanaTheme) => {
     `,
     buttonIcon: css`
       position: absolute;
-      left: ${theme.spacing.sm};
+      left: ${theme.spacing(1)};
       top: 50%;
       transform: translateY(-50%);
     `,
@@ -91,7 +91,7 @@ const getServiceStyles = (theme: GrafanaTheme) => {
       base: css`
         color: ${theme.colors.text};
         display: flex;
-        margin-bottom: ${theme.spacing.sm};
+        margin-bottom: ${theme.spacing(1)};
         justify-content: space-between;
         text-align: center;
         width: 100%;
@@ -106,7 +106,7 @@ const getServiceStyles = (theme: GrafanaTheme) => {
 };
 
 const LoginDivider = () => {
-  const styles = useStyles(getServiceStyles);
+  const styles = useStyles2(getServiceStyles);
   return (
     <>
       <div className={styles.divider.base}>
@@ -144,7 +144,7 @@ export const LoginServiceButtons = () => {
   const enabledServices = pickBy(loginServices(), (service) => service.enabled);
   const hasServices = Object.keys(enabledServices).length > 0;
   const theme = useTheme2();
-  const styles = useStyles(getServiceStyles);
+  const styles = useStyles2(getServiceStyles);
 
   if (hasServices) {
     return (

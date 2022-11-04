@@ -735,6 +735,21 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					PropertyName: "maxAlerts",
 				},
+				{ // New in 9.3.
+					Label:        "Title",
+					Description:  "Templated title of the message.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "title",
+					Placeholder:  channels.DefaultMessageTitleEmbed,
+				},
+				{ // New in 9.3.
+					Label:        "Message",
+					Description:  "Custom message. You can use template variables.",
+					Element:      ElementTypeTextArea,
+					PropertyName: "message",
+					Placeholder:  channels.DefaultMessageEmbed,
+				},
 			},
 		},
 		{

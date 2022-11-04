@@ -3,10 +3,11 @@ package cloudwatch
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
 func TestMetricDataQueryBuilder(t *testing.T) {
@@ -16,7 +17,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			query := getBaseQuery()
 			query.MetricEditorMode = models.MetricEditorModeBuilder
 			query.MetricQueryType = models.MetricQueryTypeSearch
-			mdq, err := executor.buildMetricDataQuery(query)
+			mdq, err := executor.buildMetricDataQuery(logger, query)
 			require.NoError(t, err)
 			require.Empty(t, mdq.Expression)
 			assert.Equal(t, query.MetricName, *mdq.MetricStat.Metric.MetricName)
@@ -29,7 +30,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			query.MetricEditorMode = models.MetricEditorModeBuilder
 			query.MetricQueryType = models.MetricQueryTypeSearch
 			query.MatchExact = false
-			mdq, err := executor.buildMetricDataQuery(query)
+			mdq, err := executor.buildMetricDataQuery(logger, query)
 			require.NoError(t, err)
 			require.Nil(t, mdq.MetricStat)
 			assert.Equal(t, `REMOVE_EMPTY(SEARCH('Namespace="AWS/EC2" MetricName="CPUUtilization" "LoadBalancer"="lb1"', '', 300))`, *mdq.Expression)
@@ -41,7 +42,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			query.MetricEditorMode = models.MetricEditorModeRaw
 			query.MetricQueryType = models.MetricQueryTypeQuery
 			query.SqlExpression = `SELECT SUM(CPUUTilization) FROM "AWS/EC2"`
-			mdq, err := executor.buildMetricDataQuery(query)
+			mdq, err := executor.buildMetricDataQuery(logger, query)
 			require.NoError(t, err)
 			require.Nil(t, mdq.MetricStat)
 			assert.Equal(t, query.SqlExpression, *mdq.Expression)
@@ -53,7 +54,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			query.MetricEditorMode = models.MetricEditorModeRaw
 			query.MetricQueryType = models.MetricQueryTypeSearch
 			query.Expression = `SUM(x+y)`
-			mdq, err := executor.buildMetricDataQuery(query)
+			mdq, err := executor.buildMetricDataQuery(logger, query)
 			require.NoError(t, err)
 			require.Nil(t, mdq.MetricStat)
 			assert.Equal(t, query.Expression, *mdq.Expression)
@@ -66,7 +67,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			query.MetricQueryType = models.MetricQueryTypeSearch
 			query.MatchExact = false
 			query.Expression = `SUM([a,b])`
-			mdq, err := executor.buildMetricDataQuery(query)
+			mdq, err := executor.buildMetricDataQuery(logger, query)
 			require.NoError(t, err)
 			require.Nil(t, mdq.MetricStat)
 			assert.Equal(t, int64(300), *mdq.Period)
@@ -78,7 +79,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			query := getBaseQuery()
 			query.Label = "some label"
 
-			mdq, err := executor.buildMetricDataQuery(query)
+			mdq, err := executor.buildMetricDataQuery(logger, query)
 
 			assert.NoError(t, err)
 			require.NotNil(t, mdq.Label)
@@ -105,7 +106,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 				query := getBaseQuery()
 				query.Label = tc.label
 
-				mdq, err := executor.buildMetricDataQuery(query)
+				mdq, err := executor.buildMetricDataQuery(logger, query)
 
 				assert.NoError(t, err)
 				assert.Nil(t, mdq.Label)

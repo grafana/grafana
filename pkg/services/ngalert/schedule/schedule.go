@@ -78,7 +78,7 @@ type schedule struct {
 
 	log log.Logger
 
-	evaluator eval.Evaluator
+	evaluatorFactory eval.EvaluatorFactory
 
 	ruleStore RulesStore
 
@@ -101,14 +101,14 @@ type schedule struct {
 
 // SchedulerCfg is the scheduler configuration.
 type SchedulerCfg struct {
-	Cfg             setting.UnifiedAlertingSettings
-	C               clock.Clock
-	EvalAppliedFunc func(ngmodels.AlertRuleKey, time.Time)
-	StopAppliedFunc func(ngmodels.AlertRuleKey)
-	Evaluator       eval.Evaluator
-	RuleStore       RulesStore
-	Metrics         *metrics.Scheduler
-	AlertSender     AlertsSender
+	Cfg              setting.UnifiedAlertingSettings
+	C                clock.Clock
+	EvalAppliedFunc  func(ngmodels.AlertRuleKey, time.Time)
+	StopAppliedFunc  func(ngmodels.AlertRuleKey)
+	EvaluatorFactory eval.EvaluatorFactory
+	RuleStore        RulesStore
+	Metrics          *metrics.Scheduler
+	AlertSender      AlertsSender
 }
 
 // NewScheduler returns a new schedule.
@@ -121,7 +121,7 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 		log:                   log.New("ngalert.scheduler"),
 		evalAppliedFunc:       cfg.EvalAppliedFunc,
 		stopAppliedFunc:       cfg.StopAppliedFunc,
-		evaluator:             cfg.Evaluator,
+		evaluatorFactory:      cfg.EvaluatorFactory,
 		ruleStore:             cfg.RuleStore,
 		metrics:               cfg.Metrics,
 		appURL:                appURL,
@@ -340,15 +340,28 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				},
 			},
 		}
-		evalCtx := eval.Context(ctx, schedulerUser).When(e.scheduledAt).WithRule(e.rule)
+		evalCtx := eval.Context(ctx, schedulerUser)
+		ruleEval, err := sch.evaluatorFactory.Create(evalCtx, e.rule.GetEvalCondition())
+		var results eval.Results
+		var dur time.Duration
+		if err == nil {
+			results, err = ruleEval.Evaluate(ctx, e.scheduledAt)
+			if err != nil {
+				logger.Error("Failed to evaluate rule", "error", err, "duration", dur)
+			}
+		} else {
+			logger.Error("Failed to build rule evaluator", "error", err)
+		}
+		dur = sch.clock.Now().Sub(start)
 
-		results := sch.evaluator.ConditionEval(evalCtx, e.rule.GetEvalCondition())
-		dur := sch.clock.Now().Sub(start)
 		evalTotal.Inc()
 		evalDuration.Observe(dur.Seconds())
-		if results.HasErrors() {
+
+		if err != nil || results.HasErrors() {
 			evalTotalFailures.Inc()
-			logger.Error("Failed to evaluate alert rule", "results", results, "duration", dur)
+			if results == nil {
+				results = append(results, eval.NewResultFromError(err, e.scheduledAt, dur))
+			}
 		} else {
 			logger.Debug("Alert rule evaluated", "results", results, "duration", dur)
 		}

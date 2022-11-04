@@ -22,6 +22,7 @@ import { SpanLinkFunc, TraceSpan } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { ElasticsearchQuery } from 'app/plugins/datasource/elasticsearch/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
@@ -103,7 +104,7 @@ function legacyCreateSpanLinkFactory(
     // the moment. Issue is that the trace itself isn't clearly mapped to dataFrame (right now it's just a json blob
     // inside a single field) so the dataLinks as config of that dataFrame abstraction breaks down a bit and we do
     // it manually here instead of leaving it for the data source to supply the config.
-    let dataLink: DataLink<LokiQuery | DataQuery> | undefined = {} as DataLink<LokiQuery | DataQuery> | undefined;
+    let dataLink: DataLink | undefined;
 
     // Get logs link
     if (logsDataSourceSettings && traceToLogsOptions) {
@@ -114,6 +115,8 @@ function legacyCreateSpanLinkFactory(
         case 'grafana-splunk-datasource':
           dataLink = getLinkForSplunk(span, traceToLogsOptions, logsDataSourceSettings);
           break;
+        case 'elasticsearch':
+          dataLink = getLinkForElasticsearch(span, traceToLogsOptions, logsDataSourceSettings);
       }
 
       if (dataLink) {
@@ -273,6 +276,61 @@ function getLinkForLoki(span: TraceSpan, options: TraceToLogsOptions, dataSource
       query: {
         expr: expr,
         refId: '',
+      },
+    },
+  };
+
+  return dataLink;
+}
+
+function getLinkForElasticsearch(
+  span: TraceSpan,
+  options: TraceToLogsOptions,
+  dataSourceSettings: DataSourceInstanceSettings
+) {
+  const { tags: keys, filterByTraceID, filterBySpanID, mapTagNamesEnabled, mappedTags } = options;
+  const tags = [...span.process.tags, ...span.tags].reduce((acc: string[], tag) => {
+    if (mapTagNamesEnabled && mappedTags?.length) {
+      const keysToCheck = mappedTags;
+      const keyValue = keysToCheck.find((keyValue) => keyValue.key === tag.key);
+      if (keyValue) {
+        acc.push(`${keyValue.value ? keyValue.value : keyValue.key}:"${tag.value}"`);
+      }
+    } else {
+      const keysToCheck = keys?.length ? keys : defaultKeys;
+      if (keysToCheck.includes(tag.key)) {
+        acc.push(`${tag.key}:"${tag.value}"`);
+      }
+    }
+    return acc;
+  }, []);
+
+  let query = '';
+  if (tags.length > 0) {
+    query += `${tags.join(' AND ')}`;
+  }
+  if (filterByTraceID && span.traceID) {
+    query = `"${span.traceID}" AND ` + query;
+  }
+  if (filterBySpanID && span.spanID) {
+    query = `"${span.spanID}" AND ` + query;
+  }
+
+  const dataLink: DataLink<ElasticsearchQuery> = {
+    title: dataSourceSettings.name,
+    url: '',
+    internal: {
+      datasourceUid: dataSourceSettings.uid,
+      datasourceName: dataSourceSettings.name,
+      query: {
+        query: query,
+        refId: '',
+        metrics: [
+          {
+            id: '1',
+            type: 'logs',
+          },
+        ],
       },
     },
   };

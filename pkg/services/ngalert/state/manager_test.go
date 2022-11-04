@@ -49,15 +49,21 @@ func TestDashboardAnnotations(t *testing.T) {
 	})
 
 	st.Warm(ctx)
+	bValue := float64(42)
+	cValue := float64(1)
 	_ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
 		Instance:    data.Labels{"instance_label": "testValue2"},
 		State:       eval.Alerting,
 		EvaluatedAt: evaluationTime,
+		Values: map[string]eval.NumberValueCapture{
+			"B": {Var: "B", Value: &bValue, Labels: data.Labels{"job": "prometheus"}},
+			"C": {Var: "C", Value: &cValue, Labels: data.Labels{"job": "prometheus"}},
+		},
 	}}, data.Labels{
 		"alertname": rule.Title,
 	})
 
-	expected := []string{rule.Title + " {alertname=" + rule.Title + ", instance_label=testValue2, test1=testValue1, test2=testValue2} - Alerting"}
+	expected := []string{rule.Title + " {alertname=" + rule.Title + ", instance_label=testValue2, test1=testValue1, test2=testValue2} - B=42.000000, C=1.000000"}
 	sort.Strings(expected)
 	require.Eventuallyf(t, func() bool {
 		var actual []string
@@ -1316,6 +1322,7 @@ func TestProcessEvalResults(t *testing.T) {
 					eval.Result{
 						Instance:           data.Labels{"instance_label": "test"},
 						State:              eval.Error,
+						Error:              errors.New("test error"),
 						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
 						EvaluationDuration: evaluationDuration,
 					},
@@ -1337,6 +1344,7 @@ func TestProcessEvalResults(t *testing.T) {
 					Values:      make(map[string]float64),
 					State:       eval.Pending,
 					StateReason: eval.Error.String(),
+					Error:       errors.New("test error"),
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
