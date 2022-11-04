@@ -247,7 +247,9 @@ export const Table = memo((props: Props) => {
           return max;
         }, 0);
 
-        const footerItemsCountAll: FooterItem[] = [maxCount.toString()];
+        const footerItemsCountAll: FooterItem[] = new Array(footerItems.length).fill(undefined);
+        footerItemsCountAll[0] = maxCount.toString();
+        console.log(footerItemsCountAll);
         setFooterItems(footerItemsCountAll);
       } else {
         setFooterItems(footerItems);

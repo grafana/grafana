@@ -41,8 +41,8 @@ export const FooterRow = (props: FooterRowProps) => {
             data-testid={e2eSelectorsTable.footer}
             style={height ? { height: `${height}px` } : undefined}
           >
-            {footerGroup.headers.map((column: ColumnInstance, index: number) =>
-              isCountAllSet && index > 0 ? EmptyCell : renderFooterCell(column, tableStyles, height, isCountAllSet)
+            {footerGroup.headers.map((column: ColumnInstance) =>
+              renderFooterCell(column, tableStyles, height, isCountAllSet)
             )}
           </div>
         );
@@ -78,7 +78,12 @@ export function getFooterValue(index: number, footerValues?: FooterItem[], isCou
   }
 
   if (isCountAllSet) {
-    return FooterCell({ value: [{ Count: footerValues[index] as string }] });
+    const count = footerValues[index];
+    if (typeof count !== 'string') {
+      return EmptyCell;
+    }
+
+    return FooterCell({ value: [{ Count: count }] });
   }
 
   return FooterCell({ value: footerValues[index] });
