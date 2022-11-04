@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -106,7 +107,7 @@ func TestWarmStateCache(t *testing.T) {
 		Labels:            labels,
 	}
 	_ = dbstore.SaveAlertInstances(ctx, instance2)
-	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &image.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{})
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &image.NoopImageService{}, clock.NewMock(), &historian.NoOpHistorian{})
 	st.Warm(ctx, dbstore)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
@@ -157,7 +158,7 @@ func TestAlertingTicker(t *testing.T) {
 		Metrics:     testMetrics.GetSchedulerMetrics(),
 		AlertSender: notifier,
 	}
-	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &image.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{})
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &image.NoopImageService{}, clock.NewMock(), &historian.NoOpHistorian{})
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",

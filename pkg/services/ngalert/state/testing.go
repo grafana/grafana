@@ -45,8 +45,3 @@ type FakeRuleReader struct{}
 func (f *FakeRuleReader) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) error {
 	return nil
 }
-
-type FakeHistorian struct{}
-
-func (f *FakeHistorian) RecordStates(ctx context.Context, rule *models.AlertRule, states []StateTransition) {
-}
