@@ -8,7 +8,6 @@ import { getMetadataString } from '../../language_provider';
 import promqlGrammar from '../../promql';
 import { promQueryModeller } from '../PromQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
-import { LabelFilters } from './LabelFilters';
 import { OperationExplainedBox } from '../shared/OperationExplainedBox';
 import { OperationList } from '../shared/OperationList';
 import { OperationListExplained } from '../shared/OperationListExplained';
@@ -18,7 +17,8 @@ import { RawQuery } from '../shared/RawQuery';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
-import {MetricSelect, PROMETHEUS_QUERY_BUILDER_MAX_RESULTS} from './MetricSelect';
+import { LabelFilters } from './LabelFilters';
+import { MetricSelect, PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './MetricSelect';
 import { NestedQueryList } from './NestedQueryList';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
 
@@ -91,9 +91,10 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
       op: '=~',
       value: `${queryString}.*`,
     };
-    const labelsToConsider = [forLabel]
-    if(query.metric) {
-      labelsToConsider.push({label: '__name__', op: '=', value: query.metric});
+    const labelsToConsider = query.labels.filter((x) => x !== forLabel);
+    labelsToConsider.push(forLabel);
+    if (query.metric) {
+      labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     }
     const expr = promQueryModeller.renderLabels(labelsToConsider);
 
@@ -104,13 +105,12 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
       response = getLabelValuesFromSeriesAPI(forLabel, expr);
     }
 
-    return response.then((response: Array<SelectableValue>) => {
+    return response.then((response: SelectableValue[]) => {
       if (response.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
         response.splice(0, response.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
       }
-      console.log('response', response);
-      return response
-    })
+      return response;
+    });
   };
 
   /**
@@ -118,22 +118,25 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
    * @param forLabel
    * @param promQLExpression
    */
-  const getLabelValuesFromSeriesAPI = (forLabel: Partial<QueryBuilderLabelFilter>, promQLExpression: string): Promise<Array<SelectableValue>> => {
+  const getLabelValuesFromSeriesAPI = (
+    forLabel: Partial<QueryBuilderLabelFilter>,
+    promQLExpression: string
+  ): Promise<Array<{ value: string }>> => {
     if (!forLabel.label) {
       return Promise.resolve([]);
     }
     const result = datasource.languageProvider.fetchSeries(promQLExpression);
     const forLabelInterpolated = datasource.interpolateString(forLabel.label);
-    return result.then(result => {
+    return result.then((result) => {
       // This query returns duplicate values, scrub them out
       const set = new Set<string>();
       result.forEach((labelValue) => {
         const labelNameString = labelValue[forLabelInterpolated];
         set.add(labelNameString);
-      })
+      });
 
-      return Array.from(set).map((labelValues: string) => ( { label: labelValues, value: labelValues }));
-    })
+      return Array.from(set).map((labelValues: string) => ({ label: labelValues, value: labelValues }));
+    });
   };
 
   /**
@@ -144,16 +147,16 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   const getLabelValuesFromLabelValuesAPI = (
     forLabel: Partial<QueryBuilderLabelFilter>,
     promQLExpression: string
-  ): Promise<Array<SelectableValue>> => {
+  ): Promise<Array<{ value: string }>> => {
     if (!forLabel.label) {
       return Promise.resolve([]);
     }
-    return (datasource.languageProvider.fetchSeriesValues(forLabel.label, promQLExpression)).then(response => {
+    return datasource.languageProvider.fetchSeriesValues(forLabel.label, promQLExpression).then((response) => {
       return response.map((v) => ({
         value: v,
         label: v,
       }));
-    })
+    });
   };
 
   /**
@@ -161,7 +164,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
    * Formats a promQL expression and passes that into helper functions depending on API support
    * @param forLabel
    */
-  const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<Array<SelectableValue>> => {
+  const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<Array<{ value: string }>> => {
     if (!forLabel.label) {
       return [];
     }
@@ -205,7 +208,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
             withTemplateVariableOptions(onGetLabelNames(forLabel))
           }
           onGetLabelValues={(forLabel: Partial<QueryBuilderLabelFilter>) =>
-            withTemplateVariableOptions(onGetLabelValues(forLabel) as Promise<Array<{ value: string; description?: string }>>)
+            withTemplateVariableOptions(onGetLabelValues(forLabel))
           }
         />
       </EditorRow>
