@@ -30,13 +30,15 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 		if cmd.RuleUID != "" {
 			addToQuery(` AND rule_uid = ?`, cmd.RuleUID)
 		}
-
-		if cmd.State != "" {
-			addToQuery(` AND current_state = ?`, cmd.State)
-		}
-
-		if cmd.StateReason != "" {
-			addToQuery(` AND current_reason = ?`, cmd.StateReason)
+		if len(cmd.ExcludeStates) > 0 {
+			s.WriteString(" AND current_state NOT IN (")
+			for idx, state := range cmd.ExcludeStates {
+				if idx > 0 {
+					s.WriteString(",")
+				}
+				addToQuery("?", state)
+			}
+			s.WriteString(")")
 		}
 
 		if err := sess.SQL(s.String(), params...).Find(&alertInstances); err != nil {

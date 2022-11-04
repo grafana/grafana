@@ -50,10 +50,9 @@ func (i InstanceStateType) IsValid() bool {
 
 // ListAlertInstancesQuery is the query list alert Instances.
 type ListAlertInstancesQuery struct {
-	RuleOrgID   int64 `json:"-"`
-	RuleUID     string
-	State       InstanceStateType
-	StateReason string
+	RuleUID       string
+	RuleOrgID     int64 `json:"-"`
+	ExcludeStates []InstanceStateType
 
 	Result []*AlertInstance
 }

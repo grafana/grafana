@@ -252,14 +252,20 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 
 	t.Run("can list all added instances in org filtered by current state", func(t *testing.T) {
 		listQuery := &models.ListAlertInstancesQuery{
-			RuleOrgID: orgID,
-			State:     models.InstanceStateNormal,
+			RuleOrgID:     orgID,
+			ExcludeStates: []models.InstanceStateType{models.InstanceStateNormal},
 		}
 
 		err := dbstore.ListAlertInstances(ctx, listQuery)
 		require.NoError(t, err)
 
-		require.Len(t, listQuery.Result, 1)
+		require.Len(t, listQuery.Result, 3)
+
+		for _, instance := range listQuery.Result {
+			if instance.CurrentState == models.InstanceStateNormal {
+				require.Fail(t, "List operation expected to return all states except Normal but the result contains Normal states")
+			}
+		}
 	})
 
 	t.Run("update instance with same org_id, uid and different state", func(t *testing.T) {
