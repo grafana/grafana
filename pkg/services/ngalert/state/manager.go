@@ -179,10 +179,8 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		processedResults[s.State.CacheID] = s.State
 	}
 	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults, logger)
-	if len(states) > 0 && st.instanceStore != nil {
-		logger.Debug("Saving new states to the database", "count", len(states))
-		st.saveAlertStates(ctx, states...)
-	}
+
+	st.saveAlertStates(ctx, logger, states...)
 
 	changedStates := make([]StateTransition, 0, len(states))
 	for _, s := range states {
@@ -284,7 +282,7 @@ func (st *Manager) Put(states []*State) {
 }
 
 // TODO: Is the `State` type necessary? Should it embed the instance?
-func (st *Manager) saveAlertStates(ctx context.Context, states ...StateTransition) {
+func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, states ...StateTransition) {
 	if st.instanceStore == nil {
 		return
 	}
