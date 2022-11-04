@@ -21,7 +21,8 @@ type externalAlertmanagerToDatasources struct {
 	migrator.MigrationBase
 }
 
-// Just copy old struct code to use Alertmanagers as new one is not getting it.
+// Copy old AdminConficuration struct as the new one has not attribute Alertmanagers []string anymore
+// Path: https://github.com/grafana/grafana/pull/57918/files#diff-c7fe73b0fa4aeffb895ee6b5eeb2fab9c6113fd334f07bc2175295c82f73dbb2L30
 type AdminConfiguration struct {
 	ID    int64 `xorm:"pk autoincr 'id'"`
 	OrgID int64 `xorm:"org_id"`
@@ -52,7 +53,7 @@ func (e externalAlertmanagerToDatasources) Exec(sess *xorm.Session, mg *migrator
 			if err != nil {
 				return err
 			}
-			uri := fmt.Sprintf("%s://%s", u.Scheme, u.Host)
+			uri := fmt.Sprintf("%s://%s%s", u.Scheme, u.Host, u.Path)
 
 			uid, err := generateNewDatasourceUid(sess, result.OrgID)
 			if err != nil {
