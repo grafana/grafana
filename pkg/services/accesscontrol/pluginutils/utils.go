@@ -1,9 +1,38 @@
 package pluginutils
 
 import (
+	"strings"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
+
+// ValidatePluginPermissions errors when a permission does not match expected pattern for plugins
+func ValidatePluginPermissions(pluginID string, permissions []ac.Permission) error {
+	for i := range permissions {
+		if permissions[i].Action != plugins.ActionAppAccess &&
+			!strings.HasPrefix(permissions[i].Action, pluginID+":") &&
+			!strings.HasPrefix(permissions[i].Action, pluginID+".") {
+			return &ac.ErrorActionPrefixMissing{Action: permissions[i].Action,
+				Prefixes: []string{plugins.ActionAppAccess, pluginID + ":", pluginID + "."}}
+		}
+	}
+
+	return nil
+}
+
+// ValidatePluginRole errors when a plugin role does not match expected pattern
+// or doesn't have permissions matching the expected pattern.
+func ValidatePluginRole(pluginID string, role ac.RoleDTO) error {
+	if pluginID == "" {
+		return ac.ErrPluginIDRequired
+	}
+	if !strings.HasPrefix(role.Name, ac.PluginRolePrefix+pluginID+":") {
+		return &ac.ErrorRolePrefixMissing{Role: role.Name, Prefixes: []string{ac.PluginRolePrefix + pluginID + ":"}}
+	}
+
+	return ValidatePluginPermissions(pluginID, role.Permissions)
+}
 
 func ToRegistrations(pluginName string, regs []plugins.RoleRegistration) []ac.RoleRegistration {
 	res := make([]ac.RoleRegistration, 0, len(regs))

@@ -126,8 +126,8 @@ func (r *RoleDTO) IsFixed() bool {
 	return strings.HasPrefix(r.Name, FixedRolePrefix)
 }
 
-func (r *RoleDTO) IsAppPlugin() bool {
-	return strings.HasPrefix(r.Name, AppPluginRolePrefix)
+func (r *RoleDTO) IsPlugin() bool {
+	return strings.HasPrefix(r.Name, PluginRolePrefix)
 }
 
 func (r *RoleDTO) IsBasic() bool {
@@ -273,13 +273,13 @@ type SetResourcePermissionCommand struct {
 }
 
 const (
-	GlobalOrgID         = 0
-	FixedRolePrefix     = "fixed:"
-	ManagedRolePrefix   = "managed:"
-	BasicRolePrefix     = "basic:"
-	AppPluginRolePrefix = "plugins.app:"
-	BasicRoleUIDPrefix  = "basic_"
-	RoleGrafanaAdmin    = "Grafana Admin"
+	GlobalOrgID        = 0
+	FixedRolePrefix    = "fixed:"
+	ManagedRolePrefix  = "managed:"
+	BasicRolePrefix    = "basic:"
+	PluginRolePrefix   = "plugins:"
+	BasicRoleUIDPrefix = "basic_"
+	RoleGrafanaAdmin   = "Grafana Admin"
 
 	GeneralFolderUID = "general"
 

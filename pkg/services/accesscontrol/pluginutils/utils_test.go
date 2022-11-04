@@ -76,3 +76,67 @@ func TestToRegistrations(t *testing.T) {
 		})
 	}
 }
+
+func TestValidatePluginRole(t *testing.T) {
+	tests := []struct {
+		name     string
+		pluginID string
+		role     ac.RoleDTO
+		wantErr  error
+	}{
+		{
+			name:     "empty",
+			pluginID: "",
+			role:     ac.RoleDTO{Name: "plugins::"},
+			wantErr:  ac.ErrPluginIDRequired,
+		},
+		{
+			name:     "invalid name",
+			pluginID: "test-app",
+			role:     ac.RoleDTO{Name: "test-app:reader"},
+			wantErr:  &ac.ErrorInvalidRole{},
+		},
+		{
+			name:     "invalid id in name",
+			pluginID: "test-app",
+			role:     ac.RoleDTO{Name: "plugins:test-app2:reader"},
+			wantErr:  &ac.ErrorInvalidRole{},
+		},
+		{
+			name:     "valid name",
+			pluginID: "test-app",
+			role:     ac.RoleDTO{Name: "plugins:test-app:reader"},
+		},
+		{
+			name:     "invalid permission",
+			pluginID: "test-app",
+			role: ac.RoleDTO{
+				Name:        "plugins:test-app:reader",
+				Permissions: []ac.Permission{{Action: "invalidtest-app:read"}},
+			},
+			wantErr: &ac.ErrorInvalidRole{},
+		},
+		{
+			name:     "valid permissions",
+			pluginID: "test-app",
+			role: ac.RoleDTO{
+				Name: "plugins:test-app:reader",
+				Permissions: []ac.Permission{
+					{Action: "plugins.app:access"},
+					{Action: "test-app:read"},
+					{Action: "test-app.resources:read"},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidatePluginRole(tt.pluginID, tt.role)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
