@@ -95,7 +95,7 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 	keyNames := []string{"rule_org_id", "rule_uid", "labels_hash"}
 	fieldNames := []string{
 		"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state",
-		"current_reason", "current_state_since", "current_state_end", "last_eval_time",
+		"current_state_since", "current_state_end", "last_eval_time",
 	}
 	fieldsPerRow := len(fieldNames)
 	maxRows := 20
