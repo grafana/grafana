@@ -2,7 +2,6 @@ package state
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"time"
 
@@ -164,23 +163,40 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
 	logger := st.log.FromContext(ctx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
-	var states []*State
+	var states []StateTransition
 	processedResults := make(map[string]*State, len(results))
 	for _, result := range results {
 		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
 		states = append(states, s)
-		processedResults[s.CacheID] = s
+		processedResults[s.State.CacheID] = s.State
 	}
 	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults, logger)
 	if len(states) > 0 && st.instanceStore != nil {
 		logger.Debug("Saving new states to the database", "count", len(states))
 		_, _ = st.saveAlertStates(ctx, states...)
 	}
-	return append(states, resolvedStates...)
+
+	changedStates := make([]StateTransition, 0, len(states))
+	for _, s := range states {
+		if s.changed() {
+			changedStates = append(changedStates, s)
+		}
+	}
+
+	if st.historian != nil {
+		st.historian.RecordStates(ctx, alertRule, changedStates)
+	}
+
+	deltas := append(states, resolvedStates...)
+	nextStates := make([]*State, 0, len(states))
+	for _, s := range deltas {
+		nextStates = append(nextStates, s.State)
+	}
+	return nextStates
 }
 
 // Set the current state based on evaluation results
-func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, logger log.Logger) *State {
+func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, logger log.Logger) StateTransition {
 	currentState := st.cache.getOrCreate(ctx, st.log, alertRule, result, extraLabels, st.externalURL)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
@@ -236,13 +252,13 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	st.cache.set(currentState)
 
-	shouldUpdateAnnotation := oldState != currentState.State || oldReason != currentState.StateReason
-	if shouldUpdateAnnotation && st.historian != nil {
-		go st.historian.RecordState(ctx, alertRule, currentState, result.EvaluatedAt,
-			InstanceStateAndReason{State: currentState.State, Reason: currentState.StateReason},
-			InstanceStateAndReason{State: oldState, Reason: oldReason})
+	nextState := StateTransition{
+		State:               currentState,
+		PreviousState:       oldState,
+		PreviousStateReason: oldReason,
 	}
-	return currentState
+
+	return nextState
 }
 
 func (st *Manager) GetAll(orgID int64) []*State {
@@ -278,12 +294,13 @@ func (st *Manager) Put(states []*State) {
 }
 
 // TODO: Is the `State` type necessary? Should it embed the instance?
-func (st *Manager) saveAlertStates(ctx context.Context, states ...*State) (saved, failed int) {
+func (st *Manager) saveAlertStates(ctx context.Context, states ...StateTransition) (saved, failed int) {
+	logger := st.log.FromContext(ctx)
 	if st.instanceStore == nil {
 		return 0, 0
 	}
 
-	st.log.Debug("Saving alert states", "count", len(states))
+	logger.Debug("Saving alert states", "count", len(states))
 	instances := make([]ngModels.AlertInstance, 0, len(states))
 
 	type debugInfo struct {
@@ -298,8 +315,8 @@ func (st *Manager) saveAlertStates(ctx context.Context, states ...*State) (saved
 		labels := ngModels.InstanceLabels(s.Labels)
 		_, hash, err := labels.StringAndHash()
 		if err != nil {
-			debug = append(debug, debugInfo{s.OrgID, s.AlertRuleUID, s.State.String(), s.Labels.String()})
-			st.log.Error("Failed to save alert instance with invalid labels", "orgID", s.OrgID, "rule", s.AlertRuleUID, "error", err)
+			debug = append(debug, debugInfo{s.OrgID, s.AlertRuleUID, s.State.State.String(), s.Labels.String()})
+			logger.Error("Failed to save alert instance with invalid labels", "error", err)
 			continue
 		}
 		fields := ngModels.AlertInstance{
@@ -309,7 +326,7 @@ func (st *Manager) saveAlertStates(ctx context.Context, states ...*State) (saved
 				LabelsHash: hash,
 			},
 			Labels:            ngModels.InstanceLabels(s.Labels),
-			CurrentState:      ngModels.InstanceStateType(s.State.String()),
+			CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
 			CurrentReason:     s.StateReason,
 			LastEvalTime:      s.LastEvaluationTime,
 			CurrentStateSince: s.StartsAt,
@@ -322,7 +339,7 @@ func (st *Manager) saveAlertStates(ctx context.Context, states ...*State) (saved
 		for _, inst := range instances {
 			debug = append(debug, debugInfo{inst.RuleOrgID, inst.RuleUID, string(inst.CurrentState), data.Labels(inst.Labels).String()})
 		}
-		st.log.Error("Failed to save alert states", "states", debug, "error", err)
+		logger.Error("Failed to save alert states", "states", debug, "error", err)
 		return 0, len(debug)
 	}
 
@@ -341,26 +358,12 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-// This struct provides grouping of state with reason, and string formatting.
-type InstanceStateAndReason struct {
-	State  eval.State
-	Reason string
-}
-
-func (i InstanceStateAndReason) String() string {
-	s := fmt.Sprintf("%v", i.State)
-	if len(i.Reason) > 0 {
-		s += fmt.Sprintf(" (%v)", i.Reason)
-	}
-	return s
-}
-
-func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State, logger log.Logger) []*State {
+func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State, logger log.Logger) []StateTransition {
 	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
 	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
 	var resolvedImage *ngModels.Image
 
-	var resolvedStates []*State
+	var resolvedStates []StateTransition
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
 	toDelete := make([]ngModels.AlertInstanceKey, 0)
 
@@ -378,16 +381,18 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 			toDelete = append(toDelete, ngModels.AlertInstanceKey{RuleOrgID: s.OrgID, RuleUID: s.AlertRuleUID, LabelsHash: labelsHash})
 
 			if s.State == eval.Alerting {
-				previousState := InstanceStateAndReason{State: s.State, Reason: s.StateReason}
+				oldState := s.State
+				oldReason := s.StateReason
+
 				s.State = eval.Normal
 				s.StateReason = ngModels.StateReasonMissingSeries
 				s.EndsAt = evaluatedAt
 				s.Resolved = true
-				if st.historian != nil {
-					st.historian.RecordState(ctx, alertRule, s, evaluatedAt,
-						InstanceStateAndReason{State: eval.Normal, Reason: s.StateReason},
-						previousState,
-					)
+				s.LastEvaluationTime = evaluatedAt
+				record := StateTransition{
+					State:               s,
+					PreviousState:       oldState,
+					PreviousStateReason: oldReason,
 				}
 
 				// If there is no resolved image for this rule then take one
@@ -403,9 +408,13 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 					}
 				}
 				s.Image = resolvedImage
-				resolvedStates = append(resolvedStates, s)
+				resolvedStates = append(resolvedStates, record)
 			}
 		}
+	}
+
+	if st.historian != nil {
+		st.historian.RecordStates(ctx, alertRule, resolvedStates)
 	}
 
 	if st.instanceStore != nil {
