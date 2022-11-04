@@ -112,7 +112,7 @@ func requireVersionMatch(t *testing.T, obj *object.ObjectVersionInfo, m objectVe
 	require.True(t, len(mismatches) == 0, mismatches)
 }
 
-func TestObjectServer(t *testing.T) {
+func TestIntegrationObjectServer(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

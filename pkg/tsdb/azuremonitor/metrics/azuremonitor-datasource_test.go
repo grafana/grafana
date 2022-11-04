@@ -15,11 +15,13 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
+	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
 func TestAzureMonitorBuildQueries(t *testing.T) {
@@ -279,7 +281,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				azureMonitorQuery.URL = "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics"
 			}
 
-			queries, err := datasource.buildQueries(tsdbQuery, dsInfo)
+			queries, err := datasource.buildQueries(log.New("test"), tsdbQuery, dsInfo)
 			require.NoError(t, err)
 			if diff := cmp.Diff(azureMonitorQuery, queries[0], cmpopts.IgnoreUnexported(simplejson.Json{}), cmpopts.IgnoreFields(types.AzureMonitorQuery{}, "Params")); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -310,7 +312,7 @@ func TestCustomNamespace(t *testing.T) {
 			},
 		}
 
-		result, err := datasource.buildQueries(q, types.DatasourceInfo{})
+		result, err := datasource.buildQueries(log.New("test"), q, types.DatasourceInfo{})
 		require.NoError(t, err)
 		expected := "custom/namespace"
 		require.Equal(t, expected, result[0].Params.Get("metricnamespace"))
@@ -737,7 +739,6 @@ func loadTestFile(t *testing.T, name string) types.AzureMonitorResponse {
 
 func TestAzureMonitorCreateRequest(t *testing.T) {
 	ctx := context.Background()
-	dsInfo := types.DatasourceInfo{}
 	url := "http://ds/"
 
 	tests := []struct {
@@ -759,7 +760,7 @@ func TestAzureMonitorCreateRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ds := AzureMonitorDatasource{}
-			req, err := ds.createRequest(ctx, dsInfo, url)
+			req, err := ds.createRequest(ctx, log.New("test"), url)
 			tt.Err(t, err)
 			if req.URL.String() != tt.expectedURL {
 				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())

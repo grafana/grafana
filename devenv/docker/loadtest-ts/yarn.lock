@@ -1362,10 +1362,10 @@ __metadata:
     "@babel/plugin-proposal-object-rest-spread": 7.19.4
     "@babel/preset-env": 7.19.4
     "@babel/preset-typescript": 7.18.6
-    "@types/k6": 0.39.1
+    "@types/k6": 0.41.0
     "@types/shortid": 0.0.29
     "@types/webpack": 5.28.0
-    babel-loader: 9.0.1
+    babel-loader: 9.1.0
     shortid: 2.2.16
     ts-node: 10.9.1
     typescript: 4.8.4
@@ -1516,10 +1516,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/k6@npm:0.39.1":
-  version: 0.39.1
-  resolution: "@types/k6@npm:0.39.1"
-  checksum: 7625b38b5bf9a101e37f825a6dd87e574d69b175ac2d8eb2975e9a14bf1ae1fbaa4152086b08a8d3e14a60359dd62b93cd439db0852ad33d03753cdd2ffc3489
+"@types/k6@npm:0.41.0":
+  version: 0.41.0
+  resolution: "@types/k6@npm:0.41.0"
+  checksum: efc027b5967f8fa1102eb7d0e4867d90bdbdec32153507da510827ccdc5a7a7fefac30703cfd31a8ad5550313a63a5948a369f7503490e9851f19c347bd531b5
   languageName: node
   linkType: hard
 
@@ -1845,16 +1845,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-loader@npm:9.0.1":
-  version: 9.0.1
-  resolution: "babel-loader@npm:9.0.1"
+"babel-loader@npm:9.1.0":
+  version: 9.1.0
+  resolution: "babel-loader@npm:9.1.0"
   dependencies:
     find-cache-dir: ^3.3.2
     schema-utils: ^4.0.0
   peerDependencies:
     "@babel/core": ^7.12.0
     webpack: ">=5"
-  checksum: 28164515105c54ab89c72a51fdad7076d40cf871df94e37a3fcbce6c69410f3f03ec93e83148e7ce1839d4e86c0f7be6e81b3eeb9f1a4cb52fcc78af6a438ef6
+  checksum: 774758febd1e8ca804abcae3b8f65634330dc688837424d0946f06d1386914de43435cce691710fa144eccdf1292cf883439ac3598ce7320916acfaaa2372641
   languageName: node
   linkType: hard
 
