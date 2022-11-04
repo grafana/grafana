@@ -360,7 +360,7 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 
 			key, err := s.GetAlertInstanceKey()
 			if err != nil {
-				logger.Error("Unable to get labelsHash", "error", err.Error())
+				logger.Error("Unable to get alert instance key to delete it from database. Ignoring", "error", err.Error())
 			} else {
 				toDelete = append(toDelete, key)
 			}
