@@ -90,3 +90,5 @@ func reverseMiddlewares(middlewares []plugins.ClientMiddleware) []plugins.Client
 
 	return reversed
 }
+
+var _ plugins.Client = &Provider{}
