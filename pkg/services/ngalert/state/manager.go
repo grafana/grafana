@@ -183,9 +183,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		}
 	}
 
-	if st.historian != nil {
-		st.historian.RecordStates(ctx, alertRule, changedStates)
-	}
+	st.historian.RecordStates(ctx, alertRule, changedStates)
 
 	deltas := append(states, resolvedStates...)
 	nextStates := make([]*State, 0, len(states))
@@ -413,9 +411,7 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 		}
 	}
 
-	if st.historian != nil {
-		st.historian.RecordStates(ctx, alertRule, resolvedStates)
-	}
+	st.historian.RecordStates(ctx, alertRule, resolvedStates)
 
 	if st.instanceStore != nil {
 		if err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...); err != nil {
