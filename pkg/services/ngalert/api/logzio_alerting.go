@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -310,20 +311,45 @@ func valueNumberCaptureToApi(numberValueCapture eval.NumberValueCapture) apimode
 
 func (srv *LogzioAlertingService) saveAlertStates(states []*state.State) {
 	srv.Log.Debug("saving alert states", "count", len(states))
+	instances := make([]ngmodels.AlertInstance, 0, len(states))
+
+	type debugInfo struct {
+		OrgID  int64
+		Uid    string
+		State  string
+		Labels string
+	}
+	debug := make([]debugInfo, 0)
+
 	for _, s := range states {
-		cmd := ngmodels.SaveAlertInstanceCommand{
-			RuleOrgID:         s.OrgID,
-			RuleUID:           s.AlertRuleUID,
+		labels := ngmodels.InstanceLabels(s.Labels)
+		_, hash, err := labels.StringAndHash()
+
+		if err != nil {
+			debug = append(debug, debugInfo{s.OrgID, s.AlertRuleUID, s.State.String(), s.Labels.String()})
+			srv.Log.Error("failed to save alert instance with invalid labels", "orgID", s.OrgID, "ruleUID", s.AlertRuleUID, "err", err)
+			continue
+		}
+		fields := ngmodels.AlertInstance{
+			AlertInstanceKey: ngmodels.AlertInstanceKey{
+				RuleOrgID:  s.OrgID,
+				RuleUID:    s.AlertRuleUID,
+				LabelsHash: hash,
+			},
 			Labels:            ngmodels.InstanceLabels(s.Labels),
-			State:             ngmodels.InstanceStateType(s.State.String()),
+			CurrentState:      ngmodels.InstanceStateType(s.State.String()),
 			LastEvalTime:      s.LastEvaluationTime,
 			CurrentStateSince: s.StartsAt,
 			CurrentStateEnd:   s.EndsAt,
 		}
-		err := srv.InstanceStore.SaveAlertInstance(context.Background(), &cmd)
-		if err != nil {
-			srv.Log.Error("failed to save alert state", "uid", s.AlertRuleUID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State.String(), "msg", err.Error())
+		instances = append(instances, fields)
+	}
+
+	if err := srv.InstanceStore.SaveAlertInstances(context.Background(), instances...); err != nil {
+		for _, inst := range instances {
+			debug = append(debug, debugInfo{inst.RuleOrgID, inst.RuleUID, string(inst.CurrentState), data.Labels(inst.Labels).String()})
 		}
+		srv.Log.Error("failed to save alert states", "states", debug, "err", err)
 	}
 }
 
