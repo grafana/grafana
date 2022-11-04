@@ -5,6 +5,7 @@ import {
   compareDataFrameStructures,
   DataFrame,
   Field,
+  FieldColorModeId,
   getFieldDisplayName,
   PanelProps,
   TimeRange,
@@ -233,6 +234,19 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     fillOpacity = (colorByField.config.custom.fillOpacity ?? 100) / 100;
     // gradientMode? ignore?
     getColor = (seriesIdx: number, valueIdx: number) => disp(colorByFieldRef.current?.values.get(valueIdx)).color!;
+  } else {
+    let hasPerBarColor = frame0Ref.current!.fields.some(
+      (f) =>
+        f.config.color?.mode === FieldColorModeId.Thresholds ||
+        f.config.mappings?.some((m) => m.options.result.color != null)
+    );
+
+    if (hasPerBarColor) {
+      getColor = (seriesIdx: number, valueIdx: number) => {
+        let field = frame0Ref.current!.fields[seriesIdx];
+        return field.display!(field.values.get(valueIdx)).color!;
+      };
+    }
   }
 
   const prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
