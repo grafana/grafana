@@ -1,5 +1,5 @@
 import { debounce } from 'lodash';
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -7,6 +7,7 @@ import { AccessoryButton, InputGroup } from '@grafana/experimental';
 import { AsyncSelect, Select } from '@grafana/ui';
 
 import { QueryBuilderLabelFilter } from './types';
+import {PROMETHEUS_QUERY_BUILDER_MAX_RESULTS} from "../components/MetricSelect";
 
 export interface Props {
   defaultOp: string;
@@ -17,8 +18,7 @@ export interface Props {
   onDelete: () => void;
   invalidLabel?: boolean;
   invalidValue?: boolean;
-  getLabelNames: (query?: string) => Promise<SelectableValue[]>;
-  getLabelValues: (query?: string) => Promise<SelectableValue[]>;
+  getLabelValues: (query: string, labelName?: string) => Promise<SelectableValue[]>;
 }
 
 export function LabelFilterItem({
@@ -30,7 +30,6 @@ export function LabelFilterItem({
   onGetLabelValues,
   invalidLabel,
   invalidValue,
-  getLabelNames,
   getLabelValues,
 }: Props) {
   const [state, setState] = useState<{
@@ -43,6 +42,14 @@ export function LabelFilterItem({
   const isMultiSelect = (operator = item.op) => {
     return operators.find((op) => op.label === operator)?.isMultiValue;
   };
+
+  useEffect(() => {
+    console.log('loading state change', state.isLoadingLabelValues)
+  }, [state.isLoadingLabelValues])
+
+  useEffect(() => {
+    console.log('query state change', query)
+  }, [state.isLoadingLabelValues])
 
   const getSelectOptionsFromString = (item?: string): string[] => {
     if (item) {
@@ -62,13 +69,23 @@ export function LabelFilterItem({
   //   return uniqBy([...selectedOptions, ...labelValues], 'value');
   // };
 
-  const labelNameSearch = debounce((query: string) => getLabelNames(query), 300);
-  const labelValueSearch = debounce((query: string) => getLabelValues(query), 300);
+  // const getLabelValuesHelper = (query: string, label?: string): Promise<Array<SelectableValue>> => {
+  //   const response = getLabelValues(query, label);
+  //
+  //   return response.then((results) => {
+  //     if (results.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
+  //       results.splice(0, results.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
+  //     }
+  //     return results;
+  //   });
+  // };
+
+  const labelValueSearch = debounce((query: string) => getLabelValues(query, item.label), 350);
 
   return (
     <div data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
-        <AsyncSelect
+        <Select
           placeholder="Select label"
           aria-label={selectors.components.QueryBuilder.labelSelect}
           inputId="prometheus-dimensions-filter-item-key"
@@ -80,8 +97,8 @@ export function LabelFilterItem({
             const labelNames = await onGetLabelNames(item);
             setState({ labelNames, isLoadingLabelNames: undefined });
           }}
-          isLoading={state.isLoadingLabelNames}
-          loadOptions={labelNameSearch}
+          isLoading={state.isLoadingLabelNames ?? false}
+          options={state.labelNames}
           onChange={(change) => {
             if (change.label) {
               onChange({
@@ -124,14 +141,19 @@ export function LabelFilterItem({
           onOpenMenu={async () => {
             setState({ isLoadingLabelValues: true });
             const labelValues = await onGetLabelValues(item);
+            if (labelValues.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
+              labelValues.splice(0, labelValues.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
+            }
             setState({
               ...state,
               labelValues,
               isLoadingLabelValues: undefined,
             });
           }}
+          defaultOptions={state.labelValues}
           isMulti={isMultiSelect()}
           isLoading={state.isLoadingLabelValues}
+
           // options={getOptions()}
           loadOptions={labelValueSearch}
           onChange={(change) => {
