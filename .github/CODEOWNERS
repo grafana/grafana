@@ -118,6 +118,7 @@ go.sum @grafana/backend-platform
 /public/locales @grafana/user-essentials
 /public/app/core/internationalization @grafana/user-essentials
 /e2e @grafana/user-essentials
+/e2e/cloud-plugins-suite @grafana/cloud-provider-plugins
 /packages @grafana/user-essentials @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
 /packages/grafana-e2e-selectors @grafana/user-essentials
 /packages/grafana-e2e @grafana/user-essentials
