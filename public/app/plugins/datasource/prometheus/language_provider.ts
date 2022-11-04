@@ -507,13 +507,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param match
    */
   fetchSeriesValues = async (name: string, match?: string): Promise<string[]> => {
-    const interpolatedName = match ? this.datasource.interpolateString(match) : null;
+    const interpolatedName = name ? this.datasource.interpolateString(name) : null;
     const range = this.datasource.getTimeRangeParams();
     const urlParams = {
       ...range,
-      ...(interpolatedName && { 'match[]': interpolatedName }),
+      ...(interpolatedName && { 'match[]': match }),
     };
-    return await this.request(`/api/v1/label/${name}/values`, [], urlParams);
+    return await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams);
   };
 
   /**
