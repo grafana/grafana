@@ -5,7 +5,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Field, Icon, InputControl, Label, LoadingPlaceholder, Tooltip, useStyles2 } from '@grafana/ui';
+import { Field, InputControl, Label, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { FolderPickerFilter } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/core';
 import { DashboardSearchHit } from 'app/features/search/types';
@@ -16,6 +16,7 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { fetchRulerRulesIfNotFetchedYet } from '../../state/actions';
 import { RuleForm, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { InfoIcon } from '../InfoIcon';
 
 import { getIntervalForGroup } from './GrafanaEvaluationBehavior';
 import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
@@ -80,13 +81,6 @@ const useRuleFolderFilter = (existingRuleForm: RuleForm | null) => {
     [isSearchHitAvailable]
   );
 };
-function InfoIcon({ text }: { text: string }) {
-  return (
-    <Tooltip placement="top" content={<div>{text}</div>}>
-      <Icon name="info-circle" size="xs" />
-    </Tooltip>
-  );
-}
 
 export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
   const {
@@ -96,8 +90,8 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
   } = useFormContext<RuleFormValues>();
 
   const styles = useStyles2(getStyles);
-  const folderFilter = useRuleFolderFilter(initialFolder);
   const dispatch = useDispatch();
+  const folderFilter = useRuleFolderFilter(initialFolder);
   const [isAddingGroup, setIsAddingGroup] = useState(false);
 
   const folder = watch('folder');
@@ -107,11 +101,11 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
 
   const { groupOptions, groupsForFolder, loading } = useGetGroupOptionsFromFolder(folder?.title ?? '');
 
+  useEffect(() => setSelectedGroup(group), [group, setSelectedGroup]);
+
   useEffect(() => {
     dispatch(fetchRulerRulesIfNotFetchedYet(GRAFANA_RULES_SOURCE_NAME));
   }, [dispatch]);
-
-  useEffect(() => setSelectedGroup(group), [group, setSelectedGroup]);
 
   const resetGroup = useCallback(() => {
     if (group && !initialRender.current && folder?.title) {

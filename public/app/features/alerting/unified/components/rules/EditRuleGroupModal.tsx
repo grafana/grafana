@@ -14,7 +14,6 @@ import { RulerRulesConfigDTO, RulerRuleGroupDTO, RulerRuleDTO } from 'app/types/
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { rulesInSameGroupHaveInvalidFor, updateLotexNamespaceAndGroupAction } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
-import { getRulesSourceName } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { isAlertingRulerRule, isGrafanaRulerRule } from '../../utils/rules';
 import { parsePrometheusDuration } from '../../utils/time';
@@ -186,9 +185,18 @@ export const RulesForGroupTable = ({
   );
 };
 
-interface ModalProps {
+interface CombinedGroupAndNameSpace {
   namespace: CombinedRuleNamespace;
   group: CombinedRuleGroup;
+}
+interface GroupAndNameSpaceNames {
+  namespace: string;
+  group: string;
+}
+interface ModalProps {
+  nameSpaceAndGroup: CombinedGroupAndNameSpace | GroupAndNameSpaceNames;
+  sourceName: string;
+  groupInterval: string;
   onClose: (saved?: boolean) => void;
 }
 
@@ -199,20 +207,27 @@ interface FormValues {
 }
 
 export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
-  const { namespace, group, onClose } = props;
+  const {
+    nameSpaceAndGroup: { namespace, group },
+    onClose,
+    groupInterval,
+    sourceName,
+  } = props;
+
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const { loading, error, dispatched } =
     useUnifiedAlertingSelector((state) => state.updateLotexNamespaceAndGroup) ?? initialAsyncRequestState;
   const notifyApp = useAppNotification();
-
+  const nameSpaceName = typeof namespace === 'string' ? namespace : namespace.name;
+  const groupName = typeof group === 'string' ? group : group.name;
   const defaultValues = useMemo(
     (): FormValues => ({
-      namespaceName: namespace.name,
-      groupName: group.name,
-      groupInterval: group.interval ?? '',
+      namespaceName: nameSpaceName,
+      groupName: groupName,
+      groupInterval: groupInterval ?? '',
     }),
-    [namespace, group]
+    [nameSpaceName, groupName, groupInterval]
   );
 
   // close modal if successfully saved
@@ -227,10 +242,10 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   const onSubmit = (values: FormValues) => {
     dispatch(
       updateLotexNamespaceAndGroupAction({
-        rulesSourceName: getRulesSourceName(namespace.rulesSource),
-        groupName: group.name,
+        rulesSourceName: sourceName,
+        groupName: groupName,
         newGroupName: values.groupName,
-        namespaceName: namespace.name,
+        namespaceName: nameSpaceName,
         newNamespaceName: values.namespaceName,
         groupInterval: values.groupInterval || undefined,
       })
@@ -254,7 +269,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   };
 
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-  const groupfoldersForSource = rulerRuleRequests[getRulesSourceName(namespace.rulesSource)];
+  const groupfoldersForSource = rulerRuleRequests[sourceName];
 
   const evaluateEveryValidationOptions: RegisterOptions = {
     required: {
@@ -273,7 +288,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
           return `Must be a multiple of ${MIN_TIME_RANGE_STEP_S} seconds.`;
         }
         if (
-          rulesInSameGroupHaveInvalidFor(groupfoldersForSource.result, group.name, namespace.name, value).length === 0
+          rulesInSameGroupHaveInvalidFor(groupfoldersForSource.result, groupName, nameSpaceName, value).length === 0
         ) {
           return true;
         } else {
@@ -367,8 +382,8 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 </div>
                 <RulesForGroupTable
                   rulerRules={groupfoldersForSource?.result}
-                  groupName={group.name}
-                  folderName={namespace.name}
+                  groupName={groupName}
+                  folderName={nameSpaceName}
                 />
               </>
             )}

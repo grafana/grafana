@@ -6,11 +6,13 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Card, Field, InlineLabel, Input, InputControl, useStyles2 } from '@grafana/ui';
 import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import { logInfo, LogMessages } from '../../Analytics';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { RuleForm, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
+import { EditCloudGroupModal } from '../rules/EditRuleGroupModal';
 
 import { MINUTE } from './AlertRuleForm';
 import { FolderAndGroup } from './FolderAndGroup';
@@ -77,6 +79,7 @@ function FolderGroupAndEvaluationInterval({
 }) {
   const styles = useStyles2(getStyles);
   const { watch } = useFormContext<RuleFormValues>();
+  const [isEditingGroup, setIsEditingGroup] = useState(false);
 
   const group = watch('group');
   const folder = watch('folder');
@@ -90,34 +93,50 @@ function FolderGroupAndEvaluationInterval({
       setEvaluateEvery(getIntervalForGroup(groupfoldersForGrafana?.result, group, folder?.title ?? ''));
   }, [group, folder, groupfoldersForGrafana?.result, setEvaluateEvery]);
 
+  const closeEditGroupModal = (saved = false) => {
+    if (!saved) {
+      logInfo(LogMessages.leavingRuleGroupEdit);
+    }
+    setIsEditingGroup(false);
+  };
+
+  const onOpenEditGroupModal = () => setIsEditingGroup(true);
+
   return (
     <div>
       <FolderAndGroup initialFolder={initialFolder} />
+      {isEditingGroup && (
+        <EditCloudGroupModal
+          groupInterval={evaluateEvery}
+          nameSpaceAndGroup={{ namespace: folder?.title ?? '', group: group }}
+          sourceName={GRAFANA_RULES_SOURCE_NAME}
+          onClose={() => closeEditGroupModal()}
+        />
+      )}
       <Card className={styles.cardContainer}>
         <Card.Heading>Group behaviour</Card.Heading>
-        <Card.Actions></Card.Actions>
-        <Card.Description>
-          <div className={styles.evaluateLabel}>
-            {`Alert rules in`} <span className={styles.bold}>{group}</span> are evaluated every{' '}
-            <span className={styles.bold}>{evaluateEvery}</span>.
-          </div>
-          <br />
-          {`Evaluation interval applies to every rule within a group. 
+
+        <div className={styles.evaluateLabel}>
+          {`Alert rules in`} <span className={styles.bold}>{group}</span> are evaluated every{' '}
+          <span className={styles.bold}>{evaluateEvery}</span>.
+        </div>
+        <br />
+        {`Evaluation interval applies to every rule within a group. 
               It can overwrite the interval of an existing alert rule.`}
-          <br />
-          <div className={styles.editGroup}>
-            {`Click on Edit group button to edit this value `}
-            <Button
-              icon={'edit'}
-              type="button"
-              variant="secondary"
-              disabled={groupfoldersForGrafana?.loading}
-              className={styles.editButton}
-            >
-              <span>{'Edit group'}</span>
-            </Button>
-          </div>
-        </Card.Description>
+        <br />
+        <div className={styles.editGroup}>
+          {`Click on Edit group button to edit this value `}
+          <Button
+            icon={'edit'}
+            type="button"
+            variant="secondary"
+            disabled={groupfoldersForGrafana?.loading}
+            className={styles.editButton}
+            onClick={onOpenEditGroupModal}
+          >
+            <span>{'Edit group'}</span>
+          </Button>
+        </div>
       </Card>
     </div>
   );
