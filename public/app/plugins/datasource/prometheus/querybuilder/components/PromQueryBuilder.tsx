@@ -8,7 +8,7 @@ import { getMetadataString } from '../../language_provider';
 import promqlGrammar from '../../promql';
 import { promQueryModeller } from '../PromQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
-import { LabelFilters } from '../shared/LabelFilters';
+import { LabelFilters } from './LabelFilters';
 import { OperationExplainedBox } from '../shared/OperationExplainedBox';
 import { OperationList } from '../shared/OperationList';
 import { OperationListExplained } from '../shared/OperationListExplained';
@@ -122,11 +122,17 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     if (!forLabel.label) {
       return Promise.resolve([]);
     }
-    const result = datasource.languageProvider.fetchSeriesLabels(promQLExpression);
+    const result = datasource.languageProvider.fetchSeries(promQLExpression);
     const forLabelInterpolated = datasource.interpolateString(forLabel.label);
     return result.then(result => {
-      debugger;
-      return result[forLabelInterpolated].map((v) => ({ value: v, label: v })) ?? [];
+      // This query returns duplicate values, scrub them out
+      const set = new Set<string>();
+      result.forEach((labelValue) => {
+        const labelNameString = labelValue[forLabelInterpolated];
+        set.add(labelNameString);
+      })
+
+      return Array.from(set).map((labelValues: string) => ( { label: labelValues, value: labelValues }));
     })
   };
 
