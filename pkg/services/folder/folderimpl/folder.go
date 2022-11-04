@@ -297,12 +297,14 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 }
 
 func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
-	err := s.store.Move(ctx, *cmd)
-	return nil, err
+	return nil, s.store.Move(ctx, *cmd)
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) (*folder.Folder, error) {
-	return nil, s.store.Delete(ctx, cmd.UID, 0)
+	// check if dashboard exists
+
+	// check if subfolders exist
+	return nil, s.store.Delete(ctx, cmd.UID, cmd.OrgID)
 }
 
 func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
@@ -314,7 +316,44 @@ func (s *Service) GetParents(ctx context.Context, cmd *folder.GetParentsQuery) (
 }
 
 func (s *Service) GetTree(ctx context.Context, cmd *folder.GetTreeQuery) (map[string][]*folder.Folder, error) {
-	return nil, nil
+	result := make(map[string][]*folder.Folder)
+	depth := cmd.Depth
+	UID := cmd.UID
+	if depth > 8 {
+		return nil, errors.New("depth is too deep")
+	}
+	return s.getTree(ctx, cmd.OrgID, depth, UID, result)
+}
+
+func (s *Service) getTree(
+	ctx context.Context,
+	orgID, depth int64,
+	UID string,
+	result map[string][]*folder.Folder,
+) (map[string][]*folder.Folder, error) {
+
+	children, err := s.store.GetChildren(ctx, folder.GetTreeQuery{
+		OrgID: orgID,
+		UID:   UID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if children == nil {
+		return result, nil
+	}
+
+	result[UID] = children
+	depth--
+
+	for _, child := range children {
+		UID = child.UID
+		result, err = s.getTree(ctx, orgID, depth, UID, result)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
 }
 
 func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {

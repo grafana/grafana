@@ -75,7 +75,8 @@ type MoveFolderCommand struct {
 // DeleteFolderCommand captures the information required by the folder service
 // to delete a folder.
 type DeleteFolderCommand struct {
-	UID string `json:"uid" xorm:"uid"`
+	UID   string `json:"uid" xorm:"uid"`
+	OrgID int64  `json:"orgId" xorm:"org_id"`
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
