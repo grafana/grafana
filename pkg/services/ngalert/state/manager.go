@@ -181,7 +181,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults, logger)
 	if len(states) > 0 && st.instanceStore != nil {
 		logger.Debug("Saving new states to the database", "count", len(states))
-		_, _ = st.saveAlertStates(ctx, states...)
+		st.saveAlertStates(ctx, states...)
 	}
 
 	changedStates := make([]StateTransition, 0, len(states))
@@ -284,29 +284,19 @@ func (st *Manager) Put(states []*State) {
 }
 
 // TODO: Is the `State` type necessary? Should it embed the instance?
-func (st *Manager) saveAlertStates(ctx context.Context, states ...StateTransition) (saved, failed int) {
-	logger := st.log.FromContext(ctx)
+func (st *Manager) saveAlertStates(ctx context.Context, states ...StateTransition) {
 	if st.instanceStore == nil {
-		return 0, 0
+		return
 	}
 
 	logger.Debug("Saving alert states", "count", len(states))
 	instances := make([]ngModels.AlertInstance, 0, len(states))
 
-	type debugInfo struct {
-		OrgID  int64
-		Uid    string
-		State  string
-		Labels string
-	}
-	debug := make([]debugInfo, 0)
-
 	for _, s := range states {
 		labels := ngModels.InstanceLabels(s.Labels)
 		_, hash, err := labels.StringAndHash()
 		if err != nil {
-			debug = append(debug, debugInfo{s.OrgID, s.AlertRuleUID, s.State.State.String(), s.Labels.String()})
-			logger.Error("Failed to save alert instance with invalid labels", "error", err)
+			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err)
 			continue
 		}
 		fields := ngModels.AlertInstance{
@@ -326,14 +316,16 @@ func (st *Manager) saveAlertStates(ctx context.Context, states ...StateTransitio
 	}
 
 	if err := st.instanceStore.SaveAlertInstances(ctx, instances...); err != nil {
+		type debugInfo struct {
+			State  string
+			Labels string
+		}
+		debug := make([]debugInfo, 0)
 		for _, inst := range instances {
-			debug = append(debug, debugInfo{inst.RuleOrgID, inst.RuleUID, string(inst.CurrentState), data.Labels(inst.Labels).String()})
+			debug = append(debug, debugInfo{string(inst.CurrentState), data.Labels(inst.Labels).String()})
 		}
 		logger.Error("Failed to save alert states", "states", debug, "error", err)
-		return 0, len(debug)
 	}
-
-	return len(instances), len(debug)
 }
 
 // TODO: why wouldn't you allow other types like NoData or Error?
