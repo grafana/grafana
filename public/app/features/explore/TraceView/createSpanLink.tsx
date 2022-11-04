@@ -288,7 +288,7 @@ function getLinkForLoki(span: TraceSpan, options: TraceToLogsOptions, dataSource
 
 // we do not have access to the dataquery type for opensearch,
 // so here is a minimal interface that handles both elasticsearch and opensearch.
-interface ElasticSearchOrOpensearchQuery extends DataQuery {
+interface ElasticsearchOrOpensearchQuery extends DataQuery {
   query: string;
   metrics: Array<{
     id: string;
@@ -329,7 +329,7 @@ function getLinkForElasticsearchOrOpensearch(
     query = `"${span.spanID}" AND ` + query;
   }
 
-  const dataLink: DataLink<ElasticSearchOrOpensearchQuery> = {
+  const dataLink: DataLink<ElasticsearchOrOpensearchQuery> = {
     title: dataSourceSettings.name,
     url: '',
     internal: {
