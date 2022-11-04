@@ -38,26 +38,6 @@ Add a new file to your YUM repo using the method of your choice. The command bel
 sudo nano /etc/yum.repos.d/grafana.repo
 ```
 
-Choose if you want to install the Open Source or Enterprise edition of Grafana and enter the information from the edition you've chosen into `grafana.repo`. If you want to install the beta version of Grafana you need to replace the URL with a beta URL from the table above.
-
-> We recommend all users to install the Enterprise Edition of Grafana, which can be seamlessly upgraded with a Grafana Enterprise [subscription](https://grafana.com/products/enterprise/?utm_source=grafana-install-page).
-
-For Enterprise releases:
-
-```bash
-[grafana]
-name=grafana
-baseurl=https://rpm.grafana.com
-repo_gpgcheck=1
-enabled=1
-gpgcheck=1
-gpgkey=https://rpm.grafana.com/gpg.key
-sslverify=1
-sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-```
-
-For OSS releases:
-
 ```bash
 [grafana]
 name=grafana
@@ -76,7 +56,9 @@ Optionally, add an exclude line to your `.repo` file to prevent beta versions fr
 exclude=*beta*
 ```
 
-Install Grafana with one of the following commands:
+Install Grafana with one of the following commands
+
+> We recommend all users to install the Enterprise Edition of Grafana, which can be seamlessly upgraded with a Grafana Enterprise [subscription](https://grafana.com/products/enterprise/?utm_source=grafana-install-page).
 
 ```bash
 sudo yum install grafana
