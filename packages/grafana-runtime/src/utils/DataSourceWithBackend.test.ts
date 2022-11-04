@@ -46,6 +46,8 @@ describe('DataSourceWithBackend', () => {
       maxDataPoints: 10,
       intervalMs: 5000,
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+      dashboardUID: 'dashA',
+      panelId: 123,
     } as DataQueryRequest);
 
     const args = mock.calls[0][0];
@@ -77,6 +79,10 @@ describe('DataSourceWithBackend', () => {
             },
           ],
         },
+        "headers": Object {
+          "X-Dashboard-UID": "dashA",
+          "X-Panel-Id": 123,
+        },
         "hideFromInspector": false,
         "method": "POST",
         "requestId": undefined,
@@ -91,6 +97,8 @@ describe('DataSourceWithBackend', () => {
       intervalMs: 5000,
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
       hideFromInspector: true,
+      dashboardUID: 'dashA',
+      panelId: 123,
     } as DataQueryRequest);
 
     const args = mock.calls[0][0];
@@ -121,6 +129,10 @@ describe('DataSourceWithBackend', () => {
               "refId": "B",
             },
           ],
+        },
+        "headers": Object {
+          "X-Dashboard-UID": "dashA",
+          "X-Panel-Id": 123,
         },
         "hideFromInspector": true,
         "method": "POST",
