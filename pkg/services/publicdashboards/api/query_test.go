@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -65,7 +66,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 			AccessToken:          validAccessToken,
 			ExpectedHttpResponse: http.StatusNotFound,
 			DashboardResult:      nil,
-			Err:                  ErrPublicDashboardNotFound,
+			Err:                  ErrPublicDashboardNotFound.Errorf(""),
 			FixedErrorResponse:   "",
 		},
 		{
@@ -74,7 +75,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 			ExpectedHttpResponse: http.StatusBadRequest,
 			DashboardResult:      nil,
 			Err:                  nil,
-			FixedErrorResponse:   "{\"message\":\"Invalid Access Token\"}",
+			FixedErrorResponse:   "{\"message\":\"Invalid access token\", \"messageId\":\"publicdashboards.invalidAccessToken\", \"statusCode\":400, \"traceID\":\"\"}",
 		},
 	}
 
@@ -115,12 +116,13 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 				assert.Equal(t, false, dashResp.Meta.CanSave)
 			} else if test.FixedErrorResponse != "" {
 				require.Equal(t, test.ExpectedHttpResponse, response.Code)
-				require.JSONEq(t, "{\"message\":\"Invalid Access Token\"}", response.Body.String())
+				require.JSONEq(t, "{\"message\":\"Invalid access token\", \"messageId\":\"publicdashboards.invalidAccessToken\", \"statusCode\":400, \"traceID\":\"\"}", response.Body.String())
 			} else {
-				var errResp JsonErrResponse
+				var errResp errutil.PublicError
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, test.Err.Error(), errResp.Error)
+				assert.Equal(t, "Public dashboard not found", errResp.Message)
+				assert.Equal(t, "publicdashboards.notFound", errResp.MessageID)
 			}
 		})
 	}
@@ -208,19 +210,19 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		server, _ := setup(true)
 		resp := callAPI(server, http.MethodPost, getValidQueryPath("SomeInvalidAccessToken"), strings.NewReader("{}"), t)
 		require.Equal(t, http.StatusBadRequest, resp.Code)
-		require.JSONEq(t, "{\"message\":\"Invalid Access Token\"}", resp.Body.String())
+		require.JSONEq(t, "{\"message\":\"Invalid access token\", \"messageId\":\"publicdashboards.invalidAccessToken\", \"statusCode\":400, \"traceID\":\"\"}", resp.Body.String())
 	})
 
 	t.Run("Status code is 400 when the intervalMS is lesser than 0", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
-		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, ErrPublicDashboardBadRequest)
+		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, ErrBadRequest.Errorf(""))
 		resp := callAPI(server, http.MethodPost, getValidQueryPath(validAccessToken), strings.NewReader(`{"intervalMs":-100,"maxDataPoints":1000}`), t)
 		require.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
 	t.Run("Status code is 400 when the maxDataPoints is lesser than 0", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
-		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, ErrPublicDashboardBadRequest)
+		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, ErrBadRequest.Errorf(""))
 		resp := callAPI(server, http.MethodPost, getValidQueryPath(validAccessToken), strings.NewReader(`{"intervalMs":100,"maxDataPoints":-1000}`), t)
 		require.Equal(t, http.StatusBadRequest, resp.Code)
 	})

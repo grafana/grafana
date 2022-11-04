@@ -24,12 +24,12 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	tables = append(tables, migrator.Table{
 		Name: "object",
 		Columns: []*migrator.Column{
-			// Object key contains everything required to make it unique across all instances
+			// Object path contains everything required to make it unique across all instances
 			// orgId + scope + kind + uid
-			getKeyColumn("key", true),
+			getKeyColumn("path", true),
 
 			// This is an optimization for listing everything at the same level in the object store
-			getKeyColumn("parent_folder_key", false),
+			getKeyColumn("parent_folder_path", false),
 
 			// The object type
 			{Name: "kind", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
@@ -58,20 +58,20 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			{Name: "errors", Type: migrator.DB_Text, Nullable: true}, // JSON object
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"parent_folder_key"}}, // list in folder
-			{Cols: []string{"kind"}},              // filter by type
+			{Cols: []string{"parent_folder_path"}}, // list in folder
+			{Cols: []string{"kind"}},               // filter by type
 		},
 	})
 
 	tables = append(tables, migrator.Table{
 		Name: "object_labels",
 		Columns: []*migrator.Column{
-			getKeyColumn("key", false),
+			getKeyColumn("path", false),
 			{Name: "label", Type: migrator.DB_NVarchar, Length: 191, Nullable: false},
 			{Name: "value", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"key", "label"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"path", "label"}, Type: migrator.UniqueIndex},
 		},
 	})
 
@@ -79,7 +79,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 		Name: "object_ref",
 		Columns: []*migrator.Column{
 			// Source:
-			getKeyColumn("key", false),
+			getKeyColumn("path", false),
 
 			// Address (defined in the body, not resolved, may be invalid and change)
 			{Name: "kind", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
@@ -93,7 +93,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			{Name: "resolved_time", Type: migrator.DB_DateTime, Nullable: false}, // resolution cache timestamp
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"key"}, Type: migrator.IndexType},
+			{Cols: []string{"path"}, Type: migrator.IndexType},
 			{Cols: []string{"kind"}, Type: migrator.IndexType},
 			{Cols: []string{"resolved_to"}, Type: migrator.IndexType},
 		},
@@ -102,7 +102,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	tables = append(tables, migrator.Table{
 		Name: "object_history",
 		Columns: []*migrator.Column{
-			getKeyColumn("key", false),
+			getKeyColumn("path", false),
 			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
 
 			// Raw bytes
@@ -118,7 +118,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			{Name: "message", Type: migrator.DB_Text, Nullable: false}, // defaults to empty string
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"key", "version"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"path", "version"}, Type: migrator.UniqueIndex},
 			{Cols: []string{"updated_by"}, Type: migrator.IndexType},
 		},
 	})
@@ -134,7 +134,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	// Migration cleanups: given that this is a complex setup
 	// that requires a lot of testing before we are ready to push out of dev
 	// this script lets us easy wipe previous changes and initialize clean tables
-	suffix := " (v5)" // change this when we want to wipe and reset the object tables
+	suffix := " (v2)" // change this when we want to wipe and reset the object tables
 	mg.AddMigration("ObjectStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
 		DELETE FROM migration_log WHERE migration_id LIKE 'ObjectStore init%';
 	`)))
@@ -154,5 +154,5 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("ObjectStore init: set path collation in object tables"+suffix, migrator.NewRawSQLMigration("").
 		// MySQL `utf8mb4_unicode_ci` collation is set in `mysql_dialect.go`
 		// SQLite uses a `BINARY` collation by default
-		Postgres("ALTER TABLE object ALTER COLUMN key TYPE VARCHAR(1024) COLLATE \"C\";")) // Collate C - sorting done based on character code byte values
+		Postgres("ALTER TABLE object ALTER COLUMN path TYPE VARCHAR(1024) COLLATE \"C\";")) // Collate C - sorting done based on character code byte values
 }

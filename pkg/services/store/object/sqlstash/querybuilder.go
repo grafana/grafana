@@ -14,16 +14,14 @@ type selectQuery struct {
 
 func (q *selectQuery) addWhere(f string, val string) {
 	q.args = append(q.args, val)
-	q.where = append(q.where, "`"+f+"`=?")
+	q.where = append(q.where, f+"=?")
 }
 
 func (q *selectQuery) addWhereIn(f string, vals []string) {
 	count := len(vals)
 	if count > 1 {
 		sb := strings.Builder{}
-		sb.WriteString("`")
 		sb.WriteString(f)
-		sb.WriteString("`")
 		sb.WriteString(" IN (")
 		for i := 0; i < count; i++ {
 			if i > 0 {
@@ -41,7 +39,7 @@ func (q *selectQuery) addWhereIn(f string, vals []string) {
 
 func (q *selectQuery) addWherePrefix(f string, v string) {
 	q.args = append(q.args, v+"%")
-	q.where = append(q.where, "`"+f+"` LIKE ?")
+	q.where = append(q.where, f+" LIKE ?")
 }
 
 func (q *selectQuery) toQuery() (string, []interface{}) {

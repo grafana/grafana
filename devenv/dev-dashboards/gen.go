@@ -76,7 +76,7 @@ func (g *libjsonnetGen) generate() (string, error) {
 		return "", err
 	}
 
-	sort.Slice(g.dashboards, func(i, j int) bool {
+	sort.SliceStable(g.dashboards, func(i, j int) bool {
 		return g.dashboards[i].Name < g.dashboards[j].Name
 	})
 

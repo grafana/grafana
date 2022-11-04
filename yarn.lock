@@ -4369,9 +4369,9 @@ __metadata:
     regenerator-runtime: 0.13.10
     rimraf: 3.0.2
     rollup: 2.79.1
-    rollup-plugin-dts: ^4.2.2
+    rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 4.10.1
-    rollup-plugin-node-externals: ^4.1.0
+    rollup-plugin-node-externals: ^5.0.0
     rxjs: 7.5.7
     sinon: 14.0.1
     tinycolor2: 1.4.2
@@ -4396,9 +4396,9 @@ __metadata:
     esbuild: 0.15.12
     rimraf: 3.0.2
     rollup: 2.79.1
-    rollup-plugin-dts: ^4.2.2
+    rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 4.10.1
-    rollup-plugin-node-externals: ^4.1.0
+    rollup-plugin-node-externals: ^5.0.0
     tslib: 2.4.1
     typescript: 4.8.4
   languageName: unknown
@@ -4433,14 +4433,14 @@ __metadata:
     resolve-as-bin: 2.1.0
     rimraf: 3.0.2
     rollup: 2.79.1
-    rollup-plugin-dts: ^4.2.2
+    rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 4.10.1
-    rollup-plugin-node-externals: ^4.1.0
+    rollup-plugin-node-externals: ^5.0.0
     tracelib: 1.0.1
     ts-loader: 8.4.0
     tslib: 2.4.1
     typescript: 4.8.4
-    uuid: 8.3.2
+    uuid: 9.0.0
     webpack: 5.74.0
     yaml: ^2.0.0
   bin:
@@ -4537,9 +4537,9 @@ __metadata:
     react-dom: 17.0.2
     rimraf: 3.0.2
     rollup: 2.79.1
-    rollup-plugin-dts: ^4.2.2
+    rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 4.10.1
-    rollup-plugin-node-externals: ^4.1.0
+    rollup-plugin-node-externals: ^5.0.0
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     rxjs: 7.5.7
@@ -4564,9 +4564,9 @@ __metadata:
     esbuild: 0.15.12
     rimraf: 3.0.2
     rollup: 2.79.1
-    rollup-plugin-dts: ^4.2.2
+    rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 4.10.1
-    rollup-plugin-node-externals: ^4.1.0
+    rollup-plugin-node-externals: ^5.0.0
     tslib: 2.4.1
     typescript: 4.8.4
   languageName: unknown
@@ -4804,9 +4804,9 @@ __metadata:
     react-window: 1.8.8
     rimraf: 3.0.2
     rollup: 2.79.1
-    rollup-plugin-dts: ^4.2.2
+    rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 4.10.1
-    rollup-plugin-node-externals: ^4.1.0
+    rollup-plugin-node-externals: ^5.0.0
     rollup-plugin-svg-import: ^1.6.0
     rxjs: 7.5.7
     sass-loader: 13.1.0
@@ -4820,7 +4820,7 @@ __metadata:
     tslib: 2.4.1
     typescript: 4.8.4
     uplot: 1.6.22
-    uuid: 8.3.2
+    uuid: 9.0.0
     webpack: 5.74.0
   peerDependencies:
     react: ^16.8.0 || ^17.0.0
@@ -21812,7 +21812,7 @@ __metadata:
     tslib: 2.4.1
     typescript: 4.8.4
     uplot: 1.6.22
-    uuid: 8.3.2
+    uuid: 9.0.0
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
     wait-on: 6.0.1
@@ -26477,16 +26477,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"magic-string@npm:^0.26.1":
-  version: 0.26.2
-  resolution: "magic-string@npm:0.26.2"
-  dependencies:
-    sourcemap-codec: ^1.4.8
-  checksum: b4db4e2b370ac8d9ffc6443a2b591b75364bf1fc9121b5a4068d5b89804abff6709d1fa4a0e0c2d54f2e61e0e44db83efdfe219a5ab0ba6d25ee1f2b51fbed55
-  languageName: node
-  linkType: hard
-
-"magic-string@npm:^0.26.4":
+"magic-string@npm:^0.26.4, magic-string@npm:^0.26.7":
   version: 0.26.7
   resolution: "magic-string@npm:0.26.7"
   dependencies:
@@ -33911,19 +33902,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-dts@npm:^4.2.2":
-  version: 4.2.2
-  resolution: "rollup-plugin-dts@npm:4.2.2"
+"rollup-plugin-dts@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "rollup-plugin-dts@npm:5.0.0"
   dependencies:
-    "@babel/code-frame": ^7.16.7
-    magic-string: ^0.26.1
+    "@babel/code-frame": ^7.18.6
+    magic-string: ^0.26.7
   peerDependencies:
-    rollup: ^2.55
+    rollup: ^3.0.0
     typescript: ^4.1
   dependenciesMeta:
     "@babel/code-frame":
       optional: true
-  checksum: cf4b45f6cca442a5f44af0f0fb567c8fc540ecb792c763571d1bcda9bf495803bcc8d4eaef451a2dd32f7f391eb822e2b96cc6b86b096db54a4d3935236fd8da
+  checksum: feb2d614528c255ee698120be0fd404b0a4fa312362a3d687d76551157464decc66be6dfecb624c42bc64a9e6298ed21e13e689dc9b144acab8294cd08a53455
   languageName: node
   linkType: hard
 
@@ -33943,14 +33934,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-node-externals@npm:^4.1.0":
-  version: 4.1.0
-  resolution: "rollup-plugin-node-externals@npm:4.1.0"
-  dependencies:
-    find-up: ^5.0.0
+"rollup-plugin-node-externals@npm:^5.0.0":
+  version: 5.0.2
+  resolution: "rollup-plugin-node-externals@npm:5.0.2"
   peerDependencies:
-    rollup: ^2.60.0
-  checksum: 4e714dd5135ca84943b304893ed7498bac292773c056051a5fae700072257715cca48e2b5d5e3e23d1d6395eb2aaff4f8e5f6294fbbbfd6be4171049929b70ed
+    rollup: ^2.60.0 || ^3.0.0
+  checksum: 5afefcccb37a2c54e836d7b5b97e0b9ab47a187cf9341fda22e580f84d2f87de2b1938c8005a8d38794cab6acfcf49c9121b30431641ac53928139ad020e3160
   languageName: node
   linkType: hard
 
@@ -37991,12 +37980,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:8.3.2, uuid@npm:^8.3.2":
-  version: 8.3.2
-  resolution: "uuid@npm:8.3.2"
+"uuid@npm:9.0.0":
+  version: 9.0.0
+  resolution: "uuid@npm:9.0.0"
   bin:
     uuid: dist/bin/uuid
-  checksum: 5575a8a75c13120e2f10e6ddc801b2c7ed7d8f3c8ac22c7ed0c7b2ba6383ec0abda88c905085d630e251719e0777045ae3236f04c812184b7c765f63a70e58df
+  checksum: 8dd2c83c43ddc7e1c71e36b60aea40030a6505139af6bee0f382ebcd1a56f6cd3028f7f06ffb07f8cf6ced320b76aea275284b224b002b289f89fe89c389b028
   languageName: node
   linkType: hard
 
@@ -38006,6 +37995,15 @@ __metadata:
   bin:
     uuid: ./bin/uuid
   checksum: 58de2feed61c59060b40f8203c0e4ed7fd6f99d42534a499f1741218a1dd0c129f4aa1de797bcf822c8ea5da7e4137aa3673431a96dae729047f7aca7b27866f
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^8.3.2":
+  version: 8.3.2
+  resolution: "uuid@npm:8.3.2"
+  bin:
+    uuid: dist/bin/uuid
+  checksum: 5575a8a75c13120e2f10e6ddc801b2c7ed7d8f3c8ac22c7ed0c7b2ba6383ec0abda88c905085d630e251719e0777045ae3236f04c812184b7c765f63a70e58df
   languageName: node
   linkType: hard
 
