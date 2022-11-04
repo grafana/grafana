@@ -184,7 +184,7 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 	return newPubdash, err
 }
 
-// Updates an existing public dashboard based on publicdashboard.Uid
+// Update: updates an existing public dashboard based on publicdashboard.Uid
 func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
 	// validate if the dashboard exists
 	dashboard, err := pd.FindDashboard(ctx, u.OrgID, dto.DashboardUid)

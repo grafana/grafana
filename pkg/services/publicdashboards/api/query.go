@@ -16,7 +16,6 @@ import (
 // GET /api/public/dashboards/:accessToken
 func (api *Api) ViewPublicDashboard(c *models.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
-
 	if !tokens.IsValidAccessToken(accessToken) {
 		return response.Err(ErrInvalidAccessToken.Errorf("ViewPublicDashboard: invalid access token"))
 	}

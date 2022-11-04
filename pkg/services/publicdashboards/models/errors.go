@@ -9,11 +9,11 @@ var (
 	ErrDashboardNotFound       = errutil.NewBase(errutil.StatusNotFound, "publicdashboards.dashboardNotFound", errutil.WithPublicMessage("Dashboard not found"))
 	ErrPanelNotFound           = errutil.NewBase(errutil.StatusNotFound, "publicdashboards.panelNotFound", errutil.WithPublicMessage("Public dashboard panel not found"))
 
-	ErrBadRequest                = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.badRequest")
-	ErrPanelQueriesNotFound      = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.panelQueriesNotFound", errutil.WithPublicMessage("Failed to extract queries from panel"))
-	ErrInvalidAccessToken        = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.invalidAccessToken", errutil.WithPublicMessage("Invalid access token"))
-	ErrInvalidPanelId            = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.invalidPanelId", errutil.WithPublicMessage("Invalid panel id"))
-	ErrDashboardIdentifierNotSet = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.dashboardIdentifierNotSet", errutil.WithPublicMessage("No Uid for dashboard specified"))
+	ErrBadRequest           = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.badRequest")
+	ErrPanelQueriesNotFound = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.panelQueriesNotFound", errutil.WithPublicMessage("Failed to extract queries from panel"))
+	ErrInvalidAccessToken   = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.invalidAccessToken", errutil.WithPublicMessage("Invalid access token"))
+	ErrInvalidPanelId       = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.invalidPanelId", errutil.WithPublicMessage("Invalid panel id"))
+	ErrInvalidUid           = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.invalidUid", errutil.WithPublicMessage("Invalid Uid"))
 
 	ErrPublicDashboardIdentifierNotSet     = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.identifierNotSet", errutil.WithPublicMessage("No Uid for public dashboard specified"))
 	ErrPublicDashboardHasTemplateVariables = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.hasTemplateVariables", errutil.WithPublicMessage("Public dashboard has template variables"))
