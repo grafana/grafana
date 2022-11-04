@@ -9,7 +9,9 @@ import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
 import { SceneDataState, SceneObject, SceneComponent, SceneEditor, SceneTimeRange, SceneObjectState } from './types';
 
-export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
+export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObjectState>
+  implements SceneObject<TState>
+{
   private _isActive = false;
   private _subject = new Subject<TState>();
   private _state: TState;

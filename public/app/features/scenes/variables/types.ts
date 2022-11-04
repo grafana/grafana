@@ -3,10 +3,11 @@ import { Observable } from 'rxjs';
 import { LoadingState, SelectableValue } from '@grafana/data';
 import { VariableHide } from 'app/features/variables/types';
 
-import { SceneComponent, SceneObject, SceneObjectStatePlain } from '../core/types';
+import { SceneObject, SceneObjectStatePlain } from '../core/types';
 
 export interface SceneVariableState extends SceneObjectStatePlain {
   name: string;
+  label?: string;
   hide?: VariableHide;
   skipUrlSync?: boolean;
   state?: LoadingState;
@@ -17,9 +18,6 @@ export interface SceneVariableState extends SceneObjectStatePlain {
 }
 
 export interface SceneVariable<TState extends SceneVariableState = SceneVariableState> extends SceneObject<TState> {
-  /** The react component to use for the value selector */
-  ValueSelectComponent?: SceneComponent<SceneVariable>;
-
   /**
    * Should return a string array of other variables this variable is using in it's definition.
    */

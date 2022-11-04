@@ -1,19 +1,20 @@
+import React from 'react';
 import { Observable, Subject } from 'rxjs';
 
 import { LoadingState, SelectableValue } from '@grafana/data';
 import { queryMetricTree } from 'app/plugins/datasource/testdata/metricTree';
 
+import { SceneComponentProps } from '../../core/types';
 import { VariableValueSelect } from '../components/VariableValueSelect';
 import { getVariableDependencies } from '../getVariableDependencies';
 import { sceneTemplateInterpolator } from '../sceneTemplateInterpolator';
-import { SceneVariableState, VariableGetOptionsArgs, VariableValueOption } from '../types';
+import { VariableGetOptionsArgs, VariableValueOption } from '../types';
 
-import { SceneVariableBase } from './SceneVariableBase';
+import { MultiValueVariable, MultiValueVariableState } from './MultiValueVariable';
 
-export interface TestVariableState extends SceneVariableState {
+export interface TestVariableState extends MultiValueVariableState {
   //query: DataQuery;
   query: string;
-  options: VariableValueOption[];
   delayMs?: number;
   issuedQuery?: string;
 }
@@ -21,8 +22,7 @@ export interface TestVariableState extends SceneVariableState {
 /**
  * This variable is only designed for unit tests and potentially e2e tests.
  */
-export class TestVariable extends SceneVariableBase<TestVariableState> {
-  ValueSelectComponent = VariableValueSelect;
+export class TestVariable extends MultiValueVariable<TestVariableState> {
   completeUpdate = new Subject<number>();
 
   getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
@@ -74,4 +74,8 @@ export class TestVariable extends SceneVariableBase<TestVariableState> {
   getDependencies() {
     return getVariableDependencies(this.state.query);
   }
+
+  static Component = ({ model }: SceneComponentProps<MultiValueVariable>) => {
+    return <VariableValueSelect model={model} />;
+  };
 }
