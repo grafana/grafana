@@ -45,58 +45,65 @@ describe('Loki slate editor', () => {
     e2e().contains('Code').click();
     const queryField = e2e().get('.slate-query-field');
     queryField.type('time(');
-    queryField.then(($el) => {
+    queryField.should(($el) => {
       expect($el.text().replace(/\uFEFF/g, '')).to.eq('time()');
     });
 
     // removes closing brace when opening brace is removed
     queryField.type('{backspace}');
-    queryField.then(($el) => {
+    queryField.should(($el) => {
       expect($el.text().replace(/\uFEFF/g, '')).to.eq('time');
     });
 
     // keeps closing brace when opening brace is removed and inner values exist
-    queryField.type(`{selectall}{backspace}time(test{leftArrow}{leftArrow}{leftArrow}{leftArrow}{backspace}`);
-    queryField.then(($el) => {
+    queryField.clear();
+    queryField.type('time(test{leftArrow}{leftArrow}{leftArrow}{leftArrow}{backspace}');
+    queryField.should(($el) => {
       expect($el.text().replace(/\uFEFF/g, '')).to.eq('timetest)');
     });
 
     // overrides an automatically inserted brace
-    queryField.type(`{selectall}{backspace}time()`);
-    queryField.then(($el) => {
+    queryField.clear();
+    queryField.type('time()');
+    queryField.should(($el) => {
       expect($el.text().replace(/\uFEFF/g, '')).to.eq('time()');
     });
 
     // does not override manually inserted braces
-    queryField.type(`{selectall}{backspace}))`);
-    queryField.then(($el) => {
+    queryField.clear();
+    queryField.type('))');
+    queryField.should(($el) => {
       expect($el.text().replace(/\uFEFF/g, '')).to.eq('))');
     });
 
     /** Clear Plugin */
 
     //does not change the empty value
-    queryField.type(`{selectall}{backspace}{ctrl+k}`);
-    queryField.then(($el) => {
+    queryField.clear();
+    queryField.type('{ctrl+k}');
+    queryField.should(($el) => {
       expect($el.text().replace(/\uFEFF/g, '')).to.match(/Enter a Loki query/);
     });
 
     // clears to the end of the line
-    queryField.type(`{selectall}{backspace}foo{leftArrow}{leftArrow}{leftArrow}{ctrl+k}`);
-    queryField.then(($el) => {
+    queryField.clear();
+    queryField.type('foo{leftArrow}{leftArrow}{leftArrow}{ctrl+k}');
+    queryField.should(($el) => {
       expect($el.text().replace(/\uFEFF/g, '')).to.match(/Enter a Loki query/);
     });
 
     // clears from the middle to the end of the line
-    queryField.type(`{selectall}{backspace}foo bar{leftArrow}{leftArrow}{leftArrow}{leftArrow}{ctrl+k}`);
-    queryField.then(($el) => {
+    queryField.clear();
+    queryField.type('foo bar{leftArrow}{leftArrow}{leftArrow}{leftArrow}{ctrl+k}');
+    queryField.should(($el) => {
       expect($el.text().replace(/\uFEFF/g, '')).to.eq('foo');
     });
 
     /** Runner plugin */
 
     //should execute query when enter with shift is pressed
-    queryField.type(`{selectall}{backspace}{shift+enter}`);
+    queryField.clear();
+    queryField.type('{shift+enter}');
     e2e().get('[data-testid="explore-no-data"]').should('be.visible');
 
     /** Suggestions plugin */
