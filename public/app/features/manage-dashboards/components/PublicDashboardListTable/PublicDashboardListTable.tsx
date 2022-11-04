@@ -94,7 +94,15 @@ export const PublicDashboardListTable = () => {
                         <Icon size={responsiveSize} name="cog" />
                       </LinkButton>
                       {hasWritePermissions && (
-                        <DeletePublicDashboardButton publicDashboard={pd} size={responsiveSize} />
+                        <DeletePublicDashboardButton
+                          variant="primary"
+                          fill="text"
+                          data-testid={selectors.ListItem.trashcanButton}
+                          publicDashboard={pd}
+                          loader={<Spinner />}
+                        >
+                          <Icon size={responsiveSize} name="trash-alt" />
+                        </DeletePublicDashboardButton>
                       )}
                     </ButtonGroup>
                   </td>
@@ -134,9 +142,10 @@ function getStyles(theme: GrafanaTheme2, isMobile: boolean) {
     orphanedTitle: css`
       display: flex;
       align-items: center;
+      gap: ${theme.spacing(1)};
 
       p {
-        margin: ${theme.spacing(0, 1, 0, 0)};
+        margin: ${theme.spacing(0)};
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
