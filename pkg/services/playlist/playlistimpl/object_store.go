@@ -27,7 +27,12 @@ type objectStoreImpl struct {
 var _ playlist.Service = &objectStoreImpl{}
 
 func (s *objectStoreImpl) sync() {
-	rows, err := s.sess.Query(context.Background(), "SELECT org_id,uid FROM playlist ORDER BY org_id asc")
+	type Info struct {
+		OrgID int64  `db:"org_id"`
+		UID   string `db:"uid"`
+	}
+	results := []Info{}
+	err := s.sess.Select(context.Background(), &results, "SELECT org_id,uid FROM playlist ORDER BY org_id asc")
 	if err != nil {
 		fmt.Printf("error loading playlists")
 		return
@@ -35,22 +40,15 @@ func (s *objectStoreImpl) sync() {
 
 	// Change the org_id with each row
 	rowUser := &user.SignedInUser{
-		Login:  "?",
-		OrgID:  0, // gets filled in from each row
-		UserID: 0,
+		OrgID:          0, // gets filled in from each row
+		UserID:         0, // Admin user
+		IsGrafanaAdmin: true,
 	}
 	ctx := objectstore.ContextWithUser(context.Background(), rowUser)
-	uid := ""
-	for rows.Next() {
-		err = rows.Scan(&rowUser.OrgID, &uid)
-		if err != nil {
-			fmt.Printf("error loading playlists: %v", err)
-			return
-		}
-
+	for _, info := range results {
 		dto, err := s.sqlimpl.Get(ctx, &playlist.GetPlaylistByUidQuery{
-			OrgId: rowUser.OrgID,
-			UID:   uid,
+			OrgId: info.OrgID,
+			UID:   info.UID,
 		})
 		if err != nil {
 			fmt.Printf("error loading playlist: %v", err)
@@ -59,8 +57,10 @@ func (s *objectStoreImpl) sync() {
 		body, _ := json.Marshal(dto)
 		_, _ = s.objectstore.Write(ctx, &object.WriteObjectRequest{
 			GRN: &object.GRN{
-				UID:  uid,
-				Kind: models.StandardKindPlaylist,
+				TenantId: info.OrgID,
+				UID:      info.UID,
+				Kind:     models.StandardKindPlaylist,
+				Scope:    models.ObjectStoreScopeEntity,
 			},
 			Body: body,
 		})
@@ -98,8 +98,9 @@ func (s *objectStoreImpl) Update(ctx context.Context, cmd *playlist.UpdatePlayli
 		}
 		_, err = s.objectstore.Write(ctx, &object.WriteObjectRequest{
 			GRN: &object.GRN{
-				UID:  rsp.Uid,
-				Kind: models.StandardKindPlaylist,
+				UID:   rsp.Uid,
+				Kind:  models.StandardKindPlaylist,
+				Scope: models.ObjectStoreScopeEntity,
 			},
 			Body: body,
 		})
@@ -115,8 +116,9 @@ func (s *objectStoreImpl) Delete(ctx context.Context, cmd *playlist.DeletePlayli
 	if err == nil {
 		_, err = s.objectstore.Delete(ctx, &object.DeleteObjectRequest{
 			GRN: &object.GRN{
-				UID:  cmd.UID,
-				Kind: models.StandardKindPlaylist,
+				UID:   cmd.UID,
+				Kind:  models.StandardKindPlaylist,
+				Scope: models.ObjectStoreScopeEntity,
 			},
 		})
 		if err != nil {
@@ -146,8 +148,9 @@ func (s *objectStoreImpl) GetWithoutItems(ctx context.Context, q *playlist.GetPl
 func (s *objectStoreImpl) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.PlaylistDTO, error) {
 	rsp, err := s.objectstore.Read(ctx, &object.ReadObjectRequest{
 		GRN: &object.GRN{
-			UID:  q.UID,
-			Kind: models.StandardKindPlaylist,
+			UID:   q.UID,
+			Kind:  models.StandardKindPlaylist,
+			Scope: models.ObjectStoreScopeEntity,
 		},
 		WithBody: true,
 	})

@@ -4419,7 +4419,7 @@ __metadata:
     "@types/lodash": 4.14.187
     "@types/node": 16.11.45
     "@types/uuid": 8.3.4
-    babel-loader: 9.0.1
+    babel-loader: 9.1.0
     blink-diff: 1.0.13
     chrome-remote-interface: 0.31.3
     commander: 8.3.0
@@ -4764,7 +4764,7 @@ __metadata:
     esbuild: 0.15.12
     expose-loader: 4.0.0
     hoist-non-react-statics: 3.3.2
-    i18next: ^21.9.2
+    i18next: ^22.0.0
     immutable: 4.1.0
     is-hotkey: 0.2.0
     jquery: 3.6.1
@@ -13975,16 +13975,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-loader@npm:9.0.1":
-  version: 9.0.1
-  resolution: "babel-loader@npm:9.0.1"
+"babel-loader@npm:9.1.0":
+  version: 9.1.0
+  resolution: "babel-loader@npm:9.1.0"
   dependencies:
     find-cache-dir: ^3.3.2
     schema-utils: ^4.0.0
   peerDependencies:
     "@babel/core": ^7.12.0
     webpack: ">=5"
-  checksum: 28164515105c54ab89c72a51fdad7076d40cf871df94e37a3fcbce6c69410f3f03ec93e83148e7ce1839d4e86c0f7be6e81b3eeb9f1a4cb52fcc78af6a438ef6
+  checksum: 774758febd1e8ca804abcae3b8f65634330dc688837424d0946f06d1386914de43435cce691710fa144eccdf1292cf883439ac3598ce7320916acfaaa2372641
   languageName: node
   linkType: hard
 
@@ -21646,7 +21646,7 @@ __metadata:
     app: "link:./public/app"
     autoprefixer: 10.4.13
     babel-jest: 28.1.3
-    babel-loader: 9.0.1
+    babel-loader: 9.1.0
     babel-plugin-angularjs-annotate: 0.10.0
     babel-plugin-macros: 3.1.0
     baron: 3.0.3
@@ -21696,7 +21696,7 @@ __metadata:
     html-webpack-plugin: 5.5.0
     http-server: 14.1.1
     husky: 8.0.1
-    i18next: ^21.9.2
+    i18next: ^22.0.0
     i18next-parser: 6.6.0
     immer: 9.0.16
     immutable: 4.1.0
@@ -21787,7 +21787,7 @@ __metadata:
     rst2html: "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809"
     rudder-sdk-js: 2.18.1
     rxjs: 7.5.7
-    sass: 1.55.0
+    sass: 1.56.0
     sass-loader: 13.1.0
     selecto: 1.20.2
     semver: 7.3.8
@@ -22713,12 +22713,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"i18next@npm:^21.2.0, i18next@npm:^21.9.2":
+"i18next@npm:^21.2.0":
   version: 21.9.2
   resolution: "i18next@npm:21.9.2"
   dependencies:
     "@babel/runtime": ^7.17.2
   checksum: e53b3885fa85cab7fcd4f8667b7fc3d37b06f095494703994d49fa0e961ad1f495181621e569dc58e759ff12c63a9c7704c33592ba529b7689ea7f5304be0423
+  languageName: node
+  linkType: hard
+
+"i18next@npm:^22.0.0":
+  version: 22.0.4
+  resolution: "i18next@npm:22.0.4"
+  dependencies:
+    "@babel/runtime": ^7.17.2
+  checksum: aa49e6e48583833ee673c0dd9568081a5e15fde9549aa3e47a99ad91d3fdb7469f8a315864fc45ec466b1e60caa00d5fc8371e47840068048b4ab79a69dc2b19
   languageName: node
   linkType: hard
 
@@ -34234,16 +34243,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass@npm:1.55.0":
-  version: 1.55.0
-  resolution: "sass@npm:1.55.0"
+"sass@npm:1.56.0":
+  version: 1.56.0
+  resolution: "sass@npm:1.56.0"
   dependencies:
     chokidar: ">=3.0.0 <4.0.0"
     immutable: ^4.0.0
     source-map-js: ">=0.6.2 <2.0.0"
   bin:
     sass: sass.js
-  checksum: 7d769ed08efce4e6134e0f3dc11c4f07e32c413ac8eb43c5855f2686890fdcbd80da34165c91fb4ba407f478ca108e171574b5a60cb9814a5ed09d80f6014f96
+  checksum: 37fb48b838f7a12f3c3efbf27bfc5f2b7fba015ed4b11effe32bd9488e30e1d5cefcbfef1e5c5dbd95557889fe2c7ec72f33e898cfc76182ea34eae03b1a4fb1
   languageName: node
   linkType: hard
 
