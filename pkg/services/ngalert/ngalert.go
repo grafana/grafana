@@ -281,6 +281,10 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	children, subCtx := errgroup.WithContext(ctx)
 
 	children.Go(func() error {
+		return ng.stateManager.Run(subCtx)
+	})
+
+	children.Go(func() error {
 		return ng.MultiOrgAlertmanager.Run(subCtx)
 	})
 	children.Go(func() error {
