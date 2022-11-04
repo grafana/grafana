@@ -1,10 +1,17 @@
 package sqlstash
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
 )
+
+func createContentsHash(contents []byte) string {
+	hash := md5.Sum(contents)
+	return hex.EncodeToString(hash[:])
+}
 
 // TODO? should this include the slash or not?
 func getParentFolderKey(kind string, key string) string {

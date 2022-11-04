@@ -53,8 +53,5 @@ func GetUserIDString(user *user.SignedInUser) string {
 	if user.IsRealUser() {
 		return fmt.Sprintf("user:%d:%s", user.UserID, user.Login)
 	}
-	if user.UserID == 0 {
-		return "sys:0:admin" // default is "?""
-	}
 	return fmt.Sprintf("sys:%d:%s", user.UserID, user.Login)
 }

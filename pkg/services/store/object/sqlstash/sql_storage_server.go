@@ -2,9 +2,7 @@ package sqlstash
 
 import (
 	"context"
-	"crypto/md5"
 	"database/sql"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -274,11 +272,6 @@ func (s *sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObje
 	return rsp, nil
 }
 
-func createContentsHash(contents []byte) string {
-	hash := md5.Sum(contents)
-	return hex.EncodeToString(hash[:])
-}
-
 func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
 	route, err := s.getObjectKey(ctx, r.GRN)
 	if err != nil {
@@ -510,7 +503,7 @@ func (s *sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequ
 
 		// TODO: keep history? would need current version bump, and the "write" would have to get from history
 		_, _ = tx.Exec(ctx, "DELETE FROM object_history WHERE `key`=?", key)
-		_, _ = tx.Exec(ctx, "DELETE FROM object_labels WHERE `key``=?", key)
+		_, _ = tx.Exec(ctx, "DELETE FROM object_labels WHERE `key`=?", key)
 		_, _ = tx.Exec(ctx, "DELETE FROM object_ref WHERE `key`=?", key)
 		return nil
 	})

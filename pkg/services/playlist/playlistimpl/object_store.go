@@ -90,30 +90,24 @@ func (s *objectStoreImpl) Create(ctx context.Context, cmd *playlist.CreatePlayli
 }
 
 func (s *objectStoreImpl) Update(ctx context.Context, cmd *playlist.UpdatePlaylistCommand) (*playlist.PlaylistDTO, error) {
-	// rsp, err := s.sqlimpl.store.Update(ctx, cmd)
-	// if err == nil {
-	body, err := json.Marshal(cmd)
-	if err != nil {
-		return nil, fmt.Errorf("unable to write playlist to store")
+	rsp, err := s.sqlimpl.store.Update(ctx, cmd)
+	if err == nil {
+		body, err := json.Marshal(cmd)
+		if err != nil {
+			return rsp, fmt.Errorf("unable to write playlist to store")
+		}
+		_, err = s.objectstore.Write(ctx, &object.WriteObjectRequest{
+			GRN: &object.GRN{
+				UID:   rsp.Uid,
+				Kind:  models.StandardKindPlaylist,
+				Scope: models.ObjectStoreScopeEntity,
+			},
+			Body: body,
+		})
+		if err != nil {
+			return rsp, fmt.Errorf("unable to write playlist to store")
+		}
 	}
-	rsp := &playlist.PlaylistDTO{}
-	err = json.Unmarshal(body, rsp)
-	if err != nil {
-		return nil, fmt.Errorf("unable to write playlist to store")
-	}
-
-	_, err = s.objectstore.Write(ctx, &object.WriteObjectRequest{
-		GRN: &object.GRN{
-			UID:   cmd.UID,
-			Kind:  models.StandardKindPlaylist,
-			Scope: models.ObjectStoreScopeEntity,
-		},
-		Body: body,
-	})
-	if err != nil {
-		return rsp, fmt.Errorf("unable to write playlist to store")
-	}
-	//}
 	return rsp, err
 }
 
