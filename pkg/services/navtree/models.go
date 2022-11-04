@@ -114,6 +114,49 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 		if orgAdminNode != nil {
 			orgAdminNode.Url = "/admin"
 			orgAdminNode.Text = "Administration"
+
+			orgUsersNode := root.FindById("users")
+			globalUsersNode := root.FindById("global-users")
+			teamsNode := root.FindById("teams")
+			// rolesNode := root.FindById("roles") // enterprise only?
+			serviceAccountsNode := root.FindById("serviceaccounts")
+			apiKeysNode := root.FindById("apikeys")
+			// cloudAccessPoliciesNode := root.FindById("cloudAccessPolicies") // cloud app?
+
+			adminAccessNodeLinks := []*NavLink{}
+			adminAccessNodeLinks = append(adminAccessNodeLinks, orgUsersNode)
+			adminAccessNodeLinks = append(adminAccessNodeLinks, globalUsersNode)
+			adminAccessNodeLinks = append(adminAccessNodeLinks, teamsNode)
+			// adminAccessNodeLinks = append(adminAccessNodeLinks, rolesNode)
+			adminAccessNodeLinks = append(adminAccessNodeLinks, serviceAccountsNode)
+			adminAccessNodeLinks = append(adminAccessNodeLinks, apiKeysNode)
+			// adminAccessNodeLinks = append(adminAccessNodeLinks, cloudAccessPoliciesNode)
+
+			adminConfigNodeLinks := []*NavLink{}
+
+			adminAccessNode := &NavLink{
+				Text:       "Access",
+				Id:         "admin/access",
+				Icon:       "shield",
+				SortWeight: WeightAdmin,
+				Section:    NavSectionConfig,
+				Children:   adminAccessNodeLinks,
+			}
+
+			adminConfigNode := &NavLink{
+				Text:       "Configuration",
+				Id:         "admin/config",
+				Icon:       "shield",
+				SortWeight: WeightAdmin,
+				Section:    NavSectionConfig,
+				Children:   adminConfigNodeLinks,
+			}
+
+			adminNodeLinks := []*NavLink{}
+
+			adminNodeLinks = append(adminNodeLinks, adminAccessNode)
+			adminNodeLinks = append(adminNodeLinks, adminConfigNode)
+			orgAdminNode.Children = adminNodeLinks
 		}
 
 		if serverAdminNode := root.FindById(NavIDAdmin); serverAdminNode != nil {

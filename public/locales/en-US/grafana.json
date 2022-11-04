@@ -190,7 +190,7 @@
     },
     "global-users": {
       "subtitle": "Manage and create users across the whole Grafana server",
-      "title": "Users"
+      "title": "Global users"
     },
     "help": {
       "title": "Help"
