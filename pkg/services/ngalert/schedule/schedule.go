@@ -330,6 +330,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		start := sch.clock.Now()
 
 		schedulerUser := &user.SignedInUser{
+			// FIXME: add is service account and refactor to a service account instead of a user
 			UserID:  -1,
 			Login:   "grafana_scheduler",
 			OrgID:   e.rule.OrgID,
