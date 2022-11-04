@@ -60,7 +60,7 @@ export const Basic: ComponentStory<typeof DataTable> = (args) => {
     <DataTable
       columns={columns}
       data={data}
-      getRowId={(r) => `${r.header1} lol`}
+      getRowId={(r) => r.header1}
       renderExpandedRow={() => <>Expanded content</>}
     />
   );

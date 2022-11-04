@@ -1,7 +1,7 @@
 import { cx, css } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React, { useMemo, Fragment, ReactNode } from 'react';
-import { useExpanded, useSortBy, useTable, TableOptions } from 'react-table';
+import React, { useMemo, Fragment, ReactNode, useCallback } from 'react';
+import { useExpanded, useSortBy, useTable, TableOptions, Row } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -70,7 +70,7 @@ interface Props<TableData extends object> {
   getRowId: TableOptions<TableData>['getRowId'];
 }
 
-/** @beta */
+/** @alpha */
 export function DataTable<TableData extends object>({
   data,
   className,
@@ -84,6 +84,12 @@ export function DataTable<TableData extends object>({
     return cols;
   }, [columns]);
   const id = useUniqueId();
+  const getRowHTMLID = useCallback(
+    (row: Row<TableData>) => {
+      return `${id}-${row.id}`.replace(/\s/g, '');
+    },
+    [id]
+  );
 
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable<TableData>(
     {
@@ -106,6 +112,7 @@ export function DataTable<TableData extends object>({
     useSortBy,
     useExpanded
   );
+
   // This should be called only for rows thar we'd want to actually render, which is all at this stage.
   // We may want to revisit this if we decide to add pagination and/or virtualized tables.
   rows.forEach(prepareRow);
@@ -148,6 +155,7 @@ export function DataTable<TableData extends object>({
         {rows.map((row, rowIndex) => {
           const className = cx(rowIndex % 2 === 0 && styles.evenRow);
           const { key, ...otherRowProps } = row.getRowProps();
+          const rowId = getRowHTMLID(row);
 
           return (
             <Fragment key={key}>
@@ -156,7 +164,7 @@ export function DataTable<TableData extends object>({
                   const { key, ...otherCellProps } = cell.getCellProps();
                   return (
                     <td key={key} {...otherCellProps}>
-                      {cell.render('Cell')}
+                      {cell.render('Cell', { __rowID: rowId })}
                     </td>
                   );
                 })}
@@ -164,8 +172,7 @@ export function DataTable<TableData extends object>({
               {
                 // @ts-expect-error react-table doesn't ship with useExpanded types and we can't use declaration merging without affecting the table viz
                 row.isExpanded && renderExpandedRow && (
-                  // TODO: generate a custom id for this row and the expander cell
-                  <tr className={className} {...otherRowProps} id={`${id}-${row.id}`}>
+                  <tr className={className} {...otherRowProps} id={rowId}>
                     <td colSpan={row.cells.length}>{renderExpandedRow(row.original)}</td>
                   </tr>
                 )
