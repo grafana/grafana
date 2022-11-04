@@ -64,18 +64,18 @@ const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboa
       position: absolute;
       top: 0;
       bottom: auto;
-      height: 36px;
+      height: ${theme.spacing(4.5)};
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
       padding: ${theme.spacing(0, 0, 0, 0.5)};
       z-index: 100;
       visibility: hidden;
-      width: ${showContextButton ? '80px' : '40px'};
+      width: ${showContextButton ? theme.spacing(10) : theme.spacing(5)};
     `,
     logRowMenuCell: css`
       position: absolute;
       right: ${isInDashboard ? '40px' : `calc(75px + ${theme.spacing()} + ${showContextButton ? '80px' : '40px'})`};
-      margin-top: -1px;
+      margin-top: -${theme.spacing(0.125)};
     `,
   };
 };
