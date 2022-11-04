@@ -11,8 +11,6 @@ weight: 400
 
 {{< docs/shared "influxdb/intro.md" >}}
 
-> **Note:** You can also configure a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance to display system metrics without having to host Grafana yourself. Grafana offers a [free account with Grafana Cloud](https://grafana.com/signup/cloud/connect-account?pg=gsdocs) to help you get started.
-
 {{< docs/shared "getting-started/first-step.md" >}}
 
 #### Get InfluxDB
@@ -39,10 +37,11 @@ Windows users might need to make additional adjustments. Look for special instru
 
 You can have more than one InfluxDB data source defined in Grafana.
 
-1. Follow the general instructions to [add a data source]({{< relref "../datasources/add-a-data-source/" >}}).
+1. Follow the general instructions to [add a data source]({{< relref "../administration/data-source-management#add-a-data-source/" >}}).
 1. Decide if you will use InfluxQL or Flux as your query language.
-   - For InfluxQL, refer to [InfluxDB data source]({{< relref "../datasources/influxdb/" >}}) for information about specific data source fields.
-   - For Flux, refer to [Flux query language in Grafana]({{< relref "../datasources/influxdb/influxdb-flux/" >}}) for information about specific data source fields.
+   - [Configure the data source]({{< relref "../datasources/influxdb#configure-the-data-source" >}}) for your chosen query language.
+     Each query language has its own unique data source settings.
+   - For querying features specific to each language, see the data source's [query editor documentation]({{< relref "../datasources/influxdb/query-editor" >}}).
 
 ##### InfluxDB guides
 

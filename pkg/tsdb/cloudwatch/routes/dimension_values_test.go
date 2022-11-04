@@ -7,9 +7,10 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_DimensionValues_Route(t *testing.T) {
@@ -21,7 +22,7 @@ func Test_DimensionValues_Route(t *testing.T) {
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", `/dimension-values?region=us-east-2&dimensionKey=instanceId&namespace=AWS/EC2&metricName=CPUUtilization&dimensionFilters={"NodeID":["Shared"],"stage":["QueryCommit"]}`, nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionValuesHandler, nil))
+		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionValuesHandler, logger, nil))
 		handler.ServeHTTP(rr, req)
 	})
 
@@ -33,7 +34,7 @@ func Test_DimensionValues_Route(t *testing.T) {
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", `/dimension-values?region=us-east-2&dimensionKey=instanceId&namespace=AWS/EC2&metricName=CPUUtilization&dimensionFilters={"NodeID":["Shared"],"stage":["QueryCommit"]}`, nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionValuesHandler, nil))
+		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionValuesHandler, logger, nil))
 		handler.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 		assert.Equal(t, `{"Message":"error in DimensionValuesHandler: some error","Error":"some error","StatusCode":500}`, rr.Body.String())

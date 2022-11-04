@@ -3,12 +3,15 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 )
 
 func TestCloudWatchQuery(t *testing.T) {
@@ -641,7 +644,7 @@ func Test_ParseMetricDataQueries_query_type_and_metric_editor_mode_and_GMD_query
 			require.NotNil(t, res[0])
 			assert.Equal(t, tc.expectedMetricQueryType, res[0].MetricQueryType)
 			assert.Equal(t, tc.expectedMetricEditorMode, res[0].MetricEditorMode)
-			assert.Equal(t, tc.expectedGMDApiMode, res[0].GetGMDAPIMode())
+			assert.Equal(t, tc.expectedGMDApiMode, res[0].GetGMDAPIMode(&logtest.Fake{}))
 		})
 	}
 }
@@ -948,8 +951,11 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 
 		res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), true)
 		assert.NoError(t, err)
-
 		require.Len(t, res, 2)
+
+		sort.Slice(res, func(i, j int) bool {
+			return res[i].RefId < res[j].RefId
+		})
 
 		require.NotNil(t, res[0])
 		assert.Equal(t, "{{period}} {{any_other_word}}", res[0].Alias)

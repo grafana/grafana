@@ -17,7 +17,7 @@ import { MySqlDatasource } from '../MySqlDatasource';
 import { MySQLOptions } from '../types';
 
 describe('MySQLDatasource', () => {
-  const setupTextContext = (response: any) => {
+  const setupTextContext = (response: unknown) => {
     jest.clearAllMocks();
     setBackendSrv(backendSrv);
     const fetchMock = jest.spyOn(backendSrv, 'fetch');
