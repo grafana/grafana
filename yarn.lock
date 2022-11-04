@@ -4440,7 +4440,7 @@ __metadata:
     ts-loader: 8.4.0
     tslib: 2.4.1
     typescript: 4.8.4
-    uuid: 8.3.2
+    uuid: 9.0.0
     webpack: 5.74.0
     yaml: ^2.0.0
   bin:
@@ -4820,7 +4820,7 @@ __metadata:
     tslib: 2.4.1
     typescript: 4.8.4
     uplot: 1.6.22
-    uuid: 8.3.2
+    uuid: 9.0.0
     webpack: 5.74.0
   peerDependencies:
     react: ^16.8.0 || ^17.0.0
@@ -21812,7 +21812,7 @@ __metadata:
     tslib: 2.4.1
     typescript: 4.8.4
     uplot: 1.6.22
-    uuid: 8.3.2
+    uuid: 9.0.0
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
     wait-on: 6.0.1
@@ -37989,12 +37989,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:8.3.2, uuid@npm:^8.3.2":
-  version: 8.3.2
-  resolution: "uuid@npm:8.3.2"
+"uuid@npm:9.0.0":
+  version: 9.0.0
+  resolution: "uuid@npm:9.0.0"
   bin:
     uuid: dist/bin/uuid
-  checksum: 5575a8a75c13120e2f10e6ddc801b2c7ed7d8f3c8ac22c7ed0c7b2ba6383ec0abda88c905085d630e251719e0777045ae3236f04c812184b7c765f63a70e58df
+  checksum: 8dd2c83c43ddc7e1c71e36b60aea40030a6505139af6bee0f382ebcd1a56f6cd3028f7f06ffb07f8cf6ced320b76aea275284b224b002b289f89fe89c389b028
   languageName: node
   linkType: hard
 
@@ -38004,6 +38004,15 @@ __metadata:
   bin:
     uuid: ./bin/uuid
   checksum: 58de2feed61c59060b40f8203c0e4ed7fd6f99d42534a499f1741218a1dd0c129f4aa1de797bcf822c8ea5da7e4137aa3673431a96dae729047f7aca7b27866f
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^8.3.2":
+  version: 8.3.2
+  resolution: "uuid@npm:8.3.2"
+  bin:
+    uuid: dist/bin/uuid
+  checksum: 5575a8a75c13120e2f10e6ddc801b2c7ed7d8f3c8ac22c7ed0c7b2ba6383ec0abda88c905085d630e251719e0777045ae3236f04c812184b7c765f63a70e58df
   languageName: node
   linkType: hard
 
