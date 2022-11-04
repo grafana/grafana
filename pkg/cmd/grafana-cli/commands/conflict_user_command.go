@@ -238,6 +238,7 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 		return fmt.Errorf("unable to compile regex %s: %w", diffPattern, err)
 	}
 	counterKeepUsersForBlock := map[string]int{}
+	counterDeleteUsersForBlock := map[string]int{}
 	currentBlock := ""
 	for rowNumber, row := range strings.Split(string(b), "\n") {
 		// end of file
@@ -270,6 +271,8 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 		// need to track how many keep users we have for a block
 		if row[0] == '+' {
 			counterKeepUsersForBlock[currentBlock] += 1
+		} else if row[0] == '-' {
+			counterDeleteUsersForBlock[currentBlock] += 1
 		}
 		newUser := &ConflictingUser{}
 		err := newUser.Marshal(row)
@@ -289,6 +292,12 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 		// check if we only have one addition for each block
 		if count != 1 {
 			return fmt.Errorf("invalid number of users to keep, expected 1, got %d", count)
+		}
+	}
+	for _, count := range counterDeleteUsersForBlock {
+		// check if we have at least one deletion for each block
+		if count < 1 {
+			return fmt.Errorf("invalid number of users to delete, should be at least 1, got %d", count)
 		}
 	}
 	r.ValidUsers = newConflicts
