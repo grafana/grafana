@@ -199,7 +199,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(repo.Service), new(*repo.Manager)),
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
-	pluginsintegration.ProvidePluginsIntegrationSet,
+	pluginsintegration.WireSet,
 	managerStore.ProvideService,
 	wire.Bind(new(plugins.Store), new(*managerStore.Service)),
 	wire.Bind(new(plugins.RendererManager), new(*managerStore.Service)),

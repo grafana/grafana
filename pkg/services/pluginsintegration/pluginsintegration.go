@@ -11,24 +11,20 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvidePluginsIntegrationSet(cfg *setting.Cfg,
-	oAuthTokenService oauthtoken.OAuthTokenService) wire.ProviderSet {
+// WireSet provides a wire.ProviderSet of plugin providers.
+var WireSet = wire.NewSet(
+	ProvideClientProvider,
+	wire.Bind(new(plugins.Client), new(*client.Provider)),
+)
+
+func ProvideClientProvider(cfg *setting.Cfg, pCfg *config.Cfg,
+	pluginRegistry registry.Service,
+	oAuthTokenService oauthtoken.OAuthTokenService) (*client.Provider, error) {
+	c := client.ProvideService(pluginRegistry, pCfg)
 	clientMiddlewares := []plugins.ClientMiddleware{
 		clientmiddleware.NewForwardOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewForwardCookiesMiddleware(cfg),
 	}
 
-	return wire.NewSet(
-		provideClientProvider(clientMiddlewares...),
-		wire.Bind(new(plugins.Client), new(*client.Provider)),
-	)
-}
-
-func provideClientProvider(middlewares ...plugins.ClientMiddleware) func(pCfg *config.Cfg,
-	pluginRegistry registry.Service) (*client.Provider, error) {
-	return func(pCfg *config.Cfg,
-		pluginRegistry registry.Service) (*client.Provider, error) {
-		c := client.ProvideService(pluginRegistry, pCfg)
-		return client.NewProvider(c, middlewares...)
-	}
+	return client.NewProvider(c, clientMiddlewares...)
 }

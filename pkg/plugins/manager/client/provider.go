@@ -13,12 +13,6 @@ type Provider struct {
 	middlewares []plugins.ClientMiddleware
 }
 
-func ProvideProvider(client *Service) (*Provider, error) {
-	middlewares := []plugins.ClientMiddleware{}
-
-	return NewProvider(client, middlewares...)
-}
-
 func NewProvider(client plugins.Client, middlewares ...plugins.ClientMiddleware) (*Provider, error) {
 	if client == nil {
 		return nil, fmt.Errorf("client cannot be nil")
