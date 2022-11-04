@@ -1363,12 +1363,30 @@ github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWmnc=
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
 github.com/grafana/alerting v0.0.0-20221221211348-c5ab25d1cb8a h1:Ros/f8x4rPGiOyDEv0k0bDN26IDtaxn1qMs0RMN7daw=
 github.com/grafana/alerting v0.0.0-20221221211348-c5ab25d1cb8a/go.mod h1:A+ko8Ui4Ojw9oTi1WMCPH937mFUozN8Y41cqrOfNuy8=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
 github.com/grafana/cuetsy v0.1.5 h1:mnFwAXdbqCsyL8r7kkdUMJ4kOAR26cxIPmrZj7JzTeY=
 github.com/grafana/cuetsy v0.1.5/go.mod h1:4KWkUOslwvRTpEv7wdQG0jDFTuJmU+0L9x0h4kWxa2A=
+=======
+<<<<<<< HEAD
+=======
+github.com/grafana/alerting v0.0.0-20221123220210-67a9f4464f1f h1:fldqX6OqTkMVJcic9ye1FhVy9zBcxxzs5/stDfdCNE8=
+github.com/grafana/alerting v0.0.0-20221123220210-67a9f4464f1f/go.mod h1:BO51roH8bMRpAqeWxvnGePyCQoqgk1TiNISYKfoyHzQ=
+>>>>>>> 5012a466ac (more go.mod fixes)
+=======
+github.com/grafana/alerting v0.0.0-20221215195045-4dd9b084e84d h1:2uPWbeBhkBfS5wpwU7wtZGLVn/XML2EqtiCdKGOBzDA=
+github.com/grafana/alerting v0.0.0-20221215195045-4dd9b084e84d/go.mod h1:BO51roH8bMRpAqeWxvnGePyCQoqgk1TiNISYKfoyHzQ=
+>>>>>>> 384909a262 (Let's see what else breaks?)
+github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
+github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
+github.com/grafana/cuetsy v0.1.1 h1:+1jaDDYCpvKlcOWJgBRbkc5+VZIClCEn5mbI+4PLZqM=
+github.com/grafana/cuetsy v0.1.1/go.mod h1:4KWkUOslwvRTpEv7wdQG0jDFTuJmU+0L9x0h4kWxa2A=
+>>>>>>> 2c21feb390 (WIP: Remove Alertmanager depedency from Grafana)
 github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f h1:FvvSVEbnGeM2bUivGmsiXTi8URJyBU7TcFEEoRe5wWI=
 github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f/go.mod h1:uPG2nyK4CtgNDmWv7qyzYcdI+S90kHHRWvHnBtEMBXM=
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036 h1:GplhUk6Xes5JIhUUrggPcPBhOn+eT8+WsHiebvq7GgA=

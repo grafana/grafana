@@ -256,6 +256,7 @@ require (
 	github.com/getkin/kin-openapi v0.103.0
 	github.com/golang-migrate/migrate/v4 v4.7.0
 	github.com/google/go-github/v45 v45.2.0
+	github.com/grafana/alerting v0.0.0-20221215195045-4dd9b084e84d
 	github.com/grafana/codejen v0.0.3
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
 	github.com/grafana/phlare/api v0.1.2
@@ -272,6 +273,8 @@ require (
 	gocloud.dev v0.25.0
 	k8s.io/client-go v12.0.0+incompatible // gets replaced with v0.25.0
 )
+
+require k8s.io/apimachinery v0.25.0
 
 require (
 	github.com/dave/dst v0.27.2
