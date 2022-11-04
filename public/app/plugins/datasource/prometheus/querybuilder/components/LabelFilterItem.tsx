@@ -18,7 +18,7 @@ export interface Props {
   onDelete: () => void;
   invalidLabel?: boolean;
   invalidValue?: boolean;
-  getLabelValues: (query: string, labelName?: string) => Promise<SelectableValue[]>;
+  getLabelValuesAutofillSuggestions: (query: string, labelName?: string) => Promise<SelectableValue[]>;
 }
 
 export function LabelFilterItem({
@@ -30,7 +30,7 @@ export function LabelFilterItem({
   onGetLabelValues,
   invalidLabel,
   invalidValue,
-  getLabelValues,
+  getLabelValuesAutofillSuggestions,
 }: Props) {
   const [state, setState] = useState<{
     labelNames?: SelectableValue[];
@@ -53,7 +53,7 @@ export function LabelFilterItem({
     return [];
   };
 
-  const labelValueSearch = debounce((query: string) => getLabelValues(query, item.label), 350);
+  const labelValueSearch = debounce((query: string) => getLabelValuesAutofillSuggestions(query, item.label), 350);
 
   return (
     <div data-testid="prometheus-dimensions-filter-item">

@@ -78,7 +78,7 @@ describe('LabelFilters', () => {
       <LabelFilters
         onChange={jest.fn()}
         onGetLabelNames={jest.fn()}
-        getLabelValues={jest.fn()}
+        getLabelValuesAutofillSuggestions={jest.fn()}
         onGetLabelValues={jest.fn()}
         labelsFilters={[]}
       />
@@ -104,6 +104,11 @@ function setup(propOverrides?: Partial<ComponentProps<typeof LabelFilters>>) {
   const defaultProps = {
     onChange: jest.fn(),
     getLabelValues: jest.fn(),
+    getLabelValuesAutofillSuggestions: async (query: string, labelName?: string) => [
+      { label: 'bar', value: 'bar' },
+      { label: 'qux', value: 'qux' },
+      { label: 'quux', value: 'quux' },
+    ],
     onGetLabelNames: async () => [
       { label: 'foo', value: 'foo' },
       { label: 'bar', value: 'bar' },

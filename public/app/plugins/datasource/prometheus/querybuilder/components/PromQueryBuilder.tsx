@@ -14,6 +14,7 @@ import { OperationListExplained } from '../shared/OperationListExplained';
 import { OperationsEditorRow } from '../shared/OperationsEditorRow';
 import { QueryBuilderHints } from '../shared/QueryBuilderHints';
 import { RawQuery } from '../shared/RawQuery';
+import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
@@ -83,13 +84,14 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
       .map((k) => ({ value: k }));
   };
 
-  const getLabelValues = (queryString?: string, labelName?: string): Promise<SelectableValue[]> => {
-    console.log('queryString', queryString);
+  const getLabelValuesAutocompleteSuggestions = (
+    queryString?: string,
+    labelName?: string
+  ): Promise<SelectableValue[]> => {
     const forLabel = {
-      //@todo
       label: labelName ?? '__name__',
       op: '=~',
-      value: `${queryString}.*`,
+      value: regexifyLabelValuesQueryString(`${queryString}`),
     };
     const labelsToConsider = query.labels.filter((x) => x.label !== forLabel.label);
     labelsToConsider.push(forLabel);
@@ -201,7 +203,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
           labelsFilters={query.labels}
         />
         <LabelFilters
-          getLabelValues={getLabelValues}
+          getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
           labelsFilters={query.labels}
           onChange={onChangeLabels}
           onGetLabelNames={(forLabel: Partial<QueryBuilderLabelFilter>) =>
