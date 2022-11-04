@@ -178,7 +178,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   );
   const styles = useStyles2(getStyles);
 
-  // This cannot be inline func or it will create infinite render cycle.
+  // This cannot be inline func, or it will create infinite render cycle.
   const topLevelRef = useCallback(
     (r: HTMLDivElement) => {
       measureRef(r);

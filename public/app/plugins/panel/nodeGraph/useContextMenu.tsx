@@ -14,7 +14,9 @@ import { getEdgeFields, getNodeFields } from './utils';
  */
 export function useContextMenu(
   getLinks: (dataFrame: DataFrame, rowIndex: number) => LinkModel[],
+  // This can be undefined if we only use edge dataframe
   nodes: DataFrame | undefined,
+  // This can be undefined if we have only single node
   edges: DataFrame | undefined,
   config: Config,
   setConfig: (config: Config) => void,
@@ -28,13 +30,9 @@ export function useContextMenu(
 
   const onNodeOpen = useCallback(
     (event: MouseEvent<SVGElement>, node: NodeDatum) => {
-      let label = 'Show in Grid layout';
-      let showGridLayout = true;
-
-      if (config.gridLayout) {
-        label = 'Show in Graph layout';
-        showGridLayout = false;
-      }
+      const [label, showGridLayout] = config.gridLayout
+        ? ['Show in Graph layout', false]
+        : ['Show in Grid layout', true];
 
       const extraNodeItem = [
         {
@@ -51,15 +49,7 @@ export function useContextMenu(
       const renderer = getItemsRenderer(links, node, extraNodeItem);
 
       if (renderer) {
-        setMenu(
-          <ContextMenu
-            renderHeader={() => <NodeHeader node={node} nodes={nodes} />}
-            renderMenuItems={renderer}
-            onClose={() => setMenu(undefined)}
-            x={event.pageX}
-            y={event.pageY}
-          />
-        );
+        setMenu(makeContextMenu(<NodeHeader node={node} nodes={nodes} />, renderer, event, setMenu));
       }
     },
     [config, nodes, getLinks, setMenu, setConfig, setFocusedNodeId]
@@ -76,21 +66,30 @@ export function useContextMenu(
       const renderer = getItemsRenderer(links, edge);
 
       if (renderer) {
-        setMenu(
-          <ContextMenu
-            renderHeader={() => <EdgeHeader edge={edge} edges={edges} />}
-            renderMenuItems={renderer}
-            onClose={() => setMenu(undefined)}
-            x={event.pageX}
-            y={event.pageY}
-          />
-        );
+        setMenu(makeContextMenu(<EdgeHeader edge={edge} edges={edges} />, renderer, event, setMenu));
       }
     },
     [edges, getLinks, setMenu]
   );
 
   return { onEdgeOpen, onNodeOpen, MenuComponent: menu };
+}
+
+function makeContextMenu(
+  header: JSX.Element,
+  renderer: () => React.ReactNode,
+  event: MouseEvent<SVGElement>,
+  setMenu: (el: JSX.Element | undefined) => void
+) {
+  return (
+    <ContextMenu
+      renderHeader={() => header}
+      renderMenuItems={renderer}
+      onClose={() => setMenu(undefined)}
+      x={event.pageX}
+      y={event.pageY}
+    />
+  );
 }
 
 function getItemsRenderer<T extends NodeDatum | EdgeDatum>(
