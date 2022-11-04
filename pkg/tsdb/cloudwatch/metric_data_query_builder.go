@@ -8,11 +8,13 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
-func (e *cloudWatchExecutor) buildMetricDataQuery(query *models.CloudWatchQuery) (*cloudwatch.MetricDataQuery, error) {
+func (e *cloudWatchExecutor) buildMetricDataQuery(logger log.Logger, query *models.CloudWatchQuery) (*cloudwatch.MetricDataQuery, error) {
 	mdq := &cloudwatch.MetricDataQuery{
 		Id:         aws.String(query.Id),
 		ReturnData: aws.Bool(query.ReturnData),
@@ -22,7 +24,7 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(query *models.CloudWatchQuery)
 		mdq.Label = &query.Label
 	}
 
-	switch query.GetGMDAPIMode() {
+	switch query.GetGMDAPIMode(logger) {
 	case models.GMDApiModeMathExpression:
 		mdq.Period = aws.Int64(int64(query.Period))
 		mdq.Expression = aws.String(query.Expression)

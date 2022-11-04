@@ -22,7 +22,6 @@ const AnnotationsField = () => {
   const [selectedPanel, setSelectedPanel] = useState<number | undefined>(undefined);
 
   const { useDashboardQuery } = dashboardApi;
-
   const {
     control,
     register,

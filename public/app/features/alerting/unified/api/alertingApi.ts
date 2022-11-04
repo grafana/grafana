@@ -5,10 +5,20 @@ import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 
 import { DashboardDTO } from '../../../../types';
 import { DashboardSearchItem } from '../../../search/types';
+import { logInfo } from '../Analytics';
 
 const backendSrvBaseQuery = (): BaseQueryFn<BackendSrvRequest> => async (requestOptions) => {
   try {
+    const requestStartTs = performance.now();
+
     const { data, ...meta } = await lastValueFrom(getBackendSrv().fetch(requestOptions));
+
+    logInfo('Request finished', {
+      loadTimeMs: (performance.now() - requestStartTs).toFixed(0),
+      url: requestOptions.url,
+      method: requestOptions.method ?? '',
+      responseStatus: meta.statusText,
+    });
 
     return { data, meta };
   } catch (error) {

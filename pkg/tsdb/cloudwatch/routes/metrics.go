@@ -11,13 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 )
 
-func MetricsHandler(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
+func MetricsHandler(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
 	metricsRequest, err := request.GetMetricsRequest(parameters)
 	if err != nil {
 		return nil, models.NewHttpError("error in MetricsHandler", http.StatusBadRequest, err)
 	}
 
-	service, err := newListMetricsService(pluginCtx, clientFactory, metricsRequest.Region)
+	service, err := newListMetricsService(pluginCtx, reqCtxFactory, metricsRequest.Region)
 	if err != nil {
 		return nil, models.NewHttpError("error in MetricsHandler", http.StatusInternalServerError, err)
 	}

@@ -62,21 +62,24 @@ func ProvideService(
 }
 
 // FindDashboard Gets a dashboard by Uid
-func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
-	dashboard, err := pd.store.FindDashboard(ctx, dashboardUid)
-
+func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*models.Dashboard, error) {
+	dash, err := pd.store.FindDashboard(ctx, orgId, dashboardUid)
 	if err != nil {
 		return nil, err
 	}
 
-	return dashboard, err
+	if dash == nil {
+		return nil, dashboards.ErrDashboardNotFound
+	}
+
+	return dash, nil
 }
 
 // FindPublicDashboardAndDashboardByAccessToken Gets public dashboard via access token
 func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
-	pubdash, dash, err := pd.store.FindPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	ctxLogger := pd.log.FromContext(ctx)
 
+	pubdash, err := pd.store.FindByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -86,13 +89,18 @@ func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessTok
 		return nil, nil, ErrPublicDashboardNotFound
 	}
 
-	if dash == nil {
-		ctxLogger.Error("FindPublicDashboardAndDashboardByAccessToken: Dashboard not found", "accessToken", accessToken)
+	if !pubdash.IsEnabled {
+		ctxLogger.Error("FindPublicDashboardAndDashboardByAccessToken: Public dashboard is disabled", "accessToken", accessToken)
 		return nil, nil, ErrPublicDashboardNotFound
 	}
 
-	if !pubdash.IsEnabled {
-		ctxLogger.Error("FindPublicDashboardAndDashboardByAccessToken: Public dashboard is disabled", "accessToken", accessToken)
+	dash, err := pd.store.FindDashboard(ctx, pubdash.OrgId, pubdash.DashboardUid)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if dash == nil {
+		ctxLogger.Error("FindPublicDashboardAndDashboardByAccessToken: Dashboard not found", "accessToken", accessToken)
 		return nil, nil, ErrPublicDashboardNotFound
 	}
 
@@ -101,21 +109,96 @@ func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessTok
 
 // FindByDashboardUid is a helper method to retrieve the public dashboard configuration for a given dashboard from the database
 func (pd *PublicDashboardServiceImpl) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
-	pdc, err := pd.store.FindByDashboardUid(ctx, orgId, dashboardUid)
+	pubdash, err := pd.store.FindByDashboardUid(ctx, orgId, dashboardUid)
 	if err != nil {
 		return nil, err
 	}
 
-	return pdc, nil
+	if pubdash == nil {
+		return nil, ErrPublicDashboardNotFound
+	}
+
+	return pubdash, nil
 }
 
-// Save is a helper method to persist the sharing config
-// to the database. It handles validations for sharing config and persistence
-func (pd *PublicDashboardServiceImpl) Save(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error) {
-	// validate if the dashboard exists
-	dashboard, err := pd.FindDashboard(ctx, dto.DashboardUid)
+// Creates and validates the public dashboard and saves it to the database
+func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
+	// ensure dashboard exists
+	dashboard, err := pd.FindDashboard(ctx, u.OrgID, dto.DashboardUid)
 	if err != nil {
 		return nil, err
+	}
+
+	// set default value for time settings
+	if dto.PublicDashboard.TimeSettings == nil {
+		dto.PublicDashboard.TimeSettings = &TimeSettings{}
+	}
+
+	// validate fields
+	err = validation.ValidatePublicDashboard(dto, dashboard)
+	if err != nil {
+		return nil, err
+	}
+
+	// verify public dashboard does not exist and that we didn't get one from the
+	// request
+	existingPubdash, err := pd.store.Find(ctx, dto.PublicDashboard.Uid)
+	if err != nil {
+		return nil, err
+	} else if existingPubdash != nil {
+		return nil, ErrPublicDashboardBadRequest
+	}
+
+	uid, err := pd.NewPublicDashboardUid(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, err := pd.NewPublicDashboardAccessToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	cmd := SavePublicDashboardCommand{
+		PublicDashboard: PublicDashboard{
+			Uid:                uid,
+			DashboardUid:       dto.DashboardUid,
+			OrgId:              dto.OrgId,
+			IsEnabled:          dto.PublicDashboard.IsEnabled,
+			AnnotationsEnabled: dto.PublicDashboard.AnnotationsEnabled,
+			TimeSettings:       dto.PublicDashboard.TimeSettings,
+			CreatedBy:          dto.UserId,
+			CreatedAt:          time.Now(),
+			AccessToken:        accessToken,
+		},
+	}
+
+	_, err = pd.store.Create(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	//Get latest public dashboard to return
+	newPubdash, err := pd.store.Find(ctx, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	pd.logIsEnabledChanged(existingPubdash, newPubdash, u)
+
+	return newPubdash, err
+}
+
+// Updates an existing public dashboard based on publicdashboard.Uid
+func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
+	// validate if the dashboard exists
+	dashboard, err := pd.FindDashboard(ctx, u.OrgID, dto.DashboardUid)
+	if err != nil {
+		return nil, err
+	}
+
+	if dashboard == nil {
+		return nil, dashboards.ErrDashboardNotFound
 	}
 
 	// set default value for time settings
@@ -127,25 +210,41 @@ func (pd *PublicDashboardServiceImpl) Save(ctx context.Context, u *user.SignedIn
 	existingPubdash, err := pd.store.Find(ctx, dto.PublicDashboard.Uid)
 	if err != nil {
 		return nil, err
+	} else if existingPubdash == nil {
+		return nil, ErrPublicDashboardNotFound
 	}
 
-	// save changes
-	var pubdashUid string
-	if existingPubdash == nil {
-		err = validation.ValidateSavePublicDashboard(dto, dashboard)
-		if err != nil {
-			return nil, err
-		}
-		pubdashUid, err = pd.savePublicDashboard(ctx, dto)
-	} else {
-		pubdashUid, err = pd.updatePublicDashboard(ctx, dto)
-	}
+	// validate dashboard
+	err = validation.ValidatePublicDashboard(dto, dashboard)
 	if err != nil {
 		return nil, err
 	}
 
-	//Get latest public dashboard to return
-	newPubdash, err := pd.store.Find(ctx, pubdashUid)
+	// set values to update
+	cmd := SavePublicDashboardCommand{
+		PublicDashboard: PublicDashboard{
+			Uid:                existingPubdash.Uid,
+			IsEnabled:          dto.PublicDashboard.IsEnabled,
+			AnnotationsEnabled: dto.PublicDashboard.AnnotationsEnabled,
+			TimeSettings:       dto.PublicDashboard.TimeSettings,
+			UpdatedBy:          dto.UserId,
+			UpdatedAt:          time.Now(),
+		},
+	}
+
+	// persist
+	affectedRows, err := pd.store.Update(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	// 404 if not found
+	if affectedRows == 0 {
+		return nil, ErrPublicDashboardNotFound
+	}
+
+	// get latest public dashboard to return
+	newPubdash, err := pd.store.Find(ctx, existingPubdash.Uid)
 	if err != nil {
 		return nil, err
 	}
@@ -187,59 +286,7 @@ func (pd *PublicDashboardServiceImpl) NewPublicDashboardAccessToken(ctx context.
 	return "", ErrPublicDashboardFailedGenerateAccessToken
 }
 
-// Called by Save this handles business logic
-// to generate token and calls create at the database layer
-func (pd *PublicDashboardServiceImpl) savePublicDashboard(ctx context.Context, dto *SavePublicDashboardConfigDTO) (string, error) {
-	uid, err := pd.NewPublicDashboardUid(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	accessToken, err := pd.NewPublicDashboardAccessToken(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	cmd := SavePublicDashboardConfigCommand{
-		PublicDashboard: PublicDashboard{
-			Uid:                uid,
-			DashboardUid:       dto.DashboardUid,
-			OrgId:              dto.OrgId,
-			IsEnabled:          dto.PublicDashboard.IsEnabled,
-			AnnotationsEnabled: dto.PublicDashboard.AnnotationsEnabled,
-			TimeSettings:       dto.PublicDashboard.TimeSettings,
-			CreatedBy:          dto.UserId,
-			CreatedAt:          time.Now(),
-			AccessToken:        accessToken,
-		},
-	}
-
-	err = pd.store.Save(ctx, cmd)
-	if err != nil {
-		return "", err
-	}
-
-	return uid, nil
-}
-
-// Called by Save this handles business logic for updating a
-// dashboard and calls update at the database layer
-func (pd *PublicDashboardServiceImpl) updatePublicDashboard(ctx context.Context, dto *SavePublicDashboardConfigDTO) (string, error) {
-	cmd := SavePublicDashboardConfigCommand{
-		PublicDashboard: PublicDashboard{
-			Uid:                dto.PublicDashboard.Uid,
-			IsEnabled:          dto.PublicDashboard.IsEnabled,
-			AnnotationsEnabled: dto.PublicDashboard.AnnotationsEnabled,
-			TimeSettings:       dto.PublicDashboard.TimeSettings,
-			UpdatedBy:          dto.UserId,
-			UpdatedAt:          time.Now(),
-		},
-	}
-
-	return dto.PublicDashboard.Uid, pd.store.Update(ctx, cmd)
-}
-
-// Gets a list of public dashboards by orgId
+// FindAll Returns a list of public dashboards by orgId
 func (pd *PublicDashboardServiceImpl) FindAll(ctx context.Context, u *user.SignedInUser, orgId int64) ([]PublicDashboardListResponse, error) {
 	publicDashboards, err := pd.store.FindAll(ctx, orgId)
 	if err != nil {
@@ -259,6 +306,19 @@ func (pd *PublicDashboardServiceImpl) ExistsEnabledByAccessToken(ctx context.Con
 
 func (pd *PublicDashboardServiceImpl) GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error) {
 	return pd.store.GetOrgIdByAccessToken(ctx, accessToken)
+}
+
+func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, orgId int64, uid string) error {
+	affectedRows, err := pd.store.Delete(ctx, orgId, uid)
+	if err != nil {
+		return err
+	}
+
+	if affectedRows == 0 {
+		return ErrPublicDashboardNotFound
+	}
+
+	return nil
 }
 
 // intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards

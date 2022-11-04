@@ -48,7 +48,7 @@ export function MetricStatEditor({
     if (!metricName) {
       return metricStat;
     }
-    await datasource.api.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
+    await datasource.api.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
       if (!result.find((metric) => metric.value === metricName)) {
         metricName = '';
       }
