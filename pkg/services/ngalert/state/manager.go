@@ -354,52 +354,54 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 	var resolvedImage *ngModels.Image
 
 	var resolvedStates []StateTransition
-	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
+	staleStates := st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
+		// Is the cached state in our recently processed results? If not, is it stale?
+		_, ok := states[s.CacheID]
+		return !ok && stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
+	})
+
 	toDelete := make([]ngModels.AlertInstanceKey, 0)
 
-	for _, s := range allStates {
-		// Is the cached state in our recently processed results? If not, is it stale?
-		if _, ok := states[s.CacheID]; !ok && stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
-			logger.Info("Removing stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
-			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheID)
-			ilbs := ngModels.InstanceLabels(s.Labels)
-			_, labelsHash, err := ilbs.StringAndHash()
-			if err != nil {
-				logger.Error("Unable to get labelsHash", "error", err.Error(), s.AlertRuleUID)
+	for _, s := range staleStates {
+		logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
+
+		ilbs := ngModels.InstanceLabels(s.Labels)
+		_, labelsHash, err := ilbs.StringAndHash()
+		if err != nil {
+			logger.Error("Unable to get labelsHash", "error", err.Error(), s.AlertRuleUID)
+		}
+
+		toDelete = append(toDelete, ngModels.AlertInstanceKey{RuleOrgID: s.OrgID, RuleUID: s.AlertRuleUID, LabelsHash: labelsHash})
+
+		if s.State == eval.Alerting {
+			oldState := s.State
+			oldReason := s.StateReason
+
+			s.State = eval.Normal
+			s.StateReason = ngModels.StateReasonMissingSeries
+			s.EndsAt = evaluatedAt
+			s.Resolved = true
+			s.LastEvaluationTime = evaluatedAt
+			record := StateTransition{
+				State:               s,
+				PreviousState:       oldState,
+				PreviousStateReason: oldReason,
 			}
 
-			toDelete = append(toDelete, ngModels.AlertInstanceKey{RuleOrgID: s.OrgID, RuleUID: s.AlertRuleUID, LabelsHash: labelsHash})
-
-			if s.State == eval.Alerting {
-				oldState := s.State
-				oldReason := s.StateReason
-
-				s.State = eval.Normal
-				s.StateReason = ngModels.StateReasonMissingSeries
-				s.EndsAt = evaluatedAt
-				s.Resolved = true
-				s.LastEvaluationTime = evaluatedAt
-				record := StateTransition{
-					State:               s,
-					PreviousState:       oldState,
-					PreviousStateReason: oldReason,
+			// If there is no resolved image for this rule then take one
+			if resolvedImage == nil {
+				image, err := takeImage(ctx, st.imageService, alertRule)
+				if err != nil {
+					logger.Warn("Failed to take an image",
+						"dashboard", alertRule.DashboardUID,
+						"panel", alertRule.PanelID,
+						"error", err)
+				} else if image != nil {
+					resolvedImage = image
 				}
-
-				// If there is no resolved image for this rule then take one
-				if resolvedImage == nil {
-					image, err := takeImage(ctx, st.imageService, alertRule)
-					if err != nil {
-						logger.Warn("Failed to take an image",
-							"dashboard", alertRule.DashboardUID,
-							"panel", alertRule.PanelID,
-							"error", err)
-					} else if image != nil {
-						resolvedImage = image
-					}
-				}
-				s.Image = resolvedImage
-				resolvedStates = append(resolvedStates, record)
 			}
+			s.Image = resolvedImage
+			resolvedStates = append(resolvedStates, record)
 		}
 	}
 
