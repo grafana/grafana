@@ -131,21 +131,31 @@ seqs: [
 				// in all orgs
 				autoEnabled?: bool
 
-				// List of RBAC roles and their assignments.
+				// Optional list of RBAC RoleRegistrations.
+				// Describes and organizes the default permissions associated with any of the Grafana basic roles, 
+				// which characterizes what viewers, editors, admins, or grafana admins can do on the plugin.
+				// The admin basic role inherits permissions from the editor basic role which in turn inherits
+				// permissions from the viewer basic role.
 				roles?: [...#RoleRegistration]
 
-				// RoleRegistration describes the definition of an RBAC role
-				// and its assignments to BasicRoles
+				// RoleRegistration describes an RBAC role and its assignments to basic roles.
+				// It organizes related RBAC permissions on the plugin into a role and defines which basic roles
+				// will get them by default.
+				// Example: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin
+				// which will be granted to Admins by default.
 				#RoleRegistration: {
-					// RBAC role definition
+					// RBAC role definition to bundle related RBAC permissions on the plugin.
 					role: #Role
 
-					// Assignment to a basic role 
-					// (Viewer, Editor, Admin, Grafana Admin)
+					// Default assignment of the role to Grafana basic roles (Viewer, Editor, Admin, Grafana Admin)
+					// The admin basic role inherits permissions from the editor basic role which in turn inherits
+					// permissions from the viewer basic role.
 					grants: [...#BasicRole]
 				}
 
-				// Role describes an RBAC role and its permissions
+				// Role describes an RBAC role which allows grouping multiple related permissions on the plugin,
+				// each of which has an action and an optional scope.
+				// Example: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin.
 				#Role: {
 					name: string,
 					displayName: string,
@@ -153,11 +163,17 @@ seqs: [
 					permissions: [...#Permission]
 				}
 
+				// Permission describes an RBAC permission on the plugin. A permission has an action and an option
+				// scope.
+				// Example: action: 'test-app.schedules:read', scope: 'test-app.schedules:*'
 				#Permission: {
 					action: string,
 					scope?: string
 				}
 
+				// BasicRole is a Grafana basic role, which can be 'Viewer', 'Editor', 'Admin' or 'Grafana Admin'.
+				// With RBAC, the admin basic role inherits permissions from the editor basic role which in turn
+				// inherits permissions from the viewer basic role.
 				#BasicRole: "Grafana Admin" | "Admin" | "Editor" | "Viewer"
 
 				// Dependencies needed by the plugin.
