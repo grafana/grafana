@@ -1,18 +1,18 @@
 import debounce from 'debounce-promise';
-import React, {useEffect, useState} from 'react';
+import React, { useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
 import { AsyncSelect, Select } from '@grafana/ui';
 
-import {PROMETHEUS_QUERY_BUILDER_MAX_RESULTS} from "../components/MetricSelect";
-import {QueryBuilderLabelFilter} from "../shared/types";
+import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from '../components/MetricSelect';
+import { QueryBuilderLabelFilter } from '../shared/types';
 
 export interface Props {
   defaultOp: string;
   item: Partial<QueryBuilderLabelFilter>;
-  onChange: (value: QueryBuilderLabelFilter) => void;
+  onChange: (value: Partial<QueryBuilderLabelFilter>) => void;
   onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
   onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
   onDelete: () => void;
@@ -43,10 +43,6 @@ export function LabelFilterItem({
     return operators.find((op) => op.label === operator)?.isMultiValue;
   };
 
-  useEffect(() => {
-    console.log('loading state change', state.isLoadingLabelValues)
-  }, [state.isLoadingLabelValues])
-
   const getSelectOptionsFromString = (item?: string): string[] => {
     if (item) {
       if (item.indexOf('|') > 0) {
@@ -62,6 +58,7 @@ export function LabelFilterItem({
   return (
     <div data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
+        {/* Label name select, loads all values at once */}
         <Select
           placeholder="Select label"
           aria-label={selectors.components.QueryBuilder.labelSelect}
@@ -82,12 +79,13 @@ export function LabelFilterItem({
                 ...item,
                 op: item.op ?? defaultOp,
                 label: change.label,
-              } as unknown as QueryBuilderLabelFilter);
+              });
             }
           }}
           invalid={invalidLabel}
         />
 
+        {/* Operator select i.e.   = =~ != !~   */}
         <Select
           aria-label={selectors.components.QueryBuilder.matchOperatorSelect}
           value={toOption(item.op ?? defaultOp)}
@@ -99,11 +97,12 @@ export function LabelFilterItem({
                 ...item,
                 op: change.value,
                 value: isMultiSelect(change.value) ? item.value : getSelectOptionsFromString(item?.value)[0],
-              } as unknown as QueryBuilderLabelFilter);
+              });
             }
           }}
         />
 
+        {/* Label value async select: autocomplete calls prometheus API */}
         <AsyncSelect
           placeholder="Select value"
           aria-label={selectors.components.QueryBuilder.valueSelect}
@@ -130,8 +129,6 @@ export function LabelFilterItem({
           defaultOptions={state.labelValues}
           isMulti={isMultiSelect()}
           isLoading={state.isLoadingLabelValues}
-
-          // options={getOptions()}
           loadOptions={labelValueSearch}
           onChange={(change) => {
             if (change.value) {
@@ -139,14 +136,14 @@ export function LabelFilterItem({
                 ...item,
                 value: change.value,
                 op: item.op ?? defaultOp,
-              } as unknown as QueryBuilderLabelFilter);
+              });
             } else {
               const changes = change
-                .map((change: any) => {
+                .map((change: { label?: string }) => {
                   return change.label;
                 })
                 .join('|');
-              onChange({ ...item, value: changes, op: item.op ?? defaultOp } as unknown as QueryBuilderLabelFilter);
+              onChange({ ...item, value: changes, op: item.op ?? defaultOp });
             }
           }}
           invalid={invalidValue}

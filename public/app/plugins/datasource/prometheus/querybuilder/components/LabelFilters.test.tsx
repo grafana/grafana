@@ -75,7 +75,13 @@ describe('LabelFilters', () => {
     expect(screen.getByText(/foo/)).toBeInTheDocument();
     expect(screen.getByText(/bar/)).toBeInTheDocument();
     rerender(
-      <LabelFilters onChange={jest.fn()} onGetLabelNames={jest.fn()} getLabelValues={jest.fn()} onGetLabelValues={jest.fn()} labelsFilters={[]} />
+      <LabelFilters
+        onChange={jest.fn()}
+        onGetLabelNames={jest.fn()}
+        getLabelValues={jest.fn()}
+        onGetLabelValues={jest.fn()}
+        labelsFilters={[]}
+      />
     );
     expect(screen.getAllByText('Select label')).toHaveLength(1);
     expect(screen.getAllByText('Select value')).toHaveLength(1);
@@ -113,7 +119,7 @@ function setup(propOverrides?: Partial<ComponentProps<typeof LabelFilters>>) {
 
   const props = { ...defaultProps, ...propOverrides };
 
-  const { rerender } = render(<LabelFilters  {...props} />);
+  const { rerender } = render(<LabelFilters {...props} />);
   return { ...props, rerender };
 }
 
