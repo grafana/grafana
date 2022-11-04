@@ -4764,7 +4764,7 @@ __metadata:
     esbuild: 0.15.12
     expose-loader: 4.0.0
     hoist-non-react-statics: 3.3.2
-    i18next: ^21.9.2
+    i18next: ^22.0.0
     immutable: 4.1.0
     is-hotkey: 0.2.0
     jquery: 3.6.1
@@ -21696,7 +21696,7 @@ __metadata:
     html-webpack-plugin: 5.5.0
     http-server: 14.1.1
     husky: 8.0.1
-    i18next: ^21.9.2
+    i18next: ^22.0.0
     i18next-parser: 6.6.0
     immer: 9.0.16
     immutable: 4.1.0
@@ -22713,12 +22713,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"i18next@npm:^21.2.0, i18next@npm:^21.9.2":
+"i18next@npm:^21.2.0":
   version: 21.9.2
   resolution: "i18next@npm:21.9.2"
   dependencies:
     "@babel/runtime": ^7.17.2
   checksum: e53b3885fa85cab7fcd4f8667b7fc3d37b06f095494703994d49fa0e961ad1f495181621e569dc58e759ff12c63a9c7704c33592ba529b7689ea7f5304be0423
+  languageName: node
+  linkType: hard
+
+"i18next@npm:^22.0.0":
+  version: 22.0.4
+  resolution: "i18next@npm:22.0.4"
+  dependencies:
+    "@babel/runtime": ^7.17.2
+  checksum: aa49e6e48583833ee673c0dd9568081a5e15fde9549aa3e47a99ad91d3fdb7469f8a315864fc45ec466b1e60caa00d5fc8371e47840068048b4ab79a69dc2b19
   languageName: node
   linkType: hard
 
