@@ -100,26 +100,14 @@ export const publicDashboardApi = createApi({
       }),
       providesTags: ['AuditTablePublicDashboard'],
     }),
-    deletePublicDashboard: builder.mutation<
-      void,
-      { dashboard?: DashboardModel; dashboardTitle: string; dashboardUid: string; uid: string }
-    >({
+    deletePublicDashboard: builder.mutation<void, { dashboard?: DashboardModel; dashboardUid: string; uid: string }>({
       query: (params) => ({
         url: `/uid/${params.dashboardUid}/public-dashboards/${params.uid}`,
         method: 'DELETE',
       }),
-      async onQueryStarted({ dashboard, dashboardTitle, uid }, { dispatch, queryFulfilled }) {
+      async onQueryStarted({ dashboard, uid }, { dispatch, queryFulfilled }) {
         await queryFulfilled;
-        dispatch(
-          notifyApp(
-            createSuccessNotification(
-              'Public dashboard deleted',
-              !!dashboardTitle
-                ? `Public dashboard for "${dashboardTitle}" has been deleted`
-                : `Public dashboard has been deleted`
-            )
-          )
-        );
+        dispatch(notifyApp(createSuccessNotification('Public dashboard deleted!')));
 
         dashboard?.updateMeta({
           hasPublicDashboard: false,

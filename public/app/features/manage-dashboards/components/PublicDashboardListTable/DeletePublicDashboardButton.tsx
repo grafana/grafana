@@ -33,7 +33,6 @@ export const DeletePublicDashboardButton = ({
       dashboard,
       uid: pd.uid,
       dashboardUid: pd.dashboardUid,
-      dashboardTitle: pd.title,
     });
     onDelete();
   };
