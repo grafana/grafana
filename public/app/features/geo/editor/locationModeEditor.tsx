@@ -64,7 +64,6 @@ export const LocationModeEditor = ({
 
   const styles = useStyles2(getStyles);
 
-  // TODO extend for other cases, for example auto when it's happy
   const dataValidation = () => {
     if (info) {
       if (info.warning) {

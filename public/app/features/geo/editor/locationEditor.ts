@@ -17,7 +17,6 @@ export function addLocationFields<TOptions>(
   source?: FrameGeometrySource,
   data?: DataFrame[]
 ) {
-  // TODO replace radio with custom component
   builder.addCustomEditor({
     id: 'modeEditor',
     path: `${prefix}mode`,
