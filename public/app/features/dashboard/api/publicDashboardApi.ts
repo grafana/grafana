@@ -115,13 +115,14 @@ export const publicDashboardApi = createApi({
             createSuccessNotification(
               'Public dashboard deleted',
               !!dashboardTitle
-                ? `Public dashboard for ${dashboardTitle} has been deleted`
+                ? `Public dashboard for "${dashboardTitle}" has been deleted`
                 : `Public dashboard has been deleted`
             )
           )
         );
 
         dashboard?.updateMeta({
+          hasPublicDashboard: false,
           publicDashboardUid: uid,
           publicDashboardEnabled: false,
         });

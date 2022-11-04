@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useContext, useEffect, useMemo, useState } from 'react';
+import { Subscription } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -14,6 +15,7 @@ import {
   useStyles2,
   Spinner,
   ModalsContext,
+  useForceUpdate,
 } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -37,18 +39,20 @@ import { DeletePublicDashboardButton } from 'app/features/manage-dashboards/comp
 import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
 import { AccessControlAction } from 'app/types';
 
+import { DashboardMetaChangedEvent } from '../../../../../types/events';
 import { ShareModal } from '../ShareModal';
 
 interface Props extends ShareModalTabProps {}
 
 export const SharePublicDashboard = (props: Props) => {
-  const dashboardVariables = props.dashboard.getVariables();
-  const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
+  const forceUpdate = useForceUpdate();
   const styles = useStyles2(getStyles);
   const { showModal, hideModal } = useContext(ModalsContext);
   const isDesktop = useIsDesktop();
 
-  const [hasPublicDashboard, setHasPublicDashboard] = useState(props.dashboard.meta.hasPublicDashboard);
+  const dashboardVariables = props.dashboard.getVariables();
+  const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
+  const { hasPublicDashboard } = props.dashboard.meta;
 
   const {
     isLoading: isGetLoading,
@@ -75,8 +79,12 @@ export const SharePublicDashboard = (props: Props) => {
   const [annotationsEnabled, setAnnotationsEnabled] = useState(false);
 
   useEffect(() => {
+    const eventSubs = new Subscription();
+    eventSubs.add(props.dashboard.events.subscribe(DashboardMetaChangedEvent, forceUpdate));
     reportInteraction('grafana_dashboards_public_share_viewed');
-  }, []);
+
+    return () => eventSubs.unsubscribe();
+  }, [props.dashboard.events, forceUpdate]);
 
   useEffect(() => {
     if (publicDashboardPersisted(publicDashboard)) {
@@ -125,14 +133,7 @@ export const SharePublicDashboard = (props: Props) => {
     };
 
     // create or update based on whether we have existing uid
-
-    if (hasPublicDashboard) {
-      await updatePublicDashboard(req).unwrap();
-      setHasPublicDashboard(true);
-    } else {
-      await createPublicDashboard(req).unwrap();
-      setHasPublicDashboard(true);
-    }
+    hasPublicDashboard ? updatePublicDashboard(req) : createPublicDashboard(req);
   };
 
   const onAcknowledge = (field: string, checked: boolean) => {
@@ -230,7 +231,7 @@ export const SharePublicDashboard = (props: Props) => {
             <HorizontalGroup>
               <Layout orientation={isDesktop ? 0 : 1}>
                 <Button disabled={isSaveDisabled} onClick={onSavePublicConfig} data-testid={selectors.SaveConfigButton}>
-                  Save sharing configuration
+                  {hasPublicDashboard ? 'Save public dashboard' : 'Create public dashboard'}
                 </Button>
                 {publicDashboard && hasWritePermissions && (
                   <DeletePublicDashboardButton

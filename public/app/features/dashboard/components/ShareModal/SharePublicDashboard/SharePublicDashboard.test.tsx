@@ -109,11 +109,10 @@ describe('SharePublic', () => {
     fireEvent.click(screen.getByText('Public dashboard'));
 
     await screen.findByText('Welcome to Grafana public dashboards alpha!');
-
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+    expect(screen.getByText('Create public dashboard')).toBeInTheDocument();
     expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
   });
-  it('renders public dashboard modal without delete button because lack of permissions', async () => {
+  it('renders public dashboard modal without delete button because no public dashboard was already created', async () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
 
@@ -124,7 +123,7 @@ describe('SharePublic', () => {
 
     await screen.findByText('Welcome to Grafana public dashboards alpha!');
 
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+    expect(screen.getByText('Create public dashboard')).toBeInTheDocument();
     expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
   });
   it('renders default relative time in input', async () => {
@@ -154,6 +153,7 @@ describe('SharePublic', () => {
 
     screen.getAllByTestId('Spinner');
 
+    expect(screen.getByText('Save public dashboard')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.WillBePublicCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.LimitedDSCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.CostIncreaseCheckbox)).toBeDisabled();
@@ -177,6 +177,7 @@ describe('SharePublic', () => {
     expect(screen.getByTestId(selectors.CostIncreaseCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeDisabled();
     expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeDisabled();
+    expect(screen.getByText('Save public dashboard')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
     expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
   });
@@ -202,6 +203,7 @@ describe('SharePublic - New config setup', () => {
     expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeEnabled();
     expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
 
+    expect(screen.getByText('Create public dashboard')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
   });
   it('when checkboxes are filled, then save button remains disabled', async () => {
@@ -212,6 +214,7 @@ describe('SharePublic - New config setup', () => {
     fireEvent.click(screen.getByTestId(selectors.LimitedDSCheckbox));
     fireEvent.click(screen.getByTestId(selectors.CostIncreaseCheckbox));
 
+    expect(screen.getByText('Create public dashboard')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
   });
   it('when checkboxes and switch are filled, then save button is enabled', async () => {
@@ -224,6 +227,10 @@ describe('SharePublic - New config setup', () => {
     fireEvent.click(screen.getByTestId(selectors.EnableSwitch));
 
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeEnabled();
+  });
+  it('when hasPublicDashboard flag is false, then button text is Create', async () => {
+    await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
+    expect(screen.getByText('Create public dashboard')).toBeInTheDocument();
   });
 });
 
@@ -251,6 +258,7 @@ describe('SharePublic - Already persisted', () => {
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
     expect(screen.getByTestId(selectors.DeleteButton)).toBeEnabled();
+    expect(screen.getByText('Save public dashboard')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeEnabled();
   });
   it('delete button is not rendered because lack of permissions', async () => {
@@ -276,6 +284,7 @@ describe('SharePublic - Already persisted', () => {
     expect(screen.getByTestId(selectors.CostIncreaseCheckbox)).toBeDisabled();
 
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeEnabled();
+    expect(screen.getByText('Save public dashboard')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeEnabled();
     expect(screen.getByTestId(selectors.DeleteButton)).toBeEnabled();
   });
@@ -312,5 +321,10 @@ describe('SharePublic - Already persisted', () => {
 
     fireEvent.click(screen.getByTestId(selectors.EnableSwitch));
     expect(screen.queryByTestId(selectors.CopyUrlInput)).not.toBeInTheDocument();
+  });
+  it('when hasPublicDashboard flag is true, then button text is Save', async () => {
+    await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+    expect(screen.getByText('Save public dashboard')).toBeInTheDocument();
   });
 });
