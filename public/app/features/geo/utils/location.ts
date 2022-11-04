@@ -159,6 +159,7 @@ export interface FrameGeometryField {
   field?: Field<Geometry | undefined>;
   warning?: string;
   derived?: boolean;
+  description?: string;
 }
 
 export function getGeometryField(frame: DataFrame, location: LocationFieldMatchers): FrameGeometryField {
@@ -179,6 +180,7 @@ export function getGeometryField(frame: DataFrame, location: LocationFieldMatche
         return {
           field: pointFieldFromLonLat(fields.longitude, fields.latitude),
           derived: true,
+          description: `${fields.mode}: ${fields.latitude.name}, ${fields.longitude.name}`,
         };
       }
       return {
@@ -190,6 +192,7 @@ export function getGeometryField(frame: DataFrame, location: LocationFieldMatche
         return {
           field: pointFieldFromGeohash(fields.geohash),
           derived: true,
+          description: `${fields.mode}`,
         };
       }
       return {

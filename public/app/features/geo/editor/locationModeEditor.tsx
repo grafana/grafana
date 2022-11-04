@@ -66,24 +66,27 @@ export const LocationModeEditor = ({
 
   // TODO extend for other cases, for example auto when it's happy
   const dataValidation = () => {
-    if (info && info.warning) {
-      return (
-        <Alert
-          title={info.warning}
-          severity="warning"
-          className={styles.alert}
-          buttonContent={<Icon name="question-circle" size="xl" />}
-          onRemove={() => {
-            const newWindow = window.open(helpUrl, '_blank', 'noopener,noreferrer');
-            if (newWindow) {
-              newWindow.opener = null;
-            }
-          }}
-        />
-      );
-    } else {
-      return null;
+    if (info) {
+      if (info.warning) {
+        return (
+          <Alert
+            title={info.warning}
+            severity="warning"
+            className={styles.alert}
+            buttonContent={<Icon name="question-circle" size="xl" />}
+            onRemove={() => {
+              const newWindow = window.open(helpUrl, '_blank', 'noopener,noreferrer');
+              if (newWindow) {
+                newWindow.opener = null;
+              }
+            }}
+          />
+        );
+      } else if (value === FrameGeometrySourceMode.Auto && info.description) {
+        return <Alert title={info.description} severity="success" className={styles.alert} />;
+      }
     }
+    return null;
   };
 
   return (
@@ -95,7 +98,7 @@ export const LocationModeEditor = ({
           onChange(v);
         }}
       />
-      <HorizontalGroup>{dataValidation()}</HorizontalGroup>
+      <HorizontalGroup className={styles.hGroup}>{dataValidation()}</HorizontalGroup>
     </>
   );
 };
@@ -108,6 +111,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       }
       margin-bottom: 0px;
       padding: 2px;
+      width: 100%;
+    `,
+    // TODO apply styling to horizontal group (currently not working)
+    hGroup: css`
+      & div {
+        width: 100%;
+      }
     `,
   };
 };
