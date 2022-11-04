@@ -1,5 +1,5 @@
   mysql:
-    image: arm64v8/mysql:oracle # ${mysql_version}
+    image: mysql:${mysql_version}
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: grafana
