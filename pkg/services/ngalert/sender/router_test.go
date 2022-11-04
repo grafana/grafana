@@ -3,6 +3,7 @@ package sender
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"math/rand"
 	"net/url"
 	"testing"
@@ -490,6 +491,65 @@ func TestBuildExternalURL(t *testing.T) {
 			url, err := sch.buildExternalURL(test.ds)
 			require.NoError(t, err)
 			require.Equal(t, test.expectedURL, url)
+		})
+	}
+}
+
+func TestAlertManegers_asSHA256(t *testing.T) {
+	tc := []struct {
+		name       string
+		amUrls     []string
+		ciphertext string
+	}{
+		{
+			name:       "asSHA256",
+			amUrls:     []string{"http://localhost:9093"},
+			ciphertext: "3ec9db375a5ba12f7c7b704922cf4b8e21a31e30d85be2386803829f0ee24410",
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.ciphertext, asSHA256(tt.amUrls))
+		})
+	}
+}
+
+func TestAlertManagers_buildRedactedAMs(t *testing.T) {
+	fakeLogger := logtest.Fake{}
+
+	tc := []struct {
+		name     string
+		orgId    int64
+		amUrls   []string
+		errCalls int
+		errLog   string
+		errCtx   []interface{}
+		expected []string
+	}{
+		{
+			name:     "buildRedactedAMs",
+			orgId:    1,
+			amUrls:   []string{"http://user:password@localhost:9093"},
+			errCalls: 0,
+			errLog:   "",
+			expected: []string{"http://user:xxxxx@localhost:9093"},
+		},
+		{
+			name:     "Error building redacted AM URLs",
+			orgId:    2,
+			amUrls:   []string{"1234://user:password@localhost:9094"},
+			errCalls: 1,
+			errLog:   "Failed to parse alertmanager string",
+			expected: nil,
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, buildRedactedAMs(&fakeLogger, tt.amUrls, tt.orgId))
+			require.Equal(t, tt.errCalls, fakeLogger.ErrorLogs.Calls)
+			require.Equal(t, tt.errLog, fakeLogger.ErrorLogs.Message)
 		})
 	}
 }
