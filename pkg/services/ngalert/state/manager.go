@@ -172,13 +172,12 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	logger := st.log.FromContext(ctx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
 	var states []StateTransition
-	processedResults := make(map[string]*State, len(results))
+
 	for _, result := range results {
 		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
 		states = append(states, s)
-		processedResults[s.State.CacheID] = s.State
 	}
-	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults, logger)
+	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, logger)
 	if len(states) > 0 && st.instanceStore != nil {
 		logger.Debug("Saving new states to the database", "count", len(states))
 		_, _ = st.saveAlertStates(ctx, states...)
@@ -348,16 +347,14 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State, logger log.Logger) []StateTransition {
+func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, logger log.Logger) []StateTransition {
 	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
 	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
 	var resolvedImage *ngModels.Image
 
 	var resolvedStates []StateTransition
 	staleStates := st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
-		// Is the cached state in our recently processed results? If not, is it stale?
-		_, ok := states[s.CacheID]
-		return !ok && stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
+		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
 	})
 
 	toDelete := make([]ngModels.AlertInstanceKey, 0)
