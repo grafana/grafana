@@ -154,7 +154,7 @@ func (s *sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	if !rows.Next() {
 		return &object.ReadObjectResponse{}, nil
@@ -180,7 +180,7 @@ func (s *sqlObjectServer) readFromHistory(ctx context.Context, r *object.ReadObj
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	// Version or key not found
 	if !rows.Next() {
@@ -258,7 +258,7 @@ func (s *sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObje
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	// TODO? make sure the results are in order?
 	rsp := &object.BatchReadObjectResponse{}
@@ -534,7 +534,7 @@ func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRe
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	rsp := &object.ObjectHistoryResponse{
 		GRN: route.GRN,
 	}
@@ -611,7 +611,7 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	key := ""
 	rsp := &object.ObjectSearchResponse{}
 	for rows.Next() {
