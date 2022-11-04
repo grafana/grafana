@@ -91,7 +91,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
       op: '=~',
       value: `${queryString}.*`,
     };
-    const labelsToConsider = query.labels.filter((x) => x !== forLabel);
+    const labelsToConsider = query.labels.filter((x) => x.label !== forLabel.label);
     labelsToConsider.push(forLabel);
     if (query.metric) {
       labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
