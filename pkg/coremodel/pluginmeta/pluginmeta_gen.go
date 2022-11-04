@@ -280,8 +280,8 @@ type Model struct {
 	// Optional list of RBAC RoleRegistrations.
 	// Describes and organizes the default permissions associated with any of the Grafana basic roles,
 	// which characterizes what viewers, editors, admins, or grafana admins can do on the plugin.
-	// The admin basic role inherits permissions from the editor basic role which in turn inherits
-	// permissions from the viewer basic role.
+	// The Admin basic role inherits its default permissions from the Editor basic role which in turn
+	// inherits them from the Viewer basic role.
 	Roles *[]RoleRegistration `json:"roles,omitempty"`
 
 	// Routes is a list of proxy routes, if any. For datasource plugins only.
@@ -321,8 +321,8 @@ type Category string
 type Type string
 
 // BasicRole is a Grafana basic role, which can be 'Viewer', 'Editor', 'Admin' or 'Grafana Admin'.
-// With RBAC, the admin basic role inherits permissions from the editor basic role which in turn
-// inherits permissions from the viewer basic role.
+// With RBAC, the Admin basic role inherits its default permissions from the Editor basic role which
+// in turn inherits them from the Viewer basic role.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
@@ -555,8 +555,8 @@ type Role struct {
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type RoleRegistration struct {
 	// Default assignment of the role to Grafana basic roles (Viewer, Editor, Admin, Grafana Admin)
-	// The admin basic role inherits permissions from the editor basic role which in turn inherits
-	// permissions from the viewer basic role.
+	// The Admin basic role inherits its default permissions from the Editor basic role which in turn
+	// inherits them from the Viewer basic role.
 	Grants []RoleRegistrationGrants `json:"grants"`
 
 	// RBAC role definition to bundle related RBAC permissions on the plugin.

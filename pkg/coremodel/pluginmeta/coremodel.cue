@@ -134,8 +134,8 @@ seqs: [
 				// Optional list of RBAC RoleRegistrations.
 				// Describes and organizes the default permissions associated with any of the Grafana basic roles, 
 				// which characterizes what viewers, editors, admins, or grafana admins can do on the plugin.
-				// The admin basic role inherits permissions from the editor basic role which in turn inherits
-				// permissions from the viewer basic role.
+				// The Admin basic role inherits its default permissions from the Editor basic role which in turn
+				// inherits them from the Viewer basic role.
 				roles?: [...#RoleRegistration]
 
 				// RoleRegistration describes an RBAC role and its assignments to basic roles.
@@ -148,8 +148,8 @@ seqs: [
 					role: #Role
 
 					// Default assignment of the role to Grafana basic roles (Viewer, Editor, Admin, Grafana Admin)
-					// The admin basic role inherits permissions from the editor basic role which in turn inherits
-					// permissions from the viewer basic role.
+					// The Admin basic role inherits its default permissions from the Editor basic role which in turn
+					// inherits them from the Viewer basic role.
 					grants: [...#BasicRole]
 				}
 
@@ -172,8 +172,8 @@ seqs: [
 				}
 
 				// BasicRole is a Grafana basic role, which can be 'Viewer', 'Editor', 'Admin' or 'Grafana Admin'.
-				// With RBAC, the admin basic role inherits permissions from the editor basic role which in turn
-				// inherits permissions from the viewer basic role.
+				// With RBAC, the Admin basic role inherits its default permissions from the Editor basic role which
+				// in turn inherits them from the Viewer basic role.
 				#BasicRole: "Grafana Admin" | "Admin" | "Editor" | "Viewer"
 
 				// Dependencies needed by the plugin.
