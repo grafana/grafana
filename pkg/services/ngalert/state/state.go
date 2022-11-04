@@ -73,6 +73,25 @@ func (a *State) GetRuleKey() models.AlertRuleKey {
 	}
 }
 
+// StateTransition describes the transition from one state to another.
+type StateTransition struct {
+	*State
+	PreviousState       eval.State
+	PreviousStateReason string
+}
+
+func (c StateTransition) Formatted() string {
+	return FormatStateAndReason(c.State.State, c.State.StateReason)
+}
+
+func (c StateTransition) PreviousFormatted() string {
+	return FormatStateAndReason(c.PreviousState, c.PreviousStateReason)
+}
+
+func (c StateTransition) changed() bool {
+	return c.PreviousState != c.State.State || c.PreviousStateReason != c.State.StateReason
+}
+
 type Evaluation struct {
 	EvaluationTime  time.Time
 	EvaluationState eval.State
@@ -310,4 +329,12 @@ func takeImage(ctx context.Context, s image.ImageService, r *models.AlertRule) (
 		return nil, err
 	}
 	return img, nil
+}
+
+func FormatStateAndReason(state eval.State, reason string) string {
+	s := fmt.Sprintf("%v", state)
+	if len(reason) > 0 {
+		s += fmt.Sprintf(" (%v)", reason)
+	}
+	return s
 }
