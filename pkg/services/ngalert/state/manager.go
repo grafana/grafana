@@ -361,9 +361,9 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 			key, err := s.GetAlertInstanceKey()
 			if err != nil {
 				logger.Error("Unable to get labelsHash", "error", err.Error())
+			} else {
+				toDelete = append(toDelete, key)
 			}
-
-			toDelete = append(toDelete, key)
 
 			if s.State == eval.Alerting {
 				oldState := s.State
