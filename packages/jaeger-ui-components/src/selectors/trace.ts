@@ -143,8 +143,8 @@ export const getParentSpan = createSelector(
 export const getTraceDepth = createSelector(getTraceSpanIdsAsTree, (spanTree) => spanTree.depth - 1);
 
 export const getSpanDepthForTrace = createSelector(
-  createSelector((state: { trace: Trace }) => state.trace, getTraceSpanIdsAsTree),
-  createSelector((state: { span: TraceSpan }) => state.span, getSpanId),
+  createSelector((state: { trace: TraceResponse }) => state.trace, getTraceSpanIdsAsTree),
+  createSelector((state: { span: TraceSpanData }) => state.span, getSpanId),
   (node, spanID) => node.getPath(spanID).length - 1
 );
 
@@ -204,7 +204,7 @@ const getTraceSpansByHierarchyPosition = createSelector(getTraceSpanIdsAsTree, (
 });
 
 export const getTreeSizeForTraceSpan = createSelector(
-  createSelector((state: { trace: Trace }) => state.trace, getTraceSpanIdsAsTree),
+  createSelector((state: { trace: TraceResponse }) => state.trace, getTraceSpanIdsAsTree),
   createSelector((state: { span: TraceSpanData }) => state.span, getSpanId),
   (tree, spanID) => {
     const node = tree.find(spanID);
@@ -250,8 +250,8 @@ export const DEFAULT_TICK_INTERVAL = 4;
 export const DEFAULT_TICK_WIDTH = 3;
 export const getTicksForTrace = createSelector(
   ({ trace }: { trace: TraceResponse }) => trace,
-  ({ interval = DEFAULT_TICK_INTERVAL }: { interval: number }) => interval,
-  ({ width = DEFAULT_TICK_WIDTH }: { width: number }) => width,
+  ({ interval = DEFAULT_TICK_INTERVAL }: { interval?: number }) => interval,
+  ({ width = DEFAULT_TICK_WIDTH }: { width?: number }) => width,
   (
     trace: TraceResponse,
     interval: number,
