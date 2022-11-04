@@ -5,7 +5,6 @@ import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import config from 'app/core/config';
-import { getRootSectionForNode } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
@@ -14,9 +13,8 @@ import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
-import AppRootPage from 'app/features/plugins/components/AppRootPage';
+import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
-import { store } from 'app/store/store';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
@@ -530,31 +528,4 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
       component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/ScenePage')),
     },
   ];
-}
-
-function getAppPluginRoutes(): RouteDescriptor[] {
-  const state = store.getState();
-  const { navIndex } = state;
-  const isStandalonePluginPage = (id: string) => id.startsWith('standalone-plugin-page-/');
-  const isPluginNavModelItem = (model: NavModelItem): model is PluginNavModelItem =>
-    'pluginId' in model && 'id' in model;
-
-  return Object.values(navIndex)
-    .filter<PluginNavModelItem>(isPluginNavModelItem)
-    .map((navItem) => {
-      const pluginNavSection = getRootSectionForNode(navItem);
-      const appPluginUrl = `/a/${navItem.pluginId}`;
-      const path = isStandalonePluginPage(navItem.id) ? navItem.url || appPluginUrl : appPluginUrl; // Only standalone pages can use core URLs, otherwise we fall back to "/a/:pluginId"
-
-      return {
-        path,
-        exact: false, // route everything under this path to the plugin, so it can define more routes under this path
-        component: () => <AppRootPage pluginId={navItem.pluginId} pluginNavSection={pluginNavSection} />,
-      };
-    });
-}
-
-interface PluginNavModelItem extends Omit<NavModelItem, 'pluginId' | 'id'> {
-  pluginId: string;
-  id: string;
 }
