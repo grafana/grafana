@@ -1,4 +1,4 @@
-import { VariableOption } from '@grafana/data';
+import { SelectableValue, VariableOption } from '@grafana/data';
 import { NavigationKey } from 'app/features/variables/pickers/types';
 
 import { SceneObject } from '../../core/types';
@@ -8,9 +8,7 @@ import { SceneVariableBase } from './SceneVariableBase';
 
 export interface MultiValueVariableState extends SceneVariableState {
   options: VariableValueOption[];
-  isSelectOpen?: boolean;
   isMulti?: boolean;
-  highlightIndex?: number;
 }
 
 export abstract class MultiValueVariable<
@@ -24,12 +22,8 @@ export abstract class MultiValueVariable<
     test.setState(state);
   }
 
-  onCloseSelect = () => {
-    this.setStateHelper({ isSelectOpen: false });
-  };
-
-  onOpenSelect = () => {
-    this.setStateHelper({ isSelectOpen: true });
+  onValueChange = (value: SelectableValue<string>) => {
+    this.setStateHelper({ value: value.value });
   };
 
   onFilterOrSearchOptions = (value: string) => {};
