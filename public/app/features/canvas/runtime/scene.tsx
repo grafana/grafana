@@ -597,7 +597,6 @@ export class Scene {
     const parentBoundingRect = this.div?.getBoundingClientRect();
     let parentBorderWidth = parseFloat(getComputedStyle(this.div!).borderWidth);
 
-    // TODO: Figure out glitchy re-render of box (smaller / larger) when hovering over element
     const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0) - parentBorderWidth;
     const relativeLeft = elementBoundingRect.left - (parentBoundingRect?.left ?? 0) - parentBorderWidth;
 
@@ -617,13 +616,13 @@ export class Scene {
 
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
+        <ArrowAnchors setRef={this.setArrowAnchorRef} />
         {this.root.render()}
         {canShowContextMenu && (
           <Portal>
             <CanvasContextMenu scene={this} panel={this.panel} />
           </Portal>
         )}
-        <ArrowAnchors setRef={this.setArrowAnchorRef} />
       </div>
     );
   }
