@@ -429,7 +429,7 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 			"name, description,"+
 			"labels, fields, errors) "+
 			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-			path, getParentFolderKey(grn.Kind, path), grn.Kind, versionInfo.Size, body, etag, versionInfo.Version,
+			path, getParentFolderPath(grn.Kind, path), grn.Kind, versionInfo.Size, body, etag, versionInfo.Version,
 			timestamp, versionInfo.UpdatedBy, timestamp, versionInfo.UpdatedBy, // created + updated are the same
 			summary.model.Name, summary.model.Description,
 			summary.labels, summary.fields, summary.errors,

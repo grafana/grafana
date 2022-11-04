@@ -13,8 +13,7 @@ func createContentsHash(contents []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-// TODO? should this include the slash or not?
-func getParentFolderKey(kind string, key string) string {
+func getParentFolderPath(kind string, key string) string {
 	idx := strings.LastIndex(key, "/")
 	if idx < 0 {
 		return "" // ?
