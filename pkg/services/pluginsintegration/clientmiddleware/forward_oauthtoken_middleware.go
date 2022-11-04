@@ -1,4 +1,4 @@
-package client
+package clientmiddleware
 
 import (
 	"context"
