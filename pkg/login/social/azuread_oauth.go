@@ -31,6 +31,7 @@ type azureClaims struct {
 	ClaimNames        claimNames             `json:"_claim_names,omitempty"`
 	ClaimSources      map[string]claimSource `json:"_claim_sources,omitempty"`
 	TenantID          string                 `json:"tid,omitempty"`
+	OAuthVersion      string                 `json:"ver,omitempty"`
 }
 
 type claimNames struct {
@@ -63,6 +64,10 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 	var claims azureClaims
 	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
 		return nil, fmt.Errorf("error getting claims from id token: %w", err)
+	}
+
+	if claims.OAuthVersion == "1.0" {
+		return nil, &Error{"AzureAD OAuth: version 1.0 is not supported. Please ensure the auth_url and token_url are set to the v2.0 endpoints."}
 	}
 
 	email := claims.extractEmail()

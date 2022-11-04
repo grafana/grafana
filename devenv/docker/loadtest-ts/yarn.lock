@@ -1365,7 +1365,7 @@ __metadata:
     "@types/k6": 0.39.1
     "@types/shortid": 0.0.29
     "@types/webpack": 5.28.0
-    babel-loader: 9.0.1
+    babel-loader: 9.1.0
     shortid: 2.2.16
     ts-node: 10.9.1
     typescript: 4.8.4
@@ -1845,16 +1845,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-loader@npm:9.0.1":
-  version: 9.0.1
-  resolution: "babel-loader@npm:9.0.1"
+"babel-loader@npm:9.1.0":
+  version: 9.1.0
+  resolution: "babel-loader@npm:9.1.0"
   dependencies:
     find-cache-dir: ^3.3.2
     schema-utils: ^4.0.0
   peerDependencies:
     "@babel/core": ^7.12.0
     webpack: ">=5"
-  checksum: 28164515105c54ab89c72a51fdad7076d40cf871df94e37a3fcbce6c69410f3f03ec93e83148e7ce1839d4e86c0f7be6e81b3eeb9f1a4cb52fcc78af6a438ef6
+  checksum: 774758febd1e8ca804abcae3b8f65634330dc688837424d0946f06d1386914de43435cce691710fa144eccdf1292cf883439ac3598ce7320916acfaaa2372641
   languageName: node
   linkType: hard
 
