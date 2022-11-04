@@ -8,7 +8,7 @@ import { SceneComponentProps } from '../../core/types';
 import { MultiValueVariable } from '../variants/MultiValueVariable';
 
 export function VariableValueSelect({ model }: SceneComponentProps<MultiValueVariable>) {
-  const { value, key, state, isMulti, options } = model.useState();
+  const { value, key, loading, isMulti, options } = model.useState();
 
   if (isMulti) {
     return (
@@ -18,7 +18,7 @@ export function VariableValueSelect({ model }: SceneComponentProps<MultiValueVar
         width="auto"
         value={isArray(value) ? value : [value]}
         allowCustomValue
-        isLoading={state === LoadingState.Loading}
+        isLoading={loading}
         options={options}
         onChange={model.onMultiValueChange}
       />
@@ -32,7 +32,7 @@ export function VariableValueSelect({ model }: SceneComponentProps<MultiValueVar
       width="auto"
       value={value}
       allowCustomValue
-      isLoading={state === LoadingState.Loading}
+      isLoading={loading}
       options={options}
       onChange={model.onSingleValueChange}
     />

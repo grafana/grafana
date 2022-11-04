@@ -1,6 +1,5 @@
 import { Observable } from 'rxjs';
 
-import { LoadingState } from '@grafana/data';
 import { VariableHide } from 'app/features/variables/types';
 
 import { SceneObject, SceneObjectStatePlain } from '../core/types';
@@ -10,7 +9,7 @@ export interface SceneVariableState extends SceneObjectStatePlain {
   label?: string;
   hide?: VariableHide;
   skipUrlSync?: boolean;
-  state?: LoadingState;
+  loading?: boolean;
   error?: any | null;
   description?: string | null;
   text: string | string[]; // old current.text

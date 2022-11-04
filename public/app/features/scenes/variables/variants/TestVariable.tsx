@@ -29,7 +29,7 @@ export class TestVariable extends MultiValueVariable<TestVariableState> {
     const { delayMs } = this.state;
 
     return new Observable<VariableValueOption[]>((observer) => {
-      this.setState({ state: LoadingState.Loading });
+      this.setState({ loading: true });
 
       this.completeUpdate.subscribe({
         next: () => {

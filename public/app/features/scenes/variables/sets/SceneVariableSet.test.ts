@@ -1,5 +1,3 @@
-import { LoadingState } from '@grafana/data';
-
 import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { SceneObjectStatePlain } from '../../core/types';
 import { TestVariable } from '../variants/TestVariable';
@@ -26,24 +24,24 @@ describe('SceneVariableList', () => {
       scene.activate();
 
       // Should start variables with no dependencies
-      expect(A.state.state).toBe(LoadingState.Loading);
-      expect(B.state.state).toBe(undefined);
-      expect(C.state.state).toBe(undefined);
+      expect(A.state.loading).toBe(true);
+      expect(B.state.loading).toBe(undefined);
+      expect(C.state.loading).toBe(undefined);
 
       // When A complete should start B
       A.signalUpdateCompleted();
       expect(A.state.value).toBe('AA');
       expect(A.state.issuedQuery).toBe('A.*');
-      expect(A.state.state).toBe(LoadingState.Done);
-      expect(B.state.state).toBe(LoadingState.Loading);
+      expect(A.state.loading).toBe(false);
+      expect(B.state.loading).toBe(true);
 
       // Should wait with C as B is not completed yet
-      expect(C.state.state).toBe(undefined);
+      expect(C.state.loading).toBe(undefined);
 
       // When B completes should now start C
       B.signalUpdateCompleted();
-      expect(B.state.state).toBe(LoadingState.Done);
-      expect(C.state.state).toBe(LoadingState.Loading);
+      expect(B.state.loading).toBe(false);
+      expect(C.state.loading).toBe(true);
 
       // When C completes issue correct interpolated query containing the new values for A and B
       C.signalUpdateCompleted();
@@ -69,12 +67,12 @@ describe('SceneVariableList', () => {
 
       // When changing A should start B but not C (yet)
       A.setState({ value: 'AB' });
-      expect(B.state.state).toBe(LoadingState.Loading);
-      expect(C.state.state).toBe(LoadingState.Done);
+      expect(B.state.loading).toBe(true);
+      expect(C.state.loading).toBe(false);
 
       B.signalUpdateCompleted();
       expect(B.state.value).toBe('ABA');
-      expect(C.state.state).toBe(LoadingState.Loading);
+      expect(C.state.loading).toBe(true);
     });
   });
 });

@@ -62,7 +62,7 @@ export class VariablesUpdateManager {
   }
 
   private handleVariableError(variable: SceneVariable, err: Error) {
-    variable.setState({ state: LoadingState.Error });
+    variable.setState({ loading: false, error: err });
     // todo handle properly
   }
 
@@ -73,17 +73,17 @@ export class VariablesUpdateManager {
   private updateVariableStateGivenNewOptions(variable: SceneVariable, options: VariableValueOption[]) {
     if (options.length === 0) {
       // TODO handle the no value state
-      variable.setState({ value: '?', state: LoadingState.Done });
+      variable.setState({ value: '?', loading: false });
       return;
     }
 
     const foundCurrent = options.find((x) => x.value === variable.state.value);
     if (!foundCurrent) {
       // Current value is not valid. Set to first of the available options
-      variable.setState({ value: options[0].value, text: options[0].label, state: LoadingState.Done });
+      variable.setState({ value: options[0].value, text: options[0].label, loading: false });
     } else {
       // current value is still ok
-      variable.setState({ state: LoadingState.Done });
+      variable.setState({ loading: false });
     }
   }
 
