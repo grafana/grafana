@@ -1,10 +1,23 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
+import { Subscription } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { reportInteraction } from '@grafana/runtime/src';
-import { Alert, Button, ClipboardButton, Field, HorizontalGroup, Input, useStyles2, Spinner } from '@grafana/ui/src';
+import {
+  Alert,
+  Button,
+  ClipboardButton,
+  Field,
+  HorizontalGroup,
+  Input,
+  useStyles2,
+  Spinner,
+  ModalsContext,
+  useForceUpdate,
+} from '@grafana/ui/src';
+import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   useGetPublicDashboardQuery,
@@ -21,22 +34,31 @@ import {
   publicDashboardPersisted,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { ShareModalTabProps } from 'app/features/dashboard/components/ShareModal/types';
+import { useIsDesktop } from 'app/features/dashboard/utils/screen';
+import { DeletePublicDashboardButton } from 'app/features/manage-dashboards/components/PublicDashboardListTable/DeletePublicDashboardButton';
 import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
 import { AccessControlAction } from 'app/types';
+
+import { DashboardMetaChangedEvent } from '../../../../../types/events';
+import { ShareModal } from '../ShareModal';
 
 interface Props extends ShareModalTabProps {}
 
 export const SharePublicDashboard = (props: Props) => {
+  const forceUpdate = useForceUpdate();
+  const styles = useStyles2(getStyles);
+  const { showModal, hideModal } = useContext(ModalsContext);
+  const isDesktop = useIsDesktop();
+
   const dashboardVariables = props.dashboard.getVariables();
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
-  const styles = useStyles2(getStyles);
-
-  const [hasPublicDashboard, setHasPublicDashboard] = useState(props.dashboard.meta.hasPublicDashboard);
+  const { hasPublicDashboard } = props.dashboard.meta;
 
   const {
-    isLoading: isFetchingLoading,
+    isLoading: isGetLoading,
     data: publicDashboard,
-    isError: isFetchingError,
+    isError: isGetError,
+    isFetching,
   } = useGetPublicDashboardQuery(props.dashboard.uid, {
     // if we don't have a public dashboard, don't try to load public dashboard
     skip: !hasPublicDashboard,
@@ -57,8 +79,12 @@ export const SharePublicDashboard = (props: Props) => {
   const [annotationsEnabled, setAnnotationsEnabled] = useState(false);
 
   useEffect(() => {
+    const eventSubs = new Subscription();
+    eventSubs.add(props.dashboard.events.subscribe(DashboardMetaChangedEvent, forceUpdate));
     reportInteraction('grafana_dashboards_public_share_viewed');
-  }, []);
+
+    return () => eventSubs.unsubscribe();
+  }, [props.dashboard.events, forceUpdate]);
 
   useEffect(() => {
     if (publicDashboardPersisted(publicDashboard)) {
@@ -73,19 +99,30 @@ export const SharePublicDashboard = (props: Props) => {
     setEnabledSwitch((prevState) => ({ ...prevState, isEnabled: !!publicDashboard?.isEnabled }));
   }, [publicDashboard]);
 
-  const isLoading = isFetchingLoading || isSaveLoading || isUpdateLoading;
+  const isLoading = isGetLoading || isSaveLoading || isUpdateLoading;
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const acknowledged = acknowledgements.public && acknowledgements.datasources && acknowledgements.usage;
-  const isSaveEnabled = useMemo(
+  const isSaveDisabled = useMemo(
     () =>
       !hasWritePermissions ||
       !acknowledged ||
       props.dashboard.hasUnsavedChanges() ||
       isLoading ||
-      isFetchingError ||
+      isFetching ||
+      isGetError ||
       (!publicDashboardPersisted(publicDashboard) && !enabledSwitch.wasTouched),
-    [hasWritePermissions, acknowledged, props.dashboard, isLoading, isFetchingError, enabledSwitch, publicDashboard]
+    [
+      hasWritePermissions,
+      acknowledged,
+      props.dashboard,
+      isLoading,
+      isGetError,
+      enabledSwitch,
+      publicDashboard,
+      isFetching,
+    ]
   );
+  const isDeleteDisabled = isLoading || isFetching || isGetError;
 
   const onSavePublicConfig = async () => {
     reportInteraction('grafana_dashboards_public_create_clicked');
@@ -96,18 +133,19 @@ export const SharePublicDashboard = (props: Props) => {
     };
 
     // create or update based on whether we have existing uid
-
-    if (hasPublicDashboard) {
-      await updatePublicDashboard(req).unwrap();
-      setHasPublicDashboard(true);
-    } else {
-      await createPublicDashboard(req).unwrap();
-      setHasPublicDashboard(true);
-    }
+    hasPublicDashboard ? updatePublicDashboard(req) : createPublicDashboard(req);
   };
 
   const onAcknowledge = (field: string, checked: boolean) => {
     setAcknowledgements((prevState) => ({ ...prevState, [field]: checked }));
+  };
+
+  const onDismissDelete = () => {
+    showModal(ShareModal, {
+      dashboard: props.dashboard,
+      onDismiss: hideModal,
+      activeTab: 'share',
+    });
   };
 
   return (
@@ -120,7 +158,7 @@ export const SharePublicDashboard = (props: Props) => {
         >
           Welcome to Grafana public dashboards alpha!
         </p>
-        {isFetchingLoading && <Spinner />}
+        {(isGetLoading || isFetching) && <Spinner />}
       </HorizontalGroup>
       <div className={styles.content}>
         {dashboardHasTemplateVariables(dashboardVariables) && !publicDashboardPersisted(publicDashboard) ? (
@@ -137,9 +175,7 @@ export const SharePublicDashboard = (props: Props) => {
             <hr />
             <div className={styles.checkboxes}>
               <AcknowledgeCheckboxes
-                disabled={
-                  publicDashboardPersisted(publicDashboard) || !hasWritePermissions || isLoading || isFetchingError
-                }
+                disabled={publicDashboardPersisted(publicDashboard) || !hasWritePermissions || isLoading || isGetError}
                 acknowledgements={acknowledgements}
                 onAcknowledge={onAcknowledge}
               />
@@ -148,7 +184,7 @@ export const SharePublicDashboard = (props: Props) => {
             <Configuration
               isAnnotationsEnabled={annotationsEnabled}
               dashboard={props.dashboard}
-              disabled={!hasWritePermissions || isLoading || isFetchingError}
+              disabled={!hasWritePermissions || isLoading || isGetError}
               isPubDashEnabled={enabledSwitch.isEnabled}
               onToggleEnabled={() =>
                 setEnabledSwitch((prevState) => ({ isEnabled: !prevState.isEnabled, wasTouched: true }))
@@ -193,10 +229,28 @@ export const SharePublicDashboard = (props: Props) => {
               <Alert title="You don't have permissions to create or update a public dashboard" severity="warning" />
             )}
             <HorizontalGroup>
-              <Button disabled={isSaveEnabled} onClick={onSavePublicConfig} data-testid={selectors.SaveConfigButton}>
-                Save sharing configuration
-              </Button>
-              {isSaveLoading && <Spinner />}
+              <Layout orientation={isDesktop ? 0 : 1}>
+                <Button disabled={isSaveDisabled} onClick={onSavePublicConfig} data-testid={selectors.SaveConfigButton}>
+                  {hasPublicDashboard ? 'Save public dashboard' : 'Create public dashboard'}
+                </Button>
+                {publicDashboard && hasWritePermissions && (
+                  <DeletePublicDashboardButton
+                    disabled={isDeleteDisabled}
+                    data-testid={selectors.DeleteButton}
+                    onDismiss={onDismissDelete}
+                    variant="destructive"
+                    dashboard={props.dashboard}
+                    publicDashboard={{
+                      uid: publicDashboard.uid,
+                      dashboardUid: props.dashboard.uid,
+                      title: props.dashboard.title,
+                    }}
+                  >
+                    Delete public dashboard
+                  </DeletePublicDashboardButton>
+                )}
+              </Layout>
+              {(isSaveLoading || isFetching) && <Spinner />}
             </HorizontalGroup>
           </>
         )}
