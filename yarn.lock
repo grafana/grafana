@@ -4371,7 +4371,7 @@ __metadata:
     rollup: 2.79.1
     rollup-plugin-dts: ^4.2.2
     rollup-plugin-esbuild: 4.10.1
-    rollup-plugin-node-externals: ^4.1.0
+    rollup-plugin-node-externals: ^5.0.0
     rxjs: 7.5.7
     sinon: 14.0.1
     tinycolor2: 1.4.2
@@ -4398,7 +4398,7 @@ __metadata:
     rollup: 2.79.1
     rollup-plugin-dts: ^4.2.2
     rollup-plugin-esbuild: 4.10.1
-    rollup-plugin-node-externals: ^4.1.0
+    rollup-plugin-node-externals: ^5.0.0
     tslib: 2.4.1
     typescript: 4.8.4
   languageName: unknown
@@ -4435,7 +4435,7 @@ __metadata:
     rollup: 2.79.1
     rollup-plugin-dts: ^4.2.2
     rollup-plugin-esbuild: 4.10.1
-    rollup-plugin-node-externals: ^4.1.0
+    rollup-plugin-node-externals: ^5.0.0
     tracelib: 1.0.1
     ts-loader: 8.4.0
     tslib: 2.4.1
@@ -4539,7 +4539,7 @@ __metadata:
     rollup: 2.79.1
     rollup-plugin-dts: ^4.2.2
     rollup-plugin-esbuild: 4.10.1
-    rollup-plugin-node-externals: ^4.1.0
+    rollup-plugin-node-externals: ^5.0.0
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     rxjs: 7.5.7
@@ -4566,7 +4566,7 @@ __metadata:
     rollup: 2.79.1
     rollup-plugin-dts: ^4.2.2
     rollup-plugin-esbuild: 4.10.1
-    rollup-plugin-node-externals: ^4.1.0
+    rollup-plugin-node-externals: ^5.0.0
     tslib: 2.4.1
     typescript: 4.8.4
   languageName: unknown
@@ -4806,7 +4806,7 @@ __metadata:
     rollup: 2.79.1
     rollup-plugin-dts: ^4.2.2
     rollup-plugin-esbuild: 4.10.1
-    rollup-plugin-node-externals: ^4.1.0
+    rollup-plugin-node-externals: ^5.0.0
     rollup-plugin-svg-import: ^1.6.0
     rxjs: 7.5.7
     sass-loader: 13.1.0
@@ -33943,14 +33943,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-node-externals@npm:^4.1.0":
-  version: 4.1.0
-  resolution: "rollup-plugin-node-externals@npm:4.1.0"
-  dependencies:
-    find-up: ^5.0.0
+"rollup-plugin-node-externals@npm:^5.0.0":
+  version: 5.0.2
+  resolution: "rollup-plugin-node-externals@npm:5.0.2"
   peerDependencies:
-    rollup: ^2.60.0
-  checksum: 4e714dd5135ca84943b304893ed7498bac292773c056051a5fae700072257715cca48e2b5d5e3e23d1d6395eb2aaff4f8e5f6294fbbbfd6be4171049929b70ed
+    rollup: ^2.60.0 || ^3.0.0
+  checksum: 5afefcccb37a2c54e836d7b5b97e0b9ab47a187cf9341fda22e580f84d2f87de2b1938c8005a8d38794cab6acfcf49c9121b30431641ac53928139ad020e3160
   languageName: node
   linkType: hard
 
