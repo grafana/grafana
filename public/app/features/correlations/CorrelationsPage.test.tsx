@@ -53,6 +53,11 @@ const mocks = {
   contextSrv: jest.mocked(contextSrv),
 };
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
 const renderWithContext = async (
   datasources: ConstructorParameters<typeof MockDataSourceSrv>[0] = {},
   correlations: Correlation[] = []
