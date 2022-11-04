@@ -516,7 +516,7 @@ steps:
     AZURE_SP_APP_ID:
       from_secret: azure_sp_app_id
     AZURE_SP_PASSWORD:
-      from_secret: azure_sp_pw
+      from_secret: azure_sp_app_pw
     AZURE_TENANT:
       from_secret: azure_tenant
     CYPRESS_CI: "true"
@@ -1355,7 +1355,7 @@ steps:
     AZURE_SP_APP_ID:
       from_secret: azure_sp_app_id
     AZURE_SP_PASSWORD:
-      from_secret: azure_sp_pw
+      from_secret: azure_sp_app_pw
     AZURE_TENANT:
       from_secret: azure_tenant
     CYPRESS_CI: "true"
@@ -5518,6 +5518,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: ae4080167cd7b51e78209225f221505bb1b63b70dcbba733b786b6aa5f5820a0
+hmac: e7ba470ace7465d53a00f4ee4de53caba1f86f2e37489ad36b1abcc1799cab12
 
 ...
