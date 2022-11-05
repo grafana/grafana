@@ -66,7 +66,8 @@ describe('SceneVariableList', () => {
       C.signalUpdateCompleted();
 
       // When changing A should start B but not C (yet)
-      A.setState({ value: 'AB' });
+      A.onSingleValueChange({ value: 'AB', text: 'AB' });
+
       expect(B.state.loading).toBe(true);
       expect(C.state.loading).toBe(false);
 
