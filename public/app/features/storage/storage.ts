@@ -33,12 +33,12 @@ class SimpleStorage implements GrafanaStorage {
   constructor() {}
 
   async get<T = any>(path: string): Promise<T> {
-    const storagePath = `api/storage/read/${path}`.replace('//', '/');
+    const storagePath = `api/object/store/${path}`.replace('//', '/');
     return getBackendSrv().get<T>(storagePath);
   }
 
   async list(path: string): Promise<DataFrame | undefined> {
-    let url = 'api/storage/list/';
+    let url = 'api/object/list/';
     if (path) {
       url += path + '/';
     }
@@ -55,7 +55,7 @@ class SimpleStorage implements GrafanaStorage {
 
   async createFolder(path: string): Promise<{ error?: string }> {
     const res = await getBackendSrv().post<{ success: boolean; message: string }>(
-      '/api/storage/createFolder',
+      '/api/object/createFolder',
       JSON.stringify({ path })
     );
 
@@ -84,7 +84,7 @@ class SimpleStorage implements GrafanaStorage {
   }
 
   async deleteFile(req: { path: string }): Promise<{ error?: string }> {
-    const res = await getBackendSrv().post<{ success: boolean; message: string }>(`/api/storage/delete/${req.path}`);
+    const res = await getBackendSrv().delete<{ success: boolean; message: string }>(`/api/object/store/${req.path}`);
 
     if (!res.success) {
       return {
@@ -100,11 +100,20 @@ class SimpleStorage implements GrafanaStorage {
   }
 
   async upload(folder: string, file: File, overwriteExistingFile: boolean): Promise<UploadReponse> {
+    let scope = folder;
+    let idx = folder.indexOf('/');
+    if (idx > 0) {
+      scope = folder.substring(0, idx);
+      folder = folder.substring(idx + 1);
+    } else {
+      folder = ''; // root folder
+    }
+
     const formData = new FormData();
     formData.append('folder', folder);
     formData.append('file', file);
     formData.append('overwriteExistingFile', String(overwriteExistingFile));
-    const res = await fetch('/api/storage/upload', {
+    const res = await fetch('/api/object/upload/' + scope, {
       method: 'POST',
       body: formData,
     });

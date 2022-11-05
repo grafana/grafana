@@ -1,16 +1,18 @@
 package httpobjectstore
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/kind"
+	"github.com/grafana/grafana/pkg/services/store/kind/folder"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/store/router"
 	"github.com/grafana/grafana/pkg/util"
@@ -56,6 +58,9 @@ func (s *httpObjectStore) RegisterHTTPRoutes(route routing.RouteRegister) {
 	route.Get("/list", reqGrafanaAdmin, routing.Wrap(s.doListRoots))
 	route.Get("/list/*", reqGrafanaAdmin, routing.Wrap(s.doListFolder)) // Simplified version of search -- path is prefix
 	route.Get("/search", reqGrafanaAdmin, routing.Wrap(s.doSearch))
+
+	route.Post("/createFolder", reqGrafanaAdmin, routing.Wrap(s.doCreateFolder))
+	route.Post("/deleteFolder", reqGrafanaAdmin, routing.Wrap(s.doDeleteFolder))
 
 	// File upload
 	route.Post("/upload/:scope", reqGrafanaAdmin, routing.Wrap(s.doUpload))
@@ -334,7 +339,7 @@ func (s *httpObjectStore) doListRoots(c *models.ReqContext) response.Response {
 		Name:        "Drive",
 		Description: "Objects organized in nested folders",
 	})
-	return response.JSON(200, rsp)
+	return response.JSON(200, resultsToFrame(c.Req.Context(), rsp, s.router))
 }
 
 func (s *httpObjectStore) doListFolder(c *models.ReqContext) response.Response {
@@ -363,7 +368,7 @@ func (s *httpObjectStore) doListFolder(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(500, "?", err)
 	}
-	return response.JSON(200, resultsToFrame(rsp))
+	return response.JSON(200, resultsToFrame(c.Req.Context(), rsp, s.router))
 }
 
 func (s *httpObjectStore) doSearch(c *models.ReqContext) response.Response {
@@ -391,28 +396,82 @@ func (s *httpObjectStore) doSearch(c *models.ReqContext) response.Response {
 		return response.Error(500, "?", err)
 	}
 
-	return response.JSON(200, resultsToFrame(rsp))
+	return response.JSON(200, rsp) // resultsToFrame(c.Req.Context(), rsp, s.router))
 }
 
-func asBoolean(key string, vals url.Values, defaultValue bool) bool {
-	v, ok := vals[key]
-	if !ok {
-		return defaultValue
-	}
-	if len(v) == 0 {
-		return true // single boolean parameter
-	}
-	b, err := strconv.ParseBool(v[0])
+func (s *httpObjectStore) doCreateFolder(c *models.ReqContext) response.Response {
+	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
-		return defaultValue
+		return response.Error(500, "error reading bytes", err)
 	}
-	return b
+
+	type CreateFolderCmd struct {
+		Path string `json:"path"`
+	}
+
+	cmd := &CreateFolderCmd{}
+	err = json.Unmarshal(body, cmd)
+	if err != nil {
+		return response.Error(400, "error parsing body", err)
+	}
+
+	if cmd.Path == "" {
+		return response.Error(400, "empty path", err)
+	}
+
+	idx := strings.Index(cmd.Path, "/")
+	grn := &object.GRN{
+		TenantId: c.OrgID,
+		Kind:     models.StandardKindFolder,
+		Scope:    cmd.Path[:idx],
+		UID:      cmd.Path[idx+1:],
+	}
+
+	if grn.Scope != models.ObjectStoreScopeDrive {
+		return response.Error(400, "can only create folders in drive right now", err)
+	}
+
+	f := folder.Model{
+		Name: store.GuessNameFromUID(grn.UID),
+	}
+	b, _ := json.Marshal(f)
+
+	rsp, err := s.store.Write(c.Req.Context(), &object.WriteObjectRequest{
+		GRN:  grn,
+		Body: b,
+	})
+
+	if err != nil {
+		return response.Err(err)
+	}
+
+	return response.JSON(200, rsp)
 }
 
-func getMultipartFormValue(req *http.Request, key string) string {
-	v, ok := req.MultipartForm.Value[key]
-	if !ok || len(v) != 1 {
-		return ""
+func (s *httpObjectStore) doDeleteFolder(c *models.ReqContext) response.Response {
+	body, err := io.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(500, "error reading bytes", err)
 	}
-	return v[0]
+
+	type DeleteFolderCmd struct {
+		Path  string `json:"path"`
+		Force bool   `json:"force"`
+	}
+
+	cmd := &DeleteFolderCmd{}
+	err = json.Unmarshal(body, cmd)
+	if err != nil {
+		return response.Error(400, "error parsing body", err)
+	}
+
+	if cmd.Path == "" {
+		return response.Error(400, "empty path", err)
+	}
+
+	return response.JSON(200, map[string]interface{}{
+		"message": "TODO!!!",
+		"success": true,
+		//"path":    path,
+	})
 }

@@ -1,12 +1,19 @@
 package httpobjectstore
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/store/object"
+	"github.com/grafana/grafana/pkg/services/store/router"
 )
 
 const (
@@ -21,7 +28,7 @@ const (
 	updatedByFrameField   = "updatedBy"
 )
 
-func resultsToFrame(rsp *object.ObjectSearchResponse) *data.Frame {
+func resultsToFrame(ctx context.Context, rsp *object.ObjectSearchResponse, router router.ObjectStoreRouter) *data.Frame {
 	if rsp == nil {
 		return nil
 	}
@@ -42,15 +49,27 @@ func resultsToFrame(rsp *object.ObjectSearchResponse) *data.Frame {
 	path.Name = pathPathField
 	descr.Name = descriptionFrameField
 	size.Name = sizeFrameField
+	size.Config = &data.FieldConfig{
+		Unit: "bytes",
+	}
 	labels.Name = labelsFrameField
 	fields.Name = labelsFrameField
 	updatedAt.Name = "updatedAt"
 	updatedBy.Name = "updatedBy"
 
 	for i, res := range rsp.Results {
+		p := ""
+
 		name.Set(i, res.Name)
 		kind.Set(i, res.GRN.Kind)
-		path.Set(i, fmt.Sprintf("%s/%s", res.GRN.Scope, res.GRN.UID)) // only drive for now
+		if res.GRN.Kind == models.StandardKindFolder {
+			p = fmt.Sprintf("%s/%s", res.GRN.Scope, res.GRN.UID)
+		} else {
+			info, _ := router.Route(ctx, res.GRN)
+			idx := strings.Index(info.Key, "/")
+			p = info.Key[idx:]
+		}
+		path.Set(i, p) // only drive for now
 		descr.Set(i, res.Description)
 
 		if res.Labels != nil {
@@ -72,4 +91,27 @@ func resultsToFrame(rsp *object.ObjectSearchResponse) *data.Frame {
 	}
 
 	return data.NewFrame("", name, kind, path, descr, size, labels, fields, updatedAt, updatedBy)
+}
+
+func asBoolean(key string, vals url.Values, defaultValue bool) bool {
+	v, ok := vals[key]
+	if !ok {
+		return defaultValue
+	}
+	if len(v) == 0 {
+		return true // single boolean parameter
+	}
+	b, err := strconv.ParseBool(v[0])
+	if err != nil {
+		return defaultValue
+	}
+	return b
+}
+
+func getMultipartFormValue(req *http.Request, key string) string {
+	v, ok := req.MultipartForm.Value[key]
+	if !ok || len(v) != 1 {
+		return ""
+	}
+	return v[0]
 }

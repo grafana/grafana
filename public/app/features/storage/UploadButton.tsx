@@ -14,7 +14,7 @@ interface Props {
   fileNames: string[];
 }
 
-const fileFormats = 'image/jpg, image/jpeg, image/png, image/gif, image/webp';
+const fileFormats = 'image/svg, image/jpg, image/jpeg, image/png, image/gif, image/webp';
 
 export function UploadButton({ setErrorMessages, setPath, path, fileNames }: Props) {
   const styles = useStyles2(getStyles);
