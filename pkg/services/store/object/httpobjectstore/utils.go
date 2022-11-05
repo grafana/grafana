@@ -53,7 +53,7 @@ func resultsToFrame(ctx context.Context, rsp *object.ObjectSearchResponse, route
 		Unit: "bytes",
 	}
 	labels.Name = labelsFrameField
-	fields.Name = labelsFrameField
+	fields.Name = fieldsFrameField
 	updatedAt.Name = "updatedAt"
 	updatedBy.Name = "updatedBy"
 

@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { DataFrameView, GrafanaTheme2 } from '@grafana/data';
 import { Table, useStyles2 } from '@grafana/ui';
 
-import { StorageView } from './types';
+import { StorageView, ListItem } from './types';
 
 interface Props {
-  listing: DataFrame;
+  listing: DataFrameView<ListItem>;
   view: StorageView;
 }
 
@@ -30,7 +30,7 @@ export function FolderView({ listing, view }: Props) {
             <Table
               height={height}
               width={width}
-              data={listing}
+              data={listing.dataFrame}
               noHeader={false}
               showTypeIcons={false}
               resizable={false}

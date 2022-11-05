@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataFrame, GrafanaTheme2, isDataFrame, ValueLinkConfig } from '@grafana/data';
+import { GrafanaTheme2, ValueLinkConfig, DataFrameView } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { useStyles2, Spinner, TabsBar, Tab, Button, HorizontalGroup, LinkButton, Alert, toIconName } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -20,7 +20,7 @@ import { FolderView } from './FolderView';
 import { RootView } from './RootView';
 import { UploadButton } from './UploadButton';
 import { getGrafanaStorage, filenameAlreadyExists } from './storage';
-import { StorageView } from './types';
+import { ListItem, StorageView } from './types';
 
 interface RouteParams {
   path: string;
@@ -60,59 +60,53 @@ export default function StoragePage(props: Props) {
   const [isAddingNewFolder, setIsAddingNewFolder] = useState(false);
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
 
-  const listing = useAsync((): Promise<DataFrame | undefined> => {
+  const listing = useAsync((): Promise<DataFrameView<ListItem> | undefined> => {
     return getGrafanaStorage()
       .list(path)
       .then((frame) => {
         if (frame) {
-          const name = frame.fields[0];
-          frame.fields[0] = {
-            ...name,
-            getLinks: (cfg: ValueLinkConfig) => {
-              const n = name.values.get(cfg.valueRowIndex ?? 0);
-              const p = path + '/' + n;
-              return [
-                {
-                  title: `Open ${n}`,
-                  href: `/admin/storage/${p}`,
-                  target: '_self',
-                  origin: name,
-                  onClick: () => {
-                    setPath(p);
-                  },
+          const view = new DataFrameView<ListItem>(frame);
+          frame.fields[0].getLinks = (cfg: ValueLinkConfig) => {
+            const item = view.get(cfg.valueRowIndex ?? 0);
+            const n = item.name;
+            const isFolder = item.kind === 'folder';
+            const p = isFolder ? path + '/' + n : item.path;
+            return [
+              {
+                title: `Open ${n}`,
+                href: `/admin/storage/${p}`,
+                target: '_self',
+                origin: view.fields.name,
+                onClick: () => {
+                  setPath(p);
                 },
-              ];
-            },
+              },
+            ];
           };
+          return view;
         }
-        return frame;
+        return undefined;
       });
   }, [path]);
 
   const isFolder = useMemo(() => {
-    let isFolder = path?.indexOf('/') < 0;
-    if (listing.value) {
-      const length = listing.value.length;
-      if (length === 1) {
-        const first = listing.value.fields[0].values.get(0) as string;
-        isFolder = !path.endsWith(first);
-      } else {
-        // TODO: handle files/folders which do not exist
-        isFolder = true;
-      }
-    }
-    return isFolder;
-  }, [path, listing]);
+    // let isFolder = path?.indexOf('/') < 0;
+    // if (listing.value) {
+    //   const length = listing.value.length;
+    //   if (length === 1) {
+    //     const first = listing.value.fields[0].values.get(0) as string;
+    //     isFolder = !path.endsWith(first);
+    //   } else {
+    //     // TODO: handle files/folders which do not exist
+    //     isFolder = true;
+    //   }
+    // }
+    return !path?.includes('.');
+  }, [path]);
 
   const fileNames = useMemo(() => {
-    return (
-      listing.value?.fields
-        ?.find((f) => f.name === 'name')
-        ?.values?.toArray()
-        ?.filter((v) => typeof v === 'string') ?? []
-    );
+    return listing.value?.fields.name.values.toArray() ?? [];
   }, [listing]);
-
   const renderView = () => {
     const isRoot = !path?.length || path === '/';
     switch (view) {
@@ -131,13 +125,12 @@ export default function StoragePage(props: Props) {
         return <AddRootView onPathChange={setPath} />;
     }
 
-    const frame = listing.value;
-    if (!isDataFrame(frame)) {
+    if (!listing.value) {
       return <></>;
     }
 
     if (isRoot) {
-      return <RootView root={frame} onPathChange={setPath} />;
+      return <RootView items={listing.value} onPathChange={setPath} />;
     }
 
     const opts = [{ what: StorageView.Data, text: 'Data' }];
@@ -158,8 +151,7 @@ export default function StoragePage(props: Props) {
     const canAddFolder =
       isFolder && (path.startsWith('resources') || path.startsWith('content') || path.startsWith('drive'));
     const canDelete = path.startsWith('resources/') || path.startsWith('content/') || path.startsWith('drive/');
-    const canViewDashboard =
-      config.featureToggles.dashboardsFromStorage && (path.startsWith('drive/') || path.includes('dashboard'));
+    const canViewDashboard = config.featureToggles.dashboardsFromStorage && path.startsWith('drive/');
 
     const getErrorMessages = () => {
       return (
@@ -183,7 +175,7 @@ export default function StoragePage(props: Props) {
           <Breadcrumb pathName={path} onPathChange={setPath} rootIcon={toIconName(navModel.node.icon ?? '')} />
           <HorizontalGroup>
             {canViewDashboard && (
-              <LinkButton icon="dashboard" href={`g/${path}`}>
+              <LinkButton icon="dashboard" href={`g/${path.replace('drive/', '')}`}>
                 Dashboard
               </LinkButton>
             )}
@@ -238,9 +230,9 @@ export default function StoragePage(props: Props) {
           ))}
         </TabsBar>
         {isFolder ? (
-          <FolderView listing={frame} view={view} />
+          <FolderView listing={listing.value} view={view} />
         ) : (
-          <FileView path={path} listing={frame} onPathChange={setPath} view={view} />
+          <FileView path={path} listing={listing.value.dataFrame} onPathChange={setPath} view={view} />
         )}
 
         {isAddingNewFolder && (

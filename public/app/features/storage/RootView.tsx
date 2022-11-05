@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, DataFrameView } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   Alert,
@@ -18,14 +18,14 @@ import {
 } from '@grafana/ui';
 
 import { getGrafanaStorage } from './storage';
-import { StorageInfo, StorageView } from './types';
+import { StorageInfo, StorageView, ListItem } from './types';
 
 interface Props {
-  root: DataFrame;
+  items: DataFrameView<ListItem>;
   onPathChange: (p: string, v?: StorageView) => void;
 }
 
-export function RootView({ root, onPathChange }: Props) {
+export function RootView({ items, onPathChange }: Props) {
   const styles = useStyles2(getStyles);
   const storage = useAsync(getGrafanaStorage().getConfig);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -59,6 +59,21 @@ export function RootView({ root, onPathChange }: Props) {
     }
     return { base, content };
   }, [searchQuery, storage]);
+
+  const renderItems = () => {
+    return (
+      <VerticalGroup>
+        {items.map((item) => {
+          return (
+            <Card key={item.path} href={`admin/storage${item.path}/`}>
+              <Card.Heading>{item.name}</Card.Heading>
+              <Card.Meta className={styles.clickable}>{item.description}</Card.Meta>
+            </Card>
+          );
+        })}
+      </VerticalGroup>
+    );
+  };
 
   const renderRoots = (pfix: string, roots: StorageInfo[]) => {
     return (
@@ -106,6 +121,8 @@ export function RootView({ root, onPathChange }: Props) {
           </Button>
         )}
       </div>
+
+      <div>{renderItems()}</div>
 
       <div>{renderRoots('', roots.base)}</div>
 

@@ -1,4 +1,4 @@
-import { QueryResultMetaNotice, SelectableValue } from '@grafana/data';
+import { QueryResultMetaNotice, SelectableValue, ArrayDataFrame } from '@grafana/data';
 
 export enum StorageView {
   Data = 'data',

@@ -46,7 +46,7 @@ export function FileView({ listing, path, onPathChange, view }: Props) {
       return <div>TODO... history</div>;
   }
 
-  let src = `api/storage/read/${path}`;
+  let src = `api/object/raw/${path}`;
   if (src.endsWith('/')) {
     src = src.substring(0, src.length - 1);
   }
