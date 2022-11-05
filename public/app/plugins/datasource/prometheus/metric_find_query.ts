@@ -24,7 +24,7 @@ export default class PrometheusMetricFindQuery {
     const queryResultRegex = /^query_result\((.+)\)\s*$/;
     const labelNamesQuery = this.query.match(labelNamesRegex);
     if (labelNamesQuery) {
-      return this.labelNamesQuery();
+      return labelNamesVarQuery(this.datasource);
     }
 
     const labelValuesQuery = this.query.match(labelValuesRegex);
@@ -47,25 +47,30 @@ export default class PrometheusMetricFindQuery {
     }
 
     // if query contains full metric name, return metric name and label list
-    return this.metricNameAndLabelsQuery(this.query);
+    const expressions = ['label_values()', 'metrics()', 'query_result()'];
+    if (!expressions.includes(this.query)) {
+      return this.metricNameAndLabelsQuery(this.query);
+    }
+
+    return Promise.resolve([]);
   }
 
-  labelNamesQuery() {
-    const start = this.datasource.getPrometheusTime(this.range.from, false);
-    const end = this.datasource.getPrometheusTime(this.range.to, true);
-    const params = {
-      start: start.toString(),
-      end: end.toString(),
-    };
+  // labelNamesQuery() {
+  //   const start = this.datasource.getPrometheusTime(this.range.from, false);
+  //   const end = this.datasource.getPrometheusTime(this.range.to, true);
+  //   const params = {
+  //     start: start.toString(),
+  //     end: end.toString(),
+  //   };
 
-    const url = `/api/v1/labels`;
+  //   const url = `/api/v1/labels`;
 
-    return this.datasource.metadataRequest(url, params).then((result: any) => {
-      return _map(result.data.data, (value) => {
-        return { text: value };
-      });
-    });
-  }
+  //   return this.datasource.metadataRequest(url, params).then((result: any) => {
+  //     return _map(result.data.data, (value) => {
+  //       return { text: value };
+  //     });
+  //   });
+  // }
 
   labelValuesQuery(label: string, metric?: string) {
     const start = this.datasource.getPrometheusTime(this.range.from, false);
@@ -184,4 +189,22 @@ export default class PrometheusMetricFindQuery {
       });
     });
   }
+}
+
+export function labelNamesVarQuery(datasource: PrometheusDatasource) {
+  const range = getTimeSrv().timeRange();
+  const start = datasource.getPrometheusTime(range.from, false);
+  const end = datasource.getPrometheusTime(range.to, true);
+  const params = {
+    start: start.toString(),
+    end: end.toString(),
+  };
+
+  const url = `/api/v1/labels`;
+
+  return datasource.metadataRequest(url, params).then((result: any) => {
+    return _map(result.data.data, (value) => {
+      return { text: value };
+    });
+  });
 }

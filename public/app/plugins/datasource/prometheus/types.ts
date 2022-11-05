@@ -165,3 +165,20 @@ export enum LegendFormatMode {
   Verbose = '__verbose',
   Custom = '__custom',
 }
+
+export enum PromVariableQueryType {
+  LabelNames,
+  LabelValues,
+  MetricNames,
+  VarQueryResult,
+  SeriesQuery,
+}
+
+export interface PromVariableQuery extends DataQuery {
+  expr?: string;
+  exprType?: PromVariableQueryType;
+  label?: string;
+  metric?: string;
+  varQuery?: string;
+  seriesQuery?: string;
+}
