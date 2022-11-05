@@ -6,6 +6,7 @@ import {
   DataFrame,
   Field,
   FieldColorModeId,
+  FieldType,
   getFieldDisplayName,
   PanelProps,
   TimeRange,
@@ -245,6 +246,11 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     });
 
     if (hasPerBarColor) {
+      // use opacity from first numeric field
+      let opacityField = frame0Ref.current!.fields.find((f) => f.type === FieldType.number)!;
+
+      fillOpacity = (opacityField.config.custom.fillOpacity ?? 100) / 100;
+
       getColor = (seriesIdx: number, valueIdx: number) => {
         let field = frame0Ref.current!.fields[seriesIdx];
         return field.display!(field.values.get(valueIdx)).color!;

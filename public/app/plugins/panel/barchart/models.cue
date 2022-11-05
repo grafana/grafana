@@ -62,8 +62,10 @@ Panel: thema.#Lineage & {
 						// Controls the fill opacity of the bars.
 						fillOpacity?:  int32 & >= 0 & <= 100 | *80
 						// Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option.
-            // Gradient appearance is influenced by the Fill opacity setting.
+            			// Gradient appearance is influenced by the Fill opacity setting.
 						gradientMode?: ui.GraphGradientMode | *"none"
+						// Threshold rendering
+						thresholdsStyle?: ui.GraphThresholdsStyleConfig
 					} @cuetsy(kind="interface")
 				},
 			]
