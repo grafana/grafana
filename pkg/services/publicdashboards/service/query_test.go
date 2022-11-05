@@ -915,7 +915,7 @@ func TestBuildMetricRequest(t *testing.T) {
 			publicDashboardQueryDTO,
 		)
 
-		require.ErrorContains(t, err, ErrPublicDashboardPanelNotFound.Reason)
+		require.ErrorContains(t, err, ErrPanelNotFound.Error())
 	})
 
 	t.Run("metric request built without hidden query", func(t *testing.T) {
