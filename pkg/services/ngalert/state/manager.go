@@ -15,7 +15,10 @@ import (
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-var ResendDelay = 30 * time.Second
+var (
+	ResendDelay           = 30 * time.Second
+	MetricsScrapeInterval = 15 * time.Second // TODO: parameterize? // Setting to a reasonable default scrape interval for Prometheus.
+)
 
 // AlertInstanceManager defines the interface for querying the current alert instances.
 type AlertInstanceManager interface {
@@ -29,47 +32,47 @@ type Manager struct {
 
 	clock       clock.Clock
 	cache       *cache
-	quit        chan struct{}
 	ResendDelay time.Duration
 
-	ruleStore     RuleReader
 	instanceStore InstanceStore
 	imageService  image.ImageService
 	historian     Historian
 	externalURL   *url.URL
 }
 
-func NewManager(metrics *metrics.State, externalURL *url.URL,
-	ruleStore RuleReader, instanceStore InstanceStore, imageService image.ImageService, clock clock.Clock, historian Historian) *Manager {
-	manager := &Manager{
+func NewManager(metrics *metrics.State, externalURL *url.URL, instanceStore InstanceStore, imageService image.ImageService, clock clock.Clock, historian Historian) *Manager {
+	return &Manager{
 		cache:         newCache(),
-		quit:          make(chan struct{}),
 		ResendDelay:   ResendDelay, // TODO: make this configurable
 		log:           log.New("ngalert.state.manager"),
 		metrics:       metrics,
-		ruleStore:     ruleStore,
 		instanceStore: instanceStore,
 		imageService:  imageService,
 		historian:     historian,
 		clock:         clock,
 		externalURL:   externalURL,
 	}
-	if manager.metrics != nil {
-		go manager.recordMetrics()
+}
+
+func (st *Manager) Run(ctx context.Context) error {
+	ticker := st.clock.Ticker(MetricsScrapeInterval)
+	for {
+		select {
+		case <-ticker.C:
+			st.log.Debug("Recording state cache metrics", "now", st.clock.Now())
+			st.cache.recordMetrics(st.metrics)
+		case <-ctx.Done():
+			st.log.Debug("Stopping")
+			ticker.Stop()
+			return ctx.Err()
+		}
 	}
-	return manager
 }
 
-func (st *Manager) Close() {
-	st.quit <- struct{}{}
-}
-
-func (st *Manager) Warm(ctx context.Context) {
+func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 	if st.instanceStore == nil {
 		st.log.Info("Skip warming the state because instance store is not configured")
-	}
-	if st.ruleStore == nil {
-		st.log.Info("Skip warming the state because rule store is not configured")
+		return
 	}
 	startTime := time.Now()
 	st.log.Info("Warming state cache for startup")
@@ -86,7 +89,7 @@ func (st *Manager) Warm(ctx context.Context) {
 		ruleCmd := ngModels.ListAlertRulesQuery{
 			OrgID: orgId,
 		}
-		if err := st.ruleStore.ListAlertRules(ctx, &ruleCmd); err != nil {
+		if err := rulesReader.ListAlertRules(ctx, &ruleCmd); err != nil {
 			st.log.Error("Unable to fetch previous state", "error", err)
 		}
 
@@ -272,24 +275,6 @@ func (st *Manager) GetAll(orgID int64) []*State {
 
 func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
 	return st.cache.getStatesForRuleUID(orgID, alertRuleUID)
-}
-
-func (st *Manager) recordMetrics() {
-	// TODO: parameterize?
-	// Setting to a reasonable default scrape interval for Prometheus.
-	dur := time.Duration(15) * time.Second
-	ticker := st.clock.Ticker(dur)
-	for {
-		select {
-		case <-ticker.C:
-			st.log.Debug("Recording state cache metrics", "now", st.clock.Now())
-			st.cache.recordMetrics(st.metrics)
-		case <-st.quit:
-			st.log.Debug("Stopping state cache metrics recording", "now", st.clock.Now())
-			ticker.Stop()
-			return
-		}
-	}
 }
 
 func (st *Manager) Put(states []*State) {
