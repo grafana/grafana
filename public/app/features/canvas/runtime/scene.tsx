@@ -511,6 +511,11 @@ export class Scene {
     })
       .on('select', () => {
         this.editModeEnabled.next(false);
+
+        // Hide arrow anchors on select
+        if (this.arrowAnchorDiv) {
+          this.arrowAnchorDiv.style.display = 'none';
+        }
       })
       .on('selectEnd', (event) => {
         targets = event.selected;
@@ -608,7 +613,8 @@ export class Scene {
   };
 
   handleMouseLeave = (event: React.MouseEvent) => {
-    this.arrowAnchorDiv!.style.display = 'none';
+    // TODO: Figure out how to hide arrows when mouse leaves element but not when hovering on anchor
+    // this.arrowAnchorDiv!.style.display = 'none';
   };
 
   render() {

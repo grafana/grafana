@@ -7129,6 +7129,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "10"],
       [0, 0, 0, "Do not use any type assertions.", "11"]
     ],
+    "public/app/plugins/panel/canvas/ArrowAnchors.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/plugins/panel/canvas/CanvasContextMenu.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
