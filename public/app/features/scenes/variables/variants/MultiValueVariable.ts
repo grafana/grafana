@@ -70,7 +70,7 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
     return this.state.value;
   }
 
-  getValueDisplayText(): string {
+  getValueText(): string {
     if (Array.isArray(this.state.text)) {
       return this.state.text.join(' + ');
     }

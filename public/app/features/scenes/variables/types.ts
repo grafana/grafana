@@ -38,7 +38,7 @@ export interface SceneVariable<TState extends SceneVariableState = SceneVariable
    * Example: ${podId:text}
    * Useful for variables that have non user friendly values but friendly display text names.
    */
-  getValueDisplayText?(): string;
+  getValueText?(): string;
 }
 
 export type VariableValue = string | string[] | number | number[] | boolean | boolean[] | null | undefined;
