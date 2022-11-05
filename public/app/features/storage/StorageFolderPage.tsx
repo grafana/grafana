@@ -1,37 +1,40 @@
 import React from 'react';
 import { useAsync } from 'react-use';
 
-import { DataFrame, NavModel, NavModelItem } from '@grafana/data';
+import { DataFrame, NavModel, NavModelItem, DataFrameView } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, Card, Icon, Spinner } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { getGrafanaStorage } from './storage';
+import { ListItem } from './types';
 
 export interface Props extends GrafanaRouteComponentProps<{ slug: string }> {}
 
 export function StorageFolderPage(props: Props) {
-  const slug = props.match.params.slug ?? '';
+  let slug = props.match.params.slug ?? '';
   const listing = useAsync((): Promise<DataFrame | undefined> => {
-    return getGrafanaStorage().list('content/' + slug);
+    return getGrafanaStorage().list('drive/' + slug);
   }, [slug]);
 
-  const childRoot = slug.length > 0 ? `g/${slug}/` : 'g/';
   const pageNav = getPageNavFromSlug(slug);
 
   const renderListing = () => {
     if (listing.value) {
-      const names = listing.value.fields[0].values.toArray();
-      return names.map((item: string) => {
-        let name = item;
-        const isFolder = name.indexOf('.') < 0;
-        const isDash = !isFolder && name.endsWith('.json');
-        const url = `${childRoot}${name}`;
+      if (listing.value.length < 1) {
+        return <div>Empty folder</div>;
+      }
+
+      const view = new DataFrameView<ListItem>(listing.value);
+      return view.map((item: ListItem) => {
+        const isFolder = item.kind === 'folder';
+        const isDash = item.kind === 'dashboard';
+        const url = `g/${item.path.substring('drive/'.length)}`; // skip the "drive/" at the beginning
 
         return (
-          <Card key={name} href={isFolder || isDash ? url : undefined}>
-            <Card.Heading>{name}</Card.Heading>
+          <Card key={item.path} href={isFolder || isDash ? url : undefined}>
+            <Card.Heading>{item.name}</Card.Heading>
             <Card.Figure>
               <Icon name={isFolder ? 'folder' : isDash ? 'gf-grid' : 'file-alt'} size="sm" />
             </Card.Figure>
@@ -70,6 +73,8 @@ export function getPageNavFromSlug(slug: string) {
     pageNavs.push({ text: parts[i], url, parentItem: lastPageNav });
     lastPageNav = pageNavs[pageNavs.length - 1];
   }
+
+  console.log('GOT', slug, lastPageNav);
 
   return lastPageNav;
 }

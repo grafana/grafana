@@ -66,7 +66,7 @@ func resultsToFrame(ctx context.Context, rsp *object.ObjectSearchResponse, route
 			p = fmt.Sprintf("%s/%s", res.GRN.Scope, res.GRN.UID)
 		} else {
 			info, _ := router.Route(ctx, res.GRN)
-			idx := strings.Index(info.Key, "/")
+			idx := strings.Index(info.Key, "/") + 1
 			p = info.Key[idx:]
 		}
 		path.Set(i, p) // only drive for now

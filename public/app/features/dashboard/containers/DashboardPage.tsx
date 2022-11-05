@@ -457,7 +457,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
 
   if (props.route.routeName === DashboardRoutes.Path) {
     sectionNav = getRootContentNavModel();
-    const pageNav = getPageNavFromSlug(props.match.params.slug!);
+    pageNav = getPageNavFromSlug(props.match.params.slug!);
     if (pageNav?.parentItem) {
       pageNav.parentItem = pageNav.parentItem;
     }

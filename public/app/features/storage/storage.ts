@@ -40,7 +40,10 @@ class SimpleStorage implements GrafanaStorage {
   async list(path: string): Promise<DataFrame | undefined> {
     let url = 'api/object/list/';
     if (path) {
-      url += path + '/';
+      url += path;
+    }
+    if (!url.endsWith('/')) {
+      url += '/';
     }
     const rsp = await getBackendSrv().get<DataFrameJSON>(url);
     if (rsp?.data) {
@@ -140,13 +143,15 @@ class SimpleStorage implements GrafanaStorage {
       path += '.json';
     }
 
-    if (!path.startsWith('content/')) {
-      path = `content/${path}`;
+    if (!path.startsWith('drive/')) {
+      path = `drive/${path}`;
     }
 
-    const result = await backendSrv.get(`/api/storage/read/${path}`);
+    const result = await backendSrv.get(`/api/object/store/${path}`);
     result.uid = path;
     delete result.id; // Saved with the dev dashboards!
+
+    console.log('GOT', result);
 
     return {
       meta: {
@@ -155,8 +160,10 @@ class SimpleStorage implements GrafanaStorage {
         canEdit: true,
         canSave: true,
         canStar: false, // needs id
+        updated: result.object.updated,
+        updatedBy: result.object.updatedBy,
       },
-      dashboard: result,
+      dashboard: result.object.body,
     };
   }
 

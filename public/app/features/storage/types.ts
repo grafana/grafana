@@ -73,3 +73,25 @@ export interface ItemOptions {
   path: string;
   workflows: Array<SelectableValue<WorkflowID>>;
 }
+
+export interface ListItem {
+  name: string;
+  kind: string;
+  path: string; // with scope
+  description: string;
+  labels?: Record<string, string>;
+  fields?: Record<string, string | number | boolean>;
+  size?: number;
+  updatedAt: number;
+  updatedBy: string;
+}
+
+// nameFrameField        = "name"
+// kindFrameField        = "kind"
+// pathPathField         = "path" // scope + uid
+// descriptionFrameField = "description"
+// labelsFrameField      = "labels"
+// fieldsFrameField      = "fields"
+// sizeFrameField        = "size"
+// updatedAtFrameField   = "updatedAt"
+// updatedByFrameField   = "updatedBy"
