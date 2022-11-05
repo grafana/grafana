@@ -1,5 +1,4 @@
-import { SelectableValue, VariableOption } from '@grafana/data';
-import { NavigationKey } from 'app/features/variables/pickers/types';
+import { SelectableValue } from '@grafana/data';
 
 import { SceneObject } from '../../core/types';
 import { SceneVariableState, VariableValueOption } from '../types';
@@ -29,19 +28,4 @@ export abstract class MultiValueVariable<
   onMultiValueChange = (value: Array<SelectableValue<string>>) => {
     this.setStateHelper({ value: value.map((v) => v.value!), text: value.map((v) => v.label!) });
   };
-
-  onFilterOrSearchOptions = (value: string) => {};
-
-  onNavigate = (key: NavigationKey, clearOthers: boolean) => {};
-
-  getOldPickerOptions(): VariableOption[] {
-    return this.state.options.map((op) => ({
-      selected: false,
-      text: op.label ?? op.value ?? '',
-      value: op.value ?? '',
-    }));
-  }
-
-  onToggleOption = (option: VariableOption, clearOthers: boolean) => {};
-  onToggleAllOptions = () => {};
 }
