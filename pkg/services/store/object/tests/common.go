@@ -42,11 +42,12 @@ func createServiceAccountAdminToken(t *testing.T, env *server.TestEnv) (string, 
 	})
 
 	return keyGen.ClientSecret, &user.SignedInUser{
-		UserID: account.ID,
-		Email:  account.Email,
-		Name:   account.Name,
-		Login:  account.Login,
-		OrgID:  account.OrgID,
+		UserID:           account.ID,
+		Email:            account.Email,
+		Name:             account.Name,
+		Login:            account.Login,
+		OrgID:            account.OrgID,
+		IsServiceAccount: account.IsServiceAccount,
 	}
 }
 

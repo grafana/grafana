@@ -50,8 +50,9 @@ import (
 )
 
 func TestIntegrationPluginManager(t *testing.T) {
-	t.Helper()
-
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	staticRootPath, err := filepath.Abs("../../../public/")
 	require.NoError(t, err)
 
