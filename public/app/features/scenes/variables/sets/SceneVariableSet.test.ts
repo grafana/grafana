@@ -76,4 +76,20 @@ describe('SceneVariableList', () => {
       expect(C.state.loading).toBe(true);
     });
   });
+
+  describe('When deactivated', () => {
+    it('Should cancel running variable queries', async () => {
+      const A = new TestVariable({ name: 'A', query: 'A.*', value: '', text: '', options: [] });
+
+      const scene = new TestScene({
+        $variables: new SceneVariableSet({ variables: [A] }),
+      });
+
+      scene.activate();
+      expect(A.isGettingValues).toBe(true);
+
+      scene.deactivate();
+      expect(A.isGettingValues).toBe(false);
+    });
+  });
 });

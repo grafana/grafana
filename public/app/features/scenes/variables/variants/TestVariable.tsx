@@ -23,6 +23,7 @@ export interface TestVariableState extends MultiValueVariableState {
  */
 export class TestVariable extends MultiValueVariable<TestVariableState> {
   completeUpdate = new Subject<number>();
+  isGettingValues = true;
 
   getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
     const { delayMs } = this.state;
@@ -42,9 +43,11 @@ export class TestVariable extends MultiValueVariable<TestVariableState> {
         timeout = setTimeout(() => this.signalUpdateCompleted(), delayMs);
       }
 
+      this.isGettingValues = true;
+
       return () => {
         clearTimeout(timeout);
-        // console.log('Canceling QueryVariable query');
+        this.isGettingValues = false;
       };
     });
   }
