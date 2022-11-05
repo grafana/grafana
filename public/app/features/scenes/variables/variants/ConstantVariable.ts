@@ -1,16 +1,8 @@
-import { Observable, of } from 'rxjs';
+import { SceneObjectBase } from '../../core/SceneObjectBase';
+import { SceneVariable, SceneVariableState } from '../types';
 
-import { SceneVariableState, VariableGetOptionsArgs, VariableValueOption } from '../types';
+export interface ConstantVariableState extends SceneVariableState {}
 
-import { SceneVariableBase } from './SceneVariableBase';
-
-export interface ConstantVariableState extends SceneVariableState {
-  value: string;
-  text: string;
-}
-
-export class ConstantVariable extends SceneVariableBase<ConstantVariableState> {
-  getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
-    return of([{ value: this.state.value, label: this.state.text }]);
-  }
-}
+export class ConstantVariable
+  extends SceneObjectBase<ConstantVariableState>
+  implements SceneVariable<ConstantVariableState> {}

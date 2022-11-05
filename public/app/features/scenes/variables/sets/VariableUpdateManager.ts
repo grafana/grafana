@@ -1,6 +1,6 @@
 import { Subscription, Unsubscribable } from 'rxjs';
 
-import { SceneVariable, SceneVariables, VariableValueOption } from '../types';
+import { SceneVariable, SceneVariables } from '../types';
 
 export interface VariableUpdateInProgress {
   variable: SceneVariable;
@@ -29,15 +29,19 @@ export class VariablesUpdateManager {
    */
   updateNextBatch() {
     for (const [name, variable] of this.variablesToUpdate) {
+      if (!variable.validateAndUpdate) {
+        throw new Error('Variable added to variablesToUpdate but does not have validateAndUpdate');
+      }
+
       // Wait for variables that has dependencies that also needs updates
-      if (this.hasDependendencyThatNeedsUpdating(variable)) {
+      if (this.hasDependendencyInUpdateQueue(variable)) {
         continue;
       }
 
       this.updating.set(name, {
         variable,
-        subscription: variable.getValueOptions({}).subscribe({
-          next: (valueOptions) => this.handleNewVariableValueOptions(variable, valueOptions),
+        subscription: variable.validateAndUpdate().subscribe({
+          next: () => this.validateAndUpdateCompleted(variable),
           error: (err) => this.handleVariableError(variable, err),
         }),
       });
@@ -45,12 +49,9 @@ export class VariablesUpdateManager {
   }
 
   /**
-   * A variable has completed it's update process.
-   * This could mean that variables that depend on it can now be updated in turn.
+   * A variable has completed it's update process. This could mean that variables that depend on it can now be updated in turn.
    */
-  private handleNewVariableValueOptions(variable: SceneVariable, options: VariableValueOption[]) {
-    this.updateVariableStateGivenNewOptions(variable, options);
-
+  private validateAndUpdateCompleted(variable: SceneVariable) {
     const update = this.updating.get(variable.state.name);
     update?.subscription.unsubscribe();
 
@@ -59,36 +60,18 @@ export class VariablesUpdateManager {
     this.updateNextBatch();
   }
 
+  /**
+   * TODO handle this properly (and show error in UI).
+   * Not sure if this should be handled here on in MultiValueVariable
+   */
   private handleVariableError(variable: SceneVariable, err: Error) {
     variable.setState({ loading: false, error: err });
-    // todo handle properly
-  }
-
-  /**
-   * Check if current value is valid given new options. If not update the value.
-   * TODO: Handle multi valued variables
-   */
-  private updateVariableStateGivenNewOptions(variable: SceneVariable, options: VariableValueOption[]) {
-    if (options.length === 0) {
-      // TODO handle the no value state
-      variable.setState({ value: '?', loading: false });
-      return;
-    }
-
-    const foundCurrent = options.find((x) => x.value === variable.state.value);
-    if (!foundCurrent) {
-      // Current value is not valid. Set to first of the available options
-      variable.setState({ value: options[0].value, text: options[0].label, loading: false });
-    } else {
-      // current value is still ok
-      variable.setState({ loading: false });
-    }
   }
 
   /**
    * Checks if the variable has any dependencies that is currently in variablesToUpdate
    */
-  private hasDependendencyThatNeedsUpdating(variable: SceneVariable) {
+  private hasDependendencyInUpdateQueue(variable: SceneVariable) {
     const dependencies = this.dependencies.get(variable.state.name);
 
     if (dependencies) {
@@ -108,9 +91,11 @@ export class VariablesUpdateManager {
    * Extract dependencies from all variables and add those that needs update to the variablesToUpdate map
    * Then it will start the update process.
    */
-  updateAll() {
+  validateAndUpdateAll() {
     for (const variable of this.sceneContext.state.variables) {
-      this.variablesToUpdate.set(variable.state.name, variable);
+      if (variable.validateAndUpdate) {
+        this.variablesToUpdate.set(variable.state.name, variable);
+      }
 
       if (variable.getDependencies) {
         this.dependencies.set(variable.state.name, variable.getDependencies());

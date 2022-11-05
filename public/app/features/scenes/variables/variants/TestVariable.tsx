@@ -7,9 +7,9 @@ import { SceneComponentProps } from '../../core/types';
 import { VariableValueSelect } from '../components/VariableValueSelect';
 import { getVariableDependencies } from '../getVariableDependencies';
 import { sceneTemplateInterpolator } from '../sceneTemplateInterpolator';
-import { VariableGetOptionsArgs, VariableValueOption } from '../types';
+import { VariableValueOption } from '../types';
 
-import { MultiValueVariable, MultiValueVariableState } from './MultiValueVariable';
+import { MultiValueVariable, MultiValueVariableState, VariableGetOptionsArgs } from './MultiValueVariable';
 
 export interface TestVariableState extends MultiValueVariableState {
   //query: DataQuery;

@@ -26,16 +26,19 @@ export interface SceneVariable<TState extends SceneVariableState = SceneVariable
    * This function is called when variable should execute it's query (if it's a query variable) and re-evaluate whether the
    * current value is valid and if not update it's current value.
    */
-  getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]>;
+  //getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]>;
+
+  /**
+   * This function is called on activation or when a dependency changes.
+   */
+  validateAndUpdate?(): Observable<ValidateAndUpdateResult>;
 }
+
+export interface ValidateAndUpdateResult {}
 
 export interface VariableValueOption {
   label: string;
   value: string;
-}
-
-export interface VariableGetOptionsArgs {
-  searchFilter?: string;
 }
 
 export interface SceneVariableSetState extends SceneObjectStatePlain {
