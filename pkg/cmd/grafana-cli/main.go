@@ -3,13 +3,14 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"syscall"
 )
 
 func main() {
-	e, err := os.Executable()
+	curr, err := os.Executable()
 	if err != nil {
 		fmt.Println("Error locating executable:", err)
 		os.Exit(1)
@@ -20,7 +21,13 @@ func main() {
 		executable += ".exe"
 	}
 
-	binary := filepath.Join(filepath.Dir(filepath.Clean(e)), executable)
+	binary := filepath.Join(filepath.Dir(filepath.Clean(curr)), executable)
+	if _, err := os.Stat(binary); err != nil {
+		binary, err = exec.LookPath(executable)
+		if err != nil {
+			fmt.Printf("Error locating %s: %s\n", executable, err)
+		}
+	}
 
 	args := append([]string{"grafana-cli"}, os.Args[1:]...)
 
