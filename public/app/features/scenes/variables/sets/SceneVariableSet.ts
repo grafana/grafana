@@ -16,10 +16,6 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
   /** Variables currently updating  */
   private updating = new Map<string, VariableUpdateInProgress>();
 
-  constructor(state: SceneVariableSetState) {
-    super(state);
-  }
-
   getByName(name: string): SceneVariable | undefined {
     // TODO: Replace with index
     return this.state.variables.find((x) => x.state.name === name);
