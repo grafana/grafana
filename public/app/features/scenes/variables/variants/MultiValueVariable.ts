@@ -4,9 +4,18 @@ import { SelectableValue } from '@grafana/data';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { SceneObject } from '../../core/types';
-import { SceneVariable, SceneVariableState, ValidateAndUpdateResult, VariableValueOption } from '../types';
+import {
+  SceneVariable,
+  SceneVariableValueChangedEvent,
+  SceneVariableState,
+  ValidateAndUpdateResult,
+  VariableValue,
+  VariableValueOption,
+} from '../types';
 
 export interface MultiValueVariableState extends SceneVariableState {
+  value: string | string[]; // old current.text
+  text: string | string[]; // old current.value
   options: VariableValueOption[];
   isMulti?: boolean;
 }
@@ -20,18 +29,17 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
   implements SceneVariable<TState>
 {
   /**
-   * The source of value options. Called when activation or when a dependency changes.
-   * Can also be called directly by the value select component with a dynamic search filter.
+   * The source of value options.
    */
   abstract getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]>;
 
   /**
-   * This function is called on activation or when a dependency changes.
+   * This function is called on when SceneVariableSet is activated or when a dependency changes.
    */
   validateAndUpdate(): Observable<ValidateAndUpdateResult> {
     return this.getValueOptions({}).pipe(
       map((options) => {
-        this.updateValueGivenNewOptions(this, options);
+        this.updateValueGivenNewOptions(options);
         return {};
       })
     );
@@ -41,20 +49,39 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
    * Check if current value is valid given new options. If not update the value.
    * TODO: Handle multi valued variables
    */
-  private updateValueGivenNewOptions(variable: SceneVariable, options: VariableValueOption[]) {
+  private updateValueGivenNewOptions(options: VariableValueOption[]) {
     if (options.length === 0) {
       // TODO handle the no value state
-      variable.setState({ value: '?', loading: false });
+      this.setStateHelper({ value: '?', loading: false });
       return;
     }
 
-    const foundCurrent = options.find((x) => x.value === variable.state.value);
+    const foundCurrent = options.find((x) => x.value === this.state.value);
     if (!foundCurrent) {
       // Current value is not valid. Set to first of the available options
-      variable.setState({ value: options[0].value, text: options[0].label, loading: false });
+      this.changeValueAndPublishChangeEvent(options[0].value, options[0].label);
     } else {
       // current value is still ok
-      variable.setState({ loading: false });
+      this.setStateHelper({ loading: false });
+    }
+  }
+
+  getValue(): VariableValue {
+    return this.state.value;
+  }
+
+  getValueDisplayText(): string {
+    if (Array.isArray(this.state.text)) {
+      return this.state.text.join(' + ');
+    }
+
+    return this.state.text;
+  }
+
+  changeValueAndPublishChangeEvent(value: string | string[], text: string | string[]) {
+    if (value !== this.state.value || text !== this.state.text) {
+      this.setStateHelper({ value, text, loading: false });
+      this.publishEvent(new SceneVariableValueChangedEvent(this), true);
     }
   }
 
@@ -67,10 +94,13 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
   }
 
   onSingleValueChange = (value: SelectableValue<string>) => {
-    this.setStateHelper({ value: value.value, text: value.label });
+    this.changeValueAndPublishChangeEvent(value.value!, value.label!);
   };
 
   onMultiValueChange = (value: Array<SelectableValue<string>>) => {
-    this.setStateHelper({ value: value.map((v) => v.value!), text: value.map((v) => v.label!) });
+    this.changeValueAndPublishChangeEvent(
+      value.map((v) => v.value!),
+      value.map((v) => v.label!)
+    );
   };
 }

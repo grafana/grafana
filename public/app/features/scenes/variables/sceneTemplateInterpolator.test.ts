@@ -19,12 +19,10 @@ describe('sceneTemplateInterpolator', () => {
           new ConstantVariable({
             name: 'test',
             value: 'hello',
-            text: 'hello',
           }),
           new ConstantVariable({
             name: 'atRootOnly',
             value: 'RootValue',
-            text: 'RootValue',
           }),
         ],
       }),
@@ -34,7 +32,6 @@ describe('sceneTemplateInterpolator', () => {
             new ConstantVariable({
               name: 'test',
               value: 'nestedValue',
-              text: 'nestedValue',
             }),
           ],
         }),

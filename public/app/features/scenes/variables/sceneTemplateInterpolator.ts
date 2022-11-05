@@ -17,11 +17,13 @@ export function sceneTemplateInterpolator(target: string, sceneObject: SceneObje
       return match;
     }
 
-    if (isArray(variable.state.value)) {
+    const value = variable.getValue(fieldPath);
+
+    if (isArray(value)) {
       return 'not supported yet';
     }
 
-    return variable.state.value;
+    return String(value);
   });
 }
 

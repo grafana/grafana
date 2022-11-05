@@ -1,6 +1,5 @@
 import { SceneObjectBase } from '../../core/SceneObjectBase';
-import { SceneObjectStateChangedEvent } from '../../core/events';
-import { SceneVariable, SceneVariables, SceneVariableSetState, SceneVariableState } from '../types';
+import { SceneVariable, SceneVariables, SceneVariableSetState, SceneVariableValueChangedEvent } from '../types';
 
 import { VariablesUpdateManager } from './VariableUpdateManager';
 
@@ -17,19 +16,14 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
     this.updateManager = new VariablesUpdateManager(this);
 
     // Subscribe to changes to child variables
-    this.subs.add(this.subscribeToEvent(SceneObjectStateChangedEvent, this.onVariableStateChanged));
+    this.subs.add(
+      this.subscribeToEvent(SceneVariableValueChangedEvent, (event) =>
+        this.updateManager!.variableValueChanged(event.payload)
+      )
+    );
+
     this.updateManager.validateAndUpdateAll();
   }
-
-  onVariableStateChanged = (event: SceneObjectStateChangedEvent) => {
-    const newState = event.payload.newState as SceneVariableState;
-    const oldState = event.payload.prevState as SceneVariableState;
-    const variable = event.payload.changedObject as SceneVariable;
-
-    if (newState.value !== oldState.value) {
-      this.updateManager!.variableValueChanged(variable);
-    }
-  };
 
   getByName(name: string): SceneVariable | undefined {
     // TODO: Replace with index

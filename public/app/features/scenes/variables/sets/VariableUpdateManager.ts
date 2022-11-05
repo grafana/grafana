@@ -1,4 +1,4 @@
-import { Subscription, Unsubscribable } from 'rxjs';
+import { Unsubscribable } from 'rxjs';
 
 import { SceneVariable, SceneVariables } from '../types';
 
@@ -14,7 +14,6 @@ export interface VariableUpdateInProgress {
 export class VariablesUpdateManager {
   variablesThatHaveChanged = new Map<string, SceneVariable>();
   variablesToUpdate = new Map<string, SceneVariable>();
-  subs: Subscription = new Subscription();
   dependencies = new Map<string, string[]>();
   updating = new Map<string, VariableUpdateInProgress>();
   sceneContext: SceneVariables;

@@ -1,8 +1,15 @@
 import { SceneObjectBase } from '../../core/SceneObjectBase';
-import { SceneVariable, SceneVariableState } from '../types';
+import { SceneVariable, SceneVariableState, VariableValue } from '../types';
 
-export interface ConstantVariableState extends SceneVariableState {}
+export interface ConstantVariableState extends SceneVariableState {
+  value: string;
+}
 
 export class ConstantVariable
   extends SceneObjectBase<ConstantVariableState>
-  implements SceneVariable<ConstantVariableState> {}
+  implements SceneVariable<ConstantVariableState>
+{
+  getValue(): VariableValue {
+    return this.state.value;
+  }
+}
