@@ -159,14 +159,19 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
       return;
     }
 
-    this.traverseSceneGraphAndNotify(this.parent, this.variablesThatHaveChanged);
+    this.traverseSceneAndNotify(this.parent, this.variablesThatHaveChanged);
     this.variablesThatHaveChanged.clear();
   }
 
   /**
    * Recursivly walk the full scene object graph and notify all objects with dependencies that include any of changed variables
    */
-  private traverseSceneGraphAndNotify(sceneObject: SceneObject, variablesThatChanged: Set<string>) {
+  private traverseSceneAndNotify(sceneObject: SceneObject, variablesThatChanged: Set<string>) {
+    // No need to notify variables under this SceneVariableSet
+    if (this === sceneObject) {
+      return;
+    }
+
     if (sceneObject.variableDependency) {
       for (const dep of sceneObject.variableDependency.getNames()) {
         if (variablesThatChanged.has(dep)) {
@@ -176,9 +181,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
       }
     }
 
-    forEachSceneObjectInState(sceneObject.state, (child) =>
-      this.traverseSceneGraphAndNotify(child, variablesThatChanged)
-    );
+    forEachSceneObjectInState(sceneObject.state, (child) => this.traverseSceneAndNotify(child, variablesThatChanged));
   }
 }
 
