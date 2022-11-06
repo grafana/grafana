@@ -68,6 +68,8 @@
     {
       "groupName": "Slate",
       "matchPackageNames": [
+        "@types/slate",
+        "@types/slate-react",
         "slate",
         "slate-react"
       ]

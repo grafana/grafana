@@ -14,7 +14,7 @@ import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { RuleEditorSection } from './RuleEditorSection';
 
-const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
+export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
 export const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
   required: {

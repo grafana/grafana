@@ -94,7 +94,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "total",
+      "text": "total (16.5 Bil)",
       "x": 4,
       "y": 11,
     },
@@ -200,7 +200,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "test/pkg/agent.(*Target).start.func1",
+      "text": "test/pkg/agent.(*Target).start.func1 (4.10 Bil)",
       "x": 4,
       "y": 33,
     },
@@ -306,7 +306,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "net/http.(*conn).serve",
+      "text": "net/http.(*conn).serve (5.63 Bil)",
       "x": 402.5419198055893,
       "y": 33,
     },
@@ -412,7 +412,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.gcBgMarkWorker",
+      "text": "runtime.gcBgMarkWorker (6.19 Bil)",
       "x": 949.8080194410693,
       "y": 33,
     },
@@ -786,7 +786,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "test/pkg/agent.(*Target).scrape",
+      "text": "test/pkg/agent.(*Target).scrape (4.10 Bil)",
       "x": 4,
       "y": 55,
     },
@@ -892,7 +892,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "net/http.serverHandler.ServeHTTP",
+      "text": "net/http.serverHandler.ServeHTTP (5.58 Bil)",
       "x": 402.5419198055893,
       "y": 55,
     },
@@ -1043,7 +1043,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.systemstack",
+      "text": "runtime.systemstack (6.17 Bil)",
       "x": 949.8080194410693,
       "y": 55,
     },
@@ -1328,7 +1328,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "test/pkg/distributor.(*Distributor).Push",
+      "text": "test/pkg/distributor.(*Distributor).Push (3.67 Bil)",
       "x": 4,
       "y": 77,
     },
@@ -1434,7 +1434,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "io/ioutil.ReadAll",
+      "text": "io/ioutil.ReadAll (430 Mil)",
       "x": 360.74362089914945,
       "y": 77,
     },
@@ -1540,7 +1540,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "net/http.HandlerFunc.ServeHTTP",
+      "text": "net/http.HandlerFunc.ServeHTTP (5.58 Bil)",
       "x": 402.5419198055893,
       "y": 77,
     },
@@ -1691,7 +1691,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.gcBgMarkWorker.func2",
+      "text": "runtime.gcBgMarkWorker.func2 (6.17 Bil)",
       "x": 949.8080194410693,
       "y": 77,
     },
@@ -1887,7 +1887,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "compress/gzip.(*Writer).Write",
+      "text": "compress/gzip.(*Writer).Write (1.13 Bil)",
       "x": 4,
       "y": 99,
     },
@@ -1993,7 +1993,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "test/pkg/pprof.OpenRaw",
+      "text": "test/pkg/pprof.OpenRaw (390 Mil)",
       "x": 113.84204131227219,
       "y": 99,
     },
@@ -2188,7 +2188,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "test/pkg/pprof.(*Profile).Normalize",
+      "text": "test/pkg/pprof.(*Profile).Normalize (1.84 Bil)",
       "x": 172.16524908869988,
       "y": 99,
     },
@@ -2339,7 +2339,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "io.ReadAll",
+      "text": "io.ReadAll (430 Mil)",
       "x": 360.74362089914945,
       "y": 99,
     },
@@ -2445,7 +2445,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "test/pkg/util.glob..func1.1",
+      "text": "test/pkg/util.glob..func1.1 (5.58 Bil)",
       "x": 402.5419198055893,
       "y": 99,
     },
@@ -2596,7 +2596,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.gcDrain",
+      "text": "runtime.gcDrain (6.07 Bil)",
       "x": 949.8080194410693,
       "y": 99,
     },
@@ -2837,7 +2837,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "compress/flate.(*compressor).write",
+      "text": "compress/flate.(*compressor).write (1.06 Bil)",
       "x": 4,
       "y": 121,
     },
@@ -2988,7 +2988,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "test/pkg/gen/google/v1.(*Profile).UnmarshalVT",
+      "text": "test/pkg/gen/google/v1.(*Profile).UnmarshalVT (390 Mil)",
       "x": 113.84204131227219,
       "y": 121,
     },
@@ -3183,7 +3183,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "sort.Sort",
+      "text": "sort.Sort (240 Mil)",
       "x": 172.16524908869988,
       "y": 121,
     },
@@ -3289,7 +3289,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "test/pkg/pprof.(*Profile).clearSampleReferences",
+      "text": "test/pkg/pprof.(*Profile).clearSampleReferences (1.33 Bil)",
       "x": 195.49453219927096,
       "y": 121,
     },
@@ -3529,7 +3529,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "compress/gzip.(*Reader).Read",
+      "text": "compress/gzip.(*Reader).Read (430 Mil)",
       "x": 360.74362089914945,
       "y": 121,
     },
@@ -3635,7 +3635,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "golang.org/x/net/http2/h2c.h2cHandler.ServeHTTP",
+      "text": "golang.org/x/net/http2/h2c.h2cHandler.ServeHTTP (5.58 Bil)",
       "x": 402.5419198055893,
       "y": 121,
     },
@@ -3786,7 +3786,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.scanobject",
+      "text": "runtime.scanobject (4.46 Bil)",
       "x": 949.8080194410693,
       "y": 121,
     },
@@ -4474,7 +4474,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "compress/flate.(*compressor).deflate",
+      "text": "compress/flate.(*compressor).deflate (1.02 Bil)",
       "x": 4,
       "y": 143,
     },
@@ -4937,7 +4937,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "sort.quickSort",
+      "text": "sort.quickSort (240 Mil)",
       "x": 172.16524908869988,
       "y": 143,
     },
@@ -5043,7 +5043,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "test/pkg/slices.RemoveInPlace[...]",
+      "text": "test/pkg/slices.RemoveInPlace[...] (1.29 Bil)",
       "x": 195.49453219927096,
       "y": 143,
     },
@@ -5374,7 +5374,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "compress/flate.(*decompressor).Read",
+      "text": "compress/flate.(*decompressor).Read (430 Mil)",
       "x": 360.74362089914945,
       "y": 143,
     },
@@ -5480,7 +5480,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "net/http.HandlerFunc.ServeHTTP",
+      "text": "net/http.HandlerFunc.ServeHTTP (5.58 Bil)",
       "x": 402.5419198055893,
       "y": 143,
     },
@@ -5676,7 +5676,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.pageIndexOf",
+      "text": "runtime.pageIndexOf (440 Mil)",
       "x": 955.640340218712,
       "y": 143,
     },
@@ -5782,7 +5782,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.greyobject",
+      "text": "runtime.greyobject (540 Mil)",
       "x": 998.4106925880924,
       "y": 143,
     },
@@ -5888,7 +5888,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.findObject",
+      "text": "runtime.findObject (980 Mil)",
       "x": 1050.9015795868772,
       "y": 143,
     },
@@ -6039,7 +6039,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.spanOf",
+      "text": "runtime.spanOf (480 Mil)",
       "x": 1151.023086269745,
       "y": 143,
     },
@@ -6145,7 +6145,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.markBits.isMarked",
+      "text": "runtime.markBits.isMarked (540 Mil)",
       "x": 1197.681652490887,
       "y": 143,
     },
@@ -6790,7 +6790,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "compress/flate.(*compressor).findMatch",
+      "text": "compress/flate.(*compressor).findMatch (530 Mil)",
       "x": 18.580801944106927,
       "y": 165,
     },
@@ -7299,7 +7299,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "test/pkg/pprof.(*Profile).clearSampleReferences.func1",
+      "text": "test/pkg/pprof.(*Profile).clearSampleReferences.func1 (320 Mil)",
       "x": 195.49453219927096,
       "y": 165,
     },
@@ -7585,7 +7585,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "compress/flate.(*decompressor).huffmanBlock",
+      "text": "compress/flate.(*decompressor).huffmanBlock (370 Mil)",
       "x": 365.6038882138518,
       "y": 165,
     },
@@ -7736,7 +7736,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "test/pkg/create.(*create).initServer.func2.1",
+      "text": "test/pkg/create.(*create).initServer.func2.1 (5.58 Bil)",
       "x": 402.5419198055893,
       "y": 165,
     },
@@ -9053,7 +9053,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "net/http.HandlerFunc.ServeHTTP",
+      "text": "net/http.HandlerFunc.ServeHTTP (5.58 Bil)",
       "x": 402.5419198055893,
       "y": 187,
     },
@@ -9789,7 +9789,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "github.com/opentracing-contrib/go-stdlib/nethttp.MiddlewareFunc.func5",
+      "text": "github.com/opentracing-contrib/go-stdlib/nethttp.MiddlewareFunc.func5 (5.58 Bil)",
       "x": 402.5419198055893,
       "y": 209,
     },
@@ -10615,7 +10615,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "net/http.HandlerFunc.ServeHTTP",
+      "text": "net/http.HandlerFunc.ServeHTTP (5.54 Bil)",
       "x": 402.5419198055893,
       "y": 231,
     },
@@ -11351,7 +11351,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "github.com/weaveworks/common/middleware.Log.Wrap.func1",
+      "text": "github.com/weaveworks/common/middleware.Log.Wrap.func1 (5.54 Bil)",
       "x": 402.5419198055893,
       "y": 253,
     },
@@ -12042,7 +12042,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "net/http.HandlerFunc.ServeHTTP",
+      "text": "net/http.HandlerFunc.ServeHTTP (5.53 Bil)",
       "x": 402.5419198055893,
       "y": 275,
     },
@@ -12643,7 +12643,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "github.com/weaveworks/common/middleware.Instrument.Wrap.func1",
+      "text": "github.com/weaveworks/common/middleware.Instrument.Wrap.func1 (5.51 Bil)",
       "x": 402.5419198055893,
       "y": 297,
     },
@@ -13109,7 +13109,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "github.com/felixge/httpsnoop.(*Metrics).CaptureMetrics",
+      "text": "github.com/felixge/httpsnoop.(*Metrics).CaptureMetrics (5.50 Bil)",
       "x": 402.5419198055893,
       "y": 319,
     },
@@ -13575,7 +13575,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "github.com/weaveworks/common/middleware.Instrument.Wrap.func1.2",
+      "text": "github.com/weaveworks/common/middleware.Instrument.Wrap.func1.2 (5.49 Bil)",
       "x": 402.5419198055893,
       "y": 341,
     },
@@ -13996,7 +13996,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "github.com/gorilla/mux.(*Router).ServeHTTP",
+      "text": "github.com/gorilla/mux.(*Router).ServeHTTP (5.49 Bil)",
       "x": 402.5419198055893,
       "y": 363,
     },
@@ -14327,7 +14327,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "github.com/bufbuild/connect-go.(*Handler).ServeHTTP",
+      "text": "github.com/bufbuild/connect-go.(*Handler).ServeHTTP (1.61 Bil)",
       "x": 402.5419198055893,
       "y": 385,
     },
@@ -14433,7 +14433,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "net/http.(*ServeMux).ServeHTTP",
+      "text": "net/http.(*ServeMux).ServeHTTP (3.88 Bil)",
       "x": 559.0425273390036,
       "y": 385,
     },
@@ -14764,7 +14764,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "github.com/bufbuild/connect-go.NewUnaryHandler[...].func1",
+      "text": "github.com/bufbuild/connect-go.NewUnaryHandler[...].func1 (1.61 Bil)",
       "x": 402.5419198055893,
       "y": 407,
     },
@@ -14870,7 +14870,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "net/http.HandlerFunc.ServeHTTP",
+      "text": "net/http.HandlerFunc.ServeHTTP (3.88 Bil)",
       "x": 559.0425273390036,
       "y": 407,
     },
@@ -15111,7 +15111,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "github.com/bufbuild/connect-go.NewUnaryHandler[...].func1.1",
+      "text": "github.com/bufbuild/connect-go.NewUnaryHandler[...].func1.1 (1.54 Bil)",
       "x": 402.5419198055893,
       "y": 429,
     },
@@ -15262,7 +15262,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "net/http/pprof.Index",
+      "text": "net/http/pprof.Index (3.88 Bil)",
       "x": 559.0425273390036,
       "y": 429,
     },
@@ -15503,7 +15503,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "test/pkg/ingester.(*Ingester).Push",
+      "text": "test/pkg/ingester.(*Ingester).Push (1.54 Bil)",
       "x": 402.5419198055893,
       "y": 451,
     },
@@ -15654,7 +15654,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "net/http/pprof.handler.ServeHTTP",
+      "text": "net/http/pprof.handler.ServeHTTP (3.88 Bil)",
       "x": 559.0425273390036,
       "y": 451,
     },
@@ -16029,7 +16029,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "test/pkg/create.(*Head).Ingest",
+      "text": "test/pkg/create.(*Head).Ingest (850 Mil)",
       "x": 421.01093560145813,
       "y": 473,
     },
@@ -16135,7 +16135,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "test/pkg/gen/google/v1.(*Profile).UnmarshalVT",
+      "text": "test/pkg/gen/google/v1.(*Profile).UnmarshalVT (480 Mil)",
       "x": 503.6354799513974,
       "y": 473,
     },
@@ -16286,7 +16286,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime/pprof.(*Profile).WriteTo",
+      "text": "runtime/pprof.(*Profile).WriteTo (3.87 Bil)",
       "x": 559.0425273390036,
       "y": 473,
     },
@@ -16661,7 +16661,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "test/pkg/create.(*Head).convertSamples",
+      "text": "test/pkg/create.(*Head).convertSamples (350 Mil)",
       "x": 421.01093560145813,
       "y": 495,
     },
@@ -16767,7 +16767,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "test/pkg/create.(*deduplicatingSlice[...]).ingest",
+      "text": "test/pkg/create.(*deduplicatingSlice[...]).ingest (370 Mil)",
       "x": 455.0328068043743,
       "y": 495,
     },
@@ -17409,7 +17409,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime/pprof.writeAlloc",
+      "text": "runtime/pprof.writeAlloc (3.23 Bil)",
       "x": 559.0425273390036,
       "y": 495,
     },
@@ -17515,7 +17515,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime/pprof.writeGoroutine",
+      "text": "runtime/pprof.writeGoroutine (640 Mil)",
       "x": 873.0157958687728,
       "y": 495,
     },
@@ -17890,7 +17890,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "test/pkg/create.(*deduplicatingSlice[...]).ingest",
+      "text": "test/pkg/create.(*deduplicatingSlice[...]).ingest (300 Mil)",
       "x": 421.01093560145813,
       "y": 517,
     },
@@ -18579,7 +18579,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime/pprof.writeHeapInternal",
+      "text": "runtime/pprof.writeHeapInternal (3.23 Bil)",
       "x": 559.0425273390036,
       "y": 517,
     },
@@ -18685,7 +18685,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime/pprof.writeRuntimeProfile",
+      "text": "runtime/pprof.writeRuntimeProfile (640 Mil)",
       "x": 873.0157958687728,
       "y": 517,
     },
@@ -19959,7 +19959,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime/pprof.writeHeapProto",
+      "text": "runtime/pprof.writeHeapProto (3.21 Bil)",
       "x": 559.0425273390036,
       "y": 539,
     },
@@ -20110,7 +20110,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime/pprof.runtime_goroutineProfileWithLabels",
+      "text": "runtime/pprof.runtime_goroutineProfileWithLabels (250 Mil)",
       "x": 873.0157958687728,
       "y": 539,
     },
@@ -20216,7 +20216,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime/pprof.printCountProfile",
+      "text": "runtime/pprof.printCountProfile (390 Mil)",
       "x": 897.3171324422843,
       "y": 539,
     },
@@ -21131,7 +21131,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime/pprof.(*profileBuilder).pbSample",
+      "text": "runtime/pprof.(*profileBuilder).pbSample (320 Mil)",
       "x": 559.0425273390036,
       "y": 561,
     },
@@ -21237,7 +21237,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime/pprof.(*profileBuilder).appendLocsForStack",
+      "text": "runtime/pprof.(*profileBuilder).appendLocsForStack (1.85 Bil)",
       "x": 590.1482381530984,
       "y": 561,
     },
@@ -21388,7 +21388,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime/pprof.(*profileBuilder).build",
+      "text": "runtime/pprof.(*profileBuilder).build (280 Mil)",
       "x": 770.9501822600243,
       "y": 561,
     },
@@ -21494,7 +21494,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.FuncForPC",
+      "text": "runtime.FuncForPC (590 Mil)",
       "x": 798.1676792223573,
       "y": 561,
     },
@@ -21690,7 +21690,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.goroutineProfileWithLabels",
+      "text": "runtime.goroutineProfileWithLabels (250 Mil)",
       "x": 873.0157958687728,
       "y": 561,
     },
@@ -22470,7 +22470,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime/pprof.(*profileBuilder).emitLocation",
+      "text": "runtime/pprof.(*profileBuilder).emitLocation (410 Mil)",
       "x": 590.1482381530984,
       "y": 583,
     },
@@ -22665,7 +22665,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime/pprof.allFrames",
+      "text": "runtime/pprof.allFrames (640 Mil)",
       "x": 645.5552855407047,
       "y": 583,
     },
@@ -22771,7 +22771,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.mapaccess2_fast64",
+      "text": "runtime.mapaccess2_fast64 (290 Mil)",
       "x": 707.7667071688943,
       "y": 583,
     },
@@ -23368,7 +23368,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.funcline1",
+      "text": "runtime.funcline1 (370 Mil)",
       "x": 818.580801944107,
       "y": 583,
     },
@@ -23564,7 +23564,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.forEachGRace",
+      "text": "runtime.forEachGRace (230 Mil)",
       "x": 873.0157958687728,
       "y": 583,
     },
@@ -24612,7 +24612,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.(*Frames).Next",
+      "text": "runtime.(*Frames).Next (550 Mil)",
       "x": 646.5273390036452,
       "y": 605,
     },
@@ -25389,7 +25389,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.pcvalue",
+      "text": "runtime.pcvalue (260 Mil)",
       "x": 818.580801944107,
       "y": 605,
     },
@@ -26707,7 +26707,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.funcline1",
+      "text": "runtime.funcline1 (410 Mil)",
       "x": 646.5273390036452,
       "y": 627,
     },
@@ -28519,7 +28519,7 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "runtime.pcvalue",
+      "text": "runtime.pcvalue (260 Mil)",
       "x": 654.303766707169,
       "y": 649,
     },
