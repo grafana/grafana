@@ -81,6 +81,9 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** Get the closest node with data */
   getData(): SceneObject<SceneDataState>;
 
+  /** Get the closest node with variables */
+  getVariables(): SceneVariables;
+
   /** Get the closest node with time range */
   getTimeRange(): SceneTimeRange;
 
@@ -92,6 +95,9 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
 
   /** To be replaced by declarative method */
   Editor(props: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null;
+
+  /** Optional method that SceneVariables can use to declare what variables they depend on */
+  getVariableDependencies?(): Set<string>;
 }
 
 export type SceneLayoutChild = SceneObject<SceneLayoutChildState | SceneLayoutState>;

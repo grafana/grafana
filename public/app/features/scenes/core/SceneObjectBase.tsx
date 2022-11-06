@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { BusEvent, BusEventHandler, BusEventType, EventBusSrv } from '@grafana/data';
 import { useForceUpdate } from '@grafana/ui';
 
+import { SceneVariables } from '../variables/types';
+
 import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
 import { SceneDataState, SceneObject, SceneComponent, SceneEditor, SceneTimeRange, SceneObjectState } from './types';
@@ -96,6 +98,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
       ...this._state,
       ...update,
     };
+
     this.setParent();
     this._subject.next(this._state);
 
@@ -110,7 +113,6 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
       true
     );
   }
-
   /*
    * Publish an event and optionally bubble it up the scene
    **/
@@ -206,6 +208,18 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
     }
 
     throw new Error('No data found in scene tree');
+  }
+
+  getVariables(): SceneVariables {
+    if (this.state.$variables) {
+      return this.state.$variables;
+    }
+
+    if (this.parent) {
+      return this.parent.getVariables();
+    }
+
+    throw new Error('No variables found');
   }
 
   /**

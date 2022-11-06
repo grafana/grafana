@@ -13,8 +13,6 @@ export interface SceneVariableState extends SceneObjectStatePlain {
   loading?: boolean;
   error?: any | null;
   description?: string | null;
-  //text: string | string[];
-  //value: string | string[]; // old current.value
 }
 
 export interface SceneVariable<TState extends SceneVariableState = SceneVariableState> extends SceneObject<TState> {

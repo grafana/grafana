@@ -6,14 +6,14 @@ import { Tooltip } from '@grafana/ui';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { SceneComponentProps, SceneObject, SceneObjectStatePlain } from '../../core/types';
-import { SceneVariables, SceneVariableState } from '../types';
+import { SceneVariableState } from '../types';
 
 export class VariableValueSelectors extends SceneObjectBase<SceneObjectStatePlain> {
   public static Component = VariableValueSelectorsRenderer;
 }
 
 function VariableValueSelectorsRenderer({ model }: SceneComponentProps<VariableValueSelectors>) {
-  const variables = getVariables(model).useState();
+  const variables = model.getVariables().useState();
 
   return (
     <>
@@ -22,18 +22,6 @@ function VariableValueSelectorsRenderer({ model }: SceneComponentProps<VariableV
       ))}
     </>
   );
-}
-
-function getVariables(model: SceneObject): SceneVariables {
-  if (model.state.$variables) {
-    return model.state.$variables;
-  }
-
-  if (model.parent) {
-    return getVariables(model.parent);
-  }
-
-  throw new Error('No variables found');
 }
 
 function VariableValueSelectWrapper({ variable }: { variable: SceneObject<SceneVariableState> }) {
