@@ -477,7 +477,7 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 	})
 }
 
-func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock, evalMock *eval.FakeEvaluator) *schedule {
+func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock, evalMock eval.EvaluatorFactory) *schedule {
 	t.Helper()
 
 	mockedClock := clock.NewMock()
@@ -490,9 +490,9 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		is = &state.FakeInstanceStore{}
 	}
 
-	var evaluator eval.Evaluator = evalMock
+	var evaluator = evalMock
 	if evalMock == nil {
-		evaluator = eval.NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil))
+		evaluator = eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil))
 	}
 
 	if registry == nil {
@@ -516,16 +516,15 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	}
 
 	schedCfg := SchedulerCfg{
-		Cfg:         cfg,
-		C:           mockedClock,
-		Evaluator:   evaluator,
-		RuleStore:   rs,
-		Metrics:     m.GetSchedulerMetrics(),
-		AlertSender: senderMock,
+		Cfg:              cfg,
+		C:                mockedClock,
+		EvaluatorFactory: evaluator,
+		RuleStore:        rs,
+		Metrics:          m.GetSchedulerMetrics(),
+		AlertSender:      senderMock,
 	}
 
-	stateRs := state.FakeRuleReader{}
-	st := state.NewManager(m.GetStateMetrics(), nil, &stateRs, is, &image.NoopImageService{}, mockedClock, &state.FakeHistorian{})
+	st := state.NewManager(m.GetStateMetrics(), nil, is, &image.NoopImageService{}, mockedClock, &state.FakeHistorian{})
 	return NewScheduler(schedCfg, appUrl, st)
 }
 

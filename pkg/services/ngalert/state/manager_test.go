@@ -39,7 +39,7 @@ func TestDashboardAnnotations(t *testing.T) {
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 	hist := historian.NewAnnotationHistorian(fakeAnnoRepo, &dashboards.FakeDashboardService{})
-	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.New(), hist)
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &image.NoopImageService{}, clock.New(), hist)
 
 	const mainOrgID int64 = 1
 
@@ -48,16 +48,22 @@ func TestDashboardAnnotations(t *testing.T) {
 		"test2": "{{ $labels.instance_label }}",
 	})
 
-	st.Warm(ctx)
+	st.Warm(ctx, dbstore)
+	bValue := float64(42)
+	cValue := float64(1)
 	_ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
 		Instance:    data.Labels{"instance_label": "testValue2"},
 		State:       eval.Alerting,
 		EvaluatedAt: evaluationTime,
+		Values: map[string]eval.NumberValueCapture{
+			"B": {Var: "B", Value: &bValue, Labels: data.Labels{"job": "prometheus"}},
+			"C": {Var: "C", Value: &cValue, Labels: data.Labels{"job": "prometheus"}},
+		},
 	}}, data.Labels{
 		"alertname": rule.Title,
 	})
 
-	expected := []string{rule.Title + " {alertname=" + rule.Title + ", instance_label=testValue2, test1=testValue1, test2=testValue2} - Alerting"}
+	expected := []string{rule.Title + " {alertname=" + rule.Title + ", instance_label=testValue2, test1=testValue1, test2=testValue2} - B=42.000000, C=1.000000"}
 	sort.Strings(expected)
 	require.Eventuallyf(t, func() bool {
 		var actual []string
@@ -1316,6 +1322,7 @@ func TestProcessEvalResults(t *testing.T) {
 					eval.Result{
 						Instance:           data.Labels{"instance_label": "test"},
 						State:              eval.Error,
+						Error:              errors.New("test error"),
 						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
 						EvaluationDuration: evaluationDuration,
 					},
@@ -1337,6 +1344,7 @@ func TestProcessEvalResults(t *testing.T) {
 					Values:      make(map[string]float64),
 					State:       eval.Pending,
 					StateReason: eval.Error.String(),
+					Error:       errors.New("test error"),
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -2012,7 +2020,7 @@ func TestProcessEvalResults(t *testing.T) {
 	for _, tc := range testCases {
 		fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 		hist := historian.NewAnnotationHistorian(fakeAnnoRepo, &dashboards.FakeDashboardService{})
-		st := state.NewManager(testMetrics.GetStateMetrics(), nil, nil, &state.FakeInstanceStore{}, &image.NotAvailableImageService{}, clock.New(), hist)
+		st := state.NewManager(testMetrics.GetStateMetrics(), nil, &state.FakeInstanceStore{}, &image.NotAvailableImageService{}, clock.New(), hist)
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {
 				_ = st.ProcessEvalResults(context.Background(), evaluationTime, tc.alertRule, res, data.Labels{
@@ -2039,7 +2047,7 @@ func TestProcessEvalResults(t *testing.T) {
 	t.Run("should save state to database", func(t *testing.T) {
 		instanceStore := &state.FakeInstanceStore{}
 		clk := clock.New()
-		st := state.NewManager(testMetrics.GetStateMetrics(), nil, nil, instanceStore, &image.NotAvailableImageService{}, clk, &state.FakeHistorian{})
+		st := state.NewManager(testMetrics.GetStateMetrics(), nil, instanceStore, &image.NotAvailableImageService{}, clk, &state.FakeHistorian{})
 		rule := models.AlertRuleGen()()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
 
@@ -2168,8 +2176,8 @@ func TestStaleResultsHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		ctx := context.Background()
-		st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.New(), &state.FakeHistorian{})
-		st.Warm(ctx)
+		st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &image.NoopImageService{}, clock.New(), &state.FakeHistorian{})
+		st.Warm(ctx, dbstore)
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 		// We have loaded the expected number of entries from the db
@@ -2230,7 +2238,7 @@ func TestStaleResults(t *testing.T) {
 		clk := clock.NewMock()
 		clk.Set(time.Now())
 
-		st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clk, &state.FakeHistorian{})
+		st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &image.NoopImageService{}, clk, &state.FakeHistorian{})
 
 		orgID := rand.Int63()
 		rule := tests.CreateTestAlertRule(t, ctx, dbstore, 10, orgID)

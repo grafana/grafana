@@ -8,6 +8,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 type annotationEvent struct {
@@ -17,11 +19,11 @@ type annotationEvent struct {
 	Text  string
 }
 
-func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
+func (s *Service) executeAnnotationQuery(ctx context.Context, logger log.Logger, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
 	*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
-	queries, err := s.buildQueryExecutors(req)
+	queries, err := s.buildQueryExecutors(logger, req)
 	if err != nil {
 		return resp, err
 	}
@@ -60,7 +62,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) transformAnnotationToFrame
 		frame.AppendRow(a.Time, a.Title, a.Tags, a.Text)
 	}
 	result.Frames = append(result.Frames, frame)
-	slog.Info("anno", "len", len(annotations))
+	timeSeriesQuery.logger.Info("anno", "len", len(annotations))
 }
 
 func formatAnnotationText(annotationText string, pointValue string, metricType string, metricLabels map[string]string, resourceLabels map[string]string) string {
