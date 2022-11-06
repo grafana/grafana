@@ -5,8 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { BusEvent, BusEventHandler, BusEventType, EventBusSrv } from '@grafana/data';
 import { useForceUpdate } from '@grafana/ui';
 
-import { sceneInterpolator } from '../variables/interpolation/sceneInterpolator';
-import { SceneVariables, SceneVariableDependencyConfigLike } from '../variables/types';
+import { sceneTemplateInterpolator } from '../variables/sceneTemplateInterpolator';
+import { SceneVariables } from '../variables/types';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
@@ -17,7 +17,7 @@ import {
   SceneEditor,
   SceneTimeRange,
   SceneObjectState,
-  SceneVariableDependencyConfig,
+  SceneVariableDependencyConfigLike,
 } from './types';
 import { cloneSceneObject, forEachSceneObjectInState } from './utils';
 
@@ -34,7 +34,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
   protected _parent?: SceneObject;
   protected _subs = new Subscription();
 
-  protected _variableDependency: SceneVariableDependencyConfig | undefined;
+  protected _variableDependency: SceneVariableDependencyConfigLike | undefined;
 
   public constructor(state: TState) {
     if (!state.key) {
@@ -62,7 +62,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
   }
 
   /** Returns variable dependency config */
-  get variableDependency(): SceneVariableDependencyConfig | undefined {
+  get variableDependency(): SceneVariableDependencyConfigLike | undefined {
     return this._variableDependency;
   }
 
@@ -250,6 +250,19 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
    */
   public clone(withState?: Partial<TState>): this {
     return cloneSceneObject(this, withState);
+  }
+
+  /**
+   * Interpolates the given string using the current scene object as context.
+   * TODO: Cache interpolatinos?
+   */
+  interpolate(value: string | undefined) {
+    // Skip interpolation if there are no variable depdendencies
+    if (!value || !this._variableDependency || this._variableDependency.getNames().size === 0) {
+      return value;
+    }
+
+    return sceneTemplateInterpolator(value, this);
   }
 }
 

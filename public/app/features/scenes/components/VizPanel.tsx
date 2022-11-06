@@ -7,6 +7,7 @@ import { Field, PanelChrome, Input } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneComponentProps, SceneLayoutChildState } from '../core/types';
+import { VariableDependencyConfig } from '../variables/VariableDependencyConfig';
 
 export interface VizPanelState extends SceneLayoutChildState {
   title?: string;
@@ -18,6 +19,10 @@ export interface VizPanelState extends SceneLayoutChildState {
 export class VizPanel extends SceneObjectBase<VizPanelState> {
   public static Component = ScenePanelRenderer;
   public static Editor = VizPanelEditor;
+
+  _variableDependency = new VariableDependencyConfig(this, {
+    statePaths: ['title'],
+  });
 
   public onSetTimeRange = (timeRange: AbsoluteTimeRange) => {
     const sceneTimeRange = this.getTimeRange();
@@ -36,6 +41,8 @@ function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
   const { title, pluginId, options, fieldConfig } = model.useState();
   const { data } = model.getData().useState();
 
+  const titleInterpolated = model.interpolate(title);
+
   return (
     <AutoSizer>
       {({ width, height }) => {
@@ -44,7 +51,7 @@ function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
         }
 
         return (
-          <PanelChrome title={title} width={width} height={height}>
+          <PanelChrome title={titleInterpolated} width={width} height={height}>
             {(innerWidth, innerHeight) => (
               <>
                 <PanelRenderer

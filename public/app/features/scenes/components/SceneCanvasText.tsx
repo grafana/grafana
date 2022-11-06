@@ -4,7 +4,7 @@ import { Field, Input } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneComponentProps, SceneLayoutChildState } from '../core/types';
-import { VariableDependencyCache } from '../variables/VariableDependencyCache';
+import { VariableDependencyConfig } from '../variables/VariableDependencyConfig';
 import { sceneTemplateInterpolator } from '../variables/sceneTemplateInterpolator';
 
 export interface SceneCanvasTextState extends SceneLayoutChildState {
@@ -16,11 +16,9 @@ export interface SceneCanvasTextState extends SceneLayoutChildState {
 export class SceneCanvasText extends SceneObjectBase<SceneCanvasTextState> {
   public static Editor = Editor;
 
-  constructor(state: SceneCanvasTextState) {
-    super(state);
-
-    this._variableDependency = new VariableDependencyCache(this, ['text']);
-  }
+  _variableDependency = new VariableDependencyConfig(this, {
+    statePaths: ['text'],
+  });
 
   static Component = ({ model }: SceneComponentProps<SceneCanvasText>) => {
     const { text, fontSize = 20, align = 'left', key } = model.useState();

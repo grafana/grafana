@@ -1,7 +1,7 @@
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneObjectStatePlain } from '../core/types';
 
-import { VariableDependencyCache } from './VariableDependencyCache';
+import { VariableDependencyConfig } from './VariableDependencyConfig';
 
 interface TestState extends SceneObjectStatePlain {
   query: string;
@@ -26,14 +26,14 @@ class TestObj extends SceneObjectBase<TestState> {
 describe('VariableDependencySet', () => {
   it('Should be able to extract dependencies', () => {
     const sceneObj = new TestObj();
-    const deps = new VariableDependencyCache(sceneObj, ['query', 'nested']);
+    const deps = new VariableDependencyConfig(sceneObj, { statePaths: ['query', 'nested'] });
 
     expect(deps.getNames()).toEqual(new Set(['queryVarA', 'queryVarB', 'nestedVarA']));
   });
 
   it('Should cache variable extraction', () => {
     const sceneObj = new TestObj();
-    const deps = new VariableDependencyCache(sceneObj, ['query', 'nested']);
+    const deps = new VariableDependencyConfig(sceneObj, { statePaths: ['query', 'nested'] });
 
     deps.getNames();
     deps.getNames();
@@ -43,7 +43,7 @@ describe('VariableDependencySet', () => {
 
   it('Should not rescan if state changes but not any of the state paths to scan', () => {
     const sceneObj = new TestObj();
-    const deps = new VariableDependencyCache(sceneObj, ['query', 'nested']);
+    const deps = new VariableDependencyConfig(sceneObj, { statePaths: ['query', 'nested'] });
     deps.getNames();
 
     sceneObj.setState({ otherProp: 'new value' });
@@ -54,7 +54,7 @@ describe('VariableDependencySet', () => {
 
   it('Should re-scan when both state and specific state path change', () => {
     const sceneObj = new TestObj();
-    const deps = new VariableDependencyCache(sceneObj, ['query', 'nested']);
+    const deps = new VariableDependencyConfig(sceneObj, { statePaths: ['query', 'nested'] });
     deps.getNames();
 
     sceneObj.setState({ query: 'new query with ${newVar}' });

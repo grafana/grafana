@@ -51,8 +51,8 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** SceneObject parent */
   readonly parent?: SceneObject;
 
-  /** A way to provide what variables this scene object depend on*/
-  readonly variableDependency?: SceneVariableDependencyConfig;
+  /** A way to provide what variables this scene object depend on */
+  readonly variableDependency?: SceneVariableDependencyConfigLike;
 
   /** Subscribe to state changes */
   subscribeToState(observer?: Partial<Observer<TState>>): Subscription;
@@ -85,7 +85,7 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   getData(): SceneObject<SceneDataState>;
 
   /** Get the closest node with variables */
-  getVariables(): SceneVariables;
+  getVariables(): SceneVariables | undefined;
 
   /** Get the closest node with time range */
   getTimeRange(): SceneTimeRange;
@@ -100,8 +100,11 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   Editor(props: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null;
 }
 
-export interface SceneVariableDependencyConfig {
+export interface SceneVariableDependencyConfigLike {
+  /** Should return the names of used variables */
   getNames(): Set<string>;
+  /** Will be called when any dependent variable value changed */
+  onVariableValuesChanged(): void;
 }
 
 export type SceneLayoutChild = SceneObject<SceneLayoutChildState | SceneLayoutState>;

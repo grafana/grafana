@@ -13,7 +13,7 @@ export class VariableValueSelectors extends SceneObjectBase<SceneObjectStatePlai
 }
 
 function VariableValueSelectorsRenderer({ model }: SceneComponentProps<VariableValueSelectors>) {
-  const variables = model.getVariables().useState();
+  const variables = model.getVariables()!.useState();
 
   return (
     <>

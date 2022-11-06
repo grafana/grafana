@@ -9,7 +9,8 @@ import { SceneToolbarInput } from '../components/SceneToolbarButton';
 import { VizPanel } from '../components/VizPanel';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
-import { SceneQueryRunner } from '../querying/SceneQueryRunner';
+
+import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
 export function getFlexLayoutTest(): Scene {
   const scene = new Scene({
@@ -51,18 +52,7 @@ export function getFlexLayoutTest(): Scene {
     }),
     $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(getDefaultTimeRange()),
-    $data: new SceneQueryRunner({
-      queries: [
-        {
-          refId: 'A',
-          datasource: {
-            uid: 'gdev-testdata',
-            type: 'testdata',
-          },
-          scenarioId: 'random_walk',
-        },
-      ],
-    }),
+    $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
   });
 
@@ -70,19 +60,10 @@ export function getFlexLayoutTest(): Scene {
 }
 
 export function getScenePanelRepeaterTest(): Scene {
-  const queryRunner = new SceneQueryRunner({
-    queries: [
-      {
-        refId: 'A',
-        datasource: {
-          uid: 'gdev-testdata',
-          type: 'testdata',
-        },
-        seriesCount: 2,
-        alias: '__server_names',
-        scenarioId: 'random_walk',
-      },
-    ],
+  const queryRunner = getQueryRunnerWithRandomWalkQuery({
+    seriesCount: 2,
+    alias: '__server_names',
+    scenarioId: 'random_walk',
   });
 
   const scene = new Scene({
