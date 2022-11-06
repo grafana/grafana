@@ -10,7 +10,15 @@ import { SceneVariables, SceneVariableDependencyConfigLike } from '../variables/
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
-import { SceneDataState, SceneObject, SceneComponent, SceneEditor, SceneTimeRange, SceneObjectState } from './types';
+import {
+  SceneDataState,
+  SceneObject,
+  SceneComponent,
+  SceneEditor,
+  SceneTimeRange,
+  SceneObjectState,
+  SceneVariableDependencyConfig,
+} from './types';
 import { cloneSceneObject, forEachSceneObjectInState } from './utils';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObjectState>
@@ -25,6 +33,8 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
   protected _renderCount = 0;
   protected _parent?: SceneObject;
   protected _subs = new Subscription();
+
+  protected _variableDependency: SceneVariableDependencyConfig | undefined;
 
   public constructor(state: TState) {
     if (!state.key) {
@@ -52,7 +62,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
   }
 
   /** Returns variable dependency config */
-  public get variableDependency(): SceneVariableDependencyConfigLike | undefined {
+  get variableDependency(): SceneVariableDependencyConfig | undefined {
     return this._variableDependency;
   }
 

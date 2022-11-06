@@ -16,10 +16,10 @@ export interface SceneCanvasTextState extends SceneLayoutChildState {
 export class SceneCanvasText extends SceneObjectBase<SceneCanvasTextState> {
   public static Editor = Editor;
 
-  private dependencies = new VariableDependencyCache<SceneCanvasTextState>(['text']);
+  constructor(state: SceneCanvasTextState) {
+    super(state);
 
-  getVariableDependencies() {
-    return this.dependencies.getAll(this.state);
+    this._variableDependency = new VariableDependencyCache(this, ['text']);
   }
 
   static Component = ({ model }: SceneComponentProps<SceneCanvasText>) => {

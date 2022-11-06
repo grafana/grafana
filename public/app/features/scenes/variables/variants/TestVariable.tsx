@@ -3,7 +3,7 @@ import { Observable, Subject } from 'rxjs';
 
 import { queryMetricTree } from 'app/plugins/datasource/testdata/metricTree';
 
-import { SceneComponentProps } from '../../core/types';
+import { SceneComponentProps, SceneVariableDependencyConfig } from '../../core/types';
 import { VariableDependencyCache } from '../VariableDependencyCache';
 import { VariableValueSelect } from '../components/VariableValueSelect';
 import { sceneTemplateInterpolator } from '../sceneTemplateInterpolator';
@@ -27,7 +27,13 @@ export class TestVariable extends MultiValueVariable<TestVariableState> {
   private completeUpdate = new Subject<number>();
   public isGettingValues = true;
 
-  public getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
+  constructor(state: TestVariableState) {
+    super(state);
+
+    this._variableDependency = new VariableDependencyCache(this, ['query']);
+  }
+
+  getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
     const { delayMs } = this.state;
 
     return new Observable<VariableValueOption[]>((observer) => {
@@ -69,10 +75,6 @@ export class TestVariable extends MultiValueVariable<TestVariableState> {
   /** Useful from tests */
   public signalUpdateCompleted() {
     this.completeUpdate.next(1);
-  }
-
-  public getDependencies() {
-    return getVariableDependencies(this.state.query);
   }
 
   public static Component = ({ model }: SceneComponentProps<MultiValueVariable>) => {

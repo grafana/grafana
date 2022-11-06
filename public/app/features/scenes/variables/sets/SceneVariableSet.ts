@@ -99,11 +99,11 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
    * Checks if the variable has any dependencies that is currently in variablesToUpdate
    */
   private hasDependendencyInUpdateQueue(variable: SceneVariable) {
-    if (!variable.getVariableDependencies) {
+    if (!variable.variableDependency) {
       return false;
     }
 
-    for (const dep of variable.getVariableDependencies()) {
+    for (const dep of variable.variableDependency.getNames()) {
       for (const otherVariable of this.variablesToUpdate.values()) {
         if (otherVariable.state.name === dep) {
           return true;
@@ -141,8 +141,8 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
     }
 
     for (const otherVariable of this.state.variables) {
-      if (otherVariable.getVariableDependencies) {
-        if (otherVariable.getVariableDependencies().has(variableThatChanged.state.name)) {
+      if (otherVariable.variableDependency) {
+        if (otherVariable.variableDependency.getNames().has(variableThatChanged.state.name)) {
           this.variablesToUpdate.set(otherVariable.state.name, otherVariable);
         }
       }
@@ -165,8 +165,8 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
 }
 
 function updateSceneGraph(sceneObject: SceneObject, variablesThatChanged: Set<string>) {
-  if (sceneObject.getVariableDependencies) {
-    for (const dep of sceneObject.getVariableDependencies()) {
+  if (sceneObject.variableDependency) {
+    for (const dep of sceneObject.variableDependency.getNames()) {
       if (variablesThatChanged.has(dep)) {
         sceneObject.setState({});
         break;

@@ -51,6 +51,9 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** SceneObject parent */
   readonly parent?: SceneObject;
 
+  /** A way to provide what variables this scene object depend on*/
+  readonly variableDependency?: SceneVariableDependencyConfig;
+
   /** Subscribe to state changes */
   subscribeToState(observer?: Partial<Observer<TState>>): Subscription;
 
@@ -95,9 +98,10 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
 
   /** To be replaced by declarative method */
   Editor(props: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null;
+}
 
-  /** Optional method that SceneVariables can use to declare what variables they depend on */
-  getVariableDependencies?(): Set<string>;
+export interface SceneVariableDependencyConfig {
+  getNames(): Set<string>;
 }
 
 export type SceneLayoutChild = SceneObject<SceneLayoutChildState | SceneLayoutState>;
