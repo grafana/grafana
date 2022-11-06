@@ -9,10 +9,9 @@ import (
 )
 
 type FakeService struct {
-	ExpectedFolders   []*models.Folder
-	ExpectedFolder    *models.Folder
-	NewExpectedFolder *folder.Folder // TODO: remove this and change ExpectedFolder to type *folder.Folder when nested folders refactor is done
-	ExpectedError     error
+	ExpectedFolders []*models.Folder
+	ExpectedFolder  *folder.Folder
+	ExpectedError   error
 }
 
 var _ folder.Service = (*FakeService)(nil)
@@ -21,22 +20,22 @@ func (s *FakeService) GetFolders(ctx context.Context, user *user.SignedInUser, o
 	return s.ExpectedFolders, s.ExpectedError
 }
 func (s *FakeService) GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error) {
-	return s.ExpectedFolder, s.ExpectedError
+	return folder.ConvertFolderToModelFolder(s.ExpectedFolder), s.ExpectedError
 }
 func (s *FakeService) GetFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*models.Folder, error) {
-	return s.ExpectedFolder, s.ExpectedError
+	return folder.ConvertFolderToModelFolder(s.ExpectedFolder), s.ExpectedError
 }
 func (s *FakeService) GetFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*models.Folder, error) {
-	return s.ExpectedFolder, s.ExpectedError
+	return folder.ConvertFolderToModelFolder(s.ExpectedFolder), s.ExpectedError
 }
 func (s *FakeService) CreateFolder(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
-	return s.NewExpectedFolder, s.ExpectedError
+	return s.ExpectedFolder, s.ExpectedError
 }
 func (s *FakeService) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
-	return s.NewExpectedFolder, s.ExpectedError
+	return s.ExpectedFolder, s.ExpectedError
 }
 func (s *FakeService) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) (*folder.Folder, error) {
-	return s.NewExpectedFolder, s.ExpectedError
+	return s.ExpectedFolder, s.ExpectedError
 }
 func (s *FakeService) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {
 	return s.ExpectedError
