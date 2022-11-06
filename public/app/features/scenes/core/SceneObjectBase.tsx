@@ -77,7 +77,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   /**
    * Subscribe to the scene state subject
    **/
-  subscribeToState(observerOrNext?: Partial<Observer<TState>>): Subscription {
+  public subscribeToState(observerOrNext?: Partial<Observer<TState>>): Subscription {
     return this._subject.subscribe(observerOrNext);
   }
 

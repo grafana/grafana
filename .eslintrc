@@ -21,6 +21,7 @@
         "alphabetize": { "order": "asc" }
       }
     ],
+    "@typescript-eslint/explicit-member-accessibility": "off",
     "no-restricted-imports": [
       "error",
       {
