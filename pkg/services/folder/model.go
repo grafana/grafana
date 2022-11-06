@@ -49,15 +49,18 @@ func NewFolder(title string, description string) *Folder {
 
 // TODO: this will be removed when the nested folder service refactoring is complete.
 // UpdateDashboardModel updates an existing model from command into model for update.
-func (cmd *UpdateFolderCommand) UpdateDashboardModel(dashFolder *models.Dashboard, orgId int64, userId int64) *models.Dashboard {
+func (cmd *UpdateFolderCommand) UpdateDashboardModel(dashFolder *models.Dashboard, orgId int64, userId int64) {
 	dashFolder.OrgId = orgId
-	dashFolder.Title = strings.TrimSpace(cmd.Folder.Title)
-
-	if cmd.Folder.UID != "" {
-		dashFolder.SetUid(cmd.Folder.UID)
+	if cmd.NewTitle != nil {
+		dashFolder.Title = strings.TrimSpace(*cmd.NewTitle)
+		dashFolder.Data.Set("title", dashFolder.Title)
 	}
 
-	dashFolder.SetVersion(int(cmd.Folder.OrgID)) // TODO: don't think i refactored this right
+	if cmd.NewUID != nil {
+		dashFolder.SetUid(*cmd.NewUID)
+	}
+
+	dashFolder.SetVersion(cmd.Version)
 	dashFolder.IsFolder = true
 
 	if userId == 0 {
@@ -65,8 +68,7 @@ func (cmd *UpdateFolderCommand) UpdateDashboardModel(dashFolder *models.Dashboar
 	}
 
 	dashFolder.UpdatedBy = userId
-
-	return dashFolder
+	dashFolder.UpdateSlug()
 }
 
 // CreateFolderCommand captures the information required by the folder service
@@ -88,6 +90,7 @@ type UpdateFolderCommand struct {
 	NewDescription *string `json:"description"`
 
 	// TODO: not sure we need overwrite / may want to remove when nested folder service refactoring is complete
+	Version   int  `json:"version"`
 	Overwrite bool `json:"overwrite"`
 }
 

@@ -218,8 +218,7 @@ func (s *Service) CreateFolder(ctx context.Context, cmd *folder.CreateFolderComm
 }
 
 func (s *Service) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
-	user, err := appcontext.User(ctx)
-	query := models.GetDashboardQuery{OrgId: user.OrgID, Uid: cmd.Folder.UID}
+	query := models.GetDashboardQuery{OrgId: cmd.Folder.OrgID, Uid: cmd.Folder.UID}
 	if _, err := s.dashboardStore.GetDashboard(ctx, &query); err != nil {
 		return nil, toFolderError(err)
 	}
@@ -231,11 +230,12 @@ func (s *Service) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderComm
 		return nil, dashboards.ErrFolderNotFound
 	}
 
-	cmd.UpdateDashboardModel(dashFolder, user.OrgID, user.UserID)
+	user, err := appcontext.User(ctx)
+	cmd.UpdateDashboardModel(dashFolder, cmd.Folder.OrgID, user.UserID)
 
 	dto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
-		OrgId:     user.OrgID,
+		OrgId:     cmd.Folder.OrgID,
 		User:      user,
 		Overwrite: cmd.Overwrite,
 	}
@@ -278,7 +278,10 @@ func (s *Service) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderComm
 
 func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) (*folder.Folder, error) {
 	user, err := appcontext.User(ctx)
-	dashFolder, err := s.dashboardStore.GetFolderByUID(ctx, user.OrgID, string(user.UserID))
+	if err != nil {
+		return nil, err
+	}
+	dashFolder, err := s.dashboardStore.GetFolderByUID(ctx, user.OrgID, cmd.UID)
 	if err != nil {
 		return nil, err
 	}

@@ -123,13 +123,6 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
-	// one place outside service layer we need to convert folder.Folder to models.Folder
-	// modelFolder := &models.Folder{Id: folder.ID, Uid: folder.UID, Title: folder.Title}
-	// make service return model.folder, see if tests work
-	// why is f nil and is it supposed to be; maybe mock is returning nil
-	if f == nil {
-		return nil
-	}
 	modelFolder := folder.ConvertFolderToModelFolder(f)
 	g := guardian.New(c.Req.Context(), f.ID, c.OrgID, c.SignedInUser)
 	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, modelFolder))
@@ -152,8 +145,12 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	UID := web.Params(c.Req)[":uid"]
-	f, err := hs.folderService.UpdateFolder(c.Req.Context(), &folder.UpdateFolderCommand{NewUID: &UID})
+	if cmd.Folder == nil {
+		cmd.Folder = &folder.Folder{}
+	}
+	cmd.Folder.UID = web.Params(c.Req)[":uid"]
+	cmd.Folder.OrgID = c.OrgID
+	f, err := hs.folderService.UpdateFolder(c.Req.Context(), &cmd)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
