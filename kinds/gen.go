@@ -6,6 +6,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"os"
@@ -17,29 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/sdboyer/jennywrites"
 )
-
-// Core kinds code generator. Produces all generated code in grafana/grafana
-// that derives from raw and structured core kinds.
-
-// All the single-kind generators to be run for core kinds.
-var singles = []codegen.OneToOne{
-	codegen.GoTypesGenerator(kindsys.GoCoreKindParentPath, nil),
-	codegen.CoreStructuredKindGenerator(kindsys.GoCoreKindParentPath, nil),
-	codegen.RawKindGenerator(kindsys.GoCoreKindParentPath, nil),
-	codegen.TSTypesGenerator(kindsys.TSCoreKindParentPath, &codegen.TSTypesGeneratorConfig{
-		GenDirName: func(decl *codegen.DeclForGen) string {
-			// FIXME this hardcodes always generating to experimental dir. OK for now, but need generator fanout
-			return filepath.Join(decl.Meta.Common().MachineName, "x")
-		},
-	}),
-}
-
-// All the aggregate generators to be run for core kinds.
-var multis = []codegen.ManyToOne{
-	codegen.BaseCoreRegistryGenerator(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
-	codegen.TSVeneerIndexGenerator(filepath.Join("packages", "grafana-schema", "src")),
-}
 
 const sep = string(filepath.Separator)
 
@@ -49,6 +29,27 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Core kinds composite code generator. Produces all generated code in
+	// grafana/grafana that derives from raw and structured core kinds.
+	coreKindsGen := jennywrites.JennyListWithNamer[*codegen.DeclForGen](func(decl *codegen.DeclForGen) string {
+		return decl.Meta.Common().MachineName
+	})
+
+	// All the jennies that comprise the core kinds generator pipeline
+	coreKindsGen.Append(
+		codegen.GoTypesGenerator(kindsys.GoCoreKindParentPath, nil),
+		codegen.CoreStructuredKindGenerator(kindsys.GoCoreKindParentPath, nil),
+		codegen.RawKindGenerator(kindsys.GoCoreKindParentPath, nil),
+		codegen.BaseCoreRegistryGenerator(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
+		codegen.TSTypesGenerator(kindsys.TSCoreKindParentPath, &codegen.TSTypesGeneratorConfig{
+			GenDirName: func(decl *codegen.DeclForGen) string {
+				// FIXME this hardcodes always generating to experimental dir. OK for now, but need generator fanout
+				return filepath.Join(decl.Meta.Common().MachineName, "x")
+			},
+		}),
+		codegen.TSVeneerIndexGenerator(filepath.Join("packages", "grafana-schema", "src")),
+	)
+
 	cwd, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "could not get working directory: %s", err)
@@ -57,14 +58,13 @@ func main() {
 	grootp := strings.Split(cwd, sep)
 	groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-1]...))
 
-	wd := codegen.NewWriteDiffer()
 	rt := cuectx.GrafanaThemaRuntime()
 	var all []*codegen.DeclForGen
 
-	// structured kinds first
+	// structured kinddirs first
 	f := os.DirFS(filepath.Join(groot, kindsys.CoreStructuredDeclParentPath))
-	ents := elsedie(fs.ReadDir(f, "."))("error reading structured fs root directory")
-	for _, ent := range ents {
+	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading structured fs root directory")
+	for _, ent := range kinddirs {
 		if !ent.IsDir() {
 			continue
 		}
@@ -80,10 +80,10 @@ func main() {
 		all = append(all, elsedie(codegen.ForGen(rt, decl.Some()))(rel))
 	}
 
-	// now raw kinds
+	// now raw kinddirs
 	f = os.DirFS(filepath.Join(groot, kindsys.RawDeclParentPath))
-	ents = elsedie(fs.ReadDir(f, "."))("error reading raw fs root directory")
-	for _, ent := range ents {
+	kinddirs = elsedie(fs.ReadDir(f, "."))("error reading raw fs root directory")
+	for _, ent := range kinddirs {
 		if !ent.IsDir() {
 			continue
 		}
@@ -99,47 +99,24 @@ func main() {
 		all = append(all, dfg)
 	}
 
-	// Sort em real good
 	sort.Slice(all, func(i, j int) bool {
 		return nameFor(all[i].Meta) < nameFor(all[j].Meta)
 	})
 
-	// Run all single generators
-	for _, gen := range singles {
-		for _, decl := range all {
-			gf, err := gen.Generate(decl)
-			if err != nil {
-				die(fmt.Errorf("%s: %w", err))
-			}
-			if gf != nil {
-				wd[filepath.Join(groot, gf.RelativePath)] = gf.Data
-			}
-		}
+	jfs, err := coreKindsGen.GenerateFS(all)
+	if err != nil {
+		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
 	}
-
-	// Run all multi generators
-	for _, gen := range multis {
-		gf, err := gen.Generate(all)
-		if err != nil {
-			die(fmt.Errorf("%s: %w", err))
-		}
-		wd[filepath.Join(groot, gf.RelativePath)] = gf.Data
-	}
-
-	for path := range wd {
-		fmt.Println("WRITING", path)
-	}
+	// for _, f := range jfs.AsFiles() {
+	// 	fmt.Println(filepath.Join(groot, f.RelativePath))
+	// }
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
-		err = wd.Verify()
-		if err != nil {
-			die(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate\n\n", err))
+		if err = jfs.Verify(context.Background(), groot); err != nil {
+			die(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
 		}
-	} else {
-		err = wd.Write()
-		if err != nil {
-			die(fmt.Errorf("error while writing generated code to disk:\n%s\n", err))
-		}
+	} else if err = jfs.Write(context.Background(), groot); err != nil {
+		die(fmt.Errorf("error while writing generated code to disk:\n%s", err))
 	}
 }
 

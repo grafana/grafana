@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/gocode"
+	"github.com/sdboyer/jennywrites"
 	"golang.org/x/tools/go/ast/astutil"
 )
 
@@ -34,6 +35,7 @@ func GoTypesGenerator(gokindsdir string, cfg *GoTypesGeneratorConfig) OneToOne {
 	}
 }
 
+// GoTypesGeneratorConfig holds configuration options for [GoTypesGenerator].
 type GoTypesGeneratorConfig struct {
 	// Apply is an optional AST manipulation func that, if provided, will be run
 	// against the generated Go file prior to running it through goimports.
@@ -54,11 +56,11 @@ type genGoTypes struct {
 
 var _ OneToOne = &genGoTypes{}
 
-func (gen *genGoTypes) Name() string {
+func (gen *genGoTypes) JennyName() string {
 	return "GoTypesGenerator"
 }
 
-func (gen *genGoTypes) Generate(decl *DeclForGen) (*GeneratedFile, error) {
+func (gen *genGoTypes) Generate(decl *DeclForGen) (*jennywrites.File, error) {
 	if decl.IsRaw() {
 		return nil, nil
 	}
@@ -85,8 +87,5 @@ func (gen *genGoTypes) Generate(decl *DeclForGen) (*GeneratedFile, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &GeneratedFile{
-		RelativePath: filepath.Join(gen.gokindsdir, pdir, lin.Name()+"_types_gen.go"),
-		Data:         b,
-	}, nil
+	return jennywrites.NewFile(filepath.Join(gen.gokindsdir, pdir, lin.Name()+"_types_gen.go"), b, gen), nil
 }

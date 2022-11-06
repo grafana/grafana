@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"path/filepath"
+
+	"github.com/sdboyer/jennywrites"
 )
 
 // CoreStructuredKindGenerator generates the implementation of
@@ -29,6 +31,7 @@ func CoreStructuredKindGenerator(gokindsdir string, cfg *CoreStructuredKindGener
 	}
 }
 
+// CoreStructuredKindGeneratorConfig holds configuration options for [CoreStructuredKindGenerator].
 type CoreStructuredKindGeneratorConfig struct {
 	// GenDirName returns the name of the directory in which the file should be
 	// generated. Defaults to DeclForGen.Lineage().Name() if nil.
@@ -42,11 +45,11 @@ type genCoreStructuredKind struct {
 
 var _ OneToOne = &genCoreStructuredKind{}
 
-func (gen *genCoreStructuredKind) Name() string {
+func (gen *genCoreStructuredKind) JennyName() string {
 	return "CoreStructuredKindGenerator"
 }
 
-func (gen *genCoreStructuredKind) Generate(decl *DeclForGen) (*GeneratedFile, error) {
+func (gen *genCoreStructuredKind) Generate(decl *DeclForGen) (*jennywrites.File, error) {
 	if !decl.IsCoreStructured() {
 		return nil, nil
 	}
@@ -64,8 +67,5 @@ func (gen *genCoreStructuredKind) Generate(decl *DeclForGen) (*GeneratedFile, er
 		return nil, err
 	}
 
-	return &GeneratedFile{
-		RelativePath: path,
-		Data:         b,
-	}, nil
+	return jennywrites.NewFile(path, b, gen), nil
 }

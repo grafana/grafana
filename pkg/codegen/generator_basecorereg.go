@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"path/filepath"
+
+	"github.com/sdboyer/jennywrites"
 )
 
 // BaseCoreRegistryGenerator generates a static registry for core kinds that
@@ -27,11 +29,11 @@ type genBaseRegistry struct {
 
 var _ ManyToOne = &genBaseRegistry{}
 
-func (gen *genBaseRegistry) Name() string {
+func (gen *genBaseRegistry) JennyName() string {
 	return "BaseCoreRegistryGenerator"
 }
 
-func (gen *genBaseRegistry) Generate(decls []*DeclForGen) (*GeneratedFile, error) {
+func (gen *genBaseRegistry) Generate(decls []*DeclForGen) (*jennywrites.File, error) {
 	var numRaw int
 	for _, k := range decls {
 		if k.IsRaw() {
@@ -58,8 +60,5 @@ func (gen *genBaseRegistry) Generate(decls []*DeclForGen) (*GeneratedFile, error
 		return nil, err
 	}
 
-	return &GeneratedFile{
-		RelativePath: filepath.Join(gen.path, "base_gen.go"),
-		Data:         b,
-	}, nil
+	return jennywrites.NewFile(filepath.Join(gen.path, "base_gen.go"), b, gen), nil
 }

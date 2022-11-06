@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/typescript"
+	"github.com/sdboyer/jennywrites"
 )
 
 var _ ManyToOne = &genTSVeneerIndex{}
@@ -36,11 +37,11 @@ type genTSVeneerIndex struct {
 	dir string
 }
 
-func (gen *genTSVeneerIndex) Name() string {
+func (gen *genTSVeneerIndex) JennyName() string {
 	return "TSVeneerIndexGenerator"
 }
 
-func (gen *genTSVeneerIndex) Generate(decls []*DeclForGen) (*GeneratedFile, error) {
+func (gen *genTSVeneerIndex) Generate(decls []*DeclForGen) (*jennywrites.File, error) {
 	tsf := new(ast.File)
 	for _, decl := range decls {
 		if decl.IsRaw() {
@@ -63,13 +64,9 @@ func (gen *genTSVeneerIndex) Generate(decls []*DeclForGen) (*GeneratedFile, erro
 		tsf.Nodes = append(tsf.Nodes, elems...)
 	}
 
-	return &GeneratedFile{
-		RelativePath: filepath.Join(gen.dir, "index.gen.ts"),
-		Data:         []byte(tsf.String()),
-	}, nil
+	return jennywrites.NewFile(filepath.Join(gen.dir, "index.gen.ts"), []byte(tsf.String()), gen), nil
 }
 
-// TODO make this more generic and reusable
 func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *ast.File) ([]ast.Decl, error) {
 	lin := decl.Lineage()
 	sch := thema.SchemaP(lin, thema.LatestVersion(lin))

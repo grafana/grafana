@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"path/filepath"
+
+	"github.com/sdboyer/jennywrites"
 )
 
 // RawKindGenerator generates the implementation of
@@ -42,11 +44,11 @@ type RawKindGeneratorConfig struct {
 	GenDirName func(*DeclForGen) string
 }
 
-func (gen *genRawKind) Name() string {
+func (gen *genRawKind) JennyName() string {
 	return "RawKindGenerator"
 }
 
-func (gen *genRawKind) Generate(decl *DeclForGen) (*GeneratedFile, error) {
+func (gen *genRawKind) Generate(decl *DeclForGen) (*jennywrites.File, error) {
 	if !decl.IsRaw() {
 		return nil, nil
 	}
@@ -64,8 +66,5 @@ func (gen *genRawKind) Generate(decl *DeclForGen) (*GeneratedFile, error) {
 		return nil, err
 	}
 
-	return &GeneratedFile{
-		RelativePath: path,
-		Data:         b,
-	}, nil
+	return jennywrites.NewFile(path, b, gen), nil
 }
