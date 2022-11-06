@@ -1,4 +1,4 @@
-package buffered
+package client
 
 import (
 	"testing"

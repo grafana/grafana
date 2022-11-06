@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
 
 import Datasource from '../../datasource';
+import { selectors } from '../../e2e/selectors';
 import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 import { AzureQueryEditorFieldProps, AzureMetricResource } from '../../types';
 import { Field } from '../Field';
@@ -50,7 +51,7 @@ const ResourceField: React.FC<ResourceFieldProps<string | AzureMetricResource>> 
   );
 
   return (
-    <>
+    <span data-testid={selectors.components.queryEditor.resourcePicker.select.button}>
       <Modal
         className={styles.modal}
         title="Select a resource"
@@ -74,7 +75,7 @@ const ResourceField: React.FC<ResourceFieldProps<string | AzureMetricResource>> 
           <ResourceLabel resource={resource} datasource={datasource} />
         </Button>
       </Field>
-    </>
+    </span>
   );
 };
 
