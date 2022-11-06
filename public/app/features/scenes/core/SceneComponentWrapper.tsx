@@ -20,6 +20,10 @@ export function SceneComponentWrapper<T extends SceneObject>({ model, isEditing 
     };
   }, [model]);
 
+  /** Useful for tests and evaluating efficiency in reducing renderings */
+  // @ts-ignore
+  model._renderCount += 1;
+
   if (!isEditing) {
     return inner;
   }
