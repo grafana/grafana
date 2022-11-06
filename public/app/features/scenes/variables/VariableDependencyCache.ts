@@ -1,6 +1,6 @@
 import { variableRegex } from 'app/features/variables/utils';
 
-export class VariableDependencySet<TState> {
+export class VariableDependencyCache<TState> {
   private state: TState | undefined;
   private dependencies = new Set<string>();
   scanCount = 0;
@@ -11,7 +11,7 @@ export class VariableDependencySet<TState> {
    * Scans the state for dependencies and returns them. It will only check the statePaths.
    * And it will only re-scan if state has changed and the specific statePaths have new value
    */
-  getVariableDependencies(newState: TState): Set<string> {
+  getAll(newState: TState): Set<string> {
     const prevState = this.state;
     this.state = newState;
 

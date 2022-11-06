@@ -5,13 +5,10 @@ import { SceneVariable, SceneVariables, SceneVariableSetState, SceneVariableValu
 
 export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> implements SceneVariables {
   /** Variables that have changed in since the activation or since the first manual value change */
-  // private variablesThatHaveChanged = new Map<string, SceneVariable>();
+  private variablesThatHaveChanged = new Map<string, SceneVariable>();
 
   /** Variables that are scheduled to be validated and updated */
   private variablesToUpdate = new Map<string, SceneVariable>();
-
-  /** Cached variable dependencies */
-  private dependencies = new Map<string, string[]>();
 
   /** Variables currently updating  */
   private updating = new Map<string, VariableUpdateInProgress>();
@@ -94,17 +91,18 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
    * Checks if the variable has any dependencies that is currently in variablesToUpdate
    */
   private hasDependendencyInUpdateQueue(variable: SceneVariable) {
-    const dependencies = this.dependencies.get(variable.state.name);
+    if (!variable.getVariableDependencies) {
+      return false;
+    }
 
-    if (dependencies) {
-      for (const dep of dependencies) {
-        for (const otherVariable of this.variablesToUpdate.values()) {
-          if (otherVariable.state.name === dep) {
-            return true;
-          }
+    const dependencies = variable.getVariableDependencies();
+
+    for (const dep of dependencies) {
+      for (const otherVariable of this.variablesToUpdate.values()) {
+        if (otherVariable.state.name === dep) {
+          return true;
         }
       }
-    }
 
     return false;
   }
@@ -118,10 +116,6 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
       if (variable.validateAndUpdate) {
         this.variablesToUpdate.set(variable.state.name, variable);
       }
-
-      if (variable.getDependencies) {
-        this.dependencies.set(variable.state.name, variable.getDependencies());
-      }
     }
 
     this.updateNextBatch();
@@ -134,15 +128,14 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
     const variable = event.payload;
 
     // Ignore this change if it is currently updating
-    if (this.updating.has(variable.state.name)) {
+    if (this.updating.has(variableThatChanged.state.name)) {
       return;
     }
 
-    for (const [name, deps] of this.dependencies) {
-      if (deps.includes(variable.state.name)) {
-        const otherVariable = this.getByName(name);
-        if (otherVariable) {
-          this.variablesToUpdate.set(name, otherVariable);
+    for (const otherVariable of this.state.variables) {
+      if (otherVariable.getVariableDependencies) {
+        if (otherVariable.getVariableDependencies().has(variableThatChanged.state.name)) {
+          this.variablesToUpdate.set(otherVariable.state.name, otherVariable);
         }
       }
     }

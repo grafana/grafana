@@ -17,11 +17,6 @@ export interface SceneVariableState extends SceneObjectStatePlain {
 
 export interface SceneVariable<TState extends SceneVariableState = SceneVariableState> extends SceneObject<TState> {
   /**
-   * Should return a string array of other variables this variable is using in it's definition.
-   */
-  getDependencies?(): string[];
-
-  /**
    * This function is called on activation or when a dependency changes.
    */
   validateAndUpdate?(): Observable<ValidateAndUpdateResult>;

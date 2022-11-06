@@ -1,53 +1,53 @@
-import { VariableDependencySet } from './VariableDependencySet';
+import { VariableDependencyCache } from './VariableDependencyCache';
 
 class TestState {
-  query = 'query with ${varA}';
-  otherProp = 'string with ${varB}';
+  query = 'query with ${queryVarA} ${queryVarB}';
+  otherProp = 'string with ${otherPropA}';
   nested = {
-    query: 'nested object with ${varC}',
+    query: 'nested object with ${nestedVarA}',
   };
 }
 
 describe('VariableDependencySet', () => {
   it('Should be able to extract dependencies', () => {
     const state = new TestState();
-    const deps = new VariableDependencySet<TestState>(['query', 'nested']);
+    const deps = new VariableDependencyCache<TestState>(['query', 'nested']);
 
-    expect(deps.getVariableDependencies(state)).toEqual(new Set(['varA', 'varC']));
+    expect(deps.getAll(state)).toEqual(new Set(['queryVarA', 'queryVarB', 'nestedVarA']));
   });
 
   it('Should cache variable extraction', () => {
     const state = new TestState();
-    const deps = new VariableDependencySet<TestState>(['query', 'nested']);
+    const deps = new VariableDependencyCache<TestState>(['query', 'nested']);
 
-    deps.getVariableDependencies(state);
-    deps.getVariableDependencies(state);
+    deps.getAll(state);
+    deps.getAll(state);
 
     expect(deps.scanCount).toBe(1);
   });
 
   it('Should not rescan if state changes but not any of the state paths to scan', () => {
     const state = new TestState();
-    const deps = new VariableDependencySet<TestState>(['query', 'nested']);
-    deps.getVariableDependencies(state);
+    const deps = new VariableDependencyCache<TestState>(['query', 'nested']);
+    deps.getAll(state);
 
     const newState = new TestState();
     newState.nested = state.nested;
 
-    deps.getVariableDependencies(newState);
+    deps.getAll(newState);
     expect(deps.scanCount).toBe(1);
   });
 
   it('Should re-scan when both stata and specific state path change', () => {
     const state = new TestState();
-    const deps = new VariableDependencySet<TestState>(['query', 'nested']);
-    deps.getVariableDependencies(state);
+    const deps = new VariableDependencyCache<TestState>(['query', 'nested']);
+    deps.getAll(state);
 
     const newState = new TestState();
     newState.query = 'new query with ${newVar}';
     newState.nested.query = 'no variable here any more';
 
-    expect(deps.getVariableDependencies(newState)).toEqual(new Set(['newVar']));
+    expect(deps.getAll(newState)).toEqual(new Set(['newVar']));
     expect(deps.scanCount).toBe(2);
   });
 });
