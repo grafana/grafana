@@ -45,6 +45,10 @@ func (s *FakeService) MakeUserAdmin(ctx context.Context, orgID int64, userID, fo
 	return s.ExpectedError
 }
 
+func (s *FakeService) MoveFolder(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
+	return s.ExpectedFolder, s.ExpectedError
+}
+
 func (s *FakeService) GetParents(ctx context.Context, orgID int64, folderUID string) ([]*folder.Folder, error) {
 	return modelsToFolders(s.ExpectedFolders), s.ExpectedError
 }
