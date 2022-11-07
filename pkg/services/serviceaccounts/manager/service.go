@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	metricsCollectionInterval      = time.Minute * 30
+	metricsCollectionInterval = time.Minute * 30
 	defaultSecretScanInterval = time.Minute * 5
 )
 
@@ -77,10 +77,10 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 
 	// Enforce a minimum interval of 1 minute.
 	if sa.secretScanInterval < time.Minute {
-		sa.backgroundLog.Warn("token secret check interval is too low, increasing to " +
-			defaultTokenCollectionInterval.String())
+		sa.backgroundLog.Warn("secret scan interval is too low, increasing to " +
+			defaultSecretScanInterval.String())
 
-		sa.secretScanInterval = defaultTokenCollectionInterval
+		sa.secretScanInterval = defaultSecretScanInterval
 	}
 
 	tokenCheckTicker := time.NewTicker(sa.secretScanInterval)
