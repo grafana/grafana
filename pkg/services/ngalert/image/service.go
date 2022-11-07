@@ -195,13 +195,6 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 	return &image, nil
 }
 
-// NotAvailableImageService is a service that returns ErrScreenshotsUnavailable.
-type NotAvailableImageService struct{}
-
-func (s *NotAvailableImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
-	return nil, screenshot.ErrScreenshotsUnavailable
-}
-
 // NoopImageService is a no-op image service.
 type NoopImageService struct{}
 
