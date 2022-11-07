@@ -109,35 +109,6 @@ async function getAllHistoryCompletions(dataProvider: CompletionDataProvider): P
   }));
 }
 
-async function getLabelNamesForCompletions(
-  suffix: string,
-  triggerOnInsert: boolean,
-  addExtractedLabels: boolean,
-  otherLabels: Label[],
-  dataProvider: CompletionDataProvider
-): Promise<Completion[]> {
-  const labels = new Set<string>();
-
-  if (addExtractedLabels) {
-    const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(otherLabels);
-    extractedLabelKeys.forEach((label) => {
-      labels.add(label);
-    });
-  } else {
-    const labelNames = await dataProvider.getLabelNames(otherLabels);
-    labelNames.forEach((label) => {
-      labels.add(label);
-    });
-  }
-
-  return Array.from(labels).map((text) => ({
-    type: 'LABEL_NAME',
-    label: text,
-    insertText: `${text}${suffix}`,
-    triggerOnInsert,
-  }));
-}
-
 async function getLabelNamesForSelectorCompletions(
   otherLabels: Label[],
   dataProvider: CompletionDataProvider
