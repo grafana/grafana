@@ -1,6 +1,6 @@
 import { e2e } from '@grafana/e2e';
 
-const dataSourceName = 'LokiSlate';
+const dataSourceName = 'LokiEditor';
 const addDataSource = () => {
   e2e.flows.addDataSource({
     type: 'Loki',
