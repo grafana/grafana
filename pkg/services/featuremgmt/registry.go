@@ -397,5 +397,11 @@ var (
 			Description: "Rule backtesting API for alerting",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:            "alertingNoNormalState",
+			Description:     "Stop maintaining state of alerts that are not firing",
+			State:           FeatureStateBeta,
+			RequiresRestart: false,
+		},
 	}
 )

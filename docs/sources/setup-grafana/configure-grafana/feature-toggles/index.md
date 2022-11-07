@@ -44,6 +44,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `validateDashboardsOnSave`        | Validate dashboard JSON POSTed to api/dashboards/db                             |
 | `autoMigrateGraphPanels`          | Replace the angular graph panel with timeseries                                 |
 | `datasourceLogger`                | Logs all datasource requests                                                    |
+| `alertingNoNormalState`           | Stop maintaining state of alerts that are not firing                            |
 
 ## Alpha feature toggles
 
