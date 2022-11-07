@@ -359,7 +359,7 @@ The result after applying the inner join transformation looks like the following
 
 #### Outer join
 
-An outer join includes all data from an inner join and rows where values do not match in every input. While the inner join joins on the time field, the outer join includes all rows that don’t match on the time field.
+An outer join includes all data from an inner join and rows where values do not match in every input. While the inner join joins Query A and Query B on the time field, the outer join includes all rows that don’t match on the time field.".
 
 The result after applying the outer join transformation looks like the following:
 
