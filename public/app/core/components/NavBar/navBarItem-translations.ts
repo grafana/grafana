@@ -80,7 +80,9 @@ export function getNavTitle(navId: string | undefined) {
     case 'plugins':
       return t('nav.plugins.title', 'Plugins');
     case 'org-settings':
-      return t('nav.org-settings.title', 'Preferences');
+      return config.featureToggles.topnav
+        ? t('nav.org-settings.title', 'General')
+        : t('nav.org-settings.titleBeforeTopnav', 'Preferences');
     case 'apikeys':
       return t('nav.api-keys.title', 'API keys');
     case 'serviceaccounts':
@@ -94,7 +96,9 @@ export function getNavTitle(navId: string | undefined) {
     case 'global-orgs':
       return t('nav.global-orgs.title', 'Organizations');
     case 'server-settings':
-      return t('nav.server-settings.title', 'Settings');
+      return config.featureToggles.topnav
+        ? t('nav.server-settings.title', 'Server')
+        : t('nav.server-settings.titleBeforeTopnav', 'Settings');
     case 'storage':
       return t('nav.storage.title', 'Storage');
     case 'upgrading':

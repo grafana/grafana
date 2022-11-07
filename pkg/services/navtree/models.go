@@ -115,24 +115,24 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 			orgAdminNode.Url = "/admin"
 			orgAdminNode.Text = "Administration"
 
-			orgUsersNode := root.FindById("users")
-			globalUsersNode := root.FindById("global-users")
-			teamsNode := root.FindById("teams")
-			// rolesNode := root.FindById("roles") // enterprise only?
-			serviceAccountsNode := root.FindById("serviceaccounts")
-			apiKeysNode := root.FindById("apikeys")
-			// cloudAccessPoliciesNode := root.FindById("cloudAccessPolicies") // cloud app?
-
 			adminAccessNodeLinks := []*NavLink{}
-			adminAccessNodeLinks = append(adminAccessNodeLinks, orgUsersNode)
-			adminAccessNodeLinks = append(adminAccessNodeLinks, globalUsersNode)
-			adminAccessNodeLinks = append(adminAccessNodeLinks, teamsNode)
-			// adminAccessNodeLinks = append(adminAccessNodeLinks, rolesNode)
-			adminAccessNodeLinks = append(adminAccessNodeLinks, serviceAccountsNode)
-			adminAccessNodeLinks = append(adminAccessNodeLinks, apiKeysNode)
-			// adminAccessNodeLinks = append(adminAccessNodeLinks, cloudAccessPoliciesNode)
+			adminAccessNodeLinks = AppendIfNotNil(adminAccessNodeLinks, root.FindById("users"))
+			adminAccessNodeLinks = AppendIfNotNil(adminAccessNodeLinks, root.FindById("global-users"))
+			adminAccessNodeLinks = AppendIfNotNil(adminAccessNodeLinks, root.FindById("teams"))
+			// adminAccessNodeLinks = AppendIfNotNil(adminAccessNodeLinks, rolesNode := root.FindById("roles")) // enterprise only?
+			adminAccessNodeLinks = AppendIfNotNil(adminAccessNodeLinks, root.FindById("serviceaccounts"))
+			adminAccessNodeLinks = AppendIfNotNil(adminAccessNodeLinks, root.FindById("apikeys"))
+			// adminAccessNodeLinks = AppendIfNotNil(adminAccessNodeLinks, root.FindById("cloudAccessPolicies") ) // cloud app?
 
 			adminConfigNodeLinks := []*NavLink{}
+			adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("org-settings"))
+			adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("server-settings"))
+			adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("datasources"))
+			adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("plugins"))
+			adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("global-orgs"))
+			// adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("recordedQueries")) // enterprise only
+			// adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("customBranding")) // enterprise only
+			adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("upgrading")) // but for enterprise?
 
 			adminAccessNode := &NavLink{
 				Text:       "Access",
@@ -160,13 +160,7 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 		}
 
 		if serverAdminNode := root.FindById(NavIDAdmin); serverAdminNode != nil {
-			serverAdminNode.Url = "/admin/server"
-			serverAdminNode.SortWeight = 0
-
-			if orgAdminNode != nil {
-				orgAdminNode.Children = append(orgAdminNode.Children, serverAdminNode)
-				root.RemoveSection(serverAdminNode)
-			}
+			root.RemoveSection(serverAdminNode)
 		}
 
 		// Move reports into dashboards
@@ -220,6 +214,14 @@ func Sort(nodes []*NavLink) {
 	for _, child := range nodes {
 		child.Sort()
 	}
+}
+
+func AppendIfNotNil(children []*NavLink, newChild *NavLink) []*NavLink {
+	if newChild != nil {
+		return append(children, newChild)
+	}
+
+	return children
 }
 
 func FindById(nodes []*NavLink, id string) *NavLink {
