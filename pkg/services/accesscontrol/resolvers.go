@@ -44,7 +44,7 @@ type Resolvers struct {
 }
 
 func (s *Resolvers) AddScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver) {
-	s.log.Debug("adding scope attribute resolver for '%v'", prefix)
+	s.log.Debug("adding scope attribute resolver", "prefix", prefix)
 	s.attributeResolvers[prefix] = resolver
 }
 

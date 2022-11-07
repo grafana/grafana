@@ -413,6 +413,8 @@
       "title": "Absoluter Zeitbereich"
     },
     "calendar": {
+      "apply-button": "",
+      "cancel-button": "",
       "select-time": ""
     },
     "time-range": {
