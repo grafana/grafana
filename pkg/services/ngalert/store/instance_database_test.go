@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 )
 
 const baseIntervalSeconds = 10
@@ -17,7 +18,7 @@ func BenchmarkAlertInstanceOperations(b *testing.B) {
 	b.StopTimer()
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(b, baseIntervalSeconds)
-	dbstore.FeatureToggles.(*tests.FakeFeatures).BigTransactions = false
+	dbstore.FeatureToggles.(*fakes.FakeFeatures).BigTransactions = false
 
 	const mainOrgID int64 = 1
 
@@ -86,7 +87,7 @@ func TestIntegrationAlertInstanceBulkWrite(t *testing.T) {
 	}
 
 	for _, bigStmts := range []bool{false, true} {
-		dbstore.FeatureToggles.(*tests.FakeFeatures).BigTransactions = bigStmts
+		dbstore.FeatureToggles.(*fakes.FakeFeatures).BigTransactions = bigStmts
 		err := dbstore.SaveAlertInstances(ctx, instances...)
 		require.NoError(t, err)
 		t.Log("Finished database write")

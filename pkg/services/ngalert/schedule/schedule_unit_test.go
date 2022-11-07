@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -68,7 +69,7 @@ func TestProcessTicks(t *testing.T) {
 		Metrics:      testMetrics.GetSchedulerMetrics(),
 		AlertSender:  notifier,
 	}
-	st := state.NewManager(testMetrics.GetStateMetrics(), nil, nil, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{})
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, nil, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{}, &fakes.FakeFeatures{})
 
 	sched := NewScheduler(schedCfg, st)
 
@@ -686,7 +687,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		AlertSender:      senderMock,
 	}
 
-	st := state.NewManager(m.GetStateMetrics(), nil, is, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{})
+	st := state.NewManager(m.GetStateMetrics(), nil, is, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{}, &fakes.FakeFeatures{})
 	return NewScheduler(schedCfg, st)
 }
 
