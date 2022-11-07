@@ -107,7 +107,7 @@ export class LegendItem extends PureComponent<LegendItemProps, LegendItemState> 
     if (asTable) {
       return (
         <tr className={`graph-legend-series ${seriesOptionClasses}`}>
-          <td>
+          <td role="gridcell">
             <div className="graph-legend-series__table-name">{seriesLabel}</div>
           </td>
           {valueItems}
@@ -221,7 +221,7 @@ interface LegendValueProps {
 function LegendValue({ value, valueName, asTable, onValueClick }: LegendValueProps) {
   if (asTable) {
     return (
-      <td className={`graph-legend-value ${valueName}`} onClick={onValueClick}>
+      <td role="gridcell" className={`graph-legend-value ${valueName}`} onClick={onValueClick}>
         {value}
       </td>
     );

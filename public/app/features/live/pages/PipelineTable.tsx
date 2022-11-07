@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Tag, useStyles, IconButton } from '@grafana/ui';
+import { Tag, IconButton } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { RuleModal } from './RuleModal';
@@ -27,7 +26,6 @@ export const PipelineTable = (props: Props) => {
   const [isOpen, setOpen] = useState(false);
   const [selectedRule, setSelectedRule] = useState<Rule>();
   const [clickColumn, setClickColumn] = useState<RuleType>('converter');
-  const styles = useStyles(getStyles);
 
   const onRowClick = (rule: Rule, event?: any) => {
     if (!rule) {
@@ -137,10 +135,8 @@ export const PipelineTable = (props: Props) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
-  return {
-    row: css`
-      cursor: pointer;
-    `,
-  };
+const styles = {
+  row: css`
+    cursor: pointer;
+  `,
 };

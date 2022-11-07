@@ -8,7 +8,7 @@ import { SceneVariable, SceneVariables, SceneVariableSetState, SceneVariableStat
 export class TextBoxSceneVariable extends SceneObjectBase<SceneVariableState> implements SceneVariable {}
 
 export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> implements SceneVariables {
-  getVariableByName(name: string): SceneVariable | undefined {
+  public getVariableByName(name: string): SceneVariable | undefined {
     // TODO: Replace with index
     return this.state.variables.find((x) => x.state.name === name);
   }
