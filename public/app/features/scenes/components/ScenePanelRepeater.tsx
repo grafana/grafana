@@ -20,7 +20,7 @@ export class ScenePanelRepeater extends SceneObjectBase<RepeatOptions> {
   public activate(): void {
     super.activate();
 
-    this.subs.add(
+    this._subs.add(
       this.getData().subscribeToState({
         next: (data) => {
           if (data.data?.state === LoadingState.Done) {

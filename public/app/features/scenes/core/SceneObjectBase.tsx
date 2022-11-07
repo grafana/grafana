@@ -16,7 +16,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   private _events = new EventBusSrv();
 
   protected _parent?: SceneObject;
-  protected subs = new Subscription();
+  protected _subs = new Subscription();
 
   public constructor(state: TState) {
     if (!state.key) {
@@ -159,8 +159,8 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
 
     // Clear subscriptions and listeners
     this._events.removeAllListeners();
-    this.subs.unsubscribe();
-    this.subs = new Subscription();
+    this._subs.unsubscribe();
+    this._subs = new Subscription();
 
     this._subject.complete();
     this._subject = new Subject<TState>();
