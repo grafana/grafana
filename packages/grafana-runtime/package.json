@@ -42,6 +42,7 @@
     "@sentry/browser": "6.19.7",
     "history": "4.10.1",
     "lodash": "4.17.21",
+    "react-use": "^17.4.0",
     "rxjs": "7.5.6",
     "systemjs": "0.20.19",
     "tslib": "2.4.0"
@@ -55,13 +56,15 @@
     "@testing-library/user-event": "14.4.3",
     "@types/angular": "1.8.4",
     "@types/history": "4.7.11",
-    "@types/jest": "28.1.6",
+    "@types/jest": "^29.2.2",
     "@types/lodash": "4.14.182",
     "@types/react": "17.0.42",
     "@types/react-dom": "17.0.14",
     "@types/systemjs": "^0.20.6",
+    "@types/testing-library__jest-dom": "^5.14.5",
     "esbuild": "0.15.7",
     "lodash": "4.17.21",
+    "msw": "^0.47.4",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "rimraf": "3.0.2",
@@ -71,7 +74,8 @@
     "rollup-plugin-node-externals": "^4.1.0",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
-    "typescript": "4.8.2"
+    "typescript": "4.8.2",
+    "whatwg-fetch": "^3.6.2"
   },
   "peerDependencies": {
     "react": "17.0.2",

@@ -1,7 +1,7 @@
 import React, { FC, ReactElement } from 'react';
 import { useAsync } from 'react-use';
 
-import { getPluginSettings } from 'app/features/plugins/pluginSettings';
+import { getPluginSettings } from '../services/PluginService';
 
 export interface PluginBridgeProps {
   plugin: SupportedPlugin;

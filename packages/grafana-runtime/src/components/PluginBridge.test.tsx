@@ -1,15 +1,20 @@
 import { screen, render } from '@testing-library/react';
 import React from 'react';
 
+// @ts-ignore
 import { backendSrv } from 'app/core/services/backend_srv';
+
+import { setBackendSrv } from '../services';
 
 import { createBridgeURL, PluginBridge, SupportedPlugin } from './PluginBridge';
 import { server, NON_EXISTING_PLUGIN } from './PluginBridge.mock';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => backendSrv,
-}));
+beforeAll(() => {
+  setBackendSrv(backendSrv);
+  server.listen({ onUnhandledRequest: 'error' });
+});
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
 
 describe('createBridgeURL', () => {
   it('should work with path', () => {
@@ -26,10 +31,6 @@ describe('createBridgeURL', () => {
 });
 
 describe('<PluginBridge />', () => {
-  beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
-  afterEach(() => server.resetHandlers());
-  afterAll(() => server.close());
-
   it('should render notInstalled component', async () => {
     // @ts-ignore
     render(<PluginBridge plugin={NON_EXISTING_PLUGIN} notInstalledComponent={<div>plugin not installed</div>} />);
