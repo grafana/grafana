@@ -7,14 +7,18 @@ import (
 
 // AlertInstance represents a single alert instance.
 type AlertInstance struct {
-	RuleOrgID         int64  `xorm:"rule_org_id"`
-	RuleUID           string `xorm:"rule_uid"`
+	AlertInstanceKey  `xorm:"extends"`
 	Labels            InstanceLabels
-	LabelsHash        string
 	CurrentState      InstanceStateType
 	CurrentStateSince time.Time
 	CurrentStateEnd   time.Time
 	LastEvalTime      time.Time
+}
+
+type AlertInstanceKey struct {
+	RuleOrgID  int64  `xorm:"rule_org_id"`
+	RuleUID    string `xorm:"rule_uid"`
+	LabelsHash string
 }
 
 // InstanceStateType is an enum for instance states.

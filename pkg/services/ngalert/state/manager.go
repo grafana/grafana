@@ -359,6 +359,8 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 
 func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.AlertRule, states map[string]*State) {
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
+	toDelete := make([]ngModels.AlertInstanceKey, 0)
+
 	for _, s := range allStates {
 		_, ok := states[s.CacheId]
 		if !ok && isItStale(s.LastEvaluationTime, alertRule.IntervalSeconds) {
@@ -370,14 +372,17 @@ func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.
 				st.log.Error("unable to get labelsHash", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID)
 			}
 
-			if err = st.instanceStore.DeleteAlertInstance(ctx, s.OrgID, s.AlertRuleUID, labelsHash); err != nil {
-				st.log.Error("unable to delete stale instance from database", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
-			}
+			toDelete = append(toDelete, ngModels.AlertInstanceKey{RuleOrgID: s.OrgID, RuleUID: s.AlertRuleUID, LabelsHash: labelsHash})
 
 			if s.State == eval.Alerting {
 				st.annotateState(ctx, alertRule, s.Labels, time.Now(), eval.Normal, s.State)
 			}
 		}
+	}
+
+	if err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...); err != nil {
+		st.log.Error("unable to delete stale instances from database", "err", err.Error(),
+			"orgID", alertRule.OrgID, "alertRuleUID", alertRule.UID, "count", len(toDelete))
 	}
 }
 
