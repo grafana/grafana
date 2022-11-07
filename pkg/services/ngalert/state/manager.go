@@ -388,9 +388,12 @@ func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.
 		}
 	}
 
-	if err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...); err != nil {
-		st.log.Error("unable to delete stale instances from database", "err", err.Error(),
-			"orgID", alertRule.OrgID, "alertRuleUID", alertRule.UID, "count", len(toDelete))
+	shouldManageInstances := ctx.Value(ShouldManageAnnotationsAndInstancesContextKey).(bool)
+	if shouldManageInstances {
+		if err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...); err != nil {
+			st.log.Error("unable to delete stale instances from database", "err", err.Error(),
+				"orgID", alertRule.OrgID, "alertRuleUID", alertRule.UID, "count", len(toDelete))
+		}
 	}
 }
 
