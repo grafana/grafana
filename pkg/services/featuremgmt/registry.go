@@ -208,11 +208,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "prometheusStreamingJSONParser",
-			Description: "Enable streaming JSON parser for Prometheus datasource",
-			State:       FeatureStateStable,
-		},
-		{
 			Name:        "prometheusBufferedClient",
 			Description: "Use buffered (old) client as default instead of streaming JSON parser client (new)Enable for Prometheus datasource",
 			State:       FeatureStateStable,
