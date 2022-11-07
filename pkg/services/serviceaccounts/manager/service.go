@@ -17,7 +17,7 @@ import (
 
 const (
 	metricsCollectionInterval      = time.Minute * 30
-	defaultTokenCollectionInterval = time.Minute * 5
+	defaultSecretScanInterval = time.Minute * 5
 )
 
 type ServiceAccountsService struct {
@@ -57,7 +57,7 @@ func ProvideServiceAccountsService(
 	s.secretScanEnabled = cfg.SectionWithEnvOverrides("secretscan").Key("enabled").MustBool(false)
 	if s.secretScanEnabled {
 		s.secretScanInterval = cfg.SectionWithEnvOverrides("secretscan").
-			Key("interval").MustDuration(defaultTokenCollectionInterval)
+			Key("interval").MustDuration(defaultSecretScanInterval)
 
 		s.secretScanService = secretscan.NewService(s.store, cfg)
 	}
