@@ -16,14 +16,14 @@ type Service interface {
 	UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error
 	DeleteFolder(ctx context.Context, cmd *DeleteFolderCommand) error
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error
-}
+	// }
 
-// NestedFolderService is the temporary interface definition for the folder
-// Service which includes any new or alternate methods. These will be collapsed
-// into a single service when the nested folder implementation is rolled out.
-// Note that the commands in this service use models from this package, while
-// the legacy FolderService uses models from the models package.
-type NestedFolderService interface {
+	// // NestedFolderService is the temporary interface definition for the folder
+	// // Service which includes any new or alternate methods. These will be collapsed
+	// // into a single service when the nested folder implementation is rolled out.
+	// // Note that the commands in this service use models from this package, while
+	// // the legacy FolderService uses models from the models package.
+	// type NestedFolderService interface {
 	// Create creates a new folder.
 	Create(ctx context.Context, cmd *CreateFolderCommand) (*Folder, error)
 
