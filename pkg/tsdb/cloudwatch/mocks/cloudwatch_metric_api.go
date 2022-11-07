@@ -49,12 +49,12 @@ func chunkSlice(slice []*cloudwatch.Metric, chunkSize int) [][]*cloudwatch.Metri
 	return chunks
 }
 
-type MetricsClient struct {
+type MetricsAPI struct {
 	cloudwatchiface.CloudWatchAPI
 	mock.Mock
 }
 
-func (m *MetricsClient) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
+func (m *MetricsAPI) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
 	args := m.Called(ctx, input, opts)
 
 	return args.Get(0).(*cloudwatch.GetMetricDataOutput), args.Error(1)

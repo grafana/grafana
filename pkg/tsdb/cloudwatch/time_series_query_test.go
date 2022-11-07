@@ -32,14 +32,14 @@ func TestTimeSeriesQuery(t *testing.T) {
 	t.Cleanup(func() {
 		NewCWClient = origNewCWClient
 	})
-	var api mocks.MetricsClient
+	var api mocks.MetricsAPI
 
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 		return &api
 	}
 
 	t.Run("Custom metrics", func(t *testing.T) {
-		api = mocks.MetricsClient{}
+		api = mocks.MetricsAPI{}
 		api.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatch.GetMetricDataOutput{
 			MetricDataResults: []*cloudwatch.MetricDataResult{
 				{
@@ -144,7 +144,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 		NewCWClient = origNewCWClient
 	})
 
-	var mockMetricClient mocks.MetricsClient
+	var mockMetricClient mocks.MetricsAPI
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 		return &mockMetricClient
 	}
@@ -158,7 +158,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 		mockSessionCache.On("GetSession", mock.MatchedBy(
 			func(config awsds.SessionConfig) bool { return config.Settings.Region == "us-east-1" })). // region from queries is asserted here
 			Return(&session.Session{Config: &aws.Config{}}, nil).Once()
-		mockMetricClient = mocks.MetricsClient{}
+		mockMetricClient = mocks.MetricsAPI{}
 		mockMetricClient.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
 		executor := newExecutor(im, newTestConfig(), mockSessionCache, featuremgmt.WithFeatures())
@@ -209,7 +209,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 		sessionCache.On("GetSession", mock.MatchedBy(
 			func(config awsds.SessionConfig) bool { return config.Settings.Region == "us-east-2" })).
 			Return(&session.Session{Config: &aws.Config{}}, nil, nil).Once()
-		mockMetricClient = mocks.MetricsClient{}
+		mockMetricClient = mocks.MetricsAPI{}
 		mockMetricClient.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
 		executor := newExecutor(im, newTestConfig(), sessionCache, featuremgmt.WithFeatures())
@@ -335,7 +335,7 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 		NewCWClient = origNewCWClient
 	})
 
-	var api mocks.MetricsClient
+	var api mocks.MetricsAPI
 
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 		return &api
@@ -346,7 +346,7 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 	})
 
 	t.Run("passes query label as GetMetricData label when dynamic labels feature toggle is enabled", func(t *testing.T) {
-		api = mocks.MetricsClient{}
+		api = mocks.MetricsAPI{}
 		api.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatch.GetMetricDataOutput{}, nil)
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchDynamicLabels))
 		query := newTestQuery(t, queryParameters{
@@ -395,7 +395,7 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			api = mocks.MetricsClient{}
+			api = mocks.MetricsAPI{}
 			api.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatch.GetMetricDataOutput{}, nil)
 			executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, tc.feature)
 
@@ -429,7 +429,7 @@ func Test_QueryData_response_data_frame_names(t *testing.T) {
 	t.Cleanup(func() {
 		NewCWClient = origNewCWClient
 	})
-	var api mocks.MetricsClient
+	var api mocks.MetricsAPI
 
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 		return &api

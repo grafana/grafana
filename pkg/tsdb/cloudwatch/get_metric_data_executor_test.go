@@ -15,7 +15,7 @@ import (
 func TestGetMetricDataExecutorTest(t *testing.T) {
 	executor := &cloudWatchExecutor{}
 	inputs := &cloudwatch.GetMetricDataInput{MetricDataQueries: []*cloudwatch.MetricDataQuery{}}
-	mockMetricClient := &mocks.MetricsClient{}
+	mockMetricClient := &mocks.MetricsAPI{}
 	mockMetricClient.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(
 		&cloudwatch.GetMetricDataOutput{
 			MetricDataResults: []*cloudwatch.MetricDataResult{{Values: []*float64{aws.Float64(12.3), aws.Float64(23.5)}}},
