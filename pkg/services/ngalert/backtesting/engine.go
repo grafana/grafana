@@ -45,7 +45,7 @@ func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory) *Engine {
 	return &Engine{
 		evalFactory: evalFactory,
 		createStateManager: func() stateManager {
-			return state.NewManager(nil, appUrl, nil, &NoopImageService{}, clock.New(), nil)
+			return state.NewManager(nil, appUrl, nil, &NoopImageService{}, clock.New(), nil, false)
 		},
 	}
 }

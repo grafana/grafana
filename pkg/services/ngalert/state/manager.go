@@ -37,19 +37,22 @@ type Manager struct {
 	images        ImageCapturer
 	historian     Historian
 	externalURL   *url.URL
+
+	doNotKeepNormalState bool
 }
 
-func NewManager(metrics *metrics.State, externalURL *url.URL, instanceStore InstanceStore, images ImageCapturer, clock clock.Clock, historian Historian) *Manager {
+func NewManager(metrics *metrics.State, externalURL *url.URL, instanceStore InstanceStore, images ImageCapturer, clock clock.Clock, historian Historian, doNotKeepNormalState bool) *Manager {
 	return &Manager{
-		cache:         newCache(),
-		ResendDelay:   ResendDelay, // TODO: make this configurable
-		log:           log.New("ngalert.state.manager"),
-		metrics:       metrics,
-		instanceStore: instanceStore,
-		images:        images,
-		historian:     historian,
-		clock:         clock,
-		externalURL:   externalURL,
+		cache:                newCache(),
+		ResendDelay:          ResendDelay, // TODO: make this configurable
+		log:                  log.New("ngalert.state.manager"),
+		metrics:              metrics,
+		instanceStore:        instanceStore,
+		images:               images,
+		historian:            historian,
+		clock:                clock,
+		externalURL:          externalURL,
+		doNotKeepNormalState: doNotKeepNormalState,
 	}
 }
 
