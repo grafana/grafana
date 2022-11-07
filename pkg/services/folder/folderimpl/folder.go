@@ -320,23 +320,6 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	})
 }
 
-func (s *Service) Contains(ctx context.Context, cmd *folder.ContainsFolderQuery) (*folder.ContainsFolderResult, error) {
-	foldr, err := s.store.GetChildren(ctx, folder.GetTreeQuery{
-		OrgID: cmd.OrgID,
-		UID:   cmd.UID,
-		Depth: 1,
-	})
-	if err != nil {
-		return nil, err
-	}
-	// get dashboards
-	// get alerts
-	// get library panels
-	return &folder.ContainsFolderResult{
-		FolderCount: len(foldr),
-	}, nil
-}
-
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) (*folder.Folder, error) {
 	// check the flag, if old - do whatever did before
 	//  for new only the store

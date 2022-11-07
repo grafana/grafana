@@ -80,18 +80,6 @@ type DeleteFolderCommand struct {
 	OrgID int64  `json:"orgId" xorm:"org_id"`
 }
 
-type ContainsFolderQuery struct {
-	OrgID int64
-	UID   string
-}
-
-type ContainsFolderResult struct {
-	FolderCount       int `json:"folder_count"`
-	DashboardCount    int `json:"dashboard_count"`
-	AlertCount        int `json:"alert_count"`
-	LibraryPanelCount int `json:"library_panel_count"`
-}
-
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
 // Title should be set; if multilpe fields are set by the caller the dashboard
 // service will select the field with the most specificity, in order: ID, UID,
