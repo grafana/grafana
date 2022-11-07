@@ -2368,6 +2368,7 @@ func TestEval(t *testing.T) {
 				return `{
 				"results": {
 				  "A": {
+					"status": 200,
 					"frames": [
 					  {
 						"schema": {
@@ -2424,6 +2425,7 @@ func TestEval(t *testing.T) {
 				return `{
 				"results": {
 				  "A": {
+					"status": 200,
 					"frames": [
 					  {
 						"schema": {

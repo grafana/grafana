@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { locationService } from '@grafana/runtime';
-import { ErrorBoundaryAlert } from '@grafana/ui';
+import { ErrorBoundaryAlert, usePanelContext } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -38,6 +38,8 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   const navModel = useNavModel('explore');
   const { get } = useCorrelations();
   const { warning } = useAppNotification();
+  const panelCtx = usePanelContext();
+  const eventBus = useRef(panelCtx.eventBus.newScopedBus('explore', { onlyLocal: false }));
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -102,11 +104,21 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
       <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
       <div className={styles.exploreWrapper}>
         <ErrorBoundaryAlert style="page">
-          <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={queryParams.left} />
+          <ExplorePaneContainer
+            split={hasSplit}
+            exploreId={ExploreId.left}
+            urlQuery={queryParams.left}
+            eventBus={eventBus.current}
+          />
         </ErrorBoundaryAlert>
         {hasSplit && (
           <ErrorBoundaryAlert style="page">
-            <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={queryParams.right} />
+            <ExplorePaneContainer
+              split={hasSplit}
+              exploreId={ExploreId.right}
+              urlQuery={queryParams.right}
+              eventBus={eventBus.current}
+            />
           </ErrorBoundaryAlert>
         )}
       </div>

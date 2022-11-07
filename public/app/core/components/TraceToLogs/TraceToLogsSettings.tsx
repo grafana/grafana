@@ -34,6 +34,7 @@ interface Props extends DataSourcePluginOptionsEditorProps<TraceToLogsData> {}
 
 export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles2(getStyles);
+  const supportedDataSourceTypes = ['loki', 'grafana-splunk-datasource', 'elasticsearch'];
 
   return (
     <div className={css({ width: '100%' })}>
@@ -47,10 +48,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         <InlineField tooltip="The data source the trace is going to navigate to" label="Data source" labelWidth={26}>
           <DataSourcePicker
             inputId="trace-to-logs-data-source-picker"
-            filter={(ds) => {
-              // Trace to logs only supports loki and splunk at the moment
-              return ds.type === 'loki' || ds.type === 'grafana-splunk-datasource';
-            }}
+            filter={(ds) => supportedDataSourceTypes.includes(ds.type)}
             current={options.jsonData.tracesToLogs?.datasourceUid}
             noDefault={true}
             width={40}

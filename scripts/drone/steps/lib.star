@@ -1,14 +1,14 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.15'
-build_image = 'grafana/build-container:1.6.3'
+grabpl_version = 'v3.0.16'
+build_image = 'grafana/build-container:1.6.4'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15.6'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
-go_image = 'golang:1.19.2'
+go_image = 'golang:1.19.3'
 
 disable_tests = False
 trigger_oss = {
@@ -815,7 +815,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
     else:
         mode = ''
 
-    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {} --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7'.format(
+    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {}'.format(
         mode, docker_repo)
 
     if ver_mode == 'release':
@@ -1155,6 +1155,21 @@ def verify_gen_cue_step(edition):
             '# It is required that code generated from Thema/CUE be committed and in sync with its inputs.',
             '# The following command will fail if running code generators produces any diff in output.',
             'CODEGEN_VERIFY=1 make gen-cue',
+        ],
+    }
+
+def verify_gen_jsonnet_step(edition):
+    deps = []
+    if edition in ('enterprise', 'enterprise2'):
+        deps.extend(['init-enterprise'])
+    return {
+        'name': 'verify-gen-jsonnet',
+        'image': build_image,
+        'depends_on': deps,
+        'commands': [
+            '# It is required that generated jsonnet is committed and in sync with its inputs.',
+            '# The following command will fail if running code generators produces any diff in output.',
+            'CODEGEN_VERIFY=1 make gen-jsonnet',
         ],
     }
 

@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -100,13 +101,22 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	}
 
 	var (
-		hasPublicDashboard bool
-		err                error
+		hasPublicDashboard     = false
+		publicDashboardEnabled = false
+		err                    error
 	)
+
+	// If public dashboards is enabled and we have a public dashboard, update meta
+	// values
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-		hasPublicDashboard, err = hs.PublicDashboardsApi.PublicDashboardService.ExistsEnabledByDashboardUid(c.Req.Context(), dash.Uid)
-		if err != nil {
+		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, dash.Uid)
+		if err != nil && !errors.Is(err, publicdashboardModels.ErrPublicDashboardNotFound) {
 			return response.Error(500, "Error while retrieving public dashboards", err)
+		}
+
+		if publicDashboard != nil {
+			hasPublicDashboard = true
+			publicDashboardEnabled = publicDashboard.IsEnabled
 		}
 	}
 
@@ -172,7 +182,8 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		Url:                    dash.GetUrl(),
 		FolderTitle:            "General",
 		AnnotationsPermissions: annotationPermissions,
-		PublicDashboardEnabled: hasPublicDashboard,
+		PublicDashboardEnabled: publicDashboardEnabled,
+		HasPublicDashboard:     hasPublicDashboard,
 	}
 
 	// lookup folder title
