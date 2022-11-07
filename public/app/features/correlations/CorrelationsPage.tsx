@@ -57,11 +57,17 @@ export default function CorrelationsPage() {
 
   const handleDelete = useCallback(
     (params: RemoveCorrelationParams) => {
-      reportInteraction('grafana_correlations_deleted');
       remove.execute(params);
     },
     [remove]
   );
+
+  // onDelete - triggers when deleting a correlation
+  useEffect(() => {
+    if (remove.value) {
+      reportInteraction('grafana_correlations_deleted');
+    }
+  }, [remove.value]);
 
   useEffect(() => {
     if (!remove.error && !remove.loading && remove.value) {
