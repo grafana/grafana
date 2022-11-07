@@ -12,6 +12,12 @@ weight: 100
 
 This page explains how to install Grafana dependencies, download and install Grafana, get the service up and running on your Debian or Ubuntu system, and also describes the installation package details.
 
+## Repository migration (November 8th 2022)
+
+From that date, Grafana packages will be served from a new repository (<packages.grafana.com/deb/{product}> -> <apt.grafana.com>). The new repository serves, from a single YUM/DNF configuration, all Grafana OSS products, as well as Grafana Enterprise.
+
+The old URLs will still work, serving the content from the new repository, but you may encounter warnings about some repository attributes changing (e.g. `Origin` and `Label`).
+
 ## Note on upgrading
 
 While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "../../upgrade-grafana/" >}}) for tips and guidance on updating an existing installation.
