@@ -251,7 +251,7 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 		}
 
 		entryRow := matchingExpression.Match([]byte(row))
-		// not and entry row -> is a conflict block row
+		// not an entry row -> is a conflict block row
 		if !entryRow {
 			// check for malformed row
 			// rows should be of the form
