@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 )
@@ -338,8 +337,8 @@ func takeImage(ctx context.Context, s ImageCapturer, r *models.AlertRule) (*mode
 	img, err := s.NewImage(ctx, r)
 	if err != nil {
 		if errors.Is(err, screenshot.ErrScreenshotsUnavailable) ||
-			errors.Is(err, image.ErrNoDashboard) ||
-			errors.Is(err, image.ErrNoPanel) {
+			errors.Is(err, models.ErrNoDashboard) ||
+			errors.Is(err, models.ErrNoPanel) {
 			return nil, nil
 		}
 		return nil, err

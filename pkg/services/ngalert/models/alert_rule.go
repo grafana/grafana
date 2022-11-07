@@ -26,6 +26,13 @@ var (
 	ErrAlertRuleFailedValidation          = errors.New("invalid alert rule")
 	ErrAlertRuleUniqueConstraintViolation = errors.New("a conflicting alert rule is found: rule title under the same organisation and folder should be unique")
 	ErrQuotaReached                       = errors.New("quota has been exceeded")
+	// ErrNoDashboard is returned when the alert rule does not have a Dashboard UID
+	// in its annotations or the dashboard does not exist.
+	ErrNoDashboard = errors.New("no dashboard")
+
+	// ErrNoPanel is returned when the alert rule does not have a PanelID in its
+	// annotations.
+	ErrNoPanel = errors.New("no panel")
 )
 
 // swagger:enum NoDataState
