@@ -48,8 +48,7 @@ func (gen *genTSVeneerIndex) Generate(decls []*DeclForGen) (*jennywrites.File, e
 			continue
 		}
 
-		lin := decl.Lineage()
-		sch := thema.SchemaP(lin, thema.LatestVersion(lin))
+		sch := decl.Lineage().Latest()
 		f, err := typescript.GenerateTypes(sch, &typescript.TypeConfig{
 			RootName: decl.Meta.Common().Name,
 			Group:    decl.Meta.Common().LineageIsGroup,

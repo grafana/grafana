@@ -58,7 +58,7 @@ require (
 	github.com/grafana/grafana-aws-sdk v0.11.0
 	github.com/grafana/grafana-azure-sdk-go v1.3.1
 	github.com/grafana/grafana-plugin-sdk-go v0.139.0
-	github.com/grafana/thema v0.0.0-20221103003154-ecd795c20fd5
+	github.com/grafana/thema v0.0.0-20221107225215-00ad2949c7bc
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.0.0
 	github.com/hashicorp/go-plugin v1.4.3

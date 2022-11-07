@@ -70,7 +70,7 @@ func (gen *genGoTypes) Generate(decl *DeclForGen) (*jennywrites.File, error) {
 
 	lin := decl.Lineage()
 	if gen.cfg.Version == nil {
-		sch = thema.SchemaP(lin, thema.LatestVersion(lin))
+		sch = lin.Latest()
 	} else {
 		sch, err = lin.Schema(*gen.cfg.Version)
 		if err != nil {
