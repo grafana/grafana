@@ -68,7 +68,7 @@ services:
 
   tempo:
     image: grafana/tempo:latest
-    command: 
+    command:
       - --config.file=/etc/tempo.yaml
       - --search.enabled=true
     volumes:

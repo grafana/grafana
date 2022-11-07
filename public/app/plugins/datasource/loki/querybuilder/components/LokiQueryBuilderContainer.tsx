@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React, { useEffect, useReducer } from 'react';
 
+import { testIds } from '../../components/LokiQueryEditor';
 import { LokiDatasource } from '../../datasource';
 import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
@@ -64,6 +65,7 @@ export function LokiQueryBuilderContainer(props: Props) {
         onChange={onVisQueryChange}
         onRunQuery={onRunQuery}
         showExplain={showExplain}
+        data-testid={testIds.editor}
       />
       {showRawQuery && <QueryPreview query={query.expr} />}
     </>

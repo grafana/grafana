@@ -164,8 +164,10 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       height: 100%;
     `,
     headerFilter: css`
+      background: transparent;
+      border: none;
       label: headerFilter;
-      cursor: pointer;
+      padding: 0;
     `,
     paginationWrapper: css`
       display: flex;

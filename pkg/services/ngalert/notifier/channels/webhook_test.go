@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"testing"
 
@@ -41,8 +42,8 @@ func TestWebhookNotifier(t *testing.T) {
 		expMsgError   error
 	}{
 		{
-			name:     "Default config with one alert",
-			settings: `{"url": "http://localhost/test"}`,
+			name:     "Default config with one alert with custom message",
+			settings: `{"url": "http://localhost/test", "message": "Custom message"}`,
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
@@ -89,16 +90,17 @@ func TestWebhookNotifier(t *testing.T) {
 				GroupKey: "alertname",
 				Title:    "[FIRING:1]  (val1)",
 				State:    "alerting",
-				Message:  "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				Message:  "Custom message",
 				OrgID:    orgID,
 			},
 			expMsgError: nil,
 			expHeaders:  map[string]string{},
 		},
 		{
-			name: "Custom config with multiple alerts",
+			name: "Custom config with multiple alerts with custom title",
 			settings: `{
 				"url": "http://localhost/test1",
+				"title": "Alerts firing: {{ len .Alerts.Firing }}",
 				"username": "user1",
 				"password": "mysecret",
 				"httpMethod": "PUT",
@@ -167,6 +169,73 @@ func TestWebhookNotifier(t *testing.T) {
 				Version:         "1",
 				GroupKey:        "alertname",
 				TruncatedAlerts: 1,
+				Title:           "Alerts firing: 2",
+				State:           "alerting",
+				Message:         "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
+				OrgID:           orgID,
+			},
+			expMsgError: nil,
+			expHeaders:  map[string]string{},
+		},
+		{
+			name:     "Default config, template variables in URL",
+			settings: `{"url": "http://localhost/test?numAlerts={{len .Alerts}}&status={{.Status}}"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2"},
+					},
+				},
+			},
+			expUrl:        "http://localhost/test?numAlerts=2&status=firing",
+			expHttpMethod: "POST",
+			expMsg: &WebhookMessage{
+				ExtendedData: &ExtendedData{
+					Receiver: "my_receiver",
+					Status:   "firing",
+					Alerts: ExtendedAlerts{
+						{
+							Status: "firing",
+							Labels: template.KV{
+								"alertname": "alert1",
+								"lbl1":      "val1",
+							},
+							Annotations: template.KV{
+								"ann1": "annv1",
+							},
+							Fingerprint: "fac0861a85de433a",
+							SilenceURL:  "http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1",
+						}, {
+							Status: "firing",
+							Labels: template.KV{
+								"alertname": "alert1",
+								"lbl1":      "val2",
+							},
+							Annotations: template.KV{
+								"ann1": "annv2",
+							},
+							Fingerprint: "fab6861a85d5eeb5",
+							SilenceURL:  "http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2",
+						},
+					},
+					GroupLabels: template.KV{
+						"alertname": "",
+					},
+					CommonLabels: template.KV{
+						"alertname": "alert1",
+					},
+					CommonAnnotations: template.KV{},
+					ExternalURL:       "http://localhost",
+				},
+				Version:         "1",
+				GroupKey:        "alertname",
+				TruncatedAlerts: 0,
 				Title:           "[FIRING:2]  ",
 				State:           "alerting",
 				Message:         "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
@@ -233,6 +302,19 @@ func TestWebhookNotifier(t *testing.T) {
 			expUrl:        "http://localhost/test1",
 			expHttpMethod: "POST",
 			expHeaders:    map[string]string{"Authorization": "Bearer mysecret"},
+		},
+		{
+			name:     "bad template in url",
+			settings: `{"url": "http://localhost/test1?numAlerts={{len Alerts}}"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsgError: fmt.Errorf("template: :1: function \"Alerts\" not defined"),
 		},
 		{
 			name: "with both HTTP basic auth and Authorization Header set",

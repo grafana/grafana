@@ -126,7 +126,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                           name="question-circle"
                           size="xs"
                           className={css`
-                            margin-left: 4px;
+                            margin-left: ${theme.spacing(0.5)};
                           `}
                         />
                       </Tooltip>

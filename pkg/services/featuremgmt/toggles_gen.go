@@ -11,6 +11,10 @@ const (
 	// Use big transactions for alerting database writes
 	FlagAlertingBigTransactions = "alertingBigTransactions"
 
+	// FlagPromQueryBuilder
+	// Show prometheus query builder
+	FlagPromQueryBuilder = "promQueryBuilder"
+
 	// FlagTrimDefaults
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
@@ -119,10 +123,6 @@ const (
 	// New UI for Azure Monitor Metrics Query
 	FlagAzureMonitorResourcePickerForMetrics = "azureMonitorResourcePickerForMetrics"
 
-	// FlagExplore2Dashboard
-	// Experimental Explore to Dashboard workflow
-	FlagExplore2Dashboard = "explore2Dashboard"
-
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
@@ -158,6 +158,10 @@ const (
 	// FlagPrometheusStreamingJSONParserTest
 	// Run both old and streaming requests and log differences
 	FlagPrometheusStreamingJSONParserTest = "prometheusStreamingJSONParserTest"
+
+	// FlagNewDBLibrary
+	// Use jmoiron/sqlx rather than xorm for a few backend services
+	FlagNewDBLibrary = "newDBLibrary"
 
 	// FlagValidateDashboardsOnSave
 	// Validate dashboard JSON POSTed to api/dashboards/db
@@ -250,4 +254,16 @@ const (
 	// FlagMysqlAnsiQuotes
 	// Use double quote to escape keyword in Mysql query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
+
+	// FlagDatasourceLogger
+	// Logs all datasource requests
+	FlagDatasourceLogger = "datasourceLogger"
+
+	// FlagAccessControlOnCall
+	// Access control primitives for OnCall
+	FlagAccessControlOnCall = "accessControlOnCall"
+
+	// FlagNestedFolders
+	// Enable folder nesting
+	FlagNestedFolders = "nestedFolders"
 )

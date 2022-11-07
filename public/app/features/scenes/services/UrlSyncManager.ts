@@ -10,16 +10,16 @@ export class UrlSyncManager {
   private locationListenerUnsub: () => void;
   private stateChangeSub: Unsubscribable;
 
-  constructor(sceneRoot: SceneObject) {
-    this.stateChangeSub = sceneRoot.events.subscribe(SceneObjectStateChangedEvent, this.onStateChanged);
+  public constructor(sceneRoot: SceneObject) {
+    this.stateChangeSub = sceneRoot.subscribeToEvent(SceneObjectStateChangedEvent, this.onStateChanged);
     this.locationListenerUnsub = locationService.getHistory().listen(this.onLocationUpdate);
   }
 
-  onLocationUpdate = (location: Location) => {
+  private onLocationUpdate = (location: Location) => {
     // TODO: find any scene object whose state we need to update
   };
 
-  onStateChanged = ({ payload }: SceneObjectStateChangedEvent) => {
+  private onStateChanged = ({ payload }: SceneObjectStateChangedEvent) => {
     const changedObject = payload.changedObject;
 
     if ('getUrlState' in changedObject) {
@@ -28,7 +28,7 @@ export class UrlSyncManager {
     }
   };
 
-  cleanUp() {
+  public cleanUp() {
     this.stateChangeSub.unsubscribe();
     this.locationListenerUnsub();
   }

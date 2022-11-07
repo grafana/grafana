@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -141,6 +141,7 @@ func (s *Service) GetOrCreate(ctx context.Context, orgName string) (int64, error
 		orga.Name = MainOrgName
 		orga.ID = int64(s.cfg.AutoAssignOrgId)
 	} else {
+		orga = &org.Org{}
 		orga.Name = orgName
 	}
 

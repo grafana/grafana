@@ -202,7 +202,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 
 			s := &SocialGithub{
 				SocialBase: newSocialBase("github", &oauth2.Config{},
-					&OAuthInfo{RoleAttributePath: tt.roleAttributePath}, tt.autoAssignOrgRole),
+					&OAuthInfo{RoleAttributePath: tt.roleAttributePath}, tt.autoAssignOrgRole, false),
 				allowedOrganizations: []string{},
 				apiUrl:               server.URL + "/user",
 				teamIds:              []int{},
