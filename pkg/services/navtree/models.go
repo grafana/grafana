@@ -137,6 +137,7 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 			adminAccessNode := &NavLink{
 				Text:       "Access",
 				Id:         "admin/access",
+				Url:        "/admin/access",
 				Icon:       "shield",
 				SortWeight: WeightAdmin,
 				Section:    NavSectionConfig,
@@ -146,6 +147,7 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 			adminConfigNode := &NavLink{
 				Text:       "Configuration",
 				Id:         "admin/config",
+				Url:        "/admin/config",
 				Icon:       "shield",
 				SortWeight: WeightAdmin,
 				Section:    NavSectionConfig,

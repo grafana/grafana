@@ -305,10 +305,20 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => (config.featureToggles.topnav ? <NavLandingPage navId="cfg" /> : <Redirect to="/admin/users" />),
     },
     {
-      path: '/admin/server',
+      path: '/admin/access',
       component: () =>
-        config.featureToggles.topnav ? <NavLandingPage navId="admin" /> : <Redirect to="/admin/users" />,
+        config.featureToggles.topnav ? <NavLandingPage navId="admin/access" /> : <Redirect to="/admin" />,
     },
+    {
+      path: '/admin/config',
+      component: () =>
+        config.featureToggles.topnav ? <NavLandingPage navId="admin/config" /> : <Redirect to="/admin" />,
+    },
+    // {
+    //   path: '/admin/server',
+    //   component: () =>
+    //     config.featureToggles.topnav ? <NavLandingPage navId="admin" /> : <Redirect to="/admin/users" />,
+    // },
     {
       path: '/admin/settings',
       component: SafeDynamicImport(
