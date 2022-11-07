@@ -14,7 +14,7 @@ This page explains how to install Grafana dependencies, download and install Gra
 
 ## Repository migration (November 8th 2022)
 
-From that date, Grafana packages will be served from a new repository (<packages.grafana.com/deb/{product}> -> <apt.grafana.com>). The new repository serves, from a single YUM/DNF configuration, all Grafana OSS products, as well as Grafana Enterprise.
+From that date, Grafana packages will be served from a new repository (<packages.grafana.com/deb/{product}> -> <apt.grafana.com>). The new repository serves, from a single APT configuration, all Grafana OSS products, as well as Grafana Enterprise.
 
 The old URLs will still work, serving the content from the new repository, but you may encounter warnings about some repository attributes changing (e.g. `Origin` and `Label`).
 
