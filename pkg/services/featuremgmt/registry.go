@@ -167,13 +167,6 @@ var (
 			FrontendOnly:    true,
 		},
 		{
-			Name:         "explore2Dashboard",
-			Description:  "Experimental Explore to Dashboard workflow",
-			State:        FeatureStateStable,
-			Expression:   "true", // enabled by default
-			FrontendOnly: true,
-		},
-		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateAlpha,

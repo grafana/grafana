@@ -45,7 +45,6 @@ export interface FeatureToggles {
   dashboardsFromStorage?: boolean;
   export?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
-  explore2Dashboard?: boolean;
   exploreMixedDatasource?: boolean;
   tracing?: boolean;
   commandPalette?: boolean;
