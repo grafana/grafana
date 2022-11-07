@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import { createSelector, createStructuredSelector } from 'reselect';
-import { Trace, TraceData, TraceProcess, TraceResponse, TraceSpan, TraceSpanData } from 'src/types/trace';
 
+import { Trace, TraceData, TraceProcess, TraceResponse, TraceSpan, TraceSpanData } from '../types/trace';
 import TreeNode from '../utils/TreeNode';
 import { formatMillisecondTime, formatSecondTime, ONE_SECOND } from '../utils/date';
 import { numberSortComparator } from '../utils/sort';
