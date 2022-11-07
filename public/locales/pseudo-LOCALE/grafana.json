@@ -416,6 +416,8 @@
       "select-time": "Ŝęľęčŧ ä ŧįmę řäŉģę"
     },
     "time-range": {
+      "aria-role": "Ŧįmę řäŉģę şęľęčŧįőŉ",
+      "default-title": "Ŧįmę řäŉģęş",
       "example-title": "Ēχämpľę ŧįmę řäŉģęş",
       "specify": "Ŝpęčįƒy ŧįmę řäŉģę <1></1>"
     }
