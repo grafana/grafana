@@ -48,10 +48,10 @@ describe('Account', () => {
   };
 
   describe('account field', () => {
-    config.featureToggles.cloudwatchCrossAccountQuerying = true;
+    config.featureToggles.cloudWatchCrossAccountQuerying = true;
     it('should be rendered when feature toggle is enabled', async () => {
-      const originalValue = config.featureToggles.cloudwatchCrossAccountQuerying;
-      config.featureToggles.cloudwatchCrossAccountQuerying = true;
+      const originalValue = config.featureToggles.cloudWatchCrossAccountQuerying;
+      config.featureToggles.cloudWatchCrossAccountQuerying = true;
       const api = setupMockedAPI().api;
       api.getAccounts = jest.fn().mockResolvedValue([
         {
@@ -65,19 +65,19 @@ describe('Account', () => {
         render(<Account {...props} query={{ ...props.metricStat }} api={api} />);
       });
       expect(await screen.getByLabelText('Account')).toBeInTheDocument();
-      config.featureToggles.cloudwatchCrossAccountQuerying = originalValue;
+      config.featureToggles.cloudWatchCrossAccountQuerying = originalValue;
     });
 
     it('should not be rendered when feature toggle is not enabled', async () => {
       let api = setupMockedAPI().api;
       api.getAccounts = jest.fn().mockResolvedValue(accounts);
-      const originalValue = config.featureToggles.cloudwatchCrossAccountQuerying;
-      config.featureToggles.cloudwatchCrossAccountQuerying = false;
+      const originalValue = config.featureToggles.cloudWatchCrossAccountQuerying;
+      config.featureToggles.cloudWatchCrossAccountQuerying = false;
       await act(async () => {
         render(<Account {...props} query={{ ...props.metricStat }} api={api} />);
       });
       expect(await screen.queryByLabelText('Account')).toBeNull();
-      config.featureToggles.cloudwatchCrossAccountQuerying = originalValue;
+      config.featureToggles.cloudWatchCrossAccountQuerying = originalValue;
     });
 
     it('should not be rendered when no accounts are found and accountId is defiend', async () => {

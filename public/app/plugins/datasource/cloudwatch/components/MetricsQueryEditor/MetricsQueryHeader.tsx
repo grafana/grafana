@@ -55,7 +55,7 @@ const MetricsQueryHeader: React.FC<MetricsQueryHeaderProps> = ({
   const shouldDisplayMonitoringBadge =
     query.metricQueryType === MetricQueryType.Search &&
     isMonitoringAccount &&
-    config.featureToggles.cloudwatchCrossAccountQuerying;
+    config.featureToggles.cloudWatchCrossAccountQuerying;
 
   return (
     <>

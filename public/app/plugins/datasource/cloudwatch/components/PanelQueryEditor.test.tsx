@@ -154,10 +154,10 @@ describe('PanelQueryEditor should render right editor', () => {
       datasourceMock.datasource.api.isMonitoringAccount = jest.fn().mockResolvedValue(accounts);
       datasourceMock.datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
       datasourceMock.datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
-      originalValue = config.featureToggles.cloudwatchCrossAccountQuerying;
+      originalValue = config.featureToggles.cloudWatchCrossAccountQuerying;
     });
     afterEach(() => {
-      config.featureToggles.cloudwatchCrossAccountQuerying = originalValue;
+      config.featureToggles.cloudWatchCrossAccountQuerying = originalValue;
     });
 
     describe('should be displayed when a monitoring account is returned and', () => {
@@ -176,7 +176,7 @@ describe('PanelQueryEditor should render right editor', () => {
       ];
 
       test.each(cases)('$name', async ({ query, toggle }) => {
-        config.featureToggles.cloudwatchCrossAccountQuerying = toggle;
+        config.featureToggles.cloudWatchCrossAccountQuerying = toggle;
         await act(async () => {
           render(<PanelQueryEditor {...props} datasource={datasourceMock.datasource} query={query} />);
         });
@@ -209,7 +209,7 @@ describe('PanelQueryEditor should render right editor', () => {
         },
       ];
       test.each(cases)('$name', async ({ query, toggle }) => {
-        config.featureToggles.cloudwatchCrossAccountQuerying = toggle;
+        config.featureToggles.cloudWatchCrossAccountQuerying = toggle;
         await act(async () => {
           render(<PanelQueryEditor {...props} datasource={datasourceMock.datasource} query={query} />);
         });

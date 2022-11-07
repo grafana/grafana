@@ -50,7 +50,7 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, 
   };
 
   const shouldDisplayMonitoringBadge =
-    queryMode === 'Logs' && isMonitoringAccount && config.featureToggles.cloudwatchCrossAccountQuerying;
+    queryMode === 'Logs' && isMonitoringAccount && config.featureToggles.cloudWatchCrossAccountQuerying;
 
   return (
     <EditorHeader>

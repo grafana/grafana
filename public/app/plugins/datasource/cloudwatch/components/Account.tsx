@@ -55,12 +55,12 @@ export function Account({ query, onChange, api }: Props) {
   const [state, doFetch] = useAsyncFn(fetchAccounts, [api, query.region]);
 
   useEffect(() => {
-    if (config.featureToggles.cloudwatchCrossAccountQuerying) {
+    if (config.featureToggles.cloudWatchCrossAccountQuerying) {
       doFetch();
     }
   }, [api, query.region, doFetch]);
 
-  if (!config.featureToggles.cloudwatchCrossAccountQuerying) {
+  if (!config.featureToggles.cloudWatchCrossAccountQuerying) {
     return null;
   }
 
