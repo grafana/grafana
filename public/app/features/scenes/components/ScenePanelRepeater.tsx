@@ -17,7 +17,7 @@ interface RepeatOptions extends SceneObjectStatePlain {
 }
 
 export class ScenePanelRepeater extends SceneObjectBase<RepeatOptions> {
-  activate(): void {
+  public activate(): void {
     super.activate();
 
     this.subs.add(
@@ -31,7 +31,7 @@ export class ScenePanelRepeater extends SceneObjectBase<RepeatOptions> {
     );
   }
 
-  performRepeat(data: PanelData) {
+  private performRepeat(data: PanelData) {
     // assume parent is a layout
     const firstChild = this.state.layout.state.children[0]!;
     const newChildren: SceneLayoutChild[] = [];
@@ -53,7 +53,7 @@ export class ScenePanelRepeater extends SceneObjectBase<RepeatOptions> {
     this.state.layout.setState({ children: newChildren });
   }
 
-  static Component = ({ model, isEditing }: SceneComponentProps<ScenePanelRepeater>) => {
+  public static Component = ({ model, isEditing }: SceneComponentProps<ScenePanelRepeater>) => {
     const { layout } = model.useState();
     return <layout.Component model={layout} isEditing={isEditing} />;
   };
