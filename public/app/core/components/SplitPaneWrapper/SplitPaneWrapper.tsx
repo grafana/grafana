@@ -1,28 +1,21 @@
 import { css, cx } from '@emotion/css';
-import React, { createRef, MutableRefObject, PureComponent, ReactNode } from 'react';
-import SplitPane from 'react-split-pane';
+import React, { createRef, MutableRefObject, PureComponent } from 'react';
+import SplitPane, { Split } from 'react-split-pane';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
 
-enum Pane {
-  Right,
-  Top,
-}
-
 interface Props {
-  leftPaneComponents: ReactNode[] | ReactNode;
-  rightPaneComponents: ReactNode;
-  uiState: { topPaneSize: number; rightPaneSize: number };
-  rightPaneVisible?: boolean;
-  updateUiState: (uiState: { topPaneSize?: number; rightPaneSize?: number }) => void;
+  splitOrientation?: Split;
+  paneSize: number; // top if horizontal, right if vertical
+  splitVisible?: boolean;
+  maxSize?: number;
+  primary?: 'first' | 'second';
+  onDragFinished?: (size?: number) => void;
 }
 
 export class SplitPaneWrapper extends PureComponent<Props> {
-  rafToken: MutableRefObject<number | null> = createRef();
-  static defaultProps = {
-    rightPaneVisible: true,
-  };
+  refToken: MutableRefObject<number | null> = createRef();
 
   componentDidMount() {
     window.addEventListener('resize', this.updateSplitPaneSize);
@@ -33,94 +26,45 @@ export class SplitPaneWrapper extends PureComponent<Props> {
   }
 
   updateSplitPaneSize = () => {
-    if (this.rafToken.current !== undefined) {
-      window.cancelAnimationFrame(this.rafToken.current!);
+    if (this.refToken.current !== undefined) {
+      window.cancelAnimationFrame(this.refToken.current!);
     }
-    this.rafToken.current = window.requestAnimationFrame(() => {
+    this.refToken.current = window.requestAnimationFrame(() => {
       this.forceUpdate();
     });
   };
 
-  onDragFinished = (pane: Pane, size?: number) => {
+  onDragFinished = (size?: number) => {
     document.body.style.cursor = 'auto';
 
-    // When the drag handle is just clicked size is undefined
-    if (!size) {
-      return;
-    }
-
-    const { updateUiState } = this.props;
-    if (pane === Pane.Top) {
-      updateUiState({
-        topPaneSize: size / window.innerHeight,
-      });
-    } else {
-      updateUiState({
-        rightPaneSize: size / window.innerWidth,
-      });
+    if (this.props.onDragFinished && size !== undefined) {
+      this.props.onDragFinished(size);
     }
   };
 
   onDragStarted = () => {
-    document.body.style.cursor = 'row-resize';
+    document.body.style.cursor = this.props.splitOrientation === 'horizontal' ? 'row-resize' : 'col-resize';
   };
 
-  renderHorizontalSplit() {
-    const { leftPaneComponents, uiState } = this.props;
-    const styles = getStyles(config.theme2);
-    const topPaneSize = uiState.topPaneSize >= 1 ? uiState.topPaneSize : uiState.topPaneSize * window.innerHeight;
-
-    /*
-      Guesstimate the height of the browser window minus
-      panel toolbar and editor toolbar (~120px). This is to prevent resizing
-      the preview window beyond the browser window.
-     */
-
-    if (Array.isArray(leftPaneComponents)) {
-      return (
-        <SplitPane
-          split="horizontal"
-          maxSize={-200}
-          primary="first"
-          size={topPaneSize}
-          pane2Style={{ minHeight: 0 }}
-          resizerClassName={styles.resizerH}
-          onDragStarted={this.onDragStarted}
-          onDragFinished={(size) => this.onDragFinished(Pane.Top, size)}
-        >
-          {leftPaneComponents}
-        </SplitPane>
-      );
-    }
-
-    return <div className={styles.singleLeftPane}>{leftPaneComponents}</div>;
-  }
-
   render() {
-    const { rightPaneVisible, rightPaneComponents, uiState } = this.props;
+    const { paneSize, splitOrientation, maxSize, primary } = this.props;
     // Limit options pane width to 90% of screen.
     const styles = getStyles(config.theme2);
 
     // Need to handle when width is relative. ie a percentage of the viewport
-    const rightPaneSize =
-      uiState.rightPaneSize <= 1 ? uiState.rightPaneSize * window.innerWidth : uiState.rightPaneSize;
-
-    if (!rightPaneVisible) {
-      return this.renderHorizontalSplit();
-    }
+    const paneSizePx = paneSize <= 1 ? paneSize * window.innerWidth : paneSize;
 
     return (
       <SplitPane
-        split="vertical"
-        maxSize={-300}
-        size={rightPaneSize}
-        primary="second"
-        resizerClassName={styles.resizerV}
-        onDragStarted={() => (document.body.style.cursor = 'col-resize')}
-        onDragFinished={(size) => this.onDragFinished(Pane.Right, size)}
+        split={splitOrientation}
+        maxSize={maxSize}
+        size={paneSizePx}
+        primary={primary}
+        resizerClassName={splitOrientation === 'horizontal' ? styles.resizerH : styles.resizerV}
+        onDragStarted={() => this.onDragStarted()}
+        onDragFinished={(size) => this.onDragFinished(size)}
       >
-        {this.renderHorizontalSplit()}
-        {rightPaneComponents}
+        {this.props.children}
       </SplitPane>
     );
   }

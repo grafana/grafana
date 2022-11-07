@@ -439,7 +439,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   render() {
-    const { initDone, updatePanelEditorUIState, uiState, theme, sectionNav, pageNav, className } = this.props;
+    const { initDone, uiState, theme, sectionNav, pageNav, className, updatePanelEditorUIState } = this.props;
     const styles = getStyles(theme, this.props);
 
     if (!initDone) {
@@ -458,12 +458,23 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         <div className={styles.wrapper}>
           <div className={styles.verticalSplitPanesWrapper}>
             <SplitPaneWrapper
-              leftPaneComponents={this.renderPanelAndEditor(styles)}
-              rightPaneComponents={this.renderOptionsPane()}
-              uiState={uiState}
-              updateUiState={updatePanelEditorUIState}
-              rightPaneVisible={uiState.isPanelOptionsVisible}
-            />
+              splitOrientation="vertical"
+              maxSize={-300}
+              paneSize={uiState.rightPaneSize}
+              primary="second"
+              onDragFinished={(size) => updatePanelEditorUIState({ rightPaneSize: size })}
+            >
+              <SplitPaneWrapper
+                splitOrientation="horizontal"
+                maxSize={-200}
+                paneSize={uiState.topPaneSize}
+                primary="first"
+                onDragFinished={(size) => updatePanelEditorUIState({ topPaneSize: size })}
+              >
+                {this.renderPanelAndEditor(styles)}
+              </SplitPaneWrapper>
+              {this.renderOptionsPane()}
+            </SplitPaneWrapper>
           </div>
           {this.state.showSaveLibraryPanelModal && (
             <SaveLibraryPanelModal
