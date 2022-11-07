@@ -120,7 +120,7 @@ it('getSpanDepthForTrace() should determine the depth of a given span in the par
     ) => getSpanId(item) === currentId;
     while (currentId !== getSpanId(generatedTrace.spans[0])) {
       depth++;
-      currentId = getSpanParentId(generatedTrace.spans.find(findCurrentSpanById));
+      currentId = getSpanParentId(generatedTrace.spans.find(findCurrentSpanById)!);
     }
 
     // console.log('hypothetical depth', depth);
