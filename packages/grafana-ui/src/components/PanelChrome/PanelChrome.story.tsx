@@ -68,17 +68,6 @@ export const Examples = () => {
             'Default panel with error state indicator',
             {
               title: 'Default title',
-              items: {
-                orderedList: [
-                  <Icon name="info-circle" size="sm" key="0" />,
-                  <Icon name="external-link-alt" size="sm" key="1" />,
-                  <Icon name="clock-nine" size="sm" key="2" />,
-                  <Icon name="heart" size="sm" key="3" />,
-                ],
-              },
-              actionItems: {
-                orderedList: [<Icon name="ellipsis-v" size="sm" key="0" />],
-              },
               leftItems: [
                 <PanelChrome.ErrorIndicator
                   key="errorIndicator"
@@ -177,6 +166,13 @@ const ErrorIcon = [
 ];
 
 const leftItems = { LoadingIcon, ErrorIcon, Default };
+
+const titleItems = [
+  <Icon name="info-circle" size="sm" key="0" />,
+  <Icon name="external-link-alt" size="sm" key="1" />,
+  <Icon name="clock-nine" size="sm" key="2" />,
+  <Icon name="heart" size="sm" key="3" />,
+];
 
 Basic.argTypes = {
   leftItems: {

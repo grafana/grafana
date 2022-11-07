@@ -1,29 +1,37 @@
 import { css, cx } from '@emotion/css';
 import React, { CSSProperties, ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, LoadingState } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
+import { Menu } from '../Menu/Menu';
+
+/**
+ * @internal
+ */
+interface PanelChromeInfoState {
+  icon: string | ReactNode;
+  tooltip?: string;
+  onClick: () => void;
+}
 
 /**
  * @internal
  */
 export interface PanelChromeProps {
-  title?: string;
-  items?: {
-    orderedList: ReactNode[];
-    position?: 'left' | 'right'; // Default is 'left'
-  };
-  actionItems?: {
-    orderedList: ReactNode[];
-    position?: 'left' | 'right'; // Default is 'left'
-    show?: 'always' | 'hover' | 'never'; // Default is 'hover'
-  };
   width: number;
   height: number;
-  padding?: PanelPadding;
-  leftItems?: ReactNode[]; // rightItems will be added later (actions links etc.)
   children: (innerWidth: number, innerHeight: number) => ReactNode;
+  padding?: PanelPadding;
+  title?: string;
+  titleItems?: PanelChromeInfoState[];
+  menu?: typeof Menu;
+  dragClass?: string;
+  hoverHeader?: boolean;
+  loadingState?: LoadingState;
+  states?: ReactNode[];
+  /** deprecated in favor of "states" prop */
+  leftItems?: ReactNode[];
 }
 
 /**
@@ -35,14 +43,13 @@ export type PanelPadding = 'none' | 'md';
  * @internal
  */
 export const PanelChrome: React.FC<PanelChromeProps> = ({
-  title = '',
-  items,
-  actionItems,
   width,
   height,
-  padding = 'md',
-  leftItems = [],
   children,
+  padding = 'md',
+  title = '',
+  titleItems,
+  leftItems = [],
 }) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -61,54 +68,15 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
 
   return (
     <div className={styles.container} style={containerStyles}>
-      {
-        // todo handle only the "hidden: false" case
-        title.length > 0 && (
-          <div className={styles.headerContainer} style={headerStyles}>
-            <div className={styles.title}>{title}</div>
+      {title.length > 0 && (
+        <div className={styles.headerContainer} style={headerStyles}>
+          <div className={styles.title}>{title}</div>
 
-            {items && Array.isArray(items.orderedList) && items.orderedList.length > 0 && (
-              <div className={cx({ [styles.rightAligned]: items.position === 'right' }, styles.items)}>
-                {itemsRenderer(items.orderedList, (validItems: ReactNode[]) =>
-                  validItems.map((item, i) => (
-                    <div key={i} className={styles.item} style={itemStyles}>
-                      {item}
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-            {/* todo hide/show on hover if show = 'hover' */}
-            {actionItems && Array.isArray(actionItems.orderedList) && actionItems.orderedList.length > 0 && (
-              <div className={cx({ [styles.rightAligned]: actionItems.position === 'right' }, styles.items)}>
-                {itemsRenderer(actionItems.orderedList, (validItems: ReactNode[]) =>
-                  validItems.map((item, i) => (
-                    <div key={i} className={styles.item} style={itemStyles}>
-                      {item}
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-
-            {leftItems.length > 0 && (
-              <div className={cx(styles.rightAligned, styles.items)}>{itemsRenderer(leftItems, (item) => item)}</div>
-            )}
-          </div>
-        )
-        // : (
-        //   // TODO: Create headerless behavior (title, menu, etc shown on focus/hover, drag handler is present, etc..)
-        //   <div className={styles.headerContainer} style={headerStyles}>
-        //     <div className={styles.dragIcon}>{<Icon name="draggabledots" size="sm" />}</div>
-        //     <div className={styles.edit}>
-        //       {<Icon name="clock-nine" size="sm" />}
-        //       {<Icon name="heart-rate" size="sm" />}
-        //     </div>
-        //     <div className={styles.menu}>{<Icon name="ellipsis-v" size="sm" />}</div>
-        //     <div className={styles.status}>{<Icon name="fa fa-spinner" size="sm" />}</div>
-        //   </div>
-        // )
-      }
+          {leftItems.length > 0 && (
+            <div className={cx(styles.rightAligned, styles.items)}>{itemsRenderer(leftItems, (item) => item)}</div>
+          )}
+        </div>
+      )}
 
       <div className={styles.content} style={contentStyle}>
         {children(innerWidth, innerHeight)}
