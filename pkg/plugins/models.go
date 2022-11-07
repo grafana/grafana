@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 const (
@@ -12,10 +12,9 @@ const (
 )
 
 var (
-	ErrInstallCorePlugin           = errors.New("cannot install a Core plugin")
-	ErrUninstallCorePlugin         = errors.New("cannot uninstall a Core plugin")
-	ErrUninstallOutsideOfPluginDir = errors.New("cannot uninstall a plugin outside")
-	ErrPluginNotInstalled          = errors.New("plugin is not installed")
+	ErrInstallCorePlugin   = errors.New("cannot install a Core plugin")
+	ErrUninstallCorePlugin = errors.New("cannot uninstall a Core plugin")
+	ErrPluginNotInstalled  = errors.New("plugin is not installed")
 )
 
 type NotFoundError struct {
@@ -83,16 +82,16 @@ type Dependencies struct {
 }
 
 type Includes struct {
-	Name       string          `json:"name"`
-	Path       string          `json:"path"`
-	Type       string          `json:"type"`
-	Component  string          `json:"component"`
-	Role       models.RoleType `json:"role"`
-	AddToNav   bool            `json:"addToNav"`
-	DefaultNav bool            `json:"defaultNav"`
-	Slug       string          `json:"slug"`
-	Icon       string          `json:"icon"`
-	UID        string          `json:"uid"`
+	Name       string       `json:"name"`
+	Path       string       `json:"path"`
+	Type       string       `json:"type"`
+	Component  string       `json:"component"`
+	Role       org.RoleType `json:"role"`
+	AddToNav   bool         `json:"addToNav"`
+	DefaultNav bool         `json:"defaultNav"`
+	Slug       string       `json:"slug"`
+	Icon       string       `json:"icon"`
+	UID        string       `json:"uid"`
 
 	ID string `json:"-"`
 }
@@ -176,9 +175,20 @@ const (
 type SignatureType string
 
 const (
-	GrafanaSignature SignatureType = "grafana"
-	PrivateSignature SignatureType = "private"
+	GrafanaSignature     SignatureType = "grafana"
+	CommercialSignature  SignatureType = "commercial"
+	CommunitySignature   SignatureType = "community"
+	PrivateSignature     SignatureType = "private"
+	PrivateGlobSignature SignatureType = "private-glob"
 )
+
+func (s SignatureType) IsValid() bool {
+	switch s {
+	case GrafanaSignature, CommercialSignature, CommunitySignature, PrivateSignature, PrivateGlobSignature:
+		return true
+	}
+	return false
+}
 
 type PluginFiles map[string]struct{}
 
@@ -210,6 +220,7 @@ type DataSourceDTO struct {
 	Preload    bool                   `json:"preload"`
 	Module     string                 `json:"module,omitempty"`
 	JSONData   map[string]interface{} `json:"jsonData"`
+	ReadOnly   bool                   `json:"readOnly"`
 
 	BasicAuth       string `json:"basicAuth,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`
@@ -254,4 +265,26 @@ type Error struct {
 type PreloadPlugin struct {
 	Path    string `json:"path"`
 	Version string `json:"version"`
+}
+
+// Access-Control related definitions
+
+// RoleRegistration stores a role and its assignments to basic roles
+// (Viewer, Editor, Admin, Grafana Admin)
+type RoleRegistration struct {
+	Role   Role     `json:"role"`
+	Grants []string `json:"grants"`
+}
+
+// Role is the model for Role in RBAC.
+type Role struct {
+	Name        string       `json:"name"`
+	DisplayName string       `json:"displayName"`
+	Description string       `json:"description"`
+	Permissions []Permission `json:"permissions"`
+}
+
+type Permission struct {
+	Action string `json:"action"`
+	Scope  string `json:"scope"`
 }

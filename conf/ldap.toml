@@ -24,6 +24,11 @@ bind_dn = "cn=admin,dc=grafana,dc=org"
 # Search user bind password
 # If the password contains # or ; you have to wrap it with triple quotes. Ex """#password;"""
 bind_password = 'grafana'
+# We recommend using variable expansion for the bind_password, for more info https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#variable-expansion
+# bind_password = '$__env{LDAP_BIND_PASSWORD}'
+
+# Timeout in seconds (applies to each host specified in the 'host' entry (space separated))
+timeout = 10
 
 # User search filter, for example "(cn=%s)" or "(sAMAccountName=%s)" or "(uid=%s)"
 search_filter = "(cn=%s)"
@@ -55,7 +60,7 @@ org_role = "Admin"
 # org_id = 1
 
 [[servers.group_mappings]]
-group_dn = "cn=users,ou=groups,dc=grafana,dc=org"
+group_dn = "cn=editors,ou=groups,dc=grafana,dc=org"
 org_role = "Editor"
 
 [[servers.group_mappings]]

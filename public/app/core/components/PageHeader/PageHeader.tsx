@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
-import { NavModel, NavModelItem, NavModelBreadcrumb, GrafanaTheme2 } from '@grafana/data';
-import { Tab, TabsBar, Icon, IconName, useStyles2 } from '@grafana/ui';
+import { NavModelItem, NavModelBreadcrumb, GrafanaTheme2 } from '@grafana/data';
+import { Tab, TabsBar, Icon, useStyles2, toIconName } from '@grafana/ui';
 import { PanelHeaderMenuItem } from 'app/features/dashboard/dashgrid/PanelHeader/PanelHeaderMenuItem';
 
 import { ProBadge } from '../Upgrade/ProBadge';
 
 export interface Props {
-  model: NavModel;
+  navItem: NavModelItem;
 }
 
 const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCss: string }) => {
@@ -23,10 +23,15 @@ const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCs
   return (
     <div className={`gf-form-select-wrapper width-20 ${customCss}`}>
       <div className="dropdown">
-        <div className="gf-form-input dropdown-toggle" data-toggle="dropdown">
+        <button
+          type="button"
+          className="gf-form-input dropdown-toggle"
+          data-toggle="dropdown"
+          style={{ textAlign: 'left' }}
+        >
           {defaultSelectedItem?.text}
-        </div>
-        <ul className="dropdown-menu dropdown-menu--menu">
+        </button>
+        <ul role="menu" className="dropdown-menu dropdown-menu--menu">
           {children.map((navItem: NavModelItem) => {
             if (navItem.hideFromTabs) {
               // TODO: Rename hideFromTabs => hideFromNav
@@ -63,7 +68,7 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
                 label={child.text}
                 active={child.active}
                 key={`${child.url}-${index}`}
-                icon={child.icon as IconName}
+                icon={child.icon}
                 href={child.url}
                 suffix={child.tabSuffix}
               />
@@ -75,21 +80,19 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
   );
 };
 
-export const PageHeader: FC<Props> = ({ model }) => {
+export const PageHeader: FC<Props> = ({ navItem: model }) => {
   const styles = useStyles2(getStyles);
 
   if (!model) {
     return null;
   }
 
-  const main = model.main;
-  const children = main.children;
   return (
     <div className={styles.headerCanvas}>
       <div className="page-container">
         <div className="page-header">
-          {renderHeaderTitle(main)}
-          {children && children.length && <Navigation>{children}</Navigation>}
+          {renderHeaderTitle(model)}
+          {model.children && model.children.length > 0 && <Navigation>{model.children}</Navigation>}
         </div>
       </div>
     </div>
@@ -98,17 +101,19 @@ export const PageHeader: FC<Props> = ({ model }) => {
 
 function renderHeaderTitle(main: NavModelItem) {
   const marginTop = main.icon === 'grafana' ? 12 : 14;
+  const icon = main.icon && toIconName(main.icon);
 
   return (
     <div className="page-header__inner">
       <span className="page-header__logo">
-        {main.icon && <Icon name={main.icon as IconName} size="xxxl" style={{ marginTop }} />}
+        {icon && <Icon name={icon} size="xxxl" style={{ marginTop }} />}
         {main.img && <img className="page-header__img" src={main.img} alt={`logo of ${main.text}`} />}
       </span>
 
       <div className="page-header__info-block">
         {renderTitle(main.text, main.breadcrumbs ?? [], main.highlightText)}
         {main.subTitle && <div className="page-header__sub-title">{main.subTitle}</div>}
+        {main.headerExtra && <main.headerExtra />}
       </div>
     </div>
   );
@@ -157,5 +162,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: ${theme.colors.background.canvas};
   `,
 });
-
-export default PageHeader;

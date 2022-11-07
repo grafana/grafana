@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
@@ -26,7 +25,7 @@ import (
 type PrometheusSrv struct {
 	log     log.Logger
 	manager state.AlertInstanceManager
-	store   store.RuleStore
+	store   RuleStore
 	ac      accesscontrol.AccessControl
 }
 
@@ -47,7 +46,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
-	for _, alertState := range srv.manager.GetAll(c.OrgId) {
+	for _, alertState := range srv.manager.GetAll(c.OrgID) {
 		startsAt := alertState.StartsAt
 		valString := ""
 
@@ -58,9 +57,12 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
 			Labels:      alertState.GetLabels(labelOptions...),
 			Annotations: alertState.Annotations,
-			State:       alertState.State.String(),
-			ActiveAt:    &startsAt,
-			Value:       valString,
+
+			// TODO: or should we make this two fields? Using one field lets the
+			// frontend use the same logic for parsing text on annotations and this.
+			State:    state.FormatStateAndReason(alertState.State, alertState.StateReason),
+			ActiveAt: &startsAt,
+			Value:    valString,
 		})
 	}
 
@@ -126,13 +128,13 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
-	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.OrgId, c.SignedInUser)
+	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.OrgID, c.SignedInUser)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}
 
 	if len(namespaceMap) == 0 {
-		srv.log.Debug("User does not have access to any namespaces")
+		srv.log.Debug("user does not have access to any namespaces")
 		return response.JSON(http.StatusOK, ruleResponse)
 	}
 
@@ -142,7 +144,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 	}
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
-		OrgID:         c.SignedInUser.OrgId,
+		OrgID:         c.SignedInUser.OrgID,
 		NamespaceUIDs: namespaceUIDs,
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
@@ -154,31 +156,38 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		return response.JSON(http.StatusInternalServerError, ruleResponse)
 	}
 	hasAccess := func(evaluator accesscontrol.Evaluator) bool {
-		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqSignedIn, evaluator)
+		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqViewer, evaluator)
 	}
 
-	groupMap := make(map[string]*apimodels.RuleGroup)
-
+	groupedRules := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
 	for _, rule := range alertRuleQuery.Result {
-		if !authorizeDatasourceAccessForRule(rule, hasAccess) {
+		key := rule.GetGroupKey()
+		rulesInGroup := groupedRules[key]
+		rulesInGroup = append(rulesInGroup, rule)
+		groupedRules[key] = rulesInGroup
+	}
+
+	for groupKey, rules := range groupedRules {
+		folder := namespaceMap[groupKey.NamespaceUID]
+		if folder == nil {
+			srv.log.Warn("query returned rules that belong to folder the user does not have access to. All rules that belong to that namespace will not be added to the response", "folder_uid", groupKey.NamespaceUID)
 			continue
 		}
-		groupKey := rule.RuleGroup + "-" + rule.NamespaceUID
-		newGroup, ok := groupMap[groupKey]
-		if !ok {
-			folder := namespaceMap[rule.NamespaceUID]
-			if folder == nil {
-				srv.log.Warn("query returned rules that belong to folder the user does not have access to. The rule will not be added to the response", "folder_uid", rule.NamespaceUID, "rule_uid", rule.UID)
-				continue
-			}
-			newGroup = &apimodels.RuleGroup{
-				Name: rule.RuleGroup,
-				File: folder.Title, // file is what Prometheus uses for provisioning, we replace it with namespace.
-			}
-			groupMap[groupKey] = newGroup
-			ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, newGroup)
+		if !authorizeAccessToRuleGroup(rules, hasAccess) {
+			continue
 		}
+		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, srv.toRuleGroup(groupKey.RuleGroup, folder, rules, labelOptions))
+	}
+	return response.JSON(http.StatusOK, ruleResponse)
+}
 
+func (srv PrometheusSrv) toRuleGroup(groupName string, folder *models.Folder, rules []*ngmodels.AlertRule, labelOptions []ngmodels.LabelOption) *apimodels.RuleGroup {
+	newGroup := &apimodels.RuleGroup{
+		Name: groupName,
+		File: folder.Title, // file is what Prometheus uses for provisioning, we replace it with namespace.
+	}
+	ngmodels.RulesGroup(rules).SortByGroupIndex()
+	for _, rule := range rules {
 		alertingRule := apimodels.AlertingRule{
 			State:       "inactive",
 			Name:        rule.Title,
@@ -195,7 +204,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			LastEvaluation: time.Time{},
 		}
 
-		for _, alertState := range srv.manager.GetStatesForRuleUID(c.OrgId, rule.UID) {
+		for _, alertState := range srv.manager.GetStatesForRuleUID(rule.OrgID, rule.UID) {
 			activeAt := alertState.StartsAt
 			valString := ""
 			if alertState.State == eval.Alerting || alertState.State == eval.Pending {
@@ -205,9 +214,12 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			alert := &apimodels.Alert{
 				Labels:      alertState.GetLabels(labelOptions...),
 				Annotations: alertState.Annotations,
-				State:       alertState.State.String(),
-				ActiveAt:    &activeAt,
-				Value:       valString,
+
+				// TODO: or should we make this two fields? Using one field lets the
+				// frontend use the same logic for parsing text on annotations and this.
+				State:    state.FormatStateAndReason(alertState.State, alertState.StateReason),
+				ActiveAt: &activeAt,
+				Value:    valString,
 			}
 
 			if alertState.LastEvaluationTime.After(newRule.LastEvaluation) {
@@ -241,11 +253,11 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		alertingRule.Rule = newRule
 		newGroup.Rules = append(newGroup.Rules, alertingRule)
 		newGroup.Interval = float64(rule.IntervalSeconds)
+		// TODO yuri. Change that when scheduler will process alerts in groups
 		newGroup.EvaluationTime = newRule.EvaluationTime
 		newGroup.LastEvaluation = newRule.LastEvaluation
 	}
-
-	return response.JSON(http.StatusOK, ruleResponse)
+	return newGroup
 }
 
 // ruleToQuery attempts to extract the datasource queries from the alert query model.
@@ -264,7 +276,7 @@ func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 			}
 
 			// For any other type of error, it is unexpected abort and return the whole JSON.
-			logger.Debug("failed to parse a query", "err", err)
+			logger.Debug("failed to parse a query", "error", err)
 			queryErr = err
 			break
 		}

@@ -4,6 +4,8 @@ import { default as ReactAsyncSelect } from 'react-select/async';
 import { default as AsyncCreatable } from 'react-select/async-creatable';
 import Creatable from 'react-select/creatable';
 
+import { SelectableValue } from '@grafana/data';
+
 import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
@@ -13,14 +15,14 @@ import { IndicatorsContainer } from './IndicatorsContainer';
 import { InputControl } from './InputControl';
 import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { SelectContainer } from './SelectContainer';
-import { SelectMenu, SelectMenuOptions } from './SelectMenu';
+import { SelectMenu, SelectMenuOptions, VirtualizedSelectMenu } from './SelectMenu';
 import { SelectOptionGroup } from './SelectOptionGroup';
 import { SingleValue } from './SingleValue';
 import { ValueContainer } from './ValueContainer';
 import { getSelectStyles } from './getSelectStyles';
 import { useCustomSelectStyles } from './resetSelectStyles';
-import { ActionMeta, SelectBaseProps, SelectValue } from './types';
-import { cleanValue, findSelectedValue } from './utils';
+import { ActionMeta, SelectBaseProps } from './types';
+import { cleanValue, findSelectedValue, omitDescriptions } from './utils';
 
 interface ExtraValuesIndicatorProps {
   maxVisibleValues?: number | undefined;
@@ -119,8 +121,7 @@ export function SelectBase<T>({
   maxVisibleValues,
   menuPlacement = 'auto',
   menuPosition,
-  // TODO change this to default to true for Grafana 9
-  menuShouldPortal = false,
+  menuShouldPortal = true,
   noOptionsMessage = 'No options found',
   onBlur,
   onChange,
@@ -138,6 +139,7 @@ export function SelectBase<T>({
   showAllSelectedWhenOpen = true,
   tabSelectsValue = true,
   value,
+  virtualized = false,
   width,
   isValidNewOption,
   formatOptionLabel,
@@ -167,7 +169,7 @@ export function SelectBase<T>({
   }, [maxMenuHeight, menuPlacement, loadOptions, isOpen]);
 
   const onChangeWithEmpty = useCallback(
-    (value: SelectValue<T>, action: ActionMeta) => {
+    (value: SelectableValue<T>, action: ActionMeta) => {
       if (isMulti && (value === undefined || value === null)) {
         return onChange([], action);
       }
@@ -229,7 +231,7 @@ export function SelectBase<T>({
     menuPlacement: menuPlacement === 'auto' && closeToBottom ? 'top' : menuPlacement,
     menuPosition,
     menuShouldBlockScroll: true,
-    menuPortalTarget: menuShouldPortal ? document.body : undefined,
+    menuPortalTarget: menuShouldPortal && typeof document !== 'undefined' ? document.body : undefined,
     menuShouldScrollIntoView: false,
     onBlur,
     onChange: onChangeWithEmpty,
@@ -240,7 +242,7 @@ export function SelectBase<T>({
     onFocus,
     formatOptionLabel,
     openMenuOnFocus,
-    options,
+    options: virtualized ? omitDescriptions(options) : options,
     placeholder,
     prefix,
     renderControl,
@@ -252,7 +254,7 @@ export function SelectBase<T>({
   if (allowCustomValue) {
     ReactSelectComponent = Creatable as any;
     creatableProps.allowCreateWhileLoading = allowCreateWhileLoading;
-    creatableProps.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
+    creatableProps.formatCreateLabel = formatCreateLabel ?? defaultFormatCreateLabel;
     creatableProps.onCreateOption = onCreateOption;
     creatableProps.isValidNewOption = isValidNewOption;
   }
@@ -267,12 +269,14 @@ export function SelectBase<T>({
     };
   }
 
+  const SelectMenuComponent = virtualized ? VirtualizedSelectMenu : SelectMenu;
+
   return (
     <>
       <ReactSelectComponent
         ref={reactSelectRef}
         components={{
-          MenuList: SelectMenu,
+          MenuList: SelectMenuComponent,
           Group: SelectOptionGroup,
           ValueContainer,
           IndicatorsContainer(props: any) {
@@ -318,28 +322,28 @@ export function SelectBase<T>({
               />
             );
           },
-          LoadingIndicator(props: any) {
-            return <Spinner inline={true} />;
+          LoadingIndicator() {
+            return <Spinner inline />;
           },
-          LoadingMessage(props: any) {
+          LoadingMessage() {
             return <div className={styles.loadingMessage}>{loadingMessage}</div>;
           },
-          NoOptionsMessage(props: any) {
+          NoOptionsMessage() {
             return (
               <div className={styles.loadingMessage} aria-label="No options provided">
                 {noOptionsMessage}
               </div>
             );
           },
-          DropdownIndicator(props: any) {
+          DropdownIndicator(props) {
             return <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />;
           },
           SingleValue(props: any) {
             return <SingleValue {...props} disabled={disabled} />;
           },
+          SelectContainer,
           MultiValueContainer: MultiValueContainer,
           MultiValueRemove: MultiValueRemove,
-          SelectContainer,
           ...components,
         }}
         styles={selectStyles}
@@ -349,5 +353,17 @@ export function SelectBase<T>({
         {...asyncSelectProps}
       />
     </>
+  );
+}
+
+function defaultFormatCreateLabel(input: string) {
+  return (
+    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <div>{input}</div>
+      <div style={{ flexGrow: 1 }} />
+      <div className="muted small" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        Hit enter to add
+      </div>
+    </div>
   );
 }

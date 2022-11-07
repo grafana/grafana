@@ -3,6 +3,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { CatalogPlugin, PluginListDisplayMode } from '../types';
@@ -18,11 +19,12 @@ export const PluginList = ({ plugins, displayMode }: Props) => {
   const isList = displayMode === PluginListDisplayMode.List;
   const styles = useStyles2(getStyles);
   const location = useLocation();
+  const pathName = config.appSubUrl + location.pathname;
 
   return (
     <div className={cx(styles.container, { [styles.list]: isList })} data-testid="plugin-list">
       {plugins.map((plugin) => (
-        <PluginListItem key={plugin.id} plugin={plugin} pathName={location.pathname} displayMode={displayMode} />
+        <PluginListItem key={plugin.id} plugin={plugin} pathName={pathName} displayMode={displayMode} />
       ))}
     </div>
   );

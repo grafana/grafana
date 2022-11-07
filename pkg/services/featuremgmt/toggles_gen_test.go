@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,21 +11,19 @@ import (
 	"unicode"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
 )
 
 func TestFeatureToggleFiles(t *testing.T) {
 	legacyNames := map[string]bool{
-		"httpclientprovider_azure_auth":  true,
-		"service-accounts":               true,
-		"database_metrics":               true,
-		"live-config":                    true,
-		"live-pipeline":                  true,
-		"live-service-web-worker":        true,
-		"accesscontrol-builtins":         true,
-		"prometheus_azure_auth":          true,
-		"disable_http_request_histogram": true,
+		"httpclientprovider_azure_auth": true,
+		"service-accounts":              true,
+		"database_metrics":              true,
+		"live-config":                   true,
+		"live-pipeline":                 true,
+		"live-service-web-worker":       true,
 	}
 
 	t.Run("verify files", func(t *testing.T) {
@@ -63,7 +60,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 func verifyAndGenerateFile(t *testing.T, fpath string, gen string) {
 	// nolint:gosec
 	// We can ignore the gosec G304 warning since this is a test and the function is only called explicitly above
-	body, err := ioutil.ReadFile(fpath)
+	body, err := os.ReadFile(fpath)
 	if err == nil {
 		if diff := cmp.Diff(gen, string(body)); diff != "" {
 			str := fmt.Sprintf("body mismatch (-want +got):\n%s\n", diff)

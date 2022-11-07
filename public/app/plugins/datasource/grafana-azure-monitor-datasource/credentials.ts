@@ -152,10 +152,7 @@ export function updateCredentials(
         },
         secureJsonData: {
           ...options.secureJsonData,
-          clientSecret:
-            typeof credentials.clientSecret === 'string' && credentials.clientSecret.length > 0
-              ? credentials.clientSecret
-              : undefined,
+          clientSecret: typeof credentials.clientSecret === 'string' ? credentials.clientSecret : undefined,
         },
         secureJsonFields: {
           ...options.secureJsonFields,

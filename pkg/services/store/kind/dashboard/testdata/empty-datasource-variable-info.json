@@ -1,0 +1,33 @@
+{
+  "id": 209,
+  "title": "ds-variables",
+  "tags": null,
+  "templateVars": [
+    "sqllite"
+  ],
+  "datasource": [
+    {
+      "uid": "default.uid",
+      "type": "default.type"
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "title": "usersss!",
+      "type": "table",
+      "pluginVersion": "9.1.0-pre",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 36,
+  "linkCount": 0,
+  "timeFrom": "now-6h",
+  "timeTo": "now",
+  "timezone": ""
+}

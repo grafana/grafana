@@ -1,4 +1,4 @@
-import { mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { CompletionItem } from '../../types';
@@ -6,9 +6,9 @@ import { CompletionItem } from '../../types';
 import { TypeaheadInfo } from './TypeaheadInfo';
 
 describe('TypeaheadInfo component', () => {
-  it('should show documentation as rendered markdown if passed as a markdown', () => {
-    const item: CompletionItem = { label: 'markdown', documentation: '**bold**' };
-    const wrapper = mount(<TypeaheadInfo item={item} height={100} />);
-    expect(wrapper.find('div>div').html()).toMatch('strong');
+  it('should show documentation as rendered markdown if passed as markdown', () => {
+    const item: CompletionItem = { label: 'markdown', documentation: '# My heading' };
+    render(<TypeaheadInfo item={item} height={100} />);
+    expect(screen.getByRole('heading', { name: 'My heading' })).toBeInTheDocument();
   });
 });

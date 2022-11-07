@@ -13,8 +13,9 @@ import {
   createQueryHeading,
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
-  filterAndSortQueries,
+  migrateQueryHistoryFromLocalStorage,
   SortOrder,
+  LocalStorageMigrationStatus,
 } from './richHistory';
 
 const richHistoryStorageMock: RichHistoryStorage = {} as RichHistoryStorage;
@@ -22,6 +23,20 @@ const richHistoryStorageMock: RichHistoryStorage = {} as RichHistoryStorage;
 jest.mock('../history/richHistoryStorageProvider', () => {
   return {
     getRichHistoryStorage: () => richHistoryStorageMock,
+  };
+});
+
+const richHistoryLocalStorageMock = { getRichHistory: jest.fn() };
+jest.mock('../history/RichHistoryLocalStorage', () => {
+  return function () {
+    return richHistoryLocalStorageMock;
+  };
+});
+
+const richHistoryRemoteStorageMock = { migrate: jest.fn() };
+jest.mock('../history/RichHistoryRemoteStorage', () => {
+  return function () {
+    return richHistoryRemoteStorageMock;
   };
 });
 
@@ -61,7 +76,7 @@ const key = 'grafana.explore.richHistory';
 
 describe('richHistory', () => {
   beforeEach(() => {
-    jest.useFakeTimers('modern');
+    jest.useFakeTimers();
     jest.setSystemTime(new Date(1970, 0, 1));
 
     richHistoryStorageMock.addToRichHistory = jest.fn((r) => {
@@ -164,6 +179,35 @@ describe('richHistory', () => {
     });
   });
 
+  describe('migration', () => {
+    beforeEach(() => {
+      richHistoryRemoteStorageMock.migrate.mockReset();
+    });
+
+    it('migrates history', async () => {
+      const history = { richHistory: [{ id: 'test' }, { id: 'test2' }], total: 2 };
+
+      richHistoryLocalStorageMock.getRichHistory.mockReturnValue(history);
+      const migrationResult = await migrateQueryHistoryFromLocalStorage();
+      expect(richHistoryRemoteStorageMock.migrate).toBeCalledWith(history.richHistory);
+      expect(migrationResult.status).toBe(LocalStorageMigrationStatus.Successful);
+      expect(migrationResult.error).toBeUndefined();
+    });
+    it('does not migrate if there are no entries', async () => {
+      richHistoryLocalStorageMock.getRichHistory.mockReturnValue({ richHistory: [] });
+      const migrationResult = await migrateQueryHistoryFromLocalStorage();
+      expect(richHistoryRemoteStorageMock.migrate).not.toBeCalled();
+      expect(migrationResult.status).toBe(LocalStorageMigrationStatus.NotNeeded);
+      expect(migrationResult.error).toBeUndefined();
+    });
+    it('propagates thrown errors', async () => {
+      richHistoryLocalStorageMock.getRichHistory.mockRejectedValue(new Error('migration failed'));
+      const migrationResult = await migrateQueryHistoryFromLocalStorage();
+      expect(migrationResult.status).toBe(LocalStorageMigrationStatus.Failed);
+      expect(migrationResult.error?.message).toBe('migration failed');
+    });
+  });
+
   describe('mapNumbertoTimeInSlider', () => {
     it('should correctly map number to value', () => {
       const value = mapNumbertoTimeInSlider(25);
@@ -175,30 +219,6 @@ describe('richHistory', () => {
     it('should correctly create string value from timestamp', () => {
       const value = createDateStringFromTs(1583932327000);
       expect(value).toEqual('March 11');
-    });
-  });
-
-  describe('filterQueries', () => {
-    it('should filter out queries based on data source filter', () => {
-      const filteredQueries = filterAndSortQueries(
-        storedHistory,
-        SortOrder.Ascending,
-        ['not provided data source'],
-        ''
-      );
-      expect(filteredQueries).toHaveLength(0);
-    });
-    it('should keep queries based on data source filter', () => {
-      const filteredQueries = filterAndSortQueries(storedHistory, SortOrder.Ascending, ['datasource history name'], '');
-      expect(filteredQueries).toHaveLength(1);
-    });
-    it('should filter out all queries based on search filter', () => {
-      const filteredQueries = filterAndSortQueries(storedHistory, SortOrder.Ascending, [], 'i do not exist in query');
-      expect(filteredQueries).toHaveLength(0);
-    });
-    it('should include queries based on search filter', () => {
-      const filteredQueries = filterAndSortQueries(storedHistory, SortOrder.Ascending, [], 'query1');
-      expect(filteredQueries).toHaveLength(1);
     });
   });
 

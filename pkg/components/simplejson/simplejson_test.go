@@ -263,3 +263,12 @@ func TestPathWillOverwriteExisting(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "bar", s)
 }
+
+func TestMustJson(t *testing.T) {
+	js := MustJson([]byte(`{"foo": "bar"}`))
+	assert.Equal(t, js.Get("foo").MustString(), "bar")
+
+	assert.PanicsWithValue(t, "could not unmarshal JSON: \"unexpected EOF\"", func() {
+		MustJson([]byte(`{`))
+	})
+}

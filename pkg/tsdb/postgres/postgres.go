@@ -13,10 +13,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var logger = log.New("tsdb.postgres")
@@ -83,7 +83,7 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 		}
 
 		if cfg.Env == setting.Dev {
-			logger.Debug("getEngine", "connection", cnnstr)
+			logger.Debug("GetEngine", "connection", cnnstr)
 		}
 
 		config := sqleng.DataPluginConfiguration{
@@ -94,9 +94,7 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 			RowLimit:          cfg.DataProxyRowLimit,
 		}
 
-		queryResultTransformer := postgresQueryResultTransformer{
-			log: logger,
-		}
+		queryResultTransformer := postgresQueryResultTransformer{}
 
 		handler, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
 			logger)
@@ -131,7 +129,7 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 				var err error
 				port, err = strconv.Atoi(sp[1])
 				if err != nil {
-					return "", errutil.Wrapf(err, "invalid port in host specifier %q", sp[1])
+					return "", fmt.Errorf("invalid port in host specifier %q: %w", sp[1], err)
 				}
 
 				logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
@@ -144,7 +142,7 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 				var err error
 				port, err = strconv.Atoi(dsInfo.URL[index+1:])
 				if err != nil {
-					return "", errutil.Wrapf(err, "invalid port in host specifier %q", dsInfo.URL[index+1:])
+					return "", fmt.Errorf("invalid port in host specifier %q: %w", dsInfo.URL[index+1:], err)
 				}
 
 				logger.Debug("Generating ipv6 connection string with network host/port pair", "host", host, "port", port)
@@ -186,11 +184,9 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 	return connStr, nil
 }
 
-type postgresQueryResultTransformer struct {
-	log log.Logger
-}
+type postgresQueryResultTransformer struct{}
 
-func (t *postgresQueryResultTransformer) TransformQueryError(err error) error {
+func (t *postgresQueryResultTransformer) TransformQueryError(_ log.Logger, err error) error {
 	return err
 }
 

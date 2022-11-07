@@ -1,6 +1,5 @@
 import { DataSourcePlugin } from '@grafana/data';
 
-import { CloudMonitoringAnnotationsQueryCtrl } from './annotations_query_ctrl';
 import CloudMonitoringCheatSheet from './components/CloudMonitoringCheatSheet';
 import { ConfigEditor } from './components/ConfigEditor/ConfigEditor';
 import { QueryEditor } from './components/QueryEditor';
@@ -12,5 +11,4 @@ export const plugin = new DataSourcePlugin<CloudMonitoringDatasource, CloudMonit
   .setQueryEditorHelp(CloudMonitoringCheatSheet)
   .setQueryEditor(QueryEditor)
   .setConfigEditor(ConfigEditor)
-  .setAnnotationQueryCtrl(CloudMonitoringAnnotationsQueryCtrl)
   .setVariableQueryEditor(CloudMonitoringVariableQueryEditor);

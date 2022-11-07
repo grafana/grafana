@@ -40,7 +40,7 @@ export function TimelineCollapser(props: CollapserProps) {
   const { onExpandAll, onExpandOne, onCollapseAll, onCollapseOne } = props;
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.TimelineCollapser} data-test-id="TimelineCollapser">
+    <div className={styles.TimelineCollapser} data-testid="TimelineCollapser">
       <IconButton tooltip="Expand +1" size="xl" tooltipPlacement="top" name="angle-down" onClick={onExpandOne} />
       <IconButton tooltip="Collapse +1" size="xl" tooltipPlacement="top" name="angle-right" onClick={onCollapseOne} />
       <IconButton

@@ -300,7 +300,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         </div>
         <div className="gf-form">
           <Select
-            menuShouldPortal
             allowCustomValue={true}
             placeholder="Field or number"
             options={leftNames}
@@ -309,14 +308,12 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             onChange={this.onBinaryLeftChanged}
           />
           <Select
-            menuShouldPortal
             className="width-8 gf-form-spacing"
             options={ops}
             value={options.operator ?? ops[0].value}
             onChange={this.onBinaryOperationChanged}
           />
           <Select
-            menuShouldPortal
             allowCustomValue={true}
             placeholder="Field or number"
             className="min-width-10"
@@ -344,7 +341,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
           <div className="gf-form">
             <div className="gf-form-label width-8">Mode</div>
             <Select
-              menuShouldPortal
               className="width-18"
               options={calculationModes}
               value={calculationModes.find((v) => v.value === mode)}

@@ -40,6 +40,10 @@ func (f FakeSecretsService) GetDecryptedValue(_ context.Context, sjd map[string]
 	return fallback
 }
 
+func (f FakeSecretsService) RotateDataKeys(_ context.Context) error {
+	return nil
+}
+
 func (f FakeSecretsService) ReEncryptDataKeys(_ context.Context) error {
 	return nil
 }

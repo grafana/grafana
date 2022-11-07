@@ -4,10 +4,9 @@ import React, { FC, useCallback } from 'react';
 import { FieldType, GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, useStyles2 } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { ScalarDimensionConfig, ScalarDimensionMode, ScalarDimensionOptions } from '../types';
-
-import { NumberInput } from './NumberInput';
 
 const fixedValueOption: SelectableValue<string> = {
   label: 'Fixed value',
@@ -55,7 +54,7 @@ export const ScalarDimensionEditor: FC<StandardEditorProps<ScalarDimensionConfig
   );
 
   const onModeChange = useCallback(
-    (mode) => {
+    (mode: ScalarDimensionMode) => {
       onChange({
         ...value,
         mode,
@@ -87,7 +86,6 @@ export const ScalarDimensionEditor: FC<StandardEditorProps<ScalarDimensionConfig
           </InlineField>
         </InlineFieldRow>
         <Select
-          menuShouldPortal
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}

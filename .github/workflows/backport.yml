@@ -22,5 +22,5 @@ jobs:
         with:
           metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
           token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
-          labelsToAdd: "backport"
+          labelsToAdd: "backport,no-changelog"
           title: "[{{base}}] {{originalTitle}}"

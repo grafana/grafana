@@ -14,6 +14,8 @@ import {
   getFieldSeriesColor,
   getFieldDisplayName,
   getDisplayProcessor,
+  FieldColorModeId,
+  DecimalCount,
 } from '@grafana/data';
 import {
   AxisPlacement,
@@ -24,13 +26,17 @@ import {
   ScaleDirection,
   ScaleOrientation,
   StackingMode,
+  GraphTransform,
+  AxisColorMode,
+  GraphGradientMode,
 } from '@grafana/schema';
 
 import { buildScaleKey } from '../GraphNG/utils';
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
+import { getScaleGradientFn } from '../uPlot/config/gradientFills';
 import { getStackingGroups, preparePlotData2 } from '../uPlot/utils';
 
-const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
+const defaultFormatter = (v: any, decimals: DecimalCount = 1) => (v == null ? '-' : v.toFixed(decimals));
 
 const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
@@ -43,7 +49,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 }> = ({
   frame,
   theme,
-  timeZone,
+  timeZones,
   getTimeRange,
   eventBus,
   sync,
@@ -52,9 +58,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   tweakScale = (opts) => opts,
   tweakAxis = (opts) => opts,
 }) => {
-  const builder = new UPlotConfigBuilder(timeZone);
+  const builder = new UPlotConfigBuilder(timeZones[0]);
 
-  builder.setPrepData((frames) => preparePlotData2(frames[0], builder.getStackingGroups()));
+  let alignedFrame: DataFrame;
+
+  builder.setPrepData((frames) => {
+    // cache alignedFrame
+    alignedFrame = frames[0];
+
+    return preparePlotData2(frames[0], builder.getStackingGroups());
+  });
 
   // X is the first field in the aligned frame
   const xField = frame.fields[0];
@@ -85,16 +98,51 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       },
     });
 
-    builder.addAxis({
-      scaleKey: xScaleKey,
-      isTime: true,
-      placement: xFieldAxisPlacement,
-      show: xFieldAxisShow,
-      label: xField.config.custom?.axisLabel,
-      timeZone,
-      theme,
-      grid: { show: xField.config.custom?.axisGridShow },
-    });
+    // filters first 2 ticks to make space for timezone labels
+    const filterTicks: uPlot.Axis.Filter | undefined =
+      timeZones.length > 1
+        ? (u, splits) => {
+            return splits.map((v, i) => (i < 2 ? null : v));
+          }
+        : undefined;
+
+    for (let i = 0; i < timeZones.length; i++) {
+      const timeZone = timeZones[i];
+      builder.addAxis({
+        scaleKey: xScaleKey,
+        isTime: true,
+        placement: xFieldAxisPlacement,
+        show: xFieldAxisShow,
+        label: xField.config.custom?.axisLabel,
+        timeZone,
+        theme,
+        grid: { show: i === 0 && xField.config.custom?.axisGridShow },
+        filter: filterTicks,
+      });
+    }
+
+    // render timezone labels
+    if (timeZones.length > 1) {
+      builder.addHook('drawAxes', (u: uPlot) => {
+        u.ctx.save();
+
+        u.ctx.fillStyle = theme.colors.text.primary;
+        u.ctx.textAlign = 'left';
+        u.ctx.textBaseline = 'bottom';
+
+        let i = 0;
+        u.axes.forEach((a) => {
+          if (a.side === 2) {
+            //@ts-ignore
+            let cssBaseline: number = a._pos + a._size;
+            u.ctx.fillText(timeZones[i], u.bbox.left, cssBaseline * uPlot.pxRatio);
+            i++;
+          }
+        });
+
+        u.ctx.restore();
+      });
+    }
   } else {
     // Not time!
     if (xField.config.unit) {
@@ -125,13 +173,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
 
-    const config = {
+    const config: FieldConfig<GraphFieldConfig> = {
       ...field.config,
       custom: {
         ...defaultConfig,
         ...field.config.custom,
       },
-    } as FieldConfig<GraphFieldConfig>;
+    };
 
     const customConfig: GraphFieldConfig = config.custom!;
 
@@ -169,10 +217,21 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           direction: ScaleDirection.Up,
           distribution: customConfig.scaleDistribution?.type,
           log: customConfig.scaleDistribution?.log,
+          linearThreshold: customConfig.scaleDistribution?.linearThreshold,
           min: field.config.min,
           max: field.config.max,
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
+          centeredZero: customConfig.axisCenteredZero,
+          range:
+            customConfig.stacking?.mode === StackingMode.Percent
+              ? (u: uPlot, dataMin: number, dataMax: number) => {
+                  dataMin = dataMin < 0 ? -1 : 0;
+                  dataMax = dataMax > 0 ? 1 : 0;
+                  return [dataMin, dataMax];
+                }
+              : undefined,
+          decimals: field.config.decimals,
         },
         field
       )
@@ -183,6 +242,36 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     }
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
+      let axisColor: uPlot.Axis.Stroke | undefined;
+
+      if (customConfig.axisColorMode === AxisColorMode.Series) {
+        if (
+          colorMode.isByValue &&
+          field.config.custom?.gradientMode === GraphGradientMode.Scheme &&
+          colorMode.id === FieldColorModeId.Thresholds
+        ) {
+          axisColor = getScaleGradientFn(1, theme, colorMode, field.config.thresholds);
+        } else {
+          axisColor = seriesColor;
+        }
+      }
+
+      let axisColorOpts = {};
+
+      if (axisColor) {
+        axisColorOpts = {
+          border: {
+            show: true,
+            width: 1,
+            stroke: axisColor,
+          },
+          ticks: {
+            stroke: axisColor,
+          },
+          color: customConfig.axisColorMode === AxisColorMode.Series ? axisColor : undefined,
+        };
+      }
+
       builder.addAxis(
         tweakAxis(
           {
@@ -190,9 +279,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             label: customConfig.axisLabel,
             size: customConfig.axisWidth,
             placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-            formatValue: (v) => formattedValueToString(fmt(v)),
+            formatValue: (v, decimals) => formattedValueToString(fmt(v, decimals)),
             theme,
             grid: { show: customConfig.axisGridShow },
+            decimals: field.config.decimals,
+            distr: customConfig.scaleDistribution?.type,
+            ...axisColorOpts,
           },
           field
         )
@@ -204,7 +296,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
     let pointsFilter: uPlot.Series.Points.Filter = () => null;
 
-    if (customConfig.spanNulls !== true) {
+    if (customConfig.spanNulls !== true && showPoints !== VisibilityMode.Always) {
       pointsFilter = (u, seriesIdx, show, gaps) => {
         let filtered = [];
 
@@ -213,6 +305,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         if (!show && gaps && gaps.length) {
           const [firstIdx, lastIdx] = series.idxs!;
           const xData = u.data[0];
+          const yData = u.data[seriesIdx];
           const firstPos = Math.round(u.valToPos(xData[firstIdx], 'x', true));
           const lastPos = Math.round(u.valToPos(xData[lastIdx], 'x', true));
 
@@ -226,7 +319,24 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             let nextGap = gaps[i + 1];
 
             if (nextGap && thisGap[1] === nextGap[0]) {
-              filtered.push(u.posToIdx(thisGap[1], true));
+              // approx when data density is > 1pt/px, since gap start/end pixels are rounded
+              let approxIdx = u.posToIdx(thisGap[1], true);
+
+              if (yData[approxIdx] == null) {
+                // scan left/right alternating to find closest index with non-null value
+                for (let j = 1; j < 100; j++) {
+                  if (yData[approxIdx + j] != null) {
+                    approxIdx += j;
+                    break;
+                  }
+                  if (yData[approxIdx - j] != null) {
+                    approxIdx -= j;
+                    break;
+                  }
+                }
+              }
+
+              filtered.push(approxIdx);
             }
           }
 
@@ -258,11 +368,51 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       if (customRenderedFields.indexOf(dispName) >= 0) {
         pathBuilder = () => null;
         pointsBuilder = () => undefined;
+      } else if (customConfig.transform === GraphTransform.Constant) {
+        // patch some monkeys!
+        const defaultBuilder = uPlot.paths!.linear!();
+
+        pathBuilder = (u, seriesIdx) => {
+          //eslint-disable-next-line
+          const _data: any[] = (u as any)._data; // uplot.AlignedData not exposed in types
+
+          // the data we want the line renderer to pull is x at each plot edge with paired flat y values
+
+          const r = getTimeRange();
+          let xData = [r.from.valueOf(), r.to.valueOf()];
+          let firstY = _data[seriesIdx].find((v: number | null | undefined) => v != null);
+          let yData = [firstY, firstY];
+          let fauxData = _data.slice();
+          fauxData[0] = xData;
+          fauxData[seriesIdx] = yData;
+
+          //eslint-disable-next-line
+          return defaultBuilder(
+            {
+              ...u,
+              _data: fauxData,
+            } as any,
+            seriesIdx,
+            0,
+            1
+          );
+        };
       }
 
       if (customConfig.fillBelowTo) {
+        const fillBelowToField = frame.fields.find(
+          (f) =>
+            customConfig.fillBelowTo === f.name ||
+            customConfig.fillBelowTo === f.config?.displayNameFromDS ||
+            customConfig.fillBelowTo === getFieldDisplayName(f, frame, allFrames)
+        );
+
+        const fillBelowDispName = fillBelowToField
+          ? getFieldDisplayName(fillBelowToField, frame, allFrames)
+          : customConfig.fillBelowTo;
+
         const t = indexByName.get(dispName);
-        const b = indexByName.get(customConfig.fillBelowTo);
+        const b = indexByName.get(fillBelowDispName);
         if (isNumber(b) && isNumber(t)) {
           builder.addBand({
             series: [t, b],
@@ -278,7 +428,46 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       }
     }
 
+    let dynamicSeriesColor: ((seriesIdx: number) => string | undefined) | undefined = undefined;
+
+    if (colorMode.id === FieldColorModeId.Thresholds) {
+      dynamicSeriesColor = (seriesIdx) => getFieldSeriesColor(alignedFrame.fields[seriesIdx], theme).color;
+    }
+
+    // this adds leading and trailing gaps when datasets have leading and trailing nulls
+    // it will cause additional unnecessary clips, but we also use adjacent gaps to show single points
+    // when not connecting across gaps, e.g. null,100,null,null,50,50,50,null,50,null,null
+    const gapsRefiner: uPlot.Series.GapsRefiner = (u, seriesIdx, idx0, idx1, gaps) => {
+      let yData = u.data[seriesIdx];
+
+      // @ts-ignore
+      let xData = u._data[0];
+
+      // scan to first and last non-null vals
+      let first = idx0,
+        last = idx1;
+
+      while (first <= last && yData[first] == null) {
+        first++;
+      }
+
+      while (last > first && yData[last] == null) {
+        last--;
+      }
+
+      if (first !== idx0) {
+        gaps.unshift([u.bbox.left, Math.round(u.valToPos(xData[first]!, 'x', true))]);
+      }
+
+      if (last !== idx1) {
+        gaps.push([Math.round(u.valToPos(xData[last]!, 'x', true)), u.bbox.left + u.bbox.width]);
+      }
+
+      return gaps;
+    };
+
     builder.addSeries({
+      gapsRefiner,
       pathBuilder,
       pointsBuilder,
       scaleKey,
@@ -287,6 +476,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       colorMode,
       fillOpacity,
       theme,
+      dynamicSeriesColor,
       drawStyle: customConfig.drawStyle!,
       lineColor: customConfig.lineColor ?? seriesColor,
       lineWidth: customConfig.lineWidth,
@@ -432,10 +622,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           return true;
         },
       },
-      // ??? setSeries: syncMode === DashboardCursorSync.Tooltip,
-      //TODO: remove any once https://github.com/leeoniya/uPlot/pull/611 got merged or the typing is fixed
-      scales: [xScaleKey, null as any],
-      match: [() => true, () => true],
+      scales: [xScaleKey, yScaleKey],
+      // match: [() => true, (a, b) => a === b],
     };
   }
 

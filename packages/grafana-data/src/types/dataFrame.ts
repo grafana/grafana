@@ -1,7 +1,7 @@
 import { ScopedVars } from './ScopedVars';
 import { QueryResultBase, Labels, NullValueMode } from './data';
 import { DataLink, LinkModel } from './dataLink';
-import { DisplayProcessor, DisplayValue } from './displayValue';
+import { DecimalCount, DisplayProcessor, DisplayValue } from './displayValue';
 import { FieldColor } from './fieldColor';
 import { ThresholdsConfig } from './thresholds';
 import { ValueMapping } from './valueMapping';
@@ -63,7 +63,7 @@ export interface FieldConfig<TOptions = any> {
 
   // Numeric Options
   unit?: string;
-  decimals?: number | null; // Significant digits (for display)
+  decimals?: DecimalCount; // Significant digits (for display)
   min?: number | null;
   max?: number | null;
 
@@ -181,6 +181,13 @@ export interface FieldState {
    * This is only related to the cached displayName property above.
    */
   multipleFrames?: boolean;
+
+  /**
+   * Boolean value is true if a null filling threshold has been applied
+   * against the frame of the field. This is used to avoid cases in which
+   * this would applied more than one time.
+   */
+  nullThresholdApplied?: boolean;
 }
 
 /** @public */

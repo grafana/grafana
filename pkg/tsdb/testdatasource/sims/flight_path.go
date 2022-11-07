@@ -98,11 +98,11 @@ func newFlightSimInfo() simulationInfo {
 	df.Fields = append(df.Fields, f)
 
 	return simulationInfo{
-		Type:        "flight",
-		Name:        "Flight",
-		Description: "simple circling airplain",
-		SetupFields: df,
-		OnlyForward: false,
+		Type:         "flight",
+		Name:         "Flight",
+		Description:  "simple circling airplain",
+		ConfigFields: df,
+		OnlyForward:  false,
 		create: func(cfg simulationState) (Simulation, error) {
 			s := &flightSim{
 				key: cfg.Key,

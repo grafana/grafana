@@ -8,6 +8,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,22 +40,29 @@ type EvalContext struct {
 
 	Ctx context.Context
 
-	Store AlertStore
+	Store             AlertStore
+	dashboardService  dashboards.DashboardService
+	DatasourceService datasources.DataSourceService
+	annotationRepo    annotations.Repository
 }
 
 // NewEvalContext is the EvalContext constructor.
-func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator, sqlStore AlertStore) *EvalContext {
+func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator,
+	alertStore AlertStore, dashboardService dashboards.DashboardService, dsService datasources.DataSourceService, annotationRepo annotations.Repository) *EvalContext {
 	return &EvalContext{
-		Ctx:              alertCtx,
-		StartTime:        time.Now(),
-		Rule:             rule,
-		Logs:             make([]*ResultLogEntry, 0),
-		EvalMatches:      make([]*EvalMatch, 0),
-		AllMatches:       make([]*EvalMatch, 0),
-		Log:              log.New("alerting.evalContext"),
-		PrevAlertState:   rule.State,
-		RequestValidator: requestValidator,
-		Store:            sqlStore,
+		Ctx:               alertCtx,
+		StartTime:         time.Now(),
+		Rule:              rule,
+		Logs:              make([]*ResultLogEntry, 0),
+		EvalMatches:       make([]*EvalMatch, 0),
+		AllMatches:        make([]*EvalMatch, 0),
+		Log:               log.New("alerting.evalContext"),
+		PrevAlertState:    rule.State,
+		RequestValidator:  requestValidator,
+		Store:             alertStore,
+		dashboardService:  dashboardService,
+		DatasourceService: dsService,
+		annotationRepo:    annotationRepo,
 	}
 }
 
@@ -97,7 +107,7 @@ func (c *EvalContext) shouldUpdateAlertState() bool {
 
 // GetDurationMs returns the duration of the alert evaluation.
 func (c *EvalContext) GetDurationMs() float64 {
-	return float64(c.EndTime.Nanosecond()-c.StartTime.Nanosecond()) / float64(1000000)
+	return float64(c.EndTime.Sub(c.StartTime).Nanoseconds()) / float64(time.Millisecond)
 }
 
 // GetNotificationTitle returns the title of the alert rule including alert state.
@@ -112,7 +122,7 @@ func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
 	}
 
 	uidQuery := &models.GetDashboardRefByIdQuery{Id: c.Rule.DashboardID}
-	if err := c.Store.GetDashboardUIDById(c.Ctx, uidQuery); err != nil {
+	if err := c.dashboardService.GetDashboardUIDById(c.Ctx, uidQuery); err != nil {
 		return nil, err
 	}
 
@@ -214,6 +224,10 @@ func (c *EvalContext) evaluateNotificationTemplateFields() error {
 	c.Rule.Name = ruleName
 
 	return nil
+}
+
+func (c *EvalContext) GetDataSource(ctx context.Context, q *datasources.GetDataSourceQuery) error {
+	return c.DatasourceService.GetDataSource(ctx, q)
 }
 
 // getTemplateMatches returns the values we should use to parse the templates

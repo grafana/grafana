@@ -2647,6 +2647,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Azure VM Monitoring - VM Insights by Workspace",
+  "title": "Azure / Insights / Virtual Machines by Workspace",
+  "uid": "AzVmInsightsByWS",
   "version": 21
 }

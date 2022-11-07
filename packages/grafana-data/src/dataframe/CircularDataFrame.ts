@@ -13,7 +13,7 @@ interface CircularOptions {
  */
 export class CircularDataFrame<T = any> extends MutableDataFrame<T> {
   constructor(options: CircularOptions) {
-    super(undefined, (buffer?: any[]) => {
+    super(undefined, (buffer) => {
       return new CircularVector({
         ...options,
         buffer,

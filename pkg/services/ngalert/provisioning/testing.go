@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	mock "github.com/stretchr/testify/mock"
 )
 
 const defaultAlertmanagerConfigJSON = `
@@ -135,12 +136,56 @@ func (f *fakeProvisioningStore) DeleteProvenance(ctx context.Context, o models.P
 	return nil
 }
 
-type nopTransactionManager struct{}
+type NopTransactionManager struct{}
 
-func newNopTransactionManager() *nopTransactionManager {
-	return &nopTransactionManager{}
+func newNopTransactionManager() *NopTransactionManager {
+	return &NopTransactionManager{}
 }
 
-func (n *nopTransactionManager) InTransaction(ctx context.Context, work func(ctx context.Context) error) error {
+func (n *NopTransactionManager) InTransaction(ctx context.Context, work func(ctx context.Context) error) error {
 	return work(ctx)
+}
+
+func (m *MockAMConfigStore_Expecter) GetsConfig(ac models.AlertConfiguration) *MockAMConfigStore_Expecter {
+	m.GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
+		Run(func(ctx context.Context, q *models.GetLatestAlertmanagerConfigurationQuery) {
+			q.Result = &ac
+		}).
+		Return(nil)
+	return m
+}
+
+func (m *MockAMConfigStore_Expecter) SaveSucceeds() *MockAMConfigStore_Expecter {
+	m.UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(nil)
+	return m
+}
+
+func (m *MockAMConfigStore_Expecter) SaveSucceedsIntercept(intercepted *models.SaveAlertmanagerConfigurationCmd) *MockAMConfigStore_Expecter {
+	m.UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
+		Return(nil).
+		Run(func(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) {
+			*intercepted = *cmd
+		})
+	return m
+}
+
+func (m *MockProvisioningStore_Expecter) GetReturns(p models.Provenance) *MockProvisioningStore_Expecter {
+	m.GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(p, nil)
+	return m
+}
+
+func (m *MockProvisioningStore_Expecter) SaveSucceeds() *MockProvisioningStore_Expecter {
+	m.SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	m.DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	return m
+}
+
+func (m *MockQuotaChecker_Expecter) LimitOK() *MockQuotaChecker_Expecter {
+	m.CheckQuotaReached(mock.Anything, mock.Anything, mock.Anything).Return(false, nil)
+	return m
+}
+
+func (m *MockQuotaChecker_Expecter) LimitExceeded() *MockQuotaChecker_Expecter {
+	m.CheckQuotaReached(mock.Anything, mock.Anything, mock.Anything).Return(true, nil)
+	return m
 }

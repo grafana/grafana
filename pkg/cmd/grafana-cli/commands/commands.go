@@ -1,21 +1,23 @@
 package commands
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/secretsmigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/urfave/cli/v2"
 )
 
 func runRunnerCommand(command func(commandLine utils.CommandLine, runner runner.Runner) error) func(context *cli.Context) error {
@@ -24,12 +26,12 @@ func runRunnerCommand(command func(commandLine utils.CommandLine, runner runner.
 
 		cfg, err := initCfg(cmd)
 		if err != nil {
-			return errutil.Wrap("failed to load configuration", err)
+			return fmt.Errorf("%v: %w", "failed to load configuration", err)
 		}
 
 		r, err := runner.Initialize(cfg)
 		if err != nil {
-			return errutil.Wrap("failed to initialize runner", err)
+			return fmt.Errorf("%v: %w", "failed to initialize runner", err)
 		}
 
 		if err := command(cmd, r); err != nil {
@@ -41,23 +43,25 @@ func runRunnerCommand(command func(commandLine utils.CommandLine, runner runner.
 	}
 }
 
-func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SQLStore) error) func(context *cli.Context) error {
+func runDbCommand(command func(commandLine utils.CommandLine, sqlStore db.DB) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
 
 		cfg, err := initCfg(cmd)
 		if err != nil {
-			return errutil.Wrap("failed to load configuration", err)
+			return fmt.Errorf("%v: %w", "failed to load configuration", err)
 		}
 
 		tracer, err := tracing.ProvideService(cfg)
 		if err != nil {
-			return errutil.Wrap("failed to initialize tracer service", err)
+			return fmt.Errorf("%v: %w", "failed to initialize tracer service", err)
 		}
 
-		sqlStore, err := sqlstore.ProvideService(cfg, nil, &migrations.OSSMigrations{}, tracer)
+		bus := bus.ProvideBus(tracer)
+
+		sqlStore, err := db.ProvideService(cfg, nil, &migrations.OSSMigrations{}, bus, tracer)
 		if err != nil {
-			return errutil.Wrap("failed to initialize SQL store", err)
+			return fmt.Errorf("%v: %w", "failed to initialize SQL store", err)
 		}
 
 		if err := command(cmd, sqlStore); err != nil {
@@ -97,12 +101,6 @@ func runPluginCommand(command func(commandLine utils.CommandLine) error) func(co
 
 		logger.Info(color.GreenString("Please restart Grafana after installing plugins. Refer to Grafana documentation for instructions if necessary.\n\n"))
 		return nil
-	}
-}
-
-func runCueCommand(command func(commandLine utils.CommandLine) error) func(context *cli.Context) error {
-	return func(context *cli.Context) error {
-		return command(&utils.ContextCommandLine{Context: context})
 	}
 }
 
@@ -154,7 +152,7 @@ var adminCommands = []*cli.Command{
 	{
 		Name:   "reset-admin-password",
 		Usage:  "reset-admin-password <new password>",
-		Action: runDbCommand(resetPasswordCommand),
+		Action: runRunnerCommand(resetPasswordCommand),
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "password-from-stdin",
@@ -195,71 +193,36 @@ var adminCommands = []*cli.Command{
 			},
 		},
 	},
-}
-
-var cueCommands = []*cli.Command{
 	{
-		Name:   "validate-schema",
-		Usage:  "validate known *.cue files in the Grafana project",
-		Action: runCueCommand(cmd.validateScuemata),
-		Description: `validate-schema checks that all CUE schema files are valid with respect
-to basic standards - valid CUE, valid scuemata, etc. Note that this
-command checks only paths that existed when grafana-cli was compiled,
-so must be recompiled to validate newly-added CUE files.`,
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "grafana-root",
-				Usage: "path to the root of a Grafana repository to validate",
-			},
-		},
-	},
-	{
-		Name:   "validate-resource",
-		Usage:  "validate resource files (e.g. dashboard JSON) against schema",
-		Action: runCueCommand(cmd.validateResources),
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "dashboard",
-				Usage: "dashboard JSON file to validate",
-			},
-			&cli.BoolFlag{
-				Name:  "base-only",
-				Usage: "validate using only base schema, not dist (includes plugin schema)",
-				Value: false,
-			},
-		},
-	},
-	{
-		Name:   "trim-resource",
-		Usage:  "trim schema-specified defaults from a resource",
-		Action: runCueCommand(cmd.trimResource),
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "dashboard",
-				Usage: "path to file containing (valid) dashboard JSON",
-			},
-			&cli.BoolFlag{
-				Name:  "apply",
-				Usage: "invert the operation: apply defaults instead of trimming them",
-				Value: false,
-			},
-		},
-	},
-	{
-		Name:  "gen-ts",
-		Usage: "generate TypeScript from all known CUE file types",
-		Description: `gen-ts generates TypeScript from all CUE files at
-		expected positions in the filesystem tree of a Grafana repository.`,
-		Action: runCueCommand(cmd.generateTypescript),
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "grafana-root",
-				Usage: "path to the root of a Grafana repository in which to generate TypeScript from CUE files",
-			},
-			&cli.BoolFlag{
-				Name:  "diff",
-				Usage: "diff results of codegen against files already on disk. Exits 1 if diff is non-empty",
-				Value: false,
+		Name:  "user-manager",
+		Usage: "Runs different helpful user commands",
+		Subcommands: []*cli.Command{
+			// TODO: reset password for user
+			{
+				Name:  "conflicts",
+				Usage: "runs a conflict resolution to find users with multiple entries",
+				Subcommands: []*cli.Command{
+					{
+						Name:   "list",
+						Usage:  "returns a list of users with more than one entry in the database",
+						Action: runListConflictUsers(),
+					},
+					{
+						Name:   "generate-file",
+						Usage:  "creates a conflict users file. Safe to execute multiple times.",
+						Action: runGenerateConflictUsersFile(),
+					},
+					{
+						Name:   "validate-file",
+						Usage:  "validates the conflict users file. Safe to execute multiple times.",
+						Action: runValidateConflictUsersFile(),
+					},
+					{
+						Name:   "ingest-file",
+						Usage:  "ingests the conflict users file",
+						Action: runIngestConflictUsersFile(),
+					},
+				},
 			},
 		},
 	},
@@ -275,10 +238,5 @@ var Commands = []*cli.Command{
 		Name:        "admin",
 		Usage:       "Grafana admin commands",
 		Subcommands: adminCommands,
-	},
-	{
-		Name:        "cue",
-		Usage:       "Cue validation commands",
-		Subcommands: cueCommands,
 	},
 }

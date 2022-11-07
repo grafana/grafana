@@ -1,19 +1,35 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC, ReactNode, useContext, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { locationUtil, textUtil } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { locationService } from '@grafana/runtime';
-import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpdate } from '@grafana/ui';
+import {
+  ButtonGroup,
+  ModalsController,
+  ToolbarButton,
+  PageToolbar,
+  useForceUpdate,
+  Tag,
+  ToolbarButtonRow,
+  ModalsContext,
+} from '@grafana/ui';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbarSeparator';
 import config from 'app/core/config';
-import { toggleKioskMode } from 'app/core/navigation/kiosk';
+import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useBusEvent } from 'app/core/hooks/useBusEvent';
+import { t, Trans } from 'app/core/internationalization';
 import { DashboardCommentsModal } from 'app/features/dashboard/components/DashboardComments/DashboardCommentsModal';
-import { SaveDashboardProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardProxy';
+import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { KioskMode } from 'app/types';
+import { DashboardMetaChangedEvent } from 'app/types/events';
 
+import { setStarred } from '../../../../core/reducers/navBarTree';
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { DashboardModel } from '../../state';
 
@@ -21,18 +37,22 @@ import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
 
 const mapDispatchToProps = {
+  setStarred,
   updateTimeZoneForSession,
 };
 
 const connector = connect(null, mapDispatchToProps);
 
+const selectors = e2eSelectors.pages.Dashboard.DashNav;
+
 export interface OwnProps {
   dashboard: DashboardModel;
   isFullscreen: boolean;
-  kioskMode: KioskMode;
+  kioskMode?: KioskMode | null;
   hideTimePicker: boolean;
   folderTitle?: string;
   title: string;
+  shareModalActiveTab?: string;
   onAddPanel: () => void;
 }
 
@@ -57,12 +77,18 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export const DashNav = React.memo<Props>((props) => {
   const forceUpdate = useForceUpdate();
+  const { chrome } = useGrafana();
+  const { showModal, hideModal } = useContext(ModalsContext);
+
+  // We don't really care about the event payload here only that it triggeres a re-render of this component
+  useBusEvent(props.dashboard.events, DashboardMetaChangedEvent);
 
   const onStarDashboard = () => {
     const dashboardSrv = getDashboardSrv();
-    const { dashboard } = props;
+    const { dashboard, setStarred } = props;
 
-    dashboardSrv.starDashboard(dashboard.id, dashboard.meta.isStarred).then((newState: any) => {
+    dashboardSrv.starDashboard(dashboard.id, dashboard.meta.isStarred).then((newState) => {
+      setStarred({ id: dashboard.uid, title: dashboard.title, url: dashboard.meta.url ?? '', isStarred: newState });
       dashboard.meta.isStarred = newState;
       forceUpdate();
     });
@@ -73,7 +99,7 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const onToggleTVMode = () => {
-    toggleKioskMode();
+    chrome.onToggleKioskMode();
   };
 
   const onOpenSettings = () => {
@@ -105,17 +131,38 @@ export const DashNav = React.memo<Props>((props) => {
     return playlistSrv.isPlaying;
   };
 
-  const renderLeftActionsButton = () => {
+  // Open/Close
+  useEffect(() => {
+    const dashboard = props.dashboard;
+    const shareModalActiveTab = props.shareModalActiveTab;
+    const { canShare } = dashboard.meta;
+
+    if (canShare && shareModalActiveTab) {
+      // automagically open modal
+      showModal(ShareModal, {
+        dashboard,
+        onDismiss: hideModal,
+        activeTab: shareModalActiveTab,
+      });
+    }
+    return () => {
+      hideModal();
+    };
+  }, [showModal, hideModal, props.dashboard, props.shareModalActiveTab]);
+
+  const renderLeftActions = () => {
     const { dashboard, kioskMode } = props;
     const { canStar, canShare, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
 
-    if (kioskMode !== KioskMode.Off || isPlaylistRunning()) {
+    if (kioskMode || isPlaylistRunning()) {
       return [];
     }
 
     if (canStar) {
-      let desc = isStarred ? 'Unmark as favorite' : 'Mark as favorite';
+      let desc = isStarred
+        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
+        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
       buttons.push(
         <DashNavButton
           tooltip={desc}
@@ -129,12 +176,11 @@ export const DashNav = React.memo<Props>((props) => {
     }
 
     if (canShare) {
-      let desc = 'Share dashboard or panel';
       buttons.push(
         <ModalsController key="button-share">
           {({ showModal, hideModal }) => (
             <DashNavButton
-              tooltip={desc}
+              tooltip={t('dashboard.toolbar.share', 'Share dashboard or panel')}
               icon="share-alt"
               iconSize="lg"
               onClick={() => {
@@ -149,12 +195,18 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
+    if (dashboard.meta.publicDashboardEnabled) {
+      buttons.push(
+        <Tag key="public-dashboard" name="Public" colorIndex={5} data-testid={selectors.publicDashboardTag}></Tag>
+      );
+    }
+
     if (dashboard.uid && config.featureToggles.dashboardComments) {
       buttons.push(
         <ModalsController key="button-dashboard-comments">
           {({ showModal, hideModal }) => (
             <DashNavButton
-              tooltip="Show dashboard comments"
+              tooltip={t('dashboard.toolbar.comments-show', 'Show dashboard comments')}
               icon="comment-alt-message"
               iconSize="lg"
               onClick={() => {
@@ -176,9 +228,21 @@ export const DashNav = React.memo<Props>((props) => {
   const renderPlaylistControls = () => {
     return (
       <ButtonGroup key="playlist-buttons">
-        <ToolbarButton tooltip="Go to previous dashboard" icon="backward" onClick={onPlaylistPrev} narrow />
-        <ToolbarButton onClick={onPlaylistStop}>Stop playlist</ToolbarButton>
-        <ToolbarButton tooltip="Go to next dashboard" icon="forward" onClick={onPlaylistNext} narrow />
+        <ToolbarButton
+          tooltip={t('dashboard.toolbar.playlist-previous', 'Go to previous dashboard')}
+          icon="backward"
+          onClick={onPlaylistPrev}
+          narrow
+        />
+        <ToolbarButton onClick={onPlaylistStop}>
+          <Trans i18nKey="dashboard.toolbar.playlist-stop">Stop playlist</Trans>
+        </ToolbarButton>
+        <ToolbarButton
+          tooltip={t('dashboard.toolbar.playlist-next', 'Go to next dashboard')}
+          icon="forward"
+          onClick={onPlaylistNext}
+          narrow
+        />
       </ButtonGroup>
     );
   };
@@ -195,14 +259,19 @@ export const DashNav = React.memo<Props>((props) => {
     );
   };
 
-  const renderRightActionsButton = () => {
+  const renderRightActions = () => {
     const { dashboard, onAddPanel, isFullscreen, kioskMode } = props;
     const { canSave, canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
-    const tvButton = (
-      <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={onToggleTVMode} key="tv-button" />
+    const tvButton = config.featureToggles.topnav ? null : (
+      <ToolbarButton
+        tooltip={t('dashboard.toolbar.tv-button', 'Cycle view mode')}
+        icon="monitor"
+        onClick={onToggleTVMode}
+        key="tv-button"
+      />
     );
 
     if (isPlaylistRunning()) {
@@ -214,7 +283,14 @@ export const DashNav = React.memo<Props>((props) => {
     }
 
     if (canEdit && !isFullscreen) {
-      buttons.push(<ToolbarButton tooltip="Add panel" icon="panel-add" onClick={onAddPanel} key="button-panel-add" />);
+      buttons.push(
+        <ToolbarButton
+          tooltip={t('dashboard.toolbar.add-panel', 'Add panel')}
+          icon="panel-add"
+          onClick={onAddPanel}
+          key="button-panel-add"
+        />
+      );
     }
 
     if (canSave && !isFullscreen) {
@@ -222,10 +298,10 @@ export const DashNav = React.memo<Props>((props) => {
         <ModalsController key="button-save">
           {({ showModal, hideModal }) => (
             <ToolbarButton
-              tooltip="Save dashboard"
+              tooltip={t('dashboard.toolbar.save', 'Save dashboard')}
               icon="save"
               onClick={() => {
-                showModal(SaveDashboardProxy, {
+                showModal(SaveDashboardDrawer, {
                   dashboard,
                   onDismiss: hideModal,
                 });
@@ -239,7 +315,7 @@ export const DashNav = React.memo<Props>((props) => {
     if (snapshotUrl) {
       buttons.push(
         <ToolbarButton
-          tooltip="Open original dashboard"
+          tooltip={t('dashboard.toolbar.open-original', 'Open original dashboard')}
           onClick={() => gotoSnapshotOrigin(snapshotUrl)}
           icon="link"
           key="button-snapshot"
@@ -249,7 +325,12 @@ export const DashNav = React.memo<Props>((props) => {
 
     if (showSettings) {
       buttons.push(
-        <ToolbarButton tooltip="Dashboard settings" icon="cog" onClick={onOpenSettings} key="button-settings" />
+        <ToolbarButton
+          tooltip={t('dashboard.toolbar.settings', 'Dashboard settings')}
+          icon="cog"
+          onClick={onOpenSettings}
+          key="button-settings"
+        />
       );
     }
 
@@ -268,8 +349,22 @@ export const DashNav = React.memo<Props>((props) => {
   // this ensures the component rerenders when the location changes
   const location = useLocation();
   const titleHref = locationUtil.getUrlForPartial(location, { search: 'open' });
-  const parentHref = locationUtil.getUrlForPartial(location, { search: 'open', folder: 'current' });
+  const parentHref = locationUtil.getUrlForPartial(location, { search: 'open', query: 'folder:current' });
   const onGoBack = isFullscreen ? onClose : undefined;
+
+  if (config.featureToggles.topnav) {
+    return (
+      <AppChromeUpdate
+        actions={
+          <>
+            {renderLeftActions()}
+            <NavToolbarSeparator leftActionsSeparator />
+            <ToolbarButtonRow alignment="right">{renderRightActions()}</ToolbarButtonRow>
+          </>
+        }
+      />
+    );
+  }
 
   return (
     <PageToolbar
@@ -279,9 +374,9 @@ export const DashNav = React.memo<Props>((props) => {
       titleHref={titleHref}
       parentHref={parentHref}
       onGoBack={onGoBack}
-      leftItems={renderLeftActionsButton()}
+      leftItems={renderLeftActions()}
     >
-      {renderRightActionsButton()}
+      {renderRightActions()}
     </PageToolbar>
   );
 });

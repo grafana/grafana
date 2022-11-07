@@ -36,7 +36,6 @@ const SQLOrderByGroup: React.FC<SQLBuilderSelectRowProps> = ({ query, onQueryCha
             onChange={({ value }) => value && onQueryChange(setOrderBy(query, value))}
             options={appendTemplateVariables(datasource, STATISTICS.map(toOption))}
             value={orderBy ? toOption(orderBy) : null}
-            menuShouldPortal
           />
           {orderBy && (
             <AccessoryButton
@@ -56,7 +55,6 @@ const SQLOrderByGroup: React.FC<SQLBuilderSelectRowProps> = ({ query, onQueryCha
           value={orderByDirection ? toOption(orderByDirection) : orderByDirections[0]}
           options={appendTemplateVariables(datasource, orderByDirections)}
           onChange={(item) => item && onQueryChange(setSql(query, { orderByDirection: item.value }))}
-          menuShouldPortal
         />
       </EditorField>
     </EditorFieldGroup>

@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -37,7 +37,7 @@ func TestDetectPrometheusVariant(t *testing.T) {
 		t,
 		setting.NewCfg(),
 		sqlStore,
-		withDatasources(mockDatasourceService{datasources: []*models.DataSource{
+		withDatasources(mockDatasourceService{datasources: []*datasources.DataSource{
 			{
 				Id:      1,
 				OrgId:   1,

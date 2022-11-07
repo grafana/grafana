@@ -1,13 +1,15 @@
 import { DataSourceSettings } from '@grafana/data';
 
-import { createDatasourceSettings } from '../../../../features/datasources/mocks';
+import { getMockDataSource } from '../../../../features/datasources/__mocks__';
 import { PromOptions } from '../types';
 
 export function createDefaultConfigOptions(): DataSourceSettings<PromOptions> {
-  return createDatasourceSettings<PromOptions>({
-    timeInterval: '1m',
-    queryTimeout: '1m',
-    httpMethod: 'GET',
-    directUrl: 'url',
+  return getMockDataSource<PromOptions>({
+    jsonData: {
+      timeInterval: '1m',
+      queryTimeout: '1m',
+      httpMethod: 'GET',
+      directUrl: 'url',
+    },
   });
 }

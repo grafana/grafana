@@ -1,7 +1,7 @@
 import { isEmpty } from 'lodash';
 
 import { PanelProps } from '@grafana/data';
-import { Alert } from 'app/types/unified-alerting';
+import { Alert, hasAlertState } from 'app/types/unified-alerting';
 import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { UnifiedAlertListOptions } from './types';
@@ -16,13 +16,13 @@ export function filterAlerts(options: PanelProps<UnifiedAlertListOptions>['optio
   return alerts.filter((alert) => {
     return (
       (stateFilter.firing &&
-        (alert.state === GrafanaAlertState.Alerting || alert.state === PromAlertingRuleState.Firing)) ||
+        (hasAlertState(alert, GrafanaAlertState.Alerting) || hasAlertState(alert, PromAlertingRuleState.Firing))) ||
       (stateFilter.pending &&
-        (alert.state === GrafanaAlertState.Pending || alert.state === PromAlertingRuleState.Pending)) ||
-      (stateFilter.noData && alert.state === GrafanaAlertState.NoData) ||
-      (stateFilter.normal && alert.state === GrafanaAlertState.Normal) ||
-      (stateFilter.error && alert.state === GrafanaAlertState.Error) ||
-      (stateFilter.inactive && alert.state === PromAlertingRuleState.Inactive)
+        (hasAlertState(alert, GrafanaAlertState.Pending) || hasAlertState(alert, PromAlertingRuleState.Pending))) ||
+      (stateFilter.noData && hasAlertState(alert, GrafanaAlertState.NoData)) ||
+      (stateFilter.normal && hasAlertState(alert, GrafanaAlertState.Normal)) ||
+      (stateFilter.error && hasAlertState(alert, GrafanaAlertState.Error)) ||
+      (stateFilter.inactive && hasAlertState(alert, PromAlertingRuleState.Inactive))
     );
   });
 }

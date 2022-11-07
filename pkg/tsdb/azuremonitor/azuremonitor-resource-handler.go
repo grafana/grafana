@@ -2,14 +2,13 @@ package azuremonitor
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azlog"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/deprecated"
+
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -23,7 +22,8 @@ func getTarget(original string) (target string, err error) {
 	return
 }
 
-type httpServiceProxy struct{}
+type httpServiceProxy struct {
+}
 
 func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) http.ResponseWriter {
 	res, err := cli.Do(req)
@@ -31,29 +31,29 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		rw.WriteHeader(http.StatusInternalServerError)
 		_, err = rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
 		if err != nil {
-			azlog.Error("Unable to write HTTP response", "error", err)
+			logger.Error("Unable to write HTTP response", "error", err)
 		}
 		return nil
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			azlog.Warn("Failed to close response body", "err", err)
+			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		_, err = rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
 		if err != nil {
-			azlog.Error("Unable to write HTTP response", "error", err)
+			logger.Error("Unable to write HTTP response", "error", err)
 		}
 		return nil
 	}
 	rw.WriteHeader(res.StatusCode)
 	_, err = rw.Write(body)
 	if err != nil {
-		azlog.Error("Unable to write HTTP response", "error", err)
+		logger.Error("Unable to write HTTP response", "error", err)
 	}
 
 	for k, v := range res.Header {
@@ -84,13 +84,13 @@ func writeResponse(rw http.ResponseWriter, code int, msg string) {
 	rw.WriteHeader(http.StatusBadRequest)
 	_, err := rw.Write([]byte(msg))
 	if err != nil {
-		azlog.Error("Unable to write HTTP response", "error", err)
+		logger.Error("Unable to write HTTP response", "error", err)
 	}
 }
 
 func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		azlog.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
+		logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 		newPath, err := getTarget(req.URL.Path)
 		if err != nil {
@@ -125,7 +125,5 @@ func (s *Service) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/azuremonitor/", s.handleResourceReq(azureMonitor))
 	mux.HandleFunc("/loganalytics/", s.handleResourceReq(azureLogAnalytics))
 	mux.HandleFunc("/resourcegraph/", s.handleResourceReq(azureResourceGraph))
-	// Remove with Grafana 9
-	mux.HandleFunc("/appinsights/", s.handleResourceReq(deprecated.AppInsights))
 	return mux
 }

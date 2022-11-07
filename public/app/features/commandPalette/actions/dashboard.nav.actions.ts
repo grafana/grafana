@@ -1,20 +1,27 @@
 import { Action } from 'kbar';
 
-import { locationService, getBackendSrv } from '@grafana/runtime';
+import { locationUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { getGrafanaSearcher } from 'app/features/search/service';
 
 async function getDashboardNav(parentId: string): Promise<Action[]> {
-  const data: Array<{ type: string; title: string; url: string }> = await getBackendSrv().get('/api/search');
+  const data = await getGrafanaSearcher().search({
+    kind: ['dashboard'],
+    query: '*',
+    limit: 500,
+  });
 
-  const goToDashboardActions: Action[] = data
-    .filter((item) => item.type === 'dash-db')
-    .map((item) => ({
+  const goToDashboardActions: Action[] = data.view.map((item) => {
+    const { url, name } = item; // items are backed by DataFrameView, so must hold the url in a closure
+    return {
       parent: parentId,
-      id: `go/dashboard/${item.url}`,
-      name: `Go to dashboard ${item.title}`,
+      id: `go/dashboard/${url}`,
+      name: `${name}`,
       perform: () => {
-        locationService.push(item.url);
+        locationService.push(locationUtil.stripBaseFromUrl(url));
       },
-    }));
+    };
+  });
 
   return goToDashboardActions;
 }

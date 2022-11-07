@@ -12,11 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { render, screen } from '@testing-library/react';
 import * as copy from 'copy-to-clipboard';
-import { shallow } from 'enzyme';
 import React from 'react';
-
-import { Button, Tooltip } from '@grafana/ui';
 
 import CopyIcon from './CopyIcon';
 
@@ -29,7 +27,6 @@ describe('<CopyIcon />', () => {
     tooltipTitle: 'tooltipTitleValue',
   };
   let copySpy;
-  let wrapper;
 
   beforeAll(() => {
     copySpy = jest.spyOn(copy, 'default');
@@ -37,24 +34,18 @@ describe('<CopyIcon />', () => {
 
   beforeEach(() => {
     copySpy.mockReset();
-    wrapper = shallow(<CopyIcon {...props} />);
   });
 
   it('renders as expected', () => {
-    expect(wrapper).toMatchSnapshot();
+    expect(() => render(<CopyIcon {...props} />)).not.toThrow();
   });
 
-  it('updates state and copies when clicked', () => {
-    expect(wrapper.state().hasCopied).toBe(false);
-    expect(copySpy).not.toHaveBeenCalled();
+  it('copies when clicked', () => {
+    render(<CopyIcon {...props} />);
 
-    wrapper.find(Button).simulate('click');
-    expect(wrapper.state().hasCopied).toBe(true);
+    const button = screen.getByRole('button');
+    button.click();
+
     expect(copySpy).toHaveBeenCalledWith(props.copyText);
-  });
-
-  it('persists state when tooltip opens', () => {
-    wrapper.setState({ hasCopied: true });
-    expect(wrapper.state().hasCopied).toBe(true);
   });
 });

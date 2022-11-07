@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { PermissionListItem } from './PermissionListItem';
 import { ResourcePermission } from './types';
 
 interface Props {
   title: string;
+  compareKey: 'builtInRole' | 'userLogin' | 'team';
   items: ResourcePermission[];
   permissionLevels: string[];
   canSet: boolean;
@@ -12,8 +13,24 @@ interface Props {
   onChange: (resourcePermission: ResourcePermission, permission: string) => void;
 }
 
-export const PermissionList = ({ title, items, permissionLevels, canSet, onRemove, onChange }: Props) => {
-  if (items.length === 0) {
+export const PermissionList = ({ title, items, compareKey, permissionLevels, canSet, onRemove, onChange }: Props) => {
+  const computed = useMemo(() => {
+    const keep: { [key: string]: ResourcePermission } = {};
+    for (let item of items) {
+      const key = item[compareKey]!;
+      if (!keep[key]) {
+        keep[key] = item;
+        continue;
+      }
+
+      if (item.actions.length > keep[key].actions.length) {
+        keep[key] = item;
+      }
+    }
+    return Object.keys(keep).map((k) => keep[k]);
+  }, [items, compareKey]);
+
+  if (computed.length === 0) {
     return null;
   }
 
@@ -24,13 +41,14 @@ export const PermissionList = ({ title, items, permissionLevels, canSet, onRemov
           <tr>
             <th style={{ width: '1%' }} />
             <th>{title}</th>
+            <th style={{ width: '1%' }} />
             <th>Permission</th>
             <th style={{ width: '1%' }} />
             <th style={{ width: '1%' }} />
           </tr>
         </thead>
         <tbody>
-          {items.map((item, index) => (
+          {computed.map((item, index) => (
             <PermissionListItem
               item={item}
               onRemove={onRemove}

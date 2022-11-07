@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -17,7 +18,7 @@ import (
 
 func TestTelegramNotifier(t *testing.T) {
 	tmpl := templateForTests(t)
-
+	images := newFakeImageStoreWithFile(t, 2)
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
 	tmpl.ExternalURL = externalURL
@@ -31,7 +32,7 @@ func TestTelegramNotifier(t *testing.T) {
 		expMsgError  error
 	}{
 		{
-			name: "Default template with one alert",
+			name: "A single alert with default template",
 			settings: `{
 				"bottoken": "abcdefgh0123456789",
 				"chatid": "someid"
@@ -40,19 +41,18 @@ func TestTelegramNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:       model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations:  model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+						Annotations:  model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertImageToken__": "test-image-1"},
 						GeneratorURL: "a URL",
 					},
 				},
 			},
 			expMsg: map[string]string{
-				"chat_id":    "someid",
 				"parse_mode": "html",
 				"text":       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: a URL\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 			},
 			expMsgError: nil,
 		}, {
-			name: "Custom template with multiple alerts",
+			name: "Multiple alerts with custom template",
 			settings: `{
 				"bottoken": "abcdefgh0123456789",
 				"chatid": "someid",
@@ -62,20 +62,38 @@ func TestTelegramNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:       model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations:  model.LabelSet{"ann1": "annv1"},
+						Annotations:  model.LabelSet{"ann1": "annv1", "__alertImageToken__": "test-image-1"},
 						GeneratorURL: "a URL",
 					},
 				}, {
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
-						Annotations: model.LabelSet{"ann1": "annv2"},
+						Annotations: model.LabelSet{"ann1": "annv2", "__alertImageToken__": "test-image-2"},
 					},
 				},
 			},
 			expMsg: map[string]string{
-				"chat_id":    "someid",
 				"parse_mode": "html",
 				"text":       "__Custom Firing__\n2 Firing\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: a URL\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
+			},
+			expMsgError: nil,
+		}, {
+			name: "Truncate long message",
+			settings: `{
+				"bottoken": "abcdefgh0123456789",
+				"chatid": "someid",
+				"message": "{{ .CommonLabels.alertname }}"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels: model.LabelSet{"alertname": model.LabelValue(strings.Repeat("1", 4097))},
+					},
+				},
+			},
+			expMsg: map[string]string{
+				"parse_mode": "html",
+				"text":       strings.Repeat("1", 4096-1) + "…",
 			},
 			expMsgError: nil,
 		}, {
@@ -91,34 +109,44 @@ func TestTelegramNotifier(t *testing.T) {
 			require.NoError(t, err)
 			secureSettings := make(map[string][]byte)
 
-			m := &NotificationChannelConfig{
-				Name:           "telegram_testing",
-				Type:           "telegram",
-				Settings:       settingsJSON,
-				SecureSettings: secureSettings,
-			}
-
-			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			cfg, err := NewTelegramConfig(m, decryptFn)
+			notificationService := mockNotificationService()
+
+			fc := FactoryConfig{
+				Config: &NotificationChannelConfig{
+					Name:           "telegram_tests",
+					Type:           "telegram",
+					Settings:       settingsJSON,
+					SecureSettings: secureSettings,
+				},
+				ImageStore:          images,
+				NotificationService: notificationService,
+				DecryptFunc:         decryptFn,
+				Template:            tmpl,
+			}
+
+			n, err := NewTelegramNotifier(fc)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
+
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewTelegramNotifier(cfg, webhookSender, tmpl)
-			msg, err := pn.buildTelegramMessage(ctx, c.alerts)
+			ok, err := n.Notify(ctx, c.alerts...)
+			require.NoError(t, err)
+			require.True(t, ok)
+
+			msg, err := n.buildTelegramMessage(ctx, c.alerts)
 			if c.expMsgError != nil {
 				require.Error(t, err)
 				require.Equal(t, c.expMsgError.Error(), err.Error())
 				return
 			}
 			require.NoError(t, err)
-
 			require.Equal(t, c.expMsg, msg)
 		})
 	}

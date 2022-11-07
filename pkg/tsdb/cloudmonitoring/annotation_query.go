@@ -4,16 +4,26 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
+type annotationEvent struct {
+	Title string
+	Time  time.Time
+	Tags  string
+	Text  string
+}
+
+func (s *Service) executeAnnotationQuery(ctx context.Context, logger log.Logger, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
 	*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
-	queries, err := s.buildQueryExecutors(req)
+	queries, err := s.buildQueryExecutors(logger, req)
 	if err != nil {
 		return resp, err
 	}
@@ -24,8 +34,10 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	}
 
 	mq := struct {
-		Title string `json:"title"`
-		Text  string `json:"text"`
+		MetricQuery struct {
+			Title string `json:"title"`
+			Text  string `json:"text"`
+		} `json:"metricQuery"`
 	}{}
 
 	firstQuery := req.Queries[0]
@@ -33,33 +45,24 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	if err != nil {
 		return resp, nil
 	}
-	err = queries[0].parseToAnnotations(queryRes, dr, mq.Title, mq.Text)
+	err = queries[0].parseToAnnotations(queryRes, dr, mq.MetricQuery.Title, mq.MetricQuery.Text)
 	resp.Responses[firstQuery.RefID] = *queryRes
 
 	return resp, err
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) transformAnnotationToFrame(annotations []map[string]string, result *backend.DataResponse) {
-	frames := data.Frames{}
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) transformAnnotationToFrame(annotations []*annotationEvent, result *backend.DataResponse) {
+	frame := data.NewFrame(timeSeriesQuery.RefID,
+		data.NewField("time", nil, []time.Time{}),
+		data.NewField("title", nil, []string{}),
+		data.NewField("tags", nil, []string{}),
+		data.NewField("text", nil, []string{}),
+	)
 	for _, a := range annotations {
-		frame := &data.Frame{
-			RefID: timeSeriesQuery.getRefID(),
-			Fields: []*data.Field{
-				data.NewField("time", nil, a["time"]),
-				data.NewField("title", nil, a["title"]),
-				data.NewField("tags", nil, a["tags"]),
-				data.NewField("text", nil, a["text"]),
-			},
-			Meta: &data.FrameMeta{
-				Custom: map[string]interface{}{
-					"rowCount": len(a),
-				},
-			},
-		}
-		frames = append(frames, frame)
+		frame.AppendRow(a.Time, a.Title, a.Tags, a.Text)
 	}
-	result.Frames = frames
-	slog.Info("anno", "len", len(annotations))
+	result.Frames = append(result.Frames, frame)
+	timeSeriesQuery.logger.Info("anno", "len", len(annotations))
 }
 
 func formatAnnotationText(annotationText string, pointValue string, metricType string, metricLabels map[string]string, resourceLabels map[string]string) string {

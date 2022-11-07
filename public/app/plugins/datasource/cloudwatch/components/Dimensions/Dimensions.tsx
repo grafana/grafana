@@ -1,16 +1,16 @@
 import { isEqual } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorList } from '@grafana/experimental';
 
 import { CloudWatchDatasource } from '../../datasource';
-import { Dimensions as DimensionsType, DimensionsQuery } from '../../types';
+import { Dimensions as DimensionsType, MetricStat } from '../../types';
 
 import { FilterItem } from './FilterItem';
 
 export interface Props {
-  query: DimensionsQuery;
+  metricStat: MetricStat;
   onChange: (dimensions: DimensionsType) => void;
   datasource: CloudWatchDatasource;
   dimensionKeys: Array<SelectableValue<string>>;
@@ -45,16 +45,16 @@ const filterConditionsToDimensions = (filters: DimensionFilterCondition[]) => {
   }, {});
 };
 
-export const Dimensions: React.FC<Props> = ({ query, datasource, dimensionKeys, disableExpressions, onChange }) => {
-  const [items, setItems] = useState<DimensionFilterCondition[]>([]);
-  useEffect(() => setItems(dimensionsToFilterConditions(query.dimensions)), [query.dimensions]);
+export const Dimensions = ({ metricStat, datasource, dimensionKeys, disableExpressions, onChange }: Props) => {
+  const dimensionFilters = useMemo(() => dimensionsToFilterConditions(metricStat.dimensions), [metricStat.dimensions]);
+  const [items, setItems] = useState<DimensionFilterCondition[]>(dimensionFilters);
   const onDimensionsChange = (newItems: Array<Partial<DimensionFilterCondition>>) => {
     setItems(newItems);
 
     // The onChange event should only be triggered in the case there is a complete dimension object.
     // So when a new key is added that does not yet have a value, it should not trigger an onChange event.
     const newDimensions = filterConditionsToDimensions(newItems);
-    if (!isEqual(newDimensions, query.dimensions)) {
+    if (!isEqual(newDimensions, metricStat.dimensions)) {
       onChange(newDimensions);
     }
   };
@@ -63,14 +63,14 @@ export const Dimensions: React.FC<Props> = ({ query, datasource, dimensionKeys, 
     <EditorList
       items={items}
       onChange={onDimensionsChange}
-      renderItem={makeRenderFilter(datasource, query, dimensionKeys, disableExpressions)}
+      renderItem={makeRenderFilter(datasource, metricStat, dimensionKeys, disableExpressions)}
     />
   );
 };
 
 function makeRenderFilter(
   datasource: CloudWatchDatasource,
-  query: DimensionsQuery,
+  metricStat: MetricStat,
   dimensionKeys: Array<SelectableValue<string>>,
   disableExpressions: boolean
 ) {
@@ -84,7 +84,7 @@ function makeRenderFilter(
         filter={item}
         onChange={(item) => onChange(item)}
         datasource={datasource}
-        query={query}
+        metricStat={metricStat}
         disableExpressions={disableExpressions}
         dimensionKeys={dimensionKeys}
         onDelete={onDelete}

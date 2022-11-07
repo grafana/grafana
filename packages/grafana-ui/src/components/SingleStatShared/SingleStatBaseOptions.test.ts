@@ -181,7 +181,7 @@ describe('sharedSingleStatMigrationHandler', () => {
   });
 
   it('change from angular singlestat with no enabled gauge', () => {
-    const old: any = {
+    const old = {
       angular: {
         format: 'ms',
         decimals: 7,
@@ -200,7 +200,7 @@ describe('sharedSingleStatMigrationHandler', () => {
   });
 
   it('change from angular singlestat with tableColumn set', () => {
-    const old: any = {
+    const old = {
       angular: {
         tableColumn: 'info',
       },
@@ -212,7 +212,7 @@ describe('sharedSingleStatMigrationHandler', () => {
   });
 
   it('change from angular singlestat with no enabled gauge', () => {
-    const old: any = {
+    const old = {
       angular: {
         format: 'ms',
         decimals: 7,

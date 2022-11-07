@@ -29,6 +29,7 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   scaleKey: string;
   pxAlign?: boolean;
   gradientMode?: GraphGradientMode;
+  dynamicSeriesColor?: (seriesIdx: number) => string | undefined;
 
   facets?: uPlot.Series.Facet[];
 
@@ -48,6 +49,8 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   dataFrameFieldIndex?: DataFrameFieldIndex;
   theme: GrafanaTheme2;
   value?: uPlot.Series.Value;
+
+  gapsRefiner?: uPlot.Series.GapsRefiner;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
@@ -70,6 +73,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       pxAlign,
       spanNulls,
       show = true,
+      gapsRefiner,
     } = this.props;
 
     let lineConfig: Partial<Series> = {};
@@ -144,13 +148,29 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       pxAlign,
       show,
       fill: this.getFill(),
+      gaps: gapsRefiner ?? ((u, seriesIdx, idx0, idx1, gaps) => gaps),
       ...lineConfig,
       ...pointsConfig,
     };
   }
 
   private getLineColor(): Series.Stroke {
-    const { lineColor, gradientMode, colorMode, thresholds, theme, hardMin, hardMax, softMin, softMax } = this.props;
+    const {
+      lineColor,
+      gradientMode,
+      colorMode,
+      thresholds,
+      theme,
+      hardMin,
+      hardMax,
+      softMin,
+      softMax,
+      dynamicSeriesColor,
+    } = this.props;
+
+    if (gradientMode === GraphGradientMode.None && dynamicSeriesColor) {
+      return (plot: uPlot, seriesIdx: number) => dynamicSeriesColor(seriesIdx) ?? lineColor ?? FALLBACK_COLOR;
+    }
 
     if (gradientMode === GraphGradientMode.Scheme && colorMode?.id !== FieldColorModeId.Fixed) {
       return getScaleGradientFn(1, theme, colorMode, thresholds, hardMin, hardMax, softMin, softMax);
@@ -172,6 +192,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       hardMax,
       softMin,
       softMax,
+      dynamicSeriesColor,
     } = this.props;
 
     if (fillColor) {
@@ -180,6 +201,14 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     const mode = gradientMode ?? GraphGradientMode.None;
     const opacityPercent = (fillOpacity ?? 0) / 100;
+
+    if (mode === GraphGradientMode.None && dynamicSeriesColor && opacityPercent > 0) {
+      return (u: uPlot, seriesIdx: number) => {
+        // @ts-ignore
+        let lineColor = u.series[seriesIdx]._stroke; // cache
+        return colorManipulator.alpha(lineColor ?? '', opacityPercent);
+      };
+    }
 
     switch (mode) {
       case GraphGradientMode.Opacity:

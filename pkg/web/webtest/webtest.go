@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -32,10 +34,11 @@ func NewServer(t testing.TB, routeRegister routing.RouteRegister) *Server {
 	m.Use(func(c *web.Context) {
 		initCtx.Context = c
 		initCtx.Logger = log.New("api-test")
-		c.Map(initCtx)
+
+		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), initCtx))
 	})
 
-	m.Use(requestContextMiddleware())
+	m.UseMiddleware(requestContextMiddleware())
 
 	routeRegister.Register(m.Router)
 	testServer := httptest.NewServer(m)
@@ -107,7 +110,7 @@ func RequestWithWebContext(req *http.Request, c *models.ReqContext) *http.Reques
 	return req
 }
 
-func RequestWithSignedInUser(req *http.Request, user *models.SignedInUser) *http.Request {
+func RequestWithSignedInUser(req *http.Request, user *user.SignedInUser) *http.Request {
 	return RequestWithWebContext(req, &models.ReqContext{
 		SignedInUser: user,
 		IsSignedIn:   true,
@@ -124,23 +127,25 @@ func requestContextFromRequest(req *http.Request) *models.ReqContext {
 	return val
 }
 
-func requestContextMiddleware() web.Handler {
-	return func(res http.ResponseWriter, req *http.Request, c *models.ReqContext) {
-		ctx := requestContextFromRequest(req)
-		if ctx == nil {
-			c.Next()
-			return
-		}
+func requestContextMiddleware() web.Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			c := ctxkey.Get(r.Context()).(*models.ReqContext)
 
-		c.SignedInUser = ctx.SignedInUser
-		c.UserToken = ctx.UserToken
-		c.IsSignedIn = ctx.IsSignedIn
-		c.IsRenderCall = ctx.IsRenderCall
-		c.AllowAnonymous = ctx.AllowAnonymous
-		c.SkipCache = ctx.SkipCache
-		c.RequestNonce = ctx.RequestNonce
-		c.PerfmonTimer = ctx.PerfmonTimer
-		c.LookupTokenErr = ctx.LookupTokenErr
-		c.Map(c)
+			ctx := requestContextFromRequest(r)
+			if ctx != nil {
+				c.SignedInUser = ctx.SignedInUser
+				c.UserToken = ctx.UserToken
+				c.IsSignedIn = ctx.IsSignedIn
+				c.IsRenderCall = ctx.IsRenderCall
+				c.AllowAnonymous = ctx.AllowAnonymous
+				c.SkipCache = ctx.SkipCache
+				c.RequestNonce = ctx.RequestNonce
+				c.PerfmonTimer = ctx.PerfmonTimer
+				c.LookupTokenErr = ctx.LookupTokenErr
+			}
+
+			next.ServeHTTP(w, r)
+		})
 	}
 }

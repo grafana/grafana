@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -102,6 +103,11 @@ func (ss *SQLStore) GetSystemStats(ctx context.Context, query *models.GetSystemS
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("api_key") + `WHERE service_account_id IS NULL) AS api_keys,`)
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_panels,`, models.PanelElement)
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_variables,`, models.VariableElement)
+		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `) AS data_keys,`)
+		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `WHERE active = true) AS active_data_keys,`)
+
+		// TODO: table name will change and filter should check only for is_enabled = true
+		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("dashboard_public") + `WHERE is_enabled = true) AS public_dashboards,`)
 
 		sb.Write(ss.roleCounterSQL(ctx))
 
@@ -142,7 +148,7 @@ func viewersPermissionsCounterSQL(statName string, isFolder bool, permission mod
 		FROM ` + dialect.Quote("dashboard_acl") + ` AS acl
 			INNER JOIN ` + dialect.Quote("dashboard") + ` AS d
 			ON d.id = acl.dashboard_id
-		WHERE acl.role = '` + string(models.ROLE_VIEWER) + `'
+		WHERE acl.role = '` + string(org.RoleViewer) + `'
 			AND d.is_folder = ` + dialect.BooleanStr(isFolder) + `
 			AND acl.permission = ` + strconv.FormatInt(int64(permission), 10) + `
 	) AS ` + statName + `, `
@@ -300,11 +306,11 @@ GROUP BY active, daily_active, role;`
 
 		memo := memoUserStats{memoized: time.Now()}
 		for _, role := range bitmap {
-			roletype := models.ROLE_VIEWER
+			roletype := org.RoleViewer
 			if role.Bitrole&0b100 != 0 {
-				roletype = models.ROLE_ADMIN
+				roletype = org.RoleAdmin
 			} else if role.Bitrole&0b10 != 0 {
-				roletype = models.ROLE_EDITOR
+				roletype = org.RoleEditor
 			}
 
 			memo.total = addToStats(memo.total, roletype, role.Count)
@@ -321,13 +327,13 @@ GROUP BY active, daily_active, role;`
 	})
 }
 
-func addToStats(base models.UserStats, role models.RoleType, count int64) models.UserStats {
+func addToStats(base models.UserStats, role org.RoleType, count int64) models.UserStats {
 	base.Users += count
 
 	switch role {
-	case models.ROLE_ADMIN:
+	case org.RoleAdmin:
 		base.Admins += count
-	case models.ROLE_EDITOR:
+	case org.RoleEditor:
 		base.Editors += count
 	default:
 		base.Viewers += count

@@ -11,10 +11,10 @@ const setClassNameHelper = (inherited: boolean) => {
 
 function ItemAvatar({ item }: { item: DashboardAcl }) {
   if (item.userAvatarUrl) {
-    return <img className="filter-table__avatar" src={item.userAvatarUrl} />;
+    return <img className="filter-table__avatar" src={item.userAvatarUrl} alt="User avatar" />;
   }
   if (item.teamAvatarUrl) {
-    return <img className="filter-table__avatar" src={item.teamAvatarUrl} />;
+    return <img className="filter-table__avatar" src={item.teamAvatarUrl} alt="Team avatar" />;
   }
   if (item.role === 'Editor') {
     return <Icon size="lg" name="edit" />;
@@ -87,7 +87,6 @@ export default class PermissionsListItem extends PureComponent<Props> {
             disabled={item.inherited}
             value={currentPermissionLevel}
             width={25}
-            menuShouldPortal
           />
         </td>
         <td>

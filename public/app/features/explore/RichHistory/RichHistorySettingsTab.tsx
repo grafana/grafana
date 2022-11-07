@@ -1,14 +1,15 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { stylesFactory, useTheme, Select, Button, Field, InlineField, InlineSwitch } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { useStyles2, Select, Button, Field, InlineField, InlineSwitch, Alert } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { MAX_HISTORY_ITEMS } from 'app/core/history/RichHistoryLocalStorage';
 import { dispatch } from 'app/store/store';
 
+import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 import { ShowConfirmModalEvent } from '../../../types/events';
 
 export interface RichHistorySettingsProps {
@@ -21,19 +22,25 @@ export interface RichHistorySettingsProps {
   deleteRichHistory: () => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
-      font-size: ${theme.typography.size.sm};
-      .space-between {
-        margin-bottom: ${theme.spacing.lg};
-      }
+      font-size: ${theme.typography.bodySmall.fontSize};
+    `,
+    spaceBetween: css`
+      margin-bottom: ${theme.spacing(3)};
     `,
     input: css`
       max-width: 200px;
     `,
+    bold: css`
+      font-weight: ${theme.typography.fontWeightBold};
+    `,
+    bottomMargin: css`
+      margin-bottom: ${theme.spacing(1)};
+    `,
   };
-});
+};
 
 const retentionPeriodOptions = [
   { value: 2, label: '2 days' },
@@ -52,8 +59,7 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
     toggleactiveDatasourceOnly,
     deleteRichHistory,
   } = props;
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
   const selectedOption = retentionPeriodOptions.find((v) => v.value === retentionPeriod);
 
   const onDelete = () => {
@@ -73,51 +79,51 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
 
   return (
     <div className={styles.container}>
-      <Field
-        label="History time span"
-        description={`Select the period of time for which Grafana will save your query history. Up to ${MAX_HISTORY_ITEMS} entries will be stored.`}
-        className="space-between"
+      {supportedFeatures().changeRetention ? (
+        <Field
+          label="History time span"
+          description={`Select the period of time for which Grafana will save your query history. Up to ${MAX_HISTORY_ITEMS} entries will be stored.`}
+        >
+          <div className={styles.input}>
+            <Select value={selectedOption} options={retentionPeriodOptions} onChange={onChangeRetentionPeriod}></Select>
+          </div>
+        </Field>
+      ) : (
+        <Alert severity="info" title="History time span">
+          Grafana will keep entries up to {selectedOption?.label}.
+        </Alert>
+      )}
+      <InlineField
+        label="Change the default active tab from “Query history” to “Starred”"
+        className={styles.spaceBetween}
       >
-        <div className={styles.input}>
-          <Select
-            menuShouldPortal
-            value={selectedOption}
-            options={retentionPeriodOptions}
-            onChange={onChangeRetentionPeriod}
-          ></Select>
-        </div>
-      </Field>
-      <InlineField label="Change the default active tab from “Query history” to “Starred”" className="space-between">
         <InlineSwitch
           id="explore-query-history-settings-default-active-tab"
           value={starredTabAsFirstTab}
           onChange={toggleStarredTabAsFirstTab}
         />
       </InlineField>
-      <InlineField label="Only show queries for data source currently active in Explore" className="space-between">
-        <InlineSwitch
-          id="explore-query-history-settings-data-source-behavior"
-          value={activeDatasourceOnly}
-          onChange={toggleactiveDatasourceOnly}
-        />
-      </InlineField>
-      <div
-        className={css`
-          font-weight: ${theme.typography.weight.bold};
-        `}
-      >
-        Clear query history
-      </div>
-      <div
-        className={css`
-          margin-bottom: ${theme.spacing.sm};
-        `}
-      >
-        Delete all of your query history, permanently.
-      </div>
-      <Button variant="destructive" onClick={onDelete}>
-        Clear query history
-      </Button>
+      {supportedFeatures().onlyActiveDataSource && (
+        <InlineField
+          label="Only show queries for data source currently active in Explore"
+          className={styles.spaceBetween}
+        >
+          <InlineSwitch
+            id="explore-query-history-settings-data-source-behavior"
+            value={activeDatasourceOnly}
+            onChange={toggleactiveDatasourceOnly}
+          />
+        </InlineField>
+      )}
+      {supportedFeatures().clearHistory && (
+        <div>
+          <div className={styles.bold}>Clear query history</div>
+          <div className={styles.bottomMargin}>Delete all of your query history, permanently.</div>
+          <Button variant="destructive" onClick={onDelete}>
+            Clear query history
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import {
   StackingMode,
@@ -12,11 +12,10 @@ import {
 } from '@grafana/schema';
 import { measureText, PlotTooltipInterpolator } from '@grafana/ui';
 import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
-
-import { preparePlotData2, StackingGroup } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import { StackingGroup, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { intersects, pointWithin, Quadtree, Rect } from './quadtree';
+import { findRect, intersects, pointWithin, Quadtree, Rect } from './quadtree';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -52,12 +51,14 @@ export interface BarsOptions {
   getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
   fillOpacity?: number;
   formatValue: (seriesIdx: number, value: any) => string;
+  timeZone?: TimeZone;
   text?: VizTextDisplayOptions;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
   onLeave?: (seriesIdx: number, valueIdx: number) => void;
   legend?: VizLegendOptions;
   xSpacing?: number;
   xTimeAuto?: boolean;
+  negY?: boolean[];
 }
 
 /**
@@ -250,7 +251,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   let barsPctLayout: Array<null | { offs: number[]; size: number[] }> = [];
   let barsColors: Array<null | { fill: Array<string | null>; stroke: Array<string | null> }> = [];
   let scaleFactor = 1;
-  let labels: ValueLabelTable = {};
+  let labels: ValueLabelTable;
   let fontSize = opts.text?.valueSize ?? VALUE_MAX_FONT_SIZE;
   let labelOffset = LABEL_OFFSET_MAX;
 
@@ -307,11 +308,16 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       qt.add(barRect);
 
       if (showValue !== VisibilityMode.Never) {
+        const raw = rawValue(seriesIdx, dataIdx)!;
+        let divider = 1;
+
+        if (pctStacked && alignedTotals![seriesIdx][dataIdx]!) {
+          divider = alignedTotals![seriesIdx][dataIdx]!;
+        }
+
+        const v = divider === 0 ? 0 : raw / divider;
         // Format Values and calculate label offsets
-        const text = formatValue(
-          seriesIdx,
-          rawValue(seriesIdx, dataIdx)! / (pctStacked ? alignedTotals![seriesIdx][dataIdx]! : 1)
-        );
+        const text = formatValue(seriesIdx, v);
         labelOffset = Math.min(labelOffset, Math.round(LABEL_OFFSET_FACTOR * (isXHorizontal ? wid : hgt)));
 
         if (labels[dataIdx] === undefined) {
@@ -348,6 +354,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         let middleShift = isXHorizontal ? 0 : -Math.round(MIDDLE_BASELINE_SHIFT * fontSize);
         let value = rawValue(seriesIdx, dataIdx);
 
+        if (opts.negY?.[seriesIdx] && value != null) {
+          value *= -1;
+        }
+
         if (value != null) {
           // Calculate final co-ordinates for text position
           const x =
@@ -376,7 +386,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             // Adjust for baseline which is "top" in this case
             xAdjust = (textMetrics.width * scaleFactor) / 2;
 
-            // yAdjust only matters when when the value isn't negative
+            // yAdjust only matters when the value isn't negative
             yAdjust =
               value > 0
                 ? (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor
@@ -427,7 +437,14 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
         qt.get(cx, cy, 1, 1, (o) => {
           if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-            hRect = o;
+            if (isStacked) {
+              // choose the smallest hovered rect (when stacked bigger ones overlap smaller ones)
+              if (hRect == null || o.h * o.w < hRect.h * hRect.w) {
+                hRect = o;
+              }
+            } else {
+              hRect = o;
+            }
           }
         });
       }
@@ -439,11 +456,18 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       bbox: (u, seriesIdx) => {
         let isHovered = hRect && seriesIdx === hRect.sidx;
 
+        let heightReduce = 0;
+
+        // get height of bar rect at same index of the series below the hovered one
+        if (isStacked && isHovered && hRect!.sidx > 1) {
+          heightReduce = findRect(qt, hRect!.sidx - 1, hRect!.didx)!.h;
+        }
+
         return {
           left: isHovered ? hRect!.x / devicePixelRatio : -10,
           top: isHovered ? hRect!.y / devicePixelRatio : -10,
           width: isHovered ? hRect!.w / devicePixelRatio : 0,
-          height: isHovered ? hRect!.h / devicePixelRatio : 0,
+          height: isHovered ? (hRect!.h - heightReduce) / devicePixelRatio : 0,
         };
       },
     },
@@ -472,7 +496,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
       // map per-bar colors
       for (let i = 1; i < u.data.length; i++) {
-        let colors = u.data[i].map((value, valueIdx) => {
+        let colors = (u.data[i] as Array<number | null>).map((value, valueIdx) => {
           if (value != null) {
             return getColor!(i, valueIdx, value);
           }
@@ -507,8 +531,17 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       curBaseline: CanvasTextBaseline | undefined = undefined;
 
     for (const didx in labels) {
+      // exclude first label from overlap testing
+      let first = true;
+
       for (const sidx in labels[didx]) {
-        const { text, value, x = 0, y = 0, bbox = { x: 0, y: 0, w: 1, h: 1 } } = labels[didx][sidx];
+        const label = labels[didx][sidx];
+        const { text, x = 0, y = 0 } = label;
+        let { value } = label;
+
+        if (opts.negY?.[sidx] && value != null) {
+          value *= -1;
+        }
 
         let align: CanvasTextAlign = isXHorizontal ? 'center' : value !== null && value < 0 ? 'right' : 'left';
         let baseline: CanvasTextBaseline = isXHorizontal
@@ -528,18 +561,32 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         if (showValue === VisibilityMode.Always) {
           u.ctx.fillText(text, x, y);
         } else if (showValue === VisibilityMode.Auto) {
+          let { bbox } = label;
+
           let intersectsLabel = false;
 
-          // Test for any collisions
-          for (const subsidx in labels[didx]) {
-            const r = labels[didx][subsidx].bbox!;
+          if (bbox == null) {
+            intersectsLabel = true;
+            label.hidden = true;
+          } else if (!first) {
+            // Test for any collisions
+            for (const subsidx in labels[didx]) {
+              if (subsidx === sidx) {
+                continue;
+              }
 
-            if (!labels[didx][subsidx].hidden && sidx !== subsidx && intersects(bbox, r)) {
-              intersectsLabel = true;
-              labels[didx][sidx].hidden = true;
-              break;
+              const label2 = labels[didx][subsidx];
+              const { bbox: bbox2, hidden } = label2;
+
+              if (!hidden && bbox2 && intersects(bbox, bbox2)) {
+                intersectsLabel = true;
+                label.hidden = true;
+                break;
+              }
             }
           }
+
+          first = false;
 
           !intersectsLabel && u.ctx.fillText(text, x, y);
         }

@@ -52,6 +52,7 @@ describe('addDataLinksToLogsResponse', () => {
       mockOptions,
       { ...time, raw: time },
       (s) => s ?? '',
+      (v) => [v] ?? [],
       (r) => r,
       'xrayUid'
     );

@@ -1,13 +1,14 @@
 // Package values is a set of value types to use in provisioning. They add custom unmarshaling logic that puts the string values
 // through os.ExpandEnv.
 // Usage:
-// type Data struct {
-//   Field StringValue `yaml:"field"` // Instead of string
-// }
+//
+//	type Data struct {
+//	  Field StringValue `yaml:"field"` // Instead of string
+//	}
+//
 // d := &Data{}
 // // unmarshal into d
 // d.Field.Value() // returns the final interpolated value from the yaml file
-//
 package values
 
 import (
@@ -18,8 +19,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // IntValue represents a string value in a YAML
@@ -41,7 +40,10 @@ func (val *IntValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 	val.Raw = interpolated.raw
 	val.value, err = strconv.Atoi(interpolated.value)
-	return errutil.Wrap("cannot convert value int", err)
+	if err != nil {
+		return fmt.Errorf("%v: %w", "cannot convert value int", err)
+	}
+	return err
 }
 
 // Value returns the wrapped int value
@@ -184,6 +186,47 @@ func (val *StringMapValue) UnmarshalYAML(unmarshal func(interface{}) error) erro
 
 // Value returns the wrapped map[string]string value
 func (val *StringMapValue) Value() map[string]string {
+	return val.value
+}
+
+// JSONSliceValue represents a slice value in a YAML
+// config that can be overridden by environment variables
+
+type JSONSliceValue struct {
+	value []map[string]interface{}
+	Raw   []map[string]interface{}
+}
+
+// UnmarshalYAML converts YAML into an *JSONSliceValue
+func (val *JSONSliceValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	unmarshaled := make([]interface{}, 0)
+	err := unmarshal(&unmarshaled)
+	if err != nil {
+		return err
+	}
+	interpolated := make([]map[string]interface{}, 0)
+	raw := make([]map[string]interface{}, 0)
+
+	for _, v := range unmarshaled {
+		i := make(map[string]interface{})
+		r := make(map[string]interface{})
+		for key, val := range v.(map[interface{}]interface{}) {
+			i[key.(string)], r[key.(string)], err = transformInterface(val)
+			if err != nil {
+				return err
+			}
+		}
+		interpolated = append(interpolated, i)
+		raw = append(raw, r)
+	}
+
+	val.Raw = raw
+	val.value = interpolated
+	return err
+}
+
+// Value returns the wrapped []interface{} value
+func (val *JSONSliceValue) Value() []map[string]interface{} {
 	return val.value
 }
 

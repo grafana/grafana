@@ -2,13 +2,14 @@ package guardian
 
 import (
 	"context"
-	"strconv"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -21,30 +22,36 @@ var permissionMap = map[string]models.PermissionType{
 var _ DashboardGuardian = new(AccessControlDashboardGuardian)
 
 func NewAccessControlDashboardGuardian(
-	ctx context.Context, dashboardId int64, user *models.SignedInUser,
-	store sqlstore.Store, ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
+	ctx context.Context, dashboardId int64, user *user.SignedInUser,
+	store db.DB, ac accesscontrol.AccessControl,
+	folderPermissionsService accesscontrol.FolderPermissionsService,
+	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
+	dashboardService dashboards.DashboardService,
 ) *AccessControlDashboardGuardian {
 	return &AccessControlDashboardGuardian{
-		ctx:                ctx,
-		log:                log.New("dashboard.permissions"),
-		dashboardID:        dashboardId,
-		user:               user,
-		store:              store,
-		ac:                 ac,
-		permissionServices: permissionsServices,
+		ctx:                         ctx,
+		log:                         log.New("dashboard.permissions"),
+		dashboardID:                 dashboardId,
+		user:                        user,
+		store:                       store,
+		ac:                          ac,
+		folderPermissionsService:    folderPermissionsService,
+		dashboardPermissionsService: dashboardPermissionsService,
+		dashboardService:            dashboardService,
 	}
 }
 
 type AccessControlDashboardGuardian struct {
-	ctx                context.Context
-	log                log.Logger
-	dashboardID        int64
-	dashboard          *models.Dashboard
-	parentFolderUID    string
-	user               *models.SignedInUser
-	store              sqlstore.Store
-	ac                 accesscontrol.AccessControl
-	permissionServices accesscontrol.PermissionsServices
+	ctx                         context.Context
+	log                         log.Logger
+	dashboardID                 int64
+	dashboard                   *models.Dashboard
+	user                        *user.SignedInUser
+	store                       db.DB
+	ac                          accesscontrol.AccessControl
+	folderPermissionsService    accesscontrol.FolderPermissionsService
+	dashboardPermissionsService accesscontrol.DashboardPermissionsService
+	dashboardService            dashboards.DashboardService
 }
 
 func (a *AccessControlDashboardGuardian) CanSave() (bool, error) {
@@ -53,13 +60,12 @@ func (a *AccessControlDashboardGuardian) CanSave() (bool, error) {
 	}
 
 	if a.dashboard.IsFolder {
-		return a.evaluate(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, folderScope(a.dashboard.Uid)))
+		return a.evaluate(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(a.dashboard.Uid)))
 	}
 
-	return a.evaluate(accesscontrol.EvalAny(
-		accesscontrol.EvalPermission(accesscontrol.ActionDashboardsWrite, dashboardScope(a.dashboard.Uid)),
-		accesscontrol.EvalPermission(accesscontrol.ActionDashboardsWrite, folderScope(a.parentFolderUID)),
-	))
+	return a.evaluate(
+		accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(a.dashboard.Uid)),
+	)
 }
 
 func (a *AccessControlDashboardGuardian) CanEdit() (bool, error) {
@@ -71,13 +77,12 @@ func (a *AccessControlDashboardGuardian) CanEdit() (bool, error) {
 	}
 
 	if a.dashboard.IsFolder {
-		return a.evaluate(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, folderScope(a.dashboard.Uid)))
+		return a.evaluate(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(a.dashboard.Uid)))
 	}
 
-	return a.evaluate(accesscontrol.EvalAny(
-		accesscontrol.EvalPermission(accesscontrol.ActionDashboardsWrite, dashboardScope(a.dashboard.Uid)),
-		accesscontrol.EvalPermission(accesscontrol.ActionDashboardsWrite, folderScope(a.parentFolderUID)),
-	))
+	return a.evaluate(
+		accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(a.dashboard.Uid)),
+	)
 }
 
 func (a *AccessControlDashboardGuardian) CanView() (bool, error) {
@@ -86,13 +91,12 @@ func (a *AccessControlDashboardGuardian) CanView() (bool, error) {
 	}
 
 	if a.dashboard.IsFolder {
-		return a.evaluate(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, folderScope(a.dashboard.Uid)))
+		return a.evaluate(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(a.dashboard.Uid)))
 	}
 
-	return a.evaluate(accesscontrol.EvalAny(
-		accesscontrol.EvalPermission(accesscontrol.ActionDashboardsRead, dashboardScope(a.dashboard.Uid)),
-		accesscontrol.EvalPermission(accesscontrol.ActionDashboardsRead, folderScope(a.parentFolderUID)),
-	))
+	return a.evaluate(
+		accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(a.dashboard.Uid)),
+	)
 }
 
 func (a *AccessControlDashboardGuardian) CanAdmin() (bool, error) {
@@ -102,20 +106,14 @@ func (a *AccessControlDashboardGuardian) CanAdmin() (bool, error) {
 
 	if a.dashboard.IsFolder {
 		return a.evaluate(accesscontrol.EvalAll(
-			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsRead, folderScope(a.dashboard.Uid)),
-			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, folderScope(a.dashboard.Uid)),
+			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(a.dashboard.Uid)),
+			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(a.dashboard.Uid)),
 		))
 	}
 
-	return a.evaluate(accesscontrol.EvalAny(
-		accesscontrol.EvalAll(
-			accesscontrol.EvalPermission(accesscontrol.ActionDashboardsPermissionsRead, dashboardScope(a.dashboard.Uid)),
-			accesscontrol.EvalPermission(accesscontrol.ActionDashboardsPermissionsWrite, dashboardScope(a.dashboard.Uid)),
-		),
-		accesscontrol.EvalAll(
-			accesscontrol.EvalPermission(accesscontrol.ActionDashboardsPermissionsRead, folderScope(a.parentFolderUID)),
-			accesscontrol.EvalPermission(accesscontrol.ActionDashboardsPermissionsWrite, folderScope(a.parentFolderUID)),
-		),
+	return a.evaluate(accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(dashboards.ActionDashboardsPermissionsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(a.dashboard.Uid)),
+		accesscontrol.EvalPermission(dashboards.ActionDashboardsPermissionsWrite, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(a.dashboard.Uid)),
 	))
 }
 
@@ -125,13 +123,12 @@ func (a *AccessControlDashboardGuardian) CanDelete() (bool, error) {
 	}
 
 	if a.dashboard.IsFolder {
-		return a.evaluate(accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, folderScope(a.dashboard.Uid)))
+		return a.evaluate(accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(a.dashboard.Uid)))
 	}
 
-	return a.evaluate(accesscontrol.EvalAny(
-		accesscontrol.EvalPermission(accesscontrol.ActionDashboardsDelete, dashboardScope(a.dashboard.Uid)),
-		accesscontrol.EvalPermission(accesscontrol.ActionDashboardsDelete, folderScope(a.parentFolderUID)),
-	))
+	return a.evaluate(
+		accesscontrol.EvalPermission(dashboards.ActionDashboardsDelete, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(a.dashboard.Uid)),
+	)
 }
 
 func (a *AccessControlDashboardGuardian) CanCreate(folderID int64, isFolder bool) (bool, error) {
@@ -142,56 +139,58 @@ func (a *AccessControlDashboardGuardian) CanCreate(folderID int64, isFolder bool
 	if err != nil {
 		return false, err
 	}
-	return a.evaluate(accesscontrol.EvalPermission(accesscontrol.ActionDashboardsCreate, folderScope(folder.Uid)))
+	return a.evaluate(accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.Uid)))
 }
 
 func (a *AccessControlDashboardGuardian) evaluate(evaluator accesscontrol.Evaluator) (bool, error) {
 	ok, err := a.ac.Evaluate(a.ctx, a.user, evaluator)
 	if err != nil {
-		a.log.Error("Failed to evaluate access control to folder or dashboard", "error", err, "userId", a.user.UserId, "id", a.dashboardID)
+		a.log.Debug("Failed to evaluate access control to folder or dashboard", "error", err, "userId", a.user.UserID, "id", a.dashboardID)
 	}
 
 	if !ok && err == nil {
-		a.log.Info("Access denied to folder or dashboard", "userId", a.user.UserId, "id", a.dashboardID, "permissions", evaluator.GoString())
+		a.log.Debug("Access denied to folder or dashboard", "userId", a.user.UserID, "id", a.dashboardID, "permissions", evaluator.GoString())
 	}
 
 	return ok, err
 }
 
-func (a *AccessControlDashboardGuardian) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error) {
+func (a *AccessControlDashboardGuardian) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardACL) (bool, error) {
 	// always true for access control
 	return true, nil
 }
 
-// GetAcl translate access control permissions to dashboard acl info
-func (a *AccessControlDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO, error) {
+// GetACL translate access control permissions to dashboard acl info
+func (a *AccessControlDashboardGuardian) GetACL() ([]*models.DashboardACLInfoDTO, error) {
 	if err := a.loadDashboard(); err != nil {
 		return nil, err
 	}
 
-	svc := a.permissionServices.GetDashboardService()
+	var svc accesscontrol.PermissionsService
 	if a.dashboard.IsFolder {
-		svc = a.permissionServices.GetFolderService()
+		svc = a.folderPermissionsService
+	} else {
+		svc = a.dashboardPermissionsService
 	}
 
-	permissions, err := svc.GetPermissions(a.ctx, a.user, strconv.FormatInt(a.dashboard.Id, 10))
+	permissions, err := svc.GetPermissions(a.ctx, a.user, a.dashboard.Uid)
 	if err != nil {
 		return nil, err
 	}
 
-	acl := make([]*models.DashboardAclInfoDTO, 0, len(permissions))
+	acl := make([]*models.DashboardACLInfoDTO, 0, len(permissions))
 	for _, p := range permissions {
 		if !p.IsManaged {
 			continue
 		}
 
-		var role *models.RoleType
+		var role *org.RoleType
 		if p.BuiltInRole != "" {
-			tmp := models.RoleType(p.BuiltInRole)
+			tmp := org.RoleType(p.BuiltInRole)
 			role = &tmp
 		}
 
-		acl = append(acl, &models.DashboardAclInfoDTO{
+		acl = append(acl, &models.DashboardACLInfoDTO{
 			OrgId:          a.dashboard.OrgId,
 			DashboardId:    a.dashboard.Id,
 			FolderId:       a.dashboard.FolderId,
@@ -218,17 +217,17 @@ func (a *AccessControlDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO
 	return acl, nil
 }
 
-func (a *AccessControlDashboardGuardian) GetACLWithoutDuplicates() ([]*models.DashboardAclInfoDTO, error) {
-	return a.GetAcl()
+func (a *AccessControlDashboardGuardian) GetACLWithoutDuplicates() ([]*models.DashboardACLInfoDTO, error) {
+	return a.GetACL()
 }
 
-func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.DashboardAcl, error) {
-	var hiddenACL []*models.DashboardAcl
+func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.DashboardACL, error) {
+	var hiddenACL []*models.DashboardACL
 	if a.user.IsGrafanaAdmin {
 		return hiddenACL, nil
 	}
 
-	existingPermissions, err := a.GetAcl()
+	existingPermissions, err := a.GetACL()
 	if err != nil {
 		return hiddenACL, err
 	}
@@ -239,7 +238,7 @@ func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*mode
 		}
 
 		if _, hidden := cfg.HiddenUsers[item.UserLogin]; hidden {
-			hiddenACL = append(hiddenACL, &models.DashboardAcl{
+			hiddenACL = append(hiddenACL, &models.DashboardACL{
 				OrgID:       item.OrgId,
 				DashboardID: item.DashboardId,
 				UserID:      item.UserId,
@@ -257,16 +256,9 @@ func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*mode
 
 func (a *AccessControlDashboardGuardian) loadDashboard() error {
 	if a.dashboard == nil {
-		query := &models.GetDashboardQuery{Id: a.dashboardID, OrgId: a.user.OrgId}
-		if err := a.store.GetDashboard(a.ctx, query); err != nil {
+		query := &models.GetDashboardQuery{Id: a.dashboardID, OrgId: a.user.OrgID}
+		if err := a.dashboardService.GetDashboard(a.ctx, query); err != nil {
 			return err
-		}
-		if !query.Result.IsFolder {
-			folder, err := a.loadParentFolder(query.Result.FolderId)
-			if err != nil {
-				return err
-			}
-			a.parentFolderUID = folder.Uid
 		}
 		a.dashboard = query.Result
 	}
@@ -277,17 +269,9 @@ func (a *AccessControlDashboardGuardian) loadParentFolder(folderID int64) (*mode
 	if folderID == 0 {
 		return &models.Dashboard{Uid: accesscontrol.GeneralFolderUID}, nil
 	}
-	folderQuery := &models.GetDashboardQuery{Id: folderID, OrgId: a.user.OrgId}
-	if err := a.store.GetDashboard(a.ctx, folderQuery); err != nil {
+	folderQuery := &models.GetDashboardQuery{Id: folderID, OrgId: a.user.OrgID}
+	if err := a.dashboardService.GetDashboard(a.ctx, folderQuery); err != nil {
 		return nil, err
 	}
 	return folderQuery.Result, nil
-}
-
-func dashboardScope(uid string) string {
-	return accesscontrol.GetResourceScopeUID("dashboards", uid)
-}
-
-func folderScope(uid string) string {
-	return dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid)
 }

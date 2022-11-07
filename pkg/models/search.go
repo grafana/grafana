@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type SortOption struct {
@@ -20,18 +21,19 @@ type SortOptionFilter interface {
 }
 
 type FindPersistedDashboardsQuery struct {
-	Title        string
-	OrgId        int64
-	SignedInUser *SignedInUser
-	IsStarred    bool
-	DashboardIds []int64
-	Type         string
-	FolderIds    []int64
-	Tags         []string
-	Limit        int64
-	Page         int64
-	Permission   PermissionType
-	Sort         SortOption
+	Title         string
+	OrgId         int64
+	SignedInUser  *user.SignedInUser
+	IsStarred     bool
+	DashboardIds  []int64
+	DashboardUIDs []string
+	Type          string
+	FolderIds     []int64
+	Tags          []string
+	Limit         int64
+	Page          int64
+	Permission    PermissionType
+	Sort          SortOption
 
 	Filters []interface{}
 

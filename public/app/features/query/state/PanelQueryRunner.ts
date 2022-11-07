@@ -26,11 +26,13 @@ import {
   transformDataFrame,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
+import { PublicDashboardDataSource } from '../../dashboard/services/PublicDashboardDataSource';
 import { PanelModel } from '../../dashboard/state';
 
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
@@ -44,7 +46,10 @@ export interface QueryRunnerOptions<
   datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId?: number;
+  /** @deprecate */
   dashboardId?: number;
+  dashboardUID?: string;
+  publicDashboardAccessToken?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
@@ -200,6 +205,8 @@ export class PanelQueryRunner {
       datasource,
       panelId,
       dashboardId,
+      dashboardUID,
+      publicDashboardAccessToken,
       timeRange,
       timeInfo,
       cacheTimeout,
@@ -209,7 +216,7 @@ export class PanelQueryRunner {
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
-      this.pipeToSubject(runSharedRequest(options), panelId);
+      this.pipeToSubject(runSharedRequest(options, queries[0]), panelId);
       return;
     }
 
@@ -219,6 +226,8 @@ export class PanelQueryRunner {
       timezone,
       panelId,
       dashboardId,
+      dashboardUID,
+      publicDashboardAccessToken,
       range: timeRange,
       timeInfo,
       interval: '',
@@ -234,11 +243,15 @@ export class PanelQueryRunner {
     (request as any).rangeRaw = timeRange.raw;
 
     try {
-      const ds = await getDataSource(datasource, request.scopedVars);
+      const ds = await getDataSource(datasource, request.scopedVars, publicDashboardAccessToken);
+      const isMixedDS = ds.meta?.mixed;
 
-      // Attach the data source name to each query
+      // Attach the data source to each query
       request.targets = request.targets.map((query) => {
-        if (!query.datasource) {
+        const isExpressionQuery = query.datasource?.type === ExpressionDatasourceRef.type;
+        // When using a data source variable, the panel might have the incorrect datasource
+        // stored, so when running the query make sure it is done with the correct one
+        if (!query.datasource || (query.datasource.uid !== ds.uid && !isMixedDS && !isExpressionQuery)) {
           query.datasource = ds.getRef();
         }
         return query;
@@ -338,6 +351,11 @@ export class PanelQueryRunner {
     }
   }
 
+  /** Useful from tests */
+  setLastResult(data: PanelData) {
+    this.lastResult = data;
+  }
+
   getLastResult(): PanelData | undefined {
     return this.lastResult;
   }
@@ -349,10 +367,17 @@ export class PanelQueryRunner {
 
 async function getDataSource(
   datasource: DataSourceRef | string | DataSourceApi | null,
-  scopedVars: ScopedVars
+  scopedVars: ScopedVars,
+  publicDashboardAccessToken?: string
 ): Promise<DataSourceApi> {
-  if (datasource && (datasource as any).query) {
-    return datasource as DataSourceApi;
+  if (!publicDashboardAccessToken && datasource && typeof datasource === 'object' && 'query' in datasource) {
+    return datasource;
   }
-  return await getDatasourceSrv().get(datasource as string, scopedVars);
+
+  const ds = await getDatasourceSrv().get(datasource, scopedVars);
+  if (publicDashboardAccessToken) {
+    return new PublicDashboardDataSource(ds);
+  }
+
+  return ds;
 }

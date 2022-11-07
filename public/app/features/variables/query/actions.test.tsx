@@ -1,5 +1,4 @@
 import React from 'react';
-import { expect } from 'test/lib/common';
 
 import { DataSourceRef, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
@@ -16,7 +15,7 @@ import {
   changeVariableEditorExtended,
   initialVariableEditorState,
   removeVariableEditorError,
-  setIdInEditor,
+  variableEditorMounted,
 } from '../editor/reducer';
 import { updateOptions } from '../state/actions';
 import { getPreloadedState, getRootReducer, RootReducerType } from '../state/helpers';
@@ -168,8 +167,8 @@ describe('query actions', () => {
         .whenActionIsDispatched(
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
+        .whenActionIsDispatched(toKeyedAction('key', variableEditorMounted({ name: variable.name, id: variable.id })))
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenActionIsDispatched(toKeyedAction('key', setIdInEditor({ id: variable.id })))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable)), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
@@ -196,13 +195,11 @@ describe('query actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenActionIsDispatched(toKeyedAction('key', setIdInEditor({ id: variable.id })))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable), 'search'), true);
 
       const update = { results: optionsMetrics, templatedRegex: '' };
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction('key', removeVariableEditorError({ errorProp: 'update' })),
         toKeyedAction('key', updateVariableOptions(toVariablePayload(variable, update)))
       );
     });
@@ -212,7 +209,7 @@ describe('query actions', () => {
     silenceConsoleOutput();
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true });
-      const error = { message: 'failed to fetch metrics' };
+      const error = new Error('failed to fetch metrics');
 
       mocks[variable.datasource!.uid!].metricFindQuery = jest.fn(() => Promise.reject(error));
 
@@ -222,27 +219,19 @@ describe('query actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenActionIsDispatched(toKeyedAction('key', setIdInEditor({ id: variable.id })))
         .whenAsyncActionIsDispatched(updateOptions(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
-        const expectedNumberOfActions = 5;
+        const expectedNumberOfActions = 3;
 
         expect(dispatchedActions[0]).toEqual(toKeyedAction('key', variableStateFetching(toVariablePayload(variable))));
-        expect(dispatchedActions[1]).toEqual(toKeyedAction('key', removeVariableEditorError({ errorProp: 'update' })));
-        expect(dispatchedActions[2]).toEqual(
-          toKeyedAction('key', addVariableEditorError({ errorProp: 'update', errorText: error.message }))
+        expect(dispatchedActions[1]).toEqual(
+          toKeyedAction('key', variableStateFailed(toVariablePayload(variable, { error })))
         );
-        expect(dispatchedActions[3]).toEqual(
-          toKeyedAction(
-            'key',
-            variableStateFailed(toVariablePayload(variable, { error: { message: 'failed to fetch metrics' } }))
-          )
-        );
-        expect(dispatchedActions[4].type).toEqual(notifyApp.type);
-        expect(dispatchedActions[4].payload.title).toEqual('Templating [0]');
-        expect(dispatchedActions[4].payload.text).toEqual('Error updating options: failed to fetch metrics');
-        expect(dispatchedActions[4].payload.severity).toEqual('error');
+        expect(dispatchedActions[2].type).toEqual(notifyApp.type);
+        expect(dispatchedActions[2].payload.title).toEqual('Templating [0]');
+        expect(dispatchedActions[2].payload.text).toEqual('Error updating options: failed to fetch metrics');
+        expect(dispatchedActions[2].payload.severity).toEqual('error');
 
         return dispatchedActions.length === expectedNumberOfActions;
       });

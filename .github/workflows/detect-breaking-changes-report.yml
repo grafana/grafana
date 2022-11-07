@@ -61,7 +61,7 @@ jobs:
           const script = require('./.github/workflows/scripts/json-file-to-job-output.js');
           await script({ core, filePath });
 
-    - name: Check if "breaking change" label exists
+    - name: Check if "levitate breaking change" label exists
       id: does-label-exist
       uses: actions/github-script@v6
       env:
@@ -74,7 +74,7 @@ jobs:
             repo: context.repo.repo,
           });
           const labels = data.map(({ name }) => name);
-          const doesExist = labels.includes('breaking change');
+          const doesExist = labels.includes('levitate breaking change');
 
           return doesExist ? 1 : 0;
 
@@ -104,7 +104,7 @@ jobs:
     - name: Post to Slack
       id: slack
       if: ${{ steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 }}
-      uses: slackapi/slack-github-action@v1.18.0
+      uses: slackapi/slack-github-action@v1.23.0
       with:
         payload: |
           {
@@ -117,7 +117,7 @@ jobs:
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_LEVITATE_WEBHOOK_URL }}
 
-    - name: Add "breaking change" label
+    - name: Add "levitate breaking change" label
       if: ${{ steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 }}
       uses: actions/github-script@v6
       env:
@@ -129,10 +129,10 @@ jobs:
             issue_number: process.env.PR_NUMBER,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            labels: ['breaking change']
+            labels: ['levitate breaking change']
           })
 
-    - name: Remove "breaking change" label
+    - name: Remove "levitate breaking change" label
       if: ${{ steps.levitate-run.outputs.exit_code == 0 && steps.does-label-exist.outputs.result == 1 }}
       uses: actions/github-script@v6
       env:
@@ -144,7 +144,7 @@ jobs:
             issue_number: process.env.PR_NUMBER,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            name: 'breaking change'
+            name: 'levitate breaking change'
           })
 
     # This is very weird, the actual request goes through (comes back with a 201), but does not assign the team.

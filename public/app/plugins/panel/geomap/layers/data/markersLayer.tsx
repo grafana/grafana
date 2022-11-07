@@ -5,20 +5,21 @@ import {
   PanelData,
   GrafanaTheme2,
   FrameGeometrySourceMode,
+  EventBus,
 } from '@grafana/data';
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
-import { getScaledDimension, getColorDimension, getTextDimension, getScalarDimension } from 'app/features/dimensions';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
-import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
+import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
 import { ReplaySubject } from 'rxjs';
-import { defaultStyleConfig, StyleConfig, StyleDimensions } from '../../style/types';
-import { StyleEditor } from './StyleEditor';
+import { defaultStyleConfig, StyleConfig } from '../../style/types';
+import { StyleEditor } from '../../editor/StyleEditor';
 import { getStyleConfigState } from '../../style/utils';
 import VectorLayer from 'ol/layer/Vector';
 import { isNumber } from 'lodash';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
+import { getStyleDimension} from '../../utils/utils';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -53,6 +54,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   description: 'Use markers to render each data point',
   isBaseMap: false,
   showLocation: true,
+  hideOpacity: true,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -60,7 +62,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2) => {
+  create: async (map: Map, options: MapLayerOptions<MarkersConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -119,22 +121,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         }
 
         for (const frame of data.series) {
-          if (style.fields) {
-            const dims: StyleDimensions = {};
-            if (style.fields.color) {
-              dims.color = getColorDimension(frame, style.config.color ?? defaultStyleConfig.color, theme);
-            }
-            if (style.fields.size) {
-              dims.size = getScaledDimension(frame, style.config.size ?? defaultStyleConfig.size);
-            }
-            if (style.fields.text) {
-              dims.text = getTextDimension(frame, style.config.text!);
-            }
-            if (style.fields.rotation) {
-              dims.rotation = getScalarDimension(frame, style.config.rotation ?? defaultStyleConfig.rotation);
-            }
-            style.dims = dims;
-          }
+          style.dims = getStyleDimension(frame, style, theme);
 
           // Post updates to the legend component
           if (legend) {

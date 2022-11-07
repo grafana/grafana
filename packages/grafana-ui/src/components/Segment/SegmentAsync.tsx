@@ -6,7 +6,7 @@ import { AsyncState } from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
 
-import { useStyles } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { InlineLabel } from '../Forms/InlineLabel';
 
 import { SegmentSelect } from './SegmentSelect';
@@ -48,7 +48,7 @@ export function SegmentAsync<T>({
   const [state, fetchOptions] = useAsyncFn(loadOptions, [loadOptions]);
   const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(autofocus, onExpandedChange);
   const width = inputMinWidth ? Math.max(inputMinWidth, labelWidth) : labelWidth;
-  const styles = useStyles(getSegmentStyles);
+  const styles = useStyles2(getSegmentStyles);
 
   if (!expanded) {
     const label = isObject(value) ? value.label : value;

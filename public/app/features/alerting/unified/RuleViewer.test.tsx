@@ -16,7 +16,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('./hooks/useCombinedRule');
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as any),
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => {
     return {
       getInstanceSettings: () => ({ name: 'prometheus' }),
@@ -41,12 +41,18 @@ const renderRuleViewer = () => {
   });
 };
 describe('RuleViewer', () => {
+  let mockCombinedRule: jest.MockedFn<typeof useCombinedRule>;
+
+  beforeEach(() => {
+    mockCombinedRule = jest.mocked(useCombinedRule);
+  });
+
   afterEach(() => {
-    jest.resetAllMocks();
+    mockCombinedRule.mockReset();
   });
 
   it('should render page with grafana alert', async () => {
-    jest.mocked(useCombinedRule).mockReturnValue({
+    mockCombinedRule.mockReturnValue({
       result: mockGrafanaRule as CombinedRule,
       loading: false,
       dispatched: true,
@@ -55,12 +61,12 @@ describe('RuleViewer', () => {
     });
     await renderRuleViewer();
 
-    expect(screen.getByText('Alerting / View rule')).toBeInTheDocument();
-    expect(screen.getByText('Test alert')).toBeInTheDocument();
+    expect(screen.getByText(/view rule/i)).toBeInTheDocument();
+    expect(screen.getByText(/test alert/i)).toBeInTheDocument();
   });
 
   it('should render page with cloud alert', async () => {
-    jest.mocked(useCombinedRule).mockReturnValue({
+    mockCombinedRule.mockReturnValue({
       result: mockCloudRule as CombinedRule,
       loading: false,
       dispatched: true,
@@ -68,8 +74,8 @@ describe('RuleViewer', () => {
       error: undefined,
     });
     await renderRuleViewer();
-    expect(screen.getByText('Alerting / View rule')).toBeInTheDocument();
-    expect(screen.getByText('Cloud test alert')).toBeInTheDocument();
+    expect(screen.getByText(/view rule/i)).toBeInTheDocument();
+    expect(screen.getByText(/cloud test alert/i)).toBeInTheDocument();
   });
 });
 
@@ -130,6 +136,7 @@ const mockCloudRule = {
       meta: {} as PluginMeta,
       jsonData: {} as DataSourceJsonData,
       access: 'proxy',
+      readOnly: false,
     },
   },
 };

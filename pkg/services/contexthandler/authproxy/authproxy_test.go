@@ -7,16 +7,17 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const hdrName = "markelog"
@@ -42,12 +43,12 @@ func prepareMiddleware(t *testing.T, remoteCache *remotecache.RemoteCache, confi
 	}
 
 	loginService := loginservice.LoginServiceMock{
-		ExpectedUser: &models.User{
-			Id: id,
+		ExpectedUser: &user.User{
+			ID: id,
 		},
 	}
 
-	return ProvideAuthProxy(cfg, remoteCache, loginService, nil), ctx
+	return ProvideAuthProxy(cfg, remoteCache, loginService, nil, nil), ctx
 }
 
 func TestMiddlewareContext(t *testing.T) {

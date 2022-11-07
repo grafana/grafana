@@ -62,7 +62,7 @@ You can now make SQL queries in any of your [command handlers](communication.md#
 
 ```go
 func (s *MyService) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
-    if err := s.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+    if err := s.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
         _, err := sess.Exec("DELETE FROM dashboards WHERE dashboard_id=?", cmd.DashboardID)
         return err
     })
@@ -98,6 +98,8 @@ To add a migration:
 - Open the [migrations.go](/pkg/services/sqlstore/migrations/migrations.go) file.
 - In the `AddMigrations` function, find the `addXxxMigration` function for the service you want to create a migration for.
 - At the end of the `addXxxMigration` function, register your migration:
+
+> **NOTE:** Putting migrations behind feature flags is no longer recommended as it may cause the migration skip integration testing.
 
 [Example](https://github.com/grafana/grafana/blob/00d0640b6e778ddaca021670fe851fe00982acf2/pkg/services/sqlstore/migrations/migrations.go#L55-L70)
 

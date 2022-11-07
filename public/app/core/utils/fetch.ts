@@ -106,12 +106,14 @@ export async function parseResponseBody<T>(
         return response.blob() as any;
 
       case 'json':
-        try {
-          return await response.json();
-        } catch (err) {
-          console.warn(`${response.url} returned an invalid JSON -`, err);
+        // An empty string is not a valid JSON.
+        // Sometimes (unfortunately) our APIs declare their Content-Type as JSON, however they return an empty body.
+        if (response.headers.get('Content-Length') === '0') {
+          console.warn(`${response.url} returned an invalid JSON`);
           return {} as unknown as T;
         }
+
+        return await response.json();
 
       case 'text':
         return response.text() as any;

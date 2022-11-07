@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
@@ -14,6 +13,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
@@ -74,6 +75,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 		return fmt.Errorf("missing expr in cuannel")
 	}
 
+	logger := logger.FromContext(ctx)
 	count := int64(0)
 
 	interrupt := make(chan os.Signal, 1)
@@ -82,13 +84,13 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	params := url.Values{}
 	params.Add("query", query.Expr)
 
-	isV1 := false
+	lokiDataframeApi := s.features.IsEnabled(featuremgmt.FlagLokiDataframeApi)
+
 	wsurl, _ := url.Parse(dsInfo.URL)
 
-	// Check if the v2alpha endpoint exists
-	wsurl.Path = "/loki/api/v2alpha/tail"
-	if !is400(dsInfo.HTTPClient, wsurl) {
-		isV1 = true
+	if lokiDataframeApi {
+		wsurl.Path = "/loki/api/v2alpha/tail"
+	} else {
 		wsurl.Path = "/loki/api/v1/tail"
 	}
 
@@ -99,10 +101,10 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	}
 	wsurl.RawQuery = params.Encode()
 
-	s.plog.Info("connecting to websocket", "url", wsurl)
+	logger.Info("connecting to websocket", "url", wsurl)
 	c, r, err := websocket.DefaultDialer.Dial(wsurl.String(), nil)
 	if err != nil {
-		s.plog.Error("error connecting to websocket", "err", err)
+		logger.Error("error connecting to websocket", "err", err)
 		return fmt.Errorf("error connecting to websocket")
 	}
 
@@ -114,7 +116,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 			_ = r.Body.Close()
 		}
 		err = c.Close()
-		s.plog.Error("closing loki websocket", "err", err)
+		logger.Error("closing loki websocket", "err", err)
 	}()
 
 	prev := data.FrameJSONCache{}
@@ -126,12 +128,12 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				s.plog.Error("websocket read:", "err", err)
+				logger.Error("websocket read:", "err", err)
 				return
 			}
 
 			frame := &data.Frame{}
-			if isV1 {
+			if !lokiDataframeApi {
 				frame, err = lokiBytesToLabeledFrame(message)
 			} else {
 				err = json.Unmarshal(message, &frame)
@@ -153,7 +155,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 			}
 
 			if err != nil {
-				s.plog.Error("websocket write:", "err", err, "raw", message)
+				logger.Error("websocket write:", "err", err, "raw", message)
 				return
 			}
 		}
@@ -165,14 +167,14 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	for {
 		select {
 		case <-done:
-			s.plog.Info("socket done")
+			logger.Info("socket done")
 			return nil
 		case <-ctx.Done():
-			s.plog.Info("stop streaming (context canceled)")
+			logger.Info("stop streaming (context canceled)")
 			return nil
 		case t := <-ticker.C:
 			count++
-			s.plog.Error("loki websocket ping?", "time", t, "count", count)
+			logger.Error("loki websocket ping?", "time", t, "count", count)
 		}
 	}
 }
@@ -181,20 +183,4 @@ func (s *Service) PublishStream(_ context.Context, _ *backend.PublishStreamReque
 	return &backend.PublishStreamResponse{
 		Status: backend.PublishStreamStatusPermissionDenied,
 	}, nil
-}
-
-// if the v2 endpoint exists it will give a 400 rather than 404/500
-func is400(client *http.Client, url *url.URL) bool {
-	req, err := http.NewRequest("GET", url.String(), nil)
-	if err != nil {
-		return false
-	}
-	rsp, err := client.Do(req)
-	if err != nil {
-		return false
-	}
-	defer func() {
-		_ = rsp.Body.Close()
-	}()
-	return rsp.StatusCode == 400 // will be true
 }

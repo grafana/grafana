@@ -10,15 +10,22 @@ import {
   Annotations,
   RulerRuleGroupDTO,
   GrafanaAlertState,
+  GrafanaAlertStateWithReason,
+  mapStateWithReasonToBaseState,
 } from './unified-alerting-dto';
 
 export type Alert = {
   activeAt: string;
   annotations: { [key: string]: string };
   labels: { [key: string]: string };
-  state: PromAlertingRuleState | GrafanaAlertState;
+  state: PromAlertingRuleState | GrafanaAlertStateWithReason;
   value: string;
 };
+
+export function hasAlertState(alert: Alert, state: PromAlertingRuleState | GrafanaAlertState): boolean {
+  return mapStateWithReasonToBaseState(alert.state as GrafanaAlertStateWithReason) === state;
+}
+
 interface RuleBase {
   health: string;
   name: string;
@@ -115,7 +122,7 @@ export interface CloudRuleIdentifier {
   ruleSourceName: string;
   namespace: string;
   groupName: string;
-  rulerRuleHash: number;
+  rulerRuleHash: string;
 }
 export interface GrafanaRuleIdentifier {
   ruleSourceName: 'grafana';
@@ -127,7 +134,7 @@ export interface PrometheusRuleIdentifier {
   ruleSourceName: string;
   namespace: string;
   groupName: string;
-  ruleHash: number;
+  ruleHash: string;
 }
 
 export type RuleIdentifier = CloudRuleIdentifier | GrafanaRuleIdentifier | PrometheusRuleIdentifier;
@@ -151,7 +158,7 @@ interface EvalMatch {
 }
 
 export interface StateHistoryItemData {
-  noData: boolean;
+  noData?: boolean;
   evalMatches?: EvalMatch[];
 }
 
@@ -185,4 +192,8 @@ export interface PromBasedDataSource {
   name: string;
   id: string | number;
   rulerConfig?: RulerDataSourceConfig;
+}
+
+export interface PaginationProps {
+  itemsPerPage: number;
 }

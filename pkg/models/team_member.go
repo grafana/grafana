@@ -3,11 +3,13 @@ package models
 import (
 	"errors"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // Typed errors
 var (
-	ErrTeamMemberAlreadyAdded = errors.New("User is already added to this team")
+	ErrTeamMemberAlreadyAdded = errors.New("user is already added to this team")
 )
 
 // TeamMember model
@@ -55,7 +57,7 @@ type GetTeamMembersQuery struct {
 	TeamId       int64
 	UserId       int64
 	External     bool
-	SignedInUser *SignedInUser
+	SignedInUser *user.SignedInUser
 	Result       []*TeamMemberDTO
 }
 

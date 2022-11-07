@@ -50,9 +50,10 @@ function tryExpectations(received: any[], expected: any[]): jest.CustomMatcherRe
       message: () => passMessage(received, expected),
     };
   } catch (err) {
+    const message = err instanceof Error ? err.message : 'An unknown error occurred';
     return {
       pass: false,
-      message: () => err,
+      message: () => message,
     };
   }
 }

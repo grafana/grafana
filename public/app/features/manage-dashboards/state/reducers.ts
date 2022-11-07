@@ -27,7 +27,7 @@ export enum InputType {
 
 export enum LibraryPanelInputState {
   New = 'new',
-  Exits = 'exists',
+  Exists = 'exists',
   Different = 'different',
 }
 

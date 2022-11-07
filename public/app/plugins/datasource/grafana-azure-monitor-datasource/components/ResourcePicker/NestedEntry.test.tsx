@@ -11,6 +11,7 @@ const defaultProps = {
   isSelectable: false,
   isOpen: false,
   isDisabled: false,
+  scrollIntoView: false,
   onToggleCollapse: jest.fn(),
   onSelectedChange: jest.fn(),
 };

@@ -5,13 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"net/url"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 // GetDecryptedValueFn is a function that returns the decrypted value of
@@ -59,11 +63,11 @@ func AlertmanagerFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewAlertmanagerNotifier(config, nil, fc.DecryptFunc), nil
+	return NewAlertmanagerNotifier(config, fc.ImageStore, nil, fc.DecryptFunc), nil
 }
 
 // NewAlertmanagerNotifier returns a new Alertmanager notifier.
-func NewAlertmanagerNotifier(config *AlertmanagerConfig, _ *template.Template, fn GetDecryptedValueFn) *AlertmanagerNotifier {
+func NewAlertmanagerNotifier(config *AlertmanagerConfig, images ImageStore, _ *template.Template, fn GetDecryptedValueFn) *AlertmanagerNotifier {
 	return &AlertmanagerNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -71,6 +75,7 @@ func NewAlertmanagerNotifier(config *AlertmanagerConfig, _ *template.Template, f
 			DisableResolveMessage: config.DisableResolveMessage,
 			Settings:              config.Settings,
 		}),
+		images:            images,
 		urls:              config.URLs,
 		basicAuthUser:     config.BasicAuthUser,
 		basicAuthPassword: config.BasicAuthPassword,
@@ -81,6 +86,7 @@ func NewAlertmanagerNotifier(config *AlertmanagerConfig, _ *template.Template, f
 // AlertmanagerNotifier sends alert notifications to the alert manager
 type AlertmanagerNotifier struct {
 	*Base
+	images ImageStore
 
 	urls              []*url.URL
 	basicAuthUser     string
@@ -90,10 +96,20 @@ type AlertmanagerNotifier struct {
 
 // Notify sends alert notifications to Alertmanager.
 func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	n.logger.Debug("Sending Alertmanager alert", "alertmanager", n.Name)
+	n.logger.Debug("sending Alertmanager alert", "alertmanager", n.Name)
 	if len(as) == 0 {
 		return true, nil
 	}
+
+	_ = withStoredImages(ctx, n.logger, n.images,
+		func(index int, image ngmodels.Image) error {
+			// If there is an image for this alert and the image has been uploaded
+			// to a public URL then include it as an annotation
+			if image.URL != "" {
+				as[index].Annotations["image"] = model.LabelValue(image.URL)
+			}
+			return nil
+		}, as...)
 
 	body, err := json.Marshal(as)
 	if err != nil {
@@ -110,7 +126,7 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 			password: n.basicAuthPassword,
 			body:     body,
 		}, n.logger); err != nil {
-			n.logger.Warn("Failed to send to Alertmanager", "error", err, "alertmanager", n.Name, "url", u.String())
+			n.logger.Warn("failed to send to Alertmanager", "error", err, "alertmanager", n.Name, "url", u.String())
 			lastErr = err
 			numErrs++
 		}
@@ -118,7 +134,7 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 
 	if numErrs == len(n.urls) {
 		// All attempts to send alerts have failed
-		n.logger.Warn("All attempts to send to Alertmanager failed", "alertmanager", n.Name)
+		n.logger.Warn("all attempts to send to Alertmanager failed", "alertmanager", n.Name)
 		return false, fmt.Errorf("failed to send alert to Alertmanager: %w", lastErr)
 	}
 

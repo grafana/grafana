@@ -138,7 +138,14 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
     const { childrenVisible, onClick, showChildrenIcon, span, theme } = this.props;
     const { hasChildren, spanID } = span;
     const wrapperProps = hasChildren ? { onClick, role: 'switch', 'aria-checked': childrenVisible } : null;
-    const icon = showChildrenIcon && hasChildren && (childrenVisible ? <IoIosArrowDown /> : <IoChevronRight />);
+    const icon =
+      showChildrenIcon &&
+      hasChildren &&
+      (childrenVisible ? (
+        <IoIosArrowDown data-testid="icon-arrow-down" />
+      ) : (
+        <IoChevronRight data-testid="icon-arrow-right" />
+      ));
     const styles = getStyles(theme);
     return (
       <span className={cx(styles.SpanTreeOffset, { [styles.SpanTreeOffsetParent]: hasChildren })} {...wrapperProps}>
@@ -149,7 +156,7 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
               [styles.indentGuideActive]: this.props.hoverIndentGuideIds.has(ancestorId),
             })}
             data-ancestor-id={ancestorId}
-            data-test-id="SpanTreeOffset--indentGuide"
+            data-testid="SpanTreeOffset--indentGuide"
             onMouseEnter={(event) => this.handleMouseEnter(event, ancestorId)}
             onMouseLeave={(event) => this.handleMouseLeave(event, ancestorId)}
           />
@@ -159,7 +166,7 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
             className={styles.iconWrapper}
             onMouseEnter={(event) => this.handleMouseEnter(event, spanID)}
             onMouseLeave={(event) => this.handleMouseLeave(event, spanID)}
-            data-test-id="icon-wrapper"
+            data-testid="icon-wrapper"
           >
             {icon}
           </span>

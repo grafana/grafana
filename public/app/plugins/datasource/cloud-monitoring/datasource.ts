@@ -13,6 +13,8 @@ import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@graf
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
+import { CloudMonitoringAnnotationSupport } from './annotationSupport';
+import { SLO_BURN_RATE_SELECTOR_NAME } from './constants';
 import {
   CloudMonitoringOptions,
   CloudMonitoringQuery,
@@ -41,6 +43,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.variables = new CloudMonitoringVariableSupport(this);
     this.intervalMs = 0;
+    this.annotations = CloudMonitoringAnnotationSupport(this);
   }
 
   getVariables() {
@@ -55,74 +58,12 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return super.query(request);
   }
 
-  async annotationQuery(options: any) {
-    await this.ensureGCEDefaultProject();
-    const annotation = options.annotation;
-    const queries = [
-      {
-        refId: 'annotationQuery',
-        type: 'annotationQuery',
-        datasource: this.getRef(),
-        view: 'FULL',
-        crossSeriesReducer: 'REDUCE_NONE',
-        perSeriesAligner: 'ALIGN_NONE',
-        metricType: this.templateSrv.replace(annotation.target.metricType, options.scopedVars || {}),
-        title: this.templateSrv.replace(annotation.target.title, options.scopedVars || {}),
-        text: this.templateSrv.replace(annotation.target.text, options.scopedVars || {}),
-        projectName: this.templateSrv.replace(
-          annotation.target.projectName ? annotation.target.projectName : this.getDefaultProject(),
-          options.scopedVars || {}
-        ),
-        filters: this.interpolateFilters(annotation.target.filters || [], options.scopedVars),
-      },
-    ];
-
-    return lastValueFrom(
-      getBackendSrv()
-        .fetch<PostResponse>({
-          url: '/api/ds/query',
-          method: 'POST',
-          data: {
-            from: options.range.from.valueOf().toString(),
-            to: options.range.to.valueOf().toString(),
-            queries,
-          },
-        })
-        .pipe(
-          map(({ data }) => {
-            const dataQueryResponse = toDataQueryResponse({
-              data: data,
-            });
-            const df: any = [];
-            if (dataQueryResponse.data.length !== 0) {
-              for (let i = 0; i < dataQueryResponse.data.length; i++) {
-                for (let j = 0; j < dataQueryResponse.data[i].fields[0].values.length; j++) {
-                  df.push({
-                    annotation: annotation,
-                    time: Date.parse(dataQueryResponse.data[i].fields[0].values.get(j)),
-                    title: dataQueryResponse.data[i].fields[1].values.get(j),
-                    tags: [],
-                    text: dataQueryResponse.data[i].fields[3].values.get(j),
-                  });
-                }
-              }
-            }
-            return df;
-          })
-        )
-    );
-  }
-
-  applyTemplateVariables(
-    { metricQuery, refId, queryType, sloQuery }: CloudMonitoringQuery,
-    scopedVars: ScopedVars
-  ): Record<string, any> {
+  applyTemplateVariables(target: CloudMonitoringQuery, scopedVars: ScopedVars): Record<string, any> {
+    const { metricQuery, sloQuery } = target;
     return {
+      ...target,
       datasource: this.getRef(),
-      refId,
       intervalMs: this.intervalMs,
-      type: 'timeSeriesQuery',
-      queryType,
       metricQuery: {
         ...this.interpolateProps(metricQuery, scopedVars),
         projectName: this.templateSrv.replace(
@@ -284,8 +225,14 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     }
 
     if (query.queryType && query.queryType === QueryType.SLO && query.sloQuery) {
-      const { selectorName, serviceId, sloId, projectName } = query.sloQuery;
-      return !!selectorName && !!serviceId && !!sloId && !!projectName;
+      const { selectorName, serviceId, sloId, projectName, lookbackPeriod } = query.sloQuery;
+      return (
+        !!selectorName &&
+        !!serviceId &&
+        !!sloId &&
+        !!projectName &&
+        (selectorName !== SLO_BURN_RATE_SELECTOR_NAME || !!lookbackPeriod)
+      );
     }
 
     if (query.queryType && query.queryType === QueryType.METRICS && query.metricQuery.editorMode === EditorMode.MQL) {

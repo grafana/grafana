@@ -1,8 +1,8 @@
 {
   "locales": [
-    "en",
-    "fr",
-    "es",
+    "en-US",
+    "fr-FR",
+    "es-ES",
     "pseudo-LOCALE"
   ],
   "catalogs": [
@@ -20,11 +20,11 @@
     }
   ],
   "fallbackLocales": {
-    "pseudo-LOCALE": "en",
-    "default": "en"
+    "pseudo-LOCALE": "en-US",
+    "default": "en-US"
   },
   "pseudoLocale": "pseudo-LOCALE",
-  "sourceLocale": "en",
+  "sourceLocale": "en-US",
   "format": "po",
   "formatOptions": {
     "lineNumbers": false

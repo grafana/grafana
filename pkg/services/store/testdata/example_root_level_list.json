@@ -1,0 +1,90 @@
+{
+  "schema": {
+    "meta": {
+      "type": "directory-listing"
+    },
+    "fields": [
+      {
+        "name": "name",
+        "type": "string",
+        "typeInfo": {
+          "frame": "string"
+        }
+      },
+      {
+        "name": "title",
+        "type": "string",
+        "typeInfo": {
+          "frame": "string"
+        }
+      },
+      {
+        "name": "description",
+        "type": "string",
+        "typeInfo": {
+          "frame": "string"
+        }
+      },
+      {
+        "name": "mediaType",
+        "type": "string",
+        "typeInfo": {
+          "frame": "string"
+        }
+      },
+      {
+        "name": "storageType",
+        "type": "string",
+        "typeInfo": {
+          "frame": "string"
+        }
+      },
+      {
+        "name": "readOnly",
+        "type": "boolean",
+        "typeInfo": {
+          "frame": "bool"
+        }
+      },
+      {
+        "name": "builtIn",
+        "type": "boolean",
+        "typeInfo": {
+          "frame": "bool"
+        }
+      }
+    ]
+  },
+  "data": {
+    "values": [
+      [
+        "public-static",
+        "resources"
+      ],
+      [
+        "Public static files",
+        "Resources"
+      ],
+      [
+        "Access files from the static public files",
+        "Upload custom resource files"
+      ],
+      [
+        "directory",
+        "directory"
+      ],
+      [
+        "disk",
+        "sql"
+      ],
+      [
+        true,
+        false
+      ],
+      [
+        true,
+        true
+      ]
+    ]
+  }
+}

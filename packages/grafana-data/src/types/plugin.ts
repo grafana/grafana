@@ -1,6 +1,7 @@
 import { ComponentType } from 'react';
 
 import { KeyValue } from './data';
+import { IconName } from './icon';
 
 /** Describes plugins life cycle status */
 export enum PluginState {
@@ -16,6 +17,7 @@ export enum PluginType {
   datasource = 'datasource',
   app = 'app',
   renderer = 'renderer',
+  secretsmanager = 'secretsmanager',
 }
 
 /** Describes status of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/ | plugin signature} */
@@ -67,6 +69,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   // Filled in by the backend
   jsonData?: T;
   secureJsonData?: KeyValue;
+  secureJsonFields?: KeyValue<boolean>;
   enabled?: boolean;
   defaultNavUrl?: string;
   hasUpdate?: boolean;
@@ -157,7 +160,7 @@ export interface PluginConfigPageProps<T extends PluginMeta> {
 
 export interface PluginConfigPage<T extends PluginMeta> {
   title: string; // Display
-  icon?: string;
+  icon?: IconName;
   id: string; // Unique, in URL
 
   body: ComponentType<PluginConfigPageProps<T>>;

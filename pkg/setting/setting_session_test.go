@@ -4,25 +4,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 
 	"github.com/stretchr/testify/require"
 )
-
-type testLogger struct {
-	log.Logger
-	warnCalled  bool
-	warnMessage string
-}
-
-func (stub *testLogger) Warn(testMessage string, ctx ...interface{}) {
-	stub.warnCalled = true
-	stub.warnMessage = testMessage
-}
-
-func (stub *testLogger) Info(testMessage string, ctx ...interface{}) {
-
-}
 
 func TestSessionSettings(t *testing.T) {
 	skipStaticRootValidation = true
@@ -31,8 +16,8 @@ func TestSessionSettings(t *testing.T) {
 		cfg := NewCfg()
 		homePath := "../../"
 
-		stub := &testLogger{}
-		cfg.Logger = stub
+		logger := &logtest.Fake{}
+		cfg.Logger = logger
 
 		err := cfg.Load(CommandLineArgs{
 			HomePath: homePath,
@@ -40,7 +25,7 @@ func TestSessionSettings(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		require.Equal(t, true, stub.warnCalled)
-		require.Greater(t, len(stub.warnMessage), 0)
+		require.Equal(t, 1, logger.WarnLogs.Calls)
+		require.Greater(t, len(logger.WarnLogs.Message), 0)
 	})
 }

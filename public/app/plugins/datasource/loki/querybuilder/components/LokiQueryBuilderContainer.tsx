@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React, { useEffect, useReducer } from 'react';
 
+import { testIds } from '../../components/LokiQueryEditor';
 import { LokiDatasource } from '../../datasource';
 import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
@@ -15,6 +16,8 @@ export interface Props {
   datasource: LokiDatasource;
   onChange: (update: LokiQuery) => void;
   onRunQuery: () => void;
+  showRawQuery: boolean;
+  showExplain: boolean;
 }
 
 export interface State {
@@ -26,7 +29,7 @@ export interface State {
  * This component is here just to contain the translation logic between string query and the visual query builder model.
  */
 export function LokiQueryBuilderContainer(props: Props) {
-  const { query, onChange, onRunQuery, datasource } = props;
+  const { query, onChange, onRunQuery, datasource, showRawQuery, showExplain } = props;
   const [state, dispatch] = useReducer(stateSlice.reducer, {
     expr: query.expr,
     // Use initial visual query only if query.expr is empty string
@@ -61,8 +64,10 @@ export function LokiQueryBuilderContainer(props: Props) {
         datasource={datasource}
         onChange={onVisQueryChange}
         onRunQuery={onRunQuery}
+        showExplain={showExplain}
+        data-testid={testIds.editor}
       />
-      {query.rawQuery && <QueryPreview query={query.expr} />}
+      {showRawQuery && <QueryPreview query={query.expr} />}
     </>
   );
 }

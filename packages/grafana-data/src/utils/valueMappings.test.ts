@@ -85,6 +85,16 @@ const testSet2: ValueMapping[] = [
   },
 ];
 
+const testSet3: ValueMapping[] = [
+  {
+    type: MappingType.RegexToText,
+    options: {
+      pattern: '/.*/s',
+      result: { text: 'WOW IT REPLACED EVERYTHING OVER MULTIPLE LINES' },
+    },
+  },
+];
+
 describe('Format value with value mappings', () => {
   it('should return null with no valuemappings', () => {
     const valueMappings: ValueMapping[] = [];
@@ -193,6 +203,12 @@ describe('Format value with regex mappings', () => {
 
   it('should not replace match when replace text is null', () => {
     expect(getValueMappingResult(testSet2, 'hello my name is')).toEqual({ color: 'red' });
+  });
+
+  it('supports replacing over multiple lines', () => {
+    expect(getValueMappingResult(testSet3, 'hello \n my name is')).toEqual({
+      text: 'WOW IT REPLACED EVERYTHING OVER MULTIPLE LINES',
+    });
   });
 });
 

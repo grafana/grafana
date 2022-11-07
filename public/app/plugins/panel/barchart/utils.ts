@@ -1,5 +1,5 @@
 import { orderBy } from 'lodash';
-import { Padding } from 'uplot';
+import uPlot, { Padding } from 'uplot';
 
 import {
   ArrayVector,
@@ -13,11 +13,13 @@ import {
   GrafanaTheme2,
   outerJoinDataFrames,
   reduceField,
+  TimeZone,
   VizOrientation,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
   AxisPlacement,
+  GraphTransform,
   ScaleDirection,
   ScaleDistribution,
   ScaleOrientation,
@@ -29,8 +31,8 @@ import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 import { findField } from 'app/features/dimensions';
 
 import { BarsOptions, getConfig } from './bars';
-import { BarChartFieldConfig, PanelOptions, defaultBarChartFieldConfig } from './models.gen';
-import { BarChartDisplayValues } from './types';
+import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig } from './models.gen';
+import { BarChartDisplayValues, BarChartDisplayWarning } from './types';
 
 function getBarCharScaleOrientation(orientation: VizOrientation) {
   if (orientation === VizOrientation.Vertical) {
@@ -53,6 +55,7 @@ function getBarCharScaleOrientation(orientation: VizOrientation) {
 export interface BarChartOptionsEX extends PanelOptions {
   rawValue: (seriesIdx: number, valueIdx: number) => number | null;
   getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
+  timeZone?: TimeZone;
   fillOpacity?: number;
 }
 
@@ -74,6 +77,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   xTickLabelMaxLength,
   xTickLabelSpacing = 0,
   legend,
+  timeZone,
 }) => {
   const builder = new UPlotConfigBuilder();
   const defaultValueFormatter = (seriesIdx: number, value: any) => {
@@ -102,11 +106,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     getColor,
     fillOpacity,
     formatValue,
+    timeZone,
     text,
     showValue,
     legend,
     xSpacing: xTickLabelSpacing,
     xTimeAuto: frame.fields[0]?.type === FieldType.time && !frame.fields[0].config.unit?.startsWith('time:'),
+    negY: frame.fields.map((f) => f.config.custom?.transform === GraphTransform.NegativeY),
   };
 
   const config = getConfig(opts, theme);
@@ -149,6 +155,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     label: frame.fields[0].config.custom?.axisLabel,
     splits: config.xSplits,
     values: config.xValues,
+    timeZone,
     grid: { show: false },
     ticks: { show: false },
     gap: 15,
@@ -166,12 +173,24 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
     seriesIndex++;
 
-    const customConfig: BarChartFieldConfig = { ...defaultBarChartFieldConfig, ...field.config.custom };
+    const customConfig: PanelFieldConfig = { ...defaultPanelFieldConfig, ...field.config.custom };
 
     const scaleKey = field.config.unit || FIXED_UNIT;
     const colorMode = getFieldColorModeForField(field);
     const scaleColor = getFieldSeriesColor(field, theme);
     const seriesColor = scaleColor.color;
+
+    // make barcharts start at 0 unless explicitly overridden
+    let softMin = customConfig.axisSoftMin;
+    let softMax = customConfig.axisSoftMax;
+
+    if (softMin == null && field.config.min == null) {
+      softMin = 0;
+    }
+
+    if (softMax == null && field.config.max == null) {
+      softMax = 0;
+    }
 
     builder.addSeries({
       scaleKey,
@@ -187,8 +206,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
       thresholds: field.config.thresholds,
       hardMin: field.config.min,
       hardMax: field.config.max,
-      softMin: customConfig.axisSoftMin,
-      softMax: customConfig.axisSoftMax,
+      softMin,
+      softMax,
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       // PlotLegend currently gets unfiltered DataFrame[], so index must be into that field array, not the prepped frame's which we're iterating here
@@ -207,8 +226,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
       scaleKey,
       min: field.config.min,
       max: field.config.max,
-      softMin: customConfig.axisSoftMin,
-      softMax: customConfig.axisSoftMax,
+      softMin,
+      softMax,
       orientation: vizOrientation.yOri,
       direction: vizOrientation.yDir,
       distribution: customConfig.scaleDistribution?.type,
@@ -234,7 +253,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
         label: customConfig.axisLabel,
         size: customConfig.axisWidth,
         placement,
-        formatValue: (v) => formattedValueToString(field.display!(v)),
+        formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
         theme,
         grid: { show: customConfig.axisGridShow },
       });
@@ -290,7 +309,7 @@ function getRotationPadding(frame: DataFrame, rotateLabel: number, valueMaxLengt
   // Add padding to the bottom to avoid clipping the rotated labels.
   const paddingBottom = Math.sin(((rotateLabel >= 0 ? rotateLabel : rotateLabel * -1) * Math.PI) / 180) * maxLength;
 
-  return [0, paddingRight, paddingBottom, paddingLeft];
+  return [Math.round(UPLOT_AXIS_FONT_SIZE * uPlot.pxRatio), paddingRight, paddingBottom, paddingLeft];
 }
 
 /** @internal */
@@ -298,9 +317,9 @@ export function prepareBarChartDisplayValues(
   series: DataFrame[],
   theme: GrafanaTheme2,
   options: PanelOptions
-): BarChartDisplayValues {
+): BarChartDisplayValues | BarChartDisplayWarning {
   if (!series?.length) {
-    return { warn: 'No data in response' } as BarChartDisplayValues;
+    return { warn: 'No data in response' };
   }
 
   // Bar chart requires a single frame
@@ -312,7 +331,7 @@ export function prepareBarChartDisplayValues(
         )
       : outerJoinDataFrames({ frames: series });
   if (!frame) {
-    return { warn: 'Unable to join data' } as BarChartDisplayValues;
+    return { warn: 'Unable to join data' };
   }
 
   // Color by a field different than the input
@@ -320,7 +339,7 @@ export function prepareBarChartDisplayValues(
   if (options.colorByField) {
     colorByField = findField(frame, options.colorByField);
     if (!colorByField) {
-      return { warn: 'Color field not found' } as BarChartDisplayValues;
+      return { warn: 'Color field not found' };
     }
   }
 
@@ -328,7 +347,7 @@ export function prepareBarChartDisplayValues(
   if (options.xField) {
     xField = findField(frame, options.xField);
     if (!xField) {
-      return { warn: 'Configured x field not found' } as BarChartDisplayValues;
+      return { warn: 'Configured x field not found' };
     }
   }
 
@@ -398,13 +417,13 @@ export function prepareBarChartDisplayValues(
   if (!firstField) {
     return {
       warn: 'Bar charts requires a string or time field',
-    } as BarChartDisplayValues;
+    };
   }
 
   if (!fields.length) {
     return {
       warn: 'No numeric fields found',
-    } as BarChartDisplayValues;
+    };
   }
 
   // Show the first number value

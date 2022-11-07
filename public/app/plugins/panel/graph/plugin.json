@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Graph (old)",
   "id": "graph",
+  "state": "deprecated",
 
   "info": {
     "description": "The old default graph panel",

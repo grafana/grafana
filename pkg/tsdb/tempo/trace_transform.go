@@ -46,12 +46,12 @@ func TraceToFrame(td pdata.Traces) (*data.Frame, error) {
 			data.NewField("parentSpanID", nil, []string{}),
 			data.NewField("operationName", nil, []string{}),
 			data.NewField("serviceName", nil, []string{}),
-			data.NewField("serviceTags", nil, []string{}),
+			data.NewField("serviceTags", nil, []json.RawMessage{}),
 			data.NewField("startTime", nil, []float64{}),
 			data.NewField("duration", nil, []float64{}),
-			data.NewField("logs", nil, []string{}),
-			data.NewField("references", nil, []string{}),
-			data.NewField("tags", nil, []string{}),
+			data.NewField("logs", nil, []json.RawMessage{}),
+			data.NewField("references", nil, []json.RawMessage{}),
+			data.NewField("tags", nil, []json.RawMessage{}),
 		},
 		Meta: &data.FrameMeta{
 			// TODO: use constant once available in the SDK
@@ -111,7 +111,7 @@ func resourceSpansToRows(rs pdata.ResourceSpans) ([][]interface{}, error) {
 func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, resource pdata.Resource) ([]interface{}, error) {
 	// If the id representation changed from hexstring to something else we need to change the transformBase64IDToHexString in the frontend code
 	traceID := span.TraceID().HexString()
-	traceID = strings.TrimLeft(traceID, "0")
+	traceID = strings.TrimPrefix(traceID, strings.Repeat("0", 16))
 
 	spanID := span.SpanID().HexString()
 
@@ -147,21 +147,13 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 		parentSpanID,
 		span.Name(),
 		serviceName,
-		toJSONString(serviceTagsJson),
+		json.RawMessage(serviceTagsJson),
 		startTime,
 		float64(span.EndTimestamp()-span.StartTimestamp()) / 1_000_000,
-		toJSONString(logs),
-		toJSONString(references),
-		toJSONString(spanTags),
+		json.RawMessage(logs),
+		json.RawMessage(references),
+		json.RawMessage(spanTags),
 	}, nil
-}
-
-func toJSONString(json []byte) string {
-	s := string(json)
-	if s == "null" {
-		return ""
-	}
-	return s
 }
 
 func resourceToProcess(resource pdata.Resource) (string, []*KeyValue) {

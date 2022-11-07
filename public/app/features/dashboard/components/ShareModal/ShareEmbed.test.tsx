@@ -1,8 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { BootData } from '@grafana/data';
+import { setEchoSrv } from '@grafana/runtime/src';
 import config from 'app/core/config';
 
+import { Echo } from '../../../../core/services/echo/Echo';
 import { DashboardModel, PanelModel } from '../../state';
 
 import { ShareEmbed } from './ShareEmbed';
@@ -37,7 +40,7 @@ function mockLocationHref(href: string) {
 
   // @ts-ignore
   delete window.location;
-  (window as any).location = {
+  window.location = {
     ...location,
     href,
     origin: new URL(href).origin,
@@ -46,9 +49,10 @@ function mockLocationHref(href: string) {
 }
 
 describe('ShareEmbed', () => {
-  let originalBootData: any;
+  let originalBootData: BootData;
 
   beforeAll(() => {
+    setEchoSrv(new Echo());
     originalBootData = config.bootData;
     config.appUrl = 'http://dashboards.grafana.com/';
 
@@ -56,7 +60,7 @@ describe('ShareEmbed', () => {
       user: {
         orgId: 1,
       },
-    } as any;
+    } as BootData;
   });
 
   afterAll(() => {

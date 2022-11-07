@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 import React, { useState, useMemo } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Modal, TabContent, TabsBar, Tab, Button, useStyles } from '@grafana/ui';
+import { Modal, TabContent, TabsBar, Tab, Button } from '@grafana/ui';
 
 import { RuleSettingsArray } from './RuleSettingsArray';
 import { RuleSettingsEditor } from './RuleSettingsEditor';
@@ -31,7 +30,7 @@ const tabs: TabInfo[] = [
   { label: 'Test', isTest: true, icon: 'flask' },
 ];
 
-export const RuleModal: React.FC<Props> = (props) => {
+export const RuleModal = (props: Props) => {
   const { isOpen, onClose, clickColumn } = props;
   const [rule, setRule] = useState<Rule>(props.rule);
   const [activeTab, setActiveTab] = useState<TabInfo | undefined>(tabs.find((t) => t.type === clickColumn));
@@ -39,7 +38,6 @@ export const RuleModal: React.FC<Props> = (props) => {
   const [hasChange, setChange] = useState<boolean>(false);
   const [ruleSetting, setRuleSetting] = useState<any>(activeTab?.type ? rule?.settings?.[activeTab.type] : undefined);
   const [entitiesInfo, setEntitiesInfo] = useState<PipeLineEntitiesInfo>();
-  const styles = useStyles(getStyles);
 
   const onRuleSettingChange = (value: RuleSetting | RuleSetting[]) => {
     setChange(true);
@@ -123,10 +121,8 @@ export const RuleModal: React.FC<Props> = (props) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
-  return {
-    save: css`
-      margin-top: 5px;
-    `,
-  };
+const styles = {
+  save: css`
+    margin-top: 5px;
+  `,
 };

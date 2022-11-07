@@ -1,6 +1,8 @@
-+++
-title = "Plugin publishing and signing criteria"
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/publishing-and-signing-criteria/
+title: Plugin publishing and signing criteria
+---
 
 # Plugin publishing and signing criteria
 

@@ -30,7 +30,7 @@ describe('InlineField', () => {
   it('renders with the inputId of its children', () => {
     render(
       <InlineField label="My other label">
-        <Select menuShouldPortal inputId="my-select-input" onChange={() => {}} />
+        <Select inputId="my-select-input" onChange={() => {}} />
       </InlineField>
     );
 

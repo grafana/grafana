@@ -22,6 +22,15 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
       border-radius: ${theme.shape.borderRadius()};
       position: relative;
       display: inline-block;
+
+      a {
+        color: ${theme.colors.error.contrastText};
+        text-decoration: underline;
+      }
+
+      a:hover {
+        text-decoration: none;
+      }
     `;
 
   return {
@@ -63,7 +72,11 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
   };
 });
 
-export const FieldValidationMessage: React.FC<FieldValidationMessageProps> = ({ children, horizontal, className }) => {
+export const FieldValidationMessage = ({
+  children,
+  horizontal,
+  className,
+}: React.PropsWithChildren<FieldValidationMessageProps>) => {
   const theme = useTheme2();
   const styles = getFieldValidationMessageStyles(theme);
   const cssName = cx(horizontal ? styles.horizontal : styles.vertical, className);

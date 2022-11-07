@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
+import debounce from 'debounce-promise';
 import React, { useCallback, useState } from 'react';
-// @ts-ignore
 import Highlighter from 'react-highlight-words';
 
 import { SelectableValue, toOption, GrafanaTheme2 } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
-import { Select, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
+import { AsyncSelect, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
 
+import { PrometheusDatasource } from '../../datasource';
+import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
 // We are matching words split with space
@@ -16,9 +18,13 @@ export interface Props {
   query: PromVisualQuery;
   onChange: (query: PromVisualQuery) => void;
   onGetMetrics: () => Promise<SelectableValue[]>;
+  datasource: PrometheusDatasource;
+  labelsFilters: QueryBuilderLabelFilter[];
 }
 
-export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
+const MAX_NUMBER_OF_RESULTS = 1000;
+
+export function MetricSelect({ datasource, query, onChange, onGetMetrics, labelsFilters }: Props) {
   const styles = useStyles2(getStyles);
   const [state, setState] = useState<{
     metrics?: Array<SelectableValue<any>>;
@@ -30,6 +36,12 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
     if (!label) {
       return false;
     }
+
+    // custom value is not a string label but a react node
+    if (!label.toLowerCase) {
+      return true;
+    }
+
     const searchWords = searchQuery.split(splitSeparator);
     return searchWords.reduce((acc, cur) => acc && label.toLowerCase().includes(cur.toLowerCase()), true);
   }, []);
@@ -52,10 +64,69 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
     [styles.highlight]
   );
 
+  const formatLabelFilters = (labelsFilters: QueryBuilderLabelFilter[]): string[] => {
+    return labelsFilters.map((label) => {
+      return `,${label.label}="${label.value}"`;
+    });
+  };
+
+  /**
+   * Transform queryString and any currently set label filters into label_values() string
+   */
+  const queryAndFilterToLabelValuesString = (
+    queryString: string,
+    labelsFilters: QueryBuilderLabelFilter[] | undefined
+  ): string => {
+    return `label_values({__name__=~".*${queryString}"${
+      labelsFilters ? formatLabelFilters(labelsFilters).join() : ''
+    }},__name__)`;
+  };
+
+  /**
+   * There aren't any spaces in the metric names, so let's introduce a wildcard into the regex for each space to better facilitate a fuzzy search
+   */
+  const regexifyLabelValuesQueryString = (query: string) => {
+    const queryArray = query.split(' ');
+    return queryArray.map((query) => `${query}.*`).join('');
+  };
+
+  /**
+   * Reformat the query string and label filters to return all valid results for current query editor state
+   */
+  const formatKeyValueStringsForLabelValuesQuery = (
+    query: string,
+    labelsFilters?: QueryBuilderLabelFilter[]
+  ): string => {
+    const queryString = regexifyLabelValuesQueryString(query);
+
+    return queryAndFilterToLabelValuesString(queryString, labelsFilters);
+  };
+
+  /**
+   * Gets label_values response from prometheus API for current autocomplete query string and any existing labels filters
+   */
+  const getMetricLabels = (query: string) => {
+    // Since some customers can have millions of metrics, whenever the user changes the autocomplete text we want to call the backend and request all metrics that match the current query string
+    const results = datasource.metricFindQuery(formatKeyValueStringsForLabelValuesQuery(query, labelsFilters));
+    return results.then((results) => {
+      if (results.length > MAX_NUMBER_OF_RESULTS) {
+        results.splice(0, results.length - MAX_NUMBER_OF_RESULTS);
+      }
+      return results.map((result) => {
+        return {
+          label: result.text,
+          value: result.text,
+        };
+      });
+    });
+  };
+
+  const debouncedSearch = debounce((query: string) => getMetricLabels(query), 300);
+
   return (
     <EditorFieldGroup>
       <EditorField label="Metric">
-        <Select
+        <AsyncSelect
           inputId="prometheus-metric-select"
           className={styles.select}
           value={query.metric ? toOption(query.metric) : undefined}
@@ -66,10 +137,14 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
           onOpenMenu={async () => {
             setState({ isLoading: true });
             const metrics = await onGetMetrics();
+            if (metrics.length > MAX_NUMBER_OF_RESULTS) {
+              metrics.splice(0, metrics.length - MAX_NUMBER_OF_RESULTS);
+            }
             setState({ metrics, isLoading: undefined });
           }}
+          loadOptions={debouncedSearch}
           isLoading={state.isLoading}
-          options={state.metrics}
+          defaultOptions={state.metrics}
           onChange={({ value }) => {
             if (value) {
               onChange({ ...query, metric: value });
@@ -89,7 +164,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: select__match-highlight;
     background: inherit;
     padding: inherit;
-    color: ${theme.colors.warning.main};
-    background-color: rgba(${theme.colors.warning.main}, 0.1);
+    color: ${theme.colors.warning.contrastText};
+    background-color: ${theme.colors.warning.main};
   `,
 });

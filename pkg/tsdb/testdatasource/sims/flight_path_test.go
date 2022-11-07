@@ -3,8 +3,6 @@ package sims
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -50,9 +48,7 @@ func TestFlightPathQuery(t *testing.T) {
 		require.NotNil(t, rsp)
 		for k, v := range rsp.Responses {
 			dr := v
-			filePath := filepath.Join("testdata", fmt.Sprintf("flight_path_query_%s.txt", k))
-			err = experimental.CheckGoldenDataResponse(filePath, &dr, true)
-			require.NoError(t, err)
+			experimental.CheckGoldenJSONResponse(t, "testdata", "flight_path_query_"+k, &dr, true)
 		}
 	})
 }

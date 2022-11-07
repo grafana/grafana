@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"net/http"
 	"net/url"
@@ -223,6 +222,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 // QueryData takes in the frontend queries, parses them into the CloudMonitoring query format
 // executes the queries against the CloudMonitoring API and parses the response into data frames
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	logger := slog.FromContext(ctx)
 	resp := backend.NewQueryDataResponse()
 	if len(req.Queries) == 0 {
 		return resp, fmt.Errorf("query contains no queries")
@@ -241,20 +241,20 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	switch model.Type {
 	case "annotationQuery":
-		resp, err = s.executeAnnotationQuery(ctx, req, *dsInfo)
+		resp, err = s.executeAnnotationQuery(ctx, logger, req, *dsInfo)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
-		resp, err = s.executeTimeSeriesQuery(ctx, req, *dsInfo)
+		resp, err = s.executeTimeSeriesQuery(ctx, logger, req, *dsInfo)
 	}
 
 	return resp, err
 }
 
-func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
+func (s *Service) executeTimeSeriesQuery(ctx context.Context, logger log.Logger, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
 	*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
-	queryExecutors, err := s.buildQueryExecutors(req)
+	queryExecutors, err := s.buildQueryExecutors(logger, req)
 	if err != nil {
 		return resp, err
 	}
@@ -305,7 +305,7 @@ func queryModel(query backend.DataQuery) (grafanaQuery, error) {
 	return q, nil
 }
 
-func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMonitoringQueryExecutor, error) {
+func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataRequest) ([]cloudMonitoringQueryExecutor, error) {
 	var cloudMonitoringQueryExecutors []cloudMonitoringQueryExecutor
 	startTime := req.Queries[0].TimeRange.From
 	endTime := req.Queries[0].TimeRange.To
@@ -327,6 +327,7 @@ func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMon
 		cmtsf := &cloudMonitoringTimeSeriesFilter{
 			RefID:    query.RefID,
 			GroupBys: []string{},
+			logger:   logger,
 		}
 		switch q.QueryType {
 		case metricQueryType:
@@ -338,6 +339,7 @@ func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMon
 					IntervalMS:  query.Interval.Milliseconds(),
 					AliasBy:     q.MetricQuery.AliasBy,
 					timeRange:   req.Queries[0].TimeRange,
+					GraphPeriod: q.MetricQuery.GraphPeriod,
 				}
 			} else {
 				cmtsf.AliasBy = q.MetricQuery.AliasBy
@@ -369,7 +371,7 @@ func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMon
 		cmtsf.Params = params
 
 		if setting.Env == setting.Dev {
-			slog.Debug("CloudMonitoring request", "params", params)
+			logger.Debug("CloudMonitoring request", "params", params)
 		}
 
 		cloudMonitoringQueryExecutors = append(cloudMonitoringQueryExecutors, queryInterface)
@@ -429,7 +431,13 @@ func buildFilterString(metricType string, filterParts []string) string {
 }
 
 func buildSLOFilterExpression(q sloQuery) string {
-	return fmt.Sprintf(`%s("projects/%s/services/%s/serviceLevelObjectives/%s")`, q.SelectorName, q.ProjectName, q.ServiceId, q.SloId)
+	sloName := fmt.Sprintf("projects/%s/services/%s/serviceLevelObjectives/%s", q.ProjectName, q.ServiceId, q.SloId)
+
+	if q.SelectorName == "select_slo_burn_rate" {
+		return fmt.Sprintf(`%s("%s", "%s")`, q.SelectorName, sloName, q.LookbackPeriod)
+	} else {
+		return fmt.Sprintf(`%s("%s")`, q.SelectorName, sloName)
+	}
 }
 
 func setMetricAggParams(params *url.Values, query *metricQuery, durationSeconds int, intervalMs int64) {
@@ -590,12 +598,17 @@ func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 	case bucketOptions.ExponentialBuckets != nil:
 		bucketBound = strconv.FormatInt(int64(bucketOptions.ExponentialBuckets.Scale*math.Pow(bucketOptions.ExponentialBuckets.GrowthFactor, float64(n-1))), 10)
 	case bucketOptions.ExplicitBuckets != nil:
-		bucketBound = fmt.Sprintf("%g", bucketOptions.ExplicitBuckets.Bounds[n])
+		if n < len(bucketOptions.ExplicitBuckets.Bounds) {
+			bucketBound = fmt.Sprintf("%g", bucketOptions.ExplicitBuckets.Bounds[n])
+		} else {
+			lastBound := bucketOptions.ExplicitBuckets.Bounds[len(bucketOptions.ExplicitBuckets.Bounds)-1]
+			bucketBound = fmt.Sprintf("%g+", lastBound)
+		}
 	}
 	return bucketBound
 }
 
-func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, proxyPass string, body io.Reader) (*http.Request, error) {
+func (s *Service) createRequest(logger log.Logger, dsInfo *datasourceInfo, proxyPass string, body io.Reader) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.url)
 	if err != nil {
 		return nil, err
@@ -608,7 +621,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, pro
 	}
 	req, err := http.NewRequest(method, dsInfo.services[cloudMonitor].url, body)
 	if err != nil {
-		slog.Error("Failed to create request", "error", err)
+		logger.Error("Failed to create request", "error", err)
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
@@ -625,47 +638,58 @@ func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) 
 	return dsInfo.defaultProject, nil
 }
 
-func unmarshalResponse(res *http.Response) (cloudMonitoringResponse, error) {
-	body, err := ioutil.ReadAll(res.Body)
+func unmarshalResponse(logger log.Logger, res *http.Response) (cloudMonitoringResponse, error) {
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}
 
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			slog.Warn("Failed to close response body", "err", err)
+			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
 	if res.StatusCode/100 != 2 {
-		slog.Error("Request failed", "status", res.Status, "body", string(body))
+		logger.Error("Request failed", "status", res.Status, "body", string(body))
 		return cloudMonitoringResponse{}, fmt.Errorf("query failed: %s", string(body))
 	}
 
 	var data cloudMonitoringResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		slog.Error("Failed to unmarshal CloudMonitoring response", "error", err, "status", res.Status, "body", string(body))
+		logger.Error("Failed to unmarshal CloudMonitoring response", "error", err, "status", res.Status, "body", string(body))
 		return cloudMonitoringResponse{}, fmt.Errorf("failed to unmarshal query response: %w", err)
 	}
 
 	return data, nil
 }
 
-func addConfigData(frames data.Frames, dl string, unit string) data.Frames {
+func addConfigData(frames data.Frames, dl string, unit string, period string) data.Frames {
 	for i := range frames {
 		if frames[i].Fields[1].Config == nil {
 			frames[i].Fields[1].Config = &data.FieldConfig{}
 		}
-		deepLink := data.DataLink{
-			Title:       "View in Metrics Explorer",
-			TargetBlank: true,
-			URL:         dl,
+		if len(dl) > 0 {
+			deepLink := data.DataLink{
+				Title:       "View in Metrics Explorer",
+				TargetBlank: true,
+				URL:         dl,
+			}
+			frames[i].Fields[1].Config.Links = append(frames[i].Fields[1].Config.Links, deepLink)
 		}
-		frames[i].Fields[1].Config.Links = append(frames[i].Fields[1].Config.Links, deepLink)
 		if len(unit) > 0 {
 			if val, ok := cloudMonitoringUnitMappings[unit]; ok {
 				frames[i].Fields[1].Config.Unit = val
+			}
+		}
+		if frames[i].Fields[0].Config == nil {
+			frames[i].Fields[0].Config = &data.FieldConfig{}
+		}
+		if period != "" {
+			err := addInterval(period, frames[i].Fields[0])
+			if err != nil {
+				slog.Error("Failed to add interval", "error", err)
 			}
 		}
 	}

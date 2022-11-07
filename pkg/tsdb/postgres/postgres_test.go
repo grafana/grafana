@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package postgres
 
 import (
@@ -13,19 +10,23 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 
 	_ "github.com/lib/pq"
 )
 
 // Test generateConnectionString.
-func TestGenerateConnectionString(t *testing.T) {
+func TestIntegrationGenerateConnectionString(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
 
@@ -172,11 +173,14 @@ func TestGenerateConnectionString(t *testing.T) {
 // There is also a datasource and dashboard provisioned by devenv scripts that you can
 // use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
-func TestPostgres(t *testing.T) {
+func TestIntegrationPostgres(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	// change to true to run the PostgreSQL tests
 	const runPostgresTests = false
 
-	if !(sqlstore.IsTestDbPostgres() || runPostgresTests) {
+	if !(db.IsTestDbPostgres() || runPostgresTests) {
 		t.Skip()
 	}
 
@@ -219,9 +223,7 @@ func TestPostgres(t *testing.T) {
 		RowLimit:          1000000,
 	}
 
-	queryResultTransformer := postgresQueryResultTransformer{
-		log: logger,
-	}
+	queryResultTransformer := postgresQueryResultTransformer{}
 
 	exe, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
 		logger)
@@ -1263,9 +1265,7 @@ func TestPostgres(t *testing.T) {
 				RowLimit:          1,
 			}
 
-			queryResultTransformer := postgresQueryResultTransformer{
-				log: logger,
-			}
+			queryResultTransformer := postgresQueryResultTransformer{}
 
 			handler, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newPostgresMacroEngine(false), logger)
 			require.NoError(t, err)

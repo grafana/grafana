@@ -17,7 +17,7 @@ export interface Props extends Omit<CardContainerProps, 'disableEvents' | 'disab
   /** Link to redirect to on card click. If provided, the Card inner content will be rendered inside `a` */
   href?: string;
   /** On click handler for the Card */
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   /** @deprecated Use `Card.Heading` instead */
   heading?: ReactNode;
   /** @deprecated Use `Card.Description` instead */
@@ -37,7 +37,7 @@ export interface CardInterface extends FC<Props> {
 
 const CardContext = React.createContext<{
   href?: string;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   disabled?: boolean;
   isSelected?: boolean;
 } | null>(null);
@@ -47,17 +47,7 @@ const CardContext = React.createContext<{
  *
  * @public
  */
-export const Card: CardInterface = ({
-  disabled,
-  href,
-  onClick,
-  children,
-  heading: deprecatedHeading,
-  description: deprecatedDescription,
-  isSelected,
-  className,
-  ...htmlProps
-}) => {
+export const Card: CardInterface = ({ disabled, href, onClick, children, isSelected, className, ...htmlProps }) => {
   const hasHeadingComponent = useMemo(
     () =>
       React.Children.toArray(children).some(
@@ -81,8 +71,6 @@ export const Card: CardInterface = ({
     >
       <CardContext.Provider value={{ href, onClick: onCardClick, disabled, isSelected }}>
         {!hasHeadingComponent && <Heading />}
-        {deprecatedHeading && <Heading>{deprecatedHeading}</Heading>}
-        {deprecatedDescription && <Description>{deprecatedDescription}</Description>}
         {children}
       </CardContext.Provider>
     </CardContainer>
@@ -93,9 +81,6 @@ interface ChildProps {
   className?: string;
   disabled?: boolean;
   children?: React.ReactNode;
-
-  /** @deprecated Use `className` to add new styles */
-  styles?: ReturnType<typeof getCardStyles>;
 }
 
 /** Main heading for the card */
@@ -108,11 +93,11 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
   return (
     <h2 className={cx(styles.heading, className)}>
       {href ? (
-        <a href={href} className={styles.linkHack} aria-label={ariaLabel}>
+        <a href={href} className={styles.linkHack} aria-label={ariaLabel} onClick={onClick}>
           {children}
         </a>
       ) : onClick ? (
-        <button onClick={onClick} className={styles.linkHack} aria-label={ariaLabel}>
+        <button onClick={onClick} className={styles.linkHack} aria-label={ariaLabel} type="button">
           {children}
         </button>
       ) : (

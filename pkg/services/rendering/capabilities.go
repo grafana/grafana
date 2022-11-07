@@ -1,6 +1,7 @@
 package rendering
 
 import (
+	"context"
 	"errors"
 
 	"github.com/Masterminds/semver"
@@ -16,13 +17,14 @@ type CapabilityName string
 const (
 	ScalingDownImages CapabilityName = "ScalingDownImages"
 	FullHeightImages  CapabilityName = "FullHeightImages"
+	SvgSanitization   CapabilityName = "SvgSanitization"
 )
 
 var ErrUnknownCapability = errors.New("unknown capability")
 var ErrInvalidPluginVersion = errors.New("invalid plugin version")
 
-func (rs *RenderingService) HasCapability(capability CapabilityName) (CapabilitySupportRequestResult, error) {
-	if !rs.IsAvailable() {
+func (rs *RenderingService) HasCapability(ctx context.Context, capability CapabilityName) (CapabilitySupportRequestResult, error) {
+	if !rs.IsAvailable(ctx) {
 		return CapabilitySupportRequestResult{IsSupported: false, SemverConstraint: ""}, ErrRenderUnavailable
 	}
 

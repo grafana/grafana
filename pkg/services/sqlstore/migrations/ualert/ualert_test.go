@@ -5,17 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var MigTitle = migTitle
@@ -24,17 +20,35 @@ var ClearMigrationEntryTitle = clearMigrationEntryTitle
 
 type RmMigration = rmMigration
 
-func (m *Matchers) UnmarshalJSON(data []byte) error {
-	var lines []string
-	if err := json.Unmarshal(data, &lines); err != nil {
+// UnmarshalJSON implements the json.Unmarshaler interface for Matchers. Vendored from definitions.ObjectMatchers.
+func (m *ObjectMatchers) UnmarshalJSON(data []byte) error {
+	var rawMatchers [][3]string
+	if err := json.Unmarshal(data, &rawMatchers); err != nil {
 		return err
 	}
-	for _, line := range lines {
-		pm, err := labels.ParseMatchers(line)
+	for _, rawMatcher := range rawMatchers {
+		var matchType labels.MatchType
+		switch rawMatcher[1] {
+		case "=":
+			matchType = labels.MatchEqual
+		case "!=":
+			matchType = labels.MatchNotEqual
+		case "=~":
+			matchType = labels.MatchRegexp
+		case "!~":
+			matchType = labels.MatchNotRegexp
+		default:
+			return fmt.Errorf("unsupported match type %q in matcher", rawMatcher[1])
+		}
+
+		rawMatcher[2] = strings.TrimPrefix(rawMatcher[2], "\"")
+		rawMatcher[2] = strings.TrimSuffix(rawMatcher[2], "\"")
+
+		matcher, err := labels.NewMatcher(matchType, rawMatcher[0], rawMatcher[2])
 		if err != nil {
 			return err
 		}
-		*m = append(*m, pm...)
+		*m = append(*m, matcher)
 	}
 	sort.Sort(labels.Matchers(*m))
 	return nil
@@ -99,99 +113,6 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
-		})
-	}
-}
-
-func TestCheckUnifiedAlertingEnabledByDefault(t *testing.T) {
-	testDB := sqlutil.SQLite3TestDB()
-	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
-	require.NoError(t, err)
-	_, err = x.Exec("CREATE TABLE alert ( id bigint )")
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		_, err = x.Exec("DROP TABLE alert")
-		require.NoError(t, err)
-	})
-
-	tests := []struct {
-		title                   string
-		legacyAlertExists       bool
-		legacyIsDefined         bool
-		legacyValue             bool
-		expectedUnifiedAlerting bool
-	}{
-		{
-			title:                   "enable unified alerting when there are no legacy alerts",
-			legacyIsDefined:         false,
-			legacyAlertExists:       false,
-			expectedUnifiedAlerting: true,
-		},
-		{
-			title:                   "enable unified alerting when there are no legacy alerts and legacy enabled",
-			legacyIsDefined:         true,
-			legacyValue:             true,
-			legacyAlertExists:       false,
-			expectedUnifiedAlerting: true,
-		},
-		{
-			title:                   "enable unified alerting when there are no legacy alerts and legacy disabled",
-			legacyIsDefined:         true,
-			legacyValue:             false,
-			legacyAlertExists:       false,
-			expectedUnifiedAlerting: true,
-		},
-		{
-			title:                   "enable unified alerting when there are legacy alerts but legacy disabled",
-			legacyIsDefined:         true,
-			legacyValue:             false,
-			legacyAlertExists:       true,
-			expectedUnifiedAlerting: true,
-		},
-		{
-			title:                   "disable unified alerting when there are legacy alerts",
-			legacyIsDefined:         false,
-			legacyAlertExists:       true,
-			expectedUnifiedAlerting: false,
-		},
-		{
-			title:                   "disable unified alerting when there are legacy alerts and it is enabled",
-			legacyIsDefined:         true,
-			legacyValue:             true,
-			legacyAlertExists:       true,
-			expectedUnifiedAlerting: false,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.title, func(t *testing.T) {
-			setting.AlertingEnabled = nil
-			if test.legacyIsDefined {
-				value := test.legacyValue
-				setting.AlertingEnabled = &value
-			}
-
-			if test.legacyAlertExists {
-				_, err := x.Exec("INSERT INTO alert VALUES (1)")
-				require.NoError(t, err)
-			} else {
-				_, err := x.Exec("DELETE FROM alert")
-				require.NoError(t, err)
-			}
-
-			cfg := setting.Cfg{
-				UnifiedAlerting: setting.UnifiedAlertingSettings{
-					Enabled: nil,
-				},
-			}
-			mg := migrator.NewMigrator(x, &cfg)
-
-			err := CheckUnifiedAlertingEnabledByDefault(mg)
-			require.NoError(t, err)
-			require.NotNil(t, setting.AlertingEnabled)
-			require.NotNil(t, cfg.UnifiedAlerting.Enabled)
-			require.Equal(t, *cfg.UnifiedAlerting.Enabled, test.expectedUnifiedAlerting)
-			require.Equal(t, *setting.AlertingEnabled, !test.expectedUnifiedAlerting)
 		})
 	}
 }

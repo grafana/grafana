@@ -3,17 +3,17 @@ import React, { FunctionComponent, useMemo } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
-import { InputGroup, AccessoryButton } from '@grafana/experimental';
+import { AccessoryButton, InputGroup } from '@grafana/experimental';
 import { Select, stylesFactory, useTheme2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
-import { Dimensions, DimensionsQuery } from '../../types';
+import { Dimensions, MetricStat } from '../../types';
 import { appendTemplateVariables } from '../../utils/utils';
 
 import { DimensionFilterCondition } from './Dimensions';
 
 export interface Props {
-  query: DimensionsQuery;
+  metricStat: MetricStat;
   datasource: CloudWatchDatasource;
   filter: DimensionFilterCondition;
   dimensionKeys: Array<SelectableValue<string>>;
@@ -34,7 +34,7 @@ const excludeCurrentKey = (dimensions: Dimensions, currentKey: string | undefine
 
 export const FilterItem: FunctionComponent<Props> = ({
   filter,
-  query: { region, namespace, metricName, dimensions },
+  metricStat: { region, namespace, metricName, dimensions },
   datasource,
   dimensionKeys,
   disableExpressions,
@@ -51,10 +51,16 @@ export const FilterItem: FunctionComponent<Props> = ({
       return [];
     }
 
-    return datasource
-      .getDimensionValues(region, namespace, metricName, filter.key, dimensionsExcludingCurrentKey)
+    return datasource.api
+      .getDimensionValues({
+        dimensionKey: filter.key,
+        dimensionFilters: dimensionsExcludingCurrentKey,
+        region,
+        namespace,
+        metricName,
+      })
       .then((result: Array<SelectableValue<string>>) => {
-        if (result.length && !disableExpressions) {
+        if (result.length && !disableExpressions && !result.some((o) => o.value === wildcardOption.value)) {
           result.unshift(wildcardOption);
         }
         return appendTemplateVariables(datasource, result);

@@ -3,13 +3,12 @@ import { getRefreshFromUrl } from './getRefreshFromUrl';
 describe('getRefreshFromUrl', () => {
   describe('when refresh is not part of params', () => {
     it('then it should return current refresh value', () => {
-      const params = {};
       const currentRefresh = false;
       const minRefreshInterval = '5s';
       const isAllowedIntervalFn = () => false;
 
       const actual = getRefreshFromUrl({
-        params,
+        urlRefresh: null,
         currentRefresh,
         minRefreshInterval,
         isAllowedIntervalFn,
@@ -22,14 +21,13 @@ describe('getRefreshFromUrl', () => {
   describe('when refresh is part of params', () => {
     describe('and refresh is an existing and valid interval', () => {
       it('then it should return the refresh value', () => {
-        const params = { refresh: '10s' };
         const currentRefresh = '';
         const minRefreshInterval = '5s';
         const isAllowedIntervalFn = () => true;
         const refreshIntervals = ['5s', '10s', '30s'];
 
         const actual = getRefreshFromUrl({
-          params,
+          urlRefresh: '10s',
           currentRefresh,
           minRefreshInterval,
           isAllowedIntervalFn,
@@ -61,7 +59,7 @@ describe('getRefreshFromUrl', () => {
       'when called with refresh:{$refresh}, isAllowedInterval:{$isAllowedInterval}, minRefreshInterval:{$minRefreshInterval}, refreshIntervals:{$refreshIntervals} then it should return: $expected',
       ({ refresh, isAllowedInterval, minRefreshInterval, refreshIntervals, expected }) => {
         const actual = getRefreshFromUrl({
-          params: { refresh },
+          urlRefresh: refresh,
           currentRefresh: 'currentRefresh',
           minRefreshInterval,
           isAllowedIntervalFn: () => isAllowedInterval,

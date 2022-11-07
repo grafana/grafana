@@ -1,17 +1,12 @@
 import React, { FormEvent, PureComponent } from 'react';
 
-import { AppEvents, SelectableValue } from '@grafana/data';
-import { ClipboardButton, Field, Modal, RadioButtonGroup, Switch, TextArea } from '@grafana/ui';
-import { appEvents } from 'app/core/core';
+import { reportInteraction } from '@grafana/runtime/src';
+import { ClipboardButton, Field, Modal, Switch, TextArea } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
+import { ThemePicker } from './ThemePicker';
 import { ShareModalTabProps } from './types';
 import { buildIframeHtml } from './utils';
-
-const themeOptions: Array<SelectableValue<string>> = [
-  { label: 'Current', value: 'current' },
-  { label: 'Dark', value: 'dark' },
-  { label: 'Light', value: 'light' },
-];
 
 interface Props extends ShareModalTabProps {}
 
@@ -32,6 +27,7 @@ export class ShareEmbed extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
+    reportInteraction('grafana_dashboards_embed_share_viewed');
     this.buildIframeHtml();
   }
 
@@ -60,10 +56,6 @@ export class ShareEmbed extends PureComponent<Props, State> {
     this.setState({ selectedTheme: value }, this.buildIframeHtml);
   };
 
-  onIframeHtmlCopy = () => {
-    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
-  };
-
   getIframeHtml = () => {
     return this.state.iframeHtml;
   };
@@ -72,26 +64,32 @@ export class ShareEmbed extends PureComponent<Props, State> {
     const { useCurrentTimeRange, selectedTheme, iframeHtml } = this.state;
     const isRelativeTime = this.props.dashboard ? this.props.dashboard.time.to === 'now' : false;
 
+    const timeRangeDescription = isRelativeTime
+      ? t(
+          'share-modal.embed.time-range-description',
+          'Transforms the current relative time range to an absolute time range'
+        )
+      : '';
+
     return (
       <>
-        <p className="share-modal-info-text">Generate HTML for embedding an iframe with this panel.</p>
-        <Field
-          label="Current time range"
-          description={isRelativeTime ? 'Transforms the current relative time range to an absolute time range' : ''}
-        >
+        <p className="share-modal-info-text">
+          <Trans i18nKey="share-modal.embed.info">Generate HTML for embedding an iframe with this panel.</Trans>
+        </p>
+        <Field label={t('share-modal.embed.time-range', 'Current time range')} description={timeRangeDescription}>
           <Switch
             id="share-current-time-range"
             value={useCurrentTimeRange}
             onChange={this.onUseCurrentTimeRangeChange}
           />
         </Field>
-        <Field label="Theme">
-          <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
-        </Field>
+        <ThemePicker selectedTheme={selectedTheme} onChange={this.onThemeChange} />
         <Field
-          label="Embed HTML"
-          description="The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled,
-                the user viewing that page need to be signed into Grafana for the graph to load."
+          label={t('share-modal.embed.html', 'Embed HTML')}
+          description={t(
+            'share-modal.embed.html-description',
+            'The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, the user viewing that page need to be signed into Grafana for the graph to load.'
+          )}
         >
           <TextArea
             data-testid="share-embed-html"
@@ -102,8 +100,8 @@ export class ShareEmbed extends PureComponent<Props, State> {
           />
         </Field>
         <Modal.ButtonRow>
-          <ClipboardButton variant="primary" getText={this.getIframeHtml} onClipboardCopy={this.onIframeHtmlCopy}>
-            Copy to clipboard
+          <ClipboardButton icon="copy" variant="primary" getText={this.getIframeHtml}>
+            <Trans i18nKey="share-modal.embed.copy">Copy to clipboard</Trans>
           </ClipboardButton>
         </Modal.ButtonRow>
       </>

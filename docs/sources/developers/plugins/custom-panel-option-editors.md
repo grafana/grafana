@@ -1,6 +1,8 @@
-+++
-title = "Custom panel option editors"
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/custom-panel-option-editors/
+title: Custom panel option editors
+---
 
 # Custom panel option editors
 

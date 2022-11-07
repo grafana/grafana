@@ -125,7 +125,9 @@ export const thresholdsOverrideProcessor = (
   return value as ThresholdsConfig; // !!!! likely not !!!!
 };
 
-export interface UnitFieldConfigSettings {}
+export interface UnitFieldConfigSettings {
+  isClearable?: boolean;
+}
 
 export const unitOverrideProcessor = (
   value: boolean,

@@ -23,10 +23,5 @@ func readDataProxySettings(iniFile *ini.File, cfg *Cfg) error {
 		cfg.DataProxyRowLimit = defaultDataProxyRowLimit
 	}
 
-	if val, err := dataproxy.Key("max_idle_connections_per_host").Int(); err == nil {
-		cfg.Logger.Warn("[Deprecated] the configuration setting 'max_idle_connections_per_host' is deprecated, please use 'max_idle_connections' instead")
-		cfg.DataProxyMaxIdleConns = val
-	}
-
 	return nil
 }

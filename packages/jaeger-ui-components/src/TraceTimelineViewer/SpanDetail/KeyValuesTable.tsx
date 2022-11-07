@@ -46,6 +46,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       label: row;
       & > td {
         padding: 0rem 0.5rem;
+        height: 30px;
       }
       &:nth-child(2n) > td {
         background: ${autoColor(theme, '#f5f5f5')};
@@ -74,7 +75,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
 
 const jsonObjectOrArrayStartRegex = /^(\[|\{)/;
 
-function parseIfComplexJson(value: any) {
+function parseIfComplexJson(value: unknown) {
   // if the value is a string representing actual json object or array, then use json-markup
   if (typeof value === 'string' && jsonObjectOrArrayStartRegex.test(value)) {
     // otherwise just return as is
@@ -107,7 +108,7 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
   const { data, linksGetter } = props;
   const styles = useStyles2(getStyles);
   return (
-    <div className={cx(styles.KeyValueTable)} data-test-id="KeyValueTable">
+    <div className={cx(styles.KeyValueTable)} data-testid="KeyValueTable">
       <table className={uWidth100}>
         <tbody className={styles.body}>
           {data.map((row, i) => {
@@ -132,7 +133,7 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
             return (
               // `i` is necessary in the key because row.key can repeat
               <tr className={styles.row} key={`${row.key}-${i}`}>
-                <td className={styles.keyColumn} data-test-id="KeyValueTable--keyColumn">
+                <td className={styles.keyColumn} data-testid="KeyValueTable--keyColumn">
                   {row.key}
                 </td>
                 <td>{valueMarkup}</td>

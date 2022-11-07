@@ -50,7 +50,12 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
   const namespaceOptions = useNamespaces(datasource);
   const metricOptions = useMetrics(datasource, query.region, namespace);
   const existingFilters = useMemo(() => stringArrayToDimensions(schemaLabels ?? []), [schemaLabels]);
-  const unusedDimensionKeys = useDimensionKeys(datasource, query.region, namespace, metricName, existingFilters);
+  const unusedDimensionKeys = useDimensionKeys(datasource, {
+    region: query.region,
+    namespace,
+    metricName,
+    dimensionFilters: existingFilters,
+  });
   const dimensionKeys = useMemo(
     () => (schemaLabels?.length ? [...unusedDimensionKeys, ...schemaLabels.map(toOption)] : unusedDimensionKeys),
     [unusedDimensionKeys, schemaLabels]
@@ -62,8 +67,8 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
   };
 
   const validateMetricName = async (query: CloudWatchMetricsQuery) => {
-    let { region, sql } = query;
-    await datasource.getMetrics(query.namespace, region).then((result: Array<SelectableValue<string>>) => {
+    let { region, sql, namespace } = query;
+    await datasource.api.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
       if (!result.some((metric) => metric.value === metricName)) {
         sql = removeMetricName(query).sql;
       }
@@ -82,7 +87,6 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
             options={namespaceOptions}
             allowCustomValue
             onChange={({ value }) => value && onNamespaceChange(setNamespace(query, value))}
-            menuShouldPortal
           />
         </EditorField>
 
@@ -106,7 +110,6 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
               options={dimensionKeys}
               allowCustomValue
               onChange={(item) => item && onQueryChange(setSchemaLabels(query, item))}
-              menuShouldPortal
             />
           </EditorField>
         )}
@@ -120,7 +123,6 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
             options={metricOptions}
             allowCustomValue
             onChange={({ value }) => value && onQueryChange(setMetricName(query, value))}
-            menuShouldPortal
           />
         </EditorField>
 
@@ -130,7 +132,6 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
             value={aggregation ? toOption(aggregation) : null}
             options={appendTemplateVariables(datasource, AGGREGATIONS)}
             onChange={({ value }) => value && onQueryChange(setAggregation(query, value))}
-            menuShouldPortal
           />
         </EditorField>
       </EditorFieldGroup>

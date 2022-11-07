@@ -28,7 +28,7 @@ jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
 }));
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as any),
+  ...jest.requireActual('@grafana/runtime'),
   reportMetaAnalytics: jest.fn(),
 }));
 
@@ -36,7 +36,7 @@ const mockGetUrlSearchParams = jest.fn(() => {
   return {};
 });
 jest.mock('@grafana/data', () => ({
-  ...(jest.requireActual('@grafana/data') as any),
+  ...jest.requireActual('@grafana/data'),
   urlUtil: {
     getUrlSearchParams: () => mockGetUrlSearchParams(),
   },
@@ -105,6 +105,7 @@ describe('emitDataRequestEvent - from a dashboard panel', () => {
         eventName: MetaAnalyticsEventName.DataRequest,
         datasourceName: datasource.name,
         datasourceId: datasource.id,
+        datasourceUid: datasource.uid,
         panelId: 2,
         dashboardId: 1,
         dashboardName: 'Test Dashboard',
@@ -128,6 +129,7 @@ describe('emitDataRequestEvent - from a dashboard panel', () => {
         eventName: MetaAnalyticsEventName.DataRequest,
         datasourceName: datasource.name,
         datasourceId: datasource.id,
+        datasourceUid: datasource.uid,
         panelId: 2,
         dashboardId: 1,
         dashboardName: 'Test Dashboard',
@@ -151,6 +153,7 @@ describe('emitDataRequestEvent - from a dashboard panel', () => {
         eventName: MetaAnalyticsEventName.DataRequest,
         datasourceName: datasource.name,
         datasourceId: datasource.id,
+        datasourceUid: datasource.uid,
         panelId: 2,
         dashboardId: 1,
         dashboardName: 'Test Dashboard',

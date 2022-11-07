@@ -1,14 +1,16 @@
 import { DataSourceInstanceSettings, locationUtil } from '@grafana/data';
-import { getDataSourceSrv, locationService, getBackendSrv } from '@grafana/runtime';
+import { getDataSourceSrv, locationService, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
+import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { DashboardDataDTO, DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
+import { DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
 
 import { LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import { DashboardSearchHit } from '../../search/types';
+import { DeleteDashboardResponse } from '../types';
 
 import {
   clearDashboard,
@@ -34,7 +36,9 @@ export function fetchGcomDashboard(id: string): ThunkResult<void> {
       dispatch(processElements(dashboard.json));
     } catch (error) {
       dispatch(fetchFailed());
-      dispatch(notifyApp(createErrorNotification(error.data.message || error)));
+      if (isFetchError(error)) {
+        dispatch(notifyApp(createErrorNotification(error.data.message || error)));
+      }
     }
   };
 }
@@ -75,7 +79,7 @@ function processInputs(dashboardJson: any): ThunkResult<void> {
   };
 }
 
-function processElements(dashboardJson?: { __elements?: LibraryElementExport[] }): ThunkResult<void> {
+function processElements(dashboardJson?: { __elements?: Record<string, LibraryElementExport> }): ThunkResult<void> {
   return async function (dispatch) {
     if (!dashboardJson || !dashboardJson.__elements) {
       return;
@@ -83,7 +87,7 @@ function processElements(dashboardJson?: { __elements?: LibraryElementExport[] }
 
     const libraryPanelInputs: LibraryPanelInput[] = [];
 
-    for (const element of dashboardJson.__elements) {
+    for (const element of Object.values(dashboardJson.__elements)) {
       if (element.kind !== LibraryElementKind.Panel) {
         continue;
       }
@@ -108,7 +112,7 @@ function processElements(dashboardJson?: { __elements?: LibraryElementExport[] }
 
       try {
         const panelInDb = await getLibraryPanel(uid, true);
-        input.state = LibraryPanelInputState.Exits;
+        input.state = LibraryPanelInputState.Exists;
         input.model = panelInDb;
       } catch (e: any) {
         if (e.status !== 404) {
@@ -213,11 +217,13 @@ async function moveDashboard(uid: string, toFolder: FolderInfo) {
     await saveDashboard(options);
     return { succeeded: true };
   } catch (err) {
-    if (err.data?.status !== 'plugin-dashboard') {
-      return { succeeded: false };
-    }
+    if (isFetchError(err)) {
+      if (err.data?.status !== 'plugin-dashboard') {
+        return { succeeded: false };
+      }
 
-    err.isHandled = true;
+      err.isHandled = true;
+    }
     options.overwrite = true;
 
     try {
@@ -258,14 +264,7 @@ export function deleteFoldersAndDashboards(folderUids: string[], dashboardUids: 
   return executeInOrder(tasks);
 }
 
-export interface SaveDashboardOptions {
-  dashboard: DashboardDataDTO;
-  message?: string;
-  folderId?: number;
-  overwrite?: boolean;
-}
-
-export function saveDashboard(options: SaveDashboardOptions) {
+export function saveDashboard(options: SaveDashboardCommand) {
   dashboardWatcher.ignoreNextSave();
 
   return getBackendSrv().post('/api/dashboards/db/', {
@@ -277,19 +276,24 @@ export function saveDashboard(options: SaveDashboardOptions) {
 }
 
 function deleteFolder(uid: string, showSuccessAlert: boolean) {
-  return getBackendSrv().request({
-    method: 'DELETE',
-    url: `/api/folders/${uid}?forceDeleteRules=false`,
-    showSuccessAlert: showSuccessAlert,
-  });
+  return getBackendSrv().delete(`/api/folders/${uid}?forceDeleteRules=false`, undefined, { showSuccessAlert });
 }
 
 export function createFolder(payload: any) {
   return getBackendSrv().post('/api/folders', payload);
 }
 
-export function searchFolders(query: any, permission?: PermissionLevelString): Promise<DashboardSearchHit[]> {
-  return getBackendSrv().get('/api/search', { query, type: 'dash-folder', permission });
+export function searchFolders(
+  query: any,
+  permission?: PermissionLevelString,
+  withAccessControl = false
+): Promise<DashboardSearchHit[]> {
+  return getBackendSrv().get('/api/search', {
+    query,
+    type: 'dash-folder',
+    permission,
+    accesscontrol: withAccessControl,
+  });
 }
 
 export function getFolderById(id: number): Promise<{ id: number; title: string }> {
@@ -297,11 +301,7 @@ export function getFolderById(id: number): Promise<{ id: number; title: string }
 }
 
 export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
-  return getBackendSrv().request({
-    method: 'DELETE',
-    url: `/api/dashboards/uid/${uid}`,
-    showSuccessAlert: showSuccessAlert,
-  });
+  return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
 }
 
 function executeInOrder(tasks: any[]) {

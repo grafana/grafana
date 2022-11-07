@@ -5,14 +5,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestShortURLService(t *testing.T) {
-	user := &models.SignedInUser{UserId: 1}
-	sqlStore := sqlstore.InitTestDB(t)
+	user := &user.SignedInUser{UserID: 1}
+	sqlStore := db.InitTestDB(t)
 
 	t.Run("User can create and read short URLs", func(t *testing.T) {
 		const refPath = "mock/path?test=true"
@@ -79,7 +81,7 @@ func TestShortURLService(t *testing.T) {
 
 		shortURL, err := service.GetShortURLByUID(context.Background(), user, "testnotfounduid")
 		require.Error(t, err)
-		require.Equal(t, models.ErrShortURLNotFound, err)
+		require.True(t, models.ErrShortURLNotFound.Is(err))
 		require.Nil(t, shortURL)
 	})
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 const concurrentUserStatsCacheLifetime = time.Hour
@@ -32,7 +32,7 @@ func (s *Service) concurrentUsers(ctx context.Context) (*concurrentUsersStats, e
 	}
 
 	s.concurrentUserStatsCache.stats = &concurrentUsersStats{}
-	err := s.sqlstore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.sqlstore.WithDbSession(ctx, func(sess *db.Session) error {
 		// Retrieves concurrent users stats as a histogram. Buckets are accumulative and upper bound is inclusive.
 		rawSQL := `
 SELECT
@@ -55,4 +55,25 @@ FROM (select count(1) as tokens from user_auth_token group by user_id) uat;`
 
 	s.concurrentUserStatsCache.memoized = time.Now()
 	return s.concurrentUserStatsCache.stats, nil
+}
+
+func (s *Service) collectConcurrentUsers(ctx context.Context) (map[string]interface{}, error) {
+	m := map[string]interface{}{}
+
+	// Get concurrent users stats as histogram
+	concurrentUsersStats, err := s.concurrentUsers(ctx)
+	if err != nil {
+		s.log.Error("Failed to get concurrent users stats", "error", err)
+		return nil, err
+	}
+
+	// Histogram is cumulative and metric name has a postfix of le_"<upper inclusive bound>"
+	m["stats.auth_token_per_user_le_3"] = concurrentUsersStats.BucketLE3
+	m["stats.auth_token_per_user_le_6"] = concurrentUsersStats.BucketLE6
+	m["stats.auth_token_per_user_le_9"] = concurrentUsersStats.BucketLE9
+	m["stats.auth_token_per_user_le_12"] = concurrentUsersStats.BucketLE12
+	m["stats.auth_token_per_user_le_15"] = concurrentUsersStats.BucketLE15
+	m["stats.auth_token_per_user_le_inf"] = concurrentUsersStats.BucketLEInf
+
+	return m, nil
 }

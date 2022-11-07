@@ -43,6 +43,6 @@ export const FooterCell = (props: FooterProps) => {
   return EmptyCell;
 };
 
-export const EmptyCell = (props: any) => {
+export const EmptyCell = () => {
   return <span>&nbsp;</span>;
 };

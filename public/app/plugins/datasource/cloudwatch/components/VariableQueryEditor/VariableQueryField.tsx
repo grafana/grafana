@@ -29,7 +29,6 @@ export const VariableQueryField = <T extends string | VariableQueryType>({
   return (
     <InlineField label={label} labelWidth={LABEL_WIDTH} htmlFor={inputId}>
       <Select
-        menuShouldPortal
         aria-label={label}
         width={25}
         allowCustomValue={allowCustomValue}

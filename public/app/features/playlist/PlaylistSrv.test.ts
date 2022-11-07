@@ -4,32 +4,41 @@ import configureMockStore from 'redux-mock-store';
 import { locationService } from '@grafana/runtime';
 import { setStore } from 'app/store/store';
 
+import { DashboardQueryResult } from '../search/service';
+
 import { PlaylistSrv } from './PlaylistSrv';
+import { Playlist, PlaylistItem } from './types';
 
-const getMock = jest.fn();
+jest.mock('./api', () => ({
+  getPlaylist: jest.fn().mockReturnValue({
+    interval: '1s',
+    uid: 'xyz',
+    items: [
+      { type: 'dashboard_by_uid', value: 'aaa' },
+      { type: 'dashboard_by_uid', value: 'bbb' },
+    ],
+  } as Playlist),
+  loadDashboards: (items: PlaylistItem[]) => {
+    return Promise.resolve(
+      items.map((v) => ({
+        ...v, // same item with dashboard URLs filled in
+        dashboards: [{ url: `/url/to/${v.value}` } as unknown as DashboardQueryResult],
+      }))
+    );
+  },
+}));
 
-jest.mock('@grafana/runtime', () => {
-  const original = jest.requireActual('@grafana/runtime');
-  return {
-    ...original,
-    getBackendSrv: () => ({
-      get: getMock,
-    }),
-  };
-});
-
-const mockStore = configureMockStore<any, any>();
+const mockStore = configureMockStore();
 
 setStore(
+  // eslint-disable-next-line
   mockStore({
     location: {},
   }) as any
 );
 
-const dashboards = [{ url: '/dash1' }, { url: '/dash2' }];
-
 function createPlaylistSrv(): PlaylistSrv {
-  locationService.push('/playlists/1');
+  locationService.push('/playlists/foo');
   return new PlaylistSrv();
 }
 
@@ -41,6 +50,8 @@ const mockWindowLocation = (): [jest.MockInstance<any, any>, () => void] => {
   // https://github.com/facebook/jest/issues/5124#issuecomment-446659510
   //@ts-ignore
   delete window.location;
+
+  // eslint-disable-next-line
   window.location = {} as any;
 
   // Only mocking href as that is all this test needs, but otherwise there is lots of things missing, so keep that
@@ -63,18 +74,6 @@ describe('PlaylistSrv', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    getMock.mockImplementation(
-      jest.fn((url) => {
-        switch (url) {
-          case '/api/playlists/1':
-            return Promise.resolve({ interval: '1s' });
-          case '/api/playlists/1/dashboards':
-            return Promise.resolve(dashboards);
-          default:
-            throw new Error(`Unexpected url=${url}`);
-        }
-      })
-    );
 
     srv = createPlaylistSrv();
     [hrefMock, unmockLocation] = mockWindowLocation();
@@ -88,7 +87,7 @@ describe('PlaylistSrv', () => {
   });
 
   it('runs all dashboards in cycle and reloads page after 3 cycles', async () => {
-    await srv.start(1);
+    await srv.start('foo');
 
     for (let i = 0; i < 6; i++) {
       srv.next();
@@ -99,7 +98,7 @@ describe('PlaylistSrv', () => {
   });
 
   it('keeps the refresh counter value after restarting', async () => {
-    await srv.start(1);
+    await srv.start('foo');
 
     // 1 complete loop
     for (let i = 0; i < 3; i++) {
@@ -107,7 +106,7 @@ describe('PlaylistSrv', () => {
     }
 
     srv.stop();
-    await srv.start(1);
+    await srv.start('foo');
 
     // Another 2 loops
     for (let i = 0; i < 4; i++) {
@@ -119,7 +118,7 @@ describe('PlaylistSrv', () => {
   });
 
   it('Should stop playlist when navigating away', async () => {
-    await srv.start(1);
+    await srv.start('foo');
 
     locationService.push('/datasources');
 
@@ -127,11 +126,15 @@ describe('PlaylistSrv', () => {
   });
 
   it('storeUpdated should not stop playlist when navigating to next dashboard', async () => {
-    await srv.start(1);
+    await srv.start('foo');
+
+    // eslint-disable-next-line
+    expect((srv as any).validPlaylistUrl).toBe('/url/to/aaa');
 
     srv.next();
 
-    expect((srv as any).validPlaylistUrl).toBe('/dash2');
+    // eslint-disable-next-line
+    expect((srv as any).validPlaylistUrl).toBe('/url/to/bbb');
     expect(srv.isPlaying).toBe(true);
   });
 });

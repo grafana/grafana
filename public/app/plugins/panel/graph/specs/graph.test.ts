@@ -1297,6 +1297,7 @@ describe('grafanaGraph', () => {
     describe('when called and user can edit the dashboard', () => {
       it('then the correct menu items should be returned', () => {
         const element = getGraphElement({ canEdit: true, canMakeEditable: false });
+        jest.spyOn(element.dashboard, 'canAddAnnotations').mockReturnValue(true);
 
         const result = element.getContextMenuItemsSupplier({ x: 1, y: 1 })();
 
@@ -1311,6 +1312,7 @@ describe('grafanaGraph', () => {
     describe('when called and user can make the dashboard editable', () => {
       it('then the correct menu items should be returned', () => {
         const element = getGraphElement({ canEdit: false, canMakeEditable: true });
+        jest.spyOn(element.dashboard, 'canAddAnnotations').mockReturnValue(true);
 
         const result = element.getContextMenuItemsSupplier({ x: 1, y: 1 })();
 

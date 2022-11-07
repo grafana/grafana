@@ -53,13 +53,12 @@ export const SelectWithAdd: FC<Props> = ({
         placeholder={placeholder}
         className={className}
         disabled={disabled}
-        onChange={(e) => onChange((e.target as HTMLInputElement).value)}
+        onChange={(e) => onChange(e.currentTarget.value)}
       />
     );
   } else {
     return (
       <Select
-        menuShouldPortal
         aria-label={ariaLabel}
         width={width}
         options={_options}

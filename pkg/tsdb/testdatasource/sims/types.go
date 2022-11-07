@@ -32,11 +32,11 @@ type simulationState struct {
 }
 
 type simulationInfo struct {
-	Type        string      `json:"type"`
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	OnlyForward bool        `json:"forward"`
-	SetupFields *data.Frame `json:"setup"` // the default setup fields (and types)
+	Type         string      `json:"type"`
+	Name         string      `json:"name"`
+	Description  string      `json:"description"`
+	OnlyForward  bool        `json:"forward"`
+	ConfigFields *data.Frame `json:"config"`
 
 	// Create a simulation instance
 	create func(q simulationState) (Simulation, error)

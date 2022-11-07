@@ -10,10 +10,10 @@ import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 
 import CloudWatchLink from './CloudWatchLink';
-import { CloudWatchLogsQueryField } from './LogsQueryField';
+import CloudWatchLogsQueryField from './LogsQueryField';
 
 type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> & {
-  allowCustomValue?: boolean;
+  query: CloudWatchLogsQuery;
 };
 
 const labelClass = css`
@@ -22,7 +22,7 @@ const labelClass = css`
 `;
 
 export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor(props: Props) {
-  const { query, data, datasource, onRunQuery, onChange, exploreId, allowCustomValue = false } = props;
+  const { query, data, datasource, onRunQuery, onChange, exploreId } = props;
 
   let absolute: AbsoluteTimeRange;
   if (data?.request?.range?.from) {
@@ -48,7 +48,6 @@ export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor
       history={[]}
       data={data}
       absoluteRange={absolute}
-      allowCustomValue={allowCustomValue}
       ExtraFieldElement={
         <InlineFormLabel className={`gf-form-label--btn ${labelClass}`} width="auto" tooltip="Link to Graph in AWS">
           <CloudWatchLink query={query as CloudWatchLogsQuery} panelData={data} datasource={datasource} />

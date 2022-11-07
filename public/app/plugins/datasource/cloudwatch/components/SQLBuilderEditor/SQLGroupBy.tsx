@@ -31,7 +31,7 @@ const SQLGroupBy: React.FC<SQLGroupByProps> = ({ query, datasource, onQueryChang
   const namespace = getNamespaceFromExpression(sql.from);
   const metricName = getMetricNameFromExpression(sql.select);
 
-  const baseOptions = useDimensionKeys(datasource, query.region, namespace, metricName);
+  const baseOptions = useDimensionKeys(datasource, { region: query.region, namespace, metricName });
   const options = useMemo(
     // Exclude options we've already selected
     () => baseOptions.filter((option) => !groupBysFromQuery.some((v) => v.property.name === option.value)),
@@ -100,7 +100,6 @@ const GroupByItem: React.FC<GroupByItemProps> = (props) => {
         options={options}
         allowCustomValue
         onChange={({ value }) => value && onChange(setGroupByField(value))}
-        menuShouldPortal
       />
 
       <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />

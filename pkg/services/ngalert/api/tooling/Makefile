@@ -1,8 +1,9 @@
+include ../../../../../.bingo/Variables.mk
+
 .DEFAULT_GOAL := openapi
 
 API_DIR = definitions
 GO_PKG_FILES = $(shell find $(API_DIR) -name *.go -print)
-SWAGGER_TAG ?= latest
 
 PATH_DOWN = pkg/services/ngalert/api/tooling
 PATH_UP = ../../../../..
@@ -11,26 +12,32 @@ PATH_UP = ../../../../..
 
 GENERATED_GO_MATCHERS = ./go/*.go
 
-spec.json: $(GO_PKG_FILES)
-	# this is slow because this image does not use the cache
-	# https://github.com/go-swagger/go-swagger/blob/v0.27.0/Dockerfile#L5
-	docker run --rm -it \
-		-w /src/$(PATH_DOWN) \
-		-v $$(pwd)/$(PATH_UP):/src \
-		quay.io/goswagger/swagger:$(SWAGGER_TAG) \
-		generate spec -m -o $@
+SED_INPLACE := -i
 
-ensure_go-swagger_mac:
-	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
+ifneq ($(OS),Windows_NT)
+	UNAME := $(shell uname)
+	ifeq ($(UNAME),Darwin)
+		SED_INPLACE = -i ''
+	endif
+endif
 
-spec.json-mac: ensure_go-swagger_mac $(GO_PKG_FILES)
-	swagger generate spec -m -w $(API_DIR) -o spec.json
+spec.json spec-stable.json: $(GO_PKG_FILES) $(SWAGGER)
+	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w $(API_DIR) -o spec.json && SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m --include-tag=stable -o spec-stable.json
 
 post.json: spec.json
 	go run cmd/clean-swagger/main.go -if $(<) -of $@
 
+api.json: spec-stable.json
+	go run cmd/clean-swagger/main.go -if $(<) -of $@
+
+validate-stable: spec-stable.json $(SWAGGER)
+	$(SWAGGER) validate $(<)
+
+validate: spec.json $(SWAGGER)
+	$(SWAGGER) validate $(<)
+
 swagger-codegen-api:
-	docker run --rm -v $$(pwd):/local --user $$(id -u):$$(id -g) swaggerapi/swagger-codegen-cli generate \
+	docker run --rm -v $$(pwd):/local --user $$(id -u):$$(id -g) parsertongue/swagger-codegen-cli:3.0.32 generate \
 	-i /local/post.json \
 	-l go-server \
 	-Dapis \
@@ -44,9 +51,9 @@ copy-files:
 	ls -1 go | xargs -n 1 -I {} mv go/{} ../generated_base_{}
 
 fix:
-	sed -i -e 's/apimodels\.\[\]PostableAlert/apimodels.PostableAlerts/' $(GENERATED_GO_MATCHERS)
-	sed -i -e 's/apimodels\.\[\]UpdateDashboardAclCommand/apimodels.Permissions/' $(GENERATED_GO_MATCHERS)
-	sed -i -e 's/apimodels\.\[\]PostableApiReceiver/apimodels.TestReceiversConfigParams/' $(GENERATED_GO_MATCHERS)
+	sed $(SED_INPLACE) -e 's/apimodels\.\[\]PostableAlert/apimodels.PostableAlerts/' $(GENERATED_GO_MATCHERS)
+	sed $(SED_INPLACE) -e 's/apimodels\.\[\]UpdateDashboardACLCommand/apimodels.Permissions/' $(GENERATED_GO_MATCHERS)
+	sed $(SED_INPLACE) -e 's/apimodels\.\[\]PostableApiReceiver/apimodels.TestReceiversConfigParams/' $(GENERATED_GO_MATCHERS)
 	goimports -w -v $(GENERATED_GO_MATCHERS)
 
 clean:
@@ -55,4 +62,9 @@ clean:
 serve: post.json
 	docker run --rm -p 80:8080 -v $$(pwd):/tmp -e SWAGGER_FILE=/tmp/$(<) swaggerapi/swagger-editor
 
-all: post.json swagger-codegen-api fix copy-files clean	
+serve-stable: api.json
+	docker run --rm -p 80:8080 -v $$(pwd):/tmp -e SWAGGER_FILE=/tmp/$(<) swaggerapi/swagger-editor
+
+gen: swagger-codegen-api fix copy-files clean
+
+all: post.json api.json gen

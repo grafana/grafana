@@ -1,4 +1,4 @@
-import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, PluginState } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, PluginState, EventBus } from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as style from 'ol/style';
@@ -26,7 +26,7 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: Map, options: MapLayerOptions<LastPointConfig>, theme: GrafanaTheme2) => {
+  create: async (map: Map, options: MapLayerOptions<LastPointConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const point = new Feature({});
     const config = { ...defaultOptions, ...options.config };
 

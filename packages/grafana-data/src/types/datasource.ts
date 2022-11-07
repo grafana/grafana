@@ -8,7 +8,6 @@ import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotatio
 import { CoreApp } from './app';
 import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
-import { LogRowModel } from './logs';
 import { PanelData } from './panel';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { DataQuery } from './query';
@@ -17,7 +16,10 @@ import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSuppo
 
 import { DataSourceRef, WithAccessControlMetadata } from '.';
 
-export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
+export interface DataSourcePluginOptionsEditorProps<
+  JSONData extends DataSourceJsonData = DataSourceJsonData,
+  SecureJSONData = {}
+> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
   onOptionsChange: (options: DataSourceSettings<JSONData, SecureJSONData>) => void;
 }
@@ -65,16 +67,19 @@ export class DataSourcePlugin<
     return this;
   }
 
+  /** @deprecated Use `setQueryEditor` instead. When using Explore `props.app` is equal to `CoreApp.Explore` */
   setExploreQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreQueryField = ExploreQueryField;
     return this;
   }
 
+  /** @deprecated Use `setQueryEditor` instead. */
   setExploreMetricsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreMetricsQueryField = ExploreQueryField;
     return this;
   }
 
+  /** @deprecated Use `setQueryEditor` instead. */
   setExploreLogsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreLogsQueryField = ExploreQueryField;
     return this;
@@ -92,9 +97,9 @@ export class DataSourcePlugin<
     return this.setQueryEditorHelp(ExploreStartPage);
   }
 
-  /*
+  /**
    * @deprecated -- prefer using {@link StandardVariableSupport} or {@link CustomVariableSupport} or {@link DataSourceVariableSupport} in data source instead
-   * */
+   */
   setVariableQueryEditor(VariableQueryEditor: any) {
     this.components.VariableQueryEditor = VariableQueryEditor;
     return this;
@@ -151,8 +156,11 @@ export interface DataSourcePluginComponents<
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
   QueryEditor?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
+  /** @deprecated it will be removed in a future release and `QueryEditor` will be used instead. */
   ExploreQueryField?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
+  /** @deprecated it will be removed in a future release and `QueryEditor` will be used instead. */
   ExploreMetricsQueryField?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
+  /** @deprecated it will be removed in a future release and `QueryEditor` will be used instead. */
   ExploreLogsQueryField?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
   QueryEditorHelp?: ComponentType<QueryEditorHelpProps<TQuery>>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>;
@@ -167,6 +175,13 @@ export interface DataSourceConstructor<
 > {
   new (instanceSettings: DataSourceInstanceSettings<TOptions>, ...args: any[]): DSType;
 }
+
+// VariableSupport is hoisted up to its own type to fix the wonky intermittent
+// 'variables is references directly or indirectly' error
+type VariableSupport<TQuery extends DataQuery, TOptions extends DataSourceJsonData> =
+  | StandardVariableSupport<DataSourceApi<TQuery, TOptions>>
+  | CustomVariableSupport<DataSourceApi<TQuery, TOptions>>
+  | DataSourceVariableSupport<DataSourceApi<TQuery, TOptions>>;
 
 /**
  * The main data source abstraction interface, represents an instance of a data source
@@ -261,29 +276,6 @@ abstract class DataSourceApi<
   getQueryDisplayText?(query: TQuery): string;
 
   /**
-   * @deprecated getLogRowContext and showContextToggle in `DataSourceApi` is deprecated.
-   *
-   * DataSourceWithLogsContextSupport should be implemented instead (these methods have exactly
-   * the same signature in DataSourceWithLogsContextSupport).
-   * This method will be removed from DataSourceApi in the future. Some editors may still show
-   * a deprecation warning which can be ignored for time being.
-   */
-  getLogRowContext?: <TContextQueryOptions extends {}>(
-    row: LogRowModel,
-    options?: TContextQueryOptions
-  ) => Promise<DataQueryResponse>;
-
-  /**
-   * @deprecated getLogRowContext and showContextToggle in `DataSourceApi` is deprecated.
-   *
-   * DataSourceWithLogsContextSupport should be implemented instead (these methods have exactly
-   * the same signature in DataSourceWithLogsContextSupport).
-   * This method will be removed from DataSourceApi in the future. Some editors may still show
-   * a deprecation warning which can be ignored for time being.
-   */
-  showContextToggle?(row?: LogRowModel): boolean;
-
-  /**
    * Variable query action.
    */
   metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]>;
@@ -359,10 +351,13 @@ abstract class DataSourceApi<
    * Defines new variable support
    * @alpha -- experimental
    */
-  variables?:
-    | StandardVariableSupport<DataSourceApi<TQuery, TOptions>>
-    | CustomVariableSupport<DataSourceApi<TQuery, TOptions>>
-    | DataSourceVariableSupport<DataSourceApi<TQuery, TOptions>>;
+  variables?: VariableSupport<TQuery, TOptions>;
+
+  /*
+   * Optionally, use this method to set default values for a query
+   * @alpha -- experimental
+   */
+  getDefaultQuery?(app: CoreApp): Partial<TQuery>;
 }
 
 export interface MetadataInspectorProps<
@@ -387,6 +382,7 @@ export interface QueryEditorProps<
   onRunQuery: () => void;
   onChange: (value: TVQuery) => void;
   onBlur?: () => void;
+  onAddQuery?: (query: TQuery) => void;
   /**
    * Contains query response filtered by refId of QueryResultBase and possible query error
    */
@@ -494,7 +490,10 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
+  /** @deprecate */
   dashboardId?: number;
+  dashboardUID?: string;
+  publicDashboardAccessToken?: string;
 
   // Request Timing
   startTime: number;
@@ -502,6 +501,9 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   // Explore state used by various datasources
   liveStreaming?: boolean;
+
+  // Make it possible to hide support queries from the inspector
+  hideFromInspector?: boolean;
 }
 
 export interface DataQueryTimings {
@@ -517,6 +519,7 @@ export interface QueryFixAction {
   type: string;
   query?: string;
   preventSubmit?: boolean;
+  options?: KeyValue<string>;
 }
 
 export interface QueryHint {
@@ -554,11 +557,9 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   typeName: string;
   access: string;
   url: string;
-  password: string;
   user: string;
   database: string;
   basicAuth: boolean;
-  basicAuthPassword: string;
   basicAuthUser: string;
   isDefault: boolean;
   jsonData: T;
@@ -580,6 +581,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   type: string;
   name: string;
   meta: DataSourcePluginMeta;
+  readOnly: boolean;
   url?: string;
   jsonData: T;
   username?: string;

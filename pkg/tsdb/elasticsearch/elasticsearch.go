@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
@@ -26,26 +27,32 @@ type Service struct {
 }
 
 func ProvideService(httpClientProvider httpclient.Provider) *Service {
-	eslog.Debug("initializing")
+	eslog.Debug("Initializing")
 
 	return &Service{
-		im:                 datasource.NewInstanceManager(newInstanceSettings()),
+		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		httpClientProvider: httpClientProvider,
 		intervalCalculator: intervalv2.NewCalculator(),
 	}
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	if len(req.Queries) == 0 {
-		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
-	}
-
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	client, err := es.NewClient(ctx, s.httpClientProvider, dsInfo, req.Queries[0].TimeRange)
+	// Support for version after their end-of-life (currently <7.10.0) was removed
+	lastSupportedVersion, _ := semver.NewVersion("7.10.0")
+	if dsInfo.ESVersion.LessThan(lastSupportedVersion) {
+		return &backend.QueryDataResponse{}, fmt.Errorf("support for elasticsearch versions after their end-of-life (currently versions < 7.10) was removed")
+	}
+
+	if len(req.Queries) == 0 {
+		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
+	}
+
+	client, err := es.NewClient(ctx, dsInfo, req.Queries[0].TimeRange)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -54,7 +61,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return query.execute()
 }
 
-func newInstanceSettings() datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := map[string]interface{}{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -66,13 +73,17 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 			return nil, fmt.Errorf("error getting http options: %w", err)
 		}
 
+		httpCli, err := httpClientProvider.New(httpCliOpts)
+		if err != nil {
+			return nil, err
+		}
+
 		// Set SigV4 service namespace
 		if httpCliOpts.SigV4 != nil {
 			httpCliOpts.SigV4.Service = "es"
 		}
 
 		version, err := coerceVersion(jsonData["esVersion"])
-
 		if err != nil {
 			return nil, fmt.Errorf("elasticsearch version is required, err=%v", err)
 		}
@@ -123,7 +134,7 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 		model := es.DatasourceInfo{
 			ID:                         settings.ID,
 			URL:                        settings.URL,
-			HTTPClientOpts:             httpCliOpts,
+			HTTPClient:                 httpCli,
 			Database:                   settings.Database,
 			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
 			ESVersion:                  version,

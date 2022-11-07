@@ -1,17 +1,16 @@
-import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
 import { QueryEditorProps, toOption } from '@grafana/data';
-import { Button, Select } from '@grafana/ui';
+import { EditorRows } from '@grafana/experimental';
 
-import { QUERY_TYPES, SELECT_WIDTH } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
-import { CloudMonitoringQuery, EditorMode, MetricQuery, QueryType, SLOQuery, CloudMonitoringOptions } from '../types';
+import { CloudMonitoringQuery, MetricQuery, QueryType, SLOQuery, CloudMonitoringOptions } from '../types';
 
 import { defaultQuery } from './MetricQueryEditor';
-import { defaultQuery as defaultSLOQuery } from './SLO/SLOQueryEditor';
+import { QueryHeader } from './QueryHeader';
+import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
 
-import { MetricQueryEditor, QueryEditorRow, SLOQueryEditor } from './';
+import { MetricQueryEditor, SLOQueryEditor } from './';
 
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 
@@ -26,7 +25,7 @@ export class QueryEditor extends PureComponent<Props> {
       this.props.query.metricQuery = metricQuery;
     }
 
-    if (!this.props.query.hasOwnProperty('queryType')) {
+    if (![QueryType.METRICS, QueryType.SLO].includes(this.props.query.queryType)) {
       this.props.query.queryType = QueryType.METRICS;
     }
 
@@ -55,43 +54,14 @@ export class QueryEditor extends PureComponent<Props> {
     };
 
     return (
-      <>
-        <QueryEditorRow
-          label="Query type"
-          fillComponent={
-            query.queryType !== QueryType.SLO && (
-              <Button
-                variant="secondary"
-                className={css`
-                  margin-left: auto;
-                `}
-                icon="edit"
-                onClick={() =>
-                  this.onQueryChange('metricQuery', {
-                    ...metricQuery,
-                    editorMode: metricQuery.editorMode === EditorMode.MQL ? EditorMode.Visual : EditorMode.MQL,
-                  })
-                }
-              >
-                {metricQuery.editorMode === EditorMode.MQL ? 'Switch to builder' : 'Edit MQL'}
-              </Button>
-            )
-          }
-          htmlFor={`${query.refId}-query-type`}
-        >
-          <Select
-            menuShouldPortal
-            width={SELECT_WIDTH}
-            value={queryType}
-            options={QUERY_TYPES}
-            onChange={({ value }) => {
-              onChange({ ...query, sloQuery, queryType: value! });
-              onRunQuery();
-            }}
-            inputId={`${query.refId}-query-type`}
-          />
-        </QueryEditorRow>
-
+      <EditorRows>
+        <QueryHeader
+          query={query}
+          metricQuery={metricQuery}
+          sloQuery={sloQuery}
+          onChange={onChange}
+          onRunQuery={onRunQuery}
+        />
         {queryType === QueryType.METRICS && (
           <MetricQueryEditor
             refId={query.refId}
@@ -103,7 +73,7 @@ export class QueryEditor extends PureComponent<Props> {
             onRunQuery={onRunQuery}
             datasource={datasource}
             query={metricQuery}
-          ></MetricQueryEditor>
+          />
         )}
 
         {queryType === QueryType.SLO && (
@@ -115,9 +85,9 @@ export class QueryEditor extends PureComponent<Props> {
             onRunQuery={onRunQuery}
             datasource={datasource}
             query={sloQuery}
-          ></SLOQueryEditor>
+          />
         )}
-      </>
+      </EditorRows>
     );
   }
 }

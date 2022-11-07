@@ -49,14 +49,13 @@ export interface LokiQuery extends DataQuery {
   /* @deprecated now use queryType */
   instant?: boolean;
   editorMode?: QueryEditorMode;
-  /** Controls if the raw query text is shown */
-  rawQuery?: boolean;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
   maxLines?: string;
   derivedFields?: DerivedFieldConfig[];
   alertmanager?: string;
+  keepCookies?: string[];
 }
 
 export interface LokiStats {
@@ -142,4 +141,15 @@ export interface TransformerOptions {
   refId: string;
   scopedVars: ScopedVars;
   meta?: QueryResultMeta;
+}
+
+export enum LokiVariableQueryType {
+  LabelNames,
+  LabelValues,
+}
+
+export interface LokiVariableQuery extends DataQuery {
+  type: LokiVariableQueryType;
+  label?: string;
+  stream?: string;
 }

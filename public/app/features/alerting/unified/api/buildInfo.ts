@@ -1,14 +1,47 @@
 import { lastValueFrom } from 'rxjs';
 
-import { getBackendSrv } from '@grafana/runtime';
-import { PromApplication, PromBuildInfo, PromBuildInfoResponse } from 'app/types/unified-alerting-dto';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import {
+  AlertmanagerApiFeatures,
+  PromApiFeatures,
+  PromApplication,
+  PromBuildInfoResponse,
+} from 'app/types/unified-alerting-dto';
 
-import { isFetchError } from '../utils/alertmanager';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
-import { getDataSourceByName } from '../utils/datasource';
+import { getDataSourceByName, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { fetchRules } from './prometheus';
 import { fetchTestRulerRulesGroup } from './ruler';
+
+/**
+ * Attempt to fetch buildinfo from our component
+ */
+export async function discoverFeatures(dataSourceName: string): Promise<PromApiFeatures> {
+  if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
+    return {
+      features: {
+        rulerApiEnabled: true,
+      },
+    };
+  }
+
+  const dsConfig = getDataSourceByName(dataSourceName);
+  if (!dsConfig) {
+    throw new Error(`Cannot find data source configuration for ${dataSourceName}`);
+  }
+
+  const { url, name, type } = dsConfig;
+  if (!url) {
+    throw new Error(`The data source url cannot be empty.`);
+  }
+
+  if (type !== 'prometheus' && type !== 'loki') {
+    throw new Error(`The build info request is not available for ${type}. Only 'prometheus' and 'loki' are supported`);
+  }
+
+  return discoverDataSourceFeatures({ name, url, type });
+}
 
 /**
  * This function will attempt to detect what type of system we are talking to; this could be
@@ -18,27 +51,22 @@ import { fetchTestRulerRulesGroup } from './ruler';
  * Prometheus and Mimir expose a `buildinfo` endpoint, Cortex does not.
  * Mimir reports which "features" are enabled or available via the buildinfo endpoint, Prometheus does not.
  */
-export async function fetchDataSourceBuildInfo(dsSettings: { url: string; name: string }): Promise<PromBuildInfo> {
-  const { url, name } = dsSettings;
+export async function discoverDataSourceFeatures(dsSettings: {
+  url: string;
+  name: string;
+  type: 'prometheus' | 'loki';
+}): Promise<PromApiFeatures> {
+  const { url, name, type } = dsSettings;
 
-  const response = await lastValueFrom(
-    getBackendSrv().fetch<PromBuildInfoResponse>({
-      url: `${url}/api/v1/status/buildinfo`,
-      showErrorAlert: false,
-      showSuccessAlert: false,
-    })
-  ).catch((e) => {
-    if ('status' in e && e.status === 404) {
-      return null; // Cortex does not support buildinfo endpoint, we return an empty response
-    }
-
-    throw e;
-  });
+  // The current implementation of Loki's build info endpoint is useless
+  // because it doesn't provide information about Loki's available features (e.g. Ruler API)
+  // It's better to skip fetching it for Loki and go the Cortex path (manual discovery)
+  const buildInfoResponse = type === 'loki' ? undefined : await fetchPromBuildInfo(url);
 
   // check if the component returns buildinfo
-  const hasBuildInfo = response !== null;
+  const hasBuildInfo = buildInfoResponse !== undefined;
 
-  // we are dealing with a Cortex datasource since the response for buildinfo came up empty
+  // we are dealing with a Cortex or Loki datasource since the response for buildinfo came up empty
   if (!hasBuildInfo) {
     // check if we can fetch rules via the prometheus compatible api
     const promRulesSupported = await hasPromRulesSupport(name);
@@ -57,8 +85,8 @@ export async function fetchDataSourceBuildInfo(dsSettings: { url: string; name: 
     };
   }
 
-  // if no features are reported but buildinfo was return we're talking to Prometheus
-  const { features } = response.data.data;
+  // if no features are reported but buildinfo was returned we're talking to Prometheus
+  const { features } = buildInfoResponse.data;
   if (!features) {
     return {
       application: PromApplication.Prometheus,
@@ -77,20 +105,61 @@ export async function fetchDataSourceBuildInfo(dsSettings: { url: string; name: 
   };
 }
 
-/**
- * Attempt to fetch buildinfo from our component
- */
-export async function fetchBuildInfo(dataSourceName: string): Promise<PromBuildInfo> {
-  const dsConfig = getDataSourceByName(dataSourceName);
-  if (!dsConfig) {
-    throw new Error(`Cannot find data source configuration for ${dataSourceName}`);
-  }
-  const { url, name } = dsConfig;
-  if (!url) {
-    throw new Error(`The data souce url cannot be empty.`);
+export async function discoverAlertmanagerFeatures(amSourceName: string): Promise<AlertmanagerApiFeatures> {
+  if (amSourceName === GRAFANA_RULES_SOURCE_NAME) {
+    return { lazyConfigInit: false };
   }
 
-  return fetchDataSourceBuildInfo({ name, url });
+  const dsConfig = getDataSourceConfig(amSourceName);
+
+  const { url, type } = dsConfig;
+  if (!url) {
+    throw new Error(`The data source url cannot be empty.`);
+  }
+
+  if (type !== 'alertmanager') {
+    throw new Error(
+      `Alertmanager feature discovery is not available for ${type}. Only 'alertmanager' type is supported`
+    );
+  }
+
+  return await discoverAlertmanagerFeaturesByUrl(url);
+}
+
+export async function discoverAlertmanagerFeaturesByUrl(url: string): Promise<AlertmanagerApiFeatures> {
+  try {
+    const buildInfo = await fetchPromBuildInfo(url);
+    return { lazyConfigInit: buildInfo?.data?.application === 'Grafana Mimir' };
+  } catch (e) {
+    // If we cannot access the build info then we assume the lazy config is not available
+    return { lazyConfigInit: false };
+  }
+}
+
+function getDataSourceConfig(amSourceName: string) {
+  const dsConfig = getDataSourceByName(amSourceName);
+  if (!dsConfig) {
+    throw new Error(`Cannot find data source configuration for ${amSourceName}`);
+  }
+  return dsConfig;
+}
+
+export async function fetchPromBuildInfo(url: string): Promise<PromBuildInfoResponse | undefined> {
+  const response = await lastValueFrom(
+    getBackendSrv().fetch<PromBuildInfoResponse>({
+      url: `${url}/api/v1/status/buildinfo`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+  ).catch((e) => {
+    if ('status' in e && e.status === 404) {
+      return undefined; // Cortex does not support buildinfo endpoint, we return an empty response
+    }
+
+    throw e;
+  });
+
+  return response?.data;
 }
 
 /**
@@ -120,14 +189,11 @@ async function hasRulerSupport(dataSourceName: string) {
     throw e;
   }
 }
-
 // there errors indicate that the ruler API might be disabled or not supported for Cortex
-function errorIndicatesMissingRulerSupport(error: any) {
-  return (
-    (isFetchError(error) &&
-      (error.data.message?.includes('GetRuleGroup unsupported in rule local store') || // "local" rule storage
-        error.data.message?.includes('page not found'))) || // ruler api disabled
-    error.message?.includes('404 from rules config endpoint') || // ruler api disabled
-    error.data.message?.includes(RULER_NOT_SUPPORTED_MSG) // ruler api not supported
-  );
+function errorIndicatesMissingRulerSupport(error: unknown) {
+  return isFetchError(error)
+    ? error.data.message?.includes('GetRuleGroup unsupported in rule local store') || // "local" rule storage
+        error.data.message?.includes('page not found') || // ruler api disabled
+        error.data.message?.includes(RULER_NOT_SUPPORTED_MSG) // ruler api not supported
+    : error instanceof Error && error.message?.includes('404 from rules config endpoint'); // ruler api disabled
 }

@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
@@ -30,6 +32,7 @@ type (
 		Selector    string
 		Service     string
 		Slo         string
+		logger      log.Logger
 	}
 
 	// Used to build MQL queries
@@ -40,6 +43,8 @@ type (
 		IntervalMS  int64
 		AliasBy     string
 		timeRange   backend.TimeRange
+		GraphPeriod string
+		logger      log.Logger
 	}
 
 	metricQuery struct {
@@ -56,6 +61,7 @@ type (
 		Query              string
 		Preprocessor       string
 		PreprocessorType   preprocessorType
+		GraphPeriod        string
 	}
 
 	sloQuery struct {
@@ -66,6 +72,7 @@ type (
 		SelectorName     string
 		ServiceId        string
 		SloId            string
+		LookbackPeriod   string
 	}
 
 	grafanaQuery struct {
@@ -97,6 +104,7 @@ type (
 		TimeSeriesDescriptor timeSeriesDescriptor `json:"timeSeriesDescriptor"`
 		TimeSeriesData       timeSeriesData       `json:"timeSeriesData"`
 		Unit                 string               `json:"unit"`
+		NextPageToken        string               `json:"nextPageToken"`
 	}
 )
 

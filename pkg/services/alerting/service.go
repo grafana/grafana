@@ -4,23 +4,24 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type AlertNotificationService struct {
-	SQLStore            *sqlstore.SQLStore
+	SQLStore            AlertNotificationStore
 	EncryptionService   encryption.Internal
 	NotificationService *notifications.NotificationService
 }
 
-func ProvideService(store *sqlstore.SQLStore, encryptionService encryption.Internal,
+func ProvideService(store db.DB, encryptionService encryption.Internal,
 	notificationService *notifications.NotificationService) *AlertNotificationService {
 	s := &AlertNotificationService{
-		SQLStore:            store,
+		SQLStore:            &sqlStore{db: store},
 		EncryptionService:   encryptionService,
 		NotificationService: notificationService,
 	}
@@ -33,6 +34,10 @@ func (s *AlertNotificationService) GetAlertNotifications(ctx context.Context, qu
 }
 
 func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error {
+	if util.IsShortUIDTooLong(cmd.Uid) {
+		return ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
+	}
+
 	var err error
 	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
 	if err != nil {
@@ -53,6 +58,10 @@ func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Co
 }
 
 func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error {
+	if util.IsShortUIDTooLong(cmd.Uid) {
+		return ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
+	}
+
 	var err error
 	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
 	if err != nil {
@@ -99,6 +108,10 @@ func (s *AlertNotificationService) GetAlertNotificationsWithUid(ctx context.Cont
 }
 
 func (s *AlertNotificationService) UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error {
+	if util.IsShortUIDTooLong(cmd.Uid) || util.IsShortUIDTooLong(cmd.NewUid) {
+		return ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
+	}
+
 	return s.SQLStore.UpdateAlertNotificationWithUid(ctx, cmd)
 }
 

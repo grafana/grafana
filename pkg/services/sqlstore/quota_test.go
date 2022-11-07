@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -9,11 +6,15 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
-func TestQuotaCommandsAndQueries(t *testing.T) {
+func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlStore := InitTestDB(t)
 	userId := int64(1)
 	orgId := int64(0)
@@ -40,16 +41,22 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 			AlertRule:  5,
 		},
 	}
-
+	createUserCmd := user.CreateUserCommand{
+		Name:         "TestUser",
+		OrgID:        orgId,
+		SkipOrgSetup: true,
+	}
+	user, err := sqlStore.CreateUser(context.Background(), createUserCmd)
+	require.NoError(t, err)
 	// create a new org and add user_id 1 as admin.
 	// we will then have an org with 1 user. and a user
 	// with 1 org.
 	userCmd := models.CreateOrgCommand{
 		Name:   "TestOrg",
-		UserId: 1,
+		UserId: user.ID,
 	}
 
-	err := sqlStore.CreateOrg(context.Background(), &userCmd)
+	err = sqlStore.CreateOrg(context.Background(), &userCmd)
 	require.NoError(t, err)
 	orgId = userCmd.Result.Id
 
@@ -198,7 +205,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, int64(5), query.Result.Limit)
-		require.Equal(t, int64(0), query.Result.Used)
+		require.Equal(t, int64(1), query.Result.Used)
 	})
 
 	t.Run("Should be able to global org quota", func(t *testing.T) {

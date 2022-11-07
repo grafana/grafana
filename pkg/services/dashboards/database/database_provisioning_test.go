@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package database
 
 import (
@@ -8,17 +5,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
-
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 )
 
-func TestDashboardProvisioningTest(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore)
+func TestIntegrationDashboardProvisioningTest(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	sqlStore := db.InitTestDB(t)
+	dashboardStore := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 
 	folderCmd := models.SaveDashboardCommand{
 		OrgId:    1,
@@ -30,7 +30,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 		}),
 	}
 
-	dash, err := dashboardStore.SaveDashboard(folderCmd)
+	dash, err := dashboardStore.SaveDashboard(context.Background(), folderCmd)
 	require.Nil(t, err)
 
 	saveDashboardCmd := models.SaveDashboardCommand{
@@ -52,7 +52,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			Updated:    now.Unix(),
 		}
 
-		dash, err := dashboardStore.SaveProvisionedDashboard(saveDashboardCmd, provisioning)
+		dash, err := dashboardStore.SaveProvisionedDashboard(context.Background(), saveDashboardCmd, provisioning)
 		require.Nil(t, err)
 		require.NotNil(t, dash)
 		require.NotEqual(t, 0, dash.Id)
@@ -74,11 +74,11 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				Updated:    now.Unix(),
 			}
 
-			anotherDash, err := dashboardStore.SaveProvisionedDashboard(saveCmd, provisioning)
+			anotherDash, err := dashboardStore.SaveProvisionedDashboard(context.Background(), saveCmd, provisioning)
 			require.Nil(t, err)
 
 			query := &models.GetDashboardsQuery{DashboardIds: []int64{anotherDash.Id}}
-			err = sqlStore.GetDashboards(context.Background(), query)
+			err = dashboardStore.GetDashboards(context.Background(), query)
 			require.Nil(t, err)
 			require.NotNil(t, query.Result)
 
@@ -86,7 +86,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			require.Nil(t, dashboardStore.DeleteOrphanedProvisionedDashboards(context.Background(), deleteCmd))
 
 			query = &models.GetDashboardsQuery{DashboardIds: []int64{dash.Id, anotherDash.Id}}
-			err = sqlStore.GetDashboards(context.Background(), query)
+			err = dashboardStore.GetDashboards(context.Background(), query)
 			require.Nil(t, err)
 
 			require.Equal(t, 1, len(query.Result))
@@ -94,7 +94,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 		})
 
 		t.Run("Can query for provisioned dashboards", func(t *testing.T) {
-			rslt, err := dashboardStore.GetProvisionedDashboardData("default")
+			rslt, err := dashboardStore.GetProvisionedDashboardData(context.Background(), "default")
 			require.Nil(t, err)
 
 			require.Equal(t, 1, len(rslt))
@@ -103,13 +103,13 @@ func TestDashboardProvisioningTest(t *testing.T) {
 		})
 
 		t.Run("Can query for one provisioned dashboard", func(t *testing.T) {
-			data, err := dashboardStore.GetProvisionedDataByDashboardID(dash.Id)
+			data, err := dashboardStore.GetProvisionedDataByDashboardID(context.Background(), dash.Id)
 			require.Nil(t, err)
 			require.NotNil(t, data)
 		})
 
 		t.Run("Can query for none provisioned dashboard", func(t *testing.T) {
-			data, err := dashboardStore.GetProvisionedDataByDashboardID(3000)
+			data, err := dashboardStore.GetProvisionedDataByDashboardID(context.Background(), 3000)
 			require.Nil(t, err)
 			require.Nil(t, data)
 		})
@@ -122,7 +122,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 
 			require.Nil(t, dashboardStore.DeleteDashboard(context.Background(), deleteCmd))
 
-			data, err := dashboardStore.GetProvisionedDataByDashboardID(dash.Id)
+			data, err := dashboardStore.GetProvisionedDataByDashboardID(context.Background(), dash.Id)
 			require.Nil(t, err)
 			require.Nil(t, data)
 		})
@@ -130,7 +130,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 		t.Run("UnprovisionDashboard should delete provisioning metadata", func(t *testing.T) {
 			require.Nil(t, dashboardStore.UnprovisionDashboard(context.Background(), dashId))
 
-			data, err := dashboardStore.GetProvisionedDataByDashboardID(dashId)
+			data, err := dashboardStore.GetProvisionedDataByDashboardID(context.Background(), dashId)
 			require.Nil(t, err)
 			require.Nil(t, data)
 		})

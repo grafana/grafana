@@ -7,12 +7,13 @@ import { selectors } from '@grafana/e2e-selectors';
 import { FilterInput } from '../..';
 import { stylesFactory, useTheme2 } from '../../../themes';
 import { getFocusStyles } from '../../../themes/mixins';
+import { t, Trans } from '../../../utils/i18n';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { Icon } from '../../Icon/Icon';
 
 import { TimePickerFooter } from './TimePickerFooter';
 import { TimePickerTitle } from './TimePickerTitle';
-import { TimeRangeForm } from './TimeRangeForm';
+import { TimeRangeContent } from './TimeRangeContent';
 import { TimeRangeList } from './TimeRangeList';
 import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
 
@@ -114,14 +115,14 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
   );
 };
 
-export const TimePickerContent: React.FC<Props> = (props) => {
+export const TimePickerContent = (props: Props) => {
   const { widthOverride } = props;
   const theme = useTheme2();
   const isFullscreen = (widthOverride || window.innerWidth) >= theme.breakpoints.values.lg;
   return <TimePickerContentWithScreenSize {...props} isFullscreen={isFullscreen} />;
 };
 
-const NarrowScreenForm: React.FC<FormProps> = (props) => {
+const NarrowScreenForm = (props: FormProps) => {
   const { value, hideQuickRanges, onChange, timeZone, historyOptions = [], showHistory } = props;
   const theme = useTheme2();
   const styles = getNarrowScreenStyles(theme);
@@ -130,7 +131,7 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
   const collapsed = hideQuickRanges ? false : collapsedFlag;
 
   const onChangeTimeOption = (timeOption: TimeOption) => {
-    return onChange(mapOptionToTimeRange(timeOption));
+    return onChange(mapOptionToTimeRange(timeOption, timeZone));
   };
 
   return (
@@ -148,18 +149,21 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
           aria-expanded={!collapsed}
           aria-controls="expanded-timerange"
         >
-          <TimePickerTitle>Absolute time range</TimePickerTitle>
+          <TimePickerTitle>
+            <Trans i18nKey="time-picker.absolute.title">Absolute time range</Trans>
+          </TimePickerTitle>
           {!hideQuickRanges && <Icon name={!collapsed ? 'angle-up' : 'angle-down'} />}
         </button>
       </div>
       {!collapsed && (
         <div className={styles.body} id="expanded-timerange">
           <div className={styles.form}>
-            <TimeRangeForm value={value} onApply={onChange} timeZone={timeZone} isFullscreen={false} />
+            <TimeRangeContent value={value} onApply={onChange} timeZone={timeZone} isFullscreen={false} />
           </div>
+          <p></p>
           {showHistory && (
             <TimeRangeList
-              title="Recently used absolute ranges"
+              title={t('time-picker.absolute.recent-title', 'Recently used absolute ranges')}
               options={historyOptions}
               onChange={onChangeTimeOption}
               placeholderEmpty={null}
@@ -176,16 +180,18 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
   const theme = useTheme2();
   const styles = getFullScreenStyles(theme, props.hideQuickRanges);
   const onChangeTimeOption = (timeOption: TimeOption) => {
-    return onChange(mapOptionToTimeRange(timeOption));
+    return onChange(mapOptionToTimeRange(timeOption, timeZone));
   };
 
   return (
     <>
       <div className={styles.container}>
         <div className={styles.title} data-testid={selectors.components.TimePicker.absoluteTimeRangeTitle}>
-          <TimePickerTitle>Absolute time range</TimePickerTitle>
+          <TimePickerTitle>
+            <Trans i18nKey="time-picker.absolute.title">Absolute time range</Trans>
+          </TimePickerTitle>
         </div>
-        <TimeRangeForm
+        <TimeRangeContent
           value={value}
           timeZone={timeZone}
           fiscalYearStartMonth={fiscalYearStartMonth}
@@ -197,7 +203,7 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
       {props.showHistory && (
         <div className={styles.recent}>
           <TimeRangeList
-            title="Recently used absolute ranges"
+            title={t('time-picker.absolute.recent-title', 'Recently used absolute ranges')}
             options={historyOptions || []}
             onChange={onChangeTimeOption}
             placeholderEmpty={<EmptyRecentList />}
@@ -353,7 +359,7 @@ const getEmptyListStyles = stylesFactory((theme: GrafanaTheme2) => {
       a,
       span {
         font-size: 13px;
-      }
+      }\
     `,
     link: css`
       color: ${theme.colors.text.link};

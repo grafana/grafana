@@ -230,4 +230,8 @@ func addDashboardMigration(mg *Migrator) {
 		Cols: []string{"is_folder"},
 		Type: IndexType,
 	}))
+
+	mg.AddMigration("Add isPublic for dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "is_public", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
 }

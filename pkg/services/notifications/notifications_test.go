@@ -2,17 +2,26 @@ package notifications
 
 import (
 	"context"
+	"regexp"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+func newBus(t *testing.T) bus.Bus {
+	t.Helper()
+	tracer := tracing.InitializeTracerForTest()
+	return bus.ProvideBus(tracer)
+}
+
 func TestProvideService(t *testing.T) {
-	bus := bus.New()
+	bus := newBus(t)
 
 	t.Run("When invalid from_address in configuration", func(t *testing.T) {
 		cfg := createSmtpConfig()
@@ -32,7 +41,7 @@ func TestProvideService(t *testing.T) {
 }
 
 func TestSendEmailSync(t *testing.T) {
-	bus := bus.New()
+	bus := newBus(t)
 
 	t.Run("When sending emails synchronously", func(t *testing.T) {
 		ns, mailer := createSut(t, bus)
@@ -173,11 +182,13 @@ func TestSendEmailSync(t *testing.T) {
 }
 
 func TestSendEmailAsync(t *testing.T) {
-	bus := bus.New()
+	bus := newBus(t)
 
 	t.Run("When sending reset email password", func(t *testing.T) {
 		sut, _ := createSut(t, bus)
-		err := sut.SendResetPasswordEmail(context.Background(), &models.SendResetPasswordEmailCommand{User: &models.User{Email: "asd@asd.com"}})
+		testuser := user.User{Email: "asd@asd.com", Login: "asd@asd.com"}
+		err := sut.SendResetPasswordEmail(context.Background(), &models.SendResetPasswordEmailCommand{User: &testuser})
+
 		require.NoError(t, err)
 
 		sentMsg := <-sut.mailQueue
@@ -186,6 +197,21 @@ func TestSendEmailAsync(t *testing.T) {
 		assert.Equal(t, "Reset your Grafana password - asd@asd.com", sentMsg.Subject)
 		assert.NotContains(t, sentMsg.Body["text/html"], "Subject")
 		assert.NotContains(t, sentMsg.Body["text/plain"], "Subject")
+
+		// find code in mail
+		r, _ := regexp.Compile(`code=(\w+)`)
+		match := r.FindString(sentMsg.Body["text/plain"])
+		code := match[len("code="):]
+
+		// verify code
+		query := models.ValidateResetPasswordCodeQuery{Code: code}
+		getUserByLogin := func(ctx context.Context, login string) (*user.User, error) {
+			query := models.GetUserByLoginQuery{LoginOrEmail: login}
+			query.Result = &testuser
+			return query.Result, nil
+		}
+		err = sut.ValidateResetPasswordCode(context.Background(), &query, getUserByLogin)
+		require.NoError(t, err)
 	})
 
 	t.Run("When SMTP disabled in configuration", func(t *testing.T) {

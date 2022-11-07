@@ -11,9 +11,10 @@ import {
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
 
-import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
+import { Constraint, HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
-import { GroupState } from './group';
+import { FrameState } from './frame';
+import { RootElement } from './root';
 import { Scene } from './scene';
 
 let counter = 0;
@@ -25,13 +26,16 @@ export class ElementState implements LayerElement {
   sizeStyle: CSSProperties = {};
   dataStyle: CSSProperties = {};
 
+  // Temp stored constraint for visualization purposes (switch to top / left constraint to simplify some functionality)
+  tempConstraint: Constraint | undefined;
+
   // Filled in by ref
   div?: HTMLDivElement;
 
   // Calculated
   data?: any; // depends on the type
 
-  constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: GroupState) {
+  constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: FrameState) {
     const fallbackName = `Element ${Date.now()}`;
     if (!options) {
       this.options = { type: item.id, name: fallbackName };
@@ -42,6 +46,8 @@ export class ElementState implements LayerElement {
       horizontal: HorizontalConstraint.Left,
     };
     options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0 };
+    options.background = options.background ?? { color: { fixed: 'transparent' } };
+    options.border = options.border ?? { color: { fixed: 'dark-green' } };
     const scene = this.getScene();
     if (!options.name) {
       const newName = scene?.getNextElementName();
@@ -67,13 +73,25 @@ export class ElementState implements LayerElement {
   }
 
   /** Use the configured options to update CSS style properties directly on the wrapper div **/
-  applyLayoutStylesToDiv() {
+  applyLayoutStylesToDiv(disablePointerEvents?: boolean) {
+    if (this.isRoot()) {
+      // Root supersedes layout engine and is always 100% width + height of panel
+      return;
+    }
+
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
     const placement = this.options.placement ?? ({} as Placement);
 
+    const editingEnabled = this.getScene()?.isEditingEnabled;
+
     const style: React.CSSProperties = {
+      cursor: editingEnabled ? 'grab' : 'auto',
+      pointerEvents: disablePointerEvents ? 'none' : 'auto',
       position: 'absolute',
+      // Minimum element size is 10x10
+      minWidth: '10px',
+      minHeight: '10px',
     };
 
     const translate = ['0px', '0px'];
@@ -99,6 +117,7 @@ export class ElementState implements LayerElement {
         style.top = `${placement.top}px`;
         style.bottom = `${placement.bottom}px`;
         delete placement.height;
+        style.height = '';
         break;
       case VerticalConstraint.Center:
         placement.top = placement.top ?? 0;
@@ -114,6 +133,7 @@ export class ElementState implements LayerElement {
         style.top = `${placement.top}%`;
         style.bottom = `${placement.bottom}%`;
         delete placement.height;
+        style.height = '';
         break;
     }
 
@@ -138,6 +158,7 @@ export class ElementState implements LayerElement {
         style.left = `${placement.left}px`;
         style.right = `${placement.right}px`;
         delete placement.width;
+        style.width = '';
         break;
       case HorizontalConstraint.Center:
         placement.left = placement.left ?? 0;
@@ -153,6 +174,7 @@ export class ElementState implements LayerElement {
         style.left = `${placement.left}%`;
         style.right = `${placement.right}%`;
         delete placement.width;
+        style.width = '';
         break;
     }
 
@@ -170,21 +192,37 @@ export class ElementState implements LayerElement {
     }
   }
 
-  setPlacementFromConstraint() {
+  setPlacementFromConstraint(elementContainer?: DOMRect, parentContainer?: DOMRect) {
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
 
-    const elementContainer = this.div && this.div.getBoundingClientRect();
-    const parentContainer = this.div && this.div.parentElement?.getBoundingClientRect();
+    if (!elementContainer) {
+      elementContainer = this.div && this.div.getBoundingClientRect();
+    }
+    let parentBorderWidth = 0;
+    if (!parentContainer) {
+      parentContainer = this.div && this.div.parentElement?.getBoundingClientRect();
+      parentBorderWidth = this.parent?.isRoot()
+        ? 0
+        : parseFloat(getComputedStyle(this.div?.parentElement!).borderWidth);
+    }
 
     const relativeTop =
-      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.top - parentContainer.top)) : 0;
+      elementContainer && parentContainer
+        ? Math.round(elementContainer.top - parentContainer.top - parentBorderWidth)
+        : 0;
     const relativeBottom =
-      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.bottom - parentContainer.bottom)) : 0;
+      elementContainer && parentContainer
+        ? Math.round(parentContainer.bottom - parentBorderWidth - elementContainer.bottom)
+        : 0;
     const relativeLeft =
-      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.left - parentContainer.left)) : 0;
+      elementContainer && parentContainer
+        ? Math.round(elementContainer.left - parentContainer.left - parentBorderWidth)
+        : 0;
     const relativeRight =
-      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.right - parentContainer.right)) : 0;
+      elementContainer && parentContainer
+        ? Math.round(parentContainer.right - parentBorderWidth - elementContainer.right)
+        : 0;
 
     const placement = {} as Placement;
 
@@ -287,14 +325,16 @@ export class ElementState implements LayerElement {
                 css.backgroundSize = '100% 100%';
                 break;
             }
+          } else {
+            css.backgroundImage = '';
           }
         }
       }
     }
 
-    if (border && border.color && border.width) {
+    if (border && border.color && border.width !== undefined) {
       const color = ctx.getColor(border.color);
-      css.borderWidth = border.width;
+      css.borderWidth = `${border.width}px`;
       css.borderStyle = 'solid';
       css.borderColor = color.value();
 
@@ -305,6 +345,11 @@ export class ElementState implements LayerElement {
     }
 
     this.dataStyle = css;
+    this.applyLayoutStylesToDiv();
+  }
+
+  isRoot(): this is RootElement {
+    return false;
   }
 
   /** Recursively visit all nodes */
@@ -350,82 +395,69 @@ export class ElementState implements LayerElement {
   };
 
   applyDrag = (event: OnDrag) => {
+    const hasHorizontalCenterConstraint = this.options.constraint?.horizontal === HorizontalConstraint.Center;
+    const hasVerticalCenterConstraint = this.options.constraint?.vertical === VerticalConstraint.Center;
+    if (hasHorizontalCenterConstraint || hasVerticalCenterConstraint) {
+      const numberOfTargets = this.getScene()?.selecto?.getSelectedTargets().length ?? 0;
+      const isMultiSelection = numberOfTargets > 1;
+      if (!isMultiSelection) {
+        const elementContainer = this.div?.getBoundingClientRect();
+        const height = elementContainer?.height ?? 100;
+        const yOffset = hasVerticalCenterConstraint ? height / 4 : 0;
+        event.target.style.transform = `translate(${event.translate[0]}px, ${event.translate[1] - yOffset}px)`;
+        return;
+      }
+    }
+
     event.target.style.transform = event.transform;
   };
 
   // kinda like:
   // https://github.com/grafana/grafana-edge-app/blob/main/src/panels/draw/WrapItem.tsx#L44
   applyResize = (event: OnResize) => {
-    const { options } = this;
-    const { placement, constraint } = options;
-    const { vertical, horizontal } = constraint ?? {};
-
-    const top = vertical === VerticalConstraint.Top || vertical === VerticalConstraint.TopBottom;
-    const bottom = vertical === VerticalConstraint.Bottom || vertical === VerticalConstraint.TopBottom;
-    const left = horizontal === HorizontalConstraint.Left || horizontal === HorizontalConstraint.LeftRight;
-    const right = horizontal === HorizontalConstraint.Right || horizontal === HorizontalConstraint.LeftRight;
+    const placement = this.options.placement!;
 
     const style = event.target.style;
     const deltaX = event.delta[0];
     const deltaY = event.delta[1];
     const dirLR = event.direction[0];
     const dirTB = event.direction[1];
+
     if (dirLR === 1) {
-      // RIGHT
-      if (right) {
-        placement!.right! -= deltaX;
-        style.right = `${placement!.right}px`;
-        if (!left) {
-          placement!.width = event.width;
-          style.width = `${placement!.width}px`;
-        }
-      } else {
-        placement!.width! = event.width;
-        style.width = `${placement!.width}px`;
-      }
+      placement.width = event.width;
+      style.width = `${placement.width}px`;
     } else if (dirLR === -1) {
-      // LEFT
-      if (left) {
-        placement!.left! -= deltaX;
-        placement!.width! = event.width;
-        style.left = `${placement!.left}px`;
-        style.width = `${placement!.width}px`;
-      } else {
-        placement!.width! += deltaX;
-        style.width = `${placement!.width}px`;
-      }
+      placement.left! -= deltaX;
+      placement.width = event.width;
+      style.left = `${placement.left}px`;
+      style.width = `${placement.width}px`;
     }
 
     if (dirTB === -1) {
-      // TOP
-      if (top) {
-        placement!.top! -= deltaY;
-        placement!.height = event.height;
-        style.top = `${placement!.top}px`;
-        style.height = `${placement!.height}px`;
-      } else {
-        placement!.height = event.height;
-        style.height = `${placement!.height}px`;
-      }
+      placement.top! -= deltaY;
+      placement.height = event.height;
+      style.top = `${placement.top}px`;
+      style.height = `${placement.height}px`;
     } else if (dirTB === 1) {
-      // BOTTOM
-      if (bottom) {
-        placement!.bottom! -= deltaY;
-        placement!.height! = event.height;
-        style.bottom = `${placement!.bottom}px`;
-        style.height = `${placement!.height}px`;
-      } else {
-        placement!.height! = event.height;
-        style.height = `${placement!.height}px`;
-      }
+      placement.height = event.height;
+      style.height = `${placement.height}px`;
     }
   };
 
   render() {
-    const { item } = this;
+    const { item, div } = this;
+    const scene = this.getScene();
+    // TODO: Rethink selected state handling
+    const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);
+
     return (
       <div key={this.UID} ref={this.initElement}>
-        <item.display key={`${this.UID}/${this.revId}`} config={this.options.config} data={this.data} />
+        <item.display
+          key={`${this.UID}/${this.revId}`}
+          config={this.options.config}
+          data={this.data}
+          isSelected={isSelected}
+        />
       </div>
     );
   }

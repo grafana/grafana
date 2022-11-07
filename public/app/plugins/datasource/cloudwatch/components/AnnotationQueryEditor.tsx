@@ -1,26 +1,29 @@
 import React, { ChangeEvent } from 'react';
 
-import { PanelData } from '@grafana/data';
+import { QueryEditorProps } from '@grafana/data';
 import { EditorField, EditorHeader, EditorRow, EditorSwitch, InlineSelect, Space } from '@grafana/experimental';
-import { Input } from '@grafana/ui';
+import { Alert, Input } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../datasource';
+import { isCloudWatchAnnotationQuery } from '../guards';
 import { useRegions } from '../hooks';
-import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from '../types';
+import { CloudWatchJsonData, CloudWatchQuery, MetricStat } from '../types';
 
 import { MetricStatEditor } from './MetricStatEditor';
 
-export type Props = {
-  query: CloudWatchAnnotationQuery;
-  datasource: CloudWatchDatasource;
-  onChange: (value: CloudWatchAnnotationQuery) => void;
-  data?: PanelData;
-};
+export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
 
-export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
+export const AnnotationQueryEditor = (props: Props) => {
   const { query, onChange, datasource } = props;
-
   const [regions, regionIsLoading] = useRegions(datasource);
+
+  if (!isCloudWatchAnnotationQuery(query)) {
+    return (
+      <Alert severity="error" title="Invalid annotation query" topSpacing={2}>
+        {JSON.stringify(query, null, 4)}
+      </Alert>
+    );
+  }
 
   return (
     <>
@@ -38,8 +41,10 @@ export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
       <Space v={0.5} />
       <MetricStatEditor
         {...props}
+        refId={query.refId}
+        metricStat={query}
         disableExpressions={true}
-        onChange={(editorQuery: CloudWatchMetricsQuery) => onChange({ ...query, ...editorQuery })}
+        onChange={(metricStat: MetricStat) => onChange({ ...query, ...metricStat })}
         onRunQuery={() => {}}
       ></MetricStatEditor>
       <Space v={0.5} />
@@ -81,4 +86,4 @@ export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
       </EditorRow>
     </>
   );
-}
+};

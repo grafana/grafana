@@ -5,15 +5,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"mime/multipart"
+	"os"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
+)
+
+const (
+	pushoverMaxFileSize = 1 << 21 // 2MB
 )
 
 var (
@@ -24,109 +32,90 @@ var (
 // alert notifications to Pushover
 type PushoverNotifier struct {
 	*Base
-	UserKey          string
-	APIToken         string
-	AlertingPriority int
-	OKPriority       int
-	Retry            int
-	Expire           int
-	Device           string
-	AlertingSound    string
-	OKSound          string
-	Upload           bool
-	Message          string
-	tmpl             *template.Template
-	log              log.Logger
-	ns               notifications.WebhookSender
+	tmpl     *template.Template
+	log      log.Logger
+	images   ImageStore
+	ns       notifications.WebhookSender
+	settings pushoverSettings
 }
 
-type PushoverConfig struct {
-	*NotificationChannelConfig
-	UserKey          string
-	APIToken         string
-	AlertingPriority int
-	OKPriority       int
-	Retry            int
-	Expire           int
-	Device           string
-	AlertingSound    string
-	OKSound          string
-	Upload           bool
-	Message          string
+type pushoverSettings struct {
+	userKey          string
+	apiToken         string
+	alertingPriority int
+	okPriority       int
+	retry            int
+	expire           int
+	device           string
+	alertingSound    string
+	okSound          string
+	upload           bool
+	title            string
+	message          string
 }
 
 func PushoverFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewPushoverConfig(fc.Config, fc.DecryptFunc)
+	pn, err := newPushoverNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewPushoverNotifier(cfg, fc.NotificationService, fc.Template), nil
+	return pn, nil
 }
 
-func NewPushoverConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*PushoverConfig, error) {
-	userKey := decryptFunc(context.Background(), config.SecureSettings, "userKey", config.Settings.Get("userKey").MustString())
+// newPushoverNotifier is the constructor for the Pushover notifier
+func newPushoverNotifier(fc FactoryConfig) (*PushoverNotifier, error) {
+	decryptFunc := fc.DecryptFunc
+	userKey := decryptFunc(context.Background(), fc.Config.SecureSettings, "userKey", fc.Config.Settings.Get("userKey").MustString())
 	if userKey == "" {
 		return nil, errors.New("user key not found")
 	}
-	APIToken := decryptFunc(context.Background(), config.SecureSettings, "apiToken", config.Settings.Get("apiToken").MustString())
-	if APIToken == "" {
+	apiToken := decryptFunc(context.Background(), fc.Config.SecureSettings, "apiToken", fc.Config.Settings.Get("apiToken").MustString())
+	if apiToken == "" {
 		return nil, errors.New("API token not found")
 	}
-	alertingPriority, err := strconv.Atoi(config.Settings.Get("priority").MustString("0")) // default Normal
+
+	alertingPriority, err := strconv.Atoi(fc.Config.Settings.Get("priority").MustString("0")) // default Normal
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert alerting priority to integer: %w", err)
 	}
-	okPriority, err := strconv.Atoi(config.Settings.Get("okPriority").MustString("0")) // default Normal
+	okPriority, err := strconv.Atoi(fc.Config.Settings.Get("okPriority").MustString("0")) // default Normal
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert OK priority to integer: %w", err)
 	}
-	retry, _ := strconv.Atoi(config.Settings.Get("retry").MustString())
-	expire, _ := strconv.Atoi(config.Settings.Get("expire").MustString())
-	return &PushoverConfig{
-		NotificationChannelConfig: config,
-		APIToken:                  APIToken,
-		UserKey:                   userKey,
-		AlertingPriority:          alertingPriority,
-		OKPriority:                okPriority,
-		Retry:                     retry,
-		Expire:                    expire,
-		Device:                    config.Settings.Get("device").MustString(),
-		AlertingSound:             config.Settings.Get("sound").MustString(),
-		OKSound:                   config.Settings.Get("okSound").MustString(),
-		Upload:                    config.Settings.Get("uploadImage").MustBool(true),
-		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
-	}, nil
-}
+	retry, _ := strconv.Atoi(fc.Config.Settings.Get("retry").MustString())
+	expire, _ := strconv.Atoi(fc.Config.Settings.Get("expire").MustString())
 
-// NewSlackNotifier is the constructor for the Slack notifier
-func NewPushoverNotifier(config *PushoverConfig, ns notifications.WebhookSender, t *template.Template) *PushoverNotifier {
 	return &PushoverNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			Type:                  config.Type,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
-			SecureSettings:        config.SecureSettings,
+			Uid:                   fc.Config.UID,
+			Name:                  fc.Config.Name,
+			Type:                  fc.Config.Type,
+			DisableResolveMessage: fc.Config.DisableResolveMessage,
+			Settings:              fc.Config.Settings,
+			SecureSettings:        fc.Config.SecureSettings,
 		}),
-		UserKey:          config.UserKey,
-		APIToken:         config.APIToken,
-		AlertingPriority: config.AlertingPriority,
-		OKPriority:       config.OKPriority,
-		Retry:            config.Retry,
-		Expire:           config.Expire,
-		Device:           config.Device,
-		AlertingSound:    config.AlertingSound,
-		OKSound:          config.OKSound,
-		Upload:           config.Upload,
-		Message:          config.Message,
-		tmpl:             t,
-		log:              log.New("alerting.notifier.pushover"),
-		ns:               ns,
-	}
+		tmpl:   fc.Template,
+		log:    log.New("alerting.notifier.pushover"),
+		images: fc.ImageStore,
+		ns:     fc.NotificationService,
+		settings: pushoverSettings{
+			userKey:          userKey,
+			apiToken:         apiToken,
+			alertingPriority: alertingPriority,
+			okPriority:       okPriority,
+			retry:            retry,
+			expire:           expire,
+			device:           fc.Config.Settings.Get("device").MustString(),
+			alertingSound:    fc.Config.Settings.Get("sound").MustString(),
+			okSound:          fc.Config.Settings.Get("okSound").MustString(),
+			upload:           fc.Config.Settings.Get("uploadImage").MustBool(true),
+			title:            fc.Config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
+			message:          fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
+		},
+	}, nil
 }
 
 // Notify sends an alert notification to Slack.
@@ -145,7 +134,7 @@ func (pn *PushoverNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	if err := pn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		pn.log.Error("Failed to send pushover notification", "error", err, "webhook", pn.Name)
+		pn.log.Error("failed to send pushover notification", "error", err, "webhook", pn.Name)
 		return false, err
 	}
 
@@ -156,112 +145,126 @@ func (pn *PushoverNotifier) SendResolved() bool {
 }
 
 func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Alert) (map[string]string, bytes.Buffer, error) {
-	var b bytes.Buffer
-
-	ruleURL := joinUrlPath(pn.tmpl.ExternalURL.String(), "/alerting/list", pn.log)
-
-	alerts := types.Alerts(as...)
-
-	var tmplErr error
-	tmpl, _ := TmplText(ctx, pn.tmpl, as, pn.log, &tmplErr)
-
+	b := bytes.Buffer{}
 	w := multipart.NewWriter(&b)
-	boundary := GetBoundary()
-	if boundary != "" {
+
+	// tests use a non-random boundary separator
+	if boundary := GetBoundary(); boundary != "" {
 		err := w.SetBoundary(boundary)
 		if err != nil {
 			return nil, b, err
 		}
 	}
 
-	// Add the user token
-	err := w.WriteField("user", tmpl(pn.UserKey))
-	if err != nil {
-		return nil, b, err
+	var tmplErr error
+	tmpl, _ := TmplText(ctx, pn.tmpl, as, pn.log, &tmplErr)
+
+	if err := w.WriteField("user", tmpl(pn.settings.userKey)); err != nil {
+		return nil, b, fmt.Errorf("failed to write the user: %w", err)
 	}
 
-	// Add the api token
-	err = w.WriteField("token", pn.APIToken)
-	if err != nil {
-		return nil, b, err
+	if err := w.WriteField("token", pn.settings.apiToken); err != nil {
+		return nil, b, fmt.Errorf("failed to write the token: %w", err)
 	}
 
-	// Add priority
-	priority := pn.AlertingPriority
-	if alerts.Status() == model.AlertResolved {
-		priority = pn.OKPriority
+	status := types.Alerts(as...).Status()
+	priority := pn.settings.alertingPriority
+	if status == model.AlertResolved {
+		priority = pn.settings.okPriority
 	}
-	err = w.WriteField("priority", strconv.Itoa(priority))
-	if err != nil {
-		return nil, b, err
+	if err := w.WriteField("priority", strconv.Itoa(priority)); err != nil {
+		return nil, b, fmt.Errorf("failed to write the priority: %w", err)
 	}
 
 	if priority == 2 {
-		err = w.WriteField("retry", strconv.Itoa(pn.Retry))
-		if err != nil {
-			return nil, b, err
+		if err := w.WriteField("retry", strconv.Itoa(pn.settings.retry)); err != nil {
+			return nil, b, fmt.Errorf("failed to write retry: %w", err)
 		}
 
-		err = w.WriteField("expire", strconv.Itoa(pn.Expire))
-		if err != nil {
-			return nil, b, err
+		if err := w.WriteField("expire", strconv.Itoa(pn.settings.expire)); err != nil {
+			return nil, b, fmt.Errorf("failed to write expire: %w", err)
 		}
 	}
 
-	// Add device
-	if pn.Device != "" {
-		err = w.WriteField("device", tmpl(pn.Device))
-		if err != nil {
-			return nil, b, err
+	if pn.settings.device != "" {
+		if err := w.WriteField("device", tmpl(pn.settings.device)); err != nil {
+			return nil, b, fmt.Errorf("failed to write the device: %w", err)
 		}
 	}
 
-	// Add sound
-	sound := tmpl(pn.AlertingSound)
-	if alerts.Status() == model.AlertResolved {
-		sound = tmpl(pn.OKSound)
+	if err := w.WriteField("title", tmpl(pn.settings.title)); err != nil {
+		return nil, b, fmt.Errorf("failed to write the title: %w", err)
+	}
+
+	ruleURL := joinUrlPath(pn.tmpl.ExternalURL.String(), "/alerting/list", pn.log)
+	if err := w.WriteField("url", ruleURL); err != nil {
+		return nil, b, fmt.Errorf("failed to write the URL: %w", err)
+	}
+
+	if err := w.WriteField("url_title", "Show alert rule"); err != nil {
+		return nil, b, fmt.Errorf("failed to write the URL title: %w", err)
+	}
+
+	if err := w.WriteField("message", tmpl(pn.settings.message)); err != nil {
+		return nil, b, fmt.Errorf("failed write the message: %w", err)
+	}
+
+	// Pushover supports at most one image attachment with a maximum size of pushoverMaxFileSize.
+	// If the image is larger than pushoverMaxFileSize then return an error.
+	_ = withStoredImages(ctx, pn.log, pn.images, func(index int, image ngmodels.Image) error {
+		f, err := os.Open(image.Path)
+		if err != nil {
+			return fmt.Errorf("failed to open the image: %w", err)
+		}
+		defer func() {
+			if err := f.Close(); err != nil {
+				pn.log.Error("failed to close the image", "file", image.Path)
+			}
+		}()
+
+		fileInfo, err := f.Stat()
+		if err != nil {
+			return fmt.Errorf("failed to stat the image: %w", err)
+		}
+
+		if fileInfo.Size() > pushoverMaxFileSize {
+			return fmt.Errorf("image would exceeded maximum file size: %d", fileInfo.Size())
+		}
+
+		fw, err := w.CreateFormFile("attachment", image.Path)
+		if err != nil {
+			return fmt.Errorf("failed to create form file for the image: %w", err)
+		}
+
+		if _, err = io.Copy(fw, f); err != nil {
+			return fmt.Errorf("failed to copy the image to the form file: %w", err)
+		}
+
+		return ErrImagesDone
+	}, as...)
+
+	var sound string
+	if status == model.AlertResolved {
+		sound = tmpl(pn.settings.okSound)
+	} else {
+		sound = tmpl(pn.settings.alertingSound)
 	}
 	if sound != "default" {
-		err = w.WriteField("sound", sound)
-		if err != nil {
-			return nil, b, err
+		if err := w.WriteField("sound", sound); err != nil {
+			return nil, b, fmt.Errorf("failed to write the sound: %w", err)
 		}
 	}
 
-	// Add title
-	err = w.WriteField("title", tmpl(DefaultMessageTitleEmbed))
-	if err != nil {
-		return nil, b, err
+	// Mark the message as HTML
+	if err := w.WriteField("html", "1"); err != nil {
+		return nil, b, fmt.Errorf("failed to mark the message as HTML: %w", err)
 	}
-
-	// Add URL
-	err = w.WriteField("url", ruleURL)
-	if err != nil {
-		return nil, b, err
-	}
-	// Add URL title
-	err = w.WriteField("url_title", "Show alert rule")
-	if err != nil {
-		return nil, b, err
-	}
-
-	// Add message
-	err = w.WriteField("message", tmpl(pn.Message))
-	if err != nil {
-		return nil, b, err
+	if err := w.Close(); err != nil {
+		return nil, b, fmt.Errorf("failed to close the multipart request: %w", err)
 	}
 
 	if tmplErr != nil {
-		pn.log.Warn("failed to template pushover message", "err", tmplErr.Error())
-	}
-
-	// Mark as html message
-	err = w.WriteField("html", "1")
-	if err != nil {
-		return nil, b, err
-	}
-	if err := w.Close(); err != nil {
-		return nil, b, err
+		pn.log.Warn("failed to template pushover message", "error", tmplErr.Error())
 	}
 
 	headers := map[string]string{

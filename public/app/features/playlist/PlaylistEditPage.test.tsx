@@ -9,44 +9,34 @@ import { PlaylistEditPage } from './PlaylistEditPage';
 import { Playlist } from './types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as any),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
-jest.mock('../../core/components/TagFilter/TagFilter', () => ({
+jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   TagFilter: () => {
     return <>mocked-tag-filter</>;
   },
 }));
 
-async function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
+async function getTestContext({ name, interval, items, uid }: Partial<Playlist> = {}) {
   jest.clearAllMocks();
-  const playlist = { name, items, interval } as unknown as Playlist;
+  const playlist = { name, items, interval, uid } as unknown as Playlist;
   const queryParams = {};
   const route: any = {};
-  const match: any = { params: { id: 1 } };
+  const match: any = { params: { uid: 'foo' } };
   const location: any = {};
   const history: any = {};
-  const navModel: any = {
-    node: {},
-    main: {},
-  };
   const getMock = jest.spyOn(backendSrv, 'get');
   const putMock = jest.spyOn(backendSrv, 'put');
   getMock.mockResolvedValue({
     name: 'Test Playlist',
     interval: '5s',
-    items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }],
+    items: [{ title: 'First item', type: 'dashboard_by_uid', order: 1, value: '1' }],
+    uid: 'foo',
   });
   const { rerender } = render(
-    <PlaylistEditPage
-      queryParams={queryParams}
-      route={route}
-      match={match}
-      location={location}
-      history={history}
-      navModel={navModel}
-    />
+    <PlaylistEditPage queryParams={queryParams} route={route} match={match} location={location} history={history} />
   );
   await waitFor(() => expect(getMock).toHaveBeenCalledTimes(1));
 
@@ -61,7 +51,7 @@ describe('PlaylistEditPage', () => {
       expect(screen.getByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /playlist name/i })).toHaveValue('Test Playlist');
       expect(screen.getByRole('textbox', { name: /playlist interval/i })).toHaveValue('5s');
-      expect(screen.getAllByRole('row', { name: /playlist item row/i })).toHaveLength(1);
+      expect(screen.getAllByRole('row')).toHaveLength(1);
     });
   });
 
@@ -76,10 +66,10 @@ describe('PlaylistEditPage', () => {
       await userEvent.type(screen.getByRole('textbox', { name: /playlist interval/i }), '10s');
       fireEvent.submit(screen.getByRole('button', { name: /save/i }));
       await waitFor(() => expect(putMock).toHaveBeenCalledTimes(1));
-      expect(putMock).toHaveBeenCalledWith('/api/playlists/1', {
+      expect(putMock).toHaveBeenCalledWith('/api/playlists/foo', {
         name: 'A Name',
         interval: '10s',
-        items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }],
+        items: [{ title: 'First item', type: 'dashboard_by_uid', order: 1, value: '1' }],
       });
       expect(locationService.getLocation().pathname).toEqual('/playlists');
     });

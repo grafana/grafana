@@ -33,7 +33,7 @@ export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {
   return (
     <InlineFieldRow>
       <InlineField label="Type" labelWidth={14}>
-        <Select menuShouldPortal width={32} onChange={onSelectChange} defaultValue={types[0]} options={types} />
+        <Select width={32} onChange={onSelectChange} defaultValue={types[0]} options={types} />
       </InlineField>
       {query?.stream?.type === 'signal' &&
         streamingClientFields.map(({ label, id, min, step, placeholder }) => {

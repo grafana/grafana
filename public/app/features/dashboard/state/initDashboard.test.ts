@@ -2,9 +2,10 @@ import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { Subject } from 'rxjs';
 
-import { locationService, setEchoSrv } from '@grafana/runtime';
+import { FetchError, locationService, setEchoSrv } from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { keybindingSrv } from 'app/core/services/keybindingSrv';
+import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
@@ -42,6 +43,25 @@ jest.mock('app/core/services/context_srv', () => ({
     user: { orgId: 1, orgName: 'TestOrg' },
   },
 }));
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  return {
+    ...original,
+    getDataSourceSrv: jest.fn().mockImplementation(() => ({
+      ...original.getDataSourceSrv(),
+      getInstanceSettings: jest.fn(),
+    })),
+  };
+});
+jest.mock('@grafana/data', () => {
+  const original = jest.requireActual('@grafana/data');
+  return {
+    ...original,
+    EventBusSrv: jest.fn().mockImplementation(() => ({
+      publish: jest.fn(),
+    })),
+  };
+});
 
 variableAdapters.register(createConstantVariableAdapter());
 const mockStore = configureMockStore([thunk]);
@@ -77,10 +97,76 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
               id: 2,
               targets: [
                 {
+                  datasource: {
+                    type: 'grafana-azure-monitor-datasource',
+                    uid: 'DSwithQueriesOnInitDashboard',
+                    name: 'azMonitor',
+                  },
+                  queryType: 'Azure Log Analytics',
                   refId: 'A',
                   expr: 'old expr',
                 },
+                {
+                  datasource: {
+                    type: 'cloudwatch',
+                    uid: '1234',
+                    name: 'Cloud Watch',
+                  },
+                  refId: 'B',
+                },
               ],
+            },
+            {
+              collapsed: true,
+              gridPos: {
+                h: 1,
+                w: 24,
+                x: 0,
+                y: 8,
+              },
+              id: 22,
+              panels: [
+                {
+                  datasource: {
+                    type: 'grafana-redshift-datasource',
+                    uid: 'V6_lLJf7k',
+                  },
+                  gridPos: {
+                    h: 8,
+                    w: 12,
+                    x: 12,
+                    y: 9,
+                  },
+                  id: 8,
+                  targets: [
+                    {
+                      datasource: {
+                        type: 'grafana-redshift-datasource',
+                        uid: 'V6_lLJf7k',
+                      },
+                      rawSQL: '',
+                      refId: 'A',
+                    },
+                    {
+                      datasource: {
+                        type: 'grafana-azure-monitor-datasource',
+                        uid: 'DSwithQueriesOnInitDashboard',
+                        name: 'azMonitor',
+                      },
+                      queryType: 'Azure Monitor',
+                      refId: 'B',
+                    },
+                  ],
+                  title: 'Redshift and Azure',
+                  type: 'stat',
+                },
+                {
+                  id: 9,
+                  type: 'text',
+                },
+              ],
+              title: 'Collapsed Panel',
+              type: 'row',
             },
           ],
           templating: {
@@ -107,6 +193,9 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
         urlUid: DASH_UID,
         fixUrl: false,
         routeName: DashboardRoutes.Normal,
+        keybindingSrv: {
+          setupDashboardBindings: jest.fn(),
+        } as unknown as KeybindingSrv,
       },
       backendSrv: getBackendSrv(),
       loaderSrv,
@@ -135,8 +224,6 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
     };
 
     beforeEach(async () => {
-      keybindingSrv.setupDashboardBindings = jest.fn();
-
       setDashboardSrv({
         setCurrent: jest.fn(),
       } as any);
@@ -187,7 +274,7 @@ describeInitScenario('Initializing new dashboard', (ctx) => {
     expect(getTimeSrv().init).toBeCalled();
     expect(getDashboardSrv().setCurrent).toBeCalled();
     expect(getDashboardQueryRunner().run).toBeCalled();
-    expect(keybindingSrv.setupDashboardBindings).toBeCalled();
+    expect(ctx.args.keybindingSrv.setupDashboardBindings).toBeCalled();
   });
 });
 
@@ -208,7 +295,15 @@ describeInitScenario('Initializing home dashboard', (ctx) => {
 describeInitScenario('Initializing home dashboard cancelled', (ctx) => {
   ctx.setup(() => {
     ctx.args.routeName = DashboardRoutes.Home;
-    ctx.backendSrv.get.mockRejectedValue({ cancelled: true });
+    const fetchError: FetchError = {
+      cancelled: true,
+      config: {
+        url: '/api/dashboards/home',
+      },
+      data: 'foo',
+      status: 500,
+    };
+    ctx.backendSrv.get.mockRejectedValue(fetchError);
   });
 
   it('Should abort init process', () => {
@@ -233,7 +328,63 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
 
   ctx.setup(() => {
     ctx.storeState.user.orgId = 12;
+    ctx.storeState.user.user = { id: 34 };
     ctx.storeState.explore.left.queries = mockQueries;
+  });
+
+  it('should send dashboard_loaded event', () => {
+    expect(appEvents.publish).toHaveBeenCalledWith({
+      payload: {
+        queries: {
+          cloudwatch: [
+            {
+              datasource: {
+                name: 'Cloud Watch',
+                type: 'cloudwatch',
+                uid: '1234',
+              },
+              refId: 'B',
+            },
+          ],
+          'grafana-azure-monitor-datasource': [
+            {
+              datasource: {
+                name: 'azMonitor',
+                type: 'grafana-azure-monitor-datasource',
+                uid: 'DSwithQueriesOnInitDashboard',
+              },
+              expr: 'old expr',
+              queryType: 'Azure Log Analytics',
+              refId: 'A',
+            },
+            {
+              datasource: {
+                name: 'azMonitor',
+                type: 'grafana-azure-monitor-datasource',
+                uid: 'DSwithQueriesOnInitDashboard',
+              },
+              queryType: 'Azure Monitor',
+              refId: 'B',
+            },
+          ],
+          'grafana-redshift-datasource': [
+            {
+              datasource: {
+                type: 'grafana-redshift-datasource',
+                uid: 'V6_lLJf7k',
+              },
+              rawSQL: '',
+              refId: 'A',
+            },
+          ],
+        },
+        dashboardId: 'DGmvKKxZz',
+        orgId: 12,
+        userId: 34,
+        grafanaVersion: '1.0',
+      },
+      type: 'dashboard-loaded',
+    });
   });
 
   it('Should send action dashboardInitFetching', () => {
@@ -258,7 +409,7 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
     expect(getTimeSrv().init).toBeCalled();
     expect(getDashboardSrv().setCurrent).toBeCalled();
     expect(getDashboardQueryRunner().run).toBeCalled();
-    expect(keybindingSrv.setupDashboardBindings).toBeCalled();
+    expect(ctx.args.keybindingSrv.setupDashboardBindings).toBeCalled();
   });
 
   it('Should initialize redux variables if newVariables is enabled', () => {

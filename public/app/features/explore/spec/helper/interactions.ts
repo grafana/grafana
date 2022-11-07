@@ -31,9 +31,7 @@ export const openQueryHistory = async (exploreId: ExploreId = ExploreId.left) =>
   const selector = withinExplore(exploreId);
   const button = selector.getByRole('button', { name: 'Rich history button' });
   await userEvent.click(button);
-  expect(
-    await selector.findByText('The history is local to your browser and is not shared with others.')
-  ).toBeInTheDocument();
+  expect(await selector.findByPlaceholderText('Search queries')).toBeInTheDocument();
 };
 
 export const closeQueryHistory = async (exploreId: ExploreId = ExploreId.left) => {
@@ -50,7 +48,7 @@ export const switchToQueryHistoryTab = async (
 
 export const selectStarredTabFirst = async (exploreId: ExploreId = ExploreId.left) => {
   const checkbox = withinExplore(exploreId).getByRole('checkbox', {
-    name: 'Change the default active tab from “Query history” to “Starred”',
+    name: /Change the default active tab from “Query history” to “Starred”/,
   });
   await userEvent.click(checkbox);
 };
@@ -60,12 +58,29 @@ export const selectOnlyActiveDataSource = async (exploreId: ExploreId = ExploreI
   await userEvent.click(checkbox);
 };
 
-export const starQueryHistory = (queryIndex: number, exploreId: ExploreId = ExploreId.left) => {
-  invokeAction(queryIndex, 'Star query', exploreId);
+export const starQueryHistory = async (queryIndex: number, exploreId: ExploreId = ExploreId.left) => {
+  await invokeAction(queryIndex, 'Star query', exploreId);
 };
 
-export const deleteQueryHistory = (queryIndex: number, exploreId: ExploreId = ExploreId.left) => {
-  invokeAction(queryIndex, 'Delete query', exploreId);
+export const commentQueryHistory = async (
+  queryIndex: number,
+  comment: string,
+  exploreId: ExploreId = ExploreId.left
+) => {
+  await invokeAction(queryIndex, 'Add comment', exploreId);
+  const input = withinExplore(exploreId).getByPlaceholderText('An optional description of what the query does.');
+  await userEvent.clear(input);
+  await userEvent.type(input, comment);
+  await invokeAction(queryIndex, 'Submit button', exploreId);
+};
+
+export const deleteQueryHistory = async (queryIndex: number, exploreId: ExploreId = ExploreId.left) => {
+  await invokeAction(queryIndex, 'Delete query', exploreId);
+};
+
+export const loadMoreQueryHistory = async (exploreId: ExploreId = ExploreId.left) => {
+  const button = withinExplore(exploreId).getByRole('button', { name: 'Load more' });
+  await userEvent.click(button);
 };
 
 const invokeAction = async (queryIndex: number, actionAccessibleName: string, exploreId: ExploreId) => {

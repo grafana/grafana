@@ -2,7 +2,6 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 
-import { NavModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { ApiKey, OrgRole } from 'app/types';
 
@@ -13,21 +12,26 @@ import { ApiKeysPageUnconnected, Props } from './ApiKeysPage';
 import { getMultipleMockKeys } from './__mocks__/apiKeysMock';
 import { setSearchQuery } from './state/reducers';
 
+jest.mock('app/core/core', () => {
+  return {
+    contextSrv: {
+      hasPermission: () => true,
+      hasPermissionInMetadata: () => true,
+    },
+  };
+});
+
 const setup = (propOverrides: Partial<Props>) => {
   const loadApiKeysMock = jest.fn();
   const deleteApiKeyMock = jest.fn();
+  const migrateApiKeyMock = jest.fn();
   const addApiKeyMock = jest.fn();
+  const migrateAllMock = jest.fn();
   const toggleIncludeExpiredMock = jest.fn();
   const setSearchQueryMock = mockToolkitActionCreator(setSearchQuery);
+  const getApiKeysMigrationStatusMock = jest.fn();
+  const hideApiKeysMock = jest.fn();
   const props: Props = {
-    navModel: {
-      main: {
-        text: 'Configuration',
-      },
-      node: {
-        text: 'Api Keys',
-      },
-    } as NavModel,
     apiKeys: [] as ApiKey[],
     searchQuery: '',
     hasFetched: false,
@@ -35,14 +39,17 @@ const setup = (propOverrides: Partial<Props>) => {
     deleteApiKey: deleteApiKeyMock,
     setSearchQuery: setSearchQueryMock,
     addApiKey: addApiKeyMock,
+    getApiKeysMigrationStatus: getApiKeysMigrationStatusMock,
+    migrateApiKey: migrateApiKeyMock,
+    migrateAll: migrateAllMock,
+    hideApiKeys: hideApiKeysMock,
     apiKeysCount: 0,
     timeZone: 'utc',
     includeExpired: false,
     includeExpiredDisabled: false,
     toggleIncludeExpired: toggleIncludeExpiredMock,
-    canRead: true,
     canCreate: true,
-    canDelete: true,
+    apiKeysMigrated: false,
   };
 
   Object.assign(props, propOverrides);
@@ -156,7 +163,7 @@ describe('ApiKeysPage', () => {
 
   describe('when a user adds an API key from CTA', () => {
     it('then it should call addApiKey with correct parameters', async () => {
-      const apiKeys: any[] = [];
+      const apiKeys: ApiKey[] = [];
       const { addApiKeyMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
 
       addApiKeyMock.mockClear();

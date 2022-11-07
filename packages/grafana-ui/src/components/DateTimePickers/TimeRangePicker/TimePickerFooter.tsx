@@ -78,7 +78,7 @@ export const TimePickerFooter: FC<Props> = (props) => {
             <RadioButtonGroup
               value={editMode}
               options={[
-                { label: 'Time Zone', value: 'tz' },
+                { label: 'Time zone', value: 'tz' },
                 { label: 'Fiscal year', value: 'fy' },
               ]}
               onChange={setEditMode}
@@ -109,6 +109,7 @@ export const TimePickerFooter: FC<Props> = (props) => {
               <Field className={style.fiscalYearField} label={'Fiscal year start month'}>
                 <Select
                   value={fiscalYearStartMonth}
+                  menuShouldPortal={false}
                   options={monthOptions}
                   onChange={(value) => {
                     if (onChangeFiscalYearStartMonth) {

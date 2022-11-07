@@ -6,7 +6,7 @@ import { Field, KeyValue, SelectableValue } from '@grafana/data';
 
 import { TableStyles } from './styles';
 
-export { TableFieldOptions, TableCellDisplayMode, FieldTextAlignment } from '@grafana/schema';
+export { type TableFieldOptions, TableCellDisplayMode, type FieldTextAlignment } from '@grafana/schema';
 
 export interface TableRow {
   [x: string]: any;
@@ -29,7 +29,7 @@ export interface TableCellProps extends CellProps<any> {
   tableStyles: TableStyles;
   cellProps: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
   field: Field;
-  onCellFilterAdded: TableFilterActionCallback;
+  onCellFilterAdded?: TableFilterActionCallback;
   innerWidth: number;
 }
 
@@ -44,3 +44,10 @@ export type GrafanaTableColumn = Column & {
   justifyContent: Property.JustifyContent;
   minWidth: number;
 };
+
+export interface TableFooterCalc {
+  show: boolean;
+  reducer: string[]; // actually 1 value
+  fields?: string[];
+  enablePagination?: boolean;
+}

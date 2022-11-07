@@ -18,6 +18,8 @@ import {
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
+import { CorrelationData } from '../features/correlations/useCorrelations';
+
 export enum ExploreId {
   left = 'left',
   right = 'right',
@@ -45,6 +47,8 @@ export interface ExploreState {
    */
   right?: ExploreItemState;
 
+  correlations?: CorrelationData[];
+
   /**
    * Settings for rich history (note: filters are stored per each pane separately)
    */
@@ -60,6 +64,11 @@ export interface ExploreState {
    * True if a warning message of hitting the exceeded number of items has been shown already.
    */
   richHistoryLimitExceededWarningShown: boolean;
+
+  /**
+   * True if a warning message about failed rich history has been shown already in this session.
+   */
+  richHistoryMigrationFailed: boolean;
 }
 
 export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
@@ -155,12 +164,14 @@ export interface ExploreItemState {
   showTable?: boolean;
   showTrace?: boolean;
   showNodeGraph?: boolean;
+  showFlameGraph?: boolean;
 
   /**
    * History of all queries
    */
   richHistory: RichHistoryQuery[];
   richHistorySearchFilters?: RichHistorySearchFilters;
+  richHistoryTotal?: number;
 
   /**
    * We are using caching to store query responses of queries run from logs navigation.
@@ -171,6 +182,7 @@ export interface ExploreItemState {
 
   // properties below should be more generic if we add more providers
   // see also: DataSourceWithLogsVolumeSupport
+  logsVolumeEnabled: boolean;
   logsVolumeDataProvider?: Observable<DataQueryResponse>;
   logsVolumeDataSubscription?: SubscriptionLike;
   logsVolumeData?: DataQueryResponse;
@@ -220,6 +232,7 @@ export interface ExplorePanelData extends PanelData {
   logsFrames: DataFrame[];
   traceFrames: DataFrame[];
   nodeGraphFrames: DataFrame[];
+  flameGraphFrames: DataFrame[];
   graphResult: DataFrame[] | null;
   tableResult: DataFrame | null;
   logsResult: LogsModel | null;

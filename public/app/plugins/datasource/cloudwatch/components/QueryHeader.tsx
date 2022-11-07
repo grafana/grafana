@@ -1,14 +1,14 @@
 import { pick } from 'lodash';
 import React from 'react';
 
-import { ExploreMode, SelectableValue } from '@grafana/data';
+import { SelectableValue, ExploreMode } from '@grafana/data';
 import { EditorHeader, InlineSelect } from '@grafana/experimental';
 
 import { CloudWatchDatasource } from '../datasource';
 import { useRegions } from '../hooks';
 import { CloudWatchQuery, CloudWatchQueryMode } from '../types';
 
-import MetricsQueryHeader from './MetricsQueryHeader';
+import MetricsQueryHeader from './MetricsQueryEditor/MetricsQueryHeader';
 
 interface QueryHeaderProps {
   query: CloudWatchQuery;
@@ -24,14 +24,7 @@ const apiModes: Array<SelectableValue<CloudWatchQueryMode>> = [
   { label: 'CloudWatch Logs', value: 'Logs' },
 ];
 
-const QueryHeader: React.FC<QueryHeaderProps> = ({
-  query,
-  sqlCodeEditorIsDirty,
-  datasource,
-  onChange,
-  onRunQuery,
-  onRegionChange,
-}) => {
+const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, datasource, onChange, onRunQuery }) => {
   const { queryMode, region } = query;
 
   const [regions, regionIsLoading] = useRegions(datasource);
@@ -47,9 +40,6 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({
   };
 
   const onRegion = async ({ value }: SelectableValue<string>) => {
-    if (onRegionChange) {
-      await onRegionChange(value ?? 'default');
-    }
     onChange({
       ...query,
       region: value,
@@ -70,7 +60,7 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({
 
       <InlineSelect aria-label="Query mode" value={queryMode} options={apiModes} onChange={onQueryModeChange} />
 
-      {queryMode !== ExploreMode.Logs && (
+      {queryMode === ExploreMode.Metrics && (
         <MetricsQueryHeader
           query={query}
           datasource={datasource}

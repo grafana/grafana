@@ -8,11 +8,11 @@ import { downsamplingTypes, ExpressionQuery, upsamplingTypes } from '../types';
 interface Props {
   refIds: Array<SelectableValue<string>>;
   query: ExpressionQuery;
-  labelWidth: number;
+  labelWidth?: number | 'auto';
   onChange: (query: ExpressionQuery) => void;
 }
 
-export const Resample: FC<Props> = ({ labelWidth, onChange, refIds, query }) => {
+export const Resample: FC<Props> = ({ labelWidth = 'auto', onChange, refIds, query }) => {
   const downsampler = downsamplingTypes.find((o) => o.value === query.downsampler);
   const upsampler = upsamplingTypes.find((o) => o.value === query.upsampler);
 
@@ -36,7 +36,7 @@ export const Resample: FC<Props> = ({ labelWidth, onChange, refIds, query }) => 
     <>
       <InlineFieldRow>
         <InlineField label="Input" labelWidth={labelWidth}>
-          <Select menuShouldPortal onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
+          <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
@@ -44,22 +44,10 @@ export const Resample: FC<Props> = ({ labelWidth, onChange, refIds, query }) => 
           <Input onChange={onWindowChange} value={query.window} width={15} />
         </InlineField>
         <InlineField label="Downsample">
-          <Select
-            menuShouldPortal
-            options={downsamplingTypes}
-            value={downsampler}
-            onChange={onSelectDownsampler}
-            width={25}
-          />
+          <Select options={downsamplingTypes} value={downsampler} onChange={onSelectDownsampler} width={25} />
         </InlineField>
         <InlineField label="Upsample">
-          <Select
-            menuShouldPortal
-            options={upsamplingTypes}
-            value={upsampler}
-            onChange={onSelectUpsampler}
-            width={25}
-          />
+          <Select options={upsamplingTypes} value={upsampler} onChange={onSelectUpsampler} width={25} />
         </InlineField>
       </InlineFieldRow>
     </>

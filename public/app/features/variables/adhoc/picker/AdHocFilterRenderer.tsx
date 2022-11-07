@@ -15,6 +15,7 @@ interface Props {
   onValueChange: (item: SelectableValue<string>) => void;
   placeHolder?: string;
   getTagKeysOptions?: any;
+  disabled?: boolean;
 }
 
 export const AdHocFilterRenderer: FC<Props> = ({
@@ -25,19 +26,22 @@ export const AdHocFilterRenderer: FC<Props> = ({
   onValueChange,
   placeHolder,
   getTagKeysOptions,
+  disabled,
 }) => {
   return (
     <>
       <AdHocFilterKey
+        disabled={disabled}
         datasource={datasource}
         filterKey={key}
         onChange={onKeyChange}
         getTagKeysOptions={getTagKeysOptions}
       />
       <div className="gf-form">
-        <OperatorSegment value={operator} onChange={onOperatorChange} />
+        <OperatorSegment disabled={disabled} value={operator} onChange={onOperatorChange} />
       </div>
       <AdHocFilterValue
+        disabled={disabled}
         datasource={datasource}
         filterKey={key}
         filterValue={value}

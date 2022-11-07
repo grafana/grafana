@@ -1,7 +1,6 @@
 import React from 'react';
 import { HeaderGroup, Column } from 'react-table';
 
-import { DataFrame, Field } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
@@ -13,12 +12,11 @@ import { getTableStyles, TableStyles } from './styles';
 
 export interface HeaderRowProps {
   headerGroups: HeaderGroup[];
-  data: DataFrame;
   showTypeIcons?: boolean;
 }
 
 export const HeaderRow = (props: HeaderRowProps) => {
-  const { headerGroups, data, showTypeIcons } = props;
+  const { headerGroups, showTypeIcons } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
   const tableStyles = useStyles2(getTableStyles);
 
@@ -35,7 +33,7 @@ export const HeaderRow = (props: HeaderRowProps) => {
             role="row"
           >
             {headerGroup.headers.map((column: Column, index: number) =>
-              renderHeaderCell(column, tableStyles, data.fields[index], showTypeIcons)
+              renderHeaderCell(column, tableStyles, showTypeIcons)
             )}
           </div>
         );
@@ -44,15 +42,16 @@ export const HeaderRow = (props: HeaderRowProps) => {
   );
 };
 
-function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field, showTypeIcons?: boolean) {
+function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?: boolean) {
   const headerProps = column.getHeaderProps();
+  const field = column.field ?? null;
 
   if (column.canResize) {
     headerProps.style.userSelect = column.isResizing ? 'none' : 'auto'; // disables selecting text while resizing
   }
 
   headerProps.style.position = 'absolute';
-  headerProps.style.justifyContent = (column as any).justifyContent;
+  headerProps.style.justifyContent = column.justifyContent;
 
   return (
     <div className={tableStyles.headerCell} {...headerProps} role="columnheader">

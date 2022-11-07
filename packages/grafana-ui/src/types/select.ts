@@ -1,1 +1,1 @@
-export { ActionMeta } from '../components/Select/types';
+export type { ActionMeta } from '../components/Select/types';

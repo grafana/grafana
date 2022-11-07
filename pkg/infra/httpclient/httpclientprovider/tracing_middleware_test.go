@@ -13,8 +13,7 @@ import (
 )
 
 func TestTracingMiddleware(t *testing.T) {
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	t.Run("GET request that returns 200 OK should start and capture span", func(t *testing.T) {
 		finalRoundTripper := httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {

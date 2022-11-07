@@ -2,6 +2,7 @@
 //  pkg/services/featuremgmt/registry.go
 // Then run tests in:
 //  pkg/services/featuremgmt/toggles_gen_test.go
+// twice to generate and validate the feature flag files
 
 package featuremgmt
 
@@ -9,24 +10,26 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
+			Name:        "alertingBigTransactions",
+			Description: "Use big transactions for alerting database writes",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "promQueryBuilder",
+			Description:  "Show prometheus query builder",
+			State:        FeatureStateStable,
+			Expression:   "true", // on by default
+			FrontendOnly: true,
+		},
+		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:        "envelopeEncryption",
-			Description: "encrypt secrets",
-			State:       FeatureStateBeta,
-		},
-		{
-			Name:        "httpclientprovider_azure_auth",
-			Description: "Experimental. Allow datasources to configure Azure authentication directly via JsonData",
-			State:       FeatureStateBeta,
-		},
-		{
-			Name:        "serviceAccounts",
-			Description: "support service accounts",
-			State:       FeatureStateBeta,
+			Name:        "disableEnvelopeEncryption",
+			Description: "Disable envelope encryption (emergency only)",
+			State:       FeatureStateStable,
 		},
 		{
 			Name:        "database_metrics",
@@ -67,48 +70,19 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:            "panelTitleSearch",
-			Description:     "Search for dashboards using panel title",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true, // only supported in dev mode right now
+			Name:        "panelTitleSearch",
+			Description: "Search for dashboards using panel title",
+			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "tempoSearch",
-			Description:  "Enable searching in tempo datasources",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
-			Name:        "tempoBackendSearch",
-			Description: "Use backend for tempo search",
-			State:       FeatureStateBeta,
-		},
-		{
-			Name:         "tempoServiceGraph",
-			Description:  "show service",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
-			Name:         "lokiBackendMode",
-			Description:  "Loki datasource works as backend datasource",
+			Name:         "tempoApmTable",
+			Description:  "Show APM table",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
 		{
-			Name:        "accesscontrol",
-			Description: "Support robust access control",
-			State:       FeatureStateBeta,
-		},
-		{
-			Name:            "accesscontrol-builtins",
-			Description:     "Simplify access control builtin roles",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:        "prometheus_azure_auth",
-			Description: "Experimental. Azure authentication for Prometheus datasource",
+			Name:        "prometheusAzureOverrideAudience",
+			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,
 		},
 		{
@@ -118,36 +92,29 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "newNavigation",
-			Description: "Try the next gen navigation model",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "showFeatureFlagsInUI",
 			Description:     "Show feature flags in the settings UI",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
 		{
-			Name:        "disable_http_request_histogram",
-			Description: "Do not create histograms for http requests",
+			Name:        "publicDashboards",
+			Description: "enables public access to dashboards",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:            "validatedQueries",
-			Description:     "only execute the query saved in a panel",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:            "publicDashboards",
-			Description:     "enables public access to dashboards",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
 		},
 		{
 			Name:        "lokiLive",
 			Description: "support websocket streaming for loki (early prototype)",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "lokiDataframeApi",
+			Description: "use experimental loki api for websocket streaming (early prototype)",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "lokiMonacoEditor",
+			Description: "Access to Monaco query editor for Loki",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -176,29 +143,19 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:        "saveDashboardDrawer",
-			Description: "Use a drawer to show save dashboard dialog",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "alertProvisioning",
-			Description: "Provisioning-friendly routes for alerting",
-			State:       FeatureStateAlpha,
+			Name:            "dashboardsFromStorage",
+			Description:     "Load dashboards from the generic storage interface",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true, // Also a gate on automatic git storage (for now)
 		},
 		{
 			Name:            "export",
 			Description:     "Export grafana instance (to git, etc)",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:            "storageLocalUpload",
-			Description:     "allow uploads to local storage",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
@@ -212,7 +169,14 @@ var (
 		{
 			Name:         "explore2Dashboard",
 			Description:  "Experimental Explore to Dashboard workflow",
-			State:        FeatureStateBeta,
+			State:        FeatureStateStable,
+			Expression:   "true", // enabled by default
+			FrontendOnly: true,
+		},
+		{
+			Name:         "exploreMixedDatasource",
+			Description:  "Enable mixed datasource in Explore",
+			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
 		{
@@ -222,20 +186,186 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "persistNotifications",
-			Description:  "PoC Notifications page",
+			Name:         "commandPalette",
+			Description:  "Enable command palette",
+			State:        FeatureStateStable,
+			Expression:   "true", // enabled by default
+			FrontendOnly: true,
+		},
+		{
+			Name:        "correlations",
+			Description: "Correlations page",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "cloudWatchDynamicLabels",
+			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
+			State:       FeatureStateStable,
+			Expression:  "true", // enabled by default
+		},
+		{
+			Name:        "datasourceQueryMultiStatus",
+			Description: "Introduce HTTP 207 Multi Status for api/ds/query",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "traceToMetrics",
+			Description:  "Enable trace to metrics links",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
 		{
-			Name:        "commandPalette",
-			Description: "Enable command palette",
+			Name:        "prometheusStreamingJSONParser",
+			Description: "Enable streaming JSON parser for Prometheus datasource",
+			State:       FeatureStateBeta,
+		},
+		{
+			Name:        "prometheusStreamingJSONParserTest",
+			Description: "Run both old and streaming requests and log differences",
+			State:       FeatureStateBeta,
+		},
+		{
+			Name:        "newDBLibrary",
+			Description: "Use jmoiron/sqlx rather than xorm for a few backend services",
+			State:       FeatureStateBeta,
+		},
+		{
+			Name:            "validateDashboardsOnSave",
+			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
+			State:           FeatureStateAlpha,
+			RequiresRestart: true,
+		},
+		{
+			Name:         "autoMigrateGraphPanels",
+			Description:  "Replace the angular graph panel with timeseries",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "prometheusWideSeries",
+			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "savedItems",
-			Description: "Enable Saved Items in the navbar.",
+			Name:         "canvasPanelNesting",
+			Description:  "Allow elements nesting",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "scenes",
+			Description:  "Experimental framework to build interactive dashboards",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "useLegacyHeatmapPanel",
+			Description: "Continue to use the angular/flot based heatmap panel",
+			State:       FeatureStateStable,
+		},
+		{
+			Name:            "disableSecretsCompatibility",
+			Description:     "Disable duplicated secret storage in legacy tables",
+			State:           FeatureStateAlpha,
+			RequiresRestart: true,
+		},
+		{
+			Name:        "logRequestsInstrumentedAsUnknown",
+			Description: "Logs the path for requests that are instrumented as unknown",
+		},
+		{
+			Name:        "dataConnectionsConsole",
+			Description: "Enables a new top-level page called Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "internationalization",
+			Description: "Enables work-in-progress internationalization",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "topnav",
+			Description: "New top nav and page layouts",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:            "grpcServer",
+			Description:     "Run GRPC server",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:            "objectStore",
+			Description:     "SQL based object store",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:        "traceqlEditor",
+			Description: "Show the TraceQL editor in the explore page",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "flameGraph",
+			Description: "Show the flame graph",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "redshiftAsyncQueryDataSupport",
+			Description:  "Enable async query data support for Redshift",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "athenaAsyncQueryDataSupport",
+			Description:  "Enable async query data support for Athena",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "increaseInMemDatabaseQueryCache",
+			Description: "Enable more in memory caching for database queries",
+		},
+		{
+			Name:        "interFont",
+			Description: "Switch to inter font",
+		},
+		{
+			Name:         "newPanelChromeUI",
+			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:            "queryLibrary",
+			Description:     "Reusable query library",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:        "showDashboardValidationWarnings",
+			Description: "Show warnings when Dashboards do not validate against the schema",
+		},
+		{
+			Name:        "mysqlAnsiQuotes",
+			Description: "Use double quote to escape keyword in Mysql query",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "datasourceLogger",
+			Description: "Logs all datasource requests",
+		},
+		{
+			Name:            "accessControlOnCall",
+			Description:     "Access control primitives for OnCall",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:            "nestedFolders",
+			Description:     "Enable folder nesting",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
 		},
 	}
 )

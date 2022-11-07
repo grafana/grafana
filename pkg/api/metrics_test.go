@@ -1,167 +1,45 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"testing"
 
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	datasources "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/stretchr/testify/assert"
-)
-
-var (
-	queryDatasourceInput = `{
-		"from": "",
-		"to": "",
-		"queries": [
-			{
-				"datasource": {
-					"type": "datasource",
-					"uid": "grafana"
-				},
-				"queryType": "randomWalk",
-				"refId": "A"
-			}
-		]
-	}`
-
-	getDashboardByIdOutput = `{
-		"annotations": {
-			"list": [
-			{
-				"builtIn": 1,
-				"datasource": "-- Grafana --",
-				"enable": true,
-				"hide": true,
-				"iconColor": "rgba(0, 211, 255, 1)",
-				"name": "Annotations & Alerts",
-				"target": {
-					"limit": 100,
-					"matchAny": false,
-					"tags": [],
-					"type": "dashboard"
-				},
-				"type": "dashboard"
-			}
-			]
-		},
-		"editable": true,
-		"fiscalYearStartMonth": 0,
-		"graphTooltip": 0,
-		"links": [],
-		"liveNow": false,
-		"panels": [
-		{
-			"fieldConfig": {
-				"defaults": {
-					"color": {
-						"mode": "palette-classic"
-					},
-					"custom": {
-						"axisLabel": "",
-						"axisPlacement": "auto",
-						"barAlignment": 0,
-						"drawStyle": "line",
-						"fillOpacity": 0,
-						"gradientMode": "none",
-						"hideFrom": {
-							"legend": false,
-							"tooltip": false,
-							"viz": false
-						},
-						"lineInterpolation": "linear",
-						"lineWidth": 1,
-						"pointSize": 5,
-						"scaleDistribution": {
-							"type": "linear"
-						},
-						"showPoints": "auto",
-						"spanNulls": false,
-						"stacking": {
-							"group": "A",
-							"mode": "none"
-						},
-						"thresholdsStyle": {
-							"mode": "off"
-						}
-					},
-					"mappings": [],
-					"thresholds": {
-						"mode": "absolute",
-						"steps": [
-						{
-							"color": "green",
-							"value": null
-						},
-						{
-							"color": "red",
-							"value": 80
-						}
-						]
-					}
-				},
-				"overrides": []
-			},
-			"gridPos": {
-				"h": 9,
-				"w": 12,
-				"x": 0,
-				"y": 0
-			},
-			"id": 2,
-			"options": {
-				"legend": {
-					"calcs": [],
-					"displayMode": "list",
-					"placement": "bottom"
-				},
-				"tooltip": {
-					"mode": "single",
-					"sort": "none"
-				}
-			},
-			"title": "Panel Title",
-			"type": "timeseries"
-		}
-		],
-		"schemaVersion": 35,
-		"style": "dark",
-		"tags": [],
-		"templating": {
-			"list": []
-		},
-		"time": {
-			"from": "now-6h",
-			"to": "now"
-		},
-		"timepicker": {},
-		"timezone": "",
-		"title": "New dashboard",
-		"version": 0,
-		"weekStart": ""
-	}`
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 type fakePluginRequestValidator struct {
 	err error
+}
+
+type secretsErrorResponseBody struct {
+	Error   string `json:"error"`
+	Message string `json:"message"`
 }
 
 func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) error {
@@ -173,330 +51,279 @@ type fakeOAuthTokenService struct {
 	token           *oauth2.Token
 }
 
-func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *models.SignedInUser) *oauth2.Token {
+func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token {
 	return ts.token
 }
 
-func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool {
+func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource) bool {
 	return ts.passThruEnabled
 }
 
-func (c *dashboardFakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	c.req = req
-	resp := backend.Responses{}
-	return &backend.QueryDataResponse{Responses: resp}, nil
+func (ts *fakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*models.UserAuth, bool, error) {
+	return nil, false, nil
 }
 
-type dashboardFakePluginClient struct {
-	plugins.Client
-
-	req *backend.QueryDataRequest
+func (ts *fakeOAuthTokenService) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) error {
+	return nil
 }
 
-// `/dashboards/org/:orgId/uid/:dashboardUid/panels/:panelId/query` endpoints test
-func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
-	sc := setupHTTPServerWithMockDb(t, false, false)
+func (ts *fakeOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr *models.UserAuth) error {
+	return nil
+}
 
-	secretsStore := kvstore.SetupTestService(t)
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	ds := datasources.ProvideService(nil, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
-
-	setInitCtxSignedInViewer(sc.initCtx)
-	sc.hs.queryDataService = query.ProvideService(
-		nil,
+// `/ds/query` endpoint test
+func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
+	qds := query.ProvideService(
+		setting.NewCfg(),
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
-		ds,
-		&dashboardFakePluginClient{},
+		&fakeDatasources.FakeDataSourceService{},
+		&fakePluginClient{
+			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+				resp := backend.Responses{
+					"A": backend.DataResponse{
+						Error: fmt.Errorf("query failed"),
+					},
+				}
+				return &backend.QueryDataResponse{Responses: resp}, nil
+			},
+		},
 		&fakeOAuthTokenService{},
 	)
+	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.queryDataService = qds
+		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, true)
+		hs.QuotaService = quotatest.NewQuotaServiceFake()
+	})
+	serverFeatureDisabled := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.queryDataService = qds
+		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, false)
+		hs.QuotaService = quotatest.NewQuotaServiceFake()
+	})
 
-	sc.hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagValidatedQueries, true)
+	t.Run("Status code is 400 when data source response has an error and feature toggle is disabled", func(t *testing.T) {
+		req := serverFeatureDisabled.NewPostRequest("/api/ds/query", strings.NewReader(reqValid))
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})
+		resp, err := serverFeatureDisabled.SendJSON(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
 
-	dashboardJson, err := simplejson.NewFromReader(strings.NewReader(getDashboardByIdOutput))
-	if err != nil {
-		t.Fatalf("Failed to unmarshal dashboard json: %v", err)
-	}
+	t.Run("Status code is 207 when data source response has an error and feature toggle is enabled", func(t *testing.T) {
+		req := serverFeatureEnabled.NewPostRequest("/api/ds/query", strings.NewReader(reqValid))
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})
+		resp, err := serverFeatureEnabled.SendJSON(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, http.StatusMultiStatus, resp.StatusCode)
+	})
+}
 
-	mockDb := sc.hs.SQLStore.(*mockstore.SQLStoreMock)
+func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
+	qds := query.ProvideService(
+		setting.NewCfg(),
+		nil,
+		nil,
+		&fakePluginRequestValidator{},
+		&fakeDatasources.FakeDataSourceService{SimulatePluginFailure: true},
+		&fakePluginClient{
+			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+				resp := backend.Responses{
+					"A": backend.DataResponse{
+						Error: fmt.Errorf("query failed"),
+					},
+				}
+				return &backend.QueryDataResponse{Responses: resp}, nil
+			},
+		},
+		&fakeOAuthTokenService{},
+	)
+	httpServer := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.queryDataService = qds
+		hs.QuotaService = quotatest.NewQuotaServiceFake()
+	})
 
-	t.Run("Can query a valid dashboard", func(t *testing.T) {
-		mockDb.ExpectedDashboard = &models.Dashboard{
-			Uid:   "1",
-			OrgId: testOrgID,
-			Data:  dashboardJson,
+	t.Run("Status code is 500 and a secrets plugin error is returned if there is a problem getting secrets from the remote plugin", func(t *testing.T) {
+		req := httpServer.NewPostRequest("/api/ds/query", strings.NewReader(reqValid))
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})
+		resp, err := httpServer.SendJSON(req)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		buf := new(bytes.Buffer)
+		_, err = buf.ReadFrom(resp.Body)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		var resObj secretsErrorResponseBody
+		err = json.Unmarshal(buf.Bytes(), &resObj)
+		require.NoError(t, err)
+		require.Equal(t, "unknown error", resObj.Error)
+		require.Contains(t, resObj.Message, "Secrets Plugin error:")
+	})
+}
+
+var reqValid = `{
+	"from": "",
+	"to": "",
+	"queries": [
+		{
+			"datasource": {
+				"type": "datasource",
+				"uid": "grafana"
+			},
+			"queryType": "randomWalk",
+			"refId": "A"
 		}
-		mockDb.ExpectedError = nil
+	]
+}`
 
-		response := callAPI(
-			sc.server,
-			http.MethodPost,
-			fmt.Sprintf("/api/dashboards/org/%d/uid/%s/panels/%s/query", testOrgID, "1", "2"),
-			strings.NewReader(queryDatasourceInput),
-			t,
-		)
-		assert.Equal(t, http.StatusOK, response.Code)
-	})
+var reqNoQueries = `{
+	"from": "",
+	"to": "",
+	"queries": []
+}`
 
-	t.Run("Cannot query without a valid orgid or dashboard or panel ID", func(t *testing.T) {
-		mockDb.ExpectedDashboard = nil
-		mockDb.ExpectedError = models.ErrDashboardOrPanelIdentifierNotSet
+var reqQueryWithInvalidDatasourceID = `{
+	"from": "",
+	"to": "",
+	"queries": [
+		{
+			"queryType": "randomWalk",
+			"refId": "A"
+		}
+	]
+}`
 
-		response := callAPI(
-			sc.server,
-			http.MethodPost,
-			"/api/dashboards/org//uid//panels//query",
-			strings.NewReader(queryDatasourceInput),
-			t,
-		)
+var reqDatasourceByUidNotFound = `{
+	"from": "",
+	"to": "",
+	"queries": [
+		{
+			"datasource": {
+				"type": "datasource",
+				"uid": "not-found"
+			},
+			"queryType": "randomWalk",
+			"refId": "A"
+		}
+	]
+}`
 
-		assert.Equal(t, http.StatusBadRequest, response.Code)
+var reqDatasourceByIdNotFound = `{
+	"from": "",
+	"to": "",
+	"queries": [
+		{
+			"datasourceId": 1,
+			"queryType": "randomWalk",
+			"refId": "A"
+		}
+	]
+}`
 
-		var res map[string]interface{}
-		err := json.Unmarshal(response.Body.Bytes(), &res)
-		assert.NoError(t, err)
-		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["error"])
-		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["message"])
-	})
-
-	t.Run("Cannot query without a valid orgid", func(t *testing.T) {
-		response := callAPI(
-			sc.server,
-			http.MethodPost,
-			fmt.Sprintf("/api/dashboards/org//uid/%s/panels/%s/query", "1", "2"),
-			strings.NewReader(queryDatasourceInput),
-			t,
-		)
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-		var res map[string]interface{}
-		assert.NoError(t, json.Unmarshal(response.Body.Bytes(), &res))
-		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["error"])
-		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["message"])
-	})
-
-	t.Run("Cannot query without a valid dashboard or panel ID", func(t *testing.T) {
-		response := callAPI(
-			sc.server,
-			http.MethodPost,
-			fmt.Sprintf("/api/dashboards/org//uid/%s/panels/%s/query", "1", "2"),
-			strings.NewReader(queryDatasourceInput),
-			t,
-		)
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-
-		var res map[string]interface{}
-		assert.NoError(t, json.Unmarshal(response.Body.Bytes(), &res))
-		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["error"])
-		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["message"])
-	})
-
-	t.Run("Cannot query when ValidatedQueries is disabled", func(t *testing.T) {
-		sc.hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagValidatedQueries, false)
-
-		response := callAPI(
-			sc.server,
-			http.MethodPost,
-			"/api/dashboards/uid/1/panels/1/query",
-			strings.NewReader(queryDatasourceInput),
-			t,
-		)
-
-		assert.Equal(t, http.StatusNotFound, response.Code)
-		assert.Equal(
-			t,
-			"404 page not found\n",
-			response.Body.String(),
-		)
-	})
-}
-
-func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
-	dashboardJson, err := simplejson.NewFromReader(strings.NewReader(getDashboardByIdOutput))
-	if err != nil {
-		t.Fatalf("Failed to unmarshal dashboard json: %v", err)
-	}
-
-	tests := []struct {
-		name                 string
-		orgId                int64
-		dashboardUid         string
-		panelId              int64
-		dashboardQueryResult *models.Dashboard
-		expectedError        error
+func TestDataSourceQueryError(t *testing.T) {
+	tcs := []struct {
+		request        string
+		clientErr      error
+		expectedStatus int
+		expectedBody   string
 	}{
 		{
-			name:         "Work when correct dashboardId and panelId given",
-			orgId:        testOrgID,
-			dashboardUid: "1",
-			panelId:      2,
-			dashboardQueryResult: &models.Dashboard{
-				Uid:   "1",
-				OrgId: testOrgID,
-				Data:  dashboardJson,
-			},
-			expectedError: nil,
+			request:        reqValid,
+			clientErr:      backendplugin.ErrPluginUnavailable,
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   `{"message":"Internal server error","messageId":"plugin.unavailable","statusCode":500,"traceID":""}`,
 		},
 		{
-			name:                 "404 on invalid orgId",
-			orgId:                7,
-			dashboardUid:         "1",
-			panelId:              2,
-			dashboardQueryResult: nil,
-			expectedError:        models.ErrDashboardNotFound,
+			request:        reqValid,
+			clientErr:      backendplugin.ErrMethodNotImplemented,
+			expectedStatus: http.StatusNotImplemented,
+			expectedBody:   `{"message":"Not implemented","messageId":"plugin.notImplemented","statusCode":501,"traceID":""}`,
 		},
 		{
-			name:                 "404 on invalid dashboardId",
-			orgId:                testOrgID,
-			dashboardUid:         "",
-			panelId:              2,
-			dashboardQueryResult: nil,
-			expectedError:        models.ErrDashboardNotFound,
+			request:        reqValid,
+			clientErr:      errors.New("surprise surprise"),
+			expectedStatus: errutil.StatusInternal.HTTPStatus(),
+			expectedBody:   `{"message":"An error occurred within the plugin","messageId":"plugin.downstreamError","statusCode":500,"traceID":""}`,
 		},
 		{
-			name:                 "404 on invalid panelId",
-			orgId:                testOrgID,
-			dashboardUid:         "1",
-			panelId:              0,
-			dashboardQueryResult: nil,
-			expectedError:        models.ErrDashboardNotFound,
+			request:        reqNoQueries,
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   `{"message":"No queries found","messageId":"query.noQueries","statusCode":400,"traceID":""}`,
 		},
 		{
-			name:                 "Fails when the dashboard does not exist",
-			orgId:                testOrgID,
-			dashboardUid:         "1",
-			panelId:              2,
-			dashboardQueryResult: nil,
-			expectedError:        models.ErrDashboardNotFound,
+			request:        reqQueryWithInvalidDatasourceID,
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   `{"message":"Query does not contain a valid data source identifier","messageId":"query.invalidDatasourceId","statusCode":400,"traceID":""}`,
 		},
 		{
-			name:         "Fails when the panel does not exist",
-			orgId:        testOrgID,
-			dashboardUid: "1",
-			panelId:      3,
-			dashboardQueryResult: &models.Dashboard{
-				Id:    1,
-				OrgId: testOrgID,
-				Data:  dashboardJson,
-			},
-			expectedError: models.ErrDashboardPanelNotFound,
+			request:        reqDatasourceByUidNotFound,
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   `{"error":"data source not found","message":"Data source not found","traceID":""}`,
 		},
 		{
-			name:         "Fails when the dashboard contents are nil",
-			orgId:        testOrgID,
-			dashboardUid: "1",
-			panelId:      3,
-			dashboardQueryResult: &models.Dashboard{
-				Uid:   "1",
-				OrgId: testOrgID,
-				Data:  nil,
-			},
-			expectedError: models.ErrDashboardCorrupt,
+			request:        reqDatasourceByIdNotFound,
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   `{"error":"data source not found","message":"Data source not found","traceID":""}`,
 		},
 	}
 
-	ss := mockstore.NewSQLStoreMock()
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			ss.ExpectedDashboard = test.dashboardQueryResult
-			ss.ExpectedError = test.expectedError
-
-			query := models.GetDashboardQuery{
-				OrgId: test.orgId,
-				Uid:   test.dashboardUid,
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Plugin client error %q should propagate to API", tc.clientErr), func(t *testing.T) {
+			p := &plugins.Plugin{
+				JSONData: plugins.JSONData{
+					ID: "grafana",
+				},
 			}
+			p.RegisterClient(&fakePluginBackend{
+				qdr: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+					return nil, tc.clientErr
+				},
+			})
+			srv := SetupAPITestServer(t, func(hs *HTTPServer) {
+				r := registry.NewInMemory()
+				err := r.Add(context.Background(), p)
+				require.NoError(t, err)
+				hs.queryDataService = query.ProvideService(
+					setting.NewCfg(),
+					&fakeDatasources.FakeCacheService{},
+					nil,
+					&fakePluginRequestValidator{},
+					&fakeDatasources.FakeDataSourceService{},
+					pluginClient.ProvideService(r, &config.Cfg{}),
+					&fakeOAuthTokenService{},
+				)
+				hs.QuotaService = quotatest.NewQuotaServiceFake()
+			})
+			req := srv.NewPostRequest("/api/ds/query", strings.NewReader(tc.request))
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})
+			resp, err := srv.SendJSON(req)
+			require.NoError(t, err)
 
-			assert.Equal(t, test.expectedError, checkDashboardAndPanel(context.Background(), ss, query, test.panelId))
+			require.Equal(t, tc.expectedStatus, resp.StatusCode)
+			require.Equal(t, tc.expectedStatus, resp.StatusCode)
+			body, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedBody, string(body))
+			require.NoError(t, resp.Body.Close())
 		})
 	}
 }
 
-func TestAPIEndpoint_Metrics_ParseDashboardQueryParams(t *testing.T) {
-	tests := []struct {
-		name                   string
-		params                 map[string]string
-		expectedDashboardQuery models.GetDashboardQuery
-		expectedPanelId        int64
-		expectedError          error
-	}{
-		{
-			name: "Work when correct orgId, dashboardId and panelId given",
-			params: map[string]string{
-				":orgId":        strconv.FormatInt(testOrgID, 10),
-				":dashboardUid": "1",
-				":panelId":      "2",
-			},
-			expectedDashboardQuery: models.GetDashboardQuery{
-				Uid:   "1",
-				OrgId: 1,
-			},
-			expectedPanelId: 2,
-			expectedError:   nil,
-		},
-		{
-			name: "Get error when dashboardUid not given",
-			params: map[string]string{
-				":orgId":        strconv.FormatInt(testOrgID, 10),
-				":dashboardUid": "",
-				":panelId":      "1",
-			},
-			expectedDashboardQuery: models.GetDashboardQuery{},
-			expectedPanelId:        0,
-			expectedError:          models.ErrDashboardOrPanelIdentifierNotSet,
-		},
-		{
-			name: "Get error when panelId not given",
-			params: map[string]string{
-				":orgId":        strconv.FormatInt(testOrgID, 10),
-				":dashboardUid": "1",
-				":panelId":      "",
-			},
-			expectedDashboardQuery: models.GetDashboardQuery{},
-			expectedPanelId:        0,
-			expectedError:          models.ErrDashboardOrPanelIdentifierNotSet,
-		},
-		{
-			name: "Get error when orgId not given",
-			params: map[string]string{
-				":orgId":        "",
-				":dashboardUid": "1",
-				":panelId":      "2",
-			},
-			expectedDashboardQuery: models.GetDashboardQuery{},
-			expectedPanelId:        0,
-			expectedError:          models.ErrDashboardOrPanelIdentifierNotSet,
-		},
-		{
-			name: "Get error when panelId not is invalid",
-			params: map[string]string{
-				":orgId":        strconv.FormatInt(testOrgID, 10),
-				":dashboardUid": "1",
-				":panelId":      "aaa",
-			},
-			expectedDashboardQuery: models.GetDashboardQuery{},
-			expectedPanelId:        0,
-			expectedError:          models.ErrDashboardPanelIdentifierInvalid,
-		},
-		{
-			name: "Get error when orgId not is invalid",
-			params: map[string]string{
-				":orgId":        "aaa",
-				":dashboardUid": "1",
-				":panelId":      "2",
-			},
-			expectedDashboardQuery: models.GetDashboardQuery{},
-			expectedPanelId:        0,
-			expectedError:          models.ErrDashboardPanelIdentifierInvalid,
-		},
-	}
+type fakePluginBackend struct {
+	qdr backend.QueryDataHandlerFunc
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			// other validations?
-			dashboardQuery, panelId, err := parseDashboardQueryParams(test.params)
-			assert.Equal(t, test.expectedDashboardQuery, dashboardQuery)
-			assert.Equal(t, test.expectedPanelId, panelId)
-			assert.Equal(t, test.expectedError, err)
-		})
+	backendplugin.Plugin
+}
+
+func (f *fakePluginBackend) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if f.qdr != nil {
+		return f.qdr(ctx, req)
 	}
+	return backend.NewQueryDataResponse(), nil
+}
+
+func (f *fakePluginBackend) IsDecommissioned() bool {
+	return false
 }

@@ -7,50 +7,53 @@ import { Select } from '@grafana/ui';
 import { Dimensions } from '..';
 import { CloudWatchDatasource } from '../../datasource';
 import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
-import { CloudWatchMetricsQuery } from '../../types';
+import { standardStatistics } from '../../standardStatistics';
+import { MetricStat } from '../../types';
 import { appendTemplateVariables, toOption } from '../../utils/utils';
 
 export type Props = {
-  query: CloudWatchMetricsQuery;
+  refId: string;
+  metricStat: MetricStat;
   datasource: CloudWatchDatasource;
   disableExpressions?: boolean;
-  onChange: (value: CloudWatchMetricsQuery) => void;
+  onChange: (value: MetricStat) => void;
   onRunQuery: () => void;
 };
 
 export function MetricStatEditor({
-  query,
+  refId,
+  metricStat,
   datasource,
   disableExpressions = false,
   onChange,
   onRunQuery,
 }: React.PropsWithChildren<Props>) {
-  const { region, namespace, metricName, dimensions } = query;
+  const { region, namespace } = metricStat;
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, region, namespace);
-  const dimensionKeys = useDimensionKeys(datasource, region, namespace, metricName, dimensions ?? {});
+  const dimensionKeys = useDimensionKeys(datasource, { ...metricStat, dimensionFilters: metricStat.dimensions });
 
-  const onQueryChange = (query: CloudWatchMetricsQuery) => {
-    onChange(query);
+  const onMetricStatChange = (metricStat: MetricStat) => {
+    onChange(metricStat);
     onRunQuery();
   };
 
-  const onNamespaceChange = async (query: CloudWatchMetricsQuery) => {
-    const validatedQuery = await validateMetricName(query);
-    onQueryChange(validatedQuery);
+  const onNamespaceChange = async (metricStat: MetricStat) => {
+    const validatedQuery = await validateMetricName(metricStat);
+    onMetricStatChange(validatedQuery);
   };
 
-  const validateMetricName = async (query: CloudWatchMetricsQuery) => {
-    let { metricName, namespace, region } = query;
+  const validateMetricName = async (metricStat: MetricStat) => {
+    let { metricName, namespace, region } = metricStat;
     if (!metricName) {
-      return query;
+      return metricStat;
     }
-    await datasource.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
+    await datasource.api.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
       if (!result.find((metric) => metric.value === metricName)) {
         metricName = '';
       }
     });
-    return { ...query, metricName };
+    return { ...metricStat, metricName };
   };
 
   return (
@@ -60,12 +63,12 @@ export function MetricStatEditor({
           <EditorField label="Namespace" width={26}>
             <Select
               aria-label="Namespace"
-              value={query.namespace}
+              value={metricStat?.namespace && toOption(metricStat.namespace)}
               allowCustomValue
               options={namespaces}
               onChange={({ value: namespace }) => {
                 if (namespace) {
-                  onNamespaceChange({ ...query, namespace });
+                  onNamespaceChange({ ...metricStat, namespace });
                 }
               }}
             />
@@ -73,12 +76,12 @@ export function MetricStatEditor({
           <EditorField label="Metric name" width={16}>
             <Select
               aria-label="Metric name"
-              value={query.metricName || null}
+              value={metricStat?.metricName && toOption(metricStat.metricName)}
               allowCustomValue
               options={metrics}
               onChange={({ value: metricName }) => {
                 if (metricName) {
-                  onQueryChange({ ...query, metricName });
+                  onMetricStatChange({ ...metricStat, metricName });
                 }
               }}
             />
@@ -86,24 +89,24 @@ export function MetricStatEditor({
 
           <EditorField label="Statistic" width={16}>
             <Select
-              inputId={`${query.refId}-metric-stat-editor-select-statistic`}
+              inputId={`${refId}-metric-stat-editor-select-statistic`}
               allowCustomValue
-              value={toOption(query.statistic ?? datasource.standardStatistics[0])}
+              value={toOption(metricStat.statistic ?? standardStatistics[0])}
               options={appendTemplateVariables(
                 datasource,
-                datasource.standardStatistics.filter((s) => s !== query.statistic).map(toOption)
+                standardStatistics.filter((s) => s !== metricStat.statistic).map(toOption)
               )}
               onChange={({ value: statistic }) => {
                 if (
                   !statistic ||
-                  (!datasource.standardStatistics.includes(statistic) &&
+                  (!standardStatistics.includes(statistic) &&
                     !/^p\d{2}(?:\.\d{1,2})?$/.test(statistic) &&
                     !statistic.startsWith('$'))
                 ) {
                   return;
                 }
 
-                onQueryChange({ ...query, statistic });
+                onMetricStatChange({ ...metricStat, statistic });
               }}
             />
           </EditorField>
@@ -113,8 +116,8 @@ export function MetricStatEditor({
       <EditorRow>
         <EditorField label="Dimensions">
           <Dimensions
-            query={query}
-            onChange={(dimensions) => onQueryChange({ ...query, dimensions })}
+            metricStat={metricStat}
+            onChange={(dimensions) => onMetricStatChange({ ...metricStat, dimensions })}
             dimensionKeys={dimensionKeys}
             disableExpressions={disableExpressions}
             datasource={datasource}
@@ -129,11 +132,11 @@ export function MetricStatEditor({
             tooltip="Only show metrics that exactly match all defined dimension names."
           >
             <EditorSwitch
-              id={`${query.refId}-cloudwatch-match-exact`}
-              value={!!query.matchExact}
+              id={`${refId}-cloudwatch-match-exact`}
+              value={!!metricStat.matchExact}
               onChange={(e) => {
-                onQueryChange({
-                  ...query,
+                onMetricStatChange({
+                  ...metricStat,
                   matchExact: e.currentTarget.checked,
                 });
               }}

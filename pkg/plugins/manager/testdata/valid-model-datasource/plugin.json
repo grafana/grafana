@@ -1,0 +1,14 @@
+{
+  "type": "datasource",
+  "name": "Datasource models valid",
+  "id": "valid-model-datasource",
+  "backend": true,
+  "state": "alpha",
+  "info": {
+    "description": "Test",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    }
+  }
+}

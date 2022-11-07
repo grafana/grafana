@@ -139,12 +139,55 @@ func TestLogTableToFrame(t *testing.T) {
 				return frame
 			},
 		},
+		{
+			name:     "data and error in real response",
+			testFile: "loganalytics/9-log-analytics-response-error.json",
+			expectedFrame: func() *data.Frame {
+				frame := data.NewFrame("",
+					data.NewField("OperationName", nil, []*string{pointer.String("Create or Update Virtual Machine")}),
+					data.NewField("Level", nil, []*string{pointer.String("Informational")}),
+				)
+				frame.Meta = &data.FrameMeta{
+					Custom:  &LogAnalyticsMeta{ColumnTypes: []string{"string", "string"}},
+					Notices: []data.Notice{{Severity: data.NoticeSeverityError, Text: "There were some errors when processing your query. Something went wrong processing your query on the server. The results of this query exceed the set limit of 1 records."}},
+				}
+				return frame
+			},
+		},
+		{
+			name:     "data and warning in real response",
+			testFile: "loganalytics/10-log-analytics-response-warning.json",
+			expectedFrame: func() *data.Frame {
+				frame := data.NewFrame("",
+					data.NewField("OperationName", nil, []*string{pointer.String("Create or Update Virtual Machine")}),
+					data.NewField("Level", nil, []*string{pointer.String("Informational")}),
+				)
+				frame.Meta = &data.FrameMeta{
+					Custom:  &LogAnalyticsMeta{ColumnTypes: []string{"string", "string"}},
+					Notices: []data.Notice{{Severity: data.NoticeSeverityWarning, Text: "There were some errors when processing your query. Something went wrong processing your query on the server. Not sure what happened."}},
+				}
+				return frame
+			},
+		},
+		{
+			name:     "empty data response",
+			testFile: "loganalytics/11-log-analytics-response-empty.json",
+			expectedFrame: func() *data.Frame {
+				return &data.Frame{
+					RefID: "A",
+					Meta: &data.FrameMeta{
+						ExecutedQueryString: "query",
+					},
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res := loadLogAnalyticsTestFileWithNumber(t, tt.testFile)
-			frame, err := ResponseTableToFrame(&res.Tables[0])
+			frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query")
+			appendErrorNotice(frame, res.Error)
 			require.NoError(t, err)
 
 			if diff := cmp.Diff(tt.expectedFrame(), frame, data.FrameTestCompareOptions()...); diff != "" {

@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -19,10 +22,17 @@
     ]
   },
   "editable": true,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "id": 28,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "gridPos": {
         "h": 26,
         "w": 6,
@@ -40,12 +50,16 @@
         "showStarred": true,
         "tags": []
       },
-      "pluginVersion": "8.1.0-pre",
+      "pluginVersion": "9.0.0-pre",
       "tags": [],
       "title": "Starred",
       "type": "dashlist"
     },
     {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -65,7 +79,7 @@
           "panel-tests"
         ]
       },
-      "pluginVersion": "8.1.0-pre",
+      "pluginVersion": "9.0.0-pre",
       "tags": [
         "panel-tests"
       ],
@@ -73,6 +87,10 @@
       "type": "dashlist"
     },
     {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -93,7 +111,7 @@
           "demo"
         ]
       },
-      "pluginVersion": "8.1.0-pre",
+      "pluginVersion": "9.0.0-pre",
       "tags": [
         "gdev",
         "demo"
@@ -102,6 +120,10 @@
       "type": "dashlist"
     },
     {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "gridPos": {
         "h": 26,
         "w": 6,
@@ -122,7 +144,7 @@
           "datasource-test"
         ]
       },
-      "pluginVersion": "8.1.0-pre",
+      "pluginVersion": "9.0.0-pre",
       "tags": [
         "gdev",
         "datasource-test"
@@ -131,6 +153,10 @@
       "type": "dashlist"
     },
     {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -151,7 +177,7 @@
           "gdev"
         ]
       },
-      "pluginVersion": "8.1.0-pre",
+      "pluginVersion": "9.0.0-pre",
       "tags": [
         "templating",
         "gdev"
@@ -160,6 +186,10 @@
       "type": "dashlist"
     },
     {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -180,7 +210,7 @@
           "transform"
         ]
       },
-      "pluginVersion": "8.1.0-pre",
+      "pluginVersion": "9.0.0-pre",
       "tags": [
         "gdev",
         "demo"
@@ -189,7 +219,7 @@
       "type": "dashlist"
     }
   ],
-  "schemaVersion": 33,
+  "schemaVersion": 36,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -227,5 +257,6 @@
   "timezone": "",
   "title": "Grafana Dev Overview & Home",
   "uid": "j6T00KRZz",
-  "version": 2
+  "version": 3,
+  "weekStart": ""
 }

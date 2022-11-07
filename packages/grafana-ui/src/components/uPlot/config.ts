@@ -66,7 +66,9 @@ export const graphFieldOptions = {
   thresholdsDisplayModes: [
     { label: 'Off', value: GraphTresholdsStyleMode.Off },
     { label: 'As lines', value: GraphTresholdsStyleMode.Line },
+    { label: 'As lines (dashed)', value: GraphTresholdsStyleMode.Dashed },
     { label: 'As filled regions', value: GraphTresholdsStyleMode.Area },
     { label: 'As filled regions and lines', value: GraphTresholdsStyleMode.LineAndArea },
+    { label: 'As filled regions and lines (dashed)', value: GraphTresholdsStyleMode.DashedAndArea },
   ] as Array<SelectableValue<GraphTresholdsStyleMode>>,
 };

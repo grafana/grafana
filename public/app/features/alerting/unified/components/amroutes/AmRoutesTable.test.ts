@@ -10,7 +10,9 @@ const defaultAmRoute: FormAmRoute = {
   object_matchers: [],
   continue: false,
   receiver: '',
+  overrideGrouping: false,
   groupBy: [],
+  overrideTimings: false,
   groupWaitValue: '',
   groupWaitValueType: '',
   groupIntervalValue: '',
@@ -166,7 +168,7 @@ describe('deleteRoute', () => {
     const routeToDelete = routes[1];
 
     // Act
-    const updatedRoutes = deleteRoute(routes, routeToDelete);
+    const updatedRoutes = deleteRoute(routes, routeToDelete.id);
 
     // Assert
     expect(updatedRoutes).toHaveLength(2);
@@ -179,7 +181,7 @@ describe('deleteRoute', () => {
     const routes: FormAmRoute[] = [buildAmRoute({ id: '1' }), buildAmRoute({ id: '2' }), buildAmRoute({ id: '3' })];
 
     // Act
-    const updatedRoutes = deleteRoute(routes, buildAmRoute({ id: '-1' }));
+    const updatedRoutes = deleteRoute(routes, '-1');
 
     // Assert
     expect(updatedRoutes).toHaveLength(3);

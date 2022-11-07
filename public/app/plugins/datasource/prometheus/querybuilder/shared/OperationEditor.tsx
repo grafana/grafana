@@ -6,17 +6,16 @@ import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
-import {
-  VisualQueryModeller,
-  QueryBuilderOperation,
-  QueryBuilderOperationParamValue,
-  QueryBuilderOperationDef,
-  QueryBuilderOperationParamDef,
-} from '../shared/types';
-
 import { OperationHeader } from './OperationHeader';
 import { getOperationParamEditor } from './OperationParamEditor';
 import { getOperationParamId } from './operationUtils';
+import {
+  QueryBuilderOperation,
+  QueryBuilderOperationDef,
+  QueryBuilderOperationParamDef,
+  QueryBuilderOperationParamValue,
+  VisualQueryModeller,
+} from './types';
 
 export interface Props {
   operation: QueryBuilderOperation;
@@ -27,6 +26,7 @@ export interface Props {
   onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;
   onRunQuery: () => void;
+  flash?: boolean;
   highlight?: boolean;
 }
 
@@ -39,11 +39,12 @@ export function OperationEditor({
   queryModeller,
   query,
   datasource,
+  flash,
   highlight,
 }: Props) {
   const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
-  const shouldHighlight = useHighlight(highlight);
+  const shouldFlash = useFlash(flash);
 
   if (!def) {
     return <span>Operation {operation.id} not found</span>;
@@ -129,7 +130,7 @@ export function OperationEditor({
     <Draggable draggableId={`operation-${index}`} index={index}>
       {(provided) => (
         <div
-          className={cx(styles.card, shouldHighlight && styles.cardHighlight)}
+          className={cx(styles.card, (shouldFlash || highlight) && styles.cardHighlight)}
           ref={provided.innerRef}
           {...provided.draggableProps}
           data-testid={`operations.${index}.wrapper`}
@@ -158,26 +159,26 @@ export function OperationEditor({
 }
 
 /**
- * When highlight is switched on makes sure it is switched of right away, so we just flash the highlight and then fade
+ * When flash is switched on makes sure it is switched of right away, so we just flash the highlight and then fade
  * out.
- * @param highlight
+ * @param flash
  */
-function useHighlight(highlight?: boolean) {
-  const [keepHighlight, setKeepHighlight] = useState(true);
+function useFlash(flash?: boolean) {
+  const [keepFlash, setKeepFlash] = useState(true);
   useEffect(() => {
     let t: any;
-    if (highlight) {
+    if (flash) {
       t = setTimeout(() => {
-        setKeepHighlight(false);
-      }, 1);
+        setKeepFlash(false);
+      }, 1000);
     } else {
-      setKeepHighlight(true);
+      setKeepFlash(true);
     }
 
     return () => clearTimeout(t);
-  }, [highlight]);
+  }, [flash]);
 
-  return keepHighlight && highlight;
+  return keepFlash && flash;
 }
 
 function renderAddRestParamButton(
@@ -228,7 +229,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.borderRadius(1),
       marginBottom: theme.spacing(1),
       position: 'relative',
-      transition: 'all 1s ease-in 0s',
+      transition: 'all 0.5s ease-in 0s',
     }),
     cardHighlight: css({
       boxShadow: `0px 0px 4px 0px ${theme.colors.primary.border}`,

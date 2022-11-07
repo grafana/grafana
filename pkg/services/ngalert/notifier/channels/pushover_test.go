@@ -25,6 +25,8 @@ import (
 func TestPushoverNotifier(t *testing.T) {
 	tmpl := templateForTests(t)
 
+	images := newFakeImageStoreWithFile(t, 2)
+
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
 	tmpl.ExternalURL = externalURL
@@ -38,7 +40,7 @@ func TestPushoverNotifier(t *testing.T) {
 		expMsgError  error
 	}{
 		{
-			name: "Correct config with one alert",
+			name: "Correct config with single alert",
 			settings: `{
 				"userKey": "<userKey>",
 				"apiToken": "<apiToken>"
@@ -47,20 +49,50 @@ func TestPushoverNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"__alert_rule_uid__": "rule uid", "alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertImageToken__": "test-image-1"},
 					},
 				},
 			},
 			expMsg: map[string]string{
-				"user":      "<userKey>",
-				"token":     "<apiToken>",
-				"priority":  "0",
-				"sound":     "",
-				"title":     "[FIRING:1]  (val1)",
-				"url":       "http://localhost/alerting/list",
-				"url_title": "Show alert rule",
-				"message":   "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
-				"html":      "1",
+				"user":       "<userKey>",
+				"token":      "<apiToken>",
+				"priority":   "0",
+				"sound":      "",
+				"title":      "[FIRING:1]  (val1)",
+				"url":        "http://localhost/alerting/list",
+				"url_title":  "Show alert rule",
+				"message":    "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				"attachment": "\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\b\x04\x00\x00\x00\xb5\x1c\f\x02\x00\x00\x00\vIDATx\xdacd`\x00\x00\x00\x06\x00\x020\x81\xd0/\x00\x00\x00\x00IEND\xaeB`\x82",
+				"html":       "1",
+			},
+			expMsgError: nil,
+		},
+		{
+			name: "Custom title",
+			settings: `{
+				"userKey": "<userKey>",
+				"apiToken": "<apiToken>",
+				"title": "Alerts firing: {{ len .Alerts.Firing }}"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"__alert_rule_uid__": "rule uid", "alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertImageToken__": "test-image-1"},
+					},
+				},
+			},
+			expMsg: map[string]string{
+				"user":       "<userKey>",
+				"token":      "<apiToken>",
+				"priority":   "0",
+				"sound":      "",
+				"title":      "Alerts firing: 1",
+				"url":        "http://localhost/alerting/list",
+				"url_title":  "Show alert rule",
+				"message":    "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				"attachment": "\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\b\x04\x00\x00\x00\xb5\x1c\f\x02\x00\x00\x00\vIDATx\xdacd`\x00\x00\x00\x06\x00\x020\x81\xd0/\x00\x00\x00\x00IEND\xaeB`\x82",
+				"html":       "1",
 			},
 			expMsgError: nil,
 		},
@@ -82,28 +114,29 @@ func TestPushoverNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"__alert_rule_uid__": "rule uid", "alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__alertImageToken__": "test-image-1"},
 					},
 				}, {
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
-						Annotations: model.LabelSet{"ann1": "annv2"},
+						Annotations: model.LabelSet{"ann1": "annv2", "__alertImageToken__": "test-image-2"},
 					},
 				},
 			},
 			expMsg: map[string]string{
-				"user":      "<userKey>",
-				"token":     "<apiToken>",
-				"priority":  "2",
-				"sound":     "echo",
-				"title":     "[FIRING:2]  ",
-				"url":       "http://localhost/alerting/list",
-				"url_title": "Show alert rule",
-				"message":   "2 alerts are firing, 0 are resolved",
-				"html":      "1",
-				"retry":     "30",
-				"expire":    "86400",
-				"device":    "device",
+				"user":       "<userKey>",
+				"token":      "<apiToken>",
+				"priority":   "2",
+				"sound":      "echo",
+				"title":      "[FIRING:2]  ",
+				"url":        "http://localhost/alerting/list",
+				"url_title":  "Show alert rule",
+				"message":    "2 alerts are firing, 0 are resolved",
+				"attachment": "\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\b\x04\x00\x00\x00\xb5\x1c\f\x02\x00\x00\x00\vIDATx\xdacd`\x00\x00\x00\x06\x00\x020\x81\xd0/\x00\x00\x00\x00IEND\xaeB`\x82",
+				"html":       "1",
+				"retry":      "30",
+				"expire":     "86400",
+				"device":     "device",
 			},
 			expMsgError: nil,
 		},
@@ -137,17 +170,23 @@ func TestPushoverNotifier(t *testing.T) {
 			require.NoError(t, err)
 			secureSettings := make(map[string][]byte)
 
-			m := &NotificationChannelConfig{
-				Name:           "pushover_testing",
-				Type:           "pushover",
-				Settings:       settingsJSON,
-				SecureSettings: secureSettings,
-			}
-
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			cfg, err := NewPushoverConfig(m, decryptFn)
+
+			fc := FactoryConfig{
+				Config: &NotificationChannelConfig{
+					Name:           "pushover_testing",
+					Type:           "pushover",
+					Settings:       settingsJSON,
+					SecureSettings: secureSettings,
+				},
+				ImageStore:          images,
+				NotificationService: webhookSender,
+				DecryptFunc:         decryptFn,
+				Template:            tmpl,
+			}
+			pn, err := newPushoverNotifier(fc)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -157,7 +196,6 @@ func TestPushoverNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewPushoverNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.Error(t, err)

@@ -3,12 +3,12 @@ package influxdb
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,7 +16,7 @@ import (
 )
 
 func prepare(text string) io.ReadCloser {
-	return ioutil.NopCloser(strings.NewReader(text))
+	return io.NopCloser(strings.NewReader(text))
 }
 
 func addQueryToQueries(query Query) []Query {
@@ -76,9 +76,9 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		floatFrame := data.NewFrame("cpu.mean { datacenter: America }",
 			data.NewField("time", nil,
 				[]time.Time{
-					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
-					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
-					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
 				}),
 			floatField,
 		)
@@ -91,9 +91,9 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		stringFrame := data.NewFrame("cpu.path { datacenter: America }",
 			data.NewField("time", nil,
 				[]time.Time{
-					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
-					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
-					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
 				}),
 			stringField,
 		)
@@ -106,9 +106,9 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		boolFrame := data.NewFrame("cpu.isActive { datacenter: America }",
 			data.NewField("time", nil,
 				[]time.Time{
-					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
-					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
-					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
 				}),
 			boolField,
 		)
@@ -299,9 +299,9 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		testFrame := data.NewFrame("cpu.mean",
 			data.NewField("time", nil,
 				[]time.Time{
-					time.Date(1970, 1, 1, 0, 1, 40, 0, time.UTC),
-					time.Date(1970, 1, 1, 0, 1, 41, 0, time.UTC),
-					time.Date(1970, 1, 1, 0, 1, 42, 0, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 100000000, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 101000000, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 102000000, time.UTC),
 				}),
 			newField,
 		)
@@ -348,8 +348,8 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		testFrame := data.NewFrame("cpu.mean",
 			data.NewField("time", nil,
 				[]time.Time{
-					time.Date(1970, 1, 1, 0, 1, 40, 0, time.UTC),
-					time.Date(1970, 1, 1, 0, 1, 42, 0, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 100000000, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 102000000, time.UTC),
 				}),
 			newField,
 		)
@@ -401,7 +401,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		testFrame := data.NewFrame("series alias",
 			data.NewField("time", nil,
 				[]time.Time{
-					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
 				}),
 			newField,
 		)
@@ -666,9 +666,9 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		testFrame := data.NewFrame("cpu.mean { datacenter: America }",
 			data.NewField("time", nil,
 				[]time.Time{
-					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
-					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
-					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
 				}),
 			newField,
 		)
@@ -717,9 +717,9 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser parseTimestamp valid JSON.number", func(t *testing.T) {
-		// currently we use seconds-precision with influxdb, so the test works with that.
-		// if we change this to for example milliseconds-precision, the tests will have to change.
-		timestamp, err := parseTimestamp(json.Number("1609556645"))
+		// currently we use milliseconds-precision with influxdb, so the test works with that.
+		// if we change this to for example nanoseconds-precision, the tests will have to change.
+		timestamp, err := parseTimestamp(json.Number("1609556645000"))
 		require.NoError(t, err)
 		require.Equal(t, timestamp.Format(time.RFC3339), "2021-01-02T03:04:05Z")
 	})
@@ -728,4 +728,77 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		_, err := parseTimestamp("hello")
 		require.Error(t, err)
 	})
+}
+
+func TestResponseParser_Parse(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		f     func(t *testing.T, got *backend.QueryDataResponse)
+	}{
+		{
+			name: "Influxdb response parser with valid value when null values returned",
+			input: `{ "results": [ { "series": [ {
+				"name": "cpu",
+				"columns": ["time","mean"],
+				"values": [
+					[100,null],
+					[101,null],
+					[102,52]
+				]
+			}]}]}`,
+			f: func(t *testing.T, got *backend.QueryDataResponse) {
+				newField := data.NewField("value", nil, []*float64{nil, nil, pointer.Float64(52)})
+				newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
+				testFrame := data.NewFrame("cpu.mean",
+					data.NewField("time", nil,
+						[]time.Time{
+							time.Date(1970, 1, 1, 0, 0, 0, 100000000, time.UTC),
+							time.Date(1970, 1, 1, 0, 0, 0, 101000000, time.UTC),
+							time.Date(1970, 1, 1, 0, 0, 0, 102000000, time.UTC),
+						}),
+					newField,
+				)
+				testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+				assert.Equal(t, testFrame, got.Responses["A"].Frames[0])
+			},
+		},
+		{
+			name: "Influxdb response parser with valid value when all values are null",
+			input: `{ "results": [ { "series": [ {
+				"name": "cpu",
+				"columns": ["time","mean"],
+				"values": [
+					[100,null],
+					[101,null],
+					[102,null]
+				]
+			}]}]}`,
+			f: func(t *testing.T, got *backend.QueryDataResponse) {
+				newField := data.NewField("value", nil, []*float64{nil, nil, nil})
+				newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
+				testFrame := data.NewFrame("cpu.mean",
+					data.NewField("time", nil,
+						[]time.Time{
+							time.Date(1970, 1, 1, 0, 0, 0, 100000000, time.UTC),
+							time.Date(1970, 1, 1, 0, 0, 0, 101000000, time.UTC),
+							time.Date(1970, 1, 1, 0, 0, 0, 102000000, time.UTC),
+						}),
+					newField,
+				)
+				testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+				assert.Equal(t, testFrame, got.Responses["A"].Frames[0])
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := &ResponseParser{}
+			got := parser.Parse(prepare(tt.input), addQueryToQueries(Query{}))
+			require.NotNil(t, got)
+			if tt.f != nil {
+				tt.f(t, got)
+			}
+		})
+	}
 }

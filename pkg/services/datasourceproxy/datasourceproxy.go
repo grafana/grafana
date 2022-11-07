@@ -60,10 +60,13 @@ func (p *DataSourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
 	p.ProxyDatasourceRequestWithID(c, id)
 }
 
-func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *models.ReqContext) {
+func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *models.ReqContext, dsUID string) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
 
-	dsUID := web.Params(c.Req)[":uid"]
+	if dsUID == "" { // if datasource UID is not provided, fetch it from the uid path parameter
+		dsUID = web.Params(c.Req)[":uid"]
+	}
+
 	if !util.IsValidShortUID(dsUID) {
 		c.JsonApiErr(http.StatusBadRequest, "UID is invalid", nil)
 		return
@@ -83,23 +86,24 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 	ds, err := p.DataSourceCache.GetDatasource(c.Req.Context(), dsID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		toAPIError(c, err)
+		return
 	}
 	p.proxyDatasourceRequest(c, ds)
 }
 
 func toAPIError(c *models.ReqContext, err error) {
-	if errors.Is(err, models.ErrDataSourceAccessDenied) {
+	if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 		c.JsonApiErr(http.StatusForbidden, "Access denied to datasource", err)
 		return
 	}
-	if errors.Is(err, models.ErrDataSourceNotFound) {
+	if errors.Is(err, datasources.ErrDataSourceNotFound) {
 		c.JsonApiErr(http.StatusNotFound, "Unable to find datasource", err)
 		return
 	}
 	c.JsonApiErr(http.StatusInternalServerError, "Unable to load datasource meta data", err)
 }
 
-func (p *DataSourceProxyService) proxyDatasourceRequest(c *models.ReqContext, ds *models.DataSource) {
+func (p *DataSourceProxyService) proxyDatasourceRequest(c *models.ReqContext, ds *datasources.DataSource) {
 	err := p.PluginRequestValidator.Validate(ds.Url, c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)

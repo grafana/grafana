@@ -1,25 +1,24 @@
 import { debounce } from 'lodash';
 
-import { getBackendSrv, locationService } from '@grafana/runtime';
-import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
-import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { getBackendSrv } from '@grafana/runtime';
+import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { contextSrv } from 'app/core/services/context_srv';
+import store from 'app/core/store';
+import { AccessControlAction, ServiceAccountDTO, ServiceAccountStateFilter, ThunkResult } from 'app/types';
 
-import { contextSrv } from '../../../core/services/context_srv';
-import { ServiceAccountDTO, ThunkResult, ServiceAccountFilter, AccessControlAction } from '../../../types';
-import { ServiceAccountToken } from '../CreateServiceAccountTokenModal';
+import { ServiceAccountToken } from '../components/CreateTokenModal';
+import { API_KEYS_MIGRATION_INFO_STORAGE_KEY } from '../constants';
 
 import {
   acOptionsLoaded,
-  builtInRolesLoaded,
-  filterChanged,
   pageChanged,
   queryChanged,
-  serviceAccountLoaded,
   serviceAccountsFetchBegin,
-  serviceAccountsFetchEnd,
   serviceAccountsFetched,
-  serviceAccountTokensLoaded,
-  serviceAccountToRemoveLoaded,
+  serviceAccountsFetchEnd,
+  apiKeysMigrationStatusLoaded,
+  stateFilterChanged,
+  showApiKeysMigrationInfoLoaded,
 } from './reducers';
 
 const BASE_URL = `/api/serviceaccounts`;
@@ -31,37 +30,67 @@ export function fetchACOptions(): ThunkResult<void> {
         const options = await fetchRoleOptions();
         dispatch(acOptionsLoaded(options));
       }
-      if (
-        contextSrv.licensedAccessControlEnabled() &&
-        contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)
-      ) {
-        const builtInRoles = await fetchBuiltinRoles();
-        dispatch(builtInRolesLoaded(builtInRoles));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+}
+
+export function getApiKeysMigrationStatus(): ThunkResult<void> {
+  return async (dispatch) => {
+    if (contextSrv.hasPermission(AccessControlAction.ServiceAccountsRead)) {
+      const result = await getBackendSrv().get('/api/serviceaccounts/migrationstatus');
+      dispatch(apiKeysMigrationStatusLoaded(!!result?.migrated));
+    }
+  };
+}
+
+interface FetchServiceAccountsParams {
+  withLoadingIndicator: boolean;
+}
+
+export function fetchServiceAccounts(
+  { withLoadingIndicator }: FetchServiceAccountsParams = { withLoadingIndicator: false }
+): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    try {
+      if (contextSrv.hasPermission(AccessControlAction.ServiceAccountsRead)) {
+        if (withLoadingIndicator) {
+          dispatch(serviceAccountsFetchBegin());
+        }
+        const { perPage, page, query, serviceAccountStateFilter } = getState().serviceAccounts;
+        const result = await getBackendSrv().get(
+          `/api/serviceaccounts/search?perpage=${perPage}&page=${page}&query=${query}${getStateFilter(
+            serviceAccountStateFilter
+          )}&accesscontrol=true`
+        );
+        dispatch(serviceAccountsFetched(result));
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      dispatch(serviceAccountsFetchEnd());
     }
   };
 }
 
-export function setServiceAccountToRemove(serviceAccount: ServiceAccountDTO | null): ThunkResult<void> {
+const fetchServiceAccountsWithDebounce = debounce((dispatch) => dispatch(fetchServiceAccounts()), 500, {
+  leading: true,
+});
+
+export function updateServiceAccount(serviceAccount: ServiceAccountDTO): ThunkResult<void> {
   return async (dispatch) => {
-    try {
-      dispatch(serviceAccountToRemoveLoaded(serviceAccount));
-    } catch (error) {
-      console.error(error);
-    }
+    await getBackendSrv().patch(`${BASE_URL}/${serviceAccount.id}?accesscontrol=true`, {
+      ...serviceAccount,
+    });
+    dispatch(fetchServiceAccounts());
   };
 }
 
-export function loadServiceAccount(saID: number): ThunkResult<void> {
+export function deleteServiceAccount(serviceAccountId: number): ThunkResult<void> {
   return async (dispatch) => {
-    try {
-      const response = await getBackendSrv().get(`${BASE_URL}/${saID}`, accessControlQueryParam());
-      dispatch(serviceAccountLoaded(response));
-    } catch (error) {
-      console.error(error);
-    }
+    await getBackendSrv().delete(`${BASE_URL}/${serviceAccountId}`);
+    dispatch(fetchServiceAccounts());
   };
 }
 
@@ -73,102 +102,53 @@ export function createServiceAccountToken(
   return async (dispatch) => {
     const result = await getBackendSrv().post(`${BASE_URL}/${saID}/tokens`, token);
     onTokenCreated(result.key);
-    dispatch(loadServiceAccountTokens(saID));
-  };
-}
-
-export function deleteServiceAccountToken(saID: number, id: number): ThunkResult<void> {
-  return async (dispatch) => {
-    await getBackendSrv().delete(`${BASE_URL}/${saID}/tokens/${id}`);
-    dispatch(loadServiceAccountTokens(saID));
-  };
-}
-
-export function loadServiceAccountTokens(saID: number): ThunkResult<void> {
-  return async (dispatch) => {
-    try {
-      const response = await getBackendSrv().get(`${BASE_URL}/${saID}/tokens`);
-      dispatch(serviceAccountTokensLoaded(response));
-    } catch (error) {
-      console.error(error);
-    }
-  };
-}
-
-export function updateServiceAccount(serviceAccount: ServiceAccountDTO): ThunkResult<void> {
-  return async (dispatch) => {
-    const response = await getBackendSrv().patch(`${BASE_URL}/${serviceAccount.id}?accesscontrol=true`, {
-      ...serviceAccount,
-    });
-    dispatch(serviceAccountLoaded(response));
-  };
-}
-
-export function removeServiceAccount(serviceAccountId: number): ThunkResult<void> {
-  return async (dispatch) => {
-    await getBackendSrv().delete(`${BASE_URL}/${serviceAccountId}`);
     dispatch(fetchServiceAccounts());
   };
 }
 
 // search / filtering of serviceAccounts
-const getFilters = (filters: ServiceAccountFilter[]) => {
-  return filters
-    .map((filter) => {
-      if (Array.isArray(filter.value)) {
-        return filter.value.map((v) => `${filter.name}=${v.value}`).join('&');
-      }
-      return `${filter.name}=${filter.value}`;
-    })
-    .join('&');
+const getStateFilter = (value: ServiceAccountStateFilter) => {
+  switch (value) {
+    case ServiceAccountStateFilter.WithExpiredTokens:
+      return '&expiredTokens=true';
+    case ServiceAccountStateFilter.Disabled:
+      return '&disabled=true';
+    default:
+      return '';
+  }
 };
-
-export function fetchServiceAccounts(): ThunkResult<void> {
-  return async (dispatch, getState) => {
-    try {
-      const { perPage, page, query, filters } = getState().serviceAccounts;
-      const result = await getBackendSrv().get(
-        `/api/serviceaccounts/search?perpage=${perPage}&page=${page}&query=${query}&${getFilters(
-          filters
-        )}&accesscontrol=true`
-      );
-      dispatch(serviceAccountsFetched(result));
-    } catch (error) {
-      serviceAccountsFetchEnd();
-      console.error(error);
-    }
-  };
-}
-
-const fetchServiceAccountsWithDebounce = debounce((dispatch) => dispatch(fetchServiceAccounts()), 500);
 
 export function changeQuery(query: string): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(serviceAccountsFetchBegin());
     dispatch(queryChanged(query));
     fetchServiceAccountsWithDebounce(dispatch);
   };
 }
 
-export function changeFilter(filter: ServiceAccountFilter): ThunkResult<void> {
+export function changeStateFilter(filter: ServiceAccountStateFilter): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(serviceAccountsFetchBegin());
-    dispatch(filterChanged(filter));
-    fetchServiceAccountsWithDebounce(dispatch);
+    dispatch(stateFilterChanged(filter));
+    dispatch(fetchServiceAccounts());
   };
 }
 
 export function changePage(page: number): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(serviceAccountsFetchBegin());
     dispatch(pageChanged(page));
     dispatch(fetchServiceAccounts());
   };
 }
 
-export function deleteServiceAccount(serviceAccountId: number): ThunkResult<void> {
-  return async () => {
-    await getBackendSrv().delete(`${BASE_URL}/${serviceAccountId}`);
-    locationService.push('/org/serviceaccounts');
+export function getApiKeysMigrationInfo(): ThunkResult<void> {
+  return async (dispatch) => {
+    const showApiKeysMigrationInfo = store.getBool(API_KEYS_MIGRATION_INFO_STORAGE_KEY, false);
+    dispatch(showApiKeysMigrationInfoLoaded(showApiKeysMigrationInfo));
+  };
+}
+
+export function closeApiKeysMigrationInfo(): ThunkResult<void> {
+  return async (dispatch) => {
+    store.set(API_KEYS_MIGRATION_INFO_STORAGE_KEY, false);
+    dispatch(getApiKeysMigrationInfo());
   };
 }

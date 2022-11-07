@@ -15,12 +15,13 @@ type DateFormats struct {
 }
 
 type DateFormatIntervals struct {
-	Second string `json:"second"`
-	Minute string `json:"minute"`
-	Hour   string `json:"hour"`
-	Day    string `json:"day"`
-	Month  string `json:"month"`
-	Year   string `json:"year"`
+	Millisecond string `json:"millisecond"`
+	Second      string `json:"second"`
+	Minute      string `json:"minute"`
+	Hour        string `json:"hour"`
+	Day         string `json:"day"`
+	Month       string `json:"month"`
+	Year        string `json:"year"`
 }
 
 const localBrowser = "browser"
@@ -42,6 +43,7 @@ func valueAsTimezone(section *ini.Section, keyName string) (string, error) {
 func (cfg *Cfg) readDateFormats() {
 	dateFormats := cfg.Raw.Section("date_formats")
 	cfg.DateFormats.FullDate = valueAsString(dateFormats, "full_date", "YYYY-MM-DD HH:mm:ss")
+	cfg.DateFormats.Interval.Millisecond = valueAsString(dateFormats, "interval_millisecond", "HH:mm:ss.SSS")
 	cfg.DateFormats.Interval.Second = valueAsString(dateFormats, "interval_second", "HH:mm:ss")
 	cfg.DateFormats.Interval.Minute = valueAsString(dateFormats, "interval_minute", "HH:mm")
 	cfg.DateFormats.Interval.Hour = valueAsString(dateFormats, "interval_hour", "MM-DD HH:mm")

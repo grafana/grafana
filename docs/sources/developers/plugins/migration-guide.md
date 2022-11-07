@@ -1,12 +1,14 @@
-+++
-title = "Plugin migration guide"
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/migration-guide/
+title: Plugin migration guide
+---
 
 # Plugin migration guide
 
 ## Introduction
 
-This guide helps you identify the steps you need to take based on the Grafana version your plugin supports and explains how to migrate the plugin to the 8.2.x or a later version.
+This guide helps you identify the steps required to update a plugin from the Grafana version it currently supports to newer versions of Grafana.
 
 > **Note:** If you've successfully migrated your plugin using this guide, then share your experiences with us! If you find missing information, then we encourage you to [submit an issue on GitHub](https://github.com/grafana/grafana/issues/new?title=Docs%20feedback:%20/developers/plugins/migration-guide.md) so that we can improve this guide!
 
@@ -15,6 +17,19 @@ This guide helps you identify the steps you need to take based on the Grafana ve
 - [Plugin migration guide](#plugin-migration-guide)
   - [Introduction](#introduction)
   - [Table of contents](#table-of-contents)
+  - [From version 9.1.x to 9.2.x](#from-version-91x-to-92x)
+    - [React and React-dom as peer dependencies](#react-and-react-dom-as-peer-dependencies)
+    - [NavModelItem requires a valid icon name](#navmodelitem-requires-a-valid-icon-name)
+    - [Additional type availability](#additional-type-availability)
+  - [From version 8.x to 9.x](#from-version-8x-to-9x)
+    - [9.0 breaking changes](#90-breaking-changes)
+      - [theme.visualization.getColorByName replaces getColorForTheme](#themevisualizationgetcolorbyname-replaces-getcolorfortheme)
+      - [VizTextDisplayOptions replaces TextDisplayOptions](#viztextdisplayoptions-replaces-textdisplayoptions)
+      - [Changes in the internal of `backendSrv.fetch()`](#changes-in-the-internal-of-backendsrvfetch)
+      - [GrafanaTheme2 and useStyles2 replaces getFormStyles](#grafanatheme2-and-usestyles2-replaces-getformstyles)
+      - [/api/ds/query replaces /api/tsdb/query](#apidsquery-replaces-apitsdbquery)
+      - [selectOptionInTest has been removed](#selectoptionintest-has-been-removed)
+      - [Toolkit 9 and webpack](#toolkit-9-and-webpack)
   - [From version 8.3.x to 8.4.x](#from-version-83x-to-84x)
     - [Value Mapping Editor has been removed from @grafana-ui library](#value-mapping-editor-has-been-removed-from-grafana-ui-library)
     - [Thresholds Editor has been removed from @grafana-ui library](#thresholds-editor-has-been-removed-from-grafana-ui-library)
@@ -48,6 +63,165 @@ This guide helps you identify the steps you need to take based on the Grafana ve
       - [Migrate a data source plugin](#migrate-a-data-source-plugin)
       - [Migrate to data frames](#migrate-to-data-frames)
     - [Troubleshoot plugin migration](#troubleshoot-plugin-migration)
+
+## From version 9.1.x to 9.2.x
+
+### React and React-dom as peer dependencies
+
+In earlier versions of Grafana packages `react` and `react-dom` were installed during a `yarn install` regardless of a plugins dependencies. In 9.2.0 the `@grafana` packages declare these react packages as peerDependencies and will need adding to a plugins `package.json` file for test commands to continue to run successfully.
+
+Example:
+
+```json
+// before
+"dependencies": {
+  "@grafana/data": "9.1.0",
+  "@grafana/ui": "9.1.0",
+},
+
+// after
+"dependencies": {
+  "@grafana/data": "9.2.0",
+  "@grafana/ui": "9.2.0",
+  "react": "17.0.2",
+  "react-dom": "17.0.2"
+},
+
+```
+
+### NavModelItem requires a valid icon name
+
+The typings of the `NavModelItem` have improved to only allow a valid `IconName` for the icon property. You can find the complete list of valid icons [here](https://github.com/grafana/grafana/blob/v9.2.0-beta1/packages/grafana-data/src/types/icon.ts). The icons specified in the list will work for older versions of Grafana 9.
+
+Example:
+
+```ts
+// before
+const model: NavModelItem = {
+  id: 'settings',
+  text: 'Settings',
+  icon: 'fa fa-cog',
+  url: `${baseUrl}/settings`,
+};
+
+// after
+const model: NavModelItem = {
+  id: 'settings',
+  text: 'Settings',
+  icon: 'cog',
+  url: `${baseUrl}/settings`,
+};
+```
+
+### Additional type availability
+
+FieldProps, ModalProps, and QueryFieldProps are now exposed from `@grafana/ui`. They can be imported in the same way as other types.
+
+Example:
+
+```ts
+import { FieldProps, ModalProps, QueryFieldProps } from '@grafana/ui';
+```
+
+## From version 8.x to 9.x
+
+### 9.0 breaking changes
+
+#### theme.visualization.getColorByName replaces getColorForTheme
+
+`getColorForTheme` was removed, use `theme.visualization.getColorByName` instead
+
+Example:
+
+```ts
+// before
+fillColor: getColorForTheme(panel.sparkline.fillColor, config.theme)
+
+// after
+fillColor: config.theme.visualization.getColorByName(panel.sparkline.fillColor),
+```
+
+#### VizTextDisplayOptions replaces TextDisplayOptions
+
+`TextDisplayOptions` was removed, use `VizTextDisplayOptions` instead
+
+Example:
+
+```ts
+// before
+interface Options {
+...
+text?: TextDisplayOptions;
+...
+}
+
+// after
+interface Options {
+...
+text?: VizTextDisplayOptions;
+...
+}
+```
+
+#### Changes in the internal of `backendSrv.fetch()`
+
+We have changed the internals of `backendSrv.fetch()` to throw an error when the response is an incorrect JSON. Make sure to handle possible errors on the callsite where using `backendSrv.fetch()` (or any other `backendSrv` methods)
+
+```ts
+// PREVIOUSLY: this was returning with an empty object {} - in case the response is an invalid JSON
+return await getBackendSrv().post(`${API_ROOT}/${id}/install`);
+
+// AFTER THIS CHANGE: the following will throw an error - in case the response is an invalid JSON
+return await getBackendSrv().post(`${API_ROOT}/${id}/install`);
+```
+
+#### GrafanaTheme2 and useStyles2 replaces getFormStyles
+
+We have removed the deprecated `getFormStyles` function from [grafana-ui](https://www.npmjs.com/package/@grafana/ui). Use `GrafanaTheme2` and the `useStyles2` hook instead
+
+#### /api/ds/query replaces /api/tsdb/query
+
+We have removed the deprecated `/api/tsdb/query` metrics endpoint. Use [/api/ds/query]({{< relref "../http_api/data_source/#query-a-data-source" >}}) instead
+
+#### selectOptionInTest has been removed
+
+The `@grafana/ui` package helper function `selectOptionInTest` used in frontend tests has been removed as it caused testing libraries to be bundled in the production code of Grafana. If you were using this helper function in your tests please update your code accordingly:
+
+```ts
+// before
+import { selectOptionInTest } from '@grafana/ui';
+// ...test usage
+await selectOptionInTest(selectEl, 'Option 2');
+
+// after
+import { select } from 'react-select-event';
+// ...test usage
+await select(selectEl, 'Option 2', { container: document.body });
+```
+
+#### Toolkit 9 and webpack
+
+Plugins using custom Webpack configs could potentially break due to the changes between webpack@4 and webpack@5. Please refer to the [official migration guide](https://webpack.js.org/migrate/5/) for assistance.
+
+Webpack 5 does not include polyfills for node.js core modules by default (e.g. `buffer`, `stream`, `os`). This can result in failed builds for plugins. If polyfills are required it is recommended to create a custom webpack config in the root of the plugin repo and add the required fallbacks:
+
+```js
+// webpack.config.js
+
+module.exports.getWebpackConfig = (config, options) => ({
+  ...config,
+  resolve: {
+    ...config.resolve,
+    fallback: {
+      os: require.resolve('os-browserify/browser'),
+      stream: require.resolve('stream-browserify'),
+      timers: require.resolve('timers-browserify'),
+    },
+  },
+});
+```
+
+Please refer to the webpack build error messages or the [official migration guide](https://webpack.js.org/migrate/5/) for assistance with fallbacks.
 
 ## From version 8.3.x to 8.4.x
 
@@ -321,7 +495,7 @@ import { cx, css } from '@emotion/css';
 
 ### Update needed for app plugins using dashboards
 
-To make side navigation work properly - app plugins targeting Grafana `8.+` and integrating into the side menu via [addToNav]({{< relref "metadata.md#properties-4" >}}) property need to adjust their `plugin.json` and all dashboard json files to have a matching `uid`.
+To make side navigation work properly - app plugins targeting Grafana `8.+` and integrating into the side menu via [addToNav]({{< relref "metadata/#properties-4" >}}) property need to adjust their `plugin.json` and all dashboard json files to have a matching `uid`.
 
 **`plugin.json`**
 
@@ -550,7 +724,7 @@ For plugins prior to Grafana 7.0, all options are considered _Display options_. 
 
 While backend plugins were available as an experimental feature in previous versions of Grafana, the support has been greatly improved for Grafana 7. Backend plugins for Grafana 7.0 are backwards-compatible and will continue to work. However, the old backend plugin system has been deprecated, and we recommend that you use the new SDK for backend plugins.
 
-Since Grafana 7.0 introduced [signing of backend plugins](../../plugins/plugin-signatures.md), community plugins won’t load by default if they’re unsigned.
+Since Grafana 7.0 introduced [signing of backend plugins](../../administration/plugins), community plugins won’t load by default if they’re unsigned.
 
 To learn more, refer to [Backend plugins](backend/_index.md).
 
@@ -597,9 +771,9 @@ import { PanelProps } from '@grafana/data';
 
 interface Props extends PanelProps<SimpleOptions> {}
 
-export const MyPanel: React.FC<Props> = ({ options, data, width, height }) => {
+export function MyPanel({ options, data, width, height }: Props) {
   // ...
-};
+}
 ```
 
 #### Migrate a data source plugin
@@ -621,9 +795,9 @@ Before 7.0, data source and panel plugins exchanged data using either time serie
 
 Grafana 7.0 is backward compatible with the old data format used in previous versions. Panels and data sources using the old format will still work with plugins using the new data frame format.
 
-The `DataQueryResponse` returned by the `query` method can be either a [LegacyResponseData](https://grafana.com/docs/grafana/latest/packages_api/data/legacyresponsedata/) or a [DataFrame](https://grafana.com/docs/grafana/latest/packages_api/data/dataframe/).
+The `DataQueryResponse` returned by the `query` method can be either a [LegacyResponseData](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/datasource.ts#L419) or a [DataFrame](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/dataFrame.ts#L200).
 
-The [toDataFrame()](https://grafana.com/docs/grafana/latest/packages_api/data/todataframe/) function converts a legacy response, such as `TimeSeries` or `Table`, to a `DataFrame`. Use it to gradually move your code to the new format.
+The [toDataFrame()](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/dataframe/processDataFrame.ts#L309) function converts a legacy response, such as `TimeSeries` or `Table`, to a `DataFrame`. Use it to gradually move your code to the new format.
 
 ```ts
 import { toDataFrame } from '@grafana/data';
@@ -644,4 +818,4 @@ For more information, refer to [Data frames](data-frames.md).
 
 ### Troubleshoot plugin migration
 
-As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins](../../plugins/plugin-signatures.md#allow-unsigned-plugins).
+As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins](../../administration/plugins/#allow-unsigned-plugins).

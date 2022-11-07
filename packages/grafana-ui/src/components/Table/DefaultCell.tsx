@@ -1,9 +1,11 @@
+import { cx } from '@emotion/css';
 import React, { FC, ReactElement } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { DisplayValue, Field, formattedValueToString } from '@grafana/data';
 
-import { getTextColorForBackground, getCellLinks } from '../../utils';
+import { getCellLinks, getTextColorForAlphaBackground } from '../../utils';
+import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
 import { TableStyles } from './styles';
@@ -26,16 +28,24 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellStyle = getCellStyle(tableStyles, field, displayValue, inspectEnabled);
 
-  const { link, onClick } = getCellLinks(field, row);
+  const hasLinks = Boolean(getCellLinks(field, row)?.length);
 
   return (
     <div {...cellProps} className={cellStyle}>
-      {!link && <div className={tableStyles.cellText}>{value}</div>}
-      {link && (
-        <a href={link.href} onClick={onClick} target={link.target} title={link.title} className={tableStyles.cellLink}>
-          {value}
-        </a>
+      {!hasLinks && <div className={tableStyles.cellText}>{value}</div>}
+
+      {hasLinks && (
+        <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
+          {(api) => {
+            return (
+              <div onClick={api.openMenu} className={cx(tableStyles.cellLink, api.targetClassName)}>
+                {value}
+              </div>
+            );
+          }}
+        </DataLinksContextMenu>
       )}
+
       {showActions && <CellActions {...props} previewMode="text" />}
     </div>
   );
@@ -53,7 +63,7 @@ function getCellStyle(
 
   if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackgroundSolid) {
     const bgColor = tinycolor(displayValue.color);
-    const textColor = getTextColorForBackground(displayValue.color!);
+    const textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
     return tableStyles.buildCellContainerStyle(textColor, bgColor.toRgbString(), !disableOverflowOnHover);
   }
 
@@ -64,7 +74,7 @@ function getCellStyle(
       .spin(5)
       .toRgbString();
 
-    const textColor = getTextColorForBackground(displayValue.color!);
+    const textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
 
     return tableStyles.buildCellContainerStyle(
       textColor,

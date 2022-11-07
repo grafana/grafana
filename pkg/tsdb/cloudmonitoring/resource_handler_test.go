@@ -1,14 +1,17 @@
 package cloudmonitoring
 
 import (
+	"context"
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -75,7 +78,7 @@ func Test_doRequest(t *testing.T) {
 		t.Errorf("Unexpected headers: %v", res.Header())
 	}
 	result := rw.Result()
-	body, err := ioutil.ReadAll(result.Body)
+	body, err := io.ReadAll(result.Body)
 	if err != nil {
 		t.Error(err)
 	}
@@ -284,4 +287,24 @@ func Test_processData_functions(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_getGCEDefaultProject(t *testing.T) {
+	project := "test-project"
+	s := Service{
+		im: &fakeInstance{
+			services: map[string]datasourceService{
+				cloudMonitor: {
+					url:    routes[cloudMonitor].url,
+					client: &http.Client{},
+				},
+			},
+		},
+		gceDefaultProjectGetter: func(ctx context.Context) (string, error) {
+			return project, nil
+		},
+	}
+
+	assert.HTTPSuccess(t, s.getGCEDefaultProject, "GET", "/gceDefaultProject", nil)
+	assert.HTTPBodyContains(t, s.getGCEDefaultProject, "GET", "/gceDefaultProject", nil, fmt.Sprintf("\"%v\"", project))
 }

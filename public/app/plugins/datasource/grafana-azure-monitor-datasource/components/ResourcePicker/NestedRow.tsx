@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { FadeTransition, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import { NestedEntry } from './NestedEntry';
-import NestedRows from './NestedRows';
 import getStyles from './styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
 import { findRow } from './utils';
@@ -16,6 +15,7 @@ interface NestedRowProps {
   requestNestedRows: (row: ResourceRow) => Promise<void>;
   onRowSelectedChange: (row: ResourceRow, selected: boolean) => void;
   selectableEntryTypes: ResourceRowType[];
+  scrollIntoView?: boolean;
 }
 
 const NestedRow: React.FC<NestedRowProps> = ({
@@ -25,11 +25,12 @@ const NestedRow: React.FC<NestedRowProps> = ({
   requestNestedRows,
   onRowSelectedChange,
   selectableEntryTypes,
+  scrollIntoView,
 }) => {
   const styles = useStyles2(getStyles);
   const [rowStatus, setRowStatus] = useState<'open' | 'closed' | 'loading'>('closed');
 
-  const isSelected = !!selectedRows.find((v) => v.id === row.id);
+  const isSelected = !!selectedRows.find((v) => v.uri === row.uri);
   const isDisabled = selectedRows.length > 0 && !isSelected;
   const isOpen = rowStatus === 'open';
 
@@ -49,7 +50,7 @@ const NestedRow: React.FC<NestedRowProps> = ({
     // Assuming we don't have multi-select yet
     const selectedRow = selectedRows[0];
 
-    const containsChild = selectedRow && !!findRow(row.children ?? [], selectedRow.id);
+    const containsChild = selectedRow && !!findRow(row.children ?? [], selectedRow.uri);
 
     if (containsChild) {
       setRowStatus('open');
@@ -69,6 +70,7 @@ const NestedRow: React.FC<NestedRowProps> = ({
             onToggleCollapse={onRowToggleCollapse}
             onSelectedChange={onRowSelectedChange}
             isSelectable={selectableEntryTypes.some((type) => type === row.type)}
+            scrollIntoView={scrollIntoView}
           />
         </td>
 
@@ -77,16 +79,21 @@ const NestedRow: React.FC<NestedRowProps> = ({
         <td className={styles.cell}>{row.location ?? '-'}</td>
       </tr>
 
-      {isOpen && row.children && Object.keys(row.children).length > 0 && (
-        <NestedRows
-          rows={row.children}
-          selectedRows={selectedRows}
-          level={level + 1}
-          requestNestedRows={requestNestedRows}
-          onRowSelectedChange={onRowSelectedChange}
-          selectableEntryTypes={selectableEntryTypes}
-        />
-      )}
+      {isOpen &&
+        row.children &&
+        Object.keys(row.children).length > 0 &&
+        row.children.map((childRow) => (
+          <NestedRow
+            key={childRow.uri}
+            row={childRow}
+            selectedRows={selectedRows}
+            level={level + 1}
+            requestNestedRows={requestNestedRows}
+            onRowSelectedChange={onRowSelectedChange}
+            selectableEntryTypes={selectableEntryTypes}
+            scrollIntoView={scrollIntoView}
+          />
+        ))}
 
       <FadeTransition visible={rowStatus === 'loading'}>
         <tr>

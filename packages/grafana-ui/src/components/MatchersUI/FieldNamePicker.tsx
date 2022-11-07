@@ -6,7 +6,7 @@ import { Select } from '../Select/Select';
 
 import { useFieldDisplayNames, useSelectOptions, frameHasName } from './utils';
 
-// Pick a field name out of the fulds
+// Pick a field name out of the fields
 export const FieldNamePicker: React.FC<StandardEditorProps<string, FieldNamePickerConfigSettings>> = ({
   value,
   onChange,
@@ -31,7 +31,6 @@ export const FieldNamePicker: React.FC<StandardEditorProps<string, FieldNamePick
   return (
     <>
       <Select
-        menuShouldPortal
         value={selectedOption}
         placeholder={settings.placeholderText ?? 'Select field'}
         options={selectOptions}

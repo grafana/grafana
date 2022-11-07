@@ -8,7 +8,7 @@ import './event_editor';
 import { auto } from 'angular';
 import { defaults, find, without } from 'lodash';
 
-import { DataFrame, FieldConfigProperty, getColorForTheme, PanelEvents, PanelPlugin } from '@grafana/data';
+import { DataFrame, FieldConfigProperty, PanelEvents, PanelPlugin } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { MetricsPanelCtrl } from 'app/angular/panel/metrics_panel_ctrl';
 import config from 'app/core/config';
@@ -297,7 +297,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onColorChange = (series: any, color: string) => {
-    series.setColor(getColorForTheme(color, config.theme));
+    series.setColor(config.theme2.visualization.getColorByName(color));
     this.panel.aliasColors[series.alias] = color;
     this.render();
   };

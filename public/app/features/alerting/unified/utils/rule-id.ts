@@ -91,8 +91,23 @@ function escapeDollars(value: string): string {
   return value.replace(/\$/g, '_DOLLAR_');
 }
 
-function unesacapeDollars(value: string): string {
+function unescapeDollars(value: string): string {
   return value.replace(/\_DOLLAR\_/g, '$');
+}
+
+/**
+ * deal with Unix-style path separators "/" (replaced with \x1f – unit separator)
+ * and Windows-style path separators "\" (replaced with \x1e – record separator)
+ * we need this to side-step proxies that automatically decode %2F to prevent path traversal attacks
+ * we'll use some non-printable characters from the ASCII table that will get encoded properly but very unlikely
+ * to ever be used in a rule name or namespace
+ */
+function escapePathSeparators(value: string): string {
+  return value.replace(/\//g, '\x1f').replace(/\\/g, '\x1e');
+}
+
+function unescapePathSeparators(value: string): string {
+  return value.replace(/\x1f/g, '/').replace(/\x1e/g, '\\');
 }
 
 export function parse(value: string, decodeFromUri = false): RuleIdentifier {
@@ -104,14 +119,14 @@ export function parse(value: string, decodeFromUri = false): RuleIdentifier {
   }
 
   if (parts.length === 5) {
-    const [prefix, ruleSourceName, namespace, groupName, hash] = parts.map(unesacapeDollars);
+    const [prefix, ruleSourceName, namespace, groupName, hash] = parts.map(unescapeDollars).map(unescapePathSeparators);
 
     if (prefix === cloudRuleIdentifierPrefix) {
-      return { ruleSourceName, namespace, groupName, rulerRuleHash: Number(hash) };
+      return { ruleSourceName, namespace, groupName, rulerRuleHash: hash };
     }
 
     if (prefix === prometheusRuleIdentifierPrefix) {
-      return { ruleSourceName, namespace, groupName, ruleHash: Number(hash) };
+      return { ruleSourceName, namespace, groupName, ruleHash: hash };
     }
   }
 
@@ -145,6 +160,7 @@ export function stringifyIdentifier(identifier: RuleIdentifier): string {
     ]
       .map(String)
       .map(escapeDollars)
+      .map(escapePathSeparators)
       .join('$');
   }
 
@@ -157,6 +173,7 @@ export function stringifyIdentifier(identifier: RuleIdentifier): string {
   ]
     .map(String)
     .map(escapeDollars)
+    .map(escapePathSeparators)
     .join('$');
 }
 
@@ -165,18 +182,18 @@ function hash(value: string): number {
   if (value.length === 0) {
     return hash;
   }
-  for (var i = 0; i < value.length; i++) {
-    var char = value.charCodeAt(i);
+  for (let i = 0; i < value.length; i++) {
+    const char = value.charCodeAt(i);
     hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32bit integer
   }
   return hash;
 }
 
-// this is used to identify lotex rules, as they do not have a unique identifier
-function hashRulerRule(rule: RulerRuleDTO): number {
+// this is used to identify rules, mimir / loki rules do not have a unique identifier
+export function hashRulerRule(rule: RulerRuleDTO): string {
   if (isRecordingRulerRule(rule)) {
-    return hash(JSON.stringify([rule.record, rule.expr, hashLabelsOrAnnotations(rule.labels)]));
+    return hash(JSON.stringify([rule.record, rule.expr, hashLabelsOrAnnotations(rule.labels)])).toString();
   } else if (isAlertingRulerRule(rule)) {
     return hash(
       JSON.stringify([
@@ -185,15 +202,17 @@ function hashRulerRule(rule: RulerRuleDTO): number {
         hashLabelsOrAnnotations(rule.annotations),
         hashLabelsOrAnnotations(rule.labels),
       ])
-    );
+    ).toString();
+  } else if (isGrafanaRulerRule(rule)) {
+    return rule.grafana_alert.uid;
   } else {
     throw new Error('only recording and alerting ruler rules can be hashed');
   }
 }
 
-function hashRule(rule: Rule): number {
+function hashRule(rule: Rule): string {
   if (isRecordingRule(rule)) {
-    return hash(JSON.stringify([rule.type, rule.query, hashLabelsOrAnnotations(rule.labels)]));
+    return hash(JSON.stringify([rule.type, rule.query, hashLabelsOrAnnotations(rule.labels)])).toString();
   }
 
   if (isAlertingRule(rule)) {
@@ -204,7 +223,7 @@ function hashRule(rule: Rule): number {
         hashLabelsOrAnnotations(rule.annotations),
         hashLabelsOrAnnotations(rule.labels),
       ])
-    );
+    ).toString();
   }
 
   throw new Error('only recording and alerting rules can be hashed');

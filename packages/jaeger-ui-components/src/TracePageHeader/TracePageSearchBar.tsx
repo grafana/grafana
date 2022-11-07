@@ -14,8 +14,7 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import * as React from 'react';
-import { memo } from 'react';
+import React, { memo, Dispatch, SetStateAction } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -23,7 +22,6 @@ import { Button, useStyles2 } from '@grafana/ui';
 import UiFindInput from '../common/UiFindInput';
 import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
 
-import * as markers from './TracePageSearchBar.markers';
 // eslint-disable-next-line no-duplicate-imports
 
 export const getStyles = (theme: GrafanaTheme2) => {
@@ -72,37 +70,96 @@ export const getStyles = (theme: GrafanaTheme2) => {
 };
 
 type TracePageSearchBarProps = {
-  prevResult: () => void;
-  nextResult: () => void;
   navigable: boolean;
   searchValue: string;
-  onSearchValueChange: (value: string) => void;
+  setSearch: (value: string) => void;
   searchBarSuffix: string;
+  spanFindMatches: Set<string> | undefined;
+  focusedSpanIdForSearch: string;
+  setSearchBarSuffix: Dispatch<SetStateAction<string>>;
+  setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
 };
 
 export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
-  const { navigable, nextResult, prevResult, onSearchValueChange, searchValue, searchBarSuffix } = props;
+  const {
+    navigable,
+    setSearch,
+    searchValue,
+    searchBarSuffix,
+    spanFindMatches,
+    focusedSpanIdForSearch,
+    setSearchBarSuffix,
+    setFocusedSpanIdForSearch,
+  } = props;
   const styles = useStyles2(getStyles);
 
   const suffix = searchValue ? (
-    <span className={styles.TracePageSearchBarSuffix} data-testid="trace-page-search-bar-suffix">
+    <span className={styles.TracePageSearchBarSuffix} aria-label="Search bar suffix">
       {searchBarSuffix}
     </span>
   ) : null;
 
   const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !searchValue });
   const uiFindInputInputProps = {
-    'data-test': markers.IN_TRACE_SEARCH,
     className: cx(styles.TracePageSearchBarBar, ubFlexAuto),
     name: 'search',
     suffix,
+  };
+
+  const setTraceSearch = (value: string) => {
+    setFocusedSpanIdForSearch('');
+    setSearchBarSuffix('');
+    setSearch(value);
+  };
+
+  const nextResult = () => {
+    const spanMatches = Array.from(spanFindMatches!);
+    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
+      ? spanMatches.indexOf(focusedSpanIdForSearch)
+      : 0;
+
+    // new query || at end, go to start
+    if (prevMatchedIndex === -1 || prevMatchedIndex === spanMatches.length - 1) {
+      setFocusedSpanIdForSearch(spanMatches[0]);
+      setSearchBarSuffix(getSearchBarSuffix(1));
+      return;
+    }
+
+    // get next
+    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex + 1]);
+    setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex + 2));
+  };
+
+  const prevResult = () => {
+    const spanMatches = Array.from(spanFindMatches!);
+    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
+      ? spanMatches.indexOf(focusedSpanIdForSearch)
+      : 0;
+
+    // new query || at start, go to end
+    if (prevMatchedIndex === -1 || prevMatchedIndex === 0) {
+      setFocusedSpanIdForSearch(spanMatches[spanMatches.length - 1]);
+      setSearchBarSuffix(getSearchBarSuffix(spanMatches.length));
+      return;
+    }
+
+    // get prev
+    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex - 1]);
+    setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex));
+  };
+
+  const getSearchBarSuffix = (index: number): string => {
+    if (spanFindMatches?.size && spanFindMatches?.size > 0) {
+      return index + ' of ' + spanFindMatches?.size;
+    }
+    return '';
   };
 
   return (
     <div className={styles.TracePageSearchBar}>
       <span className={ubJustifyEnd} style={{ display: 'flex' }}>
         <UiFindInput
-          onChange={onSearchValueChange}
+          onChange={setTraceSearch}
           value={searchValue}
           inputProps={uiFindInputInputProps}
           allowClear={true}
@@ -116,7 +173,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
                 disabled={!searchValue}
                 type="button"
                 icon="arrow-down"
-                data-testid="trace-page-search-bar-next-result-button"
+                aria-label="Next results button"
                 onClick={nextResult}
               />
               <Button
@@ -125,7 +182,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
                 disabled={!searchValue}
                 type="button"
                 icon="arrow-up"
-                data-testid="trace-page-search-bar-prev-result-button"
+                aria-label="Prev results button"
                 onClick={prevResult}
               />
             </>

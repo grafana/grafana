@@ -1,11 +1,10 @@
-// Package cuectx provides a single, central CUE context (runtime) and Thema
-// library that can be used uniformly across Grafana, and related helper
-// functions for loading Thema lineages.
+// Package cuectx provides a single, central ["cuelang.org/go/cue".Context] and
+// ["github.com/grafana/thema".Runtime] that can be used uniformly across
+// Grafana, and related helper functions for loading Thema lineages.
 
 package cuectx
 
 import (
-	"io"
 	"io/fs"
 	"path/filepath"
 	"testing/fstest"
@@ -13,21 +12,27 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/grafana/thema"
-	"github.com/grafana/thema/kernel"
 	"github.com/grafana/thema/load"
+	"github.com/grafana/thema/vmux"
 )
 
-var ctx *cue.Context = cuecontext.New()
-var lib thema.Library = thema.NewLibrary(ctx)
+var ctx = cuecontext.New()
+var rt = thema.NewRuntime(ctx)
 
-// ProvideCUEContext is a wire service provider of a central cue.Context.
-func ProvideCUEContext() *cue.Context {
+// GrafanaCUEContext returns Grafana's singleton instance of [cue.Context].
+//
+// All code within grafana/grafana that needs a *cue.Context should get it
+// from this function, when one was not otherwise provided.
+func GrafanaCUEContext() *cue.Context {
 	return ctx
 }
 
-// ProvideThemaLibrary is a wire service provider of a central thema.Library.
-func ProvideThemaLibrary() thema.Library {
-	return lib
+// GrafanaThemaRuntime returns Grafana's singleton instance of [thema.Runtime].
+//
+// All code within grafana/grafana that needs a *thema.Runtime should get it
+// from this function, when one was not otherwise provided.
+func GrafanaThemaRuntime() *thema.Runtime {
+	return rt
 }
 
 // JSONtoCUE attempts to decode the given []byte into a cue.Value, relying on
@@ -38,10 +43,10 @@ func ProvideThemaLibrary() thema.Library {
 // returned cue.Value.
 //
 // This is a convenience function for one-off JSON decoding. It's wasteful to
-// call it repeatedly. Most use cases use cases should probably prefer making
+// call it repeatedly. Most use cases should probably prefer making
 // their own Thema/CUE decoders.
 func JSONtoCUE(path string, b []byte) (cue.Value, error) {
-	return kernel.NewJSONDecoder(path)(ctx, b)
+	return vmux.NewJSONEndec(path).Decode(ctx, b)
 }
 
 // LoadGrafanaInstancesWithThema loads CUE files containing a lineage
@@ -53,12 +58,9 @@ func JSONtoCUE(path string, b []byte) (cue.Value, error) {
 // lineage.cue file must be the sole contents of the provided fs.FS.
 //
 // More details on underlying behavior can be found in the docs for github.com/grafana/thema/load.InstancesWithThema.
-func LoadGrafanaInstancesWithThema(
-	path string,
-	cueFS fs.FS,
-	lib thema.Library,
-	opts ...thema.BindOption,
-) (thema.Lineage, error) {
+//
+// TODO this approach is complicated and confusing, refactor to something understandable
+func LoadGrafanaInstancesWithThema(path string, cueFS fs.FS, rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
 	prefix := filepath.FromSlash(path)
 	fs, err := prefixWithGrafanaCUE(prefix, cueFS)
 	if err != nil {
@@ -72,9 +74,9 @@ func LoadGrafanaInstancesWithThema(
 		return nil, err
 	}
 
-	val := lib.Context().BuildInstance(inst)
+	val := rt.Context().BuildInstance(inst)
 
-	lin, err := thema.BindLineage(val, lib, opts...)
+	lin, err := thema.BindLineage(val, rt, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,13 +84,20 @@ func LoadGrafanaInstancesWithThema(
 	return lin, nil
 }
 
+// prefixWithGrafanaCUE constructs an fs.FS that merges the provided fs.FS with one
+// containing grafana's cue.mod at the root. The provided prefix should be the
+//
+// The returned fs.FS is suitable for passing to a CUE loader, such as
+// cuelang.org/cue/load.Instances or
+// github.com/grafana/thema/load.InstancesWithThema.
 func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
 	m := fstest.MapFS{
-		filepath.Join("cue.mod", "module.cue"): &fstest.MapFile{Data: []byte(`module: "github.com/grafana/grafana"`)},
+		// fstest can recognize only forward slashes.
+		filepath.ToSlash(filepath.Join("cue.mod", "module.cue")): &fstest.MapFile{Data: []byte(`module: "github.com/grafana/grafana"`)},
 	}
 
 	prefix = filepath.FromSlash(prefix)
-	err := fs.WalkDir(inputfs, ".", (func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(inputfs, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -97,20 +106,14 @@ func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
 			return nil
 		}
 
-		f, err := inputfs.Open(path)
+		b, err := fs.ReadFile(inputfs, path)
 		if err != nil {
 			return err
 		}
-		defer f.Close() // nolint: errcheck
-
-		b, err := io.ReadAll(f)
-		if err != nil {
-			return err
-		}
-
-		m[filepath.Join(prefix, path)] = &fstest.MapFile{Data: b}
+		// fstest can recognize only forward slashes.
+		m[filepath.ToSlash(filepath.Join(prefix, path))] = &fstest.MapFile{Data: b}
 		return nil
-	}))
+	})
 
 	return m, err
 }

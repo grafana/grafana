@@ -1,6 +1,8 @@
-interface AnnotationsDataFrameViewDTO {
+export interface AnnotationsDataFrameViewDTO {
   id: string;
+  /** @deprecate */
   dashboardId: number;
+  dashboardUID: string;
   time: number;
   timeEnd: number;
   text: string;

@@ -141,7 +141,11 @@ export const queryVariableSlice = createSlice({
   reducers: {
     updateVariableOptions: (state: VariablesState, action: PayloadAction<VariablePayload<VariableOptionsUpdate>>) => {
       const { results, templatedRegex } = action.payload.data;
-      const instanceState = getInstanceState<QueryVariableModel>(state, action.payload.id);
+      const instanceState = getInstanceState(state, action.payload.id);
+      if (instanceState.type !== 'query') {
+        return;
+      }
+
       const { includeAll, sort } = instanceState;
       const options = metricNamesToVariableValues(templatedRegex, sort, results);
 

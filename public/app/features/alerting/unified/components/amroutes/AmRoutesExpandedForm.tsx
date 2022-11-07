@@ -29,6 +29,7 @@ import {
   optionalPositiveInteger,
   stringToSelectableValue,
   stringsToSelectableValues,
+  commonGroupByOptions,
 } from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
 
@@ -44,16 +45,12 @@ export interface AmRoutesExpandedFormProps {
 export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, onSave, receivers, routes }) => {
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
-  const [overrideGrouping, setOverrideGrouping] = useState(routes.groupBy.length > 0);
-  const [overrideTimings, setOverrideTimings] = useState(
-    !!routes.groupWaitValue || !!routes.groupIntervalValue || !!routes.repeatIntervalValue
-  );
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(routes.groupBy));
   const muteTimingOptions = useMuteTimingOptions();
 
   return (
     <Form defaultValues={routes} onSubmit={onSave}>
-      {({ control, register, errors, setValue }) => (
+      {({ control, register, errors, setValue, watch }) => (
         <>
           {/* @ts-ignore-check: react-hook-form made me do this */}
           <input type="hidden" {...register('id')} />
@@ -76,7 +73,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                       {fields.map((field, index) => {
                         const localPath = `object_matchers[${index}]`;
                         return (
-                          <HorizontalGroup key={field.id} align="flex-start">
+                          <HorizontalGroup key={field.id} align="flex-start" height="auto">
                             <Field
                               label="Label"
                               invalid={!!errors.object_matchers?.[index]?.name}
@@ -97,7 +94,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                                     onChange={(value) => onChange(value?.value)}
                                     options={matcherFieldOptions}
                                     aria-label="Operator"
-                                    menuShouldPortal
                                   />
                                 )}
                                 defaultValue={field.operator}
@@ -153,7 +149,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   className={formStyles.input}
                   onChange={(value) => onChange(mapSelectValueToString(value))}
                   options={receivers}
-                  menuShouldPortal
                 />
               )}
               control={control}
@@ -164,19 +159,17 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
             <Switch id="continue-toggle" {...register('continue')} />
           </Field>
           <Field label="Override grouping">
-            <Switch
-              id="override-grouping-toggle"
-              value={overrideGrouping}
-              onChange={() => setOverrideGrouping((overrideGrouping) => !overrideGrouping)}
-            />
+            <Switch id="override-grouping-toggle" {...register('overrideGrouping')} />
           </Field>
-          {overrideGrouping && (
-            <Field label="Group by" description="Group alerts when you receive a notification based on labels.">
+          {watch().overrideGrouping && (
+            <Field
+              label="Group by"
+              description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the parent policy."
+            >
               <InputControl
                 render={({ field: { onChange, ref, ...field } }) => (
                   <MultiSelect
                     aria-label="Group by"
-                    menuShouldPortal
                     {...field}
                     allowCustomValue
                     className={formStyles.input}
@@ -187,7 +180,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                       setValue('groupBy', [...field.value, opt]);
                     }}
                     onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
-                    options={groupByOptions}
+                    options={[...commonGroupByOptions, ...groupByOptions]}
                   />
                 )}
                 control={control}
@@ -196,17 +189,13 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
             </Field>
           )}
           <Field label="Override general timings">
-            <Switch
-              id="override-timings-toggle"
-              value={overrideTimings}
-              onChange={() => setOverrideTimings((overrideTimings) => !overrideTimings)}
-            />
+            <Switch id="override-timings-toggle" {...register('overrideTimings')} />
           </Field>
-          {overrideTimings && (
+          {watch().overrideTimings && (
             <>
               <Field
                 label="Group wait"
-                description="The waiting time until the initial notification is sent for a new group created by an incoming alert."
+                description="The waiting time until the initial notification is sent for a new group created by an incoming alert. If empty it will be inherited from the parent policy."
                 invalid={!!errors.groupWaitValue}
                 error={errors.groupWaitValue?.message}
               >
@@ -218,7 +207,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           {...field}
                           className={formStyles.smallInput}
                           invalid={invalid}
-                          placeholder="Time"
                           aria-label="Group wait value"
                         />
                       )}
@@ -231,7 +219,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                     <InputControl
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select
-                          menuShouldPortal
                           {...field}
                           className={formStyles.input}
                           onChange={(value) => onChange(mapSelectValueToString(value))}
@@ -247,7 +234,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
               </Field>
               <Field
                 label="Group interval"
-                description="The waiting time to send a batch of new alerts for that group after the first notification was sent."
+                description="The waiting time to send a batch of new alerts for that group after the first notification was sent. If empty it will be inherited from the parent policy."
                 invalid={!!errors.groupIntervalValue}
                 error={errors.groupIntervalValue?.message}
               >
@@ -259,7 +246,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           {...field}
                           className={formStyles.smallInput}
                           invalid={invalid}
-                          placeholder="Time"
                           aria-label="Group interval value"
                         />
                       )}
@@ -272,7 +258,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                     <InputControl
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select
-                          menuShouldPortal
                           {...field}
                           className={formStyles.input}
                           onChange={(value) => onChange(mapSelectValueToString(value))}
@@ -300,7 +285,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           {...field}
                           className={formStyles.smallInput}
                           invalid={invalid}
-                          placeholder="Time"
                           aria-label="Repeat interval value"
                         />
                       )}
@@ -313,7 +297,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                     <InputControl
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select
-                          menuShouldPortal
                           {...field}
                           className={formStyles.input}
                           menuPlacement="top"
@@ -340,7 +323,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
               render={({ field: { onChange, ref, ...field } }) => (
                 <MultiSelect
                   aria-label="Mute timings"
-                  menuShouldPortal
                   {...field}
                   className={formStyles.input}
                   onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}

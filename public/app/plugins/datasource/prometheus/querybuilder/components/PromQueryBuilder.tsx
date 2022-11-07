@@ -1,31 +1,39 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
+import promqlGrammar from '../../promql';
 import { promQueryModeller } from '../PromQueryModeller';
+import { buildVisualQueryFromString } from '../parsing';
 import { LabelFilters } from '../shared/LabelFilters';
+import { OperationExplainedBox } from '../shared/OperationExplainedBox';
 import { OperationList } from '../shared/OperationList';
+import { OperationListExplained } from '../shared/OperationListExplained';
 import { OperationsEditorRow } from '../shared/OperationsEditorRow';
-import { QueryBuilderLabelFilter } from '../shared/types';
+import { QueryBuilderHints } from '../shared/QueryBuilderHints';
+import { RawQuery } from '../shared/RawQuery';
+import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
 import { MetricSelect } from './MetricSelect';
 import { NestedQueryList } from './NestedQueryList';
-import { PromQueryBuilderHints } from './PromQueryBuilderHints';
+import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
 
 export interface Props {
   query: PromVisualQuery;
   datasource: PrometheusDatasource;
   onChange: (update: PromVisualQuery) => void;
   onRunQuery: () => void;
-  nested?: boolean;
   data?: PanelData;
+  showExplain: boolean;
 }
 
-export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery, data }) => {
+export const PromQueryBuilder = React.memo<Props>((props) => {
+  const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
+  const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>();
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
@@ -86,10 +94,18 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
     return withTemplateVariableOptions(getMetrics(datasource, query));
   }, [datasource, query, withTemplateVariableOptions]);
 
+  const lang = { grammar: promqlGrammar, name: 'promql' };
+
   return (
     <>
       <EditorRow>
-        <MetricSelect query={query} onChange={onChange} onGetMetrics={onGetMetrics} />
+        <MetricSelect
+          query={query}
+          onChange={onChange}
+          onGetMetrics={onGetMetrics}
+          datasource={datasource}
+          labelsFilters={query.labels}
+        />
         <LabelFilters
           labelsFilters={query.labels}
           onChange={onChangeLabels}
@@ -101,6 +117,14 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           }
         />
       </EditorRow>
+      {showExplain && (
+        <OperationExplainedBox
+          stepNumber={1}
+          title={<RawQuery query={`${query.metric} ${promQueryModeller.renderLabels(query.labels)}`} lang={lang} />}
+        >
+          {EXPLAIN_LABEL_FILTER_CONTENT}
+        </OperationExplainedBox>
+      )}
       <OperationsEditorRow>
         <OperationList<PromVisualQuery>
           queryModeller={promQueryModeller}
@@ -108,11 +132,35 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           query={query}
           onChange={onChange}
           onRunQuery={onRunQuery}
+          highlightedOp={highlightedOp}
         />
-        <PromQueryBuilderHints datasource={datasource} query={query} onChange={onChange} data={data} />
+        <QueryBuilderHints<PromVisualQuery>
+          datasource={datasource}
+          query={query}
+          onChange={onChange}
+          data={data}
+          queryModeller={promQueryModeller}
+          buildVisualQueryFromString={buildVisualQueryFromString}
+        />
       </OperationsEditorRow>
+      {showExplain && (
+        <OperationListExplained<PromVisualQuery>
+          lang={lang}
+          query={query}
+          stepNumber={2}
+          queryModeller={promQueryModeller}
+          onMouseEnter={(op) => setHighlightedOp(op)}
+          onMouseLeave={() => setHighlightedOp(undefined)}
+        />
+      )}
       {query.binaryQueries && query.binaryQueries.length > 0 && (
-        <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
+        <NestedQueryList
+          query={query}
+          datasource={datasource}
+          onChange={onChange}
+          onRunQuery={onRunQuery}
+          showExplain={showExplain}
+        />
       )}
     </>
   );
@@ -132,6 +180,11 @@ async function getMetrics(
   // don't use it with the visual builder and there is no need to run all the start() setup anyway.
   if (!datasource.languageProvider.metricsMetadata) {
     await datasource.languageProvider.loadMetricsMetadata();
+  }
+
+  // Error handling for when metrics metadata returns as undefined
+  if (!datasource.languageProvider.metricsMetadata) {
+    datasource.languageProvider.metricsMetadata = {};
   }
 
   let metrics;

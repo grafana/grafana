@@ -16,7 +16,7 @@ import { VariableOption, VariableWithMultiSupport, VariableWithOptions } from '.
 import { toKeyedVariableIdentifier } from '../../utils';
 import { VariableInput } from '../shared/VariableInput';
 import { VariableLink } from '../shared/VariableLink';
-import { VariableOptions } from '../shared/VariableOptions';
+import VariableOptions from '../shared/VariableOptions';
 import { NavigationKey, VariablePickerProps } from '../types';
 
 import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, openOptions } from './actions';
@@ -125,11 +125,12 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
 
       return (
         <VariableLink
-          id={variable.id}
+          id={`var-${variable.id}`}
           text={linkText}
           onClick={this.onShowOptions}
           loading={loading}
           onCancel={this.onCancel}
+          disabled={this.props.readOnly}
         />
       );
     }
@@ -143,7 +144,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
       return (
         <ClickOutsideWrapper onClick={this.onHideOptions}>
           <VariableInput
-            id={id}
+            id={`var-${id}`}
             value={picker.queryValue}
             onChange={this.onFilterOrSearchOptions}
             onNavigate={this.onNavigate}

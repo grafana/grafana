@@ -26,7 +26,7 @@ export const FieldsByFrameRefIdMatcher = memo<MatcherUIProps<string>>((props) =>
   );
 
   const selectedOption = selectOptions.find((v) => v.value === options);
-  return <Select menuShouldPortal value={selectedOption} options={selectOptions} onChange={onChange} />;
+  return <Select value={selectedOption} options={selectOptions} onChange={onChange} />;
 });
 
 FieldsByFrameRefIdMatcher.displayName = 'FieldsByFrameRefIdMatcher';

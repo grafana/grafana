@@ -1,9 +1,5 @@
-import { AwsAuthDataSourceSecureJsonData, AwsAuthDataSourceJsonData } from '@grafana/aws-sdk';
-import { DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
-
-export interface Dimensions {
-  [key: string]: string | string[];
-}
+import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
+import { DataFrame, DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 
 import {
   QueryEditorArrayExpression,
@@ -11,7 +7,15 @@ import {
   QueryEditorPropertyExpression,
 } from './expressions';
 
-export type CloudWatchQueryMode = 'Metrics' | 'Logs';
+export interface Dimensions {
+  [key: string]: string | string[];
+}
+
+export interface MultiFilters {
+  [key: string]: string[];
+}
+
+export type CloudWatchQueryMode = 'Metrics' | 'Logs' | 'Annotations';
 
 export enum MetricQueryType {
   'Search',
@@ -35,41 +39,36 @@ export interface SQLExpression {
   limit?: number;
 }
 
-export interface DimensionsQuery extends DataQuery {
-  namespace: string;
-  region: string;
-  metricName?: string;
-  dimensions?: Dimensions;
-}
-
-export interface CloudWatchMetricsQuery extends DataQuery {
+export interface CloudWatchMetricsQuery extends MetricStat, DataQuery {
   queryMode?: 'Metrics';
   metricQueryType?: MetricQueryType;
   metricEditorMode?: MetricEditorMode;
 
   //common props
   id: string;
-  region: string;
-  namespace: string;
-  period?: string;
-  alias?: string;
 
-  //Basic editor builder props
-  metricName?: string;
-  dimensions?: Dimensions;
-  matchExact?: boolean;
-  statistic?: string;
-  /**
-   * @deprecated use statistic
-   */
-  statistics?: string[];
+  alias?: string;
+  label?: string;
 
   // Math expression query
   expression?: string;
 
   sqlExpression?: string;
-
   sql?: SQLExpression;
+}
+
+export interface MetricStat {
+  region: string;
+  namespace: string;
+  metricName?: string;
+  dimensions?: Dimensions;
+  matchExact?: boolean;
+  period?: string;
+  statistic?: string;
+  /**
+   * @deprecated use statistic
+   */
+  statistics?: string[];
 }
 
 export interface CloudWatchMathExpressionQuery extends DataQuery {
@@ -78,6 +77,7 @@ export interface CloudWatchMathExpressionQuery extends DataQuery {
 
 export type LogAction =
   | 'DescribeLogGroups'
+  | 'DescribeAllLogGroups'
   | 'GetQueryResults'
   | 'GetLogGroupFields'
   | 'GetLogEvents'
@@ -95,7 +95,6 @@ export enum CloudWatchLogsQueryStatus {
 
 export interface CloudWatchLogsQuery extends DataQuery {
   queryMode: 'Logs';
-
   id: string;
   region: string;
   expression?: string;
@@ -103,21 +102,14 @@ export interface CloudWatchLogsQuery extends DataQuery {
   statsGroups?: string[];
 }
 
-export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery;
+export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery | CloudWatchAnnotationQuery;
 
-export const isCloudWatchLogsQuery = (cloudwatchQuery: CloudWatchQuery): cloudwatchQuery is CloudWatchLogsQuery =>
-  (cloudwatchQuery as CloudWatchLogsQuery).queryMode === 'Logs';
-
-interface AnnotationProperties {
-  enable: boolean;
-  name: string;
-  iconColor: string;
-  prefixMatching: boolean;
-  actionPrefix: string;
-  alarmNamePrefix: string;
+export interface CloudWatchAnnotationQuery extends MetricStat, DataQuery {
+  queryMode: 'Annotations';
+  prefixMatching?: boolean;
+  actionPrefix?: string;
+  alarmNamePrefix?: string;
 }
-
-export type CloudWatchAnnotationQuery = CloudWatchMetricsQuery & AnnotationProperties;
 
 export type SelectableStrings = Array<SelectableValue<string>>;
 
@@ -130,6 +122,7 @@ export interface CloudWatchJsonData extends AwsAuthDataSourceJsonData {
   logsTimeout?: string;
   // Used to create links if logs contain traceId.
   tracingDatasourceUid?: string;
+  defaultLogGroups?: string[];
 }
 
 export interface CloudWatchSecureJsonData extends AwsAuthDataSourceSecureJsonData {
@@ -207,6 +200,7 @@ export interface GetLogEventsRequest {
    * If the value is true, the earliest log events are returned first. If the value is false, the latest log events are returned first. The default value is false. If you are using nextToken in this operation, you must specify true for startFromHead.
    */
   startFromHead?: boolean;
+  region?: string;
 }
 
 export interface GetQueryResultsResponse {
@@ -250,6 +244,7 @@ export interface TSDBQueryResult<T = any> {
   refId: string;
   series: TSDBTimeSeries[];
   tables: Array<TSDBTable<T>>;
+  frames: DataFrame[];
 
   error?: string;
   meta?: any;
@@ -258,6 +253,15 @@ export interface TSDBQueryResult<T = any> {
 export interface TSDBTable<T = any> {
   columns: Array<{ text: string }>;
   rows: T[];
+}
+
+export interface DataQueryError<CloudWatchMetricsQuery> {
+  data?: {
+    message?: string;
+    error?: string;
+    results: Record<string, TSDBQueryResult<CloudWatchMetricsQuery>>;
+  };
+  message?: string;
 }
 
 export interface TSDBTimeSeries {
@@ -369,7 +373,7 @@ export interface MetricRequest {
 
 export interface MetricQuery {
   [key: string]: any;
-  datasource: DataSourceRef;
+  datasource?: DataSourceRef;
   refId?: string;
   maxDataPoints?: number;
   intervalMs?: number;
@@ -385,6 +389,21 @@ export enum VariableQueryType {
   EC2InstanceAttributes = 'ec2InstanceAttributes',
   ResourceArns = 'resourceARNs',
   Statistics = 'statistics',
+  LogGroups = 'logGroups',
+}
+
+export interface OldVariableQuery extends DataQuery {
+  queryType: VariableQueryType;
+  namespace: string;
+  region: string;
+  metricName: string;
+  dimensionKey: string;
+  dimensionFilters: string;
+  ec2Filters: string;
+  instanceID: string;
+  attributeName: string;
+  resourceType: string;
+  tags: string;
 }
 
 export interface VariableQuery extends DataQuery {
@@ -394,9 +413,66 @@ export interface VariableQuery extends DataQuery {
   metricName: string;
   dimensionKey: string;
   dimensionFilters?: Dimensions;
-  ec2Filters: string;
+  ec2Filters?: MultiFilters;
   instanceID: string;
   attributeName: string;
   resourceType: string;
-  tags: string;
+  tags?: MultiFilters;
+  logGroupPrefix?: string;
+}
+
+export interface LegacyAnnotationQuery extends MetricStat, DataQuery {
+  actionPrefix: string;
+  alarmNamePrefix: string;
+  alias: string;
+  builtIn: number;
+  datasource: any;
+  dimensions: Dimensions;
+  enable: boolean;
+  expression: string;
+  hide: boolean;
+  iconColor: string;
+  id: string;
+  matchExact: boolean;
+  metricName: string;
+  name: string;
+  namespace: string;
+  period: string;
+  prefixMatching: boolean;
+  region: string;
+  statistic: string;
+  statistics: string[];
+  target: {
+    limit: number;
+    matchAny: boolean;
+    tags: any[];
+    type: string;
+  };
+  type: string;
+}
+
+export interface MetricResponse {
+  name: string;
+  namespace: string;
+}
+
+export interface ResourceRequest {
+  region: string;
+}
+
+export interface GetDimensionKeysRequest extends ResourceRequest {
+  metricName?: string;
+  namespace?: string;
+  dimensionFilters?: Dimensions;
+}
+
+export interface GetDimensionValuesRequest extends ResourceRequest {
+  dimensionKey: string;
+  namespace: string;
+  metricName?: string;
+  dimensionFilters?: Dimensions;
+}
+
+export interface GetMetricsRequest extends ResourceRequest {
+  namespace?: string;
 }

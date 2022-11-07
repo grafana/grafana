@@ -15,7 +15,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
@@ -26,6 +26,7 @@ import SpanDetail from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
 import SpanTreeOffset from './SpanTreeOffset';
 import TimelineRow from './TimelineRow';
+import { TopOfViewRefType } from './VirtualizedTraceView';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
@@ -83,9 +84,9 @@ type SpanDetailRowProps = {
   warningsToggle: (spanID: string) => void;
   stackTracesToggle: (spanID: string) => void;
   span: TraceSpan;
+  timeZone: TimeZone;
   tagsToggle: (spanID: string) => void;
   traceStartTime: number;
-  focusSpan: (uiFind: string) => void;
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
@@ -93,6 +94,7 @@ type SpanDetailRowProps = {
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
+  topOfViewRefType?: TopOfViewRefType;
 };
 
 export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProps> {
@@ -118,9 +120,9 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       warningsToggle,
       stackTracesToggle,
       span,
+      timeZone,
       tagsToggle,
       traceStartTime,
-      focusSpan,
       hoverIndentGuideIds,
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
@@ -128,6 +130,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       createSpanLink,
       focusedSpanId,
       createFocusSpanLink,
+      topOfViewRefType,
     } = this.props;
     const styles = getStyles(theme);
     return (
@@ -143,11 +146,9 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
           <span>
             <span
               className={styles.expandedAccent}
-              aria-checked="true"
               onClick={this._detailToggle}
-              role="switch"
               style={{ borderColor: color }}
-              data-test-id="detail-row-expanded-accent"
+              data-testid="detail-row-expanded-accent"
             />
           </span>
         </TimelineRow.Cell>
@@ -164,12 +165,13 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               warningsToggle={warningsToggle}
               stackTracesToggle={stackTracesToggle}
               span={span}
+              timeZone={timeZone}
               tagsToggle={tagsToggle}
               traceStartTime={traceStartTime}
-              focusSpan={focusSpan}
               createSpanLink={createSpanLink}
               focusedSpanId={focusedSpanId}
               createFocusSpanLink={createFocusSpanLink}
+              topOfViewRefType={topOfViewRefType}
             />
           </div>
         </TimelineRow.Cell>

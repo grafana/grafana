@@ -1,7 +1,7 @@
 import { isFunction } from 'lodash';
 import React, { FC } from 'react';
 
-import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax, LinkModel } from '@grafana/data';
+import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
 
 import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
@@ -44,13 +44,13 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
 
   const getLinks = () => {
     if (!isFunction(field.getLinks)) {
-      return [] as LinkModel[];
+      return [];
     }
 
     return field.getLinks({ valueRowIndex: row.index });
   };
 
-  const hasLinks = !!getLinks().length;
+  const hasLinks = Boolean(getLinks().length);
 
   const renderComponent = (menuProps: DataLinksContextMenuApi) => {
     const { openMenu, targetClassName } = menuProps;
@@ -77,7 +77,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
       {hasLinks && (
-        <DataLinksContextMenu links={getLinks} config={config}>
+        <DataLinksContextMenu links={getLinks} style={{ display: 'flex', width: '100%' }}>
           {(api) => renderComponent(api)}
         </DataLinksContextMenu>
       )}

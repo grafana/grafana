@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import { sumBy } from 'lodash';
 import React from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { Modal, ConfirmModal, Button } from '@grafana/ui';
 import { config } from 'app/core/config';
-
-import { DashboardModel, PanelModel } from '../../state';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { cleanUpDashboardAndVariables } from 'app/features/dashboard/state/actions';
 
 import { useDashboardDelete } from './useDashboardDelete';
 
@@ -15,9 +16,17 @@ type DeleteDashboardModalProps = {
   dashboard: DashboardModel;
 };
 
-export const DeleteDashboardModal: React.FC<DeleteDashboardModalProps> = ({ hideModal, dashboard }) => {
+const mapDispatchToProps = {
+  cleanUpDashboardAndVariables,
+};
+
+const connector = connect(null, mapDispatchToProps);
+
+type Props = DeleteDashboardModalProps & ConnectedProps<typeof connector>;
+
+const DeleteDashboardModalUnconnected = ({ hideModal, cleanUpDashboardAndVariables, dashboard }: Props) => {
   const isProvisioned = dashboard.meta.provisioned;
-  const { onDeleteDashboard } = useDashboardDelete(dashboard.uid);
+  const { onDeleteDashboard } = useDashboardDelete(dashboard.uid, cleanUpDashboardAndVariables);
 
   const [, onConfirm] = useAsyncFn(async () => {
     await onDeleteDashboard();
@@ -98,3 +107,5 @@ const ProvisionedDeleteModal = ({ hideModal, provisionedId }: { hideModal(): voi
     </Modal.ButtonRow>
   </Modal>
 );
+
+export const DeleteDashboardModal = connector(DeleteDashboardModalUnconnected);

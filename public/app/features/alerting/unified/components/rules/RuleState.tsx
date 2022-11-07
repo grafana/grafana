@@ -20,7 +20,7 @@ export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating }) => {
   const style = useStyles2(getStyle);
   const { promRule } = rule;
 
-  // return how long the rule has been in it's firing state, if any
+  // return how long the rule has been in its firing state, if any
   const forTime = useMemo(() => {
     if (
       promRule &&

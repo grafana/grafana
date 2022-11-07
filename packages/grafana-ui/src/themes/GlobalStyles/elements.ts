@@ -16,6 +16,10 @@ export function getElementStyles(theme: GrafanaTheme2) {
       font-kerning: normal;
     }
 
+    :root {
+      color-scheme: ${theme.colors.mode};
+    }
+
     body {
       height: 100%;
       width: 100%;
@@ -155,13 +159,19 @@ export function getElementStyles(theme: GrafanaTheme2) {
     .text-center {
       text-align: center;
     }
+
+    .highlight-search-match {
+      background: ${theme.components.textHighlight.background};
+      color: ${theme.components.textHighlight.text};
+      padding: 0;
+    }
   `;
 }
 
 export function getVariantStyles(variant: ThemeTypographyVariant) {
   return `
     margin: 0;
-    font-size: ${variant.fontSize};    
+    font-size: ${variant.fontSize};
     line-height: ${variant.lineHeight};
     font-weight: ${variant.fontWeight};
     letter-spacing: ${variant.letterSpacing};

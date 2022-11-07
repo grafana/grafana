@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -13,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -34,10 +37,11 @@ type Service struct {
 	startTime                time.Time
 	concurrentUserStatsCache memoConcurrentUserStats
 	promFlavorCache          memoPrometheusFlavor
+	usageStatProviders       []registry.ProvidesUsageStats
 }
 
 func ProvideService(
-	usagestats usagestats.Service,
+	us usagestats.Service,
 	cfg *setting.Cfg,
 	store sqlstore.Store,
 	social social.Service,
@@ -51,7 +55,7 @@ func ProvideService(
 		sqlstore:           store,
 		plugins:            plugins,
 		social:             social,
-		usageStats:         usagestats,
+		usageStats:         us,
 		features:           features,
 		datasources:        datasourceService,
 		httpClientProvider: httpClientProvider,
@@ -60,9 +64,27 @@ func ProvideService(
 		log:       log.New("infra.usagestats.collector"),
 	}
 
-	usagestats.RegisterMetricsFunc(s.collect)
+	collectors := []usagestats.MetricsFunc{
+		s.collectSystemStats,
+		s.collectConcurrentUsers,
+		s.collectDatasourceStats,
+		s.collectDatasourceAccess,
+		s.collectElasticStats,
+		s.collectAlertNotifierStats,
+		s.collectPrometheusFlavors,
+		s.collectAdditionalMetrics,
+	}
+	for _, c := range collectors {
+		us.RegisterMetricsFunc(c)
+	}
 
 	return s
+}
+
+// RegisterProviders is called only once - during Grafana start up
+func (s *Service) RegisterProviders(usageStatProviders []registry.ProvidesUsageStats) {
+	s.log.Info("registering usage stat providers", "usageStatsProvidersLen", len(usageStatProviders))
+	s.usageStatProviders = usageStatProviders
 }
 
 func (s *Service) Run(ctx context.Context) error {
@@ -80,7 +102,7 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 }
 
-func (s *Service) collect(ctx context.Context) (map[string]interface{}, error) {
+func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 
 	statsQuery := models.GetSystemStatsQuery{}
@@ -130,6 +152,9 @@ func (s *Service) collect(ctx context.Context) (map[string]interface{}, error) {
 	m["stats.folders_viewers_can_edit.count"] = statsQuery.Result.FoldersViewersCanEdit
 	m["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
 	m["stats.api_keys.count"] = statsQuery.Result.APIKeys
+	m["stats.data_keys.count"] = statsQuery.Result.DataKeys
+	m["stats.active_data_keys.count"] = statsQuery.Result.ActiveDataKeys
+	m["stats.public_dashboards.count"] = statsQuery.Result.PublicDashboards
 
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
@@ -147,7 +172,66 @@ func (s *Service) collect(ctx context.Context) (map[string]interface{}, error) {
 	}
 
 	m["stats.avg_auth_token_per_user.count"] = avgAuthTokensPerUser
+	m["stats.packaging."+s.cfg.Packaging+".count"] = 1
+	m["stats.distributor."+s.cfg.ReportingDistributor+".count"] = 1
 
+	// Add stats about auth configuration
+	authTypes := map[string]bool{}
+	authTypes["anonymous"] = s.cfg.AnonymousEnabled
+	authTypes["basic_auth"] = s.cfg.BasicAuthEnabled
+	authTypes["ldap"] = s.cfg.LDAPEnabled
+	authTypes["auth_proxy"] = s.cfg.AuthProxyEnabled
+
+	for provider, enabled := range s.social.GetOAuthProviders() {
+		authTypes["oauth_"+provider] = enabled
+	}
+
+	for authType, enabled := range authTypes {
+		enabledValue := 0
+		if enabled {
+			enabledValue = 1
+		}
+		m["stats.auth_enabled."+authType+".count"] = enabledValue
+	}
+
+	m["stats.uptime"] = int64(time.Since(s.startTime).Seconds())
+
+	featureUsageStats := s.features.GetUsageStats(ctx)
+	for k, v := range featureUsageStats {
+		m[k] = v
+	}
+
+	return m, nil
+}
+
+func (s *Service) collectAdditionalMetrics(ctx context.Context) (map[string]interface{}, error) {
+	m := map[string]interface{}{}
+	for _, usageStatProvider := range s.usageStatProviders {
+		stats := usageStatProvider.GetUsageStats(ctx)
+		for k, v := range stats {
+			m[k] = v
+		}
+	}
+	return m, nil
+}
+
+func (s *Service) collectAlertNotifierStats(ctx context.Context) (map[string]interface{}, error) {
+	m := map[string]interface{}{}
+	// get stats about alert notifier usage
+	anStats := models.GetAlertNotifierUsageStatsQuery{}
+	if err := s.sqlstore.GetAlertNotifiersUsageStats(ctx, &anStats); err != nil {
+		s.log.Error("Failed to get alert notification stats", "error", err)
+		return nil, err
+	}
+
+	for _, stats := range anStats.Result {
+		m["stats.alert_notifiers."+stats.Type+".count"] = stats.Count
+	}
+	return m, nil
+}
+
+func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interface{}, error) {
+	m := map[string]interface{}{}
 	dsStats := models.GetDataSourceStatsQuery{}
 	if err := s.sqlstore.GetDataSourceStats(ctx, &dsStats); err != nil {
 		s.log.Error("Failed to get datasource stats", "error", err)
@@ -167,42 +251,38 @@ func (s *Service) collect(ctx context.Context) (map[string]interface{}, error) {
 	}
 	m["stats.ds.other.count"] = dsOtherCount
 
-	esDataSourcesQuery := models.GetDataSourcesByTypeQuery{Type: models.DS_ES}
-	if err := s.sqlstore.GetDataSourcesByType(ctx, &esDataSourcesQuery); err != nil {
+	return m, nil
+}
+
+func (s *Service) collectElasticStats(ctx context.Context) (map[string]interface{}, error) {
+	m := map[string]interface{}{}
+	esDataSourcesQuery := datasources.GetDataSourcesByTypeQuery{Type: datasources.DS_ES}
+	if err := s.datasources.GetDataSourcesByType(ctx, &esDataSourcesQuery); err != nil {
 		s.log.Error("Failed to get elasticsearch json data", "error", err)
 		return nil, err
 	}
-
 	for _, data := range esDataSourcesQuery.Result {
-		esVersion, err := data.JsonData.Get("esVersion").Int()
+		esVersion, err := data.JsonData.Get("esVersion").String()
 		if err != nil {
 			continue
 		}
-
-		statName := fmt.Sprintf("stats.ds.elasticsearch.v%d.count", esVersion)
+		statName := fmt.Sprintf("stats.ds.elasticsearch.v%s.count", strings.ReplaceAll(esVersion, ".", "_"))
 
 		count, _ := m[statName].(int64)
 
 		m[statName] = count + 1
 	}
+	return m, nil
+}
 
-	m["stats.packaging."+s.cfg.Packaging+".count"] = 1
-	m["stats.distributor."+s.cfg.ReportingDistributor+".count"] = 1
+func (s *Service) collectDatasourceAccess(ctx context.Context) (map[string]interface{}, error) {
+	m := map[string]interface{}{}
 
 	// fetch datasource access stats
 	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
 	if err := s.sqlstore.GetDataSourceAccessStats(ctx, &dsAccessStats); err != nil {
 		s.log.Error("Failed to get datasource access stats", "error", err)
 		return nil, err
-	}
-
-	variants, err := s.detectPrometheusVariants(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	for variant, count := range variants {
-		m["stats.ds.prometheus.flavor."+variant+".count"] = count
 	}
 
 	// send access counters for each data source
@@ -227,59 +307,6 @@ func (s *Service) collect(ctx context.Context) (map[string]interface{}, error) {
 	for access, count := range dsAccessOtherCount {
 		m["stats.ds_access.other."+access+".count"] = count
 	}
-
-	// get stats about alert notifier usage
-	anStats := models.GetAlertNotifierUsageStatsQuery{}
-	if err := s.sqlstore.GetAlertNotifiersUsageStats(ctx, &anStats); err != nil {
-		s.log.Error("Failed to get alert notification stats", "error", err)
-		return nil, err
-	}
-
-	for _, stats := range anStats.Result {
-		m["stats.alert_notifiers."+stats.Type+".count"] = stats.Count
-	}
-
-	// Add stats about auth configuration
-	authTypes := map[string]bool{}
-	authTypes["anonymous"] = s.cfg.AnonymousEnabled
-	authTypes["basic_auth"] = s.cfg.BasicAuthEnabled
-	authTypes["ldap"] = s.cfg.LDAPEnabled
-	authTypes["auth_proxy"] = s.cfg.AuthProxyEnabled
-
-	for provider, enabled := range s.social.GetOAuthProviders() {
-		authTypes["oauth_"+provider] = enabled
-	}
-
-	for authType, enabled := range authTypes {
-		enabledValue := 0
-		if enabled {
-			enabledValue = 1
-		}
-		m["stats.auth_enabled."+authType+".count"] = enabledValue
-	}
-
-	// Get concurrent users stats as histogram
-	concurrentUsersStats, err := s.concurrentUsers(ctx)
-	if err != nil {
-		s.log.Error("Failed to get concurrent users stats", "error", err)
-		return nil, err
-	}
-
-	// Histogram is cumulative and metric name has a postfix of le_"<upper inclusive bound>"
-	m["stats.auth_token_per_user_le_3"] = concurrentUsersStats.BucketLE3
-	m["stats.auth_token_per_user_le_6"] = concurrentUsersStats.BucketLE6
-	m["stats.auth_token_per_user_le_9"] = concurrentUsersStats.BucketLE9
-	m["stats.auth_token_per_user_le_12"] = concurrentUsersStats.BucketLE12
-	m["stats.auth_token_per_user_le_15"] = concurrentUsersStats.BucketLE15
-	m["stats.auth_token_per_user_le_inf"] = concurrentUsersStats.BucketLEInf
-
-	m["stats.uptime"] = int64(time.Since(s.startTime).Seconds())
-
-	featureUsageStats := s.features.GetUsageStats(ctx)
-	for k, v := range featureUsageStats {
-		m[k] = v
-	}
-
 	return m, nil
 }
 
@@ -311,6 +338,12 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.StatsTotalAlertRules.Set(float64(statsQuery.Result.AlertRules))
 	metrics.StatsTotalLibraryPanels.Set(float64(statsQuery.Result.LibraryPanels))
 	metrics.StatsTotalLibraryVariables.Set(float64(statsQuery.Result.LibraryVariables))
+
+	metrics.StatsTotalDataKeys.With(prometheus.Labels{"active": "true"}).Set(float64(statsQuery.Result.ActiveDataKeys))
+	inactiveDataKeys := statsQuery.Result.DataKeys - statsQuery.Result.ActiveDataKeys
+	metrics.StatsTotalDataKeys.With(prometheus.Labels{"active": "false"}).Set(float64(inactiveDataKeys))
+
+	metrics.MStatTotalPublicDashboards.Set(float64(statsQuery.Result.PublicDashboards))
 
 	dsStats := models.GetDataSourceStatsQuery{}
 	if err := s.sqlstore.GetDataSourceStats(ctx, &dsStats); err != nil {

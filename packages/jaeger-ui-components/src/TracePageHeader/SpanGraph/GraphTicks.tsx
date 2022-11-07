@@ -42,7 +42,7 @@ export default function GraphTicks(props: GraphTicksProps) {
   }
 
   return (
-    <g data-test="ticks" aria-hidden="true">
+    <g data-testid="ticks" aria-hidden="true">
       {ticks}
     </g>
   );

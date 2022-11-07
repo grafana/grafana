@@ -1,14 +1,18 @@
 import { find, isEqual, omit } from 'lodash';
 
-import { DataQuery } from '@grafana/data';
+import { DataQuery, SelectableValue } from '@grafana/data';
+import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
 
 import { RichHistoryQuery } from '../../types';
 import store from '../store';
-import { RichHistorySettings } from '../utils/richHistoryTypes';
 
 import RichHistoryStorage, { RichHistoryServiceError, RichHistoryStorageWarning } from './RichHistoryStorage';
 import { fromDTO, toDTO } from './localStorageConverter';
-import { createRetentionPeriodBoundary, RICH_HISTORY_SETTING_KEYS } from './richHistoryLocalStorageUtils';
+import {
+  createRetentionPeriodBoundary,
+  filterAndSortQueries,
+  RICH_HISTORY_SETTING_KEYS,
+} from './richHistoryLocalStorageUtils';
 
 export const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
 export const MAX_HISTORY_ITEMS = 10000;
@@ -27,10 +31,17 @@ export type RichHistoryLocalStorageDTO = {
  */
 export default class RichHistoryLocalStorage implements RichHistoryStorage {
   /**
-   * Return all history entries, perform migration and clean up entries not matching retention policy.
+   * Return history entries based on provided filters, perform migration and clean up entries not matching retention policy.
    */
-  async getRichHistory() {
-    return getRichHistoryDTOs().map(fromDTO);
+  async getRichHistory(filters: RichHistorySearchFilters) {
+    const allQueries = getRichHistoryDTOs().map(fromDTO);
+    const queries = filters.starred ? allQueries.filter((q) => q.starred === true) : allQueries;
+
+    const richHistory = filterAndSortQueries(queries, filters.sortOrder, filters.datasourceFilters, filters.search, [
+      filters.from,
+      filters.to,
+    ]);
+    return { richHistory, total: richHistory.length };
   }
 
   async addToRichHistory(newRichHistoryQuery: Omit<RichHistoryQuery, 'id' | 'createdAt'>) {
@@ -67,7 +78,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
     try {
       store.setObject(RICH_HISTORY_KEY, updatedHistory);
     } catch (error) {
-      if (error.name === 'QuotaExceededError') {
+      if (error instanceof Error && error.name === 'QuotaExceededError') {
         throwError(RichHistoryServiceError.StorageFull, `Saving rich history failed: ${error.message}`);
       } else {
         throw error;
@@ -111,7 +122,9 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
       activeDatasourceOnly: store.getObject(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, false),
       retentionPeriod: store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7),
       starredTabAsFirstTab: store.getBool(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, false),
-      lastUsedDatasourceFilters: store.getObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, []),
+      lastUsedDatasourceFilters: store
+        .getObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, [])
+        .map((selectableValue: SelectableValue) => selectableValue.value),
     };
   }
 
@@ -119,7 +132,12 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
     store.set(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, settings.activeDatasourceOnly);
     store.set(RICH_HISTORY_SETTING_KEYS.retentionPeriod, settings.retentionPeriod);
     store.set(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, settings.starredTabAsFirstTab);
-    store.setObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, settings.lastUsedDatasourceFilters);
+    store.setObject(
+      RICH_HISTORY_SETTING_KEYS.datasourceFilters,
+      (settings.lastUsedDatasourceFilters || []).map((datasourceName: string) => {
+        return { value: datasourceName };
+      })
+    );
   }
 }
 
@@ -199,7 +217,7 @@ function createDataQuery(query: RichHistoryLocalStorageDTO, individualQuery: Dat
     // ElasticSearch (maybe other datasoures too) before grafana7
     return JSON.parse(individualQuery);
   }
-  // prometehus (maybe other datasources too) before grafana7
+  // prometheus (maybe other datasources too) before grafana7
   return { expr: individualQuery, refId: letters[index] };
 }
 

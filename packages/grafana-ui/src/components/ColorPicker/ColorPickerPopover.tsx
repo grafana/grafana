@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { FocusScope } from '@react-aria/focus';
-import React from 'react';
+import React, { Component } from 'react';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 
@@ -10,7 +10,6 @@ import { PopoverContentProps } from '../Tooltip';
 
 import { NamedColorsPalette } from './NamedColorsPalette';
 import SpectrumPalette from './SpectrumPalette';
-import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';
 
 export type ColorPickerChangeHandler = (color: string) => void;
 
@@ -18,10 +17,6 @@ export interface ColorPickerProps extends Themeable2 {
   color: string;
   onChange: ColorPickerChangeHandler;
 
-  /**
-   * @deprecated Use onChange instead
-   */
-  onColorChange?: ColorPickerChangeHandler;
   enableNamedColors?: boolean;
 }
 
@@ -42,13 +37,12 @@ interface State<T> {
   activePicker: PickerType | keyof T;
 }
 
-class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends React.Component<Props<T>, State<T>> {
+class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Component<Props<T>, State<T>> {
   constructor(props: Props<T>) {
     super(props);
     this.state = {
       activePicker: 'palette',
     };
-    warnAboutColorPickerPropsDeprecation('ColorPickerPopover', props);
   }
 
   getTabClassName = (tabName: PickerType | keyof T) => {
@@ -56,13 +50,12 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
     return `ColorPickerPopover__tab ${activePicker === tabName && 'ColorPickerPopover__tab--active'}`;
   };
 
-  handleChange = (color: any) => {
-    const { onColorChange, onChange, enableNamedColors, theme } = this.props;
-    const changeHandler = onColorChange || onChange;
+  handleChange = (color: string) => {
+    const { onChange, enableNamedColors, theme } = this.props;
     if (enableNamedColors) {
-      return changeHandler(color);
+      return onChange(color);
     }
-    changeHandler(colorManipulator.asHexString(theme.visualization.getColorByName(color)));
+    onChange(colorManipulator.asHexString(theme.visualization.getColorByName(color)));
   };
 
   onTabChange = (tab: PickerType | keyof T) => {

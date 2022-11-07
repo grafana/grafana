@@ -24,8 +24,6 @@ import {
   instanceSettings as expressionInstanceSettings,
 } from 'app/features/expressions/ExpressionDatasource';
 
-import { DataSourceVariableModel } from '../variables/types';
-
 import { importDataSourcePlugin } from './plugin_loader';
 
 export class DatasourceSrv implements DataSourceService {
@@ -191,7 +189,9 @@ export class DatasourceSrv implements DataSourceService {
       this.datasources[instance.uid] = instance;
       return instance;
     } catch (err) {
-      appEvents.emit(AppEvents.alertError, [instanceSettings.name + ' plugin failed', err.toString()]);
+      if (err instanceof Error) {
+        appEvents.emit(AppEvents.alertError, [instanceSettings.name + ' plugin failed', err.toString()]);
+      }
       return Promise.reject({ message: `Datasource: ${key} was not found` });
     }
   }
@@ -243,11 +243,16 @@ export class DatasourceSrv implements DataSourceService {
     });
 
     if (filters.variables) {
-      for (const variable of this.templateSrv.getVariables().filter((variable) => variable.type === 'datasource')) {
-        const dsVar = variable as DataSourceVariableModel;
-        const first = dsVar.current.value === 'default' ? this.defaultName : dsVar.current.value;
-        const dsName = first as unknown as string;
-        const dsSettings = this.settingsMapByName[dsName];
+      for (const variable of this.templateSrv.getVariables()) {
+        if (variable.type !== 'datasource') {
+          continue;
+        }
+        let dsValue = variable.current.value === 'default' ? this.defaultName : variable.current.value;
+        if (Array.isArray(dsValue) && dsValue.length === 1) {
+          // Support for multi-value variables with only one selected datasource
+          dsValue = dsValue[0];
+        }
+        const dsSettings = !Array.isArray(dsValue) && this.settingsMapByName[dsValue];
 
         if (dsSettings) {
           const key = `$\{${variable.name}\}`;

@@ -8,14 +8,12 @@ import { PrometheusDatasource } from './datasource';
 import LanguageProvider from './language_provider';
 import { PromQuery } from './types';
 
-import Mock = jest.Mock;
-
 describe('Language completion provider', () => {
   const datasource: PrometheusDatasource = {
     metadataRequest: () => ({ data: { data: [] as any[] } }),
     getTimeRangeParams: () => ({ start: '0', end: '1' }),
     interpolateString: (string: string) => string,
-  } as any as PrometheusDatasource;
+  } as unknown as PrometheusDatasource;
 
   describe('cleanText', () => {
     const cleanText = new LanguageProvider(datasource).cleanText;
@@ -306,7 +304,7 @@ describe('Language completion provider', () => {
         metadataRequest: () => ({ data: { data: [{ __name__: 'metric', bar: 'bazinga' }] as any[] } }),
         getTimeRangeParams: () => ({ start: '0', end: '1' }),
         interpolateString: (string: string) => string,
-      } as any as PrometheusDatasource;
+      } as unknown as PrometheusDatasource;
       const instance = new LanguageProvider(datasources);
       const value = Plain.deserialize('metric{}');
       const ed = new SlateEditor({ value });
@@ -340,7 +338,7 @@ describe('Language completion provider', () => {
         }),
         getTimeRangeParams: () => ({ start: '0', end: '1' }),
         interpolateString: (string: string) => string,
-      } as any as PrometheusDatasource;
+      } as unknown as PrometheusDatasource;
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('{job1="foo",job2!="foo",job3=~"foo",__name__="metric",}');
       const ed = new SlateEditor({ value });
@@ -363,7 +361,7 @@ describe('Language completion provider', () => {
         metadataRequest: () => {
           return { data: { data: ['value1', 'value2'] } };
         },
-      } as any as PrometheusDatasource);
+      } as unknown as PrometheusDatasource);
       const value = Plain.deserialize('{job!=}');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(6).value;
@@ -405,7 +403,7 @@ describe('Language completion provider', () => {
       const instance = new LanguageProvider({
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
-      } as any as PrometheusDatasource);
+      } as unknown as PrometheusDatasource);
       const value = Plain.deserialize('metric{bar=ba}');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(13).value;
@@ -426,7 +424,7 @@ describe('Language completion provider', () => {
       const instance = new LanguageProvider({
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
-      } as any as PrometheusDatasource);
+      } as unknown as PrometheusDatasource);
       const value = Plain.deserialize('sum(metric{foo="xx"}) by ()');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(26).value;
@@ -446,7 +444,7 @@ describe('Language completion provider', () => {
       const instance = new LanguageProvider({
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
-      } as any as PrometheusDatasource);
+      } as unknown as PrometheusDatasource);
       const value = Plain.deserialize('sum(metric) by ()');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(16).value;
@@ -466,7 +464,7 @@ describe('Language completion provider', () => {
       const instance = new LanguageProvider({
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
-      } as any as PrometheusDatasource);
+      } as unknown as PrometheusDatasource);
       const value = Plain.deserialize('sum(\nmetric\n)\nby ()');
       const aggregationTextBlock = value.document.getBlocks().get(3);
       const ed = new SlateEditor({ value });
@@ -492,7 +490,7 @@ describe('Language completion provider', () => {
       const instance = new LanguageProvider({
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
-      } as any as PrometheusDatasource);
+      } as unknown as PrometheusDatasource);
       const value = Plain.deserialize('sum(rate(metric[1h])) by ()');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(26).value;
@@ -516,7 +514,7 @@ describe('Language completion provider', () => {
       const instance = new LanguageProvider({
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
-      } as any as PrometheusDatasource);
+      } as unknown as PrometheusDatasource);
       const value = Plain.deserialize('sum(rate(metric{label1="value"}[1h])) by ()');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(42).value;
@@ -555,7 +553,7 @@ describe('Language completion provider', () => {
       const instance = new LanguageProvider({
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
-      } as any as PrometheusDatasource);
+      } as unknown as PrometheusDatasource);
       const value = Plain.deserialize('sum by () (metric)');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(8).value;
@@ -580,7 +578,9 @@ describe('Language completion provider', () => {
         metadataRequest: jest.fn(() => ({ data: { data: [] as any[] } })),
         getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
         interpolateString: (string: string) => string,
-      } as any as PrometheusDatasource;
+      } as unknown as PrometheusDatasource;
+
+      const mockedMetadataRequest = jest.mocked(datasource.metadataRequest);
 
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('{}');
@@ -594,11 +594,11 @@ describe('Language completion provider', () => {
       };
       const promise1 = instance.provideCompletionItems(args);
       // one call for 2 default labels job, instance
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(2);
+      expect(mockedMetadataRequest.mock.calls.length).toBe(2);
       const promise2 = instance.provideCompletionItems(args);
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(2);
+      expect(mockedMetadataRequest.mock.calls.length).toBe(2);
       await Promise.all([promise1, promise2]);
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(2);
+      expect(mockedMetadataRequest.mock.calls.length).toBe(2);
     });
   });
   describe('disabled metrics lookup', () => {
@@ -608,7 +608,8 @@ describe('Language completion provider', () => {
         metadataRequest: jest.fn(() => ({ data: { data: ['foo', 'bar'] as string[] } })),
         getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
         lookupsDisabled: true,
-      } as any as PrometheusDatasource;
+      } as unknown as PrometheusDatasource;
+      const mockedMetadataRequest = jest.mocked(datasource.metadataRequest);
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('{}');
       const ed = new SlateEditor({ value });
@@ -620,11 +621,11 @@ describe('Language completion provider', () => {
         value: valueWithSelection,
       };
 
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
+      expect(mockedMetadataRequest.mock.calls.length).toBe(0);
       await instance.start();
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
+      expect(mockedMetadataRequest.mock.calls.length).toBe(0);
       await instance.provideCompletionItems(args);
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
+      expect(mockedMetadataRequest.mock.calls.length).toBe(0);
       expect(console.warn).toHaveBeenCalledWith('Server did not return any values for selector = {}');
     });
     it('issues metadata requests when lookup is not disabled', async () => {
@@ -633,12 +634,13 @@ describe('Language completion provider', () => {
         getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
         lookupsDisabled: false,
         interpolateString: (string: string) => string,
-      } as any as PrometheusDatasource;
+      } as unknown as PrometheusDatasource;
+      const mockedMetadataRequest = jest.mocked(datasource.metadataRequest);
       const instance = new LanguageProvider(datasource);
 
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
+      expect(mockedMetadataRequest.mock.calls.length).toBe(0);
       await instance.start();
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBeGreaterThan(0);
+      expect(mockedMetadataRequest.mock.calls.length).toBeGreaterThan(0);
     });
   });
 

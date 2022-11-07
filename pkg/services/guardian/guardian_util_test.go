@@ -7,9 +7,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type scenarioContext struct {
@@ -17,11 +23,11 @@ type scenarioContext struct {
 	orgRoleScenario    string
 	permissionScenario string
 	g                  DashboardGuardian
-	givenUser          *models.SignedInUser
+	givenUser          *user.SignedInUser
 	givenDashboardID   int64
-	givenPermissions   []*models.DashboardAclInfoDTO
+	givenPermissions   []*models.DashboardACLInfoDTO
 	givenTeams         []*models.TeamDTO
-	updatePermissions  []*models.DashboardAcl
+	updatePermissions  []*models.DashboardACL
 	expectedFlags      permissionFlags
 	callerFile         string
 	callerLine         int
@@ -29,15 +35,15 @@ type scenarioContext struct {
 
 type scenarioFunc func(c *scenarioContext)
 
-func orgRoleScenario(desc string, t *testing.T, role models.RoleType, fn scenarioFunc) {
+func orgRoleScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
-		user := &models.SignedInUser{
-			UserId:  userID,
-			OrgId:   orgID,
+		user := &user.SignedInUser{
+			UserID:  userID,
+			OrgID:   orgID,
 			OrgRole: role,
 		}
-		store := mockstore.NewSQLStoreMock()
-		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store)
+		store := dbtest.NewFakeDB()
+		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
 
 		sc := &scenarioContext{
 			t:                t,
@@ -50,16 +56,16 @@ func orgRoleScenario(desc string, t *testing.T, role models.RoleType, fn scenari
 	})
 }
 
-func apiKeyScenario(desc string, t *testing.T, role models.RoleType, fn scenarioFunc) {
+func apiKeyScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
-		user := &models.SignedInUser{
-			UserId:   0,
-			OrgId:    orgID,
+		user := &user.SignedInUser{
+			UserID:   0,
+			OrgID:    orgID,
 			OrgRole:  role,
-			ApiKeyId: 10,
+			ApiKeyID: 10,
 		}
-		store := mockstore.NewSQLStoreMock()
-		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store)
+		store := dbtest.NewFakeDB()
+		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
 		sc := &scenarioContext{
 			t:                t,
 			orgRoleScenario:  desc,
@@ -73,10 +79,9 @@ func apiKeyScenario(desc string, t *testing.T, role models.RoleType, fn scenario
 }
 
 func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
-	permissions []*models.DashboardAclInfoDTO, fn scenarioFunc) {
+	permissions []*models.DashboardACLInfoDTO, fn scenarioFunc) {
 	sc.t.Run(desc, func(t *testing.T) {
-		store := mockstore.NewSQLStoreMock()
-		store.ExpectedDashboardAclInfoList = permissions
+		store := dbtest.NewFakeDB()
 		teams := []*models.TeamDTO{}
 
 		for _, p := range permissions {
@@ -84,10 +89,16 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 				teams = append(teams, &models.TeamDTO{Id: p.TeamId})
 			}
 		}
-		store.ExpectedTeamsByUser = teams
+		teamSvc := &teamtest.FakeService{ExpectedTeamsByUser: teams}
+
+		dashSvc := dashboards.NewFakeDashboardService(t)
+		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
+			q.Result = permissions
+		}).Return(nil)
 
 		sc.permissionScenario = desc
-		sc.g = newDashboardGuardian(context.Background(), dashboardID, sc.givenUser.OrgId, sc.givenUser, store)
+		sc.g = newDashboardGuardian(context.Background(), dashboardID, sc.givenUser.OrgID, sc.givenUser, store, dashSvc, teamSvc)
 		sc.givenDashboardID = dashboardID
 		sc.givenPermissions = permissions
 		sc.givenTeams = teams
@@ -191,7 +202,7 @@ func (sc *scenarioContext) reportFailure(desc string, expected interface{}, actu
 	buf.WriteString(fmt.Sprintf("Expected: %v\n", expected))
 	buf.WriteString(fmt.Sprintf("Actual: %v\n", actual))
 	buf.WriteString("Context:")
-	buf.WriteString(fmt.Sprintf("\n  Given user: orgRole=%s, id=%d, orgId=%d", sc.givenUser.OrgRole, sc.givenUser.UserId, sc.givenUser.OrgId))
+	buf.WriteString(fmt.Sprintf("\n  Given user: orgRole=%s, id=%d, orgId=%d", sc.givenUser.OrgRole, sc.givenUser.UserID, sc.givenUser.OrgID))
 	buf.WriteString(fmt.Sprintf("\n  Given dashboard id: %d", sc.givenDashboardID))
 
 	for i, p := range sc.givenPermissions {
@@ -217,36 +228,36 @@ func (sc *scenarioContext) reportFailure(desc string, expected interface{}, actu
 	sc.t.Fatalf(buf.String())
 }
 
-func newCustomUserPermission(dashboardID int64, userID int64, permission models.PermissionType) *models.DashboardAcl {
-	return &models.DashboardAcl{OrgID: orgID, DashboardID: dashboardID, UserID: userID, Permission: permission}
+func newCustomUserPermission(dashboardID int64, userID int64, permission models.PermissionType) *models.DashboardACL {
+	return &models.DashboardACL{OrgID: orgID, DashboardID: dashboardID, UserID: userID, Permission: permission}
 }
 
-func newDefaultUserPermission(dashboardID int64, permission models.PermissionType) *models.DashboardAcl {
+func newDefaultUserPermission(dashboardID int64, permission models.PermissionType) *models.DashboardACL {
 	return newCustomUserPermission(dashboardID, userID, permission)
 }
 
-func newCustomTeamPermission(dashboardID int64, teamID int64, permission models.PermissionType) *models.DashboardAcl {
-	return &models.DashboardAcl{OrgID: orgID, DashboardID: dashboardID, TeamID: teamID, Permission: permission}
+func newCustomTeamPermission(dashboardID int64, teamID int64, permission models.PermissionType) *models.DashboardACL {
+	return &models.DashboardACL{OrgID: orgID, DashboardID: dashboardID, TeamID: teamID, Permission: permission}
 }
 
-func newDefaultTeamPermission(dashboardID int64, permission models.PermissionType) *models.DashboardAcl {
+func newDefaultTeamPermission(dashboardID int64, permission models.PermissionType) *models.DashboardACL {
 	return newCustomTeamPermission(dashboardID, teamID, permission)
 }
 
-func newAdminRolePermission(dashboardID int64, permission models.PermissionType) *models.DashboardAcl {
-	return &models.DashboardAcl{OrgID: orgID, DashboardID: dashboardID, Role: &adminRole, Permission: permission}
+func newAdminRolePermission(dashboardID int64, permission models.PermissionType) *models.DashboardACL {
+	return &models.DashboardACL{OrgID: orgID, DashboardID: dashboardID, Role: &adminRole, Permission: permission}
 }
 
-func newEditorRolePermission(dashboardID int64, permission models.PermissionType) *models.DashboardAcl {
-	return &models.DashboardAcl{OrgID: orgID, DashboardID: dashboardID, Role: &editorRole, Permission: permission}
+func newEditorRolePermission(dashboardID int64, permission models.PermissionType) *models.DashboardACL {
+	return &models.DashboardACL{OrgID: orgID, DashboardID: dashboardID, Role: &editorRole, Permission: permission}
 }
 
-func newViewerRolePermission(dashboardID int64, permission models.PermissionType) *models.DashboardAcl {
-	return &models.DashboardAcl{OrgID: orgID, DashboardID: dashboardID, Role: &viewerRole, Permission: permission}
+func newViewerRolePermission(dashboardID int64, permission models.PermissionType) *models.DashboardACL {
+	return &models.DashboardACL{OrgID: orgID, DashboardID: dashboardID, Role: &viewerRole, Permission: permission}
 }
 
-func toDto(acl *models.DashboardAcl) *models.DashboardAclInfoDTO {
-	return &models.DashboardAclInfoDTO{
+func toDto(acl *models.DashboardACL) *models.DashboardACLInfoDTO {
+	return &models.DashboardACLInfoDTO{
 		OrgId:          acl.OrgID,
 		DashboardId:    acl.DashboardID,
 		UserId:         acl.UserID,

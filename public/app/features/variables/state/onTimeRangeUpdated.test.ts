@@ -2,7 +2,6 @@ import { dateTime, TimeRange } from '@grafana/data';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
-import { expect } from '../../../../test/lib/common';
 import { appEvents } from '../../../core/core';
 import { notifyApp } from '../../../core/reducers/appNotification';
 import { DashboardState } from '../../../types';

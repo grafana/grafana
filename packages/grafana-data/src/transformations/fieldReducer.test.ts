@@ -80,11 +80,13 @@ describe('Stats Calculators', () => {
   it('should get non standard stats', () => {
     const stats = reduceField({
       field: basicTable.fields[0],
-      reducers: [ReducerID.distinctCount, ReducerID.changeCount],
+      reducers: [ReducerID.distinctCount, ReducerID.changeCount, ReducerID.variance, ReducerID.stdDev],
     });
 
     expect(stats.distinctCount).toEqual(2);
     expect(stats.changeCount).toEqual(1);
+    expect(stats.variance).toEqual(25);
+    expect(stats.stdDev).toEqual(5);
   });
 
   it('should calculate step', () => {
@@ -95,6 +97,15 @@ describe('Stats Calculators', () => {
 
     expect(stats.step).toEqual(100);
     expect(stats.delta).toEqual(300);
+  });
+
+  it('should calculate unique values', () => {
+    const stats = reduceField({
+      field: createField('x', [1, 2, 2, 3, 1]),
+      reducers: [ReducerID.uniqueValues],
+    });
+
+    expect(stats.uniqueValues).toEqual([1, 2, 3]);
   });
 
   it('consistently check allIsNull/allIsZero', () => {

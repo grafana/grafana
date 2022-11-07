@@ -14,10 +14,7 @@ type testQuery struct {
 }
 
 func TestEventPublish(t *testing.T) {
-	bus := New()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-	bus.tracer = tracer
+	bus := ProvideBus(tracing.InitializeTracerForTest())
 
 	var invoked bool
 
@@ -26,27 +23,21 @@ func TestEventPublish(t *testing.T) {
 		return nil
 	})
 
-	err = bus.Publish(context.Background(), &testQuery{})
+	err := bus.Publish(context.Background(), &testQuery{})
 	require.NoError(t, err, "unable to publish event")
 
 	require.True(t, invoked)
 }
 
 func TestEventPublish_NoRegisteredListener(t *testing.T) {
-	bus := New()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-	bus.tracer = tracer
+	bus := ProvideBus(tracing.InitializeTracerForTest())
 
-	err = bus.Publish(context.Background(), &testQuery{})
+	err := bus.Publish(context.Background(), &testQuery{})
 	require.NoError(t, err, "unable to publish event")
 }
 
 func TestEventCtxPublishCtx(t *testing.T) {
-	bus := New()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-	bus.tracer = tracer
+	bus := ProvideBus(tracing.InitializeTracerForTest())
 
 	var invoked bool
 
@@ -55,27 +46,21 @@ func TestEventCtxPublishCtx(t *testing.T) {
 		return nil
 	})
 
-	err = bus.Publish(context.Background(), &testQuery{})
+	err := bus.Publish(context.Background(), &testQuery{})
 	require.NoError(t, err, "unable to publish event")
 
 	require.True(t, invoked)
 }
 
 func TestEventPublishCtx_NoRegisteredListener(t *testing.T) {
-	bus := New()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-	bus.tracer = tracer
+	bus := ProvideBus(tracing.InitializeTracerForTest())
 
-	err = bus.Publish(context.Background(), &testQuery{})
+	err := bus.Publish(context.Background(), &testQuery{})
 	require.NoError(t, err, "unable to publish event")
 }
 
 func TestEventPublishCtx(t *testing.T) {
-	bus := New()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-	bus.tracer = tracer
+	bus := ProvideBus(tracing.InitializeTracerForTest())
 
 	var invoked bool
 
@@ -84,17 +69,14 @@ func TestEventPublishCtx(t *testing.T) {
 		return nil
 	})
 
-	err = bus.Publish(context.Background(), &testQuery{})
+	err := bus.Publish(context.Background(), &testQuery{})
 	require.NoError(t, err, "unable to publish event")
 
 	require.True(t, invoked)
 }
 
 func TestEventCtxPublish(t *testing.T) {
-	bus := New()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-	bus.tracer = tracer
+	bus := ProvideBus(tracing.InitializeTracerForTest())
 
 	var invoked bool
 
@@ -103,7 +85,7 @@ func TestEventCtxPublish(t *testing.T) {
 		return nil
 	})
 
-	err = bus.Publish(context.Background(), &testQuery{})
+	err := bus.Publish(context.Background(), &testQuery{})
 	require.NoError(t, err, "unable to publish event")
 
 	require.True(t, invoked)

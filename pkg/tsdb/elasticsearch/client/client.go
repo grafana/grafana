@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -15,16 +15,15 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 type DatasourceInfo struct {
 	ID                         int64
-	HTTPClientOpts             sdkhttpclient.Options
+	HTTPClient                 *http.Client
 	URL                        string
 	Database                   string
 	ESVersion                  *semver.Version
@@ -38,17 +37,8 @@ type DatasourceInfo struct {
 
 const loggerName = "tsdb.elasticsearch.client"
 
-var (
-	clientLog = log.New(loggerName)
-)
-
-var newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *DatasourceInfo) (*http.Client, error) {
-	return httpClientProvider.New(ds.HTTPClientOpts)
-}
-
 // Client represents a client which can interact with elasticsearch api
 type Client interface {
-	GetVersion() *semver.Version
 	GetTimeField() string
 	GetMinInterval(queryInterval string) (time.Duration, error)
 	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error)
@@ -57,7 +47,7 @@ type Client interface {
 }
 
 // NewClient creates a new elasticsearch client
-var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider, ds *DatasourceInfo, timeRange backend.TimeRange) (Client, error) {
+var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.TimeRange) (Client, error) {
 	ip, err := newIndexPattern(ds.Interval, ds.Database)
 	if err != nil {
 		return nil, err
@@ -68,32 +58,27 @@ var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider
 		return nil, err
 	}
 
-	clientLog.Debug("Creating new client", "version", ds.ESVersion, "timeField", ds.TimeField, "indices", strings.Join(indices, ", "))
+	logger := log.New(loggerName).FromContext(ctx)
+	logger.Debug("Creating new client", "version", ds.ESVersion, "timeField", ds.TimeField, "indices", strings.Join(indices, ", "))
 
 	return &baseClientImpl{
-		ctx:                ctx,
-		httpClientProvider: httpClientProvider,
-		ds:                 ds,
-		version:            ds.ESVersion,
-		timeField:          ds.TimeField,
-		indices:            indices,
-		timeRange:          timeRange,
+		logger:    logger,
+		ctx:       ctx,
+		ds:        ds,
+		timeField: ds.TimeField,
+		indices:   indices,
+		timeRange: timeRange,
 	}, nil
 }
 
 type baseClientImpl struct {
-	ctx                context.Context
-	httpClientProvider httpclient.Provider
-	ds                 *DatasourceInfo
-	version            *semver.Version
-	timeField          string
-	indices            []string
-	timeRange          backend.TimeRange
-	debugEnabled       bool
-}
-
-func (c *baseClientImpl) GetVersion() *semver.Version {
-	return c.version
+	ctx          context.Context
+	ds           *DatasourceInfo
+	timeField    string
+	indices      []string
+	timeRange    backend.TimeRange
+	debugEnabled bool
+	logger       log.Logger
 }
 
 func (c *baseClientImpl) GetTimeField() string {
@@ -120,7 +105,7 @@ func (c *baseClientImpl) executeBatchRequest(uriPath, uriQuery string, requests 
 }
 
 func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, error) {
-	clientLog.Debug("Encoding batch requests to json", "batch requests", len(requests))
+	c.logger.Debug("Encoding batch requests to json", "batch requests", len(requests))
 	start := time.Now()
 
 	payload := bytes.Buffer{}
@@ -144,7 +129,7 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 	}
 
 	elapsed := time.Since(start)
-	clientLog.Debug("Encoded batch requests to json", "took", elapsed)
+	c.logger.Debug("Encoded batch requests to json", "took", elapsed)
 
 	return payload.Bytes(), nil
 }
@@ -167,7 +152,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		return nil, err
 	}
 
-	clientLog.Debug("Executing request", "url", req.URL.String(), "method", method)
+	c.logger.Debug("Executing request", "url", req.URL.String(), "method", method)
 
 	var reqInfo *SearchRequestInfo
 	if c.debugEnabled {
@@ -180,18 +165,13 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 
 	req.Header.Set("Content-Type", "application/x-ndjson")
 
-	httpClient, err := newDatasourceHttpClient(c.httpClientProvider, c.ds)
-	if err != nil {
-		return nil, err
-	}
-
 	start := time.Now()
 	defer func() {
 		elapsed := time.Since(start)
-		clientLog.Debug("Executed request", "took", elapsed)
+		c.logger.Debug("Executed request", "took", elapsed)
 	}()
 	//nolint:bodyclose
-	resp, err := httpClient.Do(req)
+	resp, err := c.ds.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +182,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 }
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {
-	clientLog.Debug("Executing multisearch", "search requests", len(r.Requests))
+	c.logger.Debug("Executing multisearch", "search requests", len(r.Requests))
 
 	multiRequests := c.createMultiSearchRequests(r.Requests)
 	queryParams := c.getMultiSearchQueryParameters()
@@ -213,24 +193,24 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	res := clientRes.httpResponse
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			clientLog.Warn("Failed to close response body", "err", err)
+			c.logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
-	clientLog.Debug("Received multisearch response", "code", res.StatusCode, "status", res.Status, "content-length", res.ContentLength)
+	c.logger.Debug("Received multisearch response", "code", res.StatusCode, "status", res.Status, "content-length", res.ContentLength)
 
 	start := time.Now()
-	clientLog.Debug("Decoding multisearch json response")
+	c.logger.Debug("Decoding multisearch json response")
 
 	var bodyBytes []byte
 	if c.debugEnabled {
-		tmpBytes, err := ioutil.ReadAll(res.Body)
+		tmpBytes, err := io.ReadAll(res.Body)
 		if err != nil {
-			clientLog.Error("failed to read http response bytes", "error", err)
+			c.logger.Error("Failed to read http response bytes", "error", err)
 		} else {
 			bodyBytes = make([]byte, len(tmpBytes))
 			copy(bodyBytes, tmpBytes)
-			res.Body = ioutil.NopCloser(bytes.NewBuffer(tmpBytes))
+			res.Body = io.NopCloser(bytes.NewBuffer(tmpBytes))
 		}
 	}
 
@@ -242,7 +222,7 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	}
 
 	elapsed := time.Since(start)
-	clientLog.Debug("Decoded multisearch json response", "took", elapsed)
+	c.logger.Debug("Decoded multisearch json response", "took", elapsed)
 
 	msr.Status = res.StatusCode
 
@@ -250,7 +230,7 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		bodyJSON, err := simplejson.NewFromReader(bytes.NewBuffer(bodyBytes))
 		var data *simplejson.Json
 		if err != nil {
-			clientLog.Error("failed to decode http response into json", "error", err)
+			c.logger.Error("Failed to decode http response into json", "error", err)
 		} else {
 			data = bodyJSON
 		}
@@ -281,20 +261,6 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 			interval: searchReq.Interval,
 		}
 
-		if c.version.Major() < 5 {
-			mr.header["search_type"] = "count"
-		} else {
-			allowedVersionRange, _ := semver.NewConstraint(">=5.6.0, <7.0.0")
-
-			if allowedVersionRange.Check(c.version) {
-				maxConcurrentShardRequests := c.ds.MaxConcurrentShardRequests
-				if maxConcurrentShardRequests == 0 {
-					maxConcurrentShardRequests = 256
-				}
-				mr.header["max_concurrent_shard_requests"] = maxConcurrentShardRequests
-			}
-		}
-
 		multiRequests = append(multiRequests, &mr)
 	}
 
@@ -304,17 +270,13 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 func (c *baseClientImpl) getMultiSearchQueryParameters() string {
 	var qs []string
 
-	if c.version.Major() >= 7 {
-		maxConcurrentShardRequests := c.ds.MaxConcurrentShardRequests
-		if maxConcurrentShardRequests == 0 {
-			maxConcurrentShardRequests = 5
-		}
-		qs = append(qs, fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests))
+	maxConcurrentShardRequests := c.ds.MaxConcurrentShardRequests
+	if maxConcurrentShardRequests == 0 {
+		maxConcurrentShardRequests = 5
 	}
+	qs = append(qs, fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests))
 
-	allowedFrozenIndicesVersionRange, _ := semver.NewConstraint(">=6.6.0")
-
-	if (allowedFrozenIndicesVersionRange.Check(c.version)) && c.ds.IncludeFrozen && c.ds.XPack {
+	if c.ds.IncludeFrozen && c.ds.XPack {
 		qs = append(qs, "ignore_throttled=false")
 	}
 
@@ -322,7 +284,7 @@ func (c *baseClientImpl) getMultiSearchQueryParameters() string {
 }
 
 func (c *baseClientImpl) MultiSearch() *MultiSearchRequestBuilder {
-	return NewMultiSearchRequestBuilder(c.GetVersion())
+	return NewMultiSearchRequestBuilder()
 }
 
 func (c *baseClientImpl) EnableDebug() {

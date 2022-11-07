@@ -40,15 +40,15 @@ const getTestContext = (overides?: object) => {
   const appEventsMock: EventBusExtended = {
     emit: jest.fn(),
     publish: jest.fn(),
-  } as any as EventBusExtended;
+  } as jest.MockedObject<EventBusExtended>;
 
   const user: User = {
     isSignedIn: props.isSignedIn,
     orgId: props.orgId,
-  } as any as User;
+  } as jest.MockedObject<User>;
   const contextSrvMock: ContextSrv = {
     user,
-  } as any as ContextSrv;
+  } as jest.MockedObject<ContextSrv>;
   const logoutMock = jest.fn();
   const parseRequestOptionsMock = jest.fn().mockImplementation((options) => options);
 
@@ -61,14 +61,14 @@ const getTestContext = (overides?: object) => {
 
   backendSrv['parseRequestOptions'] = parseRequestOptionsMock;
 
-  const expectCallChain = (options: any) => {
+  const expectCallChain = () => {
     expect(fromFetchMock).toHaveBeenCalledTimes(1);
   };
 
   const expectRequestCallChain = (options: any) => {
     expect(parseRequestOptionsMock).toHaveBeenCalledTimes(1);
     expect(parseRequestOptionsMock).toHaveBeenCalledWith(options);
-    expectCallChain(options);
+    expectCallChain();
   };
 
   return {
@@ -154,7 +154,7 @@ describe('backendSrv', () => {
 
     describe('when making an unsuccessful call and conditions for retry are favorable and loginPing does not throw', () => {
       it('then it should retry', async () => {
-        jest.useFakeTimers('modern');
+        jest.useFakeTimers();
         const url = '/api/dashboard/';
         const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
           ok: false,
@@ -220,7 +220,7 @@ describe('backendSrv', () => {
 
     describe('when making an unsuccessful call and conditions for retry are favorable and retry throws', () => {
       it('then it throw error', async () => {
-        jest.useFakeTimers('modern');
+        jest.useFakeTimers();
         const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
           ok: false,
           status: 401,
@@ -280,7 +280,7 @@ describe('backendSrv', () => {
 
     describe('when making an unsuccessful 422 call', () => {
       it('then it should emit Validation failed message', async () => {
-        jest.useFakeTimers('modern');
+        jest.useFakeTimers();
         const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
           ok: false,
           status: 422,
@@ -313,7 +313,7 @@ describe('backendSrv', () => {
 
     describe('when making an unsuccessful call and we handle the error', () => {
       it('then it should not emit message', async () => {
-        jest.useFakeTimers('modern');
+        jest.useFakeTimers();
         const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
           ok: false,
           status: 404,

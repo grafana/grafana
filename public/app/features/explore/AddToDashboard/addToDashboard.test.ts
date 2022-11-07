@@ -90,12 +90,6 @@ describe('addPanelToDashboard', () => {
           [{ refId: 'A', hide: true }],
           { ...createEmptyQueryResponse(), logsFrames: [new MutableDataFrame({ refId: 'A', fields: [] })] },
         ],
-        [
-          // trace view is not supported in dashboards, we expect to fallback to table panel
-          'If there are trace frames',
-          [{ refId: 'A' }],
-          { ...createEmptyQueryResponse(), traceFrames: [new MutableDataFrame({ refId: 'A', fields: [] })] },
-        ],
       ];
 
       it.each(cases)('%s', async (_, queries, queryResponse) => {
@@ -115,15 +109,13 @@ describe('addPanelToDashboard', () => {
         framesType: string;
         expectedPanel: string;
       };
-      // Note: traceFrames test is "duplicated" in "Defaults to table" tests.
-      // This is intentional as a way to enforce explicit tests for that case whenever in the future we'll
-      // add support for creating traceview panels
       it.each`
-        framesType           | expectedPanel
-        ${'logsFrames'}      | ${'logs'}
-        ${'graphFrames'}     | ${'timeseries'}
-        ${'nodeGraphFrames'} | ${'nodeGraph'}
-        ${'traceFrames'}     | ${'table'}
+        framesType            | expectedPanel
+        ${'logsFrames'}       | ${'logs'}
+        ${'graphFrames'}      | ${'timeseries'}
+        ${'nodeGraphFrames'}  | ${'nodeGraph'}
+        ${'flameGraphFrames'} | ${'flamegraph'}
+        ${'traceFrames'}      | ${'traces'}
       `(
         'Sets visualization to $expectedPanel if there are $frameType frames',
         async ({ framesType, expectedPanel }: TestArgs) => {

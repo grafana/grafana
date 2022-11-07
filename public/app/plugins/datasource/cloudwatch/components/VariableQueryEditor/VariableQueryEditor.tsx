@@ -6,9 +6,10 @@ import { InlineField } from '@grafana/ui';
 import { Dimensions } from '..';
 import { CloudWatchDatasource } from '../../datasource';
 import { useDimensionKeys, useMetrics, useNamespaces, useRegions } from '../../hooks';
-import { migrateVariableQuery } from '../../migrations';
+import { migrateVariableQuery } from '../../migrations/variableQueryMigrations';
 import { CloudWatchJsonData, CloudWatchQuery, VariableQuery, VariableQueryType } from '../../types';
 
+import { MultiFilter } from './MultiFilter';
 import { VariableQueryField } from './VariableQueryField';
 import { VariableTextField } from './VariableTextField';
 
@@ -24,6 +25,7 @@ const queryTypes: Array<{ value: string; label: string }> = [
   { value: VariableQueryType.EC2InstanceAttributes, label: 'EC2 Instance Attributes' },
   { value: VariableQueryType.ResourceArns, label: 'Resource ARNs' },
   { value: VariableQueryType.Statistics, label: 'Statistics' },
+  { value: VariableQueryType.LogGroups, label: 'Log Groups' },
 ];
 
 export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
@@ -33,8 +35,8 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const [regions, regionIsLoading] = useRegions(datasource);
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, region, namespace);
-  const dimensionKeys = useDimensionKeys(datasource, region, namespace, metricName);
-  const keysForDimensionFilter = useDimensionKeys(datasource, region, namespace, metricName, dimensionFilters ?? {});
+  const dimensionKeys = useDimensionKeys(datasource, { region, namespace, metricName });
+  const keysForDimensionFilter = useDimensionKeys(datasource, { region, namespace, metricName, dimensionFilters });
 
   const onRegionChange = async (region: string) => {
     const validatedQuery = await sanitizeQuery({
@@ -63,14 +65,14 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const sanitizeQuery = async (query: VariableQuery) => {
     let { metricName, dimensionKey, dimensionFilters, namespace, region } = query;
     if (metricName) {
-      await datasource.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
+      await datasource.api.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((metric) => metric.value === metricName)) {
           metricName = '';
         }
       });
     }
     if (dimensionKey) {
-      await datasource.getDimensionKeys(namespace, region).then((result: Array<SelectableValue<string>>) => {
+      await datasource.api.getDimensionKeys({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((key) => key.value === dimensionKey)) {
           dimensionKey = '';
           dimensionFilters = {};
@@ -87,6 +89,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
     VariableQueryType.EBSVolumeIDs,
     VariableQueryType.EC2InstanceAttributes,
     VariableQueryType.ResourceArns,
+    VariableQueryType.LogGroups,
   ].includes(parsedQuery.queryType);
   const hasNamespaceField = [
     VariableQueryType.Metrics,
@@ -99,7 +102,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
         value={parsedQuery.queryType}
         options={queryTypes}
         onChange={(value: VariableQueryType) => onQueryChange({ ...parsedQuery, queryType: value })}
-        label="Query Type"
+        label="Query type"
         inputId={`variable-query-type-${query.refId}`}
       />
       {hasRegionField && (
@@ -119,6 +122,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           onChange={(value: string) => onNamespaceChange(value)}
           label="Namespace"
           inputId={`variable-query-namespace-${query.refId}`}
+          allowCustomValue
         />
       )}
       {parsedQuery.queryType === VariableQueryType.DimensionValues && (
@@ -129,17 +133,19 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             onChange={(value: string) => onQueryChange({ ...parsedQuery, metricName: value })}
             label="Metric"
             inputId={`variable-query-metric-${query.refId}`}
+            allowCustomValue
           />
           <VariableQueryField
             value={dimensionKey || null}
             options={dimensionKeys}
             onChange={(value: string) => onQueryChange({ ...parsedQuery, dimensionKey: value })}
-            label="Dimension Key"
+            label="Dimension key"
             inputId={`variable-query-dimension-key-${query.refId}`}
+            allowCustomValue
           />
           <InlineField label="Dimensions" labelWidth={20} tooltip="Dimensions to filter the returned values on">
             <Dimensions
-              query={{ ...parsedQuery, dimensions: parsedQuery.dimensionFilters }}
+              metricStat={{ ...parsedQuery, dimensions: parsedQuery.dimensionFilters }}
               onChange={(dimensions) => {
                 onChange({ ...parsedQuery, dimensionFilters: dimensions });
               }}
@@ -162,34 +168,72 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
         <>
           <VariableTextField
             value={parsedQuery.attributeName}
-            placeholder="attribute name"
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, attributeName: value })}
-            label="Attribute Name"
+            label="Attribute name"
+            interactive={true}
+            tooltip={
+              <>
+                {'Attribute or tag to query on. Tags should be formatted "Tags.<name>". '}
+                <a
+                  href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/#selecting-attributes"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  See the documentation for more details
+                </a>
+              </>
+            }
           />
-          <VariableTextField
-            value={parsedQuery.ec2Filters}
-            tooltip='A JSON object representing dimensions/tags and the values to filter on. Ex. { "filter_name": [ "filter_value" ], "tag:name": [ "*" ] }'
-            placeholder='{"key":["value"]}'
-            onBlur={(value: string) => onQueryChange({ ...parsedQuery, ec2Filters: value })}
+          <InlineField
             label="Filters"
-          />
+            labelWidth={20}
+            tooltip={
+              <>
+                <a
+                  href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/#selecting-attributes"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Pre-defined ec2:DescribeInstances filters/tags
+                </a>
+                {' and the values to filter on. Tags should be formatted tag:<name>.'}
+              </>
+            }
+          >
+            <MultiFilter
+              filters={parsedQuery.ec2Filters}
+              onChange={(filters) => {
+                onChange({ ...parsedQuery, ec2Filters: filters });
+              }}
+              keyPlaceholder="filter/tag"
+            />
+          </InlineField>
         </>
       )}
       {parsedQuery.queryType === VariableQueryType.ResourceArns && (
         <>
           <VariableTextField
             value={parsedQuery.resourceType}
-            placeholder="resource type"
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, resourceType: value })}
-            label="Resource Type"
+            label="Resource type"
           />
-          <VariableTextField
-            value={parsedQuery.tags}
-            placeholder='{"tag":["value"]}'
-            onBlur={(value: string) => onQueryChange({ ...parsedQuery, tags: value })}
-            label="Tags"
-          />
+          <InlineField label="Tags" labelWidth={20} tooltip="Tags to filter the returned values on.">
+            <MultiFilter
+              filters={parsedQuery.tags}
+              onChange={(filters) => {
+                onChange({ ...parsedQuery, tags: filters });
+              }}
+              keyPlaceholder="tag"
+            />
+          </InlineField>
         </>
+      )}
+      {parsedQuery.queryType === VariableQueryType.LogGroups && (
+        <VariableTextField
+          value={query.logGroupPrefix ?? ''}
+          onBlur={(value: string) => onQueryChange({ ...parsedQuery, logGroupPrefix: value })}
+          label="Log group prefix"
+        />
       )}
     </>
   );

@@ -3,33 +3,66 @@ package tests
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	databasestore "github.com/grafana/grafana/pkg/services/dashboards/database"
-	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/require"
 )
 
+type FakeFeatures struct {
+	BigTransactions bool
+}
+
+func (f *FakeFeatures) IsEnabled(feature string) bool {
+	if feature == featuremgmt.FlagAlertingBigTransactions {
+		return f.BigTransactions
+	}
+
+	return false
+}
+
 // SetupTestEnv initializes a store to used by the tests.
-func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *store.DBstore) {
-	t.Helper()
+func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, *store.DBstore) {
+	tb.Helper()
+	origNewGuardian := guardian.New
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+		CanSaveValue:  true,
+		CanViewValue:  true,
+		CanAdminValue: true,
+	})
+	tb.Cleanup(func() {
+		guardian.New = origNewGuardian
+	})
 
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
@@ -39,49 +72,63 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	cfg.UnifiedAlerting.Enabled = new(bool)
 	*cfg.UnifiedAlerting.Enabled = true
 
-	cfg.IsFeatureToggleEnabled = func(key string) bool {
-		// Enable alert provisioning FF when running tests.
-		return key == featuremgmt.FlagAlertProvisioning
-	}
-
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
-	sqlStore := sqlstore.InitTestDB(t)
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-	dashboardStore := databasestore.ProvideDashboardStore(sqlStore)
+	sqlStore := db.InitTestDB(tb)
+	secretsService := secretsManager.SetupTestService(tb, database.ProvideSecretsStore(sqlStore))
+	dashboardStore := databasestore.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures()
-	permissionsServices := acmock.NewPermissionsServicesMock()
+	folderPermissions := acmock.NewMockedPermissionsService()
+	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+	dashboardPermissions := acmock.NewMockedPermissionsService()
 
 	dashboardService := dashboardservice.ProvideDashboardService(
 		cfg, dashboardStore, nil,
-		features, permissionsServices,
-	)
-	folderService := dashboardservice.ProvideFolderService(
-		cfg, dashboardService, dashboardStore, nil,
-		features, permissionsServices, ac, nil,
+		features, folderPermissions, dashboardPermissions, ac,
 	)
 
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
+	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardService, dashboardStore, features, folderPermissions, nil)
+
 	ng, err := ngalert.ProvideService(
-		cfg, nil, routing.NewRouteRegister(), sqlStore,
-		nil, nil, nil, nil, secretsService, nil, m, folderService, ac,
+		cfg, &FakeFeatures{}, nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, nil,
+		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac, annotationstest.NewFakeAnnotationsRepo(),
 	)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 	return ng, &store.DBstore{
-		SQLStore:     ng.SQLStore,
-		BaseInterval: baseInterval * time.Second,
-		Logger:       log.New("ngalert-test"),
+		FeatureToggles: ng.FeatureToggles,
+		SQLStore:       ng.SQLStore,
+		Cfg: setting.UnifiedAlertingSettings{
+			BaseInterval: baseInterval * time.Second,
+		},
+		Logger:           log.New("ngalert-test"),
+		DashboardService: dashboardService,
+		FolderService:    folderService,
 	}
 }
 
 // CreateTestAlertRule creates a dummy alert definition to be used by the tests.
-func CreateTestAlertRule(t *testing.T, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64) *models.AlertRule {
+func CreateTestAlertRule(t testing.TB, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64) *models.AlertRule {
 	return CreateTestAlertRuleWithLabels(t, ctx, dbstore, intervalSeconds, orgID, nil)
 }
 
-func CreateTestAlertRuleWithLabels(t *testing.T, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64, labels map[string]string) *models.AlertRule {
+func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64, labels map[string]string) *models.AlertRule {
 	ruleGroup := fmt.Sprintf("ruleGroup-%s", util.GenerateShortUID())
-	err := dbstore.InsertAlertRules(ctx, []models.AlertRule{
+	folderUID := "namespace"
+	user := &user.SignedInUser{
+		UserID:         1,
+		OrgID:          orgID,
+		OrgRole:        org.RoleAdmin,
+		IsGrafanaAdmin: true,
+	}
+	folder, err := dbstore.FolderService.CreateFolder(ctx, user, orgID, "FOLDER-"+util.GenerateShortUID(), folderUID)
+	if errors.Is(err, dashboards.ErrFolderWithSameUIDExists) || errors.Is(err, dashboards.ErrFolderVersionMismatch) {
+		folder, err = dbstore.FolderService.GetFolderByUID(ctx, user, orgID, folderUID)
+	}
+	require.NoError(t, err)
+
+	_, err = dbstore.InsertAlertRules(ctx, []models.AlertRule{
 		{
 
 			ID:        0,
@@ -105,7 +152,7 @@ func CreateTestAlertRuleWithLabels(t *testing.T, ctx context.Context, dbstore *s
 			Labels:          labels,
 			Annotations:     map[string]string{"testAnnoKey": "testAnnoValue"},
 			IntervalSeconds: intervalSeconds,
-			NamespaceUID:    "namespace",
+			NamespaceUID:    folder.Uid,
 			RuleGroup:       ruleGroup,
 			NoDataState:     models.NoData,
 			ExecErrState:    models.AlertingErrState,
@@ -115,7 +162,7 @@ func CreateTestAlertRuleWithLabels(t *testing.T, ctx context.Context, dbstore *s
 
 	q := models.ListAlertRulesQuery{
 		OrgID:         orgID,
-		NamespaceUIDs: []string{"namespace"},
+		NamespaceUIDs: []string{folder.Uid},
 		RuleGroup:     ruleGroup,
 	}
 	err = dbstore.ListAlertRules(ctx, &q)
@@ -123,6 +170,6 @@ func CreateTestAlertRuleWithLabels(t *testing.T, ctx context.Context, dbstore *s
 	require.NotEmpty(t, q.Result)
 
 	rule := q.Result[0]
-	t.Logf("alert definition: %v with title: %q interval: %d created", rule.GetKey(), rule.Title, rule.IntervalSeconds)
+	t.Logf("alert definition: %v with title: %q interval: %d folder: %s created", rule.GetKey(), rule.Title, rule.IntervalSeconds, folder.Uid)
 	return rule
 }

@@ -14,12 +14,10 @@ describe('AppInsights ConfigEditor', () => {
     typeName: 'Azure',
     access: 'proxy',
     url: '',
-    password: '',
     user: '',
     database: '',
     basicAuth: false,
     basicAuthUser: '',
-    basicAuthPassword: '',
     withCredentials: false,
     isDefault: false,
     jsonData: {},
@@ -44,21 +42,5 @@ describe('AppInsights ConfigEditor', () => {
     render(<ConfigEditor options={options} onOptionsChange={onOptionsChange} />);
 
     expect(screen.queryByText('Azure Application Insights')).not.toBeInTheDocument();
-  });
-
-  it('should render application insights config for data sources using application insights', () => {
-    const options = {
-      ...baseOptions,
-      jsonData: {
-        ...jsonData,
-        appInsightsAppId: 'abc-123',
-      },
-      secureJsonFields: {
-        appInsightsApiKey: true,
-      },
-    };
-    render(<ConfigEditor options={options} onOptionsChange={onOptionsChange} />);
-
-    expect(screen.queryByText('Azure Application Insights')).toBeInTheDocument();
   });
 });

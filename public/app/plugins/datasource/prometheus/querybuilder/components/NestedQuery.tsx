@@ -3,11 +3,10 @@ import React from 'react';
 
 import { GrafanaTheme2, toOption } from '@grafana/data';
 import { EditorRows, FlexItem } from '@grafana/experimental';
-import { IconButton, Select, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, IconButton, Select, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { binaryScalarDefs } from '../binaryScalarOperations';
-import { AutoSizeInput } from '../shared/AutoSizeInput';
 import { PromVisualQueryBinary } from '../types';
 
 import { PromQueryBuilder } from './PromQueryBuilder';
@@ -19,9 +18,11 @@ export interface Props {
   onChange: (index: number, update: PromVisualQueryBinary) => void;
   onRemove: (index: number) => void;
   onRunQuery: () => void;
+  showExplain: boolean;
 }
 
-export const NestedQuery = React.memo<Props>(({ nestedQuery, index, datasource, onChange, onRemove, onRunQuery }) => {
+export const NestedQuery = React.memo<Props>((props) => {
+  const { nestedQuery, index, datasource, onChange, onRemove, onRunQuery, showExplain } = props;
   const styles = useStyles2(getStyles);
 
   return (
@@ -75,9 +76,9 @@ export const NestedQuery = React.memo<Props>(({ nestedQuery, index, datasource, 
       <div className={styles.body}>
         <EditorRows>
           <PromQueryBuilder
+            showExplain={showExplain}
             query={nestedQuery.query}
             datasource={datasource}
-            nested={true}
             onRunQuery={onRunQuery}
             onChange={(update) => {
               onChange(index, { ...nestedQuery, query: update });

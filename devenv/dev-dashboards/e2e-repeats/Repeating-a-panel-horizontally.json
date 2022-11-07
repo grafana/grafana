@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -21,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "iteration": 1640181116069,
+  "id": 95,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -102,7 +105,7 @@
       "type": "timeseries"
     }
   ],
-  "schemaVersion": 34,
+  "schemaVersion": 36,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -199,6 +202,6 @@
   "timezone": "utc",
   "title": "Repeating a panel horizontally",
   "uid": "WVpf2jp7z",
-  "version": 3,
+  "version": 1,
   "weekStart": ""
 }

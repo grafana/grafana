@@ -1,9 +1,7 @@
 package loki
 
 import (
-	"bytes"
 	"context"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,9 +19,9 @@ import (
 // but i wanted to test for all of them, to be sure.
 
 func TestSuccessResponse(t *testing.T) {
-	matrixQuery := lokiQuery{Expr: "up(ALERTS)", Step: time.Second * 42, QueryType: QueryTypeRange, Direction: DirectionBackward}
-	vectorQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeInstant, Direction: DirectionBackward}
-	streamsQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeRange, Direction: DirectionBackward}
+	matrixQuery := lokiQuery{Expr: "up(ALERTS)", Step: time.Second * 42, QueryType: QueryTypeRange, Direction: DirectionBackward, RefID: "mq"}
+	vectorQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeInstant, Direction: DirectionBackward, RefID: "vq"}
+	streamsQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeRange, Direction: DirectionBackward, RefID: "sq"}
 
 	tt := []struct {
 		name     string
@@ -49,26 +46,29 @@ func TestSuccessResponse(t *testing.T) {
 		{name: "parse a vector response with special values", filepath: "vector_special_values", query: vectorQuery},
 
 		{name: "parse a simple streams response", filepath: "streams_simple", query: streamsQuery},
+
+		{name: "parse a streams response with parse errors", filepath: "streams_parse_errors", query: streamsQuery},
+
+		{name: "parse an empty response", filepath: "empty", query: matrixQuery},
 	}
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
 			responseFileName := filepath.Join("testdata", test.filepath+".json")
-			goldenFileName := filepath.Join("testdata", test.filepath+".golden.txt")
+			goldenFileName := test.filepath + ".golden"
 
+			//nolint:gosec
 			bytes, err := os.ReadFile(responseFileName)
 			require.NoError(t, err)
 
-			frames, err := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes), &test.query)
+			frames, err := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes, nil), &test.query)
 			require.NoError(t, err)
 
 			dr := &backend.DataResponse{
 				Frames: frames,
 				Error:  err,
 			}
-
-			err = experimental.CheckGoldenDataResponse(goldenFileName, dr, true)
-			require.NoError(t, err)
+			experimental.CheckGoldenJSONResponse(t, "testdata", goldenFileName, dr, true)
 		})
 	}
 }
@@ -77,8 +77,7 @@ func TestErrorResponse(t *testing.T) {
 	// NOTE: when there is an error-response, it comes with
 	// HTTP code 400, and the format seems to change between versions:
 	// 2.3.x: content-type=text/plain, content is plaintext
-	// 2.4.x: content-type=application/json, content is plaintext: https://github.com/grafana/loki/issues/4844
-	// main-branch: content-type=application/json, content is JSON
+	// 2.4.x+: content-type=application/json, content is plaintext: https://github.com/grafana/loki/issues/4844
 	// we should always be able to to return some kind of error message
 	tt := []struct {
 		name         string
@@ -98,7 +97,7 @@ func TestErrorResponse(t *testing.T) {
 			errorMessage: "parse error at line 1, col 8: something is wrong",
 		},
 		{
-			name:         "parse a non-json error body with json content type (loki 2.4.0,2.4.1,2.4.2)",
+			name:         "parse a non-json error body with json content type",
 			body:         []byte("parse error at line 1, col 8: something is wrong"),
 			contentType:  "application/json; charset=UTF-8",
 			errorMessage: "parse error at line 1, col 8: something is wrong",
@@ -119,35 +118,11 @@ func TestErrorResponse(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward})
+			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body, nil), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward})
 
 			require.Len(t, frames, 0)
 			require.Error(t, err)
 			require.EqualError(t, err, test.errorMessage)
 		})
 	}
-}
-
-type mockedRoundTripper struct {
-	statusCode    int
-	responseBytes []byte
-	contentType   string
-}
-
-func (mockedRT *mockedRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	header := http.Header{}
-	header.Add("Content-Type", mockedRT.contentType)
-	return &http.Response{
-		StatusCode: mockedRT.statusCode,
-		Header:     header,
-		Body:       ioutil.NopCloser(bytes.NewReader(mockedRT.responseBytes)),
-	}, nil
-}
-
-func makeMockedAPI(statusCode int, contentType string, responseBytes []byte) *LokiAPI {
-	client := http.Client{
-		Transport: &mockedRoundTripper{statusCode: statusCode, contentType: contentType, responseBytes: responseBytes},
-	}
-
-	return newLokiAPI(&client, "http://localhost:9999", log.New("test"))
 }

@@ -1,4 +1,4 @@
-import { ArrayVector, createTheme, FieldType, ThresholdsMode, toDataFrame } from '@grafana/data';
+import { ArrayVector, createTheme, FieldType, ThresholdsMode, TimeRange, toDataFrame, dateTime } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
 
 import {
@@ -12,6 +12,11 @@ import {
 const theme = createTheme();
 
 describe('prepare timeline graph', () => {
+  const timeRange: TimeRange = {
+    from: dateTime(1),
+    to: dateTime(3),
+    raw: {} as any,
+  };
   it('errors with no time fields', () => {
     const frames = [
       toDataFrame({
@@ -21,7 +26,7 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, true, theme);
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
     expect(info.warn).toEqual('Data does not have a time field');
   });
 
@@ -34,7 +39,7 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, true, theme);
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
     expect(info.warn).toEqual('No graphable fields');
   });
 
@@ -47,7 +52,7 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, true, theme);
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
     expect(info.warn).toBeUndefined();
 
     const out = info.frames![0];
@@ -66,6 +71,18 @@ describe('prepare timeline graph', () => {
         3,
       ]
     `);
+  });
+  it('should try to sort time fields', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'a', type: FieldType.time, values: [4, 3, 1, 2] },
+          { name: 'b', values: [1, 1, 2, 2] },
+        ],
+      }),
+    ];
+    const result = prepareTimelineFields(frames, true, timeRange, theme);
+    expect(result.frames?.[0].fields[0].values.toArray()).toEqual([1, 2, 3, 4]);
   });
 });
 

@@ -1,8 +1,6 @@
 package api
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -11,7 +9,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -20,36 +17,35 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 type TestingApiSrv struct {
 	*AlertingProxy
-	ExpressionService *expr.Service
-	DatasourceCache   datasources.CacheService
-	log               log.Logger
-	accessControl     accesscontrol.AccessControl
-	evaluator         eval.Evaluator
+	DatasourceCache datasources.CacheService
+	log             log.Logger
+	accessControl   accesscontrol.AccessControl
+	evaluator       eval.EvaluatorFactory
 }
 
 func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
 	if body.Type() != apimodels.GrafanaBackend || body.GrafanaManagedCondition == nil {
-		return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
+		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.GrafanaBackend, body.Type().String()))
 	}
 
 	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: body.GrafanaManagedCondition.Data}, func(evaluator accesscontrol.Evaluator) bool {
 		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
 	}) {
-		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization), "")
+		return errorToResponse(fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization))
 	}
 
 	evalCond := ngmodels.Condition{
 		Condition: body.GrafanaManagedCondition.Condition,
-		OrgID:     c.SignedInUser.OrgId,
 		Data:      body.GrafanaManagedCondition.Data,
 	}
+	ctx := eval.Context(c.Req.Context(), c.SignedInUser)
 
-	if err := validateCondition(c.Req.Context(), evalCond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
+	conditionEval, err := srv.evaluator.Create(ctx, evalCond)
+	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "invalid condition")
 	}
 
@@ -58,9 +54,9 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 		now = timeNow()
 	}
 
-	evalResults, err := srv.evaluator.ConditionEval(&evalCond, now, srv.ExpressionService)
+	evalResults, err := conditionEval.Evaluate(c.Req.Context(), now)
 	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate conditions")
+		return ErrResp(500, err, "Failed to evaluate the rule")
 	}
 
 	frame := evalResults.AsDataFrame()
@@ -69,27 +65,23 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 	})
 }
 
-func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
-	datasourceID := web.Params(c.Req)[":DatasourceID"]
+func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload, datasourceUID string) response.Response {
 	if body.Type() != apimodels.LoTexRulerBackend {
-		return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
+		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.LoTexRulerBackend, body.Type().String()))
 	}
-
+	ds, err := getDatasourceByUID(c, srv.DatasourceCache, apimodels.LoTexRulerBackend)
+	if err != nil {
+		return errorToResponse(err)
+	}
 	var path string
-	if datasourceID, err := strconv.ParseInt(datasourceID, 10, 64); err == nil {
-		ds, err := srv.DatasourceCache.GetDatasource(context.Background(), datasourceID, c.SignedInUser, c.SkipCache)
-		if err != nil {
-			return ErrResp(http.StatusInternalServerError, err, "failed to get datasource")
-		}
-
-		switch ds.Type {
-		case "loki":
-			path = "loki/api/v1/query"
-		case "prometheus":
-			path = "api/v1/query"
-		default:
-			return ErrResp(http.StatusBadRequest, fmt.Errorf("unexpected datasource type %s", ds.Type), "")
-		}
+	switch ds.Type {
+	case "loki":
+		path = "loki/api/v1/query"
+	case "prometheus":
+		path = "api/v1/query"
+	default:
+		// this should not happen because getDatasourceByUID would not return the data source
+		return errorToResponse(unexpectedDatasourceTypeError(ds.Type, "loki, prometheus"))
 	}
 
 	t := timeNow()
@@ -112,24 +104,34 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodel
 }
 
 func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.EvalQueriesPayload) response.Response {
-	now := cmd.Now
-	if now.IsZero() {
-		now = timeNow()
-	}
-
 	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: cmd.Data}, func(evaluator accesscontrol.Evaluator) bool {
 		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
 	}) {
 		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization), "")
 	}
 
-	if _, err := validateQueriesAndExpressions(c.Req.Context(), cmd.Data, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
-		return ErrResp(http.StatusBadRequest, err, "invalid queries or expressions")
+	cond := ngmodels.Condition{
+		Condition: "",
+		Data:      cmd.Data,
+	}
+	if len(cmd.Data) > 0 {
+		cond.Condition = cmd.Data[0].RefID
+	}
+	evaluator, err := srv.evaluator.Create(eval.Context(c.Req.Context(), c.SignedInUser), cond)
+
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "Failed to build evaluator for queries and expressions")
 	}
 
-	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now, srv.ExpressionService)
+	now := cmd.Now
+	if now.IsZero() {
+		now = timeNow()
+	}
+
+	evalResults, err := evaluator.EvaluateRaw(c.Req.Context(), now)
+
 	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate queries and expressions")
+		return ErrResp(http.StatusInternalServerError, err, "Failed to evaluate queries and expressions")
 	}
 
 	return response.JSONStreaming(http.StatusOK, evalResults)

@@ -3,7 +3,6 @@ import React, { FC, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { SELECT_WIDTH } from '../constants';
 import { getAlignmentPickerData } from '../functions';
 import { MetricQuery } from '../types';
 
@@ -23,8 +22,6 @@ export const AlignmentFunction: FC<Props> = ({ inputId, query, templateVariableO
 
   return (
     <Select
-      menuShouldPortal
-      width={SELECT_WIDTH}
       onChange={({ value }) => onChange({ ...query, perSeriesAligner: value! })}
       value={[...alignOptions, ...templateVariableOptions].find((s) => s.value === perSeriesAligner)}
       options={[
@@ -40,6 +37,7 @@ export const AlignmentFunction: FC<Props> = ({ inputId, query, templateVariableO
       ]}
       placeholder="Select Alignment"
       inputId={inputId}
-    ></Select>
+      menuPlacement="top"
+    />
   );
 };

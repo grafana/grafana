@@ -1,6 +1,7 @@
 import { map } from 'lodash';
 
 import { rangeUtil } from '@grafana/data';
+import { VariableWithMultiSupport } from 'app/features/variables/types';
 
 import TimegrainConverter from '../time_grain_converter';
 import { AzureMonitorOption } from '../types';
@@ -40,9 +41,12 @@ export const routeNames = {
   resourceGraph: 'resourcegraph',
 };
 
-export function interpolateVariable(value: any, variable: { multi: any; includeAll: any }) {
+export function interpolateVariable(value: any, variable: VariableWithMultiSupport) {
   if (typeof value === 'string') {
-    if (variable.multi || variable.includeAll) {
+    // When enabling multiple responses, quote the value to mimic the array result below
+    // even if only one response is selected. This does not apply if only the "include all"
+    // option is enabled but with a custom value.
+    if (variable.multi || (variable.includeAll && !variable.allValue)) {
       return "'" + value + "'";
     } else {
       return value;

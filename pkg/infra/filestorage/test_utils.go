@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package filestorage
 
 import (
@@ -35,12 +32,14 @@ type cmdCreateFolder struct {
 }
 
 type cmdDeleteFolder struct {
-	path  string
-	error *cmdErrorOutput
+	path    string
+	error   *cmdErrorOutput
+	options *DeleteFolderOptions
 }
 
 type queryGetInput struct {
-	path string
+	path    string
+	options *GetFileOptions
 }
 
 type fileNameCheck struct {
@@ -137,7 +136,6 @@ type queryListFiles struct {
 
 type queryListFoldersInput struct {
 	path    string
-	paging  *Paging
 	options *ListOptions
 }
 
@@ -179,7 +177,7 @@ func handleCommand(t *testing.T, ctx context.Context, cmd interface{}, cmdName s
 		}
 		expectedErr = c.error
 	case cmdDeleteFolder:
-		err = fs.DeleteFolder(ctx, c.path)
+		err = fs.DeleteFolder(ctx, c.path, c.options)
 		if c.error == nil {
 			require.NoError(t, err, "%s: should be able to delete %s", cmdName, c.path)
 		}
@@ -200,7 +198,7 @@ func handleCommand(t *testing.T, ctx context.Context, cmd interface{}, cmdName s
 }
 
 func runChecks(t *testing.T, stepName string, path string, output interface{}, checks []interface{}) {
-	if checks == nil || len(checks) == 0 {
+	if len(checks) == 0 {
 		return
 	}
 
@@ -235,17 +233,17 @@ func runChecks(t *testing.T, stepName string, path string, output interface{}, c
 		for _, check := range checks {
 			runFileMetadataCheck(o, check, interfaceName(check))
 		}
-	case ListResponse:
+	case *ListResponse:
 		for _, check := range checks {
 			c := check
 			checkName := interfaceName(c)
 			switch c := check.(type) {
 			case listSizeCheck:
-				require.Equal(t, c.v, len(o.Files), "%s %s", stepName, path)
+				require.Equal(t, c.v, len(o.Files), "%s %s\nReceived %s", stepName, path, o)
 			case listHasMoreCheck:
-				require.Equal(t, c.v, o.HasMore, "%s %s", stepName, path)
+				require.Equal(t, c.v, o.HasMore, "%s %s\nReceived %s", stepName, path, o)
 			case listLastPathCheck:
-				require.Equal(t, c.v, o.LastPath, "%s %s", stepName, path)
+				require.Equal(t, c.v, o.LastPath, "%s %s\nReceived %s", stepName, path, o)
 			default:
 				t.Fatalf("unrecognized list check %s", checkName)
 			}
@@ -254,7 +252,6 @@ func runChecks(t *testing.T, stepName string, path string, output interface{}, c
 	default:
 		t.Fatalf("unrecognized output %s", interfaceName(output))
 	}
-
 }
 
 func formatPathStructure(files []*File) string {
@@ -274,15 +271,18 @@ func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName
 	switch q := query.(type) {
 	case queryGet:
 		inputPath := q.input.path
-		file, err := fs.Get(ctx, inputPath)
+		options := q.input.options
+		file, fileFound, err := fs.Get(ctx, inputPath, options)
 		require.NoError(t, err, "%s: should be able to get file %s", queryName, inputPath)
 
 		if q.checks != nil && len(q.checks) > 0 {
 			require.NotNil(t, file, "%s %s", queryName, inputPath)
+			require.True(t, fileFound, "%s %s", queryName, inputPath)
 			require.Equal(t, strings.ToLower(inputPath), strings.ToLower(file.FullPath), "%s %s", queryName, inputPath)
 			runChecks(t, queryName, inputPath, file, q.checks)
 		} else {
 			require.Nil(t, file, "%s %s", queryName, inputPath)
+			require.False(t, fileFound, "%s %s", queryName, inputPath)
 		}
 	case queryListFiles:
 		inputPath := q.input.path
@@ -290,7 +290,7 @@ func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName
 		require.NoError(t, err, "%s: should be able to list files in %s", queryName, inputPath)
 		require.NotNil(t, resp)
 		if q.list != nil && len(q.list) > 0 {
-			runChecks(t, queryName, inputPath, *resp, q.list)
+			runChecks(t, queryName, inputPath, resp, q.list)
 		} else {
 			require.NotNil(t, resp, "%s %s", queryName, inputPath)
 			require.Equal(t, false, resp.HasMore, "%s %s", queryName, inputPath)
@@ -360,5 +360,4 @@ func executeTestStep(t *testing.T, ctx context.Context, step interface{}, stepNu
 	default:
 		t.Fatalf("unrecognized step %s", name)
 	}
-
 }

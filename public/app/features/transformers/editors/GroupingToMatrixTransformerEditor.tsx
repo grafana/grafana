@@ -23,7 +23,7 @@ export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<Grou
     (value: SelectableValue<string>) => {
       onChange({
         ...options,
-        columnField: value.value,
+        columnField: value?.value,
       });
     },
     [onChange, options]
@@ -33,7 +33,7 @@ export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<Grou
     (value: SelectableValue<string>) => {
       onChange({
         ...options,
-        rowField: value.value,
+        rowField: value?.value,
       });
     },
     [onChange, options]
@@ -43,7 +43,7 @@ export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<Grou
     (value: SelectableValue<string>) => {
       onChange({
         ...options,
-        valueField: value.value,
+        valueField: value?.value,
       });
     },
     [onChange, options]
@@ -53,25 +53,13 @@ export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<Grou
     <>
       <InlineFieldRow>
         <InlineField label="Column" labelWidth={8}>
-          <Select
-            menuShouldPortal
-            options={fieldNames}
-            value={options.columnField}
-            onChange={onSelectColumn}
-            isClearable
-          />
+          <Select options={fieldNames} value={options.columnField} onChange={onSelectColumn} isClearable />
         </InlineField>
         <InlineField label="Row" labelWidth={8}>
-          <Select menuShouldPortal options={fieldNames} value={options.rowField} onChange={onSelectRow} isClearable />
+          <Select options={fieldNames} value={options.rowField} onChange={onSelectRow} isClearable />
         </InlineField>
         <InlineField label="Cell Value" labelWidth={10}>
-          <Select
-            menuShouldPortal
-            options={fieldNames}
-            value={options.valueField}
-            onChange={onSelectValue}
-            isClearable
-          />
+          <Select options={fieldNames} value={options.valueField} onChange={onSelectValue} isClearable />
         </InlineField>
       </InlineFieldRow>
     </>

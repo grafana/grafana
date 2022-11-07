@@ -61,17 +61,19 @@ type LibraryElementWithMeta struct {
 
 // LibraryElementDTO is the frontend DTO for entities.
 type LibraryElementDTO struct {
-	ID          int64                 `json:"id"`
-	OrgID       int64                 `json:"orgId"`
-	FolderID    int64                 `json:"folderId"`
-	UID         string                `json:"uid"`
-	Name        string                `json:"name"`
-	Kind        int64                 `json:"kind"`
-	Type        string                `json:"type"`
-	Description string                `json:"description"`
-	Model       json.RawMessage       `json:"model"`
-	Version     int64                 `json:"version"`
-	Meta        LibraryElementDTOMeta `json:"meta"`
+	ID            int64                 `json:"id"`
+	OrgID         int64                 `json:"orgId"`
+	FolderID      int64                 `json:"folderId"`
+	FolderUID     string                `json:"folderUid"`
+	UID           string                `json:"uid"`
+	Name          string                `json:"name"`
+	Kind          int64                 `json:"kind"`
+	Type          string                `json:"type"`
+	Description   string                `json:"description"`
+	Model         json.RawMessage       `json:"model"`
+	Version       int64                 `json:"version"`
+	Meta          LibraryElementDTOMeta `json:"meta"`
+	SchemaVersion int64                 `json:"schemaVersion,omitempty"`
 }
 
 // LibraryElementSearchResult is the search result for entities.
@@ -114,10 +116,11 @@ type libraryElementConnection struct {
 
 // libraryElementConnectionWithMeta is the model for library element connections with meta.
 type libraryElementConnectionWithMeta struct {
-	ID             int64 `xorm:"pk autoincr 'id'"`
-	ElementID      int64 `xorm:"element_id"`
-	Kind           int64 `xorm:"kind"`
-	ConnectionID   int64 `xorm:"connection_id"`
+	ID             int64  `xorm:"pk autoincr 'id'"`
+	ElementID      int64  `xorm:"element_id"`
+	Kind           int64  `xorm:"kind"`
+	ConnectionID   int64  `xorm:"connection_id"`
+	ConnectionUID  string `xorm:"connection_uid"`
 	Created        time.Time
 	CreatedBy      int64
 	CreatedByName  string
@@ -126,12 +129,13 @@ type libraryElementConnectionWithMeta struct {
 
 // LibraryElementConnectionDTO is the frontend DTO for element connections.
 type LibraryElementConnectionDTO struct {
-	ID           int64                     `json:"id"`
-	Kind         int64                     `json:"kind"`
-	ElementID    int64                     `json:"elementId"`
-	ConnectionID int64                     `json:"connectionId"`
-	Created      time.Time                 `json:"created"`
-	CreatedBy    LibraryElementDTOMetaUser `json:"createdBy"`
+	ID            int64                     `json:"id"`
+	Kind          int64                     `json:"kind"`
+	ElementID     int64                     `json:"elementId"`
+	ConnectionID  int64                     `json:"connectionId"`
+	ConnectionUID string                    `json:"connectionUid"`
+	Created       time.Time                 `json:"created"`
+	CreatedBy     LibraryElementDTOMetaUser `json:"createdBy"`
 }
 
 var (
@@ -162,6 +166,8 @@ var (
 type CreateLibraryElementCommand struct {
 	// ID of the folder where the library element is stored.
 	FolderID int64 `json:"folderId"`
+	// UID of the folder where the library element is stored.
+	FolderUID *string `json:"folderUid"`
 	// Name of the library element.
 	Name string `json:"name"`
 	// The JSON model for the library element.
@@ -181,6 +187,8 @@ type CreateLibraryElementCommand struct {
 type PatchLibraryElementCommand struct {
 	// ID of the folder where the library element is stored.
 	FolderID int64 `json:"folderId" binding:"Default(-1)"`
+	// UID of the folder where the library element is stored.
+	FolderUID *string `json:"folderUid"`
 	// Name of the library element.
 	Name string `json:"name"`
 	// The JSON model for the library element.
@@ -199,14 +207,15 @@ type PatchLibraryElementCommand struct {
 
 // searchLibraryElementsQuery is the query used for searching for Elements
 type searchLibraryElementsQuery struct {
-	perPage       int
-	page          int
-	searchString  string
-	sortDirection string
-	kind          int
-	typeFilter    string
-	excludeUID    string
-	folderFilter  string
+	perPage          int
+	page             int
+	searchString     string
+	sortDirection    string
+	kind             int
+	typeFilter       string
+	excludeUID       string
+	folderFilter     string
+	folderFilterUIDs string
 }
 
 // LibraryElementResponse is a response struct for LibraryElementDTO.

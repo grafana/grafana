@@ -48,7 +48,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
   }
 
   request = (url: string, params?: any): Promise<TSDBResponse> => {
-    return lastValueFrom(this.datasource.awsRequest(url, params));
+    return lastValueFrom(this.datasource.logsQueryRunner.awsRequest(url, params));
   };
 
   start = () => {
@@ -145,7 +145,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     }
 
     const results = await Promise.all(
-      logGroups.map((logGroup) => this.datasource.getLogGroupFields({ logGroupName: logGroup, region }))
+      logGroups.map((logGroup) => this.datasource.logsQueryRunner.getLogGroupFields({ logGroupName: logGroup, region }))
     );
 
     const fields = [

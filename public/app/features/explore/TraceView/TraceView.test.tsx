@@ -1,7 +1,8 @@
+import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 import { TraceData, TraceSpanData } from '@jaegertracing/jaeger-ui-components/src/types/trace';
 import { render, prettyDOM, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import React, { createRef } from 'react';
 import { Provider } from 'react-redux';
 
 import { DataFrame, MutableDataFrame, getDefaultTimeRange, LoadingState } from '@grafana/data';
@@ -20,6 +21,7 @@ function getTraceView(frames: DataFrame[]) {
     series: [],
     timeRange: getDefaultTimeRange(),
   };
+  const topOfViewRef = createRef<HTMLDivElement>();
 
   const traceView = (
     <Provider store={store}>
@@ -30,13 +32,10 @@ function getTraceView(frames: DataFrame[]) {
         traceProp={transformDataFrames(frames[0])!}
         search=""
         focusedSpanIdForSearch=""
-        expandOne={() => {}}
-        expandAll={() => {}}
-        collapseOne={() => {}}
-        collapseAll={() => {}}
-        childrenToggle={() => {}}
-        childrenHiddenIDs={new Set()}
         queryResponse={mockPanelData}
+        datasource={undefined}
+        topOfViewRef={topOfViewRef}
+        topOfViewRefType={TopOfViewRefType.Explore}
       />
     </Provider>
   );
@@ -85,28 +84,28 @@ describe('TraceView', () => {
     expect(prettyDOM(baseElement)).toEqual(prettyDOM(baseElementOld));
   });
 
-  it('does not render anything on missing trace', () => {
+  it('only renders noDataMsg on missing trace', () => {
     // Simulating Explore's access to empty response data
     const { container } = renderTraceView([]);
-    expect(container.hasChildNodes()).toBeFalsy();
+    expect(container.childNodes.length === 1).toBeTruthy();
   });
 
   it('toggles detailState', async () => {
     renderTraceViewNew();
-    expect(screen.queryByText(/Tags/)).toBeFalsy();
-    const spanView = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[0];
+    expect(screen.queryByText(/Attributes/)).toBeFalsy();
+    const spanView = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
     await userEvent.click(spanView);
-    expect(screen.queryByText(/Tags/)).toBeTruthy();
+    expect(screen.queryByText(/Attributes/)).toBeTruthy();
 
     await userEvent.click(spanView);
-    screen.debug(screen.queryAllByText(/Tags/));
-    expect(screen.queryByText(/Tags/)).toBeFalsy();
+    screen.debug(screen.queryAllByText(/Attributes/));
+    expect(screen.queryByText(/Attributes/)).toBeFalsy();
   });
 
   it('shows timeline ticks', () => {
     renderTraceViewNew();
     function ticks() {
-      return screen.getByText('', { selector: 'div[data-test-id="TimelineHeaderRow"]' }).children[1].children[1]
+      return screen.getByText('', { selector: 'div[data-testid="TimelineHeaderRow"]' }).children[1].children[1]
         .textContent;
     }
     expect(ticks()).toBe('0μs274.5μs549μs823.5μs1.1ms');
@@ -115,38 +114,38 @@ describe('TraceView', () => {
   it('correctly shows processes for each span', async () => {
     renderTraceView();
     let table: HTMLElement;
-    expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
+    expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(3);
 
-    const firstSpan = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[0];
+    const firstSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
     await userEvent.click(firstSpan);
-    await userEvent.click(screen.getByText(/Process/));
-    table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
+    await userEvent.click(screen.getByText(/Resource/));
+    table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-1');
     await userEvent.click(firstSpan);
 
-    const secondSpan = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[1];
+    const secondSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[1];
     await userEvent.click(secondSpan);
-    await userEvent.click(screen.getByText(/Process/));
-    table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
+    await userEvent.click(screen.getByText(/Resource/));
+    table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-2');
     await userEvent.click(secondSpan);
 
-    const thirdSpan = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[2];
+    const thirdSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[2];
     await userEvent.click(thirdSpan);
-    await userEvent.click(screen.getByText(/Process/));
-    table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
+    await userEvent.click(screen.getByText(/Resource/));
+    table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-3');
   });
 
   it('resets detail view for new trace with the identical spanID', async () => {
     const { rerender } = render(getTraceView([frameOld]));
-    const span = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[2];
+    const span = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[2];
     await userEvent.click(span);
     //Process is in detail view
-    expect(screen.getByText(/Process/)).toBeInTheDocument();
+    expect(screen.getByText(/Resource/)).toBeInTheDocument();
 
     rerender(getTraceView([frameNew]));
-    expect(screen.queryByText(/Process/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Resource/)).not.toBeInTheDocument();
   });
 });
 

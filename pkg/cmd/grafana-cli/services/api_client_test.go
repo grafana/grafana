@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -19,7 +18,7 @@ func TestHandleResponse(t *testing.T) {
 		resp := makeResponse(t, 200, "test")
 		bodyReader, err := handleResponse(resp)
 		require.NoError(t, err)
-		body, err := ioutil.ReadAll(bodyReader)
+		body, err := io.ReadAll(bodyReader)
 		require.NoError(t, err)
 		assert.Equal(t, "test", string(body))
 	})
@@ -81,7 +80,7 @@ func makeResponse(t *testing.T, status int, body string) *http.Response {
 func makeBody(t *testing.T, body string) io.ReadCloser {
 	t.Helper()
 
-	reader := ioutil.NopCloser(bytes.NewReader([]byte(body)))
+	reader := io.NopCloser(bytes.NewReader([]byte(body)))
 	t.Cleanup(func() {
 		err := reader.Close()
 		assert.NoError(t, err)

@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import classNames from 'classnames';
 import React, { useState } from 'react';
+import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Spinner, TagList, useTheme2 } from '@grafana/ui';
@@ -15,9 +16,10 @@ export interface Props {
   imageWidth: number;
   item: DashboardSectionItem;
   lastUpdated?: string | null;
+  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
-export function SearchCardExpanded({ className, imageHeight, imageWidth, item, lastUpdated }: Props) {
+export function SearchCardExpanded({ className, imageHeight, imageWidth, item, lastUpdated, onClick }: Props) {
   const theme = useTheme2();
   const [hasImage, setHasImage] = useState(true);
   const imageSrc = getThumbnailURL(item.uid!, theme.isLight);
@@ -26,11 +28,12 @@ export function SearchCardExpanded({ className, imageHeight, imageWidth, item, l
   const folderTitle = item.folderTitle || 'General';
 
   return (
-    <a className={classNames(className, styles.card)} key={item.uid} href={item.url}>
+    <a className={classNames(className, styles.card)} key={item.uid} href={item.url} onClick={onClick}>
       <div className={styles.imageContainer}>
         {hasImage ? (
           <img
             loading="lazy"
+            alt="Dashboard preview"
             className={styles.image}
             src={imageSrc}
             onLoad={() => setHasImage(true)}
@@ -38,7 +41,11 @@ export function SearchCardExpanded({ className, imageHeight, imageWidth, item, l
           />
         ) : (
           <div className={styles.imagePlaceholder}>
-            <Icon name="apps" size="xl" />
+            {item.icon ? (
+              <SVG src={item.icon} width={36} height={36} title={item.title} />
+            ) : (
+              <Icon name="apps" size="xl" />
+            )}
           </div>
         )}
       </div>

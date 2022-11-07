@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -10,6 +9,7 @@ import { parseMatchers } from 'app/features/alerting/unified/utils/alertmanager'
 import { NOTIFICATIONS_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
 import { initialAsyncRequestState } from 'app/features/alerting/unified/utils/redux';
 import { AlertmanagerGroup, Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
 import { AlertGroup } from './AlertGroup';
 import { AlertGroupPanelOptions } from './types';

@@ -62,7 +62,6 @@ export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any, Gazet
   return (
     <>
       <Select
-        menuShouldPortal
         value={current}
         options={options}
         onChange={(v) => onChange(v.value)}

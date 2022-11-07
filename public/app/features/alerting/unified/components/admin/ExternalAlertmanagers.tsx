@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
+  Alert,
   Button,
   ConfirmModal,
   Field,
@@ -15,21 +15,20 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { StoreState } from 'app/types/store';
+import { loadDataSources } from 'app/features/datasources/state/actions';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
-import { useExternalAmSelector } from '../../hooks/useExternalAmSelector';
-import {
-  addExternalAlertmanagersAction,
-  fetchExternalAlertmanagersAction,
-  fetchExternalAlertmanagersConfigAction,
-} from '../../state/actions';
+import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { useExternalAmSelector, useExternalDataSourceAlertmanagers } from '../../hooks/useExternalAmSelector';
 
 import { AddAlertManagerModal } from './AddAlertManagerModal';
+import { ExternalAlertmanagerDataSources } from './ExternalAlertmanagerDataSources';
 
-const alertmanagerChoices = [
-  { value: 'internal', label: 'Only Internal' },
-  { value: 'external', label: 'Only External' },
-  { value: 'all', label: 'Both internal and external' },
+const alertmanagerChoices: Array<SelectableValue<AlertmanagerChoice>> = [
+  { value: AlertmanagerChoice.Internal, label: 'Only Internal' },
+  { value: AlertmanagerChoice.External, label: 'Only External' },
+  { value: AlertmanagerChoice.All, label: 'Both internal and external' },
 ];
 
 export const ExternalAlertmanagers = () => {
@@ -39,19 +38,25 @@ export const ExternalAlertmanagers = () => {
   const [deleteModalState, setDeleteModalState] = useState({ open: false, index: 0 });
 
   const externalAlertManagers = useExternalAmSelector();
-  const alertmanagersChoice = useSelector(
-    (state: StoreState) => state.unifiedAlerting.externalAlertmanagers.alertmanagerConfig.result?.alertmanagersChoice
-  );
+  const externalDsAlertManagers = useExternalDataSourceAlertmanagers();
+
+  const {
+    useSaveExternalAlertmanagersConfigMutation,
+    useGetExternalAlertmanagerConfigQuery,
+    useGetExternalAlertmanagersQuery,
+  } = alertmanagerApi;
+
+  const [saveExternalAlertManagers] = useSaveExternalAlertmanagersConfigMutation();
+  const { currentData: externalAlertmanagerConfig } = useGetExternalAlertmanagerConfigQuery();
+
+  // Just to refresh the status periodically
+  useGetExternalAlertmanagersQuery(undefined, { pollingInterval: 5000 });
+
+  const alertmanagersChoice = externalAlertmanagerConfig?.alertmanagersChoice;
   const theme = useTheme2();
 
   useEffect(() => {
-    dispatch(fetchExternalAlertmanagersAction());
-    dispatch(fetchExternalAlertmanagersConfigAction());
-    const interval = setInterval(() => dispatch(fetchExternalAlertmanagersAction()), 5000);
-
-    return () => {
-      clearInterval(interval);
-    };
+    dispatch(loadDataSources());
   }, [dispatch]);
 
   const onDelete = useCallback(
@@ -62,12 +67,15 @@ export const ExternalAlertmanagers = () => {
         .map((am) => {
           return am.url;
         });
-      dispatch(
-        addExternalAlertmanagersAction({ alertmanagers: newList, alertmanagersChoice: alertmanagersChoice ?? 'all' })
-      );
+
+      saveExternalAlertManagers({
+        alertmanagers: newList,
+        alertmanagersChoice: alertmanagersChoice ?? AlertmanagerChoice.All,
+      });
+
       setDeleteModalState({ open: false, index: 0 });
     },
-    [externalAlertManagers, dispatch, alertmanagersChoice]
+    [externalAlertManagers, saveExternalAlertManagers, alertmanagersChoice]
   );
 
   const onEdit = useCallback(() => {
@@ -97,14 +105,15 @@ export const ExternalAlertmanagers = () => {
     }));
   }, [setModalState]);
 
-  const onChangeAlertmanagerChoice = (alertmanagersChoice: string) => {
-    dispatch(
-      addExternalAlertmanagersAction({ alertmanagers: externalAlertManagers.map((am) => am.url), alertmanagersChoice })
-    );
+  const onChangeAlertmanagerChoice = (alertmanagersChoice: AlertmanagerChoice) => {
+    saveExternalAlertManagers({ alertmanagers: externalAlertManagers.map((am) => am.url), alertmanagersChoice });
   };
 
   const onChangeAlertmanagers = (alertmanagers: string[]) => {
-    dispatch(addExternalAlertmanagersAction({ alertmanagers, alertmanagersChoice: alertmanagersChoice ?? 'all' }));
+    saveExternalAlertManagers({
+      alertmanagers,
+      alertmanagersChoice: alertmanagersChoice ?? AlertmanagerChoice.All,
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -125,6 +134,39 @@ export const ExternalAlertmanagers = () => {
   return (
     <div>
       <h4>External Alertmanagers</h4>
+      <Alert title="External Alertmanager changes" severity="info">
+        The way you configure external Alertmanagers has changed.
+        <br />
+        You can now use configured Alertmanager data sources as receivers of your Grafana-managed alerts.
+        <br />
+        For more information, refer to our documentation.
+      </Alert>
+
+      <ExternalAlertmanagerDataSources
+        alertmanagers={externalDsAlertManagers}
+        inactive={alertmanagersChoice === AlertmanagerChoice.Internal}
+      />
+
+      <div className={styles.amChoice}>
+        <Field
+          label="Send alerts to"
+          description="Configures how the Grafana alert rule evaluation engine Alertmanager handles your alerts. Internal (Grafana built-in Alertmanager), External (All Alertmanagers configured above), or both."
+        >
+          <RadioButtonGroup
+            options={alertmanagerChoices}
+            value={alertmanagersChoice}
+            onChange={(value) => onChangeAlertmanagerChoice(value!)}
+          />
+        </Field>
+      </div>
+
+      <h5>Alertmanagers by URL</h5>
+      <Alert severity="warning" title="Deprecation Notice">
+        The URL-based configuration of Alertmanagers is deprecated and will be removed in Grafana 9.2.0.
+        <br />
+        Use Alertmanager data sources to configure your external Alertmanagers.
+      </Alert>
+
       <div className={styles.muted}>
         You can have your Grafana managed alerts be delivered to one or many external Alertmanager(s) in addition to the
         internal Alertmanager by specifying their URLs below.
@@ -136,6 +178,7 @@ export const ExternalAlertmanagers = () => {
           </Button>
         )}
       </div>
+
       {noAlertmanagers ? (
         <EmptyListCTA
           title="You have not added any external alertmanagers"
@@ -188,20 +231,9 @@ export const ExternalAlertmanagers = () => {
               })}
             </tbody>
           </table>
-          <div>
-            <Field
-              label="Send alerts to"
-              description="Sets which Alertmanager will handle your alerts. Internal (Grafana built in Alertmanager), External (All Alertmanagers configured above), or both."
-            >
-              <RadioButtonGroup
-                options={alertmanagerChoices}
-                value={alertmanagersChoice}
-                onChange={(value) => onChangeAlertmanagerChoice(value!)}
-              />
-            </Field>
-          </div>
         </>
       )}
+
       <ConfirmModal
         isOpen={deleteModalState.open}
         title="Remove Alertmanager"
@@ -221,7 +253,7 @@ export const ExternalAlertmanagers = () => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   url: css`
     margin-right: ${theme.spacing(1)};
   `,
@@ -235,5 +267,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   table: css`
     margin-bottom: ${theme.spacing(2)};
+  `,
+  amChoice: css`
+    margin-bottom: ${theme.spacing(4)};
   `,
 });

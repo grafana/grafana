@@ -7,9 +7,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -61,9 +64,12 @@ func writeRedirectCookie(c *models.ReqContext) {
 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
 	}
 
+	if redirectTo == "/" {
+		return
+	}
+
 	// remove any forceLogin=true params
 	redirectTo = removeForceLoginParams(redirectTo)
-
 	cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
 }
 
@@ -74,12 +80,12 @@ func removeForceLoginParams(str string) string {
 }
 
 func EnsureEditorOrViewerCanEdit(c *models.ReqContext) {
-	if !c.SignedInUser.HasRole(models.ROLE_EDITOR) && !setting.ViewersCanEdit {
+	if !c.SignedInUser.HasRole(org.RoleEditor) && !setting.ViewersCanEdit {
 		accessForbidden(c)
 	}
 }
 
-func RoleAuth(roles ...models.RoleType) web.Handler {
+func RoleAuth(roles ...org.RoleType) web.Handler {
 	return func(c *models.ReqContext) {
 		ok := false
 		for _, role := range roles {
@@ -102,7 +108,7 @@ func Auth(options *AuthOptions) web.Handler {
 			if !forceLogin {
 				orgIDValue := c.Req.URL.Query().Get("orgId")
 				orgID, err := strconv.ParseInt(orgIDValue, 10, 64)
-				if err == nil && orgID > 0 && orgID != c.OrgId {
+				if err == nil && orgID > 0 && orgID != c.OrgID {
 					forceLogin = true
 				}
 			}
@@ -135,11 +141,11 @@ func Auth(options *AuthOptions) web.Handler {
 // are otherwise only available to admins.
 func AdminOrEditorAndFeatureEnabled(enabled bool) web.Handler {
 	return func(c *models.ReqContext) {
-		if c.OrgRole == models.ROLE_ADMIN {
+		if c.OrgRole == org.RoleAdmin {
 			return
 		}
 
-		if c.OrgRole == models.ROLE_EDITOR && enabled {
+		if c.OrgRole == org.RoleEditor && enabled {
 			return
 		}
 
@@ -191,23 +197,23 @@ func shouldForceLogin(c *models.ReqContext) bool {
 	return forceLogin
 }
 
-func OrgAdminFolderAdminOrTeamAdmin(ss sqlstore.Store) func(c *models.ReqContext) {
+func OrgAdminDashOrFolderAdminOrTeamAdmin(ss db.DB, ds dashboards.DashboardService, ts team.Service) func(c *models.ReqContext) {
 	return func(c *models.ReqContext) {
-		if c.OrgRole == models.ROLE_ADMIN {
+		if c.OrgRole == org.RoleAdmin {
 			return
 		}
 
-		hasAdminPermissionInFoldersQuery := models.HasAdminPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
-		if err := ss.HasAdminPermissionInFolders(c.Req.Context(), &hasAdminPermissionInFoldersQuery); err != nil {
+		hasAdminPermissionInDashOrFoldersQuery := models.HasAdminPermissionInDashboardsOrFoldersQuery{SignedInUser: c.SignedInUser}
+		if err := ds.HasAdminPermissionInDashboardsOrFolders(c.Req.Context(), &hasAdminPermissionInDashOrFoldersQuery); err != nil {
 			c.JsonApiErr(500, "Failed to check if user is a folder admin", err)
 		}
 
-		if hasAdminPermissionInFoldersQuery.Result {
+		if hasAdminPermissionInDashOrFoldersQuery.Result {
 			return
 		}
 
 		isAdminOfTeamsQuery := models.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
-		if err := ss.IsAdminOfTeams(c.Req.Context(), &isAdminOfTeamsQuery); err != nil {
+		if err := ts.IsAdminOfTeams(c.Req.Context(), &isAdminOfTeamsQuery); err != nil {
 			c.JsonApiErr(500, "Failed to check if user is a team admin", err)
 		}
 

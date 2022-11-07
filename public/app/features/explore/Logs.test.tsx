@@ -1,7 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
-import { LoadingState, LogLevel, LogRowModel, MutableDataFrame, toUtc } from '@grafana/data';
+import { LoadingState, LogLevel, LogRowModel, MutableDataFrame, toUtc, EventBusSrv } from '@grafana/data';
+import { ExploreId } from 'app/types';
 
 import { Logs } from './Logs';
 
@@ -15,6 +16,12 @@ describe('Logs', () => {
 
     return render(
       <Logs
+        exploreId={ExploreId.left}
+        splitOpen={() => undefined}
+        logsVolumeEnabled={true}
+        onSetLogsVolumeEnabled={() => null}
+        logsVolumeData={undefined}
+        loadLogsVolumeData={() => undefined}
         logRows={rows}
         timeZone={'utc'}
         width={50}
@@ -30,12 +37,13 @@ describe('Logs', () => {
         getFieldLinks={() => {
           return [];
         }}
+        eventBus={new EventBusSrv()}
       />
     );
   };
 
   beforeEach(() => {
-    jest.useFakeTimers('modern');
+    jest.useFakeTimers();
   });
 
   afterEach(() => {
