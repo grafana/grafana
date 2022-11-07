@@ -120,6 +120,12 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 			args = append(args, cmd.Folder.UID)
 		}
 
+		if cmd.NewParentUID != nil {
+			columnsToUpdate = append(columnsToUpdate, "parent_uid = ?")
+			cmd.Folder.ParentUID = *cmd.NewParentUID
+			args = append(args, cmd.Folder.UID)
+		}
+
 		if len(columnsToUpdate) == 0 {
 			return folder.ErrBadRequest.Errorf("no columns to update")
 		}
@@ -146,16 +152,6 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 	})
 
 	return cmd.Folder, err
-}
-
-func (ss *sqlStore) Move(ctx context.Context, cmd folder.MoveFolderCommand) error {
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec("UPDATE folder SET parent_uid = ? WHERE uid = ? AND org_id = ?", cmd.NewParentUID, cmd.UID, cmd.OrgID)
-		if err != nil {
-			return folder.ErrDatabaseError.Errorf("failed to update folder: %w", err)
-		}
-		return nil
-	})
 }
 
 func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error) {

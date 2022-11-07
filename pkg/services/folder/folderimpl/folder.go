@@ -290,7 +290,9 @@ func (s *Service) DeleteFolder(ctx context.Context, user *user.SignedInUser, org
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	// check the flag, if old - do whatever did before
 	//  for new only the store
-	cmd.UID = util.GenerateShortUID()
+	if cmd.UID == "" {
+		cmd.UID = util.GenerateShortUID()
+	}
 	return s.store.Create(ctx, *cmd)
 }
 
@@ -303,8 +305,36 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
 	// check the flag, if old - do whatever did before
 	//  for new only the store
-	//  use Update
-	return nil, s.store.Move(ctx, *cmd)
+
+	foldr, err := s.Get(ctx, &folder.GetFolderQuery{
+		UID:   &cmd.UID,
+		OrgID: cmd.OrgID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return s.store.Update(ctx, folder.UpdateFolderCommand{
+		Folder:       foldr,
+		NewParentUID: &cmd.NewParentUID,
+	})
+}
+
+func (s *Service) Contains(ctx context.Context, cmd *folder.ContainsFolderQuery) (*folder.ContainsFolderResult, error) {
+	foldr, err := s.store.GetChildren(ctx, folder.GetTreeQuery{
+		OrgID: cmd.OrgID,
+		UID:   cmd.UID,
+		Depth: 1,
+	})
+	if err != nil {
+		return nil, err
+	}
+	// get dashboards
+	// get alerts
+	// get library panels
+	return &folder.ContainsFolderResult{
+		FolderCount: len(foldr),
+	}, nil
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) (*folder.Folder, error) {
@@ -312,8 +342,18 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) (
 	//  for new only the store
 	// check if dashboard exists
 
-	// check if subfolders exist
-	return nil, s.store.Delete(ctx, cmd.UID, cmd.OrgID)
+	foldr, err := s.Get(ctx, &folder.GetFolderQuery{
+		UID:   &cmd.UID,
+		OrgID: cmd.OrgID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	err = s.store.Delete(ctx, cmd.UID, cmd.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	return foldr, nil
 }
 
 func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {

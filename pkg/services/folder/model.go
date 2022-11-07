@@ -60,6 +60,7 @@ type CreateFolderCommand struct {
 type UpdateFolderCommand struct {
 	Folder         *Folder `json:"folder"` // The extant folder
 	NewUID         *string `json:"uid" xorm:"uid"`
+	NewParentUID   *string `json:"parent_uid" xorm:"parent_uid"`
 	NewTitle       *string `json:"title"`
 	NewDescription *string `json:"description"`
 }
@@ -77,6 +78,18 @@ type MoveFolderCommand struct {
 type DeleteFolderCommand struct {
 	UID   string `json:"uid" xorm:"uid"`
 	OrgID int64  `json:"orgId" xorm:"org_id"`
+}
+
+type ContainsFolderQuery struct {
+	OrgID int64
+	UID   string
+}
+
+type ContainsFolderResult struct {
+	FolderCount       int `json:"folder_count"`
+	DashboardCount    int `json:"dashboard_count"`
+	AlertCount        int `json:"alert_count"`
+	LibraryPanelCount int `json:"library_panel_count"`
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
