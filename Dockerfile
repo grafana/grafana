@@ -38,22 +38,27 @@ RUN apk add --no-cache gcc g++ make
 
 WORKDIR /tmp/grafana
 
-COPY go.mod go.sum embed.go Makefile build.go package.json ./
+COPY go.* ./
+COPY .bingo .bingo
+
+RUN go mod download && \
+    go install github.com/bwplotka/bingo@latest && \
+    bingo get
+
+COPY embed.go Makefile build.go package.json ./
 COPY packages/grafana-schema packages/grafana-schema
 COPY public/app/plugins public/app/plugins
 COPY public/api-spec.json public/api-spec.json
 COPY pkg pkg
 COPY scripts scripts
 COPY cue.mod cue.mod
-COPY .bingo .bingo
 
-RUN go mod verify && \
-    make build-go
+RUN make build-go
 
 # Final stage
 FROM ${BASE_IMAGE}
 
-LABEL maintainer="Grafana team <hello@grafana.com>"
+LABEL maintainer="Grafana Labs <hello@grafana.com>"
 
 ARG GF_UID="472"
 ARG GF_GID="0"

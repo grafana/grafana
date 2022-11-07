@@ -25,7 +25,7 @@ RUN tar xzf /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
 # Final stage
 FROM ${BASE_IMAGE}
 
-LABEL maintainer="Grafana team <hello@grafana.com>"
+LABEL maintainer="Grafana Labs <hello@grafana.com>"
 
 ARG GF_UID="472"
 ARG GF_GID="0"
