@@ -178,21 +178,11 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		states = append(states, s)
 	}
 	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
-	st.logStateTransitions(ctx, alertRule, staleStates)
 	st.deleteAlertStates(ctx, logger, staleStates)
 
 	st.saveAlertStates(ctx, logger, states...)
 
-	changedStates := make([]StateTransition, 0, len(states))
-	for _, s := range states {
-		if s.changed() {
-			changedStates = append(changedStates, s)
-		}
-	}
-
-	if st.historian != nil {
-		st.historian.RecordStates(ctx, alertRule, changedStates)
-	}
+	st.logStateTransitions(ctx, alertRule, states, staleStates)
 
 	deltas := append(states, staleStates...)
 	nextStates := make([]*State, 0, len(states))
@@ -322,11 +312,16 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 	}
 }
 
-func (st *Manager) logStateTransitions(ctx context.Context, alertRule *ngModels.AlertRule, staleStates []StateTransition) {
+func (st *Manager) logStateTransitions(ctx context.Context, alertRule *ngModels.AlertRule, newStates, staleStates []StateTransition) {
 	if st.historian == nil {
 		return
 	}
 	changedStates := make([]StateTransition, 0, len(staleStates))
+	for _, s := range newStates {
+		if s.changed() {
+			changedStates = append(changedStates, s)
+		}
+	}
 	for _, t := range staleStates {
 		if t.PreviousState == eval.Alerting {
 			changedStates = append(changedStates, t)
