@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
@@ -22,19 +21,13 @@ type externalAlertmanagerToDatasources struct {
 	migrator.MigrationBase
 }
 
-// Copy old AdminConficuration struct as the new one has not attribute Alertmanagers []string anymore
-// Path: https://github.com/grafana/grafana/pull/57918/files#diff-c7fe73b0fa4aeffb895ee6b5eeb2fab9c6113fd334f07bc2175295c82f73dbb2L30
 type AdminConfiguration struct {
-	ID    int64 `xorm:"pk autoincr 'id'"`
 	OrgID int64 `xorm:"org_id"`
 
 	Alertmanagers []string
 
-	// SendAlertsTo indicates which set of alertmanagers will handle the alert.
-	SendAlertsTo ngmodels.AlertmanagersChoice `xorm:"send_alerts_to"`
-
-	CreatedAt int64 `xorm:"created"`
-	UpdatedAt int64 `xorm:"updated"`
+	CreatedAt int64 `xorm:"created_at"`
+	UpdatedAt int64 `xorm:"updated_at"`
 }
 
 func (e externalAlertmanagerToDatasources) SQL(dialect migrator.Dialect) string {
@@ -43,7 +36,7 @@ func (e externalAlertmanagerToDatasources) SQL(dialect migrator.Dialect) string 
 
 func (e externalAlertmanagerToDatasources) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	var results []AdminConfiguration
-	err := sess.SQL("SELECT org_id, alertmanagers FROM ngalert_configuration").Find(&results)
+	err := sess.SQL("SELECT org_id, alertmanagers, created_at, updated_at FROM ngalert_configuration").Find(&results)
 	if err != nil {
 		return err
 	}
