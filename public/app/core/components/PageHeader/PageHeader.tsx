@@ -113,7 +113,6 @@ function renderHeaderTitle(main: NavModelItem) {
       <div className="page-header__info-block">
         {renderTitle(main.text, main.breadcrumbs ?? [], main.highlightText)}
         {main.subTitle && <div className="page-header__sub-title">{main.subTitle}</div>}
-        {main.headerExtra && <main.headerExtra />}
       </div>
     </div>
   );

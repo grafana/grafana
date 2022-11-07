@@ -55,7 +55,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background-color: ${theme.colors.background.canvas};
     border-color: ${theme.colors.border.strong};
     color: ${theme.colors.text.secondary};
-    margin-left: ${theme.spacing()};
+    white-space: nowrap;
   `,
   strong: css`
     color: ${theme.colors.text.primary};

@@ -31,8 +31,6 @@ export function PluginDetailsHeaderDependencies({
 
   return (
     <Stack gap={1}>
-      <div className={styles.dependencyTitle}>Dependencies:</div>
-
       {/* Grafana dependency */}
       {Boolean(grafanaDependency) && (
         <div>
