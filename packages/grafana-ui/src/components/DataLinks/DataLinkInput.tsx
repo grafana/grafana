@@ -137,10 +137,11 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     }, []);
 
     const onVariableSelect = (item: VariableSuggestion, editor = editorRef.current!) => {
+      const includeDollarSign = Plain.serialize(editor.value).slice(-1) !== '$';
       if (item.origin !== VariableOrigin.Template || item.value === DataLinkBuiltInVars.includeVars) {
-        editor.insertText(`\{${item.value}}`);
+        editor.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
       } else {
-        editor.insertText(`\{${item.value}:queryparam}`);
+        editor.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}:queryparam}`);
       }
 
       setLinkUrl(editor.value);
