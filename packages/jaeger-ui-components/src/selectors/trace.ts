@@ -43,7 +43,7 @@ const getSpanWithProcess = createSelector(
 );
 
 export const getTraceSpansAsMap = createSelector(getTraceSpans, (spans) =>
-  spans.reduce((map: Map<any, any>, span: TraceSpanData) => map.set(getSpanId(span), span), new Map())
+  spans.reduce((map, span: TraceSpanData) => map.set(getSpanId(span), span), new Map())
 );
 
 export const TREE_ROOT_ID = '__root__';
@@ -110,7 +110,8 @@ export const getTraceSpanCount = createSelector(getTraceSpans, (spans) => spans.
 
 export const getTraceTimestamp = createSelector(getTraceSpans, (spans) =>
   spans.reduce(
-    (prevTimestamp: number, span: TraceSpanData) => (prevTimestamp ? Math.min(prevTimestamp, getSpanTimestamp(span)) : getSpanTimestamp(span)),
+    (prevTimestamp: number, span: TraceSpanData) =>
+      prevTimestamp ? Math.min(prevTimestamp, getSpanTimestamp(span)) : getSpanTimestamp(span),
     0
   )
 );
@@ -137,7 +138,9 @@ export const getParentSpan = createSelector(
   (tree, spanMap) =>
     tree.children
       .map((node: TreeNode) => spanMap.get(node.value))
-      .sort((spanA: TraceSpanData, spanB: TraceSpanData) => numberSortComparator(getSpanTimestamp(spanA), getSpanTimestamp(spanB)))[0]
+      .sort((spanA: TraceSpanData, spanB: TraceSpanData) =>
+        numberSortComparator(getSpanTimestamp(spanA), getSpanTimestamp(spanB))
+      )[0]
 );
 
 export const getTraceDepth = createSelector(getTraceSpanIdsAsTree, (spanTree) => spanTree.depth - 1);
@@ -229,7 +232,7 @@ export const getTraceName = createSelector(
       serviceName: getSpanServiceName,
     })
   ),
-  ({ name, serviceName }: { name: string, serviceName: string }) => `${serviceName}: ${name}`
+  ({ name, serviceName }: { name: string; serviceName: string }) => `${serviceName}: ${name}`
 );
 
 export const omitCollapsedSpans = createSelector(
@@ -267,9 +270,9 @@ export const getTicksForTrace = createSelector(
 // TODO: delete this when the backend can ensure uniqueness
 /* istanbul ignore next */
 export const enforceUniqueSpanIds = createSelector(
-  /* istanbul ignore next */(trace: Trace) => trace,
+  /* istanbul ignore next */ (trace: Trace) => trace,
   getTraceSpans,
-  /* istanbul ignore next */(trace, spans) => {
+  /* istanbul ignore next */ (trace, spans) => {
     const map = new Map();
 
     const spanArray: TraceSpanData[] = [];
@@ -296,9 +299,9 @@ export const enforceUniqueSpanIds = createSelector(
 
 // TODO: delete this when the backend can ensure uniqueness
 export const dropEmptyStartTimeSpans = createSelector(
-  /* istanbul ignore next */(trace: Trace) => trace,
+  /* istanbul ignore next */ (trace: Trace) => trace,
   getTraceSpans,
-  /* istanbul ignore next */(trace, spans) => ({
+  /* istanbul ignore next */ (trace, spans) => ({
     ...trace,
     spans: spans.filter((span: TraceSpanData) => !!getSpanTimestamp(span)),
   })
