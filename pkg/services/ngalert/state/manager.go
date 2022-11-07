@@ -184,10 +184,14 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 
 	st.logStateTransitions(ctx, alertRule, states, staleStates)
 
-	deltas := append(states, staleStates...)
 	nextStates := make([]*State, 0, len(states))
-	for _, s := range deltas {
+	for _, s := range states {
 		nextStates = append(nextStates, s.State)
+	}
+	for _, s := range staleStates {
+		if s.PreviousState == eval.Alerting {
+			nextStates = append(nextStates, s.State)
+		}
 	}
 	return nextStates
 }
