@@ -334,7 +334,7 @@ func shouldTakeImage(state, previousState eval.State, previousImage *models.Imag
 
 // takeImage takes an image for the alert rule. It returns nil if screenshots are disabled or
 // the rule is not associated with a dashboard panel.
-func takeImage(ctx context.Context, s image.ImageService, r *models.AlertRule) (*models.Image, error) {
+func takeImage(ctx context.Context, s ImageCapturer, r *models.AlertRule) (*models.Image, error) {
 	img, err := s.NewImage(ctx, r)
 	if err != nil {
 		if errors.Is(err, screenshot.ErrScreenshotsUnavailable) ||
