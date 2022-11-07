@@ -2634,8 +2634,9 @@ var expNonEmailNotifications = map[string][]string{
 			  "grafana_folder": "default"
 			},
 			"annotations": {
-        "__value_string__": "[ var='A' labels={} value=1 ]"
-      },
+			  "__orgId__":"1",
+              "__value_string__": "[ var='A' labels={} value=1 ]"
+            },
 			"startsAt": "%s",
 			"endsAt": "0001-01-01T00:00:00Z",
 			"generatorURL": "http://localhost:3000/alerting/grafana/UID_AlertmanagerAlert/view",
