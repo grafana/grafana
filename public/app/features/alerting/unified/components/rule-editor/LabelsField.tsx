@@ -11,12 +11,11 @@ import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { fetchRulerRulesIfNotFetchedYet } from '../../state/actions';
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { RuleFormValues } from '../../types/rule-form';
 import AlertLabelDropdown from '../AlertLabelDropdown';
 
 interface Props {
   className?: string;
-  suggest: boolean;
   dataSourceName?: string | null;
 }
 
@@ -31,15 +30,7 @@ const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsB
 
   const rulerRequest = rulerRuleRequests[dataSourceName];
 
-  if (!rulerRequest) {
-    return { loading: false, labelsByKey: {} };
-  }
-
-  if (rulerRequest.loading) {
-    return { loading: true, labelsByKey: {} };
-  }
-
-  const result = rulerRequest.result || {};
+  const result = rulerRequest?.result || {};
 
   //store all labels in a flat array and remove empty values
   const labels = compact(
@@ -58,7 +49,7 @@ const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsB
     });
   });
 
-  return { loading: false, labelsByKey };
+  return { loading: rulerRequest?.loading, labelsByKey };
 };
 
 function mapLabelsToOptions(items: string[] = []): Array<SelectableValue<string>> {
@@ -102,7 +93,7 @@ const AddButton: FC<{
   </Button>
 );
 
-const LabelsWithSuggestions: FC<{ dataSourceName?: string | null }> = ({ dataSourceName }) => {
+const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName }) => {
   const styles = useStyles2(getStyles);
   const {
     register,
@@ -115,7 +106,7 @@ const LabelsWithSuggestions: FC<{ dataSourceName?: string | null }> = ({ dataSou
   const labels = watch('labels');
   const { fields, remove, append } = useFieldArray({ control, name: 'labels' });
 
-  const { loading, labelsByKey } = useGetCustomLabels(dataSourceName || RuleFormType.grafana);
+  const { loading, labelsByKey } = useGetCustomLabels(dataSourceName);
 
   const [selectedKey, setSelectedKey] = useState('');
 
@@ -214,7 +205,7 @@ const LabelsWithoutSuggestions: FC = () => {
       {fields.map((field, index) => {
         return (
           <div key={field.id}>
-            <div className={cx(styles.flexRow, styles.centerAlignRow)}>
+            <div className={cx(styles.flexRow, styles.centerAlignRow)} data-testid="alertlabel-input-wrapper">
               <Field
                 className={styles.labelInput}
                 invalid={!!errors.labels?.[index]?.key?.message}
@@ -254,7 +245,7 @@ const LabelsWithoutSuggestions: FC = () => {
   );
 };
 
-const LabelsField: FC<Props> = ({ className, suggest, dataSourceName }) => {
+const LabelsField: FC<Props> = ({ className, dataSourceName }) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -278,8 +269,8 @@ const LabelsField: FC<Props> = ({ className, suggest, dataSourceName }) => {
         <div className={styles.flexRow}>
           <InlineLabel width={18}>Labels</InlineLabel>
           <div className={styles.flexColumn}>
-            {suggest && <LabelsWithSuggestions dataSourceName={dataSourceName} />}
-            {!suggest && <LabelsWithoutSuggestions />}
+            {dataSourceName && <LabelsWithSuggestions dataSourceName={dataSourceName} />}
+            {!dataSourceName && <LabelsWithoutSuggestions />}
           </div>
         </div>
       </>
@@ -290,7 +281,7 @@ const LabelsField: FC<Props> = ({ className, suggest, dataSourceName }) => {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     icon: css`
-      margin-right: ${theme.spacing.xs};
+      margin-right: ${theme.spacing(0.5)};
     `,
     wrapper: css`
       margin-bottom: ${theme.spacing(4)};

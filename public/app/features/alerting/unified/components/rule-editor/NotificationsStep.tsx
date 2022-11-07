@@ -39,7 +39,7 @@ export const NotificationsStep = () => {
           />
         )}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <LabelsField suggest={true} dataSourceName={dataSourceName} />
+          <LabelsField dataSourceName={dataSourceName} />
           <Card className={styles.card}>
             <Card.Heading>Root route – default for all alerts</Card.Heading>
             <Card.Description>
