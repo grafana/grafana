@@ -71,7 +71,7 @@ func TestProcessTicks(t *testing.T) {
 		AlertSender:  notifier,
 		Tracer:       testTracer,
 	}
-	st := state.NewManager(testMetrics.GetStateMetrics(), nil, nil, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{})
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, nil, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{}, false)
 
 	sched := NewScheduler(schedCfg, st)
 
@@ -691,7 +691,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		Tracer:           testTracer,
 	}
 
-	st := state.NewManager(m.GetStateMetrics(), nil, is, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{})
+	st := state.NewManager(m.GetStateMetrics(), nil, is, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{}, false)
 	return NewScheduler(schedCfg, st)
 }
 
