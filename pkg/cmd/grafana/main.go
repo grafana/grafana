@@ -38,7 +38,7 @@ func main() {
 						Commit:      commit,
 						BuildBranch: buildBranch,
 						BuildStamp:  buildstamp,
-						Args:        os.Args[2:],
+						Args:        context.Args().Slice(),
 					}))
 					return nil
 				},

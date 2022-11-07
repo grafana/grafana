@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"os"
 	"runtime"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -53,9 +54,16 @@ func CLICommand(version string) *cli.Command {
 				Name:  "config",
 				Usage: "Path to config file",
 			},
+			cli.VersionFlag,
 		},
 		Subcommands: Commands,
 		Before: func(c *cli.Context) error {
+			// backward-compatible handling for cli version flag
+			if c.Bool("version") {
+				cli.ShowVersion(c)
+				os.Exit(0)
+			}
+
 			logger.SetDebug(c.Bool("debug"))
 			services.Init(version, c.Bool("insecure"), c.Bool("debug"))
 			return nil
