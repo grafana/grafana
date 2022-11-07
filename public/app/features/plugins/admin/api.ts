@@ -79,7 +79,7 @@ async function getPluginVersions(id: string, isPublished: boolean): Promise<Vers
 
 async function getLocalPluginReadme(id: string): Promise<string> {
   try {
-    const markdown: string = await getBackendSrv().get(`${API_ROOT}/${id}/markdown/help`);
+    const markdown: string = await getBackendSrv().get(`${API_ROOT}/${id}/markdown/README`);
     const markdownAsHtml = markdown ? renderMarkdown(markdown) : '';
 
     return markdownAsHtml;

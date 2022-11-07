@@ -258,9 +258,8 @@ func TestCreatePublicDashboard(t *testing.T) {
 		}
 
 		_, err := service.Create(context.Background(), SignedInUser, dto)
-
 		require.Error(t, err)
-		require.Equal(t, err, ErrPublicDashboardFailedGenerateAccessToken)
+		require.Equal(t, err, ErrInternalServerError.Errorf("failed to generate a unique accesssToken for public dashboard"))
 		publicDashboardStore.AssertNotCalled(t, "Create")
 	})
 
@@ -309,7 +308,8 @@ func TestCreatePublicDashboard(t *testing.T) {
 		}
 
 		_, err = service.Create(context.Background(), SignedInUser, dto)
-		assert.Equal(t, ErrPublicDashboardBadRequest, err)
+		require.Error(t, err)
+		assert.True(t, ErrBadRequest.Is(err))
 	})
 }
 
@@ -428,33 +428,33 @@ func TestDeletePublicDashboard(t *testing.T) {
 	testCases := []struct {
 		Name             string
 		AffectedRowsResp int64
-		ErrResp          error
-		ExpectedErr      error
+		ExpectedErrResp  error
+		StoreRespErr     error
 	}{
 		{
 			Name:             "Successfully deletes a public dashboards",
 			AffectedRowsResp: 1,
-			ErrResp:          nil,
-			ExpectedErr:      nil,
+			ExpectedErrResp:  nil,
+			StoreRespErr:     nil,
 		},
 		{
 			Name:             "Public dashboard not found",
 			AffectedRowsResp: 0,
-			ErrResp:          nil,
-			ExpectedErr:      ErrPublicDashboardNotFound,
+			ExpectedErrResp:  ErrPublicDashboardNotFound.Errorf("Delete: Public dashboard not found by orgId: 13 and Uid: uid"),
+			StoreRespErr:     nil,
 		},
 		{
 			Name:             "Database error",
 			AffectedRowsResp: 0,
-			ErrResp:          errors.New("db error!"),
-			ExpectedErr:      errors.New("db error!"),
+			ExpectedErrResp:  ErrInternalServerError.Errorf("Delete: failed to delete a public dashboard by orgId: 13 and Uid: uid db error!"),
+			StoreRespErr:     errors.New("db error!"),
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.Name, func(t *testing.T) {
 			store := NewFakePublicDashboardStore(t)
-			store.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.AffectedRowsResp, tt.ExpectedErr)
+			store.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.AffectedRowsResp, tt.StoreRespErr)
 
 			service := &PublicDashboardServiceImpl{
 				log:   log.New("test.logger"),
@@ -462,7 +462,12 @@ func TestDeletePublicDashboard(t *testing.T) {
 			}
 
 			err := service.Delete(context.Background(), 13, "uid")
-			assert.Equal(t, tt.ExpectedErr, err)
+			if tt.ExpectedErrResp != nil {
+				assert.Equal(t, tt.ExpectedErrResp.Error(), err.Error())
+				assert.Equal(t, tt.ExpectedErrResp.Error(), err.Error())
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }
@@ -833,7 +838,7 @@ func TestPublicDashboardServiceImpl_NewPublicDashboardUid(t *testing.T) {
 				store.AssertNumberOfCalls(t, "Find", 1)
 			} else {
 				store.AssertNumberOfCalls(t, "Find", 3)
-				assert.True(t, errors.Is(err, ErrPublicDashboardFailedGenerateUniqueUid))
+				assert.True(t, ErrInternalServerError.Is(err))
 			}
 		})
 	}
@@ -897,7 +902,7 @@ func TestPublicDashboardServiceImpl_NewPublicDashboardAccessToken(t *testing.T) 
 				store.AssertNumberOfCalls(t, "FindByAccessToken", 1)
 			} else {
 				store.AssertNumberOfCalls(t, "FindByAccessToken", 3)
-				assert.True(t, errors.Is(err, ErrPublicDashboardFailedGenerateAccessToken))
+				assert.True(t, ErrInternalServerError.Is(err))
 			}
 		})
 	}
