@@ -5,15 +5,17 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { DataFrameView, GrafanaTheme2 } from '@grafana/data';
 import { Table, useStyles2 } from '@grafana/ui';
 
+import { HistoryTab } from './HistoryTab';
 import { StorageView, ListItem, ObjectInfo } from './types';
 
 interface Props {
+  path: string;
   folder: ObjectInfo;
   listing?: DataFrameView<ListItem>;
   view: StorageView;
 }
 
-export function FolderView({ folder, listing, view }: Props) {
+export function FolderView({ folder, listing, view, path }: Props) {
   const styles = useStyles2(getStyles);
 
   switch (view) {
@@ -26,7 +28,7 @@ export function FolderView({ folder, listing, view }: Props) {
     case StorageView.Perms:
       return <div>TODO, show/configure permissions</div>;
     case StorageView.History:
-      return <div>Show history</div>;
+      return <HistoryTab info={folder} path={path} />;
   }
 
   if (!listing) {

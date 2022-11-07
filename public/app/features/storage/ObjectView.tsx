@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { cloneDeep } from 'lodash';
 import React, { useMemo } from 'react';
 import SVG from 'react-inlinesvg';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -6,6 +7,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme2 } from '@grafana/data';
 import { CodeEditor, useStyles2 } from '@grafana/ui';
 
+import { HistoryTab } from './HistoryTab';
 import { ObjectInfo, StorageView } from './types';
 
 interface FileDisplayInfo {
@@ -26,22 +28,23 @@ export function ObjectView({ info, path, onPathChange, view }: Props) {
 
   switch (view) {
     case StorageView.Info: {
-      if (info.object.body_base64) {
-        delete info.object.body_base64;
+      const copy = cloneDeep(info);
+      if (copy.object.body_base64) {
+        delete copy.object.body_base64;
       }
-      if (info.object.body) {
-        delete info.object.body;
+      if (copy.object.body) {
+        delete copy.object.body;
       }
       return (
         <div>
-          <pre>{JSON.stringify(info, null, 2)}</pre>
+          <pre>{JSON.stringify(copy, null, 2)}</pre>
         </div>
       );
     }
     case StorageView.Perms:
       return <div>Permissions</div>;
     case StorageView.History:
-      return <div>TODO... history</div>;
+      return <HistoryTab info={info} path={path} />;
   }
 
   let src = `api/object/raw/${path}`;
@@ -64,36 +67,30 @@ export function ObjectView({ info, path, onPathChange, view }: Props) {
           </a>
         </div>
       );
-    case 'text':
-      let body = '';
-      if (info.object?.body) {
-        body = JSON.stringify(info.object.body, null, 2);
-      }
-      return (
-        <div className={styles.tableWrapper}>
-          <AutoSizer>
-            {({ width, height }) => (
-              <CodeEditor
-                width={width}
-                height={height}
-                value={body}
-                showLineNumbers={false}
-                readOnly={true}
-                language={finfo.language ?? 'text'}
-                showMiniMap={false}
-                onBlur={(text: string) => {
-                  console.log('CHANGED!', text);
-                }}
-              />
-            )}
-          </AutoSizer>
-        </div>
-      );
   }
 
+  let body = '';
+  if (info.object?.body) {
+    body = JSON.stringify(info.object.body, null, 2);
+  }
   return (
-    <div>
-      FILE: <a href={src}>{path}</a>
+    <div className={styles.tableWrapper}>
+      <AutoSizer>
+        {({ width, height }) => (
+          <CodeEditor
+            width={width}
+            height={height}
+            value={body}
+            showLineNumbers={false}
+            readOnly={true}
+            language={finfo.language ?? 'text'}
+            showMiniMap={false}
+            onBlur={(text: string) => {
+              console.log('CHANGED!', text);
+            }}
+          />
+        )}
+      </AutoSizer>
     </div>
   );
 }

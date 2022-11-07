@@ -74,7 +74,7 @@ func resultsToFrame(ctx context.Context, rsp *object.ObjectSearchResponse, route
 
 		if res.Labels != nil {
 			b, err := json.Marshal(res.Labels)
-			if err != nil {
+			if err == nil {
 				labels.Set(i, json.RawMessage(b))
 			}
 		}
@@ -82,11 +82,11 @@ func resultsToFrame(ctx context.Context, rsp *object.ObjectSearchResponse, route
 			fields.Set(i, json.RawMessage(res.FieldsJson))
 		}
 
-		//size.Set(i, res.)
+		size.Set(i, res.Size)
 
 		updatedBy.Set(i, res.UpdatedBy)
-		if res.Updated > 0 {
-			updatedAt.SetConcrete(i, time.UnixMilli(res.Updated))
+		if res.UpdatedAt > 0 {
+			updatedAt.SetConcrete(i, time.UnixMilli(res.UpdatedAt))
 		}
 	}
 

@@ -71,7 +71,22 @@ export default function StoragePage(props: Props) {
         },
       } as ObjectInfo);
     }
-    return getGrafanaStorage().get(path);
+    if (path.startsWith('entity/')) {
+      const idx = path.indexOf('/');
+      const edx = path.lastIndexOf('/');
+      if (idx === edx) {
+        return Promise.resolve({
+          object: {
+            GRN: { kind: 'folder' },
+          },
+          summary: {
+            name: path,
+          },
+        } as ObjectInfo);
+      }
+    }
+
+    return getGrafanaStorage().get(path, { summary: true, body: true });
   }, [path]);
   const isFolder = useMemo(() => info.value?.object.GRN.kind === 'folder', [info.value]);
 
@@ -143,8 +158,7 @@ export default function StoragePage(props: Props) {
       { what: StorageView.History, text: 'History' },
     ];
 
-    if (true) {
-      // only if you are an admin
+    if (!path.startsWith('entity')) {
       opts.push({ what: StorageView.Perms, text: 'Permissions' });
     }
 
@@ -232,7 +246,7 @@ export default function StoragePage(props: Props) {
               ))}
             </TabsBar>
             {isFolder ? (
-              <FolderView folder={info.value} listing={listing.value} view={view} />
+              <FolderView path={path} folder={info.value} listing={listing.value} view={view} />
             ) : (
               <ObjectView path={path} info={info.value} onPathChange={setPath} view={view} />
             )}

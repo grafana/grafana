@@ -127,3 +127,5 @@ export interface ObjectInfo<T = unknown> {
   object: RawObject<T>;
   summary: ObjectSummary;
 }
+
+export interface ObjectHistory {}
