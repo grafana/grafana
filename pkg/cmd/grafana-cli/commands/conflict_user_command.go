@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
@@ -172,7 +173,7 @@ func runIngestConflictUsersFile() func(context *cli.Context) error {
 			return fmt.Errorf("no users")
 		}
 		r.showChanges()
-		if !confirm("\n\nWe encourage users to create a db backup before running this command. \n Proceed with operation?") {
+		if !confirm("\n\nWe encourage users to create a db backup before running this command. \n Proceed with operation") {
 			return fmt.Errorf("user cancelled")
 		}
 		err = r.MergeConflictingUsers(context.Context)
@@ -419,7 +420,14 @@ func (r *ConflictResolver) showChanges() {
 		}
 		b.WriteString("Keep the following user.\n")
 		b.WriteString(fmt.Sprintf("%s\n", block))
-		b.WriteString(fmt.Sprintf("id: %s, email: %s, login: %s\n", mainUser.ID, mainUser.Email, mainUser.Login))
+		b.WriteString(color.GreenString(fmt.Sprintf("id: %s, email: %s, login: %s\n", mainUser.ID, mainUser.Email, mainUser.Login)))
+		for _, r := range fmt.Sprintf("%s%s", mainUser.Email, mainUser.Login) {
+			if unicode.IsUpper(r) {
+				b.WriteString(fmt.Sprintf("Will be change to:\n"))
+				b.WriteString(color.GreenString(fmt.Sprintf("id: %s, email: %s, login: %s\n", mainUser.ID, strings.ToLower(mainUser.Email), strings.ToLower(mainUser.Login))))
+				break
+			}
+		}
 		b.WriteString("\n\n")
 		b.WriteString("The following user(s) will be deleted.\n")
 		for _, user := range users {
@@ -427,7 +435,7 @@ func (r *ConflictResolver) showChanges() {
 				continue
 			}
 			// mergeable users
-			b.WriteString(fmt.Sprintf("id: %s, email: %s, login: %s\n", user.ID, user.Email, user.Login))
+			b.WriteString(color.RedString(fmt.Sprintf("id: %s, email: %s, login: %s\n", user.ID, user.Email, user.Login)))
 		}
 		b.WriteString("\n\n")
 	}

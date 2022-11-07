@@ -577,7 +577,7 @@ func TestRunValidateConflictUserFile(t *testing.T) {
 	})
 }
 
-func TestMergeUser(t *testing.T) {
+func TestIntegrationMergeUser(t *testing.T) {
 	t.Run("should be able to merge user", func(t *testing.T) {
 		// Restore after destructive operation
 		sqlStore := db.InitTestDB(t)
@@ -632,7 +632,7 @@ func TestMergeUser(t *testing.T) {
 	})
 }
 
-func TestMergeUserFromNewFileInput(t *testing.T) {
+func TestIntegrationMergeUserFromNewFileInput(t *testing.T) {
 	t.Run("should be able to merge users after choosing a different user to keep", func(t *testing.T) {
 		type testBuildConflictBlock struct {
 			desc                  string
