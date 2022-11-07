@@ -131,13 +131,16 @@ func runValidateConflictUsersFile() func(context *cli.Context) error {
 		}
 		b, err := os.ReadFile(filepath.Clean(arg))
 		if err != nil {
+			logger.Error(color.RedString("validation failed with an error"))
 			return fmt.Errorf("could not read file with error %s", err)
 		}
 		validErr := getValidConflictUsers(r, b)
 		if validErr != nil {
+			logger.Error(color.RedString("validation failed with an error"))
 			return fmt.Errorf("could not validate file with error:\n%s", validErr)
 		}
-		logger.Info("File validation complete without errors.\n\n File can be used with ingesting command `ingest-file`.\n\n")
+		logger.Info(color.GreenString("File validation complete.\n"))
+		logger.Info("File can be used with the `ingest-file` command.\n\n")
 		return nil
 	}
 }
