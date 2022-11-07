@@ -239,28 +239,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       explainHandler: (op) => `Return log lines that contain string \`${op.params[0]}\`.`,
     },
     {
-      id: LokiOperationId.LineContainsInsensitive,
-      name: 'Line contains (case insensitive)',
-      params: [
-        {
-          name: 'String',
-          type: 'string',
-          hideName: true,
-          placeholder: 'Text to find',
-          description: 'Find log lines that contains this text',
-          minWidth: 33,
-          runQueryOnEnter: true,
-        },
-      ],
-      defaultParams: [''],
-      alternativesKey: 'line filter',
-      category: LokiVisualQueryOperationCategory.LineFilters,
-      orderRank: LokiOperationOrder.LineFilters,
-      renderer: getLineFilterRenderer('|~', true),
-      addOperationHandler: addLokiOperation,
-      explainHandler: (op) => `Return log lines that contain string \`${op.params[0]}\`.`,
-    },
-    {
       id: LokiOperationId.LineContainsNot,
       name: 'Line does not contain',
       params: [
@@ -283,8 +261,30 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       explainHandler: (op) => `Return log lines that does not contain string \`${op.params[0]}\`.`,
     },
     {
-      id: LokiOperationId.LineContainsNotInsensitive,
-      name: 'Line does not contain (case insensitive)',
+      id: LokiOperationId.LineContainsCaseInsensitive,
+      name: 'Line contains case insensitive',
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: 'Text to find',
+          description: 'Find log lines that contains this text',
+          minWidth: 33,
+          runQueryOnEnter: true,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'line filter',
+      category: LokiVisualQueryOperationCategory.LineFilters,
+      orderRank: LokiOperationOrder.LineFilters,
+      renderer: getLineFilterRenderer('|~', true),
+      addOperationHandler: addLokiOperation,
+      explainHandler: (op) => `Return log lines that match regex \`(?i)${op.params[0]}\`.`,
+    },
+    {
+      id: LokiOperationId.LineContainsNotCaseInsensitive,
+      name: 'Line does not contain case insensitive',
       params: [
         {
           name: 'String',
