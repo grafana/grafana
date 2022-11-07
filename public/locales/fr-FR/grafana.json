@@ -413,6 +413,8 @@
       "title": "Période temporelle absolue"
     },
     "calendar": {
+      "apply-button": "",
+      "cancel-button": "Annuler",
       "select-time": ""
     },
     "time-range": {
