@@ -72,19 +72,23 @@ func TestAddAppLinks(t *testing.T) {
 			Type: plugins.App,
 			Includes: []*plugins.Includes{
 				{
-					Name:       "Random page",
-					Path:       "/a/test-app3/random-page",
+					Name:       "Default page",
+					Path:       "/a/test-app3/default",
 					Type:       "page",
 					AddToNav:   true,
 					DefaultNav: true,
 				},
 				{
-					Name:       "Connect data",
-					Path:       "/connections/connect-data",
-					Type:       "page",
-					AddToNav:   true,
-					DefaultNav: true,
-					IsCorePage: true,
+					Name:     "Random page",
+					Path:     "/a/test-app3/random-page",
+					Type:     "page",
+					AddToNav: true,
+				},
+				{
+					Name:     "Connect data",
+					Path:     "/connections/connect-data",
+					Type:     "page",
+					AddToNav: false,
 				},
 			},
 		},
@@ -251,6 +255,7 @@ func TestAddAppLinks(t *testing.T) {
 
 	t.Run("Should replace page from plugin", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav, featuremgmt.FlagDataConnectionsConsole)
+		service.navigationAppConfig = map[string]NavigationAppConfig{}
 		service.navigationAppPathConfig = map[string]NavigationAppConfig{
 			"/connections/connect-data": {SectionID: "connections"},
 		}
@@ -273,13 +278,17 @@ func TestAddAppLinks(t *testing.T) {
 		require.Equal(t, "test-app3", connectionsNode.Children[1].PluginID)
 
 		// Check if the standalone plugin page does not appear under the app section anymore
+		// (Also checking if the Default Page got removed)
 		app3Node := treeRoot.FindById("plugin-page-test-app3")
 		require.NotNil(t, app3Node)
 		require.Len(t, app3Node.Children, 1)
 		require.Equal(t, "Random page", app3Node.Children[0].Text)
+
+		// The plugin item should take the URL of the Default Nav
+		require.Equal(t, "/a/test-app3/default", app3Node.Url)
 	})
 
-	t.Run("Should not register isCorePage=true pages under the app plugin section by default", func(t *testing.T) {
+	t.Run("Should not register pages under the app plugin section unless AddToNav=true", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav, featuremgmt.FlagDataConnectionsConsole)
 		service.navigationAppPathConfig = map[string]NavigationAppConfig{} // We don't configure it as a standalone plugin page
 
@@ -293,11 +302,11 @@ func TestAddAppLinks(t *testing.T) {
 		require.Equal(t, "connections-connect-data", connectDataNode.Id)
 		require.Equal(t, "", connectDataNode.PluginID)
 
-		// The standalone plugin page should not be found in the navtree at all
+		// The standalone plugin page should not be found in the navtree at all (as we didn't configure it)
 		standaloneConnectDataNode := treeRoot.FindById("standalone-plugin-page-/connections/connect-data")
 		require.Nil(t, standaloneConnectDataNode)
 
-		// The plugin page without "isCorePage=true" still appears under the plugin navigation
+		// Only the pages that have `AddToNav=true` appear under the plugin navigation
 		app3Node := treeRoot.FindById("plugin-page-test-app3")
 		require.NotNil(t, app3Node)
 		require.Len(t, app3Node.Children, 1) // It should only have a single child now

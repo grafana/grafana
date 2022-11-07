@@ -89,7 +89,6 @@ type Includes struct {
 	Role       org.RoleType `json:"role"`
 	AddToNav   bool         `json:"addToNav"`
 	DefaultNav bool         `json:"defaultNav"`
-	IsCorePage bool         `json:"isCorePage"`
 	Slug       string       `json:"slug"`
 	Icon       string       `json:"icon"`
 	UID        string       `json:"uid"`

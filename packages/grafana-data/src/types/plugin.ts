@@ -118,10 +118,6 @@ export interface PluginInclude {
 
   // Angular app pages
   component?: string;
-
-  // Marks a "page" type include as a route that can be used to extend or override existing Grafana pages.
-  // A page with this flag enabled will not show up under the plugins own sub-pages, but can be used as a standalone plugin page to show up under a certain navigation section using the `navigation.app_standalone_pages` Grafana setting.
-  isCorePage?: boolean;
 }
 
 interface PluginMetaInfoLink {
