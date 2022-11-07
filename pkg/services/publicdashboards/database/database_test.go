@@ -31,6 +31,9 @@ func TestLogPrefix(t *testing.T) {
 }
 
 func TestIntegrationListPublicDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlStore, cfg := db.InitTestDBwithCfg(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPublicDashboards}})
 	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg))
 	publicdashboardStore := ProvideStore(sqlStore)
@@ -64,6 +67,9 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 }
 
 func TestIntegrationFindDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore *dashboardsDB.DashboardStore
@@ -88,6 +94,9 @@ func TestIntegrationFindDashboard(t *testing.T) {
 }
 
 func TestIntegrationExistsEnabledByAccessToken(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore *dashboardsDB.DashboardStore
@@ -155,6 +164,9 @@ func TestIntegrationExistsEnabledByAccessToken(t *testing.T) {
 }
 
 func TestIntegrationExistsEnabledByDashboardUid(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore *dashboardsDB.DashboardStore
@@ -214,6 +226,9 @@ func TestIntegrationExistsEnabledByDashboardUid(t *testing.T) {
 }
 
 func TestIntegrationFindByDashboardUid(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore *dashboardsDB.DashboardStore
@@ -276,6 +291,9 @@ func TestIntegrationFindByDashboardUid(t *testing.T) {
 }
 
 func TestIntegrationFindByAccessToken(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore *dashboardsDB.DashboardStore
@@ -339,6 +357,9 @@ func TestIntegrationFindByAccessToken(t *testing.T) {
 }
 
 func TestIntegrationCreatePublicDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore *dashboardsDB.DashboardStore
@@ -406,6 +427,9 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 }
 
 func TestIntegrationUpdatePublicDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore *dashboardsDB.DashboardStore
@@ -497,6 +521,9 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 }
 
 func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore *dashboardsDB.DashboardStore
@@ -563,6 +590,9 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 }
 
 func TestIntegrationDelete(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore *dashboardsDB.DashboardStore
