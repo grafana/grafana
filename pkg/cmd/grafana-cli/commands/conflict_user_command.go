@@ -272,9 +272,16 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 			continue
 		}
 		// need to track how many keep users we have for a block
+		if _, ok := counterKeepUsersForBlock[currentBlock]; ok {
+			counterKeepUsersForBlock[currentBlock] = 0
+		}
+		if _, ok := counterDeleteUsersForBlock[currentBlock]; ok {
+			counterDeleteUsersForBlock[currentBlock] = 0
+		}
 		if row[0] == '+' {
 			counterKeepUsersForBlock[currentBlock] += 1
-		} else if row[0] == '-' {
+		}
+		if row[0] == '-' {
 			counterDeleteUsersForBlock[currentBlock] += 1
 		}
 		newUser := &ConflictingUser{}
