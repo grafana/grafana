@@ -156,9 +156,19 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 
 			adminNodeLinks := []*NavLink{}
 
-			adminNodeLinks = append(adminNodeLinks, adminAccessNode)
-			adminNodeLinks = append(adminNodeLinks, adminConfigNode)
-			orgAdminNode.Children = adminNodeLinks
+			if len(adminAccessNode.Children) > 0 {
+				adminNodeLinks = append(adminNodeLinks, adminAccessNode)
+			}
+
+			if len(adminConfigNode.Children) > 0 {
+				adminNodeLinks = append(adminNodeLinks, adminConfigNode)
+			}
+
+			if len(adminNodeLinks) > 0 {
+				orgAdminNode.Children = adminNodeLinks
+			} else {
+				root.RemoveSection(orgAdminNode)
+			}
 		}
 
 		if serverAdminNode := root.FindById(NavIDAdmin); serverAdminNode != nil {
