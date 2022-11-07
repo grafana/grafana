@@ -55,6 +55,14 @@ func TestSimpleRouter(t *testing.T) {
 			Kind:     "folder",
 		},
 	}, {
+		Key: "11/drive/path/to/folder",
+		GRN: &object.GRN{
+			TenantId: 11,
+			Scope:    models.ObjectStoreScopeDrive,
+			UID:      "path/to/folder",
+			Kind:     "folder",
+		},
+	}, {
 		Key: "10/drive/path/to/file.png",
 		GRN: &object.GRN{
 			TenantId: 10,
@@ -84,7 +92,12 @@ func TestSimpleRouter(t *testing.T) {
 			require.Equal(t, check.Error, err.Error(), testID)
 			continue
 		}
+
 		// Check that the key matched
+		if check.GRN.Kind == models.StandardKindFolder && check.Key != info.Key {
+			check.Key += "/__folder.json"
+		}
+
 		require.Equal(t, check.Key, info.Key, testID)
 
 		// Now try to parse the same key again

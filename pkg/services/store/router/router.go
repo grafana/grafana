@@ -151,10 +151,19 @@ func (r *standardStoreRouter) RouteFromKey(ctx context.Context, key string) (Res
 					info.GRN.Kind = k.ID
 				}
 			} else {
-				idx = strings.Index(key, "/")
+				// Assum it is a folder
+				info.GRN.Kind = models.StandardKindFolder
+				info.GRN.UID = key
 
-				info.GRN.Kind = key[:idx]
-				info.GRN.UID = key[idx+1:]
+				idx = strings.Index(key, "/")
+				if idx > 0 {
+					k, err := r.kinds.GetInfo(key[:idx])
+					if err == nil {
+						info.GRN.Kind = k.ID
+						info.GRN.UID = key[idx+1:]
+					}
+				}
+
 			}
 		}
 

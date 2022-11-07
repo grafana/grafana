@@ -3,11 +3,11 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardDTO } from 'app/types';
 
-import { UploadReponse, StorageInfo, ItemOptions, WriteValueRequest, WriteValueResponse } from './types';
+import { UploadReponse, StorageInfo, ItemOptions, WriteValueRequest, WriteValueResponse, ObjectInfo } from './types';
 
 // Likely should be built into the search interface!
 export interface GrafanaStorage {
-  get: <T = any>(path: string) => Promise<T>;
+  get: <T = any>(path: string) => Promise<ObjectInfo<T>>;
   list: (path: string) => Promise<DataFrame | undefined>;
   upload: (folder: string, file: File, overwriteExistingFile: boolean) => Promise<UploadReponse>;
   createFolder: (path: string) => Promise<{ error?: string }>;
@@ -32,9 +32,9 @@ export interface GrafanaStorage {
 class SimpleStorage implements GrafanaStorage {
   constructor() {}
 
-  async get<T = any>(path: string): Promise<T> {
+  async get<T = any>(path: string): Promise<ObjectInfo<T>> {
     const storagePath = `api/object/store/${path}`.replace('//', '/');
-    return getBackendSrv().get<T>(storagePath);
+    return getBackendSrv().get<ObjectInfo<T>>(storagePath);
   }
 
   async list(path: string): Promise<DataFrame | undefined> {

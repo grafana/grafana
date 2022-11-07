@@ -5,21 +5,32 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { DataFrameView, GrafanaTheme2 } from '@grafana/data';
 import { Table, useStyles2 } from '@grafana/ui';
 
-import { StorageView, ListItem } from './types';
+import { StorageView, ListItem, ObjectInfo } from './types';
 
 interface Props {
-  listing: DataFrameView<ListItem>;
+  folder: ObjectInfo;
+  listing?: DataFrameView<ListItem>;
   view: StorageView;
 }
 
-export function FolderView({ listing, view }: Props) {
+export function FolderView({ folder, listing, view }: Props) {
   const styles = useStyles2(getStyles);
 
   switch (view) {
-    case StorageView.Config:
-      return <div>CONFIGURE?</div>;
+    case StorageView.Info:
+      return (
+        <div>
+          <pre>{JSON.stringify(folder, null, 2)}</pre>
+        </div>
+      );
     case StorageView.Perms:
-      return <div>Permissions</div>;
+      return <div>TODO, show/configure permissions</div>;
+    case StorageView.History:
+      return <div>Show history</div>;
+  }
+
+  if (!listing) {
+    return <div></div>;
   }
 
   return (

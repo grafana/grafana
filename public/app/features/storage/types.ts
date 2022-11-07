@@ -1,8 +1,8 @@
-import { QueryResultMetaNotice, SelectableValue, ArrayDataFrame } from '@grafana/data';
+import { QueryResultMetaNotice, SelectableValue } from '@grafana/data';
 
 export enum StorageView {
   Data = 'data',
-  Config = 'config',
+  Info = 'info',
   Perms = 'perms',
   Export = 'export',
   History = 'history',
@@ -95,3 +95,35 @@ export interface ListItem {
 // sizeFrameField        = "size"
 // updatedAtFrameField   = "updatedAt"
 // updatedByFrameField   = "updatedBy"
+
+export interface GRN {
+  tenant_id: number;
+  scope: string;
+  kind: string;
+  uid: string;
+}
+
+export interface RawObject<T = unknown> {
+  GRN: GRN;
+  version: string;
+  created: number;
+  updated: number;
+  createdBy: string;
+  updatedBy: string;
+  body?: T;
+  body_base64?: string; // for images?
+  etag: string;
+  size: number;
+}
+
+export interface ObjectSummary {
+  name: string;
+  description: string;
+  labels: Record<string, string>;
+  fields: Record<string, string | number | boolean>;
+}
+
+export interface ObjectInfo<T = unknown> {
+  object: RawObject<T>;
+  summary: ObjectSummary;
+}

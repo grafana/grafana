@@ -15,12 +15,12 @@ import { AddRootView } from './AddRootView';
 import { Breadcrumb } from './Breadcrumb';
 import { CreateNewFolderModal } from './CreateNewFolderModal';
 import { ExportView } from './ExportView';
-import { FileView } from './FileView';
 import { FolderView } from './FolderView';
+import { ObjectView } from './ObjectView';
 import { RootView } from './RootView';
 import { UploadButton } from './UploadButton';
 import { getGrafanaStorage, filenameAlreadyExists } from './storage';
-import { ListItem, StorageView } from './types';
+import { ListItem, ObjectInfo, StorageView } from './types';
 
 interface RouteParams {
   path: string;
@@ -60,7 +60,26 @@ export default function StoragePage(props: Props) {
   const [isAddingNewFolder, setIsAddingNewFolder] = useState(false);
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
 
+  const info = useAsync(() => {
+    if (!path?.includes('/')) {
+      return Promise.resolve({
+        object: {
+          GRN: { kind: 'folder' },
+        },
+        summary: {
+          name: path,
+        },
+      } as ObjectInfo);
+    }
+    return getGrafanaStorage().get(path);
+  }, [path]);
+  const isFolder = useMemo(() => info.value?.object.GRN.kind === 'folder', [info.value]);
+
   const listing = useAsync((): Promise<DataFrameView<ListItem> | undefined> => {
+    if (!isFolder) {
+      return Promise.resolve(undefined);
+    }
+
     return getGrafanaStorage()
       .list(path)
       .then((frame) => {
@@ -87,26 +106,12 @@ export default function StoragePage(props: Props) {
         }
         return undefined;
       });
-  }, [path]);
-
-  const isFolder = useMemo(() => {
-    // let isFolder = path?.indexOf('/') < 0;
-    // if (listing.value) {
-    //   const length = listing.value.length;
-    //   if (length === 1) {
-    //     const first = listing.value.fields[0].values.get(0) as string;
-    //     isFolder = !path.endsWith(first);
-    //   } else {
-    //     // TODO: handle files/folders which do not exist
-    //     isFolder = true;
-    //   }
-    // }
-    return !path?.includes('.');
-  }, [path]);
+  }, [path, isFolder]);
 
   const fileNames = useMemo(() => {
     return listing.value?.fields.name.values.toArray() ?? [];
   }, [listing]);
+
   const renderView = () => {
     const isRoot = !path?.length || path === '/';
     switch (view) {
@@ -125,27 +130,22 @@ export default function StoragePage(props: Props) {
         return <AddRootView onPathChange={setPath} />;
     }
 
-    if (!listing.value) {
-      return <></>;
-    }
-
     if (isRoot) {
+      if (!listing.value) {
+        return <></>;
+      }
       return <RootView items={listing.value} onPathChange={setPath} />;
     }
 
-    const opts = [{ what: StorageView.Data, text: 'Data' }];
+    const opts = [
+      { what: StorageView.Data, text: isFolder ? 'Folder' : 'Object' },
+      { what: StorageView.Info, text: 'Info' },
+      { what: StorageView.History, text: 'History' },
+    ];
 
-    // Root folders have a config page
-    if (path.indexOf('/') < 0) {
-      opts.push({ what: StorageView.Config, text: 'Configure' });
-    }
-
-    // Lets only apply permissions to folders (for now)
-    if (isFolder) {
+    if (true) {
+      // only if you are an admin
       opts.push({ what: StorageView.Perms, text: 'Permissions' });
-    } else {
-      // TODO: only if the file exists in a storage engine with
-      opts.push({ what: StorageView.History, text: 'History' });
     }
 
     const canAddFolder =
@@ -219,20 +219,24 @@ export default function StoragePage(props: Props) {
 
         {errorMessages.length > 0 && getErrorMessages()}
 
-        <TabsBar>
-          {opts.map((opt) => (
-            <Tab
-              key={opt.what}
-              label={opt.text}
-              active={opt.what === view}
-              onChangeTab={() => setPath(path, opt.what)}
-            />
-          ))}
-        </TabsBar>
-        {isFolder ? (
-          <FolderView listing={listing.value} view={view} />
-        ) : (
-          <FileView path={path} listing={listing.value.dataFrame} onPathChange={setPath} view={view} />
+        {info.value && (
+          <>
+            <TabsBar>
+              {opts.map((opt) => (
+                <Tab
+                  key={opt.what}
+                  label={opt.text}
+                  active={opt.what === view}
+                  onChangeTab={() => setPath(path, opt.what)}
+                />
+              ))}
+            </TabsBar>
+            {isFolder ? (
+              <FolderView folder={info.value} listing={listing.value} view={view} />
+            ) : (
+              <ObjectView path={path} info={info.value} onPathChange={setPath} view={view} />
+            )}
+          </>
         )}
 
         {isAddingNewFolder && (
