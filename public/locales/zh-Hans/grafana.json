@@ -415,6 +415,10 @@
     "calendar": {
       "select-time": ""
     },
+    "content": {
+      "empty-recent-list": "",
+      "filter-placeholder": ""
+    },
     "time-range": {
       "aria-role": "",
       "default-title": "",
