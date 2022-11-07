@@ -113,30 +113,39 @@ function FolderGroupAndEvaluationInterval({
           onClose={() => closeEditGroupModal()}
         />
       )}
+
       <Card className={styles.cardContainer}>
         <Card.Heading>Group behaviour</Card.Heading>
+        <Card.Meta>
+          <div className={styles.evaluationDescription}>
+            <div className={styles.evaluateLabel}>
+              {`Alert rules in`} <span className={styles.bold}>{group}</span> are evaluated every{' '}
+              <span className={styles.bold}>{evaluateEvery}</span>.
+            </div>
 
-        <div className={styles.evaluateLabel}>
-          {`Alert rules in`} <span className={styles.bold}>{group}</span> are evaluated every{' '}
-          <span className={styles.bold}>{evaluateEvery}</span>.
-        </div>
-        <br />
-        {`Evaluation interval applies to every rule within a group. 
-              It can overwrite the interval of an existing alert rule.`}
-        <br />
-        <div className={styles.editGroup}>
-          {`Click on Edit group button to edit this value `}
-          <Button
-            icon={'edit'}
-            type="button"
-            variant="secondary"
-            disabled={groupfoldersForGrafana?.loading}
-            className={styles.editButton}
-            onClick={onOpenEditGroupModal}
-          >
-            <span>{'Edit group'}</span>
-          </Button>
-        </div>
+            <br />
+            <div>
+              {`Evaluation interval applies to every rule within a group. 
+          It can overwrite the interval of an existing alert rule.`}
+            </div>
+            <br />
+          </div>
+        </Card.Meta>
+        <Card.Actions>
+          <div className={styles.editGroup}>
+            {`Click on Edit group button to edit this value `}
+            <Button
+              icon={'edit'}
+              type="button"
+              variant="secondary"
+              disabled={groupfoldersForGrafana?.loading}
+              className={styles.editButton}
+              onClick={onOpenEditGroupModal}
+            >
+              <span>{'Edit group'}</span>
+            </Button>
+          </div>
+        </Card.Actions>
       </Card>
     </div>
   );
@@ -259,7 +268,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: ${theme.spacing(2, 0, 2, -1)};
   `,
   evaluateLabel: css`
-    align-self: center;
+    align-self: left;
     margin-right: ${theme.spacing(1)};
   `,
   evaluateInput: css`
@@ -289,5 +298,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   bold: css`
     font-weight: bold;
+  `,
+  evaluationDescription: css`
+    display: flex;
+    flex-direction: column;
   `,
 });

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import classNames from 'classnames';
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -122,7 +121,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
   );
 
   return (
-    <div className={classNames([styles.flexRow, styles.alignBaseline])}>
+    <div className={styles.container}>
       <Field
         label={
           <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
@@ -211,19 +210,15 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
   );
 }
 const getStyles = (theme: GrafanaTheme2) => ({
-  flexRow: css`
+  container: css`
     display: flex;
     flex-direction: row;
-    justify-content: flex-start;
-    align-items: flex-start;
-  `,
-  alignBaseline: css`
     align-items: baseline;
-    margin-bottom: ${theme.spacing(1)};
+    max-width: ${theme.breakpoints.values.sm}px;
+    justify-content: space-between;
   `,
   formInput: css`
     width: 275px;
-
     & + & {
       margin-left: ${theme.spacing(3)};
     }
