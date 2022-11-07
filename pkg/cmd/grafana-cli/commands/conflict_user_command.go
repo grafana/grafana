@@ -55,7 +55,7 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
 	}
-	resolver := ConflictResolver{Users: conflicts}
+	resolver := ConflictResolver{Users: conflicts, Store: s}
 	resolver.BuildConflictBlocks(conflicts, f)
 	return &resolver, nil
 }
