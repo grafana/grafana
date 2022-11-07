@@ -7,13 +7,13 @@ import { SceneVariable, SceneVariables, SceneVariableSetState, SceneVariableValu
 
 export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> implements SceneVariables {
   /** Variables that have changed in since the activation or since the first manual value change */
-  private variablesThatHaveChanged = new Set<string>();
+  private variablesThatHaveChanged = new Set<SceneVariable>();
 
   /** Variables that are scheduled to be validated and updated */
-  private variablesToUpdate = new Map<string, SceneVariable>();
+  private variablesToUpdate = new Set<SceneVariable>();
 
   /** Variables currently updating  */
-  private updating = new Map<string, VariableUpdateInProgress>();
+  private updating = new Map<SceneVariable, VariableUpdateInProgress>();
 
   public getByName(name: string): SceneVariable | undefined {
     // TODO: Replace with index
@@ -55,7 +55,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
       return;
     }
 
-    for (const [name, variable] of this.variablesToUpdate) {
+    for (const variable of this.variablesToUpdate) {
       if (!variable.validateAndUpdate) {
         throw new Error('Variable added to variablesToUpdate but does not have validateAndUpdate');
       }
@@ -65,7 +65,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
         continue;
       }
 
-      this.updating.set(name, {
+      this.updating.set(variable, {
         variable,
         subscription: variable.validateAndUpdate().subscribe({
           next: () => this.validateAndUpdateCompleted(variable),
@@ -79,11 +79,11 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
    * A variable has completed it's update process. This could mean that variables that depend on it can now be updated in turn.
    */
   private validateAndUpdateCompleted(variable: SceneVariable) {
-    const update = this.updating.get(variable.state.name);
+    const update = this.updating.get(variable);
     update?.subscription.unsubscribe();
 
-    this.updating.delete(variable.state.name);
-    this.variablesToUpdate.delete(variable.state.name);
+    this.updating.delete(variable);
+    this.variablesToUpdate.delete(variable);
     this.updateNextBatch();
   }
 
@@ -103,11 +103,9 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
       return false;
     }
 
-    for (const dep of variable.variableDependency.getNames()) {
-      for (const otherVariable of this.variablesToUpdate.values()) {
-        if (otherVariable.state.name === dep) {
-          return true;
-        }
+    for (const otherVariable of this.variablesToUpdate.values()) {
+      if (variable.variableDependency?.hasDependencyOn(otherVariable.state.name)) {
+        return true;
       }
 
     return false;
@@ -120,7 +118,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
   private validateAndUpdateAll() {
     for (const variable of this.state.variables) {
       if (variable.validateAndUpdate) {
-        this.variablesToUpdate.set(variable.state.name, variable);
+        this.variablesToUpdate.add(variable);
       }
     }
 
@@ -133,17 +131,17 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
   private onVariableValueChanged = (event: SceneVariableValueChangedEvent) => {
     const variableThatChanged = event.payload;
 
-    this.variablesThatHaveChanged.add(variableThatChanged.state.name);
+    this.variablesThatHaveChanged.add(variableThatChanged);
 
     // Ignore this change if it is currently updating
-    if (this.updating.has(variableThatChanged.state.name)) {
+    if (this.updating.has(variableThatChanged)) {
       return;
     }
 
     for (const otherVariable of this.state.variables) {
       if (otherVariable.variableDependency) {
-        if (otherVariable.variableDependency.getNames().has(variableThatChanged.state.name)) {
-          this.variablesToUpdate.set(otherVariable.state.name, otherVariable);
+        if (otherVariable.variableDependency.hasDependencyOn(variableThatChanged.state.name)) {
+          this.variablesToUpdate.add(otherVariable);
         }
       }
     }
@@ -159,29 +157,24 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
       return;
     }
 
-    this.traverseSceneAndNotify(this.parent, this.variablesThatHaveChanged);
+    this.traverseSceneAndNotify(this.parent);
     this.variablesThatHaveChanged.clear();
   }
 
   /**
    * Recursivly walk the full scene object graph and notify all objects with dependencies that include any of changed variables
    */
-  private traverseSceneAndNotify(sceneObject: SceneObject, variablesThatChanged: Set<string>) {
+  private traverseSceneAndNotify(sceneObject: SceneObject) {
     // No need to notify variables under this SceneVariableSet
     if (this === sceneObject) {
       return;
     }
 
     if (sceneObject.variableDependency) {
-      for (const dep of sceneObject.variableDependency.getNames()) {
-        if (variablesThatChanged.has(dep)) {
-          sceneObject.variableDependency.onVariableValuesChanged();
-          break;
-        }
-      }
+      sceneObject.variableDependency.variableValuesChanged(this.variablesThatHaveChanged);
     }
 
-    forEachSceneObjectInState(sceneObject.state, (child) => this.traverseSceneAndNotify(child, variablesThatChanged));
+    forEachSceneObjectInState(sceneObject.state, (child) => this.traverseSceneAndNotify(child));
   }
 }
 

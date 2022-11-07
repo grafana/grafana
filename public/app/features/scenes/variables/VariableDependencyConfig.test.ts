@@ -2,6 +2,7 @@ import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneObjectStatePlain } from '../core/types';
 
 import { VariableDependencyConfig } from './VariableDependencyConfig';
+import { ConstantVariable } from './variants/ConstantVariable';
 
 interface TestState extends SceneObjectStatePlain {
   query: string;
@@ -24,11 +25,19 @@ class TestObj extends SceneObjectBase<TestState> {
 }
 
 describe('VariableDependencySet', () => {
-  it('Should be able to extract dependencies', () => {
+  it('Should be able to extract dependencies from all state', () => {
+    const sceneObj = new TestObj();
+    const deps = new VariableDependencyConfig(sceneObj, {});
+
+    expect(deps.getNames()).toEqual(new Set(['queryVarA', 'queryVarB', 'nestedVarA', 'otherPropA']));
+  });
+
+  it('Should be able to extract dependencies from statePaths', () => {
     const sceneObj = new TestObj();
     const deps = new VariableDependencyConfig(sceneObj, { statePaths: ['query', 'nested'] });
 
     expect(deps.getNames()).toEqual(new Set(['queryVarA', 'queryVarB', 'nestedVarA']));
+    expect(deps.hasDependencyOn('queryVarA')).toBe(true);
   });
 
   it('Should cache variable extraction', () => {
@@ -61,5 +70,17 @@ describe('VariableDependencySet', () => {
 
     expect(deps.getNames()).toEqual(new Set(['newVar', 'nestedVarA']));
     expect(deps.scanCount).toBe(2);
+  });
+
+  it('variableValuesChanged should only call _onReferencedVariableValueChanged if dependent variable has changed', () => {
+    const sceneObj = new TestObj();
+    const fn = jest.fn();
+    const deps = new VariableDependencyConfig(sceneObj, { onReferencedVariableValueChanged: fn });
+
+    deps.variableValuesChanged(new Set([new ConstantVariable({ name: 'not-dep', value: '1' })]));
+    expect(fn.mock.calls.length).toBe(0);
+
+    deps.variableValuesChanged(new Set([new ConstantVariable({ name: 'queryVarA', value: '1' })]));
+    expect(fn.mock.calls.length).toBe(1);
   });
 });

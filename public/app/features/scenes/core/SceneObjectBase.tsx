@@ -6,19 +6,11 @@ import { BusEvent, BusEventHandler, BusEventType, EventBusSrv } from '@grafana/d
 import { useForceUpdate } from '@grafana/ui';
 
 import { sceneTemplateInterpolator } from '../variables/sceneTemplateInterpolator';
-import { SceneVariables } from '../variables/types';
+import { SceneVariables, SceneVariableDependencyConfigLike } from '../variables/types';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
-import {
-  SceneDataState,
-  SceneObject,
-  SceneComponent,
-  SceneEditor,
-  SceneTimeRange,
-  SceneObjectState,
-  SceneVariableDependencyConfigLike,
-} from './types';
+import { SceneDataState, SceneObject, SceneComponent, SceneEditor, SceneTimeRange, SceneObjectState } from './types';
 import { cloneSceneObject, forEachSceneObjectInState } from './utils';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObjectState>

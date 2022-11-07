@@ -1,36 +1,60 @@
 import { variableRegex } from 'app/features/variables/utils';
 
-import { SceneObject, SceneObjectState, SceneVariableDependencyConfigLike } from '../core/types';
+import { SceneObject, SceneObjectState } from '../core/types';
+
+import { SceneVariable, SceneVariableDependencyConfigLike } from './types';
 
 interface VariableDependencyCacheOptions<TState extends SceneObjectState> {
   /**
-   * State paths to scan / extract variable dependencies from
+   * State paths to scan / extract variable dependencies from. Leave empty to scan all paths.
    */
-  statePaths: Array<keyof TState>;
+  statePaths?: Array<keyof TState>;
   /**
    * Optional way to customize how to handle when a dependent variable changes
    * If not specified the default behavior is to trigger a re-render
    */
-  onVariableValuesChanged?: () => void;
+  onReferencedVariableValueChanged?: () => void;
 }
 
 export class VariableDependencyConfig<TState extends SceneObjectState> implements SceneVariableDependencyConfigLike {
   private _state: TState | undefined;
   private _dependencies = new Set<string>();
-  private _statePaths: Array<keyof TState>;
+  private _statePaths?: Array<keyof TState>;
+  private _onReferencedVariableValueChanged: () => void;
 
   scanCount = 0;
 
   constructor(private _sceneObject: SceneObject<TState>, options: VariableDependencyCacheOptions<TState>) {
     this._statePaths = options.statePaths;
+    this._onReferencedVariableValueChanged =
+      options.onReferencedVariableValueChanged ?? this.defaultHandlerReferencedVariableValueChanged;
+  }
 
-    if (options.onVariableValuesChanged) {
-      this.onVariableValuesChanged = options.onVariableValuesChanged;
+  /**
+   * Used to check for dependency on a specific variable
+   */
+  hasDependencyOn(name: string): boolean {
+    return this.getNames().has(name);
+  }
+
+  /**
+   * This is called whenever any set of variables have new values. It up to this implementation to check if it's relevant given the current dependencies.
+   */
+  variableValuesChanged(variables: Set<SceneVariable>) {
+    const deps = this.getNames();
+
+    for (const variable of variables) {
+      if (deps.has(variable.state.name)) {
+        this._onReferencedVariableValueChanged();
+        return;
+      }
     }
   }
 
-  //** Default handler is just to trigger re-render by changing state */
-  onVariableValuesChanged = () => {
+  /**
+   * Only way to force a re-render is to update state right now
+   */
+  private defaultHandlerReferencedVariableValueChanged = () => {
     this._sceneObject.setState({});
   };
 
@@ -46,11 +70,15 @@ export class VariableDependencyConfig<TState extends SceneObjectState> implement
 
     // Second time we only scan if state is a different and if any specific state path has changed
     if (newState !== prevState) {
-      for (const path of this._statePaths) {
-        if (newState[path] !== prevState[path]) {
-          this.scanStateForDependencies(newState);
-          break;
+      if (this._statePaths) {
+        for (const path of this._statePaths) {
+          if (newState[path] !== prevState[path]) {
+            this.scanStateForDependencies(newState);
+            break;
+          }
         }
+      } else {
+        this.scanStateForDependencies(newState);
       }
     }
 
@@ -61,11 +89,15 @@ export class VariableDependencyConfig<TState extends SceneObjectState> implement
     this._dependencies.clear();
     this.scanCount += 1;
 
-    for (const path of this._statePaths) {
-      const value = state[path];
-      if (value) {
-        this.extractVariablesFrom(value);
+    if (this._statePaths) {
+      for (const path of this._statePaths) {
+        const value = state[path];
+        if (value) {
+          this.extractVariablesFrom(value);
+        }
       }
+    } else {
+      this.extractVariablesFrom(state);
     }
   }
 

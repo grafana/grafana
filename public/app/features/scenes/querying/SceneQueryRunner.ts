@@ -34,7 +34,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
 
   _variableDependency = new VariableDependencyConfig(this, {
     statePaths: ['queries'],
-    onVariableValuesChanged: () => this.runQueries(),
+    onReferencedVariableValueChanged: () => this.runQueries(),
   });
 
   public activate() {

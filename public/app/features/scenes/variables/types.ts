@@ -53,3 +53,13 @@ export interface SceneVariables extends SceneObject<SceneVariableSetState> {
 export class SceneVariableValueChangedEvent extends BusEventWithPayload<SceneVariable> {
   public static type = 'scene-variable-changed-value';
 }
+
+export interface SceneVariableDependencyConfigLike {
+  /** Used to check for dependency on a specific variable */
+  hasDependencyOn(name: string): boolean;
+
+  /**
+   * Will be called when any variable value has changed.
+   **/
+  variableValuesChanged(variables: Set<SceneVariable>): void;
+}

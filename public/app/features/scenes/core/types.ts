@@ -3,7 +3,7 @@ import { Observer, Subscription, Unsubscribable } from 'rxjs';
 
 import { BusEvent, BusEventHandler, BusEventType, PanelData, TimeRange, UrlQueryMap } from '@grafana/data';
 
-import { SceneVariables } from '../variables/types';
+import { SceneVariableDependencyConfigLike, SceneVariables } from '../variables/types';
 
 export interface SceneObjectStatePlain {
   key?: string;
@@ -98,13 +98,6 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
 
   /** To be replaced by declarative method */
   Editor(props: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null;
-}
-
-export interface SceneVariableDependencyConfigLike {
-  /** Should return the names of used variables */
-  getNames(): Set<string>;
-  /** Will be called when any dependent variable value changed */
-  onVariableValuesChanged(): void;
 }
 
 export type SceneLayoutChild = SceneObject<SceneLayoutChildState | SceneLayoutState>;
