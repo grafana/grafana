@@ -1,8 +1,6 @@
 package api
 
 import (
-	"context"
-	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -89,50 +87,49 @@ func (api *Api) RegisterAPIEndpoints() {
 		routing.Wrap(api.DeletePublicDashboard))
 }
 
-// ListPublicDashboards Gets list of public dashboards for an org
-// GET /api/dashboards/public
+// ListPublicDashboards Gets list of public dashboards by orgId
+// GET /api/dashboards/public-dashboards
 func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
 	resp, err := api.PublicDashboardService.FindAll(c.Req.Context(), c.SignedInUser, c.OrgID)
 	if err != nil {
-		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "ListPublicDashboards: failed to list public dashboards", err)
+		return response.Err(err)
 	}
 	return response.JSON(http.StatusOK, resp)
 }
 
 // GetPublicDashboard Gets public dashboard for dashboard
-// GET /api/dashboards/uid/:uid/public-dashboards
+// GET /api/dashboards/uid/:dashboardUid/public-dashboards
 func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if !tokens.IsValidShortUID(dashboardUid) {
-		api.handleError(c.Req.Context(), http.StatusBadRequest, "GetPublicDashboard: no valid dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
+		return response.Err(ErrPublicDashboardIdentifierNotSet.Errorf("GetPublicDashboard: no dashboard Uid for public dashboard specified"))
 	}
 
-	pd, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, web.Params(c.Req)[":dashboardUid"])
-
+	pd, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, dashboardUid)
 	if err != nil {
-		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "GetPublicDashboard: failed to get public dashboard ", err)
+		return response.Err(err)
 	}
 
 	if pd == nil {
-		return api.handleError(c.Req.Context(), http.StatusNotFound, "GetPublicDashboard: public dashboard not found", ErrPublicDashboardNotFound)
+		response.Err(ErrPublicDashboardNotFound.Errorf("GetPublicDashboard: public dashboard not found"))
 	}
 
 	return response.JSON(http.StatusOK, pd)
 }
 
 // CreatePublicDashboard Sets public dashboard for dashboard
-// POST /api/dashboards/uid/:uid/public-dashboards
+// POST /api/dashboards/uid/:dashboardUid/public-dashboards
 func (api *Api) CreatePublicDashboard(c *models.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if !tokens.IsValidShortUID(dashboardUid) {
-		return api.handleError(c.Req.Context(), http.StatusBadRequest, "CreatePublicDashboard: invalid dashboardUid", dashboards.ErrDashboardIdentifierInvalid)
+		return response.Err(ErrInvalidUid.Errorf("CreatePublicDashboard: invalid Uid %s", dashboardUid))
 	}
 
 	pd := &PublicDashboard{}
 	if err := web.Bind(c.Req, pd); err != nil {
-		return api.handleError(c.Req.Context(), http.StatusBadRequest, "CreatePublicDashboard: bad request data", err)
+		return response.Err(ErrBadRequest.Errorf("CreatePublicDashboard: bad request data %v", err))
 	}
 
 	// Always set the orgID and userID from the session
@@ -147,29 +144,29 @@ func (api *Api) CreatePublicDashboard(c *models.ReqContext) response.Response {
 	//Create the public dashboard
 	pd, err := api.PublicDashboardService.Create(c.Req.Context(), c.SignedInUser, &dto)
 	if err != nil {
-		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "CreatePublicDashboard: failed to create public dashboard", err)
+		return response.Err(err)
 	}
 
 	return response.JSON(http.StatusOK, pd)
 }
 
 // UpdatePublicDashboard Sets public dashboard for dashboard
-// PUT /api/dashboards/uid/:uid/public-dashboards
+// PUT /api/dashboards/uid/:dashboardUid/public-dashboards/:uid
 func (api *Api) UpdatePublicDashboard(c *models.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if !tokens.IsValidShortUID(dashboardUid) {
-		return api.handleError(c.Req.Context(), http.StatusBadRequest, "UpdatePublicDashboard: invalid dashboardUid", dashboards.ErrDashboardIdentifierInvalid)
+		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid dashboard Uid %s", dashboardUid))
 	}
 
 	uid := web.Params(c.Req)[":uid"]
 	if !tokens.IsValidShortUID(uid) {
-		return api.handleError(c.Req.Context(), http.StatusBadRequest, "UpdatePublicDashboard: invalid public dashboard uid", ErrPublicDashboardIdentifierNotSet)
+		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid Uid %s", uid))
 	}
 
 	pd := &PublicDashboard{}
 	if err := web.Bind(c.Req, pd); err != nil {
-		return api.handleError(c.Req.Context(), http.StatusBadRequest, "UpdatePublicDashboard: bad request data", err)
+		return response.Err(ErrBadRequest.Errorf("UpdatePublicDashboard: bad request data %v", err))
 	}
 
 	// Always set the orgID and userID from the session
@@ -182,10 +179,10 @@ func (api *Api) UpdatePublicDashboard(c *models.ReqContext) response.Response {
 		PublicDashboard: pd,
 	}
 
-	// Save the public dashboard
+	// Update the public dashboard
 	pd, err := api.PublicDashboardService.Update(c.Req.Context(), c.SignedInUser, &dto)
 	if err != nil {
-		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "UpdatePublicDashboard: failed to update public dashboard", err)
+		return response.Err(err)
 	}
 
 	return response.JSON(http.StatusOK, pd)
@@ -196,36 +193,15 @@ func (api *Api) UpdatePublicDashboard(c *models.ReqContext) response.Response {
 func (api *Api) DeletePublicDashboard(c *models.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	if !tokens.IsValidShortUID(uid) {
-		return api.handleError(c.Req.Context(), http.StatusBadRequest, "DeletePublicDashboard: invalid dashboard uid", dashboards.ErrDashboardIdentifierNotSet)
+		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid Uid %s", uid))
 	}
 
 	err := api.PublicDashboardService.Delete(c.Req.Context(), c.OrgID, uid)
 	if err != nil {
-		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "DeletePublicDashboard: failed to delete public dashboard", err)
+		return response.Err(err)
 	}
 
 	return response.JSON(http.StatusOK, nil)
-}
-
-// util to help us unpack dashboard and publicdashboard errors or use default http code and message
-// we should look to do some future refactoring of these errors as publicdashboard err is the same as a dashboarderr, just defined in a
-// different package.
-func (api *Api) handleError(ctx context.Context, code int, message string, err error) response.Response {
-	var publicDashboardErr PublicDashboardErr
-	ctxLogger := api.Log.FromContext(ctx)
-	ctxLogger.Error(message, "error", err.Error())
-
-	// handle public dashboard error
-	if ok := errors.As(err, &publicDashboardErr); ok {
-		return response.Error(publicDashboardErr.StatusCode, publicDashboardErr.Error(), publicDashboardErr)
-	}
-
-	var dashboardErr dashboards.DashboardErr
-	if ok := errors.As(err, &dashboardErr); ok {
-		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), dashboardErr)
-	}
-
-	return response.Error(code, message, err)
 }
 
 // Copied from pkg/api/metrics.go

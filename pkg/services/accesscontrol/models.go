@@ -126,6 +126,10 @@ func (r *RoleDTO) IsFixed() bool {
 	return strings.HasPrefix(r.Name, FixedRolePrefix)
 }
 
+func (r *RoleDTO) IsPlugin() bool {
+	return strings.HasPrefix(r.Name, PluginRolePrefix)
+}
+
 func (r *RoleDTO) IsBasic() bool {
 	return strings.HasPrefix(r.Name, BasicRolePrefix) || strings.HasPrefix(r.UID, BasicRoleUIDPrefix)
 }
@@ -273,6 +277,7 @@ const (
 	FixedRolePrefix    = "fixed:"
 	ManagedRolePrefix  = "managed:"
 	BasicRolePrefix    = "basic:"
+	PluginRolePrefix   = "plugins:"
 	BasicRoleUIDPrefix = "basic_"
 	RoleGrafanaAdmin   = "Grafana Admin"
 
