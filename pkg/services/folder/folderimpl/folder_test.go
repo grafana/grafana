@@ -314,8 +314,7 @@ func TestFolderService(t *testing.T) {
 		}
 		res, err := folderService.GetTree(context.Background(),
 			&folder.GetTreeQuery{
-				Depth: 2,
-				UID:   "test",
+				UID: "test",
 			})
 		require.NoError(t, err)
 		require.Equal(t, 4, len(res))

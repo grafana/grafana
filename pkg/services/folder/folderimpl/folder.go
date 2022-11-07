@@ -351,50 +351,10 @@ func (s *Service) GetParents(ctx context.Context, cmd *folder.GetParentsQuery) (
 	return s.store.GetParents(ctx, *cmd)
 }
 
-func (s *Service) GetTree(ctx context.Context, cmd *folder.GetTreeQuery) (map[string][]*folder.Folder, error) {
+func (s *Service) GetTree(ctx context.Context, cmd *folder.GetTreeQuery) ([]*folder.Folder, error) {
 	// check the flag, if old - do whatever did before
 	//  for new only the store
-	result := make(map[string][]*folder.Folder)
-	depth := cmd.Depth
-	UID := cmd.UID
-	if depth > 8 {
-		return nil, errors.New("depth is too deep")
-	}
-	return s.getTree(ctx, cmd.OrgID, depth, UID, result)
-}
-
-func (s *Service) getTree(
-	ctx context.Context,
-	orgID, depth int64,
-	UID string,
-	result map[string][]*folder.Folder,
-) (map[string][]*folder.Folder, error) {
-	if depth == 0 {
-		return result, nil
-	}
-
-	children, err := s.store.GetChildren(ctx, folder.GetTreeQuery{
-		OrgID: orgID,
-		UID:   UID,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if children == nil {
-		return result, nil
-	}
-
-	result[UID] = children
-	depth--
-
-	for _, child := range children {
-		UID = child.UID
-		result, err = s.getTree(ctx, orgID, depth, UID, result)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return result, nil
+	return s.store.GetChildren(ctx, *cmd)
 }
 
 func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {
