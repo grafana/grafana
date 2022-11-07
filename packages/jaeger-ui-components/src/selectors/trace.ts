@@ -207,7 +207,7 @@ export const getTreeSizeForTraceSpan = createSelector(
   createSelector((state: { trace: TraceResponse }) => state.trace, getTraceSpanIdsAsTree),
   createSelector((state: { span: TraceSpanData }) => state.span, getSpanId),
   (tree, spanID) => {
-    const node = tree.find(spanID);
+    const node: TreeNode = tree.find(spanID);
     if (!node) {
       return -1;
     }
