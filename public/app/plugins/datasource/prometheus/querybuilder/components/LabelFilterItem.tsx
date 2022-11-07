@@ -11,10 +11,10 @@ import { QueryBuilderLabelFilter } from '../shared/types';
 
 export interface Props {
   defaultOp: string;
-  item: QueryBuilderLabelFilter;
+  item: Partial<QueryBuilderLabelFilter>;
   onChange: (value: QueryBuilderLabelFilter) => void;
-  onGetLabelNames: (forLabel: QueryBuilderLabelFilter) => Promise<SelectableValue[]>;
-  onGetLabelValues: (forLabel: QueryBuilderLabelFilter) => Promise<SelectableValue[]>;
+  onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
+  onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
   onDelete: () => void;
   invalidLabel?: boolean;
   invalidValue?: boolean;
@@ -79,7 +79,7 @@ export function LabelFilterItem({
                 ...item,
                 op: item.op ?? defaultOp,
                 label: change.label,
-              });
+              } as QueryBuilderLabelFilter);
             }
           }}
           invalid={invalidLabel}
@@ -97,7 +97,7 @@ export function LabelFilterItem({
                 ...item,
                 op: change.value,
                 value: isMultiSelect(change.value) ? item.value : getSelectOptionsFromString(item?.value)[0],
-              });
+              } as QueryBuilderLabelFilter);
             }
           }}
         />
@@ -136,14 +136,14 @@ export function LabelFilterItem({
                 ...item,
                 value: change.value,
                 op: item.op ?? defaultOp,
-              });
+              } as QueryBuilderLabelFilter);
             } else {
               const changes = change
                 .map((change: { label?: string }) => {
                   return change.label;
                 })
                 .join('|');
-              onChange({ ...item, value: changes, op: item.op ?? defaultOp });
+              onChange({ ...item, value: changes, op: item.op ?? defaultOp } as QueryBuilderLabelFilter);
             }
           }}
           invalid={invalidValue}

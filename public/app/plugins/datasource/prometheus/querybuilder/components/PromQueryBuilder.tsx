@@ -217,12 +217,8 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
           getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
           labelsFilters={query.labels}
           onChange={onChangeLabels as (labelFilters: Array<Partial<QueryBuilderLabelFilter>>) => void}
-          onGetLabelNames={(forLabel: QueryBuilderLabelFilter) =>
-            withTemplateVariableOptions(onGetLabelNames(forLabel))
-          }
-          onGetLabelValues={(forLabel: QueryBuilderLabelFilter) =>
-            withTemplateVariableOptions(onGetLabelValues(forLabel))
-          }
+          onGetLabelNames={(forLabel) => withTemplateVariableOptions(onGetLabelNames(forLabel))}
+          onGetLabelValues={(forLabel) => withTemplateVariableOptions(onGetLabelValues(forLabel))}
         />
       </EditorRow>
       {showExplain && (
