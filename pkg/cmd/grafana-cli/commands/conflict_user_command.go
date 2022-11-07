@@ -288,16 +288,16 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 		// valid entry
 		newConflicts = append(newConflicts, *newUser)
 	}
-	for _, count := range counterKeepUsersForBlock {
+	for block, count := range counterKeepUsersForBlock {
 		// check if we only have one addition for each block
 		if count != 1 {
-			return fmt.Errorf("invalid number of users to keep, expected 1, got %d", count)
+			return fmt.Errorf("invalid number of users to keep, expected 1, got %d for block: %s", count, block)
 		}
 	}
-	for _, count := range counterDeleteUsersForBlock {
+	for block, count := range counterDeleteUsersForBlock {
 		// check if we have at least one deletion for each block
 		if count < 1 {
-			return fmt.Errorf("invalid number of users to delete, should be at least 1, got %d", count)
+			return fmt.Errorf("invalid number of users to delete, should be at least 1, got %d for block %s", count, block)
 		}
 	}
 	r.ValidUsers = newConflicts
