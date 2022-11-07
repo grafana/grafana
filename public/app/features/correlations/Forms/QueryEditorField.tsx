@@ -5,7 +5,16 @@ import { useAsync } from 'react-use';
 
 import { DataQuery, getDefaultTimeRange } from '@grafana/data';
 import { createQueryRunner, getDataSourceSrv } from '@grafana/runtime';
-import { Field, LoadingPlaceholder, Alert, Button, HorizontalGroup, Icon, useTheme2 } from '@grafana/ui';
+import {
+  Field,
+  LoadingPlaceholder,
+  Alert,
+  Button,
+  HorizontalGroup,
+  Icon,
+  useTheme2,
+  FieldValidationMessage,
+} from '@grafana/ui';
 
 interface Props {
   dsUid?: string;
@@ -22,9 +31,6 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
 
   const styles = useMemo(() => {
     return {
-      error: css`
-        color: ${theme.colors.error.text};
-      `,
       valid: css`
         color: ${theme.colors.success.text};
       `,
@@ -107,9 +113,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
                     <Icon name="check" /> This query is valid.
                   </div>
                 ) : isValidQuery === false ? (
-                  <div className={styles.error}>
-                    <Icon name="exclamation-triangle" /> This query is not valid.
-                  </div>
+                  <FieldValidationMessage>This query is not valid.</FieldValidationMessage>
                 ) : (
                   <div />
                 )}
