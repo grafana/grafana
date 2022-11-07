@@ -44,13 +44,13 @@ export default function CorrelationsPage() {
 
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
-  const handleAdd = useCallback(() => {
+  const handleAdded = useCallback(() => {
     reportInteraction('grafana_correlations_added');
     fetchCorrelations();
     setIsAdding(false);
   }, [fetchCorrelations]);
 
-  const handleUpdate = useCallback(() => {
+  const handleUpdated = useCallback(() => {
     reportInteraction('grafana_correlations_edited');
     fetchCorrelations();
   }, [fetchCorrelations]);
@@ -163,14 +163,14 @@ export default function CorrelationsPage() {
             )
           }
 
-          {isAdding && <AddCorrelationForm onClose={() => setIsAdding(false)} onCreated={handleAdd} />}
+          {isAdding && <AddCorrelationForm onClose={() => setIsAdding(false)} onCreated={handleAdded} />}
 
           {data && data.length >= 1 && (
             <Table
               renderExpandedRow={(correlation) => (
                 <ExpendedRow
                   correlation={correlation}
-                  onUpdated={handleUpdate}
+                  onUpdated={handleUpdated}
                   readOnly={isSourceReadOnly({ source: correlation.source }) || !canWriteCorrelations}
                 />
               )}
