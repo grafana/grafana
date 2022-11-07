@@ -7,12 +7,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	foldersvc "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -28,8 +30,9 @@ type Service struct {
 	cfg              *setting.Cfg
 	dashboardService dashboards.DashboardService
 	dashboardStore   dashboards.Store
+	store            store
 	searchService    *search.SearchService
-	features         featuremgmt.FeatureToggles
+	features         *featuremgmt.FeatureManager
 	permissions      accesscontrol.FolderPermissionsService
 
 	// bus is currently used to publish events that cause scheduler to update rules.
@@ -42,17 +45,20 @@ func ProvideService(
 	cfg *setting.Cfg,
 	dashboardService dashboards.DashboardService,
 	dashboardStore dashboards.Store,
-	features featuremgmt.FeatureToggles,
+	db db.DB, // DB for the (new) nested folder store
+	features *featuremgmt.FeatureManager,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	searchService *search.SearchService,
 ) folder.Service {
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore))
+	store := ProvideStore(db, cfg, features)
 	return &Service{
 		cfg:              cfg,
 		log:              log.New("folder-service"),
 		dashboardService: dashboardService,
 		dashboardStore:   dashboardStore,
+		store:            store,
 		searchService:    searchService,
 		features:         features,
 		permissions:      folderPermissionsService,
@@ -149,7 +155,7 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 	dashFolder.OrgId = orgID
 
 	trimmedUID := strings.TrimSpace(uid)
-	if trimmedUID == accesscontrol.GeneralFolderUID {
+	if trimmedUID == accesscontrol.GeneralFolderUID || trimmedUID == folder.RootFolderUID {
 		return nil, dashboards.ErrFolderInvalidUID
 	}
 
@@ -205,6 +211,23 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 
 	if permissionErr != nil {
 		s.log.Error("Could not make user admin", "folder", folder.Title, "user", userID, "error", permissionErr)
+	}
+
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		_, err := s.store.Create(ctx, foldersvc.CreateFolderCommand{
+			UID:         uid,
+			OrgID:       orgID,
+			Title:       title,
+			Description: "",
+			ParentUID:   foldersvc.RootFolderUID,
+		})
+		if err != nil {
+			// This is awkward, but for now we will log the error but not return
+			// an error nor delete the legacy-style folder which was created.
+			s.log.Error("error saving folder to nested folder store", err)
+		}
+		// The folder UID is specified during creation, so we'll stop here and
+		// return the created model.Folder.
 	}
 
 	return folder, nil
