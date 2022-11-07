@@ -706,7 +706,7 @@ conflict: test2
 + id: 1, email: test, login: test, last_seen_at: 2012-09-19T08:31:20Z, auth_module:, conflict_email: true, conflict_login: true
 + id: 2, email: TEST, login: TEST, last_seen_at: 2012-09-19T08:31:29Z, auth_module:, conflict_email: true, conflict_login: true
 `,
-				expectedValidationErr: fmt.Errorf("invalid number of users to keep, expected 1, got 2"),
+				expectedValidationErr: fmt.Errorf("invalid number of users to keep, expected 1, got 2 for block: conflict: test"),
 				expectedBlocks:        []string{"conflict: test"},
 			},
 			{
