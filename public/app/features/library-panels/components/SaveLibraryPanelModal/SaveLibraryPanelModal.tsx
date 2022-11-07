@@ -10,14 +10,21 @@ import { usePanelSave } from '../../utils/usePanelSave';
 
 interface Props {
   panel: PanelModelWithLibraryPanel;
-  folderId: number;
+  folderUid: string;
   isUnsavedPrompt?: boolean;
   onConfirm: () => void;
   onDismiss: () => void;
   onDiscard: () => void;
 }
 
-export const SaveLibraryPanelModal = ({ panel, folderId, isUnsavedPrompt, onDismiss, onConfirm, onDiscard }: Props) => {
+export const SaveLibraryPanelModal = ({
+  panel,
+  folderUid,
+  isUnsavedPrompt,
+  onDismiss,
+  onConfirm,
+  onDiscard,
+}: Props) => {
   const [searchString, setSearchString] = useState('');
   const dashState = useAsync(async () => {
     const searchHits = await getConnectedDashboards(panel.libraryPanel.uid);
@@ -98,7 +105,7 @@ export const SaveLibraryPanelModal = ({ panel, folderId, isUnsavedPrompt, onDism
           )}
           <Button
             onClick={() => {
-              saveLibraryPanel(panel, folderId).then(() => {
+              saveLibraryPanel(panel, folderUid).then(() => {
                 onConfirm();
               });
             }}
