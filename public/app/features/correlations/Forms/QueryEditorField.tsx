@@ -15,7 +15,7 @@ interface Props {
 }
 
 export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
-  const [isValidQuery, setIsValidQuery] = useState('undefined');
+  const [isValidQuery, setIsValidQuery] = useState<boolean | undefined>(undefined);
   const theme = useTheme2();
 
   const runner = useMemo(() => createQueryRunner(), []);
@@ -56,11 +56,11 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
     }
     await runner.get().subscribe((panelData) => {
       if (panelData.state === 'Done') {
-        setIsValidQuery('true');
+        setIsValidQuery(true);
       } else if (panelData.state === 'Error') {
-        setIsValidQuery('false');
+        setIsValidQuery(false);
       } else {
-        setIsValidQuery('undefined');
+        setIsValidQuery(undefined);
       }
     });
   };
@@ -102,11 +102,11 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
                 query={value}
               />
               <HorizontalGroup justify="flex-end">
-                {isValidQuery === 'true' ? (
+                {isValidQuery ? (
                   <div className={styles.valid}>
                     <Icon name="check" /> This query is valid.
                   </div>
-                ) : isValidQuery === 'false' ? (
+                ) : isValidQuery === false ? (
                   <div className={styles.error}>
                     <Icon name="exclamation-triangle" /> This query is not valid.
                   </div>
