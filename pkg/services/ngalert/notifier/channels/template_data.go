@@ -90,15 +90,15 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 			extended.PanelURL = u.String()
 		}
 
-		generatorUrl, gErr := url.Parse(extended.GeneratorURL)
-		if gErr != nil {
-			logger.Debug("failed to parse generator URL while extending template data", "url", extended.GeneratorURL, "err", gErr.Error())
+		generatorUrl, err := url.Parse(extended.GeneratorURL)
+		if err != nil {
+			logger.Debug("failed to parse generator URL while extending template data", "url", extended.GeneratorURL, "err", err.Error())
 			return extended
 		}
 
-		dashboardUrl, dErr := url.Parse(extended.DashboardURL)
-		if dErr != nil {
-			logger.Debug("failed to parse dashboard URL while extending template data", "url", extended.DashboardURL, "err", dErr.Error())
+		dashboardUrl, err := url.Parse(extended.DashboardURL)
+		if err != nil {
+			logger.Debug("failed to parse dashboard URL while extending template data", "url", extended.DashboardURL, "err", err.Error())
 			return extended
 		}
 
