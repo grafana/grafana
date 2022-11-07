@@ -110,9 +110,7 @@ func TestIntegrationPrometheusClient(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"prometheusStreamingJSONParser"},
-	})
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{})
 
 	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
 	ctx := context.Background()
