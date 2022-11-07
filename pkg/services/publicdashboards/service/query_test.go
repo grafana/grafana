@@ -399,7 +399,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 				TimeSettings: timeSettings,
 			},
 		}
-		pubdashDto, err := service.Save(context.Background(), SignedInUser, dto)
+		pubdashDto, err := service.Create(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		resp, _ := service.GetQueryDataResponse(context.Background(), true, publicDashboardQueryDTO, 1, pubdashDto.AccessToken)
@@ -840,7 +840,7 @@ func TestBuildMetricRequest(t *testing.T) {
 		},
 	}
 
-	publicDashboardPD, err := service.Save(context.Background(), SignedInUser, dto)
+	publicDashboardPD, err := service.Create(context.Background(), SignedInUser, dto)
 	require.NoError(t, err)
 
 	nonPublicDto := &SavePublicDashboardDTO{
@@ -854,7 +854,7 @@ func TestBuildMetricRequest(t *testing.T) {
 		},
 	}
 
-	_, err = service.Save(context.Background(), SignedInUser, nonPublicDto)
+	_, err = service.Create(context.Background(), SignedInUser, nonPublicDto)
 	require.NoError(t, err)
 
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {
@@ -915,7 +915,7 @@ func TestBuildMetricRequest(t *testing.T) {
 			publicDashboardQueryDTO,
 		)
 
-		require.ErrorContains(t, err, ErrPublicDashboardPanelNotFound.Reason)
+		require.ErrorContains(t, err, ErrPanelNotFound.Error())
 	})
 
 	t.Run("metric request built without hidden query", func(t *testing.T) {
