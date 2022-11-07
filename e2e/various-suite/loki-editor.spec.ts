@@ -82,6 +82,7 @@ describe('Loki Editor', () => {
 
     /** Suggestions plugin */
     e2e().get('[role="code"]').type(`{selectall}av`);
+    e2e().contains('avg').should('be.visible');
     e2e().contains('avg_over_time').should('be.visible');
   });
 });
