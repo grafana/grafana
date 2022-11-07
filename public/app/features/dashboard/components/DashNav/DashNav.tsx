@@ -327,7 +327,7 @@ export const DashNav = React.memo<Props>((props) => {
   // this ensures the component rerenders when the location changes
   const location = useLocation();
   const titleHref = locationUtil.getUrlForPartial(location, { search: 'open' });
-  const parentHref = locationUtil.getUrlForPartial(location, { search: 'open', folder: 'current' });
+  const parentHref = locationUtil.getUrlForPartial(location, { search: 'open', query: 'folder:current' });
   const onGoBack = isFullscreen ? onClose : undefined;
 
   if (config.featureToggles.topnav) {
