@@ -38,7 +38,6 @@ func ProvideDeleteExpiredService(store *store.DBstore) *DeleteExpiredService {
 	return &DeleteExpiredService{store: store}
 }
 
-//go:generate mockgen -destination=mock.go -package=image github.com/grafana/grafana/pkg/services/ngalert/image ImageService
 type ImageService interface {
 	// NewImage returns a new image for the alert instance.
 	NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error)
