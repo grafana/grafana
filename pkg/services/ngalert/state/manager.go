@@ -28,6 +28,9 @@ const ClearOldAlertFrequency = time.Duration(40) * time.Minute
 
 // LOGZ.IO GRAFANA CHANGE :: end
 
+// LOGZ.IO GRAFANA CHANGE :: Manage annotations and instances only on one peer of HA cluster
+const ShouldManageAnnotationsAndInstancesContextKey = "logzio_should_manage_ualert_annotations_instances"
+
 // AlertInstanceManager defines the interface for querying the current alert instances.
 type AlertInstanceManager interface {
 	GetAll(orgID int64) []*State
@@ -203,7 +206,12 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	st.set(currentState)
 	if oldState != currentState.State {
-		go st.annotateState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, currentState.State, oldState)
+		// LOGZ.IO GRAFANA CHANGE :: Manage annotations and instances only on one peer of HA cluster
+		shouldManageAnnotations := ctx.Value(ShouldManageAnnotationsAndInstancesContextKey).(bool)
+		if shouldManageAnnotations {
+			go st.annotateState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, currentState.State, oldState)
+		}
+		// LOGZ.IO GRAFANA CHANGE :: end
 	}
 	return currentState
 }

@@ -107,16 +107,27 @@ func (srv *LogzioAlertingService) RouteEvaluateAlert(httpReq http.Request, evalR
 	return response.JSON(http.StatusOK, apiEvalResults)
 }
 
-func (srv *LogzioAlertingService) RouteProcessAlert(request apimodels.AlertProcessRequest) response.Response {
+func (srv *LogzioAlertingService) RouteProcessAlert(httpReq http.Request, request apimodels.AlertProcessRequest) response.Response {
 	alertRule := apiRuleToDbAlertRule(request.AlertRule)
+
+	var shouldCreateAnnotationsAndAlertInstances bool
+	if request.ShouldManageAnnotationsAndInstances == nil {
+		shouldCreateAnnotationsAndAlertInstances = true
+	} else {
+		shouldCreateAnnotationsAndAlertInstances = *request.ShouldManageAnnotationsAndInstances
+	}
 
 	var evalResults eval.Results
 	for _, apiEvalResult := range request.EvaluationResults {
 		evalResults = append(evalResults, apiToEvaluationResult(apiEvalResult))
 	}
 
-	processedStates := srv.StateManager.ProcessEvalResults(context.Background(), &alertRule, evalResults)
-	srv.saveAlertStates(processedStates)
+	ctx := context.WithValue(httpReq.Context(), state.ShouldManageAnnotationsAndInstancesContextKey, shouldCreateAnnotationsAndAlertInstances)
+
+	processedStates := srv.StateManager.ProcessEvalResults(ctx, &alertRule, evalResults)
+	if shouldCreateAnnotationsAndAlertInstances {
+		srv.saveAlertStates(processedStates)
+	}
 	alerts := schedule.FromAlertStateToPostableAlerts(processedStates, srv.StateManager, srv.AppUrl)
 
 	if len(alerts.PostableAlerts) > 0 {

@@ -51,7 +51,7 @@ func (api *LogzioAlertingApi) RouteProcessAlert(ctx *models.ReqContext) response
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	return api.service.RouteProcessAlert(body)
+	return api.service.RouteProcessAlert(*ctx.Req, body)
 }
 
 func (api *LogzioAlertingApi) RouteMigrateOrg(ctx *models.ReqContext) response.Response {
