@@ -115,17 +115,20 @@ export const DashboardPicker = ({ dashboardUid, panelId, onDashboardChange, onPa
       />
       <FilterInput value={panelFilter} onChange={setPanelFilter} title="Search panel" placeholder="Search panel" />
 
-      {isDashSearchFetching && (
-        <LoadingPlaceholder text="Loading dashboards..." className={styles.loadingPlaceholder} />
-      )}
       <div style={{ flex: '1 1 auto' }}>
-        <AutoSizer>
-          {({ height, width }) => (
-            <FixedSizeList itemSize={50} height={height} width={width} itemCount={filteredDashboards.length}>
-              {DashboardRow}
-            </FixedSizeList>
-          )}
-        </AutoSizer>
+        {isDashSearchFetching && (
+          <LoadingPlaceholder text="Loading dashboards..." className={styles.loadingPlaceholder} />
+        )}
+
+        {!isDashSearchFetching && (
+          <AutoSizer>
+            {({ height, width }) => (
+              <FixedSizeList itemSize={50} height={height} width={width} itemCount={filteredDashboards.length}>
+                {DashboardRow}
+              </FixedSizeList>
+            )}
+          </AutoSizer>
+        )}
       </div>
 
       <div style={{ flex: '1 1 auto' }}>
@@ -133,13 +136,15 @@ export const DashboardPicker = ({ dashboardUid, panelId, onDashboardChange, onPa
         {isDashboardFetching && (
           <LoadingPlaceholder text="Loading dashboard..." className={styles.loadingPlaceholder} />
         )}
-        <AutoSizer>
-          {({ width, height }) => (
-            <FixedSizeList itemSize={32} height={height} width={width} itemCount={filteredPanels.length}>
-              {PanelRow}
-            </FixedSizeList>
-          )}
-        </AutoSizer>
+        {dashboardUid && !isDashboardFetching && (
+          <AutoSizer>
+            {({ width, height }) => (
+              <FixedSizeList itemSize={32} height={height} width={width} itemCount={filteredPanels.length}>
+                {PanelRow}
+              </FixedSizeList>
+            )}
+          </AutoSizer>
+        )}
       </div>
     </div>
   );
