@@ -423,7 +423,7 @@ func (r *ConflictResolver) showChanges() {
 		b.WriteString(color.GreenString(fmt.Sprintf("id: %s, email: %s, login: %s\n", mainUser.ID, mainUser.Email, mainUser.Login)))
 		for _, r := range fmt.Sprintf("%s%s", mainUser.Email, mainUser.Login) {
 			if unicode.IsUpper(r) {
-				b.WriteString(fmt.Sprintf("Will be change to:\n"))
+				b.WriteString("Will be change to:\n")
 				b.WriteString(color.GreenString(fmt.Sprintf("id: %s, email: %s, login: %s\n", mainUser.ID, strings.ToLower(mainUser.Email), strings.ToLower(mainUser.Login))))
 				break
 			}
