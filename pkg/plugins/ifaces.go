@@ -75,6 +75,11 @@ type PluginLoaderAuthorizer interface {
 	CanLoadPlugin(plugin *Plugin) bool
 }
 
+// RoleRegistry handles the plugin RBAC roles and their assignments
+type RoleRegistry interface {
+	DeclarePluginRoles(ctx context.Context, ID, name string, registrations []RoleRegistration) error
+}
+
 // ClientMiddleware is an interface representing the ability to create a middleware
 // that implements the Client interface.
 type ClientMiddleware interface {

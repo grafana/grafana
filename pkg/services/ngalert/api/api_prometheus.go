@@ -60,11 +60,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 
 			// TODO: or should we make this two fields? Using one field lets the
 			// frontend use the same logic for parsing text on annotations and this.
-			State: state.InstanceStateAndReason{
-				State:  alertState.State,
-				Reason: alertState.StateReason,
-			}.String(),
-
+			State:    state.FormatStateAndReason(alertState.State, alertState.StateReason),
 			ActiveAt: &startsAt,
 			Value:    valString,
 		})
@@ -221,11 +217,7 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *models.Folder, ru
 
 				// TODO: or should we make this two fields? Using one field lets the
 				// frontend use the same logic for parsing text on annotations and this.
-				State: state.InstanceStateAndReason{
-					State:  alertState.State,
-					Reason: alertState.StateReason,
-				}.String(),
-
+				State:    state.FormatStateAndReason(alertState.State, alertState.StateReason),
 				ActiveAt: &activeAt,
 				Value:    valString,
 			}
