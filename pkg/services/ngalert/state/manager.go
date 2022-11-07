@@ -290,18 +290,13 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 	instances := make([]ngModels.AlertInstance, 0, len(states))
 
 	for _, s := range states {
-		labels := ngModels.InstanceLabels(s.Labels)
-		_, hash, err := labels.StringAndHash()
+		key, err := s.GetAlertInstanceKey()
 		if err != nil {
 			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err)
 			continue
 		}
 		fields := ngModels.AlertInstance{
-			AlertInstanceKey: ngModels.AlertInstanceKey{
-				RuleOrgID:  s.OrgID,
-				RuleUID:    s.AlertRuleUID,
-				LabelsHash: hash,
-			},
+			AlertInstanceKey:  key,
 			Labels:            ngModels.InstanceLabels(s.Labels),
 			CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
 			CurrentReason:     s.StateReason,
@@ -352,13 +347,12 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 	for _, s := range staleStates {
 		logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
 
-		ilbs := ngModels.InstanceLabels(s.Labels)
-		_, labelsHash, err := ilbs.StringAndHash()
+		key, err := s.GetAlertInstanceKey()
 		if err != nil {
-			logger.Error("Unable to get labelsHash", "error", err.Error(), s.AlertRuleUID)
+			logger.Error("Unable to get alert instance key to delete it from database. Ignoring", "error", err.Error())
+		} else {
+			toDelete = append(toDelete, key)
 		}
-
-		toDelete = append(toDelete, ngModels.AlertInstanceKey{RuleOrgID: s.OrgID, RuleUID: s.AlertRuleUID, LabelsHash: labelsHash})
 
 		if s.State == eval.Alerting {
 			oldState := s.State
