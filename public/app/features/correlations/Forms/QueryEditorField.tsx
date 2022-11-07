@@ -98,12 +98,14 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
           if (!QueryEditor) {
             return <Alert title="Data source does not export a query editor."></Alert>;
           }
-          // TODO: isValidQuery needs to be undefined as soon as the query is changed
           return (
             <>
               <QueryEditor
                 onRunQuery={() => handleValidation(value)}
-                onChange={onChange}
+                onChange={(value) => {
+                  setIsValidQuery(undefined);
+                  onChange(value);
+                }}
                 datasource={datasource}
                 query={value}
               />
