@@ -30,7 +30,7 @@
     "typescript": "4.8.4"
   },
   "dependencies": {
-    "@emotion/css": "11.9.0",
+    "@emotion/css": "11.10.5",
     "@grafana/data": "9.3.0-pre",
     "@grafana/e2e-selectors": "9.3.0-pre",
     "@grafana/runtime": "9.3.0-pre",

@@ -160,6 +160,7 @@ func (s *Service) GetOrCreate(ctx context.Context, orgName string) (int64, error
 		orga.Name = MainOrgName
 		orga.ID = int64(s.cfg.AutoAssignOrgId)
 	} else {
+		orga = &org.Org{}
 		orga.Name = orgName
 	}
 

@@ -113,6 +113,8 @@ func (e *objectStoreJob) start() {
 		e.status.Status = "error: " + err.Error()
 		return
 	}
+	e.status.Last = fmt.Sprintf("export %d dashboards", len(dashInfo))
+	e.broadcaster(e.status)
 
 	for _, dash := range dashInfo {
 		rowUser.OrgID = dash.OrgID
@@ -261,7 +263,7 @@ func (e *objectStoreJob) getDashboards(ctx context.Context) ([]dashInfo, error) 
 	e.broadcaster(e.status)
 
 	dash := make([]dashInfo, 0)
-	rows, err := e.sess.Query(ctx, "SELECT org_id,uid,data,updated_by FROM dashboard WHERE is_folder=0")
+	rows, err := e.sess.Query(ctx, "SELECT org_id,uid,data,updated_by FROM dashboard WHERE is_folder=false")
 	if err != nil {
 		return nil, err
 	}
