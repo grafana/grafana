@@ -274,11 +274,30 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 }
 
 func (st *Manager) GetAll(orgID int64) []*State {
-	return st.cache.getAll(orgID)
+	allStates := st.cache.getAll(orgID)
+	if !st.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState) {
+		return allStates
+	}
+	return withoutNormalStates(allStates)
 }
 
 func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
-	return st.cache.getStatesForRuleUID(orgID, alertRuleUID)
+	ruleStates := st.cache.getStatesForRuleUID(orgID, alertRuleUID)
+	if !st.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState) {
+		return ruleStates
+	}
+	return withoutNormalStates(ruleStates)
+}
+
+func withoutNormalStates(states []*State) []*State {
+	var result = make([]*State, 0, len(states))
+	for _, state := range states {
+		if state.State == eval.Normal && state.StateReason == "" {
+			continue
+		}
+		result = append(result, state)
+	}
+	return result
 }
 
 func (st *Manager) Put(states []*State) {
