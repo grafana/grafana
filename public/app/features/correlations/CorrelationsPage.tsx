@@ -186,7 +186,7 @@ interface ExpandedRowProps {
 }
 function ExpendedRow({ correlation: { source, target, ...correlation }, readOnly, onUpdated }: ExpandedRowProps) {
   useEffect(
-    () => reportInteraction('grafana_correlations_details_expanded', { readOnly }),
+    () => reportInteraction('grafana_correlations_details_expanded'),
     // we only want to fire this on first render
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
