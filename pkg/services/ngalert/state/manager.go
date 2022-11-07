@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -37,19 +38,22 @@ type Manager struct {
 	images        ImageCapturer
 	historian     Historian
 	externalURL   *url.URL
+
+	FeatureToggles featuremgmt.FeatureToggles
 }
 
-func NewManager(metrics *metrics.State, externalURL *url.URL, instanceStore InstanceStore, images ImageCapturer, clock clock.Clock, historian Historian) *Manager {
+func NewManager(metrics *metrics.State, externalURL *url.URL, instanceStore InstanceStore, images ImageCapturer, clock clock.Clock, historian Historian, featureToggle featuremgmt.FeatureToggles) *Manager {
 	return &Manager{
-		cache:         newCache(),
-		ResendDelay:   ResendDelay, // TODO: make this configurable
-		log:           log.New("ngalert.state.manager"),
-		metrics:       metrics,
-		instanceStore: instanceStore,
-		images:        images,
-		historian:     historian,
-		clock:         clock,
-		externalURL:   externalURL,
+		cache:          newCache(),
+		ResendDelay:    ResendDelay, // TODO: make this configurable
+		log:            log.New("ngalert.state.manager"),
+		metrics:        metrics,
+		instanceStore:  instanceStore,
+		images:         images,
+		historian:      historian,
+		clock:          clock,
+		externalURL:    externalURL,
+		FeatureToggles: featureToggle,
 	}
 }
 
