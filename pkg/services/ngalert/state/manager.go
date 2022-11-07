@@ -108,6 +108,14 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 		cmd := ngModels.ListAlertInstancesQuery{
 			RuleOrgID: orgId,
 		}
+
+		if st.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState) {
+			// do not load normal state.
+			cmd.ExcludeStates = []ngModels.InstanceStateType{
+				ngModels.InstanceStateNormal,
+			}
+		}
+
 		if err := st.instanceStore.ListAlertInstances(ctx, &cmd); err != nil {
 			st.log.Error("Unable to fetch previous state", "error", err)
 		}
