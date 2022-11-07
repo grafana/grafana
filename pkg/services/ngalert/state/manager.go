@@ -293,15 +293,26 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 		return
 	}
 
-	logger.Debug("Saving alert states", "count", len(states))
-	instances := make([]ngModels.AlertInstance, 0, len(states))
+	logger.Debug("Getting alert states that need to be saved", "count", len(states))
+
+	toSave := make([]ngModels.AlertInstance, 0, len(states))
+	toDelete := make([]ngModels.AlertInstanceKey, 0, len(states))
 
 	for _, s := range states {
 		key, err := s.GetAlertInstanceKey()
 		if err != nil {
-			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err)
+			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err, "labels", s.Labels.String())
 			continue
 		}
+
+		// Do not save normal state to database and remove transition to Normal state
+		if s.State.State == eval.Normal && st.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState) {
+			if s.PreviousState != eval.Normal {
+				toDelete = append(toDelete, key)
+			}
+			continue
+		}
+
 		fields := ngModels.AlertInstance{
 			AlertInstanceKey:  key,
 			Labels:            ngModels.InstanceLabels(s.Labels),
@@ -311,19 +322,27 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 			CurrentStateSince: s.StartsAt,
 			CurrentStateEnd:   s.EndsAt,
 		}
-		instances = append(instances, fields)
+		toSave = append(toSave, fields)
 	}
 
-	if err := st.instanceStore.SaveAlertInstances(ctx, instances...); err != nil {
-		type debugInfo struct {
-			State  string
-			Labels string
+	if len(toSave) > 0 {
+		if err := st.instanceStore.SaveAlertInstances(ctx, toSave...); err != nil {
+			type debugInfo struct {
+				State  string
+				Labels string
+			}
+			debug := make([]debugInfo, 0)
+			for _, inst := range toSave {
+				debug = append(debug, debugInfo{string(inst.CurrentState), data.Labels(inst.Labels).String()})
+			}
+			logger.Error("Failed to save alert states", "states", debug, "error", err)
 		}
-		debug := make([]debugInfo, 0)
-		for _, inst := range instances {
-			debug = append(debug, debugInfo{string(inst.CurrentState), data.Labels(inst.Labels).String()})
+	}
+	if len(toDelete) > 0 {
+		err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...)
+		if err != nil {
+			logger.Error("Failed to delete transitions to normal state from the database", "count", len(toDelete), "error", err)
 		}
-		logger.Error("Failed to save alert states", "states", debug, "error", err)
 	}
 }
 
