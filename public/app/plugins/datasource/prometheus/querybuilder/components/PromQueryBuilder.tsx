@@ -98,13 +98,11 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     if (query.metric) {
       labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     }
-    console.log('labelsToConsider', labelsToConsider);
     const interpolatedLabelsToConsider = labelsToConsider.map((labelObject) => ({
       ...labelObject,
       label: datasource.interpolateString(labelObject.label),
       value: datasource.interpolateString(labelObject.value),
     }));
-    console.log('interpolatedLabelsToConsider', interpolatedLabelsToConsider);
     const expr = promQueryModeller.renderLabels(interpolatedLabelsToConsider);
     let response;
     if (datasource.hasLabelsMatchAPISupport()) {
