@@ -155,6 +155,10 @@ const (
 	// Enable streaming JSON parser for Prometheus datasource
 	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
 
+	// FlagPrometheusBufferedClient
+	// Use buffered (old) client as default instead of streaming JSON parser client (new)Enable for Prometheus datasource
+	FlagPrometheusBufferedClient = "prometheusBufferedClient"
+
 	// FlagNewDBLibrary
 	// Use jmoiron/sqlx rather than xorm for a few backend services
 	FlagNewDBLibrary = "newDBLibrary"
