@@ -72,7 +72,7 @@ describe('VariableDependencySet', () => {
     expect(deps.scanCount).toBe(2);
   });
 
-  it('variableValuesChanged should only call _onReferencedVariableValueChanged if dependent variable has changed', () => {
+  it('variableValuesChanged should only call onReferencedVariableValueChanged if dependent variable has changed', () => {
     const sceneObj = new TestObj();
     const fn = jest.fn();
     const deps = new VariableDependencyConfig(sceneObj, { onReferencedVariableValueChanged: fn });

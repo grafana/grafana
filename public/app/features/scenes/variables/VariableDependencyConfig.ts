@@ -4,7 +4,7 @@ import { SceneObject, SceneObjectState } from '../core/types';
 
 import { SceneVariable, SceneVariableDependencyConfigLike } from './types';
 
-interface VariableDependencyCacheOptions<TState extends SceneObjectState> {
+interface VariableDependencyConfigOptions<TState extends SceneObjectState> {
   /**
    * State paths to scan / extract variable dependencies from. Leave empty to scan all paths.
    */
@@ -24,7 +24,7 @@ export class VariableDependencyConfig<TState extends SceneObjectState> implement
 
   scanCount = 0;
 
-  constructor(private _sceneObject: SceneObject<TState>, options: VariableDependencyCacheOptions<TState>) {
+  constructor(private _sceneObject: SceneObject<TState>, options: VariableDependencyConfigOptions<TState>) {
     this._statePaths = options.statePaths;
     this._onReferencedVariableValueChanged =
       options.onReferencedVariableValueChanged ?? this.defaultHandlerReferencedVariableValueChanged;
