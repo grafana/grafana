@@ -413,6 +413,8 @@
       "title": "Absolute time range"
     },
     "calendar": {
+      "apply-button": "Apply time range",
+      "cancel-button": "Cancel",
       "select-time": "Select a time range"
     },
     "time-range": {
