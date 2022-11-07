@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -28,7 +29,7 @@ import (
 )
 
 var orgID = int64(1)
-var usr = &user.SignedInUser{UserID: 1}
+var usr = &user.SignedInUser{UserID: 1, OrgID: orgID}
 
 func TestIntegrationProvideFolderService(t *testing.T) {
 	if testing.Short() {
@@ -79,9 +80,9 @@ func TestIntegrationFolderService(t *testing.T) {
 			folderId := rand.Int63()
 			folderUID := util.GenerateShortUID()
 
-			folder := models.NewFolder("Folder")
-			folder.Id = folderId
-			folder.Uid = folderUID
+			newFolder := models.NewFolder("Folder")
+			newFolder.Id = folderId
+			newFolder.Uid = folderUID
 
 			dashStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(folder, nil)
 			dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(folder, nil)
@@ -122,7 +123,21 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
-				_, err := service.DeleteFolder(context.Background(), usr, orgID, folderUID, false)
+				ctx := context.Background()
+				ctx = appcontext.WithUser(ctx, usr)
+
+				newFolder := models.NewFolder("Folder")
+				newFolder.Uid = folderUID
+
+				spew.Dump(">>>>", orgID, folderUID)
+				dashStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
+				dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)
+
+				_, err := service.DeleteFolder(ctx, &folder.DeleteFolderCommand{
+					UID:              folderUID,
+					OrgID:            orgID,
+					ForceDeleteRules: false,
+				})
 				require.Error(t, err)
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
@@ -190,7 +205,13 @@ func TestIntegrationFolderService(t *testing.T) {
 				}).Return(nil).Once()
 
 				expectedForceDeleteRules := rand.Int63()%2 == 0
-				_, err := service.DeleteFolder(context.Background(), usr, orgID, f.Uid, expectedForceDeleteRules)
+				ctx := context.Background()
+				ctx = appcontext.WithUser(ctx, usr)
+				_, err := service.DeleteFolder(ctx, &folder.DeleteFolderCommand{
+					UID:              f.Uid,
+					OrgID:            orgID,
+					ForceDeleteRules: expectedForceDeleteRules,
+				})
 				require.NoError(t, err)
 				require.NotNil(t, actualCmd)
 				require.Equal(t, f.Id, actualCmd.Id)
