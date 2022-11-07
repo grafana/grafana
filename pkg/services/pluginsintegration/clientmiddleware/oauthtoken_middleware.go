@@ -14,21 +14,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 )
 
-func NewForwardOAuthTokenMiddleware(oAuthTokenService oauthtoken.OAuthTokenService) plugins.ClientMiddleware {
+func NewOAuthTokenMiddleware(oAuthTokenService oauthtoken.OAuthTokenService) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
-		return &ForwardOAuthTokenMiddleware{
+		return &OAuthTokenMiddleware{
 			next:              next,
 			oAuthTokenService: oAuthTokenService,
 		}
 	})
 }
 
-type ForwardOAuthTokenMiddleware struct {
+type OAuthTokenMiddleware struct {
 	oAuthTokenService oauthtoken.OAuthTokenService
 	next              plugins.Client
 }
 
-func (m *ForwardOAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.PluginContext, req interface{}) (context.Context, error) {
+func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.PluginContext, req interface{}) (context.Context, error) {
 	reqCtx := contexthandler.FromContext(ctx)
 	// if request not for a datasource or no HTTP request context skip middleware
 	if req == nil || pCtx.DataSourceInstanceSettings == nil || reqCtx == nil || reqCtx.Req == nil {
@@ -36,18 +36,15 @@ func (m *ForwardOAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backe
 	}
 
 	settings := pCtx.DataSourceInstanceSettings
-
-	// need oauth pass through set defined in the SDK, for now just dummy
-	opts, err := settings.HTTPClientOptions()
+	jsonDataBytes, err := simplejson.NewJson(settings.JSONData)
 	if err != nil {
-		return nil, err
+		return ctx, err
 	}
 
-	jsonData := backend.JSONDataFromHTTPClientOptions(opts)
 	ds := &datasources.DataSource{
 		Id:       settings.ID,
 		OrgId:    pCtx.OrgID,
-		JsonData: simplejson.NewFromAny(jsonData),
+		JsonData: jsonDataBytes,
 		Updated:  settings.Updated,
 	}
 
@@ -82,7 +79,11 @@ func (m *ForwardOAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backe
 	return ctx, nil
 }
 
-func (m *ForwardOAuthTokenMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (m *OAuthTokenMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if req == nil {
+		return m.next.QueryData(ctx, req)
+	}
+
 	newCtx, err := m.applyToken(ctx, req.PluginContext, req)
 	if err != nil {
 		return nil, err
@@ -91,7 +92,11 @@ func (m *ForwardOAuthTokenMiddleware) QueryData(ctx context.Context, req *backen
 	return m.next.QueryData(newCtx, req)
 }
 
-func (m *ForwardOAuthTokenMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (m *OAuthTokenMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	if req == nil {
+		return m.next.CallResource(ctx, req, sender)
+	}
+
 	newCtx, err := m.applyToken(ctx, req.PluginContext, req)
 	if err != nil {
 		return err
@@ -100,11 +105,11 @@ func (m *ForwardOAuthTokenMiddleware) CallResource(ctx context.Context, req *bac
 	return m.next.CallResource(newCtx, req, sender)
 }
 
-func (m *ForwardOAuthTokenMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return m.next.CollectMetrics(ctx, req)
-}
+func (m *OAuthTokenMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	if req == nil {
+		return m.next.CheckHealth(ctx, req)
+	}
 
-func (m *ForwardOAuthTokenMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	newCtx, err := m.applyToken(ctx, req.PluginContext, req)
 	if err != nil {
 		return nil, err
@@ -113,14 +118,18 @@ func (m *ForwardOAuthTokenMiddleware) CheckHealth(ctx context.Context, req *back
 	return m.next.CheckHealth(newCtx, req)
 }
 
-func (m *ForwardOAuthTokenMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+func (m *OAuthTokenMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+	return m.next.CollectMetrics(ctx, req)
+}
+
+func (m *OAuthTokenMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	return m.next.SubscribeStream(ctx, req)
 }
 
-func (m *ForwardOAuthTokenMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+func (m *OAuthTokenMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	return m.next.PublishStream(ctx, req)
 }
 
-func (m *ForwardOAuthTokenMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+func (m *OAuthTokenMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return m.next.RunStream(ctx, req, sender)
 }

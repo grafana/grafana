@@ -13,21 +13,21 @@ import (
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
-func NewForwardCookiesMiddleware(skipCookiesNames []string) plugins.ClientMiddleware {
+func NewCookiesMiddleware(skipCookiesNames []string) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
-		return &ForwardCookiesMiddleware{
+		return &CookiesMiddleware{
 			next:             next,
 			skipCookiesNames: skipCookiesNames,
 		}
 	})
 }
 
-type ForwardCookiesMiddleware struct {
+type CookiesMiddleware struct {
 	next             plugins.Client
 	skipCookiesNames []string
 }
 
-func (m *ForwardCookiesMiddleware) applyCookies(ctx context.Context, pCtx backend.PluginContext, req interface{}) (context.Context, error) {
+func (m *CookiesMiddleware) applyCookies(ctx context.Context, pCtx backend.PluginContext, req interface{}) (context.Context, error) {
 	reqCtx := contexthandler.FromContext(ctx)
 	// if request not for a datasource or no HTTP request context skip middleware
 	if req == nil || pCtx.DataSourceInstanceSettings == nil || reqCtx == nil || reqCtx.Req == nil {
@@ -35,18 +35,15 @@ func (m *ForwardCookiesMiddleware) applyCookies(ctx context.Context, pCtx backen
 	}
 
 	settings := pCtx.DataSourceInstanceSettings
-
-	// need oauth pass through set defined in the SDK, for now just dummy
-	opts, err := settings.HTTPClientOptions()
+	jsonDataBytes, err := simplejson.NewJson(settings.JSONData)
 	if err != nil {
-		return nil, err
+		return ctx, err
 	}
 
-	jsonData := backend.JSONDataFromHTTPClientOptions(opts)
 	ds := &datasources.DataSource{
 		Id:       settings.ID,
 		OrgId:    pCtx.OrgID,
-		JsonData: simplejson.NewFromAny(jsonData),
+		JsonData: jsonDataBytes,
 		Updated:  settings.Updated,
 	}
 
@@ -68,7 +65,7 @@ func (m *ForwardCookiesMiddleware) applyCookies(ctx context.Context, pCtx backen
 	return ctx, nil
 }
 
-func (m *ForwardCookiesMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (m *CookiesMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if req == nil {
 		return m.next.QueryData(ctx, req)
 	}
@@ -81,7 +78,7 @@ func (m *ForwardCookiesMiddleware) QueryData(ctx context.Context, req *backend.Q
 	return m.next.QueryData(newCtx, req)
 }
 
-func (m *ForwardCookiesMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (m *CookiesMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req == nil {
 		return m.next.CallResource(ctx, req, sender)
 	}
@@ -94,7 +91,7 @@ func (m *ForwardCookiesMiddleware) CallResource(ctx context.Context, req *backen
 	return m.next.CallResource(newCtx, req, sender)
 }
 
-func (m *ForwardCookiesMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+func (m *CookiesMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if req == nil {
 		return m.next.CheckHealth(ctx, req)
 	}
@@ -107,18 +104,18 @@ func (m *ForwardCookiesMiddleware) CheckHealth(ctx context.Context, req *backend
 	return m.next.CheckHealth(newCtx, req)
 }
 
-func (m *ForwardCookiesMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+func (m *CookiesMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	return m.next.CollectMetrics(ctx, req)
 }
 
-func (m *ForwardCookiesMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+func (m *CookiesMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	return m.next.SubscribeStream(ctx, req)
 }
 
-func (m *ForwardCookiesMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+func (m *CookiesMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	return m.next.PublishStream(ctx, req)
 }
 
-func (m *ForwardCookiesMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+func (m *CookiesMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return m.next.RunStream(ctx, req, sender)
 }

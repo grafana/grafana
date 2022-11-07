@@ -3,9 +3,17 @@ package clienttest
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/client"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/web"
+	"github.com/stretchr/testify/require"
 )
 
 type TestClient struct {
@@ -115,3 +123,83 @@ func (m *TestMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRe
 }
 
 var _ plugins.Client = &TestClient{}
+
+type ClientDecoratorTest struct {
+	T               *testing.T
+	Context         context.Context
+	TestClient      *TestClient
+	Middlewares     []plugins.ClientMiddleware
+	Decorator       *client.Decorator
+	ReqContext      *models.ReqContext
+	QueryDataReq    *backend.QueryDataRequest
+	QueryDataCtx    context.Context
+	CallResourceReq *backend.CallResourceRequest
+	CallResourceCtx context.Context
+	CheckHealthReq  *backend.CheckHealthRequest
+	CheckHealthCtx  context.Context
+}
+
+type ClientDecoratorTestOption func(*ClientDecoratorTest)
+
+func NewClientDecoratorTest(t *testing.T, opts ...ClientDecoratorTestOption) *ClientDecoratorTest {
+	cdt := &ClientDecoratorTest{
+		T:       t,
+		Context: context.Background(),
+	}
+	cdt.TestClient = &TestClient{
+		QueryDataFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+			cdt.QueryDataReq = req
+			cdt.QueryDataCtx = ctx
+			return nil, nil
+		},
+		CallResourceFunc: func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+			cdt.CallResourceReq = req
+			cdt.CallResourceCtx = ctx
+			return nil
+		},
+		CheckHealthFunc: func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+			cdt.CheckHealthReq = req
+			cdt.CheckHealthCtx = ctx
+			return nil, nil
+		},
+	}
+	require.NotNil(t, cdt)
+
+	for _, opt := range opts {
+		opt(cdt)
+	}
+
+	d, err := client.NewDecorator(cdt.TestClient, cdt.Middlewares...)
+	require.NoError(t, err)
+	require.NotNil(t, d)
+
+	cdt.Decorator = d
+
+	return cdt
+}
+
+func WithReqContext(req *http.Request, user *user.SignedInUser) ClientDecoratorTestOption {
+	return ClientDecoratorTestOption(func(cdt *ClientDecoratorTest) {
+		if cdt.ReqContext == nil {
+			cdt.ReqContext = &models.ReqContext{
+				Context:      &web.Context{},
+				SignedInUser: user,
+			}
+		}
+
+		cdt.Context = ctxkey.Set(cdt.Context, cdt.ReqContext)
+
+		*req = *req.WithContext(cdt.Context)
+		cdt.ReqContext.Req = req
+	})
+}
+
+func WithMiddlewares(middlewares ...plugins.ClientMiddleware) ClientDecoratorTestOption {
+	return ClientDecoratorTestOption(func(cdt *ClientDecoratorTest) {
+		if cdt.Middlewares == nil {
+			cdt.Middlewares = []plugins.ClientMiddleware{}
+		}
+
+		cdt.Middlewares = append(cdt.Middlewares, middlewares...)
+	})
+}
