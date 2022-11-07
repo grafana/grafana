@@ -183,7 +183,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	}
 
 	uid := web.Params(c.Req)[":uid"]
-	f, err := hs.folderService.DeleteFolder(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid})
+	f, err := hs.folderService.DeleteFolder(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid, OrgID: c.OrgID, ForceDeleteRules: c.QueryBool("forceDeleteRules")})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}

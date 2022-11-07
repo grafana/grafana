@@ -37,9 +37,14 @@ func ConvertFolderToModelFolder(folder *Folder) *models.Folder {
 		return nil
 	}
 	return &models.Folder{
-		Id:    folder.ID,
-		Uid:   folder.UID,
-		Title: folder.Title,
+		Id:        folder.ID,
+		Uid:       folder.UID,
+		Title:     folder.Title,
+		Url:       "",
+		Created:   folder.Created,
+		Updated:   folder.Updated,
+		UpdatedBy: 0,
+		CreatedBy: 0,
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -23,10 +24,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/xorcare/pointer"
 )
 
 var orgID = int64(1)
-var usr = &user.SignedInUser{UserID: 1}
+var usr = &user.SignedInUser{UserID: 1, OrgID: orgID}
 
 func TestIntegrationProvideFolderService(t *testing.T) {
 	if testing.Short() {
@@ -73,9 +75,9 @@ func TestIntegrationFolderService(t *testing.T) {
 			folderId := rand.Int63()
 			folderUID := util.GenerateShortUID()
 
-			newFolder := folder.NewFolder("Folder", "Description")
-			newFolder.ID = folderId
-			newFolder.UID = folderUID
+			newFolder := models.NewFolder("Folder")
+			newFolder.Id = folderId
+			newFolder.Uid = folderUID
 
 			store.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
 			store.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)
@@ -100,7 +102,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil).Times(2)
 				ctx := context.Background()
 				ctx = appcontext.WithUser(ctx, usr)
-				_, err := service.CreateFolder(ctx, &folder.CreateFolderCommand{UID: folderUID, OrgID: orgID})
+				_, err := service.CreateFolder(ctx, &folder.CreateFolderCommand{UID: folderUID, OrgID: orgID, Title: newFolder.Title})
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
@@ -113,7 +115,8 @@ func TestIntegrationFolderService(t *testing.T) {
 				ctx := context.Background()
 				ctx = appcontext.WithUser(ctx, usr)
 				newTitle := "Folder-TEST"
-				_, err := service.UpdateFolder(context.Background(), &folder.UpdateFolderCommand{
+				_, err := service.UpdateFolder(ctx, &folder.UpdateFolderCommand{
+					Folder:   &folder.Folder{UID: folderUID, OrgID: orgID},
 					NewUID:   &folderUID,
 					NewTitle: &newTitle,
 				})
@@ -121,8 +124,20 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
-				_, err := service.DeleteFolder(context.Background(), &folder.DeleteFolderCommand{
-					UID: folderUID,
+				ctx := context.Background()
+				ctx = appcontext.WithUser(ctx, usr)
+
+				newFolder := models.NewFolder("Folder")
+				newFolder.Uid = folderUID
+
+				spew.Dump(">>>>", orgID, folderUID)
+				store.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
+				store.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)
+
+				_, err := service.DeleteFolder(ctx, &folder.DeleteFolderCommand{
+					UID:              folderUID,
+					OrgID:            orgID,
+					ForceDeleteRules: false,
 				})
 				require.Error(t, err)
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
@@ -149,10 +164,11 @@ func TestIntegrationFolderService(t *testing.T) {
 				ctx := context.Background()
 				ctx = appcontext.WithUser(ctx, usr)
 				actualFolder, err := service.CreateFolder(ctx, &folder.CreateFolderCommand{
+					OrgID: orgID,
 					Title: dash.Title,
 				})
 				require.NoError(t, err)
-				require.Equal(t, f, actualFolder)
+				require.Equal(t, f, folder.ConvertFolderToModelFolder(actualFolder))
 			})
 
 			t.Run("When creating folder should return error if uid is general", func(t *testing.T) {
@@ -184,9 +200,9 @@ func TestIntegrationFolderService(t *testing.T) {
 				}
 				ctx := context.Background()
 				ctx = appcontext.WithUser(ctx, usr)
-				UID := dashboardFolder.Uid
 				_, err := service.UpdateFolder(ctx, &folder.UpdateFolderCommand{
-					NewUID: &UID,
+					Folder:   &folder.Folder{UID: dashboardFolder.Uid, OrgID: orgID},
+					NewTitle: pointer.String("TEST-Folder"),
 				})
 				require.NoError(t, err)
 				require.Equal(t, f, req.Result)
@@ -204,8 +220,13 @@ func TestIntegrationFolderService(t *testing.T) {
 				}).Return(nil).Once()
 
 				expectedForceDeleteRules := rand.Int63()%2 == 0
-				_, err := service.DeleteFolder(context.Background(), &folder.DeleteFolderCommand{
-					UID: f.Uid,
+
+				ctx := context.Background()
+				ctx = appcontext.WithUser(ctx, usr)
+				_, err := service.DeleteFolder(ctx, &folder.DeleteFolderCommand{
+					UID:              f.Uid,
+					OrgID:            orgID,
+					ForceDeleteRules: expectedForceDeleteRules,
 				})
 				require.NoError(t, err)
 				require.NotNil(t, actualCmd)

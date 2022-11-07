@@ -75,7 +75,7 @@ func (cmd *UpdateFolderCommand) UpdateDashboardModel(dashFolder *models.Dashboar
 // to create a folder.
 type CreateFolderCommand struct {
 	UID         string `json:"uid"`
-	OrgID       int64  `json:"orgId"`
+	OrgID       int64  `json:"-"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	ParentUID   string `json:"parent_uid"`
@@ -85,6 +85,7 @@ type CreateFolderCommand struct {
 // to update a folder. Use Move to update a folder's parent folder.
 type UpdateFolderCommand struct {
 	Folder         *Folder `json:"folder"` // The extant folder
+	OrgID          int64   `json:"-"`
 	NewUID         *string `json:"uid" xorm:"uid"`
 	NewTitle       *string `json:"title"`
 	NewDescription *string `json:"description"`
@@ -98,6 +99,7 @@ type UpdateFolderCommand struct {
 // to move a folder.
 type MoveFolderCommand struct {
 	UID          string `json:"uid"`
+	OrgID        int64  `json:"-"`
 	NewParentUID string `json:"new_parent_uid"`
 }
 
@@ -105,6 +107,7 @@ type MoveFolderCommand struct {
 // to delete a folder.
 type DeleteFolderCommand struct {
 	UID              string `json:"uid" xorm:"uid"`
+	OrgID            int64  `json:"-"`
 	ForceDeleteRules bool   `json:"forceDeleteRules"`
 }
 

@@ -149,7 +149,7 @@ func (s *Service) CreateFolder(ctx context.Context, cmd *folder.CreateFolderComm
 		return nil, toFolderError(err)
 	}
 	dashFolder := models.NewDashboardFolder(cmd.Title)
-	dashFolder.OrgId = user.OrgID
+	dashFolder.OrgId = cmd.OrgID
 
 	trimmedUID := strings.TrimSpace(cmd.UID)
 	if trimmedUID == accesscontrol.GeneralFolderUID {
@@ -167,7 +167,7 @@ func (s *Service) CreateFolder(ctx context.Context, cmd *folder.CreateFolderComm
 
 	dto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
-		OrgId:     user.OrgID,
+		OrgId:     cmd.OrgID,
 		User:      user,
 	}
 
@@ -182,7 +182,7 @@ func (s *Service) CreateFolder(ctx context.Context, cmd *folder.CreateFolderComm
 	}
 
 	var modelFolder *models.Folder
-	modelFolder, err = s.dashboardStore.GetFolderByID(ctx, user.OrgID, dash.Id)
+	modelFolder, err = s.dashboardStore.GetFolderByID(ctx, cmd.OrgID, dash.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -205,9 +205,9 @@ func (s *Service) CreateFolder(ctx context.Context, cmd *folder.CreateFolderComm
 			{BuiltinRole: string(org.RoleViewer), Permission: models.PERMISSION_VIEW.String()},
 		}...)
 
-		_, permissionErr = s.permissions.SetPermissions(ctx, user.OrgID, folder.UID, permissions...)
+		_, permissionErr = s.permissions.SetPermissions(ctx, cmd.OrgID, folder.UID, permissions...)
 	} else if s.cfg.EditorsCanAdmin && user.IsRealUser() && !user.IsAnonymous {
-		permissionErr = s.MakeUserAdmin(ctx, user.OrgID, userID, folder.ID, true)
+		permissionErr = s.MakeUserAdmin(ctx, cmd.OrgID, userID, folder.ID, true)
 	}
 
 	if permissionErr != nil {
@@ -231,6 +231,9 @@ func (s *Service) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderComm
 	}
 
 	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
+	}
 	cmd.UpdateDashboardModel(dashFolder, cmd.Folder.OrgID, user.UserID)
 
 	dto := &dashboards.SaveDashboardDTO{
@@ -267,7 +270,7 @@ func (s *Service) UpdateFolder(ctx context.Context, cmd *folder.UpdateFolderComm
 			Title:     folder.Title,
 			ID:        dash.Id,
 			UID:       dash.Uid,
-			OrgID:     user.OrgID,
+			OrgID:     folder.OrgID,
 		}); err != nil {
 			s.log.Error("failed to publish FolderTitleUpdated event", "folder", folder.Title, "user", user.UserID, "error", err)
 		}
@@ -281,12 +284,13 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 	if err != nil {
 		return nil, err
 	}
-	dashFolder, err := s.dashboardStore.GetFolderByUID(ctx, user.OrgID, cmd.UID)
+
+	dashFolder, err := s.dashboardStore.GetFolderByUID(ctx, cmd.OrgID, cmd.UID)
 	if err != nil {
 		return nil, err
 	}
 
-	guard := guardian.New(ctx, dashFolder.Id, user.OrgID, user)
+	guard := guardian.New(ctx, dashFolder.Id, cmd.OrgID, user)
 	if canSave, err := guard.CanDelete(); err != nil || !canSave {
 		if err != nil {
 			return nil, toFolderError(err)
