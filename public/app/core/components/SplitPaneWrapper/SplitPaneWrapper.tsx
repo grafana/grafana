@@ -7,7 +7,7 @@ import { config } from 'app/core/config';
 
 interface Props {
   splitOrientation?: Split;
-  paneSize: number; // top if horizontal, right if vertical
+  paneSize: number;
   splitVisible?: boolean;
   maxSize?: number;
   primary?: 'first' | 'second';

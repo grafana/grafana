@@ -169,7 +169,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
 
 			rule := models.AlertRuleGen()()
-			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen()), nil)
+			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil)
 			expectedStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.NotEmpty(t, expectedStates)
 
@@ -189,7 +189,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
 
 			rule := models.AlertRuleGen()()
-			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen()), nil)
+			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil)
 			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 
 			ctx, cancel := util.WithCancelCause(context.Background())
@@ -524,8 +524,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		AlertSender:      senderMock,
 	}
 
-	stateRs := state.FakeRuleReader{}
-	st := state.NewManager(m.GetStateMetrics(), nil, &stateRs, is, &image.NoopImageService{}, mockedClock, &state.FakeHistorian{})
+	st := state.NewManager(m.GetStateMetrics(), nil, is, &image.NoopImageService{}, mockedClock, &state.FakeHistorian{})
 	return NewScheduler(schedCfg, appUrl, st)
 }
 

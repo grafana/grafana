@@ -413,9 +413,13 @@
       "title": "Période temporelle absolue"
     },
     "calendar": {
+      "apply-button": "",
+      "cancel-button": "",
       "select-time": ""
     },
     "time-range": {
+      "aria-role": "",
+      "default-title": "",
       "example-title": "",
       "specify": ""
     }
@@ -433,7 +437,7 @@
       "email-label": "Adresse e-mail",
       "name-error": "Un nom est obligatoire",
       "name-label": "Nom",
-      "username-label": "Nom d’utilisateur"
+      "username-label": "Nom d´utilisateur"
     },
     "title": "Modifier le profil"
   },
