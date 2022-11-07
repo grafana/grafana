@@ -123,10 +123,6 @@ const (
 	// New UI for Azure Monitor Metrics Query
 	FlagAzureMonitorResourcePickerForMetrics = "azureMonitorResourcePickerForMetrics"
 
-	// FlagExplore2Dashboard
-	// Experimental Explore to Dashboard workflow
-	FlagExplore2Dashboard = "explore2Dashboard"
-
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
