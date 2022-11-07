@@ -265,11 +265,11 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 }
 
 func (st *Manager) GetAll(orgID int64) []*State {
-	return st.cache.getAll(orgID)
+	allStates := st.cache.getAll(orgID, st.doNotKeepNormalState)
+	return allStates
 }
-
 func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
-	return st.cache.getStatesForRuleUID(orgID, alertRuleUID)
+	return st.cache.getStatesForRuleUID(orgID, alertRuleUID, st.doNotKeepNormalState)
 }
 
 func (st *Manager) Put(states []*State) {

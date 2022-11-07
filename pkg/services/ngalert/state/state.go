@@ -164,6 +164,11 @@ func (c StateTransition) Changed() bool {
 	return c.PreviousState != c.State.State || c.PreviousStateReason != c.State.StateReason
 }
 
+// IsNormalState returns true if the state is Normal and reason is empty
+func IsNormalState(s *State) bool {
+	return s.State == eval.Normal && s.StateReason == ""
+}
+
 type Evaluation struct {
 	EvaluationTime  time.Time
 	EvaluationState eval.State
