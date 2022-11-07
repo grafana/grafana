@@ -288,9 +288,14 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 	instances := make([]ngModels.AlertInstance, 0, len(states))
 
 	for _, s := range states {
+		// Do not save normal state to database and remove transition to Normal state but keep mapped states
+		if st.doNotKeepNormalState && IsNormalState(s.State) && !s.Changed() {
+			continue
+		}
+
 		key, err := s.GetAlertInstanceKey()
 		if err != nil {
-			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err)
+			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err, "labels", s.Labels.String())
 			continue
 		}
 		fields := ngModels.AlertInstance{
@@ -303,6 +308,10 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 			CurrentStateEnd:   s.EndsAt,
 		}
 		instances = append(instances, fields)
+	}
+
+	if len(instances) == 0 {
+		return
 	}
 
 	if err := st.instanceStore.SaveAlertInstances(ctx, instances...); err != nil {
