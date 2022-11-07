@@ -16,10 +16,10 @@ export interface VizPanelState extends SceneLayoutChildState {
 }
 
 export class VizPanel extends SceneObjectBase<VizPanelState> {
-  static Component = ScenePanelRenderer;
-  static Editor = VizPanelEditor;
+  public static Component = ScenePanelRenderer;
+  public static Editor = VizPanelEditor;
 
-  onSetTimeRange = (timeRange: AbsoluteTimeRange) => {
+  public onSetTimeRange = (timeRange: AbsoluteTimeRange) => {
     const sceneTimeRange = this.getTimeRange();
     sceneTimeRange.setState({
       raw: {
