@@ -28,6 +28,9 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		MatrixWideSeries: s.enableWideSeries,
 		VectorWideSeries: s.enableWideSeries,
 	})
+	if r.Frames == nil {
+		return r, fmt.Errorf("received empty response from prometheus")
+	}
 
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
 	for _, frame := range r.Frames {
