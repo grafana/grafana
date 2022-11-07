@@ -130,6 +130,10 @@ func getAuthHeadersForCallResource(headers map[string][]string) map[string]strin
 		data["Cookie"] = cookie
 	}
 
+	if idToken := arrayHeaderFirstValue(headers["X-ID-Token"]); idToken != "" {
+		data["X-ID-Token"] = idToken
+	}
+
 	return data
 }
 

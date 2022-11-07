@@ -52,7 +52,7 @@ func TestOauthForwardIdentity(t *testing.T) {
 		auth   bool
 		cookie bool
 	}{
-		{name: "when auth header exists => add auth header", auth: true, cookie: false},
+		{name: "when auth headers exist => add auth headers", auth: true, cookie: false},
 		{name: "when cookie header exists => add cookie header", auth: false, cookie: true},
 		{name: "when cookie&auth headers exist => add cookie&auth headers", auth: true, cookie: true},
 		{name: "when no header exists => do not add headers", auth: false, cookie: false},
@@ -62,6 +62,8 @@ func TestOauthForwardIdentity(t *testing.T) {
 	authValue := "auth"
 	cookieName := "Cookie"
 	cookieValue := "a=1"
+	idTokenName := "X-ID-Token"
+	idTokenValue := "idtoken"
 
 	for _, test := range tt {
 		t.Run("QueryData: "+test.name, func(t *testing.T) {
@@ -90,10 +92,13 @@ func TestOauthForwardIdentity(t *testing.T) {
 				// as an array
 				authValues := req.Header.Values(authName)
 				cookieValues := req.Header.Values(cookieName)
+				idTokenValues := req.Header.Values(idTokenName)
 				if test.auth {
 					require.Equal(t, []string{authValue}, authValues)
+					require.Equal(t, []string{idTokenValue}, idTokenValues)
 				} else {
 					require.Len(t, authValues, 0)
+					require.Len(t, idTokenValues, 0)
 				}
 				if test.cookie {
 					require.Equal(t, []string{cookieValue}, cookieValues)
@@ -114,6 +119,7 @@ func TestOauthForwardIdentity(t *testing.T) {
 
 			if test.auth {
 				req.Headers[authName] = authValue
+				req.Headers[idTokenName] = idTokenValue
 			}
 
 			if test.cookie {
@@ -145,13 +151,16 @@ func TestOauthForwardIdentity(t *testing.T) {
 				clientUsed = true
 				authValues := req.Header.Values(authName)
 				cookieValues := req.Header.Values(cookieName)
+				idTokenValues := req.Header.Values(idTokenName)
 				// we need to check for "header does not exist",
 				// and the only way i can find is to get the values
 				// as an array
 				if test.auth {
 					require.Equal(t, []string{authValue}, authValues)
+					require.Equal(t, []string{idTokenValue}, idTokenValues)
 				} else {
 					require.Len(t, authValues, 0)
+					require.Len(t, idTokenValues, 0)
 				}
 				if test.cookie {
 					require.Equal(t, []string{cookieValue}, cookieValues)
@@ -168,6 +177,7 @@ func TestOauthForwardIdentity(t *testing.T) {
 
 			if test.auth {
 				req.Headers[authName] = []string{authValue}
+				req.Headers[idTokenName] = []string{idTokenValue}
 			}
 			if test.cookie {
 				req.Headers[cookieName] = []string{cookieValue}
