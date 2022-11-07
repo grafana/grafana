@@ -127,11 +127,11 @@ func runValidateConflictUsersFile() func(context *cli.Context) error {
 		// read in the file to ingest
 		arg := cmd.Args().First()
 		if arg == "" {
-			return errors.New("please specify a absolute path to file to read from")
+			return fmt.Errorf("please specify a absolute path to file to read from")
 		}
 		b, err := os.ReadFile(filepath.Clean(arg))
 		if err != nil {
-			return fmt.Errorf("could not read file with error %e", err)
+			return fmt.Errorf("could not read file with error %s", err)
 		}
 		validErr := getValidConflictUsers(r, b)
 		if validErr != nil {
