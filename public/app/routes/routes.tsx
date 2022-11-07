@@ -314,11 +314,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () =>
         config.featureToggles.topnav ? <NavLandingPage navId="admin/config" /> : <Redirect to="/admin/org" />,
     },
-    // {
-    //   path: '/admin/server',
-    //   component: () =>
-    //     config.featureToggles.topnav ? <NavLandingPage navId="admin" /> : <Redirect to="/admin/users" />,
-    // },
     {
       path: '/admin/settings',
       component: SafeDynamicImport(

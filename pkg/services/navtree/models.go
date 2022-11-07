@@ -158,10 +158,12 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 
 			if len(adminAccessNode.Children) > 0 {
 				adminNodeLinks = append(adminNodeLinks, adminAccessNode)
+				adminAccessNode.Url = adminAccessNode.Children[0].Url
 			}
 
 			if len(adminConfigNode.Children) > 0 {
 				adminNodeLinks = append(adminNodeLinks, adminConfigNode)
+				adminConfigNode.Url = adminConfigNode.Children[0].Url
 			}
 
 			if len(adminNodeLinks) > 0 {
