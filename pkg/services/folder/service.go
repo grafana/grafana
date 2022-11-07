@@ -26,6 +26,7 @@ func ConvertModelFolderToFolder(folder *models.Folder) *Folder {
 	return &Folder{
 		ID:    folder.Id,
 		UID:   folder.Uid,
+		URL:   folder.Url,
 		Title: folder.Title,
 		// how do we get orgId from models.Folder?
 	}
@@ -40,7 +41,7 @@ func ConvertFolderToModelFolder(folder *Folder) *models.Folder {
 		Id:        folder.ID,
 		Uid:       folder.UID,
 		Title:     folder.Title,
-		Url:       "",
+		Url:       folder.URL,
 		Created:   folder.Created,
 		Updated:   folder.Updated,
 		UpdatedBy: 0,
