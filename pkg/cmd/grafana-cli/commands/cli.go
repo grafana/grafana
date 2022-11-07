@@ -1,11 +1,8 @@
 package commands
 
 import (
-	"fmt"
-	"os"
 	"runtime"
 
-	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
@@ -13,18 +10,10 @@ import (
 )
 
 // RunCLI is the entrypoint for the grafana-cli command. It returns the exit code for the grafana-cli program.
-func RunCLI(version string) int {
-	setupLogging()
-
-	app := &cli.App{
-		Name: "Grafana CLI",
-		Authors: []*cli.Author{
-			{
-				Name:  "Grafana Project",
-				Email: "hello@grafana.com",
-			},
-		},
-		Version: version,
+func CLICommand(version string) *cli.Command {
+	return &cli.Command{
+		Name:  "cli",
+		Usage: "run the grafana cli",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "pluginsDir",
@@ -65,38 +54,11 @@ func RunCLI(version string) int {
 				Usage: "Path to config file",
 			},
 		},
-		Commands:        Commands,
-		CommandNotFound: cmdNotFound,
+		Subcommands: Commands,
+		Before: func(c *cli.Context) error {
+			logger.SetDebug(c.Bool("debug"))
+			services.Init(version, c.Bool("insecure"), c.Bool("debug"))
+			return nil
+		},
 	}
-
-	app.Before = func(c *cli.Context) error {
-		services.Init(version, c.Bool("insecure"), c.Bool("debug"))
-		return nil
-	}
-
-	if err := app.Run(os.Args); err != nil {
-		logger.Errorf("%s: %s %s\n", color.RedString("Error"), color.RedString("✗"), err)
-		return 1
-	}
-
-	return 0
-}
-
-func setupLogging() {
-	for _, f := range os.Args {
-		if f == "-d" || f == "--debug" || f == "-debug" {
-			logger.SetDebug(true)
-		}
-	}
-}
-
-func cmdNotFound(c *cli.Context, command string) {
-	fmt.Printf(
-		"%s: '%s' is not a %s command. See '%s --help'.\n",
-		c.App.Name,
-		command,
-		c.App.Name,
-		os.Args[0],
-	)
-	os.Exit(1)
 }

@@ -16,7 +16,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	executable := "grafana-server"
+	executable := "grafana"
 	if runtime.GOOS == "windows" {
 		executable += ".exe"
 	}
@@ -29,8 +29,10 @@ func main() {
 		}
 	}
 
-	args := append([]string{"grafana-cli"}, os.Args[1:]...)
+	args := append([]string{"grafana", "cli"}, os.Args[1:]...)
 
+	// bypassing gosec G204 because we need to build the command programmatically
+	// nolint:gosec
 	execErr := syscall.Exec(binary, args, os.Environ())
 	if execErr != nil {
 		fmt.Printf("Error running %s: %s\n", binary, execErr)

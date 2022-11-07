@@ -32,6 +32,7 @@ type ServerOptions struct {
 	Commit      string
 	BuildBranch string
 	BuildStamp  string
+	Args        []string
 }
 
 type exitWithCode struct {
@@ -63,7 +64,7 @@ func RunServer(opt ServerOptions) int {
 		tracingFile = serverFs.String("tracing-file", "trace.out", "Define tracing output file")
 	)
 
-	if err := serverFs.Parse(os.Args[1:]); err != nil {
+	if err := serverFs.Parse(opt.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		return 1
 	}

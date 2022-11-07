@@ -1,27 +1,41 @@
 package main
 
 import (
+	"fmt"
 	"os"
-
-	cli "github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
-	"github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"syscall"
 )
 
-// The following variables cannot be constants, since they can be overridden through the -X link flag
-var version = "9.2.0"
-var commit = "NA"
-var buildBranch = "main"
-var buildstamp string
-
 func main() {
-	if os.Args[0] == "grafana-cli" {
-		os.Exit(cli.RunCLI(version))
+	curr, err := os.Executable()
+	if err != nil {
+		fmt.Println("Error locating executable:", err)
+		os.Exit(1)
 	}
 
-	os.Exit(commands.RunServer(commands.ServerOptions{
-		Version:     version,
-		Commit:      commit,
-		BuildBranch: buildBranch,
-		BuildStamp:  buildstamp,
-	}))
+	executable := "grafana"
+	if runtime.GOOS == "windows" {
+		executable += ".exe"
+	}
+
+	binary := filepath.Join(filepath.Dir(filepath.Clean(curr)), executable)
+	if _, err := os.Stat(binary); err != nil {
+		binary, err = exec.LookPath(executable)
+		if err != nil {
+			fmt.Printf("Error locating %s: %s\n", executable, err)
+		}
+	}
+
+	args := append([]string{"grafana", "server"}, os.Args[1:]...)
+
+	// bypassing gosec G204 because we need to build the command programmatically
+	// nolint:gosec
+	execErr := syscall.Exec(binary, args, os.Environ())
+	if execErr != nil {
+		fmt.Printf("Error running %s: %s\n", binary, execErr)
+		os.Exit(1)
+	}
 }
