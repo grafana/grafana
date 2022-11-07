@@ -58,3 +58,10 @@ type NotAvailableImageService struct{}
 func (s *NotAvailableImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
 	return nil, screenshot.ErrScreenshotsUnavailable
 }
+
+// NoopImageService is a no-op image service.
+type NoopImageService struct{}
+
+func (s *NoopImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
+	return &models.Image{}, nil
+}

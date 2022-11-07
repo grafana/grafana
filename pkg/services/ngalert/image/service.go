@@ -194,10 +194,3 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 
 	return &image, nil
 }
-
-// NoopImageService is a no-op image service.
-type NoopImageService struct{}
-
-func (s *NoopImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
-	return &models.Image{}, nil
-}
