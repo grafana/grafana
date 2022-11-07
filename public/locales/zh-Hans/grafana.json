@@ -2,11 +2,7 @@
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
   "common": {
     "locale": {
-      "default": "默认",
-      "en-US": "英语",
-      "es-ES": "西班牙语",
-      "fr-FR": "法语",
-      "zh-Hans": "中文（简体）"
+      "default": "默认"
     },
     "save": "保存"
   },
@@ -415,6 +411,15 @@
     "absolute": {
       "recent-title": "最近使用的绝对范围",
       "title": "绝对时间范围"
+    },
+    "calendar": {
+      "select-time": ""
+    },
+    "time-range": {
+      "aria-role": "",
+      "default-title": "",
+      "example-title": "",
+      "specify": ""
     }
   },
   "user-orgs": {

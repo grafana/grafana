@@ -7,9 +7,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
@@ -20,58 +17,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestQuery_Metrics(t *testing.T) {
-	origNewCWClient := NewCWClient
-	t.Cleanup(func() {
-		NewCWClient = origNewCWClient
-	})
-
-	var cwClient mocks.FakeMetricsAPI
-
-	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
-		return &cwClient
-	}
-
-	t.Run("Custom metrics", func(t *testing.T) {
-		cwClient = mocks.FakeMetricsAPI{
-			Metrics: []*cloudwatch.Metric{
-				{
-					MetricName: aws.String("Test_MetricName"),
-					Dimensions: []*cloudwatch.Dimension{
-						{
-							Name: aws.String("Test_DimensionName"),
-						},
-					},
-				},
-			},
-		}
-
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
-		})
-
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
-		resp, err := executor.handleGetMetrics(
-			backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
-			}, url.Values{
-				"region":    []string{"us-east-1"},
-				"namespace": []string{"custom"},
-			},
-		)
-		require.NoError(t, err)
-
-		expResponse := []suggestData{
-			{Text: "Test_MetricName", Value: "Test_MetricName", Label: "Test_MetricName"},
-		}
-		assert.Equal(t, expResponse, resp)
-	})
-}
 
 func TestQuery_Regions(t *testing.T) {
 	origNewEC2Client := newEC2Client
@@ -92,7 +41,7 @@ func TestQuery_Regions(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
+			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 		})
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -159,7 +108,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
+			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 		})
 
 		filterMap := map[string][]string{
@@ -242,7 +191,7 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
+			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 		})
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -302,7 +251,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
+			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 		})
 
 		tagMap := map[string][]string{
@@ -332,31 +281,5 @@ func TestQuery_ResourceARNs(t *testing.T) {
 			expResponse = append(expResponse, suggestData{Text: value, Value: value, Label: value})
 		}
 		assert.Equal(t, expResponse, resp)
-	})
-}
-
-func TestQuery_GetAllMetrics(t *testing.T) {
-	t.Run("all metrics in all namespaces are being returned", func(t *testing.T) {
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
-		})
-
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
-		resp, err := executor.handleGetAllMetrics(
-			backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
-			},
-			url.Values{
-				"region": []string{"us-east-1"},
-			},
-		)
-		require.NoError(t, err)
-
-		metricCount := 0
-		for _, metrics := range constants.NamespaceMetricsMap {
-			metricCount += len(metrics)
-		}
-
-		assert.Equal(t, metricCount, len(resp))
 	})
 }

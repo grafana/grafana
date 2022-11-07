@@ -2,11 +2,7 @@
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
   "common": {
     "locale": {
-      "default": "Por defecto",
-      "en-US": "Inglés",
-      "es-ES": "Español",
-      "fr-FR": "Francés",
-      "zh-Hans": "Chino (simplificado)"
+      "default": "Por defecto"
     },
     "save": "Guardar"
   },
@@ -415,6 +411,15 @@
     "absolute": {
       "recent-title": "Intervalos absolutos utilizados recientemente",
       "title": "Intervalo de tiempo absoluto"
+    },
+    "calendar": {
+      "select-time": ""
+    },
+    "time-range": {
+      "aria-role": "",
+      "default-title": "",
+      "example-title": "",
+      "specify": ""
     }
   },
   "user-orgs": {

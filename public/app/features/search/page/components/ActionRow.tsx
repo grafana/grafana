@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, FormEvent, useEffect } from 'react';
+import React, { FC, FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -7,8 +7,7 @@ import { HorizontalGroup, RadioButtonGroup, useStyles2, Checkbox, Button } from 
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 
-import { SEARCH_SELECTED_LAYOUT } from '../../constants';
-import { DashboardQuery, SearchLayout } from '../../types';
+import { SearchLayout, SearchState } from '../../types';
 
 export const layoutOptions = [
   { value: SearchLayout.Folders, icon: 'folder', ariaLabel: 'View by folders' },
@@ -29,13 +28,13 @@ interface Props {
   sortPlaceholder?: string;
   onDatasourceChange: (ds?: string) => void;
   includePanels: boolean;
-  setIncludePanels: (v: boolean) => void;
-  query: DashboardQuery;
+  onSetIncludePanels: (v: boolean) => void;
+  state: SearchState;
   showStarredFilter?: boolean;
   hideLayout?: boolean;
 }
 
-export function getValidQueryLayout(q: DashboardQuery): SearchLayout {
+export function getValidQueryLayout(q: SearchState): SearchLayout {
   const layout = q.layout ?? SearchLayout.Folders;
 
   // Folders is not valid when a query exists
@@ -60,51 +59,39 @@ export const ActionRow: FC<Props> = ({
   getSortOptions,
   sortPlaceholder,
   onDatasourceChange,
-  query,
+  onSetIncludePanels,
+  state,
   showStarredFilter,
   hideLayout,
-  includePanels,
-  setIncludePanels,
 }) => {
   const styles = useStyles2(getStyles);
-  const layout = getValidQueryLayout(query);
+  const layout = getValidQueryLayout(state);
 
   // Disabled folder layout option when query is present
-  const disabledOptions = query.query ? [SearchLayout.Folders] : [];
-
-  const updateLayoutPreference = (layout: SearchLayout) => {
-    localStorage.setItem(SEARCH_SELECTED_LAYOUT, layout);
-    onLayoutChange(layout);
-  };
-
-  useEffect(() => {
-    if (includePanels && layout === SearchLayout.Folders) {
-      setIncludePanels(false);
-    }
-  }, [layout, includePanels, setIncludePanels]);
+  const disabledOptions = state.query ? [SearchLayout.Folders] : [];
 
   return (
     <div className={styles.actionRow}>
       <HorizontalGroup spacing="md" width="auto">
-        <TagFilter isClearable={false} tags={query.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
+        <TagFilter isClearable={false} tags={state.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
         {config.featureToggles.panelTitleSearch && (
           <Checkbox
             data-testid="include-panels"
             disabled={layout === SearchLayout.Folders}
-            value={includePanels}
-            onChange={() => setIncludePanels(!includePanels)}
+            value={state.includePanels}
+            onChange={() => onSetIncludePanels(!state.includePanels)}
             label="Include panels"
           />
         )}
 
         {showStarredFilter && (
           <div className={styles.checkboxWrapper}>
-            <Checkbox label="Starred" onChange={onStarredFilterChange} value={query.starred} />
+            <Checkbox label="Starred" onChange={onStarredFilterChange} value={state.starred} />
           </div>
         )}
-        {query.datasource && (
+        {state.datasource && (
           <Button icon="times" variant="secondary" onClick={() => onDatasourceChange(undefined)}>
-            Datasource: {query.datasource}
+            Datasource: {state.datasource}
           </Button>
         )}
       </HorizontalGroup>
@@ -114,13 +101,13 @@ export const ActionRow: FC<Props> = ({
             <RadioButtonGroup
               options={layoutOptions}
               disabledOptions={disabledOptions}
-              onChange={updateLayoutPreference}
+              onChange={onLayoutChange}
               value={layout}
             />
           )}
           <SortPicker
             onChange={onSortChange}
-            value={query.sort?.value}
+            value={state.sort?.value}
             getSortOptions={getSortOptions}
             placeholder={sortPlaceholder}
             isClearable

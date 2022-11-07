@@ -59,14 +59,55 @@ describe('api', () => {
     it('should not initiate new api request in case a previous request had same args', async () => {
       const getMock = jest.fn();
       const { api, resourceRequestMock } = setupMockedAPI({ getMock });
+      resourceRequestMock.mockResolvedValue([]);
       await Promise.all([
-        api.getMetrics('AWS/EC2', 'us-east-1'),
-        api.getMetrics('AWS/EC2', 'us-east-1'),
-        api.getMetrics('AWS/EC2', 'us-east-2'),
-        api.getMetrics('AWS/EC2', 'us-east-2'),
-        api.getMetrics('AWS/EC2', 'us-east-2'),
+        api.getMetrics({ namespace: 'AWS/EC2', region: 'us-east-1' }),
+        api.getMetrics({ namespace: 'AWS/EC2', region: 'us-east-1' }),
+        api.getMetrics({ namespace: 'AWS/EC2', region: 'us-east-2' }),
+        api.getMetrics({ namespace: 'AWS/EC2', region: 'us-east-2' }),
+        api.getMetrics({ namespace: 'AWS/EC2', region: 'us-east-2' }),
       ]);
       expect(resourceRequestMock).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('should handle backend srv response mapping', () => {
+    it('when getAllMetrics is called', async () => {
+      const getMock = jest.fn().mockResolvedValue([
+        {
+          namespace: 'AWS/EC2',
+          name: 'CPUUtilization',
+        },
+        {
+          namespace: 'AWS/Redshift',
+          name: 'CPUPercentage',
+        },
+      ]);
+      const { api } = setupMockedAPI({ getMock });
+      const allMetrics = await api.getAllMetrics({ region: 'us-east-2' });
+      expect(allMetrics).toEqual([
+        { metricName: 'CPUUtilization', namespace: 'AWS/EC2' },
+        { metricName: 'CPUPercentage', namespace: 'AWS/Redshift' },
+      ]);
+    });
+
+    it('when getMetrics', async () => {
+      const getMock = jest.fn().mockResolvedValue([
+        {
+          namespace: 'AWS/EC2',
+          name: 'CPUUtilization',
+        },
+        {
+          namespace: 'AWS/EC2',
+          name: 'CPUPercentage',
+        },
+      ]);
+      const { api } = setupMockedAPI({ getMock });
+      const allMetrics = await api.getMetrics({ region: 'us-east-2', namespace: 'AWS/EC2' });
+      expect(allMetrics).toEqual([
+        { label: 'CPUUtilization', value: 'CPUUtilization' },
+        { label: 'CPUPercentage', value: 'CPUPercentage' },
+      ]);
     });
   });
 });

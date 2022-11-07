@@ -20,13 +20,13 @@ func TestKindRegistry(t *testing.T) {
 	}
 	require.Equal(t, []string{
 		"dashboard",
-		"dummy",
+		"folder",
+		"frame",
 		"geojson",
-		"kind1",
-		"kind2",
-		"kind3",
+		"jsonobj",
 		"playlist",
 		"png",
+		"snapshot",
 		"test",
 	}, ids)
 
@@ -40,5 +40,11 @@ func TestKindRegistry(t *testing.T) {
 	info, err = registry.GetInfo("test")
 	require.NoError(t, err)
 	require.Equal(t, "test", info.Name)
+	require.True(t, info.IsRaw)
+
+	// Get by suffix
+	info, err = registry.GetFromExtension("png")
+	require.NoError(t, err)
+	require.Equal(t, "PNG", info.Name)
 	require.True(t, info.IsRaw)
 }

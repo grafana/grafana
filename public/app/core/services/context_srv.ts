@@ -60,9 +60,9 @@ export class ContextSrv {
   pinned: any;
   version: any;
   user: User;
-  isSignedIn: any;
-  isGrafanaAdmin: any;
-  isEditor: any;
+  isSignedIn: boolean;
+  isGrafanaAdmin: boolean;
+  isEditor: boolean;
   sidemenuSmallBreakpoint = false;
   hasEditPermissionInFolders: boolean;
   minRefreshInterval: string;
@@ -83,7 +83,7 @@ export class ContextSrv {
   async fetchUserPermissions() {
     try {
       if (this.accessControlEnabled()) {
-        this.user.permissions = await getBackendSrv().get('/api/access-control/user/permissions', {
+        this.user.permissions = await getBackendSrv().get('/api/access-control/user/actions', {
           reloadcache: true,
         });
       }

@@ -10,9 +10,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
@@ -54,7 +56,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
+			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 		})
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -124,7 +126,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 	})
 
 	t.Run("End time before start time should result in error", func(t *testing.T) {
-		_, err := executor.executeTimeSeriesQuery(context.Background(), &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
+		_, err := executor.executeTimeSeriesQuery(context.Background(), logger, &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
 			From: now.Add(time.Hour * -1),
 			To:   now.Add(time.Hour * -2),
 		}}}})
@@ -132,11 +134,140 @@ func TestTimeSeriesQuery(t *testing.T) {
 	})
 
 	t.Run("End time equals start time should result in error", func(t *testing.T) {
-		_, err := executor.executeTimeSeriesQuery(context.Background(), &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
+		_, err := executor.executeTimeSeriesQuery(context.Background(), logger, &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
 			From: now.Add(time.Hour * -1),
 			To:   now.Add(time.Hour * -1),
 		}}}})
 		assert.EqualError(t, err, "invalid time range: start time must be before end time")
+	})
+}
+
+func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMetricData_is_called_once_per_grouping_of_queries_by_region(t *testing.T) {
+	/* TODO: This test aims to verify the logic to group regions which has been extracted from ParseMetricDataQueries.
+	It should be replaced by a test at a lower level when grouping by regions is incorporated into a separate business logic layer */
+	origNewCWClient := NewCWClient
+	t.Cleanup(func() {
+		NewCWClient = origNewCWClient
+	})
+
+	var mockMetricClient mocks.MetricsClient
+	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+		return &mockMetricClient
+	}
+
+	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+	})
+
+	t.Run("Queries with the same region should call GetSession with that region 1 time and call GetMetricDataWithContext 1 time", func(t *testing.T) {
+		mockSessionCache := &mockSessionCache{}
+		mockSessionCache.On("GetSession", mock.MatchedBy(
+			func(config awsds.SessionConfig) bool { return config.Settings.Region == "us-east-1" })). // region from queries is asserted here
+			Return(&session.Session{Config: &aws.Config{}}, nil).Once()
+		mockMetricClient = mocks.MetricsClient{}
+		mockMetricClient.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+
+		executor := newExecutor(im, newTestConfig(), mockSessionCache, featuremgmt.WithFeatures())
+		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+					JSON: json.RawMessage(`{
+						"type":      "timeSeriesQuery",
+						"namespace": "AWS/EC2",
+						"metricName": "NetworkOut",
+						"region": "us-east-1",
+						"statistic": "Maximum",
+						"period": "300"
+					}`),
+				},
+				{
+					RefID:     "B",
+					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+					JSON: json.RawMessage(`{
+						"type":      "timeSeriesQuery",
+						"namespace": "AWS/EC2",
+						"metricName": "NetworkIn",
+						"region": "us-east-1",
+						"statistic": "Maximum",
+						"period": "300"
+					}`),
+				},
+			},
+		})
+
+		require.NoError(t, err)
+		mockSessionCache.AssertExpectations(t) // method is defined to only return "Once()",
+		// AssertExpectations will fail if those methods were not called Once(), so expected number of calls is asserted by this line
+		mockMetricClient.AssertNumberOfCalls(t, "GetMetricDataWithContext", 1)
+		// GetMetricData is asserted to have been called 1 time for the 1 region present in the queries
+	})
+
+	t.Run("3 queries with 2 regions calls GetSession 2 times and calls GetMetricDataWithContext 2 times", func(t *testing.T) {
+		sessionCache := &mockSessionCache{}
+		sessionCache.On("GetSession", mock.MatchedBy(
+			func(config awsds.SessionConfig) bool { return config.Settings.Region == "us-east-1" })).
+			Return(&session.Session{Config: &aws.Config{}}, nil, nil).Once()
+		sessionCache.On("GetSession", mock.MatchedBy(
+			func(config awsds.SessionConfig) bool { return config.Settings.Region == "us-east-2" })).
+			Return(&session.Session{Config: &aws.Config{}}, nil, nil).Once()
+		mockMetricClient = mocks.MetricsClient{}
+		mockMetricClient.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+
+		executor := newExecutor(im, newTestConfig(), sessionCache, featuremgmt.WithFeatures())
+		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+					JSON: json.RawMessage(`{
+						"type":      "timeSeriesQuery",
+						"namespace": "AWS/EC2",
+						"metricName": "NetworkOut",
+						"region": "us-east-2",
+						"statistic": "Maximum",
+						"period": "300"
+					}`),
+				},
+				{
+					RefID:     "A2",
+					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+					JSON: json.RawMessage(`{
+						"type":      "timeSeriesQuery",
+						"namespace": "AWS/EC2",
+						"metricName": "NetworkOut",
+						"region": "us-east-2",
+						"statistic": "Maximum",
+						"period": "300"
+					}`),
+				},
+				{
+					RefID:     "B",
+					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+					JSON: json.RawMessage(`{
+						"type":      "timeSeriesQuery",
+						"namespace": "AWS/EC2",
+						"metricName": "NetworkIn",
+						"region": "us-east-1",
+						"statistic": "Maximum",
+						"period": "300"
+					}`),
+				},
+			},
+		})
+
+		require.NoError(t, err)
+		sessionCache.AssertExpectations(t) // method is defined to only return "Once()" for each region.
+		// AssertExpectations will fail if those methods were not called Once(), so expected number of calls is asserted by this line
+		mockMetricClient.AssertNumberOfCalls(t, "GetMetricDataWithContext", 2)
+		// GetMetricData is asserted to have been called 2 times, presumably once for each group of regions (2 regions total)
 	})
 }
 
@@ -217,7 +348,7 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 	}
 
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return datasourceInfo{}, nil
+		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 	})
 
 	t.Run("passes query label as GetMetricData label when dynamic labels feature toggle is enabled", func(t *testing.T) {
@@ -315,7 +446,7 @@ func Test_QueryData_response_data_frame_names(t *testing.T) {
 		},
 	}
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return datasourceInfo{}, nil
+		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 	})
 	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 

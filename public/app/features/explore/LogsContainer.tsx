@@ -8,6 +8,8 @@ import {
   LoadingState,
   LogRowModel,
   RawTimeRange,
+  EventBus,
+  SplitOpen,
 } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
@@ -17,7 +19,6 @@ import { getTimeZone } from '../profile/state/selectors';
 
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
-import { splitOpen } from './state/main';
 import { addResultsToCache, clearCache, loadLogsVolumeData, setLogsVolumeEnabled } from './state/query';
 import { updateTimeRange } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
@@ -35,6 +36,8 @@ interface LogsContainerProps extends PropsFromRedux {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
+  eventBus: EventBus;
+  splitOpenFn: SplitOpen;
 }
 
 class LogsContainer extends PureComponent<LogsContainerProps> {
@@ -69,7 +72,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
   };
 
   getFieldLinks = (field: Field, rowIndex: number) => {
-    const { splitOpen: splitOpenFn, range } = this.props;
+    const { splitOpenFn, range } = this.props;
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range });
   };
 
@@ -93,7 +96,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       scanning,
       range,
       width,
-      splitOpen,
+      splitOpenFn,
       isLive,
       exploreId,
       addResultsToCache,
@@ -135,7 +138,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             logsVolumeData={logsVolumeData}
             logsQueries={logsQueries}
             width={width}
-            splitOpen={splitOpen}
+            splitOpen={splitOpenFn}
             loading={loading}
             loadingState={loadingState}
             loadLogsVolumeData={loadLogsVolumeData}
@@ -155,6 +158,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             addResultsToCache={() => addResultsToCache(exploreId)}
             clearCache={() => clearCache(exploreId)}
             scrollElement={scrollElement}
+            eventBus={this.props.eventBus}
           />
         </LogsCrossFadeTransition>
       </>
@@ -203,7 +207,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
 
 const mapDispatchToProps = {
   updateTimeRange,
-  splitOpen,
   addResultsToCache,
   clearCache,
   loadLogsVolumeData,

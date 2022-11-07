@@ -154,7 +154,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     //e2e().wait('@chartData');
 
     // Avoid annotations flakiness
-    e2e.components.RefreshPicker.runButtonV2().first().should('be.visible').click({ force: true });
+    e2e.components.RefreshPicker.runButtonV2().first().click({ force: true });
 
     e2e().wait('@chartData');
 

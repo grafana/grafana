@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { DataQueryResponse, LoadingState } from '@grafana/data';
+import { DataQueryResponse, LoadingState, EventBusSrv } from '@grafana/data';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
 
@@ -25,6 +25,7 @@ function renderPanel(logsVolumeData?: DataQueryResponse) {
       logLinesBasedDataVisibleRange={undefined}
       onLoadLogsVolume={() => {}}
       onHiddenSeriesChanged={() => null}
+      eventBus={new EventBusSrv()}
     />
   );
 }
