@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import { RegisterOptions, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -14,7 +14,7 @@ import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { RuleEditorSection } from './RuleEditorSection';
 
-const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
+export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
 export const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
   required: {
@@ -75,7 +75,7 @@ export const evaluateEveryValidationOptions: RegisterOptions = {
   },
 };
 
-export const GrafanaEvaluationBehavior: FC = () => {
+export const GrafanaEvaluationBehavior = () => {
   const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
   const {

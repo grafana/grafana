@@ -9,13 +9,17 @@ describe('Variables - Datasource', () => {
 
     // Create a new "Datasource" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().type('Data source{enter}');
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().within(() => {
+      e2e().get('input').type('Data source{enter}');
+    });
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type('VariableUnderTest').blur();
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2().type('Variable under test').blur();
 
     // If this is failing, but sure to check there are Prometheus datasources named "gdev-prometheus" and "gdev-slow-prometheus"
     // Or, just update is to match some gdev datasources to test with :)
-    e2e.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect().type('Prometheus{enter}');
+    e2e.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect().within(() => {
+      e2e().get('input').type('Prometheus{enter}');
+    });
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption()
       .eq(0)
       .should('have.text', 'gdev-prometheus');

@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 func TestIntegrationUserAuthDataAccess(t *testing.T) {
@@ -13,7 +14,7 @@ func TestIntegrationUserAuthDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss := sqlstore.InitTestDB(t)
+	ss := db.InitTestDB(t)
 	userAuthStore := sqlStore{
 		db: ss,
 	}

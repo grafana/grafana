@@ -20,7 +20,7 @@ interface LogRowContextProps {
   errors?: LogRowContextQueryErrors;
   hasMoreContextRows?: HasMoreContextRows;
   logsSortOrder?: LogsSortOrder | null;
-  onOutsideClick: () => void;
+  onOutsideClick: (method: string) => void;
   onLoadMoreContext: () => void;
 }
 
@@ -35,13 +35,13 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
   const headerHeight = 40;
   const logsHeight = 220;
   const contextHeight = headerHeight + logsHeight;
+  const width = wrapLogMessage ? '100%' : '75%';
   const afterContext = wrapLogMessage
     ? css`
         top: -${contextHeight}px;
       `
     : css`
         margin-top: -${contextHeight}px;
-        width: 75%;
       `;
 
   const beforeContext = wrapLogMessage
@@ -49,13 +49,11 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
         top: 100%;
       `
     : css`
-        margin-top: 20px;
-        width: 75%;
+        margin-top: ${theme.spacing(2.5)};
       `;
   return {
-    sizes: css`
-      width: calc(100% + ${theme.spacing()});
-      left: -${theme.spacing()};
+    width: css`
+      width: ${width};
     `,
     commonStyles: css`
       position: absolute;
@@ -63,33 +61,34 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
       z-index: ${theme.zIndex.dropdown};
       overflow: hidden;
       background: ${theme.colors.background.primary};
-      box-shadow: 0 0 10px ${theme.v1.palette.black};
+      box-shadow: 0 0 ${theme.spacing(1.25)} ${theme.v1.palette.black};
       border: 1px solid ${theme.colors.background.secondary};
       border-radius: ${theme.shape.borderRadius(2)};
       font-family: ${theme.typography.fontFamily};
     `,
     header: css`
       height: ${headerHeight}px;
-      padding: 0 10px;
+      padding: ${theme.spacing(0, 1.25)};
       display: flex;
       align-items: center;
       background: ${theme.colors.background.canvas};
     `,
     top: css`
       border-radius: 0 0 ${theme.shape.borderRadius(2)} ${theme.shape.borderRadius(2)};
-      box-shadow: 0 0 10px ${theme.v1.palette.black};
-      clip-path: inset(0px -10px -10px -10px);
+      box-shadow: 0 0 ${theme.spacing(1.25)} ${theme.v1.palette.black};
+      clip-path: inset(0px -${theme.spacing(1.25)} -${theme.spacing(1.25)} -${theme.spacing(1.25)});
     `,
     title: css`
       position: absolute;
-      top: -${contextHeight + headerHeight}px;
+      width: ${width};
+      margin-top: -${contextHeight + headerHeight}px;
       z-index: ${theme.zIndex.modal};
       height: ${headerHeight}px;
       background: ${theme.colors.background.secondary};
       border: 1px solid ${theme.colors.background.secondary};
       border-radius: ${theme.shape.borderRadius(2)} ${theme.shape.borderRadius(2)} 0 0;
-      box-shadow: 0 0 10px ${theme.v1.palette.black};
-      clip-path: inset(-10px -10px 0px -10px);
+      box-shadow: 0 0 ${theme.spacing(1.25)} ${theme.v1.palette.black};
+      clip-path: inset(-${theme.spacing(1.25)} -${theme.spacing(1.25)} 0px -${theme.spacing(1.25)});
       font-family: ${theme.typography.fontFamily};
 
       display: flex;
@@ -108,11 +107,11 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
       display: flex;
     `,
     headerButton: css`
-      margin-left: 8px;
+      margin-left: ${theme.spacing(1)};
     `,
     logs: css`
       height: ${logsHeight}px;
-      padding: 10px;
+      padding: ${theme.spacing(1.25)};
       font-family: ${theme.typography.fontFamilyMonospace};
 
       .scrollbar-view {
@@ -192,7 +191,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   groupPosition,
   logsSortOrder,
 }) => {
-  const { commonStyles, logs, sizes } = useStyles2(getLogRowContextStyles);
+  const { commonStyles, logs } = useStyles2(getLogRowContextStyles);
   const [scrollTop, setScrollTop] = useState(0);
   const [scrollHeight, setScrollHeight] = useState(0);
 
@@ -247,7 +246,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   };
 
   return (
-    <div className={cx(commonStyles, sizes, className)}>
+    <div className={cx(commonStyles, className)}>
       {/* When displaying "after" context */}
       {shouldScrollToBottom && !error && <LogRowContextGroupHeader {...headerProps} />}
       <div className={logs}>
@@ -291,21 +290,21 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
 }) => {
   useEffect(() => {
     const handleEscKeyDown = (e: KeyboardEvent): void => {
-      if (e.keyCode === 27) {
-        onOutsideClick();
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        onOutsideClick('close_esc');
       }
     };
     document.addEventListener('keydown', handleEscKeyDown, false);
     return () => {
       document.removeEventListener('keydown', handleEscKeyDown, false);
     };
-  }, [onOutsideClick]);
-  const { afterContext, beforeContext, title, top, actions, sizes } = useStyles2((theme) =>
+  }, [onOutsideClick, row]);
+  const { afterContext, beforeContext, title, top, actions, width } = useStyles2((theme) =>
     getLogRowContextStyles(theme, wrapLogMessage)
   );
 
   return (
-    <ClickOutsideWrapper onClick={onOutsideClick}>
+    <ClickOutsideWrapper onClick={() => onOutsideClick('close_outside_click')}>
       {/* e.stopPropagation is necessary so the log details doesn't open when clicked on log line in context
        * and/or when context log line is being highlighted */}
       <div onClick={(e) => e.stopPropagation()}>
@@ -314,7 +313,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
             rows={context.after}
             error={errors && errors.after}
             row={row}
-            className={cx(afterContext, top)}
+            className={cx(afterContext, top, width)}
             shouldScrollToBottom
             canLoadMoreRows={hasMoreContextRows ? hasMoreContextRows.after : false}
             onLoadMoreContext={onLoadMoreContext}
@@ -330,15 +329,15 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
             row={row}
             rows={context.before}
             error={errors && errors.before}
-            className={beforeContext}
+            className={cx(beforeContext, width)}
             groupPosition={LogGroupPosition.Bottom}
             logsSortOrder={logsSortOrder}
           />
         )}
-        <div className={cx(title, sizes)}>
+        <div className={cx(title, width)}>
           <h5>Log context</h5>
           <div className={actions}>
-            <IconButton size="lg" name="times" onClick={onOutsideClick} />
+            <IconButton size="lg" name="times" onClick={() => onOutsideClick('close_button')} />
           </div>
         </div>
       </div>

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -22,7 +22,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureMan
 		cfg:      cfg,
 		features: features,
 	}
-	if cfg.IsFeatureToggleEnabled("newDBLibrary") {
+	if features.IsEnabled(featuremgmt.FlagNewDBLibrary) {
 		service.store = &sqlxStore{
 			sess: db.GetSqlxSession(),
 		}

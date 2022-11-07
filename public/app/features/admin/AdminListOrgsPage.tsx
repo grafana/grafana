@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -17,8 +17,8 @@ const getOrgs = async () => {
   return await getBackendSrv().get('/api/orgs');
 };
 
-const getErrorMessage = (error: any) => {
-  return error?.data?.message || 'An unexpected error happened.';
+const getErrorMessage = (error: Error) => {
+  return isFetchError(error) ? error?.data?.message : 'An unexpected error happened.';
 };
 
 export default function AdminListOrgsPages() {

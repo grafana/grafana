@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -39,8 +38,8 @@ func TestDashboardAnnotations(t *testing.T) {
 	_, dbstore := tests.SetupTestEnv(t, 1)
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-	hist := historian.NewAnnotationHistorian(fakeAnnoRepo, &dashboards.FakeDashboardService{}, log.NewNopLogger())
-	st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.New(), hist)
+	hist := historian.NewAnnotationHistorian(fakeAnnoRepo, &dashboards.FakeDashboardService{})
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &image.NoopImageService{}, clock.New(), hist)
 
 	const mainOrgID int64 = 1
 
@@ -49,16 +48,22 @@ func TestDashboardAnnotations(t *testing.T) {
 		"test2": "{{ $labels.instance_label }}",
 	})
 
-	st.Warm(ctx)
+	st.Warm(ctx, dbstore)
+	bValue := float64(42)
+	cValue := float64(1)
 	_ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
 		Instance:    data.Labels{"instance_label": "testValue2"},
 		State:       eval.Alerting,
 		EvaluatedAt: evaluationTime,
+		Values: map[string]eval.NumberValueCapture{
+			"B": {Var: "B", Value: &bValue, Labels: data.Labels{"job": "prometheus"}},
+			"C": {Var: "C", Value: &cValue, Labels: data.Labels{"job": "prometheus"}},
+		},
 	}}, data.Labels{
 		"alertname": rule.Title,
 	})
 
-	expected := []string{rule.Title + " {alertname=" + rule.Title + ", instance_label=testValue2, test1=testValue1, test2=testValue2} - Alerting"}
+	expected := []string{rule.Title + " {alertname=" + rule.Title + ", instance_label=testValue2, test1=testValue1, test2=testValue2} - B=42.000000, C=1.000000"}
 	sort.Strings(expected)
 	require.Eventuallyf(t, func() bool {
 		var actual []string
@@ -117,7 +122,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid",
@@ -125,7 +130,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -171,7 +177,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["instance_label_1","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["instance_label_1","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["instance_label_1","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid",
@@ -179,7 +185,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label_1":             "test",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -194,7 +201,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["instance_label_2","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["instance_label_2","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["instance_label_2","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid",
@@ -202,7 +209,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label_2":             "test",
 					},
-					State: eval.Alerting,
+					Values: make(map[string]float64),
+					State:  eval.Alerting,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -251,7 +259,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_1"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_1",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_1"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_1"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_1",
@@ -259,7 +267,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -312,7 +321,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -320,7 +329,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Alerting,
+					Values: make(map[string]float64),
+					State:  eval.Alerting,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -384,7 +394,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -392,7 +402,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Alerting,
+					Values: make(map[string]float64),
+					State:  eval.Alerting,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -478,7 +489,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -486,7 +497,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Pending,
+					Values: make(map[string]float64),
+					State:  eval.Pending,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
@@ -559,7 +571,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -567,7 +579,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.NoData,
+					Values: make(map[string]float64),
+					State:  eval.NoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(20 * time.Second),
@@ -623,7 +636,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -631,7 +644,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Pending,
+					Values: make(map[string]float64),
+					State:  eval.Pending,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -687,7 +701,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -695,7 +709,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Pending,
+					Values: make(map[string]float64),
+					State:  eval.Pending,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -751,7 +766,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -759,6 +774,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
+					Values:      make(map[string]float64),
 					State:       eval.Alerting,
 					StateReason: eval.NoData.String(),
 					Results: []state.Evaluation{
@@ -816,7 +832,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -824,7 +840,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.NoData,
+					Values: make(map[string]float64),
+					State:  eval.NoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -880,7 +897,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -888,7 +905,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -905,14 +923,15 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
 						"alertname":                    "test_title",
 						"label":                        "test",
 					},
-					State: eval.NoData,
+					Values: make(map[string]float64),
+					State:  eval.NoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
@@ -969,7 +988,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test-1"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test-1"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test-1"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -977,7 +996,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test-1",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -994,7 +1014,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test-2"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test-2"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test-2"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -1002,7 +1022,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test-2",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1019,14 +1040,15 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
 						"alertname":                    "test_title",
 						"label":                        "test",
 					},
-					State: eval.NoData,
+					Values: make(map[string]float64),
+					State:  eval.NoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
@@ -1085,7 +1107,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -1093,7 +1115,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1115,14 +1138,15 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
 						"alertname":                    "test_title",
 						"label":                        "test",
 					},
-					State: eval.NoData,
+					Values: make(map[string]float64),
+					State:  eval.NoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
@@ -1173,7 +1197,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -1181,6 +1205,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
+					Values:      make(map[string]float64),
 					State:       eval.Normal,
 					StateReason: eval.NoData.String(),
 					Results: []state.Evaluation{
@@ -1239,7 +1264,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -1247,6 +1272,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
+					Values:      make(map[string]float64),
 					State:       eval.Alerting,
 					StateReason: eval.NoData.String(),
 
@@ -1296,6 +1322,7 @@ func TestProcessEvalResults(t *testing.T) {
 					eval.Result{
 						Instance:           data.Labels{"instance_label": "test"},
 						State:              eval.Error,
+						Error:              errors.New("test error"),
 						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
 						EvaluationDuration: evaluationDuration,
 					},
@@ -1306,7 +1333,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -1314,8 +1341,10 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
+					Values:      make(map[string]float64),
 					State:       eval.Pending,
 					StateReason: eval.Error.String(),
+					Error:       errors.New("test error"),
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1396,7 +1425,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -1404,6 +1433,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
+					Values:      make(map[string]float64),
 					State:       eval.Alerting,
 					StateReason: eval.Error.String(),
 					Results: []state.Evaluation{
@@ -1475,7 +1505,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -1485,7 +1515,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"datasource_uid":               "datasource_uid_1",
 						"ref_id":                       "A",
 					},
-					State: eval.Error,
+					Values: make(map[string]float64),
+					State:  eval.Error,
 					Error: expr.QueryError{
 						RefID: "A",
 						Err:   errors.New("this is an error"),
@@ -1554,7 +1585,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -1562,6 +1593,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
+					Values:      make(map[string]float64),
 					State:       eval.Normal,
 					StateReason: eval.Error.String(),
 					Error:       nil,
@@ -1627,7 +1659,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -1635,6 +1667,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
+					Values:      make(map[string]float64),
 					State:       eval.Normal,
 					StateReason: eval.Error.String(),
 					Error:       nil,
@@ -1726,7 +1759,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -1734,7 +1767,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Error,
+					Values: make(map[string]float64),
+					State:  eval.Error,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(40 * time.Second),
@@ -1807,7 +1841,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -1815,7 +1849,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Alerting,
+					Values: make(map[string]float64),
+					State:  eval.Alerting,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
@@ -1894,7 +1929,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -1902,7 +1937,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.NoData,
+					Values: make(map[string]float64),
+					State:  eval.NoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
@@ -1953,7 +1989,7 @@ func TestProcessEvalResults(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["cluster","us-central-1"],["job","prod/grafana"],["label","test"],["namespace","prod"],["pod","grafana"]]`: {
 					AlertRuleUID: "test_alert_rule_uid",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["cluster","us-central-1"],["job","prod/grafana"],["label","test"],["namespace","prod"],["pod","grafana"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["cluster","us-central-1"],["job","prod/grafana"],["label","test"],["namespace","prod"],["pod","grafana"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid",
@@ -1964,7 +2000,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"job":                          "prod/grafana",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1982,8 +2019,8 @@ func TestProcessEvalResults(t *testing.T) {
 
 	for _, tc := range testCases {
 		fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-		hist := historian.NewAnnotationHistorian(fakeAnnoRepo, &dashboards.FakeDashboardService{}, log.NewNopLogger())
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &state.FakeInstanceStore{}, &image.NotAvailableImageService{}, clock.New(), hist)
+		hist := historian.NewAnnotationHistorian(fakeAnnoRepo, &dashboards.FakeDashboardService{})
+		st := state.NewManager(testMetrics.GetStateMetrics(), nil, &state.FakeInstanceStore{}, &image.NotAvailableImageService{}, clock.New(), hist)
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {
 				_ = st.ProcessEvalResults(context.Background(), evaluationTime, tc.alertRule, res, data.Labels{
@@ -1997,7 +2034,7 @@ func TestProcessEvalResults(t *testing.T) {
 			assert.Len(t, states, len(tc.expectedStates))
 
 			for _, s := range tc.expectedStates {
-				cachedState := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
+				cachedState := st.Get(s.OrgID, s.AlertRuleUID, s.CacheID)
 				assert.Equal(t, s, cachedState)
 			}
 
@@ -2010,7 +2047,7 @@ func TestProcessEvalResults(t *testing.T) {
 	t.Run("should save state to database", func(t *testing.T) {
 		instanceStore := &state.FakeInstanceStore{}
 		clk := clock.New()
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, instanceStore, &image.NotAvailableImageService{}, clk, &state.FakeHistorian{})
+		st := state.NewManager(testMetrics.GetStateMetrics(), nil, instanceStore, &image.NotAvailableImageService{}, clk, &state.FakeHistorian{})
 		rule := models.AlertRuleGen()()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
 
@@ -2029,7 +2066,7 @@ func TestProcessEvalResults(t *testing.T) {
 		}
 		require.Len(t, savedStates, len(states))
 		for _, s := range states {
-			require.Contains(t, savedStates, s.CacheId)
+			require.Contains(t, savedStates, s.CacheID)
 		}
 	})
 }
@@ -2110,14 +2147,15 @@ func TestStaleResultsHandler(t *testing.T) {
 				`[["__alert_rule_namespace_uid__","namespace"],["__alert_rule_uid__","` + rule.UID + `"],["alertname","` + rule.Title + `"],["test1","testValue1"]]`: {
 					AlertRuleUID: rule.UID,
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","namespace"],["__alert_rule_uid__","` + rule.UID + `"],["alertname","` + rule.Title + `"],["test1","testValue1"]]`,
+					CacheID:      `[["__alert_rule_namespace_uid__","namespace"],["__alert_rule_uid__","` + rule.UID + `"],["alertname","` + rule.Title + `"],["test1","testValue1"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "namespace",
 						"__alert_rule_uid__":           rule.UID,
 						"alertname":                    rule.Title,
 						"test1":                        "testValue1",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -2138,8 +2176,8 @@ func TestStaleResultsHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		ctx := context.Background()
-		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.New(), &state.FakeHistorian{})
-		st.Warm(ctx)
+		st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &image.NoopImageService{}, clock.New(), &state.FakeHistorian{})
+		st.Warm(ctx, dbstore)
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 		// We have loaded the expected number of entries from the db
@@ -2157,7 +2195,7 @@ func TestStaleResultsHandler(t *testing.T) {
 				"__alert_rule_uid__":           rule.UID,
 			})
 			for _, s := range tc.expectedStates {
-				cachedState := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
+				cachedState := st.Get(s.OrgID, s.AlertRuleUID, s.CacheID)
 				assert.Equal(t, s, cachedState)
 			}
 		}
@@ -2188,8 +2226,8 @@ func TestStaleResults(t *testing.T) {
 		t.Helper()
 		require.Len(t, actual, len(expected))
 		for _, currentState := range actual {
-			_, ok := expected[currentState.CacheId]
-			require.Truef(t, ok, "State %s is not expected. States: %v", currentState.CacheId, expected)
+			_, ok := expected[currentState.CacheID]
+			require.Truef(t, ok, "State %s is not expected. States: %v", currentState.CacheID, expected)
 		}
 	}
 
@@ -2200,7 +2238,7 @@ func TestStaleResults(t *testing.T) {
 		clk := clock.NewMock()
 		clk.Set(time.Now())
 
-		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clk, &state.FakeHistorian{})
+		st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &image.NoopImageService{}, clk, &state.FakeHistorian{})
 
 		orgID := rand.Int63()
 		rule := tests.CreateTestAlertRule(t, ctx, dbstore, 10, orgID)
@@ -2252,7 +2290,7 @@ func TestStaleResults(t *testing.T) {
 			expectedStaleReturned:           {},
 		})
 		for _, s := range processed {
-			if s.CacheId == expectedStaleReturned {
+			if s.CacheID == expectedStaleReturned {
 				assert.Truef(t, s.Resolved, "Returned stale state should have Resolved set to true")
 				assert.Equal(t, eval.Normal, s.State)
 				assert.Equal(t, models.StateReasonMissingSeries, s.StateReason)

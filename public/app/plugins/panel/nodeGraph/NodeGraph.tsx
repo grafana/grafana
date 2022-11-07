@@ -182,7 +182,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
 
   // This cannot be inline func or it will create infinite render cycle.
   const topLevelRef = useCallback(
-    (r) => {
+    (r: HTMLDivElement) => {
       measureRef(r);
       (zoomRef as MutableRefObject<HTMLElement | null>).current = r;
     },

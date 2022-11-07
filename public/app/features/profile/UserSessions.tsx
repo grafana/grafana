@@ -39,7 +39,7 @@ class UserSessions extends PureComponent<Props> {
                       <Trans i18nKey="user-session.ip-column">IP address</Trans>
                     </th>
                     <th>
-                      <Trans i18nKey="user-session.browser-column">Browser &amp; OS</Trans>
+                      <Trans i18nKey="user-session.browser-column">Browser & OS</Trans>
                     </th>
                     <th></th>
                   </tr>

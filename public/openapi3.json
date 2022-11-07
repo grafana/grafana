@@ -1731,6 +1731,21 @@
           }
         },
         "description": "(empty)"
+      },
+      "validateDashboardResponse": {
+        "description": "(empty)",
+        "headers": {
+          "isValid": {
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          "message": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
       }
     },
     "schemas": {
@@ -1769,27 +1784,6 @@
           "active_viewers": {
             "format": "int64",
             "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "AddBuiltInRoleCommand": {
-        "properties": {
-          "builtInRole": {
-            "enum": [
-              "Viewer",
-              " Editor",
-              " Admin",
-              " Grafana Admin"
-            ],
-            "type": "string"
-          },
-          "global": {
-            "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to create organization local assignment. Refer to the Built-in role assignments for more information.",
-            "type": "boolean"
-          },
-          "roleUid": {
-            "type": "string"
           }
         },
         "type": "object"
@@ -2860,11 +2854,15 @@
         "properties": {
           "field": {
             "description": "Field used to attach the correlation link",
+            "example": "message",
             "type": "string"
           },
           "target": {
             "additionalProperties": false,
             "description": "Target data query",
+            "example": {
+              "expr": "job=app"
+            },
             "type": "object"
           },
           "type": {
@@ -2880,6 +2878,27 @@
       },
       "CorrelationConfigType": {
         "type": "string"
+      },
+      "CorrelationConfigUpdateDTO": {
+        "properties": {
+          "field": {
+            "description": "Field used to attach the correlation link",
+            "example": "message",
+            "type": "string"
+          },
+          "target": {
+            "additionalProperties": false,
+            "description": "Target data query",
+            "example": {
+              "expr": "job=app"
+            },
+            "type": "object"
+          },
+          "type": {
+            "$ref": "#/components/schemas/CorrelationConfigType"
+          }
+        },
+        "type": "object"
       },
       "CreateAlertNotificationCommand": {
         "properties": {
@@ -2933,7 +2952,7 @@
             "type": "string"
           },
           "targetUID": {
-            "description": "Target data source UID to which the correlation is created",
+            "description": "Target data source UID to which the correlation is created. required if config.type = query",
             "example": "PE1C5CBDA0504A6A3",
             "type": "string"
           }
@@ -5709,7 +5728,7 @@
             "type": "string"
           },
           "items": {
-            "description": "The ordered list of items that the playlist will iterate over.",
+            "description": "The ordered list of items that the playlist will iterate over.\nFIXME! This should not be optional, but changing it makes the godegen awkward",
             "items": {
               "$ref": "#/components/schemas/PlaylistItem"
             },
@@ -8996,6 +9015,9 @@
       "UpdateCorrelationCommand": {
         "description": "UpdateCorrelationCommand is the command for updating a correlation",
         "properties": {
+          "config": {
+            "$ref": "#/components/schemas/CorrelationConfigUpdateDTO"
+          },
           "description": {
             "description": "Optional description of the correlation",
             "example": "Logs to Traces",
@@ -10243,10 +10265,6 @@
       "url": "https://grafana.com"
     },
     "description": "The Grafana backend exposes an HTTP API, the same API is used by the frontend to do\neverything from saving dashboards, creating users and updating data sources.",
-    "license": {
-      "name": "GNU Affero General Public License v3.0",
-      "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
-    },
     "title": "Grafana HTTP API.",
     "version": "0.0.1"
   },

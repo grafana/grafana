@@ -62,10 +62,12 @@ type NavLink struct {
 	HideFromTabs     bool       `json:"hideFromTabs,omitempty"`
 	ShowIconInNavbar bool       `json:"showIconInNavbar,omitempty"`
 	RoundIcon        bool       `json:"roundIcon,omitempty"`
+	IsSection        bool       `json:"isSection,omitempty"`
 	Children         []*NavLink `json:"children,omitempty"`
 	HighlightText    string     `json:"highlightText,omitempty"`
 	HighlightID      string     `json:"highlightId,omitempty"`
 	EmptyMessageId   string     `json:"emptyMessageId,omitempty"`
+	PluginID         string     `json:"pluginId,omitempty"` // (Optional) The ID of the plugin that registered nav link (e.g. as a standalone plugin page)
 }
 
 func (node *NavLink) Sort() {
@@ -115,8 +117,7 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 		}
 
 		if serverAdminNode := root.FindById(NavIDAdmin); serverAdminNode != nil {
-			serverAdminNode.Url = "/admin/settings"
-			serverAdminNode.Text = "Server admin"
+			serverAdminNode.Url = "/admin/server"
 			serverAdminNode.SortWeight = 0
 
 			if orgAdminNode != nil {

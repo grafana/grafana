@@ -102,7 +102,7 @@ const mainConfig: StorybookConfig = {
   },
   webpackFinal: async (config) => {
     // expose jquery as a global so jquery plugins don't break at runtime.
-    config.module.rules.push({
+    config.module?.rules?.push({
       test: require.resolve('jquery'),
       loader: 'expose-loader',
       options: {
@@ -111,7 +111,7 @@ const mainConfig: StorybookConfig = {
     });
 
     // use the asset module for SVGS for compatibility with grafana/ui Icon component.
-    config.module.rules.push({
+    config.module?.rules?.push({
       test: /(unicons|mono|custom)[\\/].*\.svg$/,
       type: 'asset/source',
     });

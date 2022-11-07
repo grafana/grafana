@@ -55,6 +55,19 @@ export function generateRandomNodes(count = 10) {
     [NodeGraphDataFrameFieldNames.id]: {
       values: new ArrayVector(),
       type: FieldType.string,
+      config: {
+        links: [
+          {
+            title: 'test data link',
+            url: '',
+            internal: {
+              query: { scenarioId: 'logs', alias: 'from service graph', stringInput: 'tes' },
+              datasourceUid: 'gdev-testdata',
+              datasourceName: 'gdev-testdata',
+            },
+          },
+        ],
+      },
     },
     [NodeGraphDataFrameFieldNames.title]: {
       values: new ArrayVector(),

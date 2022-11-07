@@ -48,6 +48,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	acimpl.ProvideService,
 	wire.Bind(new(accesscontrol.RoleRegistry), new(*acimpl.Service)),
+	wire.Bind(new(plugins.RoleRegistry), new(*acimpl.Service)),
 	wire.Bind(new(accesscontrol.Service), new(*acimpl.Service)),
 	thumbs.ProvideCrawlerAuthSetupService,
 	wire.Bind(new(thumbs.CrawlerAuthSetupService), new(*thumbs.OSSCrawlerAuthSetupService)),

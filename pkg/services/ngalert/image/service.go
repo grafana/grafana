@@ -135,7 +135,6 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		Timeout:      screenshotTimeout,
 	}
 
-	//
 	k := fmt.Sprintf("%s-%d-%s", opts.DashboardUID, opts.PanelID, opts.Theme)
 	result, err, _ := s.singleflight.Do(k, func() (interface{}, error) {
 		screenshot, err := s.limiter.Do(ctx, opts, s.screenshots.Take)
@@ -148,7 +147,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		image := models.Image{Path: screenshot.Path}
 		if s.uploads != nil {
 			if image, err = s.uploads.Upload(ctx, image); err != nil {
-				s.logger.Warn("failed to upload image", "path", image.Path, "err", err)
+				s.logger.Warn("failed to upload image", "path", image.Path, "error", err)
 			}
 		}
 		if err := s.store.SaveImage(ctx, &image); err != nil {

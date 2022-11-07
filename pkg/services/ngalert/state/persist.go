@@ -2,9 +2,7 @@ package state
 
 import (
 	"context"
-	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -24,5 +22,6 @@ type RuleReader interface {
 
 // Historian maintains an audit log of alert state history.
 type Historian interface {
-	RecordState(ctx context.Context, rule *models.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData InstanceStateAndReason)
+	// RecordStates writes a number of state transitions for a given rule to state history.
+	RecordStates(ctx context.Context, rule *models.AlertRule, states []StateTransition)
 }

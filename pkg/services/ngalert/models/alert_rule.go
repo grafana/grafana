@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -101,6 +102,9 @@ const (
 
 	// StateReasonAnnotation is the name of the annotation that explains the difference between evaluation state and alert state (i.e. changing state when NoData or Error).
 	StateReasonAnnotation = GrafanaReservedLabelPrefix + "state_reason"
+
+	ValuesAnnotation      = "__values__"
+	ValueStringAnnotation = "__value_string__"
 )
 
 var (
@@ -453,4 +457,15 @@ func (g RulesGroup) SortByGroupIndex() {
 		}
 		return g[i].RuleGroupIndex < g[j].RuleGroupIndex
 	})
+}
+
+type ruleKeyContextKey struct{}
+
+func WithRuleKey(ctx context.Context, ruleKey AlertRuleKey) context.Context {
+	return context.WithValue(ctx, ruleKeyContextKey{}, ruleKey)
+}
+
+func RuleKeyFromContext(ctx context.Context) (AlertRuleKey, bool) {
+	key, ok := ctx.Value(ruleKeyContextKey{}).(AlertRuleKey)
+	return key, ok
 }

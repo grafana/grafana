@@ -6,11 +6,19 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
+	"github.com/patrickmn/go-cache"
+	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/yudai/gojsondiff"
+	"github.com/yudai/gojsondiff/formatter"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -19,9 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/resource"
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/yudai/gojsondiff"
-	"github.com/yudai/gojsondiff/formatter"
 )
 
 var plog = log.New("tsdb.prometheus")
@@ -32,9 +37,10 @@ type Service struct {
 }
 
 type instance struct {
-	buffered  *buffered.Buffered
-	queryData *querydata.QueryData
-	resource  *resource.Resource
+	buffered     *buffered.Buffered
+	queryData    *querydata.QueryData
+	resource     *resource.Resource
+	versionCache *cache.Cache
 }
 
 func ProvideService(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
@@ -48,7 +54,7 @@ func ProvideService(httpClientProvider httpclient.Provider, cfg *setting.Cfg, fe
 func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		// Creates a http roundTripper. Probably should be used for both buffered and streaming/querydata instances.
-		opts, err := buffered.CreateTransportOptions(settings, cfg, plog)
+		opts, err := client.CreateTransportOptions(settings, cfg, plog)
 		if err != nil {
 			return nil, fmt.Errorf("error creating transport options: %v", err)
 		}
@@ -75,9 +81,10 @@ func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cf
 		}
 
 		return instance{
-			buffered:  b,
-			queryData: qd,
-			resource:  r,
+			buffered:     b,
+			queryData:    qd,
+			resource:     r,
+			versionCache: cache.New(time.Minute*1, time.Minute*5),
 		}, nil
 	}
 }
@@ -105,7 +112,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		var data *backend.QueryDataResponse
 		var err error
 
-		plog.Debug("PrometheusStreamingJSONParserTest", "req", req)
+		plog.FromContext(ctx).Debug("PrometheusStreamingJSONParserTest", "req", req)
 
 		wg.Add(1)
 		go func() {
@@ -133,6 +140,20 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	i, err := s.getInstance(req.PluginContext)
 	if err != nil {
 		return err
+	}
+
+	if strings.EqualFold(req.Path, "version-detect") {
+		versionObj, found := i.versionCache.Get("version")
+		if found {
+			return sender.Send(versionObj.(*backend.CallResourceResponse))
+		}
+
+		vResp, err := i.resource.DetectVersion(ctx, req)
+		if err != nil {
+			return err
+		}
+		i.versionCache.Set("version", vResp, cache.DefaultExpiration)
+		return sender.Send(vResp)
 	}
 
 	resp, err := i.resource.Execute(ctx, req)
