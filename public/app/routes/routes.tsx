@@ -307,12 +307,12 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/admin/access',
       component: () =>
-        config.featureToggles.topnav ? <NavLandingPage navId="admin/access" /> : <Redirect to="/admin" />,
+        config.featureToggles.topnav ? <NavLandingPage navId="admin/access" /> : <Redirect to="/admin/users" />,
     },
     {
       path: '/admin/config',
       component: () =>
-        config.featureToggles.topnav ? <NavLandingPage navId="admin/config" /> : <Redirect to="/admin" />,
+        config.featureToggles.topnav ? <NavLandingPage navId="admin/config" /> : <Redirect to="/admin/org" />,
     },
     // {
     //   path: '/admin/server',
