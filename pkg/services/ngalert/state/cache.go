@@ -304,13 +304,3 @@ func mergeLabels(a, b data.Labels) data.Labels {
 	}
 	return newLbs
 }
-
-func (c *cache) deleteEntry(orgID int64, alertRuleUID, cacheID string) {
-	c.mtxStates.Lock()
-	defer c.mtxStates.Unlock()
-	ruleStates, ok := c.states[orgID][alertRuleUID]
-	if !ok {
-		return
-	}
-	delete(ruleStates.states, cacheID)
-}
