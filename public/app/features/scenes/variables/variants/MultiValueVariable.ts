@@ -31,12 +31,12 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
   /**
    * The source of value options.
    */
-  abstract getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]>;
+  public abstract getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]>;
 
   /**
    * This function is called on when SceneVariableSet is activated or when a dependency changes.
    */
-  validateAndUpdate(): Observable<ValidateAndUpdateResult> {
+  public validateAndUpdate(): Observable<ValidateAndUpdateResult> {
     return this.getValueOptions({}).pipe(
       map((options) => {
         this.updateValueGivenNewOptions(options);
@@ -66,11 +66,11 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
     }
   }
 
-  getValue(): VariableValue {
+  public getValue(): VariableValue {
     return this.state.value;
   }
 
-  getValueText(): string {
+  public getValueText(): string {
     if (Array.isArray(this.state.text)) {
       return this.state.text.join(' + ');
     }
@@ -78,7 +78,7 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
     return this.state.text;
   }
 
-  changeValueAndPublishChangeEvent(value: string | string[], text: string | string[]) {
+  private changeValueAndPublishChangeEvent(value: string | string[], text: string | string[]) {
     if (value !== this.state.value || text !== this.state.text) {
       this.setStateHelper({ value, text, loading: false });
       this.publishEvent(new SceneVariableValueChangedEvent(this), true);
@@ -88,16 +88,16 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
   /**
    * This helper function is to counter the contravariance of setState
    */
-  setStateHelper(state: Partial<MultiValueVariableState>) {
+  private setStateHelper(state: Partial<MultiValueVariableState>) {
     const test: SceneObject<MultiValueVariableState> = this;
     test.setState(state);
   }
 
-  onSingleValueChange = (value: SelectableValue<string>) => {
+  public onSingleValueChange = (value: SelectableValue<string>) => {
     this.changeValueAndPublishChangeEvent(value.value!, value.label!);
   };
 
-  onMultiValueChange = (value: Array<SelectableValue<string>>) => {
+  public onMultiValueChange = (value: Array<SelectableValue<string>>) => {
     this.changeValueAndPublishChangeEvent(
       value.map((v) => v.value!),
       value.map((v) => v.label!)

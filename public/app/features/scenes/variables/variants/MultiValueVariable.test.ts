@@ -8,7 +8,7 @@ export interface ExampleVariableState extends MultiValueVariableState {
 }
 
 class ExampleVariable extends MultiValueVariable<ExampleVariableState> {
-  getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
+  public getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
     return of(this.state.optionsToReturn);
   }
 }

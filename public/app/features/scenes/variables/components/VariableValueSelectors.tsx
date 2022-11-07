@@ -9,7 +9,7 @@ import { SceneComponentProps, SceneObject, SceneObjectStatePlain } from '../../c
 import { SceneVariables, SceneVariableState } from '../types';
 
 export class VariableValueSelectors extends SceneObjectBase<SceneObjectStatePlain> {
-  static Component = VariableValueSelectorsRenderer;
+  public static Component = VariableValueSelectorsRenderer;
 }
 
 function VariableValueSelectorsRenderer({ model }: SceneComponentProps<VariableValueSelectors>) {

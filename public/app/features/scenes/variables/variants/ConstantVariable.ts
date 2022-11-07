@@ -9,7 +9,7 @@ export class ConstantVariable
   extends SceneObjectBase<ConstantVariableState>
   implements SceneVariable<ConstantVariableState>
 {
-  getValue(): VariableValue {
+  public getValue(): VariableValue {
     return this.state.value;
   }
 }

@@ -6,7 +6,7 @@ import { SceneLayoutState, SceneComponentProps } from '../core/types';
 interface SceneSubMenuState extends SceneLayoutState {}
 
 export class SceneSubMenu extends SceneObjectBase<SceneSubMenuState> {
-  static Component = SceneSubMenuRenderer;
+  public static Component = SceneSubMenuRenderer;
 }
 
 function SceneSubMenuRenderer({ model }: SceneComponentProps<SceneSubMenu>) {
