@@ -308,7 +308,7 @@ type fakeFolderService struct {
 	CreateFolderError    error
 	UpdateFolderResult   *models.Folder
 	UpdateFolderError    error
-	DeleteFolderResult   *models.Folder
+	DeleteFolderResult   *folder.Folder
 	DeleteFolderError    error
 	DeletedFolderUids    []string
 }
@@ -334,7 +334,7 @@ func (s *fakeFolderService) UpdateFolder(ctx context.Context, user *user.SignedI
 	return s.UpdateFolderError
 }
 
-func (s *fakeFolderService) DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
-	s.DeletedFolderUids = append(s.DeletedFolderUids, uid)
+func (s *fakeFolderService) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) (*folder.Folder, error) {
+	s.DeletedFolderUids = append(s.DeletedFolderUids, cmd.UID)
 	return s.DeleteFolderResult, s.DeleteFolderError
 }

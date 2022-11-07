@@ -24,6 +24,7 @@ type Folder struct {
 	UID         string `xorm:"uid"`
 	ParentUID   string `xorm:"parent_uid"`
 	Title       string
+	URL         string
 	Description string
 
 	Created time.Time
@@ -74,7 +75,9 @@ type MoveFolderCommand struct {
 // DeleteFolderCommand captures the information required by the folder service
 // to delete a folder.
 type DeleteFolderCommand struct {
-	UID string `json:"uid" xorm:"uid"`
+	UID              string `json:"uid" xorm:"uid"`
+	OrgID            int64  `json:"-"`
+	ForceDeleteRules bool   `json:"forceDeleteRules"`
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or

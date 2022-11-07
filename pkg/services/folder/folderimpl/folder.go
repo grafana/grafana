@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -261,27 +262,36 @@ func (s *Service) UpdateFolder(ctx context.Context, user *user.SignedInUser, org
 	return nil
 }
 
-func (s *Service) DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
-	dashFolder, err := s.dashboardStore.GetFolderByUID(ctx, orgID, uid)
+func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) (*folder.Folder, error) {
+	user, err := appcontext.User(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	guard := guardian.New(ctx, dashFolder.Id, orgID, user)
+	dashFolder, err := s.dashboardStore.GetFolderByUID(ctx, cmd.OrgID, cmd.UID)
+	if err != nil {
+		return nil, err
+	}
+
+	guard := guardian.New(ctx, dashFolder.Id, cmd.OrgID, user)
 	if canSave, err := guard.CanDelete(); err != nil || !canSave {
 		if err != nil {
 			return nil, toFolderError(err)
 		}
 		return nil, dashboards.ErrFolderAccessDenied
 	}
+	if dashFolder == nil {
+		return nil, nil
+	}
+	f := folder.ConvertModelFolderToFolder(dashFolder)
 
-	deleteCmd := models.DeleteDashboardCommand{OrgId: orgID, Id: dashFolder.Id, ForceDeleteFolderRules: forceDeleteRules}
+	deleteCmd := models.DeleteDashboardCommand{OrgId: user.OrgID, Id: dashFolder.Id, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 
 	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 		return nil, toFolderError(err)
 	}
 
-	return dashFolder, nil
+	return f, nil
 }
 
 func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {

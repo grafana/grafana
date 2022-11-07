@@ -14,8 +14,22 @@ type Service interface {
 	GetFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*models.Folder, error)
 	CreateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, title, uid string) (*models.Folder, error)
 	UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error
-	DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error)
+	DeleteFolder(ctx context.Context, cmd *DeleteFolderCommand) (*Folder, error)
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error
+}
+
+// TODO: remove when nested folder refactor is done.
+func ConvertModelFolderToFolder(folder *models.Folder) *Folder {
+	if folder == nil {
+		return nil
+	}
+	return &Folder{
+		ID:    folder.Id,
+		UID:   folder.Uid,
+		URL:   folder.Url,
+		Title: folder.Title,
+		// how do we get orgId from models.Folder?
+	}
 }
 
 // NestedFolderService is the temporary interface definition for the folder
