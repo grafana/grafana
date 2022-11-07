@@ -1,14 +1,14 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
 grabpl_version = 'v3.0.15'
-build_image = 'grafana/build-container:1.6.3'
+build_image = 'grafana/build-container:1.6.4'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15.6'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
-go_image = 'golang:1.19.2'
+go_image = 'golang:1.19.3'
 
 disable_tests = False
 trigger_oss = {
@@ -1062,7 +1062,7 @@ def publish_linux_packages_step(edition, package_manager='deb'):
             'secret_access_key': from_secret('packages_secret_access_key'),
             'service_account_json': from_secret('packages_service_account'),
             'target_bucket': 'grafana-packages',
-            'deb_distribution': 'stable',
+            'deb_distribution': 'auto',
             'gpg_passphrase': from_secret('packages_gpg_passphrase'),
             'gpg_public_key': from_secret('packages_gpg_public_key'),
             'gpg_private_key': from_secret('packages_gpg_private_key'),
