@@ -69,7 +69,7 @@ export class DashboardSrv {
     const parsedJson = JSON.parse(json);
     return saveDashboard({
       dashboard: parsedJson,
-      folderId: this.dashboard?.meta.folderId || parsedJson.folderId,
+      folderUid: this.dashboard?.meta.folderUid || parsedJson.folderUid,
     });
   }
 
