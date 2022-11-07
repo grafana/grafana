@@ -19,15 +19,15 @@ interface SceneState extends SceneObjectStatePlain {
 }
 
 export class Scene extends SceneObjectBase<SceneState> {
-  static Component = SceneRenderer;
-  urlSyncManager?: UrlSyncManager;
+  public static Component = SceneRenderer;
+  private urlSyncManager?: UrlSyncManager;
 
-  activate() {
+  public activate() {
     super.activate();
     this.urlSyncManager = new UrlSyncManager(this);
   }
 
-  deactivate() {
+  public deactivate() {
     super.deactivate();
     this.urlSyncManager!.cleanUp();
   }

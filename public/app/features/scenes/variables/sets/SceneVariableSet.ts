@@ -16,7 +16,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
   /** Variables currently updating  */
   private updating = new Map<string, VariableUpdateInProgress>();
 
-  getByName(name: string): SceneVariable | undefined {
+  public getByName(name: string): SceneVariable | undefined {
     // TODO: Replace with index
     return this.state.variables.find((x) => x.state.name === name);
   }
@@ -25,18 +25,18 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
    * Subscribes to child variable value changes
    * And starts the variable value validation process
    */
-  activate(): void {
+  public activate(): void {
     super.activate();
 
     // Subscribe to changes to child variables
-    this.subs.add(this.subscribeToEvent(SceneVariableValueChangedEvent, this.onVariableValueChanged));
+    this._subs.add(this.subscribeToEvent(SceneVariableValueChangedEvent, this.onVariableValueChanged));
     this.validateAndUpdateAll();
   }
 
   /**
    * Cancel all currently running updates
    */
-  deactivate(): void {
+  public deactivate(): void {
     super.deactivate();
     this.variablesToUpdate.clear();
 
@@ -49,7 +49,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
    * This loops through variablesToUpdate and update all that that can.
    * If one has a dependency that is currently in variablesToUpdate it will be skipped for now.
    */
-  updateNextBatch() {
+  private updateNextBatch() {
     for (const [name, variable] of this.variablesToUpdate) {
       if (!variable.validateAndUpdate) {
         throw new Error('Variable added to variablesToUpdate but does not have validateAndUpdate');
@@ -113,7 +113,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
    * Extract dependencies from all variables and add those that needs update to the variablesToUpdate map
    * Then it will start the update process.
    */
-  validateAndUpdateAll() {
+  private validateAndUpdateAll() {
     for (const variable of this.state.variables) {
       if (variable.validateAndUpdate) {
         this.variablesToUpdate.set(variable.state.name, variable);
@@ -130,7 +130,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
   /**
    * This will trigger an update of all variables that depend on it.
    * */
-  onVariableValueChanged = (event: SceneVariableValueChangedEvent) => {
+  private onVariableValueChanged = (event: SceneVariableValueChangedEvent) => {
     const variable = event.payload;
 
     // Ignore this change if it is currently updating

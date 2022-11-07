@@ -58,5 +58,5 @@ export interface SceneVariables extends SceneObject<SceneVariableSetState> {
 }
 
 export class SceneVariableValueChangedEvent extends BusEventWithPayload<SceneVariable> {
-  static type = 'scene-variable-changed-value';
+  public static type = 'scene-variable-changed-value';
 }

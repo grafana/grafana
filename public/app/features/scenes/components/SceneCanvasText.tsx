@@ -13,9 +13,9 @@ export interface SceneCanvasTextState extends SceneLayoutChildState {
 }
 
 export class SceneCanvasText extends SceneObjectBase<SceneCanvasTextState> {
-  static Editor = Editor;
+  public static Editor = Editor;
 
-  static Component = ({ model }: SceneComponentProps<SceneCanvasText>) => {
+  public static Component = ({ model }: SceneComponentProps<SceneCanvasText>) => {
     const { text, fontSize = 20, align = 'left' } = model.useState();
     const textInterpolated = sceneTemplateInterpolator(text, model);
 
