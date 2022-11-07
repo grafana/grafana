@@ -138,6 +138,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
       return;
     }
 
+    // Add variables that depend on the changed variable to the update queue
     for (const otherVariable of this.state.variables) {
       if (otherVariable.variableDependency) {
         if (otherVariable.variableDependency.hasDependencyOn(variableThatChanged.state.name)) {
