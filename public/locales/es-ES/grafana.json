@@ -413,6 +413,8 @@
       "title": "Intervalo de tiempo absoluto"
     },
     "calendar": {
+      "apply-button": "",
+      "cancel-button": "",
       "select-time": ""
     },
     "content": {
