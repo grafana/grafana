@@ -55,6 +55,9 @@ export class SceneVariableValueChangedEvent extends BusEventWithPayload<SceneVar
 }
 
 export interface SceneVariableDependencyConfigLike {
+  /** Return all variable names this object depend on */
+  getNames(): Set<string>;
+
   /** Used to check for dependency on a specific variable */
   hasDependencyOn(name: string): boolean;
 
