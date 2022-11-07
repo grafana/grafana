@@ -31,6 +31,7 @@ interface AddVariableOptional {
   label?: string;
   query?: string;
   regex?: string;
+  variableQueryForm?: (config: AddVariableConfig) => void;
 }
 
 interface AddVariableRequired {
@@ -160,7 +161,7 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
     e2e.pages.Dashboard.Settings.Variables.List.newButton().click();
   }
 
-  const { constantValue, dataSource, label, name, query, regex, type } = fullConfig;
+  const { constantValue, dataSource, label, name, query, regex, type, variableQueryForm } = fullConfig;
 
   // This field is key to many reactive changes
   if (type !== VARIABLE_TYPE_QUERY) {
@@ -185,7 +186,7 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.input().should('be.visible').type(`${dataSource}{enter}`);
+        e2e.components.DataSourcePicker.inputV2().type(`${dataSource}{enter}`);
       });
   }
 
@@ -201,6 +202,10 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
     if (regex) {
       e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2().type(regex);
     }
+
+    if (variableQueryForm) {
+      variableQueryForm(fullConfig);
+    }
   }
 
   // Avoid flakiness
@@ -215,13 +220,14 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
     });
 
   e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.applyButton().click();
 
   return fullConfig;
 };
 
 const addVariables = (configs: PartialAddVariableConfig[]): AddVariableConfig[] => {
   if (configs.length > 0) {
-    e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
+    e2e.components.Tab.title('Variables').click();
   }
 
   return configs.map((config, i) => addVariable(config, i === 0));
