@@ -125,15 +125,16 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 		IsGrafanaAdmin: true,
 	}
 
-	folder, err := dbstore.FolderService.CreateFolder(appcontext.WithUser(ctx, user), &folder.CreateFolderCommand{Title: "FOLDER-" + util.GenerateShortUID(), UID: folderUID})
-	require.NoError(t, err)
-	uid := folder.UID
-	if errors.Is(err, dashboards.ErrFolderWithSameUIDExists) || errors.Is(err, dashboards.ErrFolderVersionMismatch) {
+	folder, err := dbstore.FolderService.CreateFolder(appcontext.WithUser(ctx, user), &folder.CreateFolderCommand{Title: "FOLDER-" + util.GenerateShortUID(), UID: folderUID, OrgID: orgID})
+	uid := ""
+	if err == nil {
+		uid = folder.UID
+	} else if errors.Is(err, dashboards.ErrFolderWithSameUIDExists) || errors.Is(err, dashboards.ErrFolderVersionMismatch) {
 		folder, err := dbstore.FolderService.GetFolderByUID(ctx, user, orgID, folderUID)
 		require.NoError(t, err)
 		uid = folder.Uid
 	}
-	require.NoError(t, err)
+	require.NotEmpty(t, uid)
 
 	_, err = dbstore.InsertAlertRules(ctx, []models.AlertRule{
 		{
@@ -177,6 +178,6 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 	require.NotEmpty(t, q.Result)
 
 	rule := q.Result[0]
-	t.Logf("alert definition: %v with title: %q interval: %d folder: %s created", rule.GetKey(), rule.Title, rule.IntervalSeconds, folder.UID)
+	t.Logf("alert definition: %v with title: %q interval: %d folder: %s created", rule.GetKey(), rule.Title, rule.IntervalSeconds, uid)
 	return rule
 }
