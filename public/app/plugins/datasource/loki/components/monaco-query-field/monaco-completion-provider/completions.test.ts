@@ -30,7 +30,7 @@ const history = [
 const labelNames = ['place', 'source'];
 const labelValues = ['moon', 'luna', 'server\\1'];
 // Source is duplicated to test handling duplicated labels
-const extractedLabelKeys = ['extracted', 'label', 'source'];
+const extractedLabelKeys = ['extracted', 'place', 'source'];
 const otherLabels: Label[] = [
   {
     name: 'place',
@@ -103,8 +103,8 @@ const afterSelectorCompletions = [
     type: 'LINE_FILTER',
   },
   {
-    insertText: '| unwrap label',
-    label: 'unwrap label',
+    insertText: '| unwrap place',
+    label: 'unwrap place',
     type: 'LINE_FILTER',
   },
   {
@@ -222,6 +222,12 @@ describe('getCompletions', () => {
 
     expect(completions).toEqual([
       {
+        insertText: 'extracted',
+        label: 'extracted',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+      {
         insertText: 'place',
         label: 'place',
         triggerOnInsert: false,
@@ -230,18 +236,6 @@ describe('getCompletions', () => {
       {
         insertText: 'source',
         label: 'source',
-        triggerOnInsert: false,
-        type: 'LABEL_NAME',
-      },
-      {
-        insertText: 'extracted',
-        label: 'extracted',
-        triggerOnInsert: false,
-        type: 'LABEL_NAME',
-      },
-      {
-        insertText: 'label',
-        label: 'label',
         triggerOnInsert: false,
         type: 'LABEL_NAME',
       },
