@@ -179,10 +179,8 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		processedResults[s.State.CacheID] = s.State
 	}
 	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults, logger)
-	if len(states) > 0 && st.instanceStore != nil {
-		logger.Debug("Saving new states to the database", "count", len(states))
-		_, _ = st.saveAlertStates(ctx, states...)
-	}
+
+	st.saveAlertStates(ctx, logger, states...)
 
 	changedStates := make([]StateTransition, 0, len(states))
 	for _, s := range states {
@@ -284,37 +282,22 @@ func (st *Manager) Put(states []*State) {
 }
 
 // TODO: Is the `State` type necessary? Should it embed the instance?
-func (st *Manager) saveAlertStates(ctx context.Context, states ...StateTransition) (saved, failed int) {
-	logger := st.log.FromContext(ctx)
+func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, states ...StateTransition) {
 	if st.instanceStore == nil {
-		return 0, 0
+		return
 	}
 
 	logger.Debug("Saving alert states", "count", len(states))
 	instances := make([]ngModels.AlertInstance, 0, len(states))
 
-	type debugInfo struct {
-		OrgID  int64
-		Uid    string
-		State  string
-		Labels string
-	}
-	debug := make([]debugInfo, 0)
-
 	for _, s := range states {
-		labels := ngModels.InstanceLabels(s.Labels)
-		_, hash, err := labels.StringAndHash()
+		key, err := s.GetAlertInstanceKey()
 		if err != nil {
-			debug = append(debug, debugInfo{s.OrgID, s.AlertRuleUID, s.State.State.String(), s.Labels.String()})
-			logger.Error("Failed to save alert instance with invalid labels", "error", err)
+			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err)
 			continue
 		}
 		fields := ngModels.AlertInstance{
-			AlertInstanceKey: ngModels.AlertInstanceKey{
-				RuleOrgID:  s.OrgID,
-				RuleUID:    s.AlertRuleUID,
-				LabelsHash: hash,
-			},
+			AlertInstanceKey:  key,
 			Labels:            ngModels.InstanceLabels(s.Labels),
 			CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
 			CurrentReason:     s.StateReason,
@@ -326,14 +309,16 @@ func (st *Manager) saveAlertStates(ctx context.Context, states ...StateTransitio
 	}
 
 	if err := st.instanceStore.SaveAlertInstances(ctx, instances...); err != nil {
+		type debugInfo struct {
+			State  string
+			Labels string
+		}
+		debug := make([]debugInfo, 0)
 		for _, inst := range instances {
-			debug = append(debug, debugInfo{inst.RuleOrgID, inst.RuleUID, string(inst.CurrentState), data.Labels(inst.Labels).String()})
+			debug = append(debug, debugInfo{string(inst.CurrentState), data.Labels(inst.Labels).String()})
 		}
 		logger.Error("Failed to save alert states", "states", debug, "error", err)
-		return 0, len(debug)
 	}
-
-	return len(instances), len(debug)
 }
 
 // TODO: why wouldn't you allow other types like NoData or Error?
@@ -362,13 +347,13 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 		if _, ok := states[s.CacheID]; !ok && stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
 			logger.Info("Removing stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
 			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheID)
-			ilbs := ngModels.InstanceLabels(s.Labels)
-			_, labelsHash, err := ilbs.StringAndHash()
-			if err != nil {
-				logger.Error("Unable to get labelsHash", "error", err.Error(), s.AlertRuleUID)
-			}
 
-			toDelete = append(toDelete, ngModels.AlertInstanceKey{RuleOrgID: s.OrgID, RuleUID: s.AlertRuleUID, LabelsHash: labelsHash})
+			key, err := s.GetAlertInstanceKey()
+			if err != nil {
+				logger.Error("Unable to get alert instance key to delete it from database. Ignoring", "error", err.Error())
+			} else {
+				toDelete = append(toDelete, key)
+			}
 
 			if s.State == eval.Alerting {
 				oldState := s.State
