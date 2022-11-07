@@ -213,11 +213,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:        "prometheusStreamingJSONParserTest",
-			Description: "Run both old and streaming requests and log differences",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "newDBLibrary",
 			Description: "Use jmoiron/sqlx rather than xorm for a few backend services",
 			State:       FeatureStateBeta,

@@ -53,7 +53,6 @@ export interface FeatureToggles {
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   prometheusStreamingJSONParser?: boolean;
-  prometheusStreamingJSONParserTest?: boolean;
   newDBLibrary?: boolean;
   validateDashboardsOnSave?: boolean;
   autoMigrateGraphPanels?: boolean;
