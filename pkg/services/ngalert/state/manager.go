@@ -278,7 +278,7 @@ func (st *Manager) Put(states []*State) {
 
 // TODO: Is the `State` type necessary? Should it embed the instance?
 func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, states ...StateTransition) {
-	if st.instanceStore == nil {
+	if st.instanceStore == nil || len(states) == 0 {
 		return
 	}
 
@@ -335,7 +335,7 @@ func (st *Manager) logStateTransitions(ctx context.Context, alertRule *ngModels.
 }
 
 func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, states []StateTransition) {
-	if st.instanceStore == nil {
+	if st.instanceStore == nil || len(states) == 0 {
 		return
 	}
 
