@@ -14,3 +14,5 @@ In order to build and publish the Grafana build Docker image, execute the follow
 docker build -t grafana/build-container:<VERSION> .
 docker push grafana/build-container:<VERSION>
 ```
+
+If running on an ARM chip (Apple M1/M2, etc.), be sure to add `--platform linux/amd64` to the `docker build` command and prepare for this to take a while!
