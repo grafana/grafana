@@ -144,12 +144,12 @@ describe('getLineFilterRenderer', () => {
     expect(typeof lineFilterRenderer).toBe('function');
   });
 
-  it('lineFilterRenderer returns the correct query for (line contains)', () => {
+  it('lineFilterRenderer returns the correct query for line contains', () => {
     const lineFilterRenderer = getLineFilterRenderer('!~');
     expect(lineFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} !~ `error`');
   });
 
-  it('lineFilterRenderer returns the correct query for (line contains case insensitive)', () => {
+  it('lineFilterRenderer returns the correct query for line contains case insensitive', () => {
     const lineFilterRenderer = getLineFilterRenderer('!~', true);
     expect(lineFilterRenderer(MOCK_MODEL_INSENSITIVE, MOCK_DEF, MOCK_INNER_EXPR)).toBe(
       '{job="grafana"} !~ `(?i)ERrOR`'
