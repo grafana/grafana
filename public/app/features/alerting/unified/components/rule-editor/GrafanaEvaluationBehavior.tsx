@@ -124,7 +124,7 @@ function FolderGroupAndEvaluationInterval({
             </div>
 
             <br />
-            <div>
+            <div className={styles.evaluateLabelEnd}>
               {`Evaluation interval applies to every rule within a group. 
           It can overwrite the interval of an existing alert rule.`}
             </div>
@@ -139,7 +139,6 @@ function FolderGroupAndEvaluationInterval({
               type="button"
               variant="secondary"
               disabled={groupfoldersForGrafana?.loading}
-              className={styles.editButton}
               onClick={onOpenEditGroupModal}
             >
               <span>{'Edit group'}</span>
@@ -271,9 +270,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-self: left;
     margin-right: ${theme.spacing(1)};
   `,
-  evaluateInput: css`
-    margin-right: ${theme.spacing(1)};
-  `,
   cardContainer: css`
     max-width: ${theme.breakpoints.values.sm}px;
   `,
@@ -288,13 +284,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   warningMessage: css`
     color: ${theme.colors.warning.text};
   `,
-  editButton: css`
-    margin-top: ${theme.spacing(1)};
-  `,
   editGroup: css`
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-top: -${theme.spacing(4)};
+  `,
+  evaluateLabelEnd: css`
+    margin-top: -${theme.spacing(2)};
   `,
   bold: css`
     font-weight: bold;

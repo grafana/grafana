@@ -169,7 +169,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
       </Field>
 
       <Field
-        label="Group (evaluation interval)"
+        label="Evaluation group (interval)"
         data-testid="group-picker"
         description="Rules within the same group are evaluated after the same time interval."
         className={styles.formInput}
