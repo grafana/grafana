@@ -6,22 +6,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// swagger:route GET /org/quotas getCurrentOrg getCurrentOrgQuota
-//
-// Fetch Organization quota.
-//
-// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:read` and scope `org:id:1` (orgIDScope).
-//
-// Responses:
-// 200: getQuotaResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
 func (hs *HTTPServer) GetCurrentOrgQuotas(c *models.ReqContext) response.Response {
 	return hs.getOrgQuotasHelper(c, c.OrgID)
 }
@@ -41,17 +29,22 @@ func (hs *HTTPServer) GetCurrentOrgQuotas(c *models.ReqContext) response.Respons
 func (hs *HTTPServer) GetOrgQuotas(c *models.ReqContext) response.Response {
 	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
-		return response.Err(quota.ErrBadRequest.Errorf("orgId is invalid: %w", err))
+		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
 	return hs.getOrgQuotasHelper(c, orgId)
 }
 
 func (hs *HTTPServer) getOrgQuotasHelper(c *models.ReqContext, orgID int64) response.Response {
-	q, err := hs.QuotaService.GetQuotasByScope(c.Req.Context(), quota.OrgScope, orgID)
-	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get quota", err)
+	if !hs.Cfg.Quota.Enabled {
+		return response.Error(404, "Quotas not enabled", nil)
 	}
-	return response.JSON(http.StatusOK, q)
+	query := models.GetOrgQuotasQuery{OrgId: orgID}
+
+	if err := hs.SQLStore.GetOrgQuotas(c.Req.Context(), &query); err != nil {
+		return response.Error(500, "Failed to get org quotas", err)
+	}
+
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 // swagger:route PUT /orgs/{org_id}/quotas/{quota_target} orgs updateOrgQuota
@@ -70,19 +63,26 @@ func (hs *HTTPServer) getOrgQuotasHelper(c *models.ReqContext, orgID int64) resp
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateOrgQuota(c *models.ReqContext) response.Response {
-	cmd := quota.UpdateQuotaCmd{}
+	cmd := models.UpdateOrgQuotaCmd{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Err(quota.ErrBadRequest.Errorf("bad request data: %w", err))
+		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgID, err = strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	if !hs.Cfg.Quota.Enabled {
+		return response.Error(404, "Quotas not enabled", nil)
+	}
+	cmd.OrgId, err = strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
-		return response.Err(quota.ErrBadRequest.Errorf("orgId is invalid: %w", err))
+		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
 	cmd.Target = web.Params(c.Req)[":target"]
 
-	if err := hs.QuotaService.Update(c.Req.Context(), &cmd); err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update org quotas", err)
+	if _, ok := hs.Cfg.Quota.Org.ToMap()[cmd.Target]; !ok {
+		return response.Error(404, "Invalid quota target", nil)
+	}
+
+	if err := hs.SQLStore.UpdateOrgQuota(c.Req.Context(), &cmd); err != nil {
+		return response.Error(500, "Failed to update org quotas", err)
 	}
 	return response.Success("Organization quota updated")
 }
@@ -114,17 +114,22 @@ func (hs *HTTPServer) UpdateOrgQuota(c *models.ReqContext) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetUserQuotas(c *models.ReqContext) response.Response {
+	if !setting.Quota.Enabled {
+		return response.Error(404, "Quotas not enabled", nil)
+	}
+
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
-		return response.Err(quota.ErrBadRequest.Errorf("id is invalid: %w", err))
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	q, err := hs.QuotaService.GetQuotasByScope(c.Req.Context(), quota.UserScope, id)
-	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get org quotas", err)
+	query := models.GetUserQuotasQuery{UserId: id}
+
+	if err := hs.SQLStore.GetUserQuotas(c.Req.Context(), &query); err != nil {
+		return response.Error(500, "Failed to get org quotas", err)
 	}
 
-	return response.JSON(http.StatusOK, q)
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 // swagger:route PUT /admin/users/{user_id}/quotas/{quota_target} admin_users updateUserQuota
@@ -143,19 +148,26 @@ func (hs *HTTPServer) GetUserQuotas(c *models.ReqContext) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateUserQuota(c *models.ReqContext) response.Response {
-	cmd := quota.UpdateQuotaCmd{}
+	cmd := models.UpdateUserQuotaCmd{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Err(quota.ErrBadRequest.Errorf("bad request data: %w", err))
+		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.UserID, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if !setting.Quota.Enabled {
+		return response.Error(404, "Quotas not enabled", nil)
+	}
+	cmd.UserId, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
-		return response.Err(quota.ErrBadRequest.Errorf("id is invalid: %w", err))
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 	cmd.Target = web.Params(c.Req)[":target"]
 
-	if err := hs.QuotaService.Update(c.Req.Context(), &cmd); err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update org quotas", err)
+	if _, ok := setting.Quota.User.ToMap()[cmd.Target]; !ok {
+		return response.Error(404, "Invalid quota target", nil)
+	}
+
+	if err := hs.SQLStore.UpdateUserQuota(c.Req.Context(), &cmd); err != nil {
+		return response.Error(500, "Failed to update org quotas", err)
 	}
 	return response.Success("Organization quota updated")
 }
@@ -164,7 +176,7 @@ func (hs *HTTPServer) UpdateUserQuota(c *models.ReqContext) response.Response {
 type UpdateUserQuotaParams struct {
 	// in:body
 	// required:true
-	Body quota.UpdateQuotaCmd `json:"body"`
+	Body models.UpdateUserQuotaCmd `json:"body"`
 	// in:path
 	// required:true
 	QuotaTarget string `json:"quota_target"`
@@ -191,7 +203,7 @@ type GetOrgQuotaParams struct {
 type UpdateOrgQuotaParam struct {
 	// in:body
 	// required:true
-	Body quota.UpdateQuotaCmd `json:"body"`
+	Body models.UpdateOrgQuotaCmd `json:"body"`
 	// in:path
 	// required:true
 	QuotaTarget string `json:"quota_target"`
@@ -203,5 +215,5 @@ type UpdateOrgQuotaParam struct {
 // swagger:response getQuotaResponse
 type GetQuotaResponseResponse struct {
 	// in:body
-	Body []*quota.QuotaDTO `json:"body"`
+	Body []*models.UserQuotaDTO `json:"body"`
 }

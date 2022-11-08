@@ -98,6 +98,34 @@ func (m *SQLStoreMock) WithNewDbSession(ctx context.Context, callback sqlstore.D
 	return m.ExpectedError
 }
 
+func (m *SQLStoreMock) GetOrgQuotaByTarget(ctx context.Context, query *models.GetOrgQuotaByTargetQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotasQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) UpdateOrgQuota(ctx context.Context, cmd *models.UpdateOrgQuotaCmd) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetUserQuotaByTarget(ctx context.Context, query *models.GetUserQuotaByTargetQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetUserQuotas(ctx context.Context, query *models.GetUserQuotasQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) UpdateUserQuota(ctx context.Context, cmd *models.UpdateUserQuotaCmd) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetGlobalQuotaByTarget(ctx context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
+	return m.ExpectedError
+}
+
 func (m *SQLStoreMock) WithTransactionalDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
 	return m.ExpectedError
 }

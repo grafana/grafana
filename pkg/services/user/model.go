@@ -357,8 +357,3 @@ type SearchUserFilter interface {
 }
 
 type FilterHandler func(params []string) (Filter, error)
-
-const (
-	QuotaTargetSrv string = "user"
-	QuotaTarget    string = "user"
-)

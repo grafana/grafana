@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -226,8 +225,7 @@ func setupTestEnvironment(t *testing.T, permissions []accesscontrol.Permission, 
 	sql := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	teamSvc := teamimpl.ProvideService(sql, cfg)
-	userSvc, err := userimpl.ProvideService(sql, nil, cfg, teamimpl.ProvideService(sql, cfg), nil, quotatest.New(false, nil))
-	require.NoError(t, err)
+	userSvc := userimpl.ProvideService(sql, nil, cfg, teamimpl.ProvideService(sql, cfg), nil)
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	mock := accesscontrolmock.New().WithPermissions(permissions)

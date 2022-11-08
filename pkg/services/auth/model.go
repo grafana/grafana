@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/quota"
 )
 
 type userAuthToken struct {
@@ -72,8 +71,3 @@ func (uat *userAuthToken) toUserToken(ut *models.UserToken) error {
 
 	return nil
 }
-
-const (
-	QuotaTargetSrv quota.TargetSrv = "auth"
-	QuotaTarget    quota.Target    = "session"
-)
