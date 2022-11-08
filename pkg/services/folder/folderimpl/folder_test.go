@@ -387,7 +387,6 @@ func TestCreate_NestedFolders(t *testing.T) {
 		}
 
 		t.Run("create, no error", func(t *testing.T) {
-
 			// dashboard store & service commands that should be called.
 			dashboardsvc.On("BuildSaveDashboardCommand",
 				mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"),
@@ -400,23 +399,32 @@ func TestCreate_NestedFolders(t *testing.T) {
 			require.True(t, store.CreateCalled)
 		})
 
-		t.Run("create handles error from nested folder service", func(t *testing.T) {
+		t.Run("create returns error from nested folder service", func(t *testing.T) {
+			// This test creates and deletes the dashboard, so needs some extra setup.
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{})
+
 			// dashboard store & service commands that should be called.
 			dashboardsvc.On("BuildSaveDashboardCommand",
 				mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"),
 				mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&models.SaveDashboardCommand{}, nil)
 			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{}, nil)
 			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&models.Folder{}, nil)
+			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&models.Folder{}, nil)
 
 			// return an error from the folder store
-			store.ExpectedError = errors.New("BADONG")
+			store.ExpectedError = errors.New("FAILED")
 
 			// the service return success as long as the legacy create succeeds
 			_, err := foldersvc.CreateFolder(ctx, usr, orgID, "myFolder", "myFolder")
-			require.NoError(t, err)
+			require.Error(t, err, "FAILED")
 
 			// CreateFolder should also call the folder store's create method.
 			require.True(t, store.CreateCalled)
+
+			t.Cleanup(func() {
+				guardian.New = g
+			})
 		})
 	})
 }

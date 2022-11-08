@@ -214,6 +214,11 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		var description string
+		if dash.Data != nil {
+			description = dash.Data.Get("description").MustString()
+		}
+
 		_, err := s.store.Create(ctx, foldersvc.CreateFolderCommand{
 			// TODO: Today, if a UID isn't specified, the dashboard store
 			// generates a new UID. The new folder store will need to do this as
@@ -221,18 +226,19 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 			UID:         dash.Uid,
 			OrgID:       orgID,
 			Title:       title,
-			Description: "",
+			Description: description,
 			ParentUID:   foldersvc.RootFolderUID,
 		})
 		if err != nil {
-			// This is awkward, but for now we will log the error but not return
-			// an error nor delete the legacy-style folder which was created.
+			// We'll log the error and also roll back the previously-created
+			// (legacy) folder.
 			s.log.Error("error saving folder to nested folder store", err)
+			s.DeleteFolder(ctx, user, orgID, folder.Uid, true)
+			return folder, err
 		}
 		// The folder UID is specified (or generated) during creation, so we'll
 		// stop here and return the created model.Folder.
 	}
-
 	return folder, nil
 }
 
