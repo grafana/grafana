@@ -30,8 +30,8 @@ This topic describes how to:
 
 ## Before you begin
 
-- Ensure that you have either organization administrator permissions or team administrator permissions 
-- Make a plan for which users belong to which teams and the permissions team members receive 
+- Ensure that you have either organization administrator permissions or team administrator permissions
+- Make a plan for which users belong to which teams and the permissions team members receive
 
 ## Create a team
 
@@ -51,7 +51,7 @@ To create a team:
 
 ## Add a team member
 
-Add a team member to an existing team whenever you want to provide access to team dashboards and folders to another user.
+Add a team member to an existing team whenever you want to provide access to team dashboards and folders to another user. This task requires that you have organization administrator permissions.
 
 To add a team member:
 
@@ -92,7 +92,7 @@ To remove a team member:
 
 ## Delete a team
 
-Delete a team when you no longer need it. This action permanently deletes the team and removes all team permissions from dashboards and folders.
+Delete a team when you no longer need it. This action permanently deletes the team and removes all team permissions from dashboards and folders. This task requires that you have organization administrator permissions.
 
 To delete a team:
 
