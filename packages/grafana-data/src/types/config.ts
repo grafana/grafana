@@ -211,7 +211,7 @@ export interface GrafanaConfig {
   secretsManagerPluginEnabled: boolean;
   googleAnalyticsId: string | undefined;
   googleAnalytics4Id: string | undefined;
-  googleAnalytics4EnhancedMeasurementEnabled: boolean;
+  googleAnalytics4SendManualPageViews: boolean;
   rudderstackWriteKey: string | undefined;
   rudderstackDataPlaneUrl: string | undefined;
   rudderstackSdkUrl: string | undefined;

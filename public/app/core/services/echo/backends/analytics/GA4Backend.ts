@@ -11,13 +11,13 @@ declare global {
 
 export interface GA4EchoBackendOptions {
   googleAnalyticsId: string;
-  googleAnalytics4EnhancedMeasurementEnabled: boolean;
+  googleAnalytics4SendManualPageViews: boolean;
   user?: CurrentUserDTO;
 }
 
 export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBackendOptions> {
   supportedEvents = [EchoEventType.Pageview];
-  googleAnalytics4EnhancedMeasurementEnabled = true;
+  googleAnalytics4SendManualPageViews = true;
 
   constructor(public options: GA4EchoBackendOptions) {
     const url = `https://www.googletagmanager.com/gtag/js?id=${options.googleAnalyticsId}`;
@@ -36,8 +36,8 @@ export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBac
     if (options.user) {
       configOptions.user_id = getUserIdentifier(options.user);
     }
-    if (!options.googleAnalytics4EnhancedMeasurementEnabled) {
-      this.googleAnalytics4EnhancedMeasurementEnabled = false;
+    if (!options.googleAnalytics4SendManualPageViews) {
+      this.googleAnalytics4SendManualPageViews = false;
     }
 
     window.gtag('config', options.googleAnalyticsId, configOptions);
@@ -48,7 +48,7 @@ export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBac
       return;
     }
     // this should prevent duplicate events in case enhanced tracking is enabled
-    if (!this.googleAnalytics4EnhancedMeasurementEnabled) {
+    if (!this.googleAnalytics4SendManualPageViews) {
       window.gtag('event', 'page_view', { page_path: e.payload.page });
     }
   };

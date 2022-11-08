@@ -136,7 +136,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
   googleAnalyticsId: undefined;
   googleAnalytics4Id: undefined;
-  googleAnalytics4EnhancedMeasurementEnabled = true;
+  googleAnalytics4SendManualPageViews = true;
   rudderstackWriteKey: undefined;
   rudderstackDataPlaneUrl: undefined;
   rudderstackSdkUrl: undefined;

@@ -268,7 +268,7 @@ function initEchoSrv() {
     registerEchoBackend(
       new GA4EchoBackend({
         googleAnalyticsId: config.googleAnalytics4Id,
-        googleAnalytics4EnhancedMeasurementEnabled: config.googleAnalytics4EnhancedMeasurementEnabled,
+        googleAnalytics4SendManualPageViews: config.googleAnalytics4SendManualPageViews,
       })
     );
   }
