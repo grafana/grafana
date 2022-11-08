@@ -774,7 +774,9 @@ export const rulesInSameGroupHaveInvalidFor = (
 
   return rulesSameGroup.filter((rule: RulerRuleDTO) => {
     const { forDuration } = getAlertInfo(rule, everyDuration);
-    return safeParseDurationstr(forDuration) < safeParseDurationstr(everyDuration);
+    const forNumber = safeParseDurationstr(forDuration);
+    const everyNumber = safeParseDurationstr(everyDuration);
+    return forNumber !== 0 && forNumber < everyNumber;
   });
 };
 
