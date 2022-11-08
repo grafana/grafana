@@ -17,7 +17,7 @@ export interface GA4EchoBackendOptions {
 
 export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBackendOptions> {
   supportedEvents = [EchoEventType.Pageview];
-  googleAnalytics4SendManualPageViews = true;
+  googleAnalytics4SendManualPageViews = false;
 
   constructor(public options: GA4EchoBackendOptions) {
     const url = `https://www.googletagmanager.com/gtag/js?id=${options.googleAnalyticsId}`;
@@ -36,10 +36,8 @@ export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBac
     if (options.user) {
       configOptions.user_id = getUserIdentifier(options.user);
     }
-    if (!options.googleAnalytics4SendManualPageViews) {
-      this.googleAnalytics4SendManualPageViews = false;
-    }
 
+    this.googleAnalytics4SendManualPageViews = options.googleAnalytics4SendManualPageViews;
     window.gtag('config', options.googleAnalyticsId, configOptions);
   }
 
@@ -48,7 +46,7 @@ export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBac
       return;
     }
     // this should prevent duplicate events in case enhanced tracking is enabled
-    if (!this.googleAnalytics4SendManualPageViews) {
+    if (this.googleAnalytics4SendManualPageViews) {
       window.gtag('event', 'page_view', { page_path: e.payload.page });
     }
   };
