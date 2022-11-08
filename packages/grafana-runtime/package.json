@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/runtime",
-  "version": "9.2.4",
+  "version": "9.2.5",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana",
@@ -36,9 +36,9 @@
   },
   "dependencies": {
     "@grafana/agent-web": "^0.4.0",
-    "@grafana/data": "9.2.4",
-    "@grafana/e2e-selectors": "9.2.4",
-    "@grafana/ui": "9.2.4",
+    "@grafana/data": "9.2.5",
+    "@grafana/e2e-selectors": "9.2.5",
+    "@grafana/ui": "9.2.5",
     "@sentry/browser": "6.19.7",
     "history": "4.10.1",
     "lodash": "4.17.21",
