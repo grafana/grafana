@@ -316,7 +316,7 @@ func createFolderWithACL(t *testing.T, sqlStore db.DB, title string, user user.S
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := context.Background()
 	ctx = appcontext.WithUser(ctx, &user)
-	folder, err := s.CreateFolder(ctx, &folder.CreateFolderCommand{Title: title, UID: title})
+	folder, err := s.CreateFolder(ctx, &folder.CreateFolderCommand{Title: title, UID: title, OrgID: user.OrgID})
 	require.NoError(t, err)
 
 	updateFolderACL(t, dashboardStore, folder.ID, items)
