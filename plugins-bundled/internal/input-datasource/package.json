@@ -1,6 +1,6 @@
 {
   "name": "@grafana-plugins/input-datasource",
-  "version": "8.5.15",
+  "version": "8.5.16",
   "description": "Input Datasource",
   "private": true,
   "repository": {
@@ -24,9 +24,9 @@
     "webpack": "5.58.1"
   },
   "dependencies": {
-    "@grafana/data": "8.5.15",
-    "@grafana/toolkit": "8.5.15",
-    "@grafana/ui": "8.5.15",
+    "@grafana/data": "8.5.16",
+    "@grafana/toolkit": "8.5.16",
+    "@grafana/ui": "8.5.16",
     "jquery": "3.5.1",
     "react": "17.0.1",
     "react-dom": "17.0.1",
