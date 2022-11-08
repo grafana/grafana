@@ -120,11 +120,11 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 			args = append(args, cmd.Folder.UID)
 		}
 
-		if cmd.NewParentUID != nil {
-			columnsToUpdate = append(columnsToUpdate, "parent_uid = ?")
-			cmd.Folder.ParentUID = *cmd.NewParentUID
-			args = append(args, cmd.Folder.UID)
-		}
+		// if cmd.NewParentUID != nil {
+		// 	columnsToUpdate = append(columnsToUpdate, "parent_uid = ?")
+		// 	cmd.Folder.ParentUID = *cmd.NewParentUID
+		// 	args = append(args, cmd.Folder.UID)
+		// }
 
 		if len(columnsToUpdate) == 0 {
 			return folder.ErrBadRequest.Errorf("no columns to update")

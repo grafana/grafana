@@ -61,7 +61,6 @@ type CreateFolderCommand struct {
 type UpdateFolderCommand struct {
 	Folder         *Folder `json:"folder"` // The extant folder
 	NewUID         *string `json:"uid" xorm:"uid"`
-	NewParentUID   *string `json:"parent_uid" xorm:"parent_uid"`
 	NewTitle       *string `json:"title"`
 	NewDescription *string `json:"description"`
 }

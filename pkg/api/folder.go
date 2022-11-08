@@ -144,12 +144,12 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	err := hs.folderService.UpdateFolder(c.Req.Context(), c.SignedInUser, c.OrgID, web.Params(c.Req)[":uid"], &cmd)
+	result, err := hs.folderService.Update(c.Req.Context(), c.SignedInUser, c.OrgID, web.Params(c.Req)[":uid"], &cmd)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
-	g := guardian.New(c.Req.Context(), cmd.Result.Id, c.OrgID, c.SignedInUser)
-	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, cmd.Result))
+	g := guardian.New(c.Req.Context(), result.Id, c.OrgID, c.SignedInUser)
+	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, result))
 }
 
 // swagger:route DELETE /folders/{folder_uid} folders deleteFolder

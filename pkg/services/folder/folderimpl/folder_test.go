@@ -114,7 +114,7 @@ func TestIntegrationFolderService(t *testing.T) {
 					folder.Result = models.NewDashboard("dashboard-test")
 					folder.Result.IsFolder = true
 				}).Return(&models.Dashboard{}, nil)
-				err := service.UpdateFolder(context.Background(), usr, orgID, folderUID, &models.UpdateFolderCommand{
+				_, err := service.Update(context.Background(), usr, orgID, folderUID, &models.UpdateFolderCommand{
 					Uid:   folderUID,
 					Title: "Folder-TEST",
 				})
@@ -173,9 +173,9 @@ func TestIntegrationFolderService(t *testing.T) {
 					Title: "TEST-Folder",
 				}
 
-				err := service.UpdateFolder(context.Background(), usr, orgID, dashboardFolder.Uid, req)
+				reqResult, err := service.Update(context.Background(), usr, orgID, dashboardFolder.Uid, req)
 				require.NoError(t, err)
-				require.Equal(t, f, req.Result)
+				require.Equal(t, f, reqResult)
 			})
 
 			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
@@ -278,12 +278,6 @@ func TestFolderService(t *testing.T) {
 		res, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{})
 		require.NoError(t, err)
 		require.NotNil(t, res.UID)
-	})
-
-	t.Run("update folder", func(t *testing.T) {
-		folderStore.ExpectedFolder = &folder.Folder{}
-		_, err := folderService.Update(context.Background(), &folder.UpdateFolderCommand{})
-		require.NoError(t, err)
 	})
 
 	t.Run("delete folder", func(t *testing.T) {

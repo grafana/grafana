@@ -31,9 +31,9 @@ func (s *FakeService) GetFolderByTitle(ctx context.Context, user *user.SignedInU
 func (s *FakeService) CreateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, title, uid string) (*models.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
-func (s *FakeService) UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
+func (s *FakeService) Update(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) (*models.Folder, error) {
 	cmd.Result = s.ExpectedFolder
-	return s.ExpectedError
+	return s.ExpectedFolder, s.ExpectedError
 }
 func (s *FakeService) DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
