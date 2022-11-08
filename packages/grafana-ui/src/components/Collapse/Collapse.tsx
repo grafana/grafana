@@ -96,8 +96,6 @@ export interface Props {
   isOpen?: boolean;
   /** Element or text for the Collapse header */
   label: React.ReactNode;
-  /** Indicates loading state of the content */
-  loading?: boolean;
   /** Toggle collapsed header icon */
   collapsible?: boolean;
   /** Callback for the toggle functionality */
@@ -126,7 +124,6 @@ export const ControlledCollapse: FunctionComponent<Props> = ({ isOpen, onToggle,
 export const Collapse = ({
   isOpen,
   label,
-  loading,
   collapsible,
   onToggle,
   className,
@@ -140,7 +137,7 @@ export const Collapse = ({
   };
 
   const panelClass = cx([style.collapse, className]);
-  const loaderClass = loading ? cx([style.loader, style.loaderActive]) : cx([style.loader]);
+  const loaderClass = cx([style.loader]);
   const headerClass = collapsible ? cx([style.header]) : cx([style.headerCollapsed]);
 
   return (

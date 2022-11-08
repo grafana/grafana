@@ -10,6 +10,7 @@ export {
   type FieldColorMode,
   getFieldSeriesColor,
 } from './fieldColor';
+export { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 export { sortThresholds, getActiveThreshold } from './thresholds';
 export { applyFieldOverrides, validateFieldConfig, applyRawFieldOverrides } from './fieldOverrides';
 export { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
