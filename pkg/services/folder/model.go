@@ -13,6 +13,7 @@ var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
 
 const (
 	GeneralFolderUID     = "general"
+	RootFolderUID        = ""
 	MaxNestedFolderDepth = 8
 )
 
@@ -60,6 +61,7 @@ type CreateFolderCommand struct {
 type UpdateFolderCommand struct {
 	Folder         *Folder `json:"folder"` // The extant folder
 	NewUID         *string `json:"uid" xorm:"uid"`
+	NewParentUID   *string `json:"parent_uid" xorm:"parent_uid"`
 	NewTitle       *string `json:"title"`
 	NewDescription *string `json:"description"`
 }
@@ -69,12 +71,14 @@ type UpdateFolderCommand struct {
 type MoveFolderCommand struct {
 	UID          string `json:"uid"`
 	NewParentUID string `json:"new_parent_uid"`
+	OrgID        int64  `json:"orgId"`
 }
 
 // DeleteFolderCommand captures the information required by the folder service
 // to delete a folder.
 type DeleteFolderCommand struct {
-	UID string `json:"uid" xorm:"uid"`
+	UID   string `json:"uid" xorm:"uid"`
+	OrgID int64  `json:"orgId" xorm:"org_id"`
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or

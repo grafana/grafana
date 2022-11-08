@@ -413,7 +413,17 @@
       "title": "Absolute time range"
     },
     "calendar": {
+      "apply-button": "Apply time range",
+      "cancel-button": "Cancel",
       "select-time": "Select a time range"
+    },
+    "range-content": {
+      "apply-button": "Apply time range",
+      "default-error": "Please enter a past date or \"now\"",
+      "fiscal-year": "Fiscal year",
+      "from-input": "From",
+      "range-error": "\"From\" can't be after \"To\"",
+      "to-input": "To"
     },
     "time-range": {
       "aria-role": "Time range selection",

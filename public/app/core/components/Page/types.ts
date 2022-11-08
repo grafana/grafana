@@ -35,6 +35,11 @@ export interface PageInfoItem {
   value: React.ReactNode;
 }
 
+export interface PageInfoItem {
+  label: string;
+  value: React.ReactNode;
+}
+
 export interface PageType extends FC<PageProps> {
   OldNavOnly: typeof OldNavOnly;
   Contents: typeof PageContents;

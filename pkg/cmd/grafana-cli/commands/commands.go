@@ -219,7 +219,7 @@ var adminCommands = []*cli.Command{
 					},
 					{
 						Name:   "ingest-file",
-						Usage:  "ingests the conflict users file",
+						Usage:  "ingests the conflict users file. > Note: This is irreversible it will change the state of the database.",
 						Action: runIngestConflictUsersFile(),
 					},
 				},
