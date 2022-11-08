@@ -104,6 +104,7 @@ export class GrafanaApp {
     try {
       // Let iframe container know grafana has started loading
       parent.postMessage('GrafanaAppInit12345', '*'); // TESTING
+      parent.postMessage('GrafanaAppInit123456789', '*'); // TESTING
       parent.postMessage('GrafanaAppInit', '*');
 
       const loadLocalePromise = initializeI18n(config.bootData.user.locale);
