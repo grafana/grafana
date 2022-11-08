@@ -43,39 +43,47 @@ e2e.scenario({
     e2e.components.QueryField.container().should('be.visible').should('have.text', monacoLoadingText);
     e2e.components.QueryField.container().should('be.visible').should('not.have.text', monacoLoadingText);
 
-    const queryFieldValue = e2e().get('.monaco-editor textarea:first');
-
     // adds closing braces around empty value
     e2e.components.QueryField.container().type('time(');
-    queryFieldValue.should(($el) => {
-      expect($el.val()).to.eq('time()');
-    });
+    e2e()
+      .get('.monaco-editor textarea:first')
+      .should(($el) => {
+        expect($el.val()).to.eq('time()');
+      });
 
     // removes closing brace when opening brace is removed
     e2e.components.QueryField.container().type('{backspace}');
-    queryFieldValue.should(($el) => {
-      expect($el.val()).to.eq('time');
-    });
+    e2e()
+      .get('.monaco-editor textarea:first')
+      .should(($el) => {
+        expect($el.val()).to.eq('time');
+      });
 
     // keeps closing brace when opening brace is removed and inner values exist
     e2e.components.QueryField.container().type(
       `{selectall}{backspace}time(test{leftArrow}{leftArrow}{leftArrow}{leftArrow}{backspace}`
     );
-    queryFieldValue.should(($el) => {
-      expect($el.val()).to.eq('timetest)');
-    });
+    e2e()
+      .get('.monaco-editor textarea:first')
+      .should(($el) => {
+        expect($el.val()).to.eq('timetest)');
+      });
 
     // overrides an automatically inserted brace
     e2e.components.QueryField.container().type(`{selectall}{backspace}time()`);
-    queryFieldValue.should(($el) => {
-      expect($el.val()).to.eq('time()');
-    });
+    e2e()
+      .get('.monaco-editor textarea:first')
+      .should(($el) => {
+        expect($el.val()).to.eq('time()');
+      });
 
     // does not override manually inserted braces
     e2e.components.QueryField.container().type(`{selectall}{backspace}))`);
-    queryFieldValue.should(($el) => {
-      expect($el.val()).to.eq('))');
-    });
+    e2e()
+      .get('.monaco-editor textarea:first')
+      .should(($el) => {
+        expect($el.val()).to.eq('))');
+      });
 
     /** Runner plugin */
 
