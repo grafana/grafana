@@ -127,6 +127,7 @@ type AlertNG struct {
 	accesscontrol        accesscontrol.AccessControl
 	accesscontrolService accesscontrol.Service
 	annotationsRepo      annotations.Repository
+	store                *store.DBstore
 
 	bus bus.Bus
 }
@@ -143,6 +144,7 @@ func (ng *AlertNG) init() error {
 		AccessControl:    ng.accesscontrol,
 		DashboardService: ng.dashboardService,
 	}
+	ng.store = store
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
@@ -180,17 +182,18 @@ func (ng *AlertNG) init() error {
 
 	ng.AlertsRouter = alertsRouter
 
+	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
 	schedCfg := schedule.SchedulerCfg{
-		Cfg:         ng.Cfg.UnifiedAlerting,
-		C:           clk,
-		Evaluator:   eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.ExpressionService),
-		RuleStore:   store,
-		Metrics:     ng.Metrics.GetSchedulerMetrics(),
-		AlertSender: alertsRouter,
+		Cfg:              ng.Cfg.UnifiedAlerting,
+		C:                clk,
+		EvaluatorFactory: evalFactory,
+		RuleStore:        store,
+		Metrics:          ng.Metrics.GetSchedulerMetrics(),
+		AlertSender:      alertsRouter,
 	}
 
 	historian := historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService)
-	stateManager := state.NewManager(ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.imageService, clk, historian)
+	stateManager := state.NewManager(ng.Metrics.GetStateMetrics(), appUrl, store, ng.imageService, clk, historian)
 	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
@@ -215,7 +218,6 @@ func (ng *AlertNG) init() error {
 		DatasourceCache:      ng.DataSourceCache,
 		DatasourceService:    ng.DataSourceService,
 		RouteRegister:        ng.RouteRegister,
-		ExpressionService:    ng.ExpressionService,
 		Schedule:             ng.schedule,
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
@@ -233,8 +235,17 @@ func (ng *AlertNG) init() error {
 		MuteTimings:          muteTimingService,
 		AlertRules:           alertRuleService,
 		AlertsRouter:         alertsRouter,
+		EvaluatorFactory:     evalFactory,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
+
+	log.RegisterContextualLogProvider(func(ctx context.Context) ([]interface{}, bool) {
+		key, ok := models.RuleKeyFromContext(ctx)
+		if !ok {
+			return nil, false
+		}
+		return key.LogContext(), true
+	})
 
 	return DeclareFixedRoles(ng.accesscontrolService)
 }
@@ -267,9 +278,13 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 // Run starts the scheduler and Alertmanager.
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("Starting")
-	ng.stateManager.Warm(ctx)
+	ng.stateManager.Warm(ctx, ng.store)
 
 	children, subCtx := errgroup.WithContext(ctx)
+
+	children.Go(func() error {
+		return ng.stateManager.Run(subCtx)
+	})
 
 	children.Go(func() error {
 		return ng.MultiOrgAlertmanager.Run(subCtx)

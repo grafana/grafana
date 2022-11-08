@@ -80,6 +80,9 @@ func TestParseTreeTestdata(t *testing.T) {
 			rootid: "test-app",
 			skip:   "has a 'page'-type include which isn't a known part of spec",
 		},
+		"test-app-with-roles": {
+			rootid: "test-app",
+		},
 		"unsigned-datasource": {
 			rootid:  "test-datasource",
 			subpath: "plugin",

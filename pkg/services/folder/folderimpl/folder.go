@@ -18,9 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type Service struct {
+	store store
+
 	log              log.Logger
 	cfg              *setting.Cfg
 	dashboardService dashboards.DashboardService
@@ -90,6 +93,7 @@ func (s *Service) GetFolderByID(ctx context.Context, user *user.SignedInUser, id
 	if id == 0 {
 		return &models.Folder{Id: id, Title: "General"}, nil
 	}
+
 	dashFolder, err := s.dashboardStore.GetFolderByID(ctx, orgID, id)
 	if err != nil {
 		return nil, err
@@ -281,6 +285,76 @@ func (s *Service) DeleteFolder(ctx context.Context, user *user.SignedInUser, org
 	}
 
 	return dashFolder, nil
+}
+
+func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
+	// check the flag, if old - do whatever did before
+	//  for new only the store
+	if cmd.UID == "" {
+		cmd.UID = util.GenerateShortUID()
+	}
+	return s.store.Create(ctx, *cmd)
+}
+
+func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
+	// check the flag, if old - do whatever did before
+	//  for new only the store
+	return s.store.Update(ctx, *cmd)
+}
+
+func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
+	// check the flag, if old - do whatever did before
+	//  for new only the store
+
+	foldr, err := s.Get(ctx, &folder.GetFolderQuery{
+		UID:   &cmd.UID,
+		OrgID: cmd.OrgID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return s.store.Update(ctx, folder.UpdateFolderCommand{
+		Folder:       foldr,
+		NewParentUID: &cmd.NewParentUID,
+	})
+}
+
+func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) (*folder.Folder, error) {
+	// check the flag, if old - do whatever did before
+	//  for new only the store
+	// check if dashboard exists
+
+	foldr, err := s.Get(ctx, &folder.GetFolderQuery{
+		UID:   &cmd.UID,
+		OrgID: cmd.OrgID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	err = s.store.Delete(ctx, cmd.UID, cmd.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	return foldr, nil
+}
+
+func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
+	// check the flag, if old - do whatever did before
+	//  for new only the store
+	return s.store.Get(ctx, *cmd)
+}
+
+func (s *Service) GetParents(ctx context.Context, cmd *folder.GetParentsQuery) ([]*folder.Folder, error) {
+	// check the flag, if old - do whatever did before
+	//  for new only the store
+	return s.store.GetParents(ctx, *cmd)
+}
+
+func (s *Service) GetTree(ctx context.Context, cmd *folder.GetTreeQuery) ([]*folder.Folder, error) {
+	// check the flag, if old - do whatever did before
+	//  for new only the store
+	return s.store.GetChildren(ctx, *cmd)
 }
 
 func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {

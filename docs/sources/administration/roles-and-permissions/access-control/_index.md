@@ -90,7 +90,7 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 - [Provisioning]({{< relref "../../provisioning/" >}})
 - [Reports]({{< relref "../../../dashboards/create-reports/" >}})
 - [Roles]({{< relref "../../" >}})
-- [Settings]({{< relref "../../../enterprise/settings-updates/" >}})
+- [Settings]({{< relref "../../../setup-grafana/configure-grafana/settings-updates-at-runtime" >}})
 - [Service accounts]({{< relref "../../service-accounts/" >}})
 - [Teams]({{< relref "../../team-management/" >}})
 - [Users]({{< relref "../../user-management/" >}})

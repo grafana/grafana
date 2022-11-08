@@ -411,6 +411,17 @@
     "absolute": {
       "recent-title": "最近使用的绝对范围",
       "title": "绝对时间范围"
+    },
+    "calendar": {
+      "apply-button": "",
+      "cancel-button": "",
+      "select-time": ""
+    },
+    "time-range": {
+      "aria-role": "",
+      "default-title": "",
+      "example-title": "",
+      "specify": ""
     }
   },
   "user-orgs": {

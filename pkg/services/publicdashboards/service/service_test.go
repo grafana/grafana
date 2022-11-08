@@ -3,15 +3,12 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -22,11 +19,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 var timeSettings = &TimeSettings{From: "now-12h", To: "now"}
@@ -98,10 +100,10 @@ func TestGetPublicDashboard(t *testing.T) {
 				store: &fakeStore,
 			}
 
-			fakeStore.On("GetPublicDashboardAndDashboard", mock.Anything, mock.Anything).
-				Return(test.StoreResp.pd, test.StoreResp.d, test.StoreResp.err)
+			fakeStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(test.StoreResp.pd, test.StoreResp.err)
+			fakeStore.On("FindDashboard", mock.Anything, mock.Anything, mock.Anything).Return(test.StoreResp.d, test.StoreResp.err)
 
-			pdc, dash, err := service.GetPublicDashboardAndDashboard(context.Background(), test.AccessToken)
+			pdc, dash, err := service.FindPublicDashboardAndDashboardByAccessToken(context.Background(), test.AccessToken)
 			if test.ErrResp != nil {
 				assert.Error(t, test.ErrResp, err)
 			} else {
@@ -118,8 +120,10 @@ func TestGetPublicDashboard(t *testing.T) {
 	}
 }
 
-func TestSavePublicDashboard(t *testing.T) {
-	t.Run("Saving public dashboard", func(t *testing.T) {
+// We're using sqlite here because testing all of the behaviors with mocks in
+// the correct order is convoluted.
+func TestCreatePublicDashboard(t *testing.T) {
+	t.Run("Create public dashboard", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
@@ -130,7 +134,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -143,10 +147,10 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
+		_, err := service.Create(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		pubdash, err := service.GetPublicDashboard(context.Background(), dashboard.OrgId, dashboard.Uid)
+		pubdash, err := service.FindByDashboardUid(context.Background(), dashboard.OrgId, dashboard.Uid)
 		require.NoError(t, err)
 
 		// DashboardUid/OrgId/CreatedBy set by the command, not parameters
@@ -154,7 +158,7 @@ func TestSavePublicDashboard(t *testing.T) {
 		assert.Equal(t, dashboard.OrgId, pubdash.OrgId)
 		assert.Equal(t, dto.UserId, pubdash.CreatedBy)
 		assert.Equal(t, dto.PublicDashboard.AnnotationsEnabled, pubdash.AnnotationsEnabled)
-		// IsEnabled set by parameters
+		// ExistsEnabledByDashboardUid set by parameters
 		assert.Equal(t, dto.PublicDashboard.IsEnabled, pubdash.IsEnabled)
 		// CreatedAt set to non-zero time
 		assert.NotEqual(t, &time.Time{}, pubdash.CreatedAt)
@@ -176,7 +180,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -187,10 +191,10 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
+		_, err := service.Create(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		pubdash, err := service.GetPublicDashboard(context.Background(), dashboard.OrgId, dashboard.Uid)
+		pubdash, err := service.FindByDashboardUid(context.Background(), dashboard.OrgId, dashboard.Uid)
 		require.NoError(t, err)
 		assert.Equal(t, defaultPubdashTimeSettings, pubdash.TimeSettings)
 	})
@@ -207,7 +211,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -218,25 +222,31 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
+		_, err := service.Create(context.Background(), SignedInUser, dto)
 		require.Error(t, err)
 	})
 
-	t.Run("Pubdash access token generation throws an error and pubdash is not persisted", func(t *testing.T) {
+	t.Run("Throws an error when pubdash with generated access token already exists", func(t *testing.T) {
 		dashboard := models.NewDashboard("testDashie")
+		pubdash := &PublicDashboard{
+			IsEnabled:          true,
+			AnnotationsEnabled: false,
+			DashboardUid:       "NOTTHESAME",
+			OrgId:              9999999,
+			TimeSettings:       timeSettings,
+		}
 
 		publicDashboardStore := &FakePublicDashboardStore{}
-		publicDashboardStore.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil)
-		publicDashboardStore.On("GetPublicDashboardByUid", mock.Anything, mock.Anything).Return(nil, nil)
-		publicDashboardStore.On("GenerateNewPublicDashboardUid", mock.Anything).Return("an-uid", nil)
-		publicDashboardStore.On("GenerateNewPublicDashboardAccessToken", mock.Anything).Return("", ErrPublicDashboardFailedGenerateAccessToken)
+		publicDashboardStore.On("FindDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
+		publicDashboardStore.On("Find", mock.Anything, mock.Anything).Return(nil, nil)
+		publicDashboardStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(pubdash, nil)
 
 		service := &PublicDashboardServiceImpl{
 			log:   log.New("test.logger"),
 			store: publicDashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: "an-id",
 			OrgId:        8,
 			UserId:       7,
@@ -247,16 +257,13 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
-
+		_, err := service.Create(context.Background(), SignedInUser, dto)
 		require.Error(t, err)
-		require.Equal(t, err, ErrPublicDashboardFailedGenerateAccessToken)
-		publicDashboardStore.AssertNotCalled(t, "SavePublicDashboard")
+		require.Equal(t, err, ErrInternalServerError.Errorf("failed to generate a unique accesssToken for public dashboard"))
+		publicDashboardStore.AssertNotCalled(t, "Create")
 	})
-}
 
-func TestUpdatePublicDashboard(t *testing.T) {
-	t.Run("Updating public dashboard", func(t *testing.T) {
+	t.Run("Returns error if public dashboard exists", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
@@ -267,7 +274,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -278,11 +285,11 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		savedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
+		savedPubdash, err := service.Create(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
-		dto = &SavePublicDashboardConfigDTO{
+		dto = &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       8,
@@ -300,9 +307,58 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		// Since the dto.PublicDashboard has a uid, this will call
-		// service.updatePublicDashboard
-		updatedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
+		_, err = service.Create(context.Background(), SignedInUser, dto)
+		require.Error(t, err)
+		assert.True(t, ErrBadRequest.Is(err))
+	})
+}
+
+func TestUpdatePublicDashboard(t *testing.T) {
+	t.Run("Updating public dashboard", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+		publicdashboardStore := database.ProvideStore(sqlStore)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
+
+		service := &PublicDashboardServiceImpl{
+			log:   log.New("test.logger"),
+			store: publicdashboardStore,
+		}
+
+		dto := &SavePublicDashboardDTO{
+			DashboardUid: dashboard.Uid,
+			OrgId:        dashboard.OrgId,
+			UserId:       7,
+			PublicDashboard: &PublicDashboard{
+				AnnotationsEnabled: false,
+				IsEnabled:          true,
+				TimeSettings:       timeSettings,
+			},
+		}
+
+		// insert initial pubdash
+		savedPubdash, err := service.Create(context.Background(), SignedInUser, dto)
+		require.NoError(t, err)
+
+		// attempt to overwrite settings
+		dto = &SavePublicDashboardDTO{
+			DashboardUid: dashboard.Uid,
+			OrgId:        dashboard.OrgId,
+			UserId:       8,
+			PublicDashboard: &PublicDashboard{
+				Uid:          savedPubdash.Uid,
+				OrgId:        9,
+				DashboardUid: "abc1234",
+				CreatedBy:    9,
+				CreatedAt:    time.Time{},
+
+				IsEnabled:          true,
+				AnnotationsEnabled: true,
+				TimeSettings:       timeSettings,
+				AccessToken:        "NOTAREALUUID",
+			},
+		}
+		updatedPubdash, err := service.Update(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// don't get updated
@@ -331,7 +387,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			store: publicdashboardStore,
 		}
 
-		dto := &SavePublicDashboardConfigDTO{
+		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       7,
@@ -341,13 +397,11 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		// Since the dto.PublicDashboard has a uid, this will call
-		// service.updatePublicDashboard
-		savedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
+		savedPubdash, err := service.Create(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
-		dto = &SavePublicDashboardConfigDTO{
+		dto = &SavePublicDashboardDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
 			UserId:       8,
@@ -363,86 +417,59 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		updatedPubdash, err := service.SavePublicDashboard(context.Background(), SignedInUser, dto)
+		updatedPubdash, err := service.Update(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		assert.Equal(t, &TimeSettings{}, updatedPubdash.TimeSettings)
 	})
 }
 
-func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,
-	folderId int64, isFolder bool, templateVars []map[string]interface{}, customPanels []interface{}, tags ...interface{}) *models.Dashboard {
-	t.Helper()
-
-	var dashboardPanels []interface{}
-	if customPanels != nil {
-		dashboardPanels = customPanels
-	} else {
-		dashboardPanels = []interface{}{
-			map[string]interface{}{
-				"id": 1,
-				"datasource": map[string]interface{}{
-					"uid": "ds1",
-				},
-				"targets": []interface{}{
-					map[string]interface{}{
-						"datasource": map[string]interface{}{
-							"type": "mysql",
-							"uid":  "ds1",
-						},
-						"refId": "A",
-					},
-					map[string]interface{}{
-						"datasource": map[string]interface{}{
-							"type": "prometheus",
-							"uid":  "ds2",
-						},
-						"refId": "B",
-					},
-				},
-			},
-			map[string]interface{}{
-				"id": 2,
-				"datasource": map[string]interface{}{
-					"uid": "ds3",
-				},
-				"targets": []interface{}{
-					map[string]interface{}{
-						"datasource": map[string]interface{}{
-							"type": "mysql",
-							"uid":  "ds3",
-						},
-						"refId": "C",
-					},
-				},
-			},
-		}
+func TestDeletePublicDashboard(t *testing.T) {
+	testCases := []struct {
+		Name             string
+		AffectedRowsResp int64
+		ExpectedErrResp  error
+		StoreRespErr     error
+	}{
+		{
+			Name:             "Successfully deletes a public dashboards",
+			AffectedRowsResp: 1,
+			ExpectedErrResp:  nil,
+			StoreRespErr:     nil,
+		},
+		{
+			Name:             "Public dashboard not found",
+			AffectedRowsResp: 0,
+			ExpectedErrResp:  ErrPublicDashboardNotFound.Errorf("Delete: Public dashboard not found by orgId: 13 and Uid: uid"),
+			StoreRespErr:     nil,
+		},
+		{
+			Name:             "Database error",
+			AffectedRowsResp: 0,
+			ExpectedErrResp:  ErrInternalServerError.Errorf("Delete: failed to delete a public dashboard by orgId: 13 and Uid: uid db error!"),
+			StoreRespErr:     errors.New("db error!"),
+		},
 	}
 
-	cmd := models.SaveDashboardCommand{
-		OrgId:    orgId,
-		FolderId: folderId,
-		IsFolder: isFolder,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
-			"id":     nil,
-			"title":  title,
-			"tags":   tags,
-			"panels": dashboardPanels,
-			"templating": map[string]interface{}{
-				"list": templateVars,
-			},
-			"time": map[string]interface{}{
-				"from": "2022-09-01T00:00:00.000Z",
-				"to":   "2022-09-01T12:00:00.000Z",
-			},
-		}),
+	for _, tt := range testCases {
+		t.Run(tt.Name, func(t *testing.T) {
+			store := NewFakePublicDashboardStore(t)
+			store.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.AffectedRowsResp, tt.StoreRespErr)
+
+			service := &PublicDashboardServiceImpl{
+				log:   log.New("test.logger"),
+				store: store,
+			}
+
+			err := service.Delete(context.Background(), 13, "uid")
+			if tt.ExpectedErrResp != nil {
+				assert.Equal(t, tt.ExpectedErrResp.Error(), err.Error())
+				assert.Equal(t, tt.ExpectedErrResp.Error(), err.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
 	}
-	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
-	require.NoError(t, err)
-	require.NotNil(t, dash)
-	dash.Data.Set("id", dash.Id)
-	dash.Data.Set("uid", dash.Uid)
-	return dash
 }
 
 func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T) {
@@ -542,36 +569,6 @@ func TestDashboardEnabledChanged(t *testing.T) {
 	t.Run("updated isEnabled changed", func(t *testing.T) {
 		assert.True(t, publicDashboardIsEnabledChanged(&PublicDashboard{IsEnabled: false}, &PublicDashboard{IsEnabled: true}))
 	})
-}
-
-func CreateDatasource(dsType string, uid string) struct {
-	Type *string `json:"type,omitempty"`
-	Uid  *string `json:"uid,omitempty"`
-} {
-	return struct {
-		Type *string `json:"type,omitempty"`
-		Uid  *string `json:"uid,omitempty"`
-	}{
-		Type: &dsType,
-		Uid:  &uid,
-	}
-}
-
-func AddAnnotationsToDashboard(t *testing.T, dash *models.Dashboard, annotations []DashAnnotation) *models.Dashboard {
-	type annotationsDto struct {
-		List []DashAnnotation `json:"list"`
-	}
-	annos := annotationsDto{}
-	annos.List = annotations
-	annoJSON, err := json.Marshal(annos)
-	require.NoError(t, err)
-
-	dashAnnos, err := simplejson.NewJson(annoJSON)
-	require.NoError(t, err)
-
-	dash.Data.Set("annotations", dashAnnos)
-
-	return dash
 }
 
 func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
@@ -754,7 +751,7 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 	}
 
 	store := NewFakePublicDashboardStore(t)
-	store.On("ListPublicDashboards", mock.Anything, mock.Anything).
+	store.On("FindAll", mock.Anything, mock.Anything).
 		Return(mockedDashboards, nil)
 
 	ac := tests.SetupMockAccesscontrol(t,
@@ -774,11 +771,244 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ac.EvaluateFunc = tt.evaluateFunc
 
-			got, err := pd.ListPublicDashboards(tt.args.ctx, tt.args.u, tt.args.orgId)
-			if !tt.wantErr(t, err, fmt.Sprintf("ListPublicDashboards(%v, %v, %v)", tt.args.ctx, tt.args.u, tt.args.orgId)) {
+			got, err := pd.FindAll(tt.args.ctx, tt.args.u, tt.args.orgId)
+			if !tt.wantErr(t, err, fmt.Sprintf("FindAll(%v, %v, %v)", tt.args.ctx, tt.args.u, tt.args.orgId)) {
 				return
 			}
-			assert.Equalf(t, tt.want, got, "ListPublicDashboards(%v, %v, %v)", tt.args.ctx, tt.args.u, tt.args.orgId)
+			assert.Equalf(t, tt.want, got, "FindAll(%v, %v, %v)", tt.args.ctx, tt.args.u, tt.args.orgId)
 		})
 	}
+}
+
+func TestPublicDashboardServiceImpl_NewPublicDashboardUid(t *testing.T) {
+	mockedDashboard := &PublicDashboard{
+		IsEnabled:          true,
+		AnnotationsEnabled: false,
+		DashboardUid:       "NOTTHESAME",
+		OrgId:              9999999,
+		TimeSettings:       timeSettings,
+	}
+
+	type args struct {
+		ctx context.Context
+	}
+
+	type mockResponse struct {
+		PublicDashboard *PublicDashboard
+		Err             error
+	}
+	tests := []struct {
+		name      string
+		args      args
+		mockStore *mockResponse
+		want      string
+		wantErr   assert.ErrorAssertionFunc
+	}{
+		{
+			name:      "should return a new uid",
+			args:      args{ctx: context.Background()},
+			mockStore: &mockResponse{nil, nil},
+			want:      "NOTTHESAME",
+			wantErr:   assert.NoError,
+		},
+		{
+			name:      "should return an error if the generated uid exists 3 times",
+			args:      args{ctx: context.Background()},
+			mockStore: &mockResponse{mockedDashboard, nil},
+			want:      "",
+			wantErr:   assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := NewFakePublicDashboardStore(t)
+			store.On("Find", mock.Anything, mock.Anything).
+				Return(tt.mockStore.PublicDashboard, tt.mockStore.Err)
+
+			pd := &PublicDashboardServiceImpl{store: store}
+
+			got, err := pd.NewPublicDashboardUid(tt.args.ctx)
+			if !tt.wantErr(t, err, fmt.Sprintf("NewPublicDashboardUid(%v)", tt.args.ctx)) {
+				return
+			}
+
+			if err == nil {
+				assert.NotEqual(t, got, tt.want, "NewPublicDashboardUid(%v)", tt.args.ctx)
+				assert.True(t, util.IsValidShortUID(got), "NewPublicDashboardUid(%v)", tt.args.ctx)
+				store.AssertNumberOfCalls(t, "Find", 1)
+			} else {
+				store.AssertNumberOfCalls(t, "Find", 3)
+				assert.True(t, ErrInternalServerError.Is(err))
+			}
+		})
+	}
+}
+
+func TestPublicDashboardServiceImpl_NewPublicDashboardAccessToken(t *testing.T) {
+	mockedDashboard := &PublicDashboard{
+		IsEnabled:          true,
+		AnnotationsEnabled: false,
+		DashboardUid:       "NOTTHESAME",
+		OrgId:              9999999,
+		TimeSettings:       timeSettings,
+	}
+
+	type args struct {
+		ctx context.Context
+	}
+
+	type mockResponse struct {
+		PublicDashboard *PublicDashboard
+		Err             error
+	}
+	tests := []struct {
+		name      string
+		args      args
+		mockStore *mockResponse
+		want      string
+		wantErr   assert.ErrorAssertionFunc
+	}{
+		{
+			name:      "should return a new access token",
+			args:      args{ctx: context.Background()},
+			mockStore: &mockResponse{nil, nil},
+			want:      "6522e152530f4ee76522e152530f4ee7",
+			wantErr:   assert.NoError,
+		},
+		{
+			name:      "should return an error if the generated access token exists 3 times",
+			args:      args{ctx: context.Background()},
+			mockStore: &mockResponse{mockedDashboard, nil},
+			want:      "",
+			wantErr:   assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := NewFakePublicDashboardStore(t)
+			store.On("FindByAccessToken", mock.Anything, mock.Anything).
+				Return(tt.mockStore.PublicDashboard, tt.mockStore.Err)
+
+			pd := &PublicDashboardServiceImpl{store: store}
+
+			got, err := pd.NewPublicDashboardAccessToken(tt.args.ctx)
+			if !tt.wantErr(t, err, fmt.Sprintf("NewPublicDashboardAccessToken(%v)", tt.args.ctx)) {
+				return
+			}
+
+			if err == nil {
+				assert.NotEqual(t, got, tt.want, "NewPublicDashboardAccessToken(%v)", tt.args.ctx)
+				assert.True(t, tokens.IsValidAccessToken(got), "NewPublicDashboardAccessToken(%v)", tt.args.ctx)
+				store.AssertNumberOfCalls(t, "FindByAccessToken", 1)
+			} else {
+				store.AssertNumberOfCalls(t, "FindByAccessToken", 3)
+				assert.True(t, ErrInternalServerError.Is(err))
+			}
+		})
+	}
+}
+
+func CreateDatasource(dsType string, uid string) struct {
+	Type *string `json:"type,omitempty"`
+	Uid  *string `json:"uid,omitempty"`
+} {
+	return struct {
+		Type *string `json:"type,omitempty"`
+		Uid  *string `json:"uid,omitempty"`
+	}{
+		Type: &dsType,
+		Uid:  &uid,
+	}
+}
+
+func AddAnnotationsToDashboard(t *testing.T, dash *models.Dashboard, annotations []DashAnnotation) *models.Dashboard {
+	type annotationsDto struct {
+		List []DashAnnotation `json:"list"`
+	}
+	annos := annotationsDto{}
+	annos.List = annotations
+	annoJSON, err := json.Marshal(annos)
+	require.NoError(t, err)
+
+	dashAnnos, err := simplejson.NewJson(annoJSON)
+	require.NoError(t, err)
+
+	dash.Data.Set("annotations", dashAnnos)
+
+	return dash
+}
+
+func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,
+	folderId int64, isFolder bool, templateVars []map[string]interface{}, customPanels []interface{}, tags ...interface{}) *models.Dashboard {
+	t.Helper()
+
+	var dashboardPanels []interface{}
+	if customPanels != nil {
+		dashboardPanels = customPanels
+	} else {
+		dashboardPanels = []interface{}{
+			map[string]interface{}{
+				"id": 1,
+				"datasource": map[string]interface{}{
+					"uid": "ds1",
+				},
+				"targets": []interface{}{
+					map[string]interface{}{
+						"datasource": map[string]interface{}{
+							"type": "mysql",
+							"uid":  "ds1",
+						},
+						"refId": "A",
+					},
+					map[string]interface{}{
+						"datasource": map[string]interface{}{
+							"type": "prometheus",
+							"uid":  "ds2",
+						},
+						"refId": "B",
+					},
+				},
+			},
+			map[string]interface{}{
+				"id": 2,
+				"datasource": map[string]interface{}{
+					"uid": "ds3",
+				},
+				"targets": []interface{}{
+					map[string]interface{}{
+						"datasource": map[string]interface{}{
+							"type": "mysql",
+							"uid":  "ds3",
+						},
+						"refId": "C",
+					},
+				},
+			},
+		}
+	}
+
+	cmd := models.SaveDashboardCommand{
+		OrgId:    orgId,
+		FolderId: folderId,
+		IsFolder: isFolder,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"id":     nil,
+			"title":  title,
+			"tags":   tags,
+			"panels": dashboardPanels,
+			"templating": map[string]interface{}{
+				"list": templateVars,
+			},
+			"time": map[string]interface{}{
+				"from": "2022-09-01T00:00:00.000Z",
+				"to":   "2022-09-01T12:00:00.000Z",
+			},
+		}),
+	}
+	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
+	require.NoError(t, err)
+	require.NotNil(t, dash)
+	dash.Data.Set("id", dash.Id)
+	dash.Data.Set("uid", dash.Uid)
+	return dash
 }
