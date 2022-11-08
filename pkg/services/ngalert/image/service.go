@@ -2,6 +2,7 @@ package image
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"time"
@@ -135,7 +136,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		Timeout:      screenshotTimeout,
 	}
 
-	k := fmt.Sprintf("%s-%d-%s", opts.DashboardUID, opts.PanelID, opts.Theme)
+	k := base64.StdEncoding.EncodeToString(opts.Sum())
 	result, err, _ := s.singleflight.Do(k, func() (interface{}, error) {
 		screenshot, err := s.limiter.Do(ctx, opts, s.screenshots.Take)
 		if err != nil {
