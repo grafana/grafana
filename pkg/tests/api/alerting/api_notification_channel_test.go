@@ -2311,7 +2311,6 @@ var expNonEmailNotifications = map[string][]string{
 	"slack_recv1/slack_test_without_token": {
 		`{
 		  "channel": "#test-channel",
-          "text": "Integration Test [FIRING:1] SlackAlert1 (default)",
 		  "username": "Integration Test",
 		  "icon_emoji": "🚀",
 		  "icon_url": "https://awesomeemoji.com/rocket",
@@ -2324,16 +2323,9 @@ var expNonEmailNotifications = map[string][]string{
 			  "footer": "Grafana v",
 			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
 			  "color": "#D63232",
-			  "ts": %s
-			}
-		  ],
-		  "blocks": [
-			{
-			  "text": {
-				"text": "<!here|here> <!subteam^group1><!subteam^group2> <@user1><@user2>",
-				"type": "mrkdwn"
-			  },
-			  "type": "section"
+			  "ts": %s,
+              "mrkdwn_in": ["pretext"],
+              "pretext": "<!here|here> <!subteam^group1><!subteam^group2> <@user1><@user2>"
 			}
 		  ]
 		}`,
@@ -2341,7 +2333,6 @@ var expNonEmailNotifications = map[string][]string{
 	"slack_recvX/slack_testX": {
 		`{
 		  "channel": "#test-channel",
-          "text": "[FIRING:1] SlackAlert2 (default)",
 		  "username": "Integration Test",
 		  "attachments": [
 			{
@@ -2352,16 +2343,9 @@ var expNonEmailNotifications = map[string][]string{
 			  "footer": "Grafana v",
 			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
 			  "color": "#D63232",
-			  "ts": %s
-			}
-		  ],
-		  "blocks": [
-			{
-			  "text": {
-				"text": "<@user1><@user2>",
-				"type": "mrkdwn"
-			  },
-			  "type": "section"
+			  "ts": %s,
+              "mrkdwn_in": ["pretext"],
+              "pretext": "<@user1><@user2>"
 			}
 		  ]
 		}`,
