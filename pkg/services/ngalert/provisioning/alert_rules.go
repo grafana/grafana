@@ -316,10 +316,6 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int6
 	})
 }
 
-func (service *AlertRuleService) CountAlertRulesInFolder(ctx context.Context, query *models.CountAlertRulesQuery) (int64, error) {
-	return service.ruleStore.CountAlertRulesInFolder(ctx, query)
-}
-
 // checkLimitsTransactionCtx checks whether the current transaction (as identified by the ctx) breaches configured alert rule limits.
 func (service *AlertRuleService) checkLimitsTransactionCtx(ctx context.Context, orgID, userID int64) error {
 	limitReached, err := service.quotas.CheckQuotaReached(ctx, "alert_rule", &quota.ScopeParameters{

@@ -339,3 +339,7 @@ func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, org
 	}
 	return result, nil
 }
+
+func (f *RuleStore) CountAlertRulesInFolder(ctx context.Context, query *models.CountAlertRulesQuery) (int64, error) {
+	return 0, nil
+}
