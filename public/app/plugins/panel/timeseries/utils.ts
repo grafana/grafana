@@ -68,7 +68,6 @@ export function prepareGraphableFields(
           fields.push(copy);
           break; // ok
         case FieldType.string:
-          hasValueField = true;
           copy = {
             ...field,
             values: new ArrayVector(field.values.toArray()),
