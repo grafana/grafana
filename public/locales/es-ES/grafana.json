@@ -421,6 +421,14 @@
       "empty-recent-list": "",
       "filter-placeholder": ""
     },
+    "range-content": {
+      "apply-button": "",
+      "default-error": "",
+      "fiscal-year": "",
+      "from-input": "",
+      "range-error": "",
+      "to-input": ""
+    },
     "time-range": {
       "aria-role": "",
       "default-title": "",
