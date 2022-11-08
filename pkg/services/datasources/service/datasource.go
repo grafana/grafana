@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -53,8 +52,7 @@ type cachedRoundTripper struct {
 func ProvideService(
 	db db.DB, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
-	quotaService quota.Service,
-) (*Service, error) {
+) *Service {
 	dslogger := log.New("datasources")
 	store := &SqlStore{db: db, logger: dslogger}
 	s := &Service{
@@ -75,23 +73,7 @@ func ProvideService(
 	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
 	ac.RegisterScopeAttributeResolver(NewIDScopeResolver(store))
 
-	defaultLimits, err := readQuotaConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
-		TargetSrv:     datasources.QuotaTargetSrv,
-		DefaultLimits: defaultLimits,
-		Reporter:      s.Usage,
-	}); err != nil {
-		return nil, err
-	}
-	return s, nil
-}
-
-func (s *Service) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
-	return s.SQLStore.Count(ctx, scopeParams)
+	return s
 }
 
 // DataSourceRetriever interface for retrieving a datasource.
@@ -608,25 +590,4 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 	}
 
 	return nil
-}
-
-func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
-	limits := &quota.Map{}
-
-	if cfg == nil {
-		return limits, nil
-	}
-
-	globalQuotaTag, err := quota.NewTag(datasources.QuotaTargetSrv, datasources.QuotaTarget, quota.GlobalScope)
-	if err != nil {
-		return limits, err
-	}
-	orgQuotaTag, err := quota.NewTag(datasources.QuotaTargetSrv, datasources.QuotaTarget, quota.OrgScope)
-	if err != nil {
-		return limits, err
-	}
-
-	limits.Set(globalQuotaTag, cfg.Quota.Global.DataSource)
-	limits.Set(orgQuotaTag, cfg.Quota.Org.DataSource)
-	return limits, nil
 }

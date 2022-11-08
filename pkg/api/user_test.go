@@ -20,7 +20,6 @@ import (
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfostore "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -69,8 +68,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		}
 		user, err := sqlStore.CreateUser(context.Background(), createUserCmd)
 		require.Nil(t, err)
-		hs.userService, err = userimpl.ProvideService(sqlStore, nil, sc.cfg, nil, nil, quotatest.New(false, nil))
-		require.NoError(t, err)
+		hs.userService = userimpl.ProvideService(sqlStore, nil, sc.cfg, nil, nil)
 
 		sc.handlerFunc = hs.GetUserByID
 

@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -126,9 +125,7 @@ func TestGetPublicDashboard(t *testing.T) {
 func TestCreatePublicDashboard(t *testing.T) {
 	t.Run("Create public dashboard", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
-		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
-		require.NoError(t, err)
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 
@@ -150,7 +147,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err = service.Create(context.Background(), SignedInUser, dto)
+		_, err := service.Create(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		pubdash, err := service.FindByDashboardUid(context.Background(), dashboard.OrgId, dashboard.Uid)
@@ -174,9 +171,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 
 	t.Run("Validate pubdash has default time setting value", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
-		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
-		require.NoError(t, err)
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 
@@ -196,7 +191,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err = service.Create(context.Background(), SignedInUser, dto)
+		_, err := service.Create(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		pubdash, err := service.FindByDashboardUid(context.Background(), dashboard.OrgId, dashboard.Uid)
@@ -206,9 +201,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 
 	t.Run("Validate pubdash whose dashboard has template variables returns error", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
-		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
-		require.NoError(t, err)
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		templateVars := make([]map[string]interface{}, 1)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, templateVars, nil)
@@ -229,7 +222,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err = service.Create(context.Background(), SignedInUser, dto)
+		_, err := service.Create(context.Background(), SignedInUser, dto)
 		require.Error(t, err)
 	})
 
@@ -272,8 +265,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 
 	t.Run("Returns error if public dashboard exists", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
-		require.NoError(t, err)
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 
@@ -324,9 +316,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 func TestUpdatePublicDashboard(t *testing.T) {
 	t.Run("Updating public dashboard", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
-		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
-		require.NoError(t, err)
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 
@@ -388,9 +378,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 	t.Run("Updating set empty time settings", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
-		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
-		require.NoError(t, err)
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 

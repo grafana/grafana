@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -248,13 +249,15 @@ func (s *fakeRenderService) Init() error {
 }
 
 func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
-	store := sqlstore.InitTestDB(t)
+	cfg.Quota.Enabled = false
+
+	store := db.InitTestDB(t)
 	hs := &HTTPServer{
 		Cfg:                cfg,
 		Live:               newTestLive(t, store),
 		License:            &licensing.OSSLicensingService{},
 		Features:           featuremgmt.WithFeatures(),
-		QuotaService:       quotatest.New(false, nil),
+		QuotaService:       &quotaimpl.Service{Cfg: cfg},
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
 		searchUsersService: searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
@@ -373,9 +376,7 @@ func setupHTTPServerWithCfgDb(
 	routeRegister := routing.NewRouteRegister()
 	teamService := teamimpl.ProvideService(db, cfg)
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
-	quotaService := quotatest.New(false, nil)
-	dashboardsStore, err := dashboardsstore.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db, cfg), quotaService)
-	require.NoError(t, err)
+	dashboardsStore := dashboardsstore.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db, cfg))
 
 	var acmock *accesscontrolmock.Mock
 	var ac accesscontrol.AccessControl
@@ -401,8 +402,7 @@ func setupHTTPServerWithCfgDb(
 		acService, err = acimpl.ProvideService(cfg, db, routeRegister, localcache.ProvideService(), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 		ac = acimpl.ProvideAccessControl(cfg)
-		userSvc, err = userimpl.ProvideService(db, nil, cfg, teamimpl.ProvideService(db, cfg), localcache.ProvideService(), quotatest.New(false, nil))
-		require.NoError(t, err)
+		userSvc = userimpl.ProvideService(db, nil, cfg, teamimpl.ProvideService(db, cfg), localcache.ProvideService())
 	}
 	teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, license, acService, teamService, userSvc)
 	require.NoError(t, err)
@@ -412,7 +412,7 @@ func setupHTTPServerWithCfgDb(
 		Cfg:                    cfg,
 		Features:               features,
 		Live:                   newTestLive(t, db),
-		QuotaService:           quotaService,
+		QuotaService:           &quotaimpl.Service{Cfg: cfg},
 		RouteRegister:          routeRegister,
 		SQLStore:               store,
 		License:                &licensing.OSSLicensingService{},
@@ -497,7 +497,7 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 		RouteRegister:      routing.NewRouteRegister(),
 		License:            &licensing.OSSLicensingService{},
 		Features:           featuremgmt.WithFeatures(),
-		QuotaService:       quotatest.New(false, nil),
+		QuotaService:       quotatest.NewQuotaServiceFake(),
 		searchUsersService: &searchusers.OSSService{},
 	}
 

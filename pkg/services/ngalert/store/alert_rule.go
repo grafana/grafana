@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -227,6 +226,19 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 	})
 }
 
+// CountAlertRulesInFolder is a handler for retrieving the number of alert rules of
+// specific organisation associated with a given namespace (parent folder).
+func (st DBstore) CountAlertRulesInFolder(ctx context.Context, query *ngmodels.CountAlertRulesQuery) (int64, error) {
+	var count int64
+	var err error
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		q := sess.Table("alert_rule").Where("org_id = ?", query.OrgID).Where("namespace_uid = ?", query.NamespaceUID)
+		count, err = q.Count()
+		return err
+	})
+	return count, err
+}
+
 // ListAlertRules is a handler for retrieving alert rules of specific organisation.
 func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -267,29 +279,6 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		query.Result = alertRules
 		return nil
 	})
-}
-
-// Count returns either the number of the alert rules under a specific org (if orgID is not zero)
-// or the number of all the alert rules
-func (st DBstore) Count(ctx context.Context, orgID int64) (int64, error) {
-	type result struct {
-		Count int64
-	}
-
-	r := result{}
-	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rawSQL := "SELECT COUNT(*) as count from alert_rule"
-		args := make([]interface{}, 0)
-		if orgID != 0 {
-			rawSQL += " WHERE org_id=?"
-			args = append(args, orgID)
-		}
-		if _, err := sess.SQL(rawSQL, args...).Get(&r); err != nil {
-			return err
-		}
-		return nil
-	})
-	return r.Count, err
 }
 
 func (st DBstore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error) {

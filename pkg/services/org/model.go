@@ -204,9 +204,3 @@ func (o ByOrgName) Less(i, j int) bool {
 
 	return o[i].Name < o[j].Name
 }
-
-const (
-	QuotaTargetSrv     string = "org"
-	OrgQuotaTarget     string = "org"
-	OrgUserQuotaTarget string = "org_user"
-)

@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -41,12 +40,8 @@ func TestUserAuthToken(t *testing.T) {
 		userToken := createToken()
 
 		t.Run("Can count active tokens", func(t *testing.T) {
-			m, err := ctx.activeTokenService.ActiveTokenCount(context.Background(), &quota.ScopeParameters{})
+			count, err := ctx.activeTokenService.ActiveTokenCount(context.Background())
 			require.Nil(t, err)
-			tag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
-			require.NoError(t, err)
-			count, ok := m.Get(tag)
-			require.True(t, ok)
 			require.Equal(t, int64(1), count)
 		})
 
@@ -213,12 +208,8 @@ func TestUserAuthToken(t *testing.T) {
 			require.Nil(t, notGood)
 
 			t.Run("should not find active token when expired", func(t *testing.T) {
-				m, err := ctx.activeTokenService.ActiveTokenCount(context.Background(), &quota.ScopeParameters{})
+				count, err := ctx.activeTokenService.ActiveTokenCount(context.Background())
 				require.Nil(t, err)
-				tag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
-				require.NoError(t, err)
-				count, ok := m.Get(tag)
-				require.True(t, ok)
 				require.Equal(t, int64(0), count)
 			})
 		})

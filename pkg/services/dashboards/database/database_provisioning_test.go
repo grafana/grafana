@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 )
 
@@ -19,9 +18,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlStore := db.InitTestDB(t)
-	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
-	require.NoError(t, err)
+	dashboardStore := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 
 	folderCmd := models.SaveDashboardCommand{
 		OrgId:    1,

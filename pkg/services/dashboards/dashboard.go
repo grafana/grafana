@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/quota"
 )
 
 // DashboardService is a service for operating on dashboards.
@@ -78,7 +77,6 @@ type Store interface {
 	ValidateDashboardBeforeSave(ctx context.Context, dashboard *models.Dashboard, overwrite bool) (bool, error)
 	DeleteACLByUser(context.Context, int64) error
 
-	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
 	// CountDashboardsInFolder returns the number of dashboards associated with
 	// the given parent folder ID.
 	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
