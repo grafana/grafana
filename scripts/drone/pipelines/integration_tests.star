@@ -3,6 +3,7 @@ load(
     'identify_runner_step',
     'download_grabpl_step',
     'verify_gen_cue_step',
+    'verify_gen_jsonnet_step',
     'wire_install_step',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
@@ -29,6 +30,7 @@ def integration_tests(trigger, ver_mode, edition):
         compile_build_cmd(),
         identify_runner_step(),
         verify_gen_cue_step(edition="oss"),
+        verify_gen_jsonnet_step(edition="oss"),
         wire_install_step(),
     ]
     test_steps = [

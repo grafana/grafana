@@ -1,14 +1,14 @@
-import { BaseTransport } from '@grafana/agent-core';
+import { BuildInfo } from '@grafana/data';
+import { BaseTransport } from '@grafana/faro-core';
 import {
-  initializeAgent,
+  initializeFaro,
   defaultMetas,
   BrowserConfig,
   ErrorsInstrumentation,
   ConsoleInstrumentation,
   WebVitalsInstrumentation,
   FetchTransport,
-} from '@grafana/agent-web';
-import { BuildInfo } from '@grafana/data';
+} from '@grafana/faro-web-sdk';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
@@ -27,7 +27,7 @@ export class GrafanaJavascriptAgentBackend
   implements EchoBackend<GrafanaJavascriptAgentEchoEvent, GrafanaJavascriptAgentBackendOptions>
 {
   supportedEvents = [EchoEventType.GrafanaJavascriptAgent];
-  private agentInstance;
+  private faroInstance;
   transports: BaseTransport[];
 
   constructor(public options: GrafanaJavascriptAgentBackendOptions) {
@@ -51,7 +51,7 @@ export class GrafanaJavascriptAgentBackend
 
     // initialize GrafanaJavascriptAgent so it can set up its hooks and start collecting errors
     const grafanaJavaScriptAgentOptions: BrowserConfig = {
-      globalObjectKey: options.globalObjectKey || 'grafanaAgent',
+      globalObjectKey: options.globalObjectKey || 'faro',
       preventGlobalExposure: options.preventGlobalExposure || false,
       app: {
         version: options.buildInfo.version,
@@ -74,10 +74,10 @@ export class GrafanaJavascriptAgentBackend
         },
       ],
     };
-    this.agentInstance = initializeAgent(grafanaJavaScriptAgentOptions);
+    this.faroInstance = initializeFaro(grafanaJavaScriptAgentOptions);
 
     if (options.user) {
-      this.agentInstance.api.setUser({
+      this.faroInstance.api.setUser({
         id: options.user.id,
         attributes: {
           orgId: String(options.user.orgId) || '',

@@ -20,7 +20,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame, FieldType } from '@grafana/data';
+import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from '@grafana/data';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
 import { TooltipData, SelectedView } from '../types';
@@ -31,6 +31,8 @@ import { getBarX, getRectDimensionsForLevel, renderRect } from './rendering';
 
 type Props = {
   data: DataFrame;
+  app: CoreApp;
+  flameGraphHeight?: number;
   levels: ItemWithStart[][];
   topLevelIndex: number;
   rangeMin: number;
@@ -45,6 +47,8 @@ type Props = {
 
 const FlameGraph = ({
   data,
+  app,
+  flameGraphHeight,
   levels,
   topLevelIndex,
   rangeMin,
@@ -55,10 +59,13 @@ const FlameGraph = ({
   setRangeMax,
   selectedView,
 }: Props) => {
-  const styles = getStyles(selectedView);
+  const styles = getStyles(selectedView, app, flameGraphHeight);
   const totalTicks = data.fields[1].values.get(0);
   const valueField =
     data.fields.find((f) => f.name === 'value') ?? data.fields.find((f) => f.type === FieldType.number);
+  if (!valueField) {
+    throw new Error('Malformed dataFrame: value field of type number is not in the query response');
+  }
 
   const [sizeRef, { width: wrapperWidth }] = useMeasure<HTMLDivElement>();
   const graphRef = useRef<HTMLCanvasElement>(null);
@@ -95,18 +102,23 @@ const FlameGraph = ({
       ctx.font = 12 * window.devicePixelRatio + 'px monospace';
       ctx.strokeStyle = 'white';
 
+      const processor = getDisplayProcessor({
+        field: valueField,
+        theme: createTheme() /* theme does not matter for us here */,
+      });
+
       for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
         const level = levels[levelIndex];
         // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
         // sometimes we collapse multiple bars into single rect.
-        const dimensions = getRectDimensionsForLevel(level, levelIndex, totalTicks, rangeMin, pixelsPerTick);
+        const dimensions = getRectDimensionsForLevel(level, levelIndex, totalTicks, rangeMin, pixelsPerTick, processor);
         for (const rect of dimensions) {
           // Render each rectangle based on the computed dimensions
           renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex);
         }
       }
     },
-    [levels, wrapperWidth, totalTicks, rangeMin, rangeMax, search, topLevelIndex]
+    [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex]
   );
 
   useEffect(() => {
@@ -135,10 +147,10 @@ const FlameGraph = ({
 
           if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
             tooltipRef.current.style.left = e.clientX + 10 + 'px';
-            tooltipRef.current.style.top = e.clientY + 40 + 'px';
+            tooltipRef.current.style.top = e.clientY + 'px';
 
             const bar = levels[levelIndex][barIndex];
-            const tooltipData = getTooltipData(valueField!, bar.label, bar.value, totalTicks);
+            const tooltipData = getTooltipData(valueField, bar.label, bar.value, bar.self, totalTicks);
             setTooltipData(tooltipData);
             setShowTooltip(true);
           }
@@ -173,11 +185,15 @@ const FlameGraph = ({
   );
 };
 
-const getStyles = (selectedView: SelectedView) => ({
+const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: number | undefined) => ({
   graph: css`
     cursor: pointer;
     float: left;
+    overflow: scroll;
     width: ${selectedView === SelectedView.FlameGraph ? '100%' : '50%'};
+    ${app !== CoreApp.Explore
+      ? `height: calc(${flameGraphHeight}px - 44px)`
+      : ''}; // 44px to adjust for header pushing content down
   `,
 });
 

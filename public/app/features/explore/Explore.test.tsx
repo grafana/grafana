@@ -3,7 +3,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 
-import { DataSourceApi, LoadingState, CoreApp, createTheme } from '@grafana/data';
+import { DataSourceApi, LoadingState, CoreApp, createTheme, EventBusSrv } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 import { ExploreId } from 'app/types/explore';
 
@@ -62,6 +62,7 @@ const dummyProps: Props = {
   scanStopAction: scanStopAction,
   setQueries: jest.fn(),
   queryKeys: [],
+  queries: [],
   isLive: false,
   syncedTimes: false,
   updateTimeRange: jest.fn(),
@@ -82,8 +83,10 @@ const dummyProps: Props = {
   showNodeGraph: true,
   showFlameGraph: true,
   splitOpen: (() => {}) as any,
+  splitted: false,
   changeGraphStyle: () => {},
   graphStyle: 'lines',
+  eventBus: new EventBusSrv(),
 };
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {

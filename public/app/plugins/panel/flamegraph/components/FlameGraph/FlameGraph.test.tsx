@@ -2,7 +2,7 @@ import { screen } from '@testing-library/dom';
 import { render } from '@testing-library/react';
 import React, { useState } from 'react';
 
-import { DataFrameView, MutableDataFrame } from '@grafana/data';
+import { CoreApp, DataFrameView, MutableDataFrame } from '@grafana/data';
 
 import { SelectedView } from '../types';
 
@@ -33,6 +33,7 @@ describe('FlameGraph', () => {
     return (
       <FlameGraph
         data={flameGraphData}
+        app={CoreApp.Explore}
         levels={levels}
         topLevelIndex={topLevelIndex}
         rangeMin={rangeMin}

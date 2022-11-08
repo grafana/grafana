@@ -65,7 +65,7 @@ export const WideTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props, re
   );
 };
 
-export const CompactTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props, ref) => {
+export const CompactTimeZoneOption: React.FC<React.PropsWithChildren<Props>> = (props, ref) => {
   const { children, innerProps, data, isSelected, isFocused } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);

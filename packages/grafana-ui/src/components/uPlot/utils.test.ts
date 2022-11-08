@@ -1,5 +1,3 @@
-import Units from 'ol/proj/Units';
-
 import { FieldMatcherID, fieldMatchers, FieldType, MutableDataFrame } from '@grafana/data';
 import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
 
@@ -1061,6 +1059,11 @@ describe('auto stacking groups', () => {
           values: [0, 0, 0],
           config: { custom: { stacking: { mode: StackingMode.Normal } } },
         },
+        {
+          name: 'd',
+          values: [null, -0, null],
+          config: { custom: { stacking: { mode: StackingMode.Normal } } },
+        },
       ],
     });
 
@@ -1070,6 +1073,7 @@ describe('auto stacking groups', () => {
           "dir": -1,
           "series": Array [
             1,
+            4,
           ],
         },
         Object {
@@ -1102,6 +1106,11 @@ describe('auto stacking groups', () => {
           values: [0, 0, 0],
           config: { custom: { stacking: { mode: StackingMode.Normal } } },
         },
+        {
+          name: 'd',
+          values: [-0, null, 3],
+          config: { custom: { stacking: { mode: StackingMode.Normal }, transform: GraphTransform.NegativeY } },
+        },
       ],
     });
 
@@ -1113,6 +1122,7 @@ describe('auto stacking groups', () => {
             1,
             2,
             3,
+            4,
           ],
         },
       ]
@@ -1218,12 +1228,12 @@ describe('auto stacking groups', () => {
         {
           name: 'a',
           values: [1, 2, 3],
-          config: { custom: { stacking: { mode: StackingMode.Normal } }, unit: Units.FEET },
+          config: { custom: { stacking: { mode: StackingMode.Normal } }, unit: 'ft' },
         },
         {
           name: 'b',
           values: [1, 2, 3],
-          config: { custom: { stacking: { mode: StackingMode.Normal } }, unit: Units.DEGREES },
+          config: { custom: { stacking: { mode: StackingMode.Normal } }, unit: 'degrees' },
         },
       ],
     });

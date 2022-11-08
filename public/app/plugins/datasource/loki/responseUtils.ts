@@ -36,6 +36,17 @@ export function extractLogParserFromDataFrame(frame: DataFrame): { hasLogfmt: bo
   return { hasLogfmt, hasJSON };
 }
 
+export function extractLabelKeysFromDataFrame(frame: DataFrame): string[] {
+  const labelsArray: Array<{ [key: string]: string }> | undefined =
+    frame?.fields?.find((field) => field.name === 'labels')?.values.toArray() ?? [];
+
+  if (!labelsArray?.length) {
+    return [];
+  }
+
+  return Object.keys(labelsArray[0]);
+}
+
 export function extractHasErrorLabelFromDataFrame(frame: DataFrame): boolean {
   const labelField = frame.fields.find((field) => field.name === 'labels' && field.type === FieldType.other);
   if (labelField == null) {

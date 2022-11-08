@@ -239,13 +239,11 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "editor request should succeed",
 				url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusAccepted,
-				expBody:   `{"id":"0","message":"silence created"}`,
 			},
 			{
 				desc:      "admin request should succeed",
 				url:       "http://admin:admin@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusAccepted,
-				expBody:   `{"id":"0","message":"silence created"}`,
 			},
 		}
 
@@ -263,8 +261,10 @@ func TestAMConfigAccess(t *testing.T) {
 				b, err := io.ReadAll(resp.Body)
 				require.NoError(t, err)
 				if tc.expStatus == http.StatusAccepted {
-					re := regexp.MustCompile(`"id":"([\w|-]+)"`)
-					b = re.ReplaceAll(b, []byte(`"id":"0"`))
+					response := apimodels.PostSilencesOKBody{}
+					require.NoError(t, json.Unmarshal(b, &response))
+					require.NotEmpty(t, response.SilenceID)
+					return
 				}
 				require.Contains(t, string(b), tc.expBody)
 			})
@@ -2368,6 +2368,7 @@ func TestEval(t *testing.T) {
 				return `{
 				"results": {
 				  "A": {
+					"status": 200,
 					"frames": [
 					  {
 						"schema": {
@@ -2424,6 +2425,7 @@ func TestEval(t *testing.T) {
 				return `{
 				"results": {
 				  "A": {
+					"status": 200,
 					"frames": [
 					  {
 						"schema": {
@@ -2483,7 +2485,7 @@ func TestEval(t *testing.T) {
 				if setting.IsEnterprise {
 					return "user is not authorized to query one or many data sources used by the rule"
 				}
-				return "Failed to evaluate queries and expressions: failed to execute conditions: failed to build query 'A': data source not found"
+				return "Failed to build evaluator for queries and expressions: failed to build query 'A': data source not found"
 			},
 		},
 	}

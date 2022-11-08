@@ -110,11 +110,12 @@ describe('addPanelToDashboard', () => {
         expectedPanel: string;
       };
       it.each`
-        framesType           | expectedPanel
-        ${'logsFrames'}      | ${'logs'}
-        ${'graphFrames'}     | ${'timeseries'}
-        ${'nodeGraphFrames'} | ${'nodeGraph'}
-        ${'traceFrames'}     | ${'traces'}
+        framesType            | expectedPanel
+        ${'logsFrames'}       | ${'logs'}
+        ${'graphFrames'}      | ${'timeseries'}
+        ${'nodeGraphFrames'}  | ${'nodeGraph'}
+        ${'flameGraphFrames'} | ${'flamegraph'}
+        ${'traceFrames'}      | ${'traces'}
       `(
         'Sets visualization to $expectedPanel if there are $frameType frames',
         async ({ framesType, expectedPanel }: TestArgs) => {
