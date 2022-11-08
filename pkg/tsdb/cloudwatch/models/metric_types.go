@@ -2,12 +2,14 @@ package models
 
 import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/request"
 )
 
 type ListMetricsProvider interface {
-	GetDimensionKeysByDimensionFilter(*DimensionKeysRequest) ([]string, error)
-	GetHardCodedDimensionKeysByNamespace(string) ([]string, error)
+	GetDimensionKeysByDimensionFilter(*request.DimensionKeysRequest) ([]string, error)
 	GetDimensionKeysByNamespace(string) ([]string, error)
+	GetDimensionValuesByDimensionFilter(*request.DimensionValuesRequest) ([]string, error)
+	GetMetricsByNamespace(namespace string) ([]Metric, error)
 }
 
 type MetricsClientProvider interface {

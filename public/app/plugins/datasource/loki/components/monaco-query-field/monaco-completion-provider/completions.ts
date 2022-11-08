@@ -1,4 +1,6 @@
 import { escapeLabelValueInExactSelector } from '../../../languageUtils';
+import { explainOperator } from '../../../querybuilder/operations';
+import { LokiOperationId } from '../../../querybuilder/types';
 import { AGGREGATION_OPERATORS, RANGE_VEC_FUNCTIONS } from '../../../syntax';
 
 import { CompletionDataProvider } from './CompletionDataProvider';
@@ -67,21 +69,21 @@ const DURATION_COMPLETIONS: Completion[] = ['$__interval', '$__range', '1m', '5m
 const LINE_FILTER_COMPLETIONS = [
   {
     operator: '|=',
-    documentation: 'Log line contains string',
+    documentation: explainOperator(LokiOperationId.LineContains),
     afterPipe: true,
   },
   {
     operator: '!=',
-    documentation: 'Log line does not contain string',
+    documentation: explainOperator(LokiOperationId.LineContainsNot),
   },
   {
     operator: '|~',
-    documentation: 'Log line contains a match to the regular expression',
+    documentation: explainOperator(LokiOperationId.LineMatchesRegex),
     afterPipe: true,
   },
   {
     operator: '!~',
-    documentation: 'Log line does not contain a match to the regular expression',
+    documentation: explainOperator(LokiOperationId.LineMatchesRegexNot),
   },
 ];
 
@@ -107,52 +109,35 @@ async function getAllHistoryCompletions(dataProvider: CompletionDataProvider): P
   }));
 }
 
-async function getLabelNamesForCompletions(
-  suffix: string,
-  triggerOnInsert: boolean,
-  addExtractedLabels: boolean,
-  otherLabels: Label[],
-  dataProvider: CompletionDataProvider
-): Promise<Completion[]> {
-  const labelNames = await dataProvider.getLabelNames(otherLabels);
-  const result: Completion[] = labelNames.map((text) => ({
-    type: 'LABEL_NAME',
-    label: text,
-    insertText: `${text}${suffix}`,
-    triggerOnInsert,
-  }));
-
-  if (addExtractedLabels) {
-    const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(otherLabels);
-    extractedLabelKeys.forEach((key) => {
-      result.push({
-        type: 'LABEL_NAME',
-        label: `${key} (parsed)`,
-        insertText: `${key}${suffix}`,
-        triggerOnInsert,
-      });
-    });
-  }
-
-  return result;
-}
-
 async function getLabelNamesForSelectorCompletions(
   otherLabels: Label[],
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
-  return getLabelNamesForCompletions('=', true, false, otherLabels, dataProvider);
+  const labelNames = await dataProvider.getLabelNames(otherLabels);
+
+  return labelNames.map((label) => ({
+    type: 'LABEL_NAME',
+    label,
+    insertText: `${label}=`,
+    triggerOnInsert: true,
+  }));
 }
 
 async function getInGroupingCompletions(
   otherLabels: Label[],
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
-  return getLabelNamesForCompletions('', false, true, otherLabels, dataProvider);
+  const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(otherLabels);
+
+  return extractedLabelKeys.map((label) => ({
+    type: 'LABEL_NAME',
+    label,
+    insertText: label,
+    triggerOnInsert: false,
+  }));
 }
 
 const PARSERS = ['json', 'logfmt', 'pattern', 'regexp', 'unpack'];
-const PARSER_DOCUMENTATION = 'Parse and extract labels from the log content.';
 
 async function getAfterSelectorCompletions(
   labels: Label[],
@@ -171,7 +156,9 @@ async function getAfterSelectorCompletions(
       type: 'PARSER',
       label: `json${extra}`,
       insertText: `${prefix}json`,
-      documentation: hasLevelInExtractedLabels ? 'Use it to get log-levels in the histogram' : PARSER_DOCUMENTATION,
+      documentation: hasLevelInExtractedLabels
+        ? 'Use it to get log-levels in the histogram'
+        : explainOperator(LokiOperationId.Json),
     });
   }
 
@@ -182,7 +169,9 @@ async function getAfterSelectorCompletions(
       type: 'DURATION',
       label: `logfmt${extra}`,
       insertText: `${prefix}logfmt`,
-      documentation: hasLevelInExtractedLabels ? 'Get detected levels in the histogram' : PARSER_DOCUMENTATION,
+      documentation: hasLevelInExtractedLabels
+        ? 'Get detected levels in the histogram'
+        : explainOperator(LokiOperationId.Logfmt),
     });
   }
 
@@ -192,14 +181,14 @@ async function getAfterSelectorCompletions(
       type: 'PARSER',
       label: parser,
       insertText: `${prefix}${parser}`,
-      documentation: PARSER_DOCUMENTATION,
+      documentation: explainOperator(parser),
     });
   });
 
   extractedLabelKeys.forEach((key) => {
     completions.push({
       type: 'LINE_FILTER',
-      label: `unwrap ${key} (detected)`,
+      label: `unwrap ${key}`,
       insertText: `${prefix}unwrap ${key}`,
     });
   });
@@ -208,6 +197,7 @@ async function getAfterSelectorCompletions(
     type: 'PIPE_OPERATION',
     label: 'unwrap',
     insertText: `${prefix}unwrap`,
+    documentation: explainOperator(LokiOperationId.Unwrap),
   });
 
   completions.push({
@@ -215,6 +205,7 @@ async function getAfterSelectorCompletions(
     label: 'line_format',
     insertText: `${prefix}line_format "{{.$0}}"`,
     isSnippet: true,
+    documentation: explainOperator(LokiOperationId.LineFormat),
   });
 
   completions.push({
@@ -222,6 +213,7 @@ async function getAfterSelectorCompletions(
     label: 'label_format',
     insertText: `${prefix}label_format`,
     isSnippet: true,
+    documentation: explainOperator(LokiOperationId.LabelFormat),
   });
 
   return [...getLineFilterCompletions(afterPipe), ...completions];

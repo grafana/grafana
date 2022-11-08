@@ -16,23 +16,22 @@
 /contribute/ @grafana/docs-squad
 /docs/sources/developers/plugins/ @grafana/docs-squad @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/developers/plugins/backend @grafana/docs-squad @grafana/plugins-platform-backend
-# Administration, data sources, querying, release updates: Garrett Guillotte
 # Set up, dashboards/visualization, best practices: Chris Moyer
 # Alerting: Brenda Muir
-/docs/sources/administration/ @gguillotte-grafana
+/docs/sources/administration/ @Eve832 @GrafanaWriter
 /docs/sources/alerting @brendamuir
 /docs/sources/best-practices/ @chri2547
 /docs/sources/dashboards/ @chri2547
-/docs/sources/datasources/ @gguillotte-grafana
-/docs/sources/enterprise/ @gguillotte-grafana
-/docs/sources/explore/ @gguillotte-grafana
+/docs/sources/datasources/ @Eve832 @GrafanaWriter
+/docs/sources/enterprise/ @Eve832 @GrafanaWriter
+/docs/sources/explore/ @Eve832 @GrafanaWriter
 /docs/sources/getting-started/ @chri2547
 /docs/sources/old-alerting @brendamuir
 /docs/sources/panels/ @chri2547
-/docs/sources/release-notes/ @gguillotte-grafana
+/docs/sources/release-notes/ @Eve832 @GrafanaWriter
 /docs/sources/setup-grafana/ @chri2547
 /docs/sources/visualization/ @chri2547
-/docs/sources/whatsnew/ @gguillotte-grafana
+/docs/sources/whatsnew/ @Eve832 @GrafanaWriter
 
 # Backend code
 *.go @grafana/backend-platform
@@ -46,6 +45,9 @@ go.sum @grafana/backend-platform
 # Logs code, developers environment
 /devenv/docker/blocks/loki* @grafana/observability-logs
 /devenv/docker/blocks/elastic* @grafana/observability-logs
+
+# Performance tests
+/devenv/docker/loadtests-ts @grafana/grafana-edge-squad
 
 # Continuous Integration
 .drone.yml @grafana/grafana-release-eng
@@ -116,6 +118,7 @@ go.sum @grafana/backend-platform
 /public/locales @grafana/user-essentials
 /public/app/core/internationalization @grafana/user-essentials
 /e2e @grafana/user-essentials
+/e2e/cloud-plugins-suite @grafana/cloud-provider-plugins
 /packages @grafana/user-essentials @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
 /packages/grafana-e2e-selectors @grafana/user-essentials
 /packages/grafana-e2e @grafana/user-essentials

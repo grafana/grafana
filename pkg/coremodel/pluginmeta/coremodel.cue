@@ -16,7 +16,7 @@ seqs: [
 				// grafana.com, then the plugin id has to follow the naming
 				// conventions.
 				id: string & strings.MinRunes(1)
-				id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|gauge|geomap|gettingstarted|graph|heatmap|heatmap-old|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|testdata|zipkin)$"
+				id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|gauge|geomap|gettingstarted|graph|heatmap|heatmap-old|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|testdata|zipkin|phlare|parca)$"
 
 				// The set of all plugin types. This hidden field exists solely
 				// so that the set can be string-interpolated into other fields.
@@ -35,7 +35,7 @@ seqs: [
 				name: string
 
 				// Plugin category used on the Add data source page.
-				category?: "tsdb" | "logging" | "cloud" | "tracing" | "sql" | "enterprise" | "other"
+				category?: "tsdb" | "logging" | "cloud" | "tracing" | "sql" | "enterprise" | "profiling" | "other"
 
 				// For data source plugins, if the plugin supports annotation
 				// queries.
@@ -130,6 +130,51 @@ seqs: [
 				// Set to true for app plugins that should be enabled by default
 				// in all orgs
 				autoEnabled?: bool
+
+				// Optional list of RBAC RoleRegistrations.
+				// Describes and organizes the default permissions associated with any of the Grafana basic roles, 
+				// which characterizes what viewers, editors, admins, or grafana admins can do on the plugin.
+				// The Admin basic role inherits its default permissions from the Editor basic role which in turn
+				// inherits them from the Viewer basic role.
+				roles?: [...#RoleRegistration]
+
+				// RoleRegistration describes an RBAC role and its assignments to basic roles.
+				// It organizes related RBAC permissions on the plugin into a role and defines which basic roles
+				// will get them by default.
+				// Example: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin
+				// which will be granted to Admins by default.
+				#RoleRegistration: {
+					// RBAC role definition to bundle related RBAC permissions on the plugin.
+					role: #Role
+
+					// Default assignment of the role to Grafana basic roles (Viewer, Editor, Admin, Grafana Admin)
+					// The Admin basic role inherits its default permissions from the Editor basic role which in turn
+					// inherits them from the Viewer basic role.
+					grants: [...#BasicRole]
+				}
+
+				// Role describes an RBAC role which allows grouping multiple related permissions on the plugin,
+				// each of which has an action and an optional scope.
+				// Example: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin.
+				#Role: {
+					name: string,
+					displayName: string,
+					description: string,
+					permissions: [...#Permission]
+				}
+
+				// Permission describes an RBAC permission on the plugin. A permission has an action and an option
+				// scope.
+				// Example: action: 'test-app.schedules:read', scope: 'test-app.schedules:*'
+				#Permission: {
+					action: string,
+					scope?: string
+				}
+
+				// BasicRole is a Grafana basic role, which can be 'Viewer', 'Editor', 'Admin' or 'Grafana Admin'.
+				// With RBAC, the Admin basic role inherits its default permissions from the Editor basic role which
+				// in turn inherits them from the Viewer basic role.
+				#BasicRole: "Grafana Admin" | "Admin" | "Editor" | "Viewer"
 
 				// Dependencies needed by the plugin.
 				dependencies: #Dependencies

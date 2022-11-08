@@ -16,9 +16,8 @@ import (
 type getStore func(db.DB) store
 
 func testIntegrationPreferencesDataAccess(t *testing.T, fn getStore) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	t.Helper()
+
 	ss := db.InitTestDB(t)
 	prefStore := fn(ss)
 	orgNavbarPreferences := pref.NavbarPreference{
