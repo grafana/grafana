@@ -338,8 +338,33 @@ func TestMakePluginResourceRequest(t *testing.T) {
 		}
 	}
 
+	require.Equal(t, resp.Header().Get("Content-Type"), "application/json")
 	require.Equal(t, "sandbox", resp.Header().Get("Content-Security-Policy"))
 	require.Empty(t, req.Header.Get(customHeader))
+}
+
+func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
+	pluginClient := &fakePluginClient{
+		statusCode: http.StatusNoContent,
+	}
+	hs := HTTPServer{
+		Cfg:          setting.NewCfg(),
+		log:          log.New(),
+		pluginClient: pluginClient,
+	}
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	resp := httptest.NewRecorder()
+	pCtx := backend.PluginContext{}
+	err := hs.makePluginResourceRequest(resp, req, pCtx)
+	require.NoError(t, err)
+
+	for {
+		if resp.Flushed {
+			break
+		}
+	}
+
+	require.Zero(t, resp.Header().Get("Content-Type"))
 }
 
 func callGetPluginAsset(sc *scenarioContext) {
@@ -373,6 +398,8 @@ type fakePluginClient struct {
 	req *backend.CallResourceRequest
 
 	backend.QueryDataHandlerFunc
+
+	statusCode int
 }
 
 func (c *fakePluginClient) CallResource(_ context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -384,8 +411,13 @@ func (c *fakePluginClient) CallResource(_ context.Context, req *backend.CallReso
 		return err
 	}
 
+	statusCode := http.StatusOK
+	if c.statusCode != 0 {
+		statusCode = c.statusCode
+	}
+
 	return sender.Send(&backend.CallResourceResponse{
-		Status:  http.StatusOK,
+		Status:  statusCode,
 		Headers: make(map[string][]string),
 		Body:    bytes,
 	})
