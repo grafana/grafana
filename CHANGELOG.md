@@ -5,7 +5,6 @@
 ### Features and enhancements
 
 - **Chore:** Upgrade Go to 1.19.2. [#56857](https://github.com/grafana/grafana/pull/56857), [@sakjur](https://github.com/sakjur)
-- **Chore:** Upgrade Go to 1.19.3. [#58070](https://github.com/grafana/grafana/pull/58070), [@sakjur](https://github.com/sakjur)
 
 <!-- 8.5.15 END -->
 
