@@ -261,7 +261,7 @@ const jsonTestObject: DataFrame = {
   fields: [
     {
       name: 'samples',
-      type: 'auto',
+      type: FieldType.other,
       config: {},
       values: new ArrayVector([
         {

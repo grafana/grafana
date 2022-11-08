@@ -48,7 +48,8 @@ function queryJSON(frame: DataFrame, options: JSONQueryOptions): DataFrame {
   });
 
   let fields: Field[] = [];
-  values.forEach((value: unknown, key: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  values.forEach((value: any, key: string) => {
     fields.push({
       name: key,
       values: value,
