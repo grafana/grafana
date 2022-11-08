@@ -44,12 +44,12 @@ describe('Loki Editor', () => {
     e2e().contains('Code').click();
 
     // Wait for lazy loading
-    const queryField = e2e.components.QueryField.container();
     const monacoLoadingText = 'Loading...';
 
-    queryField.should('be.visible').should('have.text', monacoLoadingText);
-    queryField.should('be.visible').should('not.have.text', monacoLoadingText);
+    e2e.components.QueryField.container().should('be.visible').should('have.text', monacoLoadingText);
+    e2e.components.QueryField.container().should('be.visible').should('not.have.text', monacoLoadingText);
 
+    const queryField = e2e.components.QueryField.container();
     const queryFieldValue = e2e().get('.monaco-editor textarea:first');
 
     // adds closing braces around empty value
