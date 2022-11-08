@@ -17,6 +17,7 @@ export interface FeatureToggles {
   [name: string]: boolean | undefined; // support any string value
 
   alertingBigTransactions?: boolean;
+  promQueryBuilder?: boolean;
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   database_metrics?: boolean;
@@ -44,7 +45,6 @@ export interface FeatureToggles {
   dashboardsFromStorage?: boolean;
   export?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
-  explore2Dashboard?: boolean;
   exploreMixedDatasource?: boolean;
   tracing?: boolean;
   commandPalette?: boolean;
@@ -53,7 +53,6 @@ export interface FeatureToggles {
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   prometheusStreamingJSONParser?: boolean;
-  prometheusStreamingJSONParserTest?: boolean;
   newDBLibrary?: boolean;
   validateDashboardsOnSave?: boolean;
   autoMigrateGraphPanels?: boolean;

@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
@@ -30,6 +32,7 @@ type (
 		Selector    string
 		Service     string
 		Slo         string
+		logger      log.Logger
 	}
 
 	// Used to build MQL queries
@@ -41,6 +44,7 @@ type (
 		AliasBy     string
 		timeRange   backend.TimeRange
 		GraphPeriod string
+		logger      log.Logger
 	}
 
 	metricQuery struct {

@@ -83,6 +83,8 @@ describe('Azure Monitor QueryEditor', () => {
 
     render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
 
-    await waitFor(() => expect(screen.getByTestId('azure-monitor-experimental-header')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('data-testid azure-monitor-experimental-header')).toBeInTheDocument()
+    );
   });
 });
