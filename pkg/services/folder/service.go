@@ -19,16 +19,18 @@ type Service interface {
 }
 
 // TODO: remove when nested folder refactor is done.
-func ConvertModelFolderToFolder(folder *models.Folder) *Folder {
+func ConvertModelFolderToFolder(folder *models.Folder, orgId int64) *Folder {
 	if folder == nil {
 		return nil
 	}
 	return &Folder{
-		ID:    folder.Id,
-		UID:   folder.Uid,
-		URL:   folder.Url,
-		Title: folder.Title,
-		// how do we get orgId from models.Folder?
+		ID:      folder.Id,
+		OrgID:   orgId,
+		UID:     folder.Uid,
+		URL:     folder.Url,
+		Title:   folder.Title,
+		Created: folder.Created,
+		Updated: folder.Updated,
 	}
 }
 

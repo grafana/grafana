@@ -317,15 +317,24 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 		}
 		return nil, dashboards.ErrFolderAccessDenied
 	}
-	if dashFolder == nil {
-		return nil, nil
-	}
-	f := folder.ConvertModelFolderToFolder(dashFolder)
+
+	
+	f := folder.ConvertModelFolderToFolder(dashFolder, cmd.OrgID)
 
 	deleteCmd := models.DeleteDashboardCommand{OrgId: user.OrgID, Id: dashFolder.Id, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 
 	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 		return nil, toFolderError(err)
+	}
+
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		deletedFolder, err := s.Delete(ctx, cmd)
+		if err != nil {
+			s.log.Error("the delete folder on folder table failed with err: ", err.Error())
+		}
+		if f == nil {
+			f = deletedFolder
+		}
 	}
 
 	return f, nil
