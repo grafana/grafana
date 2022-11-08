@@ -9,7 +9,7 @@ import (
 	"github.com/sdboyer/jennywrites"
 )
 
-// TSTypesGenerator creates a [OneToOne] that produces TypeScript types and
+// TSTypesJenny creates a [OneToOne] that produces TypeScript types and
 // defaults for the latest Thema schema in a structured kind's lineage.
 //
 // At minimum, a tskindsdir must be provided. This should be the path to the parent
@@ -18,7 +18,7 @@ import (
 // should live at packages/grafana-schema/src/raw/foo, relpath should be "pkg/kind".
 //
 // This generator is a no-op for raw kinds.
-func TSTypesGenerator(tskindsdir string, cfg *TSTypesGeneratorConfig) OneToOne {
+func TSTypesJenny(tskindsdir string, cfg *TSTypesGeneratorConfig) OneToOne {
 	if cfg == nil {
 		cfg = new(TSTypesGeneratorConfig)
 	}
@@ -34,7 +34,7 @@ func TSTypesGenerator(tskindsdir string, cfg *TSTypesGeneratorConfig) OneToOne {
 	}
 }
 
-// TSTypesGeneratorConfig holds configuration options for [TSTypesGenerator].
+// TSTypesGeneratorConfig holds configuration options for [TSTypesJenny].
 type TSTypesGeneratorConfig struct {
 	// GenDirName returns the name of the parent directory in which the type file
 	// should be generated. If nil, the DeclForGen.Lineage().Name() will be used.
@@ -50,7 +50,7 @@ type genTSTypes struct {
 }
 
 func (gen *genTSTypes) JennyName() string {
-	return "TSTypesGenerator"
+	return "TSTypesJenny"
 }
 
 func (gen *genTSTypes) Generate(decl *DeclForGen) (*jennywrites.File, error) {
@@ -83,5 +83,3 @@ func (gen *genTSTypes) Generate(decl *DeclForGen) (*jennywrites.File, error) {
 		[]byte(f.String()),
 		gen), nil
 }
-
-var _ OneToOne = &genTSTypes{}

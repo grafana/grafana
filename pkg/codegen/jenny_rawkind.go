@@ -8,14 +8,14 @@ import (
 	"github.com/sdboyer/jennywrites"
 )
 
-// RawKindGenerator generates the implementation of
-// [kindsys.Raw] for the provided kind declaration.
+// RawKindJenny generates the implementation of [kindsys.Raw] for the
+// provided kind declaration.
 //
 // gokindsdir should be the relative path to the parent directory that contains
 // all generated kinds.
 //
 // This generator only has output for raw kinds.
-func RawKindGenerator(gokindsdir string, cfg *RawKindGeneratorConfig) OneToOne {
+func RawKindJenny(gokindsdir string, cfg *RawKindGeneratorConfig) OneToOne {
 	if cfg == nil {
 		cfg = new(RawKindGeneratorConfig)
 	}
@@ -36,8 +36,6 @@ type genRawKind struct {
 	cfg        *RawKindGeneratorConfig
 }
 
-var _ OneToOne = &genRawKind{}
-
 type RawKindGeneratorConfig struct {
 	// GenDirName returns the name of the directory in which the file should be
 	// generated. Defaults to DeclForGen.Lineage().Name() if nil.
@@ -45,7 +43,7 @@ type RawKindGeneratorConfig struct {
 }
 
 func (gen *genRawKind) JennyName() string {
-	return "RawKindGenerator"
+	return "RawKindJenny"
 }
 
 func (gen *genRawKind) Generate(decl *DeclForGen) (*jennywrites.File, error) {

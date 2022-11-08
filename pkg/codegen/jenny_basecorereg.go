@@ -8,14 +8,14 @@ import (
 	"github.com/sdboyer/jennywrites"
 )
 
-// BaseCoreRegistryGenerator generates a static registry for core kinds that
+// BaseCoreRegistryJenny generates a static registry for core kinds that
 // is only initializes their [kindsys.Interface]. No slot kinds are composed.
 //
 // Path should be the relative path to the directory that will contain the
 // generated registry. kindrelroot should be the repo-root-relative path to the
 // parent directory to all directories that contain generated kind bindings
 // (e.g. pkg/kind).
-func BaseCoreRegistryGenerator(path, kindrelroot string) ManyToOne {
+func BaseCoreRegistryJenny(path, kindrelroot string) ManyToOne {
 	return &genBaseRegistry{
 		path:        path,
 		kindrelroot: kindrelroot,
@@ -27,10 +27,8 @@ type genBaseRegistry struct {
 	kindrelroot string
 }
 
-var _ ManyToOne = &genBaseRegistry{}
-
 func (gen *genBaseRegistry) JennyName() string {
-	return "BaseCoreRegistryGenerator"
+	return "BaseCoreRegistryJenny"
 }
 
 func (gen *genBaseRegistry) Generate(decls []*DeclForGen) (*jennywrites.File, error) {

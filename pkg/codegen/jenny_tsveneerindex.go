@@ -16,18 +16,16 @@ import (
 	"github.com/sdboyer/jennywrites"
 )
 
-var _ ManyToOne = &genTSVeneerIndex{}
-
-// TSVeneerIndexGenerator generates an index.gen.ts file with references to all
+// TSVeneerIndexJenny generates an index.gen.ts file with references to all
 // generated TS types. Elements with the attribute @grafana(TSVeneer="type") are
 // exported from a handwritten file, rather than the raw generated types.
 //
 // The provided dir is the path, relative to the grafana root, to the directory
 // that should contain the generated index.
 //
-// Implicitly depends on output patterns in TSTypesGenerator.
-// TODO this is wasteful; share-nothing generator model entails re-running the cuetsy gen that TSTypesGenerator already did
-func TSVeneerIndexGenerator(dir string) ManyToOne {
+// Implicitly depends on output patterns in TSTypesJenny.
+// TODO this is wasteful; share-nothing generator model entails re-running the cuetsy gen that TSTypesJenny already did
+func TSVeneerIndexJenny(dir string) ManyToOne {
 	return &genTSVeneerIndex{
 		dir: dir,
 	}
@@ -38,7 +36,7 @@ type genTSVeneerIndex struct {
 }
 
 func (gen *genTSVeneerIndex) JennyName() string {
-	return "TSVeneerIndexGenerator"
+	return "TSVeneerIndexJenny"
 }
 
 func (gen *genTSVeneerIndex) Generate(decls []*DeclForGen) (*jennywrites.File, error) {

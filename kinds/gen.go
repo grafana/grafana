@@ -37,18 +37,20 @@ func main() {
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		codegen.GoTypesGenerator(kindsys.GoCoreKindParentPath, nil),
-		codegen.CoreStructuredKindGenerator(kindsys.GoCoreKindParentPath, nil),
-		codegen.RawKindGenerator(kindsys.GoCoreKindParentPath, nil),
-		codegen.BaseCoreRegistryGenerator(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
-		codegen.TSTypesGenerator(kindsys.TSCoreKindParentPath, &codegen.TSTypesGeneratorConfig{
+		codegen.GoTypesJenny(kindsys.GoCoreKindParentPath, nil),
+		codegen.CoreStructuredKindJenny(kindsys.GoCoreKindParentPath, nil),
+		codegen.RawKindJenny(kindsys.GoCoreKindParentPath, nil),
+		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
+		codegen.TSTypesJenny(kindsys.TSCoreKindParentPath, &codegen.TSTypesGeneratorConfig{
 			GenDirName: func(decl *codegen.DeclForGen) string {
 				// FIXME this hardcodes always generating to experimental dir. OK for now, but need generator fanout
 				return filepath.Join(decl.Meta.Common().MachineName, "x")
 			},
 		}),
-		codegen.TSVeneerIndexGenerator(filepath.Join("packages", "grafana-schema", "src")),
+		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
 	)
+
+	coreKindsGen.AddPostprocessors(codegen.SlashHeaderMapper("kinds/gen.go"))
 
 	cwd, err := os.Getwd()
 	if err != nil {

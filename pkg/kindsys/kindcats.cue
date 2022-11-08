@@ -26,7 +26,7 @@ import (
 // and CustomStructured.
 #Kind: #Raw | #Composable | #CoreStructured | #CustomStructured
 
-// properties shared between all kind varieties.
+// properties shared between all kind categories.
 _sharedKind: {
 	// name is the canonical name of a Kind, as expressed in PascalCase.
 	//

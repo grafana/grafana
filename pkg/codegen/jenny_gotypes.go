@@ -10,7 +10,7 @@ import (
 	"golang.org/x/tools/go/ast/astutil"
 )
 
-// GoTypesGenerator creates a [OneToOne] that produces Go types for the latest
+// GoTypesJenny creates a [OneToOne] that produces Go types for the latest
 // Thema schema in a structured kind's lineage.
 //
 // At minimum, a gokindsdir must be provided. This should be the path to the parent
@@ -19,7 +19,7 @@ import (
 // should live at pkg/kind/foo/foo_gen.go, relpath should be "pkg/kind".
 //
 // This generator is a no-op for raw kinds.
-func GoTypesGenerator(gokindsdir string, cfg *GoTypesGeneratorConfig) OneToOne {
+func GoTypesJenny(gokindsdir string, cfg *GoTypesGeneratorConfig) OneToOne {
 	if cfg == nil {
 		cfg = new(GoTypesGeneratorConfig)
 	}
@@ -35,7 +35,7 @@ func GoTypesGenerator(gokindsdir string, cfg *GoTypesGeneratorConfig) OneToOne {
 	}
 }
 
-// GoTypesGeneratorConfig holds configuration options for [GoTypesGenerator].
+// GoTypesGeneratorConfig holds configuration options for [GoTypesJenny].
 type GoTypesGeneratorConfig struct {
 	// Apply is an optional AST manipulation func that, if provided, will be run
 	// against the generated Go file prior to running it through goimports.
@@ -54,10 +54,8 @@ type genGoTypes struct {
 	cfg        *GoTypesGeneratorConfig
 }
 
-var _ OneToOne = &genGoTypes{}
-
 func (gen *genGoTypes) JennyName() string {
-	return "GoTypesGenerator"
+	return "GoTypesJenny"
 }
 
 func (gen *genGoTypes) Generate(decl *DeclForGen) (*jennywrites.File, error) {

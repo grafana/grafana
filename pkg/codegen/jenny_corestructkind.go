@@ -8,14 +8,14 @@ import (
 	"github.com/sdboyer/jennywrites"
 )
 
-// CoreStructuredKindGenerator generates the implementation of
+// CoreStructuredKindJenny generates the implementation of
 // [kindsys.Structured] for the provided kind declaration.
 //
 // gokindsdir should be the relative path to the parent directory that contains
 // all generated kinds.
 //
 // This generator only has output for core structured kinds.
-func CoreStructuredKindGenerator(gokindsdir string, cfg *CoreStructuredKindGeneratorConfig) OneToOne {
+func CoreStructuredKindJenny(gokindsdir string, cfg *CoreStructuredKindGeneratorConfig) OneToOne {
 	if cfg == nil {
 		cfg = new(CoreStructuredKindGeneratorConfig)
 	}
@@ -31,7 +31,7 @@ func CoreStructuredKindGenerator(gokindsdir string, cfg *CoreStructuredKindGener
 	}
 }
 
-// CoreStructuredKindGeneratorConfig holds configuration options for [CoreStructuredKindGenerator].
+// CoreStructuredKindGeneratorConfig holds configuration options for [CoreStructuredKindJenny].
 type CoreStructuredKindGeneratorConfig struct {
 	// GenDirName returns the name of the directory in which the file should be
 	// generated. Defaults to DeclForGen.Lineage().Name() if nil.
@@ -46,7 +46,7 @@ type genCoreStructuredKind struct {
 var _ OneToOne = &genCoreStructuredKind{}
 
 func (gen *genCoreStructuredKind) JennyName() string {
-	return "CoreStructuredKindGenerator"
+	return "CoreStructuredKindJenny"
 }
 
 func (gen *genCoreStructuredKind) Generate(decl *DeclForGen) (*jennywrites.File, error) {
