@@ -30,9 +30,8 @@ This topic describes how to:
 
 ## Before you begin
 
-- Ensure that you have either organization administrator permissions or team administrator permissions (Create a team, Grant team member permissions, Remove a team member, View a list of teams)
-- Make a plan for which users belong to which teams and the permissions team members receive (Create a team, Grant team member permissions, Remove a team member, View a list of teams)
-- Ensure that you have organization administrator permissions (Add a team member, Delete a team)
+- Ensure that you have either organization administrator permissions or team administrator permissions 
+- Make a plan for which users belong to which teams and the permissions team members receive 
 
 ## Create a team
 
