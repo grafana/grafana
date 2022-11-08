@@ -9,9 +9,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/kind/snapshot"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -26,16 +28,26 @@ type objectStoreJob struct {
 	cfg           ExportConfig
 	broadcaster   statusBroadcaster
 	stopRequested bool
+	user          *user.SignedInUser
 
-	sess            *session.SessionDB
-	playlistService playlist.Service
-	store           object.ObjectStoreServer
+	sess               *session.SessionDB
+	playlistService    playlist.Service
+	store              object.ObjectStoreServer
+	dashboardsnapshots dashboardsnapshots.Service
 }
 
-func startObjectStoreJob(cfg ExportConfig, broadcaster statusBroadcaster, db db.DB, playlistService playlist.Service, store object.ObjectStoreServer) (Job, error) {
+func startObjectStoreJob(user *user.SignedInUser,
+	cfg ExportConfig,
+	broadcaster statusBroadcaster,
+	db db.DB,
+	playlistService playlist.Service,
+	store object.ObjectStoreServer,
+	dashboardsnapshots dashboardsnapshots.Service,
+) (Job, error) {
 	job := &objectStoreJob{
 		logger:      log.New("export_to_object_store_job"),
 		cfg:         cfg,
+		user:        user,
 		broadcaster: broadcaster,
 		status: ExportStatus{
 			Running: true,
@@ -44,9 +56,10 @@ func startObjectStoreJob(cfg ExportConfig, broadcaster statusBroadcaster, db db.
 			Count:   make(map[string]int, 10),
 			Index:   0,
 		},
-		sess:            db.GetSqlxSession(),
-		playlistService: playlistService,
-		store:           store,
+		sess:               db.GetSqlxSession(),
+		playlistService:    playlistService,
+		store:              store,
+		dashboardsnapshots: dashboardsnapshots,
 	}
 
 	broadcaster(job.status)
@@ -100,6 +113,8 @@ func (e *objectStoreJob) start() {
 		e.status.Status = "error: " + err.Error()
 		return
 	}
+	e.status.Last = fmt.Sprintf("export %d dashboards", len(dashInfo))
+	e.broadcaster(e.status)
 
 	for _, dash := range dashInfo {
 		rowUser.OrgID = dash.OrgID
@@ -170,6 +185,70 @@ func (e *objectStoreJob) start() {
 		e.status.Last = fmt.Sprintf("ITEM: %s", playlist.Uid)
 		e.broadcaster(e.status)
 	}
+
+	// TODO.. query lookup
+	orgIDs := []int64{1}
+	what = "snapshot"
+	for _, orgId := range orgIDs {
+		cmd := &dashboardsnapshots.GetDashboardSnapshotsQuery{
+			OrgId:        orgId,
+			Limit:        500000,
+			SignedInUser: e.user,
+		}
+
+		err := e.dashboardsnapshots.SearchDashboardSnapshots(ctx, cmd)
+		if err != nil {
+			e.status.Status = "error: " + err.Error()
+			return
+		}
+
+		for _, dto := range cmd.Result {
+			m := snapshot.Model{
+				Name:        dto.Name,
+				ExternalURL: dto.ExternalUrl,
+				Expires:     dto.Expires.UnixMilli(),
+			}
+			rowUser.OrgID = dto.OrgId
+			rowUser.UserID = dto.UserId
+
+			snapcmd := &dashboardsnapshots.GetDashboardSnapshotQuery{
+				Key: dto.Key,
+			}
+			err = e.dashboardsnapshots.GetDashboardSnapshot(ctx, snapcmd)
+			if err == nil {
+				res := snapcmd.Result
+				m.DeleteKey = res.DeleteKey
+				m.ExternalURL = res.ExternalUrl
+
+				snap := res.Dashboard
+				m.DashboardUID = snap.Get("uid").MustString("")
+				snap.Del("uid")
+				snap.Del("id")
+
+				b, _ := snap.MarshalJSON()
+				m.Snapshot = b
+			}
+
+			_, err = e.store.Write(ctx, &object.WriteObjectRequest{
+				GRN: &object.GRN{
+					Scope: models.ObjectStoreScopeEntity,
+					UID:   dto.Key,
+					Kind:  models.StandardKindSnapshot,
+				},
+				Body:    prettyJSON(m),
+				Comment: "export from snapshtts",
+			})
+			if err != nil {
+				e.status.Status = "error: " + err.Error()
+				return
+			}
+			e.status.Changed = time.Now().UnixMilli()
+			e.status.Index++
+			e.status.Count[what] += 1
+			e.status.Last = fmt.Sprintf("ITEM: %s", dto.Name)
+			e.broadcaster(e.status)
+		}
+	}
 }
 
 type dashInfo struct {
@@ -184,7 +263,7 @@ func (e *objectStoreJob) getDashboards(ctx context.Context) ([]dashInfo, error) 
 	e.broadcaster(e.status)
 
 	dash := make([]dashInfo, 0)
-	rows, err := e.sess.Query(ctx, "SELECT org_id,uid,data,updated_by FROM dashboard WHERE is_folder=0")
+	rows, err := e.sess.Query(ctx, "SELECT org_id,uid,data,updated_by FROM dashboard WHERE is_folder=false")
 	if err != nil {
 		return nil, err
 	}

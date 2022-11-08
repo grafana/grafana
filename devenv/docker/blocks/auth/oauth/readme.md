@@ -11,7 +11,7 @@ Here is the conf you need to add to your configuration file (conf/custom.ini):
 
 ```ini
 [auth]
-signout_redirect_url = http://localhost:8087/auth/realms/grafana/protocol/openid-connect/logout?redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Flogin
+signout_redirect_url = http://localhost:8087/realms/grafana/protocol/openid-connect/logout?redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Flogin
 
 [auth.generic_oauth]
 enabled = true
@@ -23,6 +23,7 @@ scopes = openid email profile offline_access roles
 email_attribute_path = email
 login_attribute_path = username
 name_attribute_path = full_name
+groups_attribute_path = groups
 auth_url = http://localhost:8087/realms/grafana/protocol/openid-connect/auth
 token_url = http://localhost:8087/realms/grafana/protocol/openid-connect/token
 role_attribute_path = contains(roles[*], 'grafanaadmin') && 'GrafanaAdmin' || contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
@@ -47,7 +48,7 @@ username_claim = login
 email_claim = email
 jwk_set_file = devenv/docker/blocks/auth/oauth/jwks.json
 cache_ttl = 60m
-expected_claims = {"iss": "http://localhost:8087/auth/realms/grafana", "azp": "grafana-oauth"}
+expect_claims = {"iss": "http://localhost:8087/auth/realms/grafana", "azp": "grafana-oauth"}
 auto_sign_up = true
 ```
 
@@ -95,7 +96,7 @@ username_claim = login
 email_claim = email
 jwk_set_url = <YOUR REVERSE PROXY URL>/auth/realms/grafana/protocol/openid-connect/certs
 cache_ttl = 60m
-expected_claims = {"iss": "http://localhost:8087/auth/realms/grafana", "azp": "grafana-oauth"}
+expect_claims = {"iss": "http://localhost:8087/auth/realms/grafana", "azp": "grafana-oauth"}
 auto_sign_up = true
 ```
 

@@ -21,6 +21,9 @@ import (
 )
 
 func TestIntegrationPrometheusBuffered(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 	})
@@ -104,6 +107,9 @@ func TestIntegrationPrometheusBuffered(t *testing.T) {
 }
 
 func TestIntegrationPrometheusClient(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"prometheusStreamingJSONParser"},
 	})

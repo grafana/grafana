@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
-import { Icon, Input, useStyles } from '@grafana/ui';
+import { Icon, Input, useStyles2 } from '@grafana/ui';
 
 const getStyles = () => ({
   searchContainer: css`
@@ -12,7 +12,7 @@ const getStyles = () => ({
 });
 
 export const Search: FC<{ onChange: (e: React.FormEvent<HTMLInputElement>) => void }> = ({ onChange }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.searchContainer}>

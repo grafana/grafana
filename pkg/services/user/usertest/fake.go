@@ -74,6 +74,10 @@ func (f *FakeUserService) GetSignedInUser(ctx context.Context, query *user.GetSi
 	return f.ExpectedSignedInUser, f.ExpectedError
 }
 
+func (f *FakeUserService) NewAnonymousSignedInUser(ctx context.Context) (*user.SignedInUser, error) {
+	return f.ExpectedSignedInUser, f.ExpectedError
+}
+
 func (f *FakeUserService) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
 	return &f.ExpectedSearchUsers, f.ExpectedError
 }
