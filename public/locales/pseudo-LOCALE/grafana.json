@@ -417,6 +417,13 @@
       "cancel-button": "Cäŉčęľ",
       "select-time": "Ŝęľęčŧ ä ŧįmę řäŉģę"
     },
+    "footer": {
+      "change-settings-button": "Cĥäŉģę ŧįmę şęŧŧįŉģş",
+      "fiscal-year-option": "Fįşčäľ yęäř",
+      "fiscal-year-start": "Fįşčäľ yęäř şŧäřŧ mőŉŧĥ",
+      "time-zone-option": "Ŧįmę žőŉę",
+      "time-zone-selection": "Ŧįmę žőŉę şęľęčŧįőŉ"
+    },
     "range-content": {
       "apply-button": "Åppľy ŧįmę řäŉģę",
       "default-error": "Pľęäşę ęŉŧęř ä päşŧ đäŧę őř \"ŉőŵ\"",
