@@ -441,6 +441,10 @@
       "default-title": "",
       "example-title": "",
       "specify": ""
+    },
+    "zone": {
+      "select-aria-label": "",
+      "select-search-input": ""
     }
   },
   "user-orgs": {
