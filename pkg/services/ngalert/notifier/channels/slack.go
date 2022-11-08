@@ -171,7 +171,7 @@ type slackMessage struct {
 	IconEmoji   string                   `json:"icon_emoji,omitempty"`
 	IconURL     string                   `json:"icon_url,omitempty"`
 	Attachments []attachment             `json:"attachments"`
-	Blocks      []map[string]interface{} `json:"blocks"`
+	Blocks      []map[string]interface{} `json:"blocks,omitempty"`
 }
 
 // attachment is used to display a richly-formatted message block.
@@ -186,6 +186,8 @@ type attachment struct {
 	FooterIcon string              `json:"footer_icon"`
 	Color      string              `json:"color,omitempty"`
 	Ts         int64               `json:"ts,omitempty"`
+	Pretext    string              `json:"pretext,omitempty"`
+	MrkdwnIn   []string            `json:"mrkdwn_in,omitempty"`
 }
 
 // Notify sends an alert notification to Slack.
@@ -300,7 +302,6 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.A
 
 	req := &slackMessage{
 		Channel:   tmpl(sn.Recipient),
-		Text:      tmpl(sn.Title),
 		Username:  tmpl(sn.Username),
 		IconEmoji: tmpl(sn.IconEmoji),
 		IconURL:   tmpl(sn.IconURL),
@@ -354,15 +355,9 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.A
 	}
 
 	if mentionsBuilder.Len() > 0 {
-		req.Blocks = []map[string]interface{}{
-			{
-				"type": "section",
-				"text": map[string]interface{}{
-					"type": "mrkdwn",
-					"text": mentionsBuilder.String(),
-				},
-			},
-		}
+		// Use markdown-formatted pretext for any mentions.
+		req.Attachments[0].MrkdwnIn = []string{"pretext"}
+		req.Attachments[0].Pretext = mentionsBuilder.String()
 	}
 
 	return req, nil
