@@ -15,9 +15,7 @@ export interface SceneCanvasTextState extends SceneLayoutChildState {
 export class SceneCanvasText extends SceneObjectBase<SceneCanvasTextState> {
   public static Editor = Editor;
 
-  _variableDependency = new VariableDependencyConfig(this, {
-    statePaths: ['text'],
-  });
+  protected _variableDependency = new VariableDependencyConfig(this, { statePaths: ['text'] });
 
   static Component = ({ model }: SceneComponentProps<SceneCanvasText>) => {
     const { text, fontSize = 20, align = 'left', key } = model.useState();
