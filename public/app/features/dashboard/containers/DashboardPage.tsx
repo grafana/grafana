@@ -273,7 +273,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     else if (state.viewPanel && !urlViewPanelId) {
       // This mutable state feels wrong to have in getDerivedStateFromProps
       // Should move this state out of dashboard in the future
-      dashboard.exitViewPanel(state.viewPanel);
+      dashboard.exitViewPanel(dashboard.panelInView ?? state.viewPanel);
       updatedState.viewPanel = null;
       updatedState.updateScrollTop = state.rememberScrollTop;
     }
