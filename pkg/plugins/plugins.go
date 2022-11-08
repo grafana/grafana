@@ -6,15 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
@@ -26,6 +23,7 @@ type Plugin struct {
 	JSONData
 
 	PluginDir string
+	Files     FileSystem
 	Class     Class
 
 	// App fields
@@ -55,9 +53,9 @@ type Plugin struct {
 type PluginDTO struct {
 	JSONData
 
-	pluginDir string
+	files FileSystem
 
-	Class Class
+	class Class
 
 	// App fields
 	IncludedInAppID string
@@ -65,22 +63,26 @@ type PluginDTO struct {
 	Pinned          bool
 
 	// Signature fields
-	Signature      SignatureStatus
-	SignatureType  SignatureType
-	SignatureOrg   string
-	SignedFiles    PluginFiles
-	SignatureError *SignatureError
+	Signature     SignatureStatus
+	SignatureType SignatureType
+	SignatureOrg  string
+	signedFiles   PluginFiles
 
 	// SystemJS fields
 	Module  string
 	BaseURL string
 
-	// temporary
-	backend.StreamHandler
+	supportsStreaming bool
+}
+
+func NewPluginDTO(jsonData JSONData) PluginDTO {
+	return PluginDTO{
+		JSONData: jsonData,
+	}
 }
 
 func (p PluginDTO) SupportsStreaming() bool {
-	return p.StreamHandler != nil
+	return p.supportsStreaming
 }
 
 func (p PluginDTO) IsApp() bool {
@@ -88,59 +90,51 @@ func (p PluginDTO) IsApp() bool {
 }
 
 func (p PluginDTO) IsCorePlugin() bool {
-	return p.Class == Core
+	return p.class == Core
 }
 
 func (p PluginDTO) IsExternalPlugin() bool {
-	return p.Class == External
+	return p.class == External
 }
 
 func (p PluginDTO) IsSecretsManager() bool {
 	return p.JSONData.Type == SecretsManager
 }
 
-func (p PluginDTO) IncludedInSignature(file string) bool {
+func (p PluginDTO) Updatable() bool {
+	return !p.IsCorePlugin()
+}
+
+func (p PluginDTO) includedInSignature(file string) bool {
 	// permit Core plugin files
 	if p.IsCorePlugin() {
 		return true
 	}
 
 	// permit when no signed files (no MANIFEST)
-	if p.SignedFiles == nil { //TODO only accept unsigned if it is part of authorizer
+	if p.signedFiles == nil { //TODO only accept unsigned if it is part of authorizer
 		return true
 	}
 
-	if _, exists := p.SignedFiles[file]; !exists {
+	if _, exists := p.signedFiles[file]; !exists {
 		return false
 	}
 	return true
 }
 
 func (p PluginDTO) Markdown(name string) []byte {
-	// nolint:gosec
-	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
-	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	path := filepath.Join(p.pluginDir, mdFilepath(strings.ToUpper(name)))
-	exists, err := fs.Exists(path)
-	if err != nil {
-		return make([]byte, 0)
-	}
+	path := mdFilepath(strings.ToUpper(name))
+	exists := p.files.Exists(path)
 	if !exists {
-		path = filepath.Join(p.pluginDir, mdFilepath(strings.ToLower(name)))
+		path = mdFilepath(strings.ToLower(name))
 	}
 
-	exists, err = fs.Exists(path)
-	if err != nil || !exists {
+	exists = p.files.Exists(path)
+	if !exists {
 		return make([]byte, 0)
 	}
 
-	// nolint:gosec
-	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
-	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return make([]byte, 0)
-	}
+	data, _ := p.files.Read(path)
 	return data
 }
 
@@ -155,46 +149,67 @@ func (nopReadSeeker) Seek(_ int64, _ int) (int64, error) {
 }
 
 func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
-	if !p.IncludedInSignature(name) {
-		return nopReadSeeker{}, time.Time{}, nil
-	}
-
-	// prepend slash for cleaning relative paths
-	requestedFile := filepath.Clean(filepath.Join("/", name))
-	rel, err := filepath.Rel("/", requestedFile)
+	f, err := p.files.Open(name)
 	if err != nil {
-		return nopReadSeeker{}, time.Time{}, nil
-	}
-
-	absPluginDir, err := filepath.Abs(p.pluginDir)
-	if err != nil {
-		return nopReadSeeker{}, time.Time{}, nil
-	}
-
-	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
-	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	// nolint:gosec
-	f, err := os.Open(filepath.Join(absPluginDir, rel))
-	if err != nil {
-		return nopReadSeeker{}, time.Time{}, nil
+		return nil, time.Time{}, err
 	}
 
 	fi, err := f.Stat()
 	if err != nil {
-		return nopReadSeeker{}, time.Time{}, nil
+		return nil, time.Time{}, err
 	}
-	modTime := fi.ModTime()
 
-	d, err := ioutil.ReadAll(f)
+	b, err := io.ReadAll(f)
 	if err != nil {
-		return nopReadSeeker{}, time.Time{}, nil
+		return nil, time.Time{}, err
 	}
 
 	if err = f.Close(); err != nil {
-		return nopReadSeeker{}, time.Time{}, err
+		return nil, time.Time{}, err
 	}
 
-	return bytes.NewReader(d), modTime, nil
+	return bytes.NewReader(b), fi.ModTime(), nil
+
+	//if !p.includedInSignature(name) {
+	//	return nopReadSeeker{}, time.Time{}, nil
+	//}
+	//
+	//// prepend slash for cleaning relative paths
+	//requestedFile := filepath.Clean(filepath.Join("/", name))
+	//rel, err := filepath.Rel("/", requestedFile)
+	//if err != nil {
+	//	return nopReadSeeker{}, time.Time{}, nil
+	//}
+	//
+	//absPluginDir, err := filepath.Abs(p.pluginDir)
+	//if err != nil {
+	//	return nopReadSeeker{}, time.Time{}, nil
+	//}
+	//
+	//// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
+	//// use this with a prefix of the plugin's directory, which is set during plugin loading
+	//// nolint:gosec
+	//f, err := os.Open(filepath.Join(absPluginDir, rel))
+	//if err != nil {
+	//	return nopReadSeeker{}, time.Time{}, nil
+	//}
+	//
+	//fi, err := f.Stat()
+	//if err != nil {
+	//	return nopReadSeeker{}, time.Time{}, nil
+	//}
+	//modTime := fi.ModTime()
+	//
+	//d, err := ioutil.ReadAll(f)
+	//if err != nil {
+	//	return nopReadSeeker{}, time.Time{}, nil
+	//}
+	//
+	//if err = f.Close(); err != nil {
+	//	return nopReadSeeker{}, time.Time{}, err
+	//}
+	//
+	//return bytes.NewReader(d), modTime, nil
 }
 
 func mdFilepath(mdFilename string) string {
@@ -411,6 +426,18 @@ func (p *Plugin) Client() (PluginClient, bool) {
 }
 
 func (p *Plugin) ExecutablePath() string {
+	if p.IsRenderer() {
+		return pluginExecutable(p, "plugin_start")
+	}
+
+	if p.IsSecretsManager() {
+		return pluginExecutable(p, "secrets_plugin_start")
+	}
+
+	return pluginExecutable(p, p.Executable)
+}
+
+func pluginExecutable(p *Plugin, f string) string {
 	os := strings.ToLower(runtime.GOOS)
 	arch := runtime.GOARCH
 	extension := ""
@@ -418,15 +445,11 @@ func (p *Plugin) ExecutablePath() string {
 	if os == "windows" {
 		extension = ".exe"
 	}
-	if p.IsRenderer() {
-		return filepath.Join(p.PluginDir, fmt.Sprintf("%s_%s_%s%s", "plugin_start", os, strings.ToLower(arch), extension))
+	fp, exists := p.Files.AbsFilepath(fmt.Sprintf("%s_%s_%s%s", f, os, strings.ToLower(arch), extension))
+	if !exists {
+		return ""
 	}
-
-	if p.IsSecretsManager() {
-		return filepath.Join(p.PluginDir, fmt.Sprintf("%s_%s_%s%s", "secrets_plugin_start", os, strings.ToLower(arch), extension))
-	}
-
-	return filepath.Join(p.PluginDir, fmt.Sprintf("%s_%s_%s%s", p.Executable, os, strings.ToLower(arch), extension))
+	return fp
 }
 
 type PluginClient interface {
@@ -438,23 +461,20 @@ type PluginClient interface {
 }
 
 func (p *Plugin) ToDTO() PluginDTO {
-	c, _ := p.Client()
-
 	return PluginDTO{
-		pluginDir:       p.PluginDir,
-		JSONData:        p.JSONData,
-		Class:           p.Class,
-		IncludedInAppID: p.IncludedInAppID,
-		DefaultNavURL:   p.DefaultNavURL,
-		Pinned:          p.Pinned,
-		Signature:       p.Signature,
-		SignatureType:   p.SignatureType,
-		SignatureOrg:    p.SignatureOrg,
-		SignedFiles:     p.SignedFiles,
-		SignatureError:  p.SignatureError,
-		Module:          p.Module,
-		BaseURL:         p.BaseURL,
-		StreamHandler:   c,
+		files:             p.Files,
+		class:             p.Class,
+		signedFiles:       p.SignedFiles,
+		supportsStreaming: p.client != nil && p.client.(backend.StreamHandler) != nil,
+		JSONData:          p.JSONData,
+		IncludedInAppID:   p.IncludedInAppID,
+		DefaultNavURL:     p.DefaultNavURL,
+		Pinned:            p.Pinned,
+		Signature:         p.Signature,
+		SignatureType:     p.SignatureType,
+		SignatureOrg:      p.SignatureOrg,
+		Module:            p.Module,
+		BaseURL:           p.BaseURL,
 	}
 }
 
@@ -499,17 +519,16 @@ func (p *Plugin) IsExternalPlugin() bool {
 }
 
 func (p *Plugin) Manifest() []byte {
-	manifestPath := filepath.Join(p.PluginDir, "MANIFEST.txt")
-
-	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `manifestPath` is based
-	// on plugin the folder structure on disk and not user input.
-	d, err := os.ReadFile(manifestPath)
+	f, err := p.Files.Open("MANIFEST.txt")
 	if err != nil {
 		return []byte{}
 	}
 
-	return d
+	m, err := io.ReadAll(f)
+	if err != nil {
+		return []byte{}
+	}
+	return m
 }
 
 type Class string
@@ -518,6 +537,7 @@ const (
 	Core     Class = "core"
 	Bundled  Class = "bundled"
 	External Class = "external"
+	Remote   Class = "remote"
 )
 
 var PluginTypes = []Type{

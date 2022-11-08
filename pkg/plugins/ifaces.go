@@ -38,6 +38,16 @@ type UpdateInfo struct {
 	PluginZipURL string
 }
 
+type FoundPlugin struct {
+	JSONData JSONData
+	Files    FileSystem
+}
+
+type FoundBundle struct {
+	Primary  FoundPlugin
+	Children []*FoundPlugin
+}
+
 // Client is used to communicate with backend plugin implementations.
 type Client interface {
 	backend.QueryDataHandler

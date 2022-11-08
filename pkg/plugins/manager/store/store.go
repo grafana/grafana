@@ -125,6 +125,7 @@ func pluginSources(gCfg *setting.Cfg, cfg *config.Cfg) []plugins.PluginSource {
 		{Class: plugins.Core, Paths: corePluginPaths(gCfg.StaticRootPath)},
 		{Class: plugins.Bundled, Paths: []string{gCfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{cfg.PluginsPath}, pluginSettingPaths(cfg.PluginSettings)...)},
+		//{Class: plugins.Remote, Paths: pluginSettingPaths(cfg.PluginSettings)},
 	}
 }
 

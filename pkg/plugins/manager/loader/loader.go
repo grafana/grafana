@@ -9,12 +9,10 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/gosimple/slug"
 
-	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
@@ -72,52 +70,23 @@ func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoa
 }
 
 func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
-	pluginJSONPaths, err := l.pluginFinder.Find(paths)
+	//pluginJSONPaths, err := l.pluginFinder.Find(paths)
+
+	f := finder.Newv2()
+	res, err := f.Find(paths)
 	if err != nil {
 		return nil, err
 	}
 
-	return l.loadPlugins(ctx, class, pluginJSONPaths)
+	return l.loadPlugins(ctx, class, res)
 }
 
-func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSONPaths []string) ([]*plugins.Plugin, error) {
-	var foundPlugins = foundPlugins{}
+func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, res []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
+	loadedPlugins := []*plugins.Plugin{}
+	for _, r := range res {
+		plugin := createPluginBase(r.Primary.JSONData, class, r.Primary.Files)
 
-	// load plugin.json files and map directory to JSON data
-	for _, pluginJSONPath := range pluginJSONPaths {
-		plugin, err := l.readPluginJSON(pluginJSONPath)
-		if err != nil {
-			l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "err", err)
-			continue
-		}
-
-		pluginJSONAbsPath, err := filepath.Abs(pluginJSONPath)
-		if err != nil {
-			l.log.Warn("Skipping plugin loading as absolute plugin.json path could not be calculated", "pluginID", plugin.ID, "err", err)
-			continue
-		}
-
-		if _, dupe := foundPlugins[filepath.Dir(pluginJSONAbsPath)]; dupe {
-			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", plugin.ID)
-			continue
-		}
-		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
-	}
-
-	// get all registered plugins
-	registeredPlugins := make(map[string]struct{})
-	for _, p := range l.pluginRegistry.Plugins(ctx) {
-		registeredPlugins[p.ID] = struct{}{}
-	}
-
-	foundPlugins.stripDuplicates(registeredPlugins, l.log)
-
-	// calculate initial signature state
-	loadedPlugins := make(map[string]*plugins.Plugin)
-	for pluginDir, pluginJSON := range foundPlugins {
-		plugin := createPluginBase(pluginJSON, class, pluginDir)
-
-		sig, err := signature.Calculate(l.log, plugin)
+		sig, err := signature.Calculate(l.log, class, r.Primary)
 		if err != nil {
 			l.log.Warn("Could not calculate plugin signature state", "pluginID", plugin.ID, "err", err)
 			continue
@@ -127,25 +96,18 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		plugin.SignatureOrg = sig.SigningOrg
 		plugin.SignedFiles = sig.Files
 
-		loadedPlugins[plugin.PluginDir] = plugin
-	}
+		loadedPlugins = append(loadedPlugins, plugin)
 
-	// wire up plugin dependencies
-	for _, plugin := range loadedPlugins {
-		ancestors := strings.Split(plugin.PluginDir, string(filepath.Separator))
-		ancestors = ancestors[0 : len(ancestors)-1]
-		pluginPath := ""
+		for _, c := range r.Children {
+			cp := createPluginBase(c.JSONData, class, c.Files)
+			cp.Parent = plugin
+			cp.Signature = sig.Status
+			cp.SignatureType = sig.Type
+			cp.SignatureOrg = sig.SigningOrg
 
-		if runtime.GOOS != "windows" && filepath.IsAbs(plugin.PluginDir) {
-			pluginPath = "/"
-		}
-		for _, ancestor := range ancestors {
-			pluginPath = filepath.Join(pluginPath, ancestor)
-			if parentPlugin, ok := loadedPlugins[pluginPath]; ok {
-				plugin.Parent = parentPlugin
-				plugin.Parent.Children = append(plugin.Parent.Children, plugin)
-				break
-			}
+			plugin.Children = append(plugin.Children, cp)
+
+			loadedPlugins = append(loadedPlugins, cp)
 		}
 	}
 
@@ -167,14 +129,9 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 
 		// verify module.js exists for SystemJS to load
 		if !plugin.IsRenderer() && !plugin.IsCorePlugin() {
-			module := filepath.Join(plugin.PluginDir, "module.js")
-			if exists, err := fs.Exists(module); err != nil {
-				return nil, err
-			} else if !exists {
-				l.log.Warn("Plugin missing module.js",
-					"pluginID", plugin.ID,
-					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.",
-					"path", module)
+			if exists := plugin.Files.Exists("module.js"); !exists {
+				l.log.Warn("Plugin missing module.js", "pluginID", plugin.ID,
+					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.")
 			}
 		}
 
@@ -308,12 +265,13 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 	return plugin, nil
 }
 
-func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) *plugins.Plugin {
+func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, files plugins.FileSystem) *plugins.Plugin {
 	plugin := &plugins.Plugin{
 		JSONData:  pluginJSON,
-		PluginDir: pluginDir,
-		BaseURL:   baseURL(pluginJSON, class, pluginDir),
-		Module:    module(pluginJSON, class, pluginDir),
+		Files:     files,
+		PluginDir: "",
+		BaseURL:   path.Join("public/plugins", pluginJSON.ID),
+		Module:    path.Join("plugins", pluginJSON.ID, "module"),
 		Class:     class,
 	}
 
@@ -415,17 +373,11 @@ func (l *Loader) PluginErrors() []*plugins.Error {
 	return errs
 }
 
-func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
-	if class == plugins.Core {
-		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir))
-	}
+func baseURL(pluginJSON plugins.JSONData) string {
 	return path.Join("public/plugins", pluginJSON.ID)
 }
 
-func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
-	if class == plugins.Core {
-		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module")
-	}
+func module(pluginJSON plugins.JSONData) string {
 	return path.Join("plugins", pluginJSON.ID, "module")
 }
 

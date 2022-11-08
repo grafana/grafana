@@ -96,27 +96,26 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 	return &manifest, nil
 }
 
-func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, error) {
-	if plugin.IsCorePlugin() {
+func Calculate(mlog log.Logger, class plugins.Class, plugin plugins.FoundPlugin) (plugins.Signature, error) {
+	if class == plugins.Core {
 		return plugins.Signature{
 			Status: plugins.SignatureInternal,
 		}, nil
 	}
 
-	pluginFiles, err := pluginFilesRequiringVerification(plugin)
-	if err != nil {
-		mlog.Warn("Could not collect plugin file information in directory", "pluginID", plugin.ID, "dir", plugin.PluginDir)
+	if plugin.Files.IsEmpty() {
+		mlog.Warn("No plugin file information in directory", "pluginID", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
-		}, err
+		}, nil
 	}
 
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `manifestPath` is based
 	// on plugin the folder structure on disk and not user input.
-	byteValue := plugin.Manifest()
-	if err != nil || len(byteValue) < 10 {
-		mlog.Debug("Plugin is unsigned", "id", plugin.ID)
+	byteValue := plugin.Files.Manifest()
+	if len(byteValue) < 10 {
+		mlog.Debug("Plugin is unsigned", "id", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureUnsigned,
 		}, nil
@@ -124,7 +123,7 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 
 	manifest, err := readPluginManifest(byteValue)
 	if err != nil {
-		mlog.Debug("Plugin signature invalid", "id", plugin.ID, "err", err)
+		mlog.Debug("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
 		}, nil
@@ -137,7 +136,7 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 	}
 
 	// Make sure the versions all match
-	if manifest.Plugin != plugin.ID || manifest.Version != plugin.Info.Version {
+	if manifest.Plugin != plugin.JSONData.ID || manifest.Version != plugin.JSONData.Info.Version {
 		return plugins.Signature{
 			Status: plugins.SignatureModified,
 		}, nil
@@ -146,10 +145,10 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 	// Validate that plugin is running within defined root URLs
 	if len(manifest.RootURLs) > 0 {
 		if match, err := urlMatch(manifest.RootURLs, setting.AppUrl, manifest.SignatureType); err != nil {
-			mlog.Warn("Could not verify if root URLs match", "plugin", plugin.ID, "rootUrls", manifest.RootURLs)
+			mlog.Warn("Could not verify if root URLs match", "plugin", plugin.JSONData.ID, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{}, err
 		} else if !match {
-			mlog.Warn("Could not find root URL that matches running application URL", "plugin", plugin.ID,
+			mlog.Warn("Could not find root URL that matches running application URL", "plugin", plugin.JSONData.ID,
 				"appUrl", setting.AppUrl, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{
 				Status: plugins.SignatureInvalid,
@@ -161,7 +160,7 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 
 	// Verify the manifest contents
 	for p, hash := range manifest.Files {
-		err = verifyHash(mlog, plugin.ID, filepath.Join(plugin.PluginDir, p), hash)
+		err = verifyHash(mlog, plugin, p, hash)
 		if err != nil {
 			return plugins.Signature{
 				Status: plugins.SignatureModified,
@@ -173,20 +172,23 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 
 	// Track files missing from the manifest
 	var unsignedFiles []string
-	for _, f := range pluginFiles {
+	for _, f := range plugin.Files.Files() {
+		if f == "MANIFEST.txt" {
+			continue
+		}
 		if _, exists := manifestFiles[f]; !exists {
 			unsignedFiles = append(unsignedFiles, f)
 		}
 	}
 
 	if len(unsignedFiles) > 0 {
-		mlog.Warn("The following files were not included in the signature", "plugin", plugin.ID, "files", unsignedFiles)
+		mlog.Warn("The following files were not included in the signature", "plugin", plugin.JSONData.ID, "files", unsignedFiles)
 		return plugins.Signature{
 			Status: plugins.SignatureModified,
 		}, nil
 	}
 
-	mlog.Debug("Plugin signature valid", "id", plugin.ID)
+	mlog.Debug("Plugin signature valid", "id", plugin.JSONData.ID)
 	return plugins.Signature{
 		Status:     plugins.SignatureValid,
 		Type:       manifest.SignatureType,
@@ -194,13 +196,13 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 	}, nil
 }
 
-func verifyHash(mlog log.Logger, pluginID string, path string, hash string) error {
+func verifyHash(mlog log.Logger, plugin plugins.FoundPlugin, path, hash string) error {
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `path` is based
 	// on the path provided in a manifest file for a plugin and not user input.
-	f, err := os.Open(path)
+	f, err := plugin.Files.Open(path)
 	if err != nil {
-		mlog.Warn("Plugin file listed in the manifest was not found", "plugin", pluginID, "path", path)
+		mlog.Warn("Plugin file listed in the manifest was not found", "plugin", plugin.JSONData.ID, "path", path)
 		return fmt.Errorf("plugin file listed in the manifest was not found")
 	}
 	defer func() {
@@ -215,7 +217,7 @@ func verifyHash(mlog log.Logger, pluginID string, path string, hash string) erro
 	}
 	sum := hex.EncodeToString(h.Sum(nil))
 	if sum != hash {
-		mlog.Warn("Plugin file checksum does not match signature checksum", "plugin", pluginID, "path", path)
+		mlog.Warn("Plugin file checksum does not match signature checksum", "plugin", plugin.JSONData.ID, "path", path)
 		return fmt.Errorf("plugin file checksum does not match signature checksum")
 	}
 

@@ -151,7 +151,7 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 						},
 					},
 					{
-						Class: plugins.Core,
+						class: plugins.Core,
 						JSONData: plugins.JSONData{
 							ID:   "test-core-panel",
 							Info: plugins.Info{Version: "0.0.1"},

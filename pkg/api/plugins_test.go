@@ -167,15 +167,8 @@ func Test_GetPluginAssets(t *testing.T) {
 	requestedFile := filepath.Clean(tmpFile.Name())
 
 	t.Run("Given a request for an existing plugin file that is listed as a signature covered file", func(t *testing.T) {
-		p := plugins.PluginDTO{
-			JSONData: plugins.JSONData{
-				ID: pluginID,
-			},
-			PluginDir: pluginDir,
-			SignedFiles: map[string]struct{}{
-				requestedFile: {},
-			},
-		}
+		p := plugins.NewPluginDTO(plugins.External, plugins.JSONData{ID: pluginID}, pluginDir)
+		p.signedFiles = map[string]struct{}{requestedFile: {}}
 		service := &plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{p},
 		}
@@ -193,12 +186,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for a relative path", func(t *testing.T) {
-		p := plugins.PluginDTO{
-			JSONData: plugins.JSONData{
-				ID: pluginID,
-			},
-			PluginDir: pluginDir,
-		}
+		p := plugins.NewPluginDTO(plugins.JSONData{ID: pluginID}, pluginDir)
 		service := &plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{p},
 		}
@@ -214,12 +202,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an existing plugin file that is not listed as a signature covered file", func(t *testing.T) {
-		p := plugins.PluginDTO{
-			JSONData: plugins.JSONData{
-				ID: pluginID,
-			},
-			PluginDir: pluginDir,
-		}
+		p := plugins.NewPluginDTO(plugins.JSONData{ID: pluginID}, pluginDir)
 		service := &plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{p},
 		}
@@ -237,12 +220,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin file", func(t *testing.T) {
-		p := plugins.PluginDTO{
-			JSONData: plugins.JSONData{
-				ID: pluginID,
-			},
-			PluginDir: pluginDir,
-		}
+		p := plugins.NewPluginDTO(plugins.JSONData{ID: pluginID}, pluginDir)
 		service := &plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{p},
 		}
@@ -280,28 +258,6 @@ func Test_GetPluginAssets(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, 404, sc.resp.Code)
 				assert.Equal(t, "Plugin not found", respJson["message"])
-				assert.Zero(t, l.WarnLogs.Calls)
-			})
-	})
-
-	t.Run("Given a request for a core plugin's file", func(t *testing.T) {
-		service := &plugins.FakePluginStore{
-			PluginList: []plugins.PluginDTO{
-				{
-					JSONData: plugins.JSONData{ID: pluginID},
-					Class:    plugins.Core,
-				},
-			},
-		}
-		l := &logtest.Fake{}
-
-		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
-		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service, l,
-			func(sc *scenarioContext) {
-				callGetPluginAsset(sc)
-
-				require.Equal(t, 200, sc.resp.Code)
-				assert.Equal(t, expectedBody, sc.resp.Body.String())
 				assert.Zero(t, l.WarnLogs.Calls)
 			})
 	})
@@ -396,7 +352,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 	pluginStore := plugins.FakePluginStore{PluginList: []plugins.PluginDTO{
 		{
 			PluginDir:     "/grafana/plugins/test-app/dist",
-			Class:         "external",
+			class:         "external",
 			DefaultNavURL: "/plugins/test-app/page/test",
 			Pinned:        false,
 			Signature:     "unsigned",
@@ -413,7 +369,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 		},
 		{
 			PluginDir: "/grafana/public/app/plugins/datasource/mysql",
-			Class:     "core",
+			class:     "core",
 			Pinned:    false,
 			Signature: "internal",
 			Module:    "app/plugins/datasource/mysql/module",
