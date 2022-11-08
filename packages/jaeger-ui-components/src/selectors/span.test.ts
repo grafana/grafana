@@ -94,7 +94,7 @@ it('getSpanProcess() should return the process of the span', () => {
   const span = {
     ...generatedTrace.spans[0],
     process: { serviceName },
-  } as unknown as TraceSpan;
+  } as TraceSpan;
 
   expect(spanSelectors.getSpanProcess(span)).toBe(span.process);
 });
@@ -128,7 +128,7 @@ it('filterSpansForTimestamps() should return a filtered list of spans between th
       startTime: now + 1000,
       spanID: 'start-time-3',
     },
-  ] as unknown as TraceSpanData[];
+  ] as TraceSpanData[];
 
   expect(
     spanSelectors.filterSpansForTimestamps({
