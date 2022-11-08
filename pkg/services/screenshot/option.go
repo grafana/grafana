@@ -44,13 +44,12 @@ func (s ScreenshotOptions) SetDefaults() ScreenshotOptions {
 	return s
 }
 
-//nolint:errcheck,gosec
 func (s ScreenshotOptions) Hash() []byte {
 	h := fnv.New64()
-	h.Write([]byte(s.DashboardUID))
-	h.Write([]byte(strconv.FormatInt(s.PanelID, 10)))
-	h.Write([]byte(strconv.FormatInt(int64(s.Width), 10)))
-	h.Write([]byte(strconv.FormatInt(int64(s.Height), 10)))
-	h.Write([]byte(s.Theme))
+	_, _ = h.Write([]byte(s.DashboardUID))
+	_, _ = h.Write([]byte(strconv.FormatInt(s.PanelID, 10)))
+	_, _ = h.Write([]byte(strconv.FormatInt(int64(s.Width), 10)))
+	_, _ = h.Write([]byte(strconv.FormatInt(int64(s.Height), 10)))
+	_, _ = h.Write([]byte(s.Theme))
 	return h.Sum(nil)
 }
