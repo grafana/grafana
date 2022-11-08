@@ -13,6 +13,7 @@ var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
 
 const (
 	GeneralFolderUID     = "general"
+	RootFolderUID        = ""
 	MaxNestedFolderDepth = 8
 )
 
