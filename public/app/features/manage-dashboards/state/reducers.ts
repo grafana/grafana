@@ -16,8 +16,7 @@ export interface ImportDashboardDTO {
   constants: string[];
   dataSources: DataSourceInstanceSettings[];
   elements: LibraryElementDTO[];
-  // migrate to uid once api/dashboards/import supports uid
-  folder: { id: number; title?: string };
+  folder: { uid: string; title?: string };
 }
 
 export enum InputType {

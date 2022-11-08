@@ -166,7 +166,7 @@ export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkR
       dashboard: { ...dashboard, title: importDashboardForm.title, uid: importDashboardForm.uid || dashboard.uid },
       overwrite: true,
       inputs: inputsToPersist,
-      folderId: importDashboardForm.folder.id,
+      folderUid: importDashboardForm.folder.uid,
     });
 
     const dashboardUrl = locationUtil.stripBaseFromUrl(result.importedUrl);

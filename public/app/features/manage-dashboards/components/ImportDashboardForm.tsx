@@ -73,7 +73,7 @@ export const ImportDashboardForm: FC<Props> = ({
         <Input
           {...register('title', {
             required: 'Name is required',
-            validate: async (v: string) => await validateTitle(v, getValues().folder.id),
+            validate: async (v: string) => await validateTitle(v, getValues().folder.uid),
           })}
           type="text"
           data-testid={selectors.components.ImportDashboardForm.name}
