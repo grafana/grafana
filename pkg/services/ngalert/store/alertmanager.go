@@ -131,6 +131,26 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 	})
 }
 
+func (st *DBstore) MarkAlertmanagerConfigurationAsValid(ctx context.Context, configurationID int64) error {
+	return st.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		res, err := sess.Exec("UPDATE alert_configuration SET is_valid = true WHERE id = ?", configurationID)
+		if err != nil {
+			return err
+		}
+
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+
+		if rowsAffected != 1 {
+			return fmt.Errorf("update statement affected %d rows", rowsAffected)
+		}
+
+		return nil
+	})
+}
+
 // getInsertQuery is used to determinate the insert query for the alertmanager config
 // based on the provided sql driver. This is necesarry as such an advanced query
 // is not supported by our ORM and we need to generate it manually for each SQL dialect.
