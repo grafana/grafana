@@ -265,42 +265,6 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSe
 	setDisplayNameAsFieldName(dataField)
 }
 
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(dr *backend.DataResponse,
-	response cloudMonitoringResponse, title, text string) error {
-	frame := data.NewFrame(timeSeriesFilter.RefID,
-		data.NewField("time", nil, []time.Time{}),
-		data.NewField("title", nil, []string{}),
-		data.NewField("tags", nil, []string{}),
-		data.NewField("text", nil, []string{}),
-	)
-
-	for _, series := range response.TimeSeries {
-		if len(series.Points) == 0 {
-			continue
-		}
-
-		for i := len(series.Points) - 1; i >= 0; i-- {
-			point := series.Points[i]
-			value := strconv.FormatFloat(point.Value.DoubleValue, 'f', 6, 64)
-			if series.ValueType == "STRING" {
-				value = point.Value.StringValue
-			}
-			annotation := &annotationEvent{
-				Time: point.Interval.EndTime,
-				Title: formatAnnotationText(title, value, series.Metric.Type,
-					series.Metric.Labels, series.Resource.Labels),
-				Tags: "",
-				Text: formatAnnotationText(text, value, series.Metric.Type,
-					series.Metric.Labels, series.Resource.Labels),
-			}
-			frame.AppendRow(annotation.Time, annotation.Title, annotation.Tags, annotation.Text)
-		}
-	}
-	dr.Frames = append(dr.Frames, frame)
-
-	return nil
-}
-
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) buildDeepLink() string {
 	if timeSeriesFilter.Slo != "" {
 		return ""
