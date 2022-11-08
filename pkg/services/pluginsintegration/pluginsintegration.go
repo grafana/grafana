@@ -52,5 +52,9 @@ func NewClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
 	}
 
+	if cfg.SendUserHeader {
+		middlewares = append(middlewares, clientmiddleware.NewUserHeaderMiddleware())
+	}
+
 	return client.NewDecorator(c, middlewares...)
 }
