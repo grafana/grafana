@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -257,5 +258,71 @@ func TestIntegrationFolderService(t *testing.T) {
 					"For error '%s' expected error '%s', actual '%s'", tc.ActualError, tc.ExpectedError, actualError)
 			}
 		})
+	})
+}
+
+func TestFolderService(t *testing.T) {
+	folderStore := NewFakeStore()
+	folderService := &Service{
+		store: folderStore,
+	}
+	t.Run("create folder", func(t *testing.T) {
+		folderStore.ExpectedFolder = &folder.Folder{}
+		res, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{})
+		require.NoError(t, err)
+		require.NotNil(t, res.UID)
+	})
+
+	t.Run("update folder", func(t *testing.T) {
+		folderStore.ExpectedFolder = &folder.Folder{}
+		_, err := folderService.Update(context.Background(), &folder.UpdateFolderCommand{})
+		require.NoError(t, err)
+	})
+
+	t.Run("delete folder", func(t *testing.T) {
+		folderStore.ExpectedFolder = &folder.Folder{}
+		_, err := folderService.Delete(context.Background(), &folder.DeleteFolderCommand{})
+		require.NoError(t, err)
+	})
+
+	t.Run("get folder", func(t *testing.T) {
+		folderStore.ExpectedFolder = &folder.Folder{}
+		_, err := folderService.Get(context.Background(), &folder.GetFolderQuery{})
+		require.NoError(t, err)
+	})
+
+	t.Run("get parents folder", func(t *testing.T) {
+		folderStore.ExpectedFolder = &folder.Folder{}
+		_, err := folderService.GetParents(context.Background(), &folder.GetParentsQuery{})
+		require.NoError(t, err)
+	})
+
+	t.Run("get children folder", func(t *testing.T) {
+		folderStore.ExpectedFolders = []*folder.Folder{
+			{
+				UID: "test",
+			},
+			{
+				UID: "test2",
+			},
+			{
+				UID: "test3",
+			},
+			{
+				UID: "test4",
+			},
+		}
+		res, err := folderService.GetTree(context.Background(),
+			&folder.GetTreeQuery{
+				UID: "test",
+			})
+		require.NoError(t, err)
+		require.Equal(t, 4, len(res))
+	})
+
+	t.Run("move folder", func(t *testing.T) {
+		folderStore.ExpectedFolder = &folder.Folder{}
+		_, err := folderService.Move(context.Background(), &folder.MoveFolderCommand{})
+		require.NoError(t, err)
 	})
 }
