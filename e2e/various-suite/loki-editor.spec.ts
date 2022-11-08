@@ -51,45 +51,45 @@ e2e.scenario({
         expect($el.val()).to.eq('time()');
       });
 
-    // removes closing brace when opening brace is removed
-    e2e.components.QueryField.container().type('{backspace}');
-    e2e()
-      .get('.monaco-editor textarea:first')
-      .should(($el) => {
-        expect($el.val()).to.eq('time');
-      });
+    // // removes closing brace when opening brace is removed
+    // e2e.components.QueryField.container().type('{backspace}');
+    // e2e()
+    //   .get('.monaco-editor textarea:first')
+    //   .should(($el) => {
+    //     expect($el.val()).to.eq('time');
+    //   });
 
-    // keeps closing brace when opening brace is removed and inner values exist
-    e2e.components.QueryField.container().type(
-      `{selectall}{backspace}time(test{leftArrow}{leftArrow}{leftArrow}{leftArrow}{backspace}`
-    );
-    e2e()
-      .get('.monaco-editor textarea:first')
-      .should(($el) => {
-        expect($el.val()).to.eq('timetest)');
-      });
+    // // keeps closing brace when opening brace is removed and inner values exist
+    // e2e.components.QueryField.container().type(
+    //   `{selectall}{backspace}time(test{leftArrow}{leftArrow}{leftArrow}{leftArrow}{backspace}`
+    // );
+    // e2e()
+    //   .get('.monaco-editor textarea:first')
+    //   .should(($el) => {
+    //     expect($el.val()).to.eq('timetest)');
+    //   });
 
-    // overrides an automatically inserted brace
-    e2e.components.QueryField.container().type(`{selectall}{backspace}time()`);
-    e2e()
-      .get('.monaco-editor textarea:first')
-      .should(($el) => {
-        expect($el.val()).to.eq('time()');
-      });
+    // // overrides an automatically inserted brace
+    // e2e.components.QueryField.container().type(`{selectall}{backspace}time()`);
+    // e2e()
+    //   .get('.monaco-editor textarea:first')
+    //   .should(($el) => {
+    //     expect($el.val()).to.eq('time()');
+    //   });
 
-    // does not override manually inserted braces
-    e2e.components.QueryField.container().type(`{selectall}{backspace}))`);
-    e2e()
-      .get('.monaco-editor textarea:first')
-      .should(($el) => {
-        expect($el.val()).to.eq('))');
-      });
+    // // does not override manually inserted braces
+    // e2e.components.QueryField.container().type(`{selectall}{backspace}))`);
+    // e2e()
+    //   .get('.monaco-editor textarea:first')
+    //   .should(($el) => {
+    //     expect($el.val()).to.eq('))');
+    //   });
 
-    /** Runner plugin */
+    // /** Runner plugin */
 
-    // Should execute the query when enter with shift is pressed
-    e2e.components.QueryField.container().type(`{selectall}{backspace}{shift+enter}`);
-    e2e().get('[data-testid="explore-no-data"]').should('be.visible');
+    // // Should execute the query when enter with shift is pressed
+    // e2e.components.QueryField.container().type(`{selectall}{backspace}{shift+enter}`);
+    // e2e().get('[data-testid="explore-no-data"]').should('be.visible');
 
     /** Suggestions plugin */
     e2e().get('[role="code"]').type(`{selectall}av`);
