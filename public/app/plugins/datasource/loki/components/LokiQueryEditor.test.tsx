@@ -175,7 +175,7 @@ function renderWithProps(overrides?: Partial<LokiQuery>) {
 }
 
 function expectCodeEditor() {
-  // Log browser shows this until log labels are loaded.
+  // Label browser shows this until log labels are loaded.
   expect(screen.getByText('Loading labels...')).toBeInTheDocument();
 }
 
