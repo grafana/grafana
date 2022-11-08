@@ -3,18 +3,20 @@ import { useAsync } from 'react-use';
 
 import { getPluginSettings } from '../services/PluginService';
 
-export interface PluginBridgeProps {
-  plugin: SupportedPlugin;
-  // shows an optional component when the plugin is not installed
-  notInstalledComponent?: ReactElement;
-  // shows an optional component when we're checking if the plugin is installed
-  loadingComponent?: ReactElement;
-}
-
 export enum SupportedPlugin {
   Incident = 'grafana-incident-app',
   OnCall = 'grafana-oncall-app',
   MachineLearning = 'grafana-ml-app',
+}
+
+export type PluginID = SupportedPlugin | string;
+
+export interface PluginBridgeProps {
+  plugin: PluginID;
+  // shows an optional component when the plugin is not installed
+  notInstalledComponent?: ReactElement;
+  // shows an optional component when we're checking if the plugin is installed
+  loadingComponent?: ReactElement;
 }
 
 export const PluginBridge: FC<PluginBridgeProps> = ({ children, plugin, loadingComponent, notInstalledComponent }) => {
@@ -31,7 +33,7 @@ export const PluginBridge: FC<PluginBridgeProps> = ({ children, plugin, loadingC
   return <>{children}</>;
 };
 
-export function createBridgeURL(plugin: SupportedPlugin, path?: string, options?: Record<string, string>) {
+export function createBridgeURL(plugin: PluginID, path?: string, options?: Record<string, string>) {
   const searchParams = new URLSearchParams(options).toString();
   const pluginPath = `/a/${plugin}${path}`;
 

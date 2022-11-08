@@ -36,6 +36,7 @@ export {
   type DataSourcePickerState,
 } from './components/DataSourcePicker';
 export { SupportedPlugin as BridgeSupportedPlugin, PluginBridge, createBridgeURL } from './components/PluginBridge';
+export type { PluginID } from './components/PluginBridge';
 export {
   type PluginEventProperties,
   createPluginEventProperties,

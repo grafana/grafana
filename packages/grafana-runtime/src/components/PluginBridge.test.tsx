@@ -38,9 +38,8 @@ describe('<PluginBridge />', () => {
   });
 
   it('should render loading and installed component', async () => {
-    const pluginId = SupportedPlugin.Incident;
     render(
-      <PluginBridge plugin={pluginId} loadingComponent={<>Loading...</>}>
+      <PluginBridge plugin={SupportedPlugin.Incident} loadingComponent={<>Loading...</>}>
         Plugin installed!
       </PluginBridge>
     );
