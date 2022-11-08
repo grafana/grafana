@@ -45,7 +45,7 @@ func (s ScreenshotOptions) SetDefaults() ScreenshotOptions {
 }
 
 //nolint:errcheck,gosec
-func (s ScreenshotOptions) Sum() []byte {
+func (s ScreenshotOptions) Hash() []byte {
 	h := fnv.New64()
 	h.Write([]byte(s.DashboardUID))
 	h.Write([]byte(strconv.FormatInt(s.PanelID, 10)))
