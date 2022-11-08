@@ -21,8 +21,8 @@ import (
 )
 
 const (
+	screenshotCacheTTL = 15 * time.Second
 	screenshotTimeout  = 10 * time.Second
-	screenshotCacheTTL = 60 * time.Second
 )
 
 var (
@@ -59,6 +59,7 @@ type ImageService interface {
 // as an annotation or label to the Alertmanager. This service cannot take
 // screenshots of alert rules that are not associated with a dashboard panel.
 type ScreenshotImageService struct {
+	cache        CacheService
 	limiter      screenshot.RateLimiter
 	logger       log.Logger
 	screenshots  screenshot.ScreenshotService
@@ -69,12 +70,14 @@ type ScreenshotImageService struct {
 
 // NewScreenshotImageService returns a new ScreenshotImageService.
 func NewScreenshotImageService(
+	cache CacheService,
 	limiter screenshot.RateLimiter,
 	logger log.Logger,
 	screenshots screenshot.ScreenshotService,
 	store store.ImageStore,
 	uploads *UploadingService) ImageService {
 	return &ScreenshotImageService{
+		cache:       cache,
 		limiter:     limiter,
 		logger:      logger,
 		screenshots: screenshots,
@@ -88,6 +91,7 @@ func NewScreenshotImageService(
 func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds dashboards.DashboardService,
 	rs rendering.Service, r prometheus.Registerer) (ImageService, error) {
 	var (
+		cache       CacheService                 = &NoOpCacheService{}
 		limiter     screenshot.RateLimiter       = &screenshot.NoOpRateLimiter{}
 		screenshots screenshot.ScreenshotService = &screenshot.ScreenshotUnavailableService{}
 		uploads     *UploadingService            = nil
@@ -95,6 +99,7 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds da
 
 	// If screenshots are enabled
 	if cfg.UnifiedAlerting.Screenshots.Capture {
+		cache = NewInmemCacheService(screenshotCacheTTL, r)
 		limiter = screenshot.NewTokenRateLimiter(cfg.UnifiedAlerting.Screenshots.MaxConcurrentScreenshots)
 		screenshots = screenshot.NewHeadlessScreenshotService(ds, rs, r)
 
@@ -108,7 +113,7 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds da
 		}
 	}
 
-	return NewScreenshotImageService(limiter, cfg.Logger, screenshots, db, uploads), nil
+	return NewScreenshotImageService(cache, limiter, cfg.Logger, screenshots, db, uploads), nil
 }
 
 // NewImage returns a screenshot of the alert rule or an error.
@@ -119,7 +124,7 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds da
 // alert rule has a Dashboard UID and the dashboard exists, but does not have a
 // Panel ID in its annotations then an ErrNoPanel error is returned.
 func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error) {
-	if r.DashboardUID == nil {
+	if r.DashboardUID == nil || *r.DashboardUID == "" {
 		return nil, ErrNoDashboard
 	}
 
@@ -127,6 +132,16 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		return nil, ErrNoPanel
 	}
 
+	// If there is an image is in the cache return it instead of taking another screenshot
+	if image, ok := s.cache.Get(ctx, r.GetKey().String()); ok {
+		return &image, nil
+	}
+
+	// We create both a context with timeout and set a timeout in ScreenshotOptions. The timeout
+	// in the context is used for both database queries and the request to the rendering service,
+	// while the timeout in ScreenshotOptions is passed to the rendering service where it is used as
+	// a client timeout. It is not recommended to pass a context without a deadline and the context
+	// deadline should be at least as long as the timeout in ScreenshotOptions.
 	ctx, cancelFunc := context.WithTimeout(ctx, screenshotTimeout)
 	defer cancelFunc()
 
@@ -136,8 +151,11 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		Timeout:      screenshotTimeout,
 	}
 
+	// To prevent concurrent screenshots of the same dashboard panel we use singleflight,
+	// deduplicated on a base64 hash of the screenshot options.
 	optsHash := base64.StdEncoding.EncodeToString(opts.Hash())
 	result, err, _ := s.singleflight.Do(optsHash, func() (interface{}, error) {
+		// Once deduplicated concurrent screenshots are then rate-limited
 		screenshot, err := s.limiter.Do(ctx, opts, s.screenshots.Take)
 		if err != nil {
 			if errors.Is(err, dashboards.ErrDashboardNotFound) {
@@ -145,15 +163,20 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 			}
 			return nil, err
 		}
+
 		image := models.Image{Path: screenshot.Path}
+
+		// Uploading images is optional
 		if s.uploads != nil {
 			if image, err = s.uploads.Upload(ctx, image); err != nil {
-				s.logger.Warn("failed to upload image", "path", image.Path, "error", err)
+				s.logger.Warn("Failed to upload image", "path", image.Path, "error", err)
 			}
 		}
+
 		if err := s.store.SaveImage(ctx, &image); err != nil {
 			return nil, fmt.Errorf("failed to save image: %w", err)
 		}
+
 		return image, nil
 	})
 	if err != nil {
@@ -161,6 +184,10 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 	}
 
 	image := result.(models.Image)
+	if err = s.cache.Set(ctx, r.GetKey().String(), image); err != nil {
+		return &image, fmt.Errorf("failed to cache image: %w", err)
+	}
+
 	return &image, nil
 }
 
