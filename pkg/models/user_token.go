@@ -76,6 +76,10 @@ type UserTokenService interface {
 	GetUserRevokedTokens(ctx context.Context, userId int64) ([]*UserToken, error)
 }
 
+type ActiveTokenService interface {
+	ActiveTokenCount(ctx context.Context) (int64, error)
+}
+
 type UserTokenBackgroundService interface {
 	registry.BackgroundService
 }

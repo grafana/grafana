@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -65,9 +64,9 @@ func (api *ImportDashboardAPI) ImportDashboard(c *models.ReqContext) response.Re
 		return response.Error(http.StatusUnprocessableEntity, "Dashboard must be set", nil)
 	}
 
-	limitReached, err := api.quotaService.QuotaReached(c, dashboards.QuotaTargetSrv)
+	limitReached, err := api.quotaService.QuotaReached(c, "dashboard")
 	if err != nil {
-		return response.Err(err)
+		return response.Error(500, "failed to get quota", err)
 	}
 
 	if limitReached {
@@ -84,12 +83,12 @@ func (api *ImportDashboardAPI) ImportDashboard(c *models.ReqContext) response.Re
 }
 
 type QuotaService interface {
-	QuotaReached(c *models.ReqContext, target quota.TargetSrv) (bool, error)
+	QuotaReached(c *models.ReqContext, target string) (bool, error)
 }
 
-type quotaServiceFunc func(c *models.ReqContext, target quota.TargetSrv) (bool, error)
+type quotaServiceFunc func(c *models.ReqContext, target string) (bool, error)
 
-func (fn quotaServiceFunc) QuotaReached(c *models.ReqContext, target quota.TargetSrv) (bool, error) {
+func (fn quotaServiceFunc) QuotaReached(c *models.ReqContext, target string) (bool, error) {
 	return fn(c, target)
 }
 

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/apikey"
-	"github.com/grafana/grafana/pkg/services/quota"
 )
 
 type store interface {
@@ -16,6 +15,4 @@ type store interface {
 	GetApiKeyByName(ctx context.Context, query *apikey.GetByNameQuery) error
 	GetAPIKeyByHash(ctx context.Context, hash string) (*apikey.APIKey, error)
 	UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error
-
-	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
 }
