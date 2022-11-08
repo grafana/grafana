@@ -417,6 +417,10 @@
       "cancel-button": "",
       "select-time": ""
     },
+    "content": {
+      "empty-recent-list": "",
+      "filter-placeholder": ""
+    },
     "footer": {
       "change-settings-button": "",
       "fiscal-year-option": "",
