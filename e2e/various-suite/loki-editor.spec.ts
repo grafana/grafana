@@ -35,22 +35,56 @@ e2e.scenario({
     e2e.components.DataSourcePicker.container().should('be.visible').click();
     e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
 
-    cy.contains('label', 'Code').click();
+    e2e().contains('Code').click();
 
-    // we need to wait for the query-field being lazy-loaded, in two steps:
-    // it is a two-step process:
-    // 1. first we wait for the text 'Loading...' to appear
-    // 1. then we wait for the text 'Loading...' to disappear
+    // Wait for lazy loading
     const monacoLoadingText = 'Loading...';
-    const queryText = `rate(http_requests_total{job="grafana"}[5m])`;
+
     e2e.components.QueryField.container().should('be.visible').should('have.text', monacoLoadingText);
     e2e.components.QueryField.container().should('be.visible').should('not.have.text', monacoLoadingText);
-    e2e.components.QueryField.container().type(queryText, { parseSpecialCharSequences: false }).type('{backspace}');
 
-    cy.contains(queryText.slice(0, -1)).should('be.visible');
+    const queryField = e2e.components.QueryField.container();
+    const queryFieldValue = e2e().get('.monaco-editor textarea:first');
 
-    e2e.components.QueryField.container().type(e2e.typings.undo());
+    // adds closing braces around empty value
+    queryField.type('time(', { parseSpecialCharSequences: false });
+    queryFieldValue.should(($el) => {
+      expect($el.val()).to.eq('time()');
+    });
 
-    cy.contains(queryText).should('be.visible');
+    // removes closing brace when opening brace is removed
+    queryField.type('{backspace}');
+    queryFieldValue.should(($el) => {
+      expect($el.val()).to.eq('time');
+    });
+
+    // keeps closing brace when opening brace is removed and inner values exist
+    queryField.type(`{selectall}{backspace}time(test{leftArrow}{leftArrow}{leftArrow}{leftArrow}{backspace}`);
+    queryFieldValue.should(($el) => {
+      expect($el.val()).to.eq('timetest)');
+    });
+
+    // overrides an automatically inserted brace
+    queryField.type(`{selectall}{backspace}time()`);
+    queryFieldValue.should(($el) => {
+      expect($el.val()).to.eq('time()');
+    });
+
+    // does not override manually inserted braces
+    queryField.type(`{selectall}{backspace}))`);
+    queryFieldValue.should(($el) => {
+      expect($el.val()).to.eq('))');
+    });
+
+    /** Runner plugin */
+
+    // Should execute the query when enter with shift is pressed
+    queryField.type(`{selectall}{backspace}{shift+enter}`);
+    e2e().get('[data-testid="explore-no-data"]').should('be.visible');
+
+    /** Suggestions plugin */
+    e2e().get('[role="code"]').type(`{selectall}av`);
+    e2e().contains('avg').should('be.visible');
+    e2e().contains('avg_over_time').should('be.visible');
   },
 });
