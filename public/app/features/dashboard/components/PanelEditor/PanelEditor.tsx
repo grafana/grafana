@@ -462,14 +462,22 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               maxSize={-300}
               paneSize={uiState.rightPaneSize}
               primary="second"
-              onDragFinished={(size) => updatePanelEditorUIState({ rightPaneSize: size })}
+              onDragFinished={(size) => {
+                if (size) {
+                  updatePanelEditorUIState({ rightPaneSize: size / window.innerWidth });
+                }
+              }}
             >
               <SplitPaneWrapper
                 splitOrientation="horizontal"
                 maxSize={-200}
                 paneSize={uiState.topPaneSize}
                 primary="first"
-                onDragFinished={(size) => updatePanelEditorUIState({ topPaneSize: size })}
+                onDragFinished={(size) => {
+                  if (size) {
+                    updatePanelEditorUIState({ topPaneSize: size / window.innerHeight });
+                  }
+                }}
               >
                 {this.renderPanelAndEditor(styles)}
               </SplitPaneWrapper>

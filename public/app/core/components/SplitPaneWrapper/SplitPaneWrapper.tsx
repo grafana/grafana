@@ -52,7 +52,10 @@ export class SplitPaneWrapper extends PureComponent<Props> {
     const styles = getStyles(config.theme2);
 
     // Need to handle when width is relative. ie a percentage of the viewport
-    const paneSizePx = paneSize <= 1 ? paneSize * window.innerWidth : paneSize;
+    const paneSizePx =
+      paneSize <= 1
+        ? paneSize * (splitOrientation === 'horizontal' ? window.innerHeight : window.innerWidth)
+        : paneSize;
 
     return (
       <SplitPane
