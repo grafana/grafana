@@ -66,6 +66,9 @@ export class MssqlDatasource extends SqlDatasource {
   }
 
   getDB(): DB {
+    if (this.db !== undefined) {
+      return this.db;
+    }
     return {
       init: () => Promise.resolve(true),
       datasets: () => this.fetchDatasets(),
