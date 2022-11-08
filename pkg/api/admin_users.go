@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -37,6 +38,10 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
+
+	form.Email = strings.TrimSpace(form.Email)
+	form.Login = strings.TrimSpace(form.Login)
+
 	cmd := user.CreateUserCommand{
 		Login:    form.Login,
 		Email:    form.Email,
