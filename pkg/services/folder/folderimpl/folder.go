@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	foldersvc "github.com/grafana/grafana/pkg/services/folder"
+
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -30,7 +30,6 @@ type Service struct {
 	cfg              *setting.Cfg
 	dashboardService dashboards.DashboardService
 	dashboardStore   dashboards.Store
-	store            store
 	searchService    *search.SearchService
 	features         *featuremgmt.FeatureManager
 	permissions      accesscontrol.FolderPermissionsService
@@ -184,8 +183,8 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 		return nil, toFolderError(err)
 	}
 
-	var folder *models.Folder
-	folder, err = s.dashboardStore.GetFolderByID(ctx, orgID, dash.Id)
+	var createdFolder *models.Folder
+	createdFolder, err = s.dashboardStore.GetFolderByID(ctx, orgID, dash.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -204,13 +203,13 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 			{BuiltinRole: string(org.RoleViewer), Permission: models.PERMISSION_VIEW.String()},
 		}...)
 
-		_, permissionErr = s.permissions.SetPermissions(ctx, orgID, folder.Uid, permissions...)
+		_, permissionErr = s.permissions.SetPermissions(ctx, orgID, createdFolder.Uid, permissions...)
 	} else if s.cfg.EditorsCanAdmin && user.IsRealUser() && !user.IsAnonymous {
-		permissionErr = s.MakeUserAdmin(ctx, orgID, userID, folder.Id, true)
+		permissionErr = s.MakeUserAdmin(ctx, orgID, userID, createdFolder.Id, true)
 	}
 
 	if permissionErr != nil {
-		s.log.Error("Could not make user admin", "folder", folder.Title, "user", userID, "error", permissionErr)
+		s.log.Error("Could not make user admin", "folder", createdFolder.Title, "user", userID, "error", permissionErr)
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
@@ -219,7 +218,7 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 			description = dash.Data.Get("description").MustString()
 		}
 
-		_, err := s.store.Create(ctx, foldersvc.CreateFolderCommand{
+		_, err := s.store.Create(ctx, folder.CreateFolderCommand{
 			// TODO: Today, if a UID isn't specified, the dashboard store
 			// generates a new UID. The new folder store will need to do this as
 			// well, but for now we take the UID from the newly created folder.
@@ -227,19 +226,22 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 			OrgID:       orgID,
 			Title:       title,
 			Description: description,
-			ParentUID:   foldersvc.RootFolderUID,
+			ParentUID:   folder.RootFolderUID,
 		})
 		if err != nil {
 			// We'll log the error and also roll back the previously-created
 			// (legacy) folder.
 			s.log.Error("error saving folder to nested folder store", err)
-			s.DeleteFolder(ctx, user, orgID, folder.Uid, true)
-			return folder, err
+			_, err = s.DeleteFolder(ctx, user, orgID, createdFolder.Uid, true)
+			if err != nil {
+				s.log.Error("error deleting folder after failed save to nested folder store", err)
+			}
+			return createdFolder, err
 		}
 		// The folder UID is specified (or generated) during creation, so we'll
 		// stop here and return the created model.Folder.
 	}
-	return folder, nil
+	return createdFolder, nil
 }
 
 func (s *Service) UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
