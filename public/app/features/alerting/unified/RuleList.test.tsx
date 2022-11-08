@@ -6,7 +6,8 @@ import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { locationService, setDataSourceSrv, logInfo } from '@grafana/runtime';
+import { locationService, setDataSourceSrv, logInfo, setBackendSrv } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import * as actions from 'app/features/alerting/unified/state/actions';
@@ -132,6 +133,10 @@ const ui = {
     saveButton: byRole('button', { name: /Save changes/ }),
   },
 };
+
+beforeAll(() => {
+  setBackendSrv(backendSrv);
+});
 
 describe('RuleList', () => {
   beforeEach(() => {
