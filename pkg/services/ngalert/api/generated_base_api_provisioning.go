@@ -46,7 +46,9 @@ type ProvisioningApi interface {
 func (f *ProvisioningApiHandler) RouteDeleteAlertRule(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
-	return f.handleRouteDeleteAlertRule(ctx, uIDParam)
+	// Get Header
+	disablingProvenanceHeader := ctx.Req.Header.Get("x-disable-provenance")
+	return f.handleRouteDeleteAlertRule(ctx, uIDParam, disablingProvenanceHeader == "true")
 }
 func (f *ProvisioningApiHandler) RouteDeleteContactpoints(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -97,12 +99,14 @@ func (f *ProvisioningApiHandler) RouteGetTemplates(ctx *models.ReqContext) respo
 	return f.handleRouteGetTemplates(ctx)
 }
 func (f *ProvisioningApiHandler) RoutePostAlertRule(ctx *models.ReqContext) response.Response {
+	// Get Header
+	disablingProvenanceHeader := ctx.Req.Header.Get("x-disable-provenance")
 	// Parse Request Body
 	conf := apimodels.ProvisionedAlertRule{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.handleRoutePostAlertRule(ctx, conf)
+	return f.handleRoutePostAlertRule(ctx, conf, disablingProvenanceHeader == "true")
 }
 func (f *ProvisioningApiHandler) RoutePostContactpoints(ctx *models.ReqContext) response.Response {
 	// Parse Request Body
@@ -123,12 +127,14 @@ func (f *ProvisioningApiHandler) RoutePostMuteTiming(ctx *models.ReqContext) res
 func (f *ProvisioningApiHandler) RoutePutAlertRule(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
+	// Get Header
+	disablingProvenanceHeader := ctx.Req.Header.Get("x-disable-provenance")
 	// Parse Request Body
 	conf := apimodels.ProvisionedAlertRule{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.handleRoutePutAlertRule(ctx, conf, uIDParam)
+	return f.handleRoutePutAlertRule(ctx, conf, uIDParam, disablingProvenanceHeader == "true")
 }
 func (f *ProvisioningApiHandler) RoutePutAlertRuleGroup(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
