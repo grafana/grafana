@@ -1101,5 +1101,48 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				},
 			},
 		},
+		{
+			Type:        "webex",
+			Name:        "Cisco Webex",
+			Description: "Sends notifications to Cisco Webex",
+			Heading:     "Webex settings",
+			Info:        "Notifications can be configured for any Cisco Webex",
+			Options: []NotifierOption{
+				{
+					Label:        "Cisco Webex Webhook URL",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "https://api.ciscospark.com/v1/messages",
+					Description:  "API endpoint at which we'll send webhooks to.",
+					PropertyName: "webhook_url",
+				},
+				{
+					Label:        "Room ID",
+					Description:  "The room ID to where we'll send messages to.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "GMtOWY0ZGJkNzMyMGFl",
+					PropertyName: "room_id",
+					Required:     true,
+				},
+				{
+					Label:        "Bot Token",
+					Description:  "Non-expiring access token of the bot that will post messages on our behalf.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  `xxxxxxxxxxxx`,
+					PropertyName: "bot_token",
+					Secure:       true,
+				},
+				{
+					Label:        "Message Template",
+					Description:  "Message template to use. Markdown is supported.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  `{{ template "default.message" . }}`,
+					PropertyName: "message",
+				},
+			},
+		},
 	}
 }
