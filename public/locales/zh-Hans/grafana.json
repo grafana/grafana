@@ -436,6 +436,15 @@
       "range-error": "",
       "to-input": ""
     },
+    "range-picker": {
+      "aria-label-current-time": "",
+      "move-time-backwards": "",
+      "move-time-forwards": "",
+      "selected": "",
+      "to": "",
+      "zoom-out-button": "",
+      "zoom-out-tooltip": ""
+    },
     "time-range": {
       "aria-role": "",
       "default-title": "",
