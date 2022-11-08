@@ -268,12 +268,13 @@ type reporter struct {
 }
 
 func (s *service) getReporters() <-chan reporter {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
-
 	ch := make(chan reporter)
 	go func() {
-		defer close(ch)
+		s.mutex.RLock()
+		defer func() {
+			s.mutex.RUnlock()
+			close(ch)
+		}()
 		for t, r := range s.reporters {
 			ch <- reporter{target: t, reporterFunc: r}
 		}
