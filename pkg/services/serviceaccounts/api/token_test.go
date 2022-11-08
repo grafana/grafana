@@ -55,7 +55,7 @@ func createTokenforSA(t *testing.T, store serviceaccounts.Store, keyName string,
 
 func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 	store := db.InitTestDB(t)
-	quotaService := quotatest.NewQuotaServiceFake(false, nil)
+	quotaService := quotatest.New(false, nil)
 	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(store)
@@ -174,7 +174,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 
 func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 	store := db.InitTestDB(t)
-	quotaService := quotatest.NewQuotaServiceFake(false, nil)
+	quotaService := quotatest.New(false, nil)
 	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(store)

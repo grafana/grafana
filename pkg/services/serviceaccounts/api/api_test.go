@@ -45,7 +45,7 @@ var (
 
 func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	store := db.InitTestDB(t)
-	quotaService := quotatest.NewQuotaServiceFake(false, nil)
+	quotaService := quotatest.New(false, nil)
 	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(store)
@@ -216,7 +216,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 	store := db.InitTestDB(t)
 	kvStore := kvstore.ProvideService(store)
-	quotaService := quotatest.NewQuotaServiceFake(false, nil)
+	quotaService := quotatest.New(false, nil)
 	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(t, err)
 	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
@@ -291,7 +291,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	cfg := setting.NewCfg()
 	teamSvc := teamimpl.ProvideService(sqlStore, cfg)
 
-	userSvc, err := userimpl.ProvideService(sqlStore, nil, cfg, teamimpl.ProvideService(sqlStore, cfg), nil, quotatest.NewQuotaServiceFake(false, nil))
+	userSvc, err := userimpl.ProvideService(sqlStore, nil, cfg, teamimpl.ProvideService(sqlStore, cfg), nil, quotatest.New(false, nil))
 	require.NoError(t, err)
 	saPermissionService, err := ossaccesscontrol.ProvideServiceAccountPermissions(
 		cfg, routing.NewRouteRegister(), sqlStore, acmock, &licensing.OSSLicensingService{}, saStore, acmock, teamSvc, userSvc)
@@ -324,7 +324,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 
 func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 	store := db.InitTestDB(t)
-	quotaService := quotatest.NewQuotaServiceFake(false, nil)
+	quotaService := quotatest.New(false, nil)
 	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(store)
@@ -418,7 +418,7 @@ func newString(s string) *string {
 
 func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 	store := db.InitTestDB(t)
-	quotaService := quotatest.NewQuotaServiceFake(false, nil)
+	quotaService := quotatest.New(false, nil)
 	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(store)

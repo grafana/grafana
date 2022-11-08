@@ -390,7 +390,7 @@ func setup(t *testing.T) *testContext {
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	ss := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	ssvc := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-	quotaService := quotatest.NewQuotaServiceFake(false, nil)
+	quotaService := quotatest.New(false, nil)
 	ds, err := dsSvc.ProvideService(nil, ssvc, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService)
 	require.NoError(t, err)
 	fakeDatasourceService := &fakeDatasources.FakeDataSourceService{

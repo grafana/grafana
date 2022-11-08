@@ -20,7 +20,7 @@ func (s *serviceDisabled) QuotaReached(c *models.ReqContext, targetSrv quota.Tar
 	return false, nil
 }
 
-func (s *serviceDisabled) Get(ctx context.Context, scope quota.Scope, id int64) ([]quota.QuotaDTO, error) {
+func (s *serviceDisabled) GetQuotasByScope(ctx context.Context, scope quota.Scope, id int64) ([]quota.QuotaDTO, error) {
 	return nil, quota.ErrDisabled
 }
 
@@ -32,11 +32,11 @@ func (s *serviceDisabled) CheckQuotaReached(ctx context.Context, targetSrv quota
 	return false, nil
 }
 
-func (s *serviceDisabled) DeleteByUser(ctx context.Context, userID int64) error {
+func (s *serviceDisabled) DeleteQuotaForUser(ctx context.Context, userID int64) error {
 	return quota.ErrDisabled
 }
 
-func (s *serviceDisabled) AddReporter(e *quota.NewUsageReporter) error {
+func (s *serviceDisabled) RegisterQuotaReporter(e *quota.NewUsageReporter) error {
 	return nil
 }
 
@@ -92,7 +92,7 @@ func (s *service) QuotaReached(c *models.ReqContext, targetSrv quota.TargetSrv) 
 	return s.CheckQuotaReached(c.Req.Context(), targetSrv, params)
 }
 
-func (s *service) Get(ctx context.Context, scope quota.Scope, id int64) ([]quota.QuotaDTO, error) {
+func (s *service) GetQuotasByScope(ctx context.Context, scope quota.Scope, id int64) ([]quota.QuotaDTO, error) {
 	if err := scope.Validate(); err != nil {
 		return nil, err
 	}
@@ -219,7 +219,7 @@ func (s *service) CheckQuotaReached(ctx context.Context, targetSrv quota.TargetS
 	return false, nil
 }
 
-func (s *service) DeleteByUser(ctx context.Context, userID int64) error {
+func (s *service) DeleteQuotaForUser(ctx context.Context, userID int64) error {
 	c, err := s.getContext(ctx)
 	if err != nil {
 		return err
@@ -227,7 +227,7 @@ func (s *service) DeleteByUser(ctx context.Context, userID int64) error {
 	return s.store.DeleteByUser(c, userID)
 }
 
-func (s *service) AddReporter(e *quota.NewUsageReporter) error {
+func (s *service) RegisterQuotaReporter(e *quota.NewUsageReporter) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -255,8 +255,8 @@ func (s *service) AddReporter(e *quota.NewUsageReporter) error {
 }
 
 func (s *service) getReporter(target quota.TargetSrv) (quota.UsageReporterFunc, bool) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
 
 	r, ok := s.reporters[target]
 	return r, ok

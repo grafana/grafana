@@ -34,7 +34,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		setup := func() {
 			sqlStore = db.InitTestDB(t)
 			sqlStore.Cfg.RBACEnabled = false
-			quotaService := quotatest.NewQuotaServiceFake(false, nil)
+			quotaService := quotatest.New(false, nil)
 			var err error
 			dashboardStore, err = ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 			require.NoError(t, err)
@@ -190,7 +190,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			setup2 := func() {
 				sqlStore = db.InitTestDB(t)
-				quotaService := quotatest.NewQuotaServiceFake(false, nil)
+				quotaService := quotatest.New(false, nil)
 				dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 				require.NoError(t, err)
 				folder1 = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod")
@@ -297,7 +297,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			setup3 := func() {
 				sqlStore = db.InitTestDB(t)
-				quotaService := quotatest.NewQuotaServiceFake(false, nil)
+				quotaService := quotatest.New(false, nil)
 				dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 				require.NoError(t, err)
 				folder1 = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod")
@@ -481,7 +481,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			var sqlStore *sqlstore.SQLStore
 			var folder1, folder2 *models.Dashboard
 			sqlStore = db.InitTestDB(t)
-			quotaService := quotatest.NewQuotaServiceFake(false, nil)
+			quotaService := quotatest.New(false, nil)
 			dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 			require.NoError(t, err)
 			folder2 = insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
@@ -498,7 +498,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		t.Run("GetFolderByUID", func(t *testing.T) {
 			var orgId int64 = 1
 			sqlStore := db.InitTestDB(t)
-			quotaService := quotatest.NewQuotaServiceFake(false, nil)
+			quotaService := quotatest.New(false, nil)
 			dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 			require.NoError(t, err)
 			folder := insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
@@ -524,7 +524,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		t.Run("GetFolderByID", func(t *testing.T) {
 			var orgId int64 = 1
 			sqlStore := db.InitTestDB(t)
-			quotaService := quotatest.NewQuotaServiceFake(false, nil)
+			quotaService := quotatest.New(false, nil)
 			dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 			require.NoError(t, err)
 			folder := insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")

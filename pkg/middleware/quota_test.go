@@ -184,7 +184,7 @@ func TestMiddlewareQuota(t *testing.T) {
 }
 
 func getQuotaHandler(reached bool, target string) web.Handler {
-	qs := quotatest.NewQuotaServiceFake(reached, nil)
+	qs := quotatest.New(reached, nil)
 	return Quota(qs)(target)
 }
 

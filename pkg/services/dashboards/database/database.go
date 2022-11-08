@@ -52,7 +52,7 @@ func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgm
 		return nil, err
 	}
 
-	if err := quotaService.AddReporter(&quota.NewUsageReporter{
+	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
 		TargetSrv:     dashboards.QuotaTargetSrv,
 		DefaultLimits: defaultLimits,
 		Reporter:      s.Count,

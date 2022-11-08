@@ -584,7 +584,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 func CreateOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
 	t.Helper()
 
-	orgService, err := orgimpl.ProvideService(db, db.Cfg, quotatest.NewQuotaServiceFake(false, nil))
+	orgService, err := orgimpl.ProvideService(db, db.Cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 	orgID, err := orgService.GetOrCreate(context.Background(), "test-org")
 	require.NoError(t, err)

@@ -47,7 +47,7 @@ func (hs *HTTPServer) GetOrgQuotas(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) getOrgQuotasHelper(c *models.ReqContext, orgID int64) response.Response {
-	q, err := hs.QuotaService.Get(c.Req.Context(), quota.OrgScope, orgID)
+	q, err := hs.QuotaService.GetQuotasByScope(c.Req.Context(), quota.OrgScope, orgID)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get quota", err)
 	}
@@ -119,7 +119,7 @@ func (hs *HTTPServer) GetUserQuotas(c *models.ReqContext) response.Response {
 		return response.Err(quota.ErrBadRequest.Errorf("id is invalid: %w", err))
 	}
 
-	q, err := hs.QuotaService.Get(c.Req.Context(), quota.UserScope, id)
+	q, err := hs.QuotaService.GetQuotasByScope(c.Req.Context(), quota.UserScope, id)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get org quotas", err)
 	}

@@ -12,11 +12,11 @@ type FakeQuotaService struct {
 	err     error
 }
 
-func NewQuotaServiceFake(reached bool, err error) *FakeQuotaService {
+func New(reached bool, err error) *FakeQuotaService {
 	return &FakeQuotaService{reached, err}
 }
 
-func (f *FakeQuotaService) Get(ctx context.Context, scope quota.Scope, id int64) ([]quota.QuotaDTO, error) {
+func (f *FakeQuotaService) GetQuotasByScope(ctx context.Context, scope quota.Scope, id int64) ([]quota.QuotaDTO, error) {
 	return []quota.QuotaDTO{}, nil
 }
 
@@ -32,11 +32,11 @@ func (f *FakeQuotaService) CheckQuotaReached(c context.Context, target quota.Tar
 	return f.reached, f.err
 }
 
-func (f *FakeQuotaService) DeleteByUser(c context.Context, userID int64) error {
+func (f *FakeQuotaService) DeleteQuotaForUser(c context.Context, userID int64) error {
 	return f.err
 }
 
-func (f *FakeQuotaService) AddReporter(e *quota.NewUsageReporter) error {
+func (f *FakeQuotaService) RegisterQuotaReporter(e *quota.NewUsageReporter) error {
 	return f.err
 }
 

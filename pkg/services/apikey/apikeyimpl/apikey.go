@@ -29,7 +29,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg, quotaService quota.Service) (api
 		return s, err
 	}
 
-	if err := quotaService.AddReporter(&quota.NewUsageReporter{
+	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
 		TargetSrv:     apikey.QuotaTargetSrv,
 		DefaultLimits: defaultLimits,
 		Reporter:      s.Usage,

@@ -105,7 +105,7 @@ func TestAPIEndpoint_PutCurrentOrg_LegacyAccessControl(t *testing.T) {
 	})
 
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
-	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.NewQuotaServiceFake(false, nil))
+	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 	t.Run("Admin can update current org", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPut, putCurrentOrgURL, input, t)
@@ -120,7 +120,7 @@ func TestAPIEndpoint_PutCurrentOrg_AccessControl(t *testing.T) {
 	_, err := sc.db.CreateOrgWithMember("TestOrg", sc.initCtx.UserID)
 	require.NoError(t, err)
 
-	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.NewQuotaServiceFake(false, nil))
+	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	input := strings.NewReader(testUpdateOrgNameForm)
@@ -440,7 +440,7 @@ func TestAPIEndpoint_PutOrg_LegacyAccessControl(t *testing.T) {
 	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 	var err error
-	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.NewQuotaServiceFake(false, nil))
+	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 	// Create two orgs, to update another one than the logged in one
 	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)
@@ -462,7 +462,7 @@ func TestAPIEndpoint_PutOrg_LegacyAccessControl(t *testing.T) {
 func TestAPIEndpoint_PutOrg_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true)
 	var err error
-	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.NewQuotaServiceFake(false, nil))
+	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 	// Create two orgs, to update another one than the logged in one
 	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)

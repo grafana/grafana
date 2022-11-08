@@ -49,7 +49,7 @@ func ProvideService(
 		return s, err
 	}
 
-	if err := quotaService.AddReporter(&quota.NewUsageReporter{
+	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
 		TargetSrv:     quota.TargetSrv(user.QuotaTargetSrv),
 		DefaultLimits: defaultLimits,
 		Reporter:      s.Usage,

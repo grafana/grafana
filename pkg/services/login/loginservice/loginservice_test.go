@@ -26,7 +26,7 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 	authInfoMock := &logintest.AuthInfoServiceFake{}
 
 	login := Implementation{
-		QuotaService:    quotatest.NewQuotaServiceFake(false, nil),
+		QuotaService:    quotatest.New(false, nil),
 		AuthInfoService: authInfoMock,
 		SQLStore:        nil,
 		userService:     usertest.NewUserServiceFake(),
@@ -51,7 +51,7 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 	orgService.ExpectedOrgListResponse = createResponseWithOneErrLastOrgAdminItem()
 
 	login := Implementation{
-		QuotaService:    quotatest.NewQuotaServiceFake(false, nil),
+		QuotaService:    quotatest.New(false, nil),
 		AuthInfoService: authInfoMock,
 		SQLStore:        nil,
 		userService:     usertest.NewUserServiceFake(),
@@ -66,7 +66,7 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 func Test_teamSync(t *testing.T) {
 	authInfoMock := &logintest.AuthInfoServiceFake{}
 	login := Implementation{
-		QuotaService:    quotatest.NewQuotaServiceFake(false, nil),
+		QuotaService:    quotatest.New(false, nil),
 		AuthInfoService: authInfoMock,
 	}
 

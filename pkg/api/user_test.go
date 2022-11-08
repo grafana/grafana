@@ -69,7 +69,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		}
 		user, err := sqlStore.CreateUser(context.Background(), createUserCmd)
 		require.Nil(t, err)
-		hs.userService, err = userimpl.ProvideService(sqlStore, nil, sc.cfg, nil, nil, quotatest.NewQuotaServiceFake(false, nil))
+		hs.userService, err = userimpl.ProvideService(sqlStore, nil, sc.cfg, nil, nil, quotatest.New(false, nil))
 		require.NoError(t, err)
 
 		sc.handlerFunc = hs.GetUserByID

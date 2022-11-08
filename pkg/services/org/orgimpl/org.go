@@ -37,7 +37,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg, quotaService quota.Service) (org
 		return s, err
 	}
 
-	if err := quotaService.AddReporter(&quota.NewUsageReporter{
+	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
 		TargetSrv:     quota.TargetSrv(org.QuotaTargetSrv),
 		DefaultLimits: defaultLimits,
 		Reporter:      s.Usage,

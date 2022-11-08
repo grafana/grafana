@@ -146,7 +146,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.folderService = folderService
 		hs.AccessControl = acmock.New()
-		hs.QuotaService = quotatest.NewQuotaServiceFake(false, nil)
+		hs.QuotaService = quotatest.New(false, nil)
 	})
 
 	t.Run("Should attach access control metadata to multiple folders", func(t *testing.T) {
