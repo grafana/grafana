@@ -421,6 +421,13 @@
       "empty-recent-list": "",
       "filter-placeholder": ""
     },
+    "footer": {
+      "change-settings-button": "",
+      "fiscal-year-option": "",
+      "fiscal-year-start": "",
+      "time-zone-option": "",
+      "time-zone-selection": ""
+    },
     "range-content": {
       "apply-button": "",
       "default-error": "",

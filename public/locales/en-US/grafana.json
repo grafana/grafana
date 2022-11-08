@@ -421,6 +421,13 @@
       "empty-recent-list": "<0><0>It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.</0></0><1><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></1>",
       "filter-placeholder": "Search quick ranges"
     },
+    "footer": {
+      "change-settings-button": "Change time settings",
+      "fiscal-year-option": "Fiscal year",
+      "fiscal-year-start": "Fiscal year start month",
+      "time-zone-option": "Time zone",
+      "time-zone-selection": "Time zone selection"
+    },
     "range-content": {
       "apply-button": "Apply time range",
       "default-error": "Please enter a past date or \"now\"",
