@@ -14,6 +14,7 @@ import { RulerRulesConfigDTO, RulerRuleGroupDTO, RulerRuleDTO } from 'app/types/
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { rulesInSameGroupHaveInvalidFor, updateLotexNamespaceAndGroupAction } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { isAlertingRulerRule, isGrafanaRulerRule } from '../../utils/rules';
 import { parsePrometheusDuration } from '../../utils/time';
@@ -230,6 +231,9 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
     [nameSpaceName, groupName, groupInterval]
   );
 
+  const isGrafanaManagedGroup = sourceName === GRAFANA_RULES_SOURCE_NAME;
+  const nameSpaceLabel = isGrafanaManagedGroup ? 'Folder' : 'Namespace';
+
   // close modal if successfully saved
   useEffect(() => {
     if (dispatched && !loading && !error) {
@@ -315,20 +319,28 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               label={
                 <Label htmlFor="namespaceName">
                   <Stack gap={0.5}>
-                    NameSpace
-                    <InfoIcon text={'Name space can be updated'} />
+                    {nameSpaceLabel}
+                    {isGrafanaManagedGroup ? (
+                      <InfoIcon text={'Folder name can be updated on Folder view.'} />
+                    ) : (
+                      <InfoIcon text={'Name space can be updated'} />
+                    )}
                   </Stack>
                 </Label>
               }
               invalid={!!errors.namespaceName}
               error={errors.namespaceName?.message}
             >
-              <Input
-                id="namespaceName"
-                {...register('namespaceName', {
-                  required: 'Namespace name is required.',
-                })}
-              />
+              {isGrafanaManagedGroup ? (
+                <>{nameSpaceName}</>
+              ) : (
+                <Input
+                  id="namespaceName"
+                  {...register('namespaceName', {
+                    required: 'Namespace name is required.',
+                  })}
+                />
+              )}
             </Field>
             <Field
               label={
