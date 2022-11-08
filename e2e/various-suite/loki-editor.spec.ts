@@ -27,7 +27,7 @@ describe('Loki Editor', () => {
       });
   });
 
-  it('Braces plugin should insert closing brace', () => {
+  it('Autocomplete works as spected', () => {
     e2e().intercept(/labels?/, (req) => {
       req.reply({ status: 'success', data: ['instance', 'job', 'source'] });
     });
@@ -41,10 +41,17 @@ describe('Loki Editor', () => {
     e2e.components.DataSourcePicker.container().should('be.visible').click();
     e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
 
-    // adds closing braces around empty value
     e2e().contains('Code').click();
+
+    // Wait for lazy loading
+    const monacoLoadingText = 'Loading...';
+    e2e().contains(monacoLoadingText).should('be.visible');
+    e2e().contains(monacoLoadingText).should('not.exist');
+
     const queryField = e2e().get('[role="code"]');
     const queryFieldValue = e2e().get('.monaco-editor textarea:first');
+
+    // adds closing braces around empty value
     queryField.type('time(');
     queryFieldValue.should(($el) => {
       expect($el.val()).to.eq('time()');
