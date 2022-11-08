@@ -169,15 +169,37 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
+	var (
+		states        []StateTransition
+		optionalImage *ngModels.Image
+	)
+
 	logger := st.log.FromContext(ctx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
-	var states []StateTransition
 
 	for _, result := range results {
 		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
+
+		if shouldTakeImage(s.State.State, s.PreviousState, s.Image, s.Resolved) {
+			if optionalImage == nil {
+				if image, err := takeImage(ctx, st.imageService, alertRule); err != nil {
+					logger.Warn("Failed to take an image",
+						"dashboard", alertRule.DashboardUID,
+						"panel", alertRule.PanelID,
+						"error", err)
+				} else if image != nil {
+					optionalImage = image
+				}
+			}
+			s.Image = optionalImage
+			// need to set the cache once more
+			st.cache.set(s.State)
+		}
+
 		states = append(states, s)
 	}
-	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, logger)
+
+	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, optionalImage, logger)
 
 	st.saveAlertStates(ctx, logger, states...)
 
@@ -242,18 +264,6 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	// Set Resolved property so the scheduler knows to send a postable alert
 	// to Alertmanager.
 	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
-
-	if shouldTakeImage(currentState.State, oldState, currentState.Image, currentState.Resolved) {
-		image, err := takeImage(ctx, st.imageService, alertRule)
-		if err != nil {
-			logger.Warn("Failed to take an image",
-				"dashboard", alertRule.DashboardUID,
-				"panel", alertRule.PanelID,
-				"error", err)
-		} else if image != nil {
-			currentState.Image = image
-		}
-	}
 
 	st.cache.set(currentState)
 
@@ -332,11 +342,7 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, logger log.Logger) []StateTransition {
-	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
-	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
-	var resolvedImage *ngModels.Image
-
+func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, resolvedImage *ngModels.Image, logger log.Logger) []StateTransition {
 	var resolvedStates []StateTransition
 	staleStates := st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
 		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
@@ -369,19 +375,9 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 				PreviousStateReason: oldReason,
 			}
 
-			// If there is no resolved image for this rule then take one
-			if resolvedImage == nil {
-				image, err := takeImage(ctx, st.imageService, alertRule)
-				if err != nil {
-					logger.Warn("Failed to take an image",
-						"dashboard", alertRule.DashboardUID,
-						"panel", alertRule.PanelID,
-						"error", err)
-				} else if image != nil {
-					resolvedImage = image
-				}
+			if resolvedImage != nil {
+				s.Image = resolvedImage
 			}
-			s.Image = resolvedImage
 			resolvedStates = append(resolvedStates, record)
 		}
 	}
