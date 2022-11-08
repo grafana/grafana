@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -194,8 +193,3 @@ type DatasourcesPermissionFilterQuery struct {
 	Datasources []*DataSource
 	Result      []*DataSource
 }
-
-const (
-	QuotaTargetSrv quota.TargetSrv = "data_source"
-	QuotaTarget    quota.Target    = "data_source"
-)

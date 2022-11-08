@@ -18,13 +18,13 @@ type sqlStore struct {
 	db  db.DB
 	log log.Logger
 	cfg *setting.Cfg
-	fm  featuremgmt.FeatureManager
+	fm  featuremgmt.FeatureToggles
 }
 
 // sqlStore implements the store interface.
 var _ store = (*sqlStore)(nil)
 
-func ProvideStore(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureManager) *sqlStore {
+func ProvideStore(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) *sqlStore {
 	return &sqlStore{db: db, log: log.New("folder-store"), cfg: cfg, fm: features}
 }
 
@@ -117,6 +117,12 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 		if cmd.NewUID != nil {
 			columnsToUpdate = append(columnsToUpdate, "uid = ?")
 			cmd.Folder.UID = *cmd.NewUID
+			args = append(args, cmd.Folder.UID)
+		}
+
+		if cmd.NewParentUID != nil {
+			columnsToUpdate = append(columnsToUpdate, "parent_uid = ?")
+			cmd.Folder.ParentUID = *cmd.NewParentUID
 			args = append(args, cmd.Folder.UID)
 		}
 
