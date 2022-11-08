@@ -56,7 +56,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     actions: css({
       display: 'flex',
       flexDirection: 'row',
-      gap: theme.spacing(0.5),
+      gap: theme.spacing(1),
     }),
     pageHeader: css({
       display: 'flex',

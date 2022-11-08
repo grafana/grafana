@@ -37,10 +37,13 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
       <div>{plugin?.description}</div>
       {plugin?.details?.links && plugin.details.links.length > 0 && (
         <div className={styles.links}>
-          {plugin.details.links.map((link) => (
-            <a key={link.name} href={link.url} className="external-link">
-              {link.name}
-            </a>
+          {plugin.details.links.map((link, index) => (
+            <>
+              {index > 0 && ' | '}
+              <a key={link.name} href={link.url} className="external-link">
+                {link.name}
+              </a>
+            </>
           ))}
         </div>
       )}
