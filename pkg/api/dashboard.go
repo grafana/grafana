@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -402,7 +401,6 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 			OrgID: c.OrgID,
 			UID:   &cmd.FolderUid,
 		})
-		spew.Dump("<<<< postDashboard:", cmd.FolderUid, folder, err)
 		if err != nil {
 			if errors.Is(err, dashboards.ErrFolderNotFound) {
 				return response.Error(400, "Folder not found", err)
