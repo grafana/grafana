@@ -99,6 +99,8 @@ describe('createTableFrameFromSearch()', () => {
     expect(frame.fields[1].name).toBe('traceName');
     expect(frame.fields[1].values.get(0)).toBe('c10d7ca4e3a00354 ');
 
+    expect(frame.fields[2].name).toBe('startTime');
+    expect(frame.fields[2].values.get(0)).toBe('2022-01-28 03:00:28');
     expect(frame.fields[2].values.get(1)).toBe('2022-01-27 22:56:06');
 
     expect(frame.fields[3].name).toBe('duration');
