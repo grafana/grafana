@@ -2,14 +2,16 @@ package folderimpl
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
+	"github.com/VividCortex/mysqlerr"
+	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -18,13 +20,13 @@ type sqlStore struct {
 	db  db.DB
 	log log.Logger
 	cfg *setting.Cfg
-	fm  featuremgmt.FeatureManager
+	fm  featuremgmt.FeatureToggles
 }
 
 // sqlStore implements the store interface.
 var _ store = (*sqlStore)(nil)
 
-func ProvideStore(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureManager) *sqlStore {
+func ProvideStore(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) *sqlStore {
 	return &sqlStore{db: db, log: log.New("folder-store"), cfg: cfg, fm: features}
 }
 
@@ -120,6 +122,12 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 			args = append(args, cmd.Folder.UID)
 		}
 
+		if cmd.NewParentUID != nil {
+			columnsToUpdate = append(columnsToUpdate, "parent_uid = ?")
+			cmd.Folder.ParentUID = *cmd.NewParentUID
+			args = append(args, cmd.Folder.UID)
+		}
+
 		if len(columnsToUpdate) == 0 {
 			return folder.ErrBadRequest.Errorf("no columns to update")
 		}
@@ -177,9 +185,6 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 
 func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
 	var folders []*folder.Folder
-	if ss.db.GetDBType() == migrator.MySQL {
-		return ss.getParentsMySQL(ctx, q)
-	}
 
 	recQuery := `
 		WITH RECURSIVE RecQry AS (
@@ -189,14 +194,23 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 		SELECT * FROM RecQry;
 	`
 
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		err := sess.SQL(recQuery, q.UID, q.OrgID).Find(&folders)
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to get folder parents: %w", err)
 		}
 		return nil
-	})
-	return util.Reverse(folders[1:]), err
+	}); err != nil {
+		var driverErr *mysql.MySQLError
+		if errors.As(err, &driverErr) {
+			if driverErr.Number == mysqlerr.ER_PARSE_ERROR {
+				ss.log.Debug("recursive CTE subquery is not supported; it fallbacks to the iterative implementation")
+				return ss.getParentsMySQL(ctx, q)
+			}
+		}
+		return nil, err
+	}
+	return util.Reverse(folders[1:]), nil
 }
 
 func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetTreeQuery) ([]*folder.Folder, error) {
@@ -222,20 +236,32 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetTreeQuery) ([]*
 	return folders, err
 }
 
-func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd folder.GetParentsQuery) ([]*folder.Folder, error) {
-	var foldrs []*folder.Folder
-	var foldr *folder.Folder
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		uid := cmd.UID
-		for uid != folder.GeneralFolderUID && len(foldrs) < 8 {
-			err := sess.Where("uid=? AND org_id=>", uid, cmd.OrgID).Find(foldr)
+func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd folder.GetParentsQuery) (folders []*folder.Folder, err error) {
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		uid := ""
+		ok, err := sess.SQL("SELECT parent_uid FROM folder WHERE org_id=? AND uid=?", cmd.OrgID, cmd.UID).Get(&uid)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return folder.ErrFolderNotFound
+		}
+		for {
+			f := &folder.Folder{}
+			ok, err := sess.SQL("SELECT * FROM folder WHERE org_id=? AND uid=?", cmd.OrgID, uid).Get(f)
 			if err != nil {
-				return folder.ErrDatabaseError.Errorf("failed to get folder parents: %w", err)
+				return err
 			}
-			foldrs = append(foldrs, foldr)
-			uid = foldr.ParentUID
+			if !ok {
+				break
+			}
+			folders = append(folders, f)
+			uid = f.ParentUID
+			if len(folders) > folder.MaxNestedFolderDepth {
+				return folder.ErrFolderTooDeep
+			}
 		}
 		return nil
 	})
-	return foldrs, err
+	return folders, err
 }

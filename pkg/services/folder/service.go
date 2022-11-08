@@ -55,5 +55,5 @@ type NestedFolderService interface {
 	//
 	// The map keys are folder uids and the values are the list of child folders
 	// for that parent.
-	GetTree(ctx context.Context, cmd *GetTreeQuery) (map[string][]*Folder, error)
+	GetTree(ctx context.Context, cmd *GetTreeQuery) ([]*Folder, error)
 }
