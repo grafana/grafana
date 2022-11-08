@@ -1,3 +1,36 @@
+<!-- 9.2.4 START -->
+
+# 9.2.4 (2022-11-07)
+
+### Features and enhancements
+
+- **Access Control:** Add an endpoint for setting several managed resource permissions. [#57893](https://github.com/grafana/grafana/pull/57893), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **Accessibility:** Increase `Select` placeholder contrast to be WCAG AA compliant. [#58034](https://github.com/grafana/grafana/pull/58034), [@ashharrison90](https://github.com/ashharrison90)
+- **Alerting:** Append org ID to alert notification URLs. [#57123](https://github.com/grafana/grafana/pull/57123), [@neel1996](https://github.com/neel1996)
+- **Alerting:** Make the Grouped view the default one for Rules. [#58271](https://github.com/grafana/grafana/pull/58271), [@VikaCep](https://github.com/VikaCep)
+- **Build:** Remove unnecessary alpine package updates. [#58005](https://github.com/grafana/grafana/pull/58005), [@DanCech](https://github.com/DanCech)
+- **Chore:** Upgrade Go to 1.19.3. [#58052](https://github.com/grafana/grafana/pull/58052), [@sakjur](https://github.com/sakjur)
+- **Google Cloud Monitoring:** Set frame interval to draw null values. [#57768](https://github.com/grafana/grafana/pull/57768), [@andresmgot](https://github.com/andresmgot)
+- **Instrumentation:** Expose when the binary was built as a gauge. [#57951](https://github.com/grafana/grafana/pull/57951), [@bergquist](https://github.com/bergquist)
+- **Loki:** Preserve `X-ID-Token` header. [#57878](https://github.com/grafana/grafana/pull/57878), [@siiimooon](https://github.com/siiimooon)
+- **Search:** Reduce requests in folder view. [#55876](https://github.com/grafana/grafana/pull/55876), [@mvsousa](https://github.com/mvsousa)
+- **TimeSeries:** More thorough detection of negative values for auto-stacking direction. [#57863](https://github.com/grafana/grafana/pull/57863), [@leeoniya](https://github.com/leeoniya)
+
+### Bug fixes
+
+- **Alerting:** Attempt to preserve UID from migrated legacy channel. [#57639](https://github.com/grafana/grafana/pull/57639), [@alexweav](https://github.com/alexweav)
+- **Alerting:** Fix response is not returned for invalid Duration in Provisioning API. [#58046](https://github.com/grafana/grafana/pull/58046), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Alerting:** Fix screenshot is not taken for stale series. [#57982](https://github.com/grafana/grafana/pull/57982), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Auth:** Fix admins not seeing pending invites. [#58217](https://github.com/grafana/grafana/pull/58217), [@joshhunt](https://github.com/joshhunt)
+- **MSSQL/Postgres:** Fix visual query editor filter disappearing. [#58248](https://github.com/grafana/grafana/pull/58248), [@zoltanbedi](https://github.com/zoltanbedi)
+- **Tempo:** Fix dropdown issue on tag field focus. [#57616](https://github.com/grafana/grafana/pull/57616), [@xiyu95](https://github.com/xiyu95)
+- **Timeseries:** Fix null pointer when matching fill below to field. [#58030](https://github.com/grafana/grafana/pull/58030), [@mdvictor](https://github.com/mdvictor)
+
+### Plugin development fixes & changes
+
+- **Toolkit:** Fix Webpack less-loader config. [#57950](https://github.com/grafana/grafana/pull/57950), [@dessen-xu](https://github.com/dessen-xu)
+
+<!-- 9.2.4 END -->
 <!-- 9.2.3 START -->
 
 # 9.2.3 (2022-10-31)
