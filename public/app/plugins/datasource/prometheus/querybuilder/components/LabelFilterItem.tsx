@@ -79,6 +79,7 @@ export function LabelFilterItem({
                 ...item,
                 op: item.op ?? defaultOp,
                 label: change.label,
+                // eslint-ignore
               } as QueryBuilderLabelFilter);
             }
           }}
@@ -97,6 +98,7 @@ export function LabelFilterItem({
                 ...item,
                 op: change.value,
                 value: isMultiSelect(change.value) ? item.value : getSelectOptionsFromString(item?.value)[0],
+                // eslint-ignore
               } as QueryBuilderLabelFilter);
             }
           }}
@@ -136,6 +138,7 @@ export function LabelFilterItem({
                 ...item,
                 value: change.value,
                 op: item.op ?? defaultOp,
+                // eslint-ignore
               } as QueryBuilderLabelFilter);
             } else {
               const changes = change
@@ -143,6 +146,7 @@ export function LabelFilterItem({
                   return change.label;
                 })
                 .join('|');
+              // eslint-ignore
               onChange({ ...item, value: changes, op: item.op ?? defaultOp } as QueryBuilderLabelFilter);
             }
           }}
