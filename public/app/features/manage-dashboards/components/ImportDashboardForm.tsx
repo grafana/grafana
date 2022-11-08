@@ -30,7 +30,7 @@ import { ImportDashboardLibraryPanelsList } from './ImportDashboardLibraryPanels
 interface Props extends Pick<FormAPI<ImportDashboardDTO>, 'register' | 'errors' | 'control' | 'getValues' | 'watch'> {
   uidReset: boolean;
   inputs: DashboardInputs;
-  initialFolderId: number;
+  initialFolderUid: string;
 
   onCancel: () => void;
   onUidReset: () => void;
@@ -44,7 +44,7 @@ export const ImportDashboardForm: FC<Props> = ({
   getValues,
   uidReset,
   inputs,
-  initialFolderId,
+  initialFolderUid,
   onUidReset,
   onCancel,
   onSubmit,
@@ -82,7 +82,7 @@ export const ImportDashboardForm: FC<Props> = ({
       <Field label="Folder">
         <InputControl
           render={({ field: { ref, ...field } }) => (
-            <FolderPicker {...field} enableCreateNew initialFolderId={initialFolderId} />
+            <FolderPicker {...field} enableCreateNew initialFolderUid={initialFolderUid} />
           )}
           name="folder"
           control={control}
