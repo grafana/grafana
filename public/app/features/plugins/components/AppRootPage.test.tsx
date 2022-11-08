@@ -65,8 +65,32 @@ class RootComponent extends Component<AppRootProps> {
 }
 
 function renderUnderRouter() {
+  const appPluginNavItem: NavModelItem = {
+    text: 'App',
+    id: 'plugin-page-app',
+    url: '/a/plugin-page-app',
+    children: [
+      {
+        text: 'Page 1',
+        url: '/a/plugin-page-app/page-1',
+      },
+      {
+        text: 'Page 2',
+        url: '/a/plugin-page-app/page-2',
+      },
+    ],
+  };
+
+  const appsSection = {
+    text: 'apps',
+    id: 'apps',
+    children: [appPluginNavItem],
+  };
+
+  appPluginNavItem.parentItem = appsSection;
+
   const store = configureStore();
-  const route = { component: AppRootPage };
+  const route = { component: () => <AppRootPage pluginId="my-awesome-plugin" pluginNavSection={appsSection} /> };
   locationService.push('/a/my-awesome-plugin');
 
   render(

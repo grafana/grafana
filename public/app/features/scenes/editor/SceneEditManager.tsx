@@ -11,17 +11,17 @@ import { SceneObjectEditor } from './SceneObjectEditor';
 import { SceneObjectTree } from './SceneObjectTree';
 
 export class SceneEditManager extends SceneObjectBase<SceneEditorState> implements SceneEditor {
-  static Component = SceneEditorRenderer;
+  public static Component = SceneEditorRenderer;
 
-  get Component(): SceneComponent<this> {
+  public get Component(): SceneComponent<this> {
     return SceneEditorRenderer;
   }
 
-  onMouseEnterObject(model: SceneObject) {
+  public onMouseEnterObject(model: SceneObject) {
     this.setState({ hoverObject: { ref: model } });
   }
 
-  onMouseLeaveObject(model: SceneObject) {
+  public onMouseLeaveObject(model: SceneObject) {
     if (model.parent) {
       this.setState({ hoverObject: { ref: model.parent } });
     } else {
@@ -29,7 +29,7 @@ export class SceneEditManager extends SceneObjectBase<SceneEditorState> implemen
     }
   }
 
-  onSelectObject(model: SceneObject) {
+  public onSelectObject(model: SceneObject) {
     this.setState({ selectedObject: { ref: model } });
   }
 }

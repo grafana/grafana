@@ -167,13 +167,6 @@ var (
 			FrontendOnly:    true,
 		},
 		{
-			Name:         "explore2Dashboard",
-			Description:  "Experimental Explore to Dashboard workflow",
-			State:        FeatureStateStable,
-			Expression:   "true", // enabled by default
-			FrontendOnly: true,
-		},
-		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateAlpha,
@@ -217,11 +210,6 @@ var (
 		{
 			Name:        "prometheusStreamingJSONParser",
 			Description: "Enable streaming JSON parser for Prometheus datasource",
-			State:       FeatureStateBeta,
-		},
-		{
-			Name:        "prometheusStreamingJSONParserTest",
-			Description: "Run both old and streaming requests and log differences",
 			State:       FeatureStateBeta,
 		},
 		{

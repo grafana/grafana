@@ -2619,6 +2619,7 @@ var expNonEmailNotifications = map[string][]string{
 			  "grafana_folder": "default"
 			},
 			"annotations": {
+			  "__orgId__":"1",
               "__values__": "{\"A\":1}",
               "__value_string__": "[ var='A' labels={} value=1 ]"
             },
