@@ -35,3 +35,4 @@ export {
   type DataSourcePickerProps,
   type DataSourcePickerState,
 } from './components/DataSourcePicker';
+export { SupportedPlugin as BridgeSupportedPlugin, PluginBridge, createBridgeURL } from './components/PluginBridge';

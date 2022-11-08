@@ -1,6 +1,6 @@
-import { SupportedPlugin } from 'src/components/PluginBridge';
-
 import { PluginMeta } from '@grafana/data';
+
+import { SupportedPlugin } from '../components/PluginBridge';
 
 import { BackendSrvRequest, getBackendSrv } from './backendSrv';
 

@@ -1,9 +1,8 @@
 import React, { FC } from 'react';
 import { useHistory } from 'react-router-dom';
 
+import { createBridgeURL, PluginBridge, BridgeSupportedPlugin } from '@grafana/runtime';
 import { Button, Tooltip } from '@grafana/ui';
-
-import { createBridgeURL, PluginBridge, SupportedPlugin } from '../PluginBridge';
 
 interface Props {
   title?: string;
@@ -12,11 +11,11 @@ interface Props {
 
 export const DeclareIncident: FC<Props> = ({ title = '', severity = '' }) => {
   const history = useHistory();
-  const bridgeURL = createBridgeURL(SupportedPlugin.Incident, '/incidents/declare', { title, severity });
+  const bridgeURL = createBridgeURL(BridgeSupportedPlugin.Incident, '/incidents/declare', { title, severity });
 
   return (
     <PluginBridge
-      plugin={SupportedPlugin.Incident}
+      plugin={BridgeSupportedPlugin.Incident}
       loadingComponent={
         <Button size="sm" type="button" disabled>
           Declare Incident
