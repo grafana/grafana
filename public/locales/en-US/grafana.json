@@ -417,6 +417,13 @@
       "cancel-button": "Cancel",
       "select-time": "Select a time range"
     },
+    "footer": {
+      "change-settings-button": "Change time settings",
+      "fiscal-year-option": "Fiscal year",
+      "fiscal-year-start": "Fiscal year start month",
+      "time-zone-option": "Time zone",
+      "time-zone-selection": "Time zone selection"
+    },
     "time-range": {
       "aria-role": "Time range selection",
       "default-title": "Time ranges",
