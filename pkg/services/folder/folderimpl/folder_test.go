@@ -87,18 +87,18 @@ func TestIntegrationFolderService(t *testing.T) {
 			dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(folder, nil)
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
-				_, err := service.GetFolderByID(context.Background(), usr, folderId, orgID)
+				_, err := service.getFolderByID(context.Background(), usr, folderId, orgID)
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
 			t.Run("When get folder by id, with id = 0 should return default folder", func(t *testing.T) {
-				folder, err := service.GetFolderByID(context.Background(), usr, 0, orgID)
+				folder, err := service.getFolderByID(context.Background(), usr, 0, orgID)
 				require.NoError(t, err)
 				require.Equal(t, folder, &models.Folder{Id: 0, Title: "General"})
 			})
 
 			t.Run("When get folder by uid should return access denied error", func(t *testing.T) {
-				_, err := service.GetFolderByUID(context.Background(), usr, orgID, folderUID)
+				_, err := service.getFolderByUID(context.Background(), usr, orgID, folderUID)
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
@@ -213,7 +213,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				dashStore.On("GetFolderByID", mock.Anything, orgID, expected.Id).Return(expected, nil)
 
-				actual, err := service.GetFolderByID(context.Background(), usr, expected.Id, orgID)
+				actual, err := service.getFolderByID(context.Background(), usr, expected.Id, orgID)
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
 			})
@@ -224,7 +224,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				dashStore.On("GetFolderByUID", mock.Anything, orgID, expected.Uid).Return(expected, nil)
 
-				actual, err := service.GetFolderByUID(context.Background(), usr, orgID, expected.Uid)
+				actual, err := service.getFolderByUID(context.Background(), usr, orgID, expected.Uid)
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
 			})
@@ -234,7 +234,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				dashStore.On("GetFolderByTitle", mock.Anything, orgID, expected.Title).Return(expected, nil)
 
-				actual, err := service.GetFolderByTitle(context.Background(), usr, orgID, expected.Title)
+				actual, err := service.getFolderByTitle(context.Background(), usr, orgID, expected.Title)
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
 			})

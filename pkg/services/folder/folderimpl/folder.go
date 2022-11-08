@@ -78,11 +78,11 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 
 	switch {
 	case cmd.UID != nil:
-		return s.GetFolderByUID(ctx, user, cmd.OrgID, *cmd.UID)
+		return s.getFolderByUID(ctx, user, cmd.OrgID, *cmd.UID)
 	case cmd.ID != nil:
-		return s.GetFolderByID(ctx, user, *cmd.ID, cmd.OrgID)
+		return s.getFolderByID(ctx, user, *cmd.ID, cmd.OrgID)
 	case cmd.Title != nil:
-		return s.GetFolderByTitle(ctx, user, cmd.OrgID, *cmd.Title)
+		return s.getFolderByTitle(ctx, user, cmd.OrgID, *cmd.Title)
 	default:
 		return nil, folder.ErrBadRequest.Errorf("either on of UID, ID, Title fields must be present")
 	}
@@ -117,7 +117,7 @@ func (s *Service) GetFolders(ctx context.Context, user *user.SignedInUser, orgID
 	return folders, nil
 }
 
-func (s *Service) GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*folder.Folder, error) {
+func (s *Service) getFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*folder.Folder, error) {
 	if id == 0 {
 		return &folder.Folder{ID: id, Title: "General"}, nil
 	}
@@ -138,7 +138,7 @@ func (s *Service) GetFolderByID(ctx context.Context, user *user.SignedInUser, id
 	return dashFolder, nil
 }
 
-func (s *Service) GetFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*folder.Folder, error) {
+func (s *Service) getFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*folder.Folder, error) {
 	dashFolder, err := s.dashboardStore.GetFolderByUID(ctx, orgID, uid)
 	if err != nil {
 		return nil, err
@@ -155,7 +155,7 @@ func (s *Service) GetFolderByUID(ctx context.Context, user *user.SignedInUser, o
 	return dashFolder, nil
 }
 
-func (s *Service) GetFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*folder.Folder, error) {
+func (s *Service) getFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*folder.Folder, error) {
 	dashFolder, err := s.dashboardStore.GetFolderByTitle(ctx, orgID, title)
 	if err != nil {
 		return nil, err
