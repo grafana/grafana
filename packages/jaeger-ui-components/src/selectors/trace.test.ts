@@ -311,14 +311,20 @@ it('getTicksForTrace() should return a list of ticks given interval parameters',
 
 it('getTicksForTrace() should use defaults', () => {
   const timestamp = new Date().getTime() * 1000;
-  const trace = {
-    spans: [
-      {
-        startTime: timestamp,
-        duration: 4000000,
-      },
-    ],
-  };
+  const trace = traceGenerator.trace({ numberOfSpans: 1 });
+
+  trace.spans = [
+    {
+      traceID: '5031233a-d0b5-5d41-9b4b-4c072bcf5020',
+      processID: 'b5f4e0ff-7318-5017-a3f3-9c7b423a82aa',
+      spanID: 'e871771f-f1b4-54af-9e9d-826259c2915e',
+      flags: 0,
+      logs: [],
+      operationName: 'POST',
+      startTime: timestamp,
+      duration: 4000000,
+    },
+  ];
 
   expect(traceSelectors.getTicksForTrace({ trace })).toEqual([
     { timestamp, width: traceSelectors.DEFAULT_TICK_WIDTH },
