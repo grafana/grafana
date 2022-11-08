@@ -22,6 +22,7 @@ import { seriesToRowsTransformerRegistryItem } from './editors/SeriesToRowsTrans
 import { sortByTransformRegistryItem } from './editors/SortByTransformerEditor';
 import { extractFieldsTransformRegistryItem } from './extractFields/ExtractFieldsTransformerEditor';
 import { joinByLabelsTransformRegistryItem } from './joinByLabels/JoinByLabelsTransformerEditor';
+import { jsonQueryTransformRegistryItem } from './jsonQuery/JsonQueryEditor';
 import { fieldLookupTransformRegistryItem } from './lookupGazetteer/FieldLookupTransformerEditor';
 import { partitionByValuesTransformRegistryItem } from './partitionByValues/PartitionByValuesEditor';
 import { prepareTimeseriesTransformerRegistryItem } from './prepareTimeSeries/PrepareTimeSeriesEditor';
@@ -57,5 +58,6 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     limitTransformRegistryItem,
     joinByLabelsTransformRegistryItem,
     partitionByValuesTransformRegistryItem,
+    jsonQueryTransformRegistryItem,
   ];
 };
