@@ -1,3 +1,24 @@
+<!-- 8.5.15 START -->
+
+# 8.5.15 (2022-11-08)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Go to 1.19.2. [#56857](https://github.com/grafana/grafana/pull/56857), [@sakjur](https://github.com/sakjur)
+- **Chore:** Upgrade Go to 1.19.3. [#58070](https://github.com/grafana/grafana/pull/58070), [@sakjur](https://github.com/sakjur)
+
+<!-- 8.5.15 END -->
+
+<!-- 8.5.14 START -->
+
+# 8.5.14 (2022-10-11)
+
+### Features and enhancements
+
+- **Access Control:** Allow org admins to invite new users. [#55585](https://github.com/grafana/grafana/pull/55585), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+
+<!-- 8.5.14 END -->
+
 <!-- 8.5.13 START -->
 
 # 8.5.13 (2022-09-20)
@@ -32,6 +53,7 @@
 - **RBAC:** Fix Anonymous Editors missing dashboard controls. [#52649](https://github.com/grafana/grafana/pull/52649), [@gamab](https://github.com/gamab)
 
 <!-- 8.5.10 END -->
+
 <!-- 8.5.9 START -->
 
 # 8.5.9 (2022-07-14)
@@ -41,6 +63,7 @@
 - **Security:** Fixes for CVE-2022-31107 and CVE-2022-31097. [#52238](https://github.com/grafana/grafana/pull/52238), [@xlson](https://github.com/xlson)
 
 <!-- 8.5.9 END -->
+
 <!-- 8.5.6 START -->
 
 # 8.5.6 (2022-06-14)
@@ -68,6 +91,7 @@
 - **Alerting:** Remove double quotes from matchers. [#50044](https://github.com/grafana/grafana/pull/50044), [@alexweav](https://github.com/alexweav)
 
 <!-- 8.5.5 END -->
+
 <!-- 8.5.4 START -->
 
 # 8.5.4 (2022-05-30)
@@ -279,6 +303,26 @@ When user is using Github OAuth, GitHub login is showed as both Grafana login an
 
 The meaning of the default data source has now changed from being a persisted property in a panel. Before when you selected the default data source for a panel and later changed the default data source to another data source it would change all panels who were configured to use the default data source. From now on the default data source is just the default for new panels and changing the default will not impact any currently saved dashboards. Issue [#45132](https://github.com/grafana/grafana/issues/45132)
 
+<!-- 8.4.11 START -->
+
+# 8.4.11 (2022-08-30)
+
+### Features and enhancements
+
+- **Rendering:** Add support for renderer token (#54425). [#54437](https://github.com/grafana/grafana/pull/54437), [@joanlopez](https://github.com/joanlopez)
+
+<!-- 8.4.11 END -->
+
+<!-- 8.4.10 START -->
+
+# 8.4.10 (2022-07-14)
+
+### Bug fixes
+
+- **Security:** Fixes for CVE-2022-31107 and CVE-2022-31097. [#52218](https://github.com/grafana/grafana/pull/52218), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+
+<!-- 8.4.10 END -->
+
 <!-- 8.4.7 START -->
 
 # 8.4.7 (2022-04-19)
@@ -465,6 +509,16 @@ AngularJS plugin support is now in a deprecated state, meaning it will be remove
 - **Navigation:** Implement Keyboard Navigation. [#41618](https://github.com/grafana/grafana/pull/41618), [@axelavargas](https://github.com/axelavargas)
 - **News:** Reload feed when changing the time range or refreshing. [#42217](https://github.com/grafana/grafana/pull/42217), [@ashharrison90](https://github.com/ashharrison90)
 - **UI/Plot:** Implement keyboard controls for plot cursor. [#42244](https://github.com/grafana/grafana/pull/42244), [@kaydelaney](https://github.com/kaydelaney)
+
+<!-- 8.3.11 START -->
+
+# 8.3.11 (2022-08-30)
+
+### Features and enhancements
+
+- **Rendering:** Add support for renderer token (#54425). [#54436](https://github.com/grafana/grafana/pull/54436), [@joanlopez](https://github.com/joanlopez)
+
+<!-- 8.3.11 END -->
 
 <!-- 8.3.7 START -->
 
