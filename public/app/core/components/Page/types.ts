@@ -11,7 +11,7 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   navModel?: NavModel;
   pageNav?: NavModelItem;
   /** Can be used to place info inline with the heading */
-  info?: PageInfo[];
+  info?: PageInfoItem[];
   /** Can be used to place actions inline with the heading */
   actions?: React.ReactNode;
   /** Can be used to customize rendering of title */
@@ -30,7 +30,7 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   isItemPage?: boolean;
 }
 
-export interface PageInfo {
+export interface PageInfoItem {
   label: string;
   value: React.ReactNode;
 }

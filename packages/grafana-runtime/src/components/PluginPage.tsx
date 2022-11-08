@@ -2,14 +2,14 @@ import React from 'react';
 
 import { NavModelItem, PageLayoutType } from '@grafana/data';
 
-export interface PageInfo {
+export interface PageInfoItem {
   label: string;
   value: React.ReactNode;
 }
 
 export interface PluginPageProps {
   /** Can be used to place actions inline with the heading */
-  info?: PageInfo[];
+  info?: PageInfoItem[];
   /** Can be used to place actions inline with the heading */
   actions?: React.ReactNode;
   /** Can be used to customize rendering of title */

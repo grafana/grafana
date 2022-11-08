@@ -5,15 +5,15 @@ import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { getNavSubTitle, getNavTitle } from '../NavBar/navBarItem-translations';
-import { PageInfo } from '../Page/types';
+import { PageInfoItem } from '../Page/types';
 
-import { PageStats } from './PageInfo';
+import { PageInfo } from './PageInfo';
 
 export interface Props {
   navItem: NavModelItem;
   renderTitle?: (title: string) => React.ReactNode;
   actions?: React.ReactNode;
-  info?: PageInfo[];
+  info?: PageInfoItem[];
   subTitle?: React.ReactNode;
 }
 
@@ -32,7 +32,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle }: Pr
             {navItem.img && <img className={styles.pageImg} src={navItem.img} alt={`logo for ${navItem.text}`} />}
             {titleElement}
           </div>
-          {info && <PageStats info={info} />}
+          {info && <PageInfo info={info} />}
         </div>
         <div className={styles.actions}>{actions}</div>
       </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { PageInfo } from '../../../../core/components/Page/types';
+import { PageInfoItem } from '../../../../core/components/Page/types';
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
 import { InstallControls } from '../components/InstallControls';
 import { PluginDetailsHeaderDependencies } from '../components/PluginDetailsHeaderDependencies';
@@ -10,7 +10,7 @@ import { CatalogPlugin } from '../types';
 
 type ReturnType = {
   actions?: React.ReactNode;
-  info?: PageInfo[];
+  info?: PageInfoItem[];
 };
 
 export const usePluginInfo = (plugin?: CatalogPlugin): ReturnType => {
@@ -26,7 +26,7 @@ export const usePluginInfo = (plugin?: CatalogPlugin): ReturnType => {
       <GetStartedWithPlugin plugin={plugin} />
     </>
   );
-  const info: PageInfo[] = [];
+  const info: PageInfoItem[] = [];
 
   if (Boolean(version)) {
     info.push({

@@ -4,13 +4,13 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { PageInfo } from '../Page/types';
+import { PageInfoItem } from '../Page/types';
 
 export interface Props {
-  info: PageInfo[];
+  info: PageInfoItem[];
 }
 
-export function PageStats({ info }: Props) {
+export function PageInfo({ info }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
