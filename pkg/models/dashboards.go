@@ -35,6 +35,7 @@ type Dashboard struct {
 	UpdatedBy int64
 	CreatedBy int64
 	FolderId  int64
+	FolderUID string `xorm:"folder_uid"`
 	IsFolder  bool
 	HasACL    bool `xorm:"has_acl"`
 
@@ -81,7 +82,6 @@ func NewDashboard(title string) *Dashboard {
 // NewDashboardFolder creates a new dashboard folder
 func NewDashboardFolder(title string) *Dashboard {
 	folder := NewDashboard(title)
-	folder.IsFolder = true
 	folder.Data.Set("schemaVersion", 17)
 	folder.Data.Set("version", 0)
 	folder.IsFolder = true
@@ -140,6 +140,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.PluginId = cmd.PluginId
 	dash.IsFolder = cmd.IsFolder
 	dash.FolderId = cmd.FolderId
+	dash.FolderUID = cmd.FolderUid
 	dash.UpdateSlug()
 	return dash
 }

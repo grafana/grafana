@@ -234,4 +234,9 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("Add isPublic for dashboard", NewAddColumnMigration(dashboardV2, &Column{
 		Name: "is_public", Type: DB_Bool, Nullable: false, Default: "0",
 	}))
+
+	// add column to store the containing (parent) folder_uid
+	mg.AddMigration("Add column folder_uid in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "folder_uid", Type: DB_NVarchar, Length: 40, Nullable: true, Default: "",
+	}))
 }
