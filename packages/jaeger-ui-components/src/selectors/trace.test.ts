@@ -115,9 +115,7 @@ it('getSpanDepthForTrace() should determine the depth of a given span in the par
     let depth = 2;
     let currentId = getSpanParentId(span);
 
-    const findCurrentSpanById = (
-      item: TraceSpanData | { operationName: string; process: { serviceName: string }; spanID: string }
-    ) => getSpanId(item) === currentId;
+    const findCurrentSpanById = (item: TraceSpanData) => getSpanId(item) === currentId;
     while (currentId !== getSpanId(generatedTrace.spans[0])) {
       depth++;
       currentId = getSpanParentId(generatedTrace.spans.find(findCurrentSpanById)!);

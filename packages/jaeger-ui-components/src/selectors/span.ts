@@ -19,14 +19,10 @@ import { TraceSpan, TraceSpanData, TraceSpanReference } from '../types/trace';
 
 import { getProcessServiceName } from './process';
 
-export const getSpanId = (
-  span: TraceSpanData | { operationName: string; process: { serviceName: string }; spanID: string }
-) => span.spanID;
-export const getSpanName = (
-  span: TraceSpanData | { operationName: string; process: { serviceName: string }; spanID: string }
-) => span.operationName;
+export const getSpanId = (span: TraceSpanData) => span.spanID;
+export const getSpanName = (span: TraceSpanData) => span.operationName;
 export const getSpanDuration = (span: TraceSpanData) => span.duration;
-export const getSpanTimestamp = (span: TraceSpanData | { startTime: number; spanID: string }) => span.startTime;
+export const getSpanTimestamp = (span: TraceSpanData) => span.startTime;
 export const getSpanProcessId = (span: TraceSpanData) => span.processID;
 export const getSpanReferences = (span: TraceSpanData) => span.references || [];
 export const getSpanReferenceByType = createSelector(
@@ -39,10 +35,10 @@ export const getSpanParentId = createSelector(
   (childOfRef) => (childOfRef ? childOfRef.spanID : null)
 );
 
-export const getSpanProcess = (
-  span: TraceSpan | { operationName: string; process?: { serviceName: string }; spanID: string }
-) => {
-  if (!span.process) {
+export const getSpanProcess = (span: TraceSpan | TraceSpanData) => {
+  if ('process' in span) {
+    return span.process;
+  } else {
     throw new Error(
       `
       you must hydrate the spans with the processes, perhaps
@@ -50,14 +46,12 @@ export const getSpanProcess = (
     `
     );
   }
-
-  return span.process;
 };
 
 export const getSpanServiceName = createSelector(getSpanProcess, getProcessServiceName);
 
 export const filterSpansForTimestamps = createSelector(
-  ({ spans }: { spans: Array<{ startTime: number; spanID: string }> }) => spans,
+  ({ spans }: { spans: TraceSpanData[] }) => spans,
   ({ leftBound }: { leftBound: number }) => leftBound,
   ({ rightBound }: { rightBound: number }) => rightBound,
   (spans, leftBound, rightBound) =>
@@ -65,11 +59,7 @@ export const filterSpansForTimestamps = createSelector(
 );
 
 export const filterSpansForText = createSelector(
-  ({
-    spans,
-  }: {
-    spans: TraceSpan[] | Array<{ operationName: string; process: { serviceName: string }; spanID: string }>;
-  }) => spans,
+  ({ spans }: { spans: TraceSpanData[] }) => spans,
   ({ text }: { text: string }) => text,
   (spans, text) =>
     fuzzy
@@ -79,7 +69,7 @@ export const filterSpansForText = createSelector(
       .map(({ original }) => original)
 );
 
-const getTextFilterdSpansAsMap = createSelector(filterSpansForText, (matchingSpans) =>
+const getTextFilteredSpansAsMap = createSelector(filterSpansForText, (matchingSpans) =>
   matchingSpans.reduce(
     (obj, span) => ({
       ...obj,
@@ -91,10 +81,10 @@ const getTextFilterdSpansAsMap = createSelector(filterSpansForText, (matchingSpa
 
 // TODO: delete this function as it is not used?
 export const highlightSpansForTextFilter = createSelector(
-  ({ spans }: { spans: TraceSpan[] }) => spans,
-  getTextFilterdSpansAsMap,
-  (spans, textFilteredSpansMap: { [key: string]: TraceSpan }) =>
-    spans.map((span: TraceSpan) => ({
+  ({ spans }: { spans: TraceSpanData[] }) => spans,
+  getTextFilteredSpansAsMap,
+  (spans, textFilteredSpansMap: { [key: string]: TraceSpanData }) =>
+    spans.map((span: TraceSpanData) => ({
       ...span,
       muted: !textFilteredSpansMap[getSpanId(span)],
     }))
