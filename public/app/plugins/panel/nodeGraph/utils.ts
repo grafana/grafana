@@ -4,12 +4,13 @@ import {
   Field,
   FieldCache,
   FieldColorModeId,
+  FieldConfig,
   FieldType,
   MutableDataFrame,
   NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
 
-import { EdgeDatum, NodeDatum, NodeGraphOptions } from './types';
+import { EdgeDatum, NodeDatum, NodeDatumFromEdge, NodeGraphOptions } from './types';
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
 
@@ -117,40 +118,24 @@ export function processNodes(
       throw new Error('id field is required for nodes data frame.');
     }
 
+    // Create the nodes here
     const nodesMap: { [id: string]: NodeDatum } = {};
     for (let i = 0; i < nodeFields.id.values.length; i++) {
       const id = nodeFields.id.values.get(i);
       nodesMap[id] = makeNodeDatum(id, nodeFields, i);
     }
 
-    let edgesMapped: EdgeDatum[] = [];
     // We may not have edges in case of single node
-    if (edges) {
-      const edgeFields = getEdgeFields(edges);
-      if (!edgeFields.id) {
-        throw new Error('id field is required for edges data frame.');
-      }
+    let edgeDatums: EdgeDatum[] = edges ? processEdges(edges, getEdgeFields(edges)) : [];
 
-      edgesMapped = edgeFields.id.values.toArray().map((id, index) => {
-        const target = edgeFields.target?.values.get(index);
-        const source = edgeFields.source?.values.get(index);
-        // We are adding incoming edges count, so we can later on find out which nodes are the roots
-        nodesMap[target].incoming++;
-
-        return {
-          id,
-          dataFrameRowIndex: index,
-          source,
-          target,
-          mainStat: edgeFields.mainStat ? statToString(edgeFields.mainStat, index) : '',
-          secondaryStat: edgeFields.secondaryStat ? statToString(edgeFields.secondaryStat, index) : '',
-        } as EdgeDatum;
-      });
+    for (const e of edgeDatums) {
+      // We are adding incoming edges count, so we can later on find out which nodes are the roots
+      nodesMap[e.target].incoming++;
     }
 
     return {
       nodes: Object.values(nodesMap),
-      edges: edgesMapped || [],
+      edges: edgeDatums,
       legend: nodeFields.arc.map((f) => {
         return {
           color: f.config.color?.fixedColor ?? '',
@@ -163,38 +148,123 @@ export function processNodes(
 
     // We checked that either node || edges has to be defined and if nodes aren't edges has to be defined
     edges = edges!;
+
+    const nodesMap: { [id: string]: NodeDatumFromEdge } = {};
+
     const edgeFields = getEdgeFields(edges);
-    if (!edgeFields.id) {
-      throw new Error('id field is required for edges data frame.');
-    }
+    let edgeDatums = processEdges(edges, edgeFields);
 
-    const nodesMap: { [id: string]: NodeDatum } = {};
-    const edgeDatums: EdgeDatum[] = [];
-
-    for (let i = 0; i < edgeFields.id.values.length; i++) {
+    // Turn edges into reasonable filled in nodes
+    for (let i = 0; i < edgeDatums.length; i++) {
+      const edge = edgeDatums[i];
       const { source, target } = makeNodeDatumsFromEdge(edgeFields, i);
 
       nodesMap[target.id] = nodesMap[target.id] || target;
       nodesMap[source.id] = nodesMap[source.id] || source;
 
-      // We are adding incoming edges count, so we can later on find out which nodes are the roots
-      nodesMap[target.id].incoming++;
+      // Check the stats fields. They can be also strings which we cannot really aggregate so only aggregate in case
+      // they are numbers. Here we just sum all incoming edges to get the final value for node.
+      if (computableField(edgeFields.mainStat)) {
+        nodesMap[target.id].mainStatNumeric =
+          (nodesMap[target.id].mainStatNumeric ?? 0) + edgeFields.mainStat!.values.get(i);
+      }
 
-      edgeDatums.push({
-        id: edgeFields.id.values.get(i),
-        dataFrameRowIndex: i,
-        source: source.id,
-        target: target.id,
-        mainStat: edgeFields.mainStat ? statToString(edgeFields.mainStat, i) : '',
-        secondaryStat: edgeFields.secondaryStat ? statToString(edgeFields.secondaryStat, i) : '',
-      });
+      if (computableField(edgeFields.secondaryStat)) {
+        nodesMap[target.id].secondaryStatNumeric =
+          (nodesMap[target.id].secondaryStatNumeric ?? 0) + edgeFields.secondaryStat!.values.get(i);
+      }
+
+      // We are adding incoming edges count, so we can later on find out which nodes are the roots
+      nodesMap[edge.target].incoming++;
     }
 
+    // It is expected for stats to be Field, so we have to create them.
+    const nodes = normalizeStatsForNodes(nodesMap, edgeFields);
+
     return {
-      nodes: Object.values(nodesMap),
+      nodes,
       edges: edgeDatums,
     };
   }
+}
+
+/**
+ * Turn data frame data into EdgeDatum that node graph understands
+ * @param edges
+ * @param edgeFields
+ */
+function processEdges(edges: DataFrame, edgeFields: EdgeFields): EdgeDatum[] {
+  if (!edgeFields.id) {
+    throw new Error('id field is required for edges data frame.');
+  }
+
+  return edgeFields.id.values.toArray().map((id, index) => {
+    const target = edgeFields.target?.values.get(index);
+    const source = edgeFields.source?.values.get(index);
+
+    return {
+      id,
+      dataFrameRowIndex: index,
+      source,
+      target,
+      mainStat: edgeFields.mainStat
+        ? statToString(edgeFields.mainStat.config, edgeFields.mainStat.values.get(index))
+        : '',
+      secondaryStat: edgeFields.secondaryStat
+        ? statToString(edgeFields.secondaryStat.config, edgeFields.secondaryStat.values.get(index))
+        : '',
+    } as EdgeDatum;
+  });
+}
+
+function computableField(field?: Field) {
+  return field && field.type === FieldType.number;
+}
+
+/**
+ * Instead of just simple numbers node graph requires to have Field in NodeDatum (probably for some formatting info in
+ * config). So we create them here and fill with correct data.
+ * @param nodesMap
+ * @param edgeFields
+ */
+function normalizeStatsForNodes(nodesMap: { [id: string]: NodeDatumFromEdge }, edgeFields: EdgeFields): NodeDatum[] {
+  const secondaryStatValues = new ArrayVector();
+  const mainStatValues = new ArrayVector();
+  const secondaryStatField = computableField(edgeFields.secondaryStat)
+    ? {
+        ...edgeFields.secondaryStat!,
+        values: secondaryStatValues,
+      }
+    : undefined;
+
+  const mainStatField = computableField(edgeFields.mainStat)
+    ? {
+        ...edgeFields.mainStat!,
+        values: mainStatValues,
+      }
+    : undefined;
+
+  return Object.values(nodesMap).map((node, index) => {
+    if (mainStatField || secondaryStatField) {
+      const newNode = {
+        ...node,
+      };
+
+      if (mainStatField) {
+        newNode.mainStat = mainStatField;
+        mainStatValues.add(node.mainStatNumeric);
+        newNode.dataFrameRowIndex = index;
+      }
+
+      if (secondaryStatField) {
+        newNode.secondaryStat = secondaryStatField;
+        secondaryStatValues.add(node.secondaryStatNumeric);
+        newNode.dataFrameRowIndex = index;
+      }
+      return newNode;
+    }
+    return node;
+  });
 }
 
 function makeNodeDatumsFromEdge(edgeFields: EdgeFields, index: number) {
@@ -206,16 +276,13 @@ function makeNodeDatumsFromEdge(edgeFields: EdgeFields, index: number) {
   };
 }
 
-function makeSimpleNodeDatum(name: string, index: number) {
+function makeSimpleNodeDatum(name: string, index: number): NodeDatumFromEdge {
   return {
     id: name,
     title: name,
     subTitle: '',
     dataFrameRowIndex: index,
     incoming: 0,
-    // TODO: need to be summed from edges
-    // mainStat: nodeFields.mainStat,
-    // secondaryStat: nodeFields.secondaryStat,
     arcSections: [],
   };
 }
@@ -234,14 +301,13 @@ function makeNodeDatum(id: string, nodeFields: NodeFields, index: number) {
   };
 }
 
-export function statToString(field: Field, index: number) {
-  if (field.type === FieldType.string) {
-    return field.values.get(index);
+export function statToString(config: FieldConfig, value: number | string): string {
+  if (typeof value === 'string') {
+    return value;
   } else {
-    const decimals = field.config.decimals || 2;
-    const val = field.values.get(index);
-    if (Number.isFinite(val)) {
-      return field.values.get(index).toFixed(decimals) + (field.config.unit ? ' ' + field.config.unit : '');
+    const decimals = config.decimals || 2;
+    if (Number.isFinite(value)) {
+      return value.toFixed(decimals) + (config.unit ? ' ' + config.unit : '');
     } else {
       return '';
     }
@@ -323,13 +389,14 @@ function nodesFrame() {
   });
 }
 
-export function makeEdgesDataFrame(edges: Array<[number, number]>) {
+export function makeEdgesDataFrame(
+  edges: Array<Partial<{ source: string; target: string; mainstat: number; secondarystat: number }>>
+) {
   const frame = edgesFrame();
   for (const edge of edges) {
     frame.add({
-      id: edge[0] + '--' + edge[1],
-      source: edge[0].toString(),
-      target: edge[1].toString(),
+      id: edge.source + '--' + edge.target,
+      ...edge,
     });
   }
 
@@ -349,6 +416,14 @@ function edgesFrame() {
     [NodeGraphDataFrameFieldNames.target]: {
       values: new ArrayVector(),
       type: FieldType.string,
+    },
+    [NodeGraphDataFrameFieldNames.mainStat]: {
+      values: new ArrayVector(),
+      type: FieldType.number,
+    },
+    [NodeGraphDataFrameFieldNames.secondaryStat]: {
+      values: new ArrayVector(),
+      type: FieldType.number,
     },
   };
 

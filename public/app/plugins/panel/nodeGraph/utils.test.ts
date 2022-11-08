@@ -21,9 +21,9 @@ describe('processNodes', () => {
     const { nodes, edges, legend } = processNodes(
       makeNodesDataFrame(3),
       makeEdgesDataFrame([
-        [0, 1],
-        [0, 2],
-        [1, 2],
+        { source: '0', target: '1' },
+        { source: '0', target: '2' },
+        { source: '1', target: '2' },
       ])
     );
 
@@ -51,19 +51,32 @@ describe('processNodes', () => {
     const { nodes, edges } = processNodes(
       undefined,
       makeEdgesDataFrame([
-        [0, 1],
-        [0, 2],
-        [1, 2],
+        { source: '0', target: '1', mainstat: 1, secondarystat: 1 },
+        { source: '0', target: '2', mainstat: 1, secondarystat: 1 },
+        { source: '1', target: '2', mainstat: 1, secondarystat: 1 },
       ])
     );
 
     expect(nodes).toEqual([
-      makeNodeFromEdgeDatum({ dataFrameRowIndex: 0, title: '0' }),
-      makeNodeFromEdgeDatum({ dataFrameRowIndex: 1, id: '1', incoming: 1, title: '1' }),
-      makeNodeFromEdgeDatum({ dataFrameRowIndex: 2, id: '2', incoming: 2, title: '2' }),
+      expect.objectContaining(makeNodeFromEdgeDatum({ dataFrameRowIndex: 0, title: '0' })),
+      expect.objectContaining(makeNodeFromEdgeDatum({ dataFrameRowIndex: 1, id: '1', incoming: 1, title: '1' })),
+      expect.objectContaining(makeNodeFromEdgeDatum({ dataFrameRowIndex: 2, id: '2', incoming: 2, title: '2' })),
     ]);
 
-    expect(edges).toEqual([makeEdgeDatum('0--1', 0), makeEdgeDatum('0--2', 1), makeEdgeDatum('1--2', 2)]);
+    expect(nodes[0].mainStat?.values).toEqual(new ArrayVector([undefined, 1, 2]));
+    expect(nodes[0].secondaryStat?.values).toEqual(new ArrayVector([undefined, 1, 2]));
+
+    expect(nodes[0].mainStat).toEqual(nodes[1].mainStat);
+    expect(nodes[0].mainStat).toEqual(nodes[2].mainStat);
+
+    expect(nodes[0].secondaryStat).toEqual(nodes[1].secondaryStat);
+    expect(nodes[0].secondaryStat).toEqual(nodes[2].secondaryStat);
+
+    expect(edges).toEqual([
+      makeEdgeDatum('0--1', 0, '1.00', '1.00'),
+      makeEdgeDatum('0--2', 1, '1.00', '1.00'),
+      makeEdgeDatum('1--2', 2, '1.00', '1.00'),
+    ]);
   });
 
   it('detects dataframes correctly', () => {
@@ -217,9 +230,9 @@ describe('finds connections', () => {
     const { nodes, edges } = processNodes(
       makeNodesDataFrame(3),
       makeEdgesDataFrame([
-        [0, 1],
-        [0, 2],
-        [1, 2],
+        { source: '0', target: '1' },
+        { source: '0', target: '2' },
+        { source: '1', target: '2' },
       ])
     );
 
@@ -231,9 +244,9 @@ describe('finds connections', () => {
     const { nodes, edges } = processNodes(
       makeNodesDataFrame(4),
       makeEdgesDataFrame([
-        [0, 1],
-        [0, 2],
-        [1, 2],
+        { source: '0', target: '1' },
+        { source: '0', target: '2' },
+        { source: '1', target: '2' },
       ])
     );
 
@@ -302,12 +315,12 @@ function makeNodeDatum(options: Partial<NodeDatum> = {}) {
   };
 }
 
-function makeEdgeDatum(id: string, index: number) {
+function makeEdgeDatum(id: string, index: number, mainStat = '', secondaryStat = '') {
   return {
     dataFrameRowIndex: index,
     id,
-    mainStat: '',
-    secondaryStat: '',
+    mainStat,
+    secondaryStat,
     source: id.split('--')[0],
     target: id.split('--')[1],
   };
