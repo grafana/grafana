@@ -16,13 +16,13 @@ export function PageInfo({ info }: Props) {
   return (
     <div className={styles.container}>
       {info.map((infoItem, index) => (
-        <>
-          <div key={index} className={styles.infoItem}>
+        <React.Fragment key={index}>
+          <div className={styles.infoItem}>
             <div className={styles.label}>{infoItem.label}</div>
             {infoItem.value}
           </div>
-          {index + 1 < info.length && <div className={styles.separator} />}
-        </>
+          {index + 1 < info.length && <div data-testid="page-info-separator" className={styles.separator} />}
+        </React.Fragment>
       ))}
     </div>
   );
@@ -47,11 +47,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     separator: css({
       borderLeft: `1px solid ${theme.colors.border.weak}`,
-    }),
-    value: css({
-      alignItems: 'center',
-      display: 'flex',
-      flex: 1,
     }),
   };
 };

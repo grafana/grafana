@@ -6,8 +6,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { getNavSubTitle, getNavTitle } from '../NavBar/navBarItem-translations';
 import { PageInfoItem } from '../Page/types';
-
-import { PageInfo } from './PageInfo';
+import { PageInfo } from '../PageInfo/PageInfo';
 
 export interface Props {
   navItem: NavModelItem;
