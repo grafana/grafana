@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/typescript"
-	"github.com/sdboyer/jennywrites"
+	"github.com/grafana/codejen"
 )
 
 // TSTypesJenny creates a [OneToOne] that produces TypeScript types and
@@ -53,7 +53,7 @@ func (gen *genTSTypes) JennyName() string {
 	return "TSTypesJenny"
 }
 
-func (gen *genTSTypes) Generate(decl *DeclForGen) (*jennywrites.File, error) {
+func (gen *genTSTypes) Generate(decl *DeclForGen) (*codejen.File, error) {
 	if decl.IsRaw() {
 		return nil, nil
 	}
@@ -78,7 +78,7 @@ func (gen *genTSTypes) Generate(decl *DeclForGen) (*jennywrites.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	return jennywrites.NewFile(
+	return codejen.NewFile(
 		filepath.Join(gen.tskindsdir, gen.cfg.GenDirName(decl), lin.Name()+"_types.gen.ts"),
 		[]byte(f.String()),
 		gen), nil

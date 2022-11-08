@@ -6,15 +6,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
-	"github.com/sdboyer/jennywrites"
+	"github.com/grafana/codejen"
 )
 
-type OneToOne jennywrites.OneToOne[*DeclForGen]
-type OneToMany jennywrites.OneToMany[*DeclForGen]
-type ManyToOne jennywrites.ManyToOne[*DeclForGen]
-type ManyToMany jennywrites.ManyToMany[*DeclForGen]
+type OneToOne codejen.OneToOne[*DeclForGen]
+type OneToMany codejen.OneToMany[*DeclForGen]
+type ManyToOne codejen.ManyToOne[*DeclForGen]
+type ManyToMany codejen.ManyToMany[*DeclForGen]
 
-// ForGen is a jennywrites input transformer that converts a pure kindsys.SomeDecl into
+// ForGen is a codejen input transformer that converts a pure kindsys.SomeDecl into
 // a DeclForGen by binding its contained lineage.
 func ForGen(rt *thema.Runtime, decl *kindsys.SomeDecl) (*DeclForGen, error) {
 	lin, err := decl.BindKindLineage(rt)
@@ -39,8 +39,8 @@ func (decl *DeclForGen) Lineage() thema.Lineage {
 	return decl.lin
 }
 
-func SlashHeaderMapper(maingen string) jennywrites.FileMapper {
-	return func(f jennywrites.File) (jennywrites.File, error) {
+func SlashHeaderMapper(maingen string) codejen.FileMapper {
+	return func(f codejen.File) (codejen.File, error) {
 		b := new(bytes.Buffer)
 		fmt.Fprintf(b, headerTmpl, maingen, f.FromString())
 		fmt.Fprint(b, string(f.Data))

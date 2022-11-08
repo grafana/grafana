@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/typescript"
-	"github.com/sdboyer/jennywrites"
+	"github.com/grafana/codejen"
 )
 
 // TSVeneerIndexJenny generates an index.gen.ts file with references to all
@@ -39,7 +39,7 @@ func (gen *genTSVeneerIndex) JennyName() string {
 	return "TSVeneerIndexJenny"
 }
 
-func (gen *genTSVeneerIndex) Generate(decls []*DeclForGen) (*jennywrites.File, error) {
+func (gen *genTSVeneerIndex) Generate(decls []*DeclForGen) (*codejen.File, error) {
 	tsf := new(ast.File)
 	for _, decl := range decls {
 		if decl.IsRaw() {
@@ -61,7 +61,7 @@ func (gen *genTSVeneerIndex) Generate(decls []*DeclForGen) (*jennywrites.File, e
 		tsf.Nodes = append(tsf.Nodes, elems...)
 	}
 
-	return jennywrites.NewFile(filepath.Join(gen.dir, "index.gen.ts"), []byte(tsf.String()), gen), nil
+	return codejen.NewFile(filepath.Join(gen.dir, "index.gen.ts"), []byte(tsf.String()), gen), nil
 }
 
 func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *ast.File) ([]ast.Decl, error) {

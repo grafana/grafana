@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/sdboyer/jennywrites"
+	"github.com/grafana/codejen"
 )
 
 // RawKindJenny generates the implementation of [kindsys.Raw] for the
@@ -46,7 +46,7 @@ func (gen *genRawKind) JennyName() string {
 	return "RawKindJenny"
 }
 
-func (gen *genRawKind) Generate(decl *DeclForGen) (*jennywrites.File, error) {
+func (gen *genRawKind) Generate(decl *DeclForGen) (*codejen.File, error) {
 	if !decl.IsRaw() {
 		return nil, nil
 	}
@@ -64,5 +64,5 @@ func (gen *genRawKind) Generate(decl *DeclForGen) (*jennywrites.File, error) {
 		return nil, err
 	}
 
-	return jennywrites.NewFile(path, b, gen), nil
+	return codejen.NewFile(path, b, gen), nil
 }

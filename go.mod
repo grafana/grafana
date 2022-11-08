@@ -250,6 +250,7 @@ require (
 	github.com/getkin/kin-openapi v0.103.0
 	github.com/golang-migrate/migrate/v4 v4.7.0
 	github.com/google/go-github/v45 v45.2.0
+	github.com/grafana/codejen v0.0.1
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/kr/pretty v0.3.0
@@ -281,7 +282,6 @@ require (
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/rogpeppe/go-internal v1.8.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/sdboyer/jennywrites v0.0.0-20221106010904-61ad6fa366e2 // indirect
 	github.com/segmentio/asm v1.1.4 // indirect
 	go.starlark.net v0.0.0-20201118183435-e55f603d8c79 // indirect
 )

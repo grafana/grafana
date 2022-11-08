@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/sdboyer/jennywrites"
+	"github.com/grafana/codejen"
 )
 
 // CoreStructuredKindJenny generates the implementation of
@@ -49,7 +49,7 @@ func (gen *genCoreStructuredKind) JennyName() string {
 	return "CoreStructuredKindJenny"
 }
 
-func (gen *genCoreStructuredKind) Generate(decl *DeclForGen) (*jennywrites.File, error) {
+func (gen *genCoreStructuredKind) Generate(decl *DeclForGen) (*codejen.File, error) {
 	if !decl.IsCoreStructured() {
 		return nil, nil
 	}
@@ -67,5 +67,5 @@ func (gen *genCoreStructuredKind) Generate(decl *DeclForGen) (*jennywrites.File,
 		return nil, err
 	}
 
-	return jennywrites.NewFile(path, b, gen), nil
+	return codejen.NewFile(path, b, gen), nil
 }

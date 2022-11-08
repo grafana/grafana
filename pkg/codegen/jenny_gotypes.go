@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/gocode"
-	"github.com/sdboyer/jennywrites"
+	"github.com/grafana/codejen"
 	"golang.org/x/tools/go/ast/astutil"
 )
 
@@ -58,7 +58,7 @@ func (gen *genGoTypes) JennyName() string {
 	return "GoTypesJenny"
 }
 
-func (gen *genGoTypes) Generate(decl *DeclForGen) (*jennywrites.File, error) {
+func (gen *genGoTypes) Generate(decl *DeclForGen) (*codejen.File, error) {
 	if decl.IsRaw() {
 		return nil, nil
 	}
@@ -85,5 +85,5 @@ func (gen *genGoTypes) Generate(decl *DeclForGen) (*jennywrites.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	return jennywrites.NewFile(filepath.Join(gen.gokindsdir, pdir, lin.Name()+"_types_gen.go"), b, gen), nil
+	return codejen.NewFile(filepath.Join(gen.gokindsdir, pdir, lin.Name()+"_types_gen.go"), b, gen), nil
 }

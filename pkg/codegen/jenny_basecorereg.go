@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/sdboyer/jennywrites"
+	"github.com/grafana/codejen"
 )
 
 // BaseCoreRegistryJenny generates a static registry for core kinds that
@@ -31,7 +31,7 @@ func (gen *genBaseRegistry) JennyName() string {
 	return "BaseCoreRegistryJenny"
 }
 
-func (gen *genBaseRegistry) Generate(decls []*DeclForGen) (*jennywrites.File, error) {
+func (gen *genBaseRegistry) Generate(decls []*DeclForGen) (*codejen.File, error) {
 	var numRaw int
 	for _, k := range decls {
 		if k.IsRaw() {
@@ -58,5 +58,5 @@ func (gen *genBaseRegistry) Generate(decls []*DeclForGen) (*jennywrites.File, er
 		return nil, err
 	}
 
-	return jennywrites.NewFile(filepath.Join(gen.path, "base_gen.go"), b, gen), nil
+	return codejen.NewFile(filepath.Join(gen.path, "base_gen.go"), b, gen), nil
 }
