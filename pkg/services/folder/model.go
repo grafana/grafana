@@ -10,7 +10,7 @@ var ErrMaximumDepthReached = errutil.NewBase(errutil.StatusBadRequest, "folder.m
 var ErrBadRequest = errutil.NewBase(errutil.StatusBadRequest, "folder.bad-request")
 var ErrDatabaseError = errutil.NewBase(errutil.StatusInternal, "folder.database-error")
 var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
-var ErrFolderTooDeep = errutil.NewBase(errutil.StatusInternal, "folder.tooDeep")
+var ErrFolderTooDeep = errutil.NewBase(errutil.StatusInternal, "folder.too-deep")
 
 const (
 	GeneralFolderUID     = "general"
