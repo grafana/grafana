@@ -24,25 +24,25 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle }: Pr
   const titleElement = renderTitle ? renderTitle(title) : <h1 className={styles.pageTitle}>{title}</h1>;
 
   return (
-    <div className={styles.titleWrapper}>
-      <div className={styles.row}>
-        <div className={styles.pageHeader}>
+    <div className={styles.pageHeader}>
+      <div className={styles.topRow}>
+        <div className={styles.titleInfoContainer}>
           <div className={styles.title}>
-            {navItem.img && <img className={styles.pageImg} src={navItem.img} alt={`logo for ${navItem.text}`} />}
+            {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
             {titleElement}
           </div>
           {info && <PageInfo info={info} />}
         </div>
         <div className={styles.actions}>{actions}</div>
       </div>
-      {sub && <div className={styles.pageSubTitle}>{sub}</div>}
+      {sub && <div className={styles.subTitle}>{sub}</div>}
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    row: css({
+    topRow: css({
       display: 'flex',
       flexDirection: 'row',
       flexWrap: 'wrap',
@@ -50,24 +50,24 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     title: css({
       display: 'flex',
-      flexDireciton: 'row',
+      flexDirection: 'row',
     }),
     actions: css({
       display: 'flex',
       flexDirection: 'row',
       gap: theme.spacing(1),
     }),
-    pageHeader: css({
+    titleInfoContainer: css({
       display: 'flex',
-      label: 'page-header',
+      label: 'title-info-container',
       flex: 1,
       flexWrap: 'wrap',
       gap: theme.spacing(1, 4),
       justifyContent: 'space-between',
       maxWidth: '100%',
     }),
-    titleWrapper: css({
-      label: 'title-wrapper',
+    pageHeader: css({
+      label: 'page-header',
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
@@ -76,12 +76,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       marginBottom: 0,
     }),
-    pageSubTitle: css({
+    subTitle: css({
       marginBottom: theme.spacing(2),
       position: 'relative',
       color: theme.colors.text.secondary,
     }),
-    pageImg: css({
+    img: css({
       width: '32px',
       height: '32px',
       marginRight: theme.spacing(2),
