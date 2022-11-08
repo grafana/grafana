@@ -310,7 +310,7 @@ func createFolderWithACL(t *testing.T, sqlStore db.DB, title string, user user.S
 		cfg, dashboardStore, nil,
 		features, folderPermissions, dashboardPermissions, ac,
 	)
-	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, d, dashboardStore, features, folderPermissions, nil)
+	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, d, dashboardStore, nil, features, folderPermissions, nil)
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), &user, user.OrgID, title, title)
 	require.NoError(t, err)
@@ -420,7 +420,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		service := LibraryElementService{
 			Cfg:           sqlStore.Cfg,
 			SQLStore:      sqlStore,
-			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardService, dashboardStore, features, folderPermissions, nil),
+			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardService, dashboardStore, nil, features, folderPermissions, nil),
 		}
 
 		usr := user.SignedInUser{

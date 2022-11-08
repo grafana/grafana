@@ -22,7 +22,7 @@ export interface Props {
   labelsFilters: QueryBuilderLabelFilter[];
 }
 
-const MAX_NUMBER_OF_RESULTS = 1000;
+export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
 
 export function MetricSelect({ datasource, query, onChange, onGetMetrics, labelsFilters }: Props) {
   const styles = useStyles2(getStyles);
@@ -109,8 +109,8 @@ export function MetricSelect({ datasource, query, onChange, onGetMetrics, labels
     // Since some customers can have millions of metrics, whenever the user changes the autocomplete text we want to call the backend and request all metrics that match the current query string
     const results = datasource.metricFindQuery(formatKeyValueStringsForLabelValuesQuery(query, labelsFilters));
     return results.then((results) => {
-      if (results.length > MAX_NUMBER_OF_RESULTS) {
-        results.splice(0, results.length - MAX_NUMBER_OF_RESULTS);
+      if (results.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
+        results.splice(0, results.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
       }
       return results.map((result) => {
         return {
@@ -137,8 +137,8 @@ export function MetricSelect({ datasource, query, onChange, onGetMetrics, labels
           onOpenMenu={async () => {
             setState({ isLoading: true });
             const metrics = await onGetMetrics();
-            if (metrics.length > MAX_NUMBER_OF_RESULTS) {
-              metrics.splice(0, metrics.length - MAX_NUMBER_OF_RESULTS);
+            if (metrics.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
+              metrics.splice(0, metrics.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
             }
             setState({ metrics, isLoading: undefined });
           }}
