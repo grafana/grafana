@@ -207,7 +207,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
               <Button
                 variant="primary"
                 onClick={this.onApply}
-                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
               >
                 Apply
               </Button>
