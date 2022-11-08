@@ -39,10 +39,41 @@ e2e.scenario({
 
     // Wait for lazy loading
     const monacoLoadingText = 'Loading...';
+
     e2e.components.QueryField.container().should('be.visible').should('have.text', monacoLoadingText);
     e2e.components.QueryField.container().should('be.visible').should('not.have.text', monacoLoadingText);
-    e2e.components.QueryField.container().type('time(', { parseSpecialCharSequences: false });
 
-    cy.contains('time(').should('be.visible');
+    // adds closing braces around empty value
+    e2e.components.QueryField.container().type('time(');
+    cy.contains('time()').should('be.visible');
+
+    // removes closing brace when opening brace is removed
+    e2e.components.QueryField.container().type('avg_over_time({backspace}');
+    cy.contains('avg_over_time').should('be.visible');
+
+    // keeps closing brace when opening brace is removed and inner values exist
+    e2e.components.QueryField.container().type(
+      '{selectall}{backspace}time(test{leftArrow}{leftArrow}{leftArrow}{leftArrow}{backspace}'
+    );
+    cy.contains('timetest)').should('be.visible');
+
+    // overrides an automatically inserted brace
+    e2e.components.QueryField.container().type('{selectall}{backspace}time()');
+    cy.contains('time()').should('be.visible');
+
+    // does not override manually inserted braces
+    e2e.components.QueryField.container().type('{selectall}{backspace}))');
+    cy.contains('))').should('be.visible');
+
+    /** Runner plugin */
+
+    // Should execute the query when enter with shift is pressed
+    e2e.components.QueryField.container().type('{selectall}{backspace}{shift+enter}');
+    e2e().get('[data-testid="explore-no-data"]').should('be.visible');
+
+    /** Suggestions plugin */
+    e2e.components.QueryField.container().type('{selectall}av');
+    e2e().contains('avg').should('be.visible');
+    e2e().contains('avg_over_time').should('be.visible');
   },
 });
