@@ -44,7 +44,7 @@ export const ArrowAnchors = ({ setRef }: Props) => {
       ref={setRef}
     >
       <div
-        id="highlight"
+        id="arrowControl"
         ref={highlightEllipseRef}
         className={styles.highlightElement}
         onMouseEnter={onMouseEnterHighlightElement}

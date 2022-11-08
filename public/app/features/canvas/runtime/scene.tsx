@@ -307,6 +307,11 @@ export class Scene {
       this.selecto.setSelectedTargets(selection.targets);
       this.updateSelection(selection);
       this.editModeEnabled.next(false);
+
+      // Hide arrow anchors on programmatic select
+      if (this.arrowAnchorDiv) {
+        this.arrowAnchorDiv.style.display = 'none';
+      }
     }
   };
 
