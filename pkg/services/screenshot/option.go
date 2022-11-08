@@ -44,6 +44,7 @@ func (s ScreenshotOptions) SetDefaults() ScreenshotOptions {
 	return s
 }
 
+//nolint:errcheck,gosec
 func (s ScreenshotOptions) Sum() []byte {
 	h := fnv.New64()
 	h.Write([]byte(s.DashboardUID))
