@@ -13,21 +13,15 @@ const addDataSource = () => {
   });
 };
 
-describe('Loki Editor', () => {
-  beforeEach(() => {
-    e2e.flows.login('admin', 'admin');
+e2e.scenario({
+  describeName: 'Loki Query Editor',
+  itName: 'Autocomplete features should work as expected.',
+  addScenarioDataSource: false,
+  addScenarioDashBoard: false,
+  skipScenario: false,
+  scenario: () => {
+    addDataSource();
 
-    e2e()
-      .request({ url: `${e2e.env('BASE_URL')}/api/datasources/name/${dataSourceName}`, failOnStatusCode: false })
-      .then((response) => {
-        if (response.isOkStatusCode) {
-          return;
-        }
-        addDataSource();
-      });
-  });
-
-  it('Autocomplete works as spected', () => {
     e2e().intercept(/labels?/, (req) => {
       req.reply({ status: 'success', data: ['instance', 'job', 'source'] });
     });
@@ -92,5 +86,5 @@ describe('Loki Editor', () => {
     e2e().get('[role="code"]').type(`{selectall}av`);
     e2e().contains('avg').should('be.visible');
     e2e().contains('avg_over_time').should('be.visible');
-  });
+  },
 });
