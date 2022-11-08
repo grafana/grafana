@@ -13,7 +13,7 @@ For more information on the types of plugins you can build, refer to the [Plugin
 
 ## Get started
 
-The easiest way to start developing Grafana plugins is to use the [Grafana create-plugin](https://www.npmjs.com/package/@grafana/create-plugin).
+The easiest way to start developing Grafana plugins is to use the Grafana [create-plugin tool](https://www.npmjs.com/package/@grafana/create-plugin).
 
 Open the terminal, and run the following command in your [plugin directory]({{< relref "../../setup-grafana/configure-grafana/#plugins" >}}):
 
