@@ -74,8 +74,6 @@ export function getPageNavFromSlug(slug: string) {
     lastPageNav = pageNavs[pageNavs.length - 1];
   }
 
-  console.log('GOT', slug, lastPageNav);
-
   return lastPageNav;
 }
 

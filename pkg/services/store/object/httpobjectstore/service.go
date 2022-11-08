@@ -57,6 +57,8 @@ func (s *httpObjectStore) RegisterHTTPRoutes(route routing.RouteRegister) {
 	route.Get("/history/*", reqGrafanaAdmin, routing.Wrap(s.doGetHistory))
 	route.Get("/list", reqGrafanaAdmin, routing.Wrap(s.doListRoots))
 	route.Get("/list/*", reqGrafanaAdmin, routing.Wrap(s.doListFolder)) // Simplified version of search -- path is prefix
+
+	route.Get("/options/*", reqGrafanaAdmin, routing.Wrap(s.doGetWorkflowOptions))
 	route.Get("/search", reqGrafanaAdmin, routing.Wrap(s.doSearch))
 
 	route.Post("/createFolder", reqGrafanaAdmin, routing.Wrap(s.doCreateFolder))
@@ -340,6 +342,52 @@ func (s *httpObjectStore) doListRoots(c *models.ReqContext) response.Response {
 		Description: "Objects organized in nested folders",
 	})
 	return response.JSON(200, resultsToFrame(c.Req.Context(), rsp, s.router))
+}
+
+func (s *httpObjectStore) doGetWorkflowOptions(c *models.ReqContext) response.Response {
+	grn, params, err := s.getGRNFromRequest(c)
+	if err != nil {
+		return response.Error(400, err.Error(), err)
+	}
+
+	type workflowInfo struct {
+		Type        store.WriteValueWorkflow `json:"value"` // value matches selectable value
+		Label       string                   `json:"label"`
+		Description string                   `json:"description,omitempty"`
+	}
+	type optionInfo struct {
+		Path      string         `json:"path,omitempty"`
+		Workflows []workflowInfo `json:"workflows"`
+	}
+
+	options := optionInfo{
+		Path:      "??", // s.router.Route(c.Req.Context(), grn),
+		Workflows: make([]workflowInfo, 0),
+	}
+
+	options.Workflows = append(options.Workflows, workflowInfo{
+		Type:        store.WriteValueWorkflow_PR,
+		Label:       "Create pull request",
+		Description: "Create a new upstream pull request",
+	})
+	if true {
+		options.Workflows = append(options.Workflows, workflowInfo{
+			Type:        store.WriteValueWorkflow_Push,
+			Label:       "Push to " + "branch name",
+			Description: "Push commit to upstrem repository",
+		})
+	}
+	if true {
+		options.Workflows = append(options.Workflows, workflowInfo{
+			Type:        store.WriteValueWorkflow_Save,
+			Label:       "Save",
+			Description: "Save directly",
+		})
+	}
+
+	fmt.Printf("OPTIONS %v/%v\n", grn, params)
+
+	return response.JSON(200, options)
 }
 
 func (s *httpObjectStore) doListFolder(c *models.ReqContext) response.Response {

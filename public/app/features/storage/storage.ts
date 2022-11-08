@@ -1,7 +1,7 @@
 import { DataFrame, dataFrameFromJSON, DataFrameJSON, getDisplayProcessor } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
 import {
   UploadReponse,
@@ -20,7 +20,7 @@ export interface ObjectParams {
 
 // Likely should be built into the search interface!
 export interface GrafanaStorage {
-  get: <T = any>(path: string, params?: ObjectParams) => Promise<ObjectInfo<T>>;
+  get: <T = unknown>(path: string, params?: ObjectParams) => Promise<ObjectInfo<T>>;
   list: (path: string) => Promise<DataFrame | undefined>;
   history: (path: string) => Promise<ObjectHistory>;
 
@@ -167,11 +167,13 @@ class SimpleStorage implements GrafanaStorage {
       path = `drive/${path}`;
     }
 
-    const result = await backendSrv.get(`/api/object/store/${path}`);
-    result.uid = path;
-    delete result.id; // Saved with the dev dashboards!
+    const result = await this.get<DashboardDataDTO>(path);
 
-    console.log('GOT', result);
+    if (!result.object?.body) {
+      throw 'not found: ' + path;
+    }
+
+    result.object.body.uid = path;
 
     return {
       meta: {
@@ -180,7 +182,7 @@ class SimpleStorage implements GrafanaStorage {
         canEdit: true,
         canSave: true,
         canStar: false, // needs id
-        updated: result.object.updated,
+        // updated: result.object.updated,
         updatedBy: result.object.updatedBy,
       },
       dashboard: result.object.body,
@@ -188,7 +190,7 @@ class SimpleStorage implements GrafanaStorage {
   }
 
   async write(path: string, options: WriteValueRequest): Promise<WriteValueResponse> {
-    return backendSrv.post<WriteValueResponse>(`/api/storage/write/${path}`, options);
+    return backendSrv.post<WriteValueResponse>(`/api/object/store/${path}`, options);
   }
 
   async getConfig() {
@@ -196,7 +198,7 @@ class SimpleStorage implements GrafanaStorage {
   }
 
   async getOptions(path: string) {
-    return getBackendSrv().get<ItemOptions>(`/api/storage/options/${path}`);
+    return getBackendSrv().get<ItemOptions>(`/api/object/options/${path}`);
   }
 }
 

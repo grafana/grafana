@@ -56,6 +56,10 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup, sanitize bool) mo
 			return summary, body, err
 		}
 
+		if dash.Title == "" {
+			return nil, nil, fmt.Errorf("dashboard is missing a title")
+		}
+
 		dashboardRefs := NewReferenceAccumulator()
 		url := fmt.Sprintf("/d/%s/%s", uid, models.SlugifyTitle(dash.Title))
 		summary.Name = dash.Title

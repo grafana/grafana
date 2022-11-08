@@ -111,7 +111,6 @@ export function SaveToStorageForm(props: Props) {
           workflow: workflow,
         });
 
-        console.log('GOT', rsp);
         if (rsp.code === 200) {
           if (options.saveVariables) {
             dashboard.resetOriginalVariables();

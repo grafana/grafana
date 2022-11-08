@@ -178,6 +178,7 @@ func (s *standardStorageService) read(c *models.ReqContext) response.Response {
 }
 
 func (s *standardStorageService) getOptions(c *models.ReqContext) response.Response {
+
 	scope, path := getPathAndScope(c)
 	opts, err := s.getWorkflowOptions(c.Req.Context(), c.SignedInUser, scope+"/"+path)
 	if err != nil {

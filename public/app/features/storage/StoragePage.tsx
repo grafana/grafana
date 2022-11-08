@@ -155,8 +155,11 @@ export default function StoragePage(props: Props) {
     const opts = [
       { what: StorageView.Data, text: isFolder ? 'Folder' : 'Object' },
       { what: StorageView.Info, text: 'Info' },
-      { what: StorageView.History, text: 'History' },
     ];
+
+    if (!isFolder) {
+      opts.push({ what: StorageView.History, text: 'History' });
+    }
 
     if (!path.startsWith('entity')) {
       opts.push({ what: StorageView.Perms, text: 'Permissions' });
