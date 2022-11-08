@@ -18,7 +18,7 @@ Grafana supports several alert rule types, the following sections will explain t
 
 Grafana-managed rules are the most flexible alert rule type. They allow you to create alerts that can act on data from any of your existing data sources.
 
-In additional to supporting any datasource you can also add additional [expressions]({{< relref "../../../panels/query-a-data-source/use-expressions-to-manipulate-data/" >}}) to transform your data and express alert conditions.
+In additional to supporting any datasource you can also add additional [expressions]({{< relref "../../../panels-visualizations/query-transform-data/expression-queries/" >}}) to transform your data and express alert conditions.
 
 ## Mimir, Loki and Cortex rules
 

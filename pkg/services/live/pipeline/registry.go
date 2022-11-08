@@ -56,10 +56,6 @@ var ConvertersRegistry = []EntityInfo{
 		Description: "automatic recursive JSON to Frame conversion",
 	},
 	{
-		Type:        ConverterTypeJsonExact,
-		Description: "JSON to Frame conversion according to exact list of fields",
-	},
-	{
 		Type:        ConverterTypeInfluxAuto,
 		Description: "accept influx line protocol",
 		Example: AutoInfluxConverterConfig{

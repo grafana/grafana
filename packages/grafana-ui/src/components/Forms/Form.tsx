@@ -4,7 +4,7 @@ import { useForm, Mode, DeepPartial, UnpackNestedValue, SubmitHandler, FieldValu
 
 import { FormAPI } from '../../types';
 
-interface FormProps<T extends FieldValues> extends Omit<HTMLProps<HTMLFormElement>, 'onSubmit'> {
+interface FormProps<T extends FieldValues> extends Omit<HTMLProps<HTMLFormElement>, 'onSubmit' | 'children'> {
   validateOn?: Mode;
   validateOnMount?: boolean;
   validateFieldsOnMount?: string | string[];

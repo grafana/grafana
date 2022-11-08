@@ -147,6 +147,7 @@ var (
 
 	// LDAP
 	LDAPEnabled           bool
+	LDAPSkipOrgRoleSync   bool
 	LDAPConfigFile        string
 	LDAPSyncCron          string
 	LDAPAllowSignup       bool
@@ -203,6 +204,8 @@ type Cfg struct {
 	ServeFromSubPath bool
 	StaticRootPath   string
 	Protocol         Scheme
+	SocketGid        int
+	SocketMode       int
 	SocketPath       string
 	RouterLogging    bool
 	Domain           string
@@ -244,6 +247,7 @@ type Cfg struct {
 	RendererCallbackUrl            string
 	RendererAuthToken              string
 	RendererConcurrentRequestLimit int
+	RendererRenderKeyLifeTime      time.Duration
 
 	// Security
 	DisableInitAdminCreation          bool
@@ -300,6 +304,7 @@ type Cfg struct {
 	BasicAuthEnabled             bool
 	AdminUser                    string
 	AdminPassword                string
+	DisableLogin                 bool
 	AdminEmail                   string
 	DisableSyncLock              bool
 
@@ -413,8 +418,9 @@ type Cfg struct {
 	FeedbackLinksEnabled                bool
 
 	// LDAP
-	LDAPEnabled     bool
-	LDAPAllowSignup bool
+	LDAPEnabled         bool
+	LDAPSkipOrgRoleSync bool
+	LDAPAllowSignup     bool
 
 	Quota QuotaSettings
 
@@ -1131,6 +1137,8 @@ func (cfg *Cfg) readLDAPConfig() {
 	LDAPSyncCron = ldapSec.Key("sync_cron").String()
 	LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
 	cfg.LDAPEnabled = LDAPEnabled
+	LDAPSkipOrgRoleSync = ldapSec.Key("skip_org_role_sync").MustBool(false)
+	cfg.LDAPSkipOrgRoleSync = LDAPSkipOrgRoleSync
 	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
 	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 	cfg.LDAPAllowSignup = LDAPAllowSignup
@@ -1333,6 +1341,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 	cfg.OAuthSkipOrgRoleUpdateSync = auth.Key("oauth_skip_org_role_update_sync").MustBool(false)
 
+	cfg.DisableLogin = auth.Key("disable_login").MustBool(false)
+
 	// SigV4
 	SigV4AuthEnabled = auth.Key("sigv4_auth_enabled").MustBool(false)
 	cfg.SigV4AuthEnabled = SigV4AuthEnabled
@@ -1477,6 +1487,7 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	}
 
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
+	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 
@@ -1615,6 +1626,8 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	}
 	if protocolStr == "socket" {
 		cfg.Protocol = SocketScheme
+		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
+		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
 		cfg.SocketPath = server.Key("socket").String()
 	}
 

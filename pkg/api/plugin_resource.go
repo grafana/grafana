@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -117,7 +118,15 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 			hs.log.Warn("failed to unpack JSONData in datasource instance settings", "err", err)
 		}
 	}
-	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies)
+
+	list := contexthandler.AuthHTTPHeaderListFromContext(req.Context())
+	if list != nil {
+		for _, name := range list.Items {
+			req.Header.Del(name)
+		}
+	}
+
+	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies, []string{hs.Cfg.LoginCookieName})
 	proxyutil.PrepareProxyRequest(req)
 
 	body, err := io.ReadAll(req.Body)
@@ -184,7 +193,7 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 		// Expected that headers and status are only part of first stream
 		if processedStreams == 0 && resp.Headers != nil {
 			// Make sure a content type always is returned in response
-			if _, exists := resp.Headers["Content-Type"]; !exists {
+			if _, exists := resp.Headers["Content-Type"]; !exists && resp.Status != http.StatusNoContent {
 				resp.Headers["Content-Type"] = []string{"application/json"}
 			}
 

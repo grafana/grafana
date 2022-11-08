@@ -11,6 +11,10 @@ const (
 	// Use big transactions for alerting database writes
 	FlagAlertingBigTransactions = "alertingBigTransactions"
 
+	// FlagPromQueryBuilder
+	// Show prometheus query builder
+	FlagPromQueryBuilder = "promQueryBuilder"
+
 	// FlagTrimDefaults
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
@@ -79,6 +83,10 @@ const (
 	// use experimental loki api for websocket streaming (early prototype)
 	FlagLokiDataframeApi = "lokiDataframeApi"
 
+	// FlagLokiMonacoEditor
+	// Access to Monaco query editor for Loki
+	FlagLokiMonacoEditor = "lokiMonacoEditor"
+
 	// FlagSwaggerUi
 	// Serves swagger UI
 	FlagSwaggerUi = "swaggerUi"
@@ -115,10 +123,6 @@ const (
 	// New UI for Azure Monitor Metrics Query
 	FlagAzureMonitorResourcePickerForMetrics = "azureMonitorResourcePickerForMetrics"
 
-	// FlagExplore2Dashboard
-	// Experimental Explore to Dashboard workflow
-	FlagExplore2Dashboard = "explore2Dashboard"
-
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
@@ -151,9 +155,9 @@ const (
 	// Enable streaming JSON parser for Prometheus datasource
 	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
 
-	// FlagPrometheusStreamingJSONParserTest
-	// Run both old and streaming requests and log differences
-	FlagPrometheusStreamingJSONParserTest = "prometheusStreamingJSONParserTest"
+	// FlagNewDBLibrary
+	// Use jmoiron/sqlx rather than xorm for a few backend services
+	FlagNewDBLibrary = "newDBLibrary"
 
 	// FlagValidateDashboardsOnSave
 	// Validate dashboard JSON POSTed to api/dashboards/db
@@ -203,9 +207,17 @@ const (
 	// Run GRPC server
 	FlagGrpcServer = "grpcServer"
 
+	// FlagObjectStore
+	// SQL based object store
+	FlagObjectStore = "objectStore"
+
 	// FlagTraceqlEditor
 	// Show the TraceQL editor in the explore page
 	FlagTraceqlEditor = "traceqlEditor"
+
+	// FlagFlameGraph
+	// Show the flame graph
+	FlagFlameGraph = "flameGraph"
 
 	// FlagRedshiftAsyncQueryDataSupport
 	// Enable async query data support for Redshift
@@ -218,4 +230,36 @@ const (
 	// FlagIncreaseInMemDatabaseQueryCache
 	// Enable more in memory caching for database queries
 	FlagIncreaseInMemDatabaseQueryCache = "increaseInMemDatabaseQueryCache"
+
+	// FlagInterFont
+	// Switch to inter font
+	FlagInterFont = "interFont"
+
+	// FlagNewPanelChromeUI
+	// Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu
+	FlagNewPanelChromeUI = "newPanelChromeUI"
+
+	// FlagQueryLibrary
+	// Reusable query library
+	FlagQueryLibrary = "queryLibrary"
+
+	// FlagShowDashboardValidationWarnings
+	// Show warnings when Dashboards do not validate against the schema
+	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
+
+	// FlagMysqlAnsiQuotes
+	// Use double quote to escape keyword in Mysql query
+	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
+
+	// FlagDatasourceLogger
+	// Logs all datasource requests
+	FlagDatasourceLogger = "datasourceLogger"
+
+	// FlagAccessControlOnCall
+	// Access control primitives for OnCall
+	FlagAccessControlOnCall = "accessControlOnCall"
+
+	// FlagNestedFolders
+	// Enable folder nesting
+	FlagNestedFolders = "nestedFolders"
 )

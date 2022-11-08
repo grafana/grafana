@@ -15,6 +15,13 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:         "promQueryBuilder",
+			Description:  "Show prometheus query builder",
+			State:        FeatureStateStable,
+			Expression:   "true", // on by default
+			FrontendOnly: true,
+		},
+		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
@@ -106,6 +113,13 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:         "lokiMonacoEditor",
+			Description:  "Access to Monaco query editor for Loki",
+			State:        FeatureStateAlpha,
+			Expression:   "true",
+			FrontendOnly: true,
+		},
+		{
 			Name:        "swaggerUi",
 			Description: "Serves swagger UI",
 			State:       FeatureStateBeta,
@@ -155,12 +169,6 @@ var (
 			FrontendOnly:    true,
 		},
 		{
-			Name:         "explore2Dashboard",
-			Description:  "Experimental Explore to Dashboard workflow",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateAlpha,
@@ -173,9 +181,11 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "commandPalette",
-			Description: "Enable command palette",
-			State:       FeatureStateAlpha,
+			Name:         "commandPalette",
+			Description:  "Enable command palette",
+			State:        FeatureStateStable,
+			Expression:   "true", // enabled by default
+			FrontendOnly: true,
 		},
 		{
 			Name:        "correlations",
@@ -186,6 +196,7 @@ var (
 			Name:        "cloudWatchDynamicLabels",
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "datasourceQueryMultiStatus",
@@ -204,8 +215,8 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:        "prometheusStreamingJSONParserTest",
-			Description: "Run both old and streaming requests and log differences",
+			Name:        "newDBLibrary",
+			Description: "Use jmoiron/sqlx rather than xorm for a few backend services",
 			State:       FeatureStateBeta,
 		},
 		{
@@ -272,9 +283,21 @@ var (
 			Description:     "Run GRPC server",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
-		}, {
+		},
+		{
+			Name:            "objectStore",
+			Description:     "SQL based object store",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "traceqlEditor",
 			Description: "Show the TraceQL editor in the explore page",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "flameGraph",
+			Description: "Show the flame graph",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -292,6 +315,47 @@ var (
 		{
 			Name:        "increaseInMemDatabaseQueryCache",
 			Description: "Enable more in memory caching for database queries",
+		},
+		{
+			Name:        "interFont",
+			Description: "Switch to inter font",
+		},
+		{
+			Name:         "newPanelChromeUI",
+			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:            "queryLibrary",
+			Description:     "Reusable query library",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:        "showDashboardValidationWarnings",
+			Description: "Show warnings when Dashboards do not validate against the schema",
+		},
+		{
+			Name:        "mysqlAnsiQuotes",
+			Description: "Use double quote to escape keyword in Mysql query",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "datasourceLogger",
+			Description: "Logs all datasource requests",
+		},
+		{
+			Name:            "accessControlOnCall",
+			Description:     "Access control primitives for OnCall",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:            "nestedFolders",
+			Description:     "Enable folder nesting",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
 		},
 	}
 )

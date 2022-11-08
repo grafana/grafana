@@ -1,3 +1,4 @@
+import { TableIdentifier } from '@grafana/experimental';
 import { AGGREGATE_FNS, OPERATORS } from 'app/features/plugins/sql/constants';
 import {
   ColumnDefinition,
@@ -12,8 +13,6 @@ import {
   TableDefinition,
   TokenType,
 } from 'app/features/plugins/sql/types';
-
-import { SCHEMA_NAME } from './sqlUtil';
 
 interface CompletionProviderGetterArgs {
   getColumns: React.MutableRefObject<(t: SQLQuery) => Promise<ColumnDefinition[]>>;
@@ -37,15 +36,18 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
           processedToken = processedToken.next;
         }
 
-        const tableName = tablePath.split('.').pop();
-
-        return tableName || tablePath;
+        return { table: tablePath };
       },
     },
 
     columns: {
-      resolve: async (t: string) => {
-        return await getColumns.current({ table: t, refId: 'A' });
+      resolve: async (t: TableIdentifier | undefined) => {
+        if (!t?.table) {
+          return [];
+        }
+        // TODO: Use schema instead of table
+        const [database, schema, tableName] = t.table.split('.');
+        return await getColumns.current({ table: `${schema}.${tableName}`, dataset: database, refId: 'A' });
       },
     },
     supportedFunctions: () => AGGREGATE_FNS,
@@ -109,10 +111,6 @@ export function getDatabaseName(token: LinkedToken) {
   while (processedToken?.previous && !processedToken.previous.isWhiteSpace()) {
     processedToken = processedToken.previous;
     database = processedToken.value + database;
-  }
-
-  if (database.includes(SCHEMA_NAME)) {
-    database = database.replace(SCHEMA_NAME, '');
   }
 
   database = database.trim();

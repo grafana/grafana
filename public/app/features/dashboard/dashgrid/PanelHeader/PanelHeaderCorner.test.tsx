@@ -20,7 +20,7 @@ describe('Panel header corner test', () => {
     setup();
 
     expect(
-      screen.getByRole('region', { name: selectors.components.Panels.Panel.headerCornerInfo('info') })
+      screen.getByRole('button', { name: selectors.components.Panels.Panel.headerCornerInfo('info') })
     ).toBeInTheDocument();
   });
 });

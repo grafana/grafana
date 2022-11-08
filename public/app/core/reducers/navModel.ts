@@ -8,15 +8,17 @@ export const HOME_NAV_ID = 'home';
 
 export function buildInitialState(): NavIndex {
   const navIndex: NavIndex = {};
-  const rootNodes = cloneDeep(config.bootData.navTree as NavModelItem[]);
+  const rootNodes = cloneDeep(config.bootData.navTree);
   const homeNav = rootNodes.find((node) => node.id === HOME_NAV_ID);
 
   // set home as parent for the rootNodes
   buildNavIndex(navIndex, rootNodes, homeNav);
+
   // remove circular parent reference on the home node
   if (navIndex[HOME_NAV_ID]) {
     delete navIndex[HOME_NAV_ID].parentItem;
   }
+
   return navIndex;
 }
 

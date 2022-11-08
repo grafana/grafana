@@ -15,6 +15,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
@@ -35,10 +36,6 @@ type DatasourceInfo struct {
 }
 
 const loggerName = "tsdb.elasticsearch.client"
-
-var (
-	clientLog = log.New(loggerName)
-)
 
 // Client represents a client which can interact with elasticsearch api
 type Client interface {
@@ -61,9 +58,11 @@ var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.
 		return nil, err
 	}
 
-	clientLog.Debug("Creating new client", "version", ds.ESVersion, "timeField", ds.TimeField, "indices", strings.Join(indices, ", "))
+	logger := log.New(loggerName).FromContext(ctx)
+	logger.Debug("Creating new client", "version", ds.ESVersion, "timeField", ds.TimeField, "indices", strings.Join(indices, ", "))
 
 	return &baseClientImpl{
+		logger:    logger,
 		ctx:       ctx,
 		ds:        ds,
 		timeField: ds.TimeField,
@@ -79,6 +78,7 @@ type baseClientImpl struct {
 	indices      []string
 	timeRange    backend.TimeRange
 	debugEnabled bool
+	logger       log.Logger
 }
 
 func (c *baseClientImpl) GetTimeField() string {
@@ -105,7 +105,7 @@ func (c *baseClientImpl) executeBatchRequest(uriPath, uriQuery string, requests 
 }
 
 func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, error) {
-	clientLog.Debug("Encoding batch requests to json", "batch requests", len(requests))
+	c.logger.Debug("Encoding batch requests to json", "batch requests", len(requests))
 	start := time.Now()
 
 	payload := bytes.Buffer{}
@@ -129,7 +129,7 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 	}
 
 	elapsed := time.Since(start)
-	clientLog.Debug("Encoded batch requests to json", "took", elapsed)
+	c.logger.Debug("Encoded batch requests to json", "took", elapsed)
 
 	return payload.Bytes(), nil
 }
@@ -152,7 +152,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		return nil, err
 	}
 
-	clientLog.Debug("Executing request", "url", req.URL.String(), "method", method)
+	c.logger.Debug("Executing request", "url", req.URL.String(), "method", method)
 
 	var reqInfo *SearchRequestInfo
 	if c.debugEnabled {
@@ -168,7 +168,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 	start := time.Now()
 	defer func() {
 		elapsed := time.Since(start)
-		clientLog.Debug("Executed request", "took", elapsed)
+		c.logger.Debug("Executed request", "took", elapsed)
 	}()
 	//nolint:bodyclose
 	resp, err := c.ds.HTTPClient.Do(req)
@@ -182,7 +182,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 }
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {
-	clientLog.Debug("Executing multisearch", "search requests", len(r.Requests))
+	c.logger.Debug("Executing multisearch", "search requests", len(r.Requests))
 
 	multiRequests := c.createMultiSearchRequests(r.Requests)
 	queryParams := c.getMultiSearchQueryParameters()
@@ -193,20 +193,20 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	res := clientRes.httpResponse
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			clientLog.Warn("Failed to close response body", "err", err)
+			c.logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
-	clientLog.Debug("Received multisearch response", "code", res.StatusCode, "status", res.Status, "content-length", res.ContentLength)
+	c.logger.Debug("Received multisearch response", "code", res.StatusCode, "status", res.Status, "content-length", res.ContentLength)
 
 	start := time.Now()
-	clientLog.Debug("Decoding multisearch json response")
+	c.logger.Debug("Decoding multisearch json response")
 
 	var bodyBytes []byte
 	if c.debugEnabled {
 		tmpBytes, err := io.ReadAll(res.Body)
 		if err != nil {
-			clientLog.Error("failed to read http response bytes", "error", err)
+			c.logger.Error("Failed to read http response bytes", "error", err)
 		} else {
 			bodyBytes = make([]byte, len(tmpBytes))
 			copy(bodyBytes, tmpBytes)
@@ -222,7 +222,7 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	}
 
 	elapsed := time.Since(start)
-	clientLog.Debug("Decoded multisearch json response", "took", elapsed)
+	c.logger.Debug("Decoded multisearch json response", "took", elapsed)
 
 	msr.Status = res.StatusCode
 
@@ -230,7 +230,7 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		bodyJSON, err := simplejson.NewFromReader(bytes.NewBuffer(bodyBytes))
 		var data *simplejson.Json
 		if err != nil {
-			clientLog.Error("failed to decode http response into json", "error", err)
+			c.logger.Error("Failed to decode http response into json", "error", err)
 		} else {
 			data = bodyJSON
 		}

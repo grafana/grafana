@@ -6,13 +6,13 @@ import (
 	"path"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 func exportAlerts(helper *commitHelper, job *gitExportJob) error {
 	alertDir := path.Join(helper.orgDir, "alerts")
 
-	return job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+	return job.sql.WithDbSession(helper.ctx, func(sess *db.Session) error {
 		type ruleResult struct {
 			Title        string          `xorm:"title"`
 			UID          string          `xorm:"uid"`

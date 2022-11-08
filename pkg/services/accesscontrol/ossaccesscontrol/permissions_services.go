@@ -7,12 +7,12 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -38,7 +38,7 @@ var (
 )
 
 func ProvideTeamPermissions(
-	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore,
+	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB,
 	ac accesscontrol.AccessControl, license models.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*TeamPermissionsService, error) {
@@ -74,7 +74,7 @@ func ProvideTeamPermissions(
 		ReaderRoleName: "Team permission reader",
 		WriterRoleName: "Team permission writer",
 		RoleGroup:      "Teams",
-		OnSetUser: func(session *sqlstore.DBSession, orgID int64, user accesscontrol.User, resourceID, permission string) error {
+		OnSetUser: func(session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error {
 			teamId, err := strconv.ParseInt(resourceID, 10, 64)
 			if err != nil {
 				return err
@@ -112,7 +112,7 @@ var DashboardEditActions = append(DashboardViewActions, []string{dashboards.Acti
 var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.ActionDashboardsPermissionsRead, dashboards.ActionDashboardsPermissionsWrite}...)
 
 func ProvideDashboardPermissions(
-	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl,
+	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license models.Licensing, dashboardStore dashboards.Store, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*DashboardPermissionsService, error) {
@@ -191,7 +191,7 @@ var FolderEditActions = append(FolderViewActions, []string{
 var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFoldersPermissionsRead, dashboards.ActionFoldersPermissionsWrite}...)
 
 func ProvideFolderPermissions(
-	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore, accesscontrol accesscontrol.AccessControl,
+	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
 	license models.Licensing, dashboardStore dashboards.Store, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*FolderPermissionsService, error) {
@@ -282,7 +282,7 @@ type ServiceAccountPermissionsService struct {
 }
 
 func ProvideServiceAccountPermissions(
-	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl,
+	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license models.Licensing, serviceAccountStore serviceaccounts.Store, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*ServiceAccountPermissionsService, error) {

@@ -13,11 +13,11 @@ import (
 	"cuelang.org/go/cue/parser"
 	"github.com/grafana/grafana"
 	"github.com/grafana/grafana/pkg/coremodel/pluginmeta"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/framework/coremodel"
-	"github.com/grafana/grafana/pkg/framework/coremodel/registry"
 	"github.com/grafana/thema"
-	"github.com/grafana/thema/kernel"
 	"github.com/grafana/thema/load"
+	"github.com/grafana/thema/vmux"
 	"github.com/yalue/merged_fs"
 )
 
@@ -51,11 +51,9 @@ type slotandname struct {
 
 var allslots []slotandname
 
-var plugmux kernel.InputKernel
-
 // TODO re-enable after go1.18
-// var tsch thema.TypedSchema[pluginmeta.Model]
-// var plugmux vmux.ValueMux[pluginmeta.Model]
+var tsch thema.TypedSchema[*pluginmeta.Model]
+var plugmux vmux.ValueMux[*pluginmeta.Model]
 
 func init() {
 	var all []string
@@ -78,13 +76,6 @@ func init() {
 
 var muxonce sync.Once
 
-func loadMux() kernel.InputKernel {
-	muxonce.Do(func() {
-		plugmux = coremodel.Mux(registry.NewBase().Pluginmeta(), coremodel.Filename("plugin.json"))
-	})
-	return plugmux
-}
-
 // This used to be in init(), but that creates a risk for codegen.
 //
 // thema.BindType ensures that Go type and Thema schema are aligned. If we were
@@ -102,19 +93,22 @@ func loadMux() kernel.InputKernel {
 // called as needed to get our muxer, and internally relies on a sync.Once to avoid
 // repeated processing of thema.BindType.
 // TODO mux loading is easily generalizable in pkg/f/coremodel, shouldn't need one-off
-// TODO switch to this generic signature after go1.18
-// func loadMux() (thema.TypedSchema[pluginmeta.Model], vmux.ValueMux[pluginmeta.Model]) {
-// 	muxonce.Do(func() {
-// 		var err error
-// 		var t pluginmeta.Model
-// 		tsch, err = thema.BindType[pluginmeta.Model](pm.CurrentSchema(), t)
-// 		if err != nil {
-// 			panic(err)
-// 		}
-// 		plugmux = vmux.NewValueMux(tsch, vmux.NewJSONEndec("plugin.json"))
-// 	})
-// 	return tsch, plugmux
-// }
+func loadMux() (thema.TypedSchema[*pluginmeta.Model], vmux.ValueMux[*pluginmeta.Model]) {
+	muxonce.Do(func() {
+		var err error
+		t := new(pluginmeta.Model)
+		pm, err := pluginmeta.New(cuectx.GrafanaThemaRuntime())
+		if err != nil {
+			panic(err)
+		}
+		tsch, err = thema.BindType[*pluginmeta.Model](pm.CurrentSchema(), t)
+		if err != nil {
+			panic(err)
+		}
+		plugmux = vmux.NewValueMux(tsch, vmux.NewJSONEndec("plugin.json"))
+	})
+	return tsch, plugmux
+}
 
 // Tree represents the contents of a plugin filesystem tree.
 type Tree struct {
@@ -190,13 +184,12 @@ func (pi PluginInfo) Meta() pluginmeta.Model {
 // It does not descend into subdirectories to search for additional plugin.json
 // files.
 // TODO no descent is ok for core plugins, but won't cut it in general
-func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
+func ParsePluginFS(f fs.FS, rt *thema.Runtime) (*Tree, error) {
 	if f == nil {
 		return nil, ErrEmptyFS
 	}
-	// _, mux := loadMux()
-	mux := loadMux()
-	ctx := lib.Context()
+	_, mux := loadMux()
+	ctx := rt.Context()
 
 	b, err := fs.ReadFile(f, "plugin.json")
 	if err != nil {
@@ -216,13 +209,14 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 
 	// Pass the raw bytes into the muxer, get the populated Model type out that we want.
 	// TODO stop ignoring second return. (for now, lacunas are a WIP and can't occur until there's >1 schema in the pluginmeta lineage)
-	metaany, _, err := mux.Converge(b)
+	// metaany, _, err := mux(b)
+	pmeta, _, err := mux(b)
 	if err != nil {
 		// TODO more nuanced error handling by class of Thema failure
 		// return nil, fmt.Errorf("plugin.json was invalid: %w", err)
 		return nil, ewrap(err, ErrInvalidRootFile)
 	}
-	r.meta = *metaany.(*pluginmeta.Model)
+	r.meta = *pmeta
 
 	if modbyt, err := fs.ReadFile(f, "models.cue"); err == nil {
 		// TODO introduce layered CUE dependency-injecting loader
@@ -260,7 +254,7 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 		}
 		for _, s := range allslots {
 			iv := val.LookupPath(cue.ParsePath(s.slot.Name()))
-			lin, err := bindSlotLineage(iv, s.slot, r.meta, lib)
+			lin, err := bindSlotLineage(iv, s.slot, r.meta, rt)
 			if lin != nil {
 				r.slotimpls[s.slot.Name()] = lin
 			}
@@ -273,7 +267,7 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 	return tree, nil
 }
 
-func bindSlotLineage(v cue.Value, s *coremodel.Slot, meta pluginmeta.Model, lib thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
+func bindSlotLineage(v cue.Value, s *coremodel.Slot, meta pluginmeta.Model, rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
 	accept, required := s.ForPluginType(string(meta.Type))
 	exists := v.Exists()
 
@@ -292,8 +286,8 @@ func bindSlotLineage(v cue.Value, s *coremodel.Slot, meta pluginmeta.Model, lib 
 	}
 
 	// TODO make this opt real in thema, then uncomment to enforce joinSchema
-	// lin, err := thema.BindLineage(iv, lib, thema.SatisfiesJoinSchema(s.MetaSchema()))
-	lin, err := thema.BindLineage(v, lib, opts...)
+	// lin, err := thema.BindLineage(iv, rt, thema.SatisfiesJoinSchema(s.MetaSchema()))
+	lin, err := thema.BindLineage(v, rt, opts...)
 	if err != nil {
 		return nil, ewrap(fmt.Errorf("%s: invalid thema lineage for slot %s: %w", meta.Id, s.Name(), err), ErrInvalidLineage)
 	}

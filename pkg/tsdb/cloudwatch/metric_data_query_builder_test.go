@@ -3,9 +3,11 @@ package cloudwatch
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
 func TestMetricDataQueryBuilder(t *testing.T) {
@@ -13,9 +15,9 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		t.Run("should use metric stat", func(t *testing.T) {
 			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 			query := getBaseQuery()
-			query.MetricEditorMode = MetricEditorModeBuilder
-			query.MetricQueryType = MetricQueryTypeSearch
-			mdq, err := executor.buildMetricDataQuery(query)
+			query.MetricEditorMode = models.MetricEditorModeBuilder
+			query.MetricQueryType = models.MetricQueryTypeSearch
+			mdq, err := executor.buildMetricDataQuery(logger, query)
 			require.NoError(t, err)
 			require.Empty(t, mdq.Expression)
 			assert.Equal(t, query.MetricName, *mdq.MetricStat.Metric.MetricName)
@@ -25,10 +27,10 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		t.Run("should use custom built expression", func(t *testing.T) {
 			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 			query := getBaseQuery()
-			query.MetricEditorMode = MetricEditorModeBuilder
-			query.MetricQueryType = MetricQueryTypeSearch
+			query.MetricEditorMode = models.MetricEditorModeBuilder
+			query.MetricQueryType = models.MetricQueryTypeSearch
 			query.MatchExact = false
-			mdq, err := executor.buildMetricDataQuery(query)
+			mdq, err := executor.buildMetricDataQuery(logger, query)
 			require.NoError(t, err)
 			require.Nil(t, mdq.MetricStat)
 			assert.Equal(t, `REMOVE_EMPTY(SEARCH('Namespace="AWS/EC2" MetricName="CPUUtilization" "LoadBalancer"="lb1"', '', 300))`, *mdq.Expression)
@@ -37,10 +39,10 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		t.Run("should use sql expression", func(t *testing.T) {
 			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 			query := getBaseQuery()
-			query.MetricEditorMode = MetricEditorModeRaw
-			query.MetricQueryType = MetricQueryTypeQuery
+			query.MetricEditorMode = models.MetricEditorModeRaw
+			query.MetricQueryType = models.MetricQueryTypeQuery
 			query.SqlExpression = `SELECT SUM(CPUUTilization) FROM "AWS/EC2"`
-			mdq, err := executor.buildMetricDataQuery(query)
+			mdq, err := executor.buildMetricDataQuery(logger, query)
 			require.NoError(t, err)
 			require.Nil(t, mdq.MetricStat)
 			assert.Equal(t, query.SqlExpression, *mdq.Expression)
@@ -49,10 +51,10 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		t.Run("should use user defined math expression", func(t *testing.T) {
 			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 			query := getBaseQuery()
-			query.MetricEditorMode = MetricEditorModeRaw
-			query.MetricQueryType = MetricQueryTypeSearch
+			query.MetricEditorMode = models.MetricEditorModeRaw
+			query.MetricQueryType = models.MetricQueryTypeSearch
 			query.Expression = `SUM(x+y)`
-			mdq, err := executor.buildMetricDataQuery(query)
+			mdq, err := executor.buildMetricDataQuery(logger, query)
 			require.NoError(t, err)
 			require.Nil(t, mdq.MetricStat)
 			assert.Equal(t, query.Expression, *mdq.Expression)
@@ -61,11 +63,11 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		t.Run("should set period in user defined expression", func(t *testing.T) {
 			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 			query := getBaseQuery()
-			query.MetricEditorMode = MetricEditorModeRaw
-			query.MetricQueryType = MetricQueryTypeSearch
+			query.MetricEditorMode = models.MetricEditorModeRaw
+			query.MetricQueryType = models.MetricQueryTypeSearch
 			query.MatchExact = false
 			query.Expression = `SUM([a,b])`
-			mdq, err := executor.buildMetricDataQuery(query)
+			mdq, err := executor.buildMetricDataQuery(logger, query)
 			require.NoError(t, err)
 			require.Nil(t, mdq.MetricStat)
 			assert.Equal(t, int64(300), *mdq.Period)
@@ -77,7 +79,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			query := getBaseQuery()
 			query.Label = "some label"
 
-			mdq, err := executor.buildMetricDataQuery(query)
+			mdq, err := executor.buildMetricDataQuery(logger, query)
 
 			assert.NoError(t, err)
 			require.NotNil(t, mdq.Label)
@@ -104,7 +106,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 				query := getBaseQuery()
 				query.Label = tc.label
 
-				mdq, err := executor.buildMetricDataQuery(query)
+				mdq, err := executor.buildMetricDataQuery(logger, query)
 
 				assert.NoError(t, err)
 				assert.Nil(t, mdq.Label)
@@ -116,7 +118,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		const matchExact = true
 
 		t.Run("Query has three dimension values for a given dimension key", func(t *testing.T) {
-			query := &cloudWatchQuery{
+			query := &models.CloudWatchQuery{
 				Namespace:  "AWS/EC2",
 				MetricName: "CPUUtilization",
 				Dimensions: map[string][]string{
@@ -132,7 +134,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("Query has three dimension values for two given dimension keys", func(t *testing.T) {
-			query := &cloudWatchQuery{
+			query := &models.CloudWatchQuery{
 				Namespace:  "AWS/EC2",
 				MetricName: "CPUUtilization",
 				Dimensions: map[string][]string{
@@ -149,7 +151,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("No OR operator was added if a star was used for dimension value", func(t *testing.T) {
-			query := &cloudWatchQuery{
+			query := &models.CloudWatchQuery{
 				Namespace:  "AWS/EC2",
 				MetricName: "CPUUtilization",
 				Dimensions: map[string][]string{
@@ -165,7 +167,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("Query has one dimension key with a * value", func(t *testing.T) {
-			query := &cloudWatchQuery{
+			query := &models.CloudWatchQuery{
 				Namespace:  "AWS/EC2",
 				MetricName: "CPUUtilization",
 				Dimensions: map[string][]string{
@@ -181,7 +183,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("Query has three dimension values for two given dimension keys, and one value is a star", func(t *testing.T) {
-			query := &cloudWatchQuery{
+			query := &models.CloudWatchQuery{
 				Namespace:  "AWS/EC2",
 				MetricName: "CPUUtilization",
 				Dimensions: map[string][]string{
@@ -198,7 +200,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("Query has a dimension key with a space", func(t *testing.T) {
-			query := &cloudWatchQuery{
+			query := &models.CloudWatchQuery{
 				Namespace:  "AWS/Kafka",
 				MetricName: "CpuUser",
 				Dimensions: map[string][]string{
@@ -214,7 +216,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("Query has a custom namespace contains spaces", func(t *testing.T) {
-			query := &cloudWatchQuery{
+			query := &models.CloudWatchQuery{
 				Namespace:  "Test-API Cache by Minute",
 				MetricName: "CpuUser",
 				Dimensions: map[string][]string{
@@ -235,7 +237,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		const matchExact = false
 
 		t.Run("Query has three dimension values for a given dimension key", func(t *testing.T) {
-			query := &cloudWatchQuery{
+			query := &models.CloudWatchQuery{
 				Namespace:  "AWS/EC2",
 				MetricName: "CPUUtilization",
 				Dimensions: map[string][]string{
@@ -251,7 +253,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("Query has three dimension values for two given dimension keys", func(t *testing.T) {
-			query := &cloudWatchQuery{
+			query := &models.CloudWatchQuery{
 				Namespace:  "AWS/EC2",
 				MetricName: "CPUUtilization",
 				Dimensions: map[string][]string{
@@ -268,7 +270,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("Query has one dimension key with a * value", func(t *testing.T) {
-			query := &cloudWatchQuery{
+			query := &models.CloudWatchQuery{
 				Namespace:  "AWS/EC2",
 				MetricName: "CPUUtilization",
 				Dimensions: map[string][]string{
@@ -284,7 +286,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("query has three dimension values for two given dimension keys, and one value is a star", func(t *testing.T) {
-			query := &cloudWatchQuery{
+			query := &models.CloudWatchQuery{
 				Namespace:  "AWS/EC2",
 				MetricName: "CPUUtilization",
 				Dimensions: map[string][]string{
@@ -302,7 +304,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 	})
 
 	t.Run("Query has invalid characters in dimension values", func(t *testing.T) {
-		query := &cloudWatchQuery{
+		query := &models.CloudWatchQuery{
 			Namespace:  "AWS/EC2",
 			MetricName: "CPUUtilization",
 			Dimensions: map[string][]string{
@@ -318,8 +320,8 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 	})
 }
 
-func getBaseQuery() *cloudWatchQuery {
-	query := &cloudWatchQuery{
+func getBaseQuery() *models.CloudWatchQuery {
+	query := &models.CloudWatchQuery{
 		Namespace:  "AWS/EC2",
 		MetricName: "CPUUtilization",
 		Dimensions: map[string][]string{

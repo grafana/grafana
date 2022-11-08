@@ -11,10 +11,14 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
-	"github.com/stretchr/testify/require"
 )
+
+var logger = log.New("test")
 
 func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 	datasource := &AzureLogAnalyticsDatasource{}
@@ -172,7 +176,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			queries, err := datasource.buildQueries(tt.queryModel, types.DatasourceInfo{})
+			queries, err := datasource.buildQueries(logger, tt.queryModel, types.DatasourceInfo{})
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.azureLogAnalyticsQueries[0], queries[0]); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -184,7 +188,6 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 func TestLogAnalyticsCreateRequest(t *testing.T) {
 	ctx := context.Background()
 	url := "http://ds"
-	dsInfo := types.DatasourceInfo{}
 
 	tests := []struct {
 		name            string
@@ -203,7 +206,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ds := AzureLogAnalyticsDatasource{}
-			req, err := ds.createRequest(ctx, dsInfo, url)
+			req, err := ds.createRequest(ctx, logger, url)
 			tt.Err(t, err)
 			if req.URL.String() != tt.expectedURL {
 				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())
@@ -231,7 +234,7 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 		TimeRange: backend.TimeRange{},
 	}
 	tracer := tracing.InitializeTracerForTest()
-	res := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL, tracer)
+	res := ds.executeQuery(ctx, logger, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL, tracer)
 	if res.Error == nil {
 		t.Fatal("expecting an error")
 	}
