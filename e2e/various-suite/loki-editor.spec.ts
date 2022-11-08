@@ -48,7 +48,7 @@ describe('Loki Editor', () => {
     e2e().contains(monacoLoadingText).should('be.visible');
     e2e().contains(monacoLoadingText).should('not.exist');
 
-    const queryField = e2e().get('[role="code"]');
+    const queryField = e2e.components.QueryField.container();
     const queryFieldValue = e2e().get('.monaco-editor textarea:first');
 
     // adds closing braces around empty value
