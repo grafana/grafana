@@ -137,11 +137,6 @@ func (cmd *ConditionsCmd) Execute(_ context.Context, _ time.Time, vars mathexp.V
 		// The condition is no data iff all the input data is a combination of all mathexp.NoData,
 		// mathexp.Number with a nil loat64, or mathexp.Series that reduce to a nil float64
 		isCondNoData = numSeriesNoData == len(series.Values)
-		if isCondNoData {
-			matches = append(matches, EvalMatch{
-				Metric: "NoData",
-			})
-		}
 
 		if ix == 0 {
 			isFiring = isCondFiring
@@ -152,6 +147,13 @@ func (cmd *ConditionsCmd) Execute(_ context.Context, _ time.Time, vars mathexp.V
 		} else {
 			isFiring = isFiring && isCondFiring
 			isNoData = isNoData && isCondNoData
+		}
+
+		if isCondNoData {
+			matches = append(matches, EvalMatch{
+				Metric: "NoData",
+			})
+			isNoData = true
 		}
 	}
 
