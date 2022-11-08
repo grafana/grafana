@@ -19,7 +19,7 @@ For more information about teams, refer to [Teams and permissions]({{< relref ".
 
 For information about how to optimize your teams, refer to [How to best organize your teams and resources in Grafana](https://grafana.com/blog/2022/03/14/how-to-best-organize-your-teams-and-resources-in-grafana/).
 
-Managing teams includes the following tasks:
+This topic describes how to:
 
 - Create a team
 - Add a team member
