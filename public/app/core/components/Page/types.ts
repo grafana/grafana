@@ -22,6 +22,11 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   scrollTop?: number;
 }
 
+export interface PageInfoItem {
+  label: string;
+  value: React.ReactNode;
+}
+
 export interface PageType extends FC<PageProps> {
   Header: typeof PageHeader;
   OldNavOnly: typeof OldNavOnly;

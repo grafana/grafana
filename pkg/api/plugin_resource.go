@@ -193,7 +193,7 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 		// Expected that headers and status are only part of first stream
 		if processedStreams == 0 && resp.Headers != nil {
 			// Make sure a content type always is returned in response
-			if _, exists := resp.Headers["Content-Type"]; !exists {
+			if _, exists := resp.Headers["Content-Type"]; !exists && resp.Status != http.StatusNoContent {
 				resp.Headers["Content-Type"] = []string{"application/json"}
 			}
 

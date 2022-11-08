@@ -172,13 +172,12 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	logger := st.log.FromContext(ctx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
 	var states []StateTransition
-	processedResults := make(map[string]*State, len(results))
+
 	for _, result := range results {
 		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
 		states = append(states, s)
-		processedResults[s.State.CacheID] = s.State
 	}
-	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults, logger)
+	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, logger)
 
 	st.saveAlertStates(ctx, logger, states...)
 
@@ -333,58 +332,57 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State, logger log.Logger) []StateTransition {
+func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, logger log.Logger) []StateTransition {
 	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
 	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
 	var resolvedImage *ngModels.Image
 
 	var resolvedStates []StateTransition
-	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
+	staleStates := st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
+		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
+	})
+
 	toDelete := make([]ngModels.AlertInstanceKey, 0)
 
-	for _, s := range allStates {
-		// Is the cached state in our recently processed results? If not, is it stale?
-		if _, ok := states[s.CacheID]; !ok && stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
-			logger.Info("Removing stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
-			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheID)
+	for _, s := range staleStates {
+		logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
 
-			key, err := s.GetAlertInstanceKey()
-			if err != nil {
-				logger.Error("Unable to get alert instance key to delete it from database. Ignoring", "error", err.Error())
-			} else {
-				toDelete = append(toDelete, key)
+		key, err := s.GetAlertInstanceKey()
+		if err != nil {
+			logger.Error("Unable to get alert instance key to delete it from database. Ignoring", "error", err.Error())
+		} else {
+			toDelete = append(toDelete, key)
+		}
+
+		if s.State == eval.Alerting {
+			oldState := s.State
+			oldReason := s.StateReason
+
+			s.State = eval.Normal
+			s.StateReason = ngModels.StateReasonMissingSeries
+			s.EndsAt = evaluatedAt
+			s.Resolved = true
+			s.LastEvaluationTime = evaluatedAt
+			record := StateTransition{
+				State:               s,
+				PreviousState:       oldState,
+				PreviousStateReason: oldReason,
 			}
 
-			if s.State == eval.Alerting {
-				oldState := s.State
-				oldReason := s.StateReason
-
-				s.State = eval.Normal
-				s.StateReason = ngModels.StateReasonMissingSeries
-				s.EndsAt = evaluatedAt
-				s.Resolved = true
-				s.LastEvaluationTime = evaluatedAt
-				record := StateTransition{
-					State:               s,
-					PreviousState:       oldState,
-					PreviousStateReason: oldReason,
+			// If there is no resolved image for this rule then take one
+			if resolvedImage == nil {
+				image, err := takeImage(ctx, st.imageService, alertRule)
+				if err != nil {
+					logger.Warn("Failed to take an image",
+						"dashboard", alertRule.DashboardUID,
+						"panel", alertRule.PanelID,
+						"error", err)
+				} else if image != nil {
+					resolvedImage = image
 				}
-
-				// If there is no resolved image for this rule then take one
-				if resolvedImage == nil {
-					image, err := takeImage(ctx, st.imageService, alertRule)
-					if err != nil {
-						logger.Warn("Failed to take an image",
-							"dashboard", alertRule.DashboardUID,
-							"panel", alertRule.PanelID,
-							"error", err)
-					} else if image != nil {
-						resolvedImage = image
-					}
-				}
-				s.Image = resolvedImage
-				resolvedStates = append(resolvedStates, record)
 			}
+			s.Image = resolvedImage
+			resolvedStates = append(resolvedStates, record)
 		}
 	}
 
