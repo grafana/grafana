@@ -15,10 +15,10 @@ import (
 
 func TestConditionsCmd(t *testing.T) {
 	tests := []struct {
-		name          string
-		vars          mathexp.Vars
-		conditionsCmd *ConditionsCmd
-		resultNumber  func() mathexp.Number
+		name     string
+		cmd      *ConditionsCmd
+		vars     mathexp.Vars
+		expected func() mathexp.Results
 	}{
 		{
 			name: "single query and single condition",
@@ -29,7 +29,7 @@ func TestConditionsCmd(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			cmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
 						InputRefID: "A",
@@ -38,10 +38,10 @@ func TestConditionsCmd(t *testing.T) {
 						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
 					},
 				}},
-			resultNumber: func() mathexp.Number {
+			expected: func() mathexp.Results {
 				v := valBasedNumber(ptr.Float64(1))
 				v.SetMeta([]EvalMatch{{Value: ptr.Float64(35)}})
-				return v
+				return mathexp.NewResults(v)
 			},
 		},
 		{
@@ -53,7 +53,7 @@ func TestConditionsCmd(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			cmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
 						InputRefID: "A",
@@ -62,10 +62,10 @@ func TestConditionsCmd(t *testing.T) {
 						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
 					},
 				}},
-			resultNumber: func() mathexp.Number {
+			expected: func() mathexp.Results {
 				v := valBasedNumber(nil)
 				v.SetMeta([]EvalMatch{{Metric: "NoData"}})
-				return v
+				return mathexp.NewResults(v)
 			},
 		},
 		{
@@ -78,7 +78,7 @@ func TestConditionsCmd(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			cmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
 						InputRefID: "A",
@@ -87,10 +87,10 @@ func TestConditionsCmd(t *testing.T) {
 						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: .5},
 					},
 				}},
-			resultNumber: func() mathexp.Number {
+			expected: func() mathexp.Results {
 				v := valBasedNumber(ptr.Float64(1))
 				v.SetMeta([]EvalMatch{{Value: ptr.Float64(3)}})
-				return v
+				return mathexp.NewResults(v)
 			},
 		},
 		{
@@ -102,7 +102,7 @@ func TestConditionsCmd(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			cmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
 						InputRefID: "A",
@@ -116,10 +116,10 @@ func TestConditionsCmd(t *testing.T) {
 						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 12},
 					},
 				}},
-			resultNumber: func() mathexp.Number {
+			expected: func() mathexp.Results {
 				v := valBasedNumber(ptr.Float64(1))
 				v.SetMeta([]EvalMatch{{Value: ptr.Float64(40)}, {Value: ptr.Float64(30)}})
-				return v
+				return mathexp.NewResults(v)
 			},
 		},
 		{
@@ -132,7 +132,7 @@ func TestConditionsCmd(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			cmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
 						InputRefID: "A",
@@ -141,10 +141,10 @@ func TestConditionsCmd(t *testing.T) {
 						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
 					},
 				}},
-			resultNumber: func() mathexp.Number {
+			expected: func() mathexp.Results {
 				v := valBasedNumber(ptr.Float64(1))
 				v.SetMeta([]EvalMatch{{Value: ptr.Float64(35), Labels: data.Labels{"h": "1"}}})
-				return v
+				return mathexp.NewResults(v)
 			},
 		},
 		{
@@ -157,7 +157,7 @@ func TestConditionsCmd(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			cmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
 						InputRefID: "A",
@@ -166,10 +166,10 @@ func TestConditionsCmd(t *testing.T) {
 						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
 					},
 				}},
-			resultNumber: func() mathexp.Number {
+			expected: func() mathexp.Results {
 				v := valBasedNumber(ptr.Float64(1))
 				v.SetMeta([]EvalMatch{{Value: ptr.Float64(35)}})
-				return v
+				return mathexp.NewResults(v)
 			},
 		},
 		{
@@ -182,7 +182,7 @@ func TestConditionsCmd(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			cmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
 						InputRefID: "A",
@@ -191,10 +191,10 @@ func TestConditionsCmd(t *testing.T) {
 						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
 					},
 				}},
-			resultNumber: func() mathexp.Number {
+			expected: func() mathexp.Results {
 				v := valBasedNumber(ptr.Float64(0))
 				v.SetMeta([]EvalMatch{})
-				return v
+				return mathexp.Results{Values: mathexp.Values{v}}
 			},
 		},
 		{
@@ -206,7 +206,7 @@ func TestConditionsCmd(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			cmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
 						InputRefID: "A",
@@ -216,10 +216,10 @@ func TestConditionsCmd(t *testing.T) {
 					},
 				},
 			},
-			resultNumber: func() mathexp.Number {
+			expected: func() mathexp.Results {
 				v := valBasedNumber(ptr.Float64(0))
 				v.SetMeta([]EvalMatch{})
-				return v
+				return mathexp.NewResults(v)
 			},
 		},
 		{
@@ -229,7 +229,7 @@ func TestConditionsCmd(t *testing.T) {
 					Values: []mathexp.Value{mathexp.NoData{}.New()},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			cmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
 						InputRefID: "A",
@@ -239,10 +239,10 @@ func TestConditionsCmd(t *testing.T) {
 					},
 				},
 			},
-			resultNumber: func() mathexp.Number {
+			expected: func() mathexp.Results {
 				v := valBasedNumber(nil)
 				v.SetMeta([]EvalMatch{{Metric: "NoData"}})
-				return v
+				return mathexp.NewResults(v)
 			},
 		},
 		{
@@ -252,7 +252,7 @@ func TestConditionsCmd(t *testing.T) {
 					Values: []mathexp.Value{},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			cmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
 						InputRefID: "A",
@@ -262,10 +262,10 @@ func TestConditionsCmd(t *testing.T) {
 					},
 				},
 			},
-			resultNumber: func() mathexp.Number {
+			expected: func() mathexp.Results {
 				v := valBasedNumber(nil)
 				v.SetMeta([]EvalMatch{{Metric: "NoData"}})
-				return v
+				return mathexp.NewResults(v)
 			},
 		},
 		{
@@ -279,7 +279,7 @@ func TestConditionsCmd(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			cmd: &ConditionsCmd{
 				Conditions: []condition{
 					{
 						InputRefID: "A",
@@ -289,26 +289,26 @@ func TestConditionsCmd(t *testing.T) {
 					},
 				},
 			},
-			resultNumber: func() mathexp.Number {
+			expected: func() mathexp.Results {
 				v := valBasedNumber(ptr.Float64(1))
 				v.SetMeta([]EvalMatch{
 					{Value: ptr.Float64(5)},
 					{Value: ptr.Float64(10)},
 					{Value: ptr.Float64(15)},
 				})
-				return v
+				return mathexp.NewResults(v)
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := tt.conditionsCmd.Execute(context.Background(), time.Now(), tt.vars)
+			res, err := tt.cmd.Execute(context.Background(), time.Now(), tt.vars)
 			require.NoError(t, err)
 
 			require.Equal(t, 1, len(res.Values))
 
-			require.Equal(t, tt.resultNumber(), res.Values[0])
+			require.Equal(t, tt.expected(), res)
 		})
 	}
 }
