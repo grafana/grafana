@@ -202,7 +202,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 
 func TestHTTPServer_UpdateUser(t *testing.T) {
 	settings := setting.NewCfg()
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 
 	hs := &HTTPServer{
 		Cfg:           settings,
@@ -263,7 +263,7 @@ func updateUserScenario(t *testing.T, ctx updateUserContext, hs *HTTPServer) {
 
 func TestHTTPServer_UpdateSignedInUser(t *testing.T) {
 	settings := setting.NewCfg()
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 
 	hs := &HTTPServer{
 		Cfg:           settings,
