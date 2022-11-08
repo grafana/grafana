@@ -72,8 +72,8 @@ func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql
 	args := []interface{}{
 		&path, &raw.GRN.Kind, &raw.Version,
 		&raw.Size, &raw.ETag, &summaryjson.errors,
-		&raw.Created, &raw.CreatedBy,
-		&raw.Updated, &raw.UpdatedBy,
+		&raw.CreatedAt, &raw.CreatedBy,
+		&raw.UpdatedAt, &raw.UpdatedBy,
 		&syncSrc, &syncTime,
 	}
 	if r.WithBody {
@@ -193,12 +193,12 @@ func (s *sqlObjectServer) readFromHistory(ctx context.Context, r *object.ReadObj
 	rsp := &object.ReadObjectResponse{
 		Object: raw,
 	}
-	err = rows.Scan(&raw.Body, &raw.Size, &raw.ETag, &raw.Updated, &raw.UpdatedBy)
+	err = rows.Scan(&raw.Body, &raw.Size, &raw.ETag, &raw.UpdatedAt, &raw.UpdatedBy)
 	if err != nil {
 		return nil, err
 	}
 	// For versioned files, the created+updated are the same
-	raw.Created = raw.Updated
+	raw.CreatedAt = raw.UpdatedAt
 	raw.CreatedBy = raw.UpdatedBy
 	raw.Version = r.Version // from the query
 
@@ -357,7 +357,7 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 		// 1. Add the `object_history` values
 		versionInfo.Size = int64(len(body))
 		versionInfo.ETag = etag
-		versionInfo.Updated = timestamp
+		versionInfo.UpdatedAt = timestamp
 		versionInfo.UpdatedBy = store.GetUserIDString(modifier)
 		_, err = tx.Exec(ctx, `INSERT INTO object_history (`+
 			"path, version, message, "+
@@ -454,7 +454,7 @@ func (s *sqlObjectServer) selectForUpdate(ctx context.Context, tx *session.Sessi
 	}
 	current := &object.ObjectVersionInfo{}
 	if rows.Next() {
-		err = rows.Scan(&current.ETag, &current.Version, &current.Updated, &current.Size)
+		err = rows.Scan(&current.ETag, &current.Version, &current.UpdatedAt, &current.Size)
 	}
 	if err == nil {
 		err = rows.Close()
@@ -541,7 +541,7 @@ func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRe
 	}
 	for rows.Next() {
 		v := &object.ObjectVersionInfo{}
-		err := rows.Scan(&v.Version, &v.Size, &v.ETag, &v.Updated, &v.UpdatedBy, &v.Comment)
+		err := rows.Scan(&v.Version, &v.Size, &v.ETag, &v.UpdatedAt, &v.UpdatedBy, &v.Comment)
 		if err != nil {
 			return nil, err
 		}
@@ -558,7 +558,7 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 
 	fields := []string{
 		"path", "kind", "version", "errors", // errors are always returned
-		"updated_at", "updated_by",
+		"size", "updated_at", "updated_by",
 		"name", "description", // basic summary
 	}
 
@@ -586,6 +586,10 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 
 	// Locked to a folder or prefix
 	if r.Folder != "" {
+		if r.Folder == models.ObjectStoreScopeEntity {
+			return s.listEntityKinds(ctx)
+		}
+
 		if strings.HasSuffix(r.Folder, "/") {
 			return nil, fmt.Errorf("folder should not end with slash")
 		}
@@ -623,7 +627,7 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 
 		args := []interface{}{
 			&key, &result.GRN.Kind, &result.Version, &summaryjson.errors,
-			&result.Updated, &result.UpdatedBy,
+			&result.Size, &result.UpdatedAt, &result.UpdatedBy,
 			&result.Name, &summaryjson.description,
 		}
 		if r.WithBody {
@@ -675,6 +679,29 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 		}
 
 		rsp.Results = append(rsp.Results, result)
+	}
+	return rsp, err
+}
+
+// This supports browsing the entity folder view
+func (s *sqlObjectServer) listEntityKinds(ctx context.Context) (*object.ObjectSearchResponse, error) {
+	kinds := []string{}
+
+	rsp := &object.ObjectSearchResponse{}
+	user := store.UserFromContext(ctx)
+	query := "SELECT DISTINCT(kind) FROM object WHERE parent_folder_path LIKE '" + fmt.Sprintf("%d/%s", user.OrgID, models.ObjectStoreScopeEntity) + `%'`
+	err := s.sess.Select(ctx, &kinds, query)
+	if err == nil {
+		for _, kind := range kinds {
+			rsp.Results = append(rsp.Results, &object.ObjectSearchResult{
+				GRN: &object.GRN{
+					Scope: models.ObjectStoreScopeEntity,
+					Kind:  models.StandardKindFolder,
+					UID:   kind,
+				},
+				Name: kind,
+			})
+		}
 	}
 	return rsp, err
 }

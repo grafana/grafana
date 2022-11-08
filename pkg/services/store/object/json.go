@@ -60,15 +60,15 @@ func (codec *rawObjectCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 		stream.WriteObjectField("version")
 		stream.WriteString(obj.Version)
 	}
-	if obj.Created > 0 {
+	if obj.CreatedAt > 0 {
 		stream.WriteMore()
-		stream.WriteObjectField("created")
-		stream.WriteInt64(obj.Created)
+		stream.WriteObjectField("createdAt")
+		stream.WriteInt64(obj.CreatedAt)
 	}
-	if obj.Updated > 0 {
+	if obj.UpdatedAt > 0 {
 		stream.WriteMore()
-		stream.WriteObjectField("updated")
-		stream.WriteInt64(obj.Updated)
+		stream.WriteObjectField("updatedAt")
+		stream.WriteInt64(obj.UpdatedAt)
 	}
 	if obj.CreatedBy != "" {
 		stream.WriteMore()
@@ -124,11 +124,11 @@ func readRawObject(iter *jsoniter.Iterator, raw *RawObject) {
 			raw.GRN = &GRN{}
 			iter.ReadVal(raw.GRN)
 		case "updated":
-			raw.Updated = iter.ReadInt64()
+			raw.UpdatedAt = iter.ReadInt64()
 		case "updatedBy":
 			raw.UpdatedBy = iter.ReadString()
 		case "created":
-			raw.Created = iter.ReadInt64()
+			raw.CreatedAt = iter.ReadInt64()
 		case "createdBy":
 			raw.CreatedBy = iter.ReadString()
 		case "size":
@@ -224,10 +224,15 @@ func (codec *searchResultCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stre
 		stream.WriteObjectField("description")
 		stream.WriteString(obj.Description)
 	}
-	if obj.Updated > 0 {
+	if obj.Size > 0 {
 		stream.WriteMore()
-		stream.WriteObjectField("updated")
-		stream.WriteInt64(obj.Updated)
+		stream.WriteObjectField("size")
+		stream.WriteInt64(obj.Size)
+	}
+	if obj.UpdatedAt > 0 {
+		stream.WriteMore()
+		stream.WriteObjectField("updatedAt")
+		stream.WriteInt64(obj.UpdatedAt)
 	}
 	if obj.UpdatedBy != "" {
 		stream.WriteMore()
