@@ -119,7 +119,7 @@ func (cmd *ConditionsCmd) Execute(_ context.Context, _ time.Time, vars mathexp.V
 			// or mathexp.Series that reduced to a nil float64
 			if number.GetFloat64Value() == nil {
 				numSeriesNoData += 1
-			} else if ok := cond.Evaluator.Eval(number); ok {
+			} else if isValueFiring := cond.Evaluator.Eval(number); isValueFiring {
 				isCondFiring = true
 				// If the condition is met then add it to the list of matching conditions
 				labels := number.GetLabels()
