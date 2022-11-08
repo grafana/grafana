@@ -424,6 +424,14 @@
       "time-zone-option": "Ŧįmę žőŉę",
       "time-zone-selection": "Ŧįmę žőŉę şęľęčŧįőŉ"
     },
+    "range-content": {
+      "apply-button": "Åppľy ŧįmę řäŉģę",
+      "default-error": "Pľęäşę ęŉŧęř ä päşŧ đäŧę őř \"ŉőŵ\"",
+      "fiscal-year": "Fįşčäľ yęäř",
+      "from-input": "Fřőm",
+      "range-error": "\"Fřőm\" čäŉ'ŧ þę äƒŧęř \"Ŧő\"",
+      "to-input": "Ŧő"
+    },
     "time-range": {
       "aria-role": "Ŧįmę řäŉģę şęľęčŧįőŉ",
       "default-title": "Ŧįmę řäŉģęş",

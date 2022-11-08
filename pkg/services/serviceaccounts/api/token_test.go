@@ -23,7 +23,6 @@ import (
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
@@ -55,9 +54,7 @@ func createTokenforSA(t *testing.T, store serviceaccounts.Store, keyName string,
 
 func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 	store := db.InitTestDB(t)
-	quotaService := quotatest.New(false, nil)
-	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
-	require.NoError(t, err)
+	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
 	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
 	svcmock := tests.ServiceAccountMock{}
@@ -174,9 +171,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 
 func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 	store := db.InitTestDB(t)
-	quotaService := quotatest.New(false, nil)
-	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
-	require.NoError(t, err)
+	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
 	svcMock := &tests.ServiceAccountMock{}
 	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)

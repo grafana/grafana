@@ -39,7 +39,7 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -150,7 +150,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
 			Coremodels:              registry.NewBase(nil),
-			QuotaService:            quotatest.New(false, nil),
 		}
 
 		setUp := func() {
@@ -991,12 +990,9 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		provisioningService = provisioning.NewProvisioningServiceMock(context.Background())
 	}
 
-	var err error
 	if dashboardStore == nil {
 		sql := db.InitTestDB(t)
-		quotaService := quotatest.New(false, nil)
-		dashboardStore, err = database.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg), quotaService)
-		require.NoError(t, err)
+		dashboardStore = database.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg))
 	}
 
 	libraryPanelsService := mockLibraryPanelService{}
@@ -1035,7 +1031,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	require.Equal(sc.t, 200, sc.resp.Code)
 
 	dash := dtos.DashboardFullWithMeta{}
-	err = json.NewDecoder(sc.resp.Body).Decode(&dash)
+	err := json.NewDecoder(sc.resp.Body).Decode(&dash)
 	require.NoError(sc.t, err)
 
 	return dash
@@ -1081,10 +1077,12 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
 		hs := HTTPServer{
-			Cfg:                   cfg,
-			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                  newTestLive(t, db.InitTestDB(t)),
-			QuotaService:          quotatest.New(false, nil),
+			Cfg:                 cfg,
+			ProvisioningService: provisioning.NewProvisioningServiceMock(context.Background()),
+			Live:                newTestLive(t, db.InitTestDB(t)),
+			QuotaService: &quotaimpl.Service{
+				Cfg: cfg,
+			},
 			pluginStore:           &plugins.FakePluginStore{},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
@@ -1118,7 +1116,7 @@ func postValidateScenario(t *testing.T, desc string, url string, routePattern st
 			Cfg:                   cfg,
 			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                  newTestLive(t, db.InitTestDB(t)),
-			QuotaService:          quotatest.New(false, nil),
+			QuotaService:          &quotaimpl.Service{Cfg: cfg},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
 			SQLStore:              sqlmock,
@@ -1154,7 +1152,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                    newTestLive(t, db.InitTestDB(t)),
-			QuotaService:            quotatest.New(false, nil),
+			QuotaService:            &quotaimpl.Service{Cfg: cfg},
 			LibraryPanelService:     &mockLibraryPanelService{},
 			LibraryElementService:   &mockLibraryElementService{},
 			SQLStore:                sqlmock,
@@ -1192,7 +1190,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                    newTestLive(t, db.InitTestDB(t)),
-			QuotaService:            quotatest.New(false, nil),
+			QuotaService:            &quotaimpl.Service{Cfg: cfg},
 			LibraryPanelService:     &mockLibraryPanelService{},
 			LibraryElementService:   &mockLibraryElementService{},
 			DashboardService:        mock,
