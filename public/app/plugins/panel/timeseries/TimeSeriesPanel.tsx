@@ -65,7 +65,6 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       options={options}
     >
       {(config, alignedDataFrame) => {
-        console.log(alignedDataFrame);
         alignedDataFrame = regenerateLinksSupplier(alignedDataFrame, frames, replaceVariables, timeZone);
 
         return (
