@@ -20,13 +20,16 @@ export interface PluginBridgeProps {
 }
 
 export const PluginBridge: FC<PluginBridgeProps> = ({ children, plugin, loadingComponent, notInstalledComponent }) => {
-  const { loading, error } = useAsync(() => getPluginSettings(plugin, { showErrorAlert: false }));
+  const { loading, error, value } = useAsync(() => getPluginSettings(plugin, { showErrorAlert: false }));
 
   if (loading) {
     return loadingComponent ?? null;
   }
 
-  if (error) {
+  const installed = value && !error && !loading;
+  const enabled = value?.enabled;
+
+  if (!installed || !enabled) {
     return notInstalledComponent ?? null;
   }
 
