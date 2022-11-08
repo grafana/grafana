@@ -43,35 +43,36 @@ e2e.scenario({
     e2e.components.QueryField.container().should('be.visible').should('have.text', monacoLoadingText);
     e2e.components.QueryField.container().should('be.visible').should('not.have.text', monacoLoadingText);
 
-    const queryField = e2e.components.QueryField.container();
     const queryFieldValue = e2e().get('.monaco-editor textarea:first');
 
     // adds closing braces around empty value
-    queryField.type('time(', { parseSpecialCharSequences: false });
+    e2e.components.QueryField.container().type('time(');
     queryFieldValue.should(($el) => {
       expect($el.val()).to.eq('time()');
     });
 
     // removes closing brace when opening brace is removed
-    queryField.type('{backspace}');
+    e2e.components.QueryField.container().type('{backspace}');
     queryFieldValue.should(($el) => {
       expect($el.val()).to.eq('time');
     });
 
     // keeps closing brace when opening brace is removed and inner values exist
-    queryField.type(`{selectall}{backspace}time(test{leftArrow}{leftArrow}{leftArrow}{leftArrow}{backspace}`);
+    e2e.components.QueryField.container().type(
+      `{selectall}{backspace}time(test{leftArrow}{leftArrow}{leftArrow}{leftArrow}{backspace}`
+    );
     queryFieldValue.should(($el) => {
       expect($el.val()).to.eq('timetest)');
     });
 
     // overrides an automatically inserted brace
-    queryField.type(`{selectall}{backspace}time()`);
+    e2e.components.QueryField.container().type(`{selectall}{backspace}time()`);
     queryFieldValue.should(($el) => {
       expect($el.val()).to.eq('time()');
     });
 
     // does not override manually inserted braces
-    queryField.type(`{selectall}{backspace}))`);
+    e2e.components.QueryField.container().type(`{selectall}{backspace}))`);
     queryFieldValue.should(($el) => {
       expect($el.val()).to.eq('))');
     });
@@ -79,7 +80,7 @@ e2e.scenario({
     /** Runner plugin */
 
     // Should execute the query when enter with shift is pressed
-    queryField.type(`{selectall}{backspace}{shift+enter}`);
+    e2e.components.QueryField.container().type(`{selectall}{backspace}{shift+enter}`);
     e2e().get('[data-testid="explore-no-data"]').should('be.visible');
 
     /** Suggestions plugin */
