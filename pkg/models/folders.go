@@ -31,6 +31,7 @@ func NewFolder(title string) *Folder {
 	return folder
 }
 
+/*
 // DashboardToFolder converts Dashboard to Folder
 func DashboardToFolder(dash *Dashboard) *Folder {
 	return &Folder{
@@ -46,6 +47,7 @@ func DashboardToFolder(dash *Dashboard) *Folder {
 		UpdatedBy: dash.UpdatedBy,
 	}
 }
+*/
 
 // UpdateDashboardModel updates an existing model from command into model for update
 func (cmd *UpdateFolderCommand) UpdateDashboardModel(dashFolder *Dashboard, orgId int64, userId int64) {

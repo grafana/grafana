@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -57,6 +58,24 @@ func ProvideService(
 	}
 }
 
+func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case cmd.UID != nil:
+		return s.GetFolderByUID(ctx, user, cmd.OrgID, *cmd.UID)
+	case cmd.ID != nil:
+		return s.GetFolderByID(ctx, user, *cmd.ID, cmd.OrgID)
+	case cmd.Title != nil:
+		return s.GetFolderByTitle(ctx, user, cmd.OrgID, *cmd.Title)
+	default:
+		return nil, folder.ErrBadRequest.Errorf("either on of UID, ID, Title fields must be present")
+	}
+}
+
 func (s *Service) GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
 	searchQuery := search.Query{
 		SignedInUser: user,
@@ -86,9 +105,9 @@ func (s *Service) GetFolders(ctx context.Context, user *user.SignedInUser, orgID
 	return folders, nil
 }
 
-func (s *Service) GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error) {
+func (s *Service) GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*folder.Folder, error) {
 	if id == 0 {
-		return &models.Folder{Id: id, Title: "General"}, nil
+		return &folder.Folder{ID: id, Title: "General"}, nil
 	}
 
 	dashFolder, err := s.dashboardStore.GetFolderByID(ctx, orgID, id)
@@ -96,7 +115,7 @@ func (s *Service) GetFolderByID(ctx context.Context, user *user.SignedInUser, id
 		return nil, err
 	}
 
-	g := guardian.New(ctx, dashFolder.Id, orgID, user)
+	g := guardian.New(ctx, dashFolder.ID, orgID, user)
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -107,13 +126,13 @@ func (s *Service) GetFolderByID(ctx context.Context, user *user.SignedInUser, id
 	return dashFolder, nil
 }
 
-func (s *Service) GetFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*models.Folder, error) {
+func (s *Service) GetFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*folder.Folder, error) {
 	dashFolder, err := s.dashboardStore.GetFolderByUID(ctx, orgID, uid)
 	if err != nil {
 		return nil, err
 	}
 
-	g := guardian.New(ctx, dashFolder.Id, orgID, user)
+	g := guardian.New(ctx, dashFolder.ID, orgID, user)
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -124,13 +143,13 @@ func (s *Service) GetFolderByUID(ctx context.Context, user *user.SignedInUser, o
 	return dashFolder, nil
 }
 
-func (s *Service) GetFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*models.Folder, error) {
+func (s *Service) GetFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*folder.Folder, error) {
 	dashFolder, err := s.dashboardStore.GetFolderByTitle(ctx, orgID, title)
 	if err != nil {
 		return nil, err
 	}
 
-	g := guardian.New(ctx, dashFolder.Id, orgID, user)
+	g := guardian.New(ctx, dashFolder.ID, orgID, user)
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -175,7 +194,7 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 		return nil, toFolderError(err)
 	}
 
-	var folder *models.Folder
+	var folder *folder.Folder
 	folder, err = s.dashboardStore.GetFolderByID(ctx, orgID, dash.Id)
 	if err != nil {
 		return nil, err
@@ -195,16 +214,16 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 			{BuiltinRole: string(org.RoleViewer), Permission: models.PERMISSION_VIEW.String()},
 		}...)
 
-		_, permissionErr = s.permissions.SetPermissions(ctx, orgID, folder.Uid, permissions...)
+		_, permissionErr = s.permissions.SetPermissions(ctx, orgID, folder.UID, permissions...)
 	} else if s.cfg.EditorsCanAdmin && user.IsRealUser() && !user.IsAnonymous {
-		permissionErr = s.MakeUserAdmin(ctx, orgID, userID, folder.Id, true)
+		permissionErr = s.MakeUserAdmin(ctx, orgID, userID, folder.ID, true)
 	}
 
 	if permissionErr != nil {
 		s.log.Error("Could not make user admin", "folder", folder.Title, "user", userID, "error", permissionErr)
 	}
 
-	return folder, nil
+	return folder.ToLegacyModel(), nil
 }
 
 func (s *Service) UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
@@ -239,12 +258,12 @@ func (s *Service) UpdateFolder(ctx context.Context, user *user.SignedInUser, org
 		return toFolderError(err)
 	}
 
-	var folder *models.Folder
+	var folder *folder.Folder
 	folder, err = s.dashboardStore.GetFolderByID(ctx, orgID, dash.Id)
 	if err != nil {
 		return err
 	}
-	cmd.Result = folder
+	cmd.Result = folder.ToLegacyModel()
 
 	if currentTitle != folder.Title {
 		if err := s.bus.Publish(ctx, &events.FolderTitleUpdated{
@@ -267,7 +286,7 @@ func (s *Service) DeleteFolder(ctx context.Context, user *user.SignedInUser, org
 		return nil, err
 	}
 
-	guard := guardian.New(ctx, dashFolder.Id, orgID, user)
+	guard := guardian.New(ctx, dashFolder.ID, orgID, user)
 	if canSave, err := guard.CanDelete(); err != nil || !canSave {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -275,13 +294,13 @@ func (s *Service) DeleteFolder(ctx context.Context, user *user.SignedInUser, org
 		return nil, dashboards.ErrFolderAccessDenied
 	}
 
-	deleteCmd := models.DeleteDashboardCommand{OrgId: orgID, Id: dashFolder.Id, ForceDeleteFolderRules: forceDeleteRules}
+	deleteCmd := models.DeleteDashboardCommand{OrgId: orgID, Id: dashFolder.ID, ForceDeleteFolderRules: forceDeleteRules}
 
 	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 		return nil, toFolderError(err)
 	}
 
-	return dashFolder, nil
+	return dashFolder.ToLegacyModel(), nil
 }
 
 func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {

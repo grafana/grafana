@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -131,7 +132,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			t.Run("When creating folder should not return access denied error", func(t *testing.T) {
 				dash := models.NewDashboardFolder("Test-Folder")
 				dash.Id = rand.Int63()
-				f := models.DashboardToFolder(dash)
+				f := folder.FromDashboard(dash)
 
 				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
 				store.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(dash, nil).Once()
@@ -154,7 +155,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				dashboardFolder := models.NewDashboardFolder("Folder")
 				dashboardFolder.Id = rand.Int63()
 				dashboardFolder.Uid = util.GenerateShortUID()
-				f := models.DashboardToFolder(dashboardFolder)
+				f := folder.FromDashboard(dashboardFolder)
 
 				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
 				store.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(dashboardFolder, nil)

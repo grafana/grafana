@@ -3,6 +3,7 @@ package folder
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -106,4 +107,35 @@ type GetTreeQuery struct {
 	// Pagination options
 	Limit int64
 	Page  int64
+}
+
+// ToLegacyModel is temporary until the two folder services are merged
+func (f *Folder) ToLegacyModel() *models.Folder {
+	return &models.Folder{
+		Id:        f.ID,
+		Uid:       f.UID,
+		Title:     f.Title,
+		Url:       "",
+		Version:   0,
+		Created:   f.Created,
+		Updated:   f.Updated,
+		UpdatedBy: 0,
+		CreatedBy: 0,
+		HasACL:    false,
+	}
+}
+
+func FromDashboard(dash *models.Dashboard) *Folder {
+	return &Folder{
+		ID:    dash.Id,
+		UID:   dash.Uid,
+		Title: dash.Title,
+		// HasACL:    dash.HasACL,
+		// Url:       dash.GetUrl(),
+		// Version:   dash.Version,
+		Created: dash.Created,
+		// CreatedBy: dash.CreatedBy,
+		Updated: dash.Updated,
+		// UpdatedBy: dash.UpdatedBy,
+	}
 }

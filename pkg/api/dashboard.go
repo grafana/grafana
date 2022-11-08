@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/coremodel/dashboard"
 	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -25,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -394,14 +397,19 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	cmd.OrgId = c.OrgID
 	cmd.UserId = c.UserID
 	if cmd.FolderUid != "" {
-		folder, err := hs.folderService.GetFolderByUID(ctx, c.SignedInUser, c.OrgID, cmd.FolderUid)
+		ctx := appcontext.WithUser(c.Req.Context(), c.SignedInUser)
+		folder, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
+			OrgID: c.OrgID,
+			UID:   &cmd.FolderUid,
+		})
+		spew.Dump("<<<< postDashboard:", cmd.FolderUid, folder, err)
 		if err != nil {
 			if errors.Is(err, dashboards.ErrFolderNotFound) {
 				return response.Error(400, "Folder not found", err)
 			}
 			return response.Error(500, "Error while checking folder ID", err)
 		}
-		cmd.FolderId = folder.Id
+		cmd.FolderId = folder.ID
 	}
 
 	dash := cmd.GetDashboardModel()

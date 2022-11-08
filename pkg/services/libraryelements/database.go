@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -105,6 +106,7 @@ func getLibraryElement(dialect migrator.Dialect, session *db.Session, uid string
 
 // createLibraryElement adds a library element.
 func (l *LibraryElementService) createLibraryElement(c context.Context, signedInUser *user.SignedInUser, cmd CreateLibraryElementCommand) (LibraryElementDTO, error) {
+	c = appcontext.WithUser(c, signedInUser)
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return LibraryElementDTO{}, err
 	}
@@ -184,6 +186,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 
 // deleteLibraryElement deletes a library element.
 func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedInUser *user.SignedInUser, uid string) (int64, error) {
+	c = appcontext.WithUser(c, signedInUser)
 	var elementID int64
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		element, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.OrgID)
@@ -227,6 +230,7 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 
 // getLibraryElements gets a Library Element where param == value
 func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signedInUser *user.SignedInUser, params []Pair) ([]LibraryElementDTO, error) {
+	c = appcontext.WithUser(c, signedInUser)
 	libraryElements := make([]LibraryElementWithMeta, 0)
 	err := store.WithDbSession(c, func(session *db.Session) error {
 		builder := db.NewSqlBuilder(cfg)
@@ -298,6 +302,7 @@ func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signed
 
 // getLibraryElementByUid gets a Library Element by uid.
 func (l *LibraryElementService) getLibraryElementByUid(c context.Context, signedInUser *user.SignedInUser, UID string) (LibraryElementDTO, error) {
+	c = appcontext.WithUser(c, signedInUser)
 	libraryElements, err := getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{key: "org_id", value: signedInUser.OrgID}, {key: "uid", value: UID}})
 	if err != nil {
 		return LibraryElementDTO{}, err
@@ -311,11 +316,13 @@ func (l *LibraryElementService) getLibraryElementByUid(c context.Context, signed
 
 // getLibraryElementByName gets a Library Element by name.
 func (l *LibraryElementService) getLibraryElementsByName(c context.Context, signedInUser *user.SignedInUser, name string) ([]LibraryElementDTO, error) {
+	c = appcontext.WithUser(c, signedInUser)
 	return getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{"org_id", signedInUser.OrgID}, {"name", name}})
 }
 
 // getAllLibraryElements gets all Library Elements.
 func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedInUser *user.SignedInUser, query searchLibraryElementsQuery) (LibraryElementSearchResult, error) {
+	c = appcontext.WithUser(c, signedInUser)
 	elements := make([]LibraryElementWithMeta, 0)
 	result := LibraryElementSearchResult{}
 	if query.perPage <= 0 {
@@ -436,6 +443,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 }
 
 func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, elementToPatch *LibraryElement, fromFolderID int64, toFolderID int64, user *user.SignedInUser) error {
+	ctx = appcontext.WithUser(ctx, user)
 	// FolderID was not provided in the PATCH request
 	if toFolderID == -1 {
 		toFolderID = fromFolderID
@@ -460,6 +468,7 @@ func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, eleme
 
 // patchLibraryElement updates a Library Element.
 func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInUser *user.SignedInUser, cmd PatchLibraryElementCommand, uid string) (LibraryElementDTO, error) {
+	c = appcontext.WithUser(c, signedInUser)
 	var dto LibraryElementDTO
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return LibraryElementDTO{}, err
@@ -561,6 +570,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 
 // getConnections gets all connections for a Library Element.
 func (l *LibraryElementService) getConnections(c context.Context, signedInUser *user.SignedInUser, uid string) ([]LibraryElementConnectionDTO, error) {
+	c = appcontext.WithUser(c, signedInUser)
 	connections := make([]LibraryElementConnectionDTO, 0)
 	err := l.SQLStore.WithDbSession(c, func(session *db.Session) error {
 		element, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.OrgID)
@@ -660,6 +670,7 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 
 // connectElementsToDashboardID adds connections for all elements Library Elements in a Dashboard.
 func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, signedInUser *user.SignedInUser, elementUIDs []string, dashboardID int64) error {
+	c = appcontext.WithUser(c, signedInUser)
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		_, err := session.Exec("DELETE FROM "+models.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
 		if err != nil {
@@ -707,6 +718,7 @@ func (l *LibraryElementService) disconnectElementsFromDashboardID(c context.Cont
 
 // deleteLibraryElementsInFolderUID deletes all Library Elements in a folder.
 func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Context, signedInUser *user.SignedInUser, folderUID string) error {
+	c = appcontext.WithUser(c, signedInUser)
 	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		var folderUIDs []struct {
 			ID int64 `xorm:"id"`

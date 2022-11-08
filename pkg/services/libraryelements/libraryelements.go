@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -44,11 +45,13 @@ type LibraryElementService struct {
 
 // CreateElement creates a Library Element.
 func (l *LibraryElementService) CreateElement(c context.Context, signedInUser *user.SignedInUser, cmd CreateLibraryElementCommand) (LibraryElementDTO, error) {
+	c = appcontext.WithUser(c, signedInUser)
 	return l.createLibraryElement(c, signedInUser, cmd)
 }
 
 // GetElement gets an element from a UID.
 func (l *LibraryElementService) GetElement(c context.Context, signedInUser *user.SignedInUser, UID string) (LibraryElementDTO, error) {
+	c = appcontext.WithUser(c, signedInUser)
 	return l.getLibraryElementByUid(c, signedInUser, UID)
 }
 
@@ -59,6 +62,7 @@ func (l *LibraryElementService) GetElementsForDashboard(c context.Context, dashb
 
 // ConnectElementsToDashboard connects elements to a specific dashboard.
 func (l *LibraryElementService) ConnectElementsToDashboard(c context.Context, signedInUser *user.SignedInUser, elementUIDs []string, dashboardID int64) error {
+	c = appcontext.WithUser(c, signedInUser)
 	return l.connectElementsToDashboardID(c, signedInUser, elementUIDs, dashboardID)
 }
 
@@ -69,5 +73,6 @@ func (l *LibraryElementService) DisconnectElementsFromDashboard(c context.Contex
 
 // DeleteLibraryElementsInFolder deletes all elements for a specific folder.
 func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser *user.SignedInUser, folderUID string) error {
+	c = appcontext.WithUser(c, signedInUser)
 	return l.deleteLibraryElementsInFolderUID(c, signedInUser, folderUID)
 }

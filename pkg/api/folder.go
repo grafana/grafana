@@ -9,8 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/util"
@@ -67,13 +69,15 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
-	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgID, web.Params(c.Req)[":uid"])
+	uid := web.Params(c.Req)[":uid"]
+	ctx := appcontext.WithUser(c.Req.Context(), c.SignedInUser)
+	folder, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{OrgID: c.OrgID, UID: &uid})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
-	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, folder))
+	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
 }
 
 // swagger:route GET /folders/id/{folder_id} folders getFolderByID
@@ -93,13 +97,14 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	folder, err := hs.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, id, c.OrgID)
+	ctx := appcontext.WithUser(c.Req.Context(), c.SignedInUser)
+	folder, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{ID: &id, OrgID: c.OrgID})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
-	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, folder))
+	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
 }
 
 // swagger:route POST /folders folders createFolder
@@ -218,6 +223,42 @@ func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuar
 		Updated:       folder.Updated,
 		Version:       folder.Version,
 		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.Uid),
+	}
+}
+
+func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardGuardian, folder *folder.Folder) dtos.Folder {
+	canEdit, _ := g.CanEdit()
+	canSave, _ := g.CanSave()
+	canAdmin, _ := g.CanAdmin()
+	canDelete, _ := g.CanDelete()
+
+	// Finding creator and last updater of the folder
+	updater, creator := anonString, anonString
+	/*
+		if folder.CreatedBy > 0 {
+			creator = hs.getUserLogin(c.Req.Context(), folder.CreatedBy)
+		}
+		if folder.UpdatedBy > 0 {
+			updater = hs.getUserLogin(c.Req.Context(), folder.UpdatedBy)
+		}
+	*/
+
+	return dtos.Folder{
+		Id:    folder.ID,
+		Uid:   folder.UID,
+		Title: folder.Title,
+		// Url:           folder.Url,
+		// HasACL:        folder.HasACL,
+		CanSave:   canSave,
+		CanEdit:   canEdit,
+		CanAdmin:  canAdmin,
+		CanDelete: canDelete,
+		CreatedBy: creator,
+		Created:   folder.Created,
+		UpdatedBy: updater,
+		Updated:   folder.Updated,
+		// Version:       folder.Version,
+		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.UID),
 	}
 }
 

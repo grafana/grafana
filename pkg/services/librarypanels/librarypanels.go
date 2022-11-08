@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -48,6 +49,7 @@ type LibraryPanelService struct {
 
 // ConnectLibraryPanelsForDashboard loops through all panels in dashboard JSON and connects any library panels to the dashboard.
 func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, dash *models.Dashboard) error {
+	c = appcontext.WithUser(c, signedInUser)
 	panels := dash.Data.Get("panels").MustArray()
 	libraryPanels := make(map[string]string)
 	err := connectLibraryPanelsRecursively(c, panels, libraryPanels)

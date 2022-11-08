@@ -20,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -54,7 +55,8 @@ var (
 // Returns http.StatusUnauthorized if user does not have access to any of the rules that match the filter.
 // Returns http.StatusBadRequest if all rules that match the filter and the user is authorized to delete are provisioned.
 func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext, namespaceTitle string, group string) response.Response {
-	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgID, c.SignedInUser, true)
+	ctx := appcontext.WithUser(c.Req.Context(), c.SignedInUser)
+	namespace, err := srv.store.GetNamespaceByTitle(ctx, namespaceTitle, c.SignedInUser.OrgID, c.SignedInUser, true)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
@@ -83,7 +85,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext, namespaceTitle s
 		unauthz, provisioned := false, false
 		q := ngmodels.ListAlertRulesQuery{
 			OrgID:         c.SignedInUser.OrgID,
-			NamespaceUIDs: []string{namespace.Uid},
+			NamespaceUIDs: []string{namespace.UID},
 			RuleGroup:     ruleGroup,
 		}
 		if err = srv.store.ListAlertRules(ctx, &q); err != nil {
@@ -156,14 +158,15 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext, namespaceTitle s
 
 // RouteGetNamespaceRulesConfig returns all rules in a specific folder that user has access to
 func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext, namespaceTitle string) response.Response {
-	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgID, c.SignedInUser, false)
+	ctx := appcontext.WithUser(c.Req.Context(), c.SignedInUser)
+	namespace, err := srv.store.GetNamespaceByTitle(ctx, namespaceTitle, c.SignedInUser.OrgID, c.SignedInUser, false)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
 
 	q := ngmodels.ListAlertRulesQuery{
 		OrgID:         c.SignedInUser.OrgID,
-		NamespaceUIDs: []string{namespace.Uid},
+		NamespaceUIDs: []string{namespace.UID},
 	}
 	if err := srv.store.ListAlertRules(c.Req.Context(), &q); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
@@ -189,7 +192,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext, namespace
 		if !authorizeAccessToRuleGroup(rules, hasAccess) {
 			continue
 		}
-		result[namespaceTitle] = append(result[namespaceTitle], toGettableRuleGroupConfig(groupName, rules, namespace.Id, provenanceRecords))
+		result[namespaceTitle] = append(result[namespaceTitle], toGettableRuleGroupConfig(groupName, rules, namespace.ID, provenanceRecords))
 	}
 
 	return response.JSON(http.StatusAccepted, result)
@@ -198,14 +201,15 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext, namespace
 // RouteGetRulesGroupConfig returns rules that belong to a specific group in a specific namespace (folder).
 // If user does not have access to at least one of the rule in the group, returns status 401 Unauthorized
 func (srv RulerSrv) RouteGetRulesGroupConfig(c *models.ReqContext, namespaceTitle string, ruleGroup string) response.Response {
-	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgID, c.SignedInUser, false)
+	ctx := appcontext.WithUser(c.Req.Context(), c.SignedInUser)
+	namespace, err := srv.store.GetNamespaceByTitle(ctx, namespaceTitle, c.SignedInUser.OrgID, c.SignedInUser, false)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
 
 	q := ngmodels.ListAlertRulesQuery{
 		OrgID:         c.SignedInUser.OrgID,
-		NamespaceUIDs: []string{namespace.Uid},
+		NamespaceUIDs: []string{namespace.UID},
 		RuleGroup:     ruleGroup,
 	}
 	if err := srv.store.ListAlertRules(c.Req.Context(), &q); err != nil {
@@ -226,7 +230,7 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *models.ReqContext, namespaceTitl
 	}
 
 	result := apimodels.RuleGroupConfigResponse{
-		GettableRuleGroupConfig: toGettableRuleGroupConfig(ruleGroup, q.Result, namespace.Id, provenanceRecords),
+		GettableRuleGroupConfig: toGettableRuleGroupConfig(ruleGroup, q.Result, namespace.ID, provenanceRecords),
 	}
 	return response.JSON(http.StatusAccepted, result)
 }
@@ -296,13 +300,14 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 			continue
 		}
 		namespace := folder.Title
-		result[namespace] = append(result[namespace], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, folder.Id, provenanceRecords))
+		result[namespace] = append(result[namespace], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, folder.ID, provenanceRecords))
 	}
 	return response.JSON(http.StatusOK, result)
 }
 
 func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig, namespaceTitle string) response.Response {
-	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgID, c.SignedInUser, true)
+	ctx := appcontext.WithUser(c.Req.Context(), c.SignedInUser)
+	namespace, err := srv.store.GetNamespaceByTitle(ctx, namespaceTitle, c.SignedInUser.OrgID, c.SignedInUser, true)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
@@ -316,7 +321,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 
 	groupKey := ngmodels.AlertRuleGroupKey{
 		OrgID:        c.SignedInUser.OrgID,
-		NamespaceUID: namespace.Uid,
+		NamespaceUID: namespace.UID,
 		RuleGroup:    ruleGroupConfig.Name,
 	}
 

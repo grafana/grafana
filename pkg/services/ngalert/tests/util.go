@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -24,6 +25,7 @@ import (
 	databasestore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert"
@@ -125,9 +127,11 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 		OrgRole:        org.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
-	folder, err := dbstore.FolderService.CreateFolder(ctx, user, orgID, "FOLDER-"+util.GenerateShortUID(), folderUID)
+
+	_, err := dbstore.FolderService.CreateFolder(ctx, user, orgID, "FOLDER-"+util.GenerateShortUID(), folderUID)
 	if errors.Is(err, dashboards.ErrFolderWithSameUIDExists) || errors.Is(err, dashboards.ErrFolderVersionMismatch) {
-		folder, err = dbstore.FolderService.GetFolderByUID(ctx, user, orgID, folderUID)
+		ctx = appcontext.WithUser(ctx, user)
+		_, err = dbstore.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &folderUID})
 	}
 	require.NoError(t, err)
 
@@ -155,7 +159,7 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 			Labels:          labels,
 			Annotations:     map[string]string{"testAnnoKey": "testAnnoValue"},
 			IntervalSeconds: intervalSeconds,
-			NamespaceUID:    folder.Uid,
+			NamespaceUID:    folderUID,
 			RuleGroup:       ruleGroup,
 			NoDataState:     models.NoData,
 			ExecErrState:    models.AlertingErrState,
@@ -165,7 +169,7 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 
 	q := models.ListAlertRulesQuery{
 		OrgID:         orgID,
-		NamespaceUIDs: []string{folder.Uid},
+		NamespaceUIDs: []string{folderUID},
 		RuleGroup:     ruleGroup,
 	}
 	err = dbstore.ListAlertRules(ctx, &q)
@@ -173,6 +177,6 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 	require.NotEmpty(t, q.Result)
 
 	rule := q.Result[0]
-	t.Logf("alert definition: %v with title: %q interval: %d folder: %s created", rule.GetKey(), rule.Title, rule.IntervalSeconds, folder.Uid)
+	t.Logf("alert definition: %v with title: %q interval: %d folder: %s created", rule.GetKey(), rule.Title, rule.IntervalSeconds, folderUID)
 	return rule
 }
