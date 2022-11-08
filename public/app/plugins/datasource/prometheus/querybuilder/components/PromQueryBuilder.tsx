@@ -216,6 +216,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
         <LabelFilters
           getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
           labelsFilters={query.labels}
+          // eslint-ignore
           onChange={onChangeLabels as (labelFilters: Array<Partial<QueryBuilderLabelFilter>>) => void}
           onGetLabelNames={(forLabel) => withTemplateVariableOptions(onGetLabelNames(forLabel))}
           onGetLabelValues={(forLabel) => withTemplateVariableOptions(onGetLabelValues(forLabel))}
@@ -232,6 +233,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
       <OperationsEditorRow>
         <OperationList<PromVisualQuery>
           queryModeller={promQueryModeller}
+          // eslint-ignore
           datasource={datasource as DataSourceApi}
           query={query}
           onChange={onChange}
