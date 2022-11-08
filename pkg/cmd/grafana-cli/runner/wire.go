@@ -232,7 +232,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(social.Service), new(*social.SocialService)),
 	oauthtoken.ProvideService,
 	auth.ProvideActiveAuthTokenService,
-	wire.Bind(new(models.ActiveTokenService), new(*auth.ActiveAuthTokenService)),
+	wire.Bind(new(auth.ActiveTokenService), new(*auth.ActiveAuthTokenService)),
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 	tempo.ProvideService,
 	loki.ProvideService,

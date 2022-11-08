@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
@@ -87,6 +88,7 @@ const (
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
 	DashboardUIDAnnotation = "__dashboardUid__"
 	PanelIDAnnotation      = "__panelId__"
+	OrgIDAnnotation        = "__orgId__"
 
 	// This isn't a hard-coded secret token, hence the nolint.
 	//nolint:gosec
@@ -458,6 +460,11 @@ func (g RulesGroup) SortByGroupIndex() {
 		return g[i].RuleGroupIndex < g[j].RuleGroupIndex
 	})
 }
+
+const (
+	QuotaTargetSrv quota.TargetSrv = "ngalert"
+	QuotaTarget    quota.Target    = "alert_rule"
+)
 
 type ruleKeyContextKey struct{}
 
