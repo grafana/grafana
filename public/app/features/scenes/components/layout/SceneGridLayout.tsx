@@ -345,22 +345,41 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
               isBounded={false}
               // compactType={null}
             >
-              {Object.values(model.flattenedChildren).map((child) => {
-                if (child.row && child.row.state.isCollapsed) {
-                  return null;
-                }
-                return (
-                  <div key={child.child.state.key} style={{ display: 'flex' }}>
-                    <child.child.Component model={child.child} key={child.child.state.key} />
-                  </div>
-                );
-              })}
+              {renderChildren(model.state.children)}
             </ReactGridLayout>
           </div>
         );
       }}
     </AutoSizer>
   );
+}
+
+function renderChildren(children: SceneLayoutChild[]) {
+  const elements: React.ReactNode[] = [];
+
+  for (const child of children) {
+    elements.push(
+      <div key={child.state.key} style={{ display: 'flex' }}>
+        <child.Component model={child} key={child.state.key} />
+      </div>
+    );
+
+    if (child instanceof SceneGridRow) {
+      if (child.state.isCollapsed) {
+        continue;
+      }
+
+      for (const rowChild of child.state.children) {
+        elements.push(
+          <div key={rowChild.state.key} style={{ display: 'flex' }}>
+            <rowChild.Component model={rowChild} key={rowChild.state.key} />
+          </div>
+        );
+      }
+    }
+  }
+
+  return elements;
 }
 
 interface SceneGridRowState extends SceneLayoutChildState {
@@ -417,7 +436,7 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
 
 function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
   const styles = useStyles2(getSceneGridRowStyles);
-  const { isCollapsible, isCollapsed, isDraggable, title, ...state } = model.useState();
+  const { isCollapsible, isCollapsed, isDraggable, title } = model.useState();
   const layout = model.getLayout();
   const dragHandle = <SceneDragHandle layoutKey={layout.state.key!} />;
 
