@@ -5,7 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, DEFAULT_PANEL_SPAN } from 'app/core/constants';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
 import {
@@ -231,6 +231,8 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
 
     Object.values(model.flattenedChildren).forEach((child) => {
       const size = child.child.state.size!;
+      const width = Number.isInteger(Number(size.width)) ? Number(size.width) : DEFAULT_PANEL_SPAN;
+      const height = Number.isInteger(Number(size.height)) ? Number(size.height) : DEFAULT_PANEL_SPAN;
 
       if (!child.row) {
         // rendering cells and row
@@ -244,8 +246,8 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
           i: child.child.state.key!,
           x: size.x!,
           y: size.y!,
-          w: size.width!,
-          h: size.height!,
+          w: width,
+          h: height,
           isResizable,
           isDraggable,
         });
@@ -258,8 +260,8 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
           x: size.x!,
           // y: size.y!,
           y: size.y! + child.row.state.size!.y!,
-          w: size.width!,
-          h: size.height!,
+          w: width,
+          h: height,
           isResizable,
           isDraggable,
         };
@@ -308,9 +310,12 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
 
         // Dev only, to be removed
         const background = generateGridBackground({
-          cellSize: { width: (width - 23 * GRID_CELL_VMARGIN) / 24, height: GRID_CELL_HEIGHT },
+          cellSize: {
+            width: (width - (GRID_COLUMN_COUNT - 1) * GRID_CELL_VMARGIN) / GRID_COLUMN_COUNT,
+            height: GRID_CELL_HEIGHT,
+          },
           margin: [GRID_CELL_VMARGIN, GRID_CELL_VMARGIN],
-          cols: 24,
+          cols: GRID_COLUMN_COUNT,
           gridWidth: width,
           theme,
         });
@@ -518,10 +523,13 @@ function buildRowBBoxes(children: SceneLayoutChild[]) {
     if (child instanceof SceneGridRow) {
       const x = 0;
       const y = child.state.size?.y!;
-      const width = 24;
+      const width = GRID_COLUMN_COUNT;
       const heights = [];
       for (const rowChildren of child.state.children) {
-        heights.push(rowChildren.state.size?.height! + rowChildren.state.size?.y!);
+        const childHeight = Number.isInteger(rowChildren.state.size?.height!)
+          ? Number(rowChildren.state.size?.height!)
+          : DEFAULT_PANEL_SPAN;
+        heights.push(childHeight + rowChildren.state.size?.y!);
       }
 
       const height = heights.length ? Math.max(...heights) + 1 : 1;
