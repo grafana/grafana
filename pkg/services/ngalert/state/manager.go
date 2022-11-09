@@ -180,7 +180,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		states = append(states, s)
 		processedResults[s.CacheID] = s
 	}
-	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
+	resolvedStates := st.staleResultsHandler(ctx, alertRule, processedResults, evaluatedAt)
 	if len(states) > 0 {
 		logger.Debug("saving new states to the database", "count", len(states))
 		for _, state := range states {
@@ -374,16 +374,24 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 	}
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State) []*State {
-	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
-	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
-	var resolvedImage *ngModels.Image
+func (st *Manager) staleResultsHandler(ctx context.Context, r *ngModels.AlertRule, states map[string]*State, evaluatedAt time.Time) []*State {
+	var (
+		// resolvedImage contains the image for all stale states that are resolved. The resolved image is shared between
+		// all resolved states as the alert rule is the same. TODO: We will need to change this when we support images
+		// without screenshots as each state will have a different image
+		resolvedImage *ngModels.Image
 
-	var resolvedStates []*State
-	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
-	for _, s := range allStates {
+		// resolvedStates contains the stale states that were resolved
+		resolvedStates []*State
+
+		// knownStates contains the current set of states in the state cache
+		knownStates []*State
+	)
+
+	knownStates = st.GetStatesForRuleUID(r.OrgID, r.UID)
+	for _, s := range knownStates {
 		_, ok := states[s.CacheID]
-		if !ok && isItStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
+		if !ok && isItStale(evaluatedAt, s.LastEvaluationTime, r.IntervalSeconds) {
 			st.log.Debug("removing stale state entry", "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheID)
 			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheID)
 			ilbs := ngModels.InstanceLabels(s.Labels)
@@ -398,22 +406,19 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 
 			if s.State == eval.Alerting {
 				previousState := InstanceStateAndReason{State: s.State, Reason: s.StateReason}
-				s.State = eval.Normal
-				s.StateReason = ngModels.StateReasonMissingSeries
-				s.EndsAt = evaluatedAt
-				s.Resolved = true
-				st.annotateState(ctx, alertRule, s.Labels, evaluatedAt,
+				s.Resolve(ngModels.StateReasonMissingSeries, evaluatedAt)
+				st.annotateState(ctx, r, s.Labels, evaluatedAt,
 					InstanceStateAndReason{State: eval.Normal, Reason: s.StateReason},
 					previousState,
 				)
 
 				// If there is no resolved image for this rule then take one
 				if resolvedImage == nil {
-					image, err := takeImage(ctx, st.imageService, alertRule)
+					image, err := takeImage(ctx, st.imageService, r)
 					if err != nil {
 						st.log.Warn("Failed to take an image",
-							"dashboard", alertRule.DashboardUID,
-							"panel", alertRule.PanelID,
+							"dashboard", r.DashboardUID,
+							"panel", r.PanelID,
 							"error", err)
 					} else if image != nil {
 						resolvedImage = image
