@@ -240,23 +240,3 @@ func LoadCoreKind[T RawMeta | CoreStructuredMeta](declpath string, ctx *cue.Cont
 	}
 	return decl, nil
 }
-
-// LoadCustomKind takes an fs.FS that contains a CustomKind declaration at the
-// path indicated by dir, and validates that it contains a valid CustomKind
-// declaration. On success, it returns a Go representation of the entire
-// CustomKind declaration.
-// func LoadCustomKind(kfs fs.FS, dir string, ctx *cue.Context) (*Decl[CustomStructuredMeta], error) {
-// 	inst, err := cuectx.LoadInstanceWithGrafana(kfs, dir)
-// 	panic("TODO")
-// }
-//
-// // NOTE exists solely for discussion purposes
-// func LoadCustomKind2(kfs fs.FS, dir string, ctx *cue.Context) (*CustomKind, error) {
-// 	panic("JUST SPITBALLING")
-// }
-//
-// // NOTE exists solely for discussion purposes
-// type CustomKind struct {
-// 	Decl    *Decl[CustomStructuredMeta]
-// 	Lineage thema.Lineage
-// }
