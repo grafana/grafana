@@ -92,11 +92,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
   const variant = isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
 
-  const currentTimeRangeMessage = t(
-    'time-picker.range-picker.aria-label-current-time',
-    'Time range picker with current time range'
-  );
-  const selectedMessage = t('time-picker.range-picker.selected', 'selected');
+  const currentTimeRange = formattedRange(value, timeZone);
 
   return (
     <ButtonGroup className={styles.container}>
@@ -113,7 +109,11 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
       <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom" interactive>
         <ToolbarButton
           data-testid={selectors.components.TimePicker.openButton}
-          aria-label={`${currentTimeRangeMessage} ${formattedRange(value, timeZone)} ${selectedMessage}`}
+          aria-label={t(
+            'time-range.range-picker.current-time-selected',
+            'Time range picker with current time range {{currentTimeRange}} selected',
+            { currentTimeRange }
+          )}
           aria-controls="TimePickerContent"
           onClick={onOpen}
           icon="clock-nine"
