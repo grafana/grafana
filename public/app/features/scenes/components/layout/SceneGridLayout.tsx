@@ -30,20 +30,13 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       isDraggable: true,
       ...state,
     });
-
-    // Flat record of all layout children
-    // this._flattenedChildren = flattenGridLayoutChildren(this.state.children);
-
-    // Bounding boxes for each row
-    //this._rowBBoxes = buildRowBBoxes(this.state.children);
   }
 
-  // get flattenedChildren() {
-  //   return this._flattenedChildren;
-  // }
-  // get rowBBoxes() {
-  //   return this._rowBBoxes;
-  // }
+  rowStateChanged() {
+    // Should really make sure position is correct for all children?
+    // Trigger re-render
+    this.setState({});
+  }
 
   onLayoutChange = (layout: ReactGridLayout.Layout[]) => {
     if (this._skipOnLayoutChange) {
@@ -148,113 +141,31 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
         const rowAbove = this.getRowAboveIndex(gridLayout, index - 1);
 
         if (rowAbove && rowAbove !== sceneChild.parent) {
-          this.moveChildToRow(sceneChild, rowAbove);
+          // this.moveChildToRow(sceneChild, rowAbove);
         }
       }
     }
 
-    // const layoutProcessedSize: string[] = [];
-    // const activeRows: Record<
-    //   string,
-    //   {
-    //     x: number;
-    //     y: number;
-    //     height: number;
-    //   }
-    // > = {};
-    // for (const rowKey in this._rowBBoxes) {
-    //   if (this.flattenedChildren[rowKey] && this.flattenedChildren[rowKey].child.state.isCollapsed) {
-    //     continue;
-    //   }
-    //   activeRows[rowKey] = this._rowBBoxes[rowKey];
-    // }
-    // const source = this.flattenedChildren[n.i];
-    // let target: SceneLayoutChild | null = null;
-    // // detect dropped item colisions with active rows
-    // if (Object.keys(activeRows).length !== 0) {
-    //   for (const rowKey in activeRows) {
-    //     const row = activeRows[rowKey];
-    //     if (n.y > row.y && n.y <= row.y + row.height) {
-    //       target = this.flattenedChildren[rowKey].child!;
-    //       console.log(n.i, 'fits', rowKey);
-    //     }
-    //   }
-    // }
-    // // If dropped into a row...
-    // if (target) {
-    //   // update source child size realtive to target row
-    //   source.child.setState({
-    //     size: {
-    //       ...source.child.state.size,
-    //       x: n.x,
-    //       y: n.y - target.state.size!.y! - 1,
-    //     },
-    //   });
-    //   // skip size update later on
-    //   layoutProcessedSize.push(n.i);
-    //   // add child to new target row
-    //   target.setState({
-    //     children: [...target.state.children, source.child],
-    //   });
-    //   // if source cell was comining from a different row
-    //   if (source.row && source.row !== target) {
-    //     console.log('comes from a row', source.row.state.key);
-    //     source.row.setState({
-    //       children: source.row.state.children.filter((c) => c.state.key !== n.i),
-    //     });
-    //   } else {
-    //     // remove child from layout
-    //     this.setState({
-    //       children: this.state.children.filter((c) => c.state.key !== n.i),
-    //     });
-    //   }
-    // } else {
-    //   // If dropped on a grid, but not into a row
-    //   source.child.setState({
-    //     size: {
-    //       ...source.child.state.size,
-    //       x: n.x,
-    //       y: n.y,
-    //     },
-    //   });
-    //   // skip size update later on
-    //   layoutProcessedSize.push(n.i);
-    //   if (source.row) {
-    //     // if source cell was comining from a row, remove it from it
-    //     source.row.setState({
-    //       children: source.row.state.children.filter((c) => c.state.key !== n.i),
-    //     });
-    //     // add moved cell to layout
-    //     this.setState({
-    //       children: [...this.state.children, source.child],
-    //     });
-    //   } else {
-    //     console.log('Moving cell on top level grid');
-    //   }
-    // }
-    // // Update children positions if they have changed
-    // for (let i = 0; i < l.length; i++) {
-    //   if (layoutProcessedSize.includes(l[i].i)) {
-    //     continue;
-    //   }
-    //   const childDef = this.flattenedChildren[l[i].i];
-    //   const child = childDef.child;
-    //   const row = childDef.row;
-    //   const childSize = childDef.child.state.size;
-    //   const childLayout = l[i];
-    //   if (childSize?.x !== childLayout.x || childSize?.y !== childLayout.y) {
-    //     child.setState({
-    //       size: {
-    //         ...child.state.size,
-    //         x: childLayout.x,
-    //         y: row ? childLayout.y - row.state.size!.y! - 1 : childLayout.y,
-    //       },
-    //     });
-    //   }
-    // }
-    // // Skipping onLayoutChange handler to avoid unnecessary re-renders
-    // this._skipOnLayoutChange = true;
-    // this.updateLayout();
+    // Update children positions if they have changed
+    for (let i = 0; i < gridLayout.length; i++) {
+      const gridItem = gridLayout[i];
+      const child = this.getChild(gridItem.i)!;
+      //const row = childDef.row;
+      const childSize = child.state.size!;
+      const childLayout = gridLayout[i];
+
+      if (childSize?.x !== childLayout.x || childSize?.y !== childLayout.y) {
+        child.setState({
+          size: {
+            ...child.state.size,
+            x: childLayout.x,
+            y: childLayout.y,
+          },
+        });
+      }
+    }
+
+    this._skipOnLayoutChange = true;
   };
 
   toGridCell(child: SceneLayoutChild): ReactGridLayout.Layout {
@@ -440,14 +351,8 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
       return;
     }
 
-    if (layout) {
-      if (isCollapsed) {
-        this.setState({ isCollapsed: false });
-      } else {
-        this.setState({ isCollapsed: true });
-      }
-      // layout.updateLayout();
-    }
+    this.setState({ isCollapsed: !isCollapsed });
+    layout.rowStateChanged(this);
   };
 }
 
