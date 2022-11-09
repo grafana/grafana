@@ -409,7 +409,6 @@ interface SceneGridRowState extends SceneLayoutChildState {
 
 export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
   static Component = SceneGridRowRenderer;
-  // private _originalHeight = 0;
 
   constructor(state: SceneGridRowState) {
     super({
