@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { PluginSignatureType } from '@grafana/data';
+
 import { PageInfoItem } from '../../../../core/components/Page/types';
 import { PluginDisabledBadge } from '../components/Badges';
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
@@ -43,7 +45,11 @@ export const usePluginInfo = (plugin?: CatalogPlugin): ReturnType => {
     });
   }
 
-  if (Boolean(plugin.downloads > 0)) {
+  const showDownloads =
+    !plugin.signatureType ||
+    plugin.signatureType === PluginSignatureType.community ||
+    plugin.signatureType === PluginSignatureType.commercial;
+  if (showDownloads && Boolean(plugin.downloads > 0)) {
     info.push({
       label: 'Downloads',
       value: new Intl.NumberFormat().format(plugin.downloads),

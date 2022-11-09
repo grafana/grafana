@@ -33,7 +33,7 @@ export function PluginDetailsHeaderDependencies({
     <Stack gap={1}>
       {/* Grafana dependency */}
       {Boolean(grafanaDependency) && (
-        <div className={styles.grafanaDep}>
+        <div className={styles.depBadge}>
           <Icon name="grafana" className={styles.icon} />
           Grafana {grafanaDependency}
         </div>
@@ -44,7 +44,7 @@ export function PluginDetailsHeaderDependencies({
         <div>
           {pluginDependencies.map((p) => {
             return (
-              <span key={p.name}>
+              <span className={styles.depBadge} key={p.name}>
                 <Icon name={PluginIconName[p.type]} className={styles.icon} />
                 {p.name} {p.version}
               </span>
@@ -66,9 +66,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
         padding: 0;
       }
     `,
-    grafanaDep: css({
+    depBadge: css({
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
     }),
     icon: css`
       color: ${theme.colors.text.secondary};
