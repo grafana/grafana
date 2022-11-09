@@ -43,6 +43,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle }: Pr
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     topRow: css({
+      alignItems: 'center',
       display: 'flex',
       flexDirection: 'row',
       flexWrap: 'wrap',
