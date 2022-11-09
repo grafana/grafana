@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, LoadingState } from '@grafana/data';
@@ -103,25 +104,41 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
         onAddQuery={onAddQuery}
       />
       <EditorHeader>
-        <Button
-          aria-label={selectors.components.QueryBuilder.queryPatterns}
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            setQueryPatternsModalOpen((prevValue) => !prevValue);
-
-            const visualQuery = buildVisualQueryFromString(query.expr || '');
-            reportInteraction('grafana_loki_query_patterns_opened', {
-              version: 'v2',
-              app: app ?? '',
-              editorMode: query.editorMode,
-              preSelectedOperationsCount: visualQuery.query.operations.length,
-              preSelectedLabelsCount: visualQuery.query.labels.length,
-            });
-          }}
+        <div
+          className={css`
+            display: flex;
+            gap: 6px;
+          `}
         >
-          Kick start your query
-        </Button>
+          <Button
+            aria-label={selectors.components.QueryBuilder.queryPatterns}
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setQueryPatternsModalOpen((prevValue) => !prevValue);
+
+              const visualQuery = buildVisualQueryFromString(query.expr || '');
+              reportInteraction('grafana_loki_query_patterns_opened', {
+                version: 'v2',
+                app: app ?? '',
+                editorMode: query.editorMode,
+                preSelectedOperationsCount: visualQuery.query.operations.length,
+                preSelectedLabelsCount: visualQuery.query.labels.length,
+              });
+            }}
+          >
+            Kick start your query
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              console.log('Label browser clicked');
+            }}
+          >
+            Label browser
+          </Button>
+        </div>
         <QueryHeaderSwitch label="Explain" value={explain} onChange={onExplainChange} />
         {editorMode === QueryEditorMode.Builder && (
           <>
