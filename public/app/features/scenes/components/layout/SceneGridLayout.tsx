@@ -60,22 +60,22 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     console.log('updating Layout', layout);
 
     for (const item of layout) {
-      const child = this.state.children.find((c) => c.state.key === item.i);
-      if (child) {
-        const nextSize = {
-          x: item.x,
-          y: item.y,
-          width: item.w,
-          height: item.h,
-        };
-        if (!isItemSizeEqual(child.state.size!, nextSize)) {
-          child.setState({
-            size: {
-              ...child.state.size,
-              ...nextSize,
-            },
-          });
-        }
+      const child = this.getChild(item.i);
+
+      const nextSize = {
+        x: item.x,
+        y: item.y,
+        width: item.w,
+        height: item.h,
+      };
+
+      if (!isItemSizeEqual(child.state.size!, nextSize)) {
+        child.setState({
+          size: {
+            ...child.state.size,
+            ...nextSize,
+          },
+        });
       }
     }
 
