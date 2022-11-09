@@ -128,45 +128,46 @@ function FolderGroupAndEvaluationInterval({
           folderAndGroupReadOnly
         />
       )}
+      {folder && group && (
+        <Card className={styles.cardContainer}>
+          <Card.Heading>Evaluation behaviour</Card.Heading>
+          <Card.Meta>
+            <div className={styles.evaluationDescription}>
+              <div className={styles.evaluateLabel}>
+                {`Alert rules in`} <span className={styles.bold}>{group}</span> are evaluated every{' '}
+                <span className={styles.bold}>{evaluateEvery}</span>.
+              </div>
 
-      <Card className={styles.cardContainer}>
-        <Card.Heading>Evaluation behaviour</Card.Heading>
-        <Card.Meta>
-          <div className={styles.evaluationDescription}>
-            <div className={styles.evaluateLabel}>
-              {`Alert rules in`} <span className={styles.bold}>{group}</span> are evaluated every{' '}
-              <span className={styles.bold}>{evaluateEvery}</span>.
-            </div>
-
-            <br />
-            {!isNewGroup && (
-              <div className={styles.evaluateLabelEnd}>
-                {`Evaluation interval applies to every rule within a group. 
+              <br />
+              {!isNewGroup && (
+                <div className={styles.evaluateLabelEnd}>
+                  {`Evaluation interval applies to every rule within a group. 
           It can overwrite the interval of an existing alert rule.`}
-              </div>
-            )}
-            <br />
-          </div>
-        </Card.Meta>
-        <Card.Actions>
-          <div className={styles.editGroup}>
-            {isNewGroup && (
-              <div className={styles.warningMessage}>
-                New group must be saved before being able to edit the evaluation interval.
-              </div>
-            )}
-            <Button
-              icon={'edit'}
-              type="button"
-              variant="secondary"
-              disabled={editGroupDisabled}
-              onClick={onOpenEditGroupModal}
-            >
-              <span>{'Edit evaluation group'}</span>
-            </Button>
-          </div>
-        </Card.Actions>
-      </Card>
+                </div>
+              )}
+              <br />
+            </div>
+          </Card.Meta>
+          <Card.Actions>
+            <div className={styles.editGroup}>
+              {isNewGroup && (
+                <div className={styles.warningMessage}>
+                  New group must be saved before being able to edit the evaluation interval.
+                </div>
+              )}
+              <Button
+                icon={'edit'}
+                type="button"
+                variant="secondary"
+                disabled={editGroupDisabled}
+                onClick={onOpenEditGroupModal}
+              >
+                <span>{'Edit evaluation group'}</span>
+              </Button>
+            </div>
+          </Card.Actions>
+        </Card>
+      )}
     </div>
   );
 }
