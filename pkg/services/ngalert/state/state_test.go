@@ -298,6 +298,13 @@ func TestGetLastEvaluationValuesForCondition(t *testing.T) {
 	})
 }
 
+func TestResolve(t *testing.T) {
+	s := State{State: eval.Alerting, EndsAt: time.Now().Add(time.Minute)}
+	expected := State{State: eval.Normal, StateReason: "This is a reason", EndsAt: time.Now(), Resolved: true}
+	s.Resolve("This is a reason", expected.EndsAt)
+	assert.Equal(t, expected, s)
+}
+
 func TestShouldTakeImage(t *testing.T) {
 	tests := []struct {
 		name          string
