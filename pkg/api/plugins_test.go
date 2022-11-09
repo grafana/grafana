@@ -365,7 +365,6 @@ func TestMakePluginResourceRequestContentTypeUnique(t *testing.T) {
 	// Test various upper/lower case combinations for content-type that may be returned by the plugin.
 	for _, ctHeader := range []string{"content-type", "Content-Type", "CoNtEnT-TyPe"} {
 		t.Run(ctHeader, func(t *testing.T) {
-
 			hs := HTTPServer{
 				Cfg: setting.NewCfg(),
 				log: log.New(),
