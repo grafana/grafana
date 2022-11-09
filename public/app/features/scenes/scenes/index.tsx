@@ -4,9 +4,7 @@ import { getFlexLayoutTest, getScenePanelRepeaterTest } from './demo';
 import { getGridLayoutTest } from './grid';
 import { getMultipleGridLayoutTest } from './gridMultiple';
 import { getGridWithRowLayoutTest } from './gridWithRow';
-// import { getGridWithRowsTest } from './gridWithRows';
 import { getNestedScene } from './nested';
-import { getGridNestedTest } from './nestedGrid';
 import { getSceneWithRows } from './sceneWithRows';
 
 export function getScenes(): Scene[] {
@@ -18,8 +16,6 @@ export function getScenes(): Scene[] {
     getGridLayoutTest(),
     getGridWithRowLayoutTest(),
     getMultipleGridLayoutTest(),
-    // getGridWithRowsTest(),
-    getGridNestedTest(),
   ];
 }
 
