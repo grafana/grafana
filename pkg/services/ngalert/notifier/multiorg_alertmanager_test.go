@@ -25,9 +25,7 @@ import (
 )
 
 func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
-	configStore := &FakeConfigStore{
-		configs: map[int64]*models.AlertConfiguration{},
-	}
+	configStore := NewFakeConfigStore(t, map[int64][]*models.AlertConfiguration{})
 	orgStore := &FakeOrgStore{
 		orgs: []int64{1, 2, 3},
 	}
@@ -66,9 +64,11 @@ grafana_alerting_discovered_configurations 3
 
 		// Configurations should be marked as valid.
 		for _, org := range orgStore.orgs {
-			config, ok := configStore.configs[org]
-			require.True(t, ok)
-			require.True(t, config.IsValid)
+			configs, ok := configStore.configsByOrg[org]
+			for _, config := range configs {
+				require.True(t, ok)
+				require.True(t, config.IsValid)
+			}
 		}
 	}
 	// When an org is removed, it should detect it.
@@ -157,8 +157,8 @@ grafana_alerting_discovered_configurations 4
 func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T) {
 	// Include a broken configuration for organization 2.
 	var orgWithBadConfig int64 = 2
-	configStore := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{
-		orgWithBadConfig: {AlertmanagerConfiguration: brokenConfig, OrgID: orgWithBadConfig},
+	configStore := NewFakeConfigStore(t, map[int64][]*models.AlertConfiguration{
+		orgWithBadConfig: {{AlertmanagerConfiguration: brokenConfig, OrgID: orgWithBadConfig}},
 	})
 
 	orgs := []int64{1, 2, 3}
@@ -226,7 +226,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 
 	// If we fix the configuration, it becomes ready.
 	{
-		configStore.configs = map[int64]*models.AlertConfiguration{} // It'll apply the default config.
+		configStore.configsByOrg = map[int64][]*models.AlertConfiguration{} // It'll apply the default config.
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
 		require.True(t, mam.alertmanagers[1].ready())
@@ -243,9 +243,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 }
 
 func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
-	configStore := &FakeConfigStore{
-		configs: map[int64]*models.AlertConfiguration{},
-	}
+	configStore := NewFakeConfigStore(t, map[int64][]*models.AlertConfiguration{})
 	orgStore := &FakeOrgStore{
 		orgs: []int64{1, 2, 3},
 	}

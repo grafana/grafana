@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -15,74 +14,102 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
-type FakeConfigStore struct {
-	configs  map[int64]*models.AlertConfiguration
-	configID int64
+// fakeConfigStore is a fake for the actual persistence layer.
+// It's unexported to enforce the use of the factory function, which initializes the mutex.
+type fakeConfigStore struct {
+	// configsByOrg maps an orgID with its saved configurations.
+	configsByOrg map[int64][]*models.AlertConfiguration
+
+	// configByID maps an ID to its corresponding configuration.
+	configByID map[int64]*models.AlertConfiguration
+
+	lastID int64
+	mtx    *sync.RWMutex
 }
 
 // Saves the image or returns an error.
-func (f *FakeConfigStore) SaveImage(ctx context.Context, img *models.Image) error {
+func (f *fakeConfigStore) SaveImage(ctx context.Context, img *models.Image) error {
 	return models.ErrImageNotFound
 }
 
-func (f *FakeConfigStore) GetImage(ctx context.Context, token string) (*models.Image, error) {
+func (f *fakeConfigStore) GetImage(ctx context.Context, token string) (*models.Image, error) {
 	return nil, models.ErrImageNotFound
 }
 
-func (f *FakeConfigStore) GetImages(ctx context.Context, tokens []string) ([]models.Image, []string, error) {
+func (f *fakeConfigStore) GetImages(ctx context.Context, tokens []string) ([]models.Image, []string, error) {
 	return nil, nil, models.ErrImageNotFound
 }
 
-func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfiguration) *FakeConfigStore {
+func NewFakeConfigStore(t *testing.T, configsByOrg map[int64][]*models.AlertConfiguration) *fakeConfigStore {
 	t.Helper()
 
-	fcs := FakeConfigStore{configs: configs}
-	// Add unique IDs for configs.
-	for _, config := range fcs.configs {
-		config.ID = atomic.AddInt64(&fcs.configID, 1)
+	// Add unique IDs to the configs.
+	var id int64
+	configByID := make(map[int64]*models.AlertConfiguration)
+	for _, configs := range configsByOrg {
+		for _, config := range configs {
+			id++
+			config.ID = id
+			configByID[id] = config
+		}
 	}
+
+	fcs := fakeConfigStore{
+		mtx:          &sync.RWMutex{},
+		configsByOrg: configsByOrg,
+		configByID:   configByID,
+		lastID:       id,
+	}
+
 	return &fcs
 }
 
-func (f *FakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context) ([]*models.AlertConfiguration, error) {
-	result := make([]*models.AlertConfiguration, 0, len(f.configs))
-	for _, configuration := range f.configs {
-		result = append(result, configuration)
+func (f *fakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context) ([]*models.AlertConfiguration, error) {
+	f.mtx.RLock()
+	defer f.mtx.RUnlock()
+
+	result := make([]*models.AlertConfiguration, 0, len(f.configsByOrg))
+	for _, configs := range f.configsByOrg {
+		result = append(result, configs[len(configs)-1])
 	}
 	return result, nil
 }
 
-func (f *FakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
-	var ok bool
-	query.Result, ok = f.configs[query.OrgID]
+func (f *fakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
+	f.mtx.RLock()
+	defer f.mtx.RUnlock()
+
+	configs, ok := f.configsByOrg[query.OrgID]
 	if !ok {
 		return store.ErrNoAlertmanagerConfiguration
 	}
 
+	query.Result = configs[len(configs)-1]
 	return nil
 }
 
-func (f *FakeConfigStore) SaveAlertmanagerConfiguration(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
-	f.configs[cmd.OrgID] = &models.AlertConfiguration{
-		ID:                        atomic.AddInt64(&f.configID, 1),
+func (f *fakeConfigStore) SaveAlertmanagerConfiguration(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	f.configsByOrg[cmd.OrgID] = append(f.configsByOrg[cmd.OrgID], &models.AlertConfiguration{
+		ID:                        f.lastID + 1,
 		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 		OrgID:                     cmd.OrgID,
 		ConfigurationVersion:      "v1",
 		Default:                   cmd.Default,
 		IsValid:                   cmd.IsValid,
-	}
+	})
+	f.lastID++
 
 	return nil
 }
 
-func (f *FakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback store.SaveCallback) error {
-	f.configs[cmd.OrgID] = &models.AlertConfiguration{
-		ID:                        atomic.AddInt64(&f.configID, 1),
-		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
-		OrgID:                     cmd.OrgID,
-		ConfigurationVersion:      "v1",
-		Default:                   cmd.Default,
-		IsValid:                   cmd.IsValid,
+func (f *fakeConfigStore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback store.SaveCallback) error {
+	// This function calls SaveAlertmanagerConfiguration, which tries to acquire a lock.
+	// Not using the mutex here in order to avoid deadlocks.
+	if err := f.SaveAlertmanagerConfiguration(ctx, cmd); err != nil {
+		return err
 	}
 
 	if err := callback(); err != nil {
@@ -92,28 +119,59 @@ func (f *FakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Co
 	return nil
 }
 
-func (f *FakeConfigStore) UpdateAlertmanagerConfiguration(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
-	if config, exists := f.configs[cmd.OrgID]; exists && config.ConfigurationHash == cmd.FetchedConfigurationHash {
-		f.configs[cmd.OrgID] = &models.AlertConfiguration{
-			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
-			OrgID:                     cmd.OrgID,
-			ConfigurationHash:         fmt.Sprintf("%x", md5.Sum([]byte(cmd.AlertmanagerConfiguration))),
-			ConfigurationVersion:      "v1",
-			Default:                   cmd.Default,
+func (f *fakeConfigStore) UpdateAlertmanagerConfiguration(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	if configsByOrg, exists := f.configsByOrg[cmd.OrgID]; exists {
+		for i, config := range configsByOrg {
+			if config.ConfigurationHash == cmd.FetchedConfigurationHash {
+				f.configsByOrg[cmd.OrgID][i] = &models.AlertConfiguration{
+					AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
+					OrgID:                     cmd.OrgID,
+					ConfigurationHash:         fmt.Sprintf("%x", md5.Sum([]byte(cmd.AlertmanagerConfiguration))),
+					ConfigurationVersion:      "v1",
+					Default:                   cmd.Default,
+				}
+				return nil
+			}
 		}
-		return nil
 	}
+
 	return errors.New("config not found or hash not valid")
 }
 
-func (f *FakeConfigStore) MarkAlertmanagerConfigurationAsValid(_ context.Context, configID int64) error {
-	for _, config := range f.configs {
-		if config.ID == configID {
-			config.IsValid = true
-			return nil
+func (f *fakeConfigStore) MarkAlertmanagerConfigurationAsValid(_ context.Context, configID int64) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	if config, ok := f.configByID[configID]; ok {
+		config.IsValid = true
+		return nil
+	}
+
+	return errors.New("config not found")
+}
+
+func (f *fakeConfigStore) GetAllValidAlertmanagerConfigurationsForOrg(_ context.Context, query *models.GetAllValidAlertmanagerConfigurationsQuery) error {
+	f.mtx.RLock()
+	defer f.mtx.RUnlock()
+
+	configsByOrg, ok := f.configsByOrg[query.OrgID]
+	if !ok {
+		return fmt.Errorf("configs not found for org %d", query.OrgID)
+	}
+
+	var validConfigs []*models.AlertConfiguration
+	for _, config := range configsByOrg {
+		if config.IsValid {
+			validConfigs = append(validConfigs, config)
 		}
 	}
-	return errors.New("config not found")
+
+	query.Result = validConfigs
+
+	return nil
 }
 
 type FakeOrgStore struct {

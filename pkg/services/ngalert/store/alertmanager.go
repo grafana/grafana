@@ -152,6 +152,11 @@ func (st *DBstore) MarkAlertmanagerConfigurationAsValid(ctx context.Context, con
 	})
 }
 
+func (st *DBstore) GetAllValidAlertmanagerConfigurationsForOrg(ctx context.Context, query *models.GetAllValidAlertmanagerConfigurationsQuery) error {
+	// TODO: implement!
+	return nil
+}
+
 // getInsertQuery is used to determinate the insert query for the alertmanager config
 // based on the provided sql driver. This is necesarry as such an advanced query
 // is not supported by our ORM and we need to generate it manually for each SQL dialect.

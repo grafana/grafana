@@ -345,7 +345,7 @@ func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAl
 		}, // do not poll in tests.
 	}
 
-	cfgStore := notifier.NewFakeConfigStore(t, make(map[int64]*models.AlertConfiguration))
+	cfgStore := notifier.NewFakeConfigStore(t, make(map[int64][]*models.AlertConfiguration))
 	kvStore := notifier.NewFakeKVStore(t)
 	registry := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(registry)

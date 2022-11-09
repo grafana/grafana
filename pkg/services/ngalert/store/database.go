@@ -28,6 +28,7 @@ type AlertingStore interface {
 	SaveAlertmanagerConfigurationWithCallback(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback SaveCallback) error
 	UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
 	MarkAlertmanagerConfigurationAsValid(ctx context.Context, configurationID int64) error
+	GetAllValidAlertmanagerConfigurationsForOrg(ctx context.Context, query *models.GetAllValidAlertmanagerConfigurationsQuery) error
 }
 
 // DBstore stores the alert definitions and instances in the database.

@@ -21,6 +21,12 @@ type GetLatestAlertmanagerConfigurationQuery struct {
 	Result *AlertConfiguration
 }
 
+// GetAllValidAlertmanagerConfigurationsQuery is the query to get all valid configurations for a given organization.
+type GetAllValidAlertmanagerConfigurationsQuery struct {
+	OrgID  int64
+	Result []*AlertConfiguration
+}
+
 // SaveAlertmanagerConfigurationCmd is the command to save an alertmanager configuration.
 type SaveAlertmanagerConfigurationCmd struct {
 	AlertmanagerConfiguration string
