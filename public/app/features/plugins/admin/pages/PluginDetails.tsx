@@ -36,7 +36,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
     <div className={styles.subtitle}>
       <div>{plugin?.description}</div>
       {plugin?.details?.links && plugin.details.links.length > 0 && (
-        <div className={styles.links}>
+        <span>
           {plugin.details.links.map((link, index) => (
             <React.Fragment key={index}>
               {index > 0 && ' | '}
@@ -45,7 +45,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
               </a>
             </React.Fragment>
           ))}
-        </div>
+        </span>
       )}
     </div>
   );
@@ -87,14 +87,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
     alert: css`
       margin-bottom: ${theme.spacing(2)};
     `,
-    links: css`
-      display: flex;
-      flex-direction: row;
-      gap: ${theme.spacing(0.5)};
-    `,
     subtitle: css`
       display: flex;
       flex-direction: column;
+      gap: ${theme.spacing(1)};
     `,
     // Needed due to block formatting context
     tabContent: css`
