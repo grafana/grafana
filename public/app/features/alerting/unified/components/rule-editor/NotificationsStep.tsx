@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Card, Link, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import LabelsField from './LabelsField';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -17,7 +18,7 @@ export const NotificationsStep = () => {
 
   const { watch } = useFormContext<RuleFormValues>();
 
-  const dataSourceName = watch('dataSourceName');
+  const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
 
   return (
     <RuleEditorSection
