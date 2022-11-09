@@ -29,7 +29,7 @@ import {
   getSpanProcessId,
 } from './span';
 
-export const getTraceId = (trace: TraceData | Trace) => trace.traceID;
+export const getTraceId = (trace: TraceData) => trace.traceID;
 export const getTraceSpans = (trace: TraceResponse) => trace.spans;
 const getTraceProcesses = (trace: TraceData | Trace) => trace.processes;
 
@@ -168,7 +168,7 @@ export const DURATION_FORMATTERS = {
 };
 
 const getDurationFormatterForTrace = createSelector(getTraceDuration, (totalDuration: number) =>
-  totalDuration! >= ONE_SECOND ? DURATION_FORMATTERS.s : DURATION_FORMATTERS.ms
+  totalDuration >= ONE_SECOND ? DURATION_FORMATTERS.s : DURATION_FORMATTERS.ms
 );
 
 export const formatDurationForUnit = createSelector(
