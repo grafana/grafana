@@ -132,12 +132,22 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		return nil, ErrNoPanel
 	}
 
+	opts := screenshot.ScreenshotOptions{
+		DashboardUID: *r.DashboardUID,
+		PanelID:      *r.PanelID,
+		Timeout:      screenshotTimeout,
+	}
+
+	// To prevent concurrent screenshots of the same dashboard panel we use singleflight,
+	// deduplicated on a base64 hash of the screenshot options.
+	optsHash := base64.StdEncoding.EncodeToString(opts.Hash())
+
 	logger := s.logger.FromContext(ctx).New(
-		"dashboard", *r.DashboardUID,
-		"panel", *r.PanelID)
+		"dashboard", opts.DashboardUID,
+		"panel", opts.PanelID)
 
 	// If there is an image is in the cache return it instead of taking another screenshot
-	if image, ok := s.cache.Get(ctx, r.GetKey().String()); ok {
+	if image, ok := s.cache.Get(ctx, optsHash); ok {
 		logger.Debug("Found cached image", "token", image.Token)
 		return &image, nil
 	}
@@ -150,15 +160,6 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 	ctx, cancelFunc := context.WithTimeout(ctx, screenshotTimeout)
 	defer cancelFunc()
 
-	opts := screenshot.ScreenshotOptions{
-		DashboardUID: *r.DashboardUID,
-		PanelID:      *r.PanelID,
-		Timeout:      screenshotTimeout,
-	}
-
-	// To prevent concurrent screenshots of the same dashboard panel we use singleflight,
-	// deduplicated on a base64 hash of the screenshot options.
-	optsHash := base64.StdEncoding.EncodeToString(opts.Hash())
 	logger.Debug("Requesting screenshot")
 
 	result, err, _ := s.singleflight.Do(optsHash, func() (interface{}, error) {
@@ -195,7 +196,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 	}
 
 	image := result.(models.Image)
-	if err = s.cache.Set(ctx, r.GetKey().String(), image); err != nil {
+	if err = s.cache.Set(ctx, optsHash, image); err != nil {
 		s.logger.Warn("Failed to cache image",
 			"token", image.Token,
 			"error", err)
