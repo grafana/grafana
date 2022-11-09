@@ -49,7 +49,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{},
-				}, nil)
+				}, nopCallResourceSender)
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Len(t, cdt.CallResourceReq.Headers, 0)
@@ -105,7 +105,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{},
-				}, nil)
+				}, nopCallResourceSender)
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Len(t, cdt.CallResourceReq.Headers, 0)
@@ -166,7 +166,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{},
-				}, nil)
+				}, nopCallResourceSender)
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Len(t, cdt.CallResourceReq.Headers, 1)
@@ -224,7 +224,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{},
-				}, nil)
+				}, nopCallResourceSender)
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Len(t, cdt.CallResourceReq.Headers, 1)
