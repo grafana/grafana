@@ -128,10 +128,11 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
         </InlineField>
       </FieldSet>
 
-      {options.jsonData.tlsAuth ? (
+      {jsonData.tlsAuth || jsonData.tlsAuthWithCACert ? (
         <FieldSet label="TLS/SSL Auth Details">
           <TLSSecretsConfig
             showCACert={jsonData.tlsAuthWithCACert}
+            showKeyPair={jsonData.tlsAuth}
             editorProps={props}
             labelWidth={25}
           ></TLSSecretsConfig>

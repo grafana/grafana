@@ -154,6 +154,13 @@ type datasourceInfo struct {
 	decryptedSecureJSONData map[string]string
 }
 
+type datasourceJSONData struct {
+	AuthenticationType string `json:"authenticationType"`
+	DefaultProject     string `json:"defaultProject"`
+	ClientEmail        string `json:"clientEmail"`
+	TokenURI           string `json:"tokenUri"`
+}
+
 type datasourceService struct {
 	url    string
 	client *http.Client
@@ -161,40 +168,24 @@ type datasourceService struct {
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		var jsonData map[string]interface{}
+		var jsonData datasourceJSONData
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		authType := jwtAuthentication
-		if authTypeOverride, ok := jsonData["authenticationType"].(string); ok && authTypeOverride != "" {
-			authType = authTypeOverride
-		}
-
-		var defaultProject string
-		if jsonData["defaultProject"] != nil {
-			defaultProject = jsonData["defaultProject"].(string)
-		}
-
-		var clientEmail string
-		if jsonData["clientEmail"] != nil {
-			clientEmail = jsonData["clientEmail"].(string)
-		}
-
-		var tokenUri string
-		if jsonData["tokenUri"] != nil {
-			tokenUri = jsonData["tokenUri"].(string)
+		if jsonData.AuthenticationType == "" {
+			jsonData.AuthenticationType = jwtAuthentication
 		}
 
 		dsInfo := &datasourceInfo{
 			id:                      settings.ID,
 			updated:                 settings.Updated,
 			url:                     settings.URL,
-			authenticationType:      authType,
-			defaultProject:          defaultProject,
-			clientEmail:             clientEmail,
-			tokenUri:                tokenUri,
+			authenticationType:      jsonData.AuthenticationType,
+			defaultProject:          jsonData.DefaultProject,
+			clientEmail:             jsonData.ClientEmail,
+			tokenUri:                jsonData.TokenURI,
 			decryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			services:                map[string]datasourceService{},
 		}
@@ -222,6 +213,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 // QueryData takes in the frontend queries, parses them into the CloudMonitoring query format
 // executes the queries against the CloudMonitoring API and parses the response into data frames
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	logger := slog.FromContext(ctx)
 	resp := backend.NewQueryDataResponse()
 	if len(req.Queries) == 0 {
 		return resp, fmt.Errorf("query contains no queries")
@@ -240,20 +232,20 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	switch model.Type {
 	case "annotationQuery":
-		resp, err = s.executeAnnotationQuery(ctx, req, *dsInfo)
+		resp, err = s.executeAnnotationQuery(ctx, logger, req, *dsInfo)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
-		resp, err = s.executeTimeSeriesQuery(ctx, req, *dsInfo)
+		resp, err = s.executeTimeSeriesQuery(ctx, logger, req, *dsInfo)
 	}
 
 	return resp, err
 }
 
-func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
+func (s *Service) executeTimeSeriesQuery(ctx context.Context, logger log.Logger, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
 	*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
-	queryExecutors, err := s.buildQueryExecutors(req)
+	queryExecutors, err := s.buildQueryExecutors(logger, req)
 	if err != nil {
 		return resp, err
 	}
@@ -304,7 +296,7 @@ func queryModel(query backend.DataQuery) (grafanaQuery, error) {
 	return q, nil
 }
 
-func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMonitoringQueryExecutor, error) {
+func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataRequest) ([]cloudMonitoringQueryExecutor, error) {
 	var cloudMonitoringQueryExecutors []cloudMonitoringQueryExecutor
 	startTime := req.Queries[0].TimeRange.From
 	endTime := req.Queries[0].TimeRange.To
@@ -326,6 +318,7 @@ func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMon
 		cmtsf := &cloudMonitoringTimeSeriesFilter{
 			RefID:    query.RefID,
 			GroupBys: []string{},
+			logger:   logger,
 		}
 		switch q.QueryType {
 		case metricQueryType:
@@ -369,7 +362,7 @@ func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMon
 		cmtsf.Params = params
 
 		if setting.Env == setting.Dev {
-			slog.Debug("CloudMonitoring request", "params", params)
+			logger.Debug("CloudMonitoring request", "params", params)
 		}
 
 		cloudMonitoringQueryExecutors = append(cloudMonitoringQueryExecutors, queryInterface)
@@ -606,7 +599,7 @@ func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 	return bucketBound
 }
 
-func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, proxyPass string, body io.Reader) (*http.Request, error) {
+func (s *Service) createRequest(logger log.Logger, dsInfo *datasourceInfo, proxyPass string, body io.Reader) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.url)
 	if err != nil {
 		return nil, err
@@ -619,7 +612,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, pro
 	}
 	req, err := http.NewRequest(method, dsInfo.services[cloudMonitor].url, body)
 	if err != nil {
-		slog.Error("Failed to create request", "error", err)
+		logger.Error("Failed to create request", "error", err)
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
@@ -636,7 +629,7 @@ func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) 
 	return dsInfo.defaultProject, nil
 }
 
-func unmarshalResponse(res *http.Response) (cloudMonitoringResponse, error) {
+func unmarshalResponse(logger log.Logger, res *http.Response) (cloudMonitoringResponse, error) {
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
@@ -644,19 +637,19 @@ func unmarshalResponse(res *http.Response) (cloudMonitoringResponse, error) {
 
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			slog.Warn("Failed to close response body", "err", err)
+			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
 	if res.StatusCode/100 != 2 {
-		slog.Error("Request failed", "status", res.Status, "body", string(body))
+		logger.Error("Request failed", "status", res.Status, "body", string(body))
 		return cloudMonitoringResponse{}, fmt.Errorf("query failed: %s", string(body))
 	}
 
 	var data cloudMonitoringResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		slog.Error("Failed to unmarshal CloudMonitoring response", "error", err, "status", res.Status, "body", string(body))
+		logger.Error("Failed to unmarshal CloudMonitoring response", "error", err, "status", res.Status, "body", string(body))
 		return cloudMonitoringResponse{}, fmt.Errorf("failed to unmarshal query response: %w", err)
 	}
 

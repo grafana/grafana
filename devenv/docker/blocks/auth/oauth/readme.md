@@ -48,7 +48,7 @@ username_claim = login
 email_claim = email
 jwk_set_file = devenv/docker/blocks/auth/oauth/jwks.json
 cache_ttl = 60m
-expected_claims = {"iss": "http://localhost:8087/auth/realms/grafana", "azp": "grafana-oauth"}
+expect_claims = {"iss": "http://localhost:8087/auth/realms/grafana", "azp": "grafana-oauth"}
 auto_sign_up = true
 ```
 
@@ -96,7 +96,7 @@ username_claim = login
 email_claim = email
 jwk_set_url = <YOUR REVERSE PROXY URL>/auth/realms/grafana/protocol/openid-connect/certs
 cache_ttl = 60m
-expected_claims = {"iss": "http://localhost:8087/auth/realms/grafana", "azp": "grafana-oauth"}
+expect_claims = {"iss": "http://localhost:8087/auth/realms/grafana", "azp": "grafana-oauth"}
 auto_sign_up = true
 ```
 

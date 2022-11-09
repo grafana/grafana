@@ -89,6 +89,25 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 			u.RawQuery = "viewPanel=" + panelId
 			extended.PanelURL = u.String()
 		}
+
+		generatorUrl, err := url.Parse(extended.GeneratorURL)
+		if err != nil {
+			logger.Debug("failed to parse generator URL while extending template data", "url", extended.GeneratorURL, "err", err.Error())
+			return extended
+		}
+
+		dashboardUrl, err := url.Parse(extended.DashboardURL)
+		if err != nil {
+			logger.Debug("failed to parse dashboard URL while extending template data", "url", extended.DashboardURL, "err", err.Error())
+			return extended
+		}
+
+		orgId := alert.Annotations[ngmodels.OrgIDAnnotation]
+		if len(orgId) > 0 {
+			extended.DashboardURL = setOrgIdQueryParam(dashboardUrl, orgId)
+			extended.PanelURL = setOrgIdQueryParam(u, orgId)
+			extended.GeneratorURL = setOrgIdQueryParam(generatorUrl, orgId)
+		}
 	}
 
 	if alert.Annotations != nil {
@@ -121,6 +140,14 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 	extended.SilenceURL = u.String()
 
 	return extended
+}
+
+func setOrgIdQueryParam(url *url.URL, orgId string) string {
+	q := url.Query()
+	q.Set("orgId", orgId)
+	url.RawQuery = q.Encode()
+
+	return url.String()
 }
 
 func ExtendData(data *template.Data, logger log.Logger) *ExtendedData {

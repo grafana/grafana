@@ -22,7 +22,7 @@ type BucketAgg struct {
 	Field    string           `json:"field"`
 	ID       string           `json:"id"`
 	Settings *simplejson.Json `json:"settings"`
-	Type     string           `jsons:"type"`
+	Type     string           `json:"type"`
 }
 
 // MetricAgg represents a metric aggregation of the time series query model of the datasource
