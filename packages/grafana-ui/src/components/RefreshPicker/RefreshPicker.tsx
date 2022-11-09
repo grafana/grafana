@@ -84,12 +84,12 @@ export class RefreshPicker extends PureComponent<Props> {
 
     const durationAriaLabel = selectedValue.ariaLabel;
     const ariaLabelDurationSelectedMessage = t(
-      'time-range.refresh-picker.duration-selected-aria-label',
+      'refresh-picker.aria-label.duration-selected',
       'Choose refresh time interval with current interval {{durationAriaLabel}} selected',
       { durationAriaLabel }
     );
     const ariaLabelChooseIntervalMessage = t(
-      'time-range.refresh-picker.choose-interval-aria-label',
+      'refresh-picker.aria-label.choose-interval',
       'Auto refresh turned off. Choose refresh time interval'
     );
     const ariaLabel = selectedValue.value === '' ? ariaLabelChooseIntervalMessage : ariaLabelDurationSelectedMessage;
@@ -113,7 +113,7 @@ export class RefreshPicker extends PureComponent<Props> {
             options={options}
             onChange={this.onChangeSelect}
             variant={variant}
-            title={t('time-range.refresh-picker.auto-refresh-button', 'Set auto refresh interval')}
+            title={t('refresh-picker.select-button.auto-refresh', 'Set auto refresh interval')}
             data-testid={selectors.components.RefreshPicker.intervalButtonV2}
             aria-label={ariaLabel}
           />
@@ -126,15 +126,15 @@ export class RefreshPicker extends PureComponent<Props> {
 export function translateOptions(option: string) {
   if (option === RefreshPicker.liveOption.value) {
     return {
-      label: t('time-range.refresh-picker.live-option-label', 'Live'),
+      label: t('refresh-picker.live-option.label', 'Live'),
       value: 'LIVE',
-      ariaLabel: t('time-range.refresh-picker.live-option-aria-label', 'Turn on live streaming'),
+      ariaLabel: t('refresh-picker.live-option.aria-label', 'Turn on live streaming'),
     };
   }
   return {
-    label: t('refresh-picker.refresh-picker.off-option-label', 'Off'),
+    label: t('refresh-picker.off-option.label', 'Off'),
     value: '',
-    ariaLabel: t('time-range.refresh-picker.off-option-aria-label', 'Turn off auto refresh'),
+    ariaLabel: t('refresh-picker.off-option.aria-label', 'Turn off auto refresh'),
   };
 }
 
