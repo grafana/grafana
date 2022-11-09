@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	screenshotCacheTTL = 15 * time.Second
+	screenshotCacheTTL = 60 * time.Second
 	screenshotTimeout  = 10 * time.Second
 )
 
@@ -113,7 +113,7 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds da
 		}
 	}
 
-	return NewScreenshotImageService(cache, limiter, cfg.Logger, screenshots, db, uploads), nil
+	return NewScreenshotImageService(cache, limiter, log.New("ngalert.image"), screenshots, db, uploads), nil
 }
 
 // NewImage returns a screenshot of the alert rule or an error.
@@ -134,6 +134,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 
 	// If there is an image is in the cache return it instead of taking another screenshot
 	if image, ok := s.cache.Get(ctx, r.GetKey().String()); ok {
+		s.logger.Debug("Found cached image", "token", image.Token)
 		return &image, nil
 	}
 
@@ -176,7 +177,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		if err := s.store.SaveImage(ctx, &image); err != nil {
 			return nil, fmt.Errorf("failed to save image: %w", err)
 		}
-
+		s.logger.Debug("Saved new image", "token", image.Token)
 		return image, nil
 	})
 	if err != nil {
@@ -185,7 +186,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 
 	image := result.(models.Image)
 	if err = s.cache.Set(ctx, r.GetKey().String(), image); err != nil {
-		return &image, fmt.Errorf("failed to cache image: %w", err)
+		s.logger.Warn("Failed to cache image", "token", image.Token, "error", err)
 	}
 
 	return &image, nil
