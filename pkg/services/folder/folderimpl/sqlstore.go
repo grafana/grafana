@@ -56,7 +56,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 					UID:   &cmd.ParentUID,
 					OrgID: cmd.OrgID,
 				}); err != nil {
-					return err
+					return folder.ErrFolderNotFound.Errorf("parent folder does not exist")
 				}
 			}
 			sql := "INSERT INTO folder(org_id, uid, parent_uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?, ?)"
