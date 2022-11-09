@@ -37,9 +37,6 @@ type ScheduleService interface {
 	UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int64)
 	// DeleteAlertRule notifies scheduler that rules have been deleted
 	DeleteAlertRule(keys ...ngmodels.AlertRuleKey)
-	// the following are used by tests only used for tests
-	evalApplied(ngmodels.AlertRuleKey, time.Time)
-	stopApplied(ngmodels.AlertRuleKey)
 }
 
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
@@ -103,8 +100,6 @@ type schedule struct {
 type SchedulerCfg struct {
 	Cfg              setting.UnifiedAlertingSettings
 	C                clock.Clock
-	EvalAppliedFunc  func(ngmodels.AlertRuleKey, time.Time)
-	StopAppliedFunc  func(ngmodels.AlertRuleKey)
 	EvaluatorFactory eval.EvaluatorFactory
 	RuleStore        RulesStore
 	Metrics          *metrics.Scheduler
@@ -119,8 +114,6 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 		clock:                 cfg.C,
 		baseInterval:          cfg.Cfg.BaseInterval,
 		log:                   log.New("ngalert.scheduler"),
-		evalAppliedFunc:       cfg.EvalAppliedFunc,
-		stopAppliedFunc:       cfg.StopAppliedFunc,
 		evaluatorFactory:      cfg.EvaluatorFactory,
 		ruleStore:             cfg.RuleStore,
 		metrics:               cfg.Metrics,
