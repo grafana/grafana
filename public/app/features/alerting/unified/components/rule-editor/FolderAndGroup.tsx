@@ -188,7 +188,6 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
                 getOptionLabel={(option: SelectableValue<string>) =>
                   `${option.label}  (${getIntervalForGroup(groupsForFolder, option.label ?? '', folder?.title ?? '')})`
                 }
-                width={42}
                 value={selectedGroup}
                 custom={isAddingGroup}
                 onCustomChange={(custom: boolean) => setIsAddingGroup(custom)}
