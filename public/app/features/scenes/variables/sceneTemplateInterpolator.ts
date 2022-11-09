@@ -1,18 +1,10 @@
+import { isArray } from 'lodash';
+
 import { variableRegex } from 'app/features/variables/utils';
 
-import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneObject } from '../core/types';
 
-import { SceneVariable, SceneVariables, SceneVariableSetState, SceneVariableState } from './types';
-
-export class TextBoxSceneVariable extends SceneObjectBase<SceneVariableState> implements SceneVariable {}
-
-export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> implements SceneVariables {
-  public getVariableByName(name: string): SceneVariable | undefined {
-    // TODO: Replace with index
-    return this.state.variables.find((x) => x.state.name === name);
-  }
-}
+import { SceneVariable } from './types';
 
 export function sceneTemplateInterpolator(target: string, sceneObject: SceneObject) {
   variableRegex.lastIndex = 0;
@@ -25,7 +17,13 @@ export function sceneTemplateInterpolator(target: string, sceneObject: SceneObje
       return match;
     }
 
-    return variable.state.current.value;
+    const value = variable.getValue(fieldPath);
+
+    if (isArray(value)) {
+      return 'not supported yet';
+    }
+
+    return String(value);
   });
 }
 
@@ -39,7 +37,7 @@ function lookupSceneVariable(name: string, sceneObject: SceneObject): SceneVaria
     }
   }
 
-  const found = variables.getVariableByName(name);
+  const found = variables.getByName(name);
   if (found) {
     return found;
   } else if (sceneObject.parent) {
