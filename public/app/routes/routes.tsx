@@ -387,6 +387,18 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/admin/support-bundles',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SupportBundles" */ 'app/features/admin/SupportBundles')
+      ),
+    },
+    {
+      path: '/admin/support-bundles/create',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ServiceAccountCreatePage" */ 'app/features/admin/SupportBundlesCreate')
+      ),
+    },
+    {
       path: '/admin/ldap',
       component: LdapPage,
     },

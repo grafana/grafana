@@ -54,6 +54,12 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
       link.children = [
         ...getFooterLinks(),
         {
+          id: 'support-bundle',
+          text: t('nav.help/support-bundle', 'Support Bundles'),
+          icon: 'question-circle',
+          url: '/admin/support-bundles',
+        },
+        {
           id: 'keyboard-shortcuts',
           text: t('nav.help/keyboard-shortcuts', 'Keyboard shortcuts'),
           icon: 'keyboard',
