@@ -1,147 +1,179 @@
-package schedule_test
+package schedule
 
 import (
 	"context"
-	"fmt"
 	"net/url"
-	"runtime"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-var testMetrics = metrics.NewNGAlert(prometheus.NewPedanticRegistry())
 
 type evalAppliedInfo struct {
 	alertDefKey models.AlertRuleKey
 	now         time.Time
 }
 
-
-func TestAlertingTicker(t *testing.T) {
+func TestProcessTicks(t *testing.T) {
+	testMetrics := metrics.NewNGAlert(prometheus.NewPedanticRegistry())
 	ctx := context.Background()
-	_, dbstore := tests.SetupTestEnv(t, 1)
+	dispatcherGroup, ctx := errgroup.WithContext(ctx)
 
-	alerts := make([]*models.AlertRule, 0)
-
-	const mainOrgID int64 = 1
-	// create alert rule under main org with one second interval
-	alerts = append(alerts, tests.CreateTestAlertRule(t, ctx, dbstore, 1, mainOrgID))
-
-	evalAppliedCh := make(chan evalAppliedInfo, len(alerts))
-	stopAppliedCh := make(chan models.AlertRuleKey, len(alerts))
-
-	mockedClock := clock.NewMock()
+	ruleStore := newFakeRulesStore()
 
 	cfg := setting.UnifiedAlertingSettings{
-		BaseInterval:            time.Second,
+		BaseInterval:            1 * time.Second,
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
 
-	notifier := &schedule.AlertsSenderMock{}
+	const mainOrgID int64 = 1
+
+	mockedClock := clock.NewMock()
+
+	notifier := &AlertsSenderMock{}
 	notifier.EXPECT().Send(mock.Anything, mock.Anything).Return()
 
-	schedCfg := schedule.SchedulerCfg{
-		Cfg: cfg,
-		C:   mockedClock,
-		EvalAppliedFunc: func(alertDefKey models.AlertRuleKey, now time.Time) {
-			evalAppliedCh <- evalAppliedInfo{alertDefKey: alertDefKey, now: now}
-		},
-		StopAppliedFunc: func(alertDefKey models.AlertRuleKey) {
-			stopAppliedCh <- alertDefKey
-		},
-		RuleStore:   dbstore,
+	schedCfg := SchedulerCfg{
+		Cfg:         cfg,
+		C:           mockedClock,
+		RuleStore:   ruleStore,
 		Metrics:     testMetrics.GetSchedulerMetrics(),
 		AlertSender: notifier,
 	}
-	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &image.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{})
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, nil, &image.NoopImageService{}, mockedClock, &state.FakeHistorian{})
+
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",
 	}
-	sched := schedule.NewScheduler(schedCfg, appUrl, st)
+	sched := NewScheduler(schedCfg, appUrl, st)
 
-	go func() {
-		err := sched.Run(ctx)
-		require.NoError(t, err)
-	}()
-	runtime.Gosched()
+	evalAppliedCh := make(chan evalAppliedInfo, 1)
+	stopAppliedCh := make(chan models.AlertRuleKey, 1)
 
-	expectedAlertRulesEvaluated := []models.AlertRuleKey{alerts[0].GetKey()}
-	t.Run(fmt.Sprintf("on 1st tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
+	sched.evalAppliedFunc = func(alertDefKey models.AlertRuleKey, now time.Time) {
+		evalAppliedCh <- evalAppliedInfo{alertDefKey: alertDefKey, now: now}
+	}
+	sched.stopAppliedFunc = func(alertDefKey models.AlertRuleKey) {
+		stopAppliedCh <- alertDefKey
+	}
+
+	tick := time.Time{}
+
+	// create alert rule under main org with one second interval
+	alertRule1 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(cfg.BaseInterval), models.WithTitle("rule-1"))()
+	ruleStore.PutRule(ctx, alertRule1)
+
+	t.Run("on 1st tick alert rule should be evaluated", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+
+		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 1)
+		require.Equal(t, alertRule1, scheduled[0].rule)
+		require.Equal(t, tick, scheduled[0].scheduledAt)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+
+		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
 	})
 
-	// add alert rule under main org with three seconds interval
-	var threeSecInterval int64 = 3
-	alerts = append(alerts, tests.CreateTestAlertRule(t, ctx, dbstore, threeSecInterval, mainOrgID))
-	t.Logf("alert rule: %v added with interval: %d", alerts[1].GetKey(), threeSecInterval)
+	// add alert rule under main org with three base intervals
+	alertRule2 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(3*cfg.BaseInterval), models.WithTitle("rule-2"))()
+	ruleStore.PutRule(ctx, alertRule2)
 
-	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[0].GetKey()}
-	t.Run(fmt.Sprintf("on 2nd tick alert rule: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
+	t.Run("on 2nd tick first alert rule should be evaluated", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 1)
+		require.Equal(t, alertRule1, scheduled[0].rule)
+		require.Equal(t, tick, scheduled[0].scheduledAt)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
 	})
 
-	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[1].GetKey(), alerts[0].GetKey()}
-	t.Run(fmt.Sprintf("on 3rd tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
+	t.Run("on 3rd tick two alert rules should be evaluated", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
+		require.Len(t, scheduled, 2)
+		var keys []models.AlertRuleKey
+		for _, item := range scheduled {
+			keys = append(keys, item.rule.GetKey())
+			require.Equal(t, tick, item.scheduledAt)
+		}
+		require.Contains(t, keys, alertRule1.GetKey())
+		require.Contains(t, keys, alertRule2.GetKey())
+
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+
+		assertEvalRun(t, evalAppliedCh, tick, keys...)
 	})
 
-	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[0].GetKey()}
-	t.Run(fmt.Sprintf("on 4th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
+	t.Run("on 4th tick only one alert rule should be evaluated", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 1)
+		require.Equal(t, alertRule1, scheduled[0].rule)
+		require.Equal(t, tick, scheduled[0].scheduledAt)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+
+		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
 	})
 
-	key := alerts[0].GetKey()
-	err := dbstore.DeleteAlertRulesByUID(ctx, alerts[0].OrgID, alerts[0].UID)
-	require.NoError(t, err)
-	t.Logf("alert rule: %v deleted", key)
+	t.Run("on 5th tick deleted rule should not be evaluated but stopped", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
 
-	expectedAlertRulesEvaluated = []models.AlertRuleKey{}
-	t.Run(fmt.Sprintf("on 5th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
-	})
-	expectedAlertRulesStopped := []models.AlertRuleKey{alerts[0].GetKey()}
-	t.Run(fmt.Sprintf("on 5th tick alert rules: %s should be stopped", concatenate(expectedAlertRulesStopped)), func(t *testing.T) {
-		assertStopRun(t, stopAppliedCh, expectedAlertRulesStopped...)
-	})
+		ruleStore.DeleteRule(alertRule1)
 
-	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[1].GetKey()}
-	t.Run(fmt.Sprintf("on 6th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
+		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Empty(t, scheduled)
+		require.Len(t, stopped, 1)
+
+		require.Contains(t, stopped, alertRule1.GetKey())
+
+		assertStopRun(t, stopAppliedCh, alertRule1.GetKey())
 	})
 
-	// create alert rule with one second interval
-	alerts = append(alerts, tests.CreateTestAlertRule(t, ctx, dbstore, 1, mainOrgID))
+	t.Run("on 6th tick one alert rule should be evaluated", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
 
-	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[2].GetKey()}
-	t.Run(fmt.Sprintf("on 7th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
+		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 1)
+		require.Equal(t, alertRule2, scheduled[0].rule)
+		require.Equal(t, tick, scheduled[0].scheduledAt)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+
+		assertEvalRun(t, evalAppliedCh, tick, alertRule2.GetKey())
+	})
+
+	t.Run("on 7th tick a new alert rule should be evaluated", func(t *testing.T) {
+		// create alert rule with one base interval
+		alertRule3 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(cfg.BaseInterval), models.WithTitle("rule-3"))()
+		ruleStore.PutRule(ctx, alertRule3)
+		tick = tick.Add(cfg.BaseInterval)
+
+		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 1)
+		require.Equal(t, alertRule3, scheduled[0].rule)
+		require.Equal(t, tick, scheduled[0].scheduledAt)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+
+		assertEvalRun(t, evalAppliedCh, tick, alertRule3.GetKey())
 	})
 }
 
@@ -163,6 +195,9 @@ func assertEvalRun(t *testing.T, ch <-chan evalAppliedInfo, tick time.Time, keys
 			t.Logf("alert rule: %v evaluated at: %v", info.alertDefKey, info.now)
 			assert.Equal(t, tick, info.now)
 			delete(expected, info.alertDefKey)
+			if len(expected) == 0 {
+				return
+			}
 		case <-timeout:
 			if len(expected) == 0 {
 				return
@@ -197,18 +232,4 @@ func assertStopRun(t *testing.T, ch <-chan models.AlertRuleKey, keys ...models.A
 			t.Fatal("cycle has expired")
 		}
 	}
-}
-
-func advanceClock(t *testing.T, mockedClock *clock.Mock) time.Time {
-	mockedClock.Add(time.Second)
-	return mockedClock.Now()
-	// t.Logf("Tick: %v", mockedClock.Now())
-}
-
-func concatenate(keys []models.AlertRuleKey) string {
-	s := make([]string, len(keys))
-	for _, k := range keys {
-		s = append(s, k.String())
-	}
-	return fmt.Sprintf("[%s]", strings.Join(s, ","))
 }
