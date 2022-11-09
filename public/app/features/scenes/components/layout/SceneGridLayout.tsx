@@ -32,22 +32,80 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     });
   }
 
-  toggleRow(row: SceneGridRow, isCollapsed: boolean) {
-    // Should we make sure position is correct for all children?
+  toggleRow(row: SceneGridRow) {
+    const isCollapsed = row.state.isCollapsed;
+
     if (!isCollapsed) {
-      for (const child of row.state.children) {
-        child.setState({
-          size: {
-            ...child.state.size,
-            y: Math.max(row.state.size!.y! + 1, child.state.size!.y!),
-          },
-        });
+      row.setState({ isCollapsed: true });
+      // To force re-render
+      this.setState({});
+      return;
+    }
+
+    // Ok we are expanding row (code copied from DashboardModel toggleRow)
+
+    const rowChildren = row.state.children;
+
+    if (rowChildren.length === 0) {
+      row.setState({ isCollapsed: false });
+      this.setState({});
+      return;
+    }
+
+    const rowY = row.state.size?.y!;
+    const firstPanelYPos = rowChildren[0].state.size?.y ?? rowY;
+    const yDiff = firstPanelYPos - (rowY + 1);
+
+    // y max will represent the bottom y pos after all panels have been added
+    // needed to know home much panels below should be pushed down
+    let yMax = rowY;
+
+    for (const panel of rowChildren) {
+      // set the y gridPos if it wasn't already set
+      const newSize = { ...panel.state.size };
+      newSize.y = newSize.y ?? rowY;
+      // make sure y is adjusted (in case row moved while collapsed)
+      newSize.y -= yDiff;
+      if (newSize.y > panel.state.size?.y!) {
+        panel.setState({ size: newSize });
+      }
+      // update insert post and y max
+      yMax = Math.max(yMax, newSize.y + newSize.height!);
+      console.log('setting y for panel', panel.state.key, newSize.y);
+    }
+
+    const pushDownAmount = yMax - rowY - 1;
+
+    // push panels below down
+    for (const child of this.state.children) {
+      if (child.state.size?.y! > rowY) {
+        this.pushChildDown(child, pushDownAmount);
+      }
+
+      if (child instanceof SceneGridRow && child !== row) {
+        for (const rowChild of child.state.children) {
+          if (rowChild.state.size?.y! > rowY) {
+            if (rowChild.state.size?.y! > rowY) {
+              this.pushChildDown(rowChild, pushDownAmount);
+            }
+          }
+        }
       }
     }
 
-    row.setState({ isCollapsed });
+    row.setState({ isCollapsed: false });
     // Trigger re-render
     this.setState({});
+  }
+
+  pushChildDown(child: SceneLayoutChild, amount: number) {
+    console.log('pushing down y for panel', child.state.key, child.state.size?.y! + amount);
+    child.setState({
+      size: {
+        ...child.state.size,
+        y: child.state.size?.y! + amount,
+      },
+    });
   }
 
   onLayoutChange = (layout: ReactGridLayout.Layout[]) => {
@@ -165,6 +223,15 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
 
   onDragStop: ReactGridLayout.ItemCallback = (gridLayout, o, updatedItem) => {
     const sceneChild = this.getChild(updatedItem.i)!;
+
+    // need to resort it as the react-grid-layout does not do it
+    gridLayout.sort((a, b) => {
+      if (a.y === b.y) {
+        return a.x - b.x;
+      } else {
+        return a.y - b.y;
+      }
+    });
 
     // Update children positions if they have changed
     for (let i = 0; i < gridLayout.length; i++) {
@@ -398,13 +465,30 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
       throw new Error('SceneGridRow must be a child of SceneGridLayout');
     }
 
-    const { isCollapsed, size } = this.state;
+    const { size } = this.state;
     if (!size) {
       return;
     }
 
-    layout.toggleRow(this, !isCollapsed);
+    layout.toggleRow(this);
   };
+
+  getHeight(): number {
+    if (this.state.isCollapsed) {
+      return 0;
+    }
+
+    let maxPos = this.state.size?.y! + 1;
+
+    for (const child of this.state.children) {
+      const yPos = child.state.size?.y! + child.state.size?.height!;
+      if (yPos > maxPos) {
+        maxPos = yPos;
+      }
+    }
+
+    return maxPos - this.state.size?.y!;
+  }
 }
 
 function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
