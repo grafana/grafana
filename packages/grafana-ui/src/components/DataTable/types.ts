@@ -7,7 +7,7 @@ export interface Column<TableData extends object> {
    * Set this to the matching object key of your data or `undefined` if the column doesn't have any associated data with it.
    * This must be unique among all other columns.
    */
-  id?: IdType<TableData>;
+  id: IdType<TableData>;
   /**
    * Custom render function for te cell
    */
