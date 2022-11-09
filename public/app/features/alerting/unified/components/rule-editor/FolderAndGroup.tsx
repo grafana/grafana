@@ -129,7 +129,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
               Folder
               <InfoIcon
                 text={
-                  'Each folder has unique folder permission. When you store multiple rules in a folder, the folder access permissions get assigned to the rules.'
+                  'Each folder has unique folder permission. When you store multiple rules in a folder, the folder access permissions are assigned to the rules.'
                 }
               />
             </Stack>
@@ -160,7 +160,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
           )}
           name="folder"
           rules={{
-            required: { value: true, message: 'Please select a folder' },
+            required: { value: true, message: 'Select a folder' },
             validate: {
               pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
             },

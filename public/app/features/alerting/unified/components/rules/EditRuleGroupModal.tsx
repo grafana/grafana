@@ -318,7 +318,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
     <Modal
       className={styles.modal}
       isOpen={true}
-      title="Edit namespace or evaluation group"
+      title={folderAndGroupReadOnly ? 'Edit evaluation group' : `Edit ${nameSpaceLabel} or evaluation group`}
       onDismiss={onClose}
       onClickBackdrop={onClose}
     >

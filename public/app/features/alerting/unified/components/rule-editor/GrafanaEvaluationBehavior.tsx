@@ -185,7 +185,7 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
       <InlineLabel
         htmlFor={evaluateForId}
         width={7}
-        tooltip='Once condition is breached, alert will go into pending state. If it is pending for longer than the "for" value, it will become a firing alert.'
+        tooltip='Once the condition is breached, the alert goes into pending state. If the alert is pending longer than the "for" value, it becomes a firing alert.'
       >
         for
       </InlineLabel>
