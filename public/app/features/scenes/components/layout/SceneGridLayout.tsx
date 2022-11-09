@@ -118,11 +118,54 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     });
   };
 
-  onDragStop: ReactGridLayout.ItemCallback = (l, o, n) => {
-    const source = this.getChild(n.i);
+  getRowAboveIndex(layout: ReactGridLayout.Layout[], startAt: number) {
+    for (let i = startAt; i < layout.length; i++) {
+      const gridItem = layout[i];
+      const sceneChild = this.getChild(gridItem.i);
 
-    console.log(l);
-    console.log(n);
+      if (sceneChild instanceof SceneGridRow) {
+        return sceneChild;
+      }
+    }
+
+    return undefined;
+  }
+
+  moveChildToRow(child: SceneLayoutChild, target: SceneGridLayout | SceneGridRow) {
+    const currentParent = child.parent!;
+
+    if (currentParent instanceof SceneGridLayout || currentParent instanceof SceneGridRow) {
+      currentParent.setState({
+        children: currentParent.state.children.filter((c) => c.state.key !== child.state.key),
+      });
+    }
+
+    const newChildren = [...target.state.children, child];
+
+    target.setState({
+      children: newChildren,
+    });
+
+    // to always force re-render
+    this.setState({});
+  }
+
+  onDragStop: ReactGridLayout.ItemCallback = (gridLayout, o, updatedItem) => {
+    const sceneChild = this.getChild(updatedItem.i)!;
+
+    // find closest row
+    for (let index = 0; index < gridLayout.length; index++) {
+      const gridItem = gridLayout[index];
+
+      if (gridItem.i === updatedItem.i) {
+        const rowAbove = this.getRowAboveIndex(gridLayout, index - 1);
+
+        if (rowAbove && rowAbove !== sceneChild.parent) {
+          this.moveChildToRow(sceneChild, rowAbove);
+        }
+      }
+    }
+
     // const layoutProcessedSize: string[] = [];
     // const activeRows: Record<
     //   string,
