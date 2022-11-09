@@ -33,7 +33,7 @@ export function PluginDetailsHeaderDependencies({
     <Stack gap={1}>
       {/* Grafana dependency */}
       {Boolean(grafanaDependency) && (
-        <div>
+        <div className={styles.grafanaDep}>
           <Icon name="grafana" className={styles.icon} />
           Grafana {grafanaDependency}
         </div>
@@ -66,6 +66,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
         padding: 0;
       }
     `,
+    grafanaDep: css({
+      display: 'flex',
+      alignItems: 'center',
+    }),
     icon: css`
       color: ${theme.colors.text.secondary};
       margin-right: ${theme.spacing(0.5)};

@@ -31,10 +31,12 @@ export function PluginSignatureDetailsBadge({ signatureType, signatureOrg = '' }
   return (
     <>
       <DetailsBadge>
-        <strong className={styles.strong}>Level:&nbsp;</strong>
-        <Icon size="xs" name={signatureIcon} />
-        &nbsp;
-        {signatureTypeText}
+        <div className={styles.detailsWrapper}>
+          <strong className={styles.strong}>Level:&nbsp;</strong>
+          <Icon size="xs" name={signatureIcon} />
+          &nbsp;
+          {signatureTypeText}
+        </div>
       </DetailsBadge>
 
       <DetailsBadge>
@@ -47,7 +49,7 @@ export function PluginSignatureDetailsBadge({ signatureType, signatureOrg = '' }
 export const DetailsBadge = ({ children }: React.PropsWithChildren<{}>) => {
   const styles = useStyles2(getStyles);
 
-  return <Badge color="green" className={styles.badge} text={<>{children}</>} />;
+  return <Badge color="green" className={styles.badge} text={children} />;
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -56,6 +58,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border-color: ${theme.colors.border.strong};
     color: ${theme.colors.text.secondary};
     white-space: nowrap;
+  `,
+  detailsWrapper: css`
+    align-items: center;
+    display: flex;
   `,
   strong: css`
     color: ${theme.colors.text.primary};
