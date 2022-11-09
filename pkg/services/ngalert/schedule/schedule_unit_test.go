@@ -61,7 +61,7 @@ func TestProcessTicks(t *testing.T) {
 		Metrics:     testMetrics.GetSchedulerMetrics(),
 		AlertSender: notifier,
 	}
-	st := state.NewManager(testMetrics.GetStateMetrics(), nil, nil, &image.NoopImageService{}, mockedClock, &state.FakeHistorian{})
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, nil, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{})
 
 	appUrl := &url.URL{
 		Scheme: "http",
