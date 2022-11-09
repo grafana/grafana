@@ -3,12 +3,12 @@ import { uniqueId } from 'lodash';
 import React, { useMemo, Fragment, ReactNode, useCallback } from 'react';
 import { useExpanded, useSortBy, useTable, TableOptions, Row } from 'react-table';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, isTruthy } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 
-import { Column, isTruthy } from './types';
+import { Column } from './types';
 import { EXPANDER_CELL_ID, getColumns } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({

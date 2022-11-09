@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useRef } from 'react';
 
+import { isTruthy } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { ErrorBoundaryAlert, usePanelContext } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { isTruthy } from 'app/core/utils/types';
 import { useDispatch, useSelector } from 'app/types';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
 

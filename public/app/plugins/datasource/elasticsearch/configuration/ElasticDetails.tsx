@@ -1,9 +1,8 @@
 import React from 'react';
 import { valid } from 'semver';
 
-import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { DataSourceSettings, SelectableValue, isTruthy } from '@grafana/data';
 import { FieldSet, InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
-import { isTruthy } from 'app/core/utils/types';
 
 import { ElasticsearchOptions, Interval } from '../types';
 
