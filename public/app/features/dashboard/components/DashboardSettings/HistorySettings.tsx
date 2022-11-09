@@ -21,7 +21,7 @@ export function HistorySettings({ dashboard, sectionNav }: SettingsPageProps) {
         <div>
           {history.value.versions.map((v) => (
             <div key={v.version}>
-              <a href={`${location.pathname}@${v.version}`}>
+              <a href={`x-dash/${dashboard.uid}@${v.version}`}>
                 <pre>{JSON.stringify(v, null, 2)}</pre>
               </a>
             </div>
