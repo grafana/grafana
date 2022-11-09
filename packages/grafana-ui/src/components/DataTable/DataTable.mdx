@@ -13,6 +13,8 @@ The DataTable is used to display and select data efficiently.
 It allows for the display and modification of detailed information.
 With additional functionality it allows for batch editing, as needed by your feature's users.
 
+It is a wrapper around [React Table](https://react-table-v7.tanstack.com/), for more informations about it, refer to the [official documentation](https://react-table.tanstack.com/docs/overview).
+
 ### When to use
 
 The DataTable can be used to allow users to perform administrative tasks workflows.
@@ -25,6 +27,50 @@ Consider an alternative pattern where the user is presented with a summary list 
 ### Usage
 
 <Props of={DataTable} />
+
+#### About `columns` and `data` Props
+
+To avoid unnecessary rerenders, `columns` and `data` must be memoized.
+
+Columns are rendered in the same order defined in the `columns` prop.
+Each Cell's content is automatically rendered by matching the `id` of the column to the key of each object in the `data` array prop.
+
+##### Example
+
+```tsx
+interface TableData {
+  projectName: string;
+  repository: string;
+}
+
+const columns = useMemo<Array<Column<TableData>>>(
+  () => [
+    id: 'projectName'
+    header: "Project Name"
+  ],
+  [
+    id: 'repository',
+    header: "Repository"
+  ],
+  []
+);
+
+const data = useMemo<Array<TableData>>(
+  () => [
+    {
+      projectName: 'Grafana',
+      repository: 'https://github.com/grafana/grafana',
+   }
+  ],
+  [
+    {
+      projectName: 'Loki';
+      repository: 'https://github.com/grafana/loki';
+    }
+  ],
+  []
+);
+```
 
 ## Examples
 
