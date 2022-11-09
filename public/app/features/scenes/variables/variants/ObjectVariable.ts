@@ -13,7 +13,7 @@ export class ObjectVariable<T extends object>
 {
   private static fieldAccessorCache: FieldAccessorCache = {};
 
-  getValue(fieldPath: string): VariableValue {
+  public getValue(fieldPath: string): VariableValue {
     return this.getFieldAccessor(fieldPath)(this.state.value);
   }
 
