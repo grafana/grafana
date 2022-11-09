@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { PageInfoItem } from '../../../../core/components/Page/types';
+import { PluginDisabledBadge } from '../components/Badges';
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
 import { InstallControls } from '../components/InstallControls';
 import { PluginDetailsHeaderDependencies } from '../components/PluginDetailsHeaderDependencies';
@@ -49,21 +50,31 @@ export const usePluginInfo = (plugin?: CatalogPlugin): ReturnType => {
     });
   }
 
-  info.push({
-    label: 'Dependencies',
-    value: <PluginDetailsHeaderDependencies plugin={plugin} latestCompatibleVersion={latestCompatibleVersion} />,
-  });
+  const pluginDependencies = plugin.details?.pluginDependencies;
+  const grafanaDependency = plugin.isInstalled
+    ? plugin.details?.grafanaDependency
+    : latestCompatibleVersion?.grafanaDependency || plugin.details?.grafanaDependency;
+  const hasNoDependencyInfo = !grafanaDependency && (!pluginDependencies || !pluginDependencies.length);
+
+  if (!hasNoDependencyInfo) {
+    info.push({
+      label: 'Dependencies',
+      value: <PluginDetailsHeaderDependencies plugin={plugin} latestCompatibleVersion={latestCompatibleVersion} />,
+    });
+  }
+
+  if (plugin.isDisabled) {
+    info.push({
+      label: 'Status',
+      value: <PluginDisabledBadge error={plugin.error!} />,
+    });
+  }
 
   info.push({
     label: 'Signature',
     value: <PluginDetailsHeaderSignature plugin={plugin} />,
   });
 
-  // return (
-  //       {plugin.isDisabled && <PluginDisabledBadge error={plugin.error!} />}
-  //     </div>
-  //   </div>
-  // );
   return {
     actions,
     info,

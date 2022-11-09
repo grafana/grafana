@@ -26,13 +26,6 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   scrollRef?: RefCallback<HTMLDivElement>;
   /** Can be used to update the current scroll position */
   scrollTop?: number;
-  /** isItemPage will let Grafana know it's an item and make it add a go back action */
-  isItemPage?: boolean;
-}
-
-export interface PageInfoItem {
-  label: string;
-  value: React.ReactNode;
 }
 
 export interface PageInfoItem {
@@ -43,8 +36,4 @@ export interface PageInfoItem {
 export interface PageType extends FC<PageProps> {
   OldNavOnly: typeof OldNavOnly;
   Contents: typeof PageContents;
-}
-
-export interface PageHeaderProps {
-  title?: string;
 }
