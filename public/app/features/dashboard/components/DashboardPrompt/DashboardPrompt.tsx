@@ -140,7 +140,7 @@ function moveToBlockedLocationAfterReactStateUpdate(location?: H.Location | null
 /**
  * For some dashboards and users changes should be ignored *
  */
-export function ignoreChanges(current: DashboardModel, original: object | null) {
+export function ignoreChanges(current: DashboardModel | null, original: object | null) {
   if (!original) {
     return true;
   }
@@ -150,7 +150,7 @@ export function ignoreChanges(current: DashboardModel, original: object | null) 
     return true;
   }
 
-  if (!current || !current.meta) {
+  if (!current) {
     return true;
   }
 
