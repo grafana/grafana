@@ -5,12 +5,13 @@ import { GrafanaTheme2, LoadingState } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { Menu } from '../Menu/Menu';
+import { ToolbarButton } from '../ToolbarButton';
 
 /**
  * @internal
  */
 interface PanelChromeInfoState {
-  icon: string | ReactNode;
+  icon: string;
   tooltip?: string;
   onClick: () => void;
 }
@@ -48,7 +49,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   children,
   padding = 'md',
   title = '',
-  titleItems,
+  titleItems = [],
   leftItems = [],
 }) => {
   const theme = useTheme2();
@@ -68,9 +69,19 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
 
   return (
     <div className={styles.container} style={containerStyles}>
-      {title.length > 0 && (
-        <div className={styles.headerContainer} style={headerStyles}>
+      {(title.length > 0 || titleItems.length > 0) && (
+        <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
           <div className={styles.title}>{title}</div>
+
+          {titleItems.length > 0 && (
+            <div className={styles.items} data-testid="title-items-container">
+              {titleItems.map((item, i) => (
+                <div key={`${item.icon}-${i}`} className={styles.item} style={itemStyles}>
+                  <ToolbarButton tooltip={item.tooltip} icon={item.icon} onClick={item.onClick} />
+                </div>
+              ))}
+            </div>
+          )}
 
           {leftItems.length > 0 && (
             <div className={cx(styles.rightAligned, styles.items)}>{itemsRenderer(leftItems, (item) => item)}</div>
