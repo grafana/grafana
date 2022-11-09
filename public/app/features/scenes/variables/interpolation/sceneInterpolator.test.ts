@@ -89,4 +89,19 @@ describe('sceneInterpolator', () => {
 
     expect(sceneInterpolator(scene, '${test:text}')).toBe('hello + world');
   });
+
+  it('Can use formats with arguments', () => {
+    const scene = new TestScene({
+      $variables: new SceneVariableSet({
+        variables: [
+          new TestVariable({
+            name: 'test',
+            value: 1594671549254,
+          }),
+        ],
+      }),
+    });
+
+    expect(sceneInterpolator(scene, '${test:date:YYYY-MM}')).toBe('2020-07');
+  });
 });
