@@ -35,7 +35,7 @@ func (s byName) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 func (s byName) Less(i, j int) bool {
-	return len(s[i].Name) < len(s[j].Name)
+	return s[i].Name < s[j].Name
 }
 
 func (n *Node) sort() {
