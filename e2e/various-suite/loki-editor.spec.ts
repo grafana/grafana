@@ -45,25 +45,45 @@ e2e.scenario({
 
     // adds closing braces around empty value
     e2e.components.QueryField.container().type('time(');
-    cy.contains('time()').should('be.visible');
+    e2e()
+      .get('.monaco-editor textarea:first')
+      .should(($el) => {
+        expect($el.val()).to.eq('time()');
+      });
 
     // removes closing brace when opening brace is removed
-    e2e.components.QueryField.container().type('avg_over_time({backspace}');
-    cy.contains('avg_over_time').should('be.visible');
+    e2e.components.QueryField.container().type('{selectall}{backspace}avg_over_time({backspace}');
+    e2e()
+      .get('.monaco-editor textarea:first')
+      .should(($el) => {
+        expect($el.val()).to.eq('avg_over_time');
+      });
 
     // keeps closing brace when opening brace is removed and inner values exist
     e2e.components.QueryField.container().type(
       '{selectall}{backspace}time(test{leftArrow}{leftArrow}{leftArrow}{leftArrow}{backspace}'
     );
-    cy.contains('timetest)').should('be.visible');
+    e2e()
+      .get('.monaco-editor textarea:first')
+      .should(($el) => {
+        expect($el.val()).to.eq('timetest)');
+      });
 
     // overrides an automatically inserted brace
     e2e.components.QueryField.container().type('{selectall}{backspace}time()');
-    cy.contains('time()').should('be.visible');
+    e2e()
+      .get('.monaco-editor textarea:first')
+      .should(($el) => {
+        expect($el.val()).to.eq('time()');
+      });
 
     // does not override manually inserted braces
     e2e.components.QueryField.container().type('{selectall}{backspace}))');
-    cy.contains('))').should('be.visible');
+    e2e()
+      .get('.monaco-editor textarea:first')
+      .should(($el) => {
+        expect($el.val()).to.eq('))');
+      });
 
     /** Runner plugin */
 
