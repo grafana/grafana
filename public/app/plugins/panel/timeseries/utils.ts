@@ -1,5 +1,3 @@
-import { cloneDeep } from 'lodash';
-
 import {
   ArrayVector,
   DataFrame,
@@ -151,7 +149,7 @@ export function regenerateLinksSupplier(
     }
 
     const frame = frames[frameIndex];
-    const tempFrame = cloneDeep(alignedDataFrame);
+    const tempFields: Field[] = [];
 
     /* check if field has sortedVector values
       if it does, sort all string fields in the original frame by the order array already used for the field
@@ -160,14 +158,19 @@ export function regenerateLinksSupplier(
     for (const frameField of frame.fields) {
       if (frameField.type === FieldType.string) {
         if (field.values instanceof SortedVector) {
-          const clonedFrameField = cloneDeep(frameField);
-          clonedFrameField.values = new SortedVector(frameField.values, field.values.getOrderArray());
-          tempFrame.fields.push(clonedFrameField);
+          const copiedField = { ...frameField };
+          copiedField.values = new SortedVector(frameField.values, field.values.getOrderArray());
+          tempFields.push(copiedField);
         } else {
-          tempFrame.fields.push(frameField);
+          tempFields.push(frameField);
         }
       }
     }
+
+    const tempFrame: DataFrame = {
+      fields: [...alignedDataFrame.fields, ...tempFields],
+      length: alignedDataFrame.length + tempFields.length,
+    };
 
     field.getLinks = getLinksSupplier(tempFrame, field, field.state!.scopedVars!, replaceVariables, timeZone);
   });
