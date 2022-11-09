@@ -3,6 +3,7 @@ package folderimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -79,15 +80,6 @@ func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to delete folder: %w", err)
 		}
-		/*
-			affected, err := res.RowsAffected()
-			if err != nil {
-				return folder.ErrDatabaseError.Errorf("failed to get affected rows: %w", err)
-			}
-				if affected == 0 {
-					return folder.ErrFolderNotFound.Errorf("folder not found uid:%s org_id:%d", uid, orgID)
-				}
-		*/
 		return nil
 	})
 }
@@ -158,16 +150,18 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 
 func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error) {
 	foldr := &folder.Folder{}
+	fmt.Println("-------------------- I am here")
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		exists := false
 		var err error
-
+		fmt.Println("-------------------- I am here2222222222222")
 		switch {
 		case q.ID != nil:
 			exists, err = sess.SQL("SELECT * FROM folder WHERE id = ?", q.ID).Get(foldr)
 		case q.Title != nil:
 			exists, err = sess.SQL("SELECT * FROM folder WHERE title = ? AND org_id = ?", q.Title, q.OrgID).Get(foldr)
 		case q.UID != nil:
+			fmt.Println("i am here with the uid and org id*************************************")
 			exists, err = sess.SQL("SELECT * FROM folder WHERE uid = ? AND org_id = ?", q.UID, q.OrgID).Get(foldr)
 		default:
 			return folder.ErrBadRequest.Errorf("one of ID, UID, or Title must be included in the command")
