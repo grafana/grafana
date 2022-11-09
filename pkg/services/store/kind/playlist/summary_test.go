@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/coremodel/playlist"
+	"github.com/grafana/grafana/pkg/kinds/playlist"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,13 +16,13 @@ func TestPlaylistSummary(t *testing.T) {
 	_, _, err := builder(context.Background(), "abc", []byte("{invalid json"))
 	require.Error(t, err)
 
-	playlist := playlist.Model{
+	playlist := playlist.Playlist{
 		Interval: "30s",
 		Name:     "test",
-		Items: &[]playlist.PlaylistItem{
-			{Type: playlist.PlaylistItemTypeDashboardByUid, Value: "D1"},
-			{Type: playlist.PlaylistItemTypeDashboardByTag, Value: "tagA"},
-			{Type: playlist.PlaylistItemTypeDashboardByUid, Value: "D3"},
+		Items: &[]playlist.PlaylistPlaylistItem{
+			{Type: playlist.PlaylistPlaylistItemTypeDashboardByUid, Value: "D1"},
+			{Type: playlist.PlaylistPlaylistItemTypeDashboardByTag, Value: "tagA"},
+			{Type: playlist.PlaylistPlaylistItemTypeDashboardByUid, Value: "D3"},
 		},
 	}
 	out, err := json.Marshal(playlist)

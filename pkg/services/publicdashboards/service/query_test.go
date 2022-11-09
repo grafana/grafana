@@ -8,9 +8,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	dashboard2 "github.com/grafana/grafana/pkg/coremodel/dashboard"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	dashboard2 "github.com/grafana/grafana/pkg/kinds/dashboard"
 	grafanamodels "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
@@ -446,7 +446,7 @@ func TestGetAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
-			Target: &dashboard2.AnnotationTarget{
+			Target: &dashboard2.DashboardAnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
 				Tags:     nil,
@@ -459,7 +459,7 @@ func TestGetAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
-			Target: &dashboard2.AnnotationTarget{
+			Target: &dashboard2.DashboardAnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
 				Tags:     []string{"tag1"},
@@ -519,7 +519,7 @@ func TestGetAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
-			Target: &dashboard2.AnnotationTarget{
+			Target: &dashboard2.DashboardAnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
 				Tags:     []string{"tag1"},
@@ -585,7 +585,7 @@ func TestGetAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
-			Target: &dashboard2.AnnotationTarget{
+			Target: &dashboard2.DashboardAnnotationTarget{
 				Limit:    100,
 				MatchAny: true,
 				Tags:     nil,
@@ -678,7 +678,7 @@ func TestGetAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
-			Target: &dashboard2.AnnotationTarget{
+			Target: &dashboard2.DashboardAnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
 				Tags:     nil,
@@ -713,7 +713,7 @@ func TestGetAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
-			Target: &dashboard2.AnnotationTarget{
+			Target: &dashboard2.DashboardAnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
 				Tags:     []string{"tag1"},
@@ -1024,11 +1024,11 @@ func TestBuildAnonymousUser(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
-	//publicdashboardStore := database.ProvideStore(sqlStore)
-	//service := &PublicDashboardServiceImpl{
+	// publicdashboardStore := database.ProvideStore(sqlStore)
+	// service := &PublicDashboardServiceImpl{
 	//	log:   log.New("test.logger"),
 	//	store: publicdashboardStore,
-	//}
+	// }
 
 	t.Run("will add datasource read and query permissions to user for each datasource in dashboard", func(t *testing.T) {
 		user := buildAnonymousUser(context.Background(), dashboard)

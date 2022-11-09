@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/coremodel/playlist"
+	"github.com/grafana/grafana/pkg/kinds/playlist"
 	"github.com/grafana/grafana/pkg/models"
 )
 
