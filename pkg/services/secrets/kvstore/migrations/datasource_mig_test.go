@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -14,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -29,9 +27,7 @@ func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore db.DB, kvS
 		features = featuremgmt.WithFeatures(featuremgmt.FlagDisableSecretsCompatibility, true)
 	}
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-	quotaService := quotatest.New(false, nil)
-	dsService, err := dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New().WithDisabled(), acmock.NewMockedPermissionsService(), quotaService)
-	require.NoError(t, err)
+	dsService := dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New().WithDisabled(), acmock.NewMockedPermissionsService())
 	migService := ProvideDataSourceMigrationService(dsService, kvStore, features)
 	return migService
 }

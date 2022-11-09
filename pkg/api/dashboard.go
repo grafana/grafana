@@ -407,7 +407,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	dash := cmd.GetDashboardModel()
 	newDashboard := dash.Id == 0
 	if newDashboard {
-		limitReached, err := hs.QuotaService.QuotaReached(c, dashboards.QuotaTargetSrv)
+		limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard")
 		if err != nil {
 			return response.Error(500, "failed to get quota", err)
 		}

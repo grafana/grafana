@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/quota"
 )
 
 func TestIntegrationQuotaDataAccess(t *testing.T) {
@@ -21,8 +20,7 @@ func TestIntegrationQuotaDataAccess(t *testing.T) {
 	}
 
 	t.Run("quota deleted", func(t *testing.T) {
-		ctx := quota.FromContext(context.Background(), &quota.TargetToSrv{})
-		err := quotaStore.DeleteByUser(ctx, 1)
+		err := quotaStore.DeleteByUser(context.Background(), 1)
 		require.NoError(t, err)
 	})
 }

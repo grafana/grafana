@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -1877,8 +1878,6 @@ func TestQuota(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
-		// needs permission to update org quota
-		IsAdmin:        true,
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -1919,10 +1918,30 @@ func TestQuota(t *testing.T) {
 	// check quota limits
 	t.Run("when quota limit exceed creating new rule should fail", func(t *testing.T) {
 		// get existing org quota
-		limit, used := apiClient.GetOrgQuotaLimits(t, 1)
-		apiClient.UpdateAlertRuleOrgQuota(t, 1, used)
+		query := models.GetOrgQuotaByTargetQuery{OrgId: 1, Target: "alert_rule"}
+		err = store.GetOrgQuotaByTarget(context.Background(), &query)
+		require.NoError(t, err)
+		used := query.Result.Used
+		limit := query.Result.Limit
+
+		// set org quota limit to equal used
+		orgCmd := models.UpdateOrgQuotaCmd{
+			OrgId:  1,
+			Target: "alert_rule",
+			Limit:  used,
+		}
+		err := store.UpdateOrgQuota(context.Background(), &orgCmd)
+		require.NoError(t, err)
+
 		t.Cleanup(func() {
-			apiClient.UpdateAlertRuleOrgQuota(t, 1, limit)
+			// reset org quota to original value
+			orgCmd := models.UpdateOrgQuotaCmd{
+				OrgId:  1,
+				Target: "alert_rule",
+				Limit:  limit,
+			}
+			err := store.UpdateOrgQuota(context.Background(), &orgCmd)
+			require.NoError(t, err)
 		})
 
 		// try to create an alert rule
