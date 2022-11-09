@@ -199,6 +199,7 @@ interface ModalProps {
   sourceName: string;
   groupInterval: string;
   onClose: (saved?: boolean) => void;
+  folderAndGroupReadOnly?: boolean;
 }
 
 interface FormValues {
@@ -213,6 +214,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
     onClose,
     groupInterval,
     sourceName,
+    folderAndGroupReadOnly,
   } = props;
 
   const styles = useStyles2(getStyles);
@@ -233,7 +235,16 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
 
   const isGrafanaManagedGroup = sourceName === GRAFANA_RULES_SOURCE_NAME;
   const nameSpaceLabel = isGrafanaManagedGroup ? 'Folder' : 'Namespace';
+  const nameSpaceInfoIconLabelEditable = isGrafanaManagedGroup
+    ? 'Folder name can be updated to a non-existing folder name'
+    : 'Name space can be updated to a non-existing name space';
+  const nameSpaceInfoIconLabelNonEditable = isGrafanaManagedGroup
+    ? 'Folder name can be updated in folder view'
+    : 'Name space can be updated folder view';
 
+  const spaceNameInfoIconLabel = folderAndGroupReadOnly
+    ? nameSpaceInfoIconLabelNonEditable
+    : nameSpaceInfoIconLabelEditable;
   // close modal if successfully saved
   useEffect(() => {
     if (dispatched && !loading && !error) {
@@ -242,7 +253,6 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   }, [dispatched, loading, onClose, error]);
 
   useCleanup((state) => (state.unifiedAlerting.updateLotexNamespaceAndGroup = initialAsyncRequestState));
-
   const onSubmit = (values: FormValues) => {
     dispatch(
       updateLotexNamespaceAndGroupAction({
@@ -320,34 +330,31 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 <Label htmlFor="namespaceName">
                   <Stack gap={0.5}>
                     {nameSpaceLabel}
-                    {isGrafanaManagedGroup ? (
-                      <InfoIcon text={'Folder name can be updated on Folder view.'} />
-                    ) : (
-                      <InfoIcon text={'Name space can be updated'} />
-                    )}
+                    <InfoIcon text={spaceNameInfoIconLabel} />
                   </Stack>
                 </Label>
               }
               invalid={!!errors.namespaceName}
               error={errors.namespaceName?.message}
             >
-              {isGrafanaManagedGroup ? (
-                <>{nameSpaceName}</>
-              ) : (
-                <Input
-                  id="namespaceName"
-                  {...register('namespaceName', {
-                    required: 'Namespace name is required.',
-                  })}
-                />
-              )}
+              <Input
+                id="namespaceName"
+                readOnly={folderAndGroupReadOnly}
+                {...register('namespaceName', {
+                  required: 'Namespace name is required.',
+                })}
+              />
             </Field>
             <Field
               label={
                 <Label htmlFor="groupName">
                   <Stack gap={0.5}>
                     Evaluation group
-                    <InfoIcon text={'Group name can be updated'} />
+                    {isGrafanaManagedGroup ? (
+                      <InfoIcon text={'Group name can be updated on Group view.'} />
+                    ) : (
+                      <InfoIcon text={'Group name can be updated to a non existing group name.'} />
+                    )}
                   </Stack>
                 </Label>
               }
@@ -356,6 +363,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
             >
               <Input
                 id="groupName"
+                readOnly={folderAndGroupReadOnly}
                 {...register('groupName', {
                   required: 'Evaluation group name is required.',
                 })}

@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { RegisterOptions, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Card, Field, InlineLabel, Input, InputControl, useStyles2 } from '@grafana/ui';
 import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
@@ -15,7 +15,7 @@ import { CollapseToggle } from '../CollapseToggle';
 import { EditCloudGroupModal } from '../rules/EditRuleGroupModal';
 
 import { MINUTE } from './AlertRuleForm';
-import { FolderAndGroup } from './FolderAndGroup';
+import { FolderAndGroup, useGetGroupOptionsFromFolder } from './FolderAndGroup';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { RuleEditorSection } from './RuleEditorSection';
 
@@ -68,6 +68,16 @@ const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
   },
 });
 
+const useIsNewGroup = (folder: string, group: string) => {
+  const { groupOptions } = useGetGroupOptionsFromFolder(folder);
+
+  const groupIsInGroupOptions = useCallback(
+    (group_: string) => groupOptions.some((groupInList: SelectableValue<string>) => groupInList.label === group_),
+    [groupOptions]
+  );
+  return !groupIsInGroupOptions(group);
+};
+
 function FolderGroupAndEvaluationInterval({
   initialFolder,
   evaluateEvery,
@@ -87,6 +97,8 @@ function FolderGroupAndEvaluationInterval({
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
 
+  const isNewGroup = useIsNewGroup(folder?.title ?? '', group);
+
   useEffect(() => {
     group &&
       folder &&
@@ -102,6 +114,8 @@ function FolderGroupAndEvaluationInterval({
 
   const onOpenEditGroupModal = () => setIsEditingGroup(true);
 
+  const editGroupDisabled = groupfoldersForGrafana?.loading || isNewGroup || !folder || !group;
+
   return (
     <div>
       <FolderAndGroup initialFolder={initialFolder} />
@@ -111,11 +125,12 @@ function FolderGroupAndEvaluationInterval({
           nameSpaceAndGroup={{ namespace: folder?.title ?? '', group: group }}
           sourceName={GRAFANA_RULES_SOURCE_NAME}
           onClose={() => closeEditGroupModal()}
+          folderAndGroupReadOnly
         />
       )}
 
       <Card className={styles.cardContainer}>
-        <Card.Heading>Group behaviour</Card.Heading>
+        <Card.Heading>Evaluation behaviour</Card.Heading>
         <Card.Meta>
           <div className={styles.evaluationDescription}>
             <div className={styles.evaluateLabel}>
@@ -124,24 +139,30 @@ function FolderGroupAndEvaluationInterval({
             </div>
 
             <br />
-            <div className={styles.evaluateLabelEnd}>
-              {`Evaluation interval applies to every rule within a group. 
+            {!isNewGroup && (
+              <div className={styles.evaluateLabelEnd}>
+                {`Evaluation interval applies to every rule within a group. 
           It can overwrite the interval of an existing alert rule.`}
-            </div>
+              </div>
+            )}
             <br />
           </div>
         </Card.Meta>
         <Card.Actions>
           <div className={styles.editGroup}>
-            {`Click on Edit group button to edit this value `}
+            {isNewGroup && (
+              <div className={styles.warningMessage}>
+                New group must be saved before being able to edit the evaluation interval.
+              </div>
+            )}
             <Button
               icon={'edit'}
               type="button"
               variant="secondary"
-              disabled={groupfoldersForGrafana?.loading}
+              disabled={editGroupDisabled}
               onClick={onOpenEditGroupModal}
             >
-              <span>{'Edit group'}</span>
+              <span>{'Edit evaluation group'}</span>
             </Button>
           </div>
         </Card.Actions>
@@ -287,7 +308,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   editGroup: css`
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: right;
     margin-top: -${theme.spacing(4)};
   `,
   evaluateLabelEnd: css`

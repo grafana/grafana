@@ -40,7 +40,7 @@ interface FolderAndGroupProps {
   initialFolder: RuleForm | null;
 }
 
-const useGetGroupOptionsFromFolder = (folderTilte: string) => {
+export const useGetGroupOptionsFromFolder = (folderTilte: string) => {
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
 
   const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
