@@ -58,7 +58,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
       </ToolbarButton>
       {state.isOpen && (
         <div className={styles.menuWrapper}>
-          <ClickOutsideWrapper onClick={state.close} parent={document} includeButtonPress={false}>
+          <ClickOutsideWrapper onClick={state.close} parent={document} includeButtonPress={false} useCapture={true}>
             <FocusScope contain autoFocus restoreFocus>
               {/*
                 tabIndex=-1 is needed here to support highlighting text within the menu when using FocusScope

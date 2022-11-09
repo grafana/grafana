@@ -48,7 +48,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
         <PanelHeaderMenuTrigger data-testid={selectors.components.Panels.Panel.title(title)}>
           {({ closeMenu, panelMenuOpen }) => {
             return (
-              <ClickOutsideWrapper onClick={closeMenu} parent={document}>
+              <ClickOutsideWrapper onClick={closeMenu} parent={document} useCapture={true}>
                 <div className="panel-title">
                   <PanelHeaderNotices frames={data.series} panelId={panel.id} />
                   {alertState ? (
