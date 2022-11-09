@@ -79,8 +79,30 @@ it('getParentSpan() should return the parent span of the tree', () => {
 });
 
 it('getParentSpan() should return the first span if there are multiple parents', () => {
-  const firstSpan = generatedTrace.spans[0];
-  expect(traceSelectors.getParentSpan(generatedTrace)).toBe(firstSpan);
+  const initialTimestamp = new Date().getTime() * 1000;
+  const firstSpan = {
+    startTime: initialTimestamp,
+    spanID: 'my-span-1',
+    references: [],
+  };
+
+  const trace = {
+    spans: [
+      {
+        startTime: initialTimestamp + 2000,
+        spanID: 'my-span-3',
+        references: [],
+      },
+      firstSpan,
+      {
+        startTime: initialTimestamp + 1000,
+        spanID: 'my-span-2',
+        references: [],
+      },
+    ],
+  } as unknown as TraceResponse;
+
+  expect(traceSelectors.getParentSpan(trace)).toBe(firstSpan);
 });
 
 it('getTraceName() should return a formatted name for the first span', () => {
