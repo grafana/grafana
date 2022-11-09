@@ -623,7 +623,7 @@ Set to `true` to add the Content-Security-Policy header to your requests. CSP al
 
 ### content_security_policy_template
 
-Set Content Security Policy template used when adding the Content-Security-Policy header to your requests. `$NONCE` in the template includes a random nonce.
+Set the policy template that will be used when adding the Content-Security-Policy header to your requests. `$NONCE` in the template includes a random nonce.
 
 ### content_security_policy_report_only
 
@@ -632,7 +632,7 @@ You can enable both policies simultaneously.
 
 ### content_security_policy_template
 
-Set Content Security Policy Report Only template used when adding the Content-Security-Policy-Report-Only header to your requests. `$NONCE` in the template includes a random nonce.
+Set the policy template that will be used when adding the Content-Security-Policy-Report-Only header to your requests. `$NONCE` in the template includes a random nonce.
 
 <hr />
 
