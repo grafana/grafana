@@ -42,8 +42,6 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       return;
     }
 
-    // Ok we are expanding row (code copied from DashboardModel toggleRow)
-
     const rowChildren = row.state.children;
 
     if (rowChildren.length === 0) {
@@ -51,6 +49,9 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       this.setState({});
       return;
     }
+
+    // Ok we are expanding row. We need to update row children y pos (incase they are incorrect) and push items below down
+    // Code copied from DashboardModel toggleRow()
 
     const rowY = row.state.size?.y!;
     const firstPanelYPos = rowChildren[0].state.size?.y ?? rowY;
