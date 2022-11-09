@@ -48,9 +48,10 @@ export class SplitPaneWrapper extends PureComponent<Props> {
   };
 
   render() {
-    const { paneSize, splitOrientation, maxSize, primary, secondaryPaneStyle } = this.props;
+    const { paneSize, splitOrientation, maxSize, primary, secondaryPaneStyle, splitVisible = true } = this.props;
+
     // Limit options pane width to 90% of screen.
-    const styles = getStyles(config.theme2);
+    const styles = getStyles(config.theme2, splitVisible);
 
     // Need to handle when width is relative. ie a percentage of the viewport
     const paneSizePx =
@@ -62,8 +63,8 @@ export class SplitPaneWrapper extends PureComponent<Props> {
       <SplitPane
         split={splitOrientation}
         maxSize={maxSize}
-        size={paneSizePx}
-        primary={primary}
+        size={splitVisible ? paneSizePx : 0}
+        primary={splitVisible ? primary : 'second'}
         resizerClassName={splitOrientation === 'horizontal' ? styles.resizerH : styles.resizerV}
         onDragStarted={() => this.onDragStarted()}
         onDragFinished={(size) => this.onDragFinished(size)}
@@ -75,12 +76,13 @@ export class SplitPaneWrapper extends PureComponent<Props> {
   }
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, hasSplit: boolean) => {
   const handleColor = theme.v1.palette.blue95;
   const paneSpacing = theme.spacing(2);
 
   const resizer = css`
     position: relative;
+    display: ${hasSplit ? 'block' : 'none'};
 
     &::before {
       content: '';

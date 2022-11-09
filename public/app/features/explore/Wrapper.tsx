@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { ErrorBoundaryAlert, usePanelContext } from '@grafana/ui';
+import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -40,6 +41,7 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   const { warning } = useAppNotification();
   const panelCtx = usePanelContext();
   const eventBus = useRef(panelCtx.eventBus.newScopedBus('explore', { onlyLocal: false }));
+  const [rightPaneWidth, setRightPaneWidth] = useState(window.innerWidth / 2);
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -103,24 +105,25 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
     <div className={styles.pageScrollbarWrapper}>
       <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
       <div className={styles.exploreWrapper}>
-        <ErrorBoundaryAlert style="page">
-          <ExplorePaneContainer
-            split={hasSplit}
-            exploreId={ExploreId.left}
-            urlQuery={queryParams.left}
-            eventBus={eventBus.current}
-          />
-        </ErrorBoundaryAlert>
-        {hasSplit && (
+        <SplitPaneWrapper
+          splitOrientation="vertical"
+          paneSize={rightPaneWidth}
+          primary="second"
+          splitVisible={hasSplit}
+        >
           <ErrorBoundaryAlert style="page">
-            <ExplorePaneContainer
-              split={hasSplit}
-              exploreId={ExploreId.right}
-              urlQuery={queryParams.right}
-              eventBus={eventBus.current}
-            />
+            <ExplorePaneContainer exploreId={ExploreId.left} urlQuery={queryParams.left} eventBus={eventBus.current} />
           </ErrorBoundaryAlert>
-        )}
+          {hasSplit && (
+            <ErrorBoundaryAlert style="page">
+              <ExplorePaneContainer
+                exploreId={ExploreId.right}
+                urlQuery={queryParams.right}
+                eventBus={eventBus.current}
+              />
+            </ErrorBoundaryAlert>
+          )}
+        </SplitPaneWrapper>
       </div>
     </div>
   );
