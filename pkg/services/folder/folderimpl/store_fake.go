@@ -12,6 +12,7 @@ type FakeStore struct {
 	ExpectedError   error
 
 	CreateCalled bool
+	DeleteCalled bool
 }
 
 func NewFakeStore() *FakeStore {
@@ -26,6 +27,7 @@ func (f *FakeStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 }
 
 func (f *FakeStore) Delete(ctx context.Context, uid string, orgID int64) error {
+	f.DeleteCalled = true
 	return f.ExpectedError
 }
 

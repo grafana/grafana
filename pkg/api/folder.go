@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -180,7 +179,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	return response.JSON(http.StatusOK, util.DynMap{})
+	return response.JSON(http.StatusOK, "")
 }
 
 func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {

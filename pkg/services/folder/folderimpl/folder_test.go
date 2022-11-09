@@ -353,7 +353,10 @@ func TestFolderService(t *testing.T) {
 	})
 }
 
-func TestCreate_NestedFolders(t *testing.T) {
+func TestIntegrationNestedFolderService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("with feature flag unset", func(t *testing.T) {
 		ctx := appcontext.WithUser(context.Background(), usr)
 		store := &FakeStore{}
@@ -373,17 +376,39 @@ func TestCreate_NestedFolders(t *testing.T) {
 			features:         features,
 		}
 
-		// dashboard store & service commands that should be called.
-		dashboardsvc.On("BuildSaveDashboardCommand",
-			mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"),
-			mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&models.SaveDashboardCommand{}, nil)
-		dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{}, nil)
-		dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&models.Folder{}, nil)
+		t.Run("When create folder, no create in folder table done", func(t *testing.T) {
+			// dashboard store & service commands that should be called.
+			dashboardsvc.On("BuildSaveDashboardCommand",
+				mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"),
+				mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&models.SaveDashboardCommand{}, nil)
+			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{}, nil)
+			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&models.Folder{}, nil)
 
-		_, err := foldersvc.CreateFolder(ctx, usr, orgID, "myFolder", "myFolder")
-		require.NoError(t, err)
-		// CreateFolder should not call the folder store create if the feature toggle is not enabled.
-		require.False(t, store.CreateCalled)
+			_, err := foldersvc.CreateFolder(ctx, usr, orgID, "myFolder", "myFolder")
+			require.NoError(t, err)
+			// CreateFolder should not call the folder store create if the feature toggle is not enabled.
+			require.False(t, store.CreateCalled)
+		})
+
+		t.Run("When delete folder, no delete in folder table done", func(t *testing.T) {
+			var actualCmd *models.DeleteDashboardCommand
+			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
+			}).Return(nil).Once()
+			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&models.Folder{}, nil)
+
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+
+			err := foldersvc.DeleteFolder(ctx, &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID})
+			require.NoError(t, err)
+			require.NotNil(t, actualCmd)
+
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+			require.False(t, store.DeleteCalled)
+		})
 	})
 
 	t.Run("with nested folder feature flag on", func(t *testing.T) {
@@ -444,6 +469,28 @@ func TestCreate_NestedFolders(t *testing.T) {
 			t.Cleanup(func() {
 				guardian.New = g
 			})
+		})
+
+		t.Run("delete with success", func(t *testing.T) {
+			var actualCmd *models.DeleteDashboardCommand
+			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
+			}).Return(nil).Once()
+			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&models.Folder{}, nil)
+
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+
+			store.ExpectedError = nil
+
+			err := foldersvc.DeleteFolder(ctx, &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID})
+			require.NoError(t, err)
+			require.NotNil(t, actualCmd)
+
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+			require.True(t, store.DeleteCalled)
 		})
 	})
 }
