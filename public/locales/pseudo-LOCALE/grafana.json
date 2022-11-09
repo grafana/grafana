@@ -437,10 +437,8 @@
       "to-input": "Ŧő"
     },
     "range-picker": {
-      "aria-label-current-time": "Ŧįmę řäŉģę pįčĸęř ŵįŧĥ čūřřęŉŧ ŧįmę řäŉģę",
       "move-time-backwards": "Mővę ŧįmę řäŉģę þäčĸŵäřđş",
       "move-time-forwards": "Mővę ŧįmę řäŉģę ƒőřŵäřđş",
-      "selected": "şęľęčŧęđ",
       "to": "ŧő",
       "zoom-out-button": "Żőőm őūŧ ŧįmę řäŉģę",
       "zoom-out-tooltip": "Ŧįmę řäŉģę žőőm őūŧ <1></1> CŦŖĿ+Ż"
@@ -454,6 +452,11 @@
     "zone": {
       "select-aria-label": "Ŧįmę žőŉę pįčĸęř",
       "select-search-input": "Ŧypę ŧő şęäřčĥ (čőūŉŧřy, čįŧy, äþþřęvįäŧįőŉ)"
+    }
+  },
+  "time-range": {
+    "range-picker": {
+      "current-time-selected": "Ŧįmę řäŉģę pįčĸęř ŵįŧĥ čūřřęŉŧ ŧįmę řäŉģę {{čūřřęŉŧŦįmęŖäŉģę}} şęľęčŧęđ"
     }
   },
   "user-orgs": {

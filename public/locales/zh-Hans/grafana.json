@@ -437,10 +437,8 @@
       "to-input": ""
     },
     "range-picker": {
-      "aria-label-current-time": "",
       "move-time-backwards": "",
       "move-time-forwards": "",
-      "selected": "",
       "to": "",
       "zoom-out-button": "",
       "zoom-out-tooltip": ""
@@ -454,6 +452,11 @@
     "zone": {
       "select-aria-label": "",
       "select-search-input": ""
+    }
+  },
+  "time-range": {
+    "range-picker": {
+      "current-time-selected": ""
     }
   },
   "user-orgs": {

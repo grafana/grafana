@@ -437,10 +437,8 @@
       "to-input": "To"
     },
     "range-picker": {
-      "aria-label-current-time": "Time range picker with current time range",
       "move-time-backwards": "Move time range backwards",
       "move-time-forwards": "Move time range forwards",
-      "selected": "selected",
       "to": "to",
       "zoom-out-button": "Zoom out time range",
       "zoom-out-tooltip": "Time range zoom out <1></1> CTRL+Z"
@@ -454,6 +452,11 @@
     "zone": {
       "select-aria-label": "Time zone picker",
       "select-search-input": "Type to search (country, city, abbreviation)"
+    }
+  },
+  "time-range": {
+    "range-picker": {
+      "current-time-selected": "Time range picker with current time range {{currentTimeRange}} selected"
     }
   },
   "user-orgs": {
