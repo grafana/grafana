@@ -13,10 +13,39 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestNewInstanceSettings(t *testing.T) {
+	t.Run("should create a new instance with empty settings", func(t *testing.T) {
+		cli := httpclient.NewProvider()
+		f := newInstanceSettings(cli)
+		dsInfo, err := f(backend.DataSourceInstanceSettings{
+			JSONData: json.RawMessage(`{}`),
+		})
+		require.NoError(t, err)
+		assert.NotNil(t, dsInfo)
+		assert.Equal(t, jwtAuthentication, dsInfo.(*datasourceInfo).authenticationType)
+	})
+
+	t.Run("should create a new instance parsing settings", func(t *testing.T) {
+		cli := httpclient.NewProvider()
+		f := newInstanceSettings(cli)
+		dsInfo, err := f(backend.DataSourceInstanceSettings{
+			JSONData: json.RawMessage(`{"authenticationType": "test", "defaultProject": "test", "clientEmail": "test", "tokenUri": "test"}`),
+		})
+		require.NoError(t, err)
+		assert.NotNil(t, dsInfo)
+		dsInfoCasted := dsInfo.(*datasourceInfo)
+		assert.Equal(t, "test", dsInfoCasted.authenticationType)
+		assert.Equal(t, "test", dsInfoCasted.defaultProject)
+		assert.Equal(t, "test", dsInfoCasted.clientEmail)
+		assert.Equal(t, "test", dsInfoCasted.tokenUri)
+	})
+}
 
 func TestCloudMonitoring(t *testing.T) {
 	service := &Service{}
