@@ -12,7 +12,6 @@ import { VariableValueOption } from '../types';
 import { MultiValueVariable, MultiValueVariableState, VariableGetOptionsArgs } from './MultiValueVariable';
 
 export interface TestVariableState extends MultiValueVariableState {
-  //query: DataQuery;
   query: string;
   delayMs?: number;
   issuedQuery?: string;
@@ -22,16 +21,14 @@ export interface TestVariableState extends MultiValueVariableState {
  * This variable is only designed for unit tests and potentially e2e tests.
  */
 export class TestVariable extends MultiValueVariable<TestVariableState> {
-  private dependencies = new VariableDependencyCache<TestVariableState>(['query']);
-
   private completeUpdate = new Subject<number>();
   public isGettingValues = true;
 
-  _variableDependency = new VariableDependencyConfig(this, {
+  protected _variableDependency = new VariableDependencyConfig(this, {
     statePaths: ['query'],
   });
 
-  getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
+  public getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
     const { delayMs } = this.state;
 
     return new Observable<VariableValueOption[]>((observer) => {

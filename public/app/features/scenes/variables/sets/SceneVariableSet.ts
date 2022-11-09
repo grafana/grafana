@@ -48,7 +48,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
    * This loops through variablesToUpdate and update all that that can.
    * If one has a dependency that is currently in variablesToUpdate it will be skipped for now.
    */
-  updateNextBatch() {
+  private updateNextBatch() {
     // If we have nothing more to update and variable values changed we need to update scene objects that depend on these variables
     if (this.variablesToUpdate.size === 0 && this.variablesThatHaveChanged.size > 0) {
       this.notifyDependentSceneObjects();
@@ -107,6 +107,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
       if (variable.variableDependency?.hasDependencyOn(otherVariable.state.name)) {
         return true;
       }
+    }
 
     return false;
   }
