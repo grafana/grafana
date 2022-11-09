@@ -10,7 +10,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 	"github.com/stretchr/testify/assert"
@@ -360,7 +359,7 @@ func TestTakeImage(t *testing.T) {
 		r := ngmodels.AlertRule{}
 		s := NewMockImageCapturer(ctrl)
 
-		s.EXPECT().NewImage(ctx, &r).Return(nil, models.ErrNoDashboard)
+		s.EXPECT().NewImage(ctx, &r).Return(nil, ngmodels.ErrNoDashboard)
 		image, err := takeImage(ctx, s, &r)
 		assert.NoError(t, err)
 		assert.Nil(t, image)
@@ -374,7 +373,7 @@ func TestTakeImage(t *testing.T) {
 		r := ngmodels.AlertRule{DashboardUID: ptr.String("foo")}
 		s := NewMockImageCapturer(ctrl)
 
-		s.EXPECT().NewImage(ctx, &r).Return(nil, models.ErrNoPanel)
+		s.EXPECT().NewImage(ctx, &r).Return(nil, ngmodels.ErrNoPanel)
 		image, err := takeImage(ctx, s, &r)
 		assert.NoError(t, err)
 		assert.Nil(t, image)
