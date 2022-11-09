@@ -35,7 +35,6 @@ export interface InitDashboardArgs {
   urlUid?: string;
   urlSlug?: string;
   urlType?: string;
-  // urlFolderId?: string;
   urlFolderUid?: string;
   panelType?: string;
   accessToken?: string;
