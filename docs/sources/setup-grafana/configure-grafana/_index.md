@@ -627,7 +627,7 @@ Set Content Security Policy template used when adding the Content-Security-Polic
 
 ### content_security_policy_report_only
 
-Set to `true` to add the Content-Security-Policy-Report-Only header to your requests. CSP in Report Only mode allows to experiment with policies by monitoring their effects without enforcing.
+Set to `true` to add the Content-Security-Policy-Report-Only header to your requests. CSP in Report Only mode enables you to experiment with policies by monitoring their effects without enforcing them.
 Both policies can be enabled simultaneously.
 
 ### content_security_policy_template
