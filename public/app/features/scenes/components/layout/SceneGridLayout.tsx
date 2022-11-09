@@ -83,8 +83,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
         }
       }
     }
-    this.setState({ children: [...this.state.children] });
-    this._flattenedChildren = flattenGridLayoutChildren(this.state.children);
+    this.updateLayout();
   };
 
   onResizeStop: ReactGridLayout.ItemCallback = (_, o, n) => {
