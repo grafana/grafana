@@ -34,6 +34,17 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
 
   toggleRow(row: SceneGridRow, isCollapsed: boolean) {
     // Should we make sure position is correct for all children?
+    if (!isCollapsed) {
+      for (const child of row.state.children) {
+        child.setState({
+          size: {
+            ...child.state.size,
+            y: Math.max(row.state.size!.y! + 1, child.state.size!.y!),
+          },
+        });
+      }
+    }
+
     row.setState({ isCollapsed });
     // Trigger re-render
     this.setState({});
@@ -105,6 +116,11 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       const sceneChild = this.getChild(gridItem.i);
 
       if (sceneChild instanceof SceneGridRow) {
+        // the closest row is collapsed return undefined
+        if (sceneChild.state.isCollapsed) {
+          return undefined;
+        }
+
         return sceneChild;
       }
     }
@@ -142,7 +158,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
         const rowAbove = this.getRowAboveIndex(gridLayout, index - 1);
 
         if (rowAbove && rowAbove !== sceneChild.parent) {
-          // this.moveChildToRow(sceneChild, rowAbove);
+          this.moveChildToRow(sceneChild, rowAbove);
         }
       }
     }
@@ -216,6 +232,14 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
         }
       }
     }
+
+    cells.sort((panelA, panelB) => {
+      if (panelA.y === panelB.y) {
+        return panelA.x - panelB.x;
+      } else {
+        return panelA.y - panelB.y;
+      }
+    });
 
     return { lg: cells, sm: cells.map((l) => ({ ...l, w: 24 })) };
   }
