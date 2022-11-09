@@ -53,7 +53,9 @@ func TestCloudMonitoring(t *testing.T) {
 	t.Run("Parse migrated queries from frontend and build Google Cloud Monitoring API queries", func(t *testing.T) {
 		t.Run("and query has no aggregation set", func(t *testing.T) {
 			req := baseReq()
-			migrateRequest(req)
+			err := migrateRequest(req)
+			require.NoError(t, err)
+			require.NoError(t, err)
 			qes, err := service.buildQueryExecutors(slog, req)
 			require.NoError(t, err)
 			queries := getCloudMonitoringQueriesFromInterface(t, qes)
@@ -94,7 +96,8 @@ func TestCloudMonitoring(t *testing.T) {
 				"metricType": "a/metric/type",
 				"filters":    ["key", "=", "value", "AND", "key2", "=", "value2", "AND", "resource.type", "=", "another/resource/type"]
 			}`)
-			migrateRequest(query)
+			err := migrateRequest(query)
+			require.NoError(t, err)
 
 			qes, err := service.buildQueryExecutors(slog, query)
 			require.NoError(t, err)
@@ -127,7 +130,8 @@ func TestCloudMonitoring(t *testing.T) {
 					"alignmentPeriod": "grafana-auto",
 					"filters":    ["key", "=", "value", "AND", "key2", "=", "value2"]
 				}`)
-				migrateRequest(req)
+				err := migrateRequest(req)
+				require.NoError(t, err)
 
 				qes, err := service.buildQueryExecutors(slog, req)
 				require.NoError(t, err)
@@ -156,7 +160,8 @@ func TestCloudMonitoring(t *testing.T) {
 					"alignmentPeriod": "grafana-auto",
 					"filters":    ["key", "=", "value", "AND", "key2", "=", "value2"]
 				}`)
-				migrateRequest(req)
+				err := migrateRequest(req)
+				require.NoError(t, err)
 
 				qes, err := service.buildQueryExecutors(slog, req)
 				require.NoError(t, err)
@@ -191,7 +196,8 @@ func TestCloudMonitoring(t *testing.T) {
 					"target": "target",
 					"alignmentPeriod": "cloud-monitoring-auto"
 				}`)
-				migrateRequest(req)
+				err := migrateRequest(req)
+				require.NoError(t, err)
 
 				qes, err := service.buildQueryExecutors(slog, req)
 				require.NoError(t, err)
@@ -207,7 +213,8 @@ func TestCloudMonitoring(t *testing.T) {
 					"target": "target",
 					"alignmentPeriod": "cloud-monitoring-auto"
 				}`)
-				migrateRequest(req)
+				err := migrateRequest(req)
+				require.NoError(t, err)
 
 				qes, err := service.buildQueryExecutors(slog, req)
 				require.NoError(t, err)
@@ -223,7 +230,8 @@ func TestCloudMonitoring(t *testing.T) {
 					"target": "target",
 					"alignmentPeriod": "cloud-monitoring-auto"
 				}`)
-				migrateRequest(req)
+				err := migrateRequest(req)
+				require.NoError(t, err)
 
 				qes, err := service.buildQueryExecutors(slog, req)
 				require.NoError(t, err)
@@ -239,7 +247,8 @@ func TestCloudMonitoring(t *testing.T) {
 					"target": "target",
 					"alignmentPeriod": "cloud-monitoring-auto"
 				}`)
-				migrateRequest(req)
+				err := migrateRequest(req)
+				require.NoError(t, err)
 
 				qes, err := service.buildQueryExecutors(slog, req)
 				require.NoError(t, err)
@@ -259,7 +268,8 @@ func TestCloudMonitoring(t *testing.T) {
 					"target": "target",
 					"alignmentPeriod": "stackdriver-auto"
 				}`)
-				migrateRequest(req)
+				err := migrateRequest(req)
+				require.NoError(t, err)
 
 				qes, err := service.buildQueryExecutors(slog, req)
 				require.NoError(t, err)
@@ -290,7 +300,8 @@ func TestCloudMonitoring(t *testing.T) {
 					"target": "target",
 					"alignmentPeriod": "stackdriver-auto"
 				}`)
-				migrateRequest(req)
+				err := migrateRequest(req)
+				require.NoError(t, err)
 
 				qes, err := service.buildQueryExecutors(slog, req)
 				require.NoError(t, err)
@@ -321,7 +332,8 @@ func TestCloudMonitoring(t *testing.T) {
 					"target": "target",
 					"alignmentPeriod": "stackdriver-auto"
 				}`)
-				migrateRequest(req)
+				err := migrateRequest(req)
+				require.NoError(t, err)
 
 				qes, err := service.buildQueryExecutors(slog, req)
 				require.NoError(t, err)
@@ -352,7 +364,8 @@ func TestCloudMonitoring(t *testing.T) {
 					"target": "target",
 					"alignmentPeriod": "stackdriver-auto"
 				}`)
-				migrateRequest(req)
+				err := migrateRequest(req)
+				require.NoError(t, err)
 
 				qes, err := service.buildQueryExecutors(slog, req)
 				require.NoError(t, err)
@@ -383,7 +396,8 @@ func TestCloudMonitoring(t *testing.T) {
 				req.Queries[0].JSON = json.RawMessage(`{
 					"alignmentPeriod": "+600s"
 				}`)
-				migrateRequest(req)
+				err := migrateRequest(req)
+				require.NoError(t, err)
 
 				qes, err := service.buildQueryExecutors(slog, req)
 				require.NoError(t, err)
@@ -414,7 +428,8 @@ func TestCloudMonitoring(t *testing.T) {
 				"crossSeriesReducer": "REDUCE_SUM",
 				"view":               "FULL"
 			}`)
-			migrateRequest(req)
+			err := migrateRequest(req)
+			require.NoError(t, err)
 
 			qes, err := service.buildQueryExecutors(slog, req)
 			require.NoError(t, err)
@@ -459,7 +474,8 @@ func TestCloudMonitoring(t *testing.T) {
 				"groupBys":           ["metric.label.group1", "metric.label.group2"],
 				"view":               "FULL"
 			}`)
-			migrateRequest(req)
+			err := migrateRequest(req)
+			require.NoError(t, err)
 
 			qes, err := service.buildQueryExecutors(slog, req)
 			require.NoError(t, err)
@@ -754,7 +770,8 @@ func TestCloudMonitoring(t *testing.T) {
 			"groupBys":           ["labelname"],
 			"view":               "FULL"
 		}`)
-		migrateRequest(req)
+		err := migrateRequest(req)
+		require.NoError(t, err)
 
 		qes, err := service.buildQueryExecutors(slog, req)
 		require.NoError(t, err)
@@ -783,7 +800,8 @@ func TestCloudMonitoring(t *testing.T) {
 			"view":               "FULL",
 			"preprocessor":       "none"
 		}`)
-		migrateRequest(req)
+		err := migrateRequest(req)
+		require.NoError(t, err)
 
 		qes, err := service.buildQueryExecutors(slog, req)
 		require.NoError(t, err)
@@ -812,7 +830,8 @@ func TestCloudMonitoring(t *testing.T) {
 			"view":               "FULL",
 			"preprocessor":       "rate"
 		}`)
-		migrateRequest(req)
+		err := migrateRequest(req)
+		require.NoError(t, err)
 
 		qes, err := service.buildQueryExecutors(slog, req)
 		require.NoError(t, err)
@@ -839,7 +858,8 @@ func TestCloudMonitoring(t *testing.T) {
 			"view":               "FULL",
 			"preprocessor":       "rate"
 		}`)
-		migrateRequest(req)
+		err := migrateRequest(req)
+		require.NoError(t, err)
 
 		qes, err := service.buildQueryExecutors(slog, req)
 		require.NoError(t, err)
@@ -868,7 +888,8 @@ func TestCloudMonitoring(t *testing.T) {
 			"view":               "FULL",
 			"preprocessor":       "delta"
 		}`)
-		migrateRequest(req)
+		err := migrateRequest(req)
+		require.NoError(t, err)
 
 		qes, err := service.buildQueryExecutors(slog, req)
 		require.NoError(t, err)
@@ -895,7 +916,8 @@ func TestCloudMonitoring(t *testing.T) {
 			"view":               "FULL",
 			"preprocessor":       "delta"
 		}`)
-		migrateRequest(req)
+		err := migrateRequest(req)
+		require.NoError(t, err)
 
 		qes, err := service.buildQueryExecutors(slog, req)
 		require.NoError(t, err)
