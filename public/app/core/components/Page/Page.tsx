@@ -20,16 +20,16 @@ export const OldPage: PageType = ({
   navId,
   navModel: oldNavProp,
   pageNav,
-  renderTitle,
-  actions,
-  info,
   children,
   className,
   toolbar,
   scrollRef,
   scrollTop,
   layout = PageLayoutType.Standard,
+  renderTitle,
   subTitle,
+  actions,
+  info,
   ...otherProps
 }) => {
   const styles = useStyles2(getStyles);

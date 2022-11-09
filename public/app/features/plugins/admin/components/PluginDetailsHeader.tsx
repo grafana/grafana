@@ -72,7 +72,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       margin-bottom: ${theme.spacing(1)};
     `,
     description: css`
-      margin: ${theme.spacing(-1, 0, 1)};
+      margin-bottom: ${theme.spacing(1)};
     `,
     breadcrumb: css`
       font-size: ${theme.typography.h2.fontSize};
