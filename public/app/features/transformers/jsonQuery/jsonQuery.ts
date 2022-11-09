@@ -1,7 +1,15 @@
 import { JSONPath } from 'jsonpath-plus';
+import { isString } from 'lodash';
 import { map } from 'rxjs/operators';
 
-import { DataFrame, DataTransformerID, SynchronousDataTransformerInfo, FieldType, Field } from '@grafana/data';
+import {
+  DataFrame,
+  DataTransformerID,
+  SynchronousDataTransformerInfo,
+  FieldType,
+  Field,
+  ArrayVector,
+} from '@grafana/data';
 import { findField } from 'app/features/dimensions/utils';
 
 import { detectFieldType } from './detectFieldType';
@@ -35,28 +43,38 @@ function queryJSON(frame: DataFrame, options: JSONQueryOptions): DataFrame {
     return frame;
   }
 
+  const count = frame.length;
   const values = new Map<string, unknown>();
-  const queryResultArray: JSONPathPlusReturn[] = JSONPath({
-    path: options?.query ?? '$',
-    json: source.values,
-    resultType: 'all',
-  });
 
-  queryResultArray.forEach((entry: JSONPathPlusReturn, index: number) => {
-    const key = `${options.alias ?? entry.parentProperty ?? 'Value'}_${index}`;
-    values.set(key, entry.value);
-  });
+  for (let i = 0; i < count; i++) {
+    let obj = source.values.get(i);
+    if (isString(obj)) {
+      try {
+        obj = JSON.parse(obj);
+      } catch {
+        obj = {}; // empty
+      }
+    }
+
+    const queryResultArray: JSONPathPlusReturn[] = JSONPath({
+      path: options?.query ?? '$',
+      json: obj,
+      resultType: 'all',
+    });
+
+    queryResultArray.forEach((entry: JSONPathPlusReturn, index: number) => {
+      const key = `${options?.alias ?? entry.parentProperty ?? 'Value'}_${i}_${index}`;
+      values.set(key, [entry.value]);
+    });
+  }
 
   let fields: Field[] = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   values.forEach((value: any, key: string) => {
     fields.push({
       name: key,
-      values: value,
-      type:
-        options.type && options.type !== FieldType.other
-          ? options.type
-          : detectFieldType(Array.isArray(value) ? value : [value]),
+      values: new ArrayVector(value),
+      type: options.type && options.type !== FieldType.other ? options.type : detectFieldType(value),
       config: {},
     });
   });

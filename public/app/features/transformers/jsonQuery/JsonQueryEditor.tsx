@@ -81,7 +81,7 @@ export const jsonQueryTransformerEditor: React.FC<TransformerUIProps<JSONQueryOp
           }
           grow
         >
-          <Input onChange={onChangeQuery} value={options.query ?? ''} />
+          <Input onChange={onChangeQuery} value={options.query ?? '$'} />
         </InlineField>
         <InlineField label="Type" tooltip="If Auto is set, the JSON property type is used to detect the field type.">
           <Select
