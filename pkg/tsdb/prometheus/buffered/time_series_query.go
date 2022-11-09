@@ -3,6 +3,7 @@ package buffered
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -155,6 +156,12 @@ func (b *Buffered) runQuery(ctx context.Context, query *PrometheusQuery) (backen
 	if query.RangeQuery {
 		rangeResponse, _, err := b.client.QueryRange(ctx, query.Expr, timeRange)
 		if err != nil {
+			var promErr *apiv1.Error
+			if errors.As(err, &promErr) {
+				logger.Error("Range query failed", "query", query.Expr, "error", err, "detail", promErr.Detail)
+				return backend.DataResponse{Error: fmt.Errorf("%w: details: %s", err, promErr.Detail)}, nil
+			}
+
 			logger.Error("Range query failed", "query", query.Expr, "err", err)
 			return backend.DataResponse{Error: err}, nil
 		}
@@ -164,6 +171,13 @@ func (b *Buffered) runQuery(ctx context.Context, query *PrometheusQuery) (backen
 	if query.InstantQuery {
 		instantResponse, _, err := b.client.Query(ctx, query.Expr, query.End)
 		if err != nil {
+
+			var promErr *apiv1.Error
+			if errors.As(err, &promErr) {
+				logger.Error("Instant query failed", "query", query.Expr, "error", err, "detail", promErr.Detail)
+				return backend.DataResponse{Error: fmt.Errorf("%w: details: %s", err, promErr.Detail)}, nil
+			}
+
 			logger.Error("Instant query failed", "query", query.Expr, "err", err)
 			return backend.DataResponse{Error: err}, nil
 		}
@@ -175,6 +189,12 @@ func (b *Buffered) runQuery(ctx context.Context, query *PrometheusQuery) (backen
 	if query.ExemplarQuery {
 		exemplarResponse, err := b.client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 		if err != nil {
+			var promErr *apiv1.Error
+			if errors.As(err, &promErr) {
+				logger.Error("Exemplar query failed", "query", query.Expr, "error", err, "detail", promErr.Detail)
+				return backend.DataResponse{Error: fmt.Errorf("%w: details: %s", err, promErr.Detail)}, nil
+			}
+
 			logger.Error("Exemplar query failed", "query", query.Expr, "err", err)
 		} else {
 			response[ExemplarQueryType] = exemplarResponse
