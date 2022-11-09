@@ -34,7 +34,6 @@ export type TraceLog = {
 };
 
 export type TraceProcess = {
-  processID?: string;
   serviceName: string;
   tags: TraceKeyValuePair[];
 };
