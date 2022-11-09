@@ -498,7 +498,7 @@ export function getBrowseStorageRoutes(cfg = config): RouteDescriptor[] {
   }
   return [
     {
-      path: '/g/:slug*.json', // suffix will eventually include dashboard
+      path: '/x-dash/:slug*', // will map to drive/${uid}-dashboard.json
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Path,
       component: SafeDynamicImport(

@@ -51,7 +51,6 @@ func (s *httpObjectStore) RegisterHTTPRoutes(route routing.RouteRegister) {
 
 	// Every * must parse to a GRN (uid+kind)
 	route.Get("/store/*", reqGrafanaAdmin, routing.Wrap(s.doGetObject))
-	route.Post("/store/*", reqGrafanaAdmin, routing.Wrap(s.doWriteObject))
 	route.Delete("/store/*", reqGrafanaAdmin, routing.Wrap(s.doDeleteObject))
 	route.Get("/raw/*", reqGrafanaAdmin, routing.Wrap(s.doGetRawObject))
 	route.Get("/history/*", reqGrafanaAdmin, routing.Wrap(s.doGetHistory))
@@ -64,7 +63,8 @@ func (s *httpObjectStore) RegisterHTTPRoutes(route routing.RouteRegister) {
 	route.Post("/createFolder", reqGrafanaAdmin, routing.Wrap(s.doCreateFolder))
 	route.Post("/deleteFolder", reqGrafanaAdmin, routing.Wrap(s.doDeleteFolder))
 
-	// File upload
+	// Write files
+	route.Post("/write/:scope/:kind", reqGrafanaAdmin, routing.Wrap(s.doWriteObject))
 	route.Post("/upload/:scope", reqGrafanaAdmin, routing.Wrap(s.doUpload))
 }
 
@@ -175,23 +175,27 @@ func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response
 const MAX_UPLOAD_SIZE = 5 * 1024 * 1024 // 5MB
 
 func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response {
-	grn, params, err := s.getGRNFromRequest(c)
-	if err != nil {
-		return response.Error(400, err.Error(), err)
+	params := web.Params(c.Req)
+	cmd := &WriteValueRequest{}
+	if err := web.Bind(c.Req, cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	grn := &object.GRN{
+		TenantId: c.OrgID,
+		Scope:    params[":scope"],
+		Kind:     params[":kind"],
+		UID:      cmd.UID,
 	}
 
-	// Cap the max size
-	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, MAX_UPLOAD_SIZE)
-	b, err := io.ReadAll(c.Req.Body)
-	if err != nil {
-		return response.Error(400, "error reading body", err)
+	if cmd.Workflow != WriteValueWorkflow_Save {
+		return response.Error(http.StatusBadRequest, "unsupported workflow!!! "+cmd.Workflow, nil)
 	}
 
 	rsp, err := s.store.Write(c.Req.Context(), &object.WriteObjectRequest{
 		GRN:             grn,
-		Body:            b,
-		Comment:         params["comment"],
-		PreviousVersion: params["previousVersion"],
+		Body:            cmd.Body,
+		Comment:         cmd.Message,
+		PreviousVersion: cmd.PreviousVersion,
 	})
 	if err != nil {
 		return response.Error(500, "?", err)
@@ -348,16 +352,6 @@ func (s *httpObjectStore) doGetWorkflowOptions(c *models.ReqContext) response.Re
 	grn, params, err := s.getGRNFromRequest(c)
 	if err != nil {
 		return response.Error(400, err.Error(), err)
-	}
-
-	type workflowInfo struct {
-		Type        store.WriteValueWorkflow `json:"value"` // value matches selectable value
-		Label       string                   `json:"label"`
-		Description string                   `json:"description,omitempty"`
-	}
-	type optionInfo struct {
-		Path      string         `json:"path,omitempty"`
-		Workflows []workflowInfo `json:"workflows"`
 	}
 
 	options := optionInfo{

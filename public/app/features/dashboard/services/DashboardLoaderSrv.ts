@@ -42,7 +42,14 @@ export class DashboardLoaderSrv {
         return this._dashboardLoadFailed('Snapshot not found', true);
       });
     } else if (type === DashboardRoutes.Path) {
-      promise = getGrafanaStorage().getDashboard(slug!);
+      let uid = slug!;
+      let version = undefined;
+      const idx = uid.indexOf('@');
+      if (idx > 0) {
+        uid = uid.substring(0, idx);
+        version = slug.substring(idx + 1);
+      }
+      promise = getGrafanaStorage().getDashboard(uid, version);
     } else if (type === 'ds') {
       promise = this._loadFromDatasource(slug); // explore dashboards as code
     } else if (type === 'public') {

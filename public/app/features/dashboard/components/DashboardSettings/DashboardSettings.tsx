@@ -18,6 +18,7 @@ import { SaveDashboardAsButton, SaveDashboardButton } from '../SaveDashboard/Sav
 
 import { AnnotationsSettings } from './AnnotationsSettings';
 import { GeneralSettings } from './GeneralSettings';
+import { HistorySettings } from './HistorySettings';
 import { JsonEditorSettings } from './JsonEditorSettings';
 import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
@@ -120,7 +121,16 @@ function getSettingsPages(dashboard: DashboardModel) {
     });
   }
 
-  if (dashboard.id && dashboard.meta.canSave) {
+  const isFromStorage = config.featureToggles.dashboardsFromStorage && dashboard.uid?.indexOf('/') > 0;
+
+  if (isFromStorage) {
+    pages.push({
+      title: 'History',
+      id: 'history',
+      icon: 'history',
+      component: HistorySettings,
+    });
+  } else if (dashboard.id && dashboard.meta.canSave) {
     pages.push({
       title: 'Versions',
       id: 'versions',

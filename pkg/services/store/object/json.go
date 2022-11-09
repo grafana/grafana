@@ -123,11 +123,11 @@ func readRawObject(iter *jsoniter.Iterator, raw *RawObject) {
 		case "GRN":
 			raw.GRN = &GRN{}
 			iter.ReadVal(raw.GRN)
-		case "updated":
+		case "updatedAt":
 			raw.UpdatedAt = iter.ReadInt64()
 		case "updatedBy":
 			raw.UpdatedBy = iter.ReadString()
-		case "created":
+		case "createdAt":
 			raw.CreatedAt = iter.ReadInt64()
 		case "createdBy":
 			raw.CreatedBy = iter.ReadString()

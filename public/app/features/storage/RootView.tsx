@@ -65,7 +65,7 @@ export function RootView({ items, onPathChange }: Props) {
       <VerticalGroup>
         {items.map((item) => {
           return (
-            <Card key={item.path} href={`admin/storage${item.path}/`}>
+            <Card key={item.uid} href={`admin/storage/${item.uid}/`}>
               <Card.Heading>{item.name}</Card.Heading>
               <Card.Meta className={styles.clickable}>{item.description}</Card.Meta>
             </Card>

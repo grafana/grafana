@@ -52,7 +52,7 @@ export enum WorkflowID {
 }
 
 export interface WriteValueRequest {
-  kind: string;
+  uid: string;
   body: {}; // json body
   message?: string;
   title?: string;
@@ -75,9 +75,9 @@ export interface ItemOptions {
 }
 
 export interface ListItem {
-  name: string;
+  uid: string;
   kind: string;
-  path: string; // with scope
+  name: string;
   description: string;
   labels?: Record<string, string>;
   fields?: Record<string, string | number | boolean>;
@@ -97,10 +97,10 @@ export interface ListItem {
 // updatedByFrameField   = "updatedBy"
 
 export interface GRN {
-  tenant_id: number;
+  tenant_id?: number;
   scope: string;
   kind: string;
-  uid: string;
+  UID: string;
 }
 
 export interface RawObject<T = unknown> {
@@ -128,4 +128,16 @@ export interface ObjectInfo<T = unknown> {
   summary: ObjectSummary;
 }
 
-export interface ObjectHistory {}
+export interface VersionInfo {
+  version: string;
+  updated_at: number;
+  updated_by: string;
+  size: number;
+  ETag: string;
+  comment: string;
+}
+
+export interface ObjectHistory {
+  GRN: GRN;
+  versions: VersionInfo[];
+}

@@ -104,7 +104,7 @@ export default function StoragePage(props: Props) {
             const item = view.get(cfg.valueRowIndex ?? 0);
             const n = item.name;
             const isFolder = item.kind === 'folder';
-            const p = isFolder ? path + '/' + n : item.path;
+            const p = isFolder ? path + '/' + n : item.uid; // TODO
             return [
               {
                 title: `Open ${n}`,

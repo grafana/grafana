@@ -50,7 +50,11 @@ export function SaveToStorageForm(props: Props) {
   }, [workflow]);
 
   const item = useAsync(async () => {
-    const opts = await getGrafanaStorage().getOptions(dashboard.uid);
+    const opts = await getGrafanaStorage().getOptions({
+      scope: 'drive',
+      kind: 'dashboard',
+      UID: dashboard.uid,
+    });
     setWorkflow(opts.workflows[0]?.value ?? WorkflowID.Save);
     return opts;
   }, [dashboard.uid]);
@@ -99,17 +103,21 @@ export function SaveToStorageForm(props: Props) {
         let uid = saveModel.clone.uid;
         if (isNew || isCopy) {
           uid = path;
-          if (!uid.endsWith('-dash.json')) {
-            uid += '-dash.json';
-          }
         }
-        const rsp = await getGrafanaStorage().write(uid, {
-          body: saveModel.clone,
-          kind: 'dashboard',
-          title: data.title,
-          message: data.message,
-          workflow: workflow,
-        });
+        const rsp = await getGrafanaStorage().write(
+          {
+            kind: 'dashboard',
+            scope: 'drive',
+            UID: uid,
+          },
+          {
+            uid,
+            body: saveModel.clone,
+            title: data.title,
+            message: data.message,
+            workflow: workflow,
+          }
+        );
 
         if (rsp.code === 200) {
           if (options.saveVariables) {

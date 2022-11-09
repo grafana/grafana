@@ -11,18 +11,20 @@ import {
   WriteValueResponse,
   ObjectInfo,
   ObjectHistory,
+  GRN,
 } from './types';
 
 export interface ObjectParams {
   summary?: boolean; // defaults false
   body?: boolean; // default true
+  version?: string; // empty for default
 }
 
 // Likely should be built into the search interface!
 export interface GrafanaStorage {
   get: <T = unknown>(path: string, params?: ObjectParams) => Promise<ObjectInfo<T>>;
   list: (path: string) => Promise<DataFrame | undefined>;
-  history: (path: string) => Promise<ObjectHistory>;
+  history: (grn: GRN) => Promise<ObjectHistory>;
 
   upload: (folder: string, file: File, overwriteExistingFile: boolean) => Promise<UploadReponse>;
   createFolder: (path: string) => Promise<{ error?: string }>;
@@ -32,16 +34,16 @@ export interface GrafanaStorage {
   getConfig: () => Promise<StorageInfo[]>;
 
   /** Called before save */
-  getOptions: (path: string) => Promise<ItemOptions>;
+  getOptions: (grn: GRN) => Promise<ItemOptions>;
 
   /**
    * Temporary shim that will return a DashboardDTO shape for files in storage
    * Longer term, this will call an "Entity API" that is eventually backed by storage
    */
-  getDashboard: (path: string) => Promise<DashboardDTO>;
+  getDashboard: (uid: string, version?: string) => Promise<DashboardDTO>;
 
-  /** Saves dashbaords */
-  write: (path: string, options: WriteValueRequest) => Promise<WriteValueResponse>;
+  /** Write dashboards */
+  write: (grn: GRN, options: WriteValueRequest) => Promise<WriteValueResponse>;
 }
 
 class SimpleStorage implements GrafanaStorage {
@@ -52,8 +54,8 @@ class SimpleStorage implements GrafanaStorage {
     return getBackendSrv().get<ObjectInfo<T>>(storagePath, params);
   }
 
-  async history(path: string): Promise<ObjectHistory> {
-    const storagePath = `api/object/history/${path}`.replace('//', '/');
+  async history(grn: GRN): Promise<ObjectHistory> {
+    const storagePath = `api/object/history/${grn.scope}/${grn.kind}/${grn.UID}`;
     return getBackendSrv().get<ObjectHistory>(storagePath);
   }
 
@@ -154,51 +156,59 @@ class SimpleStorage implements GrafanaStorage {
   }
 
   // Temporary shim that can be loaded into the existing dashboard page structure
-  async getDashboard(path: string): Promise<DashboardDTO> {
+  async getDashboard(uid: string, version?: string): Promise<DashboardDTO> {
     if (!config.featureToggles.dashboardsFromStorage) {
       return Promise.reject('Dashboards from storage is not enabled');
     }
 
-    if (!path.endsWith('.json')) {
-      path += '.json';
-    }
-
+    let path = uid;
     if (!path.startsWith('drive/')) {
-      path = `drive/${path}`;
+      if (path.endsWith('.json')) {
+        path = `drive/${path}`;
+      } else {
+        path = `drive/dashboard/${path}`;
+      }
+    }
+    let params: ObjectParams | undefined = undefined;
+    if (version?.length) {
+      params = { version };
     }
 
-    const result = await this.get<DashboardDataDTO>(path);
+    const result = await this.get<DashboardDataDTO>(path, params);
+    const { body, body_base64, ...rest } = result.object;
 
-    if (!result.object?.body) {
+    if (!body) {
       throw 'not found: ' + path;
     }
 
-    result.object.body.uid = path;
-
+    const grn = rest.GRN;
+    body.uid = grn.UID;
     return {
       meta: {
-        uid: path,
+        uid: grn.UID, // unique within `drive` + dashboard
         slug: path,
         canEdit: true,
         canSave: true,
         canStar: false, // needs id
         // updated: result.object.updated,
         updatedBy: result.object.updatedBy,
+        object: rest, // the storage info without body
       },
-      dashboard: result.object.body,
+      dashboard: body,
     };
   }
 
-  async write(path: string, options: WriteValueRequest): Promise<WriteValueResponse> {
-    return backendSrv.post<WriteValueResponse>(`/api/object/store/${path}`, options);
+  async write(grn: GRN, options: WriteValueRequest): Promise<WriteValueResponse> {
+    options.uid = grn.UID;
+    return backendSrv.post<WriteValueResponse>(`/api/object/write/${grn.scope}/${grn.kind}`, options);
   }
 
   async getConfig() {
     return getBackendSrv().get<StorageInfo[]>('/api/storage/config');
   }
 
-  async getOptions(path: string) {
-    return getBackendSrv().get<ItemOptions>(`/api/object/options/${path}`);
+  async getOptions(grn: GRN) {
+    return getBackendSrv().get<ItemOptions>(`/api/object/options/${grn.scope}/${grn.kind}/${grn.UID}`);
   }
 }
 

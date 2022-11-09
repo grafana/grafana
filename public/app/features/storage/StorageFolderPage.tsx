@@ -28,12 +28,15 @@ export function StorageFolderPage(props: Props) {
 
       const view = new DataFrameView<ListItem>(listing.value);
       return view.map((item: ListItem) => {
+        let url = `g/${item.uid}`;
         const isFolder = item.kind === 'folder';
         const isDash = item.kind === 'dashboard';
-        const url = `g/${item.path.substring('drive/'.length)}`; // skip the "drive/" at the beginning
+        if (isDash) {
+          url = `x-dash/${item.uid}`;
+        }
 
         return (
-          <Card key={item.path} href={isFolder || isDash ? url : undefined}>
+          <Card key={url} href={isFolder || isDash ? url : undefined}>
             <Card.Heading>{item.name}</Card.Heading>
             <Card.Figure>
               <Icon name={isFolder ? 'folder' : isDash ? 'gf-grid' : 'file-alt'} size="sm" />

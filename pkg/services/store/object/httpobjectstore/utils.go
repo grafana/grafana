@@ -3,23 +3,20 @@ package httpobjectstore
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/store/router"
 )
 
 const (
-	nameFrameField        = "name"
+	uidFrameField         = "uid"
 	kindFrameField        = "kind"
-	pathPathField         = "path" // scope + uid
+	nameFrameField        = "name"
 	descriptionFrameField = "description"
 	labelsFrameField      = "labels"
 	fieldsFrameField      = "fields"
@@ -34,9 +31,9 @@ func resultsToFrame(ctx context.Context, rsp *object.ObjectSearchResponse, route
 	}
 	count := len(rsp.Results)
 
-	name := data.NewFieldFromFieldType(data.FieldTypeString, count)
+	uid := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	kind := data.NewFieldFromFieldType(data.FieldTypeString, count)
-	path := data.NewFieldFromFieldType(data.FieldTypeString, count)
+	name := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	descr := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	size := data.NewFieldFromFieldType(data.FieldTypeInt64, count)
 	labels := data.NewFieldFromFieldType(data.FieldTypeJSON, count)
@@ -46,7 +43,7 @@ func resultsToFrame(ctx context.Context, rsp *object.ObjectSearchResponse, route
 
 	name.Name = nameFrameField
 	kind.Name = kindFrameField
-	path.Name = pathPathField
+	uid.Name = uidFrameField
 	descr.Name = descriptionFrameField
 	size.Name = sizeFrameField
 	size.Config = &data.FieldConfig{
@@ -58,18 +55,16 @@ func resultsToFrame(ctx context.Context, rsp *object.ObjectSearchResponse, route
 	updatedBy.Name = "updatedBy"
 
 	for i, res := range rsp.Results {
-		p := ""
-
 		name.Set(i, res.Name)
 		kind.Set(i, res.GRN.Kind)
-		if res.GRN.Kind == models.StandardKindFolder {
-			p = fmt.Sprintf("%s/%s", res.GRN.Scope, res.GRN.UID)
-		} else {
-			info, _ := router.Route(ctx, res.GRN)
-			idx := strings.Index(info.Key, "/") + 1
-			p = info.Key[idx:]
-		}
-		path.Set(i, p) // only drive for now
+		// if res.GRN.Kind == models.StandardKindFolder {
+		// 	p = fmt.Sprintf("%s/%s", res.GRN.Scope, res.GRN.UID)
+		// } else {
+		// 	info, _ := router.Route(ctx, res.GRN)
+		// 	idx := strings.Index(info.Key, "/") + 1
+		// 	p = info.Key[idx:]
+		// }
+		uid.Set(i, res.GRN.UID)
 		descr.Set(i, res.Description)
 
 		if res.Labels != nil {
@@ -90,7 +85,7 @@ func resultsToFrame(ctx context.Context, rsp *object.ObjectSearchResponse, route
 		}
 	}
 
-	return data.NewFrame("", name, kind, path, descr, size, labels, fields, updatedAt, updatedBy)
+	return data.NewFrame("", uid, kind, name, descr, size, labels, fields, updatedAt, updatedBy)
 }
 
 func asBoolean(key string, vals url.Values, defaultValue bool) bool {

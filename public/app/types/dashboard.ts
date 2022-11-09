@@ -1,5 +1,6 @@
 import { DataQuery } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { RawObject } from 'app/features/storage/types';
 import { VariableModel } from 'app/features/variables/types';
 
 import { DashboardAcl } from './acl';
@@ -46,6 +47,9 @@ export interface DashboardMeta {
   publicDashboardEnabled?: boolean;
   hasPublicDashboard?: boolean;
   dashboardNotFound?: boolean;
+
+  // This will be set if the dashboard came from object storage
+  object?: RawObject;
 }
 
 export interface AnnotationActions {
