@@ -23,10 +23,8 @@ interface SceneGridLayoutState extends SceneLayoutState {}
 export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   static Component = SceneGridLayoutRenderer;
 
-  //private _flattenedChildren: Record<string, { row?: SceneGridRow; child: SceneLayoutChild }> = {};
-  //private _rowBBoxes: Record<string, { x: number; y: number; height: number }> = {};
-
   private _skipOnLayoutChange = false;
+
   constructor(state: SceneGridLayoutState) {
     super({
       isDraggable: true,
@@ -46,16 +44,6 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   // get rowBBoxes() {
   //   return this._rowBBoxes;
   // }
-
-  updateLayout() {
-    //this._flattenedChildren = flattenGridLayoutChildren(this.state.children);
-    //this._rowBBoxes = buildRowBBoxes(this.state.children);
-
-    // Force a re-render
-    this.setState({
-      children: [...this.state.children],
-    });
-  }
 
   onLayoutChange = (layout: ReactGridLayout.Layout[]) => {
     if (this._skipOnLayoutChange) {
@@ -85,7 +73,6 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     }
 
     this.setState({ children: [...this.state.children] });
-    //this._flattenedChildren = flattenGridLayoutChildren(this.state.children);
   };
 
   getChild(key: string) {
@@ -460,7 +447,7 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
       } else {
         this.setState({ isCollapsed: true });
       }
-      layout.updateLayout();
+      // layout.updateLayout();
     }
   };
 }
@@ -533,56 +520,6 @@ function validateChildrenSize(children: SceneLayoutChild[]) {
   ) {
     throw new Error('All children must have a size specified');
   }
-}
-
-/**
- * Given a list of GridLayout children will flatten it and keep references to the row if a child comes from one
- */
-function flattenGridLayoutChildren(
-  children: SceneLayoutChild[]
-): Record<string, { row?: SceneGridRow; child: SceneLayoutChild }> {
-  let flattenedChildren: Record<string, { row?: SceneGridRow; child: SceneLayoutChild }> = {};
-
-  for (const child of children) {
-    if (child instanceof SceneGridRow) {
-      // row is perceived as a flat child of the grid layout
-      flattenedChildren[child.state.key!] = { child };
-
-      if (!child.state.isCollapsed) {
-        // all row children are perceived as flat children of the grid layout
-        const rowChildren = flattenGridLayoutChildren(child.state.children);
-
-        for (const key in rowChildren) {
-          rowChildren[key] = { ...rowChildren[key], row: child };
-        }
-        flattenedChildren = { ...flattenedChildren, ...rowChildren };
-      }
-    } else {
-      flattenedChildren[child.state.key!] = { child };
-    }
-  }
-
-  return flattenedChildren;
-}
-
-function buildRowBBoxes(children: SceneLayoutChild[]) {
-  const rowBBoxes: Record<string, { x: number; y: number; width: number; height: number }> = {};
-  for (const child of children) {
-    if (child instanceof SceneGridRow) {
-      const x = 0;
-      const y = child.state.size?.y!;
-      const width = 24;
-      const heights = [];
-      for (const rowChildren of child.state.children) {
-        heights.push(rowChildren.state.size?.height! + rowChildren.state.size?.y!);
-      }
-
-      const height = heights.length ? Math.max(...heights) + 1 : 1;
-      rowBBoxes[child.state.key!] = { x, y, width, height };
-    }
-  }
-
-  return rowBBoxes;
 }
 
 // Source: https://github.com/metabase/metabase/blob/master/frontend/src/metabase/dashboard/components/grid/utils.js#L28
