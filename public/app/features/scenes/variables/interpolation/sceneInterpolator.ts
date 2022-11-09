@@ -1,0 +1,113 @@
+import { ScopedVars } from '@grafana/data';
+import { VariableModel } from '@grafana/schema';
+import { variableRegex } from 'app/features/variables/utils';
+
+import { SceneObject } from '../../core/types';
+import { SceneVariable, VariableValue } from '../types';
+
+import { formatRegistry, FormatRegistryID } from './formatRegistry';
+
+type CustomFormatterFn = (
+  value: unknown,
+  legacyVariableModel: VariableModel,
+  legacyDefaultFormatter: CustomFormatterFn
+) => string;
+
+export function sceneInterpolator(
+  sceneObject: SceneObject,
+  target: string | undefined | null,
+  scopedVar?: ScopedVars,
+  format?: string | CustomFormatterFn
+): string {
+  if (!target) {
+    return target ?? '';
+  }
+
+  // Skip any interpolation if there are no variables in the scene object graph?
+  if (!sceneObject.getVariables()) {
+    return target;
+  }
+
+  variableRegex.lastIndex = 0;
+
+  return target.replace(variableRegex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
+    const variableName = var1 || var2 || var3;
+    const variable = lookupSceneVariable(variableName, sceneObject);
+    const fmt = fmt2 || fmt3 || format;
+
+    if (!variable) {
+      return match;
+    }
+
+    return formatValue(variable, variable.getValue(fieldPath), fmt);
+  });
+}
+
+function lookupSceneVariable(name: string, sceneObject: SceneObject): SceneVariable | null | undefined {
+  const variables = sceneObject.state.$variables;
+  if (!variables) {
+    if (sceneObject.parent) {
+      return lookupSceneVariable(name, sceneObject.parent);
+    } else {
+      return null;
+    }
+  }
+
+  const found = variables.getByName(name);
+  if (found) {
+    return found;
+  } else if (sceneObject.parent) {
+    return lookupSceneVariable(name, sceneObject.parent);
+  }
+
+  return null;
+}
+
+function formatValue(
+  variable: SceneVariable,
+  value: VariableValue | undefined | null,
+  formatNameOrFn: string | CustomFormatterFn
+): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  // if (isAdHoc(variable) && format !== FormatRegistryID.queryParam) {
+  //   return '';
+  // }
+
+  // if it's an object transform value to string
+  if (!Array.isArray(value) && typeof value === 'object') {
+    value = `${value}`;
+  }
+
+  if (typeof formatNameOrFn === 'function') {
+    // legacy custom formatter function, TODO
+    //return format(value, {}, this.formatValue);
+    throw new Error('Custom formatter function not supported');
+  }
+
+  let args: string[] = [];
+
+  if (!formatNameOrFn) {
+    formatNameOrFn = FormatRegistryID.glob;
+  } else {
+    // some formats have arguments that come after ':' character
+    args = formatNameOrFn.split(':');
+    if (args.length > 1) {
+      formatNameOrFn = args[0];
+      args = args.slice(1);
+    } else {
+      args = [];
+    }
+  }
+
+  let formatter = formatRegistry.getIfExists(formatNameOrFn);
+
+  if (!formatter) {
+    console.error(`Variable format ${formatNameOrFn} not found. Using glob format as fallback.`);
+    formatter = formatRegistry.get(FormatRegistryID.glob);
+  }
+
+  return formatter.formatter(value, args, variable);
+}
