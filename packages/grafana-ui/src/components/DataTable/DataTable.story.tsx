@@ -28,6 +28,7 @@ const meta: ComponentMeta<typeof DataTable> = {
 interface TableData {
   header1: string;
   header2?: number;
+  noheader?: string;
 }
 
 export const Basic: ComponentStory<typeof DataTable> = (args) => {
@@ -42,7 +43,7 @@ export const Basic: ComponentStory<typeof DataTable> = (args) => {
     ],
     []
   );
-  const data = useMemo(
+  const data: TableData[] = useMemo(
     () => [
       { header1: 'a', header2: 1 },
       { header1: 'b', noheader: "This column doesn't have an header" },
