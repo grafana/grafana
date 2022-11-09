@@ -9,7 +9,7 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Alert, HorizontalGroup, Icon, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Alert, HorizontalGroup, Icon, Select, useStyles2 } from '@grafana/ui';
 
 import { FrameGeometryField, getGeometryField, getLocationMatchers } from '../utils/location';
 
@@ -18,21 +18,25 @@ const MODE_OPTIONS = [
     value: FrameGeometrySourceMode.Auto,
     label: 'Auto',
     ariaLabel: selectors.components.Transforms.SpatialOperations.location.autoOption,
+    description: 'Automatically identify location data based on default field names',
   },
   {
     value: FrameGeometrySourceMode.Coords,
     label: 'Coords',
     ariaLabel: selectors.components.Transforms.SpatialOperations.location.coords.option,
+    description: 'Specify latitude and longitude fields',
   },
   {
     value: FrameGeometrySourceMode.Geohash,
     label: 'Geohash',
     ariaLabel: selectors.components.Transforms.SpatialOperations.location.geohash.option,
+    description: 'Specify geohash field',
   },
   {
     value: FrameGeometrySourceMode.Lookup,
     label: 'Lookup',
     ariaLabel: selectors.components.Transforms.SpatialOperations.location.lookup.option,
+    description: 'Specify Gazetteer and lookup field',
   },
 ];
 
@@ -89,11 +93,11 @@ export const LocationModeEditor = ({
 
   return (
     <>
-      <RadioButtonGroup
-        value={value}
+      <Select
         options={MODE_OPTIONS}
+        value={value}
         onChange={(v) => {
-          onChange(v);
+          onChange(v.value);
         }}
       />
       <HorizontalGroup className={styles.hGroup}>{dataValidation()}</HorizontalGroup>

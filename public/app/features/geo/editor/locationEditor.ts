@@ -20,7 +20,7 @@ export function addLocationFields<TOptions>(
   builder.addCustomEditor({
     id: 'modeEditor',
     path: `${prefix}mode`,
-    name: 'Location',
+    name: 'Location Mode',
     editor: LocationModeEditor,
     settings: { data, source },
   });
