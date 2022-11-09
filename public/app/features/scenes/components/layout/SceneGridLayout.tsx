@@ -14,6 +14,7 @@ import {
   SceneLayoutChildState,
   SceneLayoutState,
   SceneObject,
+  SceneObjectSize,
 } from '../../core/types';
 import { SceneDragHandle } from '../SceneDragHandle';
 
@@ -25,12 +26,17 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   private _flattenedChildren: Record<string, { row?: SceneGridRow; child: SceneLayoutChild }> = {};
   private _rowBBoxes: Record<string, { x: number; y: number; height: number }> = {};
 
+  private _skipOnLayoutChange = false;
   constructor(state: SceneGridLayoutState) {
     super({
       isDraggable: true,
       ...state,
     });
+
+    // Flat record of all layout children
     this._flattenedChildren = flattenGridLayoutChildren(this.state.children);
+
+    // Bounding boxes for each row
     this._rowBBoxes = buildRowBBoxes(this.state.children);
   }
 
@@ -42,27 +48,39 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   }
 
   updateLayout() {
+    this._flattenedChildren = flattenGridLayoutChildren(this.state.children);
+    this._rowBBoxes = buildRowBBoxes(this.state.children);
+
+    // Force a re-render
     this.setState({
       children: [...this.state.children],
     });
-
-    this._flattenedChildren = flattenGridLayoutChildren(this.state.children);
-    this._rowBBoxes = buildRowBBoxes(this.state.children);
   }
 
   onLayoutChange = (layout: ReactGridLayout.Layout[]) => {
+    if (this._skipOnLayoutChange) {
+      // Layout has been updated by other RTL handler already
+      this._skipOnLayoutChange = false;
+      return;
+    }
+
     for (const item of layout) {
       const child = this.state.children.find((c) => c.state.key === item.i);
       if (child) {
-        child.setState({
-          size: {
-            ...child.state.size,
-            x: item.x,
-            y: item.y,
-            width: item.w,
-            height: item.h,
-          },
-        });
+        const nextSize = {
+          x: item.x,
+          y: item.y,
+          width: item.w,
+          height: item.h,
+        };
+        if (!isItemSizeEqual(child.state.size!, nextSize)) {
+          child.setState({
+            size: {
+              ...child.state.size,
+              ...nextSize,
+            },
+          });
+        }
       }
     }
     this.setState({ children: [...this.state.children] });
@@ -70,44 +88,18 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   };
 
   onResizeStop: ReactGridLayout.ItemCallback = (_, o, n) => {
-    const child = this.state.children.find((c) => c.state.key === n.i);
+    const child = this.flattenedChildren[n.i];
     if (!child) {
       return;
     }
-    child.setState({
+    child.child.setState({
       size: {
-        ...child.state.size,
+        ...child.child.state.size,
         width: n.w,
         height: n.h,
       },
     });
-    // this._flattenedChildren = flattenGridLayoutChildren(this.state.children);
   };
-
-  // onDrag: ReactGridLayout.ItemCallback = debounce((l, __, n, p) => {
-  //   const rowBBoxes: Record<string, { x: number; y: number; width: number; height: number }> = {};
-  //   for (const child of this.state.children) {
-  //     if (child instanceof SceneGridRow) {
-  //       const x = 0;
-  //       const y = child.state.size?.y!;
-  //       const width = 24;
-  //       const heights = [];
-  //       for (const rowChild of child.state.children) {
-  //         if (rowChild.state.key === n.i) {
-  //           heights.push(p.h + p.y!);
-  //         } else {
-  //           heights.push(rowChild.state.size?.height! + rowChild.state.size?.y!);
-  //         }
-  //       }
-
-  //       const height = Math.max(...heights);
-  //       rowBBoxes[child.state.key!] = { x, y, width, height };
-  //     }
-  //   }
-
-  //   this._draggingRowBBoxes = rowBBoxes;
-  //   console.log('aaa', this._draggingRowBBoxes, this.rowBBoxes);
-  // }, 100);
 
   onDragStop: ReactGridLayout.ItemCallback = (l, o, n) => {
     const layoutProcessedSize: string[] = [];
@@ -121,18 +113,11 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       }
     > = {};
 
-    // if fits any active row - revire
     for (const rowKey in this._rowBBoxes) {
       if (this.flattenedChildren[rowKey] && this.flattenedChildren[rowKey].child.state.isCollapsed) {
         continue;
       }
       activeRows[rowKey] = this._rowBBoxes[rowKey];
-      // console.log(
-      //   'activeRows has collapsed',
-      //   this._draggingRowBBoxes[rowKey].height < activeRows[rowKey].height,
-      //   this._draggingRowBBoxes[rowKey].height,
-      //   activeRows[rowKey].height
-      // );
     }
 
     const source = this.flattenedChildren[n.i];
@@ -142,16 +127,15 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     if (Object.keys(activeRows).length !== 0) {
       for (const rowKey in activeRows) {
         const row = activeRows[rowKey];
-
-        if (n.y > row.y && n.y < row.y + row.height) {
+        if (n.y > row.y && n.y <= row.y + row.height) {
           target = this.flattenedChildren[rowKey].child!;
           console.log(n.i, 'fits', rowKey);
         }
       }
     }
 
+    // If dropped into a row...
     if (target) {
-      console.log('fits a row', target.state.key);
       // update source child size realtive to target row
       source.child.setState({
         size: {
@@ -161,29 +145,28 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
         },
       });
 
+      // skip size update later on
       layoutProcessedSize.push(n.i);
+
       // add child to new target row
       target.setState({
         children: [...target.state.children, source.child],
       });
 
-      if (source.row) {
-        // remove child from old row
-        if (source.row !== target) {
-          debugger;
-          console.log('comes from a row', source.row.state.key);
-          source.row.setState({
-            children: source.row.state.children.filter((c) => c.state.key !== n.i),
-          });
-        }
+      // if source cell was comining from a different row
+      if (source.row && source.row !== target) {
+        console.log('comes from a row', source.row.state.key);
+        source.row.setState({
+          children: source.row.state.children.filter((c) => c.state.key !== n.i),
+        });
       } else {
         // remove child from layout
         this.setState({
           children: this.state.children.filter((c) => c.state.key !== n.i),
         });
-        // source.child.parent?.setState({});
       }
     } else {
+      // If dropped on a grid, but not into a row
       source.child.setState({
         size: {
           ...source.child.state.size,
@@ -191,30 +174,28 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
           y: n.y,
         },
       });
+      // skip size update later on
       layoutProcessedSize.push(n.i);
-      // does not fit a row
+
       if (source.row) {
-        console.log('comes from a row');
+        // if source cell was comining from a row, remove it from it
         source.row.setState({
           children: source.row.state.children.filter((c) => c.state.key !== n.i),
         });
+        // add moved cell to layout
         this.setState({
           children: [...this.state.children, source.child],
         });
       } else {
-        // debugger;
-        console.log('does not from a row');
+        console.log('Moving cell on top level grid');
       }
     }
 
-    console.log(source, target);
-
-    // // Update children positions if they have changed
+    // Update children positions if they have changed
     for (let i = 0; i < l.length; i++) {
       if (layoutProcessedSize.includes(l[i].i)) {
         continue;
       }
-      // let rowOffset = 0;
       const childDef = this.flattenedChildren[l[i].i];
       const child = childDef.child;
       const row = childDef.row;
@@ -232,6 +213,8 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       }
     }
 
+    // Skipping onLayoutChange handler to avoid unnecessary re-renders
+    this._skipOnLayoutChange = true;
     this.updateLayout();
   };
 }
@@ -242,7 +225,10 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
   validateChildrenSize(children);
 
   const layout = useMemo(() => {
-    let lg = Object.values(model.flattenedChildren).map((child) => {
+    let topLevelCells: ReactGridLayout.Layout[] = [];
+    const perRowCells: Record<string, ReactGridLayout.Layout[]> = {};
+
+    Object.values(model.flattenedChildren).forEach((child) => {
       const size = child.child.state.size!;
 
       if (!child.row) {
@@ -253,7 +239,7 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
           isDraggable = child.child.state.isCollapsed ? true : false;
           isResizable = false;
         }
-        return {
+        topLevelCells.push({
           i: child.child.state.key!,
           x: size.x!,
           y: size.y!,
@@ -261,30 +247,53 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
           h: size.height!,
           isResizable,
           isDraggable,
-        };
+        });
       } else {
         // Rendering row children
         let isDraggable = Boolean(child.child.state.isDraggable);
         let isResizable = Boolean(child.child.state.isResizable);
-        return {
+        const cell = {
           i: child.child.state.key!,
           x: size.x!,
-          y: size.y! + child.row.state.size!.y! + 1,
+          // y: size.y!,
+          y: size.y! + child.row.state.size!.y!,
           w: size.width!,
           h: size.height!,
           isResizable,
           isDraggable,
         };
+        if (perRowCells[child.row.state.key!]) {
+          perRowCells[child.row.state.key!].push(cell);
+        } else {
+          perRowCells[child.row.state.key!] = [cell];
+        }
       }
     });
 
-    lg = lg.sort((panelA, panelB) => {
+    topLevelCells = topLevelCells.sort((panelA, panelB) => {
       if (panelA.y === panelB.y) {
         return panelA.x - panelB.x;
       } else {
         return panelA.y - panelB.y;
       }
     });
+    // sort sub row cells
+    for (const rowKey in perRowCells) {
+      perRowCells[rowKey] = perRowCells[rowKey].sort((panelA, panelB) => {
+        if (panelA.y === panelB.y) {
+          return panelA.x - panelB.x;
+        } else {
+          return panelA.y - panelB.y;
+        }
+      });
+    }
+
+    const lg = topLevelCells.reduce<ReactGridLayout.Layout[]>((acc, cell) => {
+      if (perRowCells[cell.i]) {
+        return [...acc, cell, ...perRowCells[cell.i]];
+      }
+      return [...acc, cell];
+    }, []);
 
     return { lg, sm: lg.map((l) => ({ ...l, w: 24 })) };
   }, [model.flattenedChildren]);
@@ -322,7 +331,7 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
               isDraggable={width > 768}
               isResizable={false}
               containerPadding={[0, 0]}
-              useCSSTransforms={false}
+              useCSSTransforms={true}
               margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
               cols={GRID_COLUMN_COUNT}
               rowHeight={GRID_CELL_HEIGHT}
@@ -461,6 +470,71 @@ const getSceneGridRowStyles = (theme: GrafanaTheme2) => {
   };
 };
 
+function validateChildrenSize(children: SceneLayoutChild[]) {
+  if (
+    children.find(
+      (c) =>
+        !c.state.size ||
+        c.state.size.height === undefined ||
+        c.state.size.width === undefined ||
+        c.state.size.x === undefined ||
+        c.state.size.y === undefined
+    )
+  ) {
+    throw new Error('All children must have a size specified');
+  }
+}
+
+/**
+ * Given a list of GridLayout children will flatten it and keep references to the row if a child comes from one
+ */
+function flattenGridLayoutChildren(
+  children: SceneLayoutChild[]
+): Record<string, { row?: SceneGridRow; child: SceneLayoutChild }> {
+  let flattenedChildren: Record<string, { row?: SceneGridRow; child: SceneLayoutChild }> = {};
+
+  for (const child of children) {
+    if (child instanceof SceneGridRow) {
+      // row is perceived as a flat child of the grid layout
+      flattenedChildren[child.state.key!] = { child };
+
+      if (!child.state.isCollapsed) {
+        // all row children are perceived as flat children of the grid layout
+        const rowChildren = flattenGridLayoutChildren(child.state.children);
+
+        for (const key in rowChildren) {
+          rowChildren[key] = { ...rowChildren[key], row: child };
+        }
+        flattenedChildren = { ...flattenedChildren, ...rowChildren };
+      }
+    } else {
+      flattenedChildren[child.state.key!] = { child };
+    }
+  }
+
+  return flattenedChildren;
+}
+
+function buildRowBBoxes(children: SceneLayoutChild[]) {
+  const rowBBoxes: Record<string, { x: number; y: number; width: number; height: number }> = {};
+  for (const child of children) {
+    if (child instanceof SceneGridRow) {
+      const x = 0;
+      const y = child.state.size?.y!;
+      const width = 24;
+      const heights = [];
+      for (const rowChildren of child.state.children) {
+        heights.push(rowChildren.state.size?.height! + rowChildren.state.size?.y!);
+      }
+
+      const height = heights.length ? Math.max(...heights) + 1 : 1;
+      rowBBoxes[child.state.key!] = { x, y, width, height };
+    }
+  }
+
+  return rowBBoxes;
+}
+
 // Source: https://github.com/metabase/metabase/blob/master/frontend/src/metabase/dashboard/components/grid/utils.js#L28
 // © 2022 Metabase, Inc.
 export function generateGridBackground({
@@ -495,65 +569,6 @@ export function generateGridBackground({
   return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
 }
 
-function validateChildrenSize(children: SceneLayoutChild[]) {
-  if (
-    children.find(
-      (c) =>
-        !c.state.size ||
-        c.state.size.height === undefined ||
-        c.state.size.width === undefined ||
-        c.state.size.x === undefined ||
-        c.state.size.y === undefined
-    )
-  ) {
-    throw new Error('All children must have a size specified');
-  }
-}
-
-function flattenGridLayoutChildren(
-  children: SceneLayoutChild[]
-): Record<string, { row?: SceneGridRow; child: SceneLayoutChild }> {
-  let flattenedChildren: Record<string, { row?: SceneGridRow; child: SceneLayoutChild }> = {};
-
-  for (const child of children) {
-    if (child instanceof SceneGridRow) {
-      // row is perceived as a flat child of the grid layout
-      flattenedChildren[child.state.key!] = { child };
-
-      if (!child.state.isCollapsed) {
-        // all row children are perceived as flat children of the grid layout
-        const rowChildren = flattenGridLayoutChildren(child.state.children);
-
-        for (const key in rowChildren) {
-          rowChildren[key] = { ...rowChildren[key], row: child };
-        }
-        flattenedChildren = { ...flattenedChildren, ...rowChildren };
-      }
-    } else {
-      flattenedChildren[child.state.key!] = { child };
-    }
-  }
-
-  // console.log('flattenedChildren', flattenedChildren);
-  return flattenedChildren;
-}
-
-function buildRowBBoxes(children: SceneLayoutChild[]) {
-  const rowBBoxes: Record<string, { x: number; y: number; width: number; height: number }> = {};
-  for (const child of children) {
-    if (child instanceof SceneGridRow) {
-      const x = 0;
-      const y = child.state.size?.y!;
-      const width = 24;
-      const heights = [];
-      for (const rowChildren of child.state.children) {
-        heights.push(rowChildren.state.size?.height! + rowChildren.state.size?.y!);
-      }
-
-      const height = Math.max(...heights);
-      rowBBoxes[child.state.key!] = { x, y, width, height };
-    }
-  }
-
-  return rowBBoxes;
+function isItemSizeEqual(a: SceneObjectSize, b: SceneObjectSize) {
+  return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
 }

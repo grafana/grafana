@@ -28,35 +28,35 @@ export function getGridWithRowLayoutTest(): Scene {
             new VizPanel({
               pluginId: 'timeseries',
               title: 'Nested within a row',
-              isResizable: false,
+              isResizable: true,
               isDraggable: true,
-              size: { x: 0, y: 0, width: 12, height: 5 },
+              size: { x: 0, y: 1, width: 12, height: 5 },
             }),
             new VizPanel({
               pluginId: 'timeseries',
               title: 'Nested within a row',
-              isResizable: false,
+              isResizable: true,
               isDraggable: true,
               size: { x: 0, y: 5, width: 6, height: 5 },
             }),
           ],
         }),
-        // new VizPanel({
-        //   isResizable: true,
-        //   isDraggable: true,
-        //   pluginId: 'timeseries',
-        //   title: 'Draggable and resizable',
-        //   size: {
-        //     x: 2,
-        //     y: 11,
-        //     width: 12,
-        //     height: 10,
-        //   },
-        // }),
+        new VizPanel({
+          isResizable: true,
+          isDraggable: true,
+          pluginId: 'timeseries',
+          title: 'Draggable and resizable',
+          size: {
+            x: 2,
+            y: 11,
+            width: 12,
+            height: 10,
+          },
+        }),
         new SceneGridRow({
           title: 'Sample row1',
           isCollapsed: true,
-          size: { y: 0 },
+          size: { y: 1 },
           children: [
             new VizPanel({
               pluginId: 'timeseries',
