@@ -50,7 +50,7 @@ export function getFlexLayoutTest(): Scene {
       ],
     }),
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
+    $timeRange: new SceneTimeRange({}),
     $data: new SceneQueryRunner({
       queries: [
         {
