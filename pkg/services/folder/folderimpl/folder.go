@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
@@ -65,7 +65,6 @@ func ProvideService(
 		features:         features,
 		permissions:      folderPermissionsService,
 		bus:              bus,
-		store            
 	}
 }
 
@@ -236,7 +235,8 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 			// We'll log the error and also roll back the previously-created
 			// (legacy) folder.
 			s.log.Error("error saving folder to nested folder store", err)
-			_, err = s.DeleteFolder(ctx, user, orgID, createdFolder.Uid, true)
+
+			err = s.DeleteFolder(ctx, &folder.DeleteFolderCommand{UID: createdFolder.Uid, OrgID: orgID, ForceDeleteRules: true})
 			if err != nil {
 				s.log.Error("error deleting folder after failed save to nested folder store", err)
 			}
@@ -302,10 +302,17 @@ func (s *Service) UpdateFolder(ctx context.Context, user *user.SignedInUser, org
 	return nil
 }
 
+var total time.Duration
+var count int
+
 func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		fmt.Println("I am here>>>>>>>>>>>>>>>>>")
+		start := time.Now()
 		err := s.Delete(ctx, cmd)
+		elapsed := time.Since(start)
+		total += elapsed
+		count += 1
+		fmt.Printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Delete took %s, average is : %f", elapsed, total.Seconds()/float64(count))
 		if err != nil {
 			s.log.Error("the delete folder on folder table failed with err: ", err.Error())
 		}
@@ -355,7 +362,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	// check the flag, if old - do whatever did before
 	//  for new only the store
 
-	foldr, err := s.Get(ctx, folder.GetFolderQuery{
+	foldr, err := s.Get(ctx, &folder.GetFolderQuery{
 		UID:   &cmd.UID,
 		OrgID: cmd.OrgID,
 	})
@@ -373,7 +380,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	// check the flag, if old - do whatever did before
 	//  for new only the store
 	// check if dashboard exists
-	_, err := s.Get(ctx, folder.GetFolderQuery{
+	_, err := s.Get(ctx, &folder.GetFolderQuery{
 		UID:   &cmd.UID,
 		OrgID: cmd.OrgID,
 	})
