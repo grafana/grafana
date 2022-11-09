@@ -3,28 +3,23 @@ package query
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/grafana/grafana/pkg/util/proxyutil"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -35,7 +30,6 @@ func ProvideService(
 	pluginRequestValidator models.PluginRequestValidator,
 	dataSourceService datasources.DataSourceService,
 	pluginClient plugins.Client,
-	oAuthTokenService oauthtoken.OAuthTokenService,
 ) *Service {
 	g := &Service{
 		cfg:                    cfg,
@@ -44,7 +38,6 @@ func ProvideService(
 		pluginRequestValidator: pluginRequestValidator,
 		dataSourceService:      dataSourceService,
 		pluginClient:           pluginClient,
-		oAuthTokenService:      oAuthTokenService,
 		log:                    log.New("query_data"),
 	}
 	g.log.Info("Query Service initialization")
@@ -58,7 +51,6 @@ type Service struct {
 	pluginRequestValidator models.PluginRequestValidator
 	dataSourceService      datasources.DataSourceService
 	pluginClient           plugins.Client
-	oAuthTokenService      oauthtoken.OAuthTokenService
 	log                    log.Logger
 }
 
@@ -189,37 +181,9 @@ func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.Si
 		Queries: []backend.DataQuery{},
 	}
 
-	middlewares := []httpclient.Middleware{}
-	if parsedReq.httpRequest != nil {
-		middlewares = append(middlewares,
-			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies(), []string{s.cfg.LoginCookieName}),
-		)
-	}
-
-	if s.oAuthTokenService.IsOAuthPassThruEnabled(ds) {
-		if token := s.oAuthTokenService.GetCurrentOAuthToken(ctx, user); token != nil {
-			req.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
-
-			idToken, ok := token.Extra("id_token").(string)
-			if ok && idToken != "" {
-				req.Headers["X-ID-Token"] = idToken
-			}
-			middlewares = append(middlewares, httpclientprovider.ForwardedOAuthIdentityMiddleware(token))
-		}
-	}
-
-	if parsedReq.httpRequest != nil {
-		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies(), []string{s.cfg.LoginCookieName})
-		if cookieStr := parsedReq.httpRequest.Header.Get("Cookie"); cookieStr != "" {
-			req.Headers["Cookie"] = cookieStr
-		}
-	}
-
 	for _, q := range queries {
 		req.Queries = append(req.Queries, q.query)
 	}
-
-	ctx = httpclient.WithContextualMiddleware(ctx, middlewares...)
 
 	return s.pluginClient.QueryData(ctx, req)
 }
@@ -233,7 +197,6 @@ type parsedQuery struct {
 type parsedRequest struct {
 	hasExpression bool
 	parsedQueries map[string][]parsedQuery
-	httpRequest   *http.Request
 }
 
 func (pr parsedRequest) getFlattenedQueries() []parsedQuery {
@@ -298,10 +261,6 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 			},
 			rawQuery: query,
 		})
-	}
-
-	if reqDTO.HTTPRequest != nil {
-		req.httpRequest = reqDTO.HTTPRequest
 	}
 
 	return req, nil
