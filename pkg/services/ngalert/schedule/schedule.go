@@ -201,8 +201,12 @@ func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 	}
 }
 
-func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.Group, tick time.Time) {
+type readyToRunItem struct {
+	ruleInfo *alertRuleInfo
+	evaluation
+}
 
+func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.Group, tick time.Time) ([]readyToRunItem, map[ngmodels.AlertRuleKey]struct{}) {
 	tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
 
 	if err := sch.updateSchedulableAlertRules(ctx); err != nil {
@@ -220,11 +224,6 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	// scheduled as rules could be removed before we get a chance to evaluate them.
 	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
 	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
-
-	type readyToRunItem struct {
-		ruleInfo *alertRuleInfo
-		evaluation
-	}
 
 	readyToRun := make([]readyToRunItem, 0)
 	missingFolder := make(map[string][]string)
@@ -306,6 +305,8 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	for key := range registeredDefinitions {
 		sch.DeleteAlertRule(key)
 	}
+
+	return readyToRun, registeredDefinitions
 }
 
 func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan ruleVersion) error {
