@@ -13,110 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
-func TestUnmarshalConditionCMD(t *testing.T) {
-	var tests = []struct {
-		name            string
-		rawJSON         string
-		expectedCommand *ConditionsCmd
-		needsVars       []string
-	}{
-		{
-			name: "basic threshold condition",
-			rawJSON: `{
-				"conditions": [
-				  {
-					"evaluator": {
-					  "params": [
-						2
-					  ],
-					  "type": "gt"
-					},
-					"operator": {
-					  "type": "and"
-					},
-					"query": {
-					  "params": [
-						"A"
-					  ]
-					},
-					"reducer": {
-					  "params": [],
-					  "type": "avg"
-					},
-					"type": "query"
-				  }
-				]
-			}`,
-			expectedCommand: &ConditionsCmd{
-				Conditions: []condition{
-					{
-						InputRefID: "A",
-						Reducer:    reducer("avg"),
-						Operator:   "and",
-						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 2},
-					},
-				},
-			},
-			needsVars: []string{"A"},
-		},
-		{
-			name: "ranged condition",
-			rawJSON: `{
-				"conditions": [
-				  {
-					"evaluator": {
-					  "params": [
-						2,
-						3
-					  ],
-					  "type": "within_range"
-					},
-					"operator": {
-					  "type": "or"
-					},
-					"query": {
-					  "params": [
-						"A"
-					  ]
-					},
-					"reducer": {
-					  "params": [],
-					  "type": "diff"
-					},
-					"type": "query"
-				  }
-				]
-			}`,
-			expectedCommand: &ConditionsCmd{
-				Conditions: []condition{
-					{
-						InputRefID: "A",
-						Reducer:    reducer("diff"),
-						Operator:   "or",
-						Evaluator:  &rangedEvaluator{Type: "within_range", Lower: 2, Upper: 3},
-					},
-				},
-			},
-			needsVars: []string{"A"},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var rq map[string]interface{}
-
-			err := json.Unmarshal([]byte(tt.rawJSON), &rq)
-			require.NoError(t, err)
-
-			cmd, err := UnmarshalConditionsCmd(rq, "")
-			require.NoError(t, err)
-			require.Equal(t, tt.expectedCommand, cmd)
-
-			require.Equal(t, tt.needsVars, cmd.NeedsVars())
-		})
-	}
-}
-
-func TestConditionsCmdExecute(t *testing.T) {
+func TestConditionsCmd(t *testing.T) {
 	tests := []struct {
 		name          string
 		vars          mathexp.Vars
@@ -412,6 +309,109 @@ func TestConditionsCmdExecute(t *testing.T) {
 			require.Equal(t, 1, len(res.Values))
 
 			require.Equal(t, tt.resultNumber(), res.Values[0])
+		})
+	}
+}
+
+func TestUnmarshalConditionsCmd(t *testing.T) {
+	var tests = []struct {
+		name            string
+		rawJSON         string
+		expectedCommand *ConditionsCmd
+		needsVars       []string
+	}{
+		{
+			name: "basic threshold condition",
+			rawJSON: `{
+				"conditions": [
+				  {
+					"evaluator": {
+					  "params": [
+						2
+					  ],
+					  "type": "gt"
+					},
+					"operator": {
+					  "type": "and"
+					},
+					"query": {
+					  "params": [
+						"A"
+					  ]
+					},
+					"reducer": {
+					  "params": [],
+					  "type": "avg"
+					},
+					"type": "query"
+				  }
+				]
+			}`,
+			expectedCommand: &ConditionsCmd{
+				Conditions: []condition{
+					{
+						InputRefID: "A",
+						Reducer:    reducer("avg"),
+						Operator:   "and",
+						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 2},
+					},
+				},
+			},
+			needsVars: []string{"A"},
+		},
+		{
+			name: "ranged condition",
+			rawJSON: `{
+				"conditions": [
+				  {
+					"evaluator": {
+					  "params": [
+						2,
+						3
+					  ],
+					  "type": "within_range"
+					},
+					"operator": {
+					  "type": "or"
+					},
+					"query": {
+					  "params": [
+						"A"
+					  ]
+					},
+					"reducer": {
+					  "params": [],
+					  "type": "diff"
+					},
+					"type": "query"
+				  }
+				]
+			}`,
+			expectedCommand: &ConditionsCmd{
+				Conditions: []condition{
+					{
+						InputRefID: "A",
+						Reducer:    reducer("diff"),
+						Operator:   "or",
+						Evaluator:  &rangedEvaluator{Type: "within_range", Lower: 2, Upper: 3},
+					},
+				},
+			},
+			needsVars: []string{"A"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var rq map[string]interface{}
+
+			err := json.Unmarshal([]byte(tt.rawJSON), &rq)
+			require.NoError(t, err)
+
+			cmd, err := UnmarshalConditionsCmd(rq, "")
+			require.NoError(t, err)
+			require.Equal(t, tt.expectedCommand, cmd)
+
+			require.Equal(t, tt.needsVars, cmd.NeedsVars())
 		})
 	}
 }

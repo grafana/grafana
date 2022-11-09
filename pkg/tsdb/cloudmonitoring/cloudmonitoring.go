@@ -154,6 +154,13 @@ type datasourceInfo struct {
 	decryptedSecureJSONData map[string]string
 }
 
+type datasourceJSONData struct {
+	AuthenticationType string `json:"authenticationType"`
+	DefaultProject     string `json:"defaultProject"`
+	ClientEmail        string `json:"clientEmail"`
+	TokenURI           string `json:"tokenUri"`
+}
+
 type datasourceService struct {
 	url    string
 	client *http.Client
@@ -161,40 +168,24 @@ type datasourceService struct {
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		var jsonData map[string]interface{}
+		var jsonData datasourceJSONData
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		authType := jwtAuthentication
-		if authTypeOverride, ok := jsonData["authenticationType"].(string); ok && authTypeOverride != "" {
-			authType = authTypeOverride
-		}
-
-		var defaultProject string
-		if jsonData["defaultProject"] != nil {
-			defaultProject = jsonData["defaultProject"].(string)
-		}
-
-		var clientEmail string
-		if jsonData["clientEmail"] != nil {
-			clientEmail = jsonData["clientEmail"].(string)
-		}
-
-		var tokenUri string
-		if jsonData["tokenUri"] != nil {
-			tokenUri = jsonData["tokenUri"].(string)
+		if jsonData.AuthenticationType == "" {
+			jsonData.AuthenticationType = jwtAuthentication
 		}
 
 		dsInfo := &datasourceInfo{
 			id:                      settings.ID,
 			updated:                 settings.Updated,
 			url:                     settings.URL,
-			authenticationType:      authType,
-			defaultProject:          defaultProject,
-			clientEmail:             clientEmail,
-			tokenUri:                tokenUri,
+			authenticationType:      jsonData.AuthenticationType,
+			defaultProject:          jsonData.DefaultProject,
+			clientEmail:             jsonData.ClientEmail,
+			tokenUri:                jsonData.TokenURI,
 			decryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			services:                map[string]datasourceService{},
 		}
