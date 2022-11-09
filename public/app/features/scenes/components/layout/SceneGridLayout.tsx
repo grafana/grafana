@@ -32,8 +32,9 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     });
   }
 
-  rowStateChanged() {
-    // Should really make sure position is correct for all children?
+  toggleRow(row: SceneGridRow, isCollapsed: boolean) {
+    // Should we make sure position is correct for all children?
+    row.setState({ isCollapsed });
     // Trigger re-render
     this.setState({});
   }
@@ -351,8 +352,7 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
       return;
     }
 
-    this.setState({ isCollapsed: !isCollapsed });
-    layout.rowStateChanged(this);
+    layout.toggleRow(this, !isCollapsed);
   };
 }
 
