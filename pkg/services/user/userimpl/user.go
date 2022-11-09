@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,16 +23,13 @@ type Service struct {
 	orgService   org.Service
 	teamService  team.Service
 	cacheService *localcache.CacheService
-	// TODO remove sqlstore
-	sqlStore *sqlstore.SQLStore
-	cfg      *setting.Cfg
+	cfg          *setting.Cfg
 }
 
 func ProvideService(
 	db db.DB,
 	orgService org.Service,
 	cfg *setting.Cfg,
-	ss *sqlstore.SQLStore,
 	teamService team.Service,
 	cacheService *localcache.CacheService,
 ) user.Service {
@@ -41,7 +38,6 @@ func ProvideService(
 		store:        &store,
 		orgService:   orgService,
 		cfg:          cfg,
-		sqlStore:     ss,
 		teamService:  teamService,
 		cacheService: cacheService,
 	}
@@ -259,64 +255,41 @@ func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUs
 	return signedInUser, err
 }
 
-// TODO: remove wrapper around sqlstore
-func (s *Service) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
-	var usrSeschHitDTOs []*user.UserSearchHitDTO
-	q := &models.SearchUsersQuery{
-		SignedInUser: query.SignedInUser,
-		Query:        query.Query,
-		OrgId:        query.OrgID,
-		Page:         query.Page,
-		Limit:        query.Limit,
-		AuthModule:   query.AuthModule,
-		Filters:      query.Filters,
-		IsDisabled:   query.IsDisabled,
+func (s *Service) NewAnonymousSignedInUser(ctx context.Context) (*user.SignedInUser, error) {
+	if !s.cfg.AnonymousEnabled {
+		return nil, fmt.Errorf("anonymous access is disabled")
 	}
-	err := s.sqlStore.SearchUsers(ctx, q)
+
+	usr := &user.SignedInUser{
+		IsAnonymous: true,
+		OrgRole:     roletype.RoleType(s.cfg.AnonymousOrgRole),
+	}
+
+	if s.cfg.AnonymousOrgName == "" {
+		return usr, nil
+	}
+
+	getOrg := org.GetOrgByNameQuery{Name: s.cfg.AnonymousOrgName}
+	anonymousOrg, err := s.orgService.GetByName(ctx, &getOrg)
 	if err != nil {
 		return nil, err
 	}
-	for _, usrSearch := range q.Result.Users {
-		usrSeschHitDTOs = append(usrSeschHitDTOs, &user.UserSearchHitDTO{
-			ID:            usrSearch.Id,
-			Login:         usrSearch.Login,
-			Email:         usrSearch.Email,
-			Name:          usrSearch.Name,
-			AvatarUrl:     usrSearch.AvatarUrl,
-			IsDisabled:    usrSearch.IsDisabled,
-			IsAdmin:       usrSearch.IsAdmin,
-			LastSeenAt:    usrSearch.LastSeenAt,
-			LastSeenAtAge: usrSearch.LastSeenAtAge,
-			AuthLabels:    usrSearch.AuthLabels,
-			AuthModule:    user.AuthModuleConversion(usrSearch.AuthModule),
-		})
-	}
 
-	res := &user.SearchUserQueryResult{
-		Users:      usrSeschHitDTOs,
-		TotalCount: q.Result.TotalCount,
-		Page:       q.Result.Page,
-		PerPage:    q.Result.PerPage,
-	}
-	return res, nil
+	usr.OrgID = anonymousOrg.ID
+	usr.OrgName = anonymousOrg.Name
+	return usr, nil
 }
 
-// TODO: remove wrapper around sqlstore
+func (s *Service) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	return s.store.Search(ctx, query)
+}
+
 func (s *Service) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
-	q := &models.DisableUserCommand{
-		UserId:     cmd.UserID,
-		IsDisabled: cmd.IsDisabled,
-	}
-	return s.sqlStore.DisableUser(ctx, q)
+	return s.store.Disable(ctx, cmd)
 }
 
-// TODO: remove wrapper around sqlstore
 func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
-	c := &models.BatchDisableUsersCommand{
-		UserIds:    cmd.UserIDs,
-		IsDisabled: cmd.IsDisabled,
-	}
-	return s.sqlStore.BatchDisableUsers(ctx, c)
+	return s.store.BatchDisableUsers(ctx, cmd)
 }
 
 func (s *Service) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {

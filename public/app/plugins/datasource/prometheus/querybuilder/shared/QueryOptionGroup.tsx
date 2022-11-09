@@ -3,7 +3,8 @@ import React from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Icon, useStyles2 } from '@grafana/ui';
 
 export interface Props {
   title: string;

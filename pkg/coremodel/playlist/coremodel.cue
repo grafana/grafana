@@ -22,6 +22,7 @@ seqs: [
 				interval: string | *"5m"
 
 				// The ordered list of items that the playlist will iterate over.
+				// FIXME! This should not be optional, but changing it makes the godegen awkward
 				items?: [...#PlaylistItem]
 
 				///////////////////////////////////////
@@ -39,10 +40,10 @@ seqs: [
 					//  dashboards behind the tag will be added to the playlist.
 					//  - dashboard_by_uid: The value is the dashboard UID
 					value: string
-					
+
 					// Title is an unused property -- it will be removed in the future
-    				title: string
-				}
+    				title?: string
+				} @cuetsy(kind="interface")
 			}
 		]
 	}

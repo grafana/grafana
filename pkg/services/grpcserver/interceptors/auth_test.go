@@ -5,7 +5,11 @@ import (
 	"testing"
 
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
@@ -13,6 +17,7 @@ import (
 )
 
 func TestAuthenticator_Authenticate(t *testing.T) {
+	tracer := tracing.InitializeTracerForTest()
 	serviceAccountId := int64(1)
 	t.Run("accepts service api key with admin role", func(t *testing.T) {
 		s := newFakeAPIKey(&apikey.APIKey{
@@ -22,7 +27,8 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		a := NewAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin})
+		ac := accesscontrolmock.New()
+		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, ac, grpccontext.ProvideContextHandler(tracer))
 		ctx, err := setupContext()
 		require.NoError(t, err)
 		_, err = a.Authenticate(ctx)
@@ -37,7 +43,8 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		a := NewAuthenticator(s, &fakeUserService{OrgRole: org.RoleEditor})
+		ac := accesscontrolmock.New()
+		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleEditor}, ac, grpccontext.ProvideContextHandler(tracer))
 		ctx, err := setupContext()
 		require.NoError(t, err)
 		_, err = a.Authenticate(ctx)
@@ -52,7 +59,8 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		a := NewAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin})
+		ac := accesscontrolmock.New()
+		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, ac, grpccontext.ProvideContextHandler(tracer))
 		ctx, err := setupContext()
 		require.NoError(t, err)
 		md, ok := metadata.FromIncomingContext(ctx)
@@ -63,6 +71,49 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 		md, ok = metadata.FromIncomingContext(ctx)
 		require.True(t, ok)
 		require.Empty(t, md["authorization"])
+	})
+
+	t.Run("sets SignInUser", func(t *testing.T) {
+		s := newFakeAPIKey(&apikey.APIKey{
+			Id:               1,
+			OrgId:            1,
+			Key:              "admin-api-key",
+			Name:             "Admin API Key",
+			ServiceAccountId: &serviceAccountId,
+		}, nil)
+		ac := accesscontrolmock.New()
+		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, ac, grpccontext.ProvideContextHandler(tracer))
+		ctx, err := setupContext()
+		require.NoError(t, err)
+		ctx, err = a.Authenticate(ctx)
+		require.NoError(t, err)
+		signedInUser := grpccontext.FromContext(ctx).SignedInUser
+		require.Equal(t, serviceAccountId, signedInUser.UserID)
+	})
+
+	t.Run("sets SignInUser permissions", func(t *testing.T) {
+		s := newFakeAPIKey(&apikey.APIKey{
+			Id:               1,
+			OrgId:            1,
+			Key:              "admin-api-key",
+			Name:             "Admin API Key",
+			ServiceAccountId: &serviceAccountId,
+		}, nil)
+		permissions := []accesscontrol.Permission{
+			{
+				Action: accesscontrol.ActionAPIKeyRead,
+				Scope:  accesscontrol.ScopeAPIKeysAll,
+			},
+		}
+		ac := accesscontrolmock.New().WithPermissions(permissions)
+		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, ac, grpccontext.ProvideContextHandler(tracer))
+		ctx, err := setupContext()
+		require.NoError(t, err)
+		ctx, err = a.Authenticate(ctx)
+		require.NoError(t, err)
+		signedInUser := grpccontext.FromContext(ctx).SignedInUser
+		require.Equal(t, serviceAccountId, signedInUser.UserID)
+		require.Equal(t, []string{accesscontrol.ScopeAPIKeysAll}, signedInUser.Permissions[1][accesscontrol.ActionAPIKeyRead])
 	})
 }
 
@@ -90,9 +141,10 @@ type fakeUserService struct {
 
 func (f *fakeUserService) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
 	return &user.SignedInUser{
-		UserID:  1,
-		OrgID:   1,
-		OrgRole: f.OrgRole,
+		UserID:      1,
+		OrgID:       1,
+		OrgRole:     f.OrgRole,
+		Permissions: make(map[int64]map[string][]string),
 	}, nil
 }
 

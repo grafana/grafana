@@ -4,8 +4,8 @@ type Props = {
   fallBackComponent?: React.ReactNode;
 };
 
-export class ErrorBoundary extends React.Component<Props, { hasError: boolean }> {
-  constructor(props: Props) {
+export class ErrorBoundary extends React.Component<React.PropsWithChildren<Props>, { hasError: boolean }> {
+  constructor(props: React.PropsWithChildren<Props>) {
     super(props);
     this.state = { hasError: false };
   }

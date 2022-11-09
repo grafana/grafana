@@ -66,9 +66,11 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
-    const newResults = data ? dataFrameToLogsModel(data.series, data.request?.intervalMs) : null;
-    const logRows = newResults?.rows || [];
-    const commonLabels = newResults?.meta?.find((m) => m.label === COMMON_LABELS);
+    const logs = data
+      ? dataFrameToLogsModel(data.series, data.request?.intervalMs, undefined, data.request?.targets)
+      : null;
+    const logRows = logs?.rows || [];
+    const commonLabels = logs?.meta?.find((m) => m.label === COMMON_LABELS);
     const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
     return [logRows, deduplicatedRows, commonLabels];
   }, [data, dedupStrategy]);

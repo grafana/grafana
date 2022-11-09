@@ -1,8 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { intersection } from 'lodash';
+import React, { useState, useMemo } from 'react';
 
-import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/ui';
+import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 
 import Datasource from '../../datasource';
+import { selectors } from '../../e2e/selectors';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import SubscriptionField from '../SubscriptionField';
 
@@ -18,6 +20,28 @@ interface ArgQueryEditorProps {
 }
 
 const ERROR_SOURCE = 'arg-subscriptions';
+
+function selectSubscriptions(
+  fetchedSubscriptions: string[],
+  currentSubscriptions?: string[],
+  currentSubscription?: string
+) {
+  let querySubscriptions = currentSubscriptions || [];
+  if (querySubscriptions.length === 0 && currentSubscription) {
+    querySubscriptions = [currentSubscription];
+  }
+  if (querySubscriptions.length === 0 && fetchedSubscriptions.length) {
+    querySubscriptions = [fetchedSubscriptions[0]];
+  }
+  const commonSubscriptions = intersection(querySubscriptions, fetchedSubscriptions);
+  if (fetchedSubscriptions.length && querySubscriptions.length > commonSubscriptions.length) {
+    // If not all of the query subscriptions are in the list of fetched subscriptions, then
+    // select only the ones present (or the first one if none is present)
+    querySubscriptions = commonSubscriptions.length > 0 ? commonSubscriptions : [fetchedSubscriptions[0]];
+  }
+  return querySubscriptions;
+}
+
 const ArgQueryEditor: React.FC<ArgQueryEditorProps> = ({
   query,
   datasource,
@@ -26,15 +50,8 @@ const ArgQueryEditor: React.FC<ArgQueryEditorProps> = ({
   onChange,
   setError,
 }) => {
-  const fetchedRef = useRef(false);
   const [subscriptions, setSubscriptions] = useState<AzureMonitorOption[]>([]);
-
-  useEffect(() => {
-    if (fetchedRef.current) {
-      return;
-    }
-
-    fetchedRef.current = true;
+  useMemo(() => {
     datasource
       .getSubscriptions()
       .then((results) => {
@@ -42,18 +59,22 @@ const ArgQueryEditor: React.FC<ArgQueryEditorProps> = ({
         setSubscriptions(fetchedSubscriptions);
         setError(ERROR_SOURCE, undefined);
 
-        if (!query.subscriptions?.length && fetchedSubscriptions?.length) {
-          onChange({
-            ...query,
-            subscriptions: [query.subscription ?? fetchedSubscriptions[0].value],
-          });
-        }
+        onChange({
+          ...query,
+          subscriptions: selectSubscriptions(
+            fetchedSubscriptions.map((v) => v.value),
+            query.subscriptions,
+            query.subscription
+          ),
+        });
       })
       .catch((err) => setError(ERROR_SOURCE, err));
-  }, [datasource, onChange, query, setError]);
+    // We are only interested in re-fetching subscriptions if the data source changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [datasource]);
 
   return (
-    <span data-testid="azure-monitor-arg-query-editor-with-experimental-ui">
+    <span data-testid={selectors.components.queryEditor.argsQueryEditor.container.input}>
       <EditorRows>
         <EditorRow>
           <EditorFieldGroup>

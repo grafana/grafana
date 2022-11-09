@@ -7,14 +7,14 @@ aliases:
   - /docs/grafana/latest/panels/library-panels/unlink-library-panel/
   - /docs/grafana/latest/panels/library-panels/manage-library-panel/
   - /docs/grafana/latest/panels/library-panels/delete-library-panel/
-  - /docs/grafana/next/dashboards/manage-library-panels/
-  - /docs/grafana/next/dashboards/build-dashboards/manage-library-panels/
-title: Manage Grafana library panels
+  - /docs/grafana/latest/dashboards/manage-library-panels/
+  - /docs/grafana/latest/dashboards/build-dashboards/manage-library-panels/
+title: Manage library panels
 menuTitle: Manage library panels
 weight: 300
 ---
 
-# Manage Grafana library panels
+# Manage library panels
 
 A library panel is a reusable panel that you can use in any dashboard. When you make a change to a library panel, that change propagates to all instances of where the panel is used. Library panels streamline reuse of panels across multiple dashboards.
 

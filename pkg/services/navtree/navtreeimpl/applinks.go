@@ -57,20 +57,8 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqCo
 		})
 	}
 
-	if topNavEnabled {
-		treeRoot.AddSection(&navtree.NavLink{
-			Text:     "Apps",
-			Icon:     "apps",
-			SubTitle: "App plugins that extend the Grafana experience",
-			Id:       "apps",
-			Children: appLinks,
-			Section:  navtree.NavSectionCore,
-			Url:      s.cfg.AppSubURL + "/apps",
-		})
-	} else {
-		for _, appLink := range appLinks {
-			treeRoot.AddSection(appLink)
-		}
+	for _, appLink := range appLinks {
+		treeRoot.AddSection(appLink)
 	}
 
 	return nil
@@ -83,6 +71,8 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 		Img:        plugin.Info.Logos.Small,
 		Section:    navtree.NavSectionPlugin,
 		SortWeight: navtree.WeightPlugin,
+		IsSection:  true,
+		PluginID:   plugin.ID,
 	}
 
 	if topNavEnabled {
@@ -96,28 +86,50 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 			continue
 		}
 
-		if include.Type == "page" && include.AddToNav {
+		if include.Type == "page" {
 			link := &navtree.NavLink{
-				Text: include.Name,
-				Icon: include.Icon,
+				Text:     include.Name,
+				Icon:     include.Icon,
+				PluginID: plugin.ID,
 			}
 
 			if len(include.Path) > 0 {
 				link.Url = s.cfg.AppSubURL + include.Path
-				if include.DefaultNav {
+				if include.DefaultNav && include.AddToNav {
 					appLink.Url = link.Url
 				}
 			} else {
 				link.Url = s.cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug
 			}
 
+			// Register standalone plugin pages to certain sections using the Grafana config
 			if pathConfig, ok := s.navigationAppPathConfig[include.Path]; ok {
 				if sectionForPage := treeRoot.FindById(pathConfig.SectionID); sectionForPage != nil {
 					link.Id = "standalone-plugin-page-" + include.Path
 					link.SortWeight = pathConfig.SortWeight
-					sectionForPage.Children = append(sectionForPage.Children, link)
+
+					// Check if the section already has a page with the same URL, and in that case override it
+					// (This only happens if it is explicitly set by `navigation.app_standalone_pages` in the INI config)
+					isOverridingCorePage := false
+					for _, child := range sectionForPage.Children {
+						if child.Url == link.Url {
+							child.Id = link.Id
+							child.SortWeight = link.SortWeight
+							child.PluginID = link.PluginID
+							child.Children = []*navtree.NavLink{}
+							isOverridingCorePage = true
+							break
+						}
+					}
+
+					// Append the page to the section
+					if !isOverridingCorePage {
+						sectionForPage.Children = append(sectionForPage.Children, link)
+					}
 				}
-			} else {
+
+				// Register the page under the app
+			} else if include.AddToNav {
 				appLink.Children = append(appLink.Children, link)
 			}
 		}
@@ -126,55 +138,88 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 			dboardURL := include.DashboardURLPath()
 			if dboardURL != "" {
 				link := &navtree.NavLink{
-					Url:  path.Join(s.cfg.AppSubURL, dboardURL),
-					Text: include.Name,
+					Url:      path.Join(s.cfg.AppSubURL, dboardURL),
+					Text:     include.Name,
+					PluginID: plugin.ID,
 				}
 				appLink.Children = append(appLink.Children, link)
 			}
 		}
 	}
 
-	if len(appLink.Children) > 0 {
-		// If we only have one child and it's the app default nav then remove it from children
-		if len(appLink.Children) == 1 && appLink.Children[0].Url == appLink.Url {
-			appLink.Children = []*navtree.NavLink{}
+	// Apps without any nav children are not part of navtree
+	if len(appLink.Children) == 0 {
+		return nil
+	}
+	// If we only have one child and it's the app default nav then remove it from children
+	if len(appLink.Children) == 1 && appLink.Children[0].Url == appLink.Url {
+		appLink.Children = []*navtree.NavLink{}
+	}
+
+	if !topNavEnabled {
+		return appLink
+	}
+
+	// Remove default nav child
+	childrenWithoutDefault := []*navtree.NavLink{}
+	for _, child := range appLink.Children {
+		if child.Url != appLink.Url {
+			childrenWithoutDefault = append(childrenWithoutDefault, child)
 		}
+	}
+	appLink.Children = childrenWithoutDefault
 
-		alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
+	// Handle moving apps into specific navtree sections
+	alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
+	sectionID := navtree.NavIDApps
 
-		if navConfig, hasOverride := s.navigationAppConfig[plugin.ID]; hasOverride && topNavEnabled {
-			appLink.SortWeight = navConfig.SortWeight
+	if navConfig, hasOverride := s.navigationAppConfig[plugin.ID]; hasOverride {
+		appLink.SortWeight = navConfig.SortWeight
+		sectionID = navConfig.SectionID
+	}
 
-			if navNode := treeRoot.FindById(navConfig.SectionID); navNode != nil {
-				navNode.Children = append(navNode.Children, appLink)
-			} else {
-				if navConfig.SectionID == navtree.NavIDMonitoring {
-					treeRoot.AddSection(&navtree.NavLink{
-						Text:     "Monitoring",
-						Id:       navtree.NavIDMonitoring,
-						SubTitle: "Monitoring and infrastructure apps",
-						Icon:     "heart-rate",
-						Section:  navtree.NavSectionCore,
-						Children: []*navtree.NavLink{appLink},
-						Url:      s.cfg.AppSubURL + "/monitoring",
-					})
-				} else if navConfig.SectionID == navtree.NavIDAlertsAndIncidents && alertingNode != nil {
-					treeRoot.AddSection(&navtree.NavLink{
-						Text:     "Alerts & incidents",
-						Id:       navtree.NavIDAlertsAndIncidents,
-						SubTitle: "Alerting and incident management apps",
-						Icon:     "bell",
-						Section:  navtree.NavSectionCore,
-						Children: []*navtree.NavLink{alertingNode, appLink},
-						Url:      s.cfg.AppSubURL + "/alerts-and-incidents",
-					})
-					treeRoot.RemoveSection(alertingNode)
-				} else {
-					s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", navConfig.SectionID)
-				}
+	if navNode := treeRoot.FindById(sectionID); navNode != nil {
+		navNode.Children = append(navNode.Children, appLink)
+	} else {
+		switch sectionID {
+		case navtree.NavIDApps:
+			treeRoot.AddSection(&navtree.NavLink{
+				Text:       "Apps",
+				Icon:       "apps",
+				SubTitle:   "App plugins that extend the Grafana experience",
+				Id:         navtree.NavIDApps,
+				Children:   []*navtree.NavLink{appLink},
+				Section:    navtree.NavSectionCore,
+				SortWeight: navtree.WeightApps,
+				Url:        s.cfg.AppSubURL + "/apps",
+			})
+		case navtree.NavIDMonitoring:
+			treeRoot.AddSection(&navtree.NavLink{
+				Text:       "Monitoring",
+				Id:         navtree.NavIDMonitoring,
+				SubTitle:   "Monitoring and infrastructure apps",
+				Icon:       "heart-rate",
+				Section:    navtree.NavSectionCore,
+				SortWeight: navtree.WeightMonitoring,
+				Children:   []*navtree.NavLink{appLink},
+				Url:        s.cfg.AppSubURL + "/monitoring",
+			})
+		case navtree.NavIDAlertsAndIncidents:
+			if alertingNode != nil {
+				treeRoot.AddSection(&navtree.NavLink{
+					Text:       "Alerts & incidents",
+					Id:         navtree.NavIDAlertsAndIncidents,
+					SubTitle:   "Alerting and incident management apps",
+					Icon:       "bell",
+					Section:    navtree.NavSectionCore,
+					SortWeight: navtree.WeightAlertsAndIncidents,
+					Children:   []*navtree.NavLink{alertingNode, appLink},
+					Url:        s.cfg.AppSubURL + "/alerts-and-incidents",
+				})
+				treeRoot.RemoveSection(alertingNode)
 			}
-		} else {
-			return appLink
+		default:
+			s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", sectionID)
 		}
 	}
 
@@ -194,12 +239,13 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"/a/grafana-auth-app": {SectionID: navtree.NavIDCfg, SortWeight: 7},
 	}
 
-	sec := s.cfg.Raw.Section("navigation.apps")
+	appSections := s.cfg.Raw.Section("navigation.app_sections")
+	appStandalonePages := s.cfg.Raw.Section("navigation.app_standalone_pages")
 
-	for _, key := range sec.Keys() {
+	for _, key := range appSections.Keys() {
 		pluginId := key.Name()
 		// Support <id> <weight> value
-		values := util.SplitString(sec.Key(key.Name()).MustString(""))
+		values := util.SplitString(appSections.Key(key.Name()).MustString(""))
 
 		appCfg := &NavigationAppConfig{SectionID: values[0]}
 		if len(values) > 1 {
@@ -209,5 +255,20 @@ func (s *ServiceImpl) readNavigationSettings() {
 		}
 
 		s.navigationAppConfig[pluginId] = *appCfg
+	}
+
+	for _, key := range appStandalonePages.Keys() {
+		url := key.Name()
+		// Support <id> <weight> value
+		values := util.SplitString(appStandalonePages.Key(key.Name()).MustString(""))
+
+		appCfg := &NavigationAppConfig{SectionID: values[0]}
+		if len(values) > 1 {
+			if weight, err := strconv.ParseInt(values[1], 10, 64); err == nil {
+				appCfg.SortWeight = weight
+			}
+		}
+
+		s.navigationAppPathConfig[url] = *appCfg
 	}
 }

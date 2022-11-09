@@ -24,11 +24,13 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { VariableWithMultiSupport } from '../../../variables/types';
 import { getSearchFilterScopedVar, SearchFilterOptions } from '../../../variables/utils';
+import { ResponseParser } from '../ResponseParser';
 import { MACRO_NAMES } from '../constants';
-import { DB, SQLQuery, SQLOptions, ResponseParser, SqlQueryModel, QueryFormat } from '../types';
+import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat } from '../types';
 
 export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
   id: number;
+  responseParser: ResponseParser;
   name: string;
   interval: string;
   db: DB;
@@ -40,6 +42,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   ) {
     super(instanceSettings);
     this.name = instanceSettings.name;
+    this.responseParser = new ResponseParser();
     this.id = instanceSettings.id;
     const settingsData = instanceSettings.jsonData || {};
     this.interval = settingsData.timeInterval || '1m';
@@ -50,15 +53,16 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
 
   abstract getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): SqlQueryModel;
 
-  abstract getResponseParser(): ResponseParser;
+  getResponseParser() {
+    return this.responseParser;
+  }
 
   interpolateVariable = (value: string | string[] | number, variable: VariableWithMultiSupport) => {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
-        const result = this.getQueryModel().quoteLiteral(value);
-        return result;
+        return this.getQueryModel().quoteLiteral(value);
       } else {
-        return value;
+        return String(value).replace(/'/g, "''");
       }
     }
 
@@ -98,21 +102,20 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     target: SQLQuery,
     scopedVars: ScopedVars
   ): Record<string, string | DataSourceRef | SQLQuery['format']> {
-    const queryModel = this.getQueryModel(target, this.templateSrv, scopedVars);
-    const rawSql = this.clean(queryModel.interpolate());
     return {
       refId: target.refId,
       datasource: this.getRef(),
-      rawSql,
+      rawSql: this.templateSrv.replace(target.rawSql, scopedVars, this.interpolateVariable),
       format: target.format,
     };
   }
 
-  clean(value: string) {
-    return value.replace(/''/g, "'");
-  }
-
   async metricFindQuery(query: string, optionalOptions?: MetricFindQueryOptions): Promise<MetricFindValue[]> {
+    let refId = 'tempvar';
+    if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
+      refId = optionalOptions.variable.name;
+    }
+
     const rawSql = this.templateSrv.replace(
       query,
       getSearchFilterScopedVar({ query, wildcardChar: '%', options: optionalOptions }),
@@ -120,7 +123,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     );
 
     const interpolatedQuery: SQLQuery = {
-      refId: 'tempvar',
+      refId: refId,
       datasource: this.getRef(),
       rawSql,
       format: QueryFormat.Table,
@@ -207,4 +210,5 @@ interface RunSQLOptions extends MetricFindQueryOptions {
 
 interface MetricFindQueryOptions extends SearchFilterOptions {
   range?: TimeRange;
+  variable?: VariableWithMultiSupport;
 }

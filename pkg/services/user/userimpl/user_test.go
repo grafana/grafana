@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
@@ -126,14 +127,50 @@ func TestUserService(t *testing.T) {
 		require.NotNil(t, result2)
 		assert.Equal(t, query2.OrgID, result2.OrgID)
 	})
+
+	t.Run("NewAnonymousSignedInUser", func(t *testing.T) {
+		t.Run("should error when anonymous access is disabled", func(t *testing.T) {
+			userService.cfg = setting.NewCfg()
+			userService.cfg.AnonymousEnabled = false
+			_, err := userService.NewAnonymousSignedInUser(context.Background())
+			require.Error(t, err)
+		})
+
+		t.Run("should return user when anonymous access is enabled and org is not set", func(t *testing.T) {
+			userService.cfg = setting.NewCfg()
+			userService.cfg.AnonymousEnabled = true
+			u, err := userService.NewAnonymousSignedInUser(context.Background())
+			require.NoError(t, err)
+			require.Equal(t, true, u.IsAnonymous)
+			require.Equal(t, int64(0), u.UserID)
+			require.Equal(t, "", u.OrgName)
+			require.Equal(t, roletype.RoleType(""), u.OrgRole)
+		})
+
+		t.Run("should return user with org info when anonymous access is enabled and org is set", func(t *testing.T) {
+			userService.cfg = setting.NewCfg()
+			userService.cfg.AnonymousEnabled = true
+			userService.cfg.AnonymousOrgName = "anonymous"
+			userService.cfg.AnonymousOrgRole = "anonymous"
+			orgService.ExpectedOrg = &org.Org{Name: "anonymous", ID: 123}
+			u, err := userService.NewAnonymousSignedInUser(context.Background())
+			require.NoError(t, err)
+			require.Equal(t, true, u.IsAnonymous)
+			require.Equal(t, int64(0), u.UserID)
+			require.Equal(t, orgService.ExpectedOrg.ID, u.OrgID)
+			require.Equal(t, orgService.ExpectedOrg.Name, u.OrgName)
+			require.Equal(t, roletype.RoleType(userService.cfg.AnonymousOrgRole), u.OrgRole)
+		})
+	})
 }
 
 type FakeUserStore struct {
-	ExpectedUser            *user.User
-	ExpectedSignedInUser    *user.SignedInUser
-	ExpectedUserProfile     *user.UserProfileDTO
-	ExpectedError           error
-	ExpectedDeleteUserError error
+	ExpectedUser                  *user.User
+	ExpectedSignedInUser          *user.SignedInUser
+	ExpectedUserProfile           *user.UserProfileDTO
+	ExpectedSearchUserQueryResult *user.SearchUserQueryResult
+	ExpectedError                 error
+	ExpectedDeleteUserError       error
 }
 
 func newUserStoreFake() *FakeUserStore {
@@ -202,4 +239,16 @@ func (f *FakeUserStore) SetHelpFlag(ctx context.Context, cmd *user.SetUserHelpFl
 
 func (f *FakeUserStore) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
 	return f.ExpectedError
+}
+
+func (f *FakeUserStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	return f.ExpectedSearchUserQueryResult, f.ExpectedError
 }

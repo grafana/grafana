@@ -13,7 +13,6 @@ import { SlideOutTransition } from '../transitions/SlideOutTransition';
 const getStyles = (theme: GrafanaTheme2) => {
   const singleValue = css`
     label: singleValue;
-    color: ${theme.components.input.text};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

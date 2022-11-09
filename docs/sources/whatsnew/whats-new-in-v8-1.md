@@ -31,7 +31,7 @@ These features are included in the Grafana open source edition.
 
 Grafana 8.1 introduces the foundation for our new map panel. This new panel leverages [OpenLayers](https://openlayers.org/) and gives us a flexible solution for extending the way we use the new Geomap panel moving forward. The new Geomap panel includes multiple base layer styles (map layer options), as well as a more open data layer. The data layer can use coordinates and geo-hashed data in addition to a lookup table.
 
-The Geomap panel is also able to share views across multiple Geomap panels on the same dashboard, making it straightforward to visualize and explore multiple types of geospatial data using the same map zoom and focus settings. For more information, refer to [Geomap panel]({{< relref "../visualizations/geomap/" >}}).
+The Geomap panel is also able to share views across multiple Geomap panels on the same dashboard, making it straightforward to visualize and explore multiple types of geospatial data using the same map zoom and focus settings. For more information, refer to [Geomap panel]({{< relref "../panels-visualizations/visualizations/geomap/" >}}).
 {{< figure src="/static/img/docs/geomap-panel/geomap_with_heatmap.png" max-width="850px" caption="Geomap panel: Heatmap" >}}
 
 ## Annotation panel
@@ -50,9 +50,9 @@ Color scheme **From thresholds**:
 Color scheme: **Green-Yellow-Red (by value)**
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_line.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
 
-For more on how to configure Graphs with by value color schemes read [Graph and color schemes]({{< relref "../visualizations/time-series/" >}}).
+For more on how to configure Graphs with by value color schemes read [Graph and color schemes]({{< relref "../panels-visualizations/visualizations/time-series/" >}}).
 
-You can also create annotations in the new Time series panel bringing it closer to parity with the legacy Graph panel. To learn more, refer to the [time series panel]({{< relref "../visualizations/time-series/" >}}).
+You can also create annotations in the new Time series panel bringing it closer to parity with the legacy Graph panel. To learn more, refer to the [time series panel]({{< relref "../panels-visualizations/visualizations/time-series/" >}}).
 
 ### Transformations improvements
 
@@ -60,7 +60,7 @@ Grafana 8.1 includes some significant enhancements to transformations, including
 
 #### Config from query (Beta)
 
-This transformation enables panel config (Threshold, Min, Max, etc.) to be derived from query results. For more information, refer to [Config from query results]({{< relref "../panels/transform-data/#config-from-query-results" >}}).
+This transformation enables panel config (Threshold, Min, Max, etc.) to be derived from query results. For more information, refer to [Config from query results]({{< relref "../panels-visualizations/query-transform-data/transform-data/#config-from-query-results" >}}).
 
 #### Rows to fields (Beta)
 
@@ -82,7 +82,7 @@ Output:
 
 As you can see each row in the source data becomes a separate field. Each field now also has a max config option set. Options like **Min**, **Max**, **Unit** and **Thresholds** are all part of field configuration and if set like this will be used by the visualization instead of any options manually configured in the panel editor options pane.
 
-For more on how to use this transformation, refer to [Rows to fields transform]({{< relref "../panels/transform-data/#rows-to-fields" >}}).
+For more on how to use this transformation, refer to [Rows to fields transform]({{< relref "../panels-visualizations/query-transform-data/transform-data/#rows-to-fields" >}}).
 
 #### Contextual & Inline Help
 
@@ -110,7 +110,7 @@ And here is the prettified JSON log.
 
 {{< figure src="/static/img/docs/panels/pretty-json/prettified-json.png" max-width="1200px" caption="Prettified JSON" >}}
 
-For more on how to prettify JSON logs, refer to [Visualization]({{< relref "../visualizations/" >}}) and [Display]({{< relref "../visualizations/logs-panel/" >}}) options.
+For more on how to prettify JSON logs, refer to [Visualization]({{< relref "../panels-visualizations/visualizations/" >}}) and [Display]({{< relref "../panels-visualizations/visualizations/logs/" >}}) options.
 
 ### Plugin catalog - Updated UX and extended features
 
@@ -118,7 +118,7 @@ We’ve made some changes to the plugins UI to help make it easier to discover a
 
 #### Documentation updates
 
-New panel summaries and preview on the top level [Visualizations]({{< relref "../visualizations/" >}}) page to help users pick or learn about specific visualizations more easily.
+New panel summaries and preview on the top level [Visualizations]({{< relref "../panels-visualizations/visualizations/" >}}) page to help users pick or learn about specific visualizations more easily.
 
 ### Upcoming changes to the Select component
 
@@ -154,7 +154,7 @@ We’ve enhanced the scheduler for Reports to be more flexible, so you can send 
 
 ### Encrypt data in the query cache
 
-Query caching was released in Grafana 8.0 and allows you to temporarily store the results of data source queries in a cache, so that Grafana reads repeated queries from there instead of from the data source itself. This reduces load on data sources, improves dashboard load times, and can save money for data sources that charge per query. To learn more about query caching see its [overview]({{< relref "../enterprise/query-caching/" >}}) page. To find out how to turn on encryption, refer to the [caching configuration]({{< relref "../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}) documentation.
+Query caching was released in Grafana 8.0 and allows you to temporarily store the results of data source queries in a cache, so that Grafana reads repeated queries from there instead of from the data source itself. This reduces load on data sources, improves dashboard load times, and can save money for data sources that charge per query. To learn more about query caching see its [overview]({{< relref "../administration/data-source-management/#query-caching" >}}) page. To find out how to turn on encryption, refer to the [caching configuration]({{< relref "../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}) documentation.
 
 You can now encrypt the query data cached by Grafana. This improves the security of query data, especially when your cache (like Redis) is shared with other services.
 

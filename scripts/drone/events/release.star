@@ -34,14 +34,15 @@ load(
     'benchmark_ldap_step',
     'store_storybook_step',
     'upload_packages_step',
-    'publish_packages_step',
     'publish_grafanacom_step',
     'upload_cdn_step',
     'verify_gen_cue_step',
+    'verify_gen_jsonnet_step',
     'publish_images_step',
     'publish_linux_packages_step',
     'trigger_oss',
     'artifacts_page_step',
+    'fetch_images_step',
     'compile_build_cmd',
 )
 
@@ -58,6 +59,16 @@ load(
     'notify_pipeline',
     'failure_template',
     'drone_change_template',
+)
+
+load(
+    'scripts/drone/pipelines/test_frontend.star',
+    'test_frontend',
+)
+
+load(
+    'scripts/drone/pipelines/test_backend.star',
+    'test_backend',
 )
 
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
@@ -111,49 +122,8 @@ def release_npm_packages_step():
         ],
     }
 
-def fetch_images_step(edition):
-    return {
-        'name': 'fetch-images-{}'.format(edition),
-        'image': 'google/cloud-sdk',
-        'environment': {
-            'GCP_KEY': from_secret('gcp_key'),
-            'DOCKER_USER': from_secret('docker_username'),
-            'DOCKER_PASSWORD': from_secret('docker_password'),
-        },
-        'commands': ['./bin/build artifacts docker fetch --edition {}'.format(edition)],
-        'depends_on': ['compile-build-cmd'],
-        'volumes': [{
-            'name': 'docker',
-            'path': '/var/run/docker.sock'
-        }],
-    }
-
-def publish_image_steps(edition, mode, docker_repo, additional_docker_repo=""):
-    steps = [
-        download_grabpl_step(),
-        compile_build_cmd(),
-        fetch_images_step(edition),
-        publish_images_step(edition, 'release', mode, docker_repo),
-    ]
-    if additional_docker_repo != "":
-        steps.extend([publish_images_step(edition, 'release', mode, additional_docker_repo)])
-
-    return steps
-
-def publish_image_pipelines(mode):
-    trigger = {
-        'event': ['promote'],
-        'target': [mode],
-    }
-
-    return [pipeline(
-        name='publish-docker-oss-{}'.format(mode), trigger=trigger, steps=publish_image_steps(edition='oss',  mode=mode, docker_repo='grafana', additional_docker_repo='grafana-oss'), edition=""
-    ), pipeline(
-        name='publish-docker-enterprise-{}'.format(mode), trigger=trigger, steps=publish_image_steps(edition='enterprise',  mode=mode, docker_repo='grafana-enterprise'), edition=""
-    ),]
-
 def get_oss_pipelines(trigger, ver_mode):
-    environment = {'EDITION': 'OSS'}
+    environment = {'EDITION': 'oss'}
     edition = 'oss'
     services = integration_test_services(edition=edition)
     volumes = integration_test_services_volumes()
@@ -169,16 +139,6 @@ def get_oss_pipelines(trigger, ver_mode):
         yarn_install_step(),
         compile_build_cmd(),
     ]
-
-    test_steps = []
-
-    test_steps.extend([
-        lint_backend_step(edition=edition),
-        lint_frontend_step(),
-        test_backend_step(edition=edition),
-        test_backend_integration_step(edition=edition),
-        test_frontend_step(),
-    ])
 
     build_steps = [
         build_backend_step(edition=edition, ver_mode=ver_mode),
@@ -242,21 +202,19 @@ def get_oss_pipelines(trigger, ver_mode):
     ]
     if not disable_tests:
         pipelines.extend([
-            pipeline(
-                name='{}-oss-test'.format(ver_mode), edition=edition, trigger=trigger, services=[],
-                steps=init_steps + test_steps,
-                environment=environment, volumes=[],
-            ),
+            test_frontend(trigger, ver_mode),
+            test_backend(trigger, ver_mode),
             pipeline(
                 name='{}-oss-integration-tests'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(edition), wire_install_step(), ] + integration_test_steps,
+                steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(edition), verify_gen_jsonnet_step(edition), wire_install_step(), ] + integration_test_steps,
                 environment=environment, volumes=volumes,
             )
         ])
         deps = {
             'depends_on': [
                 '{}-oss-build{}-publish'.format(ver_mode, get_e2e_suffix()),
-                '{}-oss-test'.format(ver_mode),
+                '{}-oss-test-frontend'.format(ver_mode),
+                '{}-oss-test-backend'.format(ver_mode),
                 '{}-oss-integration-tests'.format(ver_mode)
             ]
         }
@@ -266,7 +224,7 @@ def get_oss_pipelines(trigger, ver_mode):
     return pipelines
 
 def get_enterprise_pipelines(trigger, ver_mode):
-    environment = {'EDITION': 'ENTERPRISE'}
+    environment = {'EDITION': 'enterprise'}
     edition = 'enterprise'
     services = integration_test_services(edition=edition)
     volumes = integration_test_services_volumes()
@@ -284,16 +242,6 @@ def get_enterprise_pipelines(trigger, ver_mode):
         compile_build_cmd(edition),
     ]
 
-    test_steps = []
-
-    test_steps.extend([
-        lint_backend_step(edition=edition),
-        lint_frontend_step(),
-        test_backend_step(edition=edition),
-        test_backend_integration_step(edition=edition),
-        test_frontend_step(),
-    ])
-
     build_steps = [
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
@@ -307,10 +255,6 @@ def get_enterprise_pipelines(trigger, ver_mode):
     ]
 
     if include_enterprise:
-        test_steps.extend([
-            lint_backend_step(edition=edition2),
-            test_backend_step(edition=edition2),
-        ])
         build_steps.extend([
             build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-amd64']),
         ])
@@ -364,7 +308,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
         ]
     }
 
-    for step in [wire_install_step(), yarn_install_step(), verify_gen_cue_step(edition)]:
+    for step in [wire_install_step(), yarn_install_step(edition), verify_gen_cue_step(edition), verify_gen_jsonnet_step(edition)]:
         step.update(deps_on_clone_enterprise_step)
         init_steps.extend([step])
 
@@ -384,21 +328,19 @@ def get_enterprise_pipelines(trigger, ver_mode):
     ]
     if not disable_tests:
         pipelines.extend([
-            pipeline(
-                name='{}-enterprise-test'.format(ver_mode), edition=edition, trigger=trigger, services=[],
-                steps=init_steps + test_steps, environment=environment,
-                volumes=[],
-            ),
+            test_frontend(trigger, ver_mode, edition),
+            test_backend(trigger, ver_mode, edition),
             pipeline(
                 name='{}-enterprise-integration-tests'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=[download_grabpl_step(), identify_runner_step(), clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode), verify_gen_cue_step(edition), wire_install_step()] + integration_test_steps + [redis_integration_tests_step(), memcached_integration_tests_step()],
+                steps=[download_grabpl_step(), identify_runner_step(), clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode), verify_gen_cue_step(edition), verify_gen_jsonnet_step(edition), wire_install_step()] + integration_test_steps + [redis_integration_tests_step(), memcached_integration_tests_step()],
                 environment=environment, volumes=volumes,
             ),
         ])
         deps = {
             'depends_on': [
                 '{}-enterprise-build{}-publish'.format(ver_mode, get_e2e_suffix()),
-                '{}-enterprise-test'.format(ver_mode),
+                '{}-enterprise-test-frontend'.format(ver_mode),
+                '{}-enterprise-test-backend'.format(ver_mode),
                 '{}-enterprise-integration-tests'.format(ver_mode)
             ]
         }
@@ -444,16 +386,18 @@ def publish_packages_pipeline():
     }
     oss_steps = [
         download_grabpl_step(),
-        publish_packages_step(edition='oss', ver_mode='release'),
+        compile_build_cmd(),
+        publish_linux_packages_step(edition='oss', package_manager='deb'),
+        publish_linux_packages_step(edition='oss', package_manager='rpm'),
         publish_grafanacom_step(edition='oss', ver_mode='release'),
-        publish_linux_packages_step(edition='oss'),
     ]
 
     enterprise_steps = [
         download_grabpl_step(),
-        publish_packages_step(edition='enterprise', ver_mode='release'),
+        compile_build_cmd(),
+        publish_linux_packages_step(edition='enterprise', package_manager='deb'),
+        publish_linux_packages_step(edition='enterprise', package_manager='rpm'),
         publish_grafanacom_step(edition='enterprise', ver_mode='release'),
-        publish_linux_packages_step(edition='enterprise'),
     ]
     deps = [
         'publish-artifacts-public',
@@ -500,9 +444,6 @@ def release_pipelines(ver_mode='release', trigger=None):
                 ]
             },
             'ref': ['refs/tags/v*',],
-            'repo': {
-                'exclude': ['grafana/grafana'],
-            },
         }
 
     # The release pipelines include also enterprise ones, so both editions are built for a release.

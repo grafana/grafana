@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -62,6 +63,11 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			continue
 		}
 
+		hideFromList := panel.HideFromList
+		if panel.ID == "flamegraph" {
+			hideFromList = !hs.Features.IsEnabled(featuremgmt.FlagFlameGraph)
+		}
+
 		panels[panel.ID] = plugins.PanelDTO{
 			ID:            panel.ID,
 			Name:          panel.Name,
@@ -69,7 +75,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			Module:        panel.Module,
 			BaseURL:       panel.BaseURL,
 			SkipDataQuery: panel.SkipDataQuery,
-			HideFromList:  panel.HideFromList,
+			HideFromList:  hideFromList,
 			ReleaseState:  string(panel.State),
 			Signature:     string(panel.Signature),
 			Sort:          getPanelSort(panel.ID),
@@ -140,6 +146,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"auth": map[string]interface{}{
 			"OAuthSkipOrgRoleUpdateSync": hs.Cfg.OAuthSkipOrgRoleUpdateSync,
 			"SAMLSkipOrgRoleSync":        hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
+			"LDAPSkipOrgRoleSync":        hs.Cfg.LDAPSkipOrgRoleSync,
 			"DisableSyncLock":            hs.Cfg.DisableSyncLock,
 		},
 		"buildInfo": map[string]interface{}{
@@ -208,21 +215,23 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 
 func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
 	orgDataSources := make([]*datasources.DataSource, 0)
-
 	if c.OrgID != 0 {
 		query := datasources.GetDataSourcesQuery{OrgId: c.OrgID, DataSourceLimit: hs.Cfg.DataSourceLimit}
 		err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
-
 		if err != nil {
 			return nil, err
 		}
 
-		filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, query.Result)
-		if err != nil {
-			return nil, err
+		if c.IsPublicDashboardView {
+			// If RBAC is enabled, it will filter out all datasources for a public user, so we need to skip it
+			orgDataSources = query.Result
+		} else {
+			filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, query.Result)
+			if err != nil {
+				return nil, err
+			}
+			orgDataSources = filtered
 		}
-
-		orgDataSources = filtered
 	}
 
 	dataSources := make(map[string]plugins.DataSourceDTO)

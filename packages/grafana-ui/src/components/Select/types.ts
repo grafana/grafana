@@ -77,6 +77,8 @@ export interface SelectCommonProps<T> {
   renderControl?: ControlComponent<T>;
   tabSelectsValue?: boolean;
   value?: T | SelectValue<T> | null;
+  /** Will wrap the MenuList in a react-window FixedSizeVirtualList for improved performance, does not support options with "description" properties */
+  virtualized?: boolean;
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
   width?: number | 'auto';
   isOptionDisabled?: () => boolean;
@@ -101,6 +103,11 @@ export interface SelectAsyncProps<T> {
   cacheOptions?: boolean;
   /** Message to display when options are loading */
   loadingMessage?: string;
+}
+
+/** The VirtualizedSelect component uses a slightly different SelectableValue, description and other props are not supported */
+export interface VirtualizedSelectProps<T> extends Omit<SelectCommonProps<T>, 'virtualized'> {
+  options?: Array<Pick<SelectableValue<T>, 'label' | 'value'>>;
 }
 
 export interface MultiSelectCommonProps<T> extends Omit<SelectCommonProps<T>, 'onChange' | 'isMulti' | 'value'> {

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -12,6 +13,10 @@ import (
 
 func isGeneralFolder(folderID int64) bool {
 	return folderID == 0
+}
+
+func isUIDGeneralFolder(folderUID string) bool {
+	return folderUID == accesscontrol.GeneralFolderUID
 }
 
 func (l *LibraryElementService) requireSupportedElementKind(kindAsInt int64) error {

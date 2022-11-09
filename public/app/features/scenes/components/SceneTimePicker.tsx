@@ -11,7 +11,7 @@ export interface SceneTimePickerState extends SceneObjectStatePlain {
 }
 
 export class SceneTimePicker extends SceneObjectBase<SceneTimePickerState> {
-  static Component = SceneTimePickerRenderer;
+  public static Component = SceneTimePickerRenderer;
 }
 
 function SceneTimePickerRenderer({ model }: SceneComponentProps<SceneTimePicker>) {

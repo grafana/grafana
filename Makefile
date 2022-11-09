@@ -46,7 +46,8 @@ $(SPEC_TARGET): $(SWAGGER) ## Generate API Swagger specification
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/prometheus/alertmanager" \
-	-i pkg/api/swagger_tags.json
+	-i pkg/api/swagger_tags.json \
+	--exclude-tag=alpha
 
 swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET) validate-api-spec
 
@@ -71,6 +72,9 @@ gen-cue: ## Do all CUE/Thema code generation
 gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
+
+gen-jsonnet:
+	go generate ./devenv/dev-dashboards
 
 build-go: $(MERGED_SPEC_TARGET) gen-go ## Build all Go binaries.
 	@echo "build go files"
@@ -116,13 +120,13 @@ test-go-integration: ## Run integration tests for backend with flags.
 test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.
 	@echo "test backend integration postgres tests"
 	$(GO) clean -testcache
-	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -run Integration -covermode=atomic -timeout=30m {}'
+	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -run Integration -covermode=atomic -timeout=2m {}'
 
 .PHONY: test-go-integration-mysql
 test-go-integration-mysql: devenv-mysql ## Run integration tests for mysql backend with flags.
 	@echo "test backend integration mysql tests"
 	$(GO) clean -testcache
-	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -run Integration -covermode=atomic -timeout=30m {}'
+	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -run Integration -covermode=atomic -timeout=2m {}'
 
 test-js: ## Run tests for frontend.
 	@echo "test frontend"

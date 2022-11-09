@@ -80,6 +80,9 @@ func TestParseTreeTestdata(t *testing.T) {
 			rootid: "test-app",
 			skip:   "has a 'page'-type include which isn't a known part of spec",
 		},
+		"test-app-with-roles": {
+			rootid: "test-app",
+		},
 		"unsigned-datasource": {
 			rootid:  "test-datasource",
 			subpath: "plugin",
@@ -157,7 +160,7 @@ func TestParseTreeTestdata(t *testing.T) {
 		tab[ent.Name()] = tst
 	}
 
-	lib := cuectx.ProvideThemaLibrary()
+	lib := cuectx.GrafanaThemaRuntime()
 	for name, otst := range tab {
 		tst := otst // otherwise var is shadowed within func by looping
 		t.Run(name, func(t *testing.T) {
@@ -256,7 +259,7 @@ func TestParseTreeZips(t *testing.T) {
 		tab[ent.Name()] = tst
 	}
 
-	lib := cuectx.ProvideThemaLibrary()
+	lib := cuectx.GrafanaThemaRuntime()
 	for name, otst := range tab {
 		tst := otst // otherwise var is shadowed within func by looping
 		t.Run(name, func(t *testing.T) {

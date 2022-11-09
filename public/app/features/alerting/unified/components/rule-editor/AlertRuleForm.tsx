@@ -25,7 +25,7 @@ import { DetailsStep } from './DetailsStep';
 import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
 import { NotificationsStep } from './NotificationsStep';
 import { RuleInspector } from './RuleInspector';
-import { QueryAndAlertConditionStep } from './query-and-alert-condition/QueryAndAlertConditionStep';
+import { QueryAndExpressionsStep } from './query-and-alert-condition/QueryAndExpressionsStep';
 
 type Props = {
   existing?: RuleWithLocation;
@@ -48,6 +48,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     return {
       ...getDefaultFormValues(),
       queries: getDefaultQueries(),
+      condition: 'C',
       ...(queryParams['defaults'] ? JSON.parse(queryParams['defaults'] as string) : {}),
       type: RuleFormType.grafana,
     };
@@ -159,7 +160,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
         <div className={styles.contentOuter}>
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
-              <QueryAndAlertConditionStep editingExistingRule={!!existing} />
+              <QueryAndExpressionsStep editingExistingRule={!!existing} />
               {showStep2 && (
                 <>
                   {type === RuleFormType.grafana ? <GrafanaEvaluationBehavior /> : <CloudEvaluationBehavior />}

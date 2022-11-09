@@ -3,6 +3,9 @@ github_token = 'github_token'
 drone_token = 'drone_token'
 prerelease_bucket = 'prerelease_bucket'
 gcp_upload_artifacts_key = 'gcp_upload_artifacts_key'
+azure_sp_app_id = 'azure_sp_app_id'
+azure_sp_app_pw = 'azure_sp_app_pw'
+azure_tenant = 'azure_tenant'
 
 def from_secret(secret):
     return {
@@ -26,6 +29,9 @@ def secrets():
         vault_secret(drone_token, 'infra/data/ci/drone', 'machine-user-token'),
         vault_secret(prerelease_bucket, 'infra/data/ci/grafana/prerelease', 'bucket'),
         vault_secret(gcp_upload_artifacts_key, 'infra/data/ci/grafana/releng/artifacts-uploader-service-account', 'credentials.json'),
+        vault_secret(azure_sp_app_id, 'infra/data/ci/datasources/cpp-azure-resourcemanager-credentials', 'application_id'),
+        vault_secret(azure_sp_app_pw, 'infra/data/ci/datasources/cpp-azure-resourcemanager-credentials', 'application_secret'),
+        vault_secret(azure_tenant, 'infra/data/ci/datasources/cpp-azure-resourcemanager-credentials', 'tenant_id'),
     
         # Package publishing
         vault_secret('packages_gpg_public_key', 'infra/data/ci/packages-publish/gpg', 'public-key'),

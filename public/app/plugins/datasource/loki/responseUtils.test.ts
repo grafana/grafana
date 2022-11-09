@@ -2,7 +2,13 @@ import { cloneDeep } from 'lodash';
 
 import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
 
-import { dataFrameHasLevelLabel, dataFrameHasLokiError, extractLevelLikeLabelFromDataFrame } from './responseUtils';
+import {
+  dataFrameHasLevelLabel,
+  dataFrameHasLokiError,
+  extractLevelLikeLabelFromDataFrame,
+  extractLogParserFromDataFrame,
+  extractLabelKeysFromDataFrame,
+} from './responseUtils';
 
 const frame: DataFrame = {
   length: 1,
@@ -68,5 +74,34 @@ describe('extractLevelLikeLabelFromDataFrame', () => {
     const input = cloneDeep(frame);
     input.fields[1].values = new ArrayVector([{ foo: 'info' }]);
     expect(extractLevelLikeLabelFromDataFrame(input)).toBe(null);
+  });
+});
+
+describe('extractLogParserFromDataFrame', () => {
+  it('returns false by default', () => {
+    const input = cloneDeep(frame);
+    expect(extractLogParserFromDataFrame(input)).toEqual({ hasJSON: false, hasLogfmt: false });
+  });
+  it('identifies JSON', () => {
+    const input = cloneDeep(frame);
+    input.fields[2].values = new ArrayVector(['{"a":"b"}']);
+    expect(extractLogParserFromDataFrame(input)).toEqual({ hasJSON: true, hasLogfmt: false });
+  });
+  it('identifies logfmt', () => {
+    const input = cloneDeep(frame);
+    input.fields[2].values = new ArrayVector(['a=b']);
+    expect(extractLogParserFromDataFrame(input)).toEqual({ hasJSON: false, hasLogfmt: true });
+  });
+});
+
+describe('extractLabelKeysFromDataFrame', () => {
+  it('returns empty by default', () => {
+    const input = cloneDeep(frame);
+    input.fields[1].values = new ArrayVector([]);
+    expect(extractLabelKeysFromDataFrame(input)).toEqual([]);
+  });
+  it('extracts label keys', () => {
+    const input = cloneDeep(frame);
+    expect(extractLabelKeysFromDataFrame(input)).toEqual(['level']);
   });
 });

@@ -268,13 +268,13 @@ export async function generateEmptyQuery(
   let defaultQuery: Partial<DataQuery> | undefined;
 
   // datasource override is if we have switched datasources with no carry-over - we want to create a new query with a datasource we define
+  // it's also used if there's a root datasource and there were no previous queries
   if (dataSourceOverride) {
     datasourceRef = dataSourceOverride;
   } else if (queries.length > 0 && queries[queries.length - 1].datasource) {
     // otherwise use last queries' datasource
     datasourceRef = queries[queries.length - 1].datasource;
   } else {
-    // if neither exists, use the default datasource
     datasourceInstance = await getDataSourceSrv().get();
     defaultQuery = datasourceInstance.getDefaultQuery?.(CoreApp.Explore);
     datasourceRef = datasourceInstance.getRef();

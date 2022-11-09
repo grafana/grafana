@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -64,9 +64,12 @@ func writeRedirectCookie(c *models.ReqContext) {
 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
 	}
 
+	if redirectTo == "/" {
+		return
+	}
+
 	// remove any forceLogin=true params
 	redirectTo = removeForceLoginParams(redirectTo)
-
 	cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
 }
 
@@ -194,7 +197,7 @@ func shouldForceLogin(c *models.ReqContext) bool {
 	return forceLogin
 }
 
-func OrgAdminDashOrFolderAdminOrTeamAdmin(ss sqlstore.Store, ds dashboards.DashboardService, ts team.Service) func(c *models.ReqContext) {
+func OrgAdminDashOrFolderAdminOrTeamAdmin(ss db.DB, ds dashboards.DashboardService, ts team.Service) func(c *models.ReqContext) {
 	return func(c *models.ReqContext) {
 		if c.OrgRole == org.RoleAdmin {
 			return

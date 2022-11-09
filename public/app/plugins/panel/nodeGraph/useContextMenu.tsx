@@ -27,18 +27,26 @@ export function useContextMenu(
   const [menu, setMenu] = useState<JSX.Element | undefined>(undefined);
 
   const onNodeOpen = useCallback(
-    (event, node) => {
-      const extraNodeItem = config.gridLayout
-        ? [
-            {
-              label: 'Show in Graph layout',
-              onClick: (node: NodeDatum) => {
-                setFocusedNodeId(node.id);
-                setConfig({ ...config, gridLayout: false });
-              },
-            },
-          ]
-        : undefined;
+    (event: MouseEvent<SVGElement>, node: NodeDatum) => {
+      let label = 'Show in Grid layout';
+      let showGridLayout = true;
+
+      if (config.gridLayout) {
+        label = 'Show in Graph layout';
+        showGridLayout = false;
+      }
+
+      const extraNodeItem = [
+        {
+          label: label,
+          onClick: (node: NodeDatum) => {
+            setFocusedNodeId(node.id);
+            setConfig({ ...config, gridLayout: showGridLayout });
+            setMenu(undefined);
+          },
+        },
+      ];
+
       const renderer = getItemsRenderer(getLinks(nodes, node.dataFrameRowIndex), node, extraNodeItem);
 
       if (renderer) {
@@ -57,7 +65,7 @@ export function useContextMenu(
   );
 
   const onEdgeOpen = useCallback(
-    (event, edge) => {
+    (event: MouseEvent<SVGElement>, edge: EdgeDatum) => {
       const renderer = getItemsRenderer(getLinks(edges, edge.dataFrameRowIndex), edge);
 
       if (renderer) {

@@ -4,9 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 type store interface {
@@ -23,7 +22,7 @@ type xormStore struct {
 }
 
 func (ss *xormStore) UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var rawSQL = "UPDATE temp_user SET status=? WHERE code=?"
 		_, err := sess.Exec(rawSQL, string(cmd.Status), cmd.Code)
 		return err
@@ -31,7 +30,7 @@ func (ss *xormStore) UpdateTempUserStatus(ctx context.Context, cmd *models.Updat
 }
 
 func (ss *xormStore) CreateTempUser(ctx context.Context, cmd *models.CreateTempUserCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		// create user
 		user := &models.TempUser{
 			Email:           cmd.Email,
@@ -58,7 +57,7 @@ func (ss *xormStore) CreateTempUser(ctx context.Context, cmd *models.CreateTempU
 }
 
 func (ss *xormStore) UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		user := &models.TempUser{
 			EmailSent:   true,
 			EmailSentOn: time.Now(),
@@ -71,7 +70,7 @@ func (ss *xormStore) UpdateTempUserWithEmailSent(ctx context.Context, cmd *model
 }
 
 func (ss *xormStore) GetTempUsersQuery(ctx context.Context, query *models.GetTempUsersQuery) error {
-	return ss.db.WithDbSession(ctx, func(dbSess *sqlstore.DBSession) error {
+	return ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
 		rawSQL := `SELECT
 	                tu.id             as id,
 	                tu.org_id         as org_id,
@@ -111,7 +110,7 @@ func (ss *xormStore) GetTempUsersQuery(ctx context.Context, query *models.GetTem
 }
 
 func (ss *xormStore) GetTempUserByCode(ctx context.Context, query *models.GetTempUserByCodeQuery) error {
-	return ss.db.WithDbSession(ctx, func(dbSess *sqlstore.DBSession) error {
+	return ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
 		var rawSQL = `SELECT
 	                tu.id             as id,
 	                tu.org_id         as org_id,
@@ -146,7 +145,7 @@ func (ss *xormStore) GetTempUserByCode(ctx context.Context, query *models.GetTem
 }
 
 func (ss *xormStore) ExpireOldUserInvites(ctx context.Context, cmd *models.ExpireTempUsersCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var rawSQL = "UPDATE temp_user SET status = ?, updated = ? WHERE created <= ? AND status in (?, ?)"
 		if result, err := sess.Exec(rawSQL, string(models.TmpUserExpired), time.Now().Unix(), cmd.OlderThan.Unix(), string(models.TmpUserSignUpStarted), string(models.TmpUserInvitePending)); err != nil {
 			return err

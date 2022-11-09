@@ -20,7 +20,7 @@ const getNotFoundModel = (): NavModel => {
 export const getNavModel = (navIndex: NavIndex, id: string, fallback?: NavModel, onlyChild = false): NavModel => {
   if (navIndex[id]) {
     const node = navIndex[id];
-    const main = onlyChild ? node : getSectionRoot(node);
+    const main = onlyChild ? node : getRootSectionForNode(node);
     const mainWithActive = enrichNodeWithActiveState(main, id);
 
     return {
@@ -36,8 +36,8 @@ export const getNavModel = (navIndex: NavIndex, id: string, fallback?: NavModel,
   return getNotFoundModel();
 };
 
-function getSectionRoot(node: NavModelItem): NavModelItem {
-  return node.parentItem && node.parentItem.id !== HOME_NAV_ID ? getSectionRoot(node.parentItem) : node;
+export function getRootSectionForNode(node: NavModelItem): NavModelItem {
+  return node.parentItem && node.parentItem.id !== HOME_NAV_ID ? getRootSectionForNode(node.parentItem) : node;
 }
 
 function enrichNodeWithActiveState(node: NavModelItem, activeId: string): NavModelItem {

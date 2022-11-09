@@ -9,7 +9,7 @@ keywords:
   - guide
   - rules
   - create
-title: Create Grafana managed alert rule
+title: Create Grafana managed alert rules
 weight: 400
 ---
 
@@ -25,7 +25,7 @@ Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
 1. Click **New alert rule**. The new alerting rule page opens where the Grafana managed alerts option is selected by default.
 1. In Step 1, add queries and expressions to evaluate, and then select the alert condition.
    - For queries, select a data source from the drop-down.
-   - Add one or more [queries]({{< relref "../../panels/query-a-data-source/add-a-query/" >}}) or [expressions]({{< relref "../../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/" >}}).
+   - Add one or more [queries]({{< relref "../../panels-visualizations/query-transform-data/#add-a-query/" >}}) or [expressions]({{< relref "../../panels-visualizations/query-transform-data/expression-queries/" >}}).
    - For each expression, select either **Classic condition** to create a single alert rule, or choose from **Math**, **Reduce**, **Resample** options to generate separate alert for each series. For details on these options, see [Single and multi dimensional rule](#single-and-multi-dimensional-rule).
    - Click **Run queries** to verify that the query is successful.
    - Next, select the query or expression for your alert condition.
@@ -44,7 +44,7 @@ Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
    - Add Runbook URL, panel, dashboard, and alert IDs.
    - Add custom labels.
 1. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.
-1. Next, create a [notification]({{< relref "../notifications/" >}}) for the rule.
+1. Next, create a for the rule.
 
 ### Single and multi dimensional rule
 
@@ -67,7 +67,7 @@ To generate a separate alert for each series, create a multi-dimensional rule. U
 
 #### Rule with classic condition
 
-For more information, see [expressions documentation]({{< relref "../../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/" >}}).
+For more information, see [expressions documentation]({{< relref "../../panels-visualizations/query-transform-data/expression-queries/" >}}).
 
 ### No data and error handling
 

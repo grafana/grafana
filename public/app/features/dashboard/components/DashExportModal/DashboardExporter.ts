@@ -4,6 +4,7 @@ import { DataSourceRef, PanelPluginMeta } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { PanelModel } from 'app/features/dashboard/state';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
@@ -167,10 +168,15 @@ export class DashboardExporter {
       }
     };
 
-    const processLibraryPanels = (panel: any) => {
+    const processLibraryPanels = async (panel: PanelModel) => {
       if (isPanelModelLibraryPanel(panel)) {
-        const { libraryPanel, ...model } = panel;
-        const { name, uid } = libraryPanel;
+        const { name, uid } = panel.libraryPanel;
+        let model = panel.libraryPanel.model;
+        if (!model) {
+          const libPanel = await getLibraryPanel(uid, true);
+          model = libPanel.model;
+        }
+
         const { gridPos, id, ...rest } = model;
         if (!libraryPanels.has(uid)) {
           libraryPanels.set(uid, { name, uid, kind: LibraryElementKind.Panel, model: rest });
@@ -221,11 +227,11 @@ export class DashboardExporter {
 
       // we need to process all panels again after all the promises are resolved
       // so all data sources, variables and targets have been templateized when we process library panels
-      for (const panel of saveModel.panels) {
-        processLibraryPanels(panel);
+      for (const panel of dashboard.panels) {
+        await processLibraryPanels(panel);
         if (panel.collapsed !== undefined && panel.collapsed === true && panel.panels) {
           for (const rowPanel of panel.panels) {
-            processLibraryPanels(rowPanel);
+            await processLibraryPanels(rowPanel);
           }
         }
       }

@@ -2,13 +2,13 @@ package interceptors
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 
@@ -17,30 +17,40 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Authenticator can authenticate GRPC requests.
-type Authenticator struct {
-	logger      log.Logger
-	APIKey      apikey.Service
-	UserService user.Service
+type Authenticator interface {
+	Authenticate(ctx context.Context) (context.Context, error)
 }
 
-func NewAuthenticator(apiKey apikey.Service, userService user.Service) *Authenticator {
-	return &Authenticator{
-		logger:      log.New("grpc-server-authenticator"),
-		APIKey:      apiKey,
-		UserService: userService,
+// authenticator can authenticate GRPC requests.
+type authenticator struct {
+	contextHandler grpccontext.ContextHandler
+	logger         log.Logger
+
+	APIKeyService        apikey.Service
+	UserService          user.Service
+	AccessControlService accesscontrol.Service
+}
+
+func ProvideAuthenticator(apiKeyService apikey.Service, userService user.Service, accessControlService accesscontrol.Service, contextHandler grpccontext.ContextHandler) Authenticator {
+	return &authenticator{
+		contextHandler: contextHandler,
+		logger:         log.New("grpc-server-authenticator"),
+
+		AccessControlService: accessControlService,
+		APIKeyService:        apiKeyService,
+		UserService:          userService,
 	}
 }
 
 // Authenticate checks that a token exists and is valid, and then removes the token from the
 // authorization header in the context.
-func (a *Authenticator) Authenticate(ctx context.Context) (context.Context, error) {
+func (a *authenticator) Authenticate(ctx context.Context) (context.Context, error) {
 	return a.tokenAuth(ctx)
 }
 
 const tokenPrefix = "Bearer "
 
-func (a *Authenticator) tokenAuth(ctx context.Context) (context.Context, error) {
+func (a *authenticator) tokenAuth(ctx context.Context) (context.Context, error) {
 	auth, err := extractAuthorization(ctx)
 	if err != nil {
 		return ctx, err
@@ -57,16 +67,18 @@ func (a *Authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 
 	newCtx := purgeHeader(ctx, "authorization")
 
-	_, err = a.getSignedInUser(ctx, token)
+	signedInUser, err := a.getSignedInUser(ctx, token)
 	if err != nil {
-		logger.Warn("request with invalid token", "error", err, "token", token)
+		a.logger.Warn("request with invalid token", "error", err, "token", token)
 		return ctx, status.Error(codes.Unauthenticated, "invalid token")
 	}
+
+	newCtx = a.contextHandler.SetUser(newCtx, signedInUser)
 
 	return newCtx, nil
 }
 
-func (a *Authenticator) getSignedInUser(ctx context.Context, token string) (*user.SignedInUser, error) {
+func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*user.SignedInUser, error) {
 	decoded, err := apikeygenprefix.Decode(token)
 	if err != nil {
 		return nil, err
@@ -77,7 +89,7 @@ func (a *Authenticator) getSignedInUser(ctx context.Context, token string) (*use
 		return nil, err
 	}
 
-	apikey, err := a.APIKey.GetAPIKeyByHash(ctx, hash)
+	apikey, err := a.APIKeyService.GetAPIKeyByHash(ctx, hash)
 	if err != nil {
 		return nil, err
 	}
@@ -92,13 +104,29 @@ func (a *Authenticator) getSignedInUser(ctx context.Context, token string) (*use
 		return nil, err
 	}
 
+	if signedInUser == nil {
+		return nil, status.Error(codes.Unauthenticated, "service account not found")
+	}
+
 	if !signedInUser.HasRole(org.RoleAdmin) {
-		return nil, fmt.Errorf("api key does not have admin role")
+		return nil, status.Error(codes.PermissionDenied, "service account does not have admin role")
 	}
 
 	// disabled service accounts are not allowed to access the API
 	if signedInUser.IsDisabled {
-		return nil, fmt.Errorf("service account is disabled")
+		return nil, status.Error(codes.PermissionDenied, "service account is disabled")
+	}
+
+	if signedInUser.Permissions == nil {
+		signedInUser.Permissions = make(map[int64]map[string][]string)
+	}
+
+	if signedInUser.Permissions[signedInUser.OrgID] == nil {
+		permissions, err := a.AccessControlService.GetUserPermissions(ctx, signedInUser, accesscontrol.Options{})
+		if err != nil {
+			a.logger.Error("failed fetching permissions for user", "userID", signedInUser.UserID, "error", err)
+		}
+		signedInUser.Permissions[signedInUser.OrgID] = accesscontrol.GroupScopesByAction(permissions)
 	}
 
 	return signedInUser, nil
