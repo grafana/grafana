@@ -15,10 +15,10 @@ import (
 	"strings"
 
 	"cuelang.org/go/cue/errors"
+	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/kindsys"
-	"github.com/sdboyer/jennywrites"
 )
 
 const sep = string(filepath.Separator)
@@ -31,7 +31,7 @@ func main() {
 
 	// Core kinds composite code generator. Produces all generated code in
 	// grafana/grafana that derives from raw and structured core kinds.
-	coreKindsGen := jennywrites.JennyListWithNamer[*codegen.DeclForGen](func(decl *codegen.DeclForGen) string {
+	coreKindsGen := codejen.JennyListWithNamer[*codegen.DeclForGen](func(decl *codegen.DeclForGen) string {
 		return decl.Meta.Common().MachineName
 	})
 

@@ -110,7 +110,7 @@ require (
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
 	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
 	golang.org/x/oauth2 v0.0.0-20220630143837-2104d58473e0
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
+	golang.org/x/sync v0.1.0
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858
 	golang.org/x/tools v0.1.12
 	gonum.org/v1/gonum v0.11.0
@@ -292,8 +292,8 @@ require (
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-ieproxy v0.0.3 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
-	github.com/rogpeppe/go-internal v1.8.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/rogpeppe/go-internal v1.8.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/segmentio/asm v1.1.4 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
