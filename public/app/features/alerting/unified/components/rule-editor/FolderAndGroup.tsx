@@ -191,6 +191,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
                 value={selectedGroup}
                 custom={isAddingGroup}
                 onCustomChange={(custom: boolean) => setIsAddingGroup(custom)}
+                placeholder="Evaluation group name"
                 onChange={(value: string) => {
                   field.onChange(value);
                   setSelectedGroup(value);
