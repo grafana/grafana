@@ -21,9 +21,9 @@ export interface Column<TableData extends object> {
    * */
   sortType?: DefaultSortTypes | SortByFn<TableData>;
   /**
-   * If `true` the column will shrink to its minimum width.
+   * If `true` prevents the column from growing more than its content.
    */
-  shrink?: boolean;
+  disableGrow?: boolean;
   /**
    * If the provided function returns `false` the column will be hidden.
    */

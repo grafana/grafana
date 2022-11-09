@@ -27,7 +27,7 @@ export function getColumns<K extends object>(columns: Array<Column<K>>): Array<I
       accessor: column.id || uniqueId(),
       sortType: column.sortType || 'alphanumeric',
       disableSortBy: !Boolean(column.sortType),
-      width: column.shrink ? 0 : undefined,
+      width: column.disableGrow ? 0 : undefined,
       visible: column.visible,
       ...(column.cell && { Cell: column.cell }),
     })),

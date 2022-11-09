@@ -36,7 +36,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   evenRow: css`
     background: ${theme.colors.background.primary};
   `,
-  shrink: css`
+  disableGrow: css`
     width: 0%;
   `,
   sortIcon: css`
@@ -133,7 +133,10 @@ export function DataTable<TableData extends object>({
                 return (
                   <th
                     key={key}
-                    className={cx({ [styles.shrink]: column.width === 0, [styles.sortableHeader]: column.canSort })}
+                    className={cx({
+                      [styles.disableGrow]: column.width === 0,
+                      [styles.sortableHeader]: column.canSort,
+                    })}
                     {...headerCellProps}
                   >
                     {column.render('Header')}
