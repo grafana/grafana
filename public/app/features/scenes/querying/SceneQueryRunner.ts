@@ -32,7 +32,7 @@ export interface DataQueryExtended extends DataQuery {
 export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
   private querySub?: Unsubscribable;
 
-  _variableDependency = new VariableDependencyConfig(this, {
+  protected _variableDependency = new VariableDependencyConfig(this, {
     statePaths: ['queries'],
     onReferencedVariableValueChanged: () => this.runQueries(),
   });

@@ -54,7 +54,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
   }
 
   /** Returns variable dependency config */
-  get variableDependency(): SceneVariableDependencyConfigLike | undefined {
+  public get variableDependency(): SceneVariableDependencyConfigLike | undefined {
     return this._variableDependency;
   }
 
@@ -248,7 +248,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
    * Interpolates the given string using the current scene object as context.
    * TODO: Cache interpolatinos?
    */
-  interpolate(value: string | undefined) {
+  public interpolate(value: string | undefined) {
     // Skip interpolation if there are no variable depdendencies
     if (!value || !this._variableDependency || this._variableDependency.getNames().size === 0) {
       return value;

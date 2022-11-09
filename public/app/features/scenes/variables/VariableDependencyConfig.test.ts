@@ -13,7 +13,7 @@ interface TestState extends SceneObjectStatePlain {
 }
 
 class TestObj extends SceneObjectBase<TestState> {
-  constructor() {
+  public constructor() {
     super({
       query: 'query with ${queryVarA} ${queryVarB}',
       otherProp: 'string with ${otherPropA}',
