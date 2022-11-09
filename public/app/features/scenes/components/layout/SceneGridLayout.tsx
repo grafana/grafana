@@ -57,6 +57,8 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       return;
     }
 
+    console.log('updating Layout', layout);
+
     for (const item of layout) {
       const child = this.state.children.find((c) => c.state.key === item.i);
       if (child) {
@@ -81,17 +83,21 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   };
 
   getChild(key: string) {
-    return this.state.children.find((child) => {
+    for (const child of this.state.children) {
       if (child.state.key === key) {
-        return true;
+        return child;
       }
 
-      if (child instanceof SceneGridLayout) {
-        return child.state.children.find((rowChild) => rowChild.state.key === key);
+      if (child instanceof SceneGridRow) {
+        for (const rowChild of child.state.children) {
+          if (rowChild.state.key === key) {
+            return rowChild;
+          }
+        }
       }
+    }
 
-      return false;
-    });
+    throw new Error('Scene layout child not found for GridItem');
   }
 
   onResizeStop: ReactGridLayout.ItemCallback = (_, o, n) => {
@@ -110,25 +116,33 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     });
   };
 
-  getRowAboveIndex(layout: ReactGridLayout.Layout[], startAt: number) {
-    for (let i = startAt; i < layout.length; i++) {
+  /**
+   *  We assume the layout array is storted according to y pos, and walk upwards until we find a row.
+   *  If it is collapsed there is no row to add it to.
+   */
+  getRowAboveIndex(layout: ReactGridLayout.Layout[], startAt: number): SceneGridRow | null {
+    if (startAt < 0) {
+      return null;
+    }
+
+    for (let i = startAt; i >= 0; i--) {
       const gridItem = layout[i];
       const sceneChild = this.getChild(gridItem.i);
 
       if (sceneChild instanceof SceneGridRow) {
-        // the closest row is collapsed return undefined
+        // the closest row is collapsed return null
         if (sceneChild.state.isCollapsed) {
-          return undefined;
+          return null;
         }
 
         return sceneChild;
       }
     }
 
-    return undefined;
+    return null;
   }
 
-  moveChildToRow(child: SceneLayoutChild, target: SceneGridLayout | SceneGridRow) {
+  moveChildTo(child: SceneLayoutChild, target: SceneGridLayout | SceneGridRow) {
     const currentParent = child.parent!;
 
     if (currentParent instanceof SceneGridLayout || currentParent instanceof SceneGridRow) {
@@ -143,25 +157,14 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       children: newChildren,
     });
 
-    // to always force re-render
-    this.setState({});
+    if (target !== this) {
+      // to always force re-render
+      this.setState({});
+    }
   }
 
   onDragStop: ReactGridLayout.ItemCallback = (gridLayout, o, updatedItem) => {
     const sceneChild = this.getChild(updatedItem.i)!;
-
-    // find closest row
-    for (let index = 0; index < gridLayout.length; index++) {
-      const gridItem = gridLayout[index];
-
-      if (gridItem.i === updatedItem.i) {
-        const rowAbove = this.getRowAboveIndex(gridLayout, index - 1);
-
-        if (rowAbove && rowAbove !== sceneChild.parent) {
-          this.moveChildToRow(sceneChild, rowAbove);
-        }
-      }
-    }
 
     // Update children positions if they have changed
     for (let i = 0; i < gridLayout.length; i++) {
@@ -179,6 +182,19 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
             y: childLayout.y,
           },
         });
+      }
+    }
+
+    // find closest row
+    for (let index = 0; index < gridLayout.length; index++) {
+      const gridItem = gridLayout[index];
+
+      if (gridItem.i === updatedItem.i) {
+        const rowAbove = this.getRowAboveIndex(gridLayout, index - 1);
+
+        if (rowAbove && rowAbove !== sceneChild.parent) {
+          this.moveChildTo(sceneChild, rowAbove);
+        }
       }
     }
 
@@ -220,7 +236,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     return { i: child.state.key!, x, y, h, w, isResizable, isDraggable };
   }
 
-  buildGridLayout() {
+  buildGridLayout(width: number) {
     let cells: ReactGridLayout.Layout[] = [];
 
     for (const child of this.state.children) {
@@ -241,7 +257,11 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       }
     });
 
-    return { lg: cells, sm: cells.map((l) => ({ ...l, w: 24 })) };
+    if (width < 768) {
+      return cells.map((cell) => ({ ...cell, w: 24 }));
+    }
+
+    return cells;
   }
 }
 
@@ -249,8 +269,6 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
   const theme = useTheme2();
   const { children } = model.useState();
   validateChildrenSize(children);
-
-  const layout = model.buildGridLayout();
 
   return (
     <AutoSizer disableHeight>
@@ -267,6 +285,8 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
           gridWidth: width,
           theme,
         });
+
+        const layout = model.buildGridLayout(width);
 
         return (
           /**
@@ -285,13 +305,13 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
               isDraggable={width > 768}
               isResizable={false}
               containerPadding={[0, 0]}
-              useCSSTransforms={true}
+              useCSSTransforms={false}
               margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
               cols={GRID_COLUMN_COUNT}
               rowHeight={GRID_CELL_HEIGHT}
               draggableHandle={`.grid-drag-handle-${model.state.key}`}
               // @ts-ignore: ignoring for now until we make the size type numbers-only
-              layout={width > 768 ? layout.lg : layout.sm}
+              layout={layout}
               onDragStop={model.onDragStop}
               // onDrag={model.onDrag}
               onResizeStop={model.onResizeStop}
@@ -299,7 +319,14 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
               isBounded={false}
               // compactType={null}
             >
-              {renderChildren(model.state.children)}
+              {layout.map((gridItem) => {
+                const sceneChild = model.getChild(gridItem.i)!;
+                return (
+                  <div key={sceneChild.state.key} style={{ display: 'flex' }}>
+                    <sceneChild.Component model={sceneChild} key={sceneChild.state.key} />
+                  </div>
+                );
+              })}
             </ReactGridLayout>
           </div>
         );
@@ -308,33 +335,33 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
   );
 }
 
-function renderChildren(children: SceneLayoutChild[]) {
-  const elements: React.ReactNode[] = [];
+// function renderChildren(children: SceneLayoutChild[]) {
+//   const elements: React.ReactNode[] = [];
 
-  for (const child of children) {
-    elements.push(
-      <div key={child.state.key} style={{ display: 'flex' }}>
-        <child.Component model={child} key={child.state.key} />
-      </div>
-    );
+//   for (const child of children) {
+//     elements.push(
+//       <div key={child.state.key} style={{ display: 'flex' }}>
+//         <child.Component model={child} key={child.state.key} />
+//       </div>
+//     );
 
-    if (child instanceof SceneGridRow) {
-      if (child.state.isCollapsed) {
-        continue;
-      }
+//     if (child instanceof SceneGridRow) {
+//       if (child.state.isCollapsed) {
+//         continue;
+//       }
 
-      for (const rowChild of child.state.children) {
-        elements.push(
-          <div key={rowChild.state.key} style={{ display: 'flex' }}>
-            <rowChild.Component model={rowChild} key={rowChild.state.key} />
-          </div>
-        );
-      }
-    }
-  }
+//       for (const rowChild of child.state.children) {
+//         elements.push(
+//           <div key={rowChild.state.key} style={{ display: 'flex' }}>
+//             <rowChild.Component model={rowChild} key={rowChild.state.key} />
+//           </div>
+//         );
+//       }
+//     }
+//   }
 
-  return elements;
-}
+//   return elements;
+// }
 
 interface SceneGridRowState extends SceneLayoutChildState {
   title: string;
