@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
-const webexAPIEndpoint = "https://webexapis.com/v1/messages"
+const webexAPIURL = "https://webexapis.com/v1/messages"
 
 // WebexNotifier is responsible for sending alert notifications as webex messages.
 type WebexNotifier struct {
@@ -31,12 +31,12 @@ type WebexNotifier struct {
 
 // PLEASE do not touch these settings without taking a look at what we support as part of
 // https://github.com/prometheus/alertmanager/blob/main/notify/webex/webex.go
-// Currently, the Alerting team is unifying channels and receivers - any discrepancy is detrimental to that.
+// Currently, the Alerting team is unifying channels and (upstream) receivers - any discrepancy is detrimental to that.
 type webexSettings struct {
-	Message    string `json:"message,omitempty" yaml:"message,omitempty"`
-	RoomID     string `json:"room_id,omitempty" yaml:"room_id,omitempty"`
-	WebhookURL string `json:"webhook_url,omitempty" yaml:"webhook_url,omitempty"`
-	Token      string `json:"bot_token" yaml:"bot_token"`
+	Message string `json:"message,omitempty" yaml:"message,omitempty"`
+	RoomID  string `json:"room_id,omitempty" yaml:"room_id,omitempty"`
+	APIURL  string `json:"api_url,omitempty" yaml:"api_url,omitempty"`
+	Token   string `json:"bot_token" yaml:"bot_token"`
 }
 
 func buildWebexSettings(factoryConfig FactoryConfig) (*webexSettings, error) {
@@ -46,8 +46,8 @@ func buildWebexSettings(factoryConfig FactoryConfig) (*webexSettings, error) {
 		return settings, fmt.Errorf("failed to unmarshal settings: %w", err)
 	}
 
-	if settings.WebhookURL == "" {
-		settings.WebhookURL = webexAPIEndpoint
+	if settings.APIURL == "" {
+		settings.APIURL = webexAPIURL
 	}
 
 	if settings.Message == "" {
@@ -56,12 +56,11 @@ func buildWebexSettings(factoryConfig FactoryConfig) (*webexSettings, error) {
 
 	settings.Token = factoryConfig.DecryptFunc(context.Background(), factoryConfig.Config.SecureSettings, "bot_token", settings.Token)
 
-	webhookURL := factoryConfig.DecryptFunc(context.Background(), factoryConfig.Config.SecureSettings, "webhook_url", settings.WebhookURL)
-	u, err := url.Parse(webhookURL)
+	u, err := url.Parse(settings.APIURL)
 	if err != nil {
-		return nil, fmt.Errorf("invalid URL %q", webhookURL)
+		return nil, fmt.Errorf("invalid URL %q", settings.APIURL)
 	}
-	settings.WebhookURL = u.String()
+	settings.APIURL = u.String()
 
 	return settings, err
 }
@@ -105,8 +104,6 @@ func buildWebexNotifier(factoryConfig FactoryConfig) (*WebexNotifier, error) {
 
 // WebexMessage defines the JSON object to send to Webex endpoints.
 type WebexMessage struct {
-	*ExtendedData
-
 	RoomID  string   `json:"roomId,omitempty"`
 	Message string   `json:"markdown"`
 	Files   []string `json:"files"`
@@ -125,9 +122,9 @@ func (wn *WebexNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	msg := &WebexMessage{
-		ExtendedData: data,
-		RoomID:       wn.settings.RoomID,
-		Message:      message,
+		RoomID:  wn.settings.RoomID,
+		Message: message,
+		Files:   []string{},
 	}
 
 	// Augment our Alert data with ImageURLs if available.
@@ -135,7 +132,7 @@ func (wn *WebexNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		func(index int, image ngmodels.Image) error {
 			if len(image.URL) != 0 {
 				data.Alerts[index].ImageURL = image.URL
-				msg.Files[index] = image.URL
+				msg.Files = append(msg.Files, image.URL)
 			}
 			return nil
 		},
@@ -146,7 +143,7 @@ func (wn *WebexNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		return false, err
 	}
 
-	parsedURL := tmpl(wn.settings.WebhookURL)
+	parsedURL := tmpl(wn.settings.APIURL)
 	if tmplErr != nil {
 		return false, tmplErr
 	}
