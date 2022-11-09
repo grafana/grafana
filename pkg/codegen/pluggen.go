@@ -287,7 +287,7 @@ func pgenGoTypes(plug pfs.PluginInfo, path, subpath, prefix string) (WriteDiffer
 		finalpath := filepath.Join(path, subpath, fmt.Sprintf("types_%s_gen.go", lowslot))
 		byt, err := postprocessGoFile(genGoFile{
 			path:   finalpath,
-			walker: makePrefixDropper(strings.Title(lin.Name()), slotname),
+			walker: PrefixDropper(strings.Title(lin.Name())),
 			in:     buf.Bytes(),
 		})
 		if err != nil {

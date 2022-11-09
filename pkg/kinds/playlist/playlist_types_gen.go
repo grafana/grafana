@@ -9,13 +9,13 @@
 
 package playlist
 
-// Defines values for PlaylistPlaylistItemType.
+// Defines values for PlaylistItemType.
 const (
-	PlaylistPlaylistItemTypeDashboardById PlaylistPlaylistItemType = "dashboard_by_id"
+	PlaylistItemTypeDashboardById PlaylistItemType = "dashboard_by_id"
 
-	PlaylistPlaylistItemTypeDashboardByTag PlaylistPlaylistItemType = "dashboard_by_tag"
+	PlaylistItemTypeDashboardByTag PlaylistItemType = "dashboard_by_tag"
 
-	PlaylistPlaylistItemTypeDashboardByUid PlaylistPlaylistItemType = "dashboard_by_uid"
+	PlaylistItemTypeDashboardByUid PlaylistItemType = "dashboard_by_uid"
 )
 
 // Playlist defines model for playlist.
@@ -26,7 +26,7 @@ type Playlist struct {
 
 	// The ordered list of items that the playlist will iterate over.
 	// FIXME! This should not be optional, but changing it makes the godegen awkward
-	Items *[]PlaylistPlaylistItem `json:"items,omitempty"`
+	Items *[]PlaylistItem `json:"items,omitempty"`
 
 	// Name of the playlist.
 	Name string `json:"name"`
@@ -36,13 +36,13 @@ type Playlist struct {
 	Uid string `json:"uid"`
 }
 
-// PlaylistPlaylistItem defines model for playlist.PlaylistItem.
-type PlaylistPlaylistItem struct {
+// PlaylistItem defines model for playlist.Item.
+type PlaylistItem struct {
 	// Title is an unused property -- it will be removed in the future
 	Title *string `json:"title,omitempty"`
 
 	// Type of the item.
-	Type PlaylistPlaylistItemType `json:"type"`
+	Type PlaylistItemType `json:"type"`
 
 	// Value depends on type and describes the playlist item.
 	//
@@ -56,4 +56,4 @@ type PlaylistPlaylistItem struct {
 }
 
 // Type of the item.
-type PlaylistPlaylistItemType string
+type PlaylistItemType string

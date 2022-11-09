@@ -8,12 +8,12 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/errors"
+	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy/ts"
 	"github.com/grafana/cuetsy/ts/ast"
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/typescript"
-	"github.com/grafana/codejen"
 )
 
 // TSVeneerIndexJenny generates an index.gen.ts file with references to all
@@ -89,9 +89,9 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *
 				if !sels[0].IsDefinition() {
 					return false
 				}
-				// It might seem to make sense that we'd strip out the leading # here for
+				// It might seem to make sense that we'd strip replaceout the leading # here for
 				// definitions. However, cuetsy's tsast actually has the # still present in its
-				// Ident types, stripping it out on the fly when stringifying.
+				// Ident types, stripping it replaceout on the fly when stringifying.
 				name = sels[0].String()
 			}
 

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/grafana/codejen"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/gocode"
-	"github.com/grafana/codejen"
 	"golang.org/x/tools/go/ast/astutil"
 )
 
@@ -76,14 +76,23 @@ func (gen *genGoTypes) Generate(decl *DeclForGen) (*codejen.File, error) {
 		}
 	}
 
+	// always drop prefixes.
+	var appf []astutil.ApplyFunc
+	if gen.cfg.Apply != nil {
+		appf = append(appf, gen.cfg.Apply)
+	}
+	appf = append(appf, PrefixDropper(decl.Meta.Common().Name))
+
 	pdir := gen.cfg.GenDirName(decl)
+	fpath := filepath.Join(gen.gokindsdir, pdir, lin.Name()+"_types_gen.go")
 	// TODO allow using name instead of machine name in thema generator
 	b, err := gocode.GenerateTypesOpenAPI(sch, &gocode.TypeConfigOpenAPI{
 		PackageName: filepath.Base(pdir),
-		ApplyFuncs:  []astutil.ApplyFunc{gen.cfg.Apply},
+		ApplyFuncs:  appf,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return codejen.NewFile(filepath.Join(gen.gokindsdir, pdir, lin.Name()+"_types_gen.go"), b, gen), nil
+
+	return codejen.NewFile(fpath, b, gen), nil
 }

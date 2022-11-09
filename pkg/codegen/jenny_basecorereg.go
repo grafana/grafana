@@ -9,7 +9,7 @@ import (
 )
 
 // BaseCoreRegistryJenny generates a static registry for core kinds that
-// is only initializes their [kindsys.Interface]. No slot kinds are composed.
+// only initializes their [kindsys.Interface]. No slot kinds are composed.
 //
 // Path should be the relative path to the directory that will contain the
 // generated registry. kindrelroot should be the repo-root-relative path to the

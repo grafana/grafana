@@ -9,201 +9,201 @@
 
 package dashboard
 
-// Defines values for DashboardGraphTooltip.
+// Defines values for GraphTooltip.
 const (
-	DashboardGraphTooltipN0 DashboardGraphTooltip = 0
+	GraphTooltipN0 GraphTooltip = 0
 
-	DashboardGraphTooltipN1 DashboardGraphTooltip = 1
+	GraphTooltipN1 GraphTooltip = 1
 
-	DashboardGraphTooltipN2 DashboardGraphTooltip = 2
+	GraphTooltipN2 GraphTooltip = 2
 )
 
-// Defines values for DashboardStyle.
+// Defines values for Style.
 const (
-	DashboardStyleDark DashboardStyle = "dark"
+	StyleDark Style = "dark"
 
-	DashboardStyleLight DashboardStyle = "light"
+	StyleLight Style = "light"
 )
 
-// Defines values for DashboardTimezone.
+// Defines values for Timezone.
 const (
-	DashboardTimezoneBrowser DashboardTimezone = "browser"
+	TimezoneBrowser Timezone = "browser"
 
-	DashboardTimezoneEmpty DashboardTimezone = ""
+	TimezoneEmpty Timezone = ""
 
-	DashboardTimezoneUtc DashboardTimezone = "utc"
+	TimezoneUtc Timezone = "utc"
 )
 
-// Defines values for DashboardDashboardCursorSync.
+// Defines values for DashboardCursorSync.
 const (
-	DashboardDashboardCursorSyncN0 DashboardDashboardCursorSync = 0
+	DashboardCursorSyncN0 DashboardCursorSync = 0
 
-	DashboardDashboardCursorSyncN1 DashboardDashboardCursorSync = 1
+	DashboardCursorSyncN1 DashboardCursorSync = 1
 
-	DashboardDashboardCursorSyncN2 DashboardDashboardCursorSync = 2
+	DashboardCursorSyncN2 DashboardCursorSync = 2
 )
 
-// Defines values for DashboardDashboardLinkType.
+// Defines values for DashboardLinkType.
 const (
-	DashboardDashboardLinkTypeDashboards DashboardDashboardLinkType = "dashboards"
+	DashboardLinkTypeDashboards DashboardLinkType = "dashboards"
 
-	DashboardDashboardLinkTypeLink DashboardDashboardLinkType = "link"
+	DashboardLinkTypeLink DashboardLinkType = "link"
 )
 
-// Defines values for DashboardFieldColorModeId.
+// Defines values for FieldColorModeId.
 const (
-	DashboardFieldColorModeIdContinuousGrYlRd DashboardFieldColorModeId = "continuous-GrYlRd"
+	FieldColorModeIdContinuousGrYlRd FieldColorModeId = "continuous-GrYlRd"
 
-	DashboardFieldColorModeIdFixed DashboardFieldColorModeId = "fixed"
+	FieldColorModeIdFixed FieldColorModeId = "fixed"
 
-	DashboardFieldColorModeIdPaletteClassic DashboardFieldColorModeId = "palette-classic"
+	FieldColorModeIdPaletteClassic FieldColorModeId = "palette-classic"
 
-	DashboardFieldColorModeIdPaletteSaturated DashboardFieldColorModeId = "palette-saturated"
+	FieldColorModeIdPaletteSaturated FieldColorModeId = "palette-saturated"
 
-	DashboardFieldColorModeIdThresholds DashboardFieldColorModeId = "thresholds"
+	FieldColorModeIdThresholds FieldColorModeId = "thresholds"
 )
 
-// Defines values for DashboardFieldColorSeriesByMode.
+// Defines values for FieldColorSeriesByMode.
 const (
-	DashboardFieldColorSeriesByModeLast DashboardFieldColorSeriesByMode = "last"
+	FieldColorSeriesByModeLast FieldColorSeriesByMode = "last"
 
-	DashboardFieldColorSeriesByModeMax DashboardFieldColorSeriesByMode = "max"
+	FieldColorSeriesByModeMax FieldColorSeriesByMode = "max"
 
-	DashboardFieldColorSeriesByModeMin DashboardFieldColorSeriesByMode = "min"
+	FieldColorSeriesByModeMin FieldColorSeriesByMode = "min"
 )
 
-// Defines values for DashboardGraphPanelType.
+// Defines values for GraphPanelType.
 const (
-	DashboardGraphPanelTypeGraph DashboardGraphPanelType = "graph"
+	GraphPanelTypeGraph GraphPanelType = "graph"
 )
 
-// Defines values for DashboardHeatmapPanelType.
+// Defines values for HeatmapPanelType.
 const (
-	DashboardHeatmapPanelTypeHeatmap DashboardHeatmapPanelType = "heatmap"
+	HeatmapPanelTypeHeatmap HeatmapPanelType = "heatmap"
 )
 
-// Defines values for DashboardMappingType.
+// Defines values for MappingType.
 const (
-	DashboardMappingTypeRange DashboardMappingType = "range"
+	MappingTypeRange MappingType = "range"
 
-	DashboardMappingTypeRegex DashboardMappingType = "regex"
+	MappingTypeRegex MappingType = "regex"
 
-	DashboardMappingTypeSpecial DashboardMappingType = "special"
+	MappingTypeSpecial MappingType = "special"
 
-	DashboardMappingTypeValue DashboardMappingType = "value"
+	MappingTypeValue MappingType = "value"
 )
 
-// Defines values for DashboardPanelRepeatDirection.
+// Defines values for PanelRepeatDirection.
 const (
-	DashboardPanelRepeatDirectionH DashboardPanelRepeatDirection = "h"
+	PanelRepeatDirectionH PanelRepeatDirection = "h"
 
-	DashboardPanelRepeatDirectionV DashboardPanelRepeatDirection = "v"
+	PanelRepeatDirectionV PanelRepeatDirection = "v"
 )
 
-// Defines values for DashboardRangeMapType.
+// Defines values for RangeMapType.
 const (
-	DashboardRangeMapTypeRange DashboardRangeMapType = "range"
+	RangeMapTypeRange RangeMapType = "range"
 )
 
-// Defines values for DashboardRegexMapType.
+// Defines values for RegexMapType.
 const (
-	DashboardRegexMapTypeRegex DashboardRegexMapType = "regex"
+	RegexMapTypeRegex RegexMapType = "regex"
 )
 
-// Defines values for DashboardRowPanelType.
+// Defines values for RowPanelType.
 const (
-	DashboardRowPanelTypeRow DashboardRowPanelType = "row"
+	RowPanelTypeRow RowPanelType = "row"
 )
 
-// Defines values for DashboardSpecialValueMapOptionsMatch.
+// Defines values for SpecialValueMapOptionsMatch.
 const (
-	DashboardSpecialValueMapOptionsMatchFalse DashboardSpecialValueMapOptionsMatch = "false"
+	SpecialValueMapOptionsMatchFalse SpecialValueMapOptionsMatch = "false"
 
-	DashboardSpecialValueMapOptionsMatchTrue DashboardSpecialValueMapOptionsMatch = "true"
+	SpecialValueMapOptionsMatchTrue SpecialValueMapOptionsMatch = "true"
 )
 
-// Defines values for DashboardSpecialValueMapType.
+// Defines values for SpecialValueMapType.
 const (
-	DashboardSpecialValueMapTypeSpecial DashboardSpecialValueMapType = "special"
+	SpecialValueMapTypeSpecial SpecialValueMapType = "special"
 )
 
-// Defines values for DashboardSpecialValueMatch.
+// Defines values for SpecialValueMatch.
 const (
-	DashboardSpecialValueMatchEmpty DashboardSpecialValueMatch = "empty"
+	SpecialValueMatchEmpty SpecialValueMatch = "empty"
 
-	DashboardSpecialValueMatchFalse DashboardSpecialValueMatch = "false"
+	SpecialValueMatchFalse SpecialValueMatch = "false"
 
-	DashboardSpecialValueMatchNan DashboardSpecialValueMatch = "nan"
+	SpecialValueMatchNan SpecialValueMatch = "nan"
 
-	DashboardSpecialValueMatchNull DashboardSpecialValueMatch = "null"
+	SpecialValueMatchNull SpecialValueMatch = "null"
 
-	DashboardSpecialValueMatchNullNan DashboardSpecialValueMatch = "null+nan"
+	SpecialValueMatchNullNan SpecialValueMatch = "null+nan"
 
-	DashboardSpecialValueMatchTrue DashboardSpecialValueMatch = "true"
+	SpecialValueMatchTrue SpecialValueMatch = "true"
 )
 
-// Defines values for DashboardThresholdsConfigMode.
+// Defines values for ThresholdsConfigMode.
 const (
-	DashboardThresholdsConfigModeAbsolute DashboardThresholdsConfigMode = "absolute"
+	ThresholdsConfigModeAbsolute ThresholdsConfigMode = "absolute"
 
-	DashboardThresholdsConfigModePercentage DashboardThresholdsConfigMode = "percentage"
+	ThresholdsConfigModePercentage ThresholdsConfigMode = "percentage"
 )
 
-// Defines values for DashboardThresholdsMode.
+// Defines values for ThresholdsMode.
 const (
-	DashboardThresholdsModeAbsolute DashboardThresholdsMode = "absolute"
+	ThresholdsModeAbsolute ThresholdsMode = "absolute"
 
-	DashboardThresholdsModePercentage DashboardThresholdsMode = "percentage"
+	ThresholdsModePercentage ThresholdsMode = "percentage"
 )
 
-// Defines values for DashboardValueMapType.
+// Defines values for ValueMapType.
 const (
-	DashboardValueMapTypeValue DashboardValueMapType = "value"
+	ValueMapTypeValue ValueMapType = "value"
 )
 
-// Defines values for DashboardVariableModelType.
+// Defines values for VariableModelType.
 const (
-	DashboardVariableModelTypeAdhoc DashboardVariableModelType = "adhoc"
+	VariableModelTypeAdhoc VariableModelType = "adhoc"
 
-	DashboardVariableModelTypeConstant DashboardVariableModelType = "constant"
+	VariableModelTypeConstant VariableModelType = "constant"
 
-	DashboardVariableModelTypeCustom DashboardVariableModelType = "custom"
+	VariableModelTypeCustom VariableModelType = "custom"
 
-	DashboardVariableModelTypeDatasource DashboardVariableModelType = "datasource"
+	VariableModelTypeDatasource VariableModelType = "datasource"
 
-	DashboardVariableModelTypeInterval DashboardVariableModelType = "interval"
+	VariableModelTypeInterval VariableModelType = "interval"
 
-	DashboardVariableModelTypeQuery DashboardVariableModelType = "query"
+	VariableModelTypeQuery VariableModelType = "query"
 
-	DashboardVariableModelTypeSystem DashboardVariableModelType = "system"
+	VariableModelTypeSystem VariableModelType = "system"
 
-	DashboardVariableModelTypeTextbox DashboardVariableModelType = "textbox"
+	VariableModelTypeTextbox VariableModelType = "textbox"
 )
 
-// Defines values for DashboardVariableType.
+// Defines values for VariableType.
 const (
-	DashboardVariableTypeAdhoc DashboardVariableType = "adhoc"
+	VariableTypeAdhoc VariableType = "adhoc"
 
-	DashboardVariableTypeConstant DashboardVariableType = "constant"
+	VariableTypeConstant VariableType = "constant"
 
-	DashboardVariableTypeCustom DashboardVariableType = "custom"
+	VariableTypeCustom VariableType = "custom"
 
-	DashboardVariableTypeDatasource DashboardVariableType = "datasource"
+	VariableTypeDatasource VariableType = "datasource"
 
-	DashboardVariableTypeInterval DashboardVariableType = "interval"
+	VariableTypeInterval VariableType = "interval"
 
-	DashboardVariableTypeQuery DashboardVariableType = "query"
+	VariableTypeQuery VariableType = "query"
 
-	DashboardVariableTypeSystem DashboardVariableType = "system"
+	VariableTypeSystem VariableType = "system"
 
-	DashboardVariableTypeTextbox DashboardVariableType = "textbox"
+	VariableTypeTextbox VariableType = "textbox"
 )
 
 // Dashboard defines model for dashboard.
 type Dashboard struct {
 	Annotations *struct {
 		// TODO docs
-		List []DashboardAnnotationQuery `json:"list"`
+		List []AnnotationQuery `json:"list"`
 	} `json:"annotations,omitempty"`
 
 	// Description of dashboard.
@@ -213,16 +213,16 @@ type Dashboard struct {
 	Editable bool `json:"editable"`
 
 	// TODO docs
-	FiscalYearStartMonth *int                  `json:"fiscalYearStartMonth,omitempty"`
-	GnetId               *string               `json:"gnetId,omitempty"`
-	GraphTooltip         DashboardGraphTooltip `json:"graphTooltip"`
+	FiscalYearStartMonth *int         `json:"fiscalYearStartMonth,omitempty"`
+	GnetId               *string      `json:"gnetId,omitempty"`
+	GraphTooltip         GraphTooltip `json:"graphTooltip"`
 
 	// Unique numeric identifier for the dashboard.
 	// TODO must isolate or remove identifiers local to a Grafana instance...?
 	Id *int64 `json:"id,omitempty"`
 
 	// TODO docs
-	Links *[]DashboardDashboardLink `json:"links,omitempty"`
+	Links *[]DashboardLink `json:"links,omitempty"`
 
 	// TODO docs
 	LiveNow *bool          `json:"liveNow,omitempty"`
@@ -237,13 +237,13 @@ type Dashboard struct {
 	SchemaVersion int `json:"schemaVersion"`
 
 	// Theme of dashboard.
-	Style DashboardStyle `json:"style"`
+	Style Style `json:"style"`
 
 	// Tags associated with dashboard.
 	Tags       *[]string `json:"tags,omitempty"`
 	Templating *struct {
 		// TODO docs
-		List []DashboardVariableModel `json:"list"`
+		List []VariableModel `json:"list"`
 	} `json:"templating,omitempty"`
 
 	// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
@@ -272,7 +272,7 @@ type Dashboard struct {
 	} `json:"timepicker,omitempty"`
 
 	// Timezone of dashboard,
-	Timezone *DashboardTimezone `json:"timezone,omitempty"`
+	Timezone *Timezone `json:"timezone,omitempty"`
 
 	// Title of dashboard.
 	Title *string `json:"title,omitempty"`
@@ -287,18 +287,18 @@ type Dashboard struct {
 	WeekStart *string `json:"weekStart,omitempty"`
 }
 
-// DashboardGraphTooltip defines model for Dashboard.GraphTooltip.
-type DashboardGraphTooltip int
+// GraphTooltip defines model for Dashboard.GraphTooltip.
+type GraphTooltip int
 
 // Theme of dashboard.
-type DashboardStyle string
+type Style string
 
 // Timezone of dashboard,
-type DashboardTimezone string
+type Timezone string
 
 // TODO docs
 // FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
-type DashboardAnnotationQuery struct {
+type AnnotationQuery struct {
 	BuiltIn int `json:"builtIn"`
 
 	// Datasource to use for annotation.
@@ -324,12 +324,12 @@ type DashboardAnnotationQuery struct {
 	ShowIn   int     `json:"showIn"`
 
 	// TODO docs
-	Target *DashboardAnnotationTarget `json:"target,omitempty"`
-	Type   string                     `json:"type"`
+	Target *AnnotationTarget `json:"target,omitempty"`
+	Type   string            `json:"type"`
 }
 
 // TODO docs
-type DashboardAnnotationTarget struct {
+type AnnotationTarget struct {
 	Limit    int64    `json:"limit"`
 	MatchAny bool     `json:"matchAny"`
 	Tags     []string `json:"tags"`
@@ -339,34 +339,34 @@ type DashboardAnnotationTarget struct {
 // 0 for no shared crosshair or tooltip (default).
 // 1 for shared crosshair.
 // 2 for shared crosshair AND shared tooltip.
-type DashboardDashboardCursorSync int
+type DashboardCursorSync int
 
-// FROM public/app/features/dashboard/state/DashboardModels.ts - ish
+// FROM public/app/features/dashboard/state/Models.ts - ish
 // TODO docs
-type DashboardDashboardLink struct {
-	AsDropdown  bool                       `json:"asDropdown"`
-	Icon        *string                    `json:"icon,omitempty"`
-	IncludeVars bool                       `json:"includeVars"`
-	KeepTime    bool                       `json:"keepTime"`
-	Tags        []string                   `json:"tags"`
-	TargetBlank bool                       `json:"targetBlank"`
-	Title       string                     `json:"title"`
-	Tooltip     *string                    `json:"tooltip,omitempty"`
-	Type        DashboardDashboardLinkType `json:"type"`
-	Url         *string                    `json:"url,omitempty"`
+type DashboardLink struct {
+	AsDropdown  bool              `json:"asDropdown"`
+	Icon        *string           `json:"icon,omitempty"`
+	IncludeVars bool              `json:"includeVars"`
+	KeepTime    bool              `json:"keepTime"`
+	Tags        []string          `json:"tags"`
+	TargetBlank bool              `json:"targetBlank"`
+	Title       string            `json:"title"`
+	Tooltip     *string           `json:"tooltip,omitempty"`
+	Type        DashboardLinkType `json:"type"`
+	Url         *string           `json:"url,omitempty"`
 }
 
-// DashboardDashboardLinkType defines model for DashboardDashboardLink.Type.
-type DashboardDashboardLinkType string
+// DashboardLinkType defines model for DashboardLink.Type.
+type DashboardLinkType string
 
-// DashboardDynamicConfigValue defines model for dashboard.DynamicConfigValue.
-type DashboardDynamicConfigValue struct {
+// DynamicConfigValue defines model for dashboard.DynamicConfigValue.
+type DynamicConfigValue struct {
 	Id    string       `json:"id"`
 	Value *interface{} `json:"value,omitempty"`
 }
 
 // TODO docs
-type DashboardFieldColor struct {
+type FieldColor struct {
 	// Stores the fixed color value if mode is fixed
 	FixedColor *string `json:"fixedColor,omitempty"`
 
@@ -374,19 +374,19 @@ type DashboardFieldColor struct {
 	Mode interface{} `json:"mode"`
 
 	// TODO docs
-	SeriesBy *DashboardFieldColorSeriesByMode `json:"seriesBy,omitempty"`
+	SeriesBy *FieldColorSeriesByMode `json:"seriesBy,omitempty"`
 }
 
 // TODO docs
-type DashboardFieldColorModeId string
+type FieldColorModeId string
 
 // TODO docs
-type DashboardFieldColorSeriesByMode string
+type FieldColorSeriesByMode string
 
-// DashboardFieldConfig defines model for dashboard.FieldConfig.
-type DashboardFieldConfig struct {
+// FieldConfig defines model for dashboard.FieldConfig.
+type FieldConfig struct {
 	// TODO docs
-	Color *DashboardFieldColor `json:"color,omitempty"`
+	Color *FieldColor `json:"color,omitempty"`
 
 	// custom is specified by the PanelFieldConfig field
 	// in panel plugin schemas.
@@ -412,9 +412,9 @@ type DashboardFieldConfig struct {
 	Links *[]interface{} `json:"links,omitempty"`
 
 	// Convert input values into a display string
-	Mappings *[]DashboardValueMapping `json:"mappings,omitempty"`
-	Max      *float32                 `json:"max,omitempty"`
-	Min      *float32                 `json:"min,omitempty"`
+	Mappings *[]ValueMapping `json:"mappings,omitempty"`
+	Max      *float32        `json:"max,omitempty"`
+	Min      *float32        `json:"min,omitempty"`
 
 	// Alternative to empty string
 	NoValue *string `json:"noValue,omitempty"`
@@ -424,8 +424,8 @@ type DashboardFieldConfig struct {
 	//
 	// When defined, this value can be used as an identifier within the datasource scope, and
 	// may be used to update the results
-	Path       *string                    `json:"path,omitempty"`
-	Thresholds *DashboardThresholdsConfig `json:"thresholds,omitempty"`
+	Path       *string           `json:"path,omitempty"`
+	Thresholds *ThresholdsConfig `json:"thresholds,omitempty"`
 
 	// Numeric Options
 	Unit *string `json:"unit,omitempty"`
@@ -434,11 +434,11 @@ type DashboardFieldConfig struct {
 	Writeable *bool `json:"writeable,omitempty"`
 }
 
-// DashboardFieldConfigSource defines model for dashboard.FieldConfigSource.
-type DashboardFieldConfigSource struct {
+// FieldConfigSource defines model for dashboard.FieldConfigSource.
+type FieldConfigSource struct {
 	Defaults struct {
 		// TODO docs
-		Color *DashboardFieldColor `json:"color,omitempty"`
+		Color *FieldColor `json:"color,omitempty"`
 
 		// custom is specified by the PanelFieldConfig field
 		// in panel plugin schemas.
@@ -464,9 +464,9 @@ type DashboardFieldConfigSource struct {
 		Links *[]interface{} `json:"links,omitempty"`
 
 		// Convert input values into a display string
-		Mappings *[]DashboardValueMapping `json:"mappings,omitempty"`
-		Max      *float32                 `json:"max,omitempty"`
-		Min      *float32                 `json:"min,omitempty"`
+		Mappings *[]ValueMapping `json:"mappings,omitempty"`
+		Max      *float32        `json:"max,omitempty"`
+		Min      *float32        `json:"min,omitempty"`
 
 		// Alternative to empty string
 		NoValue *string `json:"noValue,omitempty"`
@@ -476,8 +476,8 @@ type DashboardFieldConfigSource struct {
 		//
 		// When defined, this value can be used as an identifier within the datasource scope, and
 		// may be used to update the results
-		Path       *string                    `json:"path,omitempty"`
-		Thresholds *DashboardThresholdsConfig `json:"thresholds,omitempty"`
+		Path       *string           `json:"path,omitempty"`
+		Thresholds *ThresholdsConfig `json:"thresholds,omitempty"`
 
 		// Numeric Options
 		Unit *string `json:"unit,omitempty"`
@@ -497,17 +497,17 @@ type DashboardFieldConfigSource struct {
 	} `json:"overrides"`
 }
 
-// DashboardGraphPanel defines model for dashboard.GraphPanel.
-type DashboardGraphPanel struct {
+// GraphPanel defines model for dashboard.GraphPanel.
+type GraphPanel struct {
 	// Support for legacy graph and heatmap panels.
-	Type DashboardGraphPanelType `json:"type"`
+	Type GraphPanelType `json:"type"`
 }
 
 // Support for legacy graph and heatmap panels.
-type DashboardGraphPanelType string
+type GraphPanelType string
 
-// DashboardGridPos defines model for dashboard.GridPos.
-type DashboardGridPos struct {
+// GridPos defines model for dashboard.GridPos.
+type GridPos struct {
 	// Panel
 	H int `json:"h"`
 
@@ -524,19 +524,19 @@ type DashboardGridPos struct {
 	Y int `json:"y"`
 }
 
-// DashboardHeatmapPanel defines model for dashboard.HeatmapPanel.
-type DashboardHeatmapPanel struct {
-	Type DashboardHeatmapPanelType `json:"type"`
+// HeatmapPanel defines model for dashboard.HeatmapPanel.
+type HeatmapPanel struct {
+	Type HeatmapPanelType `json:"type"`
 }
 
-// DashboardHeatmapPanelType defines model for DashboardHeatmapPanel.Type.
-type DashboardHeatmapPanelType string
+// HeatmapPanelType defines model for HeatmapPanel.Type.
+type HeatmapPanelType string
 
 // TODO docs
-type DashboardMappingType string
+type MappingType string
 
-// DashboardMatcherConfig defines model for dashboard.MatcherConfig.
-type DashboardMatcherConfig struct {
+// MatcherConfig defines model for dashboard.MatcherConfig.
+type MatcherConfig struct {
 	Id      string       `json:"id"`
 	Options *interface{} `json:"options,omitempty"`
 }
@@ -544,7 +544,7 @@ type DashboardMatcherConfig struct {
 // Dashboard panels. Panels are canonically defined inline
 // because they share a version timeline with the dashboard
 // schema; they do not evolve independently.
-type DashboardPanel struct {
+type Panel struct {
 	// The datasource used in all targets.
 	Datasource *struct {
 		Type *string `json:"type,omitempty"`
@@ -556,7 +556,7 @@ type DashboardPanel struct {
 	FieldConfig struct {
 		Defaults struct {
 			// TODO docs
-			Color *DashboardFieldColor `json:"color,omitempty"`
+			Color *FieldColor `json:"color,omitempty"`
 
 			// custom is specified by the PanelFieldConfig field
 			// in panel plugin schemas.
@@ -582,9 +582,9 @@ type DashboardPanel struct {
 			Links *[]interface{} `json:"links,omitempty"`
 
 			// Convert input values into a display string
-			Mappings *[]DashboardValueMapping `json:"mappings,omitempty"`
-			Max      *float32                 `json:"max,omitempty"`
-			Min      *float32                 `json:"min,omitempty"`
+			Mappings *[]ValueMapping `json:"mappings,omitempty"`
+			Max      *float32        `json:"max,omitempty"`
+			Min      *float32        `json:"min,omitempty"`
 
 			// Alternative to empty string
 			NoValue *string `json:"noValue,omitempty"`
@@ -594,8 +594,8 @@ type DashboardPanel struct {
 			//
 			// When defined, this value can be used as an identifier within the datasource scope, and
 			// may be used to update the results
-			Path       *string                    `json:"path,omitempty"`
-			Thresholds *DashboardThresholdsConfig `json:"thresholds,omitempty"`
+			Path       *string           `json:"path,omitempty"`
+			Thresholds *ThresholdsConfig `json:"thresholds,omitempty"`
 
 			// Numeric Options
 			Unit *string `json:"unit,omitempty"`
@@ -614,7 +614,7 @@ type DashboardPanel struct {
 			} `json:"properties"`
 		} `json:"overrides"`
 	} `json:"fieldConfig"`
-	GridPos *DashboardGridPos `json:"gridPos,omitempty"`
+	GridPos *GridPos `json:"gridPos,omitempty"`
 
 	// TODO docs
 	Id *int `json:"id,omitempty"`
@@ -625,7 +625,7 @@ type DashboardPanel struct {
 
 	// Panel links.
 	// TODO fill this out - seems there are a couple variants?
-	Links *[]DashboardDashboardLink `json:"links,omitempty"`
+	Links *[]DashboardLink `json:"links,omitempty"`
 
 	// TODO docs
 	MaxDataPoints *float32 `json:"maxDataPoints,omitempty"`
@@ -642,13 +642,13 @@ type DashboardPanel struct {
 
 	// Direction to repeat in if 'repeat' is set.
 	// "h" for horizontal, "v" for vertical.
-	RepeatDirection DashboardPanelRepeatDirection `json:"repeatDirection"`
+	RepeatDirection PanelRepeatDirection `json:"repeatDirection"`
 
 	// TODO docs
 	Tags *[]string `json:"tags,omitempty"`
 
 	// TODO docs
-	Targets *[]DashboardTarget `json:"targets,omitempty"`
+	Targets *[]Target `json:"targets,omitempty"`
 
 	// TODO docs - seems to be an old field from old dashboard alerts?
 	Thresholds *[]interface{} `json:"thresholds,omitempty"`
@@ -680,10 +680,10 @@ type DashboardPanel struct {
 
 // Direction to repeat in if 'repeat' is set.
 // "h" for horizontal, "v" for vertical.
-type DashboardPanelRepeatDirection string
+type PanelRepeatDirection string
 
 // TODO docs
-type DashboardRangeMap struct {
+type RangeMap struct {
 	Options struct {
 		// to and from are `number | null` in current ts, really not sure what to do
 		From   int32 `json:"from"`
@@ -695,14 +695,14 @@ type DashboardRangeMap struct {
 		} `json:"result"`
 		To int32 `json:"to"`
 	} `json:"options"`
-	Type DashboardRangeMapType `json:"type"`
+	Type RangeMapType `json:"type"`
 }
 
-// DashboardRangeMapType defines model for DashboardRangeMap.Type.
-type DashboardRangeMapType string
+// RangeMapType defines model for RangeMap.Type.
+type RangeMapType string
 
 // TODO docs
-type DashboardRegexMap struct {
+type RegexMap struct {
 	Options struct {
 		Pattern string `json:"pattern"`
 		Result  struct {
@@ -712,14 +712,14 @@ type DashboardRegexMap struct {
 			Text  *string `json:"text,omitempty"`
 		} `json:"result"`
 	} `json:"options"`
-	Type DashboardRegexMapType `json:"type"`
+	Type RegexMapType `json:"type"`
 }
 
-// DashboardRegexMapType defines model for DashboardRegexMap.Type.
-type DashboardRegexMapType string
+// RegexMapType defines model for RegexMap.Type.
+type RegexMapType string
 
 // Row panel
-type DashboardRowPanel struct {
+type RowPanel struct {
 	Collapsed bool `json:"collapsed"`
 
 	// Name of default datasource.
@@ -727,24 +727,24 @@ type DashboardRowPanel struct {
 		Type *string `json:"type,omitempty"`
 		Uid  *string `json:"uid,omitempty"`
 	} `json:"datasource,omitempty"`
-	GridPos *DashboardGridPos `json:"gridPos,omitempty"`
-	Id      int               `json:"id"`
-	Panels  []interface{}     `json:"panels"`
+	GridPos *GridPos      `json:"gridPos,omitempty"`
+	Id      int           `json:"id"`
+	Panels  []interface{} `json:"panels"`
 
 	// Name of template variable to repeat for.
-	Repeat *string               `json:"repeat,omitempty"`
-	Title  *string               `json:"title,omitempty"`
-	Type   DashboardRowPanelType `json:"type"`
+	Repeat *string      `json:"repeat,omitempty"`
+	Title  *string      `json:"title,omitempty"`
+	Type   RowPanelType `json:"type"`
 }
 
-// DashboardRowPanelType defines model for DashboardRowPanel.Type.
-type DashboardRowPanelType string
+// RowPanelType defines model for RowPanel.Type.
+type RowPanelType string
 
 // TODO docs
-type DashboardSpecialValueMap struct {
+type SpecialValueMap struct {
 	Options struct {
-		Match   DashboardSpecialValueMapOptionsMatch `json:"match"`
-		Pattern string                               `json:"pattern"`
+		Match   SpecialValueMapOptionsMatch `json:"match"`
+		Pattern string                      `json:"pattern"`
 		Result  struct {
 			Color *string `json:"color,omitempty"`
 			Icon  *string `json:"icon,omitempty"`
@@ -752,17 +752,17 @@ type DashboardSpecialValueMap struct {
 			Text  *string `json:"text,omitempty"`
 		} `json:"result"`
 	} `json:"options"`
-	Type DashboardSpecialValueMapType `json:"type"`
+	Type SpecialValueMapType `json:"type"`
 }
 
-// DashboardSpecialValueMapOptionsMatch defines model for DashboardSpecialValueMap.Options.Match.
-type DashboardSpecialValueMapOptionsMatch string
+// SpecialValueMapOptionsMatch defines model for SpecialValueMap.Options.Match.
+type SpecialValueMapOptionsMatch string
 
-// DashboardSpecialValueMapType defines model for DashboardSpecialValueMap.Type.
-type DashboardSpecialValueMapType string
+// SpecialValueMapType defines model for SpecialValueMap.Type.
+type SpecialValueMapType string
 
 // TODO docs
-type DashboardSpecialValueMatch string
+type SpecialValueMatch string
 
 // Schema for panel targets is specified by datasource
 // plugins. We use a placeholder definition, which the Go
@@ -771,10 +771,10 @@ type DashboardSpecialValueMatch string
 // with types derived from plugins in the Instance variant.
 // When working directly from CUE, importers can extend this
 // type directly to achieve the same effect.
-type DashboardTarget map[string]interface{}
+type Target map[string]interface{}
 
 // TODO docs
-type DashboardThreshold struct {
+type Threshold struct {
 	// TODO docs
 	Color string `json:"color"`
 
@@ -788,9 +788,9 @@ type DashboardThreshold struct {
 	Value *float32 `json:"value,omitempty"`
 }
 
-// DashboardThresholdsConfig defines model for dashboard.ThresholdsConfig.
-type DashboardThresholdsConfig struct {
-	Mode DashboardThresholdsConfigMode `json:"mode"`
+// ThresholdsConfig defines model for dashboard.ThresholdsConfig.
+type ThresholdsConfig struct {
+	Mode ThresholdsConfigMode `json:"mode"`
 
 	// Must be sorted by 'value', first value is always -Infinity
 	Steps []struct {
@@ -808,33 +808,33 @@ type DashboardThresholdsConfig struct {
 	} `json:"steps"`
 }
 
-// DashboardThresholdsConfigMode defines model for DashboardThresholdsConfig.Mode.
-type DashboardThresholdsConfigMode string
+// ThresholdsConfigMode defines model for ThresholdsConfig.Mode.
+type ThresholdsConfigMode string
 
-// DashboardThresholdsMode defines model for dashboard.ThresholdsMode.
-type DashboardThresholdsMode string
+// ThresholdsMode defines model for dashboard.ThresholdsMode.
+type ThresholdsMode string
 
 // TODO docs
 // FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
-type DashboardTransformation struct {
+type Transformation struct {
 	Id      string                 `json:"id"`
 	Options map[string]interface{} `json:"options"`
 }
 
 // TODO docs
-type DashboardValueMap struct {
+type ValueMap struct {
 	Options map[string]interface{} `json:"options"`
-	Type    DashboardValueMapType  `json:"type"`
+	Type    ValueMapType           `json:"type"`
 }
 
-// DashboardValueMapType defines model for DashboardValueMap.Type.
-type DashboardValueMapType string
+// ValueMapType defines model for ValueMap.Type.
+type ValueMapType string
 
 // TODO docs
-type DashboardValueMapping interface{}
+type ValueMapping interface{}
 
 // TODO docs
-type DashboardValueMappingResult struct {
+type ValueMappingResult struct {
 	Color *string `json:"color,omitempty"`
 	Icon  *string `json:"icon,omitempty"`
 	Index *int32  `json:"index,omitempty"`
@@ -845,16 +845,16 @@ type DashboardValueMappingResult struct {
 // TODO docs
 // TODO what about what's in public/app/features/types.ts?
 // TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
-type DashboardVariableModel struct {
-	Label *string                    `json:"label,omitempty"`
-	Name  string                     `json:"name"`
-	Type  DashboardVariableModelType `json:"type"`
+type VariableModel struct {
+	Label *string           `json:"label,omitempty"`
+	Name  string            `json:"name"`
+	Type  VariableModelType `json:"type"`
 }
 
-// DashboardVariableModelType defines model for DashboardVariableModel.Type.
-type DashboardVariableModelType string
+// VariableModelType defines model for VariableModel.Type.
+type VariableModelType string
 
 // FROM: packages/grafana-data/src/types/templateVars.ts
 // TODO docs
 // TODO this implies some wider pattern/discriminated union, probably?
-type DashboardVariableType string
+type VariableType string

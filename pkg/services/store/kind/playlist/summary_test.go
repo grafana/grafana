@@ -19,10 +19,10 @@ func TestPlaylistSummary(t *testing.T) {
 	playlist := playlist.Playlist{
 		Interval: "30s",
 		Name:     "test",
-		Items: &[]playlist.PlaylistPlaylistItem{
-			{Type: playlist.PlaylistPlaylistItemTypeDashboardByUid, Value: "D1"},
-			{Type: playlist.PlaylistPlaylistItemTypeDashboardByTag, Value: "tagA"},
-			{Type: playlist.PlaylistPlaylistItemTypeDashboardByUid, Value: "D3"},
+		Items: &[]playlist.PlaylistItem{
+			{Type: playlist.PlaylistItemTypeDashboardByUid, Value: "D1"},
+			{Type: playlist.PlaylistItemTypeDashboardByTag, Value: "tagA"},
+			{Type: playlist.PlaylistItemTypeDashboardByUid, Value: "D3"},
 		},
 	}
 	out, err := json.Marshal(playlist)
