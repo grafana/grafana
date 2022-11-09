@@ -37,7 +37,7 @@ export const dashboardApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     search: build.query<DashboardSearchItem[], { query?: string }>({
       query: ({ query }) => {
-        const params = new URLSearchParams({ folderIds: '1', type: 'dash-db', limit: '1000', page: '1' });
+        const params = new URLSearchParams({ type: 'dash-db', limit: '1000', page: '1', sort: 'name_sort' });
         if (query) {
           params.set('query', query);
         }

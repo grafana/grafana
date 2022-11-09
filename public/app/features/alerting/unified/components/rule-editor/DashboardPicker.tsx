@@ -83,7 +83,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, onDashboardChange, onPa
       >
         <div className={styles.dashboardTitle}>{dashboard.title}</div>
         <div className={styles.dashboardFolder}>
-          <Icon name="folder" /> {dashboard.folderTitle}
+          <Icon name="folder" /> {dashboard.folderTitle ?? 'General'}
         </div>
       </div>
     );

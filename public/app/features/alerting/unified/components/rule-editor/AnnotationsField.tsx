@@ -21,7 +21,7 @@ const AnnotationsField = () => {
   const [selectedDashboard, setSelectedDashboard] = useState<string | undefined>(undefined);
   const [selectedPanel, setSelectedPanel] = useState<number | undefined>(undefined);
 
-  const { useDashboardQuery } = dashboardApi;
+  const { useLazyDashboardQuery } = dashboardApi;
   const {
     control,
     register,
@@ -38,10 +38,8 @@ const AnnotationsField = () => {
 
   const dashboardAnnotation = annotations.find((a) => a.key === Annotation.dashboardUID);
   const panelAnnotation = annotations.find((a) => a.key === Annotation.panelID);
-  const { currentData: currentDashboard } = useDashboardQuery(
-    { uid: dashboardAnnotation?.value ?? '' },
-    { skip: !dashboardAnnotation }
-  );
+
+  const [fetchDashboard, { currentData: currentDashboard }] = useLazyDashboardQuery();
   const panelId = Number(panelAnnotation?.value);
   const currentPanel: PanelDTO | undefined = currentDashboard?.dashboard?.panels?.find((p) => p.id === panelId);
 
@@ -71,6 +69,13 @@ const AnnotationsField = () => {
 
     setValue('annotations', updatedAnnotations);
     setShowPanelSelector(false);
+  };
+
+  const openDashboardPicker = () => {
+    setShowPanelSelector(true);
+    if (Boolean(dashboardAnnotation?.value)) {
+      fetchDashboard({ uid: dashboardAnnotation?.value ?? '' });
+    }
   };
 
   return (
@@ -140,7 +145,7 @@ const AnnotationsField = () => {
           >
             Add new annotation
           </Button>
-          <Button type="button" variant="secondary" icon="dashboard" onClick={setShowPanelSelector}>
+          <Button type="button" variant="secondary" icon="dashboard" onClick={openDashboardPicker}>
             Set panel and dashboard
           </Button>
         </Stack>
@@ -163,7 +168,7 @@ const AnnotationsField = () => {
               <div>
                 Dashboard: {currentDashboard.dashboard.title} ({currentDashboard.dashboard.uid})
               </div>
-              {currentPanel && (
+              {!!currentPanel && (
                 <div>
                   Panel: {currentPanel.title} ({currentPanel.id})
                 </div>
