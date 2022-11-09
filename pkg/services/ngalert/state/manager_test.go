@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -29,6 +31,92 @@ import (
 )
 
 var testMetrics = metrics.NewNGAlert(prometheus.NewPedanticRegistry())
+
+func TestWarmStateCache(t *testing.T) {
+	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
+	require.NoError(t, err)
+	ctx := context.Background()
+	_, dbstore := tests.SetupTestEnv(t, 1)
+
+	const mainOrgID int64 = 1
+	rule := tests.CreateTestAlertRule(t, ctx, dbstore, 600, mainOrgID)
+
+	expectedEntries := []*state.State{
+		{
+			AlertRuleUID: rule.UID,
+			OrgID:        rule.OrgID,
+			CacheID:      `[["test1","testValue1"]]`,
+			Labels:       data.Labels{"test1": "testValue1"},
+			State:        eval.Normal,
+			Results: []state.Evaluation{
+				{EvaluationTime: evaluationTime, EvaluationState: eval.Normal},
+			},
+			StartsAt:           evaluationTime.Add(-1 * time.Minute),
+			EndsAt:             evaluationTime.Add(1 * time.Minute),
+			LastEvaluationTime: evaluationTime,
+			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+		}, {
+			AlertRuleUID: rule.UID,
+			OrgID:        rule.OrgID,
+			CacheID:      `[["test2","testValue2"]]`,
+			Labels:       data.Labels{"test2": "testValue2"},
+			State:        eval.Alerting,
+			Results: []state.Evaluation{
+				{EvaluationTime: evaluationTime, EvaluationState: eval.Alerting},
+			},
+			StartsAt:           evaluationTime.Add(-1 * time.Minute),
+			EndsAt:             evaluationTime.Add(1 * time.Minute),
+			LastEvaluationTime: evaluationTime,
+			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+		},
+	}
+
+	labels := models.InstanceLabels{"test1": "testValue1"}
+	_, hash, _ := labels.StringAndHash()
+	instance1 := models.AlertInstance{
+		AlertInstanceKey: models.AlertInstanceKey{
+			RuleOrgID:  rule.OrgID,
+			RuleUID:    rule.UID,
+			LabelsHash: hash,
+		},
+		CurrentState:      models.InstanceStateNormal,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+		Labels:            labels,
+	}
+
+	_ = dbstore.SaveAlertInstances(ctx, instance1)
+
+	labels = models.InstanceLabels{"test2": "testValue2"}
+	_, hash, _ = labels.StringAndHash()
+	instance2 := models.AlertInstance{
+		AlertInstanceKey: models.AlertInstanceKey{
+			RuleOrgID:  rule.OrgID,
+			RuleUID:    rule.UID,
+			LabelsHash: hash,
+		},
+		CurrentState:      models.InstanceStateFiring,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+		Labels:            labels,
+	}
+	_ = dbstore.SaveAlertInstances(ctx, instance2)
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &image.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{})
+	st.Warm(ctx, dbstore)
+
+	t.Run("instance cache has expected entries", func(t *testing.T) {
+		for _, entry := range expectedEntries {
+			cacheEntry := st.Get(entry.OrgID, entry.AlertRuleUID, entry.CacheID)
+
+			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.State{}, "Results")); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+				t.FailNow()
+			}
+		}
+	})
+}
 
 func TestDashboardAnnotations(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2022-01-01")
