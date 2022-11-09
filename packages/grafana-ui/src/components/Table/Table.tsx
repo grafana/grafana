@@ -11,7 +11,7 @@ import {
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
 
-import { DataFrame, getFieldDisplayName, Field } from '@grafana/data';
+import { DataFrame, getFieldDisplayName, Field, ReducerID } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
@@ -175,10 +175,17 @@ export const Table = memo((props: Props) => {
     return Array(data.length).fill(0);
   }, [data]);
 
+  const isCountAllSet = Boolean(
+    footerOptions?.countAll &&
+      footerOptions.reducer &&
+      footerOptions.reducer.length &&
+      footerOptions.reducer[0] === ReducerID.count
+  );
+
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () => getColumns(data, width, columnMinWidth, footerItems, footerOptions?.countAll),
-    [data, width, columnMinWidth, footerItems, footerOptions]
+    () => getColumns(data, width, columnMinWidth, footerItems, isCountAllSet),
+    [data, width, columnMinWidth, footerItems, isCountAllSet]
   );
 
   // Internal react table state reducer
@@ -231,31 +238,24 @@ export const Table = memo((props: Props) => {
       return;
     }
 
-    if (footerOptions.show) {
-      const footerItems = getFooterItems(
-        headerGroups[0].headers as unknown as Array<{ field: Field }>,
-        createFooterCalculationValues(rows),
-        footerOptions,
-        theme
-      );
-
-      if (footerOptions.countAll && footerItems) {
-        const maxCount = footerItems.reduce((max, item) => {
-          if (typeof item === 'string' && !isNaN(+item)) {
-            return Math.max(max, +item);
-          }
-          return max;
-        }, 0);
-
-        const footerItemsCountAll: FooterItem[] = new Array(footerItems.length).fill(undefined);
-        footerItemsCountAll[0] = maxCount.toString();
-        console.log(footerItemsCountAll);
-        setFooterItems(footerItemsCountAll);
-      } else {
-        setFooterItems(footerItems);
-      }
-    } else {
+    if (!footerOptions.show) {
       setFooterItems(undefined);
+      return;
+    }
+
+    const footerItems = getFooterItems(
+      headerGroups[0].headers as unknown as Array<{ field: Field }>,
+      createFooterCalculationValues(rows),
+      footerOptions,
+      theme
+    );
+
+    if (isCountAllSet) {
+      const footerItemsCountAll: FooterItem[] = new Array(footerItems.length).fill(undefined);
+      footerItemsCountAll[0] = data.length.toString();
+      setFooterItems(footerItemsCountAll);
+    } else {
+      setFooterItems(footerItems);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [footerOptions, theme, state.filters, data]);
@@ -395,7 +395,6 @@ export const Table = memo((props: Props) => {
             <FooterRow
               height={footerHeight}
               isPaginationVisible={Boolean(enablePagination)}
-              isCountAllSet={Boolean(props.footerOptions?.countAll)}
               footerValues={footerItems}
               footerGroups={footerGroups}
               totalColumnsWidth={totalColumnsWidth}

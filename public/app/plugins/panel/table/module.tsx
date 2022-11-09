@@ -163,7 +163,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           },
         },
         defaultValue: '',
-        showIf: (cfg) => cfg.footer?.show,
+        showIf: (cfg) => cfg.footer?.show && !cfg.footer?.countAll,
       })
       .addCustomEditor({
         id: 'footer.enablePagination',

@@ -14,12 +14,11 @@ export interface FooterRowProps {
   footerGroups: HeaderGroup[];
   footerValues: FooterItem[];
   isPaginationVisible: boolean;
-  isCountAllSet: boolean;
   height: number;
 }
 
 export const FooterRow = (props: FooterRowProps) => {
-  const { totalColumnsWidth, footerGroups, height, isPaginationVisible, isCountAllSet } = props;
+  const { totalColumnsWidth, footerGroups, height, isPaginationVisible } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
   const tableStyles = useStyles2(getTableStyles);
 
@@ -41,9 +40,7 @@ export const FooterRow = (props: FooterRowProps) => {
             data-testid={e2eSelectorsTable.footer}
             style={height ? { height: `${height}px` } : undefined}
           >
-            {footerGroup.headers.map((column: ColumnInstance) =>
-              renderFooterCell(column, tableStyles, height, isCountAllSet)
-            )}
+            {footerGroup.headers.map((column: ColumnInstance) => renderFooterCell(column, tableStyles, height))}
           </div>
         );
       })}
@@ -51,7 +48,7 @@ export const FooterRow = (props: FooterRowProps) => {
   );
 };
 
-function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, height?: number, isCountAllSet?: boolean) {
+function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, height?: number) {
   const footerProps = column.getHeaderProps();
 
   if (!footerProps) {
