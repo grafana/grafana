@@ -4389,9 +4389,6 @@ exports[`better eslint`] = {
     "public/app/features/plugins/admin/components/PluginDetailsBody.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/plugins/admin/components/PluginDetailsHeader.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/plugins/admin/components/SearchField.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
