@@ -34,7 +34,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
   const styles = useStyles2(getStyles);
   const subtitle = (
     <div className={styles.subtitle}>
-      <div>{plugin?.description}</div>
+      {plugin?.description && <div>{plugin?.description}</div>}
       {plugin?.details?.links && plugin.details.links.length > 0 && (
         <span>
           {plugin.details.links.map((link, index) => (
