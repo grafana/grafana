@@ -152,6 +152,7 @@ func NewSlackNotifier(config *SlackConfig, t *template.Template) *SlackNotifier 
 // slackMessage is the slackMessage for sending a slack notification.
 type slackMessage struct {
 	Channel     string                   `json:"channel,omitempty"`
+	Text        string                   `json:"text,omitempty"`
 	Username    string                   `json:"username,omitempty"`
 	IconEmoji   string                   `json:"icon_emoji,omitempty"`
 	IconURL     string                   `json:"icon_url,omitempty"`
@@ -277,6 +278,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 	//LOGZ.IO GRAFANA CHANGE :: DEV-31356: Change grafana default username, footer URL,text to logzio ones
 	req := &slackMessage{
 		Channel:   tmpl(sn.Recipient),
+		Text:      tmpl(sn.Title),
 		Username:  LogzioAlertNotificationUsername,
 		IconEmoji: tmpl(sn.IconEmoji),
 		IconURL:   LogzioIconUrl,
