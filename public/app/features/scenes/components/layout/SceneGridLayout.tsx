@@ -23,7 +23,7 @@ interface SceneGridLayoutState extends SceneLayoutState {}
 export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   static Component = SceneGridLayoutRenderer;
 
-  private _flattenedChildren: Record<string, { row?: SceneGridRow; child: SceneLayoutChild }> = {};
+  private _flattenedChildren: Record<string, { row?: SceneGridRow; child: SceneObject<SceneLayoutChildState> }> = {};
   private _rowBBoxes: Record<string, { x: number; y: number; height: number }> = {};
 
   private _skipOnLayoutChange = false;
@@ -104,6 +104,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   onDragStop: ReactGridLayout.ItemCallback = (l, o, n) => {
     const layoutProcessedSize: string[] = [];
 
+    // Bounding boxes for all expanded rows
     const activeRows: Record<
       string,
       {
@@ -121,14 +122,14 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     }
 
     const source = this.flattenedChildren[n.i];
-    let target: SceneLayoutChild | null = null;
+    let target: SceneGridRow | null = null;
 
     // detect dropped item colisions with active rows
     if (Object.keys(activeRows).length !== 0) {
       for (const rowKey in activeRows) {
         const row = activeRows[rowKey];
         if (n.y > row.y && n.y <= row.y + row.height) {
-          target = this.flattenedChildren[rowKey].child!;
+          target = this.flattenedChildren[rowKey].child as SceneGridRow;
           console.log(n.i, 'fits', rowKey);
         }
       }
@@ -295,7 +296,7 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
       return [...acc, cell];
     }, []);
 
-    return { lg, sm: lg.map((l) => ({ ...l, w: 24 })) };
+    return { lg };
   }, [model.flattenedChildren]);
 
   return (
@@ -337,13 +338,11 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
               rowHeight={GRID_CELL_HEIGHT}
               draggableHandle={`.grid-drag-handle-${model.state.key}`}
               // @ts-ignore: ignoring for now until we make the size type numbers-only
-              layout={width > 768 ? layout.lg : layout.sm}
+              layout={layout.lg}
               onDragStop={model.onDragStop}
-              // onDrag={model.onDrag}
               onResizeStop={model.onResizeStop}
               onLayoutChange={model.onLayoutChange}
               isBounded={false}
-              // compactType={null}
             >
               {Object.values(model.flattenedChildren).map((child) => {
                 if (child.row && child.row.state.isCollapsed) {
@@ -365,8 +364,6 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
 
 interface SceneGridRowState extends SceneLayoutChildState {
   title: string;
-  isCollapsible?: boolean;
-  isCollapsed?: boolean;
   children: Array<SceneObject<SceneLayoutChildState>>;
 }
 
@@ -417,8 +414,9 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
 
 function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
   const styles = useStyles2(getSceneGridRowStyles);
-  const { isCollapsible, isCollapsed, isDraggable, title, ...state } = model.useState();
+  const { isCollapsible, isCollapsed, title, ...state } = model.useState();
   const layout = model.getLayout();
+  const isDraggable = layout.state.isDraggable ? state.isDraggable : false;
   const dragHandle = <SceneDragHandle layoutKey={layout.state.key!} />;
 
   return (
@@ -497,7 +495,6 @@ function flattenGridLayoutChildren(
     if (child instanceof SceneGridRow) {
       // row is perceived as a flat child of the grid layout
       flattenedChildren[child.state.key!] = { child };
-
       if (!child.state.isCollapsed) {
         // all row children are perceived as flat children of the grid layout
         const rowChildren = flattenGridLayoutChildren(child.state.children);
@@ -535,7 +532,7 @@ function buildRowBBoxes(children: SceneLayoutChild[]) {
   return rowBBoxes;
 }
 
-// Source: https://github.com/metabase/metabase/blob/master/frontend/src/metabase/dashboard/components/grid/utils.js#L28
+// Source: https://github.com/metabase/metabase/blob/e87289f2650ead072cd197f45e851de4c1c1f01f/frontend/src/metabase/dashboard/components/grid/utils.js#L28
 // © 2022 Metabase, Inc.
 export function generateGridBackground({
   cellSize,
