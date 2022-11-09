@@ -13,6 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
+// NewCookiesMiddleware creates a new plugins.ClientMiddleware that will
+// forward incoming HTTP request Cookies to outgoing plugins.Client and
+// HTTP requests if the datasource has enabled forwarding of cookies (keepCookies).
 func NewCookiesMiddleware(skipCookiesNames []string) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &CookiesMiddleware{

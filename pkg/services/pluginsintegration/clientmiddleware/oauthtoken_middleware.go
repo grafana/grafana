@@ -14,6 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 )
 
+// NewOAuthTokenMiddleware creates a new plugins.ClientMiddleware that will
+// set OAuth token headers on outgoing plugins.Client and HTTP requests if
+// the datasource has enabled Forward OAuth Identity (oauthPassThru).
 func NewOAuthTokenMiddleware(oAuthTokenService oauthtoken.OAuthTokenService) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &OAuthTokenMiddleware{
@@ -60,6 +63,10 @@ func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.Plug
 
 			switch t := req.(type) {
 			case *backend.QueryDataRequest:
+				t.Headers["Authorization"] = authorizationHeader
+				if idTokenHeader != "" {
+					t.Headers["X-ID-Token"] = idTokenHeader
+				}
 			case *backend.CheckHealthRequest:
 				t.Headers["Authorization"] = authorizationHeader
 				if idTokenHeader != "" {
