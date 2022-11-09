@@ -7,7 +7,7 @@ type SupportItem struct {
 	FileBytes []byte
 }
 
-type CollectorFunc func(context.Context) (map[string]interface{}, error)
+type CollectorFunc func(context.Context) (*SupportItem, error)
 type Service interface {
 	CreateSupportBundle(context.Context) (string, error)
 	ListSupportBundles() ([]string, error)

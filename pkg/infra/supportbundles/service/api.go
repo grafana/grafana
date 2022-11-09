@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -23,7 +24,14 @@ func (s *SupportBundleService) listSupportBundles(ctx *models.ReqContext) respon
 }
 
 func (s *SupportBundleService) createSupportBundle(ctx *models.ReqContext) response.Response {
-	return response.JSON(http.StatusOK, []string{})
+	uid, err := s.CreateSupportBundle(context.Background())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to create support bundle", err)
+	}
+
+	return response.JSON(http.StatusOK, map[string]string{
+		"uid":     uid,
+		"message": "Support bundle will be available soon"})
 }
 func (s *SupportBundleService) getSupportBundle(c *models.ReqContext) {
 	_ = web.Params(c.Req)[":uid"]

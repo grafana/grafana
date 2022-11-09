@@ -11,7 +11,7 @@ import (
 
 type SupportBundleService struct {
 	cfg     *setting.Cfg
-	kvStore kvstore.KVStore
+	kvStore *kvstore.NamespacedKVStore
 
 	log log.Logger
 
@@ -23,7 +23,7 @@ const rootUrl = "/api/support-bundles"
 func ProvideService(cfg *setting.Cfg, kvStore kvstore.KVStore, routeRegister routing.RouteRegister, tracer tracing.Tracer) *SupportBundleService {
 	s := &SupportBundleService{
 		cfg:     cfg,
-		kvStore: kvStore,
+		kvStore: kvstore.WithNamespace(kvStore, 0, "infra.supportbundle"),
 		log:     log.New("supportbundle.service"),
 	}
 
