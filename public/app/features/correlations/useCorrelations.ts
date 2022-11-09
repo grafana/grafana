@@ -48,7 +48,7 @@ export const useCorrelations = () => {
     [backend]
   );
 
-  const [removeInfo, remove] = useAsyncFn<(params: RemoveCorrelationParams) => Promise<void>>(
+  const [removeInfo, remove] = useAsyncFn<(params: RemoveCorrelationParams) => Promise<{ message: string }>>(
     ({ sourceUID, uid }) => backend.delete(`/api/datasources/uid/${sourceUID}/correlations/${uid}`),
     [backend]
   );

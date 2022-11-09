@@ -87,6 +87,7 @@ const (
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
 	DashboardUIDAnnotation = "__dashboardUid__"
 	PanelIDAnnotation      = "__panelId__"
+	OrgIDAnnotation        = "__orgId__"
 
 	// This isn't a hard-coded secret token, hence the nolint.
 	//nolint:gosec
@@ -351,6 +352,12 @@ type ListAlertRulesQuery struct {
 	PanelID      int64
 
 	Result RulesGroup
+}
+
+// CountAlertRulesQuery is the query for counting alert rules
+type CountAlertRulesQuery struct {
+	OrgID        int64
+	NamespaceUID string
 }
 
 type GetAlertRulesForSchedulingQuery struct {
