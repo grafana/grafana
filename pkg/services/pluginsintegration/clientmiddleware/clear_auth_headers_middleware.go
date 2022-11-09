@@ -11,7 +11,7 @@ import (
 )
 
 // NewClearAuthHeadersMiddleware creates a new plugins.ClientMiddleware
-// that wil clear any outgoing HTTP headers that was part of the incoming
+// that will clear any outgoing HTTP headers that was part of the incoming
 // HTTP request and used when authenticating to Grafana.
 func NewClearAuthHeadersMiddleware() plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
