@@ -1,35 +1,25 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { PluginSignatureType } from '@grafana/data';
+import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
 
 import { PageInfoItem } from '../../../../core/components/Page/types';
 import { PluginDisabledBadge } from '../components/Badges';
-import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
-import { InstallControls } from '../components/InstallControls';
 import { PluginDetailsHeaderDependencies } from '../components/PluginDetailsHeaderDependencies';
 import { PluginDetailsHeaderSignature } from '../components/PluginDetailsHeaderSignature';
 import { getLatestCompatibleVersion } from '../helpers';
 import { CatalogPlugin } from '../types';
 
-type ReturnType = {
-  actions?: React.ReactNode;
-  info?: PageInfoItem[];
-};
+export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
+  const info: PageInfoItem[] = [];
 
-export const usePluginInfo = (plugin?: CatalogPlugin): ReturnType => {
   if (!plugin) {
-    return {};
+    return info;
   }
+
+  // Populate info
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin.details?.versions);
   const version = plugin.installedVersion || latestCompatibleVersion?.version;
-
-  const actions = (
-    <>
-      <InstallControls plugin={plugin} latestCompatibleVersion={latestCompatibleVersion} />
-      <GetStartedWithPlugin plugin={plugin} />
-    </>
-  );
-  const info: PageInfoItem[] = [];
 
   if (Boolean(version)) {
     info.push({
@@ -81,8 +71,15 @@ export const usePluginInfo = (plugin?: CatalogPlugin): ReturnType => {
     value: <PluginDetailsHeaderSignature plugin={plugin} />,
   });
 
+  return info;
+};
+
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    actions,
-    info,
+    subtitle: css`
+      display: flex;
+      flex-direction: column;
+      gap: ${theme.spacing(1)};
+    `,
   };
 };

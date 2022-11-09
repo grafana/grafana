@@ -13,7 +13,7 @@ import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
 import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
 import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
-import { usePluginInfo } from '../hooks/usePluginInfo';
+import { usePluginPageExtensions } from '../hooks/usePluginPageExtensions';
 import { useGetSingle, useFetchStatus, useFetchDetailsStatus } from '../state/hooks';
 import { PluginTabIds } from '../types';
 
@@ -28,27 +28,10 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
 
   const plugin = useGetSingle(pluginId); // fetches the localplugin settings
   const { navModel, activePageId } = usePluginDetailsTabs(plugin, queryParams.page as PluginTabIds);
-  const { actions, info } = usePluginInfo(plugin);
+  const { actions, info, subtitle } = usePluginPageExtensions(plugin);
   const { isLoading: isFetchLoading } = useFetchStatus();
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
   const styles = useStyles2(getStyles);
-  const subtitle = (
-    <div className={styles.subtitle}>
-      {plugin?.description && <div>{plugin?.description}</div>}
-      {plugin?.details?.links && plugin.details.links.length > 0 && (
-        <span>
-          {plugin.details.links.map((link, index) => (
-            <React.Fragment key={index}>
-              {index > 0 && ' | '}
-              <a href={link.url} className="external-link">
-                {link.name}
-              </a>
-            </React.Fragment>
-          ))}
-        </span>
-      )}
-    </div>
-  );
 
   if (isFetchLoading || isFetchDetailsLoading) {
     return (
