@@ -23,7 +23,7 @@ type Folder struct {
 	Version       int                    `json:"version"`
 	AccessControl accesscontrol.Metadata `json:"accessControl,omitempty"`
 	// only used if nested folders are enabled
-	ParentUID string `json:"parent_uid"`
+	ParentUID string `json:"parentUid"`
 }
 
 type FolderSearchHit struct {
