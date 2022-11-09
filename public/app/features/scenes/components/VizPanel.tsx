@@ -20,7 +20,7 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
   public static Component = ScenePanelRenderer;
   public static Editor = VizPanelEditor;
 
-  _variableDependency = new VariableDependencyConfig(this, {
+  protected _variableDependency = new VariableDependencyConfig(this, {
     statePaths: ['title'],
   });
 
