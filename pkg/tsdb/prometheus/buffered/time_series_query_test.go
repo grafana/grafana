@@ -923,6 +923,33 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.Equal(t, "UTC", testValue.(time.Time).Location().String())
 		require.Equal(t, int64(123), testValue.(time.Time).UnixMilli())
 	})
+
+	t.Run("warnings, if there is any, should be added to each frame",
+		func(t *testing.T) {
+			value := make(map[TimeSeriesQueryType]bufferedResponse)
+			value[RangeQueryType] = bufferedResponse{
+				Response: &p.Scalar{
+					Value:     1,
+					Timestamp: 123,
+				},
+				Warnings: []string{"warning1", "warning2"},
+			}
+
+			query := &PrometheusQuery{}
+			res, err := parseTimeSeriesResponse(value, query)
+			require.NoError(t, err)
+
+			require.Len(t, res, 1)
+			require.Equal(t, res[0].Name, "1")
+			require.Len(t, res[0].Fields, 2)
+			require.Len(t, res[0].Fields[0].Labels, 0)
+			require.Equal(t, res[0].Fields[0].Name, "Time")
+			require.Equal(t, res[0].Fields[1].Name, "Value")
+			require.Equal(t, res[0].Fields[1].Config.DisplayNameFromDS, "1")
+
+			require.Equal(t, res[0].Meta.Notices[0].Text, "warning1")
+			require.Equal(t, res[0].Meta.Notices[1].Text, "warning2")
+		})
 }
 
 func queryContext(json string, timeRange backend.TimeRange) *backend.QueryDataRequest {
