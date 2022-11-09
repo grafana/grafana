@@ -257,6 +257,8 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		Default:                   true,
 		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 		OrgID:                     am.orgID,
+		// Default configuration should always be valid.
+		IsValid: true,
 	}
 
 	cfg, err := Load([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))

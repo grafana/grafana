@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -62,6 +63,13 @@ grafana_alerting_active_configurations 3
 # TYPE grafana_alerting_discovered_configurations gauge
 grafana_alerting_discovered_configurations 3
 `), "grafana_alerting_discovered_configurations", "grafana_alerting_active_configurations"))
+
+		// Configurations should be marked as valid.
+		for _, org := range orgStore.orgs {
+			config, ok := configStore.configs[org]
+			require.True(t, ok)
+			require.True(t, config.IsValid)
+		}
 	}
 	// When an org is removed, it should detect it.
 	{
@@ -148,13 +156,14 @@ grafana_alerting_discovered_configurations 4
 
 func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T) {
 	// Include a broken configuration for organization 2.
-	configStore := &FakeConfigStore{
-		configs: map[int64]*models.AlertConfiguration{
-			2: {AlertmanagerConfiguration: brokenConfig, OrgID: 2},
-		},
-	}
+	var orgWithBadConfig int64 = 2
+	configStore := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{
+		orgWithBadConfig: {AlertmanagerConfiguration: brokenConfig, OrgID: orgWithBadConfig},
+	})
+
+	orgs := []int64{1, 2, 3}
 	orgStore := &FakeOrgStore{
-		orgs: []int64{1, 2, 3},
+		orgs: orgs,
 	}
 
 	tmpDir := t.TempDir()
@@ -182,6 +191,17 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		require.True(t, mam.alertmanagers[1].ready())
 		require.False(t, mam.alertmanagers[2].ready())
 		require.True(t, mam.alertmanagers[3].ready())
+
+		// The configuration should be marked as valid for all orgs except for org 2.
+		for _, org := range orgs {
+			query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
+			require.NoError(t, configStore.GetLatestAlertmanagerConfiguration(ctx, &query))
+			if org == orgWithBadConfig {
+				require.False(t, query.Result.IsValid, fmt.Sprintf("orgID: %d", org))
+			} else {
+				require.True(t, query.Result.IsValid, fmt.Sprintf("orgID: %d", org))
+			}
+		}
 	}
 
 	// On the next sync, it never panics and alertmanager is still not ready.
@@ -191,6 +211,17 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		require.True(t, mam.alertmanagers[1].ready())
 		require.False(t, mam.alertmanagers[2].ready())
 		require.True(t, mam.alertmanagers[3].ready())
+
+		// The configuration should still be marked as valid for all orgs except for org 2.
+		for _, org := range orgs {
+			query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
+			require.NoError(t, configStore.GetLatestAlertmanagerConfiguration(ctx, &query))
+			if org == orgWithBadConfig {
+				require.False(t, query.Result.IsValid, fmt.Sprintf("orgID: %d", org))
+			} else {
+				require.True(t, query.Result.IsValid, fmt.Sprintf("orgID: %d", org))
+			}
+		}
 	}
 
 	// If we fix the configuration, it becomes ready.
@@ -201,6 +232,13 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		require.True(t, mam.alertmanagers[1].ready())
 		require.True(t, mam.alertmanagers[2].ready())
 		require.True(t, mam.alertmanagers[3].ready())
+
+		// All configurations should be marked as valid.
+		for _, org := range orgs {
+			query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
+			require.NoError(t, configStore.GetLatestAlertmanagerConfiguration(ctx, &query))
+			require.True(t, query.Result.IsValid, fmt.Sprintf("orgID: %d", org))
+		}
 	}
 }
 

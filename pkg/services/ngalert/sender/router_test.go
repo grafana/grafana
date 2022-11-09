@@ -351,7 +351,7 @@ func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAl
 	m := metrics.NewNGAlert(registry)
 	secretsService := secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
-	moa, err := notifier.NewMultiOrgAlertmanager(cfg, &cfgStore, &orgStore, kvStore, provisioning.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	moa, err := notifier.NewMultiOrgAlertmanager(cfg, cfgStore, &orgStore, kvStore, provisioning.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
 	require.NoError(t, err)
 	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
 	require.Eventually(t, func() bool {

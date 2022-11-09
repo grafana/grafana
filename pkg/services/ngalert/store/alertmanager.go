@@ -78,6 +78,7 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 			ConfigurationVersion:      cmd.ConfigurationVersion,
 			Default:                   cmd.Default,
 			OrgID:                     cmd.OrgID,
+			IsValid:                   cmd.IsValid,
 		}
 		if _, err := sess.Insert(config); err != nil {
 			return err

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -15,7 +16,8 @@ import (
 )
 
 type FakeConfigStore struct {
-	configs map[int64]*models.AlertConfiguration
+	configs  map[int64]*models.AlertConfiguration
+	configID int64
 }
 
 // Saves the image or returns an error.
@@ -31,12 +33,15 @@ func (f *FakeConfigStore) GetImages(ctx context.Context, tokens []string) ([]mod
 	return nil, nil, models.ErrImageNotFound
 }
 
-func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfiguration) FakeConfigStore {
+func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfiguration) *FakeConfigStore {
 	t.Helper()
 
-	return FakeConfigStore{
-		configs: configs,
+	fcs := FakeConfigStore{configs: configs}
+	// Add unique IDs for configs.
+	for _, config := range fcs.configs {
+		config.ID = atomic.AddInt64(&fcs.configID, 1)
 	}
+	return &fcs
 }
 
 func (f *FakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context) ([]*models.AlertConfiguration, error) {
@@ -59,10 +64,12 @@ func (f *FakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, 
 
 func (f *FakeConfigStore) SaveAlertmanagerConfiguration(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
 	f.configs[cmd.OrgID] = &models.AlertConfiguration{
+		ID:                        atomic.AddInt64(&f.configID, 1),
 		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 		OrgID:                     cmd.OrgID,
 		ConfigurationVersion:      "v1",
 		Default:                   cmd.Default,
+		IsValid:                   cmd.IsValid,
 	}
 
 	return nil
@@ -70,10 +77,12 @@ func (f *FakeConfigStore) SaveAlertmanagerConfiguration(_ context.Context, cmd *
 
 func (f *FakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback store.SaveCallback) error {
 	f.configs[cmd.OrgID] = &models.AlertConfiguration{
+		ID:                        atomic.AddInt64(&f.configID, 1),
 		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 		OrgID:                     cmd.OrgID,
 		ConfigurationVersion:      "v1",
 		Default:                   cmd.Default,
+		IsValid:                   cmd.IsValid,
 	}
 
 	if err := callback(); err != nil {
@@ -95,6 +104,16 @@ func (f *FakeConfigStore) UpdateAlertmanagerConfiguration(_ context.Context, cmd
 		return nil
 	}
 	return errors.New("config not found or hash not valid")
+}
+
+func (f *FakeConfigStore) MarkAlertmanagerConfigurationAsValid(_ context.Context, configID int64) error {
+	for _, config := range f.configs {
+		if config.ID == configID {
+			config.IsValid = true
+			return nil
+		}
+	}
+	return errors.New("config not found")
 }
 
 type FakeOrgStore struct {
