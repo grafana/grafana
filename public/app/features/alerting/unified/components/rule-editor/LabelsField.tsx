@@ -3,7 +3,7 @@ import React, { FC, useMemo } from 'react';
 import { FieldArrayWithId, useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Field, Input, InlineLabel, Label, useStyles2 } from '@grafana/ui';
+import { Button, Field, InlineLabel, Label, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
 import AlertLabelDropdown, { AlertLabelDropdownProps } from '../AlertLabelDropdown';
