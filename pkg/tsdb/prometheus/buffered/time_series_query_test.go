@@ -598,7 +598,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 
 func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 	t.Run("exemplars response should be sampled and parsed normally", func(t *testing.T) {
-		value := make(map[TimeSeriesQueryType]interface{})
+		value := make(map[TimeSeriesQueryType]bufferedResponse)
 		exemplars := []apiv1.ExemplarQueryResult{
 			{
 				SeriesLabels: p.LabelSet{
@@ -631,7 +631,10 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 
-		value[ExemplarQueryType] = exemplars
+		value[ExemplarQueryType] = bufferedResponse{
+			Response: exemplars,
+			Warnings: nil,
+		}
 		query := &PrometheusQuery{
 			LegendFormat: "legend {{app}}",
 		}
@@ -652,7 +655,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 	})
 
 	t.Run("exemplars response with inconsistent labels should marshal json ok", func(t *testing.T) {
-		value := make(map[TimeSeriesQueryType]interface{})
+		value := make(map[TimeSeriesQueryType]bufferedResponse)
 		exemplars := []apiv1.ExemplarQueryResult{
 			{
 				SeriesLabels: p.LabelSet{
@@ -685,7 +688,10 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 
-		value[ExemplarQueryType] = exemplars
+		value[ExemplarQueryType] = bufferedResponse{
+			Response: exemplars,
+			Warnings: nil,
+		}
 		query := &PrometheusQuery{
 			LegendFormat: "legend {{app}}",
 		}
@@ -723,12 +729,15 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			{Value: 4, Timestamp: 4000},
 			{Value: 5, Timestamp: 5000},
 		}
-		value := make(map[TimeSeriesQueryType]interface{})
-		value[RangeQueryType] = p.Matrix{
-			&p.SampleStream{
-				Metric: p.Metric{"app": "Application", "tag2": "tag2"},
-				Values: values,
+		value := make(map[TimeSeriesQueryType]bufferedResponse)
+		value[RangeQueryType] = bufferedResponse{
+			Response: p.Matrix{
+				&p.SampleStream{
+					Metric: p.Metric{"app": "Application", "tag2": "tag2"},
+					Values: values,
+				},
 			},
+			Warnings: nil,
 		}
 		query := &PrometheusQuery{
 			LegendFormat: "legend {{app}}",
@@ -760,12 +769,15 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			{Value: 1, Timestamp: 1000},
 			{Value: 4, Timestamp: 4000},
 		}
-		value := make(map[TimeSeriesQueryType]interface{})
-		value[RangeQueryType] = p.Matrix{
-			&p.SampleStream{
-				Metric: p.Metric{"app": "Application", "tag2": "tag2"},
-				Values: values,
+		value := make(map[TimeSeriesQueryType]bufferedResponse)
+		value[RangeQueryType] = bufferedResponse{
+			Response: p.Matrix{
+				&p.SampleStream{
+					Metric: p.Metric{"app": "Application", "tag2": "tag2"},
+					Values: values,
+				},
 			},
+			Warnings: nil,
 		}
 		query := &PrometheusQuery{
 			LegendFormat: "",
@@ -791,12 +803,15 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			{Value: 1, Timestamp: 1000},
 			{Value: 4, Timestamp: 4000},
 		}
-		value := make(map[TimeSeriesQueryType]interface{})
-		value[RangeQueryType] = p.Matrix{
-			&p.SampleStream{
-				Metric: p.Metric{"app": "Application", "tag2": "tag2"},
-				Values: values,
+		value := make(map[TimeSeriesQueryType]bufferedResponse)
+		value[RangeQueryType] = bufferedResponse{
+			Response: p.Matrix{
+				&p.SampleStream{
+					Metric: p.Metric{"app": "Application", "tag2": "tag2"},
+					Values: values,
+				},
 			},
+			Warnings: nil,
 		}
 		query := &PrometheusQuery{
 			LegendFormat: "",
@@ -820,14 +835,17 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 	})
 
 	t.Run("matrix response with NaN value should be changed to null", func(t *testing.T) {
-		value := make(map[TimeSeriesQueryType]interface{})
-		value[RangeQueryType] = p.Matrix{
-			&p.SampleStream{
-				Metric: p.Metric{"app": "Application"},
-				Values: []p.SamplePair{
-					{Value: p.SampleValue(math.NaN()), Timestamp: 1000},
+		value := make(map[TimeSeriesQueryType]bufferedResponse)
+		value[RangeQueryType] = bufferedResponse{
+			Response: p.Matrix{
+				&p.SampleStream{
+					Metric: p.Metric{"app": "Application"},
+					Values: []p.SamplePair{
+						{Value: p.SampleValue(math.NaN()), Timestamp: 1000},
+					},
 				},
 			},
+			Warnings: nil,
 		}
 		query := &PrometheusQuery{
 			LegendFormat: "",
@@ -844,13 +862,16 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 	})
 
 	t.Run("vector response should be parsed normally", func(t *testing.T) {
-		value := make(map[TimeSeriesQueryType]interface{})
-		value[RangeQueryType] = p.Vector{
-			&p.Sample{
-				Metric:    p.Metric{"app": "Application", "tag2": "tag2"},
-				Value:     1,
-				Timestamp: 123,
+		value := make(map[TimeSeriesQueryType]bufferedResponse)
+		value[RangeQueryType] = bufferedResponse{
+			Response: p.Vector{
+				&p.Sample{
+					Metric:    p.Metric{"app": "Application", "tag2": "tag2"},
+					Value:     1,
+					Timestamp: 123,
+				},
 			},
+			Warnings: nil,
 		}
 		query := &PrometheusQuery{
 			LegendFormat: "legend {{app}}",
@@ -876,10 +897,13 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 	})
 
 	t.Run("scalar response should be parsed normally", func(t *testing.T) {
-		value := make(map[TimeSeriesQueryType]interface{})
-		value[RangeQueryType] = &p.Scalar{
-			Value:     1,
-			Timestamp: 123,
+		value := make(map[TimeSeriesQueryType]bufferedResponse)
+		value[RangeQueryType] = bufferedResponse{
+			Response: &p.Scalar{
+				Value:     1,
+				Timestamp: 123,
+			},
+			Warnings: nil,
 		}
 
 		query := &PrometheusQuery{}
