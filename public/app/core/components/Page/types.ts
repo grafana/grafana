@@ -12,7 +12,15 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   navId?: string;
   navModel?: NavModel;
   pageNav?: NavModelItem;
+  /** Can be used to place info inline with the heading */
+  info?: PageInfoItem[];
+  /** Can be used to place actions inline with the heading */
+  actions?: React.ReactNode;
+  /** Can be used to customize rendering of title */
+  renderTitle?: (title: string) => React.ReactNode;
+  /** Can be used to customize or customize and set a page sub title */
   subTitle?: React.ReactNode;
+  /** Control the page layout. */
   layout?: PageLayoutType;
   /** Something we can remove when we remove the old nav. */
   toolbar?: React.ReactNode;
