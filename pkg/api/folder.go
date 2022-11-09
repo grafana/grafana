@@ -105,6 +105,8 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 //
 // Create folder.
 //
+// If nested folders are enabled then it additionally expects the parent folder UID.
+//
 // Responses:
 // 200: folderResponse
 // 400: badRequestError
@@ -113,22 +115,28 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 // 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
-	cmd := models.CreateFolderCommand{}
+	cmd := folder.CreateFolderCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	folder, err := hs.folderService.CreateFolder(c.Req.Context(), c.SignedInUser, c.OrgID, cmd.Title, cmd.Uid)
+	cmd.OrgID = c.OrgID
+
+	folder, err := hs.folderService.Create(c.Req.Context(), &cmd)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
-	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, folder))
+	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	// TODO set ParentUID if nested folders are enabled
+	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
 }
 
 // swagger:route PUT /folders/{folder_uid} folders updateFolder
 //
 // Update folder.
+//
+// If nested folders are enabled then it optionally expects a new parent folder UID that moves the folder and
+// includes it into the response.
 //
 // Responses:
 // 200: folderResponse
@@ -156,6 +164,7 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 // Delete folder.
 //
 // Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.
+// If nested folders are enabled then it also deletes all the subfolders.
 //
 // Responses:
 // 200: deleteFolderResponse
@@ -216,6 +225,42 @@ func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuar
 	}
 }
 
+func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardGuardian, folder *folder.Folder) dtos.Folder {
+	canEdit, _ := g.CanEdit()
+	canSave, _ := g.CanSave()
+	canAdmin, _ := g.CanAdmin()
+	canDelete, _ := g.CanDelete()
+
+	// Finding creator and last updater of the folder
+	updater, creator := anonString, anonString
+	/*
+		if folder.CreatedBy > 0 {
+			creator = hs.getUserLogin(c.Req.Context(), folder.CreatedBy)
+		}
+		if folder.UpdatedBy > 0 {
+			updater = hs.getUserLogin(c.Req.Context(), folder.UpdatedBy)
+		}
+	*/
+
+	return dtos.Folder{
+		Id:    folder.ID,
+		Uid:   folder.UID,
+		Title: folder.Title,
+		//Url:           folder.Url,
+		//HasACL:        folder.HasACL,
+		CanSave:   canSave,
+		CanEdit:   canEdit,
+		CanAdmin:  canAdmin,
+		CanDelete: canDelete,
+		CreatedBy: creator,
+		Created:   folder.Created,
+		UpdatedBy: updater,
+		Updated:   folder.Updated,
+		//Version:       folder.Version,
+		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.UID),
+	}
+}
+
 // swagger:parameters getFolders
 type GetFoldersParams struct {
 	// Limit the maximum number of folders to return
@@ -262,7 +307,7 @@ type GetFolderByIDParams struct {
 type CreateFolderParams struct {
 	// in:body
 	// required:true
-	Body models.CreateFolderCommand `json:"body"`
+	Body folder.CreateFolderCommand `json:"body"`
 }
 
 // swagger:parameters deleteFolder

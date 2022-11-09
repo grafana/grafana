@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	service "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -130,7 +131,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			},
 		})
 
-		folderService.ExpectedFolder = &models.Folder{Id: 1, Uid: "uid", Title: "Folder"}
+		folderService.ExpectedFolder = &folder.Folder{ID: 1, UID: "uid", Title: "Folder"}
 		dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		mockSQLStore := mockstore.NewSQLStoreMock()
 
@@ -187,7 +188,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			CheckPermissionBeforeUpdateError: guardian.ErrGuardianPermissionExists,
 		})
 
-		folderService.ExpectedFolder = &models.Folder{Id: 1, Uid: "uid", Title: "Folder"}
+		folderService.ExpectedFolder = &folder.Folder{ID: 1, UID: "uid", Title: "Folder"}
 
 		cmd := dtos.UpdateDashboardACLCommand{
 			Items: []dtos.DashboardACLUpdateItem{
@@ -251,7 +252,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			CheckPermissionBeforeUpdateError: guardian.ErrGuardianOverride},
 		)
 
-		folderService.ExpectedFolder = &models.Folder{Id: 1, Uid: "uid", Title: "Folder"}
+		folderService.ExpectedFolder = &folder.Folder{ID: 1, UID: "uid", Title: "Folder"}
 
 		cmd := dtos.UpdateDashboardACLCommand{
 			Items: []dtos.DashboardACLUpdateItem{
@@ -297,7 +298,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 
 		var gotItems []*models.DashboardACL
 
-		folderService.ExpectedFolder = &models.Folder{Id: 1, Uid: "uid", Title: "Folder"}
+		folderService.ExpectedFolder = &folder.Folder{ID: 1, UID: "uid", Title: "Folder"}
 		dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 			gotItems = args.Get(2).([]*models.DashboardACL)
 		}).Return(nil).Once()

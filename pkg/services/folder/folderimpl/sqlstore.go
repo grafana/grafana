@@ -36,6 +36,15 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 	}
 
 	var foldr *folder.Folder
+	/*
+		user, err := appcontext.User(ctx)
+		if err != nil {
+			return nil, err
+		}
+		version := 1
+		updatedBy := user.UserID
+		createdBy := user.UserID
+	*/
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var sqlOrArgs []interface{}
 		if cmd.ParentUID == "" {

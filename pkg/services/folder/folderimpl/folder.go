@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type Service struct {
@@ -150,16 +149,21 @@ func (s *Service) GetFolderByTitle(ctx context.Context, user *user.SignedInUser,
 	return dashFolder, nil
 }
 
-func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, title, uid string) (*models.Folder, error) {
-	dashFolder := models.NewDashboardFolder(title)
-	dashFolder.OrgId = orgID
+func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
+	dashFolder := models.NewDashboardFolder(cmd.Title)
+	dashFolder.OrgId = cmd.OrgID
 
-	trimmedUID := strings.TrimSpace(uid)
+	trimmedUID := strings.TrimSpace(cmd.UID)
 	if trimmedUID == accesscontrol.GeneralFolderUID {
 		return nil, dashboards.ErrFolderInvalidUID
 	}
 
 	dashFolder.SetUid(trimmedUID)
+
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
+	}
 	userID := user.UserID
 	if userID == 0 {
 		userID = -1
@@ -170,7 +174,7 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 
 	dto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
-		OrgId:     orgID,
+		OrgId:     cmd.OrgID,
 		User:      user,
 	}
 
@@ -185,7 +189,7 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 	}
 
 	var createdFolder *models.Folder
-	createdFolder, err = s.dashboardStore.GetFolderByID(ctx, orgID, dash.Id)
+	createdFolder, err = s.dashboardStore.GetFolderByID(ctx, cmd.OrgID, dash.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -204,9 +208,9 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 			{BuiltinRole: string(org.RoleViewer), Permission: models.PERMISSION_VIEW.String()},
 		}...)
 
-		_, permissionErr = s.permissions.SetPermissions(ctx, orgID, createdFolder.Uid, permissions...)
+		_, permissionErr = s.permissions.SetPermissions(ctx, cmd.OrgID, createdFolder.Uid, permissions...)
 	} else if s.cfg.EditorsCanAdmin && user.IsRealUser() && !user.IsAnonymous {
-		permissionErr = s.MakeUserAdmin(ctx, orgID, userID, createdFolder.Id, true)
+		permissionErr = s.MakeUserAdmin(ctx, cmd.OrgID, userID, createdFolder.Id, true)
 	}
 
 	if permissionErr != nil {
@@ -219,31 +223,34 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 			description = dash.Data.Get("description").MustString()
 		}
 
+		parentUID := folder.RootFolderUID
+		if cmd.ParentUID != "" {
+			parentUID = cmd.ParentUID
+		}
 		_, err := s.store.Create(ctx, folder.CreateFolderCommand{
 			// TODO: Today, if a UID isn't specified, the dashboard store
 			// generates a new UID. The new folder store will need to do this as
 			// well, but for now we take the UID from the newly created folder.
 			UID:         dash.Uid,
-			OrgID:       orgID,
-			Title:       title,
+			OrgID:       cmd.OrgID,
+			Title:       cmd.Title,
 			Description: description,
-			ParentUID:   folder.RootFolderUID,
+			ParentUID:   parentUID,
 		})
 		if err != nil {
 			// We'll log the error and also roll back the previously-created
 			// (legacy) folder.
 			s.log.Error("error saving folder to nested folder store", err)
-
 			err = s.DeleteFolder(ctx, &folder.DeleteFolderCommand{UID: createdFolder.Uid, OrgID: orgID, ForceDeleteRules: true})
 			if err != nil {
 				s.log.Error("error deleting folder after failed save to nested folder store", err)
 			}
-			return createdFolder, err
+			return folder.FromDashboard(dash), err
 		}
 		// The folder UID is specified (or generated) during creation, so we'll
 		// stop here and return the created model.Folder.
 	}
-	return createdFolder, nil
+	return folder.FromDashboard(dash), nil
 }
 
 func (s *Service) UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
@@ -331,15 +338,6 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 		return toFolderError(err)
 	}
 	return nil
-}
-
-func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
-	// check the flag, if old - do whatever did before
-	//  for new only the store
-	if cmd.UID == "" {
-		cmd.UID = util.GenerateShortUID()
-	}
-	return s.store.Create(ctx, *cmd)
 }
 
 func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
