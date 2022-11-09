@@ -325,9 +325,12 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     });
 
     if (width < 768) {
+      // We should not persist the mobile layout
+      this._skipOnLayoutChange = true;
       return cells.map((cell) => ({ ...cell, w: 24 }));
     }
 
+    this._skipOnLayoutChange = false;
     return cells;
   }
 }
