@@ -3,9 +3,7 @@ package folderimpl
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -302,17 +300,9 @@ func (s *Service) UpdateFolder(ctx context.Context, user *user.SignedInUser, org
 	return nil
 }
 
-var total time.Duration
-var count int
-
 func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		start := time.Now()
 		err := s.Delete(ctx, cmd)
-		elapsed := time.Since(start)
-		total += elapsed
-		count += 1
-		fmt.Printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Delete took %s, average is : %f", elapsed, total.Seconds()/float64(count))
 		if err != nil {
 			s.log.Error("the delete folder on folder table failed with err: ", err.Error())
 		}
@@ -377,9 +367,6 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
-	// check the flag, if old - do whatever did before
-	//  for new only the store
-	// check if dashboard exists
 	_, err := s.Get(ctx, &folder.GetFolderQuery{
 		UID:   &cmd.UID,
 		OrgID: cmd.OrgID,

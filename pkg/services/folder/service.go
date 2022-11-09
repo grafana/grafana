@@ -18,22 +18,6 @@ type Service interface {
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error
 }
 
-// TODO: remove when nested folder refactor is done.
-func ConvertModelFolderToFolder(folder *models.Folder, orgId int64) *Folder {
-	if folder == nil {
-		return nil
-	}
-	return &Folder{
-		ID:      folder.Id,
-		OrgID:   orgId,
-		UID:     folder.Uid,
-		URL:     folder.Url,
-		Title:   folder.Title,
-		Created: folder.Created,
-		Updated: folder.Updated,
-	}
-}
-
 // NestedFolderService is the temporary interface definition for the folder
 // Service which includes any new or alternate methods. These will be collapsed
 // into a single service when the nested folder implementation is rolled out.

@@ -334,7 +334,7 @@ func (s *fakeFolderService) UpdateFolder(ctx context.Context, user *user.SignedI
 	return s.UpdateFolderError
 }
 
-func (s *fakeFolderService) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) (*folder.Folder, error) {
+func (s *fakeFolderService) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
 	s.DeletedFolderUids = append(s.DeletedFolderUids, cmd.UID)
-	return s.DeleteFolderResult, s.DeleteFolderError
+	return s.DeleteFolderError
 }

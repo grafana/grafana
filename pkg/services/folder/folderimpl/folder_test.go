@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -84,8 +83,8 @@ func TestIntegrationFolderService(t *testing.T) {
 			newFolder.Id = folderId
 			newFolder.Uid = folderUID
 
-			dashStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(folder, nil)
-			dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(folder, nil)
+			dashStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
+			dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
 				_, err := service.GetFolderByID(context.Background(), usr, folderId, orgID)
@@ -105,7 +104,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			t.Run("When creating folder should return access denied error", func(t *testing.T) {
 				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil).Times(2)
-				_, err := service.CreateFolder(context.Background(), usr, orgID, folder.Title, folderUID)
+				_, err := service.CreateFolder(context.Background(), usr, orgID, newFolder.Title, folderUID)
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
@@ -129,11 +128,10 @@ func TestIntegrationFolderService(t *testing.T) {
 				newFolder := models.NewFolder("Folder")
 				newFolder.Uid = folderUID
 
-				spew.Dump(">>>>", orgID, folderUID)
 				dashStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
 				dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)
 
-				_, err := service.DeleteFolder(ctx, &folder.DeleteFolderCommand{
+				err := service.DeleteFolder(ctx, &folder.DeleteFolderCommand{
 					UID:              folderUID,
 					OrgID:            orgID,
 					ForceDeleteRules: false,
@@ -207,7 +205,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				expectedForceDeleteRules := rand.Int63()%2 == 0
 				ctx := context.Background()
 				ctx = appcontext.WithUser(ctx, usr)
-				_, err := service.DeleteFolder(ctx, &folder.DeleteFolderCommand{
+				err := service.DeleteFolder(ctx, &folder.DeleteFolderCommand{
 					UID:              f.Uid,
 					OrgID:            orgID,
 					ForceDeleteRules: expectedForceDeleteRules,
@@ -309,7 +307,7 @@ func TestFolderService(t *testing.T) {
 
 	t.Run("delete folder", func(t *testing.T) {
 		folderStore.ExpectedFolder = &folder.Folder{}
-		_, err := folderService.Delete(context.Background(), &folder.DeleteFolderCommand{})
+		err := folderService.Delete(context.Background(), &folder.DeleteFolderCommand{})
 		require.NoError(t, err)
 	})
 

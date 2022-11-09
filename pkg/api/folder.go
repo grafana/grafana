@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -164,16 +166,16 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
-	// err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
-	// if err != nil {
-	// 	if errors.Is(err, libraryelements.ErrFolderHasConnectedLibraryElements) {
-	// 		return response.Error(403, "Folder could not be deleted because it contains library elements in use", err)
-	// 	}
-	// 	return apierrors.ToFolderErrorResponse(err)
-	// }
+	err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
+	if err != nil {
+		if errors.Is(err, libraryelements.ErrFolderHasConnectedLibraryElements) {
+			return response.Error(403, "Folder could not be deleted because it contains library elements in use", err)
+		}
+		return apierrors.ToFolderErrorResponse(err)
+	}
 
 	uid := web.Params(c.Req)[":uid"]
-	err := hs.folderService.DeleteFolder(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid, OrgID: c.OrgID, ForceDeleteRules: c.QueryBool("forceDeleteRules")})
+	err = hs.folderService.DeleteFolder(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid, OrgID: c.OrgID, ForceDeleteRules: c.QueryBool("forceDeleteRules")})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}

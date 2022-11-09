@@ -26,7 +26,6 @@ type Folder struct {
 	UID         string `xorm:"uid"`
 	ParentUID   string `xorm:"parent_uid"`
 	Title       string
-	URL         string
 	Description string
 
 	Created time.Time
