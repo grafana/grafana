@@ -611,13 +611,6 @@ function transformToTraceData(data: TraceSearchMetadata) {
 
   let startTime = !isNaN(traceStartTime) ? dateTimeFormat(traceStartTime) : '';
 
-  if (Math.abs(differenceInHours(new Date(traceStartTime), Date.now())) <= 1) {
-    startTime = formatDistance(new Date(traceStartTime), Date.now(), {
-      addSuffix: true,
-      includeSeconds: true,
-    });
-  }
-
   return {
     traceID: data.traceID,
     startTime: startTime,
