@@ -1,219 +1,65 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-
-import { config } from '@grafana/runtime';
-
-import { setupMockedAPI } from '../__mocks__/API';
-import { accountIdVariable, regionVariable } from '../__mocks__/CloudWatchDataSource';
-import { MetricStat } from '../types';
+import selectEvent from 'react-select-event';
 
 import { Account } from './Account';
 
-export const accounts = [
+export const AccountOptions = [
   {
-    arn: 'arn:aws:iam::123456789012:root',
-    id: '123456789012',
+    value: '123456789',
     label: 'test-account1',
-    isMonitoringAccount: true,
+    description: '123456789',
   },
   {
-    arn: 'arn:aws:iam::432156789012:root',
-    id: '432156789013',
+    value: '432156789013',
     label: 'test-account2',
-    isMonitoringAccount: false,
+    description: '432156789013',
   },
   {
-    arn: 'arn:aws:iam::432156789013:root',
-    id: '432156789014',
+    value: '999999999999',
     label: 'test-account3',
-    isMonitoringAccount: false,
+    description: '999999999999',
+  },
+  {
+    label: 'Template Variables',
+    options: [
+      {
+        value: '$fakeVar',
+        label: '$fakeVar',
+      },
+    ],
   },
 ];
-
 describe('Account', () => {
-  const metricStat: MetricStat = {
+  const props = {
+    accountOptions: AccountOptions,
     region: 'us-east-2',
-    namespace: '',
-    metricName: '',
-    dimensions: {},
-    statistic: '',
-    matchExact: true,
+    onChange: jest.fn(),
     accountId: '123456789012',
   };
 
-  const props = {
-    api: setupMockedAPI().api,
-    metricStat,
-    onChange: jest.fn(),
-  };
+  it('should not render if there are no accounts', async () => {
+    render(<Account {...props} accountOptions={[]} />);
+    expect(screen.queryByLabelText('Account Selection')).not.toBeInTheDocument();
+  });
 
-  describe('account field', () => {
-    config.featureToggles.cloudWatchCrossAccountQuerying = true;
-    it('should be rendered when feature toggle is enabled', async () => {
-      const originalValue = config.featureToggles.cloudWatchCrossAccountQuerying;
-      config.featureToggles.cloudWatchCrossAccountQuerying = true;
-      const api = setupMockedAPI().api;
-      api.getAccounts = jest.fn().mockResolvedValue([
-        {
-          arn: 'arn:aws:iam::123456789012:root',
-          accountId: '123456789012',
-          label: 'test-account',
-          isMonitoringAccount: true,
-        },
-      ]);
-      await act(async () => {
-        render(<Account {...props} query={{ ...props.metricStat }} api={api} />);
-      });
-      expect(await screen.getByLabelText('Account')).toBeInTheDocument();
-      config.featureToggles.cloudWatchCrossAccountQuerying = originalValue;
-    });
+  it('should render a selectable field of accounts if there are accounts', async () => {
+    const onChange = jest.fn();
+    render(<Account {...props} onChange={onChange} />);
+    expect(screen.getByLabelText('Account Selection')).toBeInTheDocument();
+    await selectEvent.select(screen.getByLabelText('Account Selection'), 'test-account3', { container: document.body });
+    expect(onChange).toBeCalledWith('999999999999');
+  });
 
-    it('should not be rendered when feature toggle is not enabled', async () => {
-      let api = setupMockedAPI().api;
-      api.getAccounts = jest.fn().mockResolvedValue(accounts);
-      const originalValue = config.featureToggles.cloudWatchCrossAccountQuerying;
-      config.featureToggles.cloudWatchCrossAccountQuerying = false;
-      await act(async () => {
-        render(<Account {...props} query={{ ...props.metricStat }} api={api} />);
-      });
-      expect(await screen.queryByLabelText('Account')).toBeNull();
-      config.featureToggles.cloudWatchCrossAccountQuerying = originalValue;
-    });
+  it("should default to 'all' if there is no selection", () => {
+    render(<Account {...props} accountId={undefined} />);
+    expect(screen.getByLabelText('Account Selection')).toBeInTheDocument();
+    expect(screen.getByText('All')).toBeInTheDocument();
+  });
 
-    it('should not be rendered when no accounts are found and accountId is defiend', async () => {
-      await act(async () => {
-        const mock = setupMockedAPI({ variables: [accountIdVariable] });
-        mock.api.getAccounts = jest.fn().mockResolvedValue([]);
-        await act(async () => {
-          render(<Account {...props} query={{ ...props.metricStat }} api={mock.api} />);
-        });
-        expect(await screen.queryByLabelText('Account')).toBeNull();
-      });
-    });
-
-    it('should not be rendered when no accounts are found and accountId is not defiend', async () => {
-      await act(async () => {
-        const mock = setupMockedAPI({ variables: [accountIdVariable] });
-        mock.api.getAccounts = jest.fn().mockResolvedValue([]);
-        const { container } = render(
-          <Account {...props} query={{ ...props.metricStat, accountId: undefined }} api={mock.api} />
-        );
-        expect(container).toBeEmptyDOMElement();
-      });
-    });
-
-    it('should not be rendered and should unset accountArn when api returns an error', async () => {
-      const mock = setupMockedAPI();
-      mock.api.getAccounts = jest.fn().mockRejectedValue(new Error('error'));
-      const onChange = jest.fn();
-      await act(async () => {
-        const { container } = render(<Account onChange={onChange} query={{ ...props.metricStat }} api={mock.api} />);
-        expect(container).toBeEmptyDOMElement();
-      });
-      expect(onChange).toHaveBeenCalledWith(undefined);
-    });
-
-    it('should not be rendered and should unset accountArn when api returns an empty list of accounts', async () => {
-      const mock = setupMockedAPI();
-      mock.api.getAccounts = jest.fn().mockResolvedValue([]);
-      const onChange = jest.fn();
-      await act(async () => {
-        const { container } = render(
-          <Account
-            onChange={onChange}
-            query={{
-              ...props.metricStat,
-              accountId: '58356789012',
-            }}
-            api={mock.api}
-          />
-        );
-        expect(container).toBeEmptyDOMElement();
-      });
-      expect(onChange).toHaveBeenCalledWith(undefined);
-    });
-
-    it('should set accountArn to "all" if the current value is not in the loaded list of accounts', async () => {
-      const api = setupMockedAPI().api;
-      api.getAccounts = jest.fn().mockResolvedValue(accounts);
-      const onChange = jest.fn();
-      await act(async () => {
-        render(
-          <Account
-            onChange={onChange}
-            query={{
-              ...props.metricStat,
-              accountId: '58356789012',
-            }}
-            api={api}
-          />
-        );
-      });
-      expect(onChange).toHaveBeenCalledWith('all');
-    });
-
-    it('should render "all" if crossAccount is stored in the query model', async () => {
-      const api = setupMockedAPI().api;
-      api.getAccounts = jest.fn().mockResolvedValue(accounts);
-      const onChange = jest.fn();
-      await act(async () => {
-        render(
-          <Account
-            onChange={onChange}
-            query={{
-              ...props.metricStat,
-              accountId: 'all',
-            }}
-            api={api}
-          />
-        );
-      });
-      expect(onChange).not.toHaveBeenCalledWith();
-      expect(await screen.getByText('All')).toBeInTheDocument();
-    });
-
-    it('should not unset accountId if the current value is in the loaded list of accounts', async () => {
-      const api = setupMockedAPI().api;
-      api.getAccounts = jest.fn().mockResolvedValue(accounts);
-      const onChange = jest.fn();
-      await act(async () => {
-        render(
-          <Account
-            onChange={onChange}
-            query={{
-              ...props.metricStat,
-              accountId: accounts[1].id,
-            }}
-            api={api}
-          />
-        );
-      });
-      expect(onChange).not.toHaveBeenCalled();
-      expect(await screen.getByText(accounts[1].label)).toBeInTheDocument();
-    });
-
-    it('should display variable name in ui and not call onChange in case variable value exist in returned accounts array', async () => {
-      const api = setupMockedAPI({ variables: [regionVariable, accountIdVariable] }).api;
-      const onChange = jest.fn();
-      api.getAccounts = jest.fn().mockResolvedValue(accounts);
-      await act(async () => {
-        render(<Account onChange={onChange} query={{ ...props.metricStat, accountId: '$accountId' }} api={api} />);
-      });
-      expect(await screen.getByText('$accountId')).toBeInTheDocument();
-      expect(onChange).not.toHaveBeenCalled();
-    });
-
-    it('should not display variable name in ui and call onChange in case variable value does not exist in returned accounts array', async () => {
-      const api = setupMockedAPI({ variables: [regionVariable, accountIdVariable] }).api;
-      const onChange = jest.fn();
-      api.getAccounts = jest.fn().mockResolvedValue(accounts);
-      await act(async () => {
-        render(
-          <Account onChange={onChange} query={{ ...props.metricStat, accountId: '$unknownVariable' }} api={api} />
-        );
-      });
-      expect(await screen.queryByText('$unknownVariable')).toBeNull();
-      expect(onChange).toHaveBeenCalled();
-    });
+  it('should select an uninterpolated template variable if it has been selected', () => {
+    render(<Account {...props} accountId={'$fakeVar'} />);
+    expect(screen.getByLabelText('Account Selection')).toBeInTheDocument();
+    expect(screen.getByText('$fakeVar')).toBeInTheDocument();
   });
 });

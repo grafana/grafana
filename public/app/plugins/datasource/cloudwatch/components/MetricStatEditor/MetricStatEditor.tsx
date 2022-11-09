@@ -2,6 +2,7 @@ import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
 import { Dimensions } from '..';
@@ -10,7 +11,8 @@ import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
 import { standardStatistics } from '../../standardStatistics';
 import { MetricStat } from '../../types';
 import { appendTemplateVariables, toOption } from '../../utils/utils';
-import { Account } from '../Account';
+
+import { MetricStatAccountSelect } from './MetricStatAccountSelect';
 
 export type Props = {
   refId: string;
@@ -59,12 +61,13 @@ export function MetricStatEditor({
   return (
     <EditorRows>
       <EditorRow>
-        {!disableExpressions && (
-          <Account
-            query={metricStat}
-            onChange={(accountId?: string) => onMetricStatChange({ ...metricStat, accountId })}
+        {!disableExpressions && config.featureToggles.cloudWatchCrossAccountQuerying && (
+          <MetricStatAccountSelect
             api={datasource.api}
-          ></Account>
+            metricStat={metricStat}
+            onChange={onChange}
+            onRunQuery={onRunQuery}
+          />
         )}
         <EditorFieldGroup>
           <EditorField label="Namespace" width={26}>

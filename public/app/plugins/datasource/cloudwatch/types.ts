@@ -1,6 +1,7 @@
 import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
 import { DataFrame, DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 
+import { SelectableResourceValue } from './api';
 import {
   QueryEditorArrayExpression,
   QueryEditorFunctionExpression,
@@ -99,8 +100,10 @@ export interface CloudWatchLogsQuery extends DataQuery {
   id: string;
   region: string;
   expression?: string;
-  logGroupNames?: string[];
   statsGroups?: string[];
+  logGroups?: SelectableResourceValue[];
+  /* not quite deprecated yet, but will be soon */
+  logGroupNames?: string[];
 }
 
 export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery | CloudWatchAnnotationQuery;
@@ -218,24 +221,6 @@ export interface GetQueryResultsResponse {
    */
   status?: QueryStatus;
 }
-
-export interface DescribeLogGroupsRequest {
-  /**
-   * The prefix to match.
-   */
-  logGroupNamePrefix?: string;
-  /**
-   * The token for the next set of items to return. (You received this token from a previous call.)
-   */
-  nextToken?: string;
-  /**
-   * The maximum number of items returned. If you don't specify a value, the default is up to 50 items.
-   */
-  limit?: number;
-  refId?: string;
-  region: string;
-}
-
 export interface TSDBResponse<T = any> {
   results: Record<string, TSDBQueryResult<T>>;
   message?: string;
@@ -478,6 +463,14 @@ export interface GetDimensionValuesRequest extends ResourceRequest {
 
 export interface GetMetricsRequest extends ResourceRequest {
   namespace?: string;
+}
+
+export interface DescribeLogGroupsRequest extends ResourceRequest {
+  logGroupNamePrefix?: string;
+  logGroupPattern?: string;
+  // used by legacy requests, in the future deprecate these fields
+  refId?: string;
+  limit?: number;
 }
 
 export interface Account {

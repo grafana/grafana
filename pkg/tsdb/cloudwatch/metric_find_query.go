@@ -18,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
 )
 
@@ -295,6 +296,8 @@ func (e *cloudWatchExecutor) handleGetLogGroups(pluginCtx backend.PluginContext,
 	region := parameters.Get("region")
 	limit := parameters.Get("limit")
 	logGroupNamePrefix := parameters.Get("logGroupNamePrefix")
+	logGroupPattern := parameters.Get("logGroupPattern")
+	accountId := parameters.Get("accountId")
 
 	logsClient, err := e.getCWLogsClient(pluginCtx, region)
 	if err != nil {
@@ -312,15 +315,32 @@ func (e *cloudWatchExecutor) handleGetLogGroups(pluginCtx backend.PluginContext,
 	if len(logGroupNamePrefix) > 0 {
 		input.LogGroupNamePrefix = aws.String(logGroupNamePrefix)
 	}
+	if e.features.IsEnabled(featuremgmt.FlagCloudWatchCrossAccountQuerying) {
+		if accountId != "" {
+			input.IncludeLinkedAccounts = aws.Bool(true)
+			if logGroupPattern != "" {
+				// TODO: in the future change this to LogGroupNamePattern, api is not ready yet
+				input.LogGroupNamePrefix = aws.String(logGroupPattern)
+			}
+			if accountId != "all" {
+				input.AccountId = aws.String(accountId)
+			}
+		}
+	}
+	logger.Debug("Calling DescribeLogGroups with Input:", "input", input, "region", region)
 	response, err = logsClient.DescribeLogGroups(input)
 	if err != nil || response == nil {
 		return nil, err
 	}
-
 	result := make([]suggestData, 0)
 	for _, logGroup := range response.LogGroups {
 		logGroupName := *logGroup.LogGroupName
-		result = append(result, suggestData{Text: logGroupName, Value: logGroupName, Label: logGroupName})
+		// TODO: change return type from suggestData to logGroup so that value isn't sometimes an arn and sometimes a name
+		val := logGroupName
+		if accountId != "" {
+			val = *logGroup.Arn
+		}
+		result = append(result, suggestData{Text: logGroupName, Value: val, Label: logGroupName})
 	}
 
 	return result, nil

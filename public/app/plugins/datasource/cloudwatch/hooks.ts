@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useDeepCompareEffect } from 'react-use';
+import { useAsyncFn, useDeepCompareEffect } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { CloudWatchAPI } from './api';
 import { CloudWatchDatasource } from './datasource';
@@ -103,7 +104,8 @@ export const useDimensionKeys = (
 
 export const useIsMonitoringAccount = (api: CloudWatchAPI, region: string) => {
   const [isMonitoringAccount, setIsMonitoringAccount] = useState(false);
-  // need to ensure dependency array below revieves the interpolated value so that the effect is triggered when a variable is changed
+  // we call this before the use effect to ensure dependency array below
+  // receives the interpolated value so that the effect is triggered when a variable is changed
   if (region) {
     region = api.templateSrv.replace(region, {});
   }
@@ -112,4 +114,48 @@ export const useIsMonitoringAccount = (api: CloudWatchAPI, region: string) => {
   }, [region, api]);
 
   return isMonitoringAccount;
+};
+
+export const useAccountOptions = (
+  api: Pick<CloudWatchAPI, 'getAccounts' | 'templateSrv' | 'getVariables'>,
+  region: string
+) => {
+  // we call this before the use effect to ensure dependency array below
+  // receives the interpolated value so that the effect is triggered when a variable is changed
+  if (region) {
+    region = api.templateSrv.replace(region, {});
+  }
+
+  const fetchAccountOptions = async () => {
+    if (!config.featureToggles.cloudWatchCrossAccountQuerying) {
+      return Promise.resolve([]);
+    }
+    const accounts = await api.getAccounts({ region });
+    if (accounts.length === 0) {
+      return accounts;
+    }
+
+    const options = accounts.map((a) => ({
+      label: a.label,
+      value: a.id,
+      description: a.id,
+    }));
+
+    const variableOptions = api.getVariables().map(toOption);
+
+    const variableOptionGroup: SelectableValue<string> = {
+      label: 'Template Variables',
+      options: variableOptions,
+    };
+
+    return [...options, variableOptionGroup];
+  };
+
+  const [state, doFetch] = useAsyncFn(fetchAccountOptions, [api, region]);
+
+  useEffect(() => {
+    doFetch();
+  }, [api, region, doFetch]);
+
+  return state;
 };

@@ -27,7 +27,7 @@ const queryTypes: Array<{ value: string; label: string }> = [
   { value: VariableQueryType.ResourceArns, label: 'Resource ARNs' },
   { value: VariableQueryType.Statistics, label: 'Statistics' },
   { value: VariableQueryType.LogGroups, label: 'Log Groups' },
-  ...(config.featureToggles.cloudwatchCrossAccountQuerying
+  ...(config.featureToggles.cloudWatchCrossAccountQuerying
     ? [{ value: VariableQueryType.Accounts, label: 'Accounts' }]
     : []),
 ];

@@ -65,6 +65,7 @@ export class CloudWatchAPI extends CloudWatchRequest {
     return this.memoizedGetRequest<SelectableResourceValue[]>('log-groups', {
       ...params,
       region: this.templateSrv.replace(this.getActualRegion(params.region)),
+      accountId: this.templateSrv.replace(params.accountId),
     });
   }
 

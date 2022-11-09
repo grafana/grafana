@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 
 import { CloudWatchAPI } from './api';
-import { allOption } from './components/Account';
+import { ALL_ACCOUNTS_OPTION } from './components/Account';
 import { VariableQueryEditor } from './components/VariableQueryEditor/VariableQueryEditor';
 import { CloudWatchDatasource } from './datasource';
 import { migrateVariableQuery } from './migrations/variableQueryMigrations';
@@ -133,7 +133,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     }));
   }
 
-  allMetricFindValue: MetricFindValue = { text: 'All', value: allOption.value, expandable: true };
+  allMetricFindValue: MetricFindValue = { text: 'All', value: ALL_ACCOUNTS_OPTION.value, expandable: true };
   async handleAccountsQuery({ region }: VariableQuery) {
     return this.api.getAccounts({ region }).then((accounts) => {
       const metricFindOptions = accounts.map((account) => ({

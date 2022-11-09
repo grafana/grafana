@@ -29,7 +29,7 @@ export const DYNAMIC_LABEL_PATTERNS = [
   "${PROP('Region')}",
   "${PROP('Stat')}",
   '${SUM}',
-  ...(config.featureToggles.cloudwatchCrossAccountQuerying ? ["${PROP('AccountLabel')}"] : []),
+  ...(config.featureToggles.cloudWatchCrossAccountQuerying ? ["${PROP('AccountLabel')}"] : []),
 ];
 
 export const language: monacoType.languages.IMonarchLanguage = {

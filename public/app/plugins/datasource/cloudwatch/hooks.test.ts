@@ -1,5 +1,7 @@
 import { renderHook } from '@testing-library/react-hooks';
 
+import { config } from '@grafana/runtime';
+
 import { setupMockedAPI } from './__mocks__/API';
 import {
   accountIdVariable,
@@ -9,11 +11,13 @@ import {
   regionVariable,
   setupMockedDataSource,
 } from './__mocks__/CloudWatchDataSource';
-import { useDimensionKeys, useIsMonitoringAccount, useMetrics } from './hooks';
+import { useAccountOptions, useDimensionKeys, useIsMonitoringAccount, useMetrics } from './hooks';
 
 const WAIT_OPTIONS = {
   timeout: 1000,
 };
+
+const originalFeatureToggleValue = config.featureToggles.cloudWatchCrossAccountQuerying;
 
 describe('hooks', () => {
   describe('useIsMonitoringAccount', () => {
@@ -86,6 +90,51 @@ describe('hooks', () => {
           environment: [dimensionVariable.current.value],
         },
       });
+    });
+  });
+
+  describe('useAccountOptions', () => {
+    afterEach(() => {
+      config.featureToggles.cloudWatchCrossAccountQuerying = originalFeatureToggleValue;
+    });
+    it('does not call the api if the feature toggle is off', async () => {
+      config.featureToggles.cloudWatchCrossAccountQuerying = false;
+      const { api } = setupMockedAPI({
+        variables: [regionVariable],
+      });
+      const getAccountsMock = jest.fn().mockResolvedValue([{ id: '123', label: 'accountLabel' }]);
+      api.getAccounts = getAccountsMock;
+      const { waitForNextUpdate } = renderHook(() => useAccountOptions(api, `$${regionVariable.name}`));
+      await waitForNextUpdate(WAIT_OPTIONS);
+      expect(getAccountsMock).toHaveBeenCalledTimes(0);
+    });
+
+    it('interpolates region variables before calling the api', async () => {
+      config.featureToggles.cloudWatchCrossAccountQuerying = true;
+      const { api } = setupMockedAPI({
+        variables: [regionVariable],
+      });
+      const getAccountsMock = jest.fn().mockResolvedValue([{ id: '123', label: 'accountLabel' }]);
+      api.getAccounts = getAccountsMock;
+      const { waitForNextUpdate } = renderHook(() => useAccountOptions(api, `$${regionVariable.name}`));
+      await waitForNextUpdate(WAIT_OPTIONS);
+      expect(getAccountsMock).toHaveBeenCalledTimes(1);
+      expect(getAccountsMock).toHaveBeenCalledWith({ region: regionVariable.current.value });
+    });
+
+    it('returns properly formatted account options, and template variables', async () => {
+      config.featureToggles.cloudWatchCrossAccountQuerying = true;
+      const { api } = setupMockedAPI({
+        variables: [regionVariable],
+      });
+      const getAccountsMock = jest.fn().mockResolvedValue([{ id: '123', label: 'accountLabel' }]);
+      api.getAccounts = getAccountsMock;
+      const { waitForNextUpdate, result } = renderHook(() => useAccountOptions(api, `$${regionVariable.name}`));
+      await waitForNextUpdate(WAIT_OPTIONS);
+      expect(result.current.value).toEqual([
+        { label: 'accountLabel', description: '123', value: '123' },
+        { label: 'Template Variables', options: [{ label: '$region', value: '$region' }] },
+      ]);
     });
   });
 });

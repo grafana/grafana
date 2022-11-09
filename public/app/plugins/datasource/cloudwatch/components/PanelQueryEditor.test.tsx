@@ -15,7 +15,6 @@ import {
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchQuery, CloudWatchJsonData, MetricEditorMode, MetricQueryType } from '../types';
 
-import { accounts } from './Account.test';
 import { PanelQueryEditor } from './PanelQueryEditor';
 
 // the following three fields are added to legacy queries in the dashboard migrator
@@ -151,7 +150,7 @@ describe('PanelQueryEditor should render right editor', () => {
     let datasourceMock: ReturnType<typeof setupMockedDataSource>;
     beforeEach(() => {
       datasourceMock = setupMockedDataSource();
-      datasourceMock.datasource.api.isMonitoringAccount = jest.fn().mockResolvedValue(accounts);
+      datasourceMock.datasource.api.isMonitoringAccount = jest.fn().mockResolvedValue(true);
       datasourceMock.datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
       datasourceMock.datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
       originalValue = config.featureToggles.cloudWatchCrossAccountQuerying;
