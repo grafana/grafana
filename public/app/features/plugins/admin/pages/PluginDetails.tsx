@@ -38,12 +38,12 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
       {plugin?.details?.links && plugin.details.links.length > 0 && (
         <div className={styles.links}>
           {plugin.details.links.map((link, index) => (
-            <>
+            <React.Fragment key={index}>
               {index > 0 && ' | '}
-              <a key={link.name} href={link.url} className="external-link">
+              <a href={link.url} className="external-link">
                 {link.name}
               </a>
-            </>
+            </React.Fragment>
           ))}
         </div>
       )}
