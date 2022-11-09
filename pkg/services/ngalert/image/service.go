@@ -132,12 +132,13 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		return nil, ErrNoPanel
 	}
 
+	logger := s.logger.FromContext(ctx).New(
+		"dashboard", *r.DashboardUID,
+		"panel", *r.PanelID)
+
 	// If there is an image is in the cache return it instead of taking another screenshot
 	if image, ok := s.cache.Get(ctx, r.GetKey().String()); ok {
-		s.logger.Debug("Found cached image",
-			"token", image.Token,
-			"path", image.Path,
-			"url", image.URL)
+		logger.Debug("Found cached image", "token", image.Token)
 		return &image, nil
 	}
 
@@ -158,9 +159,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 	// To prevent concurrent screenshots of the same dashboard panel we use singleflight,
 	// deduplicated on a base64 hash of the screenshot options.
 	optsHash := base64.StdEncoding.EncodeToString(opts.Hash())
-	s.logger.Debug("Requesting screenshot",
-		"dashboard", opts.DashboardUID,
-		"panel", opts.PanelID)
+	logger.Debug("Requesting screenshot")
 
 	result, err, _ := s.singleflight.Do(optsHash, func() (interface{}, error) {
 		// Once deduplicated concurrent screenshots are then rate-limited
@@ -172,32 +171,22 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 			return nil, err
 		}
 
-		s.logger.Debug("Took screenshot",
-			"dashboard", opts.DashboardUID,
-			"panel", opts.PanelID,
-			"path", screenshot.Path)
+		logger.Debug("Took screenshot", "path", screenshot.Path)
 		image := models.Image{Path: screenshot.Path}
 
 		// Uploading images is optional
 		if s.uploads != nil {
 			if image, err = s.uploads.Upload(ctx, image); err != nil {
-				s.logger.Warn("Failed to upload image",
-					"path", image.Path,
-					"error", err)
+				logger.Warn("Failed to upload image", "error", err)
 			} else {
-				s.logger.Debug("Uploaded image",
-					"path", image.Path,
-					"url", image.URL)
+				logger.Debug("Uploaded image", "url", image.URL)
 			}
 		}
 
 		if err := s.store.SaveImage(ctx, &image); err != nil {
 			return nil, fmt.Errorf("failed to save image: %w", err)
 		}
-		s.logger.Debug("Saved image",
-			"token", image.Token,
-			"path", image.Path,
-			"url", image.URL)
+		logger.Debug("Saved image", "token", image.Token)
 
 		return image, nil
 	})
