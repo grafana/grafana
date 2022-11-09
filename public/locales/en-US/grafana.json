@@ -59,12 +59,6 @@
       "rows": "Total number rows",
       "table-title": "Stats"
     },
-    "refresh-picker": {
-      "off-arialabel": "Turn off auto refresh",
-      "off-description": "Auto refresh turned off. Choose refresh time interval",
-      "off-label": "Off",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "Add panel",
       "comments-show": "Show dashboard comments",
@@ -313,6 +307,23 @@
       "more": "More...",
       "share": "Share",
       "view": "View"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "Auto refresh turned off. Choose refresh time interval",
+      "duration-selected": "Choose refresh time interval with current interval {{durationAriaLabel}} selected"
+    },
+    "live-option": {
+      "aria-label": "Turn on live streaming",
+      "label": "Live"
+    },
+    "off-option": {
+      "aria-label": "Turn off auto refresh",
+      "label": "Off"
+    },
+    "select-button": {
+      "auto-refresh": "Set auto refresh interval"
     }
   },
   "share-modal": {

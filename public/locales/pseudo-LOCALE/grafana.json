@@ -59,12 +59,6 @@
       "rows": "Ŧőŧäľ ŉūmþęř řőŵş",
       "table-title": "Ŝŧäŧş"
     },
-    "refresh-picker": {
-      "off-arialabel": "Ŧūřŉ őƒƒ äūŧő řęƒřęşĥ",
-      "off-description": "Åūŧő řęƒřęşĥ ŧūřŉęđ őƒƒ. Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ",
-      "off-label": "Øƒƒ",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "Åđđ päŉęľ",
       "comments-show": "Ŝĥőŵ đäşĥþőäřđ čőmmęŉŧş",
@@ -313,6 +307,23 @@
       "more": "Mőřę...",
       "share": "Ŝĥäřę",
       "view": "Vįęŵ"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "Åūŧő řęƒřęşĥ ŧūřŉęđ őƒƒ. Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ",
+      "duration-selected": "Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ ŵįŧĥ čūřřęŉŧ įŉŧęřväľ {{đūřäŧįőŉÅřįäĿäþęľ}} şęľęčŧęđ"
+    },
+    "live-option": {
+      "aria-label": "Ŧūřŉ őŉ ľįvę şŧřęämįŉģ",
+      "label": "Ŀįvę"
+    },
+    "off-option": {
+      "aria-label": "Ŧūřŉ őƒƒ äūŧő řęƒřęşĥ",
+      "label": "Øƒƒ"
+    },
+    "select-button": {
+      "auto-refresh": "Ŝęŧ äūŧő řęƒřęşĥ įŉŧęřväľ"
     }
   },
   "share-modal": {
