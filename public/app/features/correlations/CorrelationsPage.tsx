@@ -86,8 +86,9 @@ export default function CorrelationsPage() {
   const columns = useMemo<Array<Column<CorrelationData>>>(
     () => [
       {
+        id: 'info',
         cell: InfoCell,
-        shrink: true,
+        disableGrow: true,
         visible: (data) => data.some(isSourceReadOnly),
       },
       {
@@ -104,8 +105,9 @@ export default function CorrelationsPage() {
       },
       { id: 'label', header: 'Label', sortType: 'alphanumeric' },
       {
+        id: 'actions',
         cell: RowActions,
-        shrink: true,
+        disableGrow: true,
         visible: (data) => canWriteCorrelations && data.some(negate(isSourceReadOnly)),
       },
     ],
