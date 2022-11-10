@@ -1312,7 +1312,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 			BaseURL:   "public/app/plugins/app/testdata-app",
 		}
 
-		configureAppChildOPlugin(parent, child)
+		configureAppChildOfPlugin(parent, child)
 
 		require.Equal(t, "app/plugins/app/testdata-app/datasources/datasource/module", child.Module)
 		require.Equal(t, "testdata-app", child.IncludedInAppID)

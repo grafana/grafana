@@ -148,7 +148,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, res []*pl
 		}
 
 		if plugin.Parent != nil && plugin.Parent.IsApp() {
-			configureAppChildOPlugin(plugin.Parent, plugin)
+			configureAppChildOfPlugin(plugin.Parent, plugin)
 		}
 
 		verifiedPlugins = append(verifiedPlugins, plugin)
@@ -278,7 +278,7 @@ func setDefaultNavURL(p *plugins.Plugin) {
 	}
 }
 
-func configureAppChildOPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
+func configureAppChildOfPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 	if !parent.IsApp() {
 		return
 	}
