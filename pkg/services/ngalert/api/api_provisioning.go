@@ -361,7 +361,7 @@ func determineProvenance(ctx *models.ReqContext) (alerting_models.Provenance, er
 
 	disableProvenance, err := strconv.ParseBool(disableProvenanceHeader)
 	if err != nil {
-		return alerting_models.ProvenanceAPI, errors.New(fmt.Sprintf("error parsing %s header", disableProvenanceHeaderName))
+		return alerting_models.ProvenanceAPI, fmt.Errorf("error parsing %s header", disableProvenanceHeaderName)
 	}
 	if disableProvenance {
 		return alerting_models.ProvenanceNone, nil
