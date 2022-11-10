@@ -229,7 +229,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   onDragStop: ReactGridLayout.ItemCallback = (gridLayout, o, updatedItem) => {
     const sceneChild = this.getChild(updatedItem.i)!;
 
-    // Need to resort it based on position
+    // Need to resort the grid layout based on new position (needed to get the find the correct new parent row)
     gridLayout.sort((a, b) => {
       if (a.y === b.y) {
         return a.x - b.x;
