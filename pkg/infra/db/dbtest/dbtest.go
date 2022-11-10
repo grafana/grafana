@@ -47,6 +47,10 @@ func (f *FakeDB) GetSqlxSession() *session.SessionDB {
 	return nil
 }
 
+func (f *FakeDB) Quote(value string) string {
+	return ""
+}
+
 // TODO: service-specific methods not yet split out ; to be removed
 func (f *FakeDB) UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error {
 	return f.ExpectedError

@@ -19,6 +19,7 @@ type DB interface {
 	GetDBType() core.DbType
 	GetSqlxSession() *session.SessionDB
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
+	Quote(value string) string
 }
 
 type Session = sqlstore.DBSession
