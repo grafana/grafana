@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/grafana/codejen"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/typescript"
-	"github.com/grafana/codejen"
 )
 
 // TSTypesJenny creates a [OneToOne] that produces TypeScript types and
