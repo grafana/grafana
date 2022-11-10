@@ -75,11 +75,11 @@ seqs: [
 				panels?: [...(#Panel | #RowPanel | #GraphPanel | #HeatmapPanel)] @grafanamaturity(NeedsExpertReview)
 				// TODO docs
 				templating?: {
-					list: [...#VariableModel] @grafanamaturity(NeedsExpertReview)
+					list?: [...#VariableModel] @grafanamaturity(NeedsExpertReview)
 				}
 				// TODO docs
 				annotations?: {
-					list: [...#AnnotationQuery] @grafanamaturity(NeedsExpertReview)
+					list?: [...#AnnotationQuery] @grafanamaturity(NeedsExpertReview)
 				}
 				// TODO docs
 				links?: [...#DashboardLink] @grafanamaturity(NeedsExpertReview)

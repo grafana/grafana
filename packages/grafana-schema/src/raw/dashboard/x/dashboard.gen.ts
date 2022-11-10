@@ -576,7 +576,7 @@ export interface Dashboard {
    * TODO docs
    */
   annotations?: {
-    list: Array<AnnotationQuery>;
+    list?: Array<AnnotationQuery>;
   };
   /**
    * Description of dashboard.
@@ -632,7 +632,7 @@ export interface Dashboard {
    * TODO docs
    */
   templating?: {
-    list: Array<VariableModel>;
+    list?: Array<VariableModel>;
   };
   /**
    * Time range for dashboard, e.g. last 6 hours, last 7 days, etc

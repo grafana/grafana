@@ -214,7 +214,7 @@ const (
 type Model struct {
 	Annotations *struct {
 		// TODO docs
-		List []AnnotationQuery `json:"list"`
+		List *[]AnnotationQuery `json:"list,omitempty"`
 	} `json:"annotations,omitempty"`
 
 	// Description of dashboard.
@@ -257,7 +257,7 @@ type Model struct {
 	Tags       *[]string `json:"tags,omitempty"`
 	Templating *struct {
 		// TODO docs
-		List []VariableModel `json:"list"`
+		List *[]VariableModel `json:"list,omitempty"`
 	} `json:"templating,omitempty"`
 
 	// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
@@ -727,6 +727,9 @@ type Panel struct {
 	// "h" for horizontal, "v" for vertical.
 	// TODO this is probably optional
 	RepeatDirection PanelRepeatDirection `json:"repeatDirection"`
+
+	// Id of the repeating panel.
+	RepeatPanelId *int64 `json:"repeatPanelId,omitempty"`
 
 	// TODO docs
 	Tags *[]string `json:"tags,omitempty"`

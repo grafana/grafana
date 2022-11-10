@@ -238,12 +238,8 @@ describe('DashboardModel', () => {
 
     beforeEach(() => {
       model = createDashboardModelFixture({
-        annotations: {
-          enable: true,
-        },
-        templating: {
-          enable: true,
-        },
+        annotations: {},
+        templating: {},
       });
     });
 
