@@ -1,0 +1,74 @@
+{
+  "branch": "79e6a54ef3b5b51b5235374f9fef652ccb40ca44",
+  "root": {
+    "hash": "9a1094fbd0ec17e7011cebba650b659395920c8a",
+    "folder": true,
+    "children": [
+      {
+        "name": "org1",
+        "hash": "9ca9658f702517e29edfdf6f314156e3ef3c80be",
+        "folder": true,
+        "children": [
+          {
+            "name": "aaa.txt",
+            "hash": "7284ab4d2836271d66b988ae7d037bd6ef0d5d15",
+            "shared": true
+          },
+          {
+            "name": "aaa2.txt",
+            "hash": "7284ab4d2836271d66b988ae7d037bd6ef0d5d15",
+            "shared": true
+          },
+          {
+            "name": "bbb.txt",
+            "hash": "6484fb6f9cea3887578def1ba0aa96fcce279f5b",
+            "shared": true
+          },
+          {
+            "name": "sub",
+            "hash": "06ecf670d585639c2448c0fe9bcc84d9b5584547",
+            "shared": true,
+            "folder": true
+          }
+        ]
+      },
+      {
+        "name": "org2",
+        "hash": "448f7de977821775137444394fd9351dbb4ff630",
+        "folder": true,
+        "children": [
+          {
+            "name": "aaa.txt",
+            "hash": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "name": "bbb.txt",
+            "hash": "6484fb6f9cea3887578def1ba0aa96fcce279f5b",
+            "shared": true
+          },
+          {
+            "name": "sub",
+            "hash": "06ecf670d585639c2448c0fe9bcc84d9b5584547",
+            "shared": true,
+            "folder": true
+          },
+          {
+            "name": "sub copy",
+            "hash": "06ecf670d585639c2448c0fe9bcc84d9b5584547",
+            "shared": true,
+            "folder": true
+          }
+        ]
+      }
+    ]
+  },
+  "shared": {
+    "06ecf670d585639c2448c0fe9bcc84d9b5584547": [
+      {
+        "name": "sub1.txt",
+        "hash": "9d07aa0df55c353e18eea6f1b401946b5dad7bce"
+      }
+    ]
+  },
+  "bytesRead": 627
+}
