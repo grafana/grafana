@@ -257,8 +257,8 @@ describe('Receivers', () => {
     // enter custom annotations and labels
     await clickSelectOption(ui.contactPointAnnotationSelect(0).get(), 'Description');
     await userEvent.type(ui.contactPointAnnotationValue(0).get(), 'Test contact point');
-    await userEvent.type(within(ui.contactPointLabelKey(0).get()).getByRole('combobox'), 'foo{enter}');
-    await userEvent.type(within(ui.contactPointLabelValue(0).get()).getByRole('combobox'), 'bar{enter}');
+    await userEvent.type(ui.contactPointLabelKey(0).get(), 'foo');
+    await userEvent.type(ui.contactPointLabelValue(0).get(), 'bar');
     await userEvent.click(ui.testContactPoint.get());
 
     await waitFor(() => expect(mocks.api.testReceivers).toHaveBeenCalled());
