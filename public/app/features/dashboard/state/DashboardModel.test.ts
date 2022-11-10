@@ -16,6 +16,7 @@ import {
   createAnnotationJSONFixture,
   createDashboardModelFixture,
   createPanelJSONFixture,
+  createVariableJSONFixture,
 } from './__fixtures__/dashboardFixtures';
 
 jest.mock('app/core/services/context_srv');
@@ -222,6 +223,7 @@ describe('DashboardModel', () => {
       target = model.panels[0].targets[0];
     });
 
+    // TODO: This test was broken when using fixtures
     it('should update query schema', () => {
       expect(target.fields).toBe(undefined);
       expect(target.select.length).toBe(2);
@@ -306,10 +308,10 @@ describe('DashboardModel', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
-      model = new DashboardModel(
+      model = createDashboardModelFixture(
         {
           templating: {
-            list: [{}],
+            list: [createVariableJSONFixture({})],
           },
         },
         {},
@@ -329,6 +331,9 @@ describe('DashboardModel', () => {
     beforeEach(() => {
       model = createDashboardModelFixture({
         templating: {
+          // TODO: Variables in schema are incompleted. They are declared as
+          // VariableModel but there are more variable types with more aggregated data
+          // The schema should reflect all possible values that can go to variable list
           list: [{ hide: VariableHide.hideVariable }],
         },
       });

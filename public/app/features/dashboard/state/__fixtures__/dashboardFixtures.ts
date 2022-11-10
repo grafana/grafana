@@ -1,11 +1,20 @@
-import { AnnotationQuery, Dashboard, defaultDashboardCursorSync, GraphPanel, Panel } from '@grafana/schema';
+import {
+  AnnotationQuery,
+  Dashboard,
+  defaultDashboardCursorSync,
+  GraphPanel,
+  Panel,
+  VariableModel,
+} from '@grafana/schema';
+import { GetVariables } from 'app/features/variables/state/selectors';
 import { DashboardMeta } from 'app/types';
 
 import { DashboardModel } from '../DashboardModel';
 
 export function createDashboardModelFixture(
   dashboardInput: Partial<Dashboard> = {},
-  meta?: DashboardMeta
+  meta?: DashboardMeta,
+  getVariablesFromState?: GetVariables
 ): DashboardModel {
   const dashboardJson: Dashboard = {
     editable: true,
@@ -16,7 +25,7 @@ export function createDashboardModelFixture(
     ...dashboardInput,
   };
 
-  return new DashboardModel(dashboardJson, meta);
+  return new DashboardModel(dashboardJson, meta, getVariablesFromState);
 }
 
 export function createPanelJSONFixture(panelInput: Partial<Panel | GraphPanel> = {}): Panel {
@@ -44,6 +53,14 @@ export function createAnnotationJSONFixture(annotationInput: Partial<AnnotationQ
     showIn: 2,
     enable: true,
     type: 'anno',
+    ...annotationInput,
+  };
+}
+
+export function createVariableJSONFixture(annotationInput: Partial<VariableModel>): VariableModel {
+  return {
+    name: 'foo.variable',
+    type: 'constant',
     ...annotationInput,
   };
 }
