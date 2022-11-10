@@ -11,6 +11,7 @@ import {
   dateTimeFormat,
   GrafanaTheme2,
   CoreApp,
+  DataFrame,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { styleMixins, withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
@@ -52,7 +53,7 @@ interface Props extends Themeable2 {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
-  getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;

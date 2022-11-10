@@ -767,14 +767,14 @@ type PanelRepeatDirection string
 type RangeMap struct {
 	Options struct {
 		// to and from are `number | null` in current ts, really not sure what to do
-		From   int32 `json:"from"`
+		From   float64 `json:"from"`
 		Result struct {
 			Color *string `json:"color,omitempty"`
 			Icon  *string `json:"icon,omitempty"`
 			Index *int32  `json:"index,omitempty"`
 			Text  *string `json:"text,omitempty"`
 		} `json:"result"`
-		To int32 `json:"to"`
+		To float64 `json:"to"`
 	} `json:"options"`
 	Type RangeMapType `json:"type"`
 }
