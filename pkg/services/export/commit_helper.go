@@ -47,39 +47,39 @@ type commitOptions struct {
 }
 
 func (ch *commitHelper) initOrg(ctx context.Context, sql db.DB, orgID int64) error {
-	sess := sql.GetSqlxSession()
-	rows := make([]*userInfo, 0)
-	query := `select "user".*, "org_user".role 
-		from "user" join org_user 
-		  ON "org_user".id = "user".id 
-		where org_user.org_id=?`
+	return sql.WithDbSession(ch.ctx, func(sess *db.Session) error {
+		userprefix := "user"
+		if isPostgreSQL(sql) {
+			userprefix = `"user"` // postgres has special needs
+		}
+		sess.Table("user").
+			Join("inner", "org_user", userprefix+`.id = org_user.user_id`).
+			Cols(userprefix+`.*`, "org_user.role").
+			Where("org_user.org_id = ?", orgID).
+			Asc(userprefix + `.id`)
 
-	fmt.Printf("DDD: %s", sql.GetDBType())
+		rows := make([]*userInfo, 0)
+		err := sess.Find(&rows)
+		if err != nil {
+			return err
+		}
 
-	if sql.GetDBType() == "mysql" {
-		query = strings.ReplaceAll(query, `"`, "")
-	}
+		lookup := make(map[int64]*userInfo, len(rows))
+		for _, row := range rows {
+			lookup[row.ID] = row
+		}
+		ch.users = lookup
+		ch.orgID = orgID
 
-	err := sess.Select(ch.ctx, &rows, query, orgID)
-	if err != nil {
+		// Set an admin user with the
+		rowUser := &user.SignedInUser{
+			Login:  "",
+			OrgID:  orgID, // gets filled in from each row
+			UserID: 0,
+		}
+		ch.ctx = store.ContextWithUser(context.Background(), rowUser)
 		return err
-	}
-
-	// Set an admin user with the
-	rowUser := &user.SignedInUser{
-		Login:  "",
-		OrgID:  orgID, // gets filled in from each row
-		UserID: 0,
-	}
-	ch.ctx = store.ContextWithUser(context.Background(), rowUser)
-
-	lookup := make(map[int64]*userInfo, len(rows))
-	for _, row := range rows {
-		lookup[row.ID] = row
-	}
-	ch.users = lookup
-	ch.orgID = orgID
-	return err
+	})
 }
 
 func (ch *commitHelper) add(opts commitOptions) error {

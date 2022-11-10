@@ -63,7 +63,7 @@ func exportUsage(helper *commitHelper, job *gitExportJob) error {
 		for _, usage := range dump {
 			rows, err := sess.DB().QueryContext(helper.ctx, usage.sql)
 			if err != nil {
-				if IsTableNotExistsError(err) {
+				if isTableNotExistsError(err) {
 					continue
 				}
 				return err

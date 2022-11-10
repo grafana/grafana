@@ -11,6 +11,8 @@ import (
 )
 
 func dumpAuthTables(helper *commitHelper, job *gitExportJob) error {
+	isMySQL := isMySQLEngine(job.sql)
+
 	return job.sql.WithDbSession(helper.ctx, func(sess *db.Session) error {
 		commit := commitOptions{
 			comment: "auth tables dump",
@@ -26,11 +28,11 @@ func dumpAuthTables(helper *commitHelper, job *gitExportJob) error {
 		dump := []statsTables{
 			{
 				table: "user",
-				sql: `
+				sql: removeQuotesFromQuery(`
 					SELECT "user".*, org_user.role 
 					  FROM "user" 
 					  JOIN org_user ON "user".id = org_user.user_id
-					 WHERE org_user.org_id =` + strconv.FormatInt(helper.orgID, 10),
+					 WHERE org_user.org_id =`+strconv.FormatInt(helper.orgID, 10), isMySQL),
 				converters: []sqlutil.Converter{{Dynamic: true}},
 				drop: []string{
 					"id", "version",
@@ -97,7 +99,7 @@ func dumpAuthTables(helper *commitHelper, job *gitExportJob) error {
 
 			rows, err := sess.DB().QueryContext(helper.ctx, auth.sql)
 			if err != nil {
-				if IsTableNotExistsError(err) {
+				if isTableNotExistsError(err) {
 					continue
 				}
 				return err

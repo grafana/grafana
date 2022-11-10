@@ -25,7 +25,7 @@ func exportLive(helper *commitHelper, job *gitExportJob) error {
 
 		err := sess.Find(&rows)
 		if err != nil {
-			if IsTableNotExistsError(err) {
+			if isTableNotExistsError(err) {
 				return nil
 			}
 			return err
