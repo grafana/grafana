@@ -636,7 +636,7 @@
          * @param  {Object} textOptions the option of the text
          * @param  {Number} [a] the angle of the value drawn
          */
-         function drawText(x, y, id, text, textOptions, a) {
+        function drawText(x, y, id, text, textOptions, a) {
             var span = $(placeholder).find("#" + id);
             var exists = span.length;
             if (!exists) {
