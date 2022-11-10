@@ -7,9 +7,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	model "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -114,10 +116,10 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 	return rule, nil
 }
 
-func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (models.AlertRuleGroup, error) {
+func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, namespaceUID, group string) (models.AlertRuleGroup, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID:         orgID,
-		NamespaceUIDs: []string{folder},
+		NamespaceUIDs: []string{namespaceUID},
 		RuleGroup:     group,
 	}
 	if err := service.ruleStore.ListAlertRules(ctx, &q); err != nil {
@@ -364,6 +366,16 @@ func (service *AlertRuleService) deleteRules(ctx context.Context, orgID int64, t
 		}
 	}
 	return nil
+}
+
+// GetFolderByUID retrieves a model.Folder for a given org and folder uid.
+func (service *AlertRuleService) GetFolderByUID(ctx context.Context, namespaceUID string, orgID int64, user *user.SignedInUser) (*model.Folder, error) {
+	folder, err := service.ruleStore.GetNamespaceByUID(ctx, namespaceUID, orgID, user)
+	if err != nil {
+		return nil, err
+	}
+
+	return folder, nil
 }
 
 // syncRuleGroupFields synchronizes calculated fields across multiple rules in a group.

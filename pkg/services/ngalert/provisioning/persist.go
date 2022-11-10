@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 
+	model "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // AMStore is a store of Alertmanager configurations.
@@ -42,6 +44,7 @@ type RuleStore interface {
 	UpdateAlertRules(ctx context.Context, rule []models.UpdateRule) error
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *models.GetAlertRulesGroupByRuleUIDQuery) error
+	GetNamespaceByUID(context.Context, string, int64, *user.SignedInUser) (*model.Folder, error)
 }
 
 // QuotaChecker represents the ability to evaluate whether quotas are met.
