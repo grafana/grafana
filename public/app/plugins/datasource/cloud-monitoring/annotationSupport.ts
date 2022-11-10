@@ -41,8 +41,7 @@ export const CloudMonitoringAnnotationSupport: (
         target: {
           intervalMs: ds.intervalMs,
           refId: target?.refId || 'annotationQuery',
-          type: 'annotationQuery',
-          queryType: QueryType.METRICS,
+          queryType: QueryType.ANNOTATION,
           metricQuery: {
             projectName: target?.projectName || ds.getDefaultProject(),
             editorMode: EditorMode.Visual,
