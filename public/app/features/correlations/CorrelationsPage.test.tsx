@@ -3,12 +3,20 @@ import { merge, uniqueId } from 'lodash';
 import React from 'react';
 import { DeepPartial } from 'react-hook-form';
 import { Provider } from 'react-redux';
-import { Observable } from 'rxjs';
+import { Observable, Subscriber } from 'rxjs';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { DataSourcePluginMeta } from '@grafana/data';
-import { BackendSrv, FetchError, FetchResponse, setDataSourceSrv, BackendSrvRequest } from '@grafana/runtime';
+import { DataSourcePluginMeta, PanelData } from '@grafana/data';
+import {
+  BackendSrv,
+  FetchError,
+  FetchResponse,
+  setDataSourceSrv,
+  BackendSrvRequest,
+  QueryRunnerFactory,
+  setQueryRunnerFactory,
+} from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
@@ -217,12 +225,31 @@ const renderWithContext = async (
   return renderResult;
 };
 
+const mockQueryRunner = () => {
+  let emitter: Subscriber<PanelData> | undefined;
+  const observable: Observable<PanelData> = new Observable((subscriber) => (emitter = subscriber));
+  const factory: QueryRunnerFactory = () => ({
+    get: () => observable,
+    run: () => {},
+    cancel: () => {},
+    destroy: () => {},
+  });
+
+  setQueryRunnerFactory(factory);
+
+  return emitter?.next;
+};
+
+let emit;
+
 beforeAll(() => {
   mocks.contextSrv.hasPermission.mockImplementation(() => true);
+  emit = mockQueryRunner();
 });
 
 afterAll(() => {
   jest.restoreAllMocks();
+  // TODO: destroy QueryRunner?
 });
 
 describe('CorrelationsPage', () => {
