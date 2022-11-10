@@ -199,16 +199,36 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
    */
   private moveChildTo(child: SceneLayoutChild, target: SceneGridLayout | SceneGridRow) {
     const currentParent = child.parent!;
+    let rootChildren = this.state.children;
+    const newChild = child.clone({ key: child.state.key });
 
-    // Remove from current parent
-    if (currentParent instanceof SceneGridLayout || currentParent instanceof SceneGridRow) {
-      currentParent.setState({
+    // Remove from current parent row
+    if (currentParent instanceof SceneGridRow) {
+      const newRow = currentParent.clone({
         children: currentParent.state.children.filter((c) => c.state.key !== child.state.key),
       });
+
+      // new children with new row
+      rootChildren = rootChildren.map((c) => (c === currentParent ? newRow : c));
+
+      // if target is also a row
+      if (target instanceof SceneGridRow) {
+        const targetRow = target.clone({ children: [...target.state.children, newChild] });
+        rootChildren = rootChildren.map((c) => (c === target ? targetRow : c));
+      } else {
+        // target is the main grid
+        rootChildren = [...rootChildren, newChild];
+      }
+    } else {
+      // current parent is the main grid remove it from there
+      rootChildren = rootChildren.filter((c) => c.state.key !== child.state.key);
+      // Clone the target row and add the child
+      const targetRow = target.clone({ children: [...target.state.children, newChild] });
+      // Replace row with new row
+      rootChildren = rootChildren.map((c) => (c === target ? targetRow : c));
     }
 
-    // Add to new parent
-    target.setState({ children: sortChildrenByPosition([...target.state.children, child]) });
+    return rootChildren;
   }
 
   public onDragStop: ReactGridLayout.ItemCallback = (gridLayout, o, updatedItem) => {
@@ -237,12 +257,13 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     // Update the parent if the child if it has moved to a row or back to the grid
     const indexOfUpdatedItem = gridLayout.findIndex((item) => item.i === updatedItem.i);
     const newParent = this.findGridItemSceneParent(gridLayout, indexOfUpdatedItem - 1);
+    let newChildren = this.state.children;
 
     if (newParent !== sceneChild.parent) {
-      this.moveChildTo(sceneChild, newParent);
+      newChildren = this.moveChildTo(sceneChild, newParent);
     }
 
-    this.setState({ children: sortChildrenByPosition(this.state.children) });
+    this.setState({ children: sortChildrenByPosition(newChildren) });
     this._skipOnLayoutChange = true;
   };
 
