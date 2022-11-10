@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/common/model"
 
 	"github.com/prometheus/alertmanager/config"
@@ -65,7 +66,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       200: EvalQueriesResponse
+//       200: BacktestResult
 
 // swagger:parameters RouteTestReceiverConfig
 type TestReceiverRequest struct {
@@ -175,6 +176,7 @@ type ResponseDetails struct {
 	Msg string `json:"msg"`
 }
 
+// swagger:model
 type BacktestConfig struct {
 	From     time.Time      `json:"from"`
 	To       time.Time      `json:"to"`
@@ -190,3 +192,6 @@ type BacktestConfig struct {
 
 	NoDataState NoDataState `json:"no_data_state"`
 }
+
+// swagger:model
+type BacktestResult data.Frame
