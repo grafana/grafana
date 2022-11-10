@@ -79,6 +79,10 @@ type CreateFolderCommand struct {
 	Result *Folder `json:"-"`
 }
 
+type MoveFolderCommand struct {
+	ParentUID *string `json:"parentUid"`
+}
+
 type UpdateFolderCommand struct {
 	Uid         string `json:"uid"`
 	Title       string `json:"title"`

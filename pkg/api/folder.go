@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -129,6 +130,32 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
 	// TODO set ParentUID if nested folders are enabled
 	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
+}
+
+func (hs *HTTPServer) MoveFolder(c *models.ReqContext) response.Response {
+	if hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		cmd := models.MoveFolderCommand{}
+		if err := web.Bind(c.Req, &cmd); err != nil {
+			return response.Error(http.StatusBadRequest, "bad request data", err)
+		}
+		var theFolder *folder.Folder
+		var err error
+		if cmd.ParentUID != nil {
+			moveCommand := folder.MoveFolderCommand{
+				UID:          web.Params(c.Req)[":uid"],
+				NewParentUID: *cmd.ParentUID,
+				OrgID:        c.OrgID,
+			}
+			theFolder, err = hs.folderService.Move(c.Req.Context(), &moveCommand)
+			if err != nil {
+				return response.Error(http.StatusInternalServerError, "update folder uid failed", err)
+			}
+		}
+		return response.JSON(http.StatusOK, theFolder)
+	}
+	result := map[string]string{}
+	result["message"] = "To use this service, you need to activate nested folder feature."
+	return response.JSON(http.StatusNotFound, result)
 }
 
 // swagger:route PUT /folders/{folder_uid} folders updateFolder
