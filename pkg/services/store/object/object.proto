@@ -27,10 +27,10 @@ message RawObject {
   GRN GRN = 1;
 
   // Time in epoch milliseconds that the object was created
-  int64 created = 2;
+  int64 created_at = 2;
 
   // Time in epoch milliseconds that the object was updated
-  int64 updated = 3;
+  int64 updated_at = 3;
 
   // Who created the object
   string created_by = 4;
@@ -83,7 +83,7 @@ message ObjectVersionInfo {
   string version = 1;
 
   // Time in epoch milliseconds that the object was updated
-  int64 updated = 2;
+  int64 updated_at = 2;
 
   // Who updated the object
   string updated_by = 3;
@@ -266,10 +266,13 @@ message ObjectSearchResult {
   GRN GRN = 1;
 
   // The current veresion of this object
-  string version = 3;
+  string version = 2;
+
+  // Content Length
+  int64 size = 3;
 
   // Time in epoch milliseconds that the object was updated
-  int64 updated = 4;
+  int64 updated_at = 4;
 
   // Who updated the object
   string updated_by = 5;
