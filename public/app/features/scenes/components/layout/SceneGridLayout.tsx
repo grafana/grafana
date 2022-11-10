@@ -232,16 +232,14 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     for (let i = 0; i < gridLayout.length; i++) {
       const gridItem = gridLayout[i];
       const child = this.getSceneLayoutChild(gridItem.i)!;
-      //const row = childDef.row;
       const childSize = child.state.size!;
-      const childLayout = gridLayout[i];
 
-      if (childSize?.x !== childLayout.x || childSize?.y !== childLayout.y) {
+      if (childSize?.x !== gridItem.x || childSize?.y !== gridItem.y) {
         child.setState({
           size: {
             ...child.state.size,
-            x: childLayout.x,
-            y: childLayout.y,
+            x: gridItem.x,
+            y: gridItem.y,
           },
         });
       }
