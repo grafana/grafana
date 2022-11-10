@@ -40,7 +40,7 @@ type UpdateInfo struct {
 
 type FoundPlugin struct {
 	JSONData JSONData
-	Files    FileSystem
+	Files    LocalFS
 }
 
 type FoundBundle struct {

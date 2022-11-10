@@ -23,7 +23,7 @@ type Plugin struct {
 	JSONData
 
 	PluginDir string
-	Files     FileSystem
+	Files     LocalFS
 	Class     Class
 
 	// App fields
@@ -53,7 +53,7 @@ type Plugin struct {
 type PluginDTO struct {
 	JSONData
 
-	files FileSystem
+	files LocalFS
 
 	class Class
 

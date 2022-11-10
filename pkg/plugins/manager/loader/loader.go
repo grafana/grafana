@@ -272,7 +272,7 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 	return plugin, nil
 }
 
-func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, files plugins.FileSystem) *plugins.Plugin {
+func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, files plugins.LocalFS) *plugins.Plugin {
 	plugin := &plugins.Plugin{
 		JSONData:  pluginJSON,
 		Files:     files,

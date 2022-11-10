@@ -85,7 +85,7 @@ func (f *Finderv2) Find(pluginPaths []string) ([]*plugins.FoundBundle, error) {
 		res[pluginDir] = &plugins.FoundBundle{
 			Primary: plugins.FoundPlugin{
 				JSONData: data,
-				Files:    plugins.NewFileSystem(files, pluginDir),
+				Files:    plugins.NewLocalFS(files, pluginDir),
 			},
 		}
 	}
