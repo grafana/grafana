@@ -15,48 +15,51 @@ func TestRetryingOnFailures(t *testing.T) {
 	store.dbCfg.QueryRetries = 5
 
 	funcToTest := map[string]func(ctx context.Context, callback DBTransactionFunc) error{
-		"WithDbSession()":    store.WithDbSession,
-		"WithNewDbSession()": store.WithNewDbSession,
+		"WithDbSession":    store.WithDbSession,
+		"WithNewDbSession": store.WithNewDbSession,
 	}
 
 	for name, f := range funcToTest {
-		i := 0
 		t.Run(fmt.Sprintf("%s should return the error immediately if it's other than sqlite3.ErrLocked or sqlite3.ErrBusy", name), func(t *testing.T) {
-			err := f(context.Background(), func(sess *DBSession) error {
+			i := 0
+			callback := func(sess *DBSession) error {
 				i++
 				return errors.New("some error")
-			})
+			}
+			err := f(context.Background(), callback)
 			require.Error(t, err)
-			require.Equal(t, i, 1)
+			require.Equal(t, 1, i)
 		})
 
-		i = 0
 		t.Run(fmt.Sprintf("%s should return the sqlite3.Error if all retries have failed", name), func(t *testing.T) {
-			err := f(context.Background(), func(sess *DBSession) error {
+			i := 0
+			callback := func(sess *DBSession) error {
 				i++
 				return sqlite3.Error{Code: sqlite3.ErrBusy}
-			})
+			}
+			err := f(context.Background(), callback)
 			require.Error(t, err)
 			var driverErr sqlite3.Error
 			require.ErrorAs(t, err, &driverErr)
-			require.Equal(t, i, store.dbCfg.QueryRetries+1)
+			require.Equal(t, store.dbCfg.QueryRetries, i)
 		})
 
-		i = 0
 		t.Run(fmt.Sprintf("%s should not return the error if successive retries succeed", name), func(t *testing.T) {
-			err := f(context.Background(), func(sess *DBSession) error {
+			i := 0
+			callback := func(sess *DBSession) error {
+				i++
 				var err error
 				switch {
-				case i >= store.dbCfg.QueryRetries:
+				case store.dbCfg.QueryRetries == i:
 					err = nil
 				default:
 					err = sqlite3.Error{Code: sqlite3.ErrBusy}
 				}
-				i++
 				return err
-			})
+			}
+			err := f(context.Background(), callback)
 			require.NoError(t, err)
-			require.Equal(t, i, store.dbCfg.QueryRetries+1)
+			require.Equal(t, store.dbCfg.QueryRetries, i)
 		})
 	}
 
