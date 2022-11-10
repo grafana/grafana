@@ -5,7 +5,7 @@ import {
   PanelPlugin,
   ReducerID,
   standardEditorsRegistry,
-  identityOverrideProcessor
+  identityOverrideProcessor,
 } from '@grafana/data';
 import { TableFieldOptions, BackgroundDisplayMode, BarGaugeDisplayMode } from '@grafana/schema';
 import { TableCellDisplayMode } from '@grafana/ui';
@@ -77,9 +77,9 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
               { value: TableCellDisplayMode.Image, label: 'Image' },
             ],
           },
-          
+
           defaultValue: defaultPanelFieldConfig.cellOptions.displayMode,
-          
+          category: cellCategory,
         })
         .addCustomEditor<void, object>({
           id: 'cellSubOptions',
@@ -91,7 +91,10 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           process: identityOverrideProcessor,
           category: cellCategory,
           shouldApply: (f) => true,
-          showIf: (cfg) => { console.log(cfg); return true; },
+          showIf: (cfg) => {
+            console.log(cfg);
+            return true;
+          },
         })
         .addSelect({
           path: 'cellOptions.gaugeDisplayMode',
