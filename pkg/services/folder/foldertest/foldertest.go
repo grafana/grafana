@@ -20,18 +20,6 @@ func (s *FakeService) GetFolders(ctx context.Context, user *user.SignedInUser, o
 	return s.ExpectedFolders, s.ExpectedError
 }
 
-// func (s *FakeService) GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error) {
-// 	return s.ExpectedFolder.ToLegacyModel(), s.ExpectedError
-// }
-// func (s *FakeService) GetFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*models.Folder, error) {
-// 	if s.ExpectedFolder == nil {
-// 		return nil, s.ExpectedError
-// 	}
-// 	return s.ExpectedFolder.ToLegacyModel(), s.ExpectedError
-// }
-// func (s *FakeService) GetFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*models.Folder, error) {
-// 	return s.ExpectedFolder.ToLegacyModel(), s.ExpectedError
-// }
 func (s *FakeService) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
