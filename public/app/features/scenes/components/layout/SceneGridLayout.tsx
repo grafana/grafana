@@ -120,7 +120,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     console.log('updating Layout', layout);
 
     for (const item of layout) {
-      const child = this.getChild(item.i);
+      const child = this.getSceneLayoutChild(item.i);
 
       const nextSize = {
         x: item.x,
@@ -142,7 +142,10 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     this.setState({ children: sortChildrenByPosition(this.state.children) });
   };
 
-  getChild(key: string) {
+  /**
+   * Will also scan row children and return child of the row
+   */
+  getSceneLayoutChild(key: string) {
     for (const child of this.state.children) {
       if (child.state.key === key) {
         return child;
@@ -161,7 +164,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   }
 
   onResizeStop: ReactGridLayout.ItemCallback = (_, o, n) => {
-    const child = this.getChild(n.i);
+    const child = this.getSceneLayoutChild(n.i);
 
     if (!child) {
       return;
@@ -187,7 +190,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
 
     for (let i = startAt; i >= 0; i--) {
       const gridItem = layout[i];
-      const sceneChild = this.getChild(gridItem.i);
+      const sceneChild = this.getSceneLayoutChild(gridItem.i);
 
       if (sceneChild instanceof SceneGridRow) {
         // the closest row is collapsed return null
@@ -227,7 +230,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   }
 
   onDragStop: ReactGridLayout.ItemCallback = (gridLayout, o, updatedItem) => {
-    const sceneChild = this.getChild(updatedItem.i)!;
+    const sceneChild = this.getSceneLayoutChild(updatedItem.i)!;
 
     // Need to resort the grid layout based on new position (needed to get the find the correct new parent row)
     gridLayout = sortGridLayout(gridLayout);
@@ -235,7 +238,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     // Update children positions if they have changed
     for (let i = 0; i < gridLayout.length; i++) {
       const gridItem = gridLayout[i];
-      const child = this.getChild(gridItem.i)!;
+      const child = this.getSceneLayoutChild(gridItem.i)!;
       //const row = childDef.row;
       const childSize = child.state.size!;
       const childLayout = gridLayout[i];
@@ -385,7 +388,7 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
               // compactType={null}
             >
               {layout.map((gridItem) => {
-                const sceneChild = model.getChild(gridItem.i)!;
+                const sceneChild = model.getSceneLayoutChild(gridItem.i)!;
                 return (
                   <div key={sceneChild.state.key} style={{ display: 'flex' }}>
                     <sceneChild.Component model={sceneChild} key={sceneChild.state.key} />
