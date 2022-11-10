@@ -4,6 +4,8 @@ import React, { useMemo, useState } from 'react';
 import { useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { useGetAllWithFilters } from 'app/features/plugins/admin/state/hooks';
 
+import { ROUTES } from '../../constants';
+
 import { CardGrid } from './CardGrid';
 import { CategoryHeader } from './CategoryHeader';
 import { NoResults } from './NoResults';
@@ -31,7 +33,7 @@ export function ConnectData() {
         id: plugin.id,
         name: plugin.name,
         logo: plugin.info.logos.small,
-        url: `plugins/${plugin.id}`,
+        url: ROUTES.DataSourcesDetails.replace(':id', plugin.id),
       })),
     [plugins]
   );
