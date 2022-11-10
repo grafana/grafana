@@ -74,7 +74,7 @@ func (n *node) sort() {
 	}
 }
 
-func (t *treeListing) ToDataFrame() *data.Frame {
+func (t *treeListing) toDataFrame() *data.Frame {
 	path := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	hash := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	path.Name = "path"
@@ -225,7 +225,7 @@ func GetListing(addr GitAddress) (*data.Frame, error) {
 	}
 
 	listing.Root.sort()
-	frame := listing.ToDataFrame()
+	frame := listing.toDataFrame()
 	frame.Meta = &data.FrameMeta{
 		Custom: &GetFrameMeta{
 			Address:   addr,
