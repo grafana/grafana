@@ -333,7 +333,7 @@ func TestEvaluatorTest(t *testing.T) {
 			}
 			from := time.Now()
 			to := from.Add(ruleInterval)
-			_, err := engine.Test(context.Background(), nil, rule, time.Now(), to)
+			_, err := engine.Test(context.Background(), nil, rule, from, to)
 			require.ErrorIs(t, err, expectedError)
 		})
 	})
