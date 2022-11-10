@@ -392,36 +392,15 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
     if (!this.state.isCollapsible) {
       return;
     }
+
     const layout = this.parent;
 
     if (!layout || !(layout instanceof SceneGridLayout)) {
       throw new Error('SceneGridRow must be a child of SceneGridLayout');
     }
 
-    const { size } = this.state;
-    if (!size) {
-      return;
-    }
-
     layout.toggleRow(this);
   };
-
-  getHeight(): number {
-    if (this.state.isCollapsed) {
-      return 0;
-    }
-
-    let maxPos = this.state.size?.y! + 1;
-
-    for (const child of this.state.children) {
-      const yPos = child.state.size?.y! + child.state.size?.height!;
-      if (yPos > maxPos) {
-        maxPos = yPos;
-      }
-    }
-
-    return maxPos - this.state.size?.y!;
-  }
 }
 
 function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
