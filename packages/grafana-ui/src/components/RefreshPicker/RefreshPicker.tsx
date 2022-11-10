@@ -75,7 +75,7 @@ export class RefreshPicker extends PureComponent<Props> {
     const variant = this.getVariant();
     const options = intervalsToOptions({ intervals });
     const option = options.find(({ value }) => value === currentValue);
-    const translatedOffOption = translateOptions(RefreshPicker.offOption.value);
+    const translatedOffOption = translateOption(RefreshPicker.offOption.value);
     let selectedValue = option || translatedOffOption;
 
     if (selectedValue.label === translatedOffOption.label) {
@@ -123,7 +123,7 @@ export class RefreshPicker extends PureComponent<Props> {
   }
 }
 
-export function translateOptions(option: string) {
+export function translateOption(option: string) {
   if (option === RefreshPicker.liveOption.value) {
     return {
       label: t('refresh-picker.live-option.label', 'Live'),
@@ -152,6 +152,6 @@ export function intervalsToOptions({ intervals = defaultIntervals }: { intervals
     };
   });
 
-  options.unshift(translateOptions(RefreshPicker.offOption.value));
+  options.unshift(translateOption(RefreshPicker.offOption.value));
   return options;
 }
