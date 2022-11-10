@@ -67,7 +67,8 @@ export const DashboardPicker = ({ dashboardUid, panelId, onDashboardChange, onPa
 
   const filteredPanels =
     dashboardResult?.dashboard?.panels
-      ?.filter((panel): panel is PanelDTO => panel.title?.includes(panelFilter))
+      ?.filter((panel): panel is PanelDTO => typeof panel.id === 'number')
+      ?.filter((panel) => panel.title?.toLowerCase().includes(panelFilter.toLowerCase()))
       .sort(panelSort) ?? [];
 
   const DashboardRow = ({ index, style }: { index: number; style: CSSProperties }) => {
