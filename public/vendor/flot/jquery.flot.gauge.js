@@ -327,7 +327,8 @@
 
             var blur = gaugeOptionsi.gauge.shadow.show ? gaugeOptionsi.gauge.shadow.blur : 0;
             var color = getColor(gaugeOptionsi, data);
-            var angles = calculateAnglesForGauge(gaugeOptionsi, layout, data);
+            var hasNegative = gaugeOptionsi.gauge.min < 0.0
+            var angles = calculateAnglesForGauge(gaugeOptionsi, layout, data, hasNegative);
 
             // draw gauge frame
             drawArcWithShadow(
@@ -355,7 +356,7 @@
                 color,           // fill color
                 blur);
             
-            if(gaugeOptionsi.gauge.neutralValue != null)  
+            if(hasNegative)  
                 drawZeroMarker(gaugeOptionsi, layout, cellLayout, color);
         }
 
@@ -368,16 +369,16 @@
          * @param  {Number} data the value of the gauge
          * @returns {Object}
          */
-        function calculateAnglesForGauge(gaugeOptionsi, layout, data) {
+        function calculateAnglesForGauge(gaugeOptionsi, layout, data, hasNegative) {
             let angles = {};
-            var neutral = gaugeOptionsi.gauge.neutralValue
+            var isNegative = data < 0.0
 
-            if (neutral != null) {
-                if (data < neutral) {
+            if (hasNegative) {
+                if (isNegative) {
                     angles.a1 = calculateAngle(gaugeOptionsi, layout, data);
-                    angles.a2 = calculateAngle(gaugeOptionsi, layout, neutral);
+                    angles.a2 = calculateAngle(gaugeOptionsi, layout, 0.0);
                 } else {
-                    angles.a1 = calculateAngle(gaugeOptionsi, layout, neutral);
+                    angles.a1 = calculateAngle(gaugeOptionsi, layout, 0.0);
                     angles.a2 = calculateAngle(gaugeOptionsi, layout, data);
                 }
             } else {
@@ -398,15 +399,15 @@
          * @param  {String} color line color
          */
         function drawZeroMarker(gaugeOptionsi, layout, cellLayout, color) {
-            var diff = (gaugeOptionsi.gauge.max - gaugeOptionsi.gauge.min) / 600;
+            var diff = (gaugeOptionsi.gauge.max - gaugeOptionsi.gauge.min) / 800;
 
             drawArc(context,
                 cellLayout.cx,
                 cellLayout.cy,
                 layout.radius - 2,
                 layout.width - 4,
-                toRad(calculateAngle(gaugeOptionsi, layout, gaugeOptionsi.gauge.neutralValue-diff)),
-                toRad(calculateAngle(gaugeOptionsi, layout, gaugeOptionsi.gauge.neutralValue+diff)),
+                toRad(calculateAngle(gaugeOptionsi, layout, -diff)),
+                toRad(calculateAngle(gaugeOptionsi, layout, diff)),
                 color,
                 2,
                 gaugeOptionsi.gauge.background.color);

@@ -28,7 +28,6 @@ export class GaugePanel extends PureComponent<PanelProps<PanelOptions>> {
         text={options.text}
         showThresholdLabels={options.showThresholdLabels}
         showThresholdMarkers={options.showThresholdMarkers}
-        neutral={options.neutral}
         theme={config.theme}
         onClick={openMenu}
         className={targetClassName}

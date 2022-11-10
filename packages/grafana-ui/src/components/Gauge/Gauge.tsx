@@ -21,7 +21,6 @@ export interface Props extends Themeable {
   field: FieldConfig;
   showThresholdMarkers: boolean;
   showThresholdLabels: boolean;
-  neutral: Number;
   width: number;
   value: DisplayValue;
   text?: VizTextDisplayOptions;
@@ -51,7 +50,7 @@ export class Gauge extends PureComponent<Props> {
   }
 
   draw() {
-    const { field, showThresholdLabels, showThresholdMarkers, width, height, theme, value, neutral } = this.props;
+    const { field, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
 
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
     const dimension = Math.min(width, autoProps.gaugeHeight);
@@ -59,7 +58,6 @@ export class Gauge extends PureComponent<Props> {
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 5.5, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
-    const neutralValue = neutral;
     const text = formattedValueToString(value);
     // This not 100% accurate as I am unsure of flot's calculations here
     const valueWidthBase = Math.min(width, dimension * 1.3) * 0.9;
@@ -98,7 +96,6 @@ export class Gauge extends PureComponent<Props> {
           gauge: {
             min,
             max,
-            neutralValue,
             background: { color: backgroundColor },
             border: { color: null },
             shadow: { show: false },
