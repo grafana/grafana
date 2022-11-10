@@ -5,7 +5,7 @@ import { DashboardMeta } from 'app/types';
 
 import { DashboardModel } from '../state';
 
-import { DashboardGridUnconnected as DashboardGrid, Props } from './DashboardGrid';
+import { DashboardGrid, Props } from './DashboardGrid';
 
 jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
   const LazyLoader: React.FC = ({ children }) => {
@@ -58,7 +58,6 @@ describe('DashboardGrid', () => {
       editPanel: null,
       viewPanel: null,
       dashboard: getTestDashboard(),
-      cleanAndRemoveMany: jest.fn,
     };
     expect(() => render(<DashboardGrid {...props} />)).not.toThrow();
   });

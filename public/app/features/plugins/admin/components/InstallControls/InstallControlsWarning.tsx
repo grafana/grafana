@@ -7,36 +7,23 @@ import { HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
-import { getExternalManageLink, isInstallControlsEnabled } from '../../helpers';
+import { getExternalManageLink } from '../../helpers';
 import { isGrafanaAdmin } from '../../permissions';
 import { useIsRemotePluginsAvailable } from '../../state/hooks';
 import { CatalogPlugin, PluginStatus, Version } from '../../types';
 
-import { ExternallyManagedButton } from './ExternallyManagedButton';
-import { InstallControlsButton } from './InstallControlsButton';
-
 interface Props {
   plugin: CatalogPlugin;
+  pluginStatus: PluginStatus;
   latestCompatibleVersion?: Version;
 }
 
-export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
+export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleVersion }: Props) => {
   const styles = useStyles2(getStyles);
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
   const hasPermission = contextSrv.hasAccess(AccessControlAction.PluginsInstall, isGrafanaAdmin());
   const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
   const isCompatible = Boolean(latestCompatibleVersion);
-  const isInstallControlsDisabled = plugin.isCore || plugin.isDisabled || !isInstallControlsEnabled();
-
-  const pluginStatus = plugin.isInstalled
-    ? plugin.hasUpdate
-      ? PluginStatus.UPDATE
-      : PluginStatus.UNINSTALL
-    : PluginStatus.INSTALL;
-
-  if (isInstallControlsDisabled) {
-    return null;
-  }
 
   if (plugin.type === PluginType.renderer) {
     return <div className={styles.message}>Renderer plugins cannot be managed by the Plugin Catalog.</div>;
@@ -96,10 +83,6 @@ export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
     );
   }
 
-  if (isExternallyManaged) {
-    return <ExternallyManagedButton pluginId={plugin.id} pluginStatus={pluginStatus} />;
-  }
-
   if (!isRemotePluginsAvailable) {
     return (
       <div className={styles.message}>
@@ -108,13 +91,7 @@ export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
     );
   }
 
-  return (
-    <InstallControlsButton
-      plugin={plugin}
-      pluginStatus={pluginStatus}
-      latestCompatibleVersion={latestCompatibleVersion}
-    />
-  );
+  return null;
 };
 
 export const getStyles = (theme: GrafanaTheme2) => {
