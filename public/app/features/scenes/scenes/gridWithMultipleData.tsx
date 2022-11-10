@@ -14,6 +14,7 @@ export function getGridWithMultipleData(): Scene {
     layout: new SceneGridLayout({
       children: [
         new SceneGridRow({
+          $timeRange: new SceneTimeRange(getDefaultTimeRange()),
           $data: new SceneQueryRunner({
             queries: [
               {
@@ -64,8 +65,21 @@ export function getGridWithMultipleData(): Scene {
               size: { x: 0, y: 2, width: 12, height: 5 },
             }),
             new VizPanel({
+              $data: new SceneQueryRunner({
+                queries: [
+                  {
+                    refId: 'A',
+                    datasource: {
+                      uid: 'gdev-testdata',
+                      type: 'testdata',
+                    },
+                    scenarioId: 'random_walk',
+                    seriesCount: 10,
+                  },
+                ],
+              }),
               pluginId: 'timeseries',
-              title: 'Row B Child2',
+              title: 'Row B Child2 with data',
               key: 'Row B Child2',
               isResizable: false,
               isDraggable: true,
