@@ -15,6 +15,7 @@ import {
   lokiQueryEditorRawQueryKey,
   useFlag,
 } from '../../prometheus/querybuilder/shared/hooks/useFlag';
+import { LabelBrowserModal } from '../querybuilder/components/LabelBrowserModal';
 import { LokiQueryBuilderContainer } from '../querybuilder/components/LokiQueryBuilderContainer';
 import { LokiQueryBuilderOptions } from '../querybuilder/components/LokiQueryBuilderOptions';
 import { LokiQueryCodeEditor } from '../querybuilder/components/LokiQueryCodeEditor';
@@ -34,6 +35,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
+  const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
   const { flag: explain, setFlag: setExplain } = useFlag(lokiQueryEditorExplainKey);
   const { flag: rawQuery, setFlag: setRawQuery } = useFlag(lokiQueryEditorRawQueryKey, true);
 
@@ -81,6 +83,10 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
     setRawQuery(isEnabled);
   };
 
+  const onClickChooserButton = () => {
+    setLabelBrowserVisible((visible) => !visible);
+  };
+
   const getChooserText = (hasSyntax: boolean, hasLogLabels: boolean) => {
     if (!hasSyntax) {
       return 'Loading labels...';
@@ -117,6 +123,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
         onAddQuery={onAddQuery}
       />
       <EditorHeader>
+        <LabelBrowserModal isOpen={labelBrowserVisible} onClose={() => setLabelBrowserVisible(false)} />
         <div
           className={css`
             display: flex;
@@ -142,13 +149,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           >
             Kick start your query
           </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              console.log('Label browser clicked');
-            }}
-          >
+          <Button variant="secondary" size="sm" onClick={onClickChooserButton}>
             {labelBrowserText}
           </Button>
         </div>
