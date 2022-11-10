@@ -5,7 +5,7 @@ import { variableRegex } from 'app/features/variables/utils';
 import { SceneObject } from '../../core/types';
 import { SceneVariable, VariableValue } from '../types';
 
-import { getVariableForScopedVar } from './ScopedVarsProxyVariable';
+import { getSceneVariableForScopedVar } from './ScopedVarsVariable';
 import { formatRegistry, FormatRegistryID } from './formatRegistry';
 
 type CustomFormatterFn = (
@@ -14,6 +14,13 @@ type CustomFormatterFn = (
   legacyDefaultFormatter: CustomFormatterFn
 ) => string;
 
+/**
+ * This function will try to parse and replace any variable expression found in the target string. The sceneObject will be used as the source of variables. It will
+ * use the scene graph and walk up the parent tree until it finds the closest variable.
+ *
+ * ScopedVars should not really be needed much in the new scene architecture as they can be added to the local scene node instead of passed in interpolate function.
+ * It is supported here for backward compatibility and some edge cases where adding scoped vars to local scene node is not practical.
+ */
 export function sceneInterpolator(
   sceneObject: SceneObject,
   target: string | undefined | null,
@@ -37,7 +44,7 @@ export function sceneInterpolator(
     let variable: SceneVariable | undefined | null;
 
     if (scopedVars && scopedVars[variableName]) {
-      variable = getVariableForScopedVar(scopedVars[variableName]);
+      variable = getSceneVariableForScopedVar(variableName, scopedVars[variableName]);
     } else {
       variable = lookupSceneVariable(variableName, sceneObject);
     }

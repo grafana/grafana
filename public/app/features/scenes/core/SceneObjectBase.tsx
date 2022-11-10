@@ -249,7 +249,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
    * TODO: Cache interpolatinos?
    */
   public interpolate(value: string | undefined) {
-    // Skip interpolation if there are no variable depdendencies
+    // Skip interpolation if there are no variable dependencies
     if (!value || !this._variableDependency || this._variableDependency.getNames().size === 0) {
       return value ?? '';
     }

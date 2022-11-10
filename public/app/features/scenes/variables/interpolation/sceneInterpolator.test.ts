@@ -113,6 +113,19 @@ describe('sceneInterpolator', () => {
     });
 
     const scopedVars = { __from: { value: 'a', text: 'b' } };
+
     expect(sceneInterpolator(scene, '${__from}', scopedVars)).toBe('a');
+    expect(sceneInterpolator(scene, '${__from:text}', scopedVars)).toBe('b');
+  });
+
+  it('Can use scopedVars with fieldPath', () => {
+    const scene = new TestScene({
+      $variables: new SceneVariableSet({
+        variables: [],
+      }),
+    });
+
+    const scopedVars = { __data: { value: { name: 'Main org' }, text: '' } };
+    expect(sceneInterpolator(scene, '${__data.name}', scopedVars)).toBe('Main org');
   });
 });
