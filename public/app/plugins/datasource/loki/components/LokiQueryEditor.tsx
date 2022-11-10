@@ -81,6 +81,19 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
     setRawQuery(isEnabled);
   };
 
+  const getChooserText = (hasSyntax: boolean, hasLogLabels: boolean) => {
+    if (!hasSyntax) {
+      return 'Loading labels...';
+    }
+    if (!hasLogLabels) {
+      return '(No labels found)';
+    }
+    return 'Label browser';
+  };
+
+  // TODO: replace (true, true) with actual values
+  const labelBrowserText = getChooserText(true, true);
+
   return (
     <>
       <ConfirmModal
@@ -136,7 +149,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
               console.log('Label browser clicked');
             }}
           >
-            Label browser
+            {labelBrowserText}
           </Button>
         </div>
         <QueryHeaderSwitch label="Explain" value={explain} onChange={onExplainChange} />
