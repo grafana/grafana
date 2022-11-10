@@ -267,6 +267,9 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAPIKey")
 	defer span.End()
 
+	ctx := WithAuthHTTPHeader(reqContext.Req.Context(), "Authorization")
+	*reqContext.Req = *reqContext.Req.WithContext(ctx)
+
 	var (
 		apikey *apikey.APIKey
 		errKey error
@@ -309,7 +312,8 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	}
 
 	if apikey.ServiceAccountId == nil || *apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
-		//Use the old APIkey method.  This provides backwards compatibility.
+		// Use the old APIkey method.  This provides backwards compatibility.
+		// will probably have to be supported for a long time.
 		reqContext.SignedInUser = &user.SignedInUser{}
 		reqContext.OrgRole = apikey.Role
 		reqContext.ApiKeyID = apikey.Id
@@ -356,7 +360,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 		return false
 	}
 
-	ctx, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithBasicAuth")
+	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithBasicAuth")
 	defer span.End()
 
 	username, password, err := util.DecodeBasicAuthHeader(header)
@@ -365,12 +369,15 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 		return true
 	}
 
+	ctx := WithAuthHTTPHeader(reqContext.Req.Context(), "Authorization")
+	*reqContext.Req = *reqContext.Req.WithContext(ctx)
+
 	authQuery := models.LoginUserQuery{
 		Username: username,
 		Password: password,
 		Cfg:      h.Cfg,
 	}
-	if err := h.authenticator.AuthenticateUser(reqContext.Req.Context(), &authQuery); err != nil {
+	if err := h.authenticator.AuthenticateUser(ctx, &authQuery); err != nil {
 		reqContext.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,
@@ -651,6 +658,15 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 
 	logger.Debug("Successfully got user info", "userID", user.UserID, "username", user.Login)
 
+	ctx := WithAuthHTTPHeader(reqContext.Req.Context(), h.Cfg.AuthProxyHeaderName)
+	for _, header := range h.Cfg.AuthProxyHeaders {
+		if header != "" {
+			ctx = WithAuthHTTPHeader(ctx, header)
+		}
+	}
+
+	*reqContext.Req = *reqContext.Req.WithContext(ctx)
+
 	// Add user info to context
 	reqContext.SignedInUser = user
 	reqContext.IsSignedIn = true
@@ -669,4 +685,39 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 	}
 
 	return true
+}
+
+type authHTTPHeaderListContextKey struct{}
+
+var authHTTPHeaderListKey = authHTTPHeaderListContextKey{}
+
+// AuthHTTPHeaderList used to record HTTP headers that being when verifying authentication
+// of an incoming HTTP request.
+type AuthHTTPHeaderList struct {
+	Items []string
+}
+
+// WithAuthHTTPHeader returns a copy of parent in which the named HTTP header will be included
+// and later retrievable by AuthHTTPHeaderListFromContext.
+func WithAuthHTTPHeader(parent context.Context, name string) context.Context {
+	list := AuthHTTPHeaderListFromContext(parent)
+
+	if list == nil {
+		list = &AuthHTTPHeaderList{
+			Items: []string{},
+		}
+	}
+
+	list.Items = append(list.Items, name)
+
+	return context.WithValue(parent, authHTTPHeaderListKey, list)
+}
+
+// AuthHTTPHeaderListFromContext returns the AuthHTTPHeaderList in a context.Context, if any,
+// and will include any HTTP headers used when verifying authentication of an incoming HTTP request.
+func AuthHTTPHeaderListFromContext(c context.Context) *AuthHTTPHeaderList {
+	if list, ok := c.Value(authHTTPHeaderListKey).(*AuthHTTPHeaderList); ok {
+		return list
+	}
+	return nil
 }

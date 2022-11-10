@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
@@ -64,7 +63,6 @@ type API struct {
 	DatasourceCache      datasources.CacheService
 	DatasourceService    datasources.DataSourceService
 	RouteRegister        routing.RouteRegister
-	ExpressionService    *expr.Service
 	QuotaService         quota.Service
 	Schedule             schedule.ScheduleService
 	TransactionManager   provisioning.TransactionManager
@@ -82,6 +80,7 @@ type API struct {
 	MuteTimings          *provisioning.MuteTimingService
 	AlertRules           *provisioning.AlertRuleService
 	AlertsRouter         *sender.AlertsRouter
+	EvaluatorFactory     eval.EvaluatorFactory
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -91,8 +90,6 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		DataProxy: api.DataProxy,
 		ac:        api.AccessControl,
 	}
-
-	evaluator := eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.ExpressionService)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
@@ -111,7 +108,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
 		&RulerSrv{
-			conditionValidator: evaluator,
+			conditionValidator: api.EvaluatorFactory,
 			QuotaService:       api.QuotaService,
 			scheduleService:    api.Schedule,
 			store:              api.RuleStore,
@@ -128,7 +125,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			DatasourceCache: api.DatasourceCache,
 			log:             logger,
 			accessControl:   api.AccessControl,
-			evaluator:       evaluator,
+			evaluator:       api.EvaluatorFactory,
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewConfiguration(
 		&ConfigSrv{

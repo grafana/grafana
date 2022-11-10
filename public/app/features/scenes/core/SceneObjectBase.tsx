@@ -1,123 +1,177 @@
 import { useEffect } from 'react';
-import { Observer, Subject, Subscription } from 'rxjs';
+import { Observer, Subject, Subscription, Unsubscribable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { EventBusSrv } from '@grafana/data';
+import { BusEvent, BusEventHandler, BusEventType, EventBusSrv } from '@grafana/data';
 import { useForceUpdate } from '@grafana/ui';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
-import {
-  SceneDataState,
-  SceneObject,
-  SceneComponent,
-  SceneEditor,
-  SceneTimeRange,
-  isSceneObject,
-  SceneObjectState,
-  SceneLayoutChild,
-} from './types';
+import { SceneDataState, SceneObject, SceneComponent, SceneEditor, SceneTimeRange, SceneObjectState } from './types';
 
-export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
-  subject = new Subject<TState>();
-  state: TState;
-  parent?: SceneObjectBase<SceneObjectState>;
-  subs = new Subscription();
-  isActive?: boolean;
-  events = new EventBusSrv();
+export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObjectState>
+  implements SceneObject<TState>
+{
+  private _isActive = false;
+  private _subject = new Subject<TState>();
+  private _state: TState;
+  private _events = new EventBusSrv();
 
-  constructor(state: TState) {
+  protected _parent?: SceneObject;
+  protected _subs = new Subscription();
+
+  public constructor(state: TState) {
     if (!state.key) {
       state.key = uuidv4();
     }
 
-    this.state = state;
-    this.subject.next(state);
+    this._state = state;
+    this._subject.next(state);
     this.setParent();
+  }
+
+  /** Current state */
+  public get state(): TState {
+    return this._state;
+  }
+
+  /** True if currently being active (ie displayed for visual objects) */
+  public get isActive(): boolean {
+    return this._isActive;
+  }
+
+  /** Returns the parent, undefined for root object */
+  public get parent(): SceneObject | undefined {
+    return this._parent;
   }
 
   /**
    * Used in render functions when rendering a SceneObject.
    * Wraps the component in an EditWrapper that handles edit mode
    */
-  get Component(): SceneComponent<this> {
+  public get Component(): SceneComponent<this> {
     return SceneComponentWrapper;
   }
 
   /**
    * Temporary solution, should be replaced by declarative options
    */
-  get Editor(): SceneComponent<this> {
+  public get Editor(): SceneComponent<this> {
     return ((this as any).constructor['Editor'] ?? (() => null)) as SceneComponent<this>;
   }
 
   private setParent() {
-    for (const propValue of Object.values(this.state)) {
-      if (isSceneObject(propValue)) {
-        propValue.parent = this;
+    for (const propValue of Object.values(this._state)) {
+      if (propValue instanceof SceneObjectBase) {
+        propValue._parent = this;
       }
 
       if (Array.isArray(propValue)) {
         for (const child of propValue) {
-          if (isSceneObject(child)) {
-            child.parent = this;
+          if (child instanceof SceneObjectBase) {
+            child._parent = this;
           }
         }
       }
     }
   }
 
-  /** This function implements the Subscribable<TState> interface */
-  subscribe(observer: Partial<Observer<TState>>) {
-    return this.subject.subscribe(observer);
+  /**
+   * Subscribe to the scene state subject
+   **/
+  public subscribeToState(observerOrNext?: Partial<Observer<TState>>): Subscription {
+    return this._subject.subscribe(observerOrNext);
   }
 
-  setState(update: Partial<TState>) {
-    const prevState = this.state;
-    this.state = {
-      ...this.state,
+  /**
+   * Subscribe to the scene event
+   **/
+  public subscribeToEvent<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
+    return this._events.subscribe(eventType, handler);
+  }
+
+  public setState(update: Partial<TState>) {
+    const prevState = this._state;
+    this._state = {
+      ...this._state,
       ...update,
     };
     this.setParent();
-    this.subject.next(this.state);
+    this._subject.next(this._state);
 
-    // broadcast state change. This is event is subscribed to by UrlSyncManager and UndoManager
-    this.getRoot().events.publish(
+    // Bubble state change event. This is event is subscribed to by UrlSyncManager and UndoManager
+    this.publishEvent(
       new SceneObjectStateChangedEvent({
         prevState,
-        newState: this.state,
+        newState: this._state,
         partialUpdate: update,
         changedObject: this,
-      })
+      }),
+      true
     );
   }
 
-  private getRoot(): SceneObject {
-    return !this.parent ? this : this.parent.getRoot();
-  }
+  /*
+   * Publish an event and optionally bubble it up the scene
+   **/
+  public publishEvent(event: BusEvent, bubble?: boolean) {
+    this._events.publish(event);
 
-  activate() {
-    this.isActive = true;
-
-    const { $data } = this.state;
-    if ($data && !$data.isActive) {
-      $data.activate();
+    if (bubble && this.parent) {
+      this.parent.publishEvent(event, bubble);
     }
   }
 
-  deactivate(): void {
-    this.isActive = false;
+  public getRoot(): SceneObject {
+    return !this._parent ? this : this._parent.getRoot();
+  }
 
-    const { $data } = this.state;
+  /**
+   * Called by the SceneComponentWrapper when the react component is mounted
+   */
+  public activate() {
+    this._isActive = true;
+
+    const { $data, $variables } = this.state;
+
+    if ($data && !$data.isActive) {
+      $data.activate();
+    }
+
+    if ($variables && !$variables.isActive) {
+      $variables.activate();
+    }
+  }
+
+  /**
+   * Called by the SceneComponentWrapper when the react component is unmounted
+   */
+  public deactivate(): void {
+    this._isActive = false;
+
+    const { $data, $variables } = this.state;
+
     if ($data && $data.isActive) {
       $data.deactivate();
     }
 
-    this.subs.unsubscribe();
-    this.subs = new Subscription();
+    if ($variables && $variables.isActive) {
+      $variables.deactivate();
+    }
+
+    // Clear subscriptions and listeners
+    this._events.removeAllListeners();
+    this._subs.unsubscribe();
+    this._subs = new Subscription();
+
+    this._subject.complete();
+    this._subject = new Subject<TState>();
   }
 
-  useState() {
+  /**
+   * Utility hook to get and subscribe to state
+   */
+  public useState() {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     return useSceneObjectState(this);
   }
@@ -125,7 +179,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   /**
    * Will walk up the scene object graph to the closest $timeRange scene object
    */
-  getTimeRange(): SceneTimeRange {
+  public getTimeRange(): SceneTimeRange {
     const { $timeRange } = this.state;
     if ($timeRange) {
       return $timeRange;
@@ -141,7 +195,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   /**
    * Will walk up the scene object graph to the closest $data scene object
    */
-  getData(): SceneObject<SceneDataState> {
+  public getData(): SceneObject<SceneDataState> {
     const { $data } = this.state;
     if ($data) {
       return $data;
@@ -157,7 +211,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   /**
    * Will walk up the scene object graph to the closest $editor scene object
    */
-  getSceneEditor(): SceneEditor {
+  public getSceneEditor(): SceneEditor {
     const { $editor } = this.state;
     if ($editor) {
       return $editor;
@@ -171,9 +225,9 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   }
 
   /**
-   * Will create new SceneItem with shalled cloned state, but all states items of type SceneItem are deep cloned
+   * Will create new SceneItem with shalled cloned state, but all states items of type SceneObject are deep cloned
    */
-  clone(withState?: Partial<TState>): this {
+  public clone(withState?: Partial<TState>): this {
     const clonedState = { ...this.state };
 
     // Clone any SceneItems in state
@@ -182,15 +236,19 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
       if (propValue instanceof SceneObjectBase) {
         clonedState[key] = propValue.clone();
       }
-    }
 
-    // Clone layout children
-    if ('children' in this.state) {
-      const newChildren: SceneLayoutChild[] = [];
-      for (const child of this.state.children) {
-        newChildren.push(child.clone());
+      // Clone scene objects in arrays
+      if (Array.isArray(propValue)) {
+        const newArray: any = [];
+        for (const child of propValue) {
+          if (child instanceof SceneObjectBase) {
+            newArray.push(child.clone());
+          } else {
+            newArray.push(child);
+          }
+        }
+        clonedState[key] = newArray;
       }
-      (clonedState as any).children = newChildren;
     }
 
     Object.assign(clonedState, withState);
@@ -207,7 +265,7 @@ function useSceneObjectState<TState extends SceneObjectState>(model: SceneObject
   const forceUpdate = useForceUpdate();
 
   useEffect(() => {
-    const s = model.subject.subscribe(forceUpdate);
+    const s = model.subscribeToState({ next: forceUpdate });
     return () => s.unsubscribe();
   }, [model, forceUpdate]);
 

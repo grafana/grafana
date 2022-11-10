@@ -1,7 +1,6 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-many",
 //      "custom": {
 //          "resultType": "exemplar"
 //      },
@@ -29,12 +28,12 @@
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
         "name": "exemplar",
         "meta": {
-          "type": "timeseries-many",
           "custom": {
             "resultType": "exemplar"
           },

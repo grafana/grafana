@@ -165,7 +165,7 @@ export function ignoreChanges(current: DashboardModel | null, original: object |
 /**
  * Remove stuff that should not count in diff
  */
-function cleanDashboardFromIgnoredChanges(dashData: any) {
+function cleanDashboardFromIgnoredChanges(dashData: unknown) {
   // need to new up the domain model class to get access to expand / collapse row logic
   const model = new DashboardModel(dashData);
 
@@ -193,7 +193,7 @@ function cleanDashboardFromIgnoredChanges(dashData: any) {
   return dash;
 }
 
-export function hasChanges(current: DashboardModel, original: any) {
+export function hasChanges(current: DashboardModel, original: unknown) {
   if (current.hasUnsavedChanges()) {
     return true;
   }

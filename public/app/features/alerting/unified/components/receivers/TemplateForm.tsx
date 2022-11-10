@@ -4,7 +4,8 @@ import { useForm, Validate } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Field, FieldSet, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Alert, Button, Field, FieldSet, Input, LinkButton, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';

@@ -2,11 +2,7 @@
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
   "common": {
     "locale": {
-      "default": "Por defecto",
-      "en-US": "Inglés",
-      "es-ES": "Español",
-      "fr-FR": "Francés",
-      "zh-Hans": "Chino (simplificado)"
+      "default": "Por defecto"
     },
     "save": "Guardar"
   },
@@ -415,6 +411,40 @@
     "absolute": {
       "recent-title": "Intervalos absolutos utilizados recientemente",
       "title": "Intervalo de tiempo absoluto"
+    },
+    "calendar": {
+      "apply-button": "",
+      "cancel-button": "",
+      "select-time": ""
+    },
+    "content": {
+      "empty-recent-list": "",
+      "filter-placeholder": ""
+    },
+    "footer": {
+      "change-settings-button": "",
+      "fiscal-year-option": "",
+      "fiscal-year-start": "",
+      "time-zone-option": "",
+      "time-zone-selection": ""
+    },
+    "range-content": {
+      "apply-button": "",
+      "default-error": "",
+      "fiscal-year": "",
+      "from-input": "",
+      "range-error": "",
+      "to-input": ""
+    },
+    "time-range": {
+      "aria-role": "",
+      "default-title": "",
+      "example-title": "",
+      "specify": ""
+    },
+    "zone": {
+      "select-aria-label": "",
+      "select-search-input": ""
     }
   },
   "user-orgs": {

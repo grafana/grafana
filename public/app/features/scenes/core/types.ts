@@ -1,16 +1,16 @@
 import React from 'react';
-import { Subscribable } from 'rxjs';
+import { Observer, Subscription, Unsubscribable } from 'rxjs';
 
-import { EventBus, PanelData, TimeRange, UrlQueryMap } from '@grafana/data';
+import { BusEvent, BusEventHandler, BusEventType, PanelData, TimeRange, UrlQueryMap } from '@grafana/data';
 
-import { SceneVariableSet } from '../variables/types';
+import { SceneVariables } from '../variables/types';
 
 export interface SceneObjectStatePlain {
   key?: string;
   $timeRange?: SceneTimeRange;
   $data?: SceneObject<SceneDataState>;
   $editor?: SceneEditor;
-  $variables?: SceneVariableSet;
+  $variables?: SceneVariables;
 }
 
 export interface SceneLayoutChildState extends SceneObjectStatePlain {
@@ -41,18 +41,24 @@ export interface SceneDataState extends SceneObjectStatePlain {
   data?: PanelData;
 }
 
-export interface SceneObject<TState extends SceneObjectState = SceneObjectState> extends Subscribable<TState> {
+export interface SceneObject<TState extends SceneObjectState = SceneObjectState> {
   /** The current state */
-  state: TState;
+  readonly state: TState;
 
   /** True when there is a React component mounted for this Object */
-  isActive?: boolean;
+  readonly isActive: boolean;
 
   /** SceneObject parent */
-  parent?: SceneObject;
+  readonly parent?: SceneObject;
 
-  /** Currently only used from root to broadcast events */
-  events: EventBus;
+  /** Subscribe to state changes */
+  subscribeToState(observer?: Partial<Observer<TState>>): Subscription;
+
+  /** Subscribe to a scene event */
+  subscribeToEvent<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable;
+
+  /** Publish an event and optionally bubble it up the scene */
+  publishEvent(event: BusEvent, bubble?: boolean): void;
 
   /** Utility hook that wraps useObservable. Used by React components to subscribes to state changes */
   useState(): TState;
@@ -63,11 +69,20 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** Called when the Component is mounted. A place to register event listeners add subscribe to state changes */
   activate(): void;
 
-  /** Called when component unmounts. Unsubscribe to events */
+  /** Called when component unmounts. Unsubscribe and closes all subscriptions  */
   deactivate(): void;
 
   /** Get the scene editor */
   getSceneEditor(): SceneEditor;
+
+  /** Get the scene root */
+  getRoot(): SceneObject;
+
+  /** Get the closest node with data */
+  getData(): SceneObject<SceneDataState>;
+
+  /** Get the closest node with time range */
+  getTimeRange(): SceneTimeRange;
 
   /** Returns a deep clone this object and all its children */
   clone(state?: Partial<TState>): this;
@@ -99,6 +114,7 @@ export interface SceneEditor extends SceneObject<SceneEditorState> {
 }
 
 export interface SceneTimeRangeState extends SceneObjectStatePlain, TimeRange {}
+
 export interface SceneTimeRange extends SceneObject<SceneTimeRangeState> {
   onTimeRangeChange(timeRange: TimeRange): void;
   onIntervalChanged(interval: string): void;

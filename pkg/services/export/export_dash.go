@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 )
 
@@ -30,7 +31,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 		return err
 	}
 
-	rootDir := path.Join(helper.orgDir, "root")
+	rootDir := path.Join(helper.orgDir, models.ObjectStoreScopeDrive)
 	folderStructure := commitOptions{
 		when:    time.Now(),
 		comment: "Exported folder structure",
@@ -59,7 +60,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 			return err
 		}
 
-		reader := dashboard.NewStaticDashboardSummaryBuilder(lookup)
+		reader := dashboard.NewStaticDashboardSummaryBuilder(lookup, false)
 
 		// Process all folders
 		for _, row := range rows {
@@ -95,7 +96,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 			if row.IsFolder {
 				continue
 			}
-			fname := row.Slug + "-dash.json"
+			fname := row.Slug + "-dashboard.json"
 			fpath, ok := folders[row.FolderID]
 			if ok {
 				fpath = path.Join(fpath, fname)

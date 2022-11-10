@@ -29,6 +29,11 @@ export interface TempoJsonData extends DataSourceJsonData {
   spanBar?: {
     tag: string;
   };
+  traceQuery?: {
+    timeShiftEnabled?: boolean;
+    spanStartTimeShift?: string;
+    spanEndTimeShift?: string;
+  };
 }
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
