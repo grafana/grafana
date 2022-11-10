@@ -8,13 +8,25 @@ import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
 
-export function getGridWithRowLayoutTest(): Scene {
+export function getGridWithMultipleData(): Scene {
   const scene = new Scene({
-    title: 'Grid with row layout test',
+    title: 'Grid with rows and different queries',
     layout: new SceneGridLayout({
       children: [
         new SceneGridRow({
-          title: 'Row A',
+          $data: new SceneQueryRunner({
+            queries: [
+              {
+                refId: 'A',
+                datasource: {
+                  uid: 'gdev-testdata',
+                  type: 'testdata',
+                },
+                scenarioId: 'random_walk_table',
+              },
+            ],
+          }),
+          title: 'Row A - has its own query',
           key: 'Row A',
           isCollapsed: true,
           size: { y: 0 },
@@ -38,7 +50,7 @@ export function getGridWithRowLayoutTest(): Scene {
           ],
         }),
         new SceneGridRow({
-          title: 'Row B',
+          title: 'Row B - uses global query',
           key: 'Row B',
           isCollapsed: true,
           size: { y: 1 },
@@ -62,13 +74,39 @@ export function getGridWithRowLayoutTest(): Scene {
           ],
         }),
         new VizPanel({
+          $data: new SceneQueryRunner({
+            queries: [
+              {
+                refId: 'A',
+                datasource: {
+                  uid: 'gdev-testdata',
+                  type: 'testdata',
+                },
+                scenarioId: 'random_walk',
+                seriesCount: 10,
+              },
+            ],
+          }),
           isResizable: true,
           isDraggable: true,
           pluginId: 'timeseries',
-          title: 'Outsider',
-          key: 'Outsider',
+          title: 'Outsider, has its own query',
+          key: 'Outsider-own-query',
           size: {
-            x: 2,
+            x: 0,
+            y: 12,
+            width: 6,
+            height: 10,
+          },
+        }),
+        new VizPanel({
+          isResizable: true,
+          isDraggable: true,
+          pluginId: 'timeseries',
+          title: 'Outsider, uses global query',
+          key: 'Outsider-global-query',
+          size: {
+            x: 6,
             y: 12,
             width: 12,
             height: 10,
