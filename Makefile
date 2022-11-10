@@ -66,6 +66,7 @@ openapi3-gen: swagger-api-spec ## Generates OpenApi 3 specs from the Swagger 2 a
 ##@ Building
 gen-cue: ## Do all CUE/Thema code generation
 	@echo "generate code from .cue files"
+	go generate ./kinds/gen.go
 	go generate ./pkg/framework/coremodel
 	go generate ./public/app/plugins
 
