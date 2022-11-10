@@ -211,22 +211,15 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   moveChildTo(child: SceneLayoutChild, target: SceneGridLayout | SceneGridRow) {
     const currentParent = child.parent!;
 
+    // Remove from current parent
     if (currentParent instanceof SceneGridLayout || currentParent instanceof SceneGridRow) {
       currentParent.setState({
         children: currentParent.state.children.filter((c) => c.state.key !== child.state.key),
       });
     }
 
-    const newChildren = [...target.state.children, child];
-
-    target.setState({
-      children: newChildren,
-    });
-
-    if (target !== this) {
-      // to always force re-render
-      this.setState({});
-    }
+    // Add to new parent
+    target.setState({ children: sortChildrenByPosition([...target.state.children, child]) });
   }
 
   onDragStop: ReactGridLayout.ItemCallback = (gridLayout, o, updatedItem) => {
@@ -262,6 +255,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       this.moveChildTo(sceneChild, newParent);
     }
 
+    this.setState({ children: sortChildrenByPosition(this.state.children) });
     this._skipOnLayoutChange = true;
   };
 
