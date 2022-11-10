@@ -19,6 +19,7 @@ import {
   Expr,
   LiteralExpr,
   MetricExpr,
+  UnwrapExpr,
 } from '@grafana/lezer-logql';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
@@ -117,6 +118,10 @@ export type Situation =
       type: 'AFTER_SELECTOR';
       afterPipe: boolean;
       labels: Label[];
+    }
+  | {
+      type: 'AFTER_UNWRAP';
+      otherLabels: Label[];
     };
 
 type Resolver = {
@@ -170,6 +175,10 @@ const RESOLVERS: Resolver[] = [
   {
     path: [ERROR_NODE_ID, PipelineStage, PipelineExpr],
     fun: resolvePipeError,
+  },
+  {
+    path: [ERROR_NODE_ID, UnwrapExpr],
+    fun: resolveAfterUnwrap,
   },
 ];
 
@@ -246,6 +255,25 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
   labels.reverse();
 
   return labels;
+}
+
+function resolveAfterUnwrap(node: SyntaxNode, text: string, pos: number): Situation | null {
+  const selectorNode = walk(node, [
+    ['parent', UnwrapExpr],
+    ['parent', LogRangeExpr],
+    ['firstChild', Selector],
+  ]);
+
+  if (selectorNode === null) {
+    return null;
+  }
+
+  const otherLabels = getLabels(selectorNode, text);
+
+  return {
+    type: 'AFTER_UNWRAP',
+    otherLabels,
+  };
 }
 
 function resolvePipeError(node: SyntaxNode, text: string, pos: number): Situation | null {

@@ -137,6 +137,24 @@ describe('situation', () => {
     });
   });
 
+  it('identifies AFTER_UNWRAP autocomplete situations', () => {
+    assertSituation('sum(count_over_time({one="val1"} | unwrap^', {
+      type: 'AFTER_UNWRAP',
+      otherLabels: [{ name: 'one', value: 'val1', op: '=' }],
+    });
+
+    assertSituation(
+      'quantile_over_time(0.99, {cluster="ops-tools1",container="ingress-nginx"} | json | __error__ = "" | unwrap ^',
+      {
+        type: 'AFTER_UNWRAP',
+        otherLabels: [
+          { name: 'cluster', value: 'ops-tools1', op: '=' },
+          { name: 'container', value: 'ingress-nginx', op: '=' },
+        ],
+      }
+    );
+  });
+
   it('handles label values', () => {
     assertSituation('{job=^}', {
       type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
