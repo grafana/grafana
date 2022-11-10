@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"xorm.io/core"
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -32,6 +33,7 @@ type Store interface {
 	GetGlobalQuotaByTarget(ctx context.Context, query *models.GetGlobalQuotaByTargetQuery) error
 	WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
+	GetDBEngine() *xorm.Engine
 	Migrate(bool) error
 	Sync() error
 	Reset() error

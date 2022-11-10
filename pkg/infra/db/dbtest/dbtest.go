@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"xorm.io/core"
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -33,6 +34,10 @@ func (f *FakeDB) WithNewDbSession(ctx context.Context, callback sqlstore.DBTrans
 
 func (f *FakeDB) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
 	return f.ExpectedError
+}
+
+func (f *FakeDB) GetDBEngine() *xorm.Engine {
+	return nil
 }
 
 func (f *FakeDB) GetDBType() core.DbType {

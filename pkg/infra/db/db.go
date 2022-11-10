@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"xorm.io/core"
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -19,6 +20,7 @@ type DB interface {
 	GetDBType() core.DbType
 	GetSqlxSession() *session.SessionDB
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
+	GetDBEngine() *xorm.Engine
 }
 
 type Session = sqlstore.DBSession
