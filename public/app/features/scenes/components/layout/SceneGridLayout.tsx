@@ -29,6 +29,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     super({
       isDraggable: true,
       ...state,
+      children: sortChildrenByPosition(state.children),
     });
   }
 
@@ -138,7 +139,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       }
     }
 
-    this.setState({ children: [...this.state.children] });
+    this.setState({ children: sortChildrenByPosition(this.state.children) });
   };
 
   getChild(key: string) {
@@ -201,6 +202,9 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     return null;
   }
 
+  /**
+   * This likely needs a slighltly different approach. Where we clone or deactivate or and re-activate the moved child
+   */
   moveChildTo(child: SceneLayoutChild, target: SceneGridLayout | SceneGridRow) {
     const currentParent = child.parent!;
 
@@ -225,7 +229,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   onDragStop: ReactGridLayout.ItemCallback = (gridLayout, o, updatedItem) => {
     const sceneChild = this.getChild(updatedItem.i)!;
 
-    // need to resort it as the react-grid-layout does not do it
+    // Need to resort it based on position
     gridLayout.sort((a, b) => {
       if (a.y === b.y) {
         return a.x - b.x;
@@ -601,4 +605,14 @@ export function generateGridBackground({
 
 function isItemSizeEqual(a: SceneObjectSize, b: SceneObjectSize) {
   return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
+}
+
+function sortChildrenByPosition(children: SceneLayoutChild[]) {
+  return [...children].sort((a, b) => {
+    if (a.state.size?.y === b.state.size?.y!) {
+      return a.state.size?.x! - b.state.size?.x!;
+    } else {
+      return a.state.size?.y! - b.state.size?.y!;
+    }
+  });
 }
