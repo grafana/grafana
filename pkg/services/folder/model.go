@@ -131,7 +131,7 @@ func (f *Folder) ToLegacyModel() *models.Folder {
 		Id:        f.ID,
 		Uid:       f.UID,
 		Title:     f.Title,
-		Url:       "",
+		Url:       models.GetFolderUrl(f.UID, models.SlugifyTitle(f.Title)),
 		Version:   0,
 		Created:   f.Created,
 		Updated:   f.Updated,
