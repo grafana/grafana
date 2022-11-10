@@ -5,7 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
+import { DEFAULT_PANEL_SPAN, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
 import {
@@ -236,7 +236,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       }
     }
 
-    // Update the parent of the child if it has moved to a row or back to the grid
+    // Update the parent if the child if it has moved to a row or back to the grid
     const indexOfUpdatedItem = gridLayout.findIndex((item) => item.i === updatedItem.i);
     const newParent = this.findGridItemSceneParent(gridLayout, indexOfUpdatedItem - 1);
 
@@ -251,26 +251,10 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   toGridCell(child: SceneLayoutChild): ReactGridLayout.Layout {
     const size = child.state.size!;
 
-    let x = 0;
-    let y = 0;
-    let w = 0;
-    let h = 0;
-
-    if (size.x !== undefined) {
-      x = size.x;
-    }
-
-    if (size.y !== undefined) {
-      y = size.y;
-    }
-
-    if (size.width !== undefined && typeof size.width === 'number') {
-      w = size.width;
-    }
-
-    if (size.height !== undefined && typeof size.height === 'number') {
-      h = size.height;
-    }
+    let x = size.x ?? 0;
+    let y = size.y ?? 0;
+    const w = Number.isInteger(Number(size.width)) ? Number(size.width) : DEFAULT_PANEL_SPAN;
+    const h = Number.isInteger(Number(size.height)) ? Number(size.height) : DEFAULT_PANEL_SPAN;
 
     let isDraggable = Boolean(child.state.isDraggable);
     let isResizable = Boolean(child.state.isResizable);
