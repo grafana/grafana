@@ -264,8 +264,8 @@ func TestAddAppLinks(t *testing.T) {
 		treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx))
 		connectionsNode := treeRoot.FindById("connections")
 		require.Equal(t, "Connections", connectionsNode.Text)
-		require.Equal(t, "Connect Data", connectionsNode.Children[1].Text)
-		require.Equal(t, "connections-connect-data", connectionsNode.Children[1].Id) // Original "Connect Data" page
+		require.Equal(t, "Connect data", connectionsNode.Children[1].Text)
+		require.Equal(t, "connections-connect-data", connectionsNode.Children[1].Id) // Original "Connect data" page
 		require.Equal(t, "", connectionsNode.Children[1].PluginID)
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
@@ -273,8 +273,8 @@ func TestAddAppLinks(t *testing.T) {
 		// Check if the standalone plugin page appears under the section where we registered it
 		require.NoError(t, err)
 		require.Equal(t, "Connections", connectionsNode.Text)
-		require.Equal(t, "Connect Data", connectionsNode.Children[1].Text)
-		require.Equal(t, "standalone-plugin-page-/connections/connect-data", connectionsNode.Children[1].Id) // Overridden "Connect Data" page
+		require.Equal(t, "Connect data", connectionsNode.Children[1].Text)
+		require.Equal(t, "standalone-plugin-page-/connections/connect-data", connectionsNode.Children[1].Id) // Overridden "Connect data" page
 		require.Equal(t, "test-app3", connectionsNode.Children[1].PluginID)
 
 		// Check if the standalone plugin page does not appear under the app section anymore

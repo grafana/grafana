@@ -1,6 +1,7 @@
 package export
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -224,7 +225,7 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 		return response.Error(http.StatusLocked, "export already running", nil)
 	}
 
-	user := store.UserFromContext(c.Req.Context())
+	ctx := store.ContextWithUser(context.Background(), c.SignedInUser)
 	var job Job
 	broadcast := func(s ExportStatus) {
 		ex.broadcastStatus(c.OrgID, s)
@@ -233,13 +234,13 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 	case "dummy":
 		job, err = startDummyExportJob(cfg, broadcast)
 	case "objectStore":
-		job, err = startObjectStoreJob(user, cfg, broadcast, ex.db, ex.playlistService, ex.store, ex.dashboardsnapshotsService)
+		job, err = startObjectStoreJob(ctx, cfg, broadcast, ex.db, ex.playlistService, ex.store, ex.dashboardsnapshotsService)
 	case "git":
 		dir := filepath.Join(ex.dataDir, "export_git", fmt.Sprintf("git_%d", time.Now().Unix()))
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 			return response.Error(http.StatusBadRequest, "Error creating export folder", nil)
 		}
-		job, err = startGitExportJob(cfg, ex.db, ex.dashboardsnapshotsService, dir, c.OrgID, broadcast, ex.playlistService, ex.orgService, ex.datasourceService)
+		job, err = startGitExportJob(ctx, cfg, ex.db, ex.dashboardsnapshotsService, dir, c.OrgID, broadcast, ex.playlistService, ex.orgService, ex.datasourceService)
 	default:
 		return response.Error(http.StatusBadRequest, "Unsupported job format", nil)
 	}
