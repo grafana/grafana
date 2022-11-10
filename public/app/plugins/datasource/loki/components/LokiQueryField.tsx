@@ -32,9 +32,9 @@ function getChooserText(hasSyntax: boolean, hasLogLabels: boolean) {
     return 'Loading labels...';
   }
   if (!hasLogLabels) {
-    return '(No logs found)';
+    return '(No labels found)';
   }
-  return 'Log browser';
+  return 'Label browser';
 }
 
 function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: SuggestionsState): string {

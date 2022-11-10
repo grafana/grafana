@@ -35,22 +35,65 @@ e2e.scenario({
     e2e.components.DataSourcePicker.container().should('be.visible').click();
     e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
 
-    cy.contains('label', 'Code').click();
+    e2e().contains('Code').click();
 
-    // we need to wait for the query-field being lazy-loaded, in two steps:
-    // it is a two-step process:
-    // 1. first we wait for the text 'Loading...' to appear
-    // 1. then we wait for the text 'Loading...' to disappear
+    // Wait for lazy loading
     const monacoLoadingText = 'Loading...';
-    const queryText = `rate(http_requests_total{job="grafana"}[5m])`;
+
     e2e.components.QueryField.container().should('be.visible').should('have.text', monacoLoadingText);
     e2e.components.QueryField.container().should('be.visible').should('not.have.text', monacoLoadingText);
-    e2e.components.QueryField.container().type(queryText, { parseSpecialCharSequences: false }).type('{backspace}');
 
-    cy.contains(queryText.slice(0, -1)).should('be.visible');
+    // adds closing braces around empty value
+    e2e.components.QueryField.container().type('time(');
+    e2e()
+      .get('.monaco-editor textarea:first')
+      .should(($el) => {
+        expect($el.val()).to.eq('time()');
+      });
 
-    e2e.components.QueryField.container().type(e2e.typings.undo());
+    // removes closing brace when opening brace is removed
+    e2e.components.QueryField.container().type('{selectall}{backspace}avg_over_time({backspace}');
+    e2e()
+      .get('.monaco-editor textarea:first')
+      .should(($el) => {
+        expect($el.val()).to.eq('avg_over_time');
+      });
 
-    cy.contains(queryText).should('be.visible');
+    // keeps closing brace when opening brace is removed and inner values exist
+    e2e.components.QueryField.container().type(
+      '{selectall}{backspace}time(test{leftArrow}{leftArrow}{leftArrow}{leftArrow}{backspace}'
+    );
+    e2e()
+      .get('.monaco-editor textarea:first')
+      .should(($el) => {
+        expect($el.val()).to.eq('timetest)');
+      });
+
+    // overrides an automatically inserted brace
+    e2e.components.QueryField.container().type('{selectall}{backspace}time()');
+    e2e()
+      .get('.monaco-editor textarea:first')
+      .should(($el) => {
+        expect($el.val()).to.eq('time()');
+      });
+
+    // does not override manually inserted braces
+    e2e.components.QueryField.container().type('{selectall}{backspace}))');
+    e2e()
+      .get('.monaco-editor textarea:first')
+      .should(($el) => {
+        expect($el.val()).to.eq('))');
+      });
+
+    /** Runner plugin */
+
+    // Should execute the query when enter with shift is pressed
+    e2e.components.QueryField.container().type('{selectall}{backspace}{shift+enter}');
+    e2e().get('[data-testid="explore-no-data"]').should('be.visible');
+
+    /** Suggestions plugin */
+    e2e.components.QueryField.container().type('{selectall}av');
+    e2e().contains('avg').should('be.visible');
+    e2e().contains('avg_over_time').should('be.visible');
   },
 });
