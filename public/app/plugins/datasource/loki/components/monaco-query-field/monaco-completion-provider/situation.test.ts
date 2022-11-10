@@ -26,15 +26,19 @@ function assertSituation(situation: string, expectedSituation: Situation | null)
 }
 
 describe('situation', () => {
-  it('handles things', () => {
+  it('identifies EMPTY autocomplete situations', () => {
     assertSituation('^', {
       type: 'EMPTY',
     });
+  });
 
+  it('identifies EMPTY autocomplete situations', () => {
     assertSituation('s^', {
       type: 'AT_ROOT',
     });
+  });
 
+  it('identifies AFTER_SELECTOR autocomplete situations', () => {
     assertSituation('{level="info"} ^', {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
@@ -74,18 +78,27 @@ describe('situation', () => {
       afterPipe: false,
       labels: [{ name: 'level', value: 'info', op: '=' }],
     });
+  });
 
+  it('identifies IN_AGGREGATION autocomplete situations', () => {
     assertSituation('sum(^)', {
       type: 'IN_AGGREGATION',
     });
   });
 
-  it('handles label names', () => {
+  it('identifies IN_LABEL_SELECTOR_NO_LABEL_NAME autocomplete situations', () => {
     assertSituation('{^}', {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels: [],
     });
 
+    assertSituation('sum({^})', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+      otherLabels: [],
+    });
+  });
+
+  it('identifies labels from queries', () => {
     assertSituation('sum(count_over_time({level="info"})) by (^)', {
       type: 'IN_GROUPING',
       otherLabels: [{ name: 'level', value: 'info', op: '=' }],
