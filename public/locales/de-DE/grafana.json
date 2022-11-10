@@ -437,8 +437,8 @@
       "to-input": ""
     },
     "range-picker": {
-      "move-time-backwards": "",
-      "move-time-forwards": "",
+      "backwards-time-aria-label": "",
+      "forwards-time-aria-label": "",
       "to": "",
       "zoom-out-button": "",
       "zoom-out-tooltip": ""
