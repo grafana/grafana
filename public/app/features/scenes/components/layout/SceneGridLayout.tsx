@@ -225,7 +225,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   onDragStop: ReactGridLayout.ItemCallback = (gridLayout, o, updatedItem) => {
     const sceneChild = this.getSceneLayoutChild(updatedItem.i)!;
 
-    // Need to resort the grid layout based on new position (needed to get the find the correct new parent row)
+    // Need to resort the grid layout based on new position (needed to to find the new parent)
     gridLayout = sortGridLayout(gridLayout);
 
     // Update children positions if they have changed
