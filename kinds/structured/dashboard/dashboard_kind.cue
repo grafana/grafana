@@ -1,18 +1,15 @@
-package dashboard
+package kind
 
-import (
-	"strings"
+import "strings"
 
-	"github.com/grafana/thema"
-)
+name:     "Dashboard"
+maturity: "merged"
 
-thema.#Lineage
-name: "dashboard"
-seqs: [
+lineage: seqs: [
 	{
 		schemas: [
 			{// 0.0
-			  @grafana(TSVeneer="type")
+				@grafana(TSVeneer="type")
 
 				// Unique numeric identifier for the dashboard.
 				// TODO must isolate or remove identifiers local to a Grafana instance...?
@@ -84,12 +81,13 @@ seqs: [
 				///////////////////////////////////////
 				// Definitions (referenced above) are declared below
 
+				// TODO docs
 				#AnnotationTarget: {
-					limit: int64
+					limit:    int64
 					matchAny: bool
 					tags: [...string]
 					type: string
-				}
+				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 				// TODO docs
 				// FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
@@ -111,9 +109,9 @@ seqs: [
 					iconColor?: string                @grafanamaturity(NeedsExpertReview)
 					type:       string | *"dashboard" @grafanamaturity(NeedsExpertReview)
 					// Query for annotation data.
-					rawQuery?: string     @grafanamaturity(NeedsExpertReview)
-					showIn:    uint8 | *0 @grafanamaturity(NeedsExpertReview)
-					target?:   #AnnotationTarget    @grafanamaturity(NeedsExpertReview)
+					rawQuery?: string            @grafanamaturity(NeedsExpertReview)
+					showIn:    uint8 | *0        @grafanamaturity(NeedsExpertReview)
+					target?:   #AnnotationTarget @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface")
 
 				// FROM: packages/grafana-data/src/types/templateVars.ts
@@ -237,7 +235,7 @@ seqs: [
 				#SpecialValueMap: {
 					type: #MappingType & "special"
 					options: {
-						match: "true" | "false"
+						match:   "true" | "false"
 						pattern: string
 						result:  #ValueMappingResult
 					}
@@ -376,7 +374,7 @@ seqs: [
 					// Human readable field metadata
 					description?: string @grafanamaturity(NeedsExpertReview)
 
-					// An explict path to the field in the datasource.  When the frame meta includes a path,
+					// An explicit path to the field in the datasource.  When the frame meta includes a path,
 					// This will default to `${frame.meta.path}/${field.name}
 					//
 					// When defined, this value can be used as an identifier within the datasource scope, and
