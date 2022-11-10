@@ -6,6 +6,7 @@ import (
 	"crypto/sha1"
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -421,7 +422,7 @@ func (pr *PackfileReader) Read() (*Packfile, error) {
 	packfile := NewPackfile()
 
 	if err := pr.validateHeader(); err != nil {
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			// This is an empty repo. It's OK.
 			return packfile, nil
 		}
@@ -438,7 +439,7 @@ func (pr *PackfileReader) Read() (*Packfile, error) {
 		return nil, err
 	}
 
-	packfile.Version = uint32(ver)
+	packfile.Version = ver
 	packfile.ObjectCount = int(count)
 
 	if packfile.ObjectCount > MaxObjectsLimit {
@@ -490,7 +491,7 @@ func (pr *PackfileReader) readObjects(packfile *Packfile) error {
 
 		pr.offsets[pos] = obj.hash
 
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 	}
@@ -700,7 +701,7 @@ func (o *objectReader) addObject(bytes []byte) error {
 func (o *objectReader) inflate() ([]byte, error) {
 	zr, err := zlib.NewReader(o.pr.r)
 	if err != nil {
-		if err == zlib.ErrHeader {
+		if errors.Is(err, zlib.ErrHeader) {
 			return nil, zlib.ErrHeader
 		} else {
 			return nil, NewError("error opening packfile's object zlib: %v", err)
@@ -713,7 +714,10 @@ func (o *objectReader) inflate() ([]byte, error) {
 	}
 
 	var buf bytes.Buffer
-	io.Copy(&buf, zr) // also: io.CopyN(&buf, zr, int64(o.size))
+	_, err = io.Copy(&buf, zr) // also: io.CopyN(&buf, zr, int64(o.size))
+	if err != nil {
+		return nil, err
+	}
 
 	var bufLen = buf.Len()
 	if bufLen != int(o.size) {
@@ -797,6 +801,7 @@ func req(org, repo string) ([]byte, error) {
 		return nil, err
 	}
 	b, err := io.ReadAll(res.Body)
+	_ = res.Body.Close()
 	return b, err
 }
 
@@ -812,5 +817,6 @@ func cmd(org, repo string, data []byte) ([]byte, error) {
 		return nil, err
 	}
 	b, err := io.ReadAll(res.Body)
+	_ = res.Body.Close()
 	return b, err
 }

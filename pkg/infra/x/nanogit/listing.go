@@ -201,18 +201,12 @@ func GetListing(addr GitAddress) (*data.Frame, error) {
 			} else {
 				entry.Children = tree.Children
 			}
-
 		} else if listing.Root == nil {
 			listing.Root = tree
 		} else {
 			listing.Errors = append(listing.Errors, fmt.Sprintf("found multiple roots: %s", tree.Hash))
 			fmt.Printf("multiple roots???")
 		}
-
-		if tree.IsShared {
-			fmt.Printf("SHARED TREEXX: %s\n", tree.Hash)
-		}
-
 	}
 
 	if listing.Shared != nil {
