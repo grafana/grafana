@@ -7,9 +7,7 @@
 package api
 
 import (
-	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -17,11 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/web"
 )
-
-const disableProvenanceHeaderName = "x-disable-provenance"
 
 type ProvisioningApi interface {
 	RouteDeleteAlertRule(*models.ReqContext) response.Response
@@ -102,16 +97,12 @@ func (f *ProvisioningApiHandler) RouteGetTemplates(ctx *models.ReqContext) respo
 	return f.handleRouteGetTemplates(ctx)
 }
 func (f *ProvisioningApiHandler) RoutePostAlertRule(ctx *models.ReqContext) response.Response {
-	provenance, err := determineProvenance(ctx)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
 	// Parse Request Body
 	conf := apimodels.ProvisionedAlertRule{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.handleRoutePostAlertRule(ctx, conf, provenance)
+	return f.handleRoutePostAlertRule(ctx, conf)
 }
 func (f *ProvisioningApiHandler) RoutePostContactpoints(ctx *models.ReqContext) response.Response {
 	// Parse Request Body
@@ -132,17 +123,12 @@ func (f *ProvisioningApiHandler) RoutePostMuteTiming(ctx *models.ReqContext) res
 func (f *ProvisioningApiHandler) RoutePutAlertRule(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
-
-	provenance, err := determineProvenance(ctx)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
 	// Parse Request Body
 	conf := apimodels.ProvisionedAlertRule{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.handleRoutePutAlertRule(ctx, conf, uIDParam, provenance)
+	return f.handleRoutePutAlertRule(ctx, conf, uIDParam)
 }
 func (f *ProvisioningApiHandler) RoutePutAlertRuleGroup(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -195,17 +181,6 @@ func (f *ProvisioningApiHandler) RoutePutTemplate(ctx *models.ReqContext) respon
 }
 func (f *ProvisioningApiHandler) RouteResetPolicyTree(ctx *models.ReqContext) response.Response {
 	return f.handleRouteResetPolicyTree(ctx)
-}
-
-func determineProvenance(ctx *models.ReqContext) (alerting_models.Provenance, error) {
-	disableProvenance, err := strconv.ParseBool(ctx.Req.Header.Get(disableProvenanceHeaderName))
-	if err != nil {
-		return alerting_models.ProvenanceAPI, errors.New("error parsing x-disable-provenance header")
-	}
-	if disableProvenance {
-		return alerting_models.ProvenanceNone, nil
-	}
-	return alerting_models.ProvenanceAPI, nil
 }
 
 func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics.API) {
