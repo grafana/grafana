@@ -354,7 +354,12 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag defi
 }
 
 func determineProvenance(ctx *models.ReqContext) (alerting_models.Provenance, error) {
-	disableProvenance, err := strconv.ParseBool(ctx.Req.Header.Get(disableProvenanceHeaderName))
+	disableProvenanceHeader := ctx.Req.Header.Get(disableProvenanceHeaderName)
+	if disableProvenanceHeader == "" {
+		return alerting_models.ProvenanceAPI, nil
+	}
+
+	disableProvenance, err := strconv.ParseBool(disableProvenanceHeader)
 	if err != nil {
 		return alerting_models.ProvenanceAPI, errors.New(fmt.Sprintf("error parsing %s header", disableProvenanceHeaderName))
 	}

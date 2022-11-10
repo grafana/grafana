@@ -261,6 +261,7 @@ func TestProvisioningApi(t *testing.T) {
 			t.Run("POST sets expected fields with no provenance", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
+				rc.Req.Header = map[string][]string{"X-Disable-Provenance": {"true"}}
 				rc.OrgID = 3
 				rule := createTestAlertRule("rule", 1)
 
@@ -279,6 +280,7 @@ func TestProvisioningApi(t *testing.T) {
 				rule.UID = uid
 				insertRuleInOrg(t, sut, rule, 3)
 				rc := createTestRequestCtx()
+				rc.Req.Header = map[string][]string{"X-Disable-Provenance": {"false"}}
 				rc.OrgID = 3
 				rule.OrgID = 1 // Set the org back to something wrong, we should still prefer the value from the req context.
 
