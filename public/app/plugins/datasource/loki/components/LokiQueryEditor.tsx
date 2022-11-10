@@ -36,6 +36,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
   const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
+  const [labelsLoaded, setLabelsLoaded] = useState(false);
   const { flag: explain, setFlag: setExplain } = useFlag(lokiQueryEditorExplainKey);
   const { flag: rawQuery, setFlag: setRawQuery } = useFlag(lokiQueryEditorRawQueryKey, true);
 
@@ -87,8 +88,8 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
     setLabelBrowserVisible((visible) => !visible);
   };
 
-  const getChooserText = (hasSyntax: boolean, hasLogLabels: boolean) => {
-    if (!hasSyntax) {
+  const getChooserText = (logLabelsLoaded: boolean, hasLogLabels: boolean) => {
+    if (!logLabelsLoaded) {
       return 'Loading labels...';
     }
     if (!hasLogLabels) {
@@ -97,8 +98,23 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
     return 'Label browser';
   };
 
-  // TODO: replace (true, true) with actual values
-  const labelBrowserText = getChooserText(true, true);
+  useEffect(() => {
+    let _isMounted = false;
+
+    async function componentDidMount() {
+      _isMounted = true;
+      await datasource.languageProvider.start();
+      if (_isMounted) {
+        setLabelsLoaded(true);
+      }
+    }
+
+    componentDidMount();
+  }, [datasource]);
+
+  const hasLogLabels = datasource.languageProvider.getLabelKeys().length > 0;
+  const labelBrowserText = getChooserText(labelsLoaded, hasLogLabels);
+  const buttonDisabled = !(labelsLoaded && hasLogLabels);
 
   return (
     <>
@@ -156,7 +172,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           >
             Kick start your query
           </Button>
-          <Button variant="secondary" size="sm" onClick={onClickChooserButton}>
+          <Button variant="secondary" size="sm" onClick={onClickChooserButton} disabled={buttonDisabled}>
             {labelBrowserText}
           </Button>
         </div>
