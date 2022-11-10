@@ -184,10 +184,6 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
    *  If it is collapsed there is no row to add it to. The default is then to return the SceneGridLayout itself
    */
   findGridItemSceneParent(layout: ReactGridLayout.Layout[], startAt: number): SceneGridRow | SceneGridLayout {
-    if (startAt < 0) {
-      return this;
-    }
-
     for (let i = startAt; i >= 0; i--) {
       const gridItem = layout[i];
       const sceneChild = this.getSceneLayoutChild(gridItem.i);
