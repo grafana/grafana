@@ -156,6 +156,48 @@ message WriteObjectRequest {
   string previous_version = 4;
 }
 
+// This operation is useful when syncing a resource from external sources
+// that have more accurate metadata information (git, or an archive).
+// This process can bypass the forced checks that 
+message AdminWriteObjectRequest {
+  // Object identifier
+  GRN GRN = 1;
+
+  // The raw object body
+  bytes body = 2;
+
+  // Message that can be seen when exploring object history
+  string comment = 3;
+
+  // Time in epoch milliseconds that the object was created
+  // Optional, if 0 it will use the current time
+  int64 created_at = 4;
+
+  // Time in epoch milliseconds that the object was updated
+  // Optional, if empty it will use the current user
+  int64 updated_at = 5;
+
+  // Who created the object
+  // Optional, if 0 it will use the current time
+  string created_by = 6;
+
+  // Who updated the object
+  // Optional, if empty it will use the current user
+  string updated_by = 7;
+
+  // An explicit version identifier
+  // Optional, if set, this will overwrite/define an explicit version
+  string version = 8;
+
+  // Request that previous versions are removed from the cache
+  // This will make sense for systems that manage history explicitly externallay
+  bool clear_history = 9;
+
+  // NOTE: currently managed by the dashboard_provisioning table
+  // git@... ?
+  string sync_source = 10;
+}
+
 message WriteObjectResponse {
   // Error info -- if exists, the save did not happen
   ObjectErrorInfo error = 1;
@@ -318,6 +360,7 @@ service ObjectStore {
   rpc Read(ReadObjectRequest) returns (ReadObjectResponse);
   rpc BatchRead(BatchReadObjectRequest) returns (BatchReadObjectResponse);
   rpc Write(WriteObjectRequest) returns (WriteObjectResponse);
+  rpc AdminWrite(AdminWriteObjectRequest) returns (WriteObjectResponse);
   rpc Delete(DeleteObjectRequest) returns (DeleteObjectResponse);
   rpc History(ObjectHistoryRequest) returns (ObjectHistoryResponse);
   rpc Search(ObjectSearchRequest) returns (ObjectSearchResponse);
