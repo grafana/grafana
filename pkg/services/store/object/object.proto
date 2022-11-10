@@ -53,10 +53,10 @@ message RawObject {
   string version = 9;
 
   // External location info
-  RawObjectSyncInfo sync = 10;
+  ObjectOriginInfo origin = 10;
 }
 
-message RawObjectSyncInfo {
+message ObjectOriginInfo {
   // NOTE: currently managed by the dashboard_provisioning table
   string source = 1;
 
@@ -189,13 +189,16 @@ message AdminWriteObjectRequest {
   // Optional, if set, this will overwrite/define an explicit version
   string version = 8;
 
-  // Request that previous versions are removed from the cache
-  // This will make sense for systems that manage history explicitly externallay
-  bool clear_history = 9;
+  // Used for optimistic locking.  If missing, the previous version will be replaced regardless
+  // This may not be used along with an explicit version in the request
+  string previous_version = 9;
 
-  // NOTE: currently managed by the dashboard_provisioning table
-  // git@... ?
-  string sync_source = 10;
+  // Request that all previous versions are removed from the history
+  // This will make sense for systems that manage history explicitly externallay
+  bool clear_history = 10;
+
+  // Optionally define where the object came from
+  string origin = 11;
 }
 
 message WriteObjectResponse {
@@ -354,13 +357,11 @@ message ObjectSearchResponse {
 // Storage interface
 //-----------------------------------------------
 
-// This assumes a future grpc interface where the user info is passed in context, not in each message body
-// for now it will only work with an admin API key
+// The object store provides a basic CRUD (+watch eventually) interface for generic objects
 service ObjectStore {
   rpc Read(ReadObjectRequest) returns (ReadObjectResponse);
   rpc BatchRead(BatchReadObjectRequest) returns (BatchReadObjectResponse);
   rpc Write(WriteObjectRequest) returns (WriteObjectResponse);
-  rpc AdminWrite(AdminWriteObjectRequest) returns (WriteObjectResponse);
   rpc Delete(DeleteObjectRequest) returns (DeleteObjectResponse);
   rpc History(ObjectHistoryRequest) returns (ObjectHistoryResponse);
   rpc Search(ObjectSearchRequest) returns (ObjectSearchResponse);
@@ -368,4 +369,10 @@ service ObjectStore {
 // Ideally an additional search endpoint with more flexibility to limit what you actually care about
 //  https://github.com/grafana/grafana-plugin-sdk-go/blob/main/proto/backend.proto#L129
 //  rpc SearchEX(ObjectSearchRequest) returns (DataResponse);
+}
+
+// The admin service extends the basic object store interface, but provides
+// more explicit control that can support bulk operations like efficient git sync
+service ObjectStoreAdmin {
+  rpc AdminWrite(AdminWriteObjectRequest) returns (WriteObjectResponse);
 }

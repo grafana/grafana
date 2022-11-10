@@ -23,6 +23,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// Make sure we implement both store + admin
+var _ object.ObjectStoreServer = &sqlObjectServer{}
+var _ object.ObjectStoreAdminServer = &sqlObjectServer{}
+
 func ProvideSQLObjectServer(db db.DB, cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry, resolver resolver.ObjectReferenceResolver) object.ObjectStoreServer {
 	objectServer := &sqlObjectServer{
 		sess:     db.GetSqlxSession(),
@@ -63,7 +67,7 @@ func getReadSelect(r *object.ReadObjectRequest) string {
 func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql.Rows, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
 	path := "" // string (extract UID?)
 	var syncSrc sql.NullString
-	var syncTime sql.NullTime
+	var syncTime sql.NullInt64
 	raw := &object.RawObject{
 		GRN: &object.GRN{},
 	}
@@ -89,9 +93,9 @@ func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql
 	}
 
 	if syncSrc.Valid || syncTime.Valid {
-		raw.Sync = &object.RawObjectSyncInfo{
+		raw.Origin = &object.ObjectOriginInfo{
 			Source: syncSrc.String,
-			Time:   syncTime.Time.UnixMilli(),
+			Time:   syncTime.Int64,
 		}
 	}
 
@@ -273,6 +277,10 @@ func (s *sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObje
 }
 
 func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
+	return s.AdminWrite(ctx, object.ToAdminWriteObjectRequest(r))
+}
+
+func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteObjectRequest) (*object.WriteObjectResponse, error) {
 	route, err := s.getObjectKey(ctx, r.GRN)
 	if err != nil {
 		return nil, err
@@ -462,7 +470,7 @@ func (s *sqlObjectServer) selectForUpdate(ctx context.Context, tx *session.Sessi
 	return current, err
 }
 
-func (s *sqlObjectServer) prepare(ctx context.Context, r *object.WriteObjectRequest) (*summarySupport, []byte, error) {
+func (s *sqlObjectServer) prepare(ctx context.Context, r *object.AdminWriteObjectRequest) (*summarySupport, []byte, error) {
 	grn := r.GRN
 	builder := s.kinds.GetSummaryBuilder(grn.Kind)
 	if builder == nil {
