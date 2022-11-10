@@ -3,9 +3,7 @@ import { CellProps, DefaultSortTypes, IdType, SortByFn } from 'react-table';
 
 export interface Column<TableData extends object> {
   /**
-   * ID of the column.
-   * Set this to the matching object key of your data or `undefined` if the column doesn't have any associated data with it.
-   * This must be unique among all other columns.
+   * ID of the column. Must be unique among all other columns
    */
   id: IdType<TableData>;
   /**
