@@ -375,131 +375,259 @@ func TestProvisioningApi(t *testing.T) {
 		})
 	})
 
-	t.Run("alert rule group exports", func(t *testing.T) {
-		t.Run("are present, GET returns 200", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
-			rc := createTestRequestCtx()
-			insertRule(t, sut, createTestAlertRule("rule", 1))
+	t.Run("exports", func(t *testing.T) {
+		t.Run("alert rule group", func(t *testing.T) {
+			t.Run("are present, GET returns 200", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule", 1))
 
-			response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
 
-			require.Equal(t, 200, response.Status())
+				require.Equal(t, 200, response.Status())
+			})
+
+			t.Run("are missing, GET returns 404", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule", 1))
+
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "does not exist")
+
+				require.Equal(t, 404, response.Status())
+			})
+
+			t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule", 1))
+
+				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "text/yaml", rc.Context.Resp.Header().Get("Content-Type"))
+			})
+
+			t.Run("accept header contains json, GET returns json", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule", 1))
+
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
+			})
+
+			t.Run("accept header contains json and yaml, GET returns json", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule", 1))
+
+				rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
+			})
+
+			t.Run("query param download=true, GET returns content disposition attachment", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule", 1))
+
+				rc.Context.Req.Form.Set("download", "true")
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Contains(t, rc.Context.Resp.Header().Get("Content-Disposition"), "attachment")
+			})
+
+			t.Run("query param download=false, GET returns empty content disposition", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule", 1))
+
+				rc.Context.Req.Form.Set("download", "false")
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
+			})
+
+			t.Run("query param download not set, GET returns empty content disposition", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule", 1))
+
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
+			})
+
+			t.Run("json body content is as expected", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule1", 1))
+				insertRule(t, sut, createTestAlertRule("rule2", 1))
+
+				expectedResponse := `{"orgId":1,"name":"my-cool-group","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"-100"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s"},{"uid":"rule2","title":"rule2","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"-100"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s"}]}`
+
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
+
+			t.Run("yaml body content is as expected", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule1", 1))
+				insertRule(t, sut, createTestAlertRule("rule2", 1))
+
+				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				expectedResponse := "orgId: 1\nname: my-cool-group\nfolder: Folder Title\ninterval: 1m\nrules:\n    - uid: rule1\n      title: rule1\n      condition: A\n      data:\n        - refId: A\n          datasourceUid: \"\"\n          model:\n            conditions:\n                - evaluator:\n                    params:\n                        - 3\n                    type: gt\n                  operator:\n                    type: and\n                  query:\n                    params:\n                        - A\n                  reducer:\n                    type: last\n                  type: query\n            datasource:\n                type: __expr__\n                uid: \"-100\"\n            expression: 1==0\n            intervalMs: 1000\n            maxDataPoints: 43200\n            refId: A\n            type: math\n      noDataState: OK\n      execErrState: OK\n      for: 0s\n    - uid: rule2\n      title: rule2\n      condition: A\n      data:\n        - refId: A\n          datasourceUid: \"\"\n          model:\n            conditions:\n                - evaluator:\n                    params:\n                        - 3\n                    type: gt\n                  operator:\n                    type: and\n                  query:\n                    params:\n                        - A\n                  reducer:\n                    type: last\n                  type: query\n            datasource:\n                type: __expr__\n                uid: \"-100\"\n            expression: 1==0\n            intervalMs: 1000\n            maxDataPoints: 43200\n            refId: A\n            type: math\n      noDataState: OK\n      execErrState: OK\n      for: 0s\n"
+
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
 		})
 
-		t.Run("are missing, GET returns 404", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
-			rc := createTestRequestCtx()
-			insertRule(t, sut, createTestAlertRule("rule", 1))
+		t.Run("alert rule", func(t *testing.T) {
+			t.Run("are present, GET returns 200", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule1", 1))
 
-			response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "does not exist")
+				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
 
-			require.Equal(t, 404, response.Status())
-		})
+				require.Equal(t, 200, response.Status())
+			})
 
-		t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
-			rc := createTestRequestCtx()
-			insertRule(t, sut, createTestAlertRule("rule", 1))
+			t.Run("are missing, GET returns 404", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule1", 1))
 
-			rc.Context.Req.Header.Add("Accept", "application/yaml")
-			response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
-			response.WriteTo(&rc)
+				response := sut.RouteGetAlertRuleExport(&rc, "rule404")
 
-			require.Equal(t, 200, response.Status())
-			require.Equal(t, "text/yaml", rc.Context.Resp.Header().Get("Content-Type"))
-		})
+				require.Equal(t, 404, response.Status())
+			})
 
-		t.Run("accept header contains json, GET returns json", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
-			rc := createTestRequestCtx()
-			insertRule(t, sut, createTestAlertRule("rule", 1))
+			t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule1", 1))
 
-			rc.Context.Req.Header.Add("Accept", "application/json")
-			response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
-			response.WriteTo(&rc)
+				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
+				response.WriteTo(&rc)
 
-			require.Equal(t, 200, response.Status())
-			require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
-		})
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "text/yaml", rc.Context.Resp.Header().Get("Content-Type"))
+			})
 
-		t.Run("accept header contains json and yaml, GET returns json", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
-			rc := createTestRequestCtx()
-			insertRule(t, sut, createTestAlertRule("rule", 1))
+			t.Run("accept header contains json, GET returns json", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule1", 1))
 
-			rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
-			response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
-			response.WriteTo(&rc)
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
+				response.WriteTo(&rc)
 
-			require.Equal(t, 200, response.Status())
-			require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
-		})
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
+			})
 
-		t.Run("query param download=true, GET returns content disposition attachment", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
-			rc := createTestRequestCtx()
-			insertRule(t, sut, createTestAlertRule("rule", 1))
+			t.Run("accept header contains json and yaml, GET returns json", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule1", 1))
 
-			rc.Context.Req.Form.Set("download", "true")
-			response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
-			response.WriteTo(&rc)
+				rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
+				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
+				response.WriteTo(&rc)
 
-			require.Equal(t, 200, response.Status())
-			require.Contains(t, rc.Context.Resp.Header().Get("Content-Disposition"), "attachment")
-		})
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
+			})
 
-		t.Run("query param download=false, GET returns empty content disposition", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
-			rc := createTestRequestCtx()
-			insertRule(t, sut, createTestAlertRule("rule", 1))
+			t.Run("query param download=true, GET returns content disposition attachment", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule1", 1))
 
-			rc.Context.Req.Form.Set("download", "false")
-			response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
-			response.WriteTo(&rc)
+				rc.Context.Req.Form.Set("download", "true")
+				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
+				response.WriteTo(&rc)
 
-			require.Equal(t, 200, response.Status())
-			require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
-		})
+				require.Equal(t, 200, response.Status())
+				require.Contains(t, rc.Context.Resp.Header().Get("Content-Disposition"), "attachment")
+			})
 
-		t.Run("query param download not set, GET returns empty content disposition", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
-			rc := createTestRequestCtx()
-			insertRule(t, sut, createTestAlertRule("rule", 1))
+			t.Run("query param download=false, GET returns empty content disposition", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule1", 1))
 
-			response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
-			response.WriteTo(&rc)
+				rc.Context.Req.Form.Set("download", "false")
+				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
+				response.WriteTo(&rc)
 
-			require.Equal(t, 200, response.Status())
-			require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
-		})
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
+			})
 
-		t.Run("json body content is as expected", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
-			rc := createTestRequestCtx()
-			insertRule(t, sut, createTestAlertRule("rule1", 1))
-			insertRule(t, sut, createTestAlertRule("rule2", 1))
+			t.Run("query param download not set, GET returns empty content disposition", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule1", 1))
 
-			expectedResponse := `{"orgId":1,"name":"my-cool-group","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"-100"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s"},{"uid":"rule2","title":"rule2","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"-100"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s"}]}`
+				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
+				response.WriteTo(&rc)
 
-			response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
+			})
 
-			require.Equal(t, 200, response.Status())
-			require.Equal(t, expectedResponse, string(response.Body()))
-		})
+			t.Run("json body content is as expected", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule1", 1))
 
-		t.Run("yaml body content is as expected", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
-			rc := createTestRequestCtx()
-			insertRule(t, sut, createTestAlertRule("rule1", 1))
-			insertRule(t, sut, createTestAlertRule("rule2", 1))
+				expectedResponse := `{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"-100"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s"}`
 
-			rc.Context.Req.Header.Add("Accept", "application/yaml")
-			expectedResponse := "orgId: 1\nname: my-cool-group\nfolder: Folder Title\ninterval: 1m\nrules:\n    - uid: rule1\n      title: rule1\n      condition: A\n      data:\n        - refId: A\n          datasourceUid: \"\"\n          model:\n            conditions:\n                - evaluator:\n                    params:\n                        - 3\n                    type: gt\n                  operator:\n                    type: and\n                  query:\n                    params:\n                        - A\n                  reducer:\n                    type: last\n                  type: query\n            datasource:\n                type: __expr__\n                uid: \"-100\"\n            expression: 1==0\n            intervalMs: 1000\n            maxDataPoints: 43200\n            refId: A\n            type: math\n      noDataState: OK\n      execErrState: OK\n      for: 0s\n    - uid: rule2\n      title: rule2\n      condition: A\n      data:\n        - refId: A\n          datasourceUid: \"\"\n          model:\n            conditions:\n                - evaluator:\n                    params:\n                        - 3\n                    type: gt\n                  operator:\n                    type: and\n                  query:\n                    params:\n                        - A\n                  reducer:\n                    type: last\n                  type: query\n            datasource:\n                type: __expr__\n                uid: \"-100\"\n            expression: 1==0\n            intervalMs: 1000\n            maxDataPoints: 43200\n            refId: A\n            type: math\n      noDataState: OK\n      execErrState: OK\n      for: 0s\n"
+				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
 
-			response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
 
-			require.Equal(t, 200, response.Status())
-			require.Equal(t, expectedResponse, string(response.Body()))
+			t.Run("yaml body content is as expected", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule1", 1))
+
+				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				expectedResponse := "uid: rule1\ntitle: rule1\ncondition: A\ndata:\n    - refId: A\n      datasourceUid: \"\"\n      model:\n        conditions:\n            - evaluator:\n                params:\n                    - 3\n                type: gt\n              operator:\n                type: and\n              query:\n                params:\n                    - A\n              reducer:\n                type: last\n              type: query\n        datasource:\n            type: __expr__\n            uid: \"-100\"\n        expression: 1==0\n        intervalMs: 1000\n        maxDataPoints: 43200\n        refId: A\n        type: math\nnoDataState: OK\nexecErrState: OK\nfor: 0s\n"
+
+				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
 		})
 	})
 }

@@ -23,6 +23,19 @@ import (
 //       200: ProvisionedAlertRule
 //       404: description: Not found.
 
+// swagger:route GET /api/v1/provisioning/alert-rules/{UID}/export provisioning stable RouteGetAlertRuleExport
+//
+// Export a rule in provisioning file format.
+//
+//     Produces:
+//     - application/json
+//     - application/yaml
+//     - text/yaml
+//
+//     Responses:
+//       200: AlertRuleExport
+//       404: description: Not found.
+
 // swagger:route POST /api/v1/provisioning/alert-rules provisioning stable RoutePostAlertRule
 //
 // Create a new alert rule.
@@ -52,7 +65,7 @@ import (
 //     Responses:
 //       204: description: The alert rule was deleted successfully.
 
-// swagger:parameters RouteGetAlertRule RoutePutAlertRule RouteDeleteAlertRule
+// swagger:parameters RouteGetAlertRule RoutePutAlertRule RouteDeleteAlertRule RouteGetAlertRuleExport
 type AlertRuleUIDReference struct {
 	// Alert rule UID
 	// in:path
@@ -216,7 +229,7 @@ type AlertRuleGroupMetadata struct {
 	Interval int64 `json:"interval"`
 }
 
-// swagger:parameters RouteGetAlertRuleGroupExport
+// swagger:parameters RouteGetAlertRuleGroupExport RouteGetAlertRuleExport
 type ExportQueryParams struct {
 	// Whether to initiate a download of the file or not.
 	// in: query

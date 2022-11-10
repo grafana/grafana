@@ -380,6 +380,43 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqCont
 	return r(http.StatusOK, grp)
 }
 
+// RouteGetAlertRuleExport retrieves the given alert rule in a format compatible with file provisioning.
+func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, UID string) response.Response {
+	rule, _, err := srv.alertRules.GetAlertRule(c.Req.Context(), c.OrgID, UID)
+	if err != nil {
+		if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
+			return ErrResp(http.StatusNotFound, err, "")
+		}
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+
+	export, err := definitions.NewAlertRuleExport(rule)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+
+	format := "json"
+	acceptHeader := c.Req.Header.Get("Accept")
+	if strings.Contains(acceptHeader, "yaml") && !strings.Contains(acceptHeader, "json") {
+		format = "yaml"
+	}
+
+	download := c.QueryBoolWithDefault("download", false)
+	if download {
+		r := response.JSONDownload
+		if format == "yaml" {
+			r = response.YAMLDownload
+		}
+		return r(http.StatusOK, export, fmt.Sprintf("rule_export.%s", format))
+	}
+
+	r := response.JSON
+	if format == "yaml" {
+		r = response.YAML
+	}
+	return r(http.StatusOK, export)
+}
+
 func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, ag definitions.AlertRuleGroup, folderUID string, group string) response.Response {
 	ag.FolderUID = folderUID
 	ag.Title = group
