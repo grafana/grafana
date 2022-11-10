@@ -229,7 +229,20 @@ func TestProvisioningApi(t *testing.T) {
 
 	t.Run("alert rules", func(t *testing.T) {
 		t.Run("are invalid", func(t *testing.T) {
-			t.Run("POST returns 400", func(t *testing.T) {
+			t.Run("POST returns 400 on wrong x-disable-provenance value", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rc.Req.Header = map[string][]string{"X-Disable-Provenance": {"treu"}}
+				rule := createInvalidAlertRule()
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "expected true or false, got treu")
+			})
+
+			t.Run("POST returns 400 on wrong body params", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 				rule := createInvalidAlertRule()
@@ -241,7 +254,23 @@ func TestProvisioningApi(t *testing.T) {
 				require.Contains(t, string(response.Body()), "invalid alert rule")
 			})
 
-			t.Run("PUT returns 400", func(t *testing.T) {
+			t.Run("PUT returns 400 on wrong x-disable-provenance value", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rc.Req.Header = map[string][]string{"X-Disable-Provenance": {"flase"}}
+				uid := "123123"
+				rule := createTestAlertRule("rule", 1)
+				rule.UID = uid
+				insertRule(t, sut, rule)
+				rule = createInvalidAlertRule()
+
+				response := sut.RoutePutAlertRule(&rc, rule, uid)
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "expected true or false, got flase")
+			})
+
+			t.Run("PUT returns 400 on wrong body params", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 				uid := "123123"
