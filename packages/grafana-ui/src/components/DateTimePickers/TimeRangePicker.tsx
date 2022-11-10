@@ -98,7 +98,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     <ButtonGroup className={styles.container}>
       {hasAbsolute && (
         <ToolbarButton
-          aria-label={t('time-picker.range-picker.move-time-backwards', 'Move time range backwards')}
+          aria-label={t('time-picker.range-picker.backwards-time-aria-label', 'Move time range backwards')}
           variant={variant}
           onClick={onMoveBackward}
           icon="angle-left"
@@ -147,7 +147,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 
       {hasAbsolute && (
         <ToolbarButton
-          aria-label={t('time-picker.range-picker.move-time-forwards', 'Move time range forwards')}
+          aria-label={t('time-picker.range-picker.forwards-time-aria-label', 'Move time range forwards')}
           onClick={onMoveForward}
           icon="angle-right"
           narrow
