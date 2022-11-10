@@ -80,7 +80,7 @@ export class DataProcessor {
     const series = new TimeSeries({
       datapoints: datapoints || [],
       alias: alias,
-      color: config.theme.visualization.getColorByName(color),
+      color: config.theme2.visualization.getColorByName(color),
       unit: field.config ? field.config.unit : undefined,
       dataFrameIndex,
       fieldIndex,

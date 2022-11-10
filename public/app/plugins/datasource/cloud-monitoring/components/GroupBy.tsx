@@ -1,7 +1,8 @@
 import React, { FunctionComponent, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, MultiSelect } from '@grafana/ui';
+import { EditorField, EditorFieldGroup } from '@grafana/experimental';
+import { MultiSelect } from '@grafana/ui';
 
 import { SYSTEM_LABELS } from '../constants';
 import { labelsToGroupedOptions } from '../functions';
@@ -46,6 +47,7 @@ export const GroupBy: FunctionComponent<Props> = ({
           onChange={(options) => {
             onChange({ ...query, groupBys: options.map((o) => o.value!) });
           }}
+          menuPlacement="top"
         />
       </EditorField>
       <Aggregation

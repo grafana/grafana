@@ -20,7 +20,7 @@ interface LogRowContextProps {
   errors?: LogRowContextQueryErrors;
   hasMoreContextRows?: HasMoreContextRows;
   logsSortOrder?: LogsSortOrder | null;
-  onOutsideClick: () => void;
+  onOutsideClick: (method: string) => void;
   onLoadMoreContext: () => void;
 }
 
@@ -49,7 +49,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
         top: 100%;
       `
     : css`
-        margin-top: 20px;
+        margin-top: ${theme.spacing(2.5)};
       `;
   return {
     width: css`
@@ -61,22 +61,22 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
       z-index: ${theme.zIndex.dropdown};
       overflow: hidden;
       background: ${theme.colors.background.primary};
-      box-shadow: 0 0 10px ${theme.v1.palette.black};
+      box-shadow: 0 0 ${theme.spacing(1.25)} ${theme.v1.palette.black};
       border: 1px solid ${theme.colors.background.secondary};
       border-radius: ${theme.shape.borderRadius(2)};
       font-family: ${theme.typography.fontFamily};
     `,
     header: css`
       height: ${headerHeight}px;
-      padding: 0 10px;
+      padding: ${theme.spacing(0, 1.25)};
       display: flex;
       align-items: center;
       background: ${theme.colors.background.canvas};
     `,
     top: css`
       border-radius: 0 0 ${theme.shape.borderRadius(2)} ${theme.shape.borderRadius(2)};
-      box-shadow: 0 0 10px ${theme.v1.palette.black};
-      clip-path: inset(0px -10px -10px -10px);
+      box-shadow: 0 0 ${theme.spacing(1.25)} ${theme.v1.palette.black};
+      clip-path: inset(0px -${theme.spacing(1.25)} -${theme.spacing(1.25)} -${theme.spacing(1.25)});
     `,
     title: css`
       position: absolute;
@@ -87,8 +87,8 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
       background: ${theme.colors.background.secondary};
       border: 1px solid ${theme.colors.background.secondary};
       border-radius: ${theme.shape.borderRadius(2)} ${theme.shape.borderRadius(2)} 0 0;
-      box-shadow: 0 0 10px ${theme.v1.palette.black};
-      clip-path: inset(-10px -10px 0px -10px);
+      box-shadow: 0 0 ${theme.spacing(1.25)} ${theme.v1.palette.black};
+      clip-path: inset(-${theme.spacing(1.25)} -${theme.spacing(1.25)} 0px -${theme.spacing(1.25)});
       font-family: ${theme.typography.fontFamily};
 
       display: flex;
@@ -107,11 +107,11 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
       display: flex;
     `,
     headerButton: css`
-      margin-left: 8px;
+      margin-left: ${theme.spacing(1)};
     `,
     logs: css`
       height: ${logsHeight}px;
-      padding: 10px;
+      padding: ${theme.spacing(1.25)};
       font-family: ${theme.typography.fontFamilyMonospace};
 
       .scrollbar-view {
@@ -290,21 +290,21 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
 }) => {
   useEffect(() => {
     const handleEscKeyDown = (e: KeyboardEvent): void => {
-      if (e.keyCode === 27) {
-        onOutsideClick();
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        onOutsideClick('close_esc');
       }
     };
     document.addEventListener('keydown', handleEscKeyDown, false);
     return () => {
       document.removeEventListener('keydown', handleEscKeyDown, false);
     };
-  }, [onOutsideClick]);
+  }, [onOutsideClick, row]);
   const { afterContext, beforeContext, title, top, actions, width } = useStyles2((theme) =>
     getLogRowContextStyles(theme, wrapLogMessage)
   );
 
   return (
-    <ClickOutsideWrapper onClick={onOutsideClick}>
+    <ClickOutsideWrapper onClick={() => onOutsideClick('close_outside_click')}>
       {/* e.stopPropagation is necessary so the log details doesn't open when clicked on log line in context
        * and/or when context log line is being highlighted */}
       <div onClick={(e) => e.stopPropagation()}>
@@ -337,7 +337,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
         <div className={cx(title, width)}>
           <h5>Log context</h5>
           <div className={actions}>
-            <IconButton size="lg" name="times" onClick={onOutsideClick} />
+            <IconButton size="lg" name="times" onClick={() => onOutsideClick('close_button')} />
           </div>
         </div>
       </div>

@@ -5,14 +5,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/require"
 )
 
 var theme = models.ThemeDark
@@ -22,12 +23,12 @@ func TestIntegrationSqlStorage(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	var sqlStore *sqlstore.SQLStore
+	var sqlStore db.DB
 	var store store
 	var savedFolder *models.Dashboard
 
 	setup := func() {
-		sqlStore = sqlstore.InitTestDB(t)
+		sqlStore = db.InitTestDB(t)
 		store = &xormStore{db: sqlStore}
 		savedFolder = insertTestDashboard(t, sqlStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 	}
@@ -283,7 +284,7 @@ func updateThumbnailState(t *testing.T, store store, dashboardUID string, orgId 
 	require.NoError(t, err)
 }
 
-func updateTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashModel *models.Dashboard, data map[string]interface{}) {
+func updateTestDashboard(t *testing.T, sqlStore db.DB, dashModel *models.Dashboard, data map[string]interface{}) {
 	t.Helper()
 
 	data["id"] = dashModel.Id
@@ -296,7 +297,7 @@ func updateTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashModel *m
 		Dashboard: simplejson.NewFromAny(data),
 	}
 	var dash *models.Dashboard
-	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		var existing models.Dashboard
 		dash = cmd.GetDashboardModel()
 		dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existing)
@@ -320,7 +321,7 @@ func updateTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashModel *m
 
 	require.Nil(t, err)
 
-	err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		dashVersion := &dashver.DashboardVersion{
 			DashboardID:   dash.Id,
 			ParentVersion: parentVersion,
@@ -344,7 +345,7 @@ func updateTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashModel *m
 	require.NoError(t, err)
 }
 
-func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string, orgId int64,
+func insertTestDashboard(t *testing.T, sqlStore db.DB, title string, orgId int64,
 	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
 	t.Helper()
 	cmd := models.SaveDashboardCommand{
@@ -359,7 +360,7 @@ func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	}
 
 	var dash *models.Dashboard
-	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		dash = cmd.GetDashboardModel()
 		dash.SetVersion(1)
 		dash.Created = time.Now()
@@ -374,7 +375,7 @@ func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	dash.Data.Set("id", dash.Id)
 	dash.Data.Set("uid", dash.Uid)
 
-	err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		dashVersion := &dashver.DashboardVersion{
 			DashboardID:   dash.Id,
 			ParentVersion: dash.Version,

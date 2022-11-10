@@ -6,9 +6,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 )
 
@@ -17,7 +16,7 @@ type xormStore struct {
 }
 
 func (ss *xormStore) Get(ctx context.Context, query *thumbs.GetDashboardThumbnailCommand) (*thumbs.DashboardThumbnail, error) {
-	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		result, err := findThumbnailByMeta(sess, query.DashboardThumbnailMeta)
 		if err != nil {
 			return err
@@ -42,7 +41,7 @@ func marshalDatasourceUids(dsUids []string) (string, error) {
 }
 
 func (ss *xormStore) Save(ctx context.Context, cmd *thumbs.SaveDashboardThumbnailCommand) (*thumbs.DashboardThumbnail, error) {
-	err := ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		existing, err := findThumbnailByMeta(sess, cmd.DashboardThumbnailMeta)
 
 		if err != nil && !errors.Is(err, dashboards.ErrDashboardThumbnailNotFound) {
@@ -93,7 +92,7 @@ func (ss *xormStore) Save(ctx context.Context, cmd *thumbs.SaveDashboardThumbnai
 }
 
 func (ss *xormStore) UpdateState(ctx context.Context, cmd *thumbs.UpdateThumbnailStateCommand) error {
-	err := ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		existing, err := findThumbnailByMeta(sess, cmd.DashboardThumbnailMeta)
 
 		if err != nil {
@@ -109,7 +108,7 @@ func (ss *xormStore) UpdateState(ctx context.Context, cmd *thumbs.UpdateThumbnai
 }
 
 func (ss *xormStore) Count(ctx context.Context, cmd *thumbs.FindDashboardThumbnailCountCommand) (int64, error) {
-	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		count, err := sess.Count(&thumbs.DashboardThumbnail{})
 		if err != nil {
 			return err
@@ -123,7 +122,7 @@ func (ss *xormStore) Count(ctx context.Context, cmd *thumbs.FindDashboardThumbna
 }
 
 func (ss *xormStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd *thumbs.FindDashboardsWithStaleThumbnailsCommand) ([]*thumbs.DashboardWithStaleThumbnail, error) {
-	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sess.Table("dashboard")
 		sess.Join("LEFT", "dashboard_thumbnail", "dashboard.id = dashboard_thumbnail.dashboard_id AND dashboard_thumbnail.theme = ? AND dashboard_thumbnail.kind = ?", cmd.Theme, cmd.Kind)
 		sess.Where("dashboard.is_folder = ?", ss.db.GetDialect().BooleanStr(false))
@@ -166,7 +165,7 @@ func (ss *xormStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd 
 	return cmd.Result, err
 }
 
-func findThumbnailByMeta(sess *sqlstore.DBSession, meta thumbs.DashboardThumbnailMeta) (*thumbs.DashboardThumbnail, error) {
+func findThumbnailByMeta(sess *db.Session, meta thumbs.DashboardThumbnailMeta) (*thumbs.DashboardThumbnail, error) {
 	result := &thumbs.DashboardThumbnail{}
 
 	sess.Table("dashboard_thumbnail")
@@ -200,7 +199,7 @@ type dash struct {
 	Id int64
 }
 
-func findDashboardIdByThumbMeta(sess *sqlstore.DBSession, meta thumbs.DashboardThumbnailMeta) (*dash, error) {
+func findDashboardIdByThumbMeta(sess *db.Session, meta thumbs.DashboardThumbnailMeta) (*dash, error) {
 	result := &dash{}
 
 	sess.Table("dashboard").Where("dashboard.uid = ? AND dashboard.org_id = ?", meta.DashboardUID, meta.OrgId).Cols("id")

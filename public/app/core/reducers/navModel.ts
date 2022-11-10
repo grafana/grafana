@@ -8,7 +8,7 @@ export const HOME_NAV_ID = 'home';
 
 export function buildInitialState(): NavIndex {
   const navIndex: NavIndex = {};
-  const rootNodes = cloneDeep(config.bootData.navTree as NavModelItem[]);
+  const rootNodes = cloneDeep(config.bootData.navTree);
   const homeNav = rootNodes.find((node) => node.id === HOME_NAV_ID);
 
   // set home as parent for the rootNodes

@@ -27,6 +27,8 @@ const (
 
 	CategoryOther Category = "other"
 
+	CategoryProfiling Category = "profiling"
+
 	CategorySql Category = "sql"
 
 	CategoryTracing Category = "tracing"
@@ -45,6 +47,17 @@ const (
 	TypeRenderer Type = "renderer"
 
 	TypeSecretsmanager Type = "secretsmanager"
+)
+
+// Defines values for BasicRole.
+const (
+	BasicRoleAdmin BasicRole = "Admin"
+
+	BasicRoleEditor BasicRole = "Editor"
+
+	BasicRoleGrafanaAdmin BasicRole = "Grafana Admin"
+
+	BasicRoleViewer BasicRole = "Viewer"
 )
 
 // Defines values for DependencyType.
@@ -91,6 +104,17 @@ const (
 	ReleaseStateDeprecated ReleaseState = "deprecated"
 
 	ReleaseStateStable ReleaseState = "stable"
+)
+
+// Defines values for RoleRegistrationGrants.
+const (
+	RoleRegistrationGrantsAdmin RoleRegistrationGrants = "Admin"
+
+	RoleRegistrationGrantsEditor RoleRegistrationGrants = "Editor"
+
+	RoleRegistrationGrantsGrafanaAdmin RoleRegistrationGrants = "Grafana Admin"
+
+	RoleRegistrationGrantsViewer RoleRegistrationGrants = "Viewer"
 )
 
 // Model is the Go representation of a pluginmeta.
@@ -253,6 +277,13 @@ type Model struct {
 		MinInterval *bool `json:"minInterval,omitempty"`
 	} `json:"queryOptions,omitempty"`
 
+	// Optional list of RBAC RoleRegistrations.
+	// Describes and organizes the default permissions associated with any of the Grafana basic roles,
+	// which characterizes what viewers, editors, admins, or grafana admins can do on the plugin.
+	// The Admin basic role inherits its default permissions from the Editor basic role which in turn
+	// inherits them from the Viewer basic role.
+	Roles *[]RoleRegistration `json:"roles,omitempty"`
+
 	// Routes is a list of proxy routes, if any. For datasource plugins only.
 	Routes *[]Route `json:"routes,omitempty"`
 
@@ -288,6 +319,14 @@ type Category string
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type Type string
+
+// BasicRole is a Grafana basic role, which can be 'Viewer', 'Editor', 'Admin' or 'Grafana Admin'.
+// With RBAC, the Admin basic role inherits its default permissions from the Editor basic role which
+// in turn inherits them from the Viewer basic role.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type BasicRole string
 
 // BuildInfo is the Go representation of a pluginmeta.BuildInfo.
 //
@@ -473,11 +512,70 @@ type JWTTokenAuth struct {
 	Url string `json:"url"`
 }
 
+// Permission describes an RBAC permission on the plugin. A permission has an action and an option
+// scope.
+// Example: action: 'test-app.schedules:read', scope: 'test-app.schedules:*'
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type Permission struct {
+	Action string  `json:"action"`
+	Scope  *string `json:"scope,omitempty"`
+}
+
 // ReleaseState indicates release maturity state of a plugin.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type ReleaseState string
+
+// Role describes an RBAC role which allows grouping multiple related permissions on the plugin,
+// each of which has an action and an optional scope.
+// Example: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type Role struct {
+	Description string `json:"description"`
+	DisplayName string `json:"displayName"`
+	Name        string `json:"name"`
+	Permissions []struct {
+		Action string  `json:"action"`
+		Scope  *string `json:"scope,omitempty"`
+	} `json:"permissions"`
+}
+
+// RoleRegistration describes an RBAC role and its assignments to basic roles.
+// It organizes related RBAC permissions on the plugin into a role and defines which basic roles
+// will get them by default.
+// Example: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin
+// which will be granted to Admins by default.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type RoleRegistration struct {
+	// Default assignment of the role to Grafana basic roles (Viewer, Editor, Admin, Grafana Admin)
+	// The Admin basic role inherits its default permissions from the Editor basic role which in turn
+	// inherits them from the Viewer basic role.
+	Grants []RoleRegistrationGrants `json:"grants"`
+
+	// RBAC role definition to bundle related RBAC permissions on the plugin.
+	Role struct {
+		Description string `json:"description"`
+		DisplayName string `json:"displayName"`
+		Name        string `json:"name"`
+		Permissions []struct {
+			Action string  `json:"action"`
+			Scope  *string `json:"scope,omitempty"`
+		} `json:"permissions"`
+	} `json:"role"`
+}
+
+// RoleRegistrationGrants is the Go representation of a RoleRegistration.Grants.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type RoleRegistrationGrants string
 
 // A proxy route used in datasource plugins for plugin authentication
 // and adding headers to HTTP requests made by the plugin.
