@@ -4,8 +4,9 @@ import { useLocation } from 'react-router-dom';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { logInfo } from '@grafana/runtime';
-import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Button, Icon, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 
@@ -149,4 +150,120 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-export default RuleList;
+function WelcomePage() {
+  const styles = useStyles2(getWelcomePageStyles);
+
+  return (
+    <AlertingPageWrapper pageId="alert-list">
+      <div className={styles.grid}>
+        <WelcomeHeader />
+      </div>
+    </AlertingPageWrapper>
+  );
+}
+
+const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
+  grid: css`
+    display: grid;
+    gap: ${theme.spacing(2)};
+  `,
+});
+
+function WelcomeHeader() {
+  const styles = useStyles2(getWelcomeHeaderStyles);
+
+  return (
+    <div className={styles.container}>
+      <h2>What you can do</h2>
+      <a href="https://grafana.com/docs/grafana/latest/alerting/" className={styles.docsLink}>
+        Read more in the Alerting Docs <Icon name="angle-right" size="xl" className={styles.docsArrow} />
+      </a>
+
+      <div className={styles.ctaContainer}>
+        <WelcomeCTABox
+          title="Manage alert rules"
+          description="Manage your alert rules. Combine data from multiple data sources"
+          icon="list-ul"
+          href="/alerting/new"
+          hrefText="Create a rule"
+        />
+        <WelcomeCTABox
+          title="Manage notification policies"
+          description="Configure where your alerts are delivered"
+          icon="sitemap"
+          href="/alerting/routes"
+          hrefText="Check configuration"
+        />
+        <WelcomeCTABox
+          title="Manage contact points"
+          description="Configure who and how receives notifications"
+          icon="comment-alt-share"
+          href="/alerting/notifications"
+          hrefText="Configure contact points"
+        />
+      </div>
+    </div>
+  );
+}
+
+const getWelcomeHeaderStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    display: flex;
+    flex-direction: column;
+    padding: ${theme.spacing(4)};
+    background-image: linear-gradient(
+      325deg,
+      hsl(36deg 96% 66%) 0%,
+      hsl(29deg 96% 66%) 52%,
+      hsl(21deg 96% 66%) 77%,
+      hsl(10deg 90% 67%) 91%,
+      hsl(356deg 76% 68%) 99%,
+      hsl(341deg 61% 69%) 100%
+    );
+  `,
+  ctaContainer: css`
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: ${theme.spacing(2)};
+    justify-content: space-between;
+  `,
+  docsLink: css`
+    display: block;
+    color: ${theme.colors.text.link};
+  `,
+  docsArrow: css`
+    //vertical-align: top;
+  `,
+});
+
+interface WelcomeCTABoxProps {
+  title: string;
+  description: string;
+  icon: React.ComponentProps<typeof Icon>['name'];
+  href: string;
+  hrefText: string;
+}
+
+function WelcomeCTABox({ title, description, icon, href, hrefText }: WelcomeCTABoxProps) {
+  // const styles = useStyles2(getWelcomeCTAButtonStyles);
+
+  return (
+    <Stack direction="row" gap={1} wrap={false} alignItems="center">
+      <Icon name={icon} size="xxl" />
+      <Stack gap={1} direction="column">
+        <h3>{title}</h3>
+        <div>{description}</div>
+        <LinkButton href={href}>{hrefText}</LinkButton>
+      </Stack>
+    </Stack>
+  );
+}
+
+const getWelcomeCTAButtonStyles = (theme: GrafanaTheme2) => ({
+  // cont: css`
+  //   grid-template-columns: 50px auto;
+  //   grid-template-rows: ;
+  // `,
+});
+
+export default WelcomePage;
