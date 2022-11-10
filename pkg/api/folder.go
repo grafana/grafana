@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -67,13 +68,15 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
-	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgID, web.Params(c.Req)[":uid"])
+	uid := web.Params(c.Req)[":uid"]
+	ctx := appcontext.WithUser(c.Req.Context(), c.SignedInUser)
+	folder, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{OrgID: c.OrgID, UID: &uid})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
-	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, folder))
+	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
 }
 
 // swagger:route GET /folders/id/{folder_id} folders getFolderByID
@@ -93,13 +96,13 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	folder, err := hs.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, id, c.OrgID)
+	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{ID: &id, OrgID: c.OrgID})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
-	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, folder))
+	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
 }
 
 // swagger:route POST /folders folders createFolder
@@ -182,8 +185,8 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
-	g := guardian.New(c.Req.Context(), result.Id, c.OrgID, c.SignedInUser)
-	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, result))
+	g := guardian.New(c.Req.Context(), result.ID, c.OrgID, c.SignedInUser)
+	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, result))
 }
 
 // swagger:route DELETE /folders/{folder_uid} folders deleteFolder

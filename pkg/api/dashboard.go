@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -394,14 +395,18 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	cmd.OrgId = c.OrgID
 	cmd.UserId = c.UserID
 	if cmd.FolderUid != "" {
-		folder, err := hs.folderService.GetFolderByUID(ctx, c.SignedInUser, c.OrgID, cmd.FolderUid)
+		folder, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
+			OrgID: c.OrgID,
+			UID:   &cmd.FolderUid,
+		})
+		// c.SignedInUser, c.OrgID, cmd.FolderUid)
 		if err != nil {
 			if errors.Is(err, dashboards.ErrFolderNotFound) {
 				return response.Error(400, "Folder not found", err)
 			}
 			return response.Error(500, "Error while checking folder ID", err)
 		}
-		cmd.FolderId = folder.Id
+		cmd.FolderId = folder.ID
 	}
 
 	dash := cmd.GetDashboardModel()
