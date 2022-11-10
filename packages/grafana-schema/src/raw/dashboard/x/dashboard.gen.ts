@@ -373,6 +373,10 @@ export interface Panel {
    */
   repeatDirection: ('h' | 'v');
   /**
+   * Id of the repeating panel.
+   */
+  repeatPanelId?: number;
+  /**
    * TODO docs
    */
   tags?: Array<string>;

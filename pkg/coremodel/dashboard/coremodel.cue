@@ -320,6 +320,8 @@ seqs: [
 					// "h" for horizontal, "v" for vertical.
           // TODO this is probably optional
 					repeatDirection: *"h" | "v" @grafanamaturity(NeedsExpertReview)
+					// Id of the repeating panel.
+					repeatPanelId?: int64 @grafanamaturity(NeedsExpertReview)
 
 					// TODO docs
 					maxDataPoints?: number @grafanamaturity(NeedsExpertReview)
