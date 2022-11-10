@@ -31,7 +31,7 @@ jest.mock(
 );
 
 const ui = {
-  setDashboardButton: byRole('button', { name: 'Set panel and dashboard' }),
+  setDashboardButton: byRole('button', { name: 'Set dashboard and panel' }),
   annotationKeys: byTestId('annotation-key-', { exact: false }),
   annotationValues: byTestId('annotation-value-', { exact: false }),
   dashboardPicker: {
@@ -93,6 +93,36 @@ describe('AnnotationsField', function () {
 
       expect(ui.dashboardPicker.dialog.get()).toBeInTheDocument();
       expect(ui.dashboardPicker.heading.get()).toBeInTheDocument();
+    });
+
+    it('should enable Confirm button only when dashboard and panel selected', async function () {
+      mockSearchResponse([
+        mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
+      ]);
+
+      mockGetDashboardResponse(
+        mockDashboardDto({
+          title: 'My dashboard',
+          uid: 'dash-test-uid',
+          panels: [
+            { id: 1, title: 'First panel' },
+            { id: 2, title: 'Second panel' },
+          ],
+        })
+      );
+
+      const user = userEvent.setup();
+
+      render(<FormWrapper />);
+
+      await user.click(ui.setDashboardButton.get());
+      expect(ui.dashboardPicker.confirmButton.get()).toBeDisabled();
+
+      await user.click(await findByTitle(ui.dashboardPicker.dialog.get(), 'My dashboard'));
+      expect(ui.dashboardPicker.confirmButton.get()).toBeDisabled();
+
+      await user.click(await findByText(ui.dashboardPicker.dialog.get(), 'First panel'));
+      expect(ui.dashboardPicker.confirmButton.get()).toBeEnabled();
     });
 
     it('should add selected dashboard and panel as annotations', async function () {

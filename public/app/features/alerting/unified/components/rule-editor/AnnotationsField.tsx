@@ -8,6 +8,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Alert, Button, Field, Input, InputControl, Label, Modal, TextArea, useStyles2 } from '@grafana/ui';
 
+import { DashboardDTO } from '../../../../../types';
 import { dashboardApi } from '../../api/alertingApi';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation } from '../../utils/constants';
@@ -18,8 +19,10 @@ import { DashboardPicker, PanelDTO } from './DashboardPicker';
 const AnnotationsField = () => {
   const styles = useStyles2(getStyles);
   const [showPanelSelector, setShowPanelSelector] = useToggle(false);
-  const [selectedDashboard, setSelectedDashboard] = useState<string | undefined>(undefined);
-  const [selectedPanel, setSelectedPanel] = useState<number | undefined>(undefined);
+  const [currentDashboard, setCurrentDashboard] = useState<DashboardDTO | undefined>(undefined);
+
+  const [selectedDashboardUid, setSelectedDashboardUid] = useState<string | undefined>(undefined);
+  const [selectedPanelUid, setSelectedPanelUid] = useState<number | undefined>(undefined);
 
   const { useLazyDashboardQuery } = dashboardApi;
   const {
@@ -39,14 +42,16 @@ const AnnotationsField = () => {
   const dashboardAnnotation = annotations.find((a) => a.key === Annotation.dashboardUID);
   const panelAnnotation = annotations.find((a) => a.key === Annotation.panelID);
 
-  const [fetchDashboard, { currentData: currentDashboard }] = useLazyDashboardQuery();
+  const dashboardUid = dashboardAnnotation?.value;
   const panelId = Number(panelAnnotation?.value);
+
+  const [fetchDashboard] = useLazyDashboardQuery();
   const currentPanel: PanelDTO | undefined = currentDashboard?.dashboard?.panels?.find((p) => p.id === panelId);
 
   const { fields, append, remove } = useFieldArray({ control, name: 'annotations' });
 
-  const onPanelChange = () => {
-    if (!selectedDashboard || !selectedPanel) {
+  const onDashboardPanelChange = () => {
+    if (!selectedDashboardUid || !selectedPanelUid) {
       return;
     }
 
@@ -55,26 +60,32 @@ const AnnotationsField = () => {
       const panelAnn = draft.find((a) => a.key === Annotation.panelID);
 
       if (dashboardAnn) {
-        dashboardAnn.value = selectedDashboard;
+        dashboardAnn.value = selectedDashboardUid;
       } else {
-        draft.push({ key: Annotation.dashboardUID, value: selectedDashboard });
+        draft.push({ key: Annotation.dashboardUID, value: selectedDashboardUid });
       }
 
       if (panelAnn) {
-        panelAnn.value = selectedPanel.toString(10);
+        panelAnn.value = selectedPanelUid.toString(10);
       } else {
-        draft.push({ key: Annotation.panelID, value: selectedPanel.toString(10) });
+        draft.push({ key: Annotation.panelID, value: selectedPanelUid.toString(10) });
       }
     });
 
     setValue('annotations', updatedAnnotations);
     setShowPanelSelector(false);
+    setSelectedDashboardUid(undefined);
+    setSelectedPanelUid(undefined);
+    setCurrentDashboard(undefined);
   };
 
-  const openDashboardPicker = () => {
+  const openDashboardPicker = async () => {
     setShowPanelSelector(true);
-    if (Boolean(dashboardAnnotation?.value)) {
-      fetchDashboard({ uid: dashboardAnnotation?.value ?? '' });
+    if (dashboardUid) {
+      const { data } = await fetchDashboard({ uid: dashboardUid }, true);
+      if (data) {
+        setCurrentDashboard(data);
+      }
     }
   };
 
@@ -176,17 +187,17 @@ const AnnotationsField = () => {
             </Alert>
           )}
           <DashboardPicker
-            dashboardUid={selectedDashboard}
-            panelId={selectedPanel}
-            onDashboardChange={setSelectedDashboard}
-            onPanelChange={setSelectedPanel}
+            dashboardUid={selectedDashboardUid}
+            panelId={selectedPanelUid}
+            onDashboardChange={setSelectedDashboardUid}
+            onPanelChange={setSelectedPanelUid}
           />
           <Modal.ButtonRow>
             <Button
               type="button"
               variant="primary"
-              disabled={!selectedDashboard && !selectedPanel}
-              onClick={onPanelChange}
+              disabled={!selectedDashboardUid || !selectedPanelUid}
+              onClick={onDashboardPanelChange}
             >
               Confirm
             </Button>
