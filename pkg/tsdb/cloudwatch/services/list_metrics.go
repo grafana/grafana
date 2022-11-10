@@ -98,30 +98,6 @@ func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(r resources.Dim
 	return response, nil
 }
 
-func (l *ListMetricsService) GetDimensionKeysByNamespace(r *resources.DimensionKeysRequest) ([]resources.ResourceResponse[string], error) {
-	input := &cloudwatch.ListMetricsInput{Namespace: aws.String(r.Namespace)}
-	setAccount(input, r.ResourceRequest)
-	metrics, err := l.ListMetricsWithPageLimit(input)
-	if err != nil {
-		return []resources.ResourceResponse[string]{}, err
-	}
-
-	response := []resources.ResourceResponse[string]{}
-	dupCheck := make(map[string]struct{})
-	for _, metric := range metrics {
-		for _, dim := range metric.Dimensions {
-			if _, exists := dupCheck[*dim.Name]; exists {
-				continue
-			}
-
-			dupCheck[*dim.Name] = struct{}{}
-			response = append(response, resources.ResourceResponse[string]{AccountId: metric.AccountId, Value: *dim.Name})
-		}
-	}
-
-	return response, nil
-}
-
 func (l *ListMetricsService) GetMetricsByNamespace(r *resources.MetricsRequest) ([]resources.ResourceResponse[resources.Metric], error) {
 	input := &cloudwatch.ListMetricsInput{Namespace: aws.String(r.Namespace)}
 	setAccount(input, r.ResourceRequest)

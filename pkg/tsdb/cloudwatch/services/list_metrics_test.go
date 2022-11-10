@@ -129,57 +129,6 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 	}
 }
 
-func TestListMetricsService_GetDimensionKeysByNamespace(t *testing.T) {
-	t.Run("Should filter out duplicates and keys matching dimension filter keys", func(t *testing.T) {
-		fakeMetricsClient := &mocks.FakeMetricsClient{}
-		fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(metricResponse, nil)
-		listMetricsService := NewListMetricsService(fakeMetricsClient)
-
-		resp, err := listMetricsService.GetDimensionKeysByNamespace(&resources.DimensionKeysRequest{Namespace: "AWS/EC2"})
-
-		require.NoError(t, err)
-		assert.Equal(t, []resources.ResourceResponse[string]{{Value: "InstanceId"}, {Value: "InstanceType"}, {Value: "AutoScalingGroupName"}}, resp)
-	})
-
-	testCases := []validateInputTestCase[resources.DimensionKeysRequest]{
-		{
-			name: "Should set account correctly on list metric input if it cross account is defined on the request",
-			input: &resources.DimensionKeysRequest{
-				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: stringPtr(useLinkedAccountsId)},
-				Namespace:       "AWS/EC2",
-			},
-			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
-				Namespace:             aws.String("AWS/EC2"),
-				IncludeLinkedAccounts: aws.Bool(true),
-			},
-		},
-		{
-			name: "Should set account correctly on list metric input if single account is defined on the request",
-			input: &resources.DimensionKeysRequest{
-				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: stringPtr("1234567890")},
-				Namespace:       "AWS/EC2",
-			},
-			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
-				Namespace:             aws.String("AWS/EC2"),
-				IncludeLinkedAccounts: aws.Bool(true),
-				OwningAccount:         aws.String("1234567890"),
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			fakeMetricsClient := &mocks.FakeMetricsClient{}
-			fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(metricResponse, nil)
-			listMetricsService := NewListMetricsService(fakeMetricsClient)
-			res, err := listMetricsService.GetDimensionKeysByNamespace(tc.input)
-			require.NoError(t, err)
-			require.NotEmpty(t, res)
-			fakeMetricsClient.AssertCalled(t, "ListMetricsWithPageLimit", tc.listMetricsWithPageLimitInput)
-		})
-	}
-}
-
 func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 	t.Run("Should filter out duplicates and keys matching dimension filter keys", func(t *testing.T) {
 		fakeMetricsClient := &mocks.FakeMetricsClient{}

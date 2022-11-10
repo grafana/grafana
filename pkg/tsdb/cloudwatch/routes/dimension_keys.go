@@ -22,12 +22,12 @@ func DimensionKeysHandler(pluginCtx backend.PluginContext, reqCtxFactory models.
 		return nil, models.NewHttpError("error in DimensionKeyHandler", http.StatusInternalServerError, err)
 	}
 
-	response := []resources.ResourceResponse[string]{}
+	var response []resources.ResourceResponse[string]
 	switch dimensionKeysRequest.Type() {
 	case resources.FilterDimensionKeysRequest:
 		response, err = service.GetDimensionKeysByDimensionFilter(dimensionKeysRequest)
 	default:
-		response, err = services.GetHardCodedDimensionKeysByNamespace(dimensionKeysRequest)
+		response, err = services.GetHardCodedDimensionKeysByNamespace(dimensionKeysRequest.Namespace)
 	}
 	if err != nil {
 		return nil, models.NewHttpError("error in DimensionKeyHandler", http.StatusInternalServerError, err)
