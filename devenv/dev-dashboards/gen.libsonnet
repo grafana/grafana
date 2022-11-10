@@ -107,6 +107,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('barchart-thresholds-mappings', import 'panel-barchart/barchart-thresholds-mappings.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('candlestick', import 'panel-candlestick/candlestick.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
