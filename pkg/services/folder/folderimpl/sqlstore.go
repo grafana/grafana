@@ -79,15 +79,6 @@ func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to delete folder: %w", err)
 		}
-		/*
-			affected, err := res.RowsAffected()
-			if err != nil {
-				return folder.ErrDatabaseError.Errorf("failed to get affected rows: %w", err)
-			}
-				if affected == 0 {
-					return folder.ErrFolderNotFound.Errorf("folder not found uid:%s org_id:%d", uid, orgID)
-				}
-		*/
 		return nil
 	})
 }
@@ -161,7 +152,6 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		exists := false
 		var err error
-
 		switch {
 		case q.ID != nil:
 			exists, err = sess.SQL("SELECT * FROM folder WHERE id = ?", q.ID).Get(foldr)

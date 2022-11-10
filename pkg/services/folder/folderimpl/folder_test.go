@@ -28,7 +28,7 @@ import (
 )
 
 var orgID = int64(1)
-var usr = &user.SignedInUser{UserID: 1}
+var usr = &user.SignedInUser{UserID: 1, OrgID: orgID}
 
 func TestIntegrationProvideFolderService(t *testing.T) {
 	if testing.Short() {
@@ -79,12 +79,12 @@ func TestIntegrationFolderService(t *testing.T) {
 			folderId := rand.Int63()
 			folderUID := util.GenerateShortUID()
 
-			folder := models.NewFolder("Folder")
-			folder.Id = folderId
-			folder.Uid = folderUID
+			newFolder := models.NewFolder("Folder")
+			newFolder.Id = folderId
+			newFolder.Uid = folderUID
 
-			dashStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(folder, nil)
-			dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(folder, nil)
+			dashStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
+			dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
 				_, err := service.GetFolderByID(context.Background(), usr, folderId, orgID)
@@ -104,7 +104,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			t.Run("When creating folder should return access denied error", func(t *testing.T) {
 				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil).Times(2)
-				_, err := service.CreateFolder(context.Background(), usr, orgID, folder.Title, folderUID)
+				_, err := service.CreateFolder(context.Background(), usr, orgID, newFolder.Title, folderUID)
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
@@ -122,7 +122,20 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
-				_, err := service.DeleteFolder(context.Background(), usr, orgID, folderUID, false)
+				ctx := context.Background()
+				ctx = appcontext.WithUser(ctx, usr)
+
+				newFolder := models.NewFolder("Folder")
+				newFolder.Uid = folderUID
+
+				dashStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
+				dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)
+
+				err := service.DeleteFolder(ctx, &folder.DeleteFolderCommand{
+					UID:              folderUID,
+					OrgID:            orgID,
+					ForceDeleteRules: false,
+				})
 				require.Error(t, err)
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
@@ -190,7 +203,13 @@ func TestIntegrationFolderService(t *testing.T) {
 				}).Return(nil).Once()
 
 				expectedForceDeleteRules := rand.Int63()%2 == 0
-				_, err := service.DeleteFolder(context.Background(), usr, orgID, f.Uid, expectedForceDeleteRules)
+				ctx := context.Background()
+				ctx = appcontext.WithUser(ctx, usr)
+				err := service.DeleteFolder(ctx, &folder.DeleteFolderCommand{
+					UID:              f.Uid,
+					OrgID:            orgID,
+					ForceDeleteRules: expectedForceDeleteRules,
+				})
 				require.NoError(t, err)
 				require.NotNil(t, actualCmd)
 				require.Equal(t, f.Id, actualCmd.Id)
@@ -288,7 +307,7 @@ func TestFolderService(t *testing.T) {
 
 	t.Run("delete folder", func(t *testing.T) {
 		folderStore.ExpectedFolder = &folder.Folder{}
-		_, err := folderService.Delete(context.Background(), &folder.DeleteFolderCommand{})
+		err := folderService.Delete(context.Background(), &folder.DeleteFolderCommand{})
 		require.NoError(t, err)
 	})
 
@@ -334,7 +353,7 @@ func TestFolderService(t *testing.T) {
 	})
 }
 
-func TestCreate_NestedFolders(t *testing.T) {
+func TestNestedFolderService(t *testing.T) {
 	t.Run("with feature flag unset", func(t *testing.T) {
 		ctx := appcontext.WithUser(context.Background(), usr)
 		store := &FakeStore{}
@@ -354,17 +373,39 @@ func TestCreate_NestedFolders(t *testing.T) {
 			features:         features,
 		}
 
-		// dashboard store & service commands that should be called.
-		dashboardsvc.On("BuildSaveDashboardCommand",
-			mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"),
-			mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&models.SaveDashboardCommand{}, nil)
-		dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{}, nil)
-		dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&models.Folder{}, nil)
+		t.Run("When create folder, no create in folder table done", func(t *testing.T) {
+			// dashboard store & service commands that should be called.
+			dashboardsvc.On("BuildSaveDashboardCommand",
+				mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"),
+				mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&models.SaveDashboardCommand{}, nil)
+			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{}, nil)
+			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&models.Folder{}, nil)
 
-		_, err := foldersvc.CreateFolder(ctx, usr, orgID, "myFolder", "myFolder")
-		require.NoError(t, err)
-		// CreateFolder should not call the folder store create if the feature toggle is not enabled.
-		require.False(t, store.CreateCalled)
+			_, err := foldersvc.CreateFolder(ctx, usr, orgID, "myFolder", "myFolder")
+			require.NoError(t, err)
+			// CreateFolder should not call the folder store create if the feature toggle is not enabled.
+			require.False(t, store.CreateCalled)
+		})
+
+		t.Run("When delete folder, no delete in folder table done", func(t *testing.T) {
+			var actualCmd *models.DeleteDashboardCommand
+			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
+			}).Return(nil).Once()
+			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&models.Folder{}, nil)
+
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+
+			err := foldersvc.DeleteFolder(ctx, &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID})
+			require.NoError(t, err)
+			require.NotNil(t, actualCmd)
+
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+			require.False(t, store.DeleteCalled)
+		})
 	})
 
 	t.Run("with nested folder feature flag on", func(t *testing.T) {
@@ -425,6 +466,28 @@ func TestCreate_NestedFolders(t *testing.T) {
 			t.Cleanup(func() {
 				guardian.New = g
 			})
+		})
+
+		t.Run("delete with success", func(t *testing.T) {
+			var actualCmd *models.DeleteDashboardCommand
+			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
+			}).Return(nil).Once()
+			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&models.Folder{}, nil)
+
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+
+			store.ExpectedError = nil
+
+			err := foldersvc.DeleteFolder(ctx, &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID})
+			require.NoError(t, err)
+			require.NotNil(t, actualCmd)
+
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+			require.True(t, store.DeleteCalled)
 		})
 	})
 }

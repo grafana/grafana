@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -232,7 +233,8 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 			// We'll log the error and also roll back the previously-created
 			// (legacy) folder.
 			s.log.Error("error saving folder to nested folder store", err)
-			_, err = s.DeleteFolder(ctx, user, orgID, createdFolder.Uid, true)
+
+			err = s.DeleteFolder(ctx, &folder.DeleteFolderCommand{UID: createdFolder.Uid, OrgID: orgID, ForceDeleteRules: true})
 			if err != nil {
 				s.log.Error("error deleting folder after failed save to nested folder store", err)
 			}
@@ -298,27 +300,37 @@ func (s *Service) UpdateFolder(ctx context.Context, user *user.SignedInUser, org
 	return nil
 }
 
-func (s *Service) DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
-	dashFolder, err := s.dashboardStore.GetFolderByUID(ctx, orgID, uid)
+func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		err := s.Delete(ctx, cmd)
+		if err != nil {
+			s.log.Error("the delete folder on folder table failed with err: ", err.Error())
+		}
+	}
+	user, err := appcontext.User(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	guard := guardian.New(ctx, dashFolder.Id, orgID, user)
+	dashFolder, err := s.dashboardStore.GetFolderByUID(ctx, cmd.OrgID, cmd.UID)
+	if err != nil {
+		return err
+	}
+
+	guard := guardian.New(ctx, dashFolder.Id, cmd.OrgID, user)
 	if canSave, err := guard.CanDelete(); err != nil || !canSave {
 		if err != nil {
-			return nil, toFolderError(err)
+			return toFolderError(err)
 		}
-		return nil, dashboards.ErrFolderAccessDenied
+		return dashboards.ErrFolderAccessDenied
 	}
 
-	deleteCmd := models.DeleteDashboardCommand{OrgId: orgID, Id: dashFolder.Id, ForceDeleteFolderRules: forceDeleteRules}
+	deleteCmd := models.DeleteDashboardCommand{OrgId: cmd.OrgID, Id: dashFolder.Id, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 
 	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
-		return nil, toFolderError(err)
+		return toFolderError(err)
 	}
-
-	return dashFolder, nil
+	return nil
 }
 
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
@@ -354,23 +366,30 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	})
 }
 
-func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) (*folder.Folder, error) {
-	// check the flag, if old - do whatever did before
-	//  for new only the store
-	// check if dashboard exists
-
-	foldr, err := s.Get(ctx, &folder.GetFolderQuery{
+func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+	_, err := s.Get(ctx, &folder.GetFolderQuery{
 		UID:   &cmd.UID,
 		OrgID: cmd.OrgID,
 	})
 	if err != nil {
-		return nil, err
+		return err
+	}
+
+	folders, err := s.store.GetChildren(ctx, folder.GetTreeQuery{UID: cmd.UID, OrgID: cmd.OrgID})
+	if err != nil {
+		return err
+	}
+	for _, f := range folders {
+		err := s.Delete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules})
+		if err != nil {
+			return err
+		}
 	}
 	err = s.store.Delete(ctx, cmd.UID, cmd.OrgID)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return foldr, nil
+	return nil
 }
 
 func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
