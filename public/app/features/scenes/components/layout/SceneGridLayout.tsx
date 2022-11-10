@@ -230,13 +230,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     const sceneChild = this.getChild(updatedItem.i)!;
 
     // Need to resort the grid layout based on new position (needed to get the find the correct new parent row)
-    gridLayout.sort((a, b) => {
-      if (a.y === b.y) {
-        return a.x - b.x;
-      } else {
-        return a.y - b.y;
-      }
-    });
+    gridLayout = sortGridLayout(gridLayout);
 
     // Update children positions if they have changed
     for (let i = 0; i < gridLayout.length; i++) {
@@ -321,13 +315,8 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       }
     }
 
-    cells.sort((panelA, panelB) => {
-      if (panelA.y === panelB.y) {
-        return panelA.x - panelB.x;
-      } else {
-        return panelA.y - panelB.y;
-      }
-    });
+    // Sort by position
+    cells = sortGridLayout(cells);
 
     if (width < 768) {
       // We should not persist the mobile layout
@@ -344,6 +333,7 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
   const theme = useTheme2();
   const { children } = model.useState();
   validateChildrenSize(children);
+  console.log('render grid');
 
   return (
     <AutoSizer disableHeight>
@@ -609,10 +599,10 @@ function isItemSizeEqual(a: SceneObjectSize, b: SceneObjectSize) {
 
 function sortChildrenByPosition(children: SceneLayoutChild[]) {
   return [...children].sort((a, b) => {
-    if (a.state.size?.y === b.state.size?.y!) {
-      return a.state.size?.x! - b.state.size?.x!;
-    } else {
-      return a.state.size?.y! - b.state.size?.y!;
-    }
+    return a.state.size?.y! - b.state.size?.y! || a.state.size?.x! - b.state.size?.x!;
   });
+}
+
+function sortGridLayout(layout: ReactGridLayout.Layout[]) {
+  return [...layout].sort((a, b) => a.y - b.y || a.x! - b.x);
 }
