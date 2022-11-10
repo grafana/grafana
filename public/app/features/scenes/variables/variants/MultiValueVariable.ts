@@ -48,7 +48,6 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
 
   /**
    * Check if current value is valid given new options. If not update the value.
-   * TODO: Handle multi valued variables
    */
   private updateValueGivenNewOptions(options: VariableValueOption[]) {
     const stateUpdate: Partial<MultiValueVariableState> = {
@@ -58,15 +57,12 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
       text: this.state.text,
     };
 
-    // TODO handle the no value state
     if (options.length === 0) {
-    }
-    // If value is set to All then we keep it set to All but just store the options
-    else if (this.hasAllValue()) {
-      // Do nothing
-    }
-    // If we are a multi valued variable validate the current values are among the options
-    else if (this.state.isMulti) {
+      // TODO handle the no value state
+    } else if (this.hasAllValue()) {
+      // If value is set to All then we keep it set to All but just store the options
+    } else if (this.state.isMulti) {
+      // If we are a multi valued variable validate the current values are among the options
       const currentValues = Array.isArray(this.state.value) ? this.state.value : [this.state.value];
       const validValues = currentValues.filter((v) => options.find((o) => o.value === v));
 
@@ -81,9 +77,8 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
         stateUpdate.value = validValues;
         stateUpdate.text = validTexts;
       }
-    }
-    // Single valued variable
-    else {
+    } else {
+      // Single valued variable
       const foundCurrent = options.find((x) => x.value === this.state.value);
       if (!foundCurrent) {
         // Current value is not valid. Set to first of the available options
