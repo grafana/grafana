@@ -4,16 +4,17 @@ import React, { CSSProperties, ReactNode } from 'react';
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
-import { Menu } from '../Menu/Menu';
-import { ToolbarButton } from '../ToolbarButton';
+import { IconName } from '../../types/icon';
+import { IconButton } from '../IconButton/IconButton';
+import { PopoverContent } from '../Tooltip';
 
 /**
  * @internal
  */
 interface PanelChromeInfoState {
-  icon: string;
-  tooltip?: string;
-  onClick: () => void;
+  icon: IconName;
+  tooltip?: PopoverContent;
+  onClick?: () => void;
 }
 
 /**
@@ -26,12 +27,16 @@ export interface PanelChromeProps {
   padding?: PanelPadding;
   title?: string;
   titleItems?: PanelChromeInfoState[];
-  menu?: typeof Menu;
+  menu?: ReactNode;
   dragClass?: string;
   hoverHeader?: boolean;
   loadingState?: LoadingState;
   states?: ReactNode[];
-  /** deprecated in favor of "states" prop */
+  /** @deprecated in favor of prop states
+   * which will serve the same purpose
+   * of showing the panel state in the top right corner
+   * of itself or its header
+   * */
   leftItems?: ReactNode[];
 }
 
@@ -50,6 +55,11 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   padding = 'md',
   title = '',
   titleItems = [],
+  menu,
+  dragClass,
+  hoverHeader,
+  loadingState,
+  states,
   leftItems = [],
 }) => {
   const theme = useTheme2();
@@ -67,19 +77,35 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   };
   const containerStyles: CSSProperties = { width, height };
 
+  const handleMenuOpen = () => {};
+
+  const hasHeader = title || titleItems.length > 0 || menu;
+
   return (
     <div className={styles.container} style={containerStyles}>
-      {(title.length > 0 || titleItems.length > 0) && (
+      {hasHeader && !hoverHeader && (
         <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
-          <div className={styles.title}>{title}</div>
+          {title && <div className={styles.title}>{title}</div>}
 
           {titleItems.length > 0 && (
             <div className={styles.items} data-testid="title-items-container">
               {titleItems.map((item, i) => (
                 <div key={`${item.icon}-${i}`} className={styles.item} style={itemStyles}>
-                  <ToolbarButton tooltip={item.tooltip} icon={item.icon} onClick={item.onClick} />
+                  <IconButton tooltip={item.tooltip} name={item.icon} size="sm" onClick={item.onClick} />
                 </div>
               ))}
+            </div>
+          )}
+
+          {menu && (
+            <div className={styles.item} style={itemStyles}>
+              <IconButton
+                tooltip={`Menu for ${title && `${title} `}panel`}
+                name="ellipsis-v"
+                size="sm"
+                onClick={handleMenuOpen}
+                data-testid="menu-icon"
+              />
             </div>
           )}
 
@@ -96,7 +122,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   );
 };
 
-const itemsRenderer = (items: ReactNode[], renderer: (itemsss: ReactNode[]) => ReactNode): ReactNode => {
+const itemsRenderer = (items: ReactNode[], renderer: (items: ReactNode[]) => ReactNode): ReactNode => {
   const toRender = React.Children.toArray(items).filter(Boolean);
   return toRender.length > 0 ? renderer(toRender) : null;
 };
@@ -171,7 +197,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
     }),
     rightAligned: css({
-      // todo margin left is not the best when >= set of items are put on the right
       marginLeft: 'auto',
     }),
   };

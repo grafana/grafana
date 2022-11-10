@@ -8,7 +8,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { PanelChrome, useTheme2, PanelChromeProps } from '@grafana/ui';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Icon } from '../Icon/Icon';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
 const meta: ComponentMeta<typeof PanelChrome> = {
@@ -168,10 +167,26 @@ const ErrorIcon = [
 const leftItems = { LoadingIcon, ErrorIcon, Default };
 
 const titleItems = [
-  <Icon name="info-circle" size="sm" key="0" />,
-  <Icon name="external-link-alt" size="sm" key="1" />,
-  <Icon name="clock-nine" size="sm" key="2" />,
-  <Icon name="heart" size="sm" key="3" />,
+  {
+    icon: 'info-circle',
+    tooltip:
+      'Description text with very long descriptive words that describe what is going on in the panel and not beyond. Or maybe beyond, not up to us.',
+  },
+  {
+    icon: 'external-link-alt',
+    tooltip: 'wearegoingonanadventure.openanewtab.maybe',
+    onClick: () => {},
+  },
+  {
+    icon: 'clock-nine',
+    tooltip: 'Time range: 2021-09-01 00:00:00 to 2021-09-01 00:00:00',
+    onClick: () => {},
+  },
+  {
+    icon: 'heart',
+    tooltip: 'Health of the panel',
+    onClick: () => {},
+  },
 ];
 
 Basic.argTypes = {
