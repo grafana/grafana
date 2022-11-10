@@ -29,10 +29,6 @@ type (
 		LineageCUEPath string
 		GenLicense     bool
 	}
-	tvars_coremodel_registry struct {
-		Header     tvars_autogen_header
-		Coremodels []tplVars
-	}
 	tvars_kind_registry struct {
 		// Header tvars_autogen_header
 		NumRaw, NumStructured int
