@@ -130,19 +130,18 @@ function FolderGroupAndEvaluationInterval({
       )}
       {folder && group && (
         <Card className={styles.cardContainer}>
-          <Card.Heading>Evaluation behaviour</Card.Heading>
+          <Card.Heading>Evaluation behavior</Card.Heading>
           <Card.Meta>
             <div className={styles.evaluationDescription}>
               <div className={styles.evaluateLabel}>
-                {`Alert rules in`} <span className={styles.bold}>{group}</span> are evaluated every{' '}
+                {`Alert rules in the `} <span className={styles.bold}>{group}</span> group are evaluated every{' '}
                 <span className={styles.bold}>{evaluateEvery}</span>.
               </div>
 
               <br />
               {!isNewGroup && (
                 <div className={styles.evaluateLabelEnd}>
-                  {`Evaluation interval applies to every rule within a group. 
-          It can overwrite the interval of an existing alert rule.`}
+                  {`Evaluation group interval applies to every rule within a group. It overwrites intervals defined for existing alert rules.`}
                 </div>
               )}
               <br />
@@ -152,7 +151,7 @@ function FolderGroupAndEvaluationInterval({
             <div className={styles.editGroup}>
               {isNewGroup && (
                 <div className={styles.warningMessage}>
-                  New group must be saved before being able to edit the evaluation interval.
+                  {`Save the ${group} evaluation group in order to edit the evaluation group interval.`}
                 </div>
               )}
               <Button

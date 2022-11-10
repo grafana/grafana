@@ -124,7 +124,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
     <div className={styles.container}>
       <Field
         label={
-          <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
+          <Label htmlFor="folder" description={'Select a folder for your rule.'}>
             <Stack gap={0.5}>
               Folder
               <InfoIcon
@@ -171,7 +171,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
       <Field
         label="Evaluation group (interval)"
         data-testid="group-picker"
-        description="Rules within the same group are evaluated after the same time interval."
+        description="Select a group to evaluate all rules in the same group over the same time interval."
         className={styles.formInput}
         error={errors.group?.message}
         invalid={!!errors.group?.message}
