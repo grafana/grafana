@@ -7,7 +7,7 @@ import { FixedSizeList } from 'react-window';
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { FilterInput, LoadingPlaceholder, useStyles2, Icon } from '@grafana/ui';
 
-import { dashboardApi } from '../../api/alertingApi';
+import { dashboardApi } from '../../api/dashboardApi';
 
 export interface PanelDTO {
   id: number;

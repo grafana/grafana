@@ -9,7 +9,7 @@ import { Stack } from '@grafana/experimental';
 import { Alert, Button, Field, Input, InputControl, Label, Modal, TextArea, useStyles2 } from '@grafana/ui';
 
 import { DashboardDTO } from '../../../../../types';
-import { dashboardApi } from '../../api/alertingApi';
+import { dashboardApi } from '../../api/dashboardApi';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation } from '../../utils/constants';
 
