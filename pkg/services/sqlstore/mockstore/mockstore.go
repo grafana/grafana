@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"xorm.io/core"
-	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -133,14 +132,6 @@ func (m *SQLStoreMock) WithTransactionalDbSession(ctx context.Context, callback 
 
 func (m *SQLStoreMock) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
 	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDBEngine() *xorm.Engine {
-	return nil
-}
-
-func (m *SQLStoreMock) GetDBConfig() *sqlstore.DatabaseConfig {
-	return nil
 }
 
 func (m *SQLStoreMock) Migrate(_ bool) error {

@@ -659,14 +659,6 @@ func IsTestDBMSSQL() bool {
 	return false
 }
 
-func (ss *SQLStore) GetDBEngine() *xorm.Engine {
-	return ss.engine
-}
-
-func (ss *SQLStore) GetDBConfig() *DatabaseConfig {
-	return &ss.dbCfg
-}
-
 type DatabaseConfig struct {
 	Type                        string
 	Host                        string

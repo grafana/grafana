@@ -26,8 +26,6 @@ func (ss *SQLStore) InTransaction(ctx context.Context, fn func(ctx context.Conte
 	return ss.inTransactionWithRetry(ctx, fn, 0)
 }
 
-
-
 func (ss *SQLStore) inTransactionWithRetry(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
 	return ss.inTransactionWithRetryCtx(ctx, ss.engine, ss.bus, func(sess *DBSession) error {
 		withValue := context.WithValue(ctx, ContextSessionKey{}, sess)
