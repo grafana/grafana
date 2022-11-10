@@ -2,20 +2,18 @@ package nanogit
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGithubHTTP(t *testing.T) {
 	addr := GitAddress{
 		Owner: "ryantxu",
-		Repo:  "test-repo-export-0002", // also try 3 (much smaller, more duplicates)
+		Repo:  "test-repo-export-0003", // also try 3 (much smaller, more duplicates)
 	}
 
 	refs, err := ListRefs(addr)
@@ -25,26 +23,15 @@ func TestGithubHTTP(t *testing.T) {
 		fmt.Println("ls-refs", ref.Hash, ref.Name)
 	}
 
-	branchHash := refs[0].Hash // "f7aceb5288c3937343875a0323cf10fa10ad0f5b" // HEAD branch from above
+	addr.Branch = refs[0].Hash // "f7aceb5288c3937343875a0323cf10fa10ad0f5b" // HEAD branch from above
 
-	listing, err := ReadTree(addr, branchHash)
+	listing, err := GetListing(addr)
 	require.NoError(t, err)
 
-	out, _ := json.MarshalIndent(listing, "", "  ")
-	gpath := fmt.Sprintf("testdata/tree-%s-%s.json", addr.Owner, addr.Repo)
-
-	// Ignore gosec warning G304 since it's a test
-	// nolint:gosec
-	golden, _ := os.ReadFile(gpath)
-
-	if !assert.JSONEq(t, string(golden), string(out)) {
-		err = os.WriteFile(gpath, out, 0600)
-		require.NoError(t, err)
-		require.Fail(t, "response changed")
-	}
+	experimental.CheckGoldenJSONFrame(t, "testdata", fmt.Sprintf("list-%s-%s", addr.Owner, addr.Repo), listing, true)
 
 	if false {
-		blobs, err := ReadBody(addr, branchHash,
+		blobs, err := ReadBody(addr, "???",
 			"7284ab4d2836271d66b988ae7d037bd6ef0d5d15",
 			"6484fb6f9cea3887578def1ba0aa96fcce279f5b",
 		)
