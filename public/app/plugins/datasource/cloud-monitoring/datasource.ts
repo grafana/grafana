@@ -198,9 +198,8 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       return {
         refId,
         intervalMs,
-        type,
         hide,
-        queryType: QueryType.METRICS,
+        queryType: type === 'annotationQuery' ? QueryType.ANNOTATION : QueryType.METRICS,
         metricQuery: {
           ...rest,
           view: rest.view || 'FULL',

@@ -22,6 +22,8 @@ type Folder struct {
 	Updated       time.Time              `json:"updated"`
 	Version       int                    `json:"version"`
 	AccessControl accesscontrol.Metadata `json:"accessControl,omitempty"`
+	// only used if nested folders are enabled
+	ParentUID string `json:"parentUid"`
 }
 
 type FolderSearchHit struct {
