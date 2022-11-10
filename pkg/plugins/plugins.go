@@ -101,27 +101,6 @@ func (p PluginDTO) IsSecretsManager() bool {
 	return p.JSONData.Type == SecretsManager
 }
 
-func (p PluginDTO) Updatable() bool {
-	return !p.IsCorePlugin()
-}
-
-func (p PluginDTO) includedInSignature(file string) bool {
-	// permit Core plugin files
-	if p.IsCorePlugin() {
-		return true
-	}
-
-	// permit when no signed files (no MANIFEST)
-	if p.signedFiles == nil { //TODO only accept unsigned if it is part of authorizer
-		return true
-	}
-
-	if _, exists := p.signedFiles[file]; !exists {
-		return false
-	}
-	return true
-}
-
 func (p PluginDTO) Markdown(name string) []byte {
 	path := mdFilepath(strings.ToUpper(name))
 	exists := p.files.Exists(path)
@@ -136,16 +115,6 @@ func (p PluginDTO) Markdown(name string) []byte {
 
 	data, _ := p.files.Read(path)
 	return data
-}
-
-type nopReadSeeker struct{}
-
-func (nopReadSeeker) Read(_ []byte) (int, error) {
-	return 0, nil
-}
-
-func (nopReadSeeker) Seek(_ int64, _ int) (int64, error) {
-	return 0, nil
 }
 
 func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
@@ -169,47 +138,6 @@ func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
 	}
 
 	return bytes.NewReader(b), fi.ModTime(), nil
-
-	//if !p.includedInSignature(name) {
-	//	return nopReadSeeker{}, time.Time{}, nil
-	//}
-	//
-	//// prepend slash for cleaning relative paths
-	//requestedFile := filepath.Clean(filepath.Join("/", name))
-	//rel, err := filepath.Rel("/", requestedFile)
-	//if err != nil {
-	//	return nopReadSeeker{}, time.Time{}, nil
-	//}
-	//
-	//absPluginDir, err := filepath.Abs(p.pluginDir)
-	//if err != nil {
-	//	return nopReadSeeker{}, time.Time{}, nil
-	//}
-	//
-	//// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
-	//// use this with a prefix of the plugin's directory, which is set during plugin loading
-	//// nolint:gosec
-	//f, err := os.Open(filepath.Join(absPluginDir, rel))
-	//if err != nil {
-	//	return nopReadSeeker{}, time.Time{}, nil
-	//}
-	//
-	//fi, err := f.Stat()
-	//if err != nil {
-	//	return nopReadSeeker{}, time.Time{}, nil
-	//}
-	//modTime := fi.ModTime()
-	//
-	//d, err := ioutil.ReadAll(f)
-	//if err != nil {
-	//	return nopReadSeeker{}, time.Time{}, nil
-	//}
-	//
-	//if err = f.Close(); err != nil {
-	//	return nopReadSeeker{}, time.Time{}, err
-	//}
-	//
-	//return bytes.NewReader(d), modTime, nil
 }
 
 func mdFilepath(mdFilename string) string {

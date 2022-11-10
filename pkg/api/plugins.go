@@ -314,8 +314,7 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 
 	f, mod, err := plugin.File(rel)
 	if err != nil {
-		// slash is prepended above therefore this is not expected to fail
-		c.JsonApiErr(500, "Failed to get the relative path", err)
+		c.JsonApiErr(500, "Failed to get plugin file", err)
 		return
 	}
 
