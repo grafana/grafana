@@ -80,7 +80,7 @@ type CreateFolderCommand struct {
 }
 
 type MoveFolderCommand struct {
-	ParentUID *string `json:"parentUID"`
+	ParentUID *string `json:"parentUid"`
 }
 
 type UpdateFolderCommand struct {

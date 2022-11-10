@@ -146,14 +146,16 @@ func (hs *HTTPServer) MoveFolder(c *models.ReqContext) response.Response {
 				NewParentUID: *cmd.ParentUID,
 				OrgID:        c.OrgID,
 			}
-			theFolder, err = hs.folderService.MoveFolder(c.Req.Context(), &moveCommand)
+			theFolder, err = hs.folderService.Move(c.Req.Context(), &moveCommand)
 			if err != nil {
 				return response.Error(http.StatusInternalServerError, "update folder uid failed", err)
 			}
 		}
 		return response.JSON(http.StatusOK, theFolder)
 	}
-	return response.JSON(http.StatusNotFound, "To use this service, you need to activate nested folder feature.")
+	result := map[string]string{}
+	result["message"] = "To use this service, you need to activate nested folder feature."
+	return response.JSON(http.StatusNotFound, result)
 }
 
 // swagger:route PUT /folders/{folder_uid} folders updateFolder
@@ -305,16 +307,6 @@ type GetFolderByUIDParams struct {
 	// in:path
 	// required:true
 	FolderUID string `json:"folder_uid"`
-}
-
-// swagger:parameters moveFolder
-type MoveFolderParams struct {
-	// in:path
-	// required:true
-	FolderUID string `json:"folder_uid"`
-	// in:body
-	// required:true
-	Body models.MoveFolderCommand `json:"body"`
 }
 
 // swagger:parameters updateFolder

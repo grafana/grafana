@@ -45,7 +45,7 @@ func (s *FakeService) MakeUserAdmin(ctx context.Context, orgID int64, userID, fo
 	return s.ExpectedError
 }
 
-func (s *FakeService) MoveFolder(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
+func (s *FakeService) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
 

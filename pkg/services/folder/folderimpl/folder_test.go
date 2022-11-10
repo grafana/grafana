@@ -519,7 +519,7 @@ func TestNestedFolderService(t *testing.T) {
 		t.Run("move, no error", func(t *testing.T) {
 			store.ExpectedError = nil
 			store.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
-			f, err := foldersvc.MoveFolder(ctx, &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID})
+			f, err := foldersvc.Move(ctx, &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID})
 			require.NoError(t, err)
 			require.NotNil(t, f)
 		})
