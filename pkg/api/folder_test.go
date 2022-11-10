@@ -39,7 +39,7 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			Title: "Folder",
 		}
 
-		folderService.ExpectedFolder = &models.Folder{Id: 1, Uid: "uid", Title: "Folder"}
+		folderService.ExpectedFolder = &folder.Folder{ID: 1, UID: "uid", Title: "Folder"}
 
 		createFolderScenario(t, "When calling POST on", "/api/folders", "/api/folders", folderService, cmd,
 			func(sc *scenarioContext) {
@@ -94,7 +94,7 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			Title: "Folder upd",
 		}
 
-		folderService.ExpectedFolder = &models.Folder{Id: 1, Uid: "uid", Title: "Folder upd"}
+		folderService.ExpectedFolder = &folder.Folder{ID: 1, UID: "uid", Title: "Folder upd"}
 
 		updateFolderScenario(t, "When calling PUT on", "/api/folders/uid", "/api/folders/:uid", folderService, cmd,
 			func(sc *scenarioContext) {
@@ -179,7 +179,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 	})
 
 	t.Run("Should attach access control metadata to folder response", func(t *testing.T) {
-		folderService.ExpectedFolder = &models.Folder{Uid: "folderUid"}
+		folderService.ExpectedFolder = &folder.Folder{UID: "folderUid"}
 
 		req := server.NewGetRequest("/api/folders/folderUid?accesscontrol=true")
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -202,7 +202,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 	})
 
 	t.Run("Should attach access control metadata to folder response", func(t *testing.T) {
-		folderService.ExpectedFolder = &models.Folder{Uid: "folderUid"}
+		folderService.ExpectedFolder = &folder.Folder{UID: "folderUid"}
 
 		req := server.NewGetRequest("/api/folders/folderUid")
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -308,7 +308,7 @@ type fakeFolderService struct {
 	CreateFolderError    error
 	UpdateFolderResult   *models.Folder
 	UpdateFolderError    error
-	DeleteFolderResult   *models.Folder
+	DeleteFolderResult   *folder.Folder
 	DeleteFolderError    error
 	DeletedFolderUids    []string
 }
@@ -334,7 +334,7 @@ func (s *fakeFolderService) UpdateFolder(ctx context.Context, user *user.SignedI
 	return s.UpdateFolderError
 }
 
-func (s *fakeFolderService) DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
-	s.DeletedFolderUids = append(s.DeletedFolderUids, uid)
-	return s.DeleteFolderResult, s.DeleteFolderError
+func (s *fakeFolderService) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+	s.DeletedFolderUids = append(s.DeletedFolderUids, cmd.UID)
+	return s.DeleteFolderError
 }

@@ -77,7 +77,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
   onOpenSplitView = () => {
     const { split } = this.props;
     split();
-    reportInteraction('grafana_explore_split_view_opened');
+    reportInteraction('grafana_explore_split_view_opened', { origin: 'menu' });
   };
 
   onCloseSplitView = () => {
@@ -157,7 +157,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
         </ToolbarButton>
       ),
 
-      config.featureToggles.explore2Dashboard && showExploreToDashboard && (
+      showExploreToDashboard && (
         <Suspense key="addToDashboard" fallback={null}>
           <AddToDashboard exploreId={exploreId} />
         </Suspense>

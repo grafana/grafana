@@ -91,7 +91,7 @@ describe('AnnotationsWorker', () => {
       const options = getDefaultOptions();
       options.dashboard.meta.publicDashboardAccessToken = 'accessTokenString';
 
-      expect(worker.canWork(options)).toBe(false);
+      expect(worker.canWork(options)).toBe(true);
     });
   });
 

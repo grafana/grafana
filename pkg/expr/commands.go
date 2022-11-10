@@ -16,7 +16,7 @@ import (
 // Command is an interface for all expression commands.
 type Command interface {
 	NeedsVars() []string
-	Execute(c context.Context, vars mathexp.Vars) (mathexp.Results, error)
+	Execute(ctx context.Context, now time.Time, vars mathexp.Vars) (mathexp.Results, error)
 }
 
 // MathCommand is a command for a math expression such as "1 + $GA / 2"
@@ -66,7 +66,7 @@ func (gm *MathCommand) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (gm *MathCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (gm *MathCommand) Execute(_ context.Context, _ time.Time, vars mathexp.Vars) (mathexp.Results, error) {
 	return gm.Expression.Execute(gm.refID, vars)
 }
 
@@ -154,7 +154,7 @@ func (gr *ReduceCommand) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (gr *ReduceCommand) Execute(_ context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (gr *ReduceCommand) Execute(_ context.Context, _ time.Time, vars mathexp.Vars) (mathexp.Results, error) {
 	newRes := mathexp.Results{}
 	for _, val := range vars[gr.VarToReduce].Values {
 		switch v := val.(type) {
@@ -210,6 +210,9 @@ func NewResampleCommand(refID, rawWindow, varToResample string, downsampler stri
 
 // UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
 func UnmarshalResampleCommand(rn *rawNode) (*ResampleCommand, error) {
+	if rn.TimeRange == nil {
+		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
+	}
 	rawVar, ok := rn.Query["expression"]
 	if !ok {
 		return nil, errors.New("no expression ID to resample. must be a reference to an existing query or expression")
@@ -259,14 +262,15 @@ func (gr *ResampleCommand) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (gr *ResampleCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (gr *ResampleCommand) Execute(_ context.Context, now time.Time, vars mathexp.Vars) (mathexp.Results, error) {
 	newRes := mathexp.Results{}
+	timeRange := gr.TimeRange.AbsoluteTime(now)
 	for _, val := range vars[gr.VarToResample].Values {
 		series, ok := val.(mathexp.Series)
 		if !ok {
 			return newRes, fmt.Errorf("can only resample type series, got type %v", val.Type())
 		}
-		num, err := series.Resample(gr.refID, gr.Window, gr.Downsampler, gr.Upsampler, gr.TimeRange.From, gr.TimeRange.To)
+		num, err := series.Resample(gr.refID, gr.Window, gr.Downsampler, gr.Upsampler, timeRange.From, timeRange.To)
 		if err != nil {
 			return newRes, err
 		}

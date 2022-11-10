@@ -29,3 +29,16 @@ type DashboardSearchProjection struct {
 	FolderTitle string
 	SortMeta    int64
 }
+
+type CountDashboardsInFolderQuery struct {
+	FolderUID string
+	OrgID     int64
+}
+
+// TODO: CountDashboardsInFolderRequest is the request passed from the service
+// to the store layer. The FolderID will be replaced with FolderUID when
+// dashboards are updated with parent folder UIDs.
+type CountDashboardsInFolderRequest struct {
+	FolderID int64
+	OrgID    int64
+}

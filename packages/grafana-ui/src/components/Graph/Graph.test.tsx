@@ -89,9 +89,10 @@ const mockGraphProps = (multiSeries = false) => {
   };
 };
 
-(window as any).ResizeObserver = class ResizeObserver {
+window.ResizeObserver = class ResizeObserver {
   constructor() {}
   observe() {}
+  unobserve() {}
   disconnect() {}
 };
 

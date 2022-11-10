@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apikey"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/pkg/errors"
 	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type sqlStore struct {
@@ -23,7 +23,7 @@ type sqlStore struct {
 var timeNow = time.Now
 
 func (ss *sqlStore) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQuery) error {
-	return ss.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		var sess *xorm.Session
 
 		if query.IncludeExpired {
@@ -53,7 +53,7 @@ func (ss *sqlStore) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQuer
 
 func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.APIKey, error) {
 	result := make([]*apikey.APIKey, 0)
-	err := ss.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sess := dbSession.Where("service_account_id IS NULL").Asc("name")
 		if orgID != -1 {
 			sess = sess.Where("org_id=?", orgID)
@@ -64,7 +64,7 @@ func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.A
 }
 
 func (ss *sqlStore) DeleteApiKey(ctx context.Context, cmd *apikey.DeleteCommand) error {
-	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		rawSQL := "DELETE FROM api_key WHERE id=? and org_id=? and service_account_id IS NULL"
 		result, err := sess.Exec(rawSQL, cmd.Id, cmd.OrgId)
 		if err != nil {
@@ -81,7 +81,7 @@ func (ss *sqlStore) DeleteApiKey(ctx context.Context, cmd *apikey.DeleteCommand)
 }
 
 func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		key := apikey.APIKey{OrgId: cmd.OrgId, Name: cmd.Name}
 		exists, _ := sess.Get(&key)
 		if exists {
@@ -119,7 +119,7 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error
 }
 
 func (ss *sqlStore) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuery) error {
-	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var key apikey.APIKey
 		has, err := sess.ID(query.ApiKeyId).Get(&key)
 
@@ -135,7 +135,7 @@ func (ss *sqlStore) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuer
 }
 
 func (ss *sqlStore) GetApiKeyByName(ctx context.Context, query *apikey.GetByNameQuery) error {
-	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var key apikey.APIKey
 		has, err := sess.Where("org_id=? AND name=?", query.OrgId, query.KeyName).Get(&key)
 
@@ -152,7 +152,7 @@ func (ss *sqlStore) GetApiKeyByName(ctx context.Context, query *apikey.GetByName
 
 func (ss *sqlStore) GetAPIKeyByHash(ctx context.Context, hash string) (*apikey.APIKey, error) {
 	var key apikey.APIKey
-	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.Table("api_key").Where(fmt.Sprintf("%s = ?", ss.db.GetDialect().Quote("key")), hash).Get(&key)
 		if err != nil {
 			return err
@@ -166,7 +166,7 @@ func (ss *sqlStore) GetAPIKeyByHash(ctx context.Context, hash string) (*apikey.A
 
 func (ss *sqlStore) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error {
 	now := timeNow()
-	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if _, err := sess.Table("api_key").ID(tokenID).Cols("last_used_at").Update(&apikey.APIKey{LastUsedAt: &now}); err != nil {
 			return err
 		}

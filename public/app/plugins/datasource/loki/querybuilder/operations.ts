@@ -189,9 +189,9 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       explainHandler: () =>
         `This will replace log line using a specified template. The template can refer to stream labels and extracted labels.
 
-        Example: \`{{.status_code}} - {{.message}}\`
+Example: \`{{.status_code}} - {{.message}}\`
 
-        [Read the docs](https://grafana.com/docs/loki/latest/logql/log_queries/#line-format-expression) for more.
+[Read the docs](https://grafana.com/docs/loki/latest/logql/log_queries/#line-format-expression) for more.
         `,
     },
     {
@@ -210,9 +210,9 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       explainHandler: () =>
         `This will change name of label to desired new label. In the example below, label "error_level" will be renamed to "level".
 
-        Example: error_level=\`level\`
+Example: \`\`error_level=\`level\` \`\`
 
-        [Read the docs](https://grafana.com/docs/loki/latest/logql/log_queries/#labels-format-expression) for more.
+[Read the docs](https://grafana.com/docs/loki/latest/logql/log_queries/#labels-format-expression) for more.
         `,
     },
 
@@ -259,6 +259,50 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       renderer: getLineFilterRenderer('!='),
       addOperationHandler: addLokiOperation,
       explainHandler: (op) => `Return log lines that does not contain string \`${op.params[0]}\`.`,
+    },
+    {
+      id: LokiOperationId.LineContainsCaseInsensitive,
+      name: 'Line contains case insensitive',
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: 'Text to find',
+          description: 'Find log lines that contains this text',
+          minWidth: 33,
+          runQueryOnEnter: true,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'line filter',
+      category: LokiVisualQueryOperationCategory.LineFilters,
+      orderRank: LokiOperationOrder.LineFilters,
+      renderer: getLineFilterRenderer('|~', true),
+      addOperationHandler: addLokiOperation,
+      explainHandler: (op) => `Return log lines that match regex \`(?i)${op.params[0]}\`.`,
+    },
+    {
+      id: LokiOperationId.LineContainsNotCaseInsensitive,
+      name: 'Line does not contain case insensitive',
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: 'Text to exclude',
+          description: 'Find log lines that does not contain this text',
+          minWidth: 40,
+          runQueryOnEnter: true,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'line filter',
+      category: LokiVisualQueryOperationCategory.LineFilters,
+      orderRank: LokiOperationOrder.LineFilters,
+      renderer: getLineFilterRenderer('!~', true),
+      addOperationHandler: addLokiOperation,
+      explainHandler: (op) => `Return log lines that does not match regex \`(?i)${op.params[0]}\`.`,
     },
     {
       id: LokiOperationId.LineMatchesRegex,
@@ -419,4 +463,20 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   ];
 
   return list;
+}
+
+// Keeping a local copy as an optimization measure.
+const definitions = getOperationDefinitions();
+
+/**
+ * Given an operator, return the corresponding explain.
+ * For usage within the Query Editor.
+ */
+export function explainOperator(id: LokiOperationId | string): string {
+  const definition = definitions.find((operation) => operation.id === id);
+
+  const explain = definition?.explainHandler?.({ id: '', params: ['<value>'] }) || '';
+
+  // Strip markdown links
+  return explain.replace(/\[(.*)\]\(.*\)/g, '$1');
 }

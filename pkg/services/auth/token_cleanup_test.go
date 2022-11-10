@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 func TestUserAuthTokenCleanup(t *testing.T) {
@@ -22,7 +23,7 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 
 	insertToken := func(ctx *testContext, token string, prev string, createdAt, rotatedAt int64) {
 		ut := userAuthToken{AuthToken: token, PrevAuthToken: prev, CreatedAt: createdAt, RotatedAt: rotatedAt, UserAgent: "", ClientIp: ""}
-		err := ctx.sqlstore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err := ctx.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			_, err := sess.Insert(&ut)
 			require.Nil(t, err)
 			return nil

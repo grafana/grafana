@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,6 +26,13 @@ var (
 	ErrAlertRuleFailedValidation          = errors.New("invalid alert rule")
 	ErrAlertRuleUniqueConstraintViolation = errors.New("a conflicting alert rule is found: rule title under the same organisation and folder should be unique")
 	ErrQuotaReached                       = errors.New("quota has been exceeded")
+	// ErrNoDashboard is returned when the alert rule does not have a Dashboard UID
+	// in its annotations or the dashboard does not exist.
+	ErrNoDashboard = errors.New("no dashboard")
+
+	// ErrNoPanel is returned when the alert rule does not have a PanelID in its
+	// annotations.
+	ErrNoPanel = errors.New("no panel")
 )
 
 // swagger:enum NoDataState
@@ -86,6 +94,7 @@ const (
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
 	DashboardUIDAnnotation = "__dashboardUid__"
 	PanelIDAnnotation      = "__panelId__"
+	OrgIDAnnotation        = "__orgId__"
 
 	// This isn't a hard-coded secret token, hence the nolint.
 	//nolint:gosec
@@ -155,6 +164,22 @@ type AlertRule struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
+}
+
+// GetDashboardUID returns the DashboardUID or "".
+func (alertRule *AlertRule) GetDashboardUID() string {
+	if alertRule.DashboardUID != nil {
+		return *alertRule.DashboardUID
+	}
+	return ""
+}
+
+// GetPanelID returns the Panel ID or -1.
+func (alertRule *AlertRule) GetPanelID() int64 {
+	if alertRule.PanelID != nil {
+		return *alertRule.PanelID
+	}
+	return -1
 }
 
 type LabelOption func(map[string]string)
@@ -352,6 +377,12 @@ type ListAlertRulesQuery struct {
 	Result RulesGroup
 }
 
+// CountAlertRulesQuery is the query for counting alert rules
+type CountAlertRulesQuery struct {
+	OrgID        int64
+	NamespaceUID string
+}
+
 type GetAlertRulesForSchedulingQuery struct {
 	PopulateFolders bool
 
@@ -456,4 +487,15 @@ func (g RulesGroup) SortByGroupIndex() {
 		}
 		return g[i].RuleGroupIndex < g[j].RuleGroupIndex
 	})
+}
+
+type ruleKeyContextKey struct{}
+
+func WithRuleKey(ctx context.Context, ruleKey AlertRuleKey) context.Context {
+	return context.WithValue(ctx, ruleKeyContextKey{}, ruleKey)
+}
+
+func RuleKeyFromContext(ctx context.Context) (AlertRuleKey, bool) {
+	key, ok := ctx.Value(ruleKeyContextKey{}).(AlertRuleKey)
+	return key, ok
 }

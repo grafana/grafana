@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { useController, useFormContext } from 'react-hook-form';
 
-import { dateTime, GrafanaTheme } from '@grafana/data';
-import { Field, TimeRangeInput, useStyles } from '@grafana/ui';
+import { dateTime } from '@grafana/data';
+import { Field, TimeRangeInput } from '@grafana/ui';
 
 import { SilenceFormFields } from '../../types/silence-form';
 
 export const SilencePeriod = () => {
   const { control, getValues } = useFormContext<SilenceFormFields>();
-  const styles = useStyles(getStyles);
+
   const {
     field: { onChange: onChangeStartsAt, value: startsAt },
     fieldState: { invalid: startsAtInvalid },
@@ -74,8 +74,8 @@ export const SilencePeriod = () => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const styles = {
   timeRange: css`
     width: 400px;
   `,
-});
+};

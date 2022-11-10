@@ -1,10 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { select } from 'react-select-event';
 
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
-import { Dimensions, VariableQueryType } from '../../types';
+import { GetDimensionKeysRequest, VariableQueryType } from '../../types';
 
 import { VariableQueryEditor, Props } from './VariableQueryEditor';
 
@@ -39,7 +39,7 @@ ds.datasource.api.getMetrics = jest.fn().mockResolvedValue([
 ]);
 ds.datasource.api.getDimensionKeys = jest
   .fn()
-  .mockImplementation((_namespace: string, region: string, dimensionFilters?: Dimensions) => {
+  .mockImplementation(({ namespace: region, dimensionFilters }: GetDimensionKeysRequest) => {
     if (!!dimensionFilters) {
       return Promise.resolve([
         { label: 's4', value: 's4' },
@@ -128,8 +128,9 @@ describe('VariableEditor', () => {
         dimensionKey: 's4',
         dimensionFilters: { s4: 'foo' },
       };
-      render(<VariableQueryEditor {...props} />);
-
+      await act(async () => {
+        render(<VariableQueryEditor {...props} />);
+      });
       const filterItem = screen.getByTestId('cloudwatch-dimensions-filter-item');
       expect(filterItem).toBeInTheDocument();
       expect(within(filterItem).getByText('s4')).toBeInTheDocument();
@@ -141,7 +142,12 @@ describe('VariableEditor', () => {
       await select(keySelect, 'v4', {
         container: document.body,
       });
-      expect(ds.datasource.api.getDimensionKeys).toHaveBeenCalledWith('z2', 'a1', {}, '');
+      expect(ds.datasource.api.getDimensionKeys).toHaveBeenCalledWith({
+        namespace: 'z2',
+        region: 'a1',
+        metricName: 'i3',
+        dimensionFilters: undefined,
+      });
       expect(onChange).toHaveBeenCalledWith({
         ...defaultQuery,
         queryType: VariableQueryType.DimensionValues,
@@ -220,12 +226,14 @@ describe('VariableEditor', () => {
       expect(querySelect).toBeInTheDocument();
       expect(screen.queryByText('Dimension Values')).toBeInTheDocument();
       const regionSelect = screen.getByRole('combobox', { name: 'Region' });
-      await select(regionSelect, 'b1', {
-        container: document.body,
-      });
+      await waitFor(() =>
+        select(regionSelect, 'b1', {
+          container: document.body,
+        })
+      );
 
-      expect(ds.datasource.api.getMetrics).toHaveBeenCalledWith('z2', 'b1');
-      expect(ds.datasource.api.getDimensionKeys).toHaveBeenCalledWith('z2', 'b1');
+      expect(ds.datasource.api.getMetrics).toHaveBeenCalledWith({ namespace: 'z2', region: 'b1' });
+      expect(ds.datasource.api.getDimensionKeys).toHaveBeenCalledWith({ namespace: 'z2', region: 'b1' });
       expect(props.onChange).toHaveBeenCalledWith({
         ...defaultQuery,
         refId: 'CloudWatchVariableQueryEditor-VariableQuery',
