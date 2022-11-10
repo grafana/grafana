@@ -10,7 +10,7 @@
 /**
  * @module flot.gauge
  */
- (function($) {
+(function($) {
 
 
     /**
