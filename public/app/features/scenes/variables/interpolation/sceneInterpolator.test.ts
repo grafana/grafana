@@ -104,4 +104,15 @@ describe('sceneInterpolator', () => {
 
     expect(sceneInterpolator(scene, '${test:date:YYYY-MM}')).toBe('2020-07');
   });
+
+  it('Can use scopedVars', () => {
+    const scene = new TestScene({
+      $variables: new SceneVariableSet({
+        variables: [],
+      }),
+    });
+
+    const scopedVars = { __from: { value: 'a', text: 'b' } };
+    expect(sceneInterpolator(scene, '${__from}', scopedVars)).toBe('a');
+  });
 });

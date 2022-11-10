@@ -5,6 +5,7 @@ import { variableRegex } from 'app/features/variables/utils';
 import { SceneObject } from '../../core/types';
 import { SceneVariable, VariableValue } from '../types';
 
+import { getVariableForScopedVar } from './ScopedVarsProxyVariable';
 import { formatRegistry, FormatRegistryID } from './formatRegistry';
 
 type CustomFormatterFn = (
@@ -16,7 +17,7 @@ type CustomFormatterFn = (
 export function sceneInterpolator(
   sceneObject: SceneObject,
   target: string | undefined | null,
-  scopedVar?: ScopedVars,
+  scopedVars?: ScopedVars,
   format?: string | CustomFormatterFn
 ): string {
   if (!target) {
@@ -32,8 +33,14 @@ export function sceneInterpolator(
 
   return target.replace(variableRegex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
     const variableName = var1 || var2 || var3;
-    const variable = lookupSceneVariable(variableName, sceneObject);
     const fmt = fmt2 || fmt3 || format;
+    let variable: SceneVariable | undefined | null;
+
+    if (scopedVars && scopedVars[variableName]) {
+      variable = getVariableForScopedVar(scopedVars[variableName]);
+    } else {
+      variable = lookupSceneVariable(variableName, sceneObject);
+    }
 
     if (!variable) {
       return match;

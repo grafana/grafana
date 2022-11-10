@@ -13,3 +13,7 @@ export class ConstantVariable
     return this.state.value;
   }
 }
+
+export interface ScopedVarsProxyVariableState extends SceneVariableState {
+  value: string;
+}
