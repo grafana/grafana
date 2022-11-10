@@ -138,7 +138,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     text-overflow: ellipsis;
     /* using absolute positioning because flex interferes with ellipsis */
     position: absolute;
-    width: 50%;
     right: 0;
     text-align: right;
     transition: opacity 100ms linear;
