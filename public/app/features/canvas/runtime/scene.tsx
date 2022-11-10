@@ -26,6 +26,7 @@ import {
   getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
 import { ArrowAnchors } from 'app/plugins/panel/canvas/ArrowAnchors';
+import { ArrowSVG } from 'app/plugins/panel/canvas/ArrowSVG';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/CanvasContextMenu';
 import { AnchorPoint, LayerActionID } from 'app/plugins/panel/canvas/types';
 
@@ -60,6 +61,8 @@ export class Scene {
   moveable?: Moveable;
   div?: HTMLDivElement;
   arrowAnchorDiv?: HTMLDivElement;
+  arrowSVG?: SVGElement;
+  arrowLine?: SVGLineElement;
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   shouldShowAdvancedTypes?: boolean;
@@ -302,6 +305,14 @@ export class Scene {
     this.arrowAnchorDiv = anchorElement;
   };
 
+  setArrowSVGRef = (arrowSVG: SVGSVGElement) => {
+    this.arrowSVG = arrowSVG;
+  };
+
+  setArrowLineRef = (arrowLine: SVGLineElement) => {
+    this.arrowLine = arrowLine;
+  };
+
   select = (selection: SelectionParams) => {
     if (this.selecto) {
       this.selecto.setSelectedTargets(selection.targets);
@@ -469,13 +480,27 @@ export class Scene {
 
     const arrowListener = (event: MouseEvent) => {
       event.preventDefault();
-      // TODO: Handle drawing arrow
 
-      // Remove event listener when mouse is not actively clicked anymore
+      if (this.arrowLine && this.div && this.div.parentElement) {
+        const parentBoundingRect = this.div.parentElement.getBoundingClientRect();
+        const x = event.pageX - parentBoundingRect.x;
+        const y = event.pageY - parentBoundingRect.y;
+
+        this.arrowLine.setAttribute('x2', `${x}`);
+        this.arrowLine.setAttribute('y2', `${y}`);
+      }
+
       if (!event.buttons) {
         // TODO: Handle saving arrow
-        this.selecto!.rootContainer!.style.cursor = 'default';
-        this.selecto?.rootContainer?.removeEventListener('mousemove', arrowListener);
+
+        if (this.arrowSVG) {
+          // this.arrowSVG.style.display = 'none';
+        }
+
+        if (this.selecto && this.selecto.rootContainer) {
+          this.selecto.rootContainer.style.cursor = 'default';
+          this.selecto.rootContainer.removeEventListener('mousemove', arrowListener);
+        }
       }
     };
 
@@ -486,6 +511,21 @@ export class Scene {
       // If selected target is an arrow control, eject to handle arrow event
       if (selectedTarget.id === 'arrowControl') {
         this.selecto!.rootContainer!.style.cursor = 'crosshair';
+        if (this.arrowSVG && this.arrowLine && this.div && this.div.parentElement) {
+          const arrowStartTargetBox = selectedTarget.getBoundingClientRect();
+          const parentBoundingRect = this.div.parentElement.getBoundingClientRect();
+
+          // TODO: Make this not as magic numbery -> related to the height / width of highlight ellipse
+          const arrowAnchorHighlightOffset = 8;
+
+          const x = arrowStartTargetBox.x - parentBoundingRect!.x + arrowAnchorHighlightOffset;
+          const y = arrowStartTargetBox.y - parentBoundingRect!.y + arrowAnchorHighlightOffset;
+
+          this.arrowLine.setAttribute('x1', `${x}`);
+          this.arrowLine.setAttribute('y1', `${y}`);
+          this.arrowSVG.style.display = 'block';
+        }
+
         this.selecto?.rootContainer?.addEventListener('mousemove', arrowListener);
         event.stop();
         return;
@@ -628,6 +668,7 @@ export class Scene {
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
         <ArrowAnchors setRef={this.setArrowAnchorRef} />
+        <ArrowSVG setSVGRef={this.setArrowSVGRef} setLineRef={this.setArrowLineRef} />
         {this.root.render()}
         {canShowContextMenu && (
           <Portal>
