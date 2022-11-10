@@ -120,7 +120,7 @@ const getStyles = () => {
       objectFit: 'contain',
     }),
     button: css({
-      'margin-left': '16px',
+      marginLeft: '16px',
     }),
   };
 };
