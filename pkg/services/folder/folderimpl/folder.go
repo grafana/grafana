@@ -325,7 +325,7 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 		return dashboards.ErrFolderAccessDenied
 	}
 
-	deleteCmd := models.DeleteDashboardCommand{OrgId: user.OrgID, Id: dashFolder.Id, ForceDeleteFolderRules: cmd.ForceDeleteRules}
+	deleteCmd := models.DeleteDashboardCommand{OrgId: cmd.OrgID, Id: dashFolder.Id, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 
 	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 		return toFolderError(err)

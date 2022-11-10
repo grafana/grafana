@@ -353,10 +353,7 @@ func TestFolderService(t *testing.T) {
 	})
 }
 
-func TestIntegrationNestedFolderService(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func TestNestedFolderService(t *testing.T) {
 	t.Run("with feature flag unset", func(t *testing.T) {
 		ctx := appcontext.WithUser(context.Background(), usr)
 		store := &FakeStore{}
