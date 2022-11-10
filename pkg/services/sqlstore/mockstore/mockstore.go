@@ -139,6 +139,10 @@ func (m *SQLStoreMock) GetDBEngine() *xorm.Engine {
 	return nil
 }
 
+func (m *SQLStoreMock) GetDBConfig() *sqlstore.DatabaseConfig {
+	return nil
+}
+
 func (m *SQLStoreMock) Migrate(_ bool) error {
 	return m.ExpectedError
 }

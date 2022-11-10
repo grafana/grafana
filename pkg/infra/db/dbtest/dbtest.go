@@ -36,6 +36,10 @@ func (f *FakeDB) InTransaction(ctx context.Context, fn func(ctx context.Context)
 	return f.ExpectedError
 }
 
+func (f *FakeDB) GetDBConfig() *sqlstore.DatabaseConfig {
+	return nil
+}
+
 func (f *FakeDB) GetDBEngine() *xorm.Engine {
 	return nil
 }

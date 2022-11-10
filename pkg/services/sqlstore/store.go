@@ -34,6 +34,7 @@ type Store interface {
 	WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 	GetDBEngine() *xorm.Engine
+	GetDBConfig() *DatabaseConfig
 	Migrate(bool) error
 	Sync() error
 	Reset() error
