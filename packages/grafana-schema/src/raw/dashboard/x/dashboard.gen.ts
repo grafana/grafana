@@ -534,11 +534,7 @@ export interface RowPanel {
   };
   gridPos?: GridPos;
   id: number;
-  panels: Array<(Panel | {
-      type: 'graph';
-    } | {
-      type: 'heatmap';
-    })>;
+  panels: Array<(Panel | GraphPanel | HeatmapPanel)>;
   /**
    * Name of template variable to repeat for.
    */
@@ -551,6 +547,25 @@ export const defaultRowPanel: Partial<RowPanel> = {
   collapsed: false,
   panels: [],
 };
+
+/**
+ * Support for legacy graph and heatmap panels.
+ */
+export interface GraphPanel {
+  /**
+   * @deprecated this is part of deprecated graph panel
+   */
+  legend?: {
+    show: boolean;
+    sort?: string;
+    sortDesc?: boolean;
+  };
+  type: 'graph';
+}
+
+export interface HeatmapPanel {
+  type: 'heatmap';
+}
 
 export interface Dashboard {
   /**
@@ -586,11 +601,7 @@ export interface Dashboard {
    * TODO docs
    */
   liveNow?: boolean;
-  panels?: Array<(Panel | RowPanel | {
-      type: 'graph';
-    } | {
-      type: 'heatmap';
-    })>;
+  panels?: Array<(Panel | RowPanel | GraphPanel | HeatmapPanel)>;
   /**
    * TODO docs
    */
@@ -679,6 +690,7 @@ export const defaultDashboard: Partial<Dashboard> = {
   graphTooltip: DashboardCursorSync.Off,
   links: [],
   panels: [],
+  revision: -1,
   schemaVersion: 36,
   style: 'dark',
   tags: [],

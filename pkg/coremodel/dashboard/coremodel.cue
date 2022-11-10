@@ -25,7 +25,7 @@ seqs: [
 				description?: string
 
 				// Version of the current dashboard data 
-				revision: int64 @grafanamaturity(NeedsExpertReview)
+				revision: int64 | *-1 @grafanamaturity(NeedsExpertReview)
 
 				gnetId?: string @grafanamaturity(NeedsExpertReview)
 				// Tags associated with dashboard.
@@ -447,12 +447,18 @@ seqs: [
 				// Support for legacy graph and heatmap panels.
 				#GraphPanel: {
 					type: "graph" @grafanamaturity(NeedsExpertReview)
+					// @deprecated this is part of deprecated graph panel
+					legend?: { 
+						show: bool | *true
+						sort?: string
+						sortDesc?: bool
+					} 
 					...
-				} @grafanamaturity(NeedsExpertReview)
+				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 				#HeatmapPanel: {
 					type: "heatmap" @grafanamaturity(NeedsExpertReview)
 					...
-				} @grafanamaturity(NeedsExpertReview)
+				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 			},
 		]
 	},

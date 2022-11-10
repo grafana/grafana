@@ -1,4 +1,4 @@
-import { AnnotationQuery, Dashboard, defaultDashboardCursorSync, Panel } from '@grafana/schema';
+import { AnnotationQuery, Dashboard, defaultDashboardCursorSync, GraphPanel, Panel } from '@grafana/schema';
 import { DashboardMeta } from 'app/types';
 
 import { DashboardModel } from '../DashboardModel';
@@ -19,7 +19,7 @@ export function createDashboardModelFixture(
   return new DashboardModel(dashboardJson, meta);
 }
 
-export function createPanelJSONFixture(panelInput: Partial<Panel> = {}): Panel {
+export function createPanelJSONFixture(panelInput: Partial<Panel | GraphPanel> = {}): Panel {
   return {
     fieldConfig: {
       defaults: {},

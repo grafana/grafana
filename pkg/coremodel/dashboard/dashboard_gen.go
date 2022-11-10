@@ -243,7 +243,7 @@ type Model struct {
 	Refresh *interface{} `json:"refresh,omitempty"`
 
 	// Version of the current dashboard data
-	Revision int64 `json:"revision"`
+	Revision int `json:"revision"`
 
 	// Version of the JSON schema, incremented each time a Grafana update brings
 	// changes to said schema.
@@ -551,16 +551,21 @@ type FieldConfigSource struct {
 	} `json:"overrides"`
 }
 
-// GraphPanel is the Go representation of a dashboard.GraphPanel.
+// Support for legacy graph and heatmap panels.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type GraphPanel struct {
-	// Support for legacy graph and heatmap panels.
+	// @deprecated this is part of deprecated graph panel
+	Legend *struct {
+		Show     bool    `json:"show"`
+		Sort     *string `json:"sort,omitempty"`
+		SortDesc *bool   `json:"sortDesc,omitempty"`
+	} `json:"legend,omitempty"`
 	Type GraphPanelType `json:"type"`
 }
 
-// Support for legacy graph and heatmap panels.
+// GraphPanelType is the Go representation of a GraphPanel.Type.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.

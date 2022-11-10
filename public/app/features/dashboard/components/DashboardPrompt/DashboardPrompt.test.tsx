@@ -14,7 +14,7 @@ function getDefaultDashboardModel() {
         id: 1,
         type: 'graph',
         gridPos: { x: 0, y: 0, w: 24, h: 6 },
-        legend: { sortDesc: false }, // TODO legend is marked as a non-persisted field
+        legend: { show: true, sortDesc: false }, // TODO legend is marked as a non-persisted field
       }),
 
       {

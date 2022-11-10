@@ -24,7 +24,9 @@ export type {
   ValueMappingResult,
   Transformation,
   MatcherConfig,
-  RowPanel
+  RowPanel,
+  GraphPanel,
+  HeatmapPanel
 } from './raw/dashboard/x/dashboard.gen';
 
 // Raw generated enums and default consts from dashboard entity type.
