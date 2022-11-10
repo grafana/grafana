@@ -270,7 +270,7 @@ func (s *Service) Update(ctx context.Context, user *user.SignedInUser, orgID int
 		}
 
 		getFolder, err := s.store.Get(ctx, folder.GetFolderQuery{
-			UID:   &cmd.Uid,
+			UID:   &existingUid,
 			OrgID: orgID,
 		})
 		if err != nil {
