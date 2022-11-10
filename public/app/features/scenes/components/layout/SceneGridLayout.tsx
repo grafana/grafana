@@ -87,9 +87,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       if (child instanceof SceneGridRow && child !== row) {
         for (const rowChild of child.state.children) {
           if (rowChild.state.size?.y! > rowY) {
-            if (rowChild.state.size?.y! > rowY) {
-              this.pushChildDown(rowChild, pushDownAmount);
-            }
+            this.pushChildDown(rowChild, pushDownAmount);
           }
         }
       }
