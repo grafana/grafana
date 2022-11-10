@@ -272,7 +272,7 @@ func ReadBody(addr GitAddress, oids ...string) error {
 			}
 
 			for k, v := range p.Commits {
-				fmt.Println("COMIT", k, v.Author)
+				fmt.Println("Commit", k, v.Author, v.Message)
 			}
 
 			for name := range p.Blobs {
