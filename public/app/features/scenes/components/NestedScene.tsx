@@ -18,9 +18,9 @@ interface NestedSceneState extends SceneLayoutChildState {
 }
 
 export class NestedScene extends SceneObjectBase<NestedSceneState> {
-  static Component = NestedSceneRenderer;
+  public static Component = NestedSceneRenderer;
 
-  onToggle = () => {
+  public onToggle = () => {
     this.setState({
       isCollapsed: !this.state.isCollapsed,
       size: {
@@ -31,7 +31,7 @@ export class NestedScene extends SceneObjectBase<NestedSceneState> {
   };
 
   /** Removes itself from its parent's children array */
-  onRemove = () => {
+  public onRemove = () => {
     const parent = this.parent!;
     if ('children' in parent.state) {
       parent.setState({

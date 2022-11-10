@@ -43,7 +43,7 @@ You can also augment queries by using [template variables]({{< relref "./templat
 ## Code mode
 
 In **Code mode**, you can write complex queries using a text editor with autocompletion features and syntax highlighting.
-It also contains a [log browser]({{< relref "#log-browser" >}}) to further help you write queries.
+It also contains a [label browser]({{< relref "#label-browser" >}}) to further help you write queries.
 
 For more information about Loki's query language, refer to the [Loki documentation](/docs/loki/latest/logql/).
 
@@ -54,21 +54,21 @@ Code mode's autocompletion feature works automatically while typing.
 The query editor can autocomplete static functions, aggregations, and keywords, and also dynamic items like labels.
 The autocompletion dropdown includes documentation for the suggested items where available.
 
-### Log browser
+### Label browser
 
-You can use the Loki log browser to navigate through your labels and values, and build queries.
+You can use the Loki label browser to navigate through your labels and values, and build queries.
 
 **To navigate Loki and build a query:**
 
 1. Choose labels to locate.
 1. Search for the values of your selected labels.
 
-   The search field supports fuzzy search, and the log browser also supports faceting to list only possible label combinations.
+   The search field supports fuzzy search, and the label browser also supports faceting to list only possible label combinations.
 
 1. Choose a query type between [**logs query**]({{< relref "#create-a-log-query" >}}) and [**rate metrics query**]({{< relref "#create-a-metric-query" >}}).
    You can also validate the selector.
 
-{{< figure src="/static/img/docs/v75/loki_log_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki log browser" >}}
+{{< figure src="/static/img/docs/v75/loki_log_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki label browser" >}}
 
 ### Configure query settings
 
