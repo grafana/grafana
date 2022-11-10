@@ -115,7 +115,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, onDashboardChange, onPa
       />
       <FilterInput value={panelFilter} onChange={setPanelFilter} title="Search panel" placeholder="Search panel" />
 
-      <div style={{ flex: '1 1 auto' }}>
+      <div className={styles.column}>
         {isDashSearchFetching && (
           <LoadingPlaceholder text="Loading dashboards..." className={styles.loadingPlaceholder} />
         )}
@@ -131,7 +131,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, onDashboardChange, onPa
         )}
       </div>
 
-      <div style={{ flex: '1 1 auto' }}>
+      <div className={styles.column}>
         {!dashboardUid && !isDashboardFetching && <div>Select a dashboard to get a list of available panels</div>}
         {isDashboardFetching && (
           <LoadingPlaceholder text="Loading dashboard..." className={styles.loadingPlaceholder} />
@@ -157,6 +157,9 @@ const getPickerStyles = (theme: GrafanaTheme2) => ({
     grid-template-rows: min-content auto;
     gap: ${theme.spacing(2)};
     flex: 1;
+  `,
+  column: css`
+    flex: 1 1 auto;
   `,
   dashboardTitle: css`
     height: 22px;

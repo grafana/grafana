@@ -146,7 +146,7 @@ const AnnotationsField = () => {
             Add new annotation
           </Button>
           <Button type="button" variant="secondary" icon="dashboard" onClick={openDashboardPicker}>
-            Set panel and dashboard
+            Set dashboard and panel
           </Button>
         </Stack>
         <Modal
