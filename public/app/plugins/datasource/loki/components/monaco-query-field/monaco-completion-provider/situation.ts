@@ -169,7 +169,7 @@ const RESOLVERS: Resolver[] = [
     fun: resolveLogRangeFromError,
   },
   {
-    path: [ERROR_NODE_ID, LiteralExpr, MetricExpr, VectorAggregationExpr, MetricExpr, Expr, LogQL],
+    path: [ERROR_NODE_ID, LiteralExpr, MetricExpr, VectorAggregationExpr],
     fun: () => ({ type: 'IN_AGGREGATION' }),
   },
   {
