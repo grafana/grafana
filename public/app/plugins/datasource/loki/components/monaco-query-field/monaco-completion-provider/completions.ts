@@ -66,6 +66,27 @@ const DURATION_COMPLETIONS: Completion[] = ['$__interval', '$__range', '1m', '5m
   })
 );
 
+const UNWRAP_FUNCTION_COMPLETIONS: Completion[] = [
+  {
+    type: 'FUNCTION',
+    label: 'duration_seconds',
+    documentation: 'Will convert the label value in seconds from the go duration format (e.g 5m, 24s30ms).',
+    insertText: 'duration_seconds()',
+  },
+  {
+    type: 'FUNCTION',
+    label: 'duration',
+    documentation: 'Short version of duration_seconds().',
+    insertText: 'duration()',
+  },
+  {
+    type: 'FUNCTION',
+    label: 'duration',
+    documentation: 'Will convert the label value to raw bytes applying the bytes unit (e.g. 5 MiB, 3k, 1G).',
+    insertText: 'bytes()',
+  },
+];
+
 const LINE_FILTER_COMPLETIONS = [
   {
     operator: '|=',
@@ -233,6 +254,19 @@ async function getLabelValuesForMetricCompletions(
   }));
 }
 
+async function getAfterUnwrapCompletions(labels: Label[], dataProvider: CompletionDataProvider) {
+  const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(labels);
+
+  const labelCompletions = extractedLabelKeys.map((label) => ({
+    type: 'LABEL_NAME',
+    label,
+    insertText: label,
+    triggerOnInsert: false,
+  }));
+
+  return [...labelCompletions, ...UNWRAP_FUNCTION_COMPLETIONS];
+}
+
 export async function getCompletions(
   situation: Situation,
   dataProvider: CompletionDataProvider
@@ -257,6 +291,8 @@ export async function getCompletions(
       );
     case 'AFTER_SELECTOR':
       return getAfterSelectorCompletions(situation.labels, situation.afterPipe, dataProvider);
+    case 'AFTER_UNWRAP':
+      return getAfterUnwrapCompletions(situation.otherLabels, dataProvider);
     case 'IN_AGGREGATION':
       return [...FUNCTION_COMPLETIONS, ...AGGREGATION_COMPLETIONS];
     default:
