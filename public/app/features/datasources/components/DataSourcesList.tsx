@@ -2,13 +2,14 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
-import { Card, Tag, useStyles2 } from '@grafana/ui';
+import { Button, LinkButton, Card, Tag, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/core';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
 
 import { getDataSources, getDataSourcesCount, useDataSourcesRoutes, useLoadDataSources } from '../state';
+import { constructDataSourceExploreUrl } from '../utils';
 
 import { DataSourcesListHeader } from './DataSourcesListHeader';
 
@@ -40,6 +41,7 @@ export type ViewProps = {
 export function DataSourcesListView({ dataSources, dataSourcesCount, isLoading, hasCreateRights }: ViewProps) {
   const styles = useStyles2(getStyles);
   const dataSourcesRoutes = useDataSourcesRoutes();
+  const canExploreDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
 
   if (isLoading) {
     return <PageLoader />;
@@ -83,6 +85,21 @@ export function DataSourcesListView({ dataSources, dataSourcesCount, isLoading, 
                     dataSource.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />,
                   ]}
                 </Card.Meta>
+                <Card.Tags>
+                  <Button icon="apps" fill="outline" variant="secondary">
+                    Build a Dashboard
+                  </Button>
+                  <LinkButton
+                    icon="compass"
+                    fill="outline"
+                    variant="secondary"
+                    className={styles.button}
+                    href={constructDataSourceExploreUrl(dataSource)}
+                    disabled={!canExploreDataSources}
+                  >
+                    Explore
+                  </LinkButton>
+                </Card.Tags>
               </Card>
             </li>
           );
@@ -101,6 +118,9 @@ const getStyles = () => {
     }),
     logo: css({
       objectFit: 'contain',
+    }),
+    button: css({
+      'margin-left': '16px',
     }),
   };
 };
