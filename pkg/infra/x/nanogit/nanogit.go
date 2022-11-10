@@ -3,6 +3,9 @@ package nanogit
 import (
 	"bytes"
 	"compress/zlib"
+
+	// Ignore G505 since sha1 is required for git
+	// nolint:gosec
 	"crypto/sha1"
 	"encoding/binary"
 	"encoding/hex"
@@ -485,7 +488,7 @@ func (pr *PackfileReader) readObjects(packfile *Packfile) error {
 	for i := 0; i < packfile.ObjectCount; i++ {
 		var pos = pr.Pos()
 		obj, err := pr.readObject(packfile)
-		if err != nil && err != io.EOF {
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 
