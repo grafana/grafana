@@ -710,7 +710,7 @@ func (o *objectReader) inflate() ([]byte, error) {
 			return nil, NewError("error opening packfile's object zlib: %v", err)
 		}
 	}
-	defer zr.Close()
+	defer zr.Close() //nolint:errcheck
 
 	if o.size > SIZE_LIMIT {
 		return nil, NewError("the object size exceeed the allowed limit: %d", o.size)
