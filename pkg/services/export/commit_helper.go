@@ -49,11 +49,18 @@ type commitOptions struct {
 func (ch *commitHelper) initOrg(ctx context.Context, sql db.DB, orgID int64) error {
 	sess := sql.GetSqlxSession()
 	rows := make([]*userInfo, 0)
-	err := sess.Select(ch.ctx, &rows,
-		`select "user".*, "org_user".role 
-		  from "user" join org_user 
-		    ON "org_user".id = "user".id 
-		 where org_user.org_id=?`, orgID)
+	query := `select "user".*, "org_user".role 
+		from "user" join org_user 
+		  ON "org_user".id = "user".id 
+		where org_user.org_id=?`
+
+	fmt.Printf("DDD: %s", sql.GetDBType())
+
+	if sql.GetDBType() == "mysql" {
+		query = strings.ReplaceAll(query, `"`, "")
+	}
+
+	err := sess.Select(ch.ctx, &rows, query, orgID)
 	if err != nil {
 		return err
 	}
