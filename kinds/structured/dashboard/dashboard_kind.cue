@@ -216,8 +216,8 @@ lineage: seqs: [
 					type: #MappingType & "range"
 					options: {
 						// to and from are `number | null` in current ts, really not sure what to do
-						from:   int32 @grafanamaturity(NeedsExpertReview)
-						to:     int32 @grafanamaturity(NeedsExpertReview)
+						from:   float64 @grafanamaturity(NeedsExpertReview)
+						to:     float64 @grafanamaturity(NeedsExpertReview)
 						result: #ValueMappingResult
 					}
 				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
