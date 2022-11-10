@@ -327,7 +327,8 @@
 
             var blur = gaugeOptionsi.gauge.shadow.show ? gaugeOptionsi.gauge.shadow.blur : 0;
             var color = getColor(gaugeOptionsi, data);
-            var hasNegative = gaugeOptionsi.gauge.min < 0.0
+            var hasPositive = gaugeOptionsi.gauge.max > 0.0;
+            var hasNegative = gaugeOptionsi.gauge.min < 0.0;
             var angles = calculateAnglesForGauge(gaugeOptionsi, layout, data, hasNegative);
 
             // draw gauge frame
@@ -356,8 +357,9 @@
                 color,           // fill color
                 blur);
             
-            if(hasNegative)  
+            if(hasPositive && hasNegative) {
                 drawZeroMarker(gaugeOptionsi, layout, cellLayout, color);
+            }
         }
 
         /**
@@ -584,6 +586,12 @@
                     drawThresholdValue(gaugeOptionsi, layout, cellLayout, i + "_" + j, threshold.value, a);
                 }
             }
+
+            var hasPositive = gaugeOptionsi.gauge.max > 0.0;
+            var hasNegative = gaugeOptionsi.gauge.min < 0.0;
+            if(hasPositive && hasNegative) {
+                drawThresholdValue(gaugeOptionsi, layout, cellLayout, "Zero" + i, 0, calculateAngle(gaugeOptionsi, layout, 0));
+            }
         }
 
         /**
@@ -637,7 +645,7 @@
          * @param  {Object} textOptions the option of the text
          * @param  {Number} [a] the angle of the value drawn
          */
-         function drawText(x, y, id, text, textOptions, a) {
+        function drawText(x, y, id, text, textOptions, a) {
             var span = $(placeholder).find("#" + id);
             var exists = span.length;
             if (!exists) {
