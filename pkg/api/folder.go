@@ -221,39 +221,39 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	return response.JSON(http.StatusOK, "")
 }
 
-func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {
-	canEdit, _ := g.CanEdit()
-	canSave, _ := g.CanSave()
-	canAdmin, _ := g.CanAdmin()
-	canDelete, _ := g.CanDelete()
+// func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {
+// 	canEdit, _ := g.CanEdit()
+// 	canSave, _ := g.CanSave()
+// 	canAdmin, _ := g.CanAdmin()
+// 	canDelete, _ := g.CanDelete()
 
-	// Finding creator and last updater of the folder
-	updater, creator := anonString, anonString
-	if folder.CreatedBy > 0 {
-		creator = hs.getUserLogin(c.Req.Context(), folder.CreatedBy)
-	}
-	if folder.UpdatedBy > 0 {
-		updater = hs.getUserLogin(c.Req.Context(), folder.UpdatedBy)
-	}
+// 	// Finding creator and last updater of the folder
+// 	updater, creator := anonString, anonString
+// 	if folder.CreatedBy > 0 {
+// 		creator = hs.getUserLogin(c.Req.Context(), folder.CreatedBy)
+// 	}
+// 	if folder.UpdatedBy > 0 {
+// 		updater = hs.getUserLogin(c.Req.Context(), folder.UpdatedBy)
+// 	}
 
-	return dtos.Folder{
-		Id:            folder.Id,
-		Uid:           folder.Uid,
-		Title:         folder.Title,
-		Url:           folder.Url,
-		HasACL:        folder.HasACL,
-		CanSave:       canSave,
-		CanEdit:       canEdit,
-		CanAdmin:      canAdmin,
-		CanDelete:     canDelete,
-		CreatedBy:     creator,
-		Created:       folder.Created,
-		UpdatedBy:     updater,
-		Updated:       folder.Updated,
-		Version:       folder.Version,
-		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.Uid),
-	}
-}
+// 	return dtos.Folder{
+// 		Id:            folder.Id,
+// 		Uid:           folder.Uid,
+// 		Title:         folder.Title,
+// 		Url:           folder.Url,
+// 		HasACL:        folder.HasACL,
+// 		CanSave:       canSave,
+// 		CanEdit:       canEdit,
+// 		CanAdmin:      canAdmin,
+// 		CanDelete:     canDelete,
+// 		CreatedBy:     creator,
+// 		Created:       folder.Created,
+// 		UpdatedBy:     updater,
+// 		Updated:       folder.Updated,
+// 		Version:       folder.Version,
+// 		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.Uid),
+// 	}
+// }
 
 func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardGuardian, folder *folder.Folder) dtos.Folder {
 	canEdit, _ := g.CanEdit()
