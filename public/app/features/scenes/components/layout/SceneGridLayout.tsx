@@ -183,7 +183,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
    *  We assume the layout array is storted according to y pos, and walk upwards until we find a row.
    *  If it is collapsed there is no row to add it to. The default is then to return the SceneGridLayout itself
    */
-  getRowAboveIndex(layout: ReactGridLayout.Layout[], startAt: number): SceneGridRow | SceneGridLayout {
+  findGridItemSceneParent(layout: ReactGridLayout.Layout[], startAt: number): SceneGridRow | SceneGridLayout {
     if (startAt < 0) {
       return this;
     }
@@ -254,17 +254,12 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       }
     }
 
-    // find closest row
-    for (let index = 0; index < gridLayout.length; index++) {
-      const gridItem = gridLayout[index];
+    // Update the parent of the child if it has moved to a row or back to the grid
+    const indexOfUpdatedItem = gridLayout.findIndex((item) => item.i === updatedItem.i);
+    const newParent = this.findGridItemSceneParent(gridLayout, indexOfUpdatedItem - 1);
 
-      if (gridItem.i === updatedItem.i) {
-        const rowAbove = this.getRowAboveIndex(gridLayout, index - 1);
-
-        if (rowAbove && rowAbove !== sceneChild.parent) {
-          this.moveChildTo(sceneChild, rowAbove);
-        }
-      }
+    if (newParent !== sceneChild.parent) {
+      this.moveChildTo(sceneChild, newParent);
     }
 
     this._skipOnLayoutChange = true;
