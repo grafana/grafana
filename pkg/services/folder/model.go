@@ -65,7 +65,7 @@ type CreateFolderCommand struct {
 	OrgID       int64  `json:"-"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	ParentUID   string `json:"parent_uid"`
+	ParentUID   string `json:"parentUid"`
 }
 
 // UpdateFolderCommand captures the information required by the folder service
@@ -73,6 +73,7 @@ type CreateFolderCommand struct {
 type UpdateFolderCommand struct {
 	Folder         *Folder `json:"folder"` // The extant folder
 	NewUID         *string `json:"uid" xorm:"uid"`
+	NewParentUID   *string `json:"parentUid" xorm:"parent_uid"`
 	NewTitle       *string `json:"title"`
 	NewDescription *string `json:"description"`
 }
@@ -81,7 +82,7 @@ type UpdateFolderCommand struct {
 // to move a folder.
 type MoveFolderCommand struct {
 	UID          string `json:"uid"`
-	NewParentUID string `json:"new_parent_uid"`
+	NewParentUID string `json:"NewParentUid"`
 	OrgID        int64  `json:"-"`
 }
 

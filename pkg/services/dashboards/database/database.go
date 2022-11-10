@@ -125,7 +125,11 @@ func (d *DashboardStore) GetFolderByUID(ctx context.Context, orgID int64, uid st
 
 	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Uid: uid}
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
+		query := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true))
+		if !d.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+			query = query.Where("folder_id=0")
+		}
+		has, err := query.Get(&dashboard)
 		if err != nil {
 			return err
 		}
