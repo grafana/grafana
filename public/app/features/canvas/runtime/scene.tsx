@@ -472,7 +472,7 @@ export class Scene {
         this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
       }
 
-      if (isTargetMoveableElement || isTargetAlreadySelected) {
+      if (isTargetMoveableElement || isTargetAlreadySelected || !this.isEditingEnabled) {
         // Prevent drawing selection box when selected target is a moveable element or already selected
         event.stop();
       }
