@@ -496,7 +496,9 @@ describe('DashboardModel', () => {
             collapsed: true,
             panels: [
               // this whole test is about dealing with out-of-spec (or at least ambigious) data...
+              //@ts-expect-error
               { id: 3, type: 'graph', gridPos: { w: 12, h: 2 } },
+              //@ts-expect-error
               { id: 4, type: 'graph', gridPos: { w: 12, h: 2 } },
             ],
           },

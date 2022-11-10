@@ -133,6 +133,7 @@ export class DashboardModel implements TimeModel {
 
     this.events = new EventBusSrv();
     this.id = data.id || null;
+    // TODO: UID is used in many places assuming it always exist
     this.uid = data.uid || null;
     this.revision = data.revision;
     this.title = data.title ?? 'No Title';
