@@ -2,13 +2,10 @@ package loader
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/gosimple/slug"
@@ -25,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/storage"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -87,6 +83,10 @@ func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string) 
 func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, res []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
 	loadedPlugins := []*plugins.Plugin{}
 	for _, r := range res {
+		if _, exists := l.pluginRegistry.Plugin(ctx, r.Primary.JSONData.ID); exists {
+			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", r.Primary.JSONData.ID)
+			continue
+		}
 		plugin := createPluginBase(r.Primary.JSONData, class, r.Primary.Files)
 
 		sig, err := signature.Calculate(l.log, class, r.Primary)
@@ -102,6 +102,11 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, res []*pl
 		loadedPlugins = append(loadedPlugins, plugin)
 
 		for _, c := range r.Children {
+			if _, exists := l.pluginRegistry.Plugin(ctx, c.JSONData.ID); exists {
+				l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", r.Primary.JSONData.ID)
+				continue
+			}
+
 			cp := createPluginBase(c.JSONData, class, c.Files)
 			cp.Parent = plugin
 			cp.Signature = sig.Status
@@ -207,7 +212,6 @@ func (l *Loader) load(ctx context.Context, p *plugins.Plugin) error {
 func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
 	l.log.Debug("Stopping plugin process", "pluginId", p.ID)
 
-	// TODO confirm the sequence of events is safe
 	if err := l.processManager.Stop(ctx, p.ID); err != nil {
 		return err
 	}
@@ -221,55 +225,6 @@ func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
 		return err
 	}
 	return nil
-}
-
-func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
-	l.log.Debug("Loading plugin", "path", pluginJSONPath)
-
-	if !strings.EqualFold(filepath.Ext(pluginJSONPath), ".json") {
-		return plugins.JSONData{}, ErrInvalidPluginJSONFilePath
-	}
-
-	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `currentPath` is based
-	// on plugin the folder structure on disk and not user input.
-	reader, err := os.Open(pluginJSONPath)
-	if err != nil {
-		return plugins.JSONData{}, err
-	}
-
-	plugin := plugins.JSONData{}
-	if err = json.NewDecoder(reader).Decode(&plugin); err != nil {
-		return plugins.JSONData{}, err
-	}
-
-	if err = reader.Close(); err != nil {
-		l.log.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
-	}
-
-	if err = validatePluginJSON(plugin); err != nil {
-		return plugins.JSONData{}, err
-	}
-
-	if plugin.ID == "grafana-piechart-panel" {
-		plugin.Name = "Pie Chart (old)"
-	}
-
-	if len(plugin.Dependencies.Plugins) == 0 {
-		plugin.Dependencies.Plugins = []plugins.Dependency{}
-	}
-
-	if plugin.Dependencies.GrafanaVersion == "" {
-		plugin.Dependencies.GrafanaVersion = "*"
-	}
-
-	for _, include := range plugin.Includes {
-		if include.Role == "" {
-			include.Role = org.RoleViewer
-		}
-	}
-
-	return plugin, nil
 }
 
 func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, files plugins.LocalFS) *plugins.Plugin {
@@ -378,35 +333,4 @@ func (l *Loader) PluginErrors() []*plugins.Error {
 	}
 
 	return errs
-}
-
-func baseURL(pluginJSON plugins.JSONData) string {
-	return path.Join("public/plugins", pluginJSON.ID)
-}
-
-func module(pluginJSON plugins.JSONData) string {
-	return path.Join("plugins", pluginJSON.ID, "module")
-}
-
-func validatePluginJSON(data plugins.JSONData) error {
-	if data.ID == "" || !data.Type.IsValid() {
-		return ErrInvalidPluginJSON
-	}
-	return nil
-}
-
-type foundPlugins map[string]plugins.JSONData
-
-// stripDuplicates will strip duplicate plugins or plugins that already exist
-func (f *foundPlugins) stripDuplicates(existingPlugins map[string]struct{}, log log.Logger) {
-	pluginsByID := make(map[string]struct{})
-	for k, scannedPlugin := range *f {
-		if _, existing := existingPlugins[scannedPlugin.ID]; existing {
-			log.Debug("Skipping plugin as it's already installed", "plugin", scannedPlugin.ID)
-			delete(*f, k)
-			continue
-		}
-
-		pluginsByID[scannedPlugin.ID] = struct{}{}
-	}
 }

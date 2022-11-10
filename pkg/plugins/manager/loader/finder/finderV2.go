@@ -33,7 +33,6 @@ func Newv2() Finderv2 {
 
 func (f *Finderv2) Find(pluginPaths []string) ([]*plugins.FoundBundle, error) {
 	var pluginJSONPaths []string
-
 	for _, path := range pluginPaths {
 		exists, err := fs.Exists(path)
 		if err != nil {
@@ -51,9 +50,8 @@ func (f *Finderv2) Find(pluginPaths []string) ([]*plugins.FoundBundle, error) {
 		pluginJSONPaths = append(pluginJSONPaths, paths...)
 	}
 
-	var foundPlugins = foundPlugins{}
-
 	// load plugin.json files and map directory to JSON data
+	foundPlugins := make(map[string]plugins.JSONData)
 	for _, pluginJSONPath := range pluginJSONPaths {
 		plugin, err := f.readPluginJSON(pluginJSONPath)
 		if err != nil {
@@ -75,7 +73,6 @@ func (f *Finderv2) Find(pluginPaths []string) ([]*plugins.FoundBundle, error) {
 	}
 
 	var res = make(map[string]*plugins.FoundBundle)
-	//var res map[string]*plugins.FoundPlugin
 	for pluginDir, data := range foundPlugins {
 		files, err := collectFilesWithin(pluginDir)
 		if err != nil {
@@ -217,22 +214,6 @@ func validatePluginJSON(data plugins.JSONData) error {
 		return ErrInvalidPluginJSON
 	}
 	return nil
-}
-
-type foundPlugins map[string]plugins.JSONData
-
-// stripDuplicates will strip duplicate plugins or plugins that already exist
-func (f *foundPlugins) stripDuplicates(existingPlugins map[string]struct{}, log log.Logger) {
-	pluginsByID := make(map[string]struct{})
-	for k, scannedPlugin := range *f {
-		if _, existing := existingPlugins[scannedPlugin.ID]; existing {
-			log.Debug("Skipping plugin as it's already installed", "plugin", scannedPlugin.ID)
-			delete(*f, k)
-			continue
-		}
-
-		pluginsByID[scannedPlugin.ID] = struct{}{}
-	}
 }
 
 func collectFilesWithin(dir string) (map[string]struct{}, error) {
