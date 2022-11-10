@@ -74,7 +74,7 @@ export const LocationModeEditor = ({
         return (
           <Alert
             title={info.warning}
-            severity="warning"
+            severity="info"
             buttonContent={<Icon name="question-circle" size="xl" />}
             onRemove={() => {
               const newWindow = window.open(helpUrl, '_blank', 'noopener,noreferrer');
