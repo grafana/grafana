@@ -5,7 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, DEFAULT_PANEL_SPAN } from 'app/core/constants';
+import { DEFAULT_PANEL_SPAN, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
 import {
@@ -23,37 +23,88 @@ interface SceneGridLayoutState extends SceneLayoutState {}
 export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   static Component = SceneGridLayoutRenderer;
 
-  private _flattenedChildren: Record<string, { row?: SceneGridRow; child: SceneObject<SceneLayoutChildState> }> = {};
-  private _rowBBoxes: Record<string, { x: number; y: number; height: number }> = {};
-
   private _skipOnLayoutChange = false;
+
   constructor(state: SceneGridLayoutState) {
     super({
       isDraggable: true,
       ...state,
+      children: sortChildrenByPosition(state.children),
     });
-
-    // Flat record of all layout children
-    this._flattenedChildren = flattenGridLayoutChildren(this.state.children);
-
-    // Bounding boxes for each row
-    this._rowBBoxes = buildRowBBoxes(this.state.children);
   }
 
-  get flattenedChildren() {
-    return this._flattenedChildren;
-  }
-  get rowBBoxes() {
-    return this._rowBBoxes;
+  toggleRow(row: SceneGridRow) {
+    const isCollapsed = row.state.isCollapsed;
+
+    if (!isCollapsed) {
+      row.setState({ isCollapsed: true });
+      // To force re-render
+      this.setState({});
+      return;
+    }
+
+    const rowChildren = row.state.children;
+
+    if (rowChildren.length === 0) {
+      row.setState({ isCollapsed: false });
+      this.setState({});
+      return;
+    }
+
+    // Ok we are expanding row. We need to update row children y pos (incase they are incorrect) and push items below down
+    // Code copied from DashboardModel toggleRow()
+
+    const rowY = row.state.size?.y!;
+    const firstPanelYPos = rowChildren[0].state.size?.y ?? rowY;
+    const yDiff = firstPanelYPos - (rowY + 1);
+
+    // y max will represent the bottom y pos after all panels have been added
+    // needed to know home much panels below should be pushed down
+    let yMax = rowY;
+
+    for (const panel of rowChildren) {
+      // set the y gridPos if it wasn't already set
+      const newSize = { ...panel.state.size };
+      newSize.y = newSize.y ?? rowY;
+      // make sure y is adjusted (in case row moved while collapsed)
+      newSize.y -= yDiff;
+      if (newSize.y > panel.state.size?.y!) {
+        panel.setState({ size: newSize });
+      }
+      // update insert post and y max
+      yMax = Math.max(yMax, newSize.y + newSize.height!);
+      console.log('setting y for panel', panel.state.key, newSize.y);
+    }
+
+    const pushDownAmount = yMax - rowY - 1;
+
+    // push panels below down
+    for (const child of this.state.children) {
+      if (child.state.size?.y! > rowY) {
+        this.pushChildDown(child, pushDownAmount);
+      }
+
+      if (child instanceof SceneGridRow && child !== row) {
+        for (const rowChild of child.state.children) {
+          if (rowChild.state.size?.y! > rowY) {
+            this.pushChildDown(rowChild, pushDownAmount);
+          }
+        }
+      }
+    }
+
+    row.setState({ isCollapsed: false });
+    // Trigger re-render
+    this.setState({});
   }
 
-  updateLayout() {
-    this._flattenedChildren = flattenGridLayoutChildren(this.state.children);
-    this._rowBBoxes = buildRowBBoxes(this.state.children);
-
-    // Force a re-render
-    this.setState({
-      children: [...this.state.children],
+  pushChildDown(child: SceneLayoutChild, amount: number) {
+    console.log('pushing down y for panel', child.state.key, child.state.size?.y! + amount);
+    child.setState({
+      size: {
+        ...child.state.size,
+        y: child.state.size?.y! + amount,
+      },
     });
   }
 
@@ -64,241 +115,188 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       return;
     }
 
+    console.log('updating Layout', layout);
+
     for (const item of layout) {
-      const child = this.state.children.find((c) => c.state.key === item.i);
-      if (child) {
-        const nextSize = {
-          x: item.x,
-          y: item.y,
-          width: item.w,
-          height: item.h,
-        };
-        if (!isItemSizeEqual(child.state.size!, nextSize)) {
-          child.setState({
-            size: {
-              ...child.state.size,
-              ...nextSize,
-            },
-          });
+      const child = this.getSceneLayoutChild(item.i);
+
+      const nextSize = {
+        x: item.x,
+        y: item.y,
+        width: item.w,
+        height: item.h,
+      };
+
+      if (!isItemSizeEqual(child.state.size!, nextSize)) {
+        child.setState({
+          size: {
+            ...child.state.size,
+            ...nextSize,
+          },
+        });
+      }
+    }
+
+    this.setState({ children: sortChildrenByPosition(this.state.children) });
+  };
+
+  /**
+   * Will also scan row children and return child of the row
+   */
+  getSceneLayoutChild(key: string) {
+    for (const child of this.state.children) {
+      if (child.state.key === key) {
+        return child;
+      }
+
+      if (child instanceof SceneGridRow) {
+        for (const rowChild of child.state.children) {
+          if (rowChild.state.key === key) {
+            return rowChild;
+          }
         }
       }
     }
-    this.updateLayout();
-  };
+
+    throw new Error('Scene layout child not found for GridItem');
+  }
 
   onResizeStop: ReactGridLayout.ItemCallback = (_, o, n) => {
-    const child = this.flattenedChildren[n.i];
-    if (!child) {
-      return;
-    }
-    child.child.setState({
+    const child = this.getSceneLayoutChild(n.i);
+    child.setState({
       size: {
-        ...child.child.state.size,
+        ...child.state.size,
         width: n.w,
         height: n.h,
       },
     });
   };
 
-  onDragStop: ReactGridLayout.ItemCallback = (l, o, n) => {
-    const layoutProcessedSize: string[] = [];
+  /**
+   *  We assume the layout array is storted according to y pos, and walk upwards until we find a row.
+   *  If it is collapsed there is no row to add it to. The default is then to return the SceneGridLayout itself
+   */
+  findGridItemSceneParent(layout: ReactGridLayout.Layout[], startAt: number): SceneGridRow | SceneGridLayout {
+    for (let i = startAt; i >= 0; i--) {
+      const gridItem = layout[i];
+      const sceneChild = this.getSceneLayoutChild(gridItem.i);
 
-    // Bounding boxes for all expanded rows
-    const activeRows: Record<
-      string,
-      {
-        x: number;
-        y: number;
-        height: number;
-      }
-    > = {};
-
-    for (const rowKey in this._rowBBoxes) {
-      if (this.flattenedChildren[rowKey] && this.flattenedChildren[rowKey].child.state.isCollapsed) {
-        continue;
-      }
-      activeRows[rowKey] = this._rowBBoxes[rowKey];
-    }
-
-    const source = this.flattenedChildren[n.i];
-    let target: SceneGridRow | null = null;
-
-    // detect dropped item colisions with active rows
-    if (Object.keys(activeRows).length !== 0) {
-      for (const rowKey in activeRows) {
-        const row = activeRows[rowKey];
-        if (n.y > row.y && n.y <= row.y + row.height) {
-          target = this.flattenedChildren[rowKey].child as SceneGridRow;
-          console.log(n.i, 'fits', rowKey);
+      if (sceneChild instanceof SceneGridRow) {
+        // the closest row is collapsed return null
+        if (sceneChild.state.isCollapsed) {
+          return this;
         }
+
+        return sceneChild;
       }
     }
 
-    // If dropped into a row...
-    if (target) {
-      // update source child size realtive to target row
-      source.child.setState({
-        size: {
-          ...source.child.state.size,
-          x: n.x,
-          y: n.y - target.state.size!.y! - 1,
-        },
+    return this;
+  }
+
+  /**
+   * This likely needs a slighltly different approach. Where we clone or deactivate or and re-activate the moved child
+   */
+  moveChildTo(child: SceneLayoutChild, target: SceneGridLayout | SceneGridRow) {
+    const currentParent = child.parent!;
+
+    // Remove from current parent
+    if (currentParent instanceof SceneGridLayout || currentParent instanceof SceneGridRow) {
+      currentParent.setState({
+        children: currentParent.state.children.filter((c) => c.state.key !== child.state.key),
       });
-
-      // skip size update later on
-      layoutProcessedSize.push(n.i);
-
-      // add child to new target row
-      target.setState({
-        children: [...target.state.children, source.child],
-      });
-
-      // if source cell was comining from a different row
-      if (source.row && source.row !== target) {
-        console.log('comes from a row', source.row.state.key);
-        source.row.setState({
-          children: source.row.state.children.filter((c) => c.state.key !== n.i),
-        });
-      } else {
-        // remove child from layout
-        this.setState({
-          children: this.state.children.filter((c) => c.state.key !== n.i),
-        });
-      }
-    } else {
-      // If dropped on a grid, but not into a row
-      source.child.setState({
-        size: {
-          ...source.child.state.size,
-          x: n.x,
-          y: n.y,
-        },
-      });
-      // skip size update later on
-      layoutProcessedSize.push(n.i);
-
-      if (source.row) {
-        // if source cell was comining from a row, remove it from it
-        source.row.setState({
-          children: source.row.state.children.filter((c) => c.state.key !== n.i),
-        });
-        // add moved cell to layout
-        this.setState({
-          children: [...this.state.children, source.child],
-        });
-      } else {
-        console.log('Moving cell on top level grid');
-      }
     }
+
+    // Add to new parent
+    target.setState({ children: sortChildrenByPosition([...target.state.children, child]) });
+  }
+
+  onDragStop: ReactGridLayout.ItemCallback = (gridLayout, o, updatedItem) => {
+    const sceneChild = this.getSceneLayoutChild(updatedItem.i)!;
+
+    // Need to resort the grid layout based on new position (needed to to find the new parent)
+    gridLayout = sortGridLayout(gridLayout);
 
     // Update children positions if they have changed
-    for (let i = 0; i < l.length; i++) {
-      if (layoutProcessedSize.includes(l[i].i)) {
-        continue;
-      }
-      const childDef = this.flattenedChildren[l[i].i];
-      const child = childDef.child;
-      const row = childDef.row;
-      const childSize = childDef.child.state.size;
-      const childLayout = l[i];
+    for (let i = 0; i < gridLayout.length; i++) {
+      const gridItem = gridLayout[i];
+      const child = this.getSceneLayoutChild(gridItem.i)!;
+      const childSize = child.state.size!;
 
-      if (childSize?.x !== childLayout.x || childSize?.y !== childLayout.y) {
+      if (childSize?.x !== gridItem.x || childSize?.y !== gridItem.y) {
         child.setState({
           size: {
             ...child.state.size,
-            x: childLayout.x,
-            y: row ? childLayout.y - row.state.size!.y! - 1 : childLayout.y,
+            x: gridItem.x,
+            y: gridItem.y,
           },
         });
       }
     }
 
-    // Skipping onLayoutChange handler to avoid unnecessary re-renders
+    // Update the parent if the child if it has moved to a row or back to the grid
+    const indexOfUpdatedItem = gridLayout.findIndex((item) => item.i === updatedItem.i);
+    const newParent = this.findGridItemSceneParent(gridLayout, indexOfUpdatedItem - 1);
+
+    if (newParent !== sceneChild.parent) {
+      this.moveChildTo(sceneChild, newParent);
+    }
+
+    this.setState({ children: sortChildrenByPosition(this.state.children) });
     this._skipOnLayoutChange = true;
-    this.updateLayout();
   };
+
+  toGridCell(child: SceneLayoutChild): ReactGridLayout.Layout {
+    const size = child.state.size!;
+
+    let x = size.x ?? 0;
+    let y = size.y ?? 0;
+    const w = Number.isInteger(Number(size.width)) ? Number(size.width) : DEFAULT_PANEL_SPAN;
+    const h = Number.isInteger(Number(size.height)) ? Number(size.height) : DEFAULT_PANEL_SPAN;
+
+    let isDraggable = Boolean(child.state.isDraggable);
+    let isResizable = Boolean(child.state.isResizable);
+
+    if (child instanceof SceneGridRow) {
+      isDraggable = child.state.isCollapsed ? true : false;
+      isResizable = false;
+    }
+
+    return { i: child.state.key!, x, y, h, w, isResizable, isDraggable };
+  }
+
+  buildGridLayout(width: number) {
+    let cells: ReactGridLayout.Layout[] = [];
+
+    for (const child of this.state.children) {
+      cells.push(this.toGridCell(child));
+
+      if (child instanceof SceneGridRow && !child.state.isCollapsed) {
+        for (const rowChild of child.state.children) {
+          cells.push(this.toGridCell(rowChild));
+        }
+      }
+    }
+
+    // Sort by position
+    cells = sortGridLayout(cells);
+
+    if (width < 768) {
+      // We should not persist the mobile layout
+      this._skipOnLayoutChange = true;
+      return cells.map((cell) => ({ ...cell, w: 24 }));
+    }
+
+    this._skipOnLayoutChange = false;
+    return cells;
+  }
 }
 
 function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>) {
   const theme = useTheme2();
   const { children } = model.useState();
   validateChildrenSize(children);
-
-  const layout = useMemo(() => {
-    let topLevelCells: ReactGridLayout.Layout[] = [];
-    const perRowCells: Record<string, ReactGridLayout.Layout[]> = {};
-
-    Object.values(model.flattenedChildren).forEach((child) => {
-      const size = child.child.state.size!;
-      const width = Number.isInteger(Number(size.width)) ? Number(size.width) : DEFAULT_PANEL_SPAN;
-      const height = Number.isInteger(Number(size.height)) ? Number(size.height) : DEFAULT_PANEL_SPAN;
-
-      if (!child.row) {
-        // rendering cells and row
-        let isDraggable = Boolean(child.child.state.isDraggable);
-        let isResizable = Boolean(child.child.state.isResizable);
-        if (child.child instanceof SceneGridRow) {
-          isDraggable = child.child.state.isCollapsed ? true : false;
-          isResizable = false;
-        }
-        topLevelCells.push({
-          i: child.child.state.key!,
-          x: size.x!,
-          y: size.y!,
-          w: width,
-          h: height,
-          isResizable,
-          isDraggable,
-        });
-      } else {
-        // Rendering row children
-        let isDraggable = Boolean(child.child.state.isDraggable);
-        let isResizable = Boolean(child.child.state.isResizable);
-        const cell = {
-          i: child.child.state.key!,
-          x: size.x!,
-          // y: size.y!,
-          y: size.y! + child.row.state.size!.y!,
-          w: width,
-          h: height,
-          isResizable,
-          isDraggable,
-        };
-        if (perRowCells[child.row.state.key!]) {
-          perRowCells[child.row.state.key!].push(cell);
-        } else {
-          perRowCells[child.row.state.key!] = [cell];
-        }
-      }
-    });
-
-    topLevelCells = topLevelCells.sort((panelA, panelB) => {
-      if (panelA.y === panelB.y) {
-        return panelA.x - panelB.x;
-      } else {
-        return panelA.y - panelB.y;
-      }
-    });
-    // sort sub row cells
-    for (const rowKey in perRowCells) {
-      perRowCells[rowKey] = perRowCells[rowKey].sort((panelA, panelB) => {
-        if (panelA.y === panelB.y) {
-          return panelA.x - panelB.x;
-        } else {
-          return panelA.y - panelB.y;
-        }
-      });
-    }
-
-    const lg = topLevelCells.reduce<ReactGridLayout.Layout[]>((acc, cell) => {
-      if (perRowCells[cell.i]) {
-        return [...acc, cell, ...perRowCells[cell.i]];
-      }
-      return [...acc, cell];
-    }, []);
-
-    return { lg };
-  }, [model.flattenedChildren]);
+  console.log('render grid');
 
   return (
     <AutoSizer disableHeight>
@@ -309,15 +307,14 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
 
         // Dev only, to be removed
         const background = generateGridBackground({
-          cellSize: {
-            width: (width - (GRID_COLUMN_COUNT - 1) * GRID_CELL_VMARGIN) / GRID_COLUMN_COUNT,
-            height: GRID_CELL_HEIGHT,
-          },
+          cellSize: { width: (width - 23 * GRID_CELL_VMARGIN) / 24, height: GRID_CELL_HEIGHT },
           margin: [GRID_CELL_VMARGIN, GRID_CELL_VMARGIN],
-          cols: GRID_COLUMN_COUNT,
+          cols: 24,
           gridWidth: width,
           theme,
         });
+
+        const layout = model.buildGridLayout(width);
 
         return (
           /**
@@ -336,25 +333,25 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
               isDraggable={width > 768}
               isResizable={false}
               containerPadding={[0, 0]}
-              useCSSTransforms={true}
+              useCSSTransforms={false}
               margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
               cols={GRID_COLUMN_COUNT}
               rowHeight={GRID_CELL_HEIGHT}
               draggableHandle={`.grid-drag-handle-${model.state.key}`}
               // @ts-ignore: ignoring for now until we make the size type numbers-only
-              layout={layout.lg}
+              layout={layout}
               onDragStop={model.onDragStop}
+              // onDrag={model.onDrag}
               onResizeStop={model.onResizeStop}
               onLayoutChange={model.onLayoutChange}
               isBounded={false}
+              // compactType={null}
             >
-              {Object.values(model.flattenedChildren).map((child) => {
-                if (child.row && child.row.state.isCollapsed) {
-                  return null;
-                }
+              {layout.map((gridItem) => {
+                const sceneChild = model.getSceneLayoutChild(gridItem.i)!;
                 return (
-                  <div key={child.child.state.key} style={{ display: 'flex' }}>
-                    <child.child.Component model={child.child} key={child.child.state.key} />
+                  <div key={sceneChild.state.key} style={{ display: 'flex' }}>
+                    <sceneChild.Component model={sceneChild} key={sceneChild.state.key} />
                   </div>
                 );
               })}
@@ -368,12 +365,13 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
 
 interface SceneGridRowState extends SceneLayoutChildState {
   title: string;
+  isCollapsible?: boolean;
+  isCollapsed?: boolean;
   children: Array<SceneObject<SceneLayoutChildState>>;
 }
 
 export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
   static Component = SceneGridRowRenderer;
-  // private _originalHeight = 0;
 
   constructor(state: SceneGridRowState) {
     super({
@@ -394,33 +392,21 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
     if (!this.state.isCollapsible) {
       return;
     }
+
     const layout = this.parent;
 
     if (!layout || !(layout instanceof SceneGridLayout)) {
       throw new Error('SceneGridRow must be a child of SceneGridLayout');
     }
 
-    const { isCollapsed, size } = this.state;
-    if (!size) {
-      return;
-    }
-
-    if (layout) {
-      if (isCollapsed) {
-        this.setState({ isCollapsed: false });
-      } else {
-        this.setState({ isCollapsed: true });
-      }
-      layout.updateLayout();
-    }
+    layout.toggleRow(this);
   };
 }
 
 function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
   const styles = useStyles2(getSceneGridRowStyles);
-  const { isCollapsible, isCollapsed, title, ...state } = model.useState();
+  const { isCollapsible, isCollapsed, isDraggable, title } = model.useState();
   const layout = model.getLayout();
-  const isDraggable = layout.state.isDraggable ? state.isDraggable : false;
   const dragHandle = <SceneDragHandle layoutKey={layout.state.key!} />;
 
   return (
@@ -487,59 +473,7 @@ function validateChildrenSize(children: SceneLayoutChild[]) {
   }
 }
 
-/**
- * Given a list of GridLayout children will flatten it and keep references to the row if a child comes from one
- */
-function flattenGridLayoutChildren(
-  children: SceneLayoutChild[]
-): Record<string, { row?: SceneGridRow; child: SceneLayoutChild }> {
-  let flattenedChildren: Record<string, { row?: SceneGridRow; child: SceneLayoutChild }> = {};
-
-  for (const child of children) {
-    if (child instanceof SceneGridRow) {
-      // row is perceived as a flat child of the grid layout
-      flattenedChildren[child.state.key!] = { child };
-      if (!child.state.isCollapsed) {
-        // all row children are perceived as flat children of the grid layout
-        const rowChildren = flattenGridLayoutChildren(child.state.children);
-
-        for (const key in rowChildren) {
-          rowChildren[key] = { ...rowChildren[key], row: child };
-        }
-        flattenedChildren = { ...flattenedChildren, ...rowChildren };
-      }
-    } else {
-      flattenedChildren[child.state.key!] = { child };
-    }
-  }
-
-  return flattenedChildren;
-}
-
-function buildRowBBoxes(children: SceneLayoutChild[]) {
-  const rowBBoxes: Record<string, { x: number; y: number; width: number; height: number }> = {};
-  for (const child of children) {
-    if (child instanceof SceneGridRow) {
-      const x = 0;
-      const y = child.state.size?.y!;
-      const width = GRID_COLUMN_COUNT;
-      const heights = [];
-      for (const rowChildren of child.state.children) {
-        const childHeight = Number.isInteger(rowChildren.state.size?.height!)
-          ? Number(rowChildren.state.size?.height!)
-          : DEFAULT_PANEL_SPAN;
-        heights.push(childHeight + rowChildren.state.size?.y!);
-      }
-
-      const height = heights.length ? Math.max(...heights) + 1 : 1;
-      rowBBoxes[child.state.key!] = { x, y, width, height };
-    }
-  }
-
-  return rowBBoxes;
-}
-
-// Source: https://github.com/metabase/metabase/blob/e87289f2650ead072cd197f45e851de4c1c1f01f/frontend/src/metabase/dashboard/components/grid/utils.js#L28
+// Source: https://github.com/metabase/metabase/blob/master/frontend/src/metabase/dashboard/components/grid/utils.js#L28
 // © 2022 Metabase, Inc.
 export function generateGridBackground({
   cellSize,
@@ -575,4 +509,14 @@ export function generateGridBackground({
 
 function isItemSizeEqual(a: SceneObjectSize, b: SceneObjectSize) {
   return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
+}
+
+function sortChildrenByPosition(children: SceneLayoutChild[]) {
+  return [...children].sort((a, b) => {
+    return a.state.size?.y! - b.state.size?.y! || a.state.size?.x! - b.state.size?.x!;
+  });
+}
+
+function sortGridLayout(layout: ReactGridLayout.Layout[]) {
+  return [...layout].sort((a, b) => a.y - b.y || a.x! - b.x);
 }
