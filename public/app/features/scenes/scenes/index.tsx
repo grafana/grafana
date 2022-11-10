@@ -2,6 +2,7 @@ import { Scene } from '../components/Scene';
 
 import { getFlexLayoutTest, getScenePanelRepeaterTest } from './demo';
 import { getGridLayoutTest } from './grid';
+import { getGridWithMultipleTimeRanges } from './gridMultiTimeRange';
 import { getMultipleGridLayoutTest } from './gridMultiple';
 import { getGridWithMultipleData } from './gridWithMultipleData';
 import { getGridWithRowLayoutTest } from './gridWithRow';
@@ -18,6 +19,7 @@ export function getScenes(): Scene[] {
     getGridLayoutTest(),
     getGridWithRowLayoutTest(),
     getGridWithMultipleData(),
+    getGridWithMultipleTimeRanges(),
     getMultipleGridLayoutTest(),
     getVariablesDemo(),
   ];
