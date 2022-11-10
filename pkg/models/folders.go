@@ -80,10 +80,11 @@ type CreateFolderCommand struct {
 }
 
 type UpdateFolderCommand struct {
-	Uid       string `json:"uid"`
-	Title     string `json:"title"`
-	Version   int    `json:"version"`
-	Overwrite bool   `json:"overwrite"`
+	Uid         string `json:"uid"`
+	Title       string `json:"title"`
+	Version     int    `json:"version"`
+	Description string `json:"description"`
+	Overwrite   bool   `json:"overwrite"`
 
 	Result *Folder `json:"-"`
 }

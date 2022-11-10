@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -253,17 +254,53 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	return folder.FromDashboard(dash), nil
 }
 
-func (s *Service) UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
+func (s *Service) Update(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) (*models.Folder, error) {
+	foldr, err := s.legacyUpdate(ctx, user, orgID, existingUid, cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		if cmd.Uid != "" {
+			if !util.IsValidShortUID(cmd.Uid) {
+				return nil, dashboards.ErrDashboardInvalidUid
+			} else if util.IsShortUIDTooLong(cmd.Uid) {
+				return nil, dashboards.ErrDashboardUidTooLong
+			}
+		}
+
+		getFolder, err := s.store.Get(ctx, folder.GetFolderQuery{
+			UID:   &existingUid,
+			OrgID: orgID,
+		})
+		if err != nil {
+			return nil, err
+		}
+		_, err = s.store.Update(ctx, folder.UpdateFolderCommand{
+			Folder:         getFolder,
+			NewUID:         &cmd.Uid,
+			NewTitle:       &cmd.Title,
+			NewDescription: &cmd.Description,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return foldr, nil
+}
+
+func (s *Service) legacyUpdate(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) (*models.Folder, error) {
 	query := models.GetDashboardQuery{OrgId: orgID, Uid: existingUid}
-	if _, err := s.dashboardStore.GetDashboard(ctx, &query); err != nil {
-		return toFolderError(err)
+	_, err := s.dashboardStore.GetDashboard(ctx, &query)
+	if err != nil {
+		return nil, toFolderError(err)
 	}
 
 	dashFolder := query.Result
 	currentTitle := dashFolder.Title
 
 	if !dashFolder.IsFolder {
-		return dashboards.ErrFolderNotFound
+		return nil, dashboards.ErrFolderNotFound
 	}
 
 	cmd.UpdateDashboardModel(dashFolder, orgID, user.UserID)
@@ -277,34 +314,32 @@ func (s *Service) UpdateFolder(ctx context.Context, user *user.SignedInUser, org
 
 	saveDashboardCmd, err := s.dashboardService.BuildSaveDashboardCommand(ctx, dto, false, false)
 	if err != nil {
-		return toFolderError(err)
+		return nil, toFolderError(err)
 	}
 
 	dash, err := s.dashboardStore.SaveDashboard(ctx, *saveDashboardCmd)
 	if err != nil {
-		return toFolderError(err)
+		return nil, toFolderError(err)
 	}
 
-	var folder *models.Folder
-	folder, err = s.dashboardStore.GetFolderByID(ctx, orgID, dash.Id)
+	var foldr *models.Folder
+	foldr, err = s.dashboardStore.GetFolderByID(ctx, orgID, dash.Id)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	cmd.Result = folder
 
-	if currentTitle != folder.Title {
+	if currentTitle != foldr.Title {
 		if err := s.bus.Publish(ctx, &events.FolderTitleUpdated{
-			Timestamp: folder.Updated,
-			Title:     folder.Title,
+			Timestamp: foldr.Updated,
+			Title:     foldr.Title,
 			ID:        dash.Id,
 			UID:       dash.Uid,
 			OrgID:     orgID,
 		}); err != nil {
-			s.log.Error("failed to publish FolderTitleUpdated event", "folder", folder.Title, "user", user.UserID, "error", err)
+			s.log.Error("failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", user.UserID, "error", err)
 		}
 	}
-
-	return nil
+	return foldr, nil
 }
 
 func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
@@ -340,12 +375,6 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 	return nil
 }
 
-func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
-	// check the flag, if old - do whatever did before
-	//  for new only the store
-	return s.store.Update(ctx, *cmd)
-}
-
 func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
 	// check the flag, if old - do whatever did before
 	//  for new only the store
@@ -359,8 +388,8 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	}
 
 	return s.store.Update(ctx, folder.UpdateFolderCommand{
-		Folder:       foldr,
-		NewParentUID: &cmd.NewParentUID,
+		Folder: foldr,
+		// NewParentUID: &cmd.NewParentUID,
 	})
 }
 
