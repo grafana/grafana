@@ -22,7 +22,7 @@ func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
 }
 
 func summaryBuilder(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
-	obj := &playlist.Model{}
+	obj := &playlist.Playlist{}
 	err := json.Unmarshal(body, obj)
 	if err != nil {
 		return nil, nil, err // unable to read object
