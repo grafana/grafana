@@ -357,5 +357,10 @@ var (
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
+		{
+			Name:        "elasticsearchBackendMigration",
+			Description: "Use Elasticsearch as backend data source",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
