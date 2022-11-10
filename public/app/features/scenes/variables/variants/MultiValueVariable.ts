@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import { map, Observable } from 'rxjs';
 
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
@@ -58,16 +59,44 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
 
     // If value is set to All then we keep it set to All but just store the options
     if (this.hasAllValue()) {
-      this.setStateHelper({ options, loading: false });
-      this.publishEvent(new SceneVariableValueChangedEvent(this), true);
+      this.setStateAndPublishValueChangedEvent({ options, loading: false });
+      return;
+    }
+
+    // If we are a multi valued variable validate the current values are among the options
+    if (this.state.isMulti) {
+      const currentValues = Array.isArray(this.state.value) ? this.state.value : [this.state.value];
+      const validValues = currentValues.filter((v) => options.find((o) => o.value === v));
+
+      // If no valid values pick the first option
+      if (validValues.length === 0) {
+        this.setStateAndPublishValueChangedEvent({
+          value: [options[0].value],
+          text: [options[0].label],
+          loading: false,
+          options,
+        });
+        return;
+      }
+
+      // We have valid values, if it's different from current valid values update current values
+      if (!isEqual(validValues, this.state.value)) {
+        const validTexts = validValues.map((v) => options.find((o) => o.value === v)!.label);
+        this.setStateAndPublishValueChangedEvent({ value: validValues, text: validTexts, options, loading: false });
+      }
+
       return;
     }
 
     const foundCurrent = options.find((x) => x.value === this.state.value);
     if (!foundCurrent) {
       // Current value is not valid. Set to first of the available options
-      this.setStateHelper({ value: options[0].value, text: options[0].label, loading: false, options });
-      this.publishEvent(new SceneVariableValueChangedEvent(this), true);
+      this.setStateAndPublishValueChangedEvent({
+        value: options[0].value,
+        text: options[0].label,
+        loading: false,
+        options,
+      });
     } else {
       // current value is still ok
       this.setStateHelper({ loading: false, options });
@@ -99,13 +128,17 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
     return value === ALL_VARIABLE_VALUE || (Array.isArray(value) && value[0] === ALL_VARIABLE_VALUE);
   }
 
+  private setStateAndPublishValueChangedEvent(state: Partial<MultiValueVariableState>) {
+    this.setStateHelper(state);
+    this.publishEvent(new SceneVariableValueChangedEvent(this), true);
+  }
+
   /**
    * Change the value and publish SceneVariableValueChangedEvent event
    */
   public changeValueTo(value: VariableValue, text?: VariableValue) {
     if (value !== this.state.value || text !== this.state.text) {
-      this.setStateHelper({ value, text, loading: false });
-      this.publishEvent(new SceneVariableValueChangedEvent(this), true);
+      this.setStateAndPublishValueChangedEvent({ value, text, loading: false });
     }
   }
 

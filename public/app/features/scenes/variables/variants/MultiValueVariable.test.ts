@@ -50,6 +50,44 @@ describe('MultiValueVariable', () => {
       expect(variable.state.text).toBe('A');
     });
 
+    it('Should maintain the valid values when multiple selected', async () => {
+      const variable = new ExampleVariable({
+        name: 'test',
+        options: [],
+        isMulti: true,
+        optionsToReturn: [
+          { label: 'A', value: 'A' },
+          { label: 'C', value: 'C' },
+        ],
+        value: ['A', 'B', 'C'],
+        text: ['A', 'B', 'C'],
+      });
+
+      await lastValueFrom(variable.validateAndUpdate());
+
+      expect(variable.state.value).toEqual(['A', 'C']);
+      expect(variable.state.text).toEqual(['A', 'C']);
+    });
+
+    it('Should pick first option if none of the current values are valid', async () => {
+      const variable = new ExampleVariable({
+        name: 'test',
+        options: [],
+        isMulti: true,
+        optionsToReturn: [
+          { label: 'A', value: 'A' },
+          { label: 'C', value: 'C' },
+        ],
+        value: ['D', 'E'],
+        text: ['E', 'E'],
+      });
+
+      await lastValueFrom(variable.validateAndUpdate());
+
+      expect(variable.state.value).toEqual(['A']);
+      expect(variable.state.text).toEqual(['A']);
+    });
+
     it('Should handle $__all value and send change event even when value is still $__all', async () => {
       const variable = new ExampleVariable({
         name: 'test',
