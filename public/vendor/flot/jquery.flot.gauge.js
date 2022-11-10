@@ -10,7 +10,7 @@
 /**
  * @module flot.gauge
  */
-(function($) {
+ (function($) {
 
 
     /**
@@ -327,8 +327,7 @@
 
             var blur = gaugeOptionsi.gauge.shadow.show ? gaugeOptionsi.gauge.shadow.blur : 0;
             var color = getColor(gaugeOptionsi, data);
-            var hasNegative = gaugeOptionsi.gauge.min < 0.0
-            var angles = calculateAnglesForGauge(gaugeOptionsi, layout, data, hasNegative);
+            var angles = calculateAnglesForGauge(gaugeOptionsi, layout, data);
 
             // draw gauge frame
             drawArcWithShadow(
@@ -356,7 +355,7 @@
                 color,           // fill color
                 blur);
             
-            if(hasNegative)  
+            if(gaugeOptionsi.gauge.neutralValue != null)  
                 drawZeroMarker(gaugeOptionsi, layout, cellLayout, color);
         }
 
@@ -369,16 +368,16 @@
          * @param  {Number} data the value of the gauge
          * @returns {Object}
          */
-        function calculateAnglesForGauge(gaugeOptionsi, layout, data, hasNegative) {
+        function calculateAnglesForGauge(gaugeOptionsi, layout, data) {
             let angles = {};
-            var isNegative = data < 0.0
+            var neutral = gaugeOptionsi.gauge.neutralValue
 
-            if (hasNegative) {
-                if (isNegative) {
+            if (neutral != null) {
+                if (data < neutral) {
                     angles.a1 = calculateAngle(gaugeOptionsi, layout, data);
-                    angles.a2 = calculateAngle(gaugeOptionsi, layout, 0.0);
+                    angles.a2 = calculateAngle(gaugeOptionsi, layout, neutral);
                 } else {
-                    angles.a1 = calculateAngle(gaugeOptionsi, layout, 0.0);
+                    angles.a1 = calculateAngle(gaugeOptionsi, layout, neutral);
                     angles.a2 = calculateAngle(gaugeOptionsi, layout, data);
                 }
             } else {
@@ -399,15 +398,15 @@
          * @param  {String} color line color
          */
         function drawZeroMarker(gaugeOptionsi, layout, cellLayout, color) {
-            var diff = (gaugeOptionsi.gauge.max - gaugeOptionsi.gauge.min) / 800;
+            var diff = (gaugeOptionsi.gauge.max - gaugeOptionsi.gauge.min) / 600;
 
             drawArc(context,
                 cellLayout.cx,
                 cellLayout.cy,
                 layout.radius - 2,
                 layout.width - 4,
-                toRad(calculateAngle(gaugeOptionsi, layout, -diff)),
-                toRad(calculateAngle(gaugeOptionsi, layout, diff)),
+                toRad(calculateAngle(gaugeOptionsi, layout, gaugeOptionsi.gauge.neutralValue-diff)),
+                toRad(calculateAngle(gaugeOptionsi, layout, gaugeOptionsi.gauge.neutralValue+diff)),
                 color,
                 2,
                 gaugeOptionsi.gauge.background.color);
@@ -1008,4 +1007,3 @@
     });
 
 })(jQuery);
-
