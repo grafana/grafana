@@ -66,28 +66,38 @@ func ProvideService(
 	}
 }
 
-func (s *Service) GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
+func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagNestedFolders) {
+		// TODO filter out folders that user do not have permission to view
+		return s.store.GetChildren(ctx, *cmd)
+	}
+
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	searchQuery := search.Query{
 		SignedInUser: user,
 		DashboardIds: make([]int64, 0),
 		FolderIds:    make([]int64, 0),
-		Limit:        limit,
-		OrgId:        orgID,
+		Limit:        cmd.Limit,
+		OrgId:        cmd.OrgID,
 		Type:         "dash-folder",
 		Permission:   models.PERMISSION_VIEW,
-		Page:         page,
+		Page:         cmd.Page,
 	}
 
 	if err := s.searchService.SearchHandler(ctx, &searchQuery); err != nil {
 		return nil, err
 	}
 
-	folders := make([]*models.Folder, 0)
+	folders := make([]*folder.Folder, 0)
 
 	for _, hit := range searchQuery.Result {
-		folders = append(folders, &models.Folder{
-			Id:    hit.ID,
-			Uid:   hit.UID,
+		folders = append(folders, &folder.Folder{
+			ID:    hit.ID,
+			UID:   hit.UID,
 			Title: hit.Title,
 		})
 	}
@@ -375,7 +385,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 		return err
 	}
 
-	folders, err := s.store.GetChildren(ctx, folder.GetTreeQuery{UID: cmd.UID, OrgID: cmd.OrgID})
+	folders, err := s.store.GetChildren(ctx, folder.GetChildrenQuery{UID: cmd.UID, OrgID: cmd.OrgID})
 	if err != nil {
 		return err
 	}
@@ -404,7 +414,7 @@ func (s *Service) GetParents(ctx context.Context, cmd *folder.GetParentsQuery) (
 	return s.store.GetParents(ctx, *cmd)
 }
 
-func (s *Service) GetTree(ctx context.Context, cmd *folder.GetTreeQuery) ([]*folder.Folder, error) {
+func (s *Service) GetTree(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
 	// check the flag, if old - do whatever did before
 	//  for new only the store
 	return s.store.GetChildren(ctx, *cmd)

@@ -339,7 +339,7 @@ func TestFolderService(t *testing.T) {
 			},
 		}
 		res, err := folderService.GetTree(context.Background(),
-			&folder.GetTreeQuery{
+			&folder.GetChildrenQuery{
 				UID: "test",
 			})
 		require.NoError(t, err)

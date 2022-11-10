@@ -4568,7 +4568,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID.",
         "tags": [
           "folders"
         ],
@@ -4589,6 +4589,12 @@
             "default": 1,
             "description": "Page index for starting fetching folders",
             "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "The parent folder UID",
+            "name": "parent_uid",
             "in": "query"
           }
         ],
@@ -10425,6 +10431,10 @@
         "replyTo": {
           "type": "string"
         },
+        "scaleFactor": {
+          "type": "integer",
+          "format": "int64"
+        },
         "schedule": {
           "$ref": "#/definitions/ScheduleDTO"
         },
@@ -10725,6 +10735,10 @@
         },
         "replyTo": {
           "type": "string"
+        },
+        "scaleFactor": {
+          "type": "integer",
+          "format": "int64"
         },
         "schedule": {
           "$ref": "#/definitions/ScheduleDTO"
@@ -11071,6 +11085,9 @@
         "hasAcl": {
           "type": "boolean"
         },
+        "hasPublicDashboard": {
+          "type": "boolean"
+        },
         "isFolder": {
           "type": "boolean"
         },
@@ -11354,11 +11371,14 @@
       "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
         "Error": {
-          "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+          "description": "Error is a property to be set if the corresponding DataQuery has an error.",
           "type": "string"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
+        },
+        "Status": {
+          "$ref": "#/definitions/Status"
         }
       }
     },
@@ -11590,7 +11610,7 @@
       "type": "string"
     },
     "DsPermissionType": {
-      "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
+      "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\n`2` - Edit\nEnum: 0,1,2",
       "type": "integer",
       "format": "int64"
     },
@@ -11816,6 +11836,9 @@
         "id": {
           "type": "integer",
           "format": "int64"
+        },
+        "parent_uid": {
+          "type": "string"
         },
         "title": {
           "type": "string"
@@ -12079,6 +12102,9 @@
         "folderId": {
           "type": "integer",
           "format": "int64"
+        },
+        "folderUid": {
+          "type": "string"
         },
         "imported": {
           "type": "boolean"
@@ -12351,6 +12377,10 @@
           "type": "string"
         },
         "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "schemaVersion": {
           "type": "integer",
           "format": "int64"
         },
@@ -13809,12 +13839,8 @@
       "type": "string"
     },
     "Status": {
-      "type": "object",
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        }
-      }
+      "type": "integer",
+      "format": "int64"
     },
     "SuccessResponseBody": {
       "type": "object",

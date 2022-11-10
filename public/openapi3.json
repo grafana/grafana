@@ -1511,6 +1511,19 @@
         },
         "description": "(empty)"
       },
+      "receiversResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/receiver"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "recordingRuleResponse": {
         "content": {
           "application/json": {
@@ -2790,6 +2803,10 @@
           "replyTo": {
             "type": "string"
           },
+          "scaleFactor": {
+            "format": "int64",
+            "type": "integer"
+          },
           "schedule": {
             "$ref": "#/components/schemas/ScheduleDTO"
           },
@@ -3096,6 +3113,10 @@
           },
           "replyTo": {
             "type": "string"
+          },
+          "scaleFactor": {
+            "format": "int64",
+            "type": "integer"
           },
           "schedule": {
             "$ref": "#/components/schemas/ScheduleDTO"
@@ -3442,6 +3463,9 @@
           "hasAcl": {
             "type": "boolean"
           },
+          "hasPublicDashboard": {
+            "type": "boolean"
+          },
           "isFolder": {
             "type": "boolean"
           },
@@ -3724,11 +3748,14 @@
         "description": "A map of RefIDs (unique query identifiers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
         "properties": {
           "Error": {
-            "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+            "description": "Error is a property to be set if the corresponding DataQuery has an error.",
             "type": "string"
           },
           "Frames": {
             "$ref": "#/components/schemas/Frames"
+          },
+          "Status": {
+            "$ref": "#/components/schemas/Status"
           }
         },
         "title": "DataResponse contains the results from a DataQuery.",
@@ -3979,7 +4006,7 @@
         "type": "string"
       },
       "DsPermissionType": {
-        "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
+        "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\n`2` - Edit\nEnum: 0,1,2",
         "format": "int64",
         "type": "integer"
       },
@@ -3995,6 +4022,9 @@
           },
           "auth_password": {
             "$ref": "#/components/schemas/Secret"
+          },
+          "auth_password_file": {
+            "type": "string"
           },
           "auth_secret": {
             "$ref": "#/components/schemas/Secret"
@@ -4385,6 +4415,9 @@
           "id": {
             "format": "int64",
             "type": "integer"
+          },
+          "parent_uid": {
+            "type": "string"
           },
           "title": {
             "type": "string"
@@ -4910,6 +4943,9 @@
           "smtp_auth_password": {
             "$ref": "#/components/schemas/Secret"
           },
+          "smtp_auth_password_file": {
+            "type": "string"
+          },
           "smtp_auth_secret": {
             "$ref": "#/components/schemas/Secret"
           },
@@ -5123,6 +5159,9 @@
           "folderId": {
             "format": "int64",
             "type": "integer"
+          },
+          "folderUid": {
+            "type": "string"
           },
           "imported": {
             "type": "boolean"
@@ -5468,6 +5507,10 @@
             "type": "string"
           },
           "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "schemaVersion": {
             "format": "int64",
             "type": "integer"
           },
@@ -8234,12 +8277,8 @@
         "type": "string"
       },
       "Status": {
-        "properties": {
-          "enabled": {
-            "type": "boolean"
-          }
-        },
-        "type": "object"
+        "format": "int64",
+        "type": "integer"
       },
       "Success": {
         "$ref": "#/components/schemas/ResponseDetails"
@@ -8661,6 +8700,9 @@
               "type": "string"
             },
             "type": "array"
+          },
+          "location": {
+            "type": "string"
           },
           "months": {
             "items": {
@@ -9713,7 +9755,6 @@
         "type": "object"
       },
       "alertGroup": {
-        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -9905,7 +9946,6 @@
         "type": "array"
       },
       "gettableSilence": {
-        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -9954,13 +9994,13 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -10057,6 +10097,15 @@
         ],
         "type": "object"
       },
+      "postSilencesOKBody": {
+        "properties": {
+          "silenceID": {
+            "description": "silence ID",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "postableAlert": {
         "description": "PostableAlert postable alert",
         "properties": {
@@ -10095,7 +10144,6 @@
         "type": "array"
       },
       "postableSilence": {
-        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -10133,6 +10181,7 @@
         "type": "object"
       },
       "receiver": {
+        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -15919,7 +15968,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID.",
         "operationId": "getFolders",
         "parameters": [
           {
@@ -15940,6 +15989,14 @@
               "default": 1,
               "format": "int64",
               "type": "integer"
+            }
+          },
+          {
+            "description": "The parent folder UID",
+            "in": "query",
+            "name": "parent_uid",
+            "schema": {
+              "type": "string"
             }
           }
         ],

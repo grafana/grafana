@@ -16,6 +16,9 @@ type FakeService struct {
 
 var _ folder.Service = (*FakeService)(nil)
 
+func (s *FakeService) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+	return modelsToFolders(s.ExpectedFolders), s.ExpectedError
+}
 func (s *FakeService) GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
 	return s.ExpectedFolders, s.ExpectedError
 }

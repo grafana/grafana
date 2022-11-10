@@ -26,5 +26,5 @@ type store interface {
 
 	// GetChildren returns the set of immediate children folders (depth=1) of the
 	// given folder.
-	GetChildren(ctx context.Context, cmd folder.GetTreeQuery) ([]*folder.Folder, error)
+	GetChildren(ctx context.Context, cmd folder.GetChildrenQuery) ([]*folder.Folder, error)
 }

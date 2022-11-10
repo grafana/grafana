@@ -8,7 +8,8 @@ import (
 )
 
 type Service interface {
-	GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error)
+	// GetChildren returns an array containing all child folders.
+	GetChildren(ctx context.Context, cmd *GetChildrenQuery) ([]*Folder, error)
 	GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error)
 	GetFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*models.Folder, error)
 	GetFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*models.Folder, error)
@@ -49,11 +50,6 @@ type NestedFolderService interface {
 	// node.
 	GetParents(ctx context.Context, cmd *GetParentsQuery) ([]*Folder, error)
 
-	// GetTree returns an map containing all child folders starting from the
-	// given parent folder UID and descending to the requested depth. Use the
-	// sentinel value -1 to return all child folders.
-	//
-	// The map keys are folder uids and the values are the list of child folders
-	// for that parent.
-	GetTree(ctx context.Context, cmd *GetTreeQuery) ([]*Folder, error)
+	// GetChildren returns an array containing all child folders.
+	GetChildren(ctx context.Context, cmd *GetChildrenQuery) ([]*Folder, error)
 }

@@ -3,6 +3,7 @@ package folderimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -203,20 +204,24 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 	return util.Reverse(folders[1:]), nil
 }
 
-func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetTreeQuery) ([]*folder.Folder, error) {
+func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.Folder, error) {
 	var folders []*folder.Folder
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql := strings.Builder{}
+		if q.UID == "" {
+			q.UID = folder.GeneralFolderUID
+		}
 		sql.Write([]byte("SELECT * FROM folder WHERE parent_uid=? AND org_id=?"))
 
 		if q.Limit != 0 {
-			var offset int64 = 1
-			if q.Page != 0 {
-				offset = q.Page
+			var offset int64 = 0
+			if q.Page > 0 {
+				offset = q.Limit * (q.Page - 1)
 			}
 			sql.Write([]byte(ss.db.GetDialect().LimitOffset(q.Limit, offset)))
 		}
+		fmt.Println(">>>>>", sql.String())
 		err := sess.SQL(sql.String(), q.UID, q.OrgID).Find(&folders)
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to get folder children: %w", err)
