@@ -31,7 +31,7 @@ export const testIds = {
 };
 
 export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
-  const { onChange, onRunQuery, onAddQuery, data, app, queries } = props;
+  const { onChange, onRunQuery, onAddQuery, data, app, queries, datasource } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
@@ -123,7 +123,14 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
         onAddQuery={onAddQuery}
       />
       <EditorHeader>
-        <LabelBrowserModal isOpen={labelBrowserVisible} onClose={() => setLabelBrowserVisible(false)} />
+        <LabelBrowserModal
+          isOpen={labelBrowserVisible}
+          onClose={() => setLabelBrowserVisible(false)}
+          languageProvider={datasource.languageProvider}
+          onChange={onChangeInternal}
+          onRunQuery={onRunQuery}
+          query={query}
+        />
         <div
           className={css`
             display: flex;
