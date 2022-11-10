@@ -181,11 +181,11 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
 
   /**
    *  We assume the layout array is storted according to y pos, and walk upwards until we find a row.
-   *  If it is collapsed there is no row to add it to.
+   *  If it is collapsed there is no row to add it to. The default is then to return the SceneGridLayout itself
    */
-  getRowAboveIndex(layout: ReactGridLayout.Layout[], startAt: number): SceneGridRow | null {
+  getRowAboveIndex(layout: ReactGridLayout.Layout[], startAt: number): SceneGridRow | SceneGridLayout {
     if (startAt < 0) {
-      return null;
+      return this;
     }
 
     for (let i = startAt; i >= 0; i--) {
@@ -195,14 +195,14 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       if (sceneChild instanceof SceneGridRow) {
         // the closest row is collapsed return null
         if (sceneChild.state.isCollapsed) {
-          return null;
+          return this;
         }
 
         return sceneChild;
       }
     }
 
-    return null;
+    return this;
   }
 
   /**
