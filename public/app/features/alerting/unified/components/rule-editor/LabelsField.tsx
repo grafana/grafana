@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import React, { FC } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Button, Field, Input, InlineLabel, Label, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, Field, Input, InlineLabel, Label, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
 
@@ -12,7 +12,7 @@ interface Props {
 }
 
 const LabelsField: FC<Props> = ({ className }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const {
     register,
     control,
@@ -94,10 +94,10 @@ const LabelsField: FC<Props> = ({ className }) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
-      margin-bottom: ${theme.spacing.xl};
+      margin-bottom: ${theme.spacing(4)};
     `,
     flexColumn: css`
       display: flex;
@@ -109,11 +109,11 @@ const getStyles = (theme: GrafanaTheme) => {
       justify-content: flex-start;
 
       & + button {
-        margin-left: ${theme.spacing.xs};
+        margin-left: ${theme.spacing(0.5)};
       }
     `,
     deleteLabelButton: css`
-      margin-left: ${theme.spacing.xs};
+      margin-left: ${theme.spacing(0.5)};
       align-self: flex-start;
     `,
     addLabelButton: css`
@@ -127,13 +127,13 @@ const getStyles = (theme: GrafanaTheme) => {
       align-self: flex-start;
       width: 28px;
       justify-content: center;
-      margin-left: ${theme.spacing.xs};
+      margin-left: ${theme.spacing(0.5)};
     `,
     labelInput: css`
       width: 175px;
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing(1)};
       & + & {
-        margin-left: ${theme.spacing.sm};
+        margin-left: ${theme.spacing(1)};
       }
     `,
   };

@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { getTheme } from '@grafana/ui';
+import { createTheme } from '@grafana/data';
 
 import PromQlLanguageProvider from '../language_provider';
 
@@ -131,7 +131,7 @@ describe('PrometheusMetricsBrowser', () => {
     };
 
     const defaults: BrowserProps = {
-      theme: getTheme(),
+      theme: createTheme({ colors: { mode: 'dark' } }),
       onChange: () => {},
       autoSelect: 0,
       languageProvider: mockLanguageProvider as unknown as PromQlLanguageProvider,

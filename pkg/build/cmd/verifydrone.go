@@ -39,6 +39,9 @@ func VerifyDrone(c *cli.Context) error {
 	for _, flag := range starlark.Command.Flags {
 		flag.Apply(flags)
 	}
+	if err := flags.Set("format", "true"); err != nil {
+		return err
+	}
 	cStarlark := cliv1.NewContext(cliv1.NewApp(), flags, nil)
 	action := starlark.Command.Action.(func(*cliv1.Context))
 	action(cStarlark)

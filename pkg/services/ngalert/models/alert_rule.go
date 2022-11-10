@@ -26,6 +26,13 @@ var (
 	ErrAlertRuleFailedValidation          = errors.New("invalid alert rule")
 	ErrAlertRuleUniqueConstraintViolation = errors.New("a conflicting alert rule is found: rule title under the same organisation and folder should be unique")
 	ErrQuotaReached                       = errors.New("quota has been exceeded")
+	// ErrNoDashboard is returned when the alert rule does not have a Dashboard UID
+	// in its annotations or the dashboard does not exist.
+	ErrNoDashboard = errors.New("no dashboard")
+
+	// ErrNoPanel is returned when the alert rule does not have a PanelID in its
+	// annotations.
+	ErrNoPanel = errors.New("no panel")
 )
 
 // swagger:enum NoDataState
@@ -87,6 +94,7 @@ const (
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
 	DashboardUIDAnnotation = "__dashboardUid__"
 	PanelIDAnnotation      = "__panelId__"
+	OrgIDAnnotation        = "__orgId__"
 
 	// This isn't a hard-coded secret token, hence the nolint.
 	//nolint:gosec
@@ -351,6 +359,12 @@ type ListAlertRulesQuery struct {
 	PanelID      int64
 
 	Result RulesGroup
+}
+
+// CountAlertRulesQuery is the query for counting alert rules
+type CountAlertRulesQuery struct {
+	OrgID        int64
+	NamespaceUID string
 }
 
 type GetAlertRulesForSchedulingQuery struct {
