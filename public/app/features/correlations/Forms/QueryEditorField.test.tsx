@@ -3,8 +3,10 @@ import React, { ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
-import { setDataSourceSrv } from '@grafana/runtime';
+import { setDataSourceSrv, setQueryRunnerFactory } from '@grafana/runtime';
 import { MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
+
+import { QueryRunner } from '../../query/state/QueryRunner';
 
 import { QueryEditorField } from './QueryEditorField';
 
@@ -32,6 +34,10 @@ const renderWithContext = async (
 
   render(<Wrapper>{children}</Wrapper>);
 };
+
+beforeAll(() => {
+  setQueryRunnerFactory(() => new QueryRunner());
+});
 
 describe('QueryEditorField', () => {
   it('should render the query editor', async () => {
