@@ -234,7 +234,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				rule := createInvalidAlertRule()
 
-				response := sut.RoutePostAlertRule(&rc, rule, true)
+				response := sut.RoutePostAlertRule(&rc, rule)
 
 				require.Equal(t, 400, response.Status())
 				require.NotEmpty(t, response.Body())
@@ -250,7 +250,7 @@ func TestProvisioningApi(t *testing.T) {
 				insertRule(t, sut, rule)
 				rule = createInvalidAlertRule()
 
-				response := sut.RoutePutAlertRule(&rc, rule, uid, false)
+				response := sut.RoutePutAlertRule(&rc, rule, uid)
 				require.Equal(t, 400, response.Status())
 				require.NotEmpty(t, response.Body())
 				require.Contains(t, string(response.Body()), "invalid alert rule")
@@ -263,9 +263,8 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				rc.OrgID = 3
 				rule := createTestAlertRule("rule", 1)
-				disableProvenance := true
 
-				response := sut.RoutePostAlertRule(&rc, rule, disableProvenance)
+				response := sut.RoutePostAlertRule(&rc, rule)
 
 				require.Equal(t, 201, response.Status())
 				created := deserializeRule(t, response.Body())
@@ -282,9 +281,8 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				rc.OrgID = 3
 				rule.OrgID = 1 // Set the org back to something wrong, we should still prefer the value from the req context.
-				disableProvenance := false
 
-				response := sut.RoutePutAlertRule(&rc, rule, rule.UID, disableProvenance)
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
 
 				require.Equal(t, 200, response.Status())
 				created := deserializeRule(t, response.Body())
@@ -298,7 +296,7 @@ func TestProvisioningApi(t *testing.T) {
 			rc := createTestRequestCtx()
 			rule := createTestAlertRule("rule", 1)
 
-			response := sut.RoutePutAlertRule(&rc, rule, "does not exist", false)
+			response := sut.RoutePutAlertRule(&rc, rule, "does not exist")
 
 			require.Equal(t, 404, response.Status())
 		})
@@ -312,7 +310,7 @@ func TestProvisioningApi(t *testing.T) {
 			rule := createTestAlertRule("rule", 1)
 			rc := createTestRequestCtx()
 
-			response := sut.RoutePostAlertRule(&rc, rule, true)
+			response := sut.RoutePostAlertRule(&rc, rule)
 
 			require.Equal(t, 403, response.Status())
 		})
@@ -587,7 +585,7 @@ func insertRuleInOrg(t *testing.T, srv ProvisioningSrv, rule definitions.Provisi
 
 	rc := createTestRequestCtx()
 	rc.OrgID = orgID
-	resp := srv.RoutePostAlertRule(&rc, rule, false)
+	resp := srv.RoutePostAlertRule(&rc, rule)
 	require.Equal(t, 201, resp.Status())
 }
 
