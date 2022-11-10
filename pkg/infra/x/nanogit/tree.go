@@ -15,9 +15,9 @@ type GitAddress struct {
 type TreeListing struct {
 	Branch    string             `json:"branch"`
 	Root      *Node              `json:"root,omitempty"`
-	Shared    map[string][]*Node `json:"shared,omitempty"`
-	BytesRead int                `json:"bytesRead,omitempty"`
+	Shared    map[string][]*Node `json:"shared,omitempty"` // Some folder trees are redundant
 	Errors    []string           `json:"errors,omitempty"`
+	BytesRead int                `json:"bytesRead,omitempty"`
 }
 
 type Node struct {
@@ -54,7 +54,6 @@ func (n *Node) sort() {
 
 func ListRefs(addr GitAddress) ([]Node, error) {
 	refs := make([]Node, 0, 10)
-	// Get all refs from the server
 	refsData, err := cmd(addr.Owner, addr.Repo, fmtLines([]string{
 		"command=ls-refs\n",
 		"object-format=sha1\n",
@@ -115,6 +114,7 @@ func ReadTree(addr GitAddress, branch string) (TreeListing, error) {
 		return listing, err
 	}
 
+	shared := make([]*Node, 0)
 	trees := make(map[string]*Node, 0)
 	entries := make(map[string]*Node, 0)
 	for i, p := range parts {
@@ -147,6 +147,7 @@ func ReadTree(addr GitAddress, branch string) (TreeListing, error) {
 					if old != nil {
 						old.IsShared = true
 						child.IsShared = true
+						shared = append(shared, old, child)
 					}
 					entries[e.Hash] = child // This may be a tree!
 				}
@@ -184,15 +185,14 @@ func ReadTree(addr GitAddress, branch string) (TreeListing, error) {
 
 	}
 
-	// for _, c := range tree.Children {
-	// 	found, ok := trees[c.Hash]
-	// 	if !ok {
-	// 		found, ok = entries[c.Hash]
-	// 	}
-	// 	if ok {
-	// 		c.Children = found.Children
-	// 	}
-	// }
+	if listing.Shared != nil {
+		for _, entry := range shared {
+			if listing.Shared[entry.Hash] != nil {
+				entry.IsFolder = true
+				entry.IsShared = true
+			}
+		}
+	}
 
 	listing.Root.sort()
 	return listing, err
