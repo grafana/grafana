@@ -467,7 +467,12 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
             2. Find values for the selected labels
           </Label>
           <div>
-            <Input onChange={this.onChangeSearch} aria-label="Filter expression for values" value={searchTerm} />
+            <Input
+              onChange={this.onChangeSearch}
+              aria-label="Filter expression for values"
+              value={searchTerm}
+              placeholder={'Enter label value'}
+            />
           </div>
           <div className={styles.valueListArea}>
             {selectedLabels.map((label) => (
