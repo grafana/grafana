@@ -370,7 +370,7 @@
          */
         function calculateAnglesForGauge(gaugeOptionsi, layout, data) {
             let angles = {};
-            var neutral = gaugeOptionsi.gauge.neutralValue
+            var neutral = gaugeOptionsi.gauge.neutralValue;
 
             if (neutral != null) {
                 if (data < neutral) {
@@ -582,6 +582,11 @@
                     var a = calculateAngle(gaugeOptionsi, layout, threshold.value);
                     drawThresholdValue(gaugeOptionsi, layout, cellLayout, i + "_" + j, threshold.value, a);
                 }
+            }
+            
+            var neutral = gaugeOptionsi.gauge.neutralValue;
+            if (neutral != null) {
+                drawThresholdValue(gaugeOptionsi, layout, cellLayout, "Neutral" + i, neutral, calculateAngle(gaugeOptionsi, layout, neutral));
             }
         }
 
