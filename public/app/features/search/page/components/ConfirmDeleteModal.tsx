@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { ConfirmModal, stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { ConfirmModal, useStyles2 } from '@grafana/ui';
 import { deleteFoldersAndDashboards } from 'app/features/manage-dashboards/state/actions';
 
 import { OnMoveOrDeleleSelectedItems } from '../../types';
@@ -15,8 +15,7 @@ interface Props {
 }
 
 export const ConfirmDeleteModal: FC<Props> = ({ results, onDeleteItems, isOpen, onDismiss }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   const dashboards = Array.from(results.get('dashboard') ?? []);
   const folders = Array.from(results.get('folder') ?? []);
@@ -61,11 +60,9 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, onDeleteItems, isOpen, 
   ) : null;
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    subtitle: css`
-      font-size: ${theme.typography.size.base};
-      padding-top: ${theme.spacing.md};
-    `,
-  };
+const getStyles = (theme: GrafanaTheme2) => ({
+  subtitle: css`
+    font-size: ${theme.typography.fontSize}px;
+    padding-top: ${theme.spacing(2)};
+  `,
 });

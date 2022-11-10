@@ -217,6 +217,9 @@ type JSONData struct {
 	Backend      bool         `json:"backend"`
 	Routes       []*Route     `json:"routes"`
 
+	// AccessControl settings
+	Roles []RoleRegistration `json:"roles,omitempty"`
+
 	// Panel settings
 	SkipDataQuery bool `json:"skipDataQuery"`
 

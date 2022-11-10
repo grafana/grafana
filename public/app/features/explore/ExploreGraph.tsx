@@ -1,13 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { identity } from 'lodash';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { usePrevious } from 'react-use';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useCounter } from 'react-use';
 
 import {
   AbsoluteTimeRange,
   applyFieldOverrides,
-  compareArrayValues,
-  compareDataFrameStructures,
   createFieldConfigRegistry,
   DataFrame,
   dateTime,
@@ -75,13 +73,13 @@ export function ExploreGraph({
   eventBus,
 }: Props) {
   const theme = useTheme2();
+  const style = useStyles2(getStyles);
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
-  const [baseStructureRev, setBaseStructureRev] = useState(1);
-
-  const previousData = usePrevious(data);
-  const structureChangesRef = useRef(0);
-  const structureRev = baseStructureRev + structureChangesRef.current;
-  const prevStructureRev = usePrevious(structureRev);
+  const [structureRev, { inc: incrementStructureRev }] = useCounter(1);
+  const fieldConfigRegistry = useMemo(
+    () => createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Explore'),
+    []
+  );
 
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>({
     defaults: {
@@ -98,15 +96,6 @@ export function ExploreGraph({
     overrides: [],
   });
 
-  if (data && previousData && !compareArrayValues(previousData, data, compareDataFrameStructures)) {
-    structureChangesRef.current++;
-
-    if (prevStructureRev === structureRev) {
-      setFieldConfig({ ...fieldConfig, overrides: [] });
-    }
-  }
-
-  const style = useStyles2(getStyles);
   const timeRange = {
     from: dateTime(absoluteRange.from),
     to: dateTime(absoluteRange.to),
@@ -116,18 +105,25 @@ export function ExploreGraph({
     },
   };
 
+  const styledFieldConfig = useMemo(() => applyGraphStyle(fieldConfig, graphStyle), [fieldConfig, graphStyle]);
+
   const dataWithConfig = useMemo(() => {
-    const registry = createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Explore');
-    const styledFieldConfig = applyGraphStyle(fieldConfig, graphStyle);
     return applyFieldOverrides({
       fieldConfig: styledFieldConfig,
       data,
       timeZone,
       replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
       theme,
-      fieldConfigRegistry: registry,
+      fieldConfigRegistry,
     });
-  }, [fieldConfig, graphStyle, data, timeZone, theme]);
+  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig]);
+
+  // structureRev should be incremented when either the number of series or the config changes.
+  // like useEffect, but runs before rendering.
+  // TODO: while this works as it is supposed to, we are forced to do this now because of the way
+  // ExploreGraph is implemented. We should refactor it to a single component that handles structureRev increments
+  // when a user changes the viz style and not react to the value change itself.
+  useMemo(incrementStructureRev, [dataWithConfig.length, styledFieldConfig, incrementStructureRev]);
 
   useEffect(() => {
     if (onHiddenSeriesChanged) {
@@ -149,10 +145,22 @@ export function ExploreGraph({
     sync: () => DashboardCursorSync.Crosshair,
     onSplitOpen: splitOpenFn,
     onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {
-      setBaseStructureRev((r) => r + 1);
       setFieldConfig(seriesVisibilityConfigFactory(label, mode, fieldConfig, data));
     },
   };
+
+  const panelOptions: TimeSeriesOptions = useMemo(
+    () => ({
+      tooltip: { mode: tooltipDisplayMode, sort: SortOrder.None },
+      legend: {
+        displayMode: LegendDisplayMode.List,
+        showLegend: true,
+        placement: 'bottom',
+        calcs: [],
+      },
+    }),
+    [tooltipDisplayMode]
+  );
 
   return (
     <PanelContextProvider value={panelContext}>
@@ -163,31 +171,20 @@ export function ExploreGraph({
           <span
             className={cx([style.showAllTimeSeries])}
             onClick={() => {
-              structureChangesRef.current++;
               setShowAllTimeSeries(true);
             }}
           >{`Show all ${dataWithConfig.length}`}</span>
         </div>
       )}
       <PanelRenderer
-        data={{ series: seriesToShow, timeRange, structureRev, state: loadingState, annotations }}
+        data={{ series: seriesToShow, timeRange, state: loadingState, annotations, structureRev }}
         pluginId="timeseries"
         title=""
         width={width}
         height={height}
         onChangeTimeRange={onChangeTime}
         timeZone={timeZone}
-        options={
-          {
-            tooltip: { mode: tooltipDisplayMode, sort: SortOrder.None },
-            legend: {
-              displayMode: LegendDisplayMode.List,
-              showLegend: true,
-              placement: 'bottom',
-              calcs: [],
-            },
-          } as TimeSeriesOptions
-        }
+        options={panelOptions}
       />
     </PanelContextProvider>
   );

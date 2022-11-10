@@ -124,6 +124,7 @@ export const Pages = {
             selectionOptionsCustomAllInputV2: 'data-testid Variable editor Form IncludeAll field',
             previewOfValuesOption: 'Variable editor Preview of Values option',
             submitButton: 'Variable editor Submit button',
+            applyButton: 'data-testid Variable editor Apply button',
           },
           QueryVariable: {
             queryOptionsDataSourceSelect: Components.DataSourcePicker.container,
@@ -188,6 +189,7 @@ export const Pages = {
       EnableSwitch: 'data-testid public dashboard on off switch',
       EnableAnnotationsSwitch: 'data-testid public dashboard on off switch for annotations',
       SaveConfigButton: 'data-testid public dashboard save config button',
+      DeleteButton: 'data-testid public dashboard delete button',
       CopyUrlInput: 'data-testid public dashboard copy url input',
       CopyUrlButton: 'data-testid public dashboard copy url button',
       TemplateVariablesWarningAlert: 'data-testid public dashboard disabled template variables alert',
