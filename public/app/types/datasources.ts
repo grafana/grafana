@@ -14,6 +14,7 @@ export interface DataSourcesState {
   isLoadingDataSources: boolean;
   plugins: DataSourcePluginMeta[];
   categories: DataSourcePluginCategory[];
+  isSortAscending: boolean;
 }
 
 export interface TestingStatus {
