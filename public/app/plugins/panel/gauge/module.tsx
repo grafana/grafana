@@ -26,6 +26,12 @@ export const plugin = new PanelPlugin<PanelOptions>(GaugePanel)
         name: 'Show threshold markers',
         description: 'Renders the thresholds as an outer bar',
         defaultValue: defaultPanelOptions.showThresholdMarkers,
+      })
+      .addNumberInput({
+        path: 'neutral',
+        name: 'Neutral',
+        description: 'Set the neutral point of the gauge',
+        category: ['Standard options'],
       });
 
     commonOptionsBuilder.addTextSizeOptions(builder);
