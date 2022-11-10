@@ -83,7 +83,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 				resp := backend.Responses{
 					"A": backend.DataResponse{
-						Error: fmt.Errorf("query failed"),
+						Error: errors.New("query failed"),
 					},
 				}
 				return &backend.QueryDataResponse{Responses: resp}, nil
@@ -132,7 +132,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 				resp := backend.Responses{
 					"A": backend.DataResponse{
-						Error: fmt.Errorf("query failed"),
+						Error: errors.New("query failed"),
 					},
 				}
 				return &backend.QueryDataResponse{Responses: resp}, nil
