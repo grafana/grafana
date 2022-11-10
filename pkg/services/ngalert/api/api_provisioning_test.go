@@ -239,7 +239,7 @@ func TestProvisioningApi(t *testing.T) {
 
 				require.Equal(t, 400, response.Status())
 				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "expected true or false, got treu")
+				require.Contains(t, string(response.Body()), "expected true or false on header x-disable-provenance, got treu")
 			})
 
 			t.Run("POST returns 400 on wrong body params", func(t *testing.T) {
@@ -267,7 +267,7 @@ func TestProvisioningApi(t *testing.T) {
 				response := sut.RoutePutAlertRule(&rc, rule, uid)
 				require.Equal(t, 400, response.Status())
 				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "expected true or false, got flase")
+				require.Contains(t, string(response.Body()), "expected true or false on header x-disable-provenance, got flase")
 			})
 
 			t.Run("PUT returns 400 on wrong body params", func(t *testing.T) {
