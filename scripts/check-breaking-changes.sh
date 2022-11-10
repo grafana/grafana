@@ -48,8 +48,8 @@ while IFS=" " read -r -a package; do
 done <<< "$PACKAGES"
 
 # "Export" the message to an environment variable that can be used across Github Actions steps
-echo "is_breaking=$EXIT_CODE" >> $GITHUB_OUTPUT
-echo "message=$GITHUB_MESSAGE" >> $GITHUB_OUTPUT
+echo "is_breaking=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+echo "message=$GITHUB_MESSAGE" >> "$GITHUB_OUTPUT"
 
 # We will exit the workflow accordingly at another step
 exit 0
