@@ -236,7 +236,7 @@ func GetListing(addr GitAddress) (*data.Frame, error) {
 }
 
 // https://git-scm.com/docs/protocol-v2
-func ReadBody(addr GitAddress, oids ...string) ([]node, error) {
+func ReadBody(addr GitAddress, oids ...string) error {
 	lines := []string{
 		"command=fetch\n",
 		"object-format=sha1\n",
@@ -255,9 +255,8 @@ func ReadBody(addr GitAddress, oids ...string) ([]node, error) {
 
 	z, err := cmd(addr.Owner, addr.Repo, fmtLines(lines))
 	if err != nil {
-		return nil, err
+		return err
 	}
-	nodes := make([]node, 0, len(oids))
 	parts, _ := parsePktLine(z)
 	for i, p := range parts {
 		if string(p) == "packfile\n" {
@@ -269,7 +268,7 @@ func ReadBody(addr GitAddress, oids ...string) ([]node, error) {
 			})
 			p, err := rr.Read()
 			if err != nil {
-				return nodes, err
+				return err
 			}
 
 			for k, v := range p.Commits {
@@ -277,12 +276,9 @@ func ReadBody(addr GitAddress, oids ...string) ([]node, error) {
 			}
 
 			for name := range p.Blobs {
-				nodes = append(nodes, node{
-					Hash: name,
-					Body: cache[name],
-				})
+				fmt.Println("BLOG", name, len(cache[name]), "bytes")
 			}
 		}
 	}
-	return nodes, err
+	return err
 }

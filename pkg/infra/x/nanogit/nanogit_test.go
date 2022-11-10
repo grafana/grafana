@@ -16,6 +16,10 @@ func TestGithubHTTP(t *testing.T) {
 		Repo:  "test-repo-export-0003", // also try 3 (much smaller, more duplicates)
 	}
 
+	rsp, err := req(addr.Owner, addr.Repo)
+	require.NoError(t, err)
+	fmt.Printf("INFO:\n=======\n%s\n=======\n", string(rsp))
+
 	refs, err := ListRefs(addr)
 	require.NoError(t, err)
 
@@ -30,20 +34,16 @@ func TestGithubHTTP(t *testing.T) {
 
 	experimental.CheckGoldenJSONFrame(t, "testdata", fmt.Sprintf("list-%s-%s", addr.Owner, addr.Repo), listing, true)
 
-	if false {
-		blobs, err := ReadBody(addr, "???",
+	if true {
+		err := ReadBody(addr,
 			"7284ab4d2836271d66b988ae7d037bd6ef0d5d15",
 			"6484fb6f9cea3887578def1ba0aa96fcce279f5b",
 		)
 		require.NoError(t, err)
-
-		for _, node := range blobs {
-			fmt.Println("BLOB", node.Hash, len(node.Body), "bytes")
-		}
 	}
 
 	// Show log messages
-	t.FailNow()
+	// t.FailNow()
 }
 
 func TestOldMain(t *testing.T) {
