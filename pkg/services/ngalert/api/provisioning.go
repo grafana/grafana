@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 type ProvisioningApiHandler struct {
@@ -80,16 +81,16 @@ func (f *ProvisioningApiHandler) handleRouteGetAlertRule(ctx *models.ReqContext,
 	return f.svc.RouteRouteGetAlertRule(ctx, UID)
 }
 
-func (f *ProvisioningApiHandler) handleRoutePostAlertRule(ctx *models.ReqContext, ar apimodels.ProvisionedAlertRule, dp bool) response.Response {
-	return f.svc.RoutePostAlertRule(ctx, ar, dp)
+func (f *ProvisioningApiHandler) handleRoutePostAlertRule(ctx *models.ReqContext, ar apimodels.ProvisionedAlertRule, provenance alerting_models.Provenance) response.Response {
+	return f.svc.RoutePostAlertRule(ctx, ar, provenance)
 }
 
-func (f *ProvisioningApiHandler) handleRoutePutAlertRule(ctx *models.ReqContext, ar apimodels.ProvisionedAlertRule, UID string, dp bool) response.Response {
-	return f.svc.RoutePutAlertRule(ctx, ar, UID, dp)
+func (f *ProvisioningApiHandler) handleRoutePutAlertRule(ctx *models.ReqContext, ar apimodels.ProvisionedAlertRule, UID string, provenance alerting_models.Provenance) response.Response {
+	return f.svc.RoutePutAlertRule(ctx, ar, UID, provenance)
 }
 
-func (f *ProvisioningApiHandler) handleRouteDeleteAlertRule(ctx *models.ReqContext, UID string, dp bool) response.Response {
-	return f.svc.RouteDeleteAlertRule(ctx, UID, dp)
+func (f *ProvisioningApiHandler) handleRouteDeleteAlertRule(ctx *models.ReqContext, UID string) response.Response {
+	return f.svc.RouteDeleteAlertRule(ctx, UID)
 }
 
 func (f *ProvisioningApiHandler) handleRouteResetPolicyTree(ctx *models.ReqContext) response.Response {
