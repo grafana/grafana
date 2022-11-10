@@ -3027,7 +3027,14 @@
         "type": "object"
       },
       "CreateFolderCommand": {
+        "description": "CreateFolderCommand captures the information required by the folder service\nto create a folder.",
         "properties": {
+          "description": {
+            "type": "string"
+          },
+          "parent_uid": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -4383,6 +4390,10 @@
           "id": {
             "format": "int64",
             "type": "integer"
+          },
+          "parent_uid": {
+            "description": "only used if nested folders are enabled",
+            "type": "string"
           },
           "title": {
             "type": "string"
@@ -16020,6 +16031,7 @@
         ]
       },
       "post": {
+        "description": "If nested folders are enabled then it additionally expects the parent folder UID.",
         "operationId": "createFolder",
         "requestBody": {
           "content": {
@@ -16098,7 +16110,7 @@
     },
     "/folders/{folder_uid}": {
       "delete": {
-        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.",
+        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.\nIf nested folders are enabled then it also deletes all the subfolders.",
         "operationId": "deleteFolder",
         "parameters": [
           {
@@ -16179,6 +16191,7 @@
         ]
       },
       "put": {
+        "description": "If nested folders are enabled then it optionally expects a new parent folder UID that moves the folder and\nincludes it into the response.",
         "operationId": "updateFolder",
         "parameters": [
           {

@@ -4614,6 +4614,7 @@
         }
       },
       "post": {
+        "description": "If nested folders are enabled then it additionally expects the parent folder UID.",
         "tags": [
           "folders"
         ],
@@ -4721,6 +4722,7 @@
         }
       },
       "put": {
+        "description": "If nested folders are enabled then it optionally expects a new parent folder UID that moves the folder and\nincludes it into the response.",
         "tags": [
           "folders"
         ],
@@ -4768,7 +4770,7 @@
         }
       },
       "delete": {
-        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.",
+        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.\nIf nested folders are enabled then it also deletes all the subfolders.",
         "tags": [
           "folders"
         ],
@@ -10648,8 +10650,15 @@
       }
     },
     "CreateFolderCommand": {
+      "description": "CreateFolderCommand captures the information required by the folder service\nto create a folder.",
       "type": "object",
       "properties": {
+        "description": {
+          "type": "string"
+        },
+        "parent_uid": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -11804,6 +11813,10 @@
         "id": {
           "type": "integer",
           "format": "int64"
+        },
+        "parent_uid": {
+          "description": "only used if nested folders are enabled",
+          "type": "string"
         },
         "title": {
           "type": "string"
