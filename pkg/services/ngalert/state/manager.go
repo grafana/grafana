@@ -239,8 +239,8 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		image, err := takeImage(ctx, st.imageService, alertRule)
 		if err != nil {
 			st.log.Warn("Failed to take an image",
-				"dashboard", alertRule.DashboardUID,
-				"panel", alertRule.PanelID,
+				"dashboard", alertRule.GetDashboardUID(),
+				"panel", alertRule.GetPanelID(),
 				"error", err)
 		} else if image != nil {
 			currentState.Image = image
@@ -417,8 +417,8 @@ func (st *Manager) staleResultsHandler(ctx context.Context, r *ngModels.AlertRul
 					image, err := takeImage(ctx, st.imageService, r)
 					if err != nil {
 						st.log.Warn("Failed to take an image",
-							"dashboard", r.DashboardUID,
-							"panel", r.PanelID,
+							"dashboard", r.GetDashboardUID(),
+							"panel", r.GetPanelID(),
 							"error", err)
 					} else if image != nil {
 						resolvedImage = image

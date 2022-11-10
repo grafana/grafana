@@ -126,19 +126,23 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds da
 func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error) {
 	logger := s.logger.FromContext(ctx)
 
-	if r.DashboardUID == nil || *r.DashboardUID == "" {
+	dashboardUID := r.GetDashboardUID()
+	if dashboardUID == "" {
 		logger.Debug("Cannot take screenshot for alert rule as it is not associated with a dashboard")
 		return nil, ErrNoDashboard
 	}
 
-	if r.PanelID == nil || *r.PanelID == 0 {
+	panelID := r.GetPanelID()
+	if panelID <= 0 {
 		logger.Debug("Cannot take screenshot for alert rule as it is not associated with a panel")
 		return nil, ErrNoPanel
 	}
 
+	logger = logger.New("dashboard", dashboardUID, "panel", panelID)
+
 	opts := screenshot.ScreenshotOptions{
-		DashboardUID: *r.DashboardUID,
-		PanelID:      *r.PanelID,
+		DashboardUID: dashboardUID,
+		PanelID:      panelID,
 		Timeout:      screenshotTimeout,
 	}
 
