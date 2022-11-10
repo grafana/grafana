@@ -241,7 +241,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 			// We'll log the error and also roll back the previously-created
 			// (legacy) folder.
 			s.log.Error("error saving folder to nested folder store", err)
-			err = s.DeleteFolder(ctx, &folder.DeleteFolderCommand{UID: createdFolder.Uid, OrgID: orgID, ForceDeleteRules: true})
+			err = s.DeleteFolder(ctx, &folder.DeleteFolderCommand{UID: createdFolder.Uid, OrgID: cmd.OrgID, ForceDeleteRules: true})
 			if err != nil {
 				s.log.Error("error deleting folder after failed save to nested folder store", err)
 			}
