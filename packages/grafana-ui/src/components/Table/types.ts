@@ -50,5 +50,5 @@ export interface TableFooterCalc {
   reducer: string[]; // actually 1 value
   fields?: string[];
   enablePagination?: boolean;
-  countAll?: boolean;
+  countRows?: boolean;
 }

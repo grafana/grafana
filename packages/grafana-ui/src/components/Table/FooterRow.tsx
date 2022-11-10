@@ -69,12 +69,12 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, heig
   );
 }
 
-export function getFooterValue(index: number, footerValues?: FooterItem[], isCountAllSet?: boolean) {
+export function getFooterValue(index: number, footerValues?: FooterItem[], isCountRowsSet?: boolean) {
   if (footerValues === undefined) {
     return EmptyCell;
   }
 
-  if (isCountAllSet) {
+  if (isCountRowsSet) {
     const count = footerValues[index];
     if (typeof count !== 'string') {
       return EmptyCell;

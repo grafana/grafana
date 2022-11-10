@@ -27,7 +27,7 @@ export const defaultPanelOptions: PanelOptions = {
   footer: {
     show: false,
     reducer: [],
-    countAll: false,
+    countRows: false,
   },
 };
 

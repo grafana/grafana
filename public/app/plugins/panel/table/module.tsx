@@ -132,10 +132,11 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         showIf: (cfg) => cfg.footer?.show,
       })
       .addBooleanSwitch({
-        path: 'footer.countAll',
+        path: 'footer.countRows',
         category: [footerCategory],
-        name: 'Count all data',
-        defaultValue: defaultPanelOptions.footer?.countAll,
+        name: 'Count rows',
+        description: 'Display a single count for all data rows',
+        defaultValue: defaultPanelOptions.footer?.countRows,
         showIf: (cfg) => cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] === ReducerID.count,
       })
       .addMultiSelect({
@@ -163,7 +164,9 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           },
         },
         defaultValue: '',
-        showIf: (cfg) => cfg.footer?.show && !cfg.footer?.countAll,
+        showIf: (cfg) =>
+          (cfg.footer?.show && !cfg.footer?.countRows) ||
+          (cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] !== ReducerID.count),
       })
       .addCustomEditor({
         id: 'footer.enablePagination',

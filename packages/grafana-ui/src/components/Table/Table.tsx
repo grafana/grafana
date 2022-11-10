@@ -175,8 +175,8 @@ export const Table = memo((props: Props) => {
     return Array(data.length).fill(0);
   }, [data]);
 
-  const isCountAllSet = Boolean(
-    footerOptions?.countAll &&
+  const isCountRowsSet = Boolean(
+    footerOptions?.countRows &&
       footerOptions.reducer &&
       footerOptions.reducer.length &&
       footerOptions.reducer[0] === ReducerID.count
@@ -184,8 +184,8 @@ export const Table = memo((props: Props) => {
 
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () => getColumns(data, width, columnMinWidth, footerItems, isCountAllSet),
-    [data, width, columnMinWidth, footerItems, isCountAllSet]
+    () => getColumns(data, width, columnMinWidth, footerItems, isCountRowsSet),
+    [data, width, columnMinWidth, footerItems, isCountRowsSet]
   );
 
   // Internal react table state reducer
@@ -250,10 +250,10 @@ export const Table = memo((props: Props) => {
       theme
     );
 
-    if (isCountAllSet) {
-      const footerItemsCountAll: FooterItem[] = new Array(footerItems.length).fill(undefined);
-      footerItemsCountAll[0] = data.length.toString();
-      setFooterItems(footerItemsCountAll);
+    if (isCountRowsSet) {
+      const footerItemsCountRows: FooterItem[] = new Array(footerItems.length).fill(undefined);
+      footerItemsCountRows[0] = data.length.toString();
+      setFooterItems(footerItemsCountRows);
     } else {
       setFooterItems(footerItems);
     }
