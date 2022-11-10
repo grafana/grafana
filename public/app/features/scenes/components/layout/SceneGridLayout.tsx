@@ -165,11 +165,6 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
 
   onResizeStop: ReactGridLayout.ItemCallback = (_, o, n) => {
     const child = this.getSceneLayoutChild(n.i);
-
-    if (!child) {
-      return;
-    }
-
     child.setState({
       size: {
         ...child.state.size,
