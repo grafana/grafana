@@ -128,6 +128,7 @@ export interface SceneEditor extends SceneObject<SceneEditorState> {
 }
 
 export interface SceneTimeRangeState extends SceneObjectStatePlain, TimeRange {}
+
 export interface SceneTimeRange extends SceneObject<SceneTimeRangeState> {
   onTimeRangeChange(timeRange: TimeRange): void;
   onIntervalChanged(interval: string): void;

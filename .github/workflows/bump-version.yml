@@ -44,10 +44,10 @@ jobs:
       - name: Set intermedia variables
         id: intermedia
         run: |
-          echo "::set-output name=short_ref::${GITHUB_REF#refs/*/}"
-          echo "::set-output name=check_passed::false"
-          echo "::set-output name=branch_name::v${{steps.regex-match.outputs.group1}}"
-          echo "::set-output name=branch_exist::$(git ls-remote --heads https://github.com/grafana/grafana.git v${{ steps.regex-match.outputs.group1 }}.x | wc -l)"
+          echo "short_ref=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+          echo "check_passed=false" >> $GITHUB_OUTPUT
+          echo "branch_name=v${{steps.regex-match.outputs.group1}}" >> $GITHUB_OUTPUT
+          echo "branch_exist=$(git ls-remote --heads https://github.com/grafana/grafana.git v${{ steps.regex-match.outputs.group1 }}.x | wc -l)" >> $GITHUB_OUTPUT
 
       - name: Check input version is aligned with branch(main)
         if: ${{ github.event.inputs.version != '' && steps.intermedia.outputs.branch_exist == '0' && !contains(steps.intermedia.outputs.short_ref, 'main') }}
