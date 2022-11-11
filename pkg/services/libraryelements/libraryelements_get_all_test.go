@@ -37,7 +37,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all panel elements and both panels and variables exist, it should only return panels",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateVariableCommand(sc.folder.Id, "query0")
+			command := getCreateVariableCommand(sc.folder.ID, "query0")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -77,7 +77,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
+								FolderUID:           sc.folder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
@@ -103,7 +103,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all variable elements and both panels and variables exist, it should only return panels",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateVariableCommand(sc.folder.Id, "query0")
+			command := getCreateVariableCommand(sc.folder.ID, "query0")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -142,7 +142,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
+								FolderUID:           sc.folder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
@@ -168,7 +168,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -204,7 +204,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
+								FolderUID:           sc.folder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
@@ -239,7 +239,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
+								FolderUID:           sc.folder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[1].Meta.Created,
 								Updated:             result.Result.Elements[1].Meta.Updated,
@@ -265,7 +265,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and sort desc is set, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -304,7 +304,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
+								FolderUID:           sc.folder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
@@ -339,7 +339,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
+								FolderUID:           sc.folder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[1].Meta.Created,
 								Updated:             result.Result.Elements[1].Meta.Updated,
@@ -365,7 +365,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and typeFilter is set to existing types, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommandWithModel(sc.folder.Id, "Gauge - Library Panel", models.PanelElement, []byte(`
+			command := getCreateCommandWithModel(sc.folder.ID, "Gauge - Library Panel", models.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -378,7 +378,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
-			command = getCreateCommandWithModel(sc.folder.Id, "BarGauge - Library Panel", models.PanelElement, []byte(`
+			command = getCreateCommandWithModel(sc.folder.ID, "BarGauge - Library Panel", models.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -425,7 +425,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
+								FolderUID:           sc.folder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
@@ -460,7 +460,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
+								FolderUID:           sc.folder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[1].Meta.Created,
 								Updated:             result.Result.Elements[1].Meta.Updated,
@@ -486,7 +486,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and typeFilter is set to a nonexistent type, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommandWithModel(sc.folder.Id, "Gauge - Library Panel", models.PanelElement, []byte(`
+			command := getCreateCommandWithModel(sc.folder.ID, "Gauge - Library Panel", models.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -621,7 +621,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilter is set to General folder, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -661,7 +661,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
+								FolderUID:           sc.folder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
@@ -696,7 +696,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
+								FolderUID:           sc.folder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[1].Meta.Created,
 								Updated:             result.Result.Elements[1].Meta.Updated,
@@ -722,7 +722,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and excludeUID is set, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -761,7 +761,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
+								FolderUID:           sc.folder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
@@ -787,7 +787,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -826,7 +826,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
+								FolderUID:           sc.folder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
@@ -852,7 +852,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 2, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -892,7 +892,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
+								FolderUID:           sc.folder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
@@ -918,7 +918,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and searchString exists in the description, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommandWithModel(sc.folder.Id, "Text - Library Panel2", models.PanelElement, []byte(`
+			command := getCreateCommandWithModel(sc.folder.ID, "Text - Library Panel2", models.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -967,7 +967,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
+								FolderUID:           sc.folder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
@@ -993,7 +993,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and searchString exists in both name and description, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommandWithModel(sc.folder.Id, "Some Other", models.PanelElement, []byte(`
+			command := getCreateCommandWithModel(sc.folder.ID, "Some Other", models.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -1040,7 +1040,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
+								FolderUID:           sc.folder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
@@ -1075,7 +1075,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
+								FolderUID:           sc.folder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[1].Meta.Created,
 								Updated:             result.Result.Elements[1].Meta.Updated,
@@ -1101,7 +1101,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 1 and searchString is panel2, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -1142,7 +1142,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
+								FolderUID:           sc.folder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
@@ -1168,7 +1168,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 3 and searchString is panel, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -1199,7 +1199,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 3 and searchString does not exist, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
