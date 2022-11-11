@@ -157,7 +157,7 @@ export class PrometheusDatasource
       this._isDatasourceVersionGreaterOrEqualTo('1.11.0', PromApplication.Cortex) ||
       // https://github.com/thanos-io/thanos/pull/3566
       //https://github.com/thanos-io/thanos/releases/tag/v0.18.0
-      this._isDatasourceVersionGreaterOrEqualTo('0.18', PromApplication.Thanos)
+      this._isDatasourceVersionGreaterOrEqualTo('0.18.0', PromApplication.Thanos)
     );
   }
 

@@ -3,9 +3,10 @@ import { Scene } from '../components/Scene';
 import { getFlexLayoutTest, getScenePanelRepeaterTest } from './demo';
 import { getNestedScene } from './nested';
 import { getSceneWithRows } from './sceneWithRows';
+import { getVariablesDemo } from './variablesDemo';
 
 export function getScenes(): Scene[] {
-  return [getFlexLayoutTest(), getScenePanelRepeaterTest(), getNestedScene(), getSceneWithRows()];
+  return [getFlexLayoutTest(), getScenePanelRepeaterTest(), getNestedScene(), getSceneWithRows(), getVariablesDemo()];
 }
 
 const cache: Record<string, Scene> = {};

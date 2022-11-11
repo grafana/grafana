@@ -711,9 +711,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "36"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "37"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "38"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "39"],
+      [0, 0, 0, "Do not use any type assertions.", "39"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "40"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "41"],
+      [0, 0, 0, "Do not use any type assertions.", "41"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "42"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "43"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "44"],
@@ -723,38 +723,43 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "48"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "49"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "50"],
-      [0, 0, 0, "Do not use any type assertions.", "51"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "51"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "52"],
-      [0, 0, 0, "Do not use any type assertions.", "53"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "53"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "54"],
-      [0, 0, 0, "Do not use any type assertions.", "55"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "56"],
-      [0, 0, 0, "Do not use any type assertions.", "57"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "58"],
-      [0, 0, 0, "Do not use any type assertions.", "59"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "60"],
-      [0, 0, 0, "Do not use any type assertions.", "61"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "62"],
-      [0, 0, 0, "Do not use any type assertions.", "63"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "64"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "55"],
+      [0, 0, 0, "Do not use any type assertions.", "56"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "57"],
+      [0, 0, 0, "Do not use any type assertions.", "58"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "59"],
+      [0, 0, 0, "Do not use any type assertions.", "60"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "61"],
+      [0, 0, 0, "Do not use any type assertions.", "62"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "63"],
+      [0, 0, 0, "Do not use any type assertions.", "64"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "65"],
       [0, 0, 0, "Do not use any type assertions.", "66"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "67"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "68"],
-      [0, 0, 0, "Do not use any type assertions.", "69"],
+      [0, 0, 0, "Do not use any type assertions.", "68"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "69"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "70"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "71"],
-      [0, 0, 0, "Do not use any type assertions.", "72"],
+      [0, 0, 0, "Do not use any type assertions.", "71"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "72"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "73"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "74"],
-      [0, 0, 0, "Do not use any type assertions.", "75"],
+      [0, 0, 0, "Do not use any type assertions.", "74"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "75"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "76"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "77"],
-      [0, 0, 0, "Do not use any type assertions.", "78"],
+      [0, 0, 0, "Do not use any type assertions.", "77"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "78"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "79"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "80"],
-      [0, 0, 0, "Do not use any type assertions.", "81"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "82"]
+      [0, 0, 0, "Do not use any type assertions.", "80"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "81"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "82"],
+      [0, 0, 0, "Do not use any type assertions.", "83"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "84"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "85"],
+      [0, 0, 0, "Do not use any type assertions.", "86"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "87"]
     ],
     "packages/grafana-data/src/utils/Registry.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3865,12 +3870,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/features/dimensions/resource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
     "public/app/features/dimensions/scale.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -4384,9 +4383,6 @@ exports[`better eslint`] = {
     "public/app/features/plugins/admin/components/PluginDetailsBody.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/plugins/admin/components/PluginDetailsHeader.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/plugins/admin/components/SearchField.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -4425,9 +4421,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/plugins/components/AppRootPage.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/plugins/components/AppRootPage.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/plugins/datasource_srv.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -4668,6 +4661,10 @@ exports[`better eslint`] = {
     ],
     "public/app/features/scenes/variables/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/scenes/variables/variants/ObjectVariable.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/search/components/SearchCard.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6666,6 +6663,12 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "public/app/plugins/datasource/prometheus/querybuilder/components/LabelFilterItem.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"]
+    ],
     "public/app/plugins/datasource/prometheus/querybuilder/components/LabelParamEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -6678,7 +6681,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilderContainer.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -8183,9 +8187,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"]
-    ],
-    "public/app/plugins/panel/timeseries/FillBelowToEditor.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/panel/timeseries/LineStyleEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
