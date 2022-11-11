@@ -76,7 +76,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 		{
 			name: "Should set account correctly on list metric input if it cross account is defined on the request",
 			input: &resources.DimensionKeysRequest{
-				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: stringPtr(useLinkedAccountsId)},
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: pointer(useLinkedAccountsId)},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
 				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
@@ -91,7 +91,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 		{
 			name: "Should set account correctly on list metric input if single account is defined on the request",
 			input: &resources.DimensionKeysRequest{
-				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: stringPtr("1234567890")},
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: pointer("1234567890")},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
 				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
@@ -153,7 +153,7 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 		{
 			name: "Should set account correctly on list metric input if it cross account is defined on the request",
 			input: &resources.DimensionValuesRequest{
-				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: stringPtr(useLinkedAccountsId)},
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: pointer(useLinkedAccountsId)},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
 				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
@@ -168,7 +168,7 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 		{
 			name: "Should set account correctly on list metric input if single account is defined on the request",
 			input: &resources.DimensionValuesRequest{
-				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: stringPtr("1234567890")},
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: pointer("1234567890")},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
 				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},

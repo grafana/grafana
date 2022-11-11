@@ -3,7 +3,6 @@ package services
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/oam"
@@ -87,15 +86,4 @@ func (a *AccountsService) GetAccountsForCurrentUserOrRole() ([]resources.Resourc
 	}
 
 	return valuesToListMetricRespone(response), nil
-}
-
-func getAccountId(arn string) string {
-	// format: arn:partition:service:region:account-id:resource-id
-	parts := strings.Split(arn, ":")
-
-	if len(parts) >= 4 {
-		return parts[4]
-	}
-
-	return ""
 }

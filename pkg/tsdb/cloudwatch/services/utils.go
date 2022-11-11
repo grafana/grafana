@@ -1,6 +1,8 @@
 package services
 
 import (
+	"strings"
+
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
 
@@ -13,4 +15,15 @@ func valuesToListMetricRespone[T any](values []T) []resources.ResourceResponse[T
 	return response
 }
 
-func stringPtr(s string) *string { return &s }
+func getAccountId(arn string) string {
+	// format: arn:partition:service:region:account-id:resource-id
+	parts := strings.Split(arn, ":")
+
+	if len(parts) >= 4 {
+		return parts[4]
+	}
+
+	return ""
+}
+
+func pointer[T any](arg T) *T { return &arg }

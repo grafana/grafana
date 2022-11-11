@@ -4,6 +4,7 @@ import (
 	"net/url"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/oam"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
@@ -33,15 +34,19 @@ type CloudWatchMetricsAPIProvider interface {
 	ListMetricsPages(*cloudwatch.ListMetricsInput, func(*cloudwatch.ListMetricsOutput, bool) bool) error
 }
 
+type CloudWatchLogsAPIProvider interface {
+	DescribeLogGroups(*cloudwatchlogs.DescribeLogGroupsInput) (*cloudwatchlogs.DescribeLogGroupsOutput, error)
+}
+
 type OAMClientProvider interface {
 	ListSinks(*oam.ListSinksInput) (*oam.ListSinksOutput, error)
 	ListAttachedLinks(*oam.ListAttachedLinksInput) (*oam.ListAttachedLinksOutput, error)
 }
 
-type AccountsProvider interface {
-	GetAccountsForCurrentUserOrRole() ([]resources.ResourceResponse[*resources.Account], error)
+type LogGroupsProvider interface {
+	GetLogGroups(request resources.LogsRequest) ([]resources.ResourceResponse[resources.LogGroup], error)
 }
 
-type ClientsProvider interface {
-	OAMClientProvider
+type AccountsProvider interface {
+	GetAccountsForCurrentUserOrRole() ([]resources.ResourceResponse[*resources.Account], error)
 }

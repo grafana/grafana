@@ -28,3 +28,8 @@ type Metric struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
 }
+
+type LogGroup struct {
+	Arn  string `json:"arn"`
+	Name string `json:"name"`
+}
