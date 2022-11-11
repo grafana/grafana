@@ -20,6 +20,9 @@ import {
   LiteralExpr,
   MetricExpr,
   UnwrapExpr,
+  LineFilter,
+  LabelParser,
+  LineFilters,
 } from '@grafana/lezer-logql';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
@@ -118,6 +121,8 @@ export type Situation =
       type: 'AFTER_SELECTOR';
       afterPipe: boolean;
       labels: Label[];
+      lineFilter: boolean;
+      parser?: string;
     }
   | {
       type: 'AFTER_UNWRAP';
@@ -255,6 +260,52 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
   labels.reverse();
 
   return labels;
+}
+
+function hasLineFilter(node: SyntaxNode, afterPipe: boolean) {
+  const path: Path = afterPipe
+    ? [
+        ['lastChild', PipelineExpr],
+        ['firstChild', PipelineExpr],
+        ['firstChild', PipelineExpr],
+        ['firstChild', PipelineStage],
+        ['firstChild', LineFilters],
+        ['firstChild', LineFilter],
+      ]
+    : [
+        ['lastChild', PipelineExpr],
+        ['firstChild', PipelineExpr],
+        ['firstChild', PipelineStage],
+        ['firstChild', LineFilters],
+        ['firstChild', LineFilter],
+      ];
+
+  const lineFilterNode = walk(node, path);
+
+  return lineFilterNode ? true : false;
+}
+
+function getParser(node: SyntaxNode, text: string, afterPipe: boolean) {
+  const path: Path = afterPipe
+    ? [
+        ['lastChild', PipelineExpr],
+        ['firstChild', PipelineExpr],
+        ['lastChild', PipelineStage],
+        ['lastChild', LabelParser],
+      ]
+    : [
+        ['lastChild', PipelineExpr],
+        ['lastChild', PipelineStage],
+        ['lastChild', LabelParser],
+      ];
+
+  const parserNode = walk(node, path);
+
+  if (!parserNode) {
+    return undefined;
+  }
+
+  return text.substring(parserNode.from, parserNode.to);
 }
 
 function resolveAfterUnwrap(node: SyntaxNode, text: string, pos: number): Situation | null {
@@ -446,21 +497,26 @@ function resolveLogRangeFromError(node: SyntaxNode, text: string, pos: number): 
 }
 
 function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, afterPipe: boolean): Situation | null {
-  // here the `node` is either a LogExpr or a LogRangeExpr
-  // we want to handle the case where we are next to a selector
+  // Here the `node` is either a LogExpr or a LogRangeExpr
+  // We want to handle the case where we are next to a selector
   const selectorNode = walk(node, [['firstChild', Selector]]);
 
-  // we check that the selector is before the cursor, not after it
-  if (selectorNode != null && selectorNode.to <= pos) {
-    const labels = getLabels(selectorNode, text);
-    return {
-      type: 'AFTER_SELECTOR',
-      afterPipe,
-      labels,
-    };
+  // Check that the selector is before the cursor, not after it
+  if (!selectorNode || selectorNode.to > pos) {
+    return null;
   }
 
-  return null;
+  const labels = getLabels(selectorNode, text);
+  const lineFilter = hasLineFilter(node, afterPipe);
+  const parser = getParser(node, text, afterPipe);
+
+  return {
+    type: 'AFTER_SELECTOR',
+    afterPipe,
+    labels,
+    lineFilter,
+    parser,
+  };
 }
 
 function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation | null {

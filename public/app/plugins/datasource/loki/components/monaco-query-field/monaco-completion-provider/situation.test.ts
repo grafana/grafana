@@ -43,6 +43,8 @@ describe('situation', () => {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
       labels: [{ name: 'level', value: 'info', op: '=' }],
+      lineFilter: false,
+      parser: undefined,
     });
 
     // should not trigger AFTER_SELECTOR before the selector
@@ -55,18 +57,24 @@ describe('situation', () => {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
       labels: [{ name: 'level', value: 'info', op: '=' }],
+      lineFilter: false,
+      parser: 'json',
     });
 
     assertSituation('{level="info"} | json | ^', {
       type: 'AFTER_SELECTOR',
       afterPipe: true,
       labels: [{ name: 'level', value: 'info', op: '=' }],
+      lineFilter: false,
+      parser: 'json',
     });
 
     assertSituation('count_over_time({level="info"}^[10s])', {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
       labels: [{ name: 'level', value: 'info', op: '=' }],
+      lineFilter: false,
+      parser: undefined,
     });
 
     // should not trigger AFTER_SELECTOR before the selector
@@ -77,6 +85,16 @@ describe('situation', () => {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
       labels: [{ name: 'level', value: 'info', op: '=' }],
+      lineFilter: false,
+      parser: undefined,
+    });
+
+    assertSituation('{level="info"} |= "a" | logfmt ^', {
+      type: 'AFTER_SELECTOR',
+      afterPipe: false,
+      labels: [{ name: 'level', value: 'info', op: '=' }],
+      lineFilter: true,
+      parser: 'logfmt',
     });
   });
 
