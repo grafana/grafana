@@ -1,9 +1,34 @@
-import { Column, DataFrameView, Field, FieldCache, FieldType, KeyValue, MutableDataFrame } from '@grafana/data';
+import {
+  Column,
+  DataFrame,
+  DataFrameView,
+  Field,
+  FieldCache,
+  FieldType,
+  KeyValue,
+  MutableDataFrame,
+} from '@grafana/data';
 import flatten from 'app/core/utils/flatten';
 
 import { ElasticResponse } from './ElasticResponse';
 import { highlightTags } from './queryDef';
 import { ElasticsearchQuery } from './types';
+
+function getTimeField(frame: DataFrame): Field {
+  const field = frame.fields[0];
+  if (field.type !== FieldType.time) {
+    throw new Error('first field should be the time-field');
+  }
+  return field;
+}
+
+function getValueField(frame: DataFrame): Field {
+  const field = frame.fields[1];
+  if (field.type !== FieldType.number) {
+    throw new Error('second field should be the number-field');
+  }
+  return field;
+}
 
 describe('ElasticResponse', () => {
   let targets: ElasticsearchQuery[];
@@ -296,10 +321,11 @@ describe('ElasticResponse', () => {
 
     it('should return 1 series', () => {
       expect(result.data.length).toBe(1);
-      expect(result.data[0].target).toBe('Count');
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].datapoints[0][0]).toBe(10);
-      expect(result.data[0].datapoints[0][1]).toBe(1000);
+      const frame = result.data[0];
+      expect(frame.name).toBe('Count');
+      expect(frame.length).toBe(2);
+      expect(getTimeField(frame).values.get(0)).toBe(1000);
+      expect(getValueField(frame).values.get(0)).toBe(10);
     });
   });
 
@@ -347,13 +373,14 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].datapoints[0][0]).toBe(10);
-      expect(result.data[0].datapoints[0][1]).toBe(1000);
+      const frame1 = result.data[0];
+      const frame2 = result.data[1];
+      expect(frame1.length).toBe(2);
+      expect(getValueField(frame1).values.get(0)).toBe(10);
+      expect(getTimeField(frame1).values.get(0)).toBe(1000);
 
-      expect(result.data[1].target).toBe('Average value');
-      expect(result.data[1].datapoints[0][0]).toBe(88);
-      expect(result.data[1].datapoints[1][0]).toBe(99);
+      expect(frame2.name).toBe('Average value');
+      expect(getValueField(frame2).values.toArray()).toStrictEqual([88, 99]);
     });
   });
 
@@ -411,9 +438,11 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('server1');
-      expect(result.data[1].target).toBe('server2');
+      const frame1 = result.data[0];
+      const frame2 = result.data[1];
+      expect(frame1.length).toBe(2);
+      expect(frame1.name).toBe('server1');
+      expect(frame2.name).toBe('server2');
     });
   });
 
@@ -474,11 +503,11 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(4);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('server1 Count');
-      expect(result.data[1].target).toBe('server1 Average @value');
-      expect(result.data[2].target).toBe('server2 Count');
-      expect(result.data[3].target).toBe('server2 Average @value');
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].name).toBe('server1 Count');
+      expect(result.data[1].name).toBe('server1 Average @value');
+      expect(result.data[2].name).toBe('server2 Count');
+      expect(result.data[3].name).toBe('server2 Average @value');
     });
   });
 
@@ -523,12 +552,12 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('p75 @value');
-      expect(result.data[1].target).toBe('p90 @value');
-      expect(result.data[0].datapoints[0][0]).toBe(3.3);
-      expect(result.data[0].datapoints[0][1]).toBe(1000);
-      expect(result.data[1].datapoints[1][0]).toBe(4.5);
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].name).toBe('p75 @value');
+      expect(result.data[1].name).toBe('p90 @value');
+      expect(getValueField(result.data[0]).values.get(0)).toBe(3.3);
+      expect(getTimeField(result.data[0]).values.get(0)).toBe(1000);
+      expect(getValueField(result.data[1]).values.get(1)).toBe(4.5);
     });
   });
 
@@ -605,12 +634,12 @@ describe('ElasticResponse', () => {
 
     it('should return 4 series', () => {
       expect(result.data.length).toBe(4);
-      expect(result.data[0].datapoints.length).toBe(1);
-      expect(result.data[0].target).toBe('server1 Max @value');
-      expect(result.data[1].target).toBe('server1 Std Dev Upper @value');
+      expect(result.data[0].length).toBe(1);
+      expect(result.data[0].name).toBe('server1 Max @value');
+      expect(result.data[1].name).toBe('server1 Std Dev Upper @value');
 
-      expect(result.data[0].datapoints[0][0]).toBe(10.2);
-      expect(result.data[1].datapoints[0][0]).toBe(3);
+      expect(getValueField(result.data[0]).values.get(0)).toBe(10.2);
+      expect(getValueField(result.data[1]).values.get(0)).toBe(3);
     });
   });
 
@@ -666,20 +695,22 @@ describe('ElasticResponse', () => {
       expect(result.data.length).toBe(2);
 
       const firstSeries = result.data[0];
-      expect(firstSeries.target).toBe('Top Metrics @value');
-      expect(firstSeries.datapoints.length).toBe(2);
-      expect(firstSeries.datapoints).toEqual([
-        [1, new Date('2021-01-01T00:00:00.000Z').valueOf()],
-        [1, new Date('2021-01-01T00:00:10.000Z').valueOf()],
+      expect(firstSeries.name).toBe('Top Metrics @value');
+      expect(firstSeries.length).toBe(2);
+      expect(getTimeField(firstSeries).values.toArray()).toStrictEqual([
+        new Date('2021-01-01T00:00:00.000Z').valueOf(),
+        new Date('2021-01-01T00:00:10.000Z').valueOf(),
       ]);
+      expect(getValueField(firstSeries).values.toArray()).toStrictEqual([1, 1]);
 
       const secondSeries = result.data[1];
-      expect(secondSeries.target).toBe('Top Metrics @anotherValue');
-      expect(secondSeries.datapoints.length).toBe(2);
-      expect(secondSeries.datapoints).toEqual([
-        [2, new Date('2021-01-01T00:00:00.000Z').valueOf()],
-        [2, new Date('2021-01-01T00:00:10.000Z').valueOf()],
+      expect(secondSeries.name).toBe('Top Metrics @anotherValue');
+      expect(secondSeries.length).toBe(2);
+      expect(getTimeField(secondSeries).values.toArray()).toStrictEqual([
+        new Date('2021-01-01T00:00:00.000Z').valueOf(),
+        new Date('2021-01-01T00:00:10.000Z').valueOf(),
       ]);
+      expect(getValueField(secondSeries).values.toArray()).toStrictEqual([2, 2]);
     });
   });
 
@@ -748,10 +779,10 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(3);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('server1 Count and {{not_exist}} server1');
-      expect(result.data[1].target).toBe('server2 Count and {{not_exist}} server2');
-      expect(result.data[2].target).toBe('0 Count and {{not_exist}} 0');
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].name).toBe('server1 Count and {{not_exist}} server1');
+      expect(result.data[1].name).toBe('server2 Count and {{not_exist}} server2');
+      expect(result.data[2].name).toBe('0 Count and {{not_exist}} 0');
     });
   });
 
@@ -857,9 +888,9 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('@metric:cpu');
-      expect(result.data[1].target).toBe('@metric:logins.count');
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].name).toBe('@metric:cpu');
+      expect(result.data[1].name).toBe('@metric:logins.count');
     });
   });
 
@@ -916,7 +947,7 @@ describe('ElasticResponse', () => {
 
     it('should remove first and last value', () => {
       expect(result.data.length).toBe(2);
-      expect(result.data[0].datapoints.length).toBe(1);
+      expect(result.data[0].length).toBe(1);
     });
   });
 
@@ -1180,16 +1211,16 @@ describe('ElasticResponse', () => {
     });
     it('should return 3 series', () => {
       expect(result.data.length).toBe(3);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('Sum @value');
-      expect(result.data[1].target).toBe('Max @value');
-      expect(result.data[2].target).toBe('Sum @value * Max @value');
-      expect(result.data[0].datapoints[0][0]).toBe(2);
-      expect(result.data[1].datapoints[0][0]).toBe(3);
-      expect(result.data[2].datapoints[0][0]).toBe(6);
-      expect(result.data[0].datapoints[1][0]).toBe(3);
-      expect(result.data[1].datapoints[1][0]).toBe(4);
-      expect(result.data[2].datapoints[1][0]).toBe(12);
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].name).toBe('Sum @value');
+      expect(result.data[1].name).toBe('Max @value');
+      expect(result.data[2].name).toBe('Sum @value * Max @value');
+      expect(getValueField(result.data[0]).values.get(0)).toBe(2);
+      expect(getValueField(result.data[1]).values.get(0)).toBe(3);
+      expect(getValueField(result.data[2]).values.get(0)).toBe(6);
+      expect(getValueField(result.data[0]).values.get(1)).toBe(3);
+      expect(getValueField(result.data[1]).values.get(1)).toBe(4);
+      expect(getValueField(result.data[2]).values.get(1)).toBe(12);
     });
   });
 

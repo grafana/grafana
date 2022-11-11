@@ -487,17 +487,8 @@ export class ElasticResponse {
     const result = this.processResponseToSeries();
     return {
       ...result,
-      data: result.data.map((item) => {
-        if (item.type === 'table') {
-          return toDataFrame(item);
-        }
-        if (item.type === 'docs') {
-          return toDataFrame(item);
-        }
-        return item;
-      }),
+      data: result.data.map((item) => toDataFrame(item)),
     };
-    return result;
   }
 
   getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {
