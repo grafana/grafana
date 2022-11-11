@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -35,19 +34,19 @@ type Manager struct {
 	ResendDelay time.Duration
 
 	instanceStore InstanceStore
-	imageService  image.ImageService
+	images        ImageCapturer
 	historian     Historian
 	externalURL   *url.URL
 }
 
-func NewManager(metrics *metrics.State, externalURL *url.URL, instanceStore InstanceStore, imageService image.ImageService, clock clock.Clock, historian Historian) *Manager {
+func NewManager(metrics *metrics.State, externalURL *url.URL, instanceStore InstanceStore, images ImageCapturer, clock clock.Clock, historian Historian) *Manager {
 	return &Manager{
 		cache:         newCache(),
 		ResendDelay:   ResendDelay, // TODO: make this configurable
 		log:           log.New("ngalert.state.manager"),
 		metrics:       metrics,
 		instanceStore: instanceStore,
-		imageService:  imageService,
+		images:        images,
 		historian:     historian,
 		clock:         clock,
 		externalURL:   externalURL,
@@ -244,11 +243,11 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
 
 	if shouldTakeImage(currentState.State, oldState, currentState.Image, currentState.Resolved) {
-		image, err := takeImage(ctx, st.imageService, alertRule)
+		image, err := takeImage(ctx, st.images, alertRule)
 		if err != nil {
 			logger.Warn("Failed to take an image",
-				"dashboard", alertRule.DashboardUID,
-				"panel", alertRule.PanelID,
+				"dashboard", alertRule.GetDashboardUID(),
+				"panel", alertRule.GetPanelID(),
 				"error", err)
 		} else if image != nil {
 			currentState.Image = image
@@ -371,11 +370,11 @@ func (st *Manager) staleResultsHandler(ctx context.Context, logger log.Logger, r
 
 			// If there is no resolved image for this rule then take one
 			if resolvedImage == nil {
-				image, err := takeImage(ctx, st.imageService, r)
+				image, err := takeImage(ctx, st.images, r)
 				if err != nil {
 					logger.Warn("Failed to take an image",
-						"dashboard", r.DashboardUID,
-						"panel", r.PanelID,
+						"dashboard", r.GetDashboardUID(),
+						"panel", r.GetPanelID(),
 						"error", err)
 				} else if image != nil {
 					resolvedImage = image

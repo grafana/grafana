@@ -534,29 +534,37 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 	var children []*navtree.NavLink
 	var navLink *navtree.NavLink
 
-	baseId := "connections"
-	baseUrl := s.cfg.AppSubURL + "/" + baseId
+	baseUrl := s.cfg.AppSubURL + "/connections"
 
+	// Your connections
 	children = append(children, &navtree.NavLink{
-		Id:       baseId + "-datasources",
-		Text:     "Data sources",
-		Icon:     "database",
-		SubTitle: "Add and configure data sources",
-		Url:      baseUrl + "/datasources",
+		Id:       "connections-your-connections",
+		Text:     "Your connections",
+		SubTitle: "Manage your existing connections",
+		Url:      baseUrl + "/your-connections",
+		// Datasources
+		Children: []*navtree.NavLink{{
+			Id:       "connections-your-connections-datasources",
+			Text:     "Datasources",
+			SubTitle: "Manage your existing datasource connections",
+			Url:      baseUrl + "/your-connections/datasources",
+		}},
 	})
 
+	// Connect data
 	children = append(children, &navtree.NavLink{
-		Id:       baseId + "-connect-data",
-		Text:     "Connect Data",
-		Icon:     "plug",
-		SubTitle: "Manage data sources",
-		Url:      baseUrl + "/connect-data",
+		Id:       "connections-connect-data",
+		Text:     "Connect data",
+		SubTitle: "Browse and create new connections",
+		Url:      s.cfg.AppSubURL + "/connections/connect-data",
+		Children: []*navtree.NavLink{},
 	})
 
+	// Connections (main)
 	navLink = &navtree.NavLink{
 		Text:       "Connections",
 		Icon:       "link",
-		Id:         baseId,
+		Id:         "connections",
 		Url:        baseUrl,
 		Children:   children,
 		Section:    navtree.NavSectionCore,

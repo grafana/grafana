@@ -16,7 +16,7 @@ This topic describes how to sign in to Grafana.
 
 ## Steps
 
-To sign in to Grafana for the first time:
+To sign in to Grafana for the first time, follow these steps:
 
 1. Open your web browser and go to http://localhost:3000/.
 

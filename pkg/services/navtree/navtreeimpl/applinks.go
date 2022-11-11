@@ -233,6 +233,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1},
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3},
+		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfg},
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{

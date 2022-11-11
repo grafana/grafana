@@ -12,10 +12,14 @@ type Service interface {
 	GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error)
 	GetFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*models.Folder, error)
 	GetFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*models.Folder, error)
-	CreateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, title, uid string) (*models.Folder, error)
-	UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error
-	DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error)
+	Create(ctx context.Context, cmd *CreateFolderCommand) (*Folder, error)
+	// Update is used to update a folder's UID, Title and Description. To change
+	// a folder's parent folder, use Move.
+	Update(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) (*models.Folder, error)
+	DeleteFolder(ctx context.Context, cmd *DeleteFolderCommand) error
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error
+	// Move changes a folder's parent folder to the requested new parent.
+	Move(ctx context.Context, cmd *MoveFolderCommand) (*Folder, error)
 }
 
 // NestedFolderService is the temporary interface definition for the folder
@@ -26,13 +30,6 @@ type Service interface {
 type NestedFolderService interface {
 	// Create creates a new folder.
 	Create(ctx context.Context, cmd *CreateFolderCommand) (*Folder, error)
-
-	// Update is used to update a folder's UID, Title and Description. To change
-	// a folder's parent folder, use Move.
-	Update(ctx context.Context, cmd *UpdateFolderCommand) (*Folder, error)
-
-	// Move changes a folder's parent folder to the requested new parent.
-	Move(ctx context.Context, cmd *MoveFolderCommand) (*Folder, error)
 
 	// Delete deletes a folder. This will return an error if there are any
 	// dashboards in the folder.
