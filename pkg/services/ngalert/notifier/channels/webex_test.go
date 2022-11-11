@@ -93,7 +93,7 @@ func TestWebexNotifier(t *testing.T) {
 				},
 			},
 			expHeaders:  map[string]string{"Authorization": "Bearer abcdefgh0123456789"},
-			expMsg:      fmt.Sprintf(`{"roomId":"someid","markdown":"%s","files":[]}`, strings.Repeat("1", 4097)),
+			expMsg:      fmt.Sprintf(`{"roomId":"someid","markdown":"%s…","files":[]}`, strings.Repeat("1", 4093)),
 			expMsgError: nil,
 		},
 		{
