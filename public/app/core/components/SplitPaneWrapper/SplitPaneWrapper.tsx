@@ -16,7 +16,8 @@ interface Props {
 }
 
 export class SplitPaneWrapper extends PureComponent<Props> {
-  refToken: MutableRefObject<number | null> = createRef();
+  //requestAnimationFrame reference
+  rafToken: MutableRefObject<number | null> = createRef();
 
   componentDidMount() {
     window.addEventListener('resize', this.updateSplitPaneSize);
@@ -27,10 +28,10 @@ export class SplitPaneWrapper extends PureComponent<Props> {
   }
 
   updateSplitPaneSize = () => {
-    if (this.refToken.current !== undefined) {
-      window.cancelAnimationFrame(this.refToken.current!);
+    if (this.rafToken.current !== undefined) {
+      window.cancelAnimationFrame(this.rafToken.current!);
     }
-    this.refToken.current = window.requestAnimationFrame(() => {
+    this.rafToken.current = window.requestAnimationFrame(() => {
       this.forceUpdate();
     });
   };
