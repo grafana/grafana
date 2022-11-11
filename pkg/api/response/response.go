@@ -197,7 +197,7 @@ func JSONDownload(status int, body interface{}, filename string) *NormalResponse
 func YAML(status int, body interface{}) *NormalResponse {
 	b, err := yaml.Marshal(body)
 	if err != nil {
-		return Error(500, "body json marshal", err)
+		return Error(http.StatusInternalServerError, "body yaml marshal", err)
 	}
 	// As of now, application/yaml is downloaded by default in chrome regardless of Content-Disposition, so we use text/yaml instead.
 	return Respond(status, b).SetHeader("Content-Type", "text/yaml")
