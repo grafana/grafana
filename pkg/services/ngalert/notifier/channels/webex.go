@@ -44,7 +44,7 @@ func buildWebexSettings(factoryConfig FactoryConfig) (*webexSettings, error) {
 	settings := &webexSettings{}
 	err := factoryConfig.Config.unmarshalSettings(&settings)
 	if err != nil {
-		return settings, fmt.Errorf("failed to unmarshal settings: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
 	}
 
 	if settings.APIURL == "" {
