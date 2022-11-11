@@ -157,7 +157,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
         </ToolbarButton>
       ),
 
-      config.featureToggles.explore2Dashboard && showExploreToDashboard && (
+      showExploreToDashboard && (
         <Suspense key="addToDashboard" fallback={null}>
           <AddToDashboard exploreId={exploreId} />
         </Suspense>
