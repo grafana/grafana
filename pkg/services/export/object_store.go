@@ -28,7 +28,7 @@ type objectStoreJob struct {
 	cfg           ExportConfig
 	broadcaster   statusBroadcaster
 	stopRequested bool
-	user          *user.SignedInUser
+	ctx           context.Context
 
 	sess               *session.SessionDB
 	playlistService    playlist.Service
@@ -36,7 +36,7 @@ type objectStoreJob struct {
 	dashboardsnapshots dashboardsnapshots.Service
 }
 
-func startObjectStoreJob(user *user.SignedInUser,
+func startObjectStoreJob(ctx context.Context,
 	cfg ExportConfig,
 	broadcaster statusBroadcaster,
 	db db.DB,
@@ -47,7 +47,7 @@ func startObjectStoreJob(user *user.SignedInUser,
 	job := &objectStoreJob{
 		logger:      log.New("export_to_object_store_job"),
 		cfg:         cfg,
-		user:        user,
+		ctx:         ctx,
 		broadcaster: broadcaster,
 		status: ExportStatus{
 			Running: true,
@@ -63,7 +63,7 @@ func startObjectStoreJob(user *user.SignedInUser,
 	}
 
 	broadcaster(job.status)
-	go job.start()
+	go job.start(ctx)
 	return job, nil
 }
 
@@ -71,7 +71,7 @@ func (e *objectStoreJob) requestStop() {
 	e.stopRequested = true
 }
 
-func (e *objectStoreJob) start() {
+func (e *objectStoreJob) start(ctx context.Context) {
 	defer func() {
 		e.logger.Info("Finished dummy export job")
 
@@ -97,11 +97,11 @@ func (e *objectStoreJob) start() {
 	e.logger.Info("Starting dummy export job")
 	// Select all dashboards
 	rowUser := &user.SignedInUser{
-		Login:  "?",
+		Login:  "",
 		OrgID:  0, // gets filled in from each row
 		UserID: 0,
 	}
-	ctx := store.ContextWithUser(context.Background(), rowUser)
+	ctx = store.ContextWithUser(ctx, rowUser)
 
 	what := models.StandardKindDashboard
 	e.status.Count[what] = 0
@@ -190,10 +190,12 @@ func (e *objectStoreJob) start() {
 	orgIDs := []int64{1}
 	what = "snapshot"
 	for _, orgId := range orgIDs {
+		rowUser.OrgID = orgId
+		rowUser.UserID = 1
 		cmd := &dashboardsnapshots.GetDashboardSnapshotsQuery{
 			OrgId:        orgId,
 			Limit:        500000,
-			SignedInUser: e.user,
+			SignedInUser: rowUser,
 		}
 
 		err := e.dashboardsnapshots.SearchDashboardSnapshots(ctx, cmd)
