@@ -10,7 +10,7 @@ interface Props {
   text: string;
   loading: boolean;
   onCancel: () => void;
-  disabled: boolean; // todo: optional?
+  disabled?: boolean;
   /**
    *  htmlFor, needed for the label
    */

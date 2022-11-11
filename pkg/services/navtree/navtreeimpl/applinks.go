@@ -86,7 +86,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 			continue
 		}
 
-		if include.Type == "page" && include.AddToNav {
+		if include.Type == "page" {
 			link := &navtree.NavLink{
 				Text:     include.Name,
 				Icon:     include.Icon,
@@ -95,7 +95,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 
 			if len(include.Path) > 0 {
 				link.Url = s.cfg.AppSubURL + include.Path
-				if include.DefaultNav {
+				if include.DefaultNav && include.AddToNav {
 					appLink.Url = link.Url
 				}
 			} else {
@@ -127,7 +127,9 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 						sectionForPage.Children = append(sectionForPage.Children, link)
 					}
 				}
-			} else {
+
+				// Register the page under the app
+			} else if include.AddToNav {
 				appLink.Children = append(appLink.Children, link)
 			}
 		}
@@ -169,7 +171,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 
 	// Handle moving apps into specific navtree sections
 	alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
-	sectionID := "apps"
+	sectionID := navtree.NavIDApps
 
 	if navConfig, hasOverride := s.navigationAppConfig[plugin.ID]; hasOverride {
 		appLink.SortWeight = navConfig.SortWeight
@@ -231,6 +233,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1},
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3},
+		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfg},
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{
