@@ -10,12 +10,12 @@ import { LokiQuery } from '../../types';
 
 type Props = {
   isOpen: boolean;
-  onClose: () => void;
   languageProvider: LanguageProvider;
-  onChange: any;
-  onRunQuery: any;
   query: LokiQuery;
   app?: CoreApp;
+  onClose: () => void;
+  onChange: (query: LokiQuery) => void;
+  onRunQuery: () => void;
 };
 
 export const LabelBrowserModal = (props: Props) => {

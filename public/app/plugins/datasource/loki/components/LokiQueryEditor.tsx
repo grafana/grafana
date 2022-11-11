@@ -141,12 +141,12 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
       <EditorHeader>
         <LabelBrowserModal
           isOpen={labelBrowserVisible}
-          onClose={() => setLabelBrowserVisible(false)}
           languageProvider={datasource.languageProvider}
-          onChange={onChangeInternal}
-          onRunQuery={onRunQuery}
           query={query}
           app={app}
+          onClose={() => setLabelBrowserVisible(false)}
+          onChange={onChangeInternal}
+          onRunQuery={onRunQuery}
         />
         <div
           className={css`
