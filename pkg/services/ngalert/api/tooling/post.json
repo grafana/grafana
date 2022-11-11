@@ -3289,7 +3289,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -3449,6 +3448,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -3504,6 +3504,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -5498,7 +5499,7 @@
      },
      {
       "in": "header",
-      "name": "x-disable-provenance",
+      "name": "X-Disable-Provenance",
       "type": "boolean"
      }
     ],
@@ -5593,7 +5594,7 @@
      },
      {
       "in": "header",
-      "name": "x-disable-provenance",
+      "name": "X-Disable-Provenance",
       "type": "boolean"
      }
     ],
