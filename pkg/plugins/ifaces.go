@@ -38,14 +38,14 @@ type UpdateInfo struct {
 	PluginZipURL string
 }
 
-type FoundPlugin struct {
-	JSONData JSONData
-	Files    LocalFS
-}
-
 type FoundBundle struct {
 	Primary  FoundPlugin
 	Children []*FoundPlugin
+}
+
+type FoundPlugin struct {
+	JSONData JSONData
+	FS       FS
 }
 
 // Client is used to communicate with backend plugin implementations.

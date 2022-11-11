@@ -167,8 +167,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	requestedFile := filepath.Clean(tmpFile.Name())
 
 	t.Run("Given a request for an existing plugin file that is listed as a signature covered file", func(t *testing.T) {
-		p := plugins.NewPluginDTO(plugins.External, plugins.JSONData{ID: pluginID}, pluginDir)
-		p.signedFiles = map[string]struct{}{requestedFile: {}}
+		p := createPluginDTO(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewLocalFS(map[string]struct{}{requestedFile: {}}, filepath.Dir(requestedFile)))
 		service := &plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{p},
 		}
@@ -186,7 +185,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for a relative path", func(t *testing.T) {
-		p := plugins.NewPluginDTO(plugins.JSONData{ID: pluginID}, pluginDir)
+		p := createPluginDTO(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewLocalFS(map[string]struct{}{}, ""))
 		service := &plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{p},
 		}
@@ -202,7 +201,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an existing plugin file that is not listed as a signature covered file", func(t *testing.T) {
-		p := plugins.NewPluginDTO(plugins.JSONData{ID: pluginID}, pluginDir)
+		p := createPluginDTO(plugins.JSONData{ID: pluginID}, plugins.Core, plugins.NewLocalFS(map[string]struct{}{}, ""))
 		service := &plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{p},
 		}
@@ -220,7 +219,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin file", func(t *testing.T) {
-		p := plugins.NewPluginDTO(plugins.JSONData{ID: pluginID}, pluginDir)
+		p := createPluginDTO(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewLocalFS(map[string]struct{}{}, ""))
 		service := &plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{p},
 		}
@@ -441,42 +440,19 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 }
 
 func Test_PluginsList_AccessControl(t *testing.T) {
-	pluginStore := plugins.FakePluginStore{PluginList: []plugins.PluginDTO{
-		{
-			PluginDir:     "/grafana/plugins/test-app/dist",
-			class:         "external",
-			DefaultNavURL: "/plugins/test-app/page/test",
-			Pinned:        false,
-			Signature:     "unsigned",
-			Module:        "plugins/test-app/module",
-			BaseURL:       "public/plugins/test-app",
-			JSONData: plugins.JSONData{
-				ID:   "test-app",
-				Type: "app",
-				Name: "test-app",
-				Info: plugins.Info{
-					Version: "1.0.0",
-				},
-			},
-		},
-		{
-			PluginDir: "/grafana/public/app/plugins/datasource/mysql",
-			class:     "core",
-			Pinned:    false,
-			Signature: "internal",
-			Module:    "app/plugins/datasource/mysql/module",
-			BaseURL:   "public/app/plugins/datasource/mysql",
-			JSONData: plugins.JSONData{
-				ID:   "mysql",
-				Type: "datasource",
-				Name: "MySQL",
-				Info: plugins.Info{
-					Author:      plugins.InfoLink{Name: "Grafana Labs", URL: "https://grafana.com"},
-					Description: "Data source for MySQL databases",
-				},
-			},
-		},
-	}}
+	p1 := createPluginDTO(plugins.JSONData{
+		ID: "test-app", Type: "app", Name: "test-app",
+		Info: plugins.Info{
+			Version: "1.0.0",
+		}}, plugins.External, plugins.NewLocalFS(map[string]struct{}{}, ""))
+	p2 := createPluginDTO(
+		plugins.JSONData{ID: "mysql", Type: "datasource", Name: "MySQL",
+		Info: plugins.Info{
+			Author:      plugins.InfoLink{Name: "Grafana Labs", URL: "https://grafana.com"},
+			Description: "Data source for MySQL databases",
+		}}, plugins.Core, plugins.NewLocalFS(map[string]struct{}{}, ""))
+
+	pluginStore := plugins.FakePluginStore{PluginList: []plugins.PluginDTO{p1,p2}}
 
 	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
 		"test-app": {ID: 0, OrgID: 1, PluginID: "test-app", PluginVersion: "1.0.0", Enabled: true},
@@ -536,4 +512,14 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 			}
 		})
 	}
+}
+
+func createPluginDTO(jd plugins.JSONData, class plugins.Class, files plugins.FS) plugins.PluginDTO {
+	p := &plugins.Plugin{
+		JSONData: jd,
+		Class:    class,
+		Files:    files,
+	}
+
+	return p.ToDTO()
 }

@@ -109,7 +109,7 @@ func newTestLive(t *testing.T, store db.DB) *live.GrafanaLive {
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	gLive, err := live.ProvideService(nil, cfg,
 		routing.NewRouteRegister(),
-		nil, nil, nil,
+		nil, nil, nil, nil,
 		store,
 		nil,
 		&usagestats.UsageStatsMock{T: t},

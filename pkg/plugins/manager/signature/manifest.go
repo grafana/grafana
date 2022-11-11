@@ -9,9 +9,8 @@ import (
 	"fmt"
 	"io"
 	"net/url"
-	"os"
 	"path"
-	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/gobwas/glob"
@@ -103,7 +102,7 @@ func Calculate(mlog log.Logger, class plugins.Class, plugin plugins.FoundPlugin)
 		}, nil
 	}
 
-	if plugin.Files.IsEmpty() {
+	if len(plugin.FS.Files()) == 0 {
 		mlog.Warn("No plugin file information in directory", "pluginID", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
@@ -113,8 +112,8 @@ func Calculate(mlog log.Logger, class plugins.Class, plugin plugins.FoundPlugin)
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `manifestPath` is based
 	// on plugin the folder structure on disk and not user input.
-	byteValue := plugin.Files.Manifest()
-	if len(byteValue) < 10 {
+	byteValue, exists := plugin.FS.Read("MANIFEST.txt")
+	if !exists || len(byteValue) < 10 {
 		mlog.Debug("Plugin is unsigned", "id", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureUnsigned,
@@ -172,7 +171,11 @@ func Calculate(mlog log.Logger, class plugins.Class, plugin plugins.FoundPlugin)
 
 	// Track files missing from the manifest
 	var unsignedFiles []string
-	for _, f := range plugin.Files.Files() {
+	for _, f := range plugin.FS.Files() {
+		if runtime.GOOS == "windows" && f == "chrome-win/debug.log" {
+			continue
+		}
+
 		if f == "MANIFEST.txt" {
 			continue
 		}
@@ -200,7 +203,7 @@ func verifyHash(mlog log.Logger, plugin plugins.FoundPlugin, path, hash string) 
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `path` is based
 	// on the path provided in a manifest file for a plugin and not user input.
-	f, err := plugin.Files.Open(path)
+	f, err := plugin.FS.Open(path)
 	if err != nil {
 		mlog.Warn("Plugin file listed in the manifest was not found", "plugin", plugin.JSONData.ID, "path", path)
 		return fmt.Errorf("plugin file listed in the manifest was not found")
@@ -222,63 +225,6 @@ func verifyHash(mlog log.Logger, plugin plugins.FoundPlugin, path, hash string) 
 	}
 
 	return nil
-}
-
-// pluginFilesRequiringVerification gets plugin filenames that require verification for plugin signing
-// returns filenames as a slice of posix style paths relative to plugin directory
-func pluginFilesRequiringVerification(plugin *plugins.Plugin) ([]string, error) {
-	var files []string
-	err := filepath.Walk(plugin.PluginDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.Mode()&os.ModeSymlink == os.ModeSymlink {
-			symlinkPath, err := filepath.EvalSymlinks(path)
-			if err != nil {
-				return err
-			}
-
-			symlink, err := os.Stat(symlinkPath)
-			if err != nil {
-				return err
-			}
-
-			// verify that symlinked file is within plugin directory
-			p, err := filepath.Rel(plugin.PluginDir, symlinkPath)
-			if err != nil {
-				return err
-			}
-			if p == ".." || strings.HasPrefix(p, ".."+string(filepath.Separator)) {
-				return fmt.Errorf("file '%s' not inside of plugin directory", p)
-			}
-
-			// skip adding symlinked directories
-			if symlink.IsDir() {
-				return nil
-			}
-		}
-
-		// skip directories and MANIFEST.txt
-		if info.IsDir() || info.Name() == "MANIFEST.txt" {
-			return nil
-		}
-
-		// verify that file is within plugin directory
-		file, err := filepath.Rel(plugin.PluginDir, path)
-		if err != nil {
-			return err
-		}
-		if strings.HasPrefix(file, ".."+string(filepath.Separator)) {
-			return fmt.Errorf("file '%s' not inside of plugin directory", file)
-		}
-
-		files = append(files, filepath.ToSlash(file))
-
-		return nil
-	})
-
-	return files, err
 }
 
 func urlMatch(specs []string, target string, signatureType plugins.SignatureType) (bool, error) {

@@ -151,15 +151,18 @@ func TestCalculate(t *testing.T) {
 			})
 			setting.AppUrl = tc.appURL
 
-			sig, err := Calculate(log.NewNopLogger(), &plugins.Plugin{
+			basePath := filepath.Join(parentDir, "testdata/non-pvt-with-root-url/plugin")
+			sig, err := Calculate(log.NewNopLogger(), plugins.External, plugins.FoundPlugin{
 				JSONData: plugins.JSONData{
 					ID: "test-datasource",
 					Info: plugins.Info{
 						Version: "1.0.0",
 					},
 				},
-				PluginDir: filepath.Join(parentDir, "testdata/non-pvt-with-root-url/plugin"),
-				Class:     plugins.External,
+				FS: plugins.NewLocalFS(map[string]struct{}{
+					filepath.Join(basePath,"MANIFEST.txt"): {},
+					filepath.Join(basePath,"plugin.json"): {},
+				}, basePath),
 			})
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedSignature, sig)

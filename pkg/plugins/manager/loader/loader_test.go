@@ -2,7 +2,6 @@ package loader
 
 import (
 	"context"
-	"errors"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -17,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -1116,185 +1114,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		}
 
 		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
-
-		t.Run("order of loaded parent and child plugins gives same output", func(t *testing.T) {
-			parentPluginJSON := filepath.Join(rootDir, "testdata/app-with-child/dist/plugin.json")
-			childPluginJSON := filepath.Join(rootDir, "testdata/app-with-child/dist/child/plugin.json")
-
-			reg = fakes.NewFakePluginRegistry()
-			storage = fakes.NewFakePluginStorage()
-			procPrvdr = fakes.NewFakeBackendProcessProvider()
-			procMgr = fakes.NewFakeProcessManager()
-			l = newLoader(&config.Cfg{}, func(l *Loader) {
-				l.pluginRegistry = reg
-				l.pluginStorage = storage
-				l.processManager = procMgr
-				l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
-			})
-			got, err = l.loadPlugins(context.Background(), plugins.External, []string{parentPluginJSON, childPluginJSON})
-			require.NoError(t, err)
-
-			// to ensure we can compare with expected
-			sort.SliceStable(got, func(i, j int) bool {
-				return got[i].ID < got[j].ID
-			})
-
-			if !cmp.Equal(got, expected, compareOpts) {
-				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
-			}
-
-			verifyState(t, expected, reg, procPrvdr, storage, procMgr)
-
-			reg = fakes.NewFakePluginRegistry()
-			storage = fakes.NewFakePluginStorage()
-			procPrvdr = fakes.NewFakeBackendProcessProvider()
-			procMgr = fakes.NewFakeProcessManager()
-			l = newLoader(&config.Cfg{}, func(l *Loader) {
-				l.pluginRegistry = reg
-				l.pluginStorage = storage
-				l.processManager = procMgr
-				l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
-			})
-			got, err = l.loadPlugins(context.Background(), plugins.External, []string{childPluginJSON, parentPluginJSON})
-			require.NoError(t, err)
-
-			// to ensure we can compare with expected
-			sort.SliceStable(got, func(i, j int) bool {
-				return got[i].ID < got[j].ID
-			})
-
-			if !cmp.Equal(got, expected, compareOpts) {
-				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
-			}
-
-			verifyState(t, expected, reg, procPrvdr, storage, procMgr)
-		})
 	})
-}
-
-func TestLoader_readPluginJSON(t *testing.T) {
-	tests := []struct {
-		name       string
-		pluginPath string
-		expected   plugins.JSONData
-		failed     bool
-	}{
-		{
-			name:       "Valid plugin",
-			pluginPath: "../testdata/test-app/plugin.json",
-			expected: plugins.JSONData{
-				ID:   "test-app",
-				Type: "app",
-				Name: "Test App",
-				Info: plugins.Info{
-					Author: plugins.InfoLink{
-						Name: "Test Inc.",
-						URL:  "http://test.com",
-					},
-					Description: "Official Grafana Test App & Dashboard bundle",
-					Version:     "1.0.0",
-					Links: []plugins.InfoLink{
-						{Name: "Project site", URL: "http://project.com"},
-						{Name: "License & Terms", URL: "http://license.com"},
-					},
-					Logos: plugins.Logos{
-						Small: "img/logo_small.png",
-						Large: "img/logo_large.png",
-					},
-					Screenshots: []plugins.Screenshots{
-						{Path: "img/screenshot1.png", Name: "img1"},
-						{Path: "img/screenshot2.png", Name: "img2"},
-					},
-					Updated: "2015-02-10",
-				},
-				Dependencies: plugins.Dependencies{
-					GrafanaVersion: "3.x.x",
-					Plugins: []plugins.Dependency{
-						{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
-						{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
-					},
-				},
-				Includes: []*plugins.Includes{
-					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer},
-					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer},
-					{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer},
-					{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer},
-				},
-				Backend: false,
-			},
-		},
-		{
-			name:       "Invalid plugin JSON",
-			pluginPath: "../testdata/invalid-plugin-json/plugin.json",
-			failed:     true,
-		},
-		{
-			name:       "Non-existing JSON file",
-			pluginPath: "nonExistingFile.json",
-			failed:     true,
-		},
-	}
-
-	l := newLoader(nil)
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := l.readPluginJSON(tt.pluginPath)
-			if (err != nil) && !tt.failed {
-				t.Errorf("readPluginJSON() error = %v, failed %v", err, tt.failed)
-				return
-			}
-			if !cmp.Equal(got, tt.expected, compareOpts) {
-				t.Errorf("Unexpected pluginJSONData: %v", cmp.Diff(got, tt.expected, compareOpts))
-			}
-		})
-	}
-}
-
-func Test_validatePluginJSON(t *testing.T) {
-	type args struct {
-		data plugins.JSONData
-	}
-	tests := []struct {
-		name string
-		args args
-		err  error
-	}{
-		{
-			name: "Valid case",
-			args: args{
-				data: plugins.JSONData{
-					ID:   "grafana-plugin-id",
-					Type: plugins.DataSource,
-				},
-			},
-		},
-		{
-			name: "Invalid plugin ID",
-			args: args{
-				data: plugins.JSONData{
-					Type: plugins.Panel,
-				},
-			},
-			err: ErrInvalidPluginJSON,
-		},
-		{
-			name: "Invalid plugin type",
-			args: args{
-				data: plugins.JSONData{
-					ID:   "grafana-plugin-id",
-					Type: "test",
-				},
-			},
-			err: ErrInvalidPluginJSON,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := validatePluginJSON(tt.args.data); !errors.Is(err, tt.err) {
-				t.Errorf("validatePluginJSON() = %v, want %v", err, tt.err)
-			}
-		})
-	}
 }
 
 func Test_setPathsBasedOnApp(t *testing.T) {

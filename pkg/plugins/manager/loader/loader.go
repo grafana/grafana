@@ -87,7 +87,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, res []*pl
 			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", r.Primary.JSONData.ID)
 			continue
 		}
-		plugin := createPluginBase(r.Primary.JSONData, class, r.Primary.Files)
+		plugin := createPluginBase(r.Primary.JSONData, class, r.Primary.FS)
 
 		sig, err := signature.Calculate(l.log, class, r.Primary)
 		if err != nil {
@@ -107,7 +107,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, res []*pl
 				continue
 			}
 
-			cp := createPluginBase(c.JSONData, class, c.Files)
+			cp := createPluginBase(c.JSONData, class, c.FS)
 			cp.Parent = plugin
 			cp.Signature = sig.Status
 			cp.SignatureType = sig.Type
@@ -162,7 +162,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, res []*pl
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 
 		if errDeclareRoles := l.roleRegistry.DeclarePluginRoles(ctx, p.ID, p.Name, p.Roles); errDeclareRoles != nil {
-			l.log.Warn("Declare plugin roles failed.", "pluginID", p.ID, "path", p.PluginDir, "error", errDeclareRoles)
+			l.log.Warn("Declare plugin roles failed.", "pluginID", p.ID, "error", errDeclareRoles)
 		}
 	}
 
@@ -201,7 +201,7 @@ func (l *Loader) load(ctx context.Context, p *plugins.Plugin) error {
 	}
 
 	if p.IsExternalPlugin() {
-		if err := l.pluginStorage.Register(ctx, p.ID, p.PluginDir); err != nil {
+		if err := l.pluginStorage.Register(ctx, p.ID, p.Files.Base()); err != nil {
 			return err
 		}
 	}
@@ -227,11 +227,10 @@ func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
 	return nil
 }
 
-func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, files plugins.LocalFS) *plugins.Plugin {
+func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, files plugins.FS) *plugins.Plugin {
 	plugin := &plugins.Plugin{
 		JSONData:  pluginJSON,
 		Files:     files,
-		PluginDir: "",
 		BaseURL:   path.Join("public/plugins", pluginJSON.ID),
 		Module:    path.Join("plugins", pluginJSON.ID, "module"),
 		Class:     class,
@@ -282,7 +281,7 @@ func configureAppChildOfPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 	if !parent.IsApp() {
 		return
 	}
-	appSubPath := strings.ReplaceAll(strings.Replace(child.PluginDir, parent.PluginDir, "", 1), "\\", "/")
+	appSubPath := strings.ReplaceAll(strings.Replace(child.Files.Base(), parent.Files.Base(), "", 1), "\\", "/")
 	child.IncludedInAppID = parent.ID
 	child.BaseURL = parent.BaseURL
 

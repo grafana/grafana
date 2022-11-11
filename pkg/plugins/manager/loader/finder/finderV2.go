@@ -9,12 +9,16 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/google/go-cmp/cmp/cmpopts"
+
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+var compareOpts = cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log")
 
 var walkv2 = util.Walk
 
@@ -82,7 +86,7 @@ func (f *Finderv2) Find(pluginPaths []string) ([]*plugins.FoundBundle, error) {
 		res[pluginDir] = &plugins.FoundBundle{
 			Primary: plugins.FoundPlugin{
 				JSONData: data,
-				Files:    plugins.NewLocalFS(files, pluginDir),
+				FS:       plugins.NewLocalFS(files, pluginDir),
 			},
 		}
 	}

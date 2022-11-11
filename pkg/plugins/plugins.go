@@ -22,8 +22,7 @@ import (
 type Plugin struct {
 	JSONData
 
-	PluginDir string
-	Files     LocalFS
+	Files     FS
 	Class     Class
 
 	// App fields
@@ -53,7 +52,7 @@ type Plugin struct {
 type PluginDTO struct {
 	JSONData
 
-	files LocalFS
+	files FS
 
 	class Class
 
@@ -75,10 +74,15 @@ type PluginDTO struct {
 	supportsStreaming bool
 }
 
-func NewPluginDTO(jsonData JSONData) PluginDTO {
+func NewPluginDTO(jsonData JSONData, class Class) PluginDTO {
 	return PluginDTO{
+		class:    class,
 		JSONData: jsonData,
 	}
+}
+
+func (p PluginDTO) Upgradeable() bool {
+	return !p.IsCorePlugin()
 }
 
 func (p PluginDTO) SupportsStreaming() bool {
@@ -376,7 +380,7 @@ func pluginExecutable(p *Plugin, f string) string {
 	if os == "windows" {
 		extension = ".exe"
 	}
-	fp, exists := p.Files.AbsFilepath(fmt.Sprintf("%s_%s_%s%s", f, os, strings.ToLower(arch), extension))
+	fp, exists := p.Files.FullPath(fmt.Sprintf("%s_%s_%s%s", f, os, strings.ToLower(arch), extension))
 	if !exists {
 		return ""
 	}
@@ -414,7 +418,7 @@ func (p *Plugin) StaticRoute() *StaticRoute {
 		return nil
 	}
 
-	return &StaticRoute{Directory: p.PluginDir, PluginID: p.ID}
+	return &StaticRoute{Directory: p.Files.Base(), PluginID: p.ID}
 }
 
 func (p *Plugin) IsRenderer() bool {

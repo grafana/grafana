@@ -11,6 +11,17 @@ import (
 
 var _ fs.FS = (*LocalFS)(nil)
 
+type FS interface {
+	fs.FS
+
+	Base() string
+	Exists(name string) bool
+	FullPath(name string) (string, bool)
+	Files() []string
+	Read(name string) ([]byte, bool)
+	Remove(name string) error
+}
+
 type LocalFS struct {
 	m        map[string]*LocalFile
 	basePath string
@@ -30,8 +41,8 @@ func NewLocalFS(m map[string]struct{}, basePath string) LocalFS {
 	}
 }
 
-func (f LocalFS) IsEmpty() bool {
-	return len(f.m) == 0
+func (f LocalFS) Base() string {
+	return f.basePath
 }
 
 func (f LocalFS) Exists(name string) bool {
@@ -44,7 +55,7 @@ func (f LocalFS) Exists(name string) bool {
 	return false
 }
 
-func (f LocalFS) AbsFilepath(name string) (string, bool) {
+func (f LocalFS) FullPath(name string) (string, bool) {
 	fp := filepath.Join(f.basePath, name)
 	if _, exists := f.m[fp]; exists {
 		return fp, true
@@ -63,14 +74,6 @@ func (f LocalFS) Files() []string {
 	}
 
 	return files
-}
-
-func (f LocalFS) Manifest() []byte {
-	b, exists := f.Read("MANIFEST.txt")
-	if !exists {
-		return []byte{}
-	}
-	return b
 }
 
 func (f LocalFS) Read(name string) ([]byte, bool) {
@@ -98,6 +101,11 @@ func (f LocalFS) Open(name string) (fs.File, error) {
 		return os.Open(kv.path)
 	}
 	return nil, fmt.Errorf("file does not exist")
+}
+
+func (f LocalFS) Remove(name string) error {
+	// TODO
+	return nil
 }
 
 var _ fs.File = (*LocalFile)(nil)
