@@ -209,7 +209,7 @@ var (
 		},
 		{
 			Name:        "prometheusBufferedClient",
-			Description: "Use buffered (old) client as default instead of streaming JSON parser client (new)Enable for Prometheus datasource",
+			Description: "Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new)",
 			State:       FeatureStateStable,
 		},
 		{

@@ -152,7 +152,7 @@ const (
 	FlagTraceToMetrics = "traceToMetrics"
 
 	// FlagPrometheusBufferedClient
-	// Use buffered (old) client as default instead of streaming JSON parser client (new)Enable for Prometheus datasource
+	// Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new)
 	FlagPrometheusBufferedClient = "prometheusBufferedClient"
 
 	// FlagNewDBLibrary
