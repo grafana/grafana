@@ -402,13 +402,26 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Helper()
 
 	t.Run(desc, func(t *testing.T) {
-		ctx := web.Context{Req: &http.Request{
+		orgID := int64(1)
+		role := org.RoleAdmin
+		usr := user.SignedInUser{
+			UserID:     1,
+			Name:       "Signed In User",
+			Login:      "signed_in_user",
+			Email:      "signed.in.user@test.com",
+			OrgID:      orgID,
+			OrgRole:    role,
+			LastSeenAt: time.Now(),
+		}
+		req := &http.Request{
 			Header: http.Header{
 				"Content-Type": []string{"application/json"},
 			},
-		}}
-		orgID := int64(1)
-		role := org.RoleAdmin
+		}
+		ctx := appcontext.WithUser(context.Background(), &usr)
+		req = req.WithContext(ctx)
+		webCtx := web.Context{Req: req}
+
 		sqlStore := db.InitTestDB(t)
 		dashboardStore := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		features := featuremgmt.WithFeatures()
@@ -428,16 +441,6 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardService, dashboardStore, nil, features, folderPermissions, nil),
 		}
 
-		usr := user.SignedInUser{
-			UserID:     1,
-			Name:       "Signed In User",
-			Login:      "signed_in_user",
-			Email:      "signed.in.user@test.com",
-			OrgID:      orgID,
-			OrgRole:    role,
-			LastSeenAt: time.Now(),
-		}
-
 		// deliberate difference between signed in user and user in db to make it crystal clear
 		// what to expect in the tests
 		// In the real world these are identical
@@ -452,11 +455,11 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 
 		sc := scenarioContext{
 			user:     usr,
-			ctx:      &ctx,
+			ctx:      &webCtx,
 			service:  &service,
 			sqlStore: sqlStore,
 			reqContext: &models.ReqContext{
-				Context:      &ctx,
+				Context:      &webCtx,
 				SignedInUser: &usr,
 			},
 		}
