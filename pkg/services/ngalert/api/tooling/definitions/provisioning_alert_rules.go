@@ -15,6 +15,14 @@ import (
 //     Responses:
 //       200: ProvisionedAlertRules
 
+// swagger:route GET /api/v1/provisioning/alert-rules/export provisioning stable RouteGetAlertRulesExport
+//
+// Get all alert rules groups in provisioning file format.
+//
+//     Responses:
+//       200: AlertRuleFileExport
+//       404: description: Not found.
+
 // swagger:route GET /api/v1/provisioning/alert-rules/{UID} provisioning stable RouteGetAlertRule
 //
 // Get a specific alert rule by UID.
@@ -229,7 +237,7 @@ type AlertRuleGroupMetadata struct {
 	Interval int64 `json:"interval"`
 }
 
-// swagger:parameters RouteGetAlertRuleGroupExport RouteGetAlertRuleExport
+// swagger:parameters RouteGetAlertRuleGroupExport RouteGetAlertRuleExport RouteGetAlertRulesExport
 type ExportQueryParams struct {
 	// Whether to initiate a download of the file or not.
 	// in: query
@@ -244,6 +252,12 @@ type AlertRuleGroup struct {
 	FolderUID string                 `json:"folderUid"`
 	Interval  int64                  `json:"interval"`
 	Rules     []ProvisionedAlertRule `json:"rules"`
+}
+
+// AlertRuleFileExport is the provisioned export of multiple models.AlertRuleGroup.
+// swagger:model
+type AlertRuleFileExport struct {
+	Groups []AlertRuleGroupExport `json:"groups" yaml:"groups"`
 }
 
 // AlertRuleGroupExport is the provisioned export of models.AlertRuleGroup.

@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	model "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -20,6 +21,7 @@ type AlertRuleService struct {
 	baseIntervalSeconds    int64
 	ruleStore              RuleStore
 	provenanceStore        ProvisioningStore
+	dashboardService       dashboards.DashboardService
 	quotas                 QuotaChecker
 	xact                   TransactionManager
 	log                    log.Logger
@@ -27,6 +29,7 @@ type AlertRuleService struct {
 
 func NewAlertRuleService(ruleStore RuleStore,
 	provenanceStore ProvisioningStore,
+	dashboardService dashboards.DashboardService,
 	quotas QuotaChecker,
 	xact TransactionManager,
 	defaultIntervalSeconds int64,
@@ -37,6 +40,7 @@ func NewAlertRuleService(ruleStore RuleStore,
 		baseIntervalSeconds:    baseIntervalSeconds,
 		ruleStore:              ruleStore,
 		provenanceStore:        provenanceStore,
+		dashboardService:       dashboardService,
 		quotas:                 quotas,
 		xact:                   xact,
 		log:                    log,
@@ -368,14 +372,115 @@ func (service *AlertRuleService) deleteRules(ctx context.Context, orgID int64, t
 	return nil
 }
 
-// GetFolderByUID retrieves a model.Folder for a given org and folder uid.
-func (service *AlertRuleService) GetFolderByUID(ctx context.Context, namespaceUID string, orgID int64, user *user.SignedInUser) (*model.Folder, error) {
-	folder, err := service.ruleStore.GetNamespaceByUID(ctx, namespaceUID, orgID, user)
+type AlertRuleGroupWithTitle struct {
+	AlertRuleGroup models.AlertRuleGroup
+	FolderTitle    string
+}
+
+// GetRuleGroupWithTitle returns the alert rule group with folder title.
+func (service *AlertRuleService) GetRuleGroupWithTitle(ctx context.Context, orgID int64, namespaceUID, group string) (AlertRuleGroupWithTitle, error) {
+	q := models.ListAlertRulesQuery{
+		OrgID:         orgID,
+		NamespaceUIDs: []string{namespaceUID},
+		RuleGroup:     group,
+	}
+	if err := service.ruleStore.ListAlertRules(ctx, &q); err != nil {
+		return AlertRuleGroupWithTitle{}, err
+	}
+	if len(q.Result) == 0 {
+		return AlertRuleGroupWithTitle{}, store.ErrAlertRuleGroupNotFound
+	}
+
+	dq := model.GetDashboardQuery{
+		OrgId: orgID,
+		Uid:   namespaceUID,
+	}
+	err := service.dashboardService.GetDashboard(ctx, &dq)
 	if err != nil {
+		return AlertRuleGroupWithTitle{}, err
+	}
+
+	res := AlertRuleGroupWithTitle{
+		AlertRuleGroup: models.AlertRuleGroup{
+			Title:     q.Result[0].RuleGroup,
+			FolderUID: q.Result[0].NamespaceUID,
+			Interval:  q.Result[0].IntervalSeconds,
+			Rules:     []models.AlertRule{},
+		},
+		FolderTitle: dq.Result.Title,
+	}
+	for _, r := range q.Result {
+		if r != nil {
+			res.AlertRuleGroup.Rules = append(res.AlertRuleGroup.Rules, *r)
+		}
+	}
+	return res, nil
+}
+
+// GetAlertGroupsWithTitle returns all groups with folder title that have at least one alert.
+func (service *AlertRuleService) GetAlertGroupsWithTitle(ctx context.Context, orgID int64) ([]AlertRuleGroupWithTitle, error) {
+	q := models.ListAlertRulesQuery{
+		OrgID: orgID,
+	}
+
+	if err := service.ruleStore.ListAlertRules(ctx, &q); err != nil {
 		return nil, err
 	}
 
-	return folder, nil
+	groups := make(map[models.AlertRuleGroupKey][]models.AlertRule)
+	namespaces := make(map[string][]*models.AlertRuleGroupKey)
+	for _, r := range q.Result {
+		groupKey := r.GetGroupKey()
+		group := groups[groupKey]
+		group = append(group, *r)
+		groups[groupKey] = group
+
+		namespaces[r.NamespaceUID] = append(namespaces[r.NamespaceUID], &groupKey)
+	}
+
+	dq := model.GetDashboardsQuery{
+		DashboardUIds: nil,
+	}
+	for uid, _ := range namespaces {
+		dq.DashboardUIds = append(dq.DashboardUIds, uid)
+	}
+
+	// We need folder titles for the provisioning file format. We do it this way instead of using GetUserVisibleNamespaces to avoid folder:read permissions that should not apply to those with alert.provisioning:read.
+	err := service.dashboardService.GetDashboards(ctx, &dq)
+	if err != nil {
+		return nil, err
+	}
+	folderUidToTitle := make(map[string]string)
+	for _, dash := range dq.Result {
+		folderUidToTitle[dash.Uid] = dash.Title
+	}
+
+	result := make([]AlertRuleGroupWithTitle, 0)
+	for groupKey, rules := range groups {
+		title, ok := folderUidToTitle[groupKey.NamespaceUID]
+		if !ok {
+			return nil, fmt.Errorf("cannot find title for folder with uid '%s'", groupKey.NamespaceUID)
+		}
+		result = append(result, AlertRuleGroupWithTitle{
+			AlertRuleGroup: models.AlertRuleGroup{
+				Title:     rules[0].RuleGroup,
+				FolderUID: rules[0].NamespaceUID,
+				Interval:  rules[0].IntervalSeconds,
+				Rules:     rules,
+			},
+			FolderTitle: title,
+		})
+	}
+
+	// Return results in a stable manner.
+	sort.SliceStable(result, func(i, j int) bool {
+		if result[i].AlertRuleGroup.FolderUID == result[j].AlertRuleGroup.FolderUID {
+			return result[i].AlertRuleGroup.Title < result[j].AlertRuleGroup.Title
+		}
+		return result[i].AlertRuleGroup.FolderUID < result[j].AlertRuleGroup.FolderUID
+	})
+
+	return result, nil
 }
 
 // syncRuleGroupFields synchronizes calculated fields across multiple rules in a group.

@@ -14,7 +14,6 @@ import (
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -63,7 +62,8 @@ type AlertRuleService interface {
 	DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance alerting_models.Provenance) error
 	GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroup, error)
 	ReplaceRuleGroup(ctx context.Context, orgID int64, group alerting_models.AlertRuleGroup, userID int64, provenance alerting_models.Provenance) error
-	GetFolderByUID(ctx context.Context, namespaceUID string, orgID int64, user *user.SignedInUser) (*models.Folder, error)
+	GetRuleGroupWithTitle(ctx context.Context, orgID int64, folder, group string) (provisioning.AlertRuleGroupWithTitle, error)
+	GetAlertGroupsWithTitle(ctx context.Context, orgID int64) ([]provisioning.AlertRuleGroupWithTitle, error)
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) response.Response {
@@ -338,9 +338,47 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *contextmodel.ReqContext, f
 	return response.JSON(http.StatusOK, definitions.NewAlertRuleGroupFromModel(g))
 }
 
+// RouteGetAlertRulesExport retrieves all alert rules in a format compatible with file provisioning.
+func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext) response.Response {
+	groupWithTitles, err := srv.alertRules.GetAlertGroupsWithTitle(c.Req.Context(), c.OrgID)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
+	}
+
+	f := definitions.AlertRuleFileExport{}
+	for _, group := range groupWithTitles {
+		export, err := definitions.NewAlertRuleGroupExport(c.OrgID, group.FolderTitle, group.AlertRuleGroup)
+		if err != nil {
+			return ErrResp(http.StatusInternalServerError, err, "")
+		}
+		f.Groups = append(f.Groups, export)
+	}
+
+	format := "json"
+	acceptHeader := c.Req.Header.Get("Accept")
+	if strings.Contains(acceptHeader, "yaml") && !strings.Contains(acceptHeader, "json") {
+		format = "yaml"
+	}
+
+	download := c.QueryBoolWithDefault("download", false)
+	if download {
+		r := response.JSONDownload
+		if format == "yaml" {
+			r = response.YAMLDownload
+		}
+		return r(http.StatusOK, f, fmt.Sprintf("groups_export.%s", format))
+	}
+
+	r := response.JSON
+	if format == "yaml" {
+		r = response.YAML
+	}
+	return r(http.StatusOK, f)
+}
+
 // RouteGetAlertRuleGroupExport retrieves the given alert rule group in a format compatible with file provisioning.
 func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqContext, folder string, group string) response.Response {
-	g, err := srv.alertRules.GetRuleGroup(c.Req.Context(), c.OrgID, folder, group)
+	g, err := srv.alertRules.GetRuleGroupWithTitle(c.Req.Context(), c.OrgID, folder, group)
 	if err != nil {
 		if errors.Is(err, store.ErrAlertRuleGroupNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -348,12 +386,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqCont
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	f, err := srv.alertRules.GetFolderByUID(c.Req.Context(), folder, c.OrgID, c.SignedInUser)
-	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
-	}
-
-	grp, err := definitions.NewAlertRuleGroupExport(c.OrgID, f.Title, g)
+	grp, err := definitions.NewAlertRuleGroupExport(c.OrgID, g.FolderTitle, g.AlertRuleGroup)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
