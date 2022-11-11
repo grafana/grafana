@@ -95,7 +95,7 @@ export type Situation =
       type: 'AT_ROOT';
     }
   | {
-      type: 'IN_DURATION';
+      type: 'IN_RANGE';
     }
   | {
       type: 'IN_AGGREGATION';
@@ -428,7 +428,7 @@ function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation
 
 function resolveDurations(node: SyntaxNode, text: string, pos: number): Situation {
   return {
-    type: 'IN_DURATION',
+    type: 'IN_RANGE',
   };
 }
 

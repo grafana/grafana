@@ -155,6 +155,15 @@ describe('situation', () => {
     );
   });
 
+  it.each(['count_over_time({job="mysql"}[^])', 'rate({instance="server\\1"}[^])', 'rate({}[^'])(
+    'identifies IN_RANGE autocomplete situations in metric query %s',
+    (query: string) => {
+      assertSituation(query, {
+        type: 'IN_RANGE',
+      });
+    }
+  );
+
   it('handles label values', () => {
     assertSituation('{job=^}', {
       type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',

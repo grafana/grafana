@@ -200,8 +200,8 @@ describe('getCompletions', () => {
     expect(completions).toHaveLength(25);
   });
 
-  test('Returns completion options when the situation is IN_DURATION', async () => {
-    const situation: Situation = { type: 'IN_DURATION' };
+  test('Returns completion options when the situation is IN_RANGE', async () => {
+    const situation: Situation = { type: 'IN_RANGE' };
     const completions = await getCompletions(situation, completionProvider);
 
     expect(completions).toEqual([

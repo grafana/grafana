@@ -254,10 +254,10 @@ async function getLabelValuesForMetricCompletions(
   }));
 }
 
-async function getAfterUnwrapCompletions(labels: Label[], dataProvider: CompletionDataProvider) {
+async function getAfterUnwrapCompletions(labels: Label[], dataProvider: CompletionDataProvider): Promise<Completion[]> {
   const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(labels);
 
-  const labelCompletions = extractedLabelKeys.map((label) => ({
+  const labelCompletions: Completion[] = extractedLabelKeys.map((label) => ({
     type: 'LABEL_NAME',
     label,
     insertText: label,
@@ -276,7 +276,7 @@ export async function getCompletions(
     case 'AT_ROOT':
       const historyCompletions = await getAllHistoryCompletions(dataProvider);
       return [...historyCompletions, ...LOG_COMPLETIONS, ...AGGREGATION_COMPLETIONS, ...FUNCTION_COMPLETIONS];
-    case 'IN_DURATION':
+    case 'IN_RANGE':
       return DURATION_COMPLETIONS;
     case 'IN_GROUPING':
       return getInGroupingCompletions(situation.otherLabels, dataProvider);
