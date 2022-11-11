@@ -135,7 +135,7 @@ export interface DB {
   validateQuery: (query: SQLQuery, range?: TimeRange) => Promise<ValidationResults>;
   dsID: () => number;
   dispose?: (dsID?: string) => void;
-  lookup: (path?: string) => Promise<Array<{ name: string; completion: string }>>;
+  lookup?: (path?: string) => Promise<Array<{ name: string; completion: string }>>;
   getEditorLanguageDefinition: () => LanguageDefinition;
   toRawSql?: (query: SQLQuery) => string;
   functions?: () => string[];

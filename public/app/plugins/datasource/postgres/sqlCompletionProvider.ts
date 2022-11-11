@@ -40,6 +40,6 @@ export async function fetchColumns(db: DB, q: SQLQuery) {
 }
 
 export async function fetchTables(db: DB) {
-  const tables = await db.lookup();
-  return tables;
+  const tables = await db.lookup?.();
+  return tables || [];
 }
