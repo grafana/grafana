@@ -1,7 +1,15 @@
 import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { AbsoluteTimeRange, FieldConfigSource, PanelPlugin, PluginContextProvider, toUtc } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  FieldConfigSource,
+  PanelModel,
+  PanelPlugin,
+  PluginContextProvider,
+  toUtc,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Field, PanelChrome, Input, ErrorBoundaryAlert } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { useFieldOverrides } from 'app/features/panel/components/PanelRenderer';
@@ -16,14 +24,21 @@ export interface VizPanelState extends SceneLayoutChildState {
   pluginId: string;
   options: object;
   fieldConfig: FieldConfigSource;
+  pluginVersion?: string;
   // internal state
-  plugin?: PanelPlugin;
   pluginLoadError?: string;
 }
 
 export class VizPanel extends SceneObjectBase<VizPanelState> {
   public static Component = ScenePanelRenderer;
   public static Editor = VizPanelEditor;
+
+  // Not part of state as this is not serializable
+  private _plugin?: PanelPlugin;
+
+  public getPlugin(): PanelPlugin | undefined {
+    return this._plugin;
+  }
 
   public constructor(state: Partial<VizPanelState>) {
     super({
@@ -52,24 +67,31 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
   }
 
   private pluginLoaded(plugin: PanelPlugin) {
-    const { options, fieldConfig } = this.state;
+    const { options, fieldConfig, title, pluginId } = this.state;
+
+    const version = this.getPluginVersion(plugin);
+    const panel: PanelModel = { title, options, fieldConfig, id: 1, type: pluginId, pluginVersion: version };
 
     if (plugin.onPanelMigration) {
-      // TODO: Add migration
-      // if (version !== this.pluginVersion) {
-      //   this.options = plugin.onPanelMigration(this);
-      //   this.pluginVersion = version;
-      // }
+      if (version !== this.state.pluginVersion) {
+        // These migration handlers also mutate panel.fieldConfig to migrate fieldConfig
+        panel.options = plugin.onPanelMigration(panel);
+      }
     }
 
     const withDefaults = getPanelOptionsWithDefaults({
       plugin,
-      currentOptions: options,
-      currentFieldConfig: fieldConfig,
+      currentOptions: panel.options,
+      currentFieldConfig: panel.fieldConfig,
       isAfterPluginChange: false,
     });
 
-    this.setState({ options: withDefaults.options, fieldConfig: withDefaults.fieldConfig, plugin });
+    this._plugin = plugin;
+    this.setState({ options: withDefaults.options, fieldConfig: withDefaults.fieldConfig, pluginVersion: version });
+  }
+
+  private getPluginVersion(plugin: PanelPlugin): string {
+    return plugin && plugin.meta.info.version ? plugin.meta.info.version : config.buildInfo.version;
   }
 
   public onChangeTimeRange = (timeRange: AbsoluteTimeRange) => {
@@ -94,8 +116,9 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
 }
 
 function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
-  const { title, options, fieldConfig, plugin, pluginId, pluginLoadError } = model.useState();
+  const { title, options, fieldConfig, pluginId, pluginLoadError } = model.useState();
   const { data } = model.getData().useState();
+  const plugin = model.getPlugin();
 
   // Not sure we need to subscribe to this state
   const timeZone = model.getTimeRange().state.timeZone;
