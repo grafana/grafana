@@ -1,6 +1,7 @@
 package pluginutils
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -54,7 +55,7 @@ func ToRegistrations(pluginID, pluginName string, regs []plugins.RoleRegistratio
 }
 
 func roleName(pluginID, roleName string) string {
-	return ac.PluginRolePrefix + pluginID + ":" + strings.Replace(strings.ToLower(roleName), " ", "-", -1)
+	return fmt.Sprintf("%v%v:%v", ac.PluginRolePrefix, pluginID, strings.Replace(strings.ToLower(roleName), " ", "-", -1))
 }
 
 func toPermissions(perms []plugins.Permission) []ac.Permission {
