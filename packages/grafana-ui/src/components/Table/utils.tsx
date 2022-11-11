@@ -34,7 +34,7 @@ import {
   TableFooterCalc,
 } from './types';
 
-const EXPANDER_WIDTH = 20;
+export const EXPANDER_WIDTH = 50;
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
@@ -92,6 +92,10 @@ export function getColumns(
     : [];
   let fieldCountWithoutWidth = 0;
 
+  if (expander) {
+    availableWidth -= EXPANDER_WIDTH;
+  }
+
   for (const [fieldIndex, field] of data.fields.entries()) {
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
 
@@ -103,10 +107,6 @@ export function getColumns(
       availableWidth -= fieldTableOptions.width;
     } else {
       fieldCountWithoutWidth++;
-    }
-
-    if (expander) {
-      availableWidth -= EXPANDER_WIDTH;
     }
 
     const selectSortType = (type: FieldType) => {

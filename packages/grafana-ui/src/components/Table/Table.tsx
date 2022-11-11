@@ -31,7 +31,14 @@ import {
   TableFooterCalc,
   GrafanaTableColumn,
 } from './types';
-import { getColumns, sortCaseInsensitive, sortNumber, getFooterItems, createFooterCalculationValues } from './utils';
+import {
+  getColumns,
+  sortCaseInsensitive,
+  sortNumber,
+  getFooterItems,
+  createFooterCalculationValues,
+  EXPANDER_WIDTH,
+} from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
 
@@ -300,17 +307,8 @@ export const Table = memo((props: Props) => {
     }
   });
 
-  const RenderRow = React.useCallback(
-    ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
-      let row = rows[rowIndex];
-      if (enablePagination) {
-        row = page[rowIndex];
-      }
-      prepareRow(row);
-
-      let tableProps = row.getRowProps({ style });
-
-      let subTable = null;
+  const renderSubTable = React.useCallback(
+    (rowIndex: number) => {
       if (expandedIndexes.has(rowIndex)) {
         const rowSubData = subData?.find((frame) => frame.meta?.custom?.parentRowIndex === rowIndex);
         if (rowSubData) {
@@ -321,16 +319,34 @@ export const Table = memo((props: Props) => {
             position: 'absolute',
             bottom: 0,
           };
-          subTable = (
+          return (
             <div style={subTableStyle}>
-              <Table data={rowSubData} width={width - 80} height={tableStyles.rowHeight * (rowSubData.length + 1)} />
+              <Table
+                data={rowSubData}
+                width={width - EXPANDER_WIDTH}
+                height={tableStyles.rowHeight * (rowSubData.length + 1)}
+              />
             </div>
           );
         }
       }
+      return null;
+    },
+    [expandedIndexes, subData, tableStyles.rowHeight, theme.colors, width]
+  );
+
+  const RenderRow = React.useCallback(
+    ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
+      let row = rows[rowIndex];
+      if (enablePagination) {
+        row = page[rowIndex];
+      }
+      prepareRow(row);
 
       return (
-        <div {...tableProps} className={tableStyles.row}>
+        <div {...row.getRowProps({ style })} className={tableStyles.row}>
+          {/*add the subtable to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
+          {renderSubTable(rowIndex)}
           {row.cells.map((cell: Cell, index: number) => (
             <TableCell
               key={index}
@@ -341,11 +357,10 @@ export const Table = memo((props: Props) => {
               columnCount={row.cells.length}
             />
           ))}
-          {subTable}
         </div>
       );
     },
-    [onCellFilterAdded, page, enablePagination, prepareRow, rows, tableStyles, subData, expandedIndexes, theme, width]
+    [onCellFilterAdded, page, enablePagination, prepareRow, rows, tableStyles, renderSubTable]
   );
 
   const onNavigate = useCallback(
