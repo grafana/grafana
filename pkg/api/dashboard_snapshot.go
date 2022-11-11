@@ -130,11 +130,6 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 
 		metrics.MApiDashboardSnapshotExternal.Inc()
 	} else {
-		if cmd.Dashboard.Get("id").MustInt64() == 0 {
-			c.JSON(http.StatusBadRequest, "Creating a local snapshot requires a dashboard")
-			return nil
-		}
-
 		if cmd.Key == "" {
 			var err error
 			cmd.Key, err = util.GetRandomString(32)
