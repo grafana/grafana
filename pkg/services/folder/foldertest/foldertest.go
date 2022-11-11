@@ -14,6 +14,10 @@ type FakeService struct {
 	ExpectedError   error
 }
 
+func NewFakeService() *FakeService {
+	return &FakeService{}
+}
+
 var _ folder.Service = (*FakeService)(nil)
 
 func (s *FakeService) GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
