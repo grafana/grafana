@@ -256,8 +256,8 @@ const LabelsField: FC<Props> = ({ className, dataSourceName }) => {
           <Tooltip
             content={
               <div>
-                Labels shown as suggestions in the dropdowns come from previously entered labels in other alert rules.
-                They do not represent the full set of labels for the alert.
+                The dropdown only displays labels that you have previously used for alerts. Select a label from the
+                dropdown or type in a new one.
               </div>
             }
           >
