@@ -133,13 +133,11 @@ func (wn *WebexNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	// Augment our Alert data with ImageURLs if available.
 	_ = withStoredImages(ctx, wn.log, wn.images, func(index int, image ngmodels.Image) error {
-		if len(msg.Files) == 1 {
-			return ErrImagesDone
-		}
-
+		// Cisco Webex only supports a single image per request: https://developer.webex.com/docs/basics#message-attachments
 		if image.HasURL() {
 			data.Alerts[index].ImageURL = image.URL
 			msg.Files = append(msg.Files, image.URL)
+			return ErrImagesDone
 		}
 
 		return nil
