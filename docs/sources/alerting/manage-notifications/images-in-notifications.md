@@ -61,7 +61,7 @@ Restart Grafana for the changes to take affect.
 Images in notifications are supported in the following notifiers and additional support will be added in the future:
 
 | Name                    | Upload images from disk | Include images from URL |
-| ----------------------- | ----------------------- | ----------------------- |
+|-------------------------| ----------------------- |-------------------------|
 | DingDing                | No                      | No                      |
 | Discord                 | Yes                     | Yes                     |
 | Email                   | Yes                     | Yes                     |
@@ -79,6 +79,7 @@ Images in notifications are supported in the following notifiers and additional 
 | Threema                 | No                      | No                      |
 | VictorOps               | No                      | No                      |
 | Webhook                 | No                      | Yes                     |
+| Cisco Webex Teams       | No                      | Yes                     |
 
 Include images from URL refers to using the external image store.
 
