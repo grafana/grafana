@@ -221,7 +221,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			if err != nil {
 				return err
 			}
-
+			q.QueryType = metricQueryType
 			gq := grafanaQuery{
 				TimeSeriesList: &mq,
 			}
@@ -239,6 +239,9 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 		// Migrate type to queryType, which is only used for annotations
 		if rawQuery["type"] != nil && rawQuery["type"].(string) == "annotationQuery" {
 			q.QueryType = annotationQueryType
+		}
+		if rawQuery["queryType"] != nil {
+			q.QueryType = rawQuery["queryType"].(string)
 		}
 
 		// Metric query was divided between timeSeriesList and timeSeriesQuery API calls
@@ -260,6 +263,9 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			b, err := json.Marshal(rawQuery)
 			if err != nil {
 				return err
+			}
+			if q.QueryType == "" {
+				q.QueryType = metricQueryType
 			}
 			q.JSON = b
 		}
@@ -284,6 +290,9 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			b, err := json.Marshal(rawQuery)
 			if err != nil {
 				return err
+			}
+			if q.QueryType == "" {
+				q.QueryType = sloQueryType
 			}
 			q.JSON = b
 		}
