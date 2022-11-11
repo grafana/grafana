@@ -78,6 +78,7 @@ Images in notifications are supported in the following notifiers and additional 
 | Threema                 | No                      | No                      |
 | VictorOps               | No                      | No                      |
 | Webhook                 | No                      | Yes                     |
+| Cisco Webex Teams       | No                      | Yes                     |
 
 Include images from URL refers to using the external image store.
 
