@@ -14,22 +14,25 @@
 
 jest.mock('./scroll-page');
 
-import ScrollManager from './ScrollManager';
+import traceGenerator from '../src/demo/trace-generators';
+
+import ScrollManager, { Accessors } from './ScrollManager';
 import { scrollBy, scrollTo } from './scroll-page';
+import { Trace, TraceSpanData } from './types/trace';
 
 const SPAN_HEIGHT = 2;
 
-function getTrace() {
-  const spans = [];
-  const trace = {
-    spans,
-    duration: 2000,
-    startTime: 1000,
-  };
-  for (let i = 0; i < 10; i++) {
-    spans.push({ duration: 1, startTime: 1000, spanID: i + 1 });
-  }
-  return trace;
+function getTrace(): Trace {
+  const generatedTrace = traceGenerator.trace({ numberOfSpans: 10 });
+  generatedTrace.duration = 2000;
+  generatedTrace.startTime = 1000;
+
+  generatedTrace.spans.forEach((span: TraceSpanData, index: number) => {
+    span.duration = 1;
+    span.startTime = 1000;
+    span.spanID = (index + 1).toString();
+  });
+  return generatedTrace;
 }
 
 function getAccessors() {
@@ -47,13 +50,13 @@ function getAccessors() {
 }
 
 describe('ScrollManager', () => {
-  let trace;
-  let accessors;
-  let manager;
+  let trace: Trace;
+  let accessors: Accessors;
+  let manager: ScrollManager;
 
   beforeEach(() => {
-    scrollBy.mockReset();
-    scrollTo.mockReset();
+    (scrollBy as jest.Mock).mockReset();
+    (scrollTo as jest.Mock).mockReset();
     trace = getTrace();
     accessors = getAccessors();
     manager = new ScrollManager(trace, { scrollBy, scrollTo });
@@ -61,9 +64,8 @@ describe('ScrollManager', () => {
   });
 
   it('saves the accessors', () => {
-    const n = Math.random();
-    manager.setAccessors(n);
-    expect(manager._accessors).toBe(n);
+    manager.setAccessors(accessors);
+    expect(manager._accessors).toBe(accessors);
   });
 
   describe('_scrollPast()', () => {
@@ -77,10 +79,10 @@ describe('ScrollManager', () => {
       const oldWarn = console.warn;
       // eslint-disable-next-line no-console
       console.warn = () => {};
-      manager._scrollPast(null, null);
-      expect(accessors.getRowPosition.mock.calls.length).toBe(1);
-      expect(accessors.getViewHeight.mock.calls.length).toBe(0);
-      expect(scrollTo.mock.calls.length).toBe(0);
+      manager._scrollPast(-2, 1);
+      expect((accessors.getRowPosition as jest.Mock).mock.calls.length).toBe(1);
+      expect((accessors.getViewHeight as jest.Mock).mock.calls.length).toBe(0);
+      expect((scrollTo as jest.Mock).mock.calls.length).toBe(0);
       // eslint-disable-next-line no-console
       console.warn = oldWarn;
     });
@@ -88,26 +90,26 @@ describe('ScrollManager', () => {
     it('scrolls up with direction is `-1`', () => {
       const y = 10;
       const expectTo = y - 0.5 * accessors.getViewHeight();
-      accessors.getRowPosition.mockReturnValue({ y, height: SPAN_HEIGHT });
+      (accessors.getRowPosition as jest.Mock).mockReturnValue({ y, height: SPAN_HEIGHT });
       manager._scrollPast(NaN, -1);
-      expect(scrollTo.mock.calls).toEqual([[expectTo]]);
+      expect((scrollTo as jest.Mock).mock.calls).toEqual([[expectTo]]);
     });
 
     it('scrolls down with direction `1`', () => {
       const y = 10;
       const vh = accessors.getViewHeight();
       const expectTo = y + SPAN_HEIGHT - 0.5 * vh;
-      accessors.getRowPosition.mockReturnValue({ y, height: SPAN_HEIGHT });
+      (accessors.getRowPosition as jest.Mock).mockReturnValue({ y, height: SPAN_HEIGHT });
       manager._scrollPast(NaN, 1);
-      expect(scrollTo.mock.calls).toEqual([[expectTo]]);
+      expect((scrollTo as jest.Mock).mock.calls).toEqual([[expectTo]]);
     });
   });
 
   describe('_scrollToVisibleSpan()', () => {
-    function getRefs(spanID) {
+    function getRefs(spanID: string) {
       return [{ refType: 'CHILD_OF', spanID }];
     }
-    let scrollPastMock;
+    let scrollPastMock: jest.Mock;
 
     beforeEach(() => {
       scrollPastMock = jest.fn();
@@ -119,13 +121,13 @@ describe('ScrollManager', () => {
     });
     it('exits if the trace is not set', () => {
       manager.setTrace(null);
-      manager._scrollToVisibleSpan();
+      manager._scrollToVisibleSpan(1);
       expect(scrollPastMock.mock.calls.length).toBe(0);
     });
 
     it('does nothing if already at the boundary', () => {
-      accessors.getTopRowIndexVisible.mockReturnValue(0);
-      accessors.getBottomRowIndexVisible.mockReturnValue(trace.spans.length - 1);
+      (accessors.getTopRowIndexVisible as jest.Mock).mockReturnValue(0);
+      (accessors.getBottomRowIndexVisible as jest.Mock).mockReturnValue(trace.spans.length - 1);
       manager._scrollToVisibleSpan(-1);
       expect(scrollPastMock.mock.calls.length).toBe(0);
       manager._scrollToVisibleSpan(1);
@@ -133,8 +135,8 @@ describe('ScrollManager', () => {
     });
 
     it('centers the current top or bottom span', () => {
-      accessors.getTopRowIndexVisible.mockReturnValue(5);
-      accessors.getBottomRowIndexVisible.mockReturnValue(5);
+      (accessors.getTopRowIndexVisible as jest.Mock).mockReturnValue(5);
+      (accessors.getBottomRowIndexVisible as jest.Mock).mockReturnValue(5);
       manager._scrollToVisibleSpan(-1);
       expect(scrollPastMock).lastCalledWith(5, -1);
       manager._scrollToVisibleSpan(1);
@@ -144,8 +146,8 @@ describe('ScrollManager', () => {
     it('skips spans that are out of view', () => {
       trace.spans[4].startTime = trace.startTime + trace.duration * 0.5;
       accessors.getViewRange = () => [0.4, 0.6];
-      accessors.getTopRowIndexVisible.mockReturnValue(trace.spans.length - 1);
-      accessors.getBottomRowIndexVisible.mockReturnValue(0);
+      (accessors.getTopRowIndexVisible as jest.Mock).mockReturnValue(trace.spans.length - 1);
+      (accessors.getBottomRowIndexVisible as jest.Mock).mockReturnValue(0);
       manager._scrollToVisibleSpan(1);
       expect(scrollPastMock).lastCalledWith(4, 1);
       manager._scrollToVisibleSpan(-1);
@@ -153,8 +155,8 @@ describe('ScrollManager', () => {
     });
 
     it('skips spans that do not match the text search', () => {
-      accessors.getTopRowIndexVisible.mockReturnValue(trace.spans.length - 1);
-      accessors.getBottomRowIndexVisible.mockReturnValue(0);
+      (accessors.getTopRowIndexVisible as jest.Mock).mockReturnValue(trace.spans.length - 1);
+      (accessors.getBottomRowIndexVisible as jest.Mock).mockReturnValue(0);
       accessors.getSearchedSpanIDs = () => new Set([trace.spans[4].spanID]);
       manager._scrollToVisibleSpan(1);
       expect(scrollPastMock).lastCalledWith(4, 1);
@@ -164,8 +166,8 @@ describe('ScrollManager', () => {
 
     it('scrolls to boundary when scrolling away from closest spanID in findMatches', () => {
       const closetFindMatchesSpanID = 4;
-      accessors.getTopRowIndexVisible.mockReturnValue(closetFindMatchesSpanID - 1);
-      accessors.getBottomRowIndexVisible.mockReturnValue(closetFindMatchesSpanID + 1);
+      (accessors.getTopRowIndexVisible as jest.Mock).mockReturnValue(closetFindMatchesSpanID - 1);
+      (accessors.getBottomRowIndexVisible as jest.Mock).mockReturnValue(closetFindMatchesSpanID + 1);
       accessors.getSearchedSpanIDs = () => new Set([trace.spans[closetFindMatchesSpanID].spanID]);
 
       manager._scrollToVisibleSpan(1);
@@ -177,9 +179,10 @@ describe('ScrollManager', () => {
 
     it('scrolls to last visible row when boundary is hidden', () => {
       const parentOfLastRowWithHiddenChildrenIndex = trace.spans.length - 2;
-      accessors.getBottomRowIndexVisible.mockReturnValue(0);
+      (accessors.getBottomRowIndexVisible as jest.Mock).mockReturnValue(0);
       accessors.getCollapsedChildren = () => new Set([trace.spans[parentOfLastRowWithHiddenChildrenIndex].spanID]);
       accessors.getSearchedSpanIDs = () => new Set([trace.spans[0].spanID]);
+      console.log(trace.spans[trace.spans.length - 1].references);
       trace.spans[trace.spans.length - 1].references = getRefs(
         trace.spans[parentOfLastRowWithHiddenChildrenIndex].spanID
       );
@@ -200,28 +203,19 @@ describe('ScrollManager', () => {
               parentID = spans[i].spanID;
               break;
             default:
+              parentID = spans[i].spanID;
               spans[i].references = getRefs(parentID);
           }
         }
         // set which spans are "in-view" and which have collapsed children
-        accessors.getTopRowIndexVisible.mockReturnValue(trace.spans.length - 1);
-        accessors.getBottomRowIndexVisible.mockReturnValue(0);
-        accessors.getCollapsedChildren.mockReturnValue(new Set([spans[0].spanID, spans[4].spanID]));
+        (accessors.getTopRowIndexVisible as jest.Mock).mockReturnValue(trace.spans.length - 1);
+        (accessors.getBottomRowIndexVisible as jest.Mock).mockReturnValue(0);
+        (accessors.getCollapsedChildren as jest.Mock).mockReturnValue(new Set([spans[0].spanID, spans[4].spanID]));
       });
 
       it('skips spans that are hidden because their parent is collapsed', () => {
         manager.scrollToNextVisibleSpan();
         expect(scrollPastMock).lastCalledWith(4, 1);
-        manager.scrollToPrevVisibleSpan();
-        expect(scrollPastMock).lastCalledWith(4, -1);
-      });
-
-      it('ignores references with unknown types', () => {
-        // modify spans[2] so that it has an unknown refType
-        const spans = trace.spans;
-        spans[2].references = [{ refType: 'OTHER' }];
-        manager.scrollToNextVisibleSpan();
-        expect(scrollPastMock).lastCalledWith(2, 1);
         manager.scrollToPrevVisibleSpan();
         expect(scrollPastMock).lastCalledWith(4, -1);
       });
@@ -261,12 +255,12 @@ describe('ScrollManager', () => {
       manager._accessors = null;
       manager.scrollPageDown();
       manager.scrollPageUp();
-      expect(scrollBy.mock.calls.length).toBe(0);
+      expect((scrollBy as jest.Mock).mock.calls.length).toBe(0);
       manager._accessors = accessors;
       manager._scroller = null;
       manager.scrollPageDown();
       manager.scrollPageUp();
-      expect(scrollBy.mock.calls.length).toBe(0);
+      expect((scrollBy as jest.Mock).mock.calls.length).toBe(0);
     });
   });
 

@@ -26,13 +26,13 @@ import { TraceSpan, TraceSpanReference, Trace } from './types/trace';
  * as-needed basis.
  */
 export type Accessors = {
-  getViewRange: () => [number, number];
+  getViewRange: () => [number, number] | number[];
   getSearchedSpanIDs: () => Set<string> | TNil;
   getCollapsedChildren: () => Set<string> | TNil;
   getViewHeight: () => number;
   getBottomRowIndexVisible: () => number;
   getTopRowIndexVisible: () => number;
-  getRowPosition: (rowIndex: number) => { height: number; y: number };
+  getRowPosition: (rowIndex: number | TNil) => { height: number; y: number };
   mapRowIndexToSpanIndex: (rowIndex: number) => number;
   mapSpanIndexToRowIndex: (spanIndex: number) => number;
 };
@@ -87,7 +87,7 @@ function isSpanHidden(span: TraceSpan, childrenAreHidden: Set<string>, spansMap:
  */
 export default class ScrollManager {
   _trace: Trace | TNil;
-  _scroller: Scroller;
+  _scroller: Scroller | TNil;
   _accessors: Accessors | TNil;
 
   constructor(trace: Trace | TNil, scroller: Scroller) {
@@ -96,7 +96,7 @@ export default class ScrollManager {
     this._accessors = undefined;
   }
 
-  _scrollPast(rowIndex: number, direction: 1 | -1) {
+  _scrollPast(rowIndex: number | TNil, direction: 1 | -1) {
     const xrs = this._accessors;
     /* istanbul ignore next */
     if (!xrs) {
@@ -117,7 +117,7 @@ export default class ScrollManager {
       y -= vh;
     }
     y += direction * 0.5 * vh;
-    this._scroller.scrollTo(y);
+    this._scroller?.scrollTo(y);
   }
 
   _scrollToVisibleSpan(direction: 1 | -1, startRow?: number) {
@@ -218,7 +218,7 @@ export default class ScrollManager {
    * `setAccessors` is bound in the ctor, so it can be passed as a prop to
    * children components.
    */
-  setAccessors = (accessors: Accessors) => {
+  setAccessors = (accessors: Accessors | TNil) => {
     this._accessors = accessors;
   };
 
