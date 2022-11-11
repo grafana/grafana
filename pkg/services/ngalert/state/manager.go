@@ -188,6 +188,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	for _, s := range states {
 		nextStates = append(nextStates, s.State)
 	}
+	// TODO refactor further. Do not filter because it will be filtered downstream
 	for _, s := range staleStates {
 		if s.PreviousState == eval.Alerting {
 			nextStates = append(nextStates, s.State)
@@ -326,6 +327,8 @@ func (st *Manager) logStateTransitions(ctx context.Context, alertRule *ngModels.
 			changedStates = append(changedStates, s)
 		}
 	}
+
+	// TODO refactor further. Let historian decide what to log. Current logic removes states `Normal (reason-X) -> Normal (reason-Y)`
 	for _, t := range staleStates {
 		if t.PreviousState == eval.Alerting {
 			changedStates = append(changedStates, t)
