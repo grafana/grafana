@@ -166,7 +166,7 @@ seqs: [
 					permissions: [...#Permission]
 				}
 
-				// Permission describes an RBAC permission on the plugin. A permission has an action and an option
+				// Permission describes an RBAC permission on the plugin. A permission has an action and an optional
 				// scope.
 				// Example: action: 'test-app.schedules:read', scope: 'test-app.schedules:*'
 				#Permission: {
