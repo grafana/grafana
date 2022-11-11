@@ -36,7 +36,7 @@ export const getSpanParentId = createSelector(
 );
 
 export const getSpanProcess = (span: TraceSpan | TraceSpanData) => {
-  if ('process' in span) {
+  if ('process' in span && span.process) {
     return span.process;
   } else {
     throw new Error(
