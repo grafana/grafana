@@ -132,15 +132,18 @@ func (wn *WebexNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	// Augment our Alert data with ImageURLs if available.
-	_ = withStoredImages(ctx, wn.log, wn.images,
-		func(index int, image ngmodels.Image) error {
-			if len(image.URL) != 0 {
-				data.Alerts[index].ImageURL = image.URL
-				msg.Files = append(msg.Files, image.URL)
-			}
-			return nil
-		},
-		as...)
+	_ = withStoredImages(ctx, wn.log, wn.images, func(index int, image ngmodels.Image) error {
+		if len(msg.Files) == 1 {
+			return ErrImagesDone
+		}
+
+		if image.HasURL() {
+			data.Alerts[index].ImageURL = image.URL
+			msg.Files = append(msg.Files, image.URL)
+		}
+
+		return nil
+	}, as...)
 
 	body, err := json.Marshal(msg)
 	if err != nil {
