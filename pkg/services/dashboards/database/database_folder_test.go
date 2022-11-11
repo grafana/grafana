@@ -481,7 +481,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			t.Run("GetFolderByTitle should find the folder", func(t *testing.T) {
 				result, err := dashboardStore.GetFolderByTitle(context.Background(), orgId, title)
 				require.NoError(t, err)
-				require.Equal(t, folder1.Id, result.Id)
+				require.Equal(t, folder1.Id, result.ID)
 			})
 		})
 
@@ -494,7 +494,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			t.Run("should return folder by UID", func(t *testing.T) {
 				d, err := dashboardStore.GetFolderByUID(context.Background(), orgId, folder.Uid)
-				require.Equal(t, folder.Id, d.Id)
+				require.Equal(t, folder.Id, d.ID)
 				require.NoError(t, err)
 			})
 			t.Run("should not find dashboard", func(t *testing.T) {
@@ -518,7 +518,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			t.Run("should return folder by ID", func(t *testing.T) {
 				d, err := dashboardStore.GetFolderByID(context.Background(), orgId, folder.Id)
-				require.Equal(t, folder.Id, d.Id)
+				require.Equal(t, folder.Id, d.ID)
 				require.NoError(t, err)
 			})
 			t.Run("should not find dashboard", func(t *testing.T) {

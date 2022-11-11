@@ -85,17 +85,20 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 
 	// here we need to get FolderId from FolderUID if it present in the request, if both exist, FolderUID would overwrite FolderID
 	if req.FolderUid != "" {
-		folder, err := s.folderService.GetFolderByUID(ctx, req.User, req.User.OrgID, req.FolderUid)
+		folder, err := s.folderService.Get(ctx, &folder.GetFolderQuery{
+			OrgID: req.User.OrgID,
+			UID:   &req.FolderUid,
+		})
 		if err != nil {
 			return nil, err
 		}
-		req.FolderId = folder.Id
+		req.FolderId = folder.ID
 	} else {
-		folder, err := s.folderService.GetFolderByID(ctx, req.User, req.FolderId, req.User.OrgID)
+		folder, err := s.folderService.Get(ctx, &folder.GetFolderQuery{ID: &req.FolderId, OrgID: req.User.OrgID})
 		if err != nil {
 			return nil, err
 		}
-		req.FolderUid = folder.Uid
+		req.FolderUid = folder.UID
 	}
 
 	saveCmd := models.SaveDashboardCommand{
