@@ -787,9 +787,14 @@ describe('ElasticResponse', () => {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return table with byte and count', () => {
-      expect(result.data[0].rows.length).toBe(3);
-      expect(result.data[0].columns).toEqual([{ text: 'bytes', filterable: true }, { text: 'Count' }]);
+    it('should return dataframe with byte and count', () => {
+      expect(result.data[0].length).toBe(3);
+      const { fields } = result.data[0];
+      expect(fields.length).toBe(2);
+      expect(fields[0].name).toBe('bytes');
+      expect(fields[0].config).toStrictEqual({ filterable: true });
+      expect(fields[1].name).toBe('Count');
+      expect(fields[1].config).toStrictEqual({});
     });
   });
 
@@ -954,16 +959,17 @@ describe('ElasticResponse', () => {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return table', () => {
+    it('should return dataframe', () => {
       expect(result.data.length).toBe(1);
-      expect(result.data[0].type).toBe('table');
-      expect(result.data[0].rows.length).toBe(2);
-      expect(result.data[0].rows[0][0]).toBe('server-1');
-      expect(result.data[0].rows[0][1]).toBe(1000);
-      expect(result.data[0].rows[0][2]).toBe(369);
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].fields.length).toBe(3);
+      const field1 = result.data[0].fields[0];
+      const field2 = result.data[0].fields[1];
+      const field3 = result.data[0].fields[2];
 
-      expect(result.data[0].rows[1][0]).toBe('server-2');
-      expect(result.data[0].rows[1][1]).toBe(2000);
+      expect(field1.values.toArray()).toStrictEqual(['server-1', 'server-2']);
+      expect(field2.values.toArray()).toStrictEqual([1000, 2000]);
+      expect(field3.values.toArray()).toStrictEqual([369, 200]);
     });
   });
 
@@ -1006,19 +1012,19 @@ describe('ElasticResponse', () => {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return table', () => {
+    it('should return dataframe', () => {
       expect(result.data.length).toBe(1);
-      expect(result.data[0].type).toBe('table');
-      expect(result.data[0].columns[0].text).toBe('id');
-      expect(result.data[0].columns[1].text).toBe('p75 value');
-      expect(result.data[0].columns[2].text).toBe('p90 value');
-      expect(result.data[0].rows.length).toBe(2);
-      expect(result.data[0].rows[0][0]).toBe('id1');
-      expect(result.data[0].rows[0][1]).toBe(3.3);
-      expect(result.data[0].rows[0][2]).toBe(5.5);
-      expect(result.data[0].rows[1][0]).toBe('id2');
-      expect(result.data[0].rows[1][1]).toBe(2.3);
-      expect(result.data[0].rows[1][2]).toBe(4.5);
+      expect(result.data[0].length).toBe(2);
+      const field1 = result.data[0].fields[0];
+      const field2 = result.data[0].fields[1];
+      const field3 = result.data[0].fields[2];
+      expect(field1.name).toBe('id');
+      expect(field2.name).toBe('p75 value');
+      expect(field3.name).toBe('p90 value');
+
+      expect(field1.values.toArray()).toStrictEqual(['id1', 'id2']);
+      expect(field2.values.toArray()).toStrictEqual([3.3, 2.3]);
+      expect(field3.values.toArray()).toStrictEqual([5.5, 4.5]);
     });
   });
 
@@ -1058,9 +1064,11 @@ describe('ElasticResponse', () => {
     });
 
     it('should include field in metric name', () => {
-      expect(result.data[0].type).toBe('table');
-      expect(result.data[0].rows[0][1]).toBe(1000);
-      expect(result.data[0].rows[0][2]).toBe(3000);
+      expect(result.data[0].length).toBe(1);
+      expect(result.data[0].fields.length).toBe(3);
+      expect(result.data[0].fields[0].values.toArray()).toStrictEqual(['server-1']);
+      expect(result.data[0].fields[1].values.toArray()).toStrictEqual([1000]);
+      expect(result.data[0].fields[2].values.toArray()).toStrictEqual([3000]);
     });
   });
 
@@ -1248,16 +1256,15 @@ describe('ElasticResponse', () => {
     });
 
     it('should return 2 rows with 5 columns', () => {
-      expect(result.data[0].columns.length).toBe(5);
-      expect(result.data[0].rows.length).toBe(2);
-      expect(result.data[0].rows[0][1]).toBe(2);
-      expect(result.data[0].rows[0][2]).toBe(3);
-      expect(result.data[0].rows[0][3]).toBe(6);
-      expect(result.data[0].rows[0][4]).toBe(24);
-      expect(result.data[0].rows[1][1]).toBe(3);
-      expect(result.data[0].rows[1][2]).toBe(4);
-      expect(result.data[0].rows[1][3]).toBe(12);
-      expect(result.data[0].rows[1][4]).toBe(48);
+      const frame = result.data[0];
+      expect(frame.length).toBe(2);
+      const { fields } = frame;
+      expect(fields.length).toBe(5);
+      expect(fields[0].values.toArray()).toStrictEqual([1000, 2000]);
+      expect(fields[1].values.toArray()).toStrictEqual([2, 3]);
+      expect(fields[2].values.toArray()).toStrictEqual([3, 4]);
+      expect(fields[3].values.toArray()).toStrictEqual([6, 12]);
+      expect(fields[4].values.toArray()).toStrictEqual([24, 48]);
     });
   });
 
