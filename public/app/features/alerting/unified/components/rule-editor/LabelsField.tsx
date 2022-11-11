@@ -86,7 +86,7 @@ const AddButton: FC<{
     type="button"
     variant="secondary"
     onClick={() => {
-      append({});
+      append({ key: '', value: '' });
     }}
   >
     Add label
