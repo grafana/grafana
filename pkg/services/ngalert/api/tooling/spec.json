@@ -2373,9 +2373,9 @@
         "operationId": "BacktestConfig",
         "responses": {
           "200": {
-            "description": "EvalQueriesResponse",
+            "description": "BacktestResult",
             "schema": {
-              "$ref": "#/definitions/EvalQueriesResponse"
+              "$ref": "#/definitions/BacktestResult"
             }
           }
         }
@@ -2745,6 +2745,60 @@
         }
       }
     },
+    "BacktestConfig": {
+      "type": "object",
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "condition": {
+          "type": "string"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          }
+        },
+        "for": {
+          "$ref": "#/definitions/Duration"
+        },
+        "from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "no_data_state": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "NoData",
+            "OK"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "BacktestResult": {
+      "$ref": "#/definitions/Frame"
+    },
     "BasicAuth": {
       "type": "object",
       "title": "BasicAuth contains basic HTTP authentication credentials.",
@@ -2822,11 +2876,14 @@
       "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
         "Error": {
-          "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+          "description": "Error is a property to be set if the corresponding DataQuery has an error.",
           "type": "string"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
+        },
+        "Status": {
+          "$ref": "#/definitions/Status"
         }
       }
     },
@@ -5276,6 +5333,10 @@
     "SmtpNotEnabled": {
       "$ref": "#/definitions/ResponseDetails"
     },
+    "Status": {
+      "type": "integer",
+      "format": "int64"
+    },
     "Success": {
       "$ref": "#/definitions/ResponseDetails"
     },
@@ -5543,6 +5604,9 @@
         "Host": {
           "type": "string"
         },
+        "OmitHost": {
+          "type": "boolean"
+        },
         "Opaque": {
           "type": "string"
         },
@@ -5744,7 +5808,6 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -5906,6 +5969,7 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -5913,7 +5977,6 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -5970,6 +6033,7 @@
       "$ref": "#/definitions/gettableSilences"
     },
     "integration": {
+      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -6153,7 +6217,6 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
