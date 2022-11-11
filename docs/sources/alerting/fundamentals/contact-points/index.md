@@ -26,7 +26,7 @@ You can also use message templating to customize notification messages for conta
 The following table lists the contact point types supported by Grafana.
 
 | Name                                             | Type                      | Grafana Alertmanager | Other Alertmanagers                                                                                      |
-|--------------------------------------------------|---------------------------| -------------------- |----------------------------------------------------------------------------------------------------------|
+| ------------------------------------------------ | ------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------- |
 | [DingDing](https://www.dingtalk.com/en)          | `dingding`                | Supported            | N/A                                                                                                      |
 | [Discord](https://discord.com/)                  | `discord`                 | Supported            | N/A                                                                                                      |
 | [Email](#email)                                  | `email`                   | Supported            | Supported                                                                                                |

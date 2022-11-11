@@ -635,7 +635,7 @@ The following sections detail the supported settings and secure settings for eac
 #### Alert notification `Cisco Webex Teams`
 
 | Name      | Secure setting |
-|-----------| -------------- |
+| --------- | -------------- |
 | message   |                |
 | room_id   |                |
 | api_url   |                |

@@ -61,7 +61,7 @@ Restart Grafana for the changes to take affect.
 Images in notifications are supported in the following notifiers and additional support will be added in the future:
 
 | Name                    | Upload images from disk | Include images from URL |
-|-------------------------| ----------------------- |-------------------------|
+| ----------------------- | ----------------------- | ----------------------- |
 | DingDing                | No                      | No                      |
 | Discord                 | Yes                     | Yes                     |
 | Email                   | Yes                     | Yes                     |
