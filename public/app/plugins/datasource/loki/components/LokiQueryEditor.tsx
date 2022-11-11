@@ -173,7 +173,13 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           >
             Kick start your query
           </Button>
-          <Button variant="secondary" size="sm" onClick={onClickChooserButton} disabled={buttonDisabled}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onClickChooserButton}
+            disabled={buttonDisabled}
+            data-testid="label-browser-button"
+          >
             {labelBrowserText}
           </Button>
         </div>
