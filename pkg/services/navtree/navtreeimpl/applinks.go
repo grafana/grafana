@@ -65,7 +65,6 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqCo
 }
 
 func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqContext, topNavEnabled bool, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
-	hasAccess := ac.HasAccess(s.accessControl, c)
 	appLink := &navtree.NavLink{
 		Text:       plugin.Name,
 		Id:         "plugin-page-" + plugin.ID,
@@ -83,13 +82,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 	}
 
 	for _, include := range plugin.Includes {
-		useRBAC := s.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) && include.IsRBACReady()
-		if useRBAC && !hasAccess(ac.ReqHasRole(include.Role), ac.EvalPermission(include.Action)) {
-			s.log.Debug("plugin include is covered by RBAC, user doesn't have access",
-				"plugin", plugin.ID,
-				"include", include.Name)
-			continue
-		} else if !useRBAC && !c.HasUserRole(include.Role) {
+		if !s.hasAccessToInclude(c, plugin.ID, include) {
 			continue
 		}
 
@@ -235,6 +228,20 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 	}
 
 	return nil
+}
+
+func (s *ServiceImpl) hasAccessToInclude(c *models.ReqContext, pluginID string, include *plugins.Includes) bool {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+	useRBAC := s.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) && include.IsRBACReady()
+	if useRBAC && !hasAccess(ac.ReqHasRole(include.Role), ac.EvalPermission(include.Action)) {
+		s.log.Debug("plugin include is covered by RBAC, user doesn't have access",
+			"plugin", pluginID,
+			"include", include.Name)
+		return false
+	} else if !useRBAC && !c.HasUserRole(include.Role) {
+		return false
+	}
+	return true
 }
 
 func (s *ServiceImpl) readNavigationSettings() {
