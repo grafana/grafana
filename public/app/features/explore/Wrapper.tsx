@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { inRange } from 'lodash';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
@@ -17,7 +18,7 @@ import { useCorrelations } from '../correlations/useCorrelations';
 
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
-import { lastSavedUrl, resetExploreAction, saveCorrelationsAction } from './state/main';
+import { lastSavedUrl, saveCorrelationsAction, resetExploreAction, splitSizeUpdateAction } from './state/main';
 
 const styles = {
   pageScrollbarWrapper: css`
@@ -42,6 +43,8 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   const panelCtx = usePanelContext();
   const eventBus = useRef(panelCtx.eventBus.newScopedBus('explore', { onlyLocal: false }));
   const [rightPaneWidth, setRightPaneWidth] = useState(window.innerWidth / 2);
+  const minWidth = 200;
+  const exploreState = useSelector((state) => state.explore);
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -99,7 +102,33 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- dispatch is stable, doesn't need to be in the deps array
   }, []);
 
+  const updateSplitSize = (size: number) => {
+    const evenSplitWidth = window.innerWidth / 2;
+    const areBothSimilar = inRange(rightPaneWidth, evenSplitWidth - 100, evenSplitWidth + 100);
+    if (areBothSimilar) {
+      dispatch(splitSizeUpdateAction({ largerExploreId: undefined }));
+    } else {
+      dispatch(
+        splitSizeUpdateAction({
+          largerExploreId: rightPaneWidth > evenSplitWidth ? ExploreId.right : ExploreId.left,
+        })
+      );
+    }
+
+    setRightPaneWidth(size);
+  };
+
   const hasSplit = Boolean(queryParams.left) && Boolean(queryParams.right);
+  let widthCalc = 0;
+  if (hasSplit) {
+    if (!exploreState.evenSplitPanes && exploreState.maxedExploreId) {
+      widthCalc = exploreState.maxedExploreId === ExploreId.right ? window.innerWidth - minWidth : minWidth;
+    } else if (exploreState.evenSplitPanes) {
+      widthCalc = Math.floor(window.innerWidth / 2);
+    } else if (rightPaneWidth !== undefined) {
+      widthCalc = rightPaneWidth;
+    }
+  }
 
   return (
     <div className={styles.pageScrollbarWrapper}>
@@ -107,14 +136,14 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
       <div className={styles.exploreWrapper}>
         <SplitPaneWrapper
           splitOrientation="vertical"
-          minSize={200}
-          paneSize={rightPaneWidth}
+          minSize={minWidth}
+          paneSize={widthCalc}
           primary="second"
           splitVisible={hasSplit}
           paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column', overflowY: 'scroll' }}
           onDragFinished={(size) => {
             if (size) {
-              setRightPaneWidth(size);
+              updateSplitSize(size);
             }
           }}
         >
