@@ -84,7 +84,11 @@ func (d *DashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, titl
 	// there are no nested folders so the parent folder id is always 0
 	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Title: title}
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
+		query := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true))
+		if !d.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+			query = query.Where("folder_id=0")
+		}
+		has, err := query.Get(&dashboard)
 		if err != nil {
 			return err
 		}
@@ -101,7 +105,11 @@ func (d *DashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, titl
 func (d *DashboardStore) GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error) {
 	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Id: id}
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
+		query := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true))
+		if !d.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+			query = query.Where("folder_id=0")
+		}
+		has, err := query.Get(&dashboard)
 		if err != nil {
 			return err
 		}
