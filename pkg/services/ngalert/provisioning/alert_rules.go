@@ -441,7 +441,7 @@ func (service *AlertRuleService) GetAlertGroupsWithTitle(ctx context.Context, or
 	dq := model.GetDashboardsQuery{
 		DashboardUIds: nil,
 	}
-	for uid, _ := range namespaces {
+	for uid := range namespaces {
 		dq.DashboardUIds = append(dq.DashboardUIds, uid)
 	}
 
