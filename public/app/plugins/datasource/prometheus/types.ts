@@ -22,6 +22,7 @@ export interface PromQuery extends DataQuery {
   showingTable?: boolean;
   /** Code, Builder or Explain */
   editorMode?: QueryEditorMode;
+  query?: string;
 }
 
 export interface PromOptions extends DataSourceJsonData {
@@ -175,6 +176,7 @@ export enum PromVariableQueryType {
 }
 
 export interface PromVariableQuery extends DataQuery {
+  query?: string;
   expr?: string;
   exprType?: PromVariableQueryType;
   label?: string;

@@ -49,12 +49,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
       return;
     }
     // Migrate the previous variable expr string
-    const variableQuery =
-      typeof query === 'string'
-        ? migrateVariableQueryToEditor(query)
-        : typeof query.expr === 'string'
-        ? migrateVariableQueryToEditor(query.expr)
-        : query;
+    const variableQuery = query.query ? migrateVariableQueryToEditor(query.query) : query;
 
     setExprType(variableQuery.exprType);
     setLabel(variableQuery.label || '');
@@ -89,10 +84,10 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
       refId: 'PrometheusVariableQueryEditor-VariableQuery',
     };
 
-    const expr = migrateVariableEditorBackToVariableSupport(queryVar);
+    const queryString = migrateVariableEditorBackToVariableSupport(queryVar);
 
     onChange({
-      expr: expr,
+      query: queryString,
       refId,
     });
   };

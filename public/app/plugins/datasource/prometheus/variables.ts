@@ -24,7 +24,7 @@ export class PrometheusVariableSupport extends CustomVariableSupport<PrometheusD
   editor = PromVariableQueryEditor;
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
-    const query = request.targets[0].expr;
+    const query = request.targets[0].query;
     if (!query) {
       return of({ data: [] });
     }
