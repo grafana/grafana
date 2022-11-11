@@ -72,7 +72,16 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   }
 
   async componentDidMount() {
-    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, panelsState, orgId } = this.props;
+    const {
+      initialized,
+      exploreId,
+      initialDatasource,
+      initialQueries,
+      initialRange,
+      panelsState,
+      orgId,
+      isFromCompactUrl,
+    } = this.props;
     const width = this.el?.offsetWidth ?? 0;
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
@@ -117,7 +126,8 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
         initialRange,
         width,
         this.exploreEvents,
-        panelsState
+        panelsState,
+        isFromCompactUrl
       );
     }
   }
@@ -175,6 +185,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
     initialRange,
     panelsState,
     orgId: state.user.orgId,
+    isFromCompactUrl: urlState.isFromCompactUrl || false,
   };
 }
 

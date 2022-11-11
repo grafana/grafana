@@ -86,6 +86,7 @@ const dummyProps: Props = {
   splitted: false,
   changeGraphStyle: () => {},
   graphStyle: 'lines',
+  isFromCompactUrl: false,
   eventBus: new EventBusSrv(),
 };
 
