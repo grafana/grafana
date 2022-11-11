@@ -259,6 +259,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         >
           <NumberInput
             placeholder="60"
+            min={0}
             value={jsonData.connectionTimeout}
             onChange={onConnectionTimeoutChanged}
           ></NumberInput>

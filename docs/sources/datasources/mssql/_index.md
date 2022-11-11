@@ -79,7 +79,7 @@ You can also override this setting in a dashboard panel under its data source op
 
 ### Connection timeout
 
-The **Connection timeout** setting defines the maximum number of seconds to wait for a connection to the database before timing out.
+The **Connection timeout** setting defines the maximum number of seconds to wait for a connection to the database before timing out. Default is 0 for no timeout.
 
 ### Database user permissions
 
@@ -123,6 +123,7 @@ datasources:
       maxOpenConns: 0 # Grafana v5.4+
       maxIdleConns: 2 # Grafana v5.4+
       connMaxLifetime: 14400 # Grafana v5.4+
+      connectionTimeout: 0 # Grafana v9.3+
     secureJsonData:
       password: 'Password!'
 ```
