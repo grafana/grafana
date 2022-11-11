@@ -23,9 +23,6 @@ type (
 	// Plugin API query data request used to generate
 	// a cloudMonitoringTimeSeriesList or cloudMonitoringTimeSeriesQuery
 	grafanaQuery struct {
-		DatasourceId    int              `json:"datasourceId"`
-		RefId           string           `json:"refId"`
-		QueryType       string           `json:"queryType"`
 		AliasBy         string           `json:"aliasBy"`
 		TimeSeriesList  *timeSeriesList  `json:"timeSeriesList,omitempty"`
 		TimeSeriesQuery *timeSeriesQuery `json:"timeSeriesQuery,omitempty"`

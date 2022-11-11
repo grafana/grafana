@@ -223,7 +223,6 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			}
 
 			gq := grafanaQuery{
-				QueryType:      metricQueryType,
 				TimeSeriesList: &mq,
 			}
 			if rawQuery["aliasBy"] != nil {
@@ -376,7 +375,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			logger:  logger,
 			aliasBy: q.AliasBy,
 		}
-		switch q.QueryType {
+		switch query.QueryType {
 		case metricQueryType, annotationQueryType:
 			if q.TimeSeriesQuery != nil {
 				queryInterface = &cloudMonitoringTimeSeriesQuery{
@@ -405,7 +404,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			setSloAggParams(&params, q.SloQuery, q.TimeSeriesList.AlignmentPeriod, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmtsf
 		default:
-			return nil, fmt.Errorf("unrecognized query type %q", q.QueryType)
+			return nil, fmt.Errorf("unrecognized query type %q", query.QueryType)
 		}
 
 		cmtsf.params = params
