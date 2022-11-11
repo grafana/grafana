@@ -11,6 +11,7 @@ import {
 import { Alert, InlineSwitch, FieldSet, InlineField, InlineFieldRow, Input, Select, SecretInput } from '@grafana/ui';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
+import { useMigrateDatabaseField } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseField';
 
 import { PostgresOptions, PostgresTLSMethods, PostgresTLSModes, SecureJsonData } from '../types';
 
@@ -36,6 +37,8 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
   const [versionOptions, setVersionOptions] = useState(postgresVersions);
 
   useAutoDetectFeatures({ props, setVersionOptions });
+
+  useMigrateDatabaseField(props);
 
   const { options, onOptionsChange } = props;
   const jsonData = options.jsonData;
@@ -93,9 +96,9 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           <Input
             width={40}
             name="database"
-            value={options.database || ''}
+            value={jsonData.database || ''}
             placeholder="database name"
-            onChange={onDSOptionChanged('database')}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'database')}
           ></Input>
         </InlineField>
         <InlineFieldRow>

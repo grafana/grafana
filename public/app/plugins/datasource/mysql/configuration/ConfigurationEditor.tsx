@@ -10,12 +10,15 @@ import {
 import { Alert, FieldSet, InlineField, InlineFieldRow, InlineSwitch, Input, Link, SecretInput } from '@grafana/ui';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
+import { useMigrateDatabaseField } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseField';
 
 import { MySQLOptions } from '../types';
 
 export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<MySQLOptions>) => {
   const { options, onOptionsChange } = props;
   const jsonData = options.jsonData;
+
+  useMigrateDatabaseField(props);
 
   const onResetPassword = () => {
     updateDatasourcePluginResetOption(props, 'password');
@@ -54,9 +57,9 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
           <Input
             width={longWidth}
             name="database"
-            value={options.database || ''}
+            value={jsonData.database || ''}
             placeholder="database name"
-            onChange={onDSOptionChanged('database')}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'database')}
           ></Input>
         </InlineField>
         <InlineFieldRow>

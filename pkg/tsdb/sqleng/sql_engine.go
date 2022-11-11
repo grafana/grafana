@@ -65,6 +65,7 @@ type JsonData struct {
 	Encrypt             string `json:"encrypt"`
 	Servername          string `json:"servername"`
 	TimeInterval        string `json:"timeInterval"`
+	Database            string `json:"database"`
 }
 
 type DataSourceInfo struct {
