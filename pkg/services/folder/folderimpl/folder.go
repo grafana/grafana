@@ -34,6 +34,7 @@ type Service struct {
 	searchService    *search.SearchService
 	features         *featuremgmt.FeatureManager
 	permissions      accesscontrol.FolderPermissionsService
+	accessControl    accesscontrol.AccessControl
 
 	// bus is currently used to publish events that cause scheduler to update rules.
 	bus bus.Bus
@@ -62,18 +63,27 @@ func ProvideService(
 		searchService:    searchService,
 		features:         features,
 		permissions:      folderPermissionsService,
+		accessControl:    ac,
 		bus:              bus,
 	}
 }
 
 func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
-	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagNestedFolders) {
-		return s.store.Get(ctx, *cmd)
-	}
-
 	user, err := appcontext.User(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagNestedFolders) {
+		if ok, err := s.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(
+			dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(*cmd.UID),
+		)); !ok {
+			if err != nil {
+				return nil, toFolderError(err)
+			}
+			return nil, dashboards.ErrFolderAccessDenied
+		}
+		return s.store.Get(ctx, *cmd)
 	}
 
 	switch {

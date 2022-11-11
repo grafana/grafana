@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -445,6 +446,9 @@ func TestNestedFolderService(t *testing.T) {
 			dashboardStore:   dashStore,
 			store:            store,
 			features:         features,
+			accessControl: actest.FakeAccessControl{
+				ExpectedEvaluate: true,
+			},
 		}
 
 		t.Run("create, no error", func(t *testing.T) {
