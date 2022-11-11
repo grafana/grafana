@@ -433,7 +433,7 @@ func exportResponse(c *models.ReqContext, body any) response.Response {
 		if format == "yaml" {
 			r = response.YAMLDownload
 		}
-		return r(http.StatusOK, body, fmt.Sprintf("groups_export.%s", format))
+		return r(http.StatusOK, body, fmt.Sprintf("export.%s", format))
 	}
 
 	r := response.JSON
