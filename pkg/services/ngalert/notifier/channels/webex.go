@@ -107,7 +107,7 @@ func buildWebexNotifier(factoryConfig FactoryConfig) (*WebexNotifier, error) {
 type WebexMessage struct {
 	RoomID  string   `json:"roomId,omitempty"`
 	Message string   `json:"markdown"`
-	Files   []string `json:"files"`
+	Files   []string `json:"files,omitempty"`
 }
 
 // Notify implements the Notifier interface.
