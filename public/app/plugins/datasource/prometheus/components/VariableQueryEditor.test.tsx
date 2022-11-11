@@ -26,7 +26,7 @@ describe('PromVariableQueryEditor', () => {
       } as unknown as PrometheusDatasource,
       query: {
         refId: 'test',
-        expr: 'label_names()',
+        query: 'label_names()',
       },
       onRunQuery: () => {},
       onChange: () => {},
@@ -44,7 +44,7 @@ describe('PromVariableQueryEditor', () => {
     await waitFor(() => expect(screen.getByText('Label values')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('Metrics')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('Query result')).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText('Match[] series')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Series query')).toBeInTheDocument());
   });
 
   test('Calls onChange for label_names() query', async () => {
@@ -52,7 +52,7 @@ describe('PromVariableQueryEditor', () => {
 
     props.query = {
       refId: 'test',
-      expr: '',
+      query: '',
     };
 
     render(<PromVariableQueryEditor {...props} onChange={onChange} />);
@@ -60,7 +60,7 @@ describe('PromVariableQueryEditor', () => {
     await selectOptionInTest(screen.getByLabelText('Function type'), 'Label names');
 
     expect(onChange).toHaveBeenCalledWith({
-      expr: 'label_names()',
+      query: 'label_names()',
       refId,
     });
   });
@@ -72,7 +72,7 @@ describe('PromVariableQueryEditor', () => {
 
     await selectOptionInTest(screen.getByLabelText('Function type'), 'Metrics');
     await selectOptionInTest(screen.getByLabelText('Function type'), 'Query result');
-    await selectOptionInTest(screen.getByLabelText('Function type'), 'Match[] series');
+    await selectOptionInTest(screen.getByLabelText('Function type'), 'Series query');
 
     expect(onChange).not.toHaveBeenCalled();
   });
@@ -82,7 +82,7 @@ describe('PromVariableQueryEditor', () => {
 
     props.query = {
       refId: 'test',
-      expr: 'metrics(a)',
+      query: 'metrics(a)',
     };
 
     render(<PromVariableQueryEditor {...props} onChange={onChange} />);
@@ -93,7 +93,7 @@ describe('PromVariableQueryEditor', () => {
     await userEvent.click(functionSelect);
 
     expect(onChange).toHaveBeenCalledWith({
-      expr: 'metrics(a)',
+      query: 'metrics(a)',
       refId,
     });
   });
@@ -103,7 +103,7 @@ describe('PromVariableQueryEditor', () => {
 
     props.query = {
       refId: 'test',
-      expr: 'query_result(a)',
+      query: 'query_result(a)',
     };
 
     render(<PromVariableQueryEditor {...props} onChange={onChange} />);
@@ -114,7 +114,7 @@ describe('PromVariableQueryEditor', () => {
     await userEvent.click(functionSelect);
 
     expect(onChange).toHaveBeenCalledWith({
-      expr: 'query_result(a)',
+      query: 'query_result(a)',
       refId,
     });
   });
@@ -124,7 +124,7 @@ describe('PromVariableQueryEditor', () => {
 
     props.query = {
       refId: 'test',
-      expr: '{a: "example"}',
+      query: '{a: "example"}',
     };
 
     render(<PromVariableQueryEditor {...props} onChange={onChange} />);
@@ -135,7 +135,7 @@ describe('PromVariableQueryEditor', () => {
     await userEvent.click(functionSelect);
 
     expect(onChange).toHaveBeenCalledWith({
-      expr: '{a: "example"}',
+      query: '{a: "example"}',
       refId,
     });
   });

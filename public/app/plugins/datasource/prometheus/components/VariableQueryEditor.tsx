@@ -16,7 +16,7 @@ export const variableOptions = [
   { label: 'Label values', value: QueryType.LabelValues },
   { label: 'Metrics', value: QueryType.MetricNames },
   { label: 'Query result', value: QueryType.VarQueryResult },
-  { label: 'Series Query', value: QueryType.SeriesQuery },
+  { label: 'Series query', value: QueryType.SeriesQuery },
 ];
 
 export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions, PromVariableQuery>;
