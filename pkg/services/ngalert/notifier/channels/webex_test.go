@@ -75,7 +75,7 @@ func TestWebexNotifier(t *testing.T) {
 				},
 			},
 			expHeaders:  map[string]string{"Authorization": "Bearer abcdefgh0123456789"},
-			expMsg:      `{"roomId":"someid","markdown":"__Custom Firing__\n2 Firing\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: a URL\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana\u0026matcher=alertname%3Dalert1\u0026matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana\u0026matcher=alertname%3Dalert1\u0026matcher=lbl1%3Dval2\n","files":["https://www.example.com/test-image-1","https://www.example.com/test-image-2"]}`,
+			expMsg:      `{"roomId":"someid","markdown":"__Custom Firing__\n2 Firing\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: a URL\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana\u0026matcher=alertname%3Dalert1\u0026matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana\u0026matcher=alertname%3Dalert1\u0026matcher=lbl1%3Dval2\n","files":["https://www.example.com/test-image-1"]}`,
 			expMsgError: nil,
 		},
 		{
@@ -93,7 +93,7 @@ func TestWebexNotifier(t *testing.T) {
 				},
 			},
 			expHeaders:  map[string]string{"Authorization": "Bearer abcdefgh0123456789"},
-			expMsg:      fmt.Sprintf(`{"roomId":"someid","markdown":"%s…","files":[]}`, strings.Repeat("1", 4093)),
+			expMsg:      fmt.Sprintf(`{"roomId":"someid","markdown":"%s…"}`, strings.Repeat("1", 4093)),
 			expMsgError: nil,
 		},
 		{
