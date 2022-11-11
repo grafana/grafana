@@ -160,12 +160,15 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     }
   };
 
-  const handleOnChange = useCallback((value) => {
-    onChange({
-      ...query,
-      search: value,
-    });
-  }, []); // eslint-disable-line
+  const handleOnChange = useCallback(
+    (value) => {
+      onChange({
+        ...query,
+        search: value,
+      });
+    },
+    [onChange, query]
+  );
 
   const templateSrv: TemplateSrv = getTemplateSrv();
 
