@@ -79,9 +79,10 @@ export function migrateVariableEditorBackToVariableSupport(QueryVariable: PromVa
       return 'label_names()';
     case 1: // LabelValues
       if (QueryVariable.metric) {
-        // series match
-        return `label_values(${QueryVariable.metric},${QueryVariable.label})`;
+        // labels endpoint match
+        return `label_values(${QueryVariable.label},${QueryVariable.metric})`;
       } else {
+        // old series match
         return `label_values(${QueryVariable.label})`;
       }
     case 2: // MetricNames

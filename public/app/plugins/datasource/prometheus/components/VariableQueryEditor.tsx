@@ -92,16 +92,8 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
     });
   };
 
-  const resetTextFields = () => {
-    setLabel('');
-    setMetric('');
-    setVarQuery('');
-    setSeriesQuery('');
-  };
-
   const onQueryTypeChange = (newType: SelectableValue<QueryType>) => {
     setExprType(newType.value);
-    resetTextFields();
     if (newType.value === QueryType.LabelNames) {
       onChangeWithVariableString(newType.value);
     }
