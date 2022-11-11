@@ -374,3 +374,27 @@ func (ds *dataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthR
   // ...
 }
 ```
+
+## Forward user header for the logged-in user
+
+When [send_user_header]({{< relref "../../setup-grafana/configure-grafana/_index.md#send_user_header" >}}) is enabled, Grafana will pass the user header to the plugin in the `X-Grafana-User` header, available in the `QueryData`, `CallResource` and `CheckHealth` requests in your backend data source.
+
+```go
+func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+  u:= req.Headers["X-Grafana-User"]
+
+  // ...
+}
+
+func (ds *dataSource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+  u := req.Headers["X-Grafana-User"]
+
+  // ...
+}
+
+func (ds *dataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+  u := req.Headers["X-Grafana-User"]
+
+  // ...
+}
+```
