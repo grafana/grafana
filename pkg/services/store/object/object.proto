@@ -369,6 +369,9 @@ service ObjectStore {
 // Ideally an additional search endpoint with more flexibility to limit what you actually care about
 //  https://github.com/grafana/grafana-plugin-sdk-go/blob/main/proto/backend.proto#L129
 //  rpc SearchEX(ObjectSearchRequest) returns (DataResponse);
+
+  // TEMPORARY... while we split this into a new service (see below)
+  rpc AdminWrite(AdminWriteObjectRequest) returns (WriteObjectResponse);
 }
 
 // The admin service extends the basic object store interface, but provides

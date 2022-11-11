@@ -123,14 +123,19 @@ func (e *objectStoreJob) start(ctx context.Context) {
 			rowUser.UserID = 0 // avoid Uint64Val issue????
 		}
 
-		_, err = e.store.Write(ctx, &object.WriteObjectRequest{
+		_, err = e.store.AdminWrite(ctx, &object.AdminWriteObjectRequest{
 			GRN: &object.GRN{
 				Scope: models.ObjectStoreScopeEntity,
 				UID:   dash.UID,
 				Kind:  models.StandardKindDashboard,
 			},
-			Body:    dash.Body,
-			Comment: "export from dashboard table",
+			CreatedAt: 1345678987654,
+			UpdatedAt: 1234567898765,
+			UpdatedBy: "<original/updater>",
+			CreatedBy: "<original/creator>",
+			Origin:    "export-from-sql",
+			Body:      dash.Body,
+			Comment:   "export from dashboard table",
 		})
 		if err != nil {
 			e.status.Status = "error: " + err.Error()
