@@ -153,27 +153,33 @@ func (s *SocialGithub) HasMoreRecords(headers http.Header) (string, bool) {
 }
 
 func (s *SocialGithub) FetchOrganizations(client *http.Client, organizationsUrl string) ([]string, error) {
+	url := organizationsUrl
+	hasMore := true
+	logins := make([]string, 0)
+
 	type Record struct {
 		Login string `json:"login"`
 	}
 
-	response, err := s.httpGet(client, organizationsUrl)
-	if err != nil {
-		return nil, fmt.Errorf("error getting organizations: %s", err)
+	for hasMore {
+		response, err := s.httpGet(client, url)
+		if err != nil {
+			return nil, fmt.Errorf("error getting organizations: %s", err)
+		}
+
+		var records []Record
+
+		err = json.Unmarshal(response.Body, &records)
+		if err != nil {
+			return nil, fmt.Errorf("error getting organizations: %s", err)
+		}
+
+		for i, record := range records {
+			logins = append(logins, record.Login)
+		}
+
+		url, hasMore = s.HasMoreRecords(response.Headers)
 	}
-
-	var records []Record
-
-	err = json.Unmarshal(response.Body, &records)
-	if err != nil {
-		return nil, fmt.Errorf("error getting organizations: %s", err)
-	}
-
-	var logins = make([]string, len(records))
-	for i, record := range records {
-		logins[i] = record.Login
-	}
-
 	return logins, nil
 }
 
