@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { CoreApp } from '@grafana/data';
 import { Modal } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
@@ -14,10 +15,11 @@ type Props = {
   onChange: any;
   onRunQuery: any;
   query: LokiQuery;
+  app?: CoreApp;
 };
 
 export const LabelBrowserModal = (props: Props) => {
-  const { isOpen, onClose, languageProvider } = props;
+  const { isOpen, onClose, languageProvider, app } = props;
 
   const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
 
@@ -50,6 +52,7 @@ export const LabelBrowserModal = (props: Props) => {
               lastUsedLabels={lastUsedLabels}
               storeLastUsedLabels={onLastUsedLabelsSave}
               deleteLastUsedLabels={onLastUsedLabelsDelete}
+              app={app}
             />
           );
         }}

@@ -146,6 +146,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           onChange={onChangeInternal}
           onRunQuery={onRunQuery}
           query={query}
+          app={app}
         />
         <div
           className={css`
