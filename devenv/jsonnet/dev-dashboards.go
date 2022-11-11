@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	OUTPUT_PATH = "gen.libsonnet"
+	OUTPUT_PATH = "dev-dashboards.libsonnet"
 	EXCLUDE     = map[string]struct{}{
 		"jsonnetfile.json":      {},
 		"jsonnetfile.lock.json": {},
