@@ -132,9 +132,9 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 	})
 }
 
-func (st *DBstore) MarkAlertmanagerConfigurationAsValid(ctx context.Context, configurationID int64) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		res, err := sess.Exec("UPDATE alert_configuration SET is_valid = true WHERE id = ?", configurationID)
+func (st *DBstore) MarkAlertmanagerConfigurationAsSuccessfullyApplied(ctx context.Context, configurationID int64) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		res, err := sess.Exec("UPDATE alert_configuration SET successfully_applied = true WHERE id = ?", configurationID)
 		if err != nil {
 			return err
 		}
@@ -152,13 +152,26 @@ func (st *DBstore) MarkAlertmanagerConfigurationAsValid(ctx context.Context, con
 	})
 }
 
-func (st *DBstore) GetAllValidAlertmanagerConfigurationsForOrg(ctx context.Context, query *models.GetAllValidAlertmanagerConfigurationsQuery) error {
-	// TODO: implement!
-	return nil
+// GetSuccessfullyAppliedAlertmanagerConfigurations returns the latest n valid configurations for an org.
+func (st *DBstore) GetSuccessfullyAppliedAlertmanagerConfigurations(ctx context.Context, query *models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery) error {
+	if query.Limit < 1 {
+		return fmt.Errorf("failed to fetch previous valid configurations: limit is set to '%d' but needs to be > 0", query.Limit)
+	}
+
+	var result []*models.AlertConfiguration
+	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		err := sess.Table("alert_configuration").Where("org_id = ? AND successfully_applied = true", query.OrgID).Desc("id").Find(&result)
+		if err != nil {
+			return err
+		}
+
+		query.Result = result
+		return nil
+	})
 }
 
-// getInsertQuery is used to determinate the insert query for the alertmanager config
-// based on the provided sql driver. This is necesarry as such an advanced query
+// getInsertQuery is used to determine the insert query for the alertmanager config
+// based on the provided sql driver. This is necessary as such an advanced query
 // is not supported by our ORM and we need to generate it manually for each SQL dialect.
 // We introduced this as part of a bug fix as the old approach wasn't working.
 // Rel: https://github.com/grafana/grafana/issues/51356
@@ -235,10 +248,6 @@ func getInsertQuery(driver string) string {
 func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID int64, limit int) (int64, error) {
 	if limit < 1 {
 		return 0, fmt.Errorf("failed to delete old configurations: limit is set to '%d' but needs to be > 0", limit)
-	}
-
-	if limit < 1 {
-		limit = ConfigRecordsLimit
 	}
 
 	var affectedRows int64

@@ -359,6 +359,29 @@
         }
       }
     },
+    "/api/alertmanager/grafana/config/api/v1/alerts/valid": {
+      "get": {
+        "description": "gets Alerting configurations that were successfully applied in the past",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteGetGrafanaSuccessfullyAppliedAlertingConfigs",
+        "responses": {
+          "200": {
+            "description": "GettableUserConfigs",
+            "schema": {
+              "$ref": "#/definitions/GettableUserConfigs"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
     "/api/alertmanager/grafana/config/api/v1/receivers": {
       "get": {
         "description": "Get a list of all receivers",
@@ -2799,11 +2822,14 @@
       "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
         "Error": {
-          "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+          "description": "Error is a property to be set if the corresponding DataQuery has an error.",
           "type": "string"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
+        },
+        "Status": {
+          "$ref": "#/definitions/Status"
         }
       }
     },
@@ -2827,11 +2853,6 @@
           "type": "string"
         }
       }
-    },
-    "DsPermissionType": {
-      "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
-      "type": "integer",
-      "format": "int64"
     },
     "Duration": {
       "type": "integer",
@@ -3565,6 +3586,12 @@
             "type": "string"
           }
         }
+      }
+    },
+    "GettableUserConfigs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/GettableUserConfig"
       }
     },
     "GlobalConfig": {
@@ -5270,6 +5297,10 @@
     "SmtpNotEnabled": {
       "$ref": "#/definitions/ResponseDetails"
     },
+    "Status": {
+      "type": "integer",
+      "format": "int64"
+    },
     "Success": {
       "$ref": "#/definitions/ResponseDetails"
     },
@@ -5524,8 +5555,9 @@
       }
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -5715,7 +5747,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -5845,7 +5876,6 @@
       }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",

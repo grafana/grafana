@@ -131,6 +131,15 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 	return response.JSON(http.StatusOK, config)
 }
 
+func (srv AlertmanagerSrv) RouteGetSuccessfullyAppliedAlertingConfigs(c *models.ReqContext) response.Response {
+	configs, err := srv.mam.GetSuccessfullyAppliedAlertmanagerConfigurations(c.Req.Context(), c.OrgID)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, err.Error())
+	}
+
+	return response.JSON(http.StatusOK, configs)
+}
+
 func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *models.ReqContext) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {

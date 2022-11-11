@@ -89,6 +89,73 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 	return result, nil
 }
 
+func (moa *MultiOrgAlertmanager) GetSuccessfullyAppliedAlertmanagerConfigurations(ctx context.Context, org int64) (definitions.GettableUserConfigs, error) {
+	// TODO: determine limit
+	query := models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery{OrgID: org, Limit: 10}
+	err := moa.configStore.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, &query)
+	if err != nil {
+		return definitions.GettableUserConfigs{}, fmt.Errorf("failed to get successfully applied configurations: %w", err)
+	}
+
+	result := make(definitions.GettableUserConfigs, 0, len(query.Result))
+	for _, config := range query.Result {
+		cfg, err := Load([]byte(config.AlertmanagerConfiguration))
+		if err != nil {
+			return definitions.GettableUserConfigs{}, fmt.Errorf("failed to unmarshal alertmanager configuration: %w", err)
+		}
+
+		gettableUserConfig := definitions.GettableUserConfig{
+			TemplateFiles: cfg.TemplateFiles,
+			AlertmanagerConfig: definitions.GettableApiAlertingConfig{
+				Config: cfg.AlertmanagerConfig.Config,
+			},
+		}
+
+		// TODO: extract duplicated code
+		for _, recv := range cfg.AlertmanagerConfig.Receivers {
+			receivers := make([]*definitions.GettableGrafanaReceiver, 0, len(recv.PostableGrafanaReceivers.GrafanaManagedReceivers))
+			for _, pr := range recv.PostableGrafanaReceivers.GrafanaManagedReceivers {
+				secureFields := make(map[string]bool, len(pr.SecureSettings))
+				for k := range pr.SecureSettings {
+					decryptedValue, err := moa.Crypto.getDecryptedSecret(pr, k)
+					if err != nil {
+						return definitions.GettableUserConfigs{}, fmt.Errorf("failed to decrypt stored secure setting: %w", err)
+					}
+					if decryptedValue == "" {
+						continue
+					}
+					secureFields[k] = true
+				}
+				gr := definitions.GettableGrafanaReceiver{
+					UID:                   pr.UID,
+					Name:                  pr.Name,
+					Type:                  pr.Type,
+					DisableResolveMessage: pr.DisableResolveMessage,
+					Settings:              pr.Settings,
+					SecureFields:          secureFields,
+				}
+				receivers = append(receivers, &gr)
+			}
+			gettableApiReceiver := definitions.GettableApiReceiver{
+				GettableGrafanaReceivers: definitions.GettableGrafanaReceivers{
+					GrafanaManagedReceivers: receivers,
+				},
+			}
+			gettableApiReceiver.Name = recv.Name
+			gettableUserConfig.AlertmanagerConfig.Receivers = append(gettableUserConfig.AlertmanagerConfig.Receivers, &gettableApiReceiver)
+		}
+
+		gettableUserConfig, err = moa.mergeProvenance(ctx, gettableUserConfig, org)
+		if err != nil {
+			return definitions.GettableUserConfigs{}, err
+		}
+
+		result = append(result, gettableUserConfig)
+	}
+
+	return result, nil
+}
+
 func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
 	// Get the last known working configuration
 	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}

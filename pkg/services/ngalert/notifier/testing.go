@@ -141,7 +141,7 @@ func (f *fakeConfigStore) UpdateAlertmanagerConfiguration(_ context.Context, cmd
 	return errors.New("config not found or hash not valid")
 }
 
-func (f *fakeConfigStore) MarkAlertmanagerConfigurationAsValid(_ context.Context, configID int64) error {
+func (f *fakeConfigStore) MarkAlertmanagerConfigurationAsSuccessfullyApplied(_ context.Context, configID int64) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
@@ -153,7 +153,7 @@ func (f *fakeConfigStore) MarkAlertmanagerConfigurationAsValid(_ context.Context
 	return errors.New("config not found")
 }
 
-func (f *fakeConfigStore) GetAllValidAlertmanagerConfigurationsForOrg(_ context.Context, query *models.GetAllValidAlertmanagerConfigurationsQuery) error {
+func (f *fakeConfigStore) GetSuccessfullyAppliedAlertmanagerConfigurations(_ context.Context, query *models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery) error {
 	f.mtx.RLock()
 	defer f.mtx.RUnlock()
 
@@ -162,14 +162,17 @@ func (f *fakeConfigStore) GetAllValidAlertmanagerConfigurationsForOrg(_ context.
 		return fmt.Errorf("configs not found for org %d", query.OrgID)
 	}
 
-	var validConfigs []*models.AlertConfiguration
-	for _, config := range configsByOrg {
-		if config.IsValid {
-			validConfigs = append(validConfigs, config)
+	// Iterating backwards to get the latest successfully applied configs.
+	var successfullyAppliedConfigs []*models.AlertConfiguration
+	start := len(configsByOrg) - 1
+	end := start - query.Limit
+	for i := start; i >= end; i++ {
+		if configsByOrg[i].IsValid {
+			successfullyAppliedConfigs = append(successfullyAppliedConfigs, configsByOrg[i])
 		}
 	}
 
-	query.Result = validConfigs
+	query.Result = successfullyAppliedConfigs
 
 	return nil
 }

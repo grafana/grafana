@@ -48,6 +48,14 @@ import (
 //       200: GettableUserConfig
 //       400: ValidationError
 
+// swagger:route GET /api/alertmanager/grafana/config/api/v1/alerts/valid alertmanager RouteGetGrafanaSuccessfullyAppliedAlertingConfigs
+//
+// gets Alerting configurations that were successfully applied in the past
+//
+//     Responses:
+//       200: GettableUserConfigs
+//       400: ValidationError
+
 // swagger:route GET /api/alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RouteGetAlertingConfig
 //
 // gets an Alerting config
@@ -580,6 +588,9 @@ type GettableUserConfig struct {
 	amSimple map[string]interface{} `yaml:"-" json:"-"`
 }
 
+// swagger:model GettableUserConfigs
+type GettableUserConfigs []GettableUserConfig
+
 func (c *GettableUserConfig) UnmarshalYAML(value *yaml.Node) error {
 	// cortex/loki actually pass the AM config as a string.
 	type cortexGettableUserConfig struct {
@@ -614,6 +625,27 @@ func (c *GettableUserConfig) MarshalJSON() ([]byte, error) {
 	tmp := plain{
 		TemplateFiles:      c.TemplateFiles,
 		AlertmanagerConfig: c.amSimple,
+	}
+
+	return json.Marshal(tmp)
+}
+
+// MarshalJSON is used to prevent the items in the GettableUserConfigs slice
+// from being treated as pointers when marshaling into JSON.
+func (c GettableUserConfigs) MarshalJSON() ([]byte, error) {
+	type plainConfig struct {
+		TemplateFiles           map[string]string            `yaml:"template_files" json:"template_files"`
+		TemplateFilesProvenance map[string]models.Provenance `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
+		AlertmanagerConfig      GettableApiAlertingConfig    `yaml:"alertmanager_config" json:"alertmanager_config"`
+	}
+
+	tmp := []plainConfig{}
+	for _, config := range c {
+		tmp = append(tmp, plainConfig{
+			TemplateFiles:           config.TemplateFiles,
+			TemplateFilesProvenance: config.TemplateFileProvenances,
+			AlertmanagerConfig:      config.AlertmanagerConfig,
+		})
 	}
 
 	return json.Marshal(tmp)

@@ -49,7 +49,7 @@ func TestAuthorize(t *testing.T) {
 		}
 		paths[p] = methods
 	}
-	require.Len(t, paths, 40)
+	require.Len(t, paths, 41)
 
 	ac := acmock.New()
 	api := &API{AccessControl: ac}

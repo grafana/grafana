@@ -12,7 +12,7 @@ type AlertConfiguration struct {
 	CreatedAt                 int64 `xorm:"created"`
 	Default                   bool
 	OrgID                     int64 `xorm:"org_id"`
-	IsValid                   bool  `xorm:"is_valid"`
+	IsValid                   bool  `xorm:"successfully_applied"`
 }
 
 // GetLatestAlertmanagerConfigurationQuery is the query to get the latest alertmanager configuration.
@@ -21,9 +21,11 @@ type GetLatestAlertmanagerConfigurationQuery struct {
 	Result *AlertConfiguration
 }
 
-// GetAllValidAlertmanagerConfigurationsQuery is the query to get all valid configurations for a given organization.
-type GetAllValidAlertmanagerConfigurationsQuery struct {
+// GetSuccessfullyAppliedAlertmanagerConfigurationsQuery is the query to get
+// all the configurations that were successfully applied in the past for a given organization.
+type GetSuccessfullyAppliedAlertmanagerConfigurationsQuery struct {
 	OrgID  int64
+	Limit  int
 	Result []*AlertConfiguration
 }
 

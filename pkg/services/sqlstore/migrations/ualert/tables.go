@@ -344,8 +344,8 @@ func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {
 		Name: "configuration_hash", Type: migrator.DB_Varchar, Nullable: false, Default: "'not-yet-calculated'", Length: 32,
 	}))
 
-	mg.AddMigration("add is_valid column to alert_configuration", migrator.NewAddColumnMigration(alertConfiguration, &migrator.Column{
-		Name: "is_valid", Type: migrator.DB_Bool, Nullable: false, Default: "0",
+	mg.AddMigration("add successfully_applied column to alert_configuration", migrator.NewAddColumnMigration(alertConfiguration, &migrator.Column{
+		Name: "successfully_applied", Type: migrator.DB_Bool, Nullable: false, Default: "0",
 	}))
 }
 
