@@ -104,13 +104,13 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
 
   const updateSplitSize = (size: number) => {
     const evenSplitWidth = window.innerWidth / 2;
-    const areBothSimilar = inRange(rightPaneWidth, evenSplitWidth - 100, evenSplitWidth + 100);
+    const areBothSimilar = inRange(size, evenSplitWidth - 100, evenSplitWidth + 100);
     if (areBothSimilar) {
       dispatch(splitSizeUpdateAction({ largerExploreId: undefined }));
     } else {
       dispatch(
         splitSizeUpdateAction({
-          largerExploreId: rightPaneWidth > evenSplitWidth ? ExploreId.right : ExploreId.left,
+          largerExploreId: size > evenSplitWidth ? ExploreId.right : ExploreId.left,
         })
       );
     }
