@@ -10,10 +10,9 @@ import (
 	"testing"
 
 	"cuelang.org/go/cue/errors"
-	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/coremodel/dashboard"
 	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/kinds/dashboard"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDevenvDashboardValidity(t *testing.T) {
@@ -22,7 +21,7 @@ func TestDevenvDashboardValidity(t *testing.T) {
 
 	m, err := themaTestableDashboards(os.DirFS(path))
 	require.NoError(t, err)
-	cm, err := dashboard.New(cuectx.GrafanaThemaRuntime())
+	dk, err := dashboard.NewKind(cuectx.GrafanaThemaRuntime())
 	require.NoError(t, err)
 
 	for path, b := range m {
@@ -31,7 +30,7 @@ func TestDevenvDashboardValidity(t *testing.T) {
 			cv, err := cuectx.JSONtoCUE(path, b)
 			require.NoError(t, err, "error while decoding dashboard JSON into a CUE value")
 
-			_, err = cm.CurrentSchema().Validate(cv)
+			_, err = dk.ConvergentLineage().TypedSchema().Validate(cv)
 			if err != nil {
 				// Testify trims errors to short length. We want the full text
 				errstr := errors.Details(err, nil)

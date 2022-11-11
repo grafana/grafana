@@ -1,12 +1,9 @@
-package playlist
+package kind
 
-import (
-	"github.com/grafana/thema"
-)
+name: "Playlist"
+maturity: "merged"
 
-thema.#Lineage
-name: "playlist"
-seqs: [
+lineage: seqs: [
 	{
 		schemas: [
 			{//0.0
