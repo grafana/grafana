@@ -12802,9 +12802,9 @@ __metadata:
   linkType: hard
 
 "@xmldom/xmldom@npm:^0.8.3":
-  version: 0.8.3
-  resolution: "@xmldom/xmldom@npm:0.8.3"
-  checksum: 087303060fc794f0ec8c0e9031362c1ae56eb1cf06b291cc178602462c072fb9f84657a430ae9c8c1b4c0d33549259e89ed14ebc86ca1a696f253bdd7f0dffcf
+  version: 0.8.6
+  resolution: "@xmldom/xmldom@npm:0.8.6"
+  checksum: f17ac6d99a971a6aeb831fcfc5cfa86f367664e45815046548814b2deb17ccc421fef4e0d5ba29e66179d112b552f6caa5680064f8e7bd8a389b788a60404c8e
   languageName: node
   linkType: hard
 
@@ -21719,7 +21719,7 @@ __metadata:
     mousetrap: 1.6.5
     mousetrap-global-bind: 1.1.0
     moveable: 0.37.1
-    msw: 0.47.4
+    msw: 0.48.1
     mutationobserver-shim: 0.3.7
     ngtemplate-loader: 2.1.0
     node-notifier: 10.0.1
@@ -27958,9 +27958,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"msw@npm:0.47.4":
-  version: 0.47.4
-  resolution: "msw@npm:0.47.4"
+"msw@npm:0.48.1":
+  version: 0.48.1
+  resolution: "msw@npm:0.48.1"
   dependencies:
     "@mswjs/cookies": ^0.2.2
     "@mswjs/interceptors": ^0.17.5
@@ -27989,7 +27989,7 @@ __metadata:
       optional: true
   bin:
     msw: cli/index.js
-  checksum: 10ff632641d40384d6622abf4df6399e4ae649db0f676b5d1ee2d0a515ec96f33abe9d4fecba08cdba4b2e43255af419da9eefc020d40a7e10669d0906457197
+  checksum: fbe255fd7d97058663f4807c570dadd3c83948f3d2675c13932ca22346a2c2a15c4e3681af7408ca96efba258223b933ad2aaed3c881a354118dbd8174d697ba
   languageName: node
   linkType: hard
 
