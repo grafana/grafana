@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -55,9 +56,9 @@ func TestImportDashboardService(t *testing.T) {
 			},
 		}
 		folderService := &foldertest.FakeService{
-			ExpectedFolder: &models.Folder{
-				Id:  5,
-				Uid: "123",
+			ExpectedFolder: &folder.Folder{
+				ID:  5,
+				UID: "123",
 			},
 		}
 
@@ -115,9 +116,9 @@ func TestImportDashboardService(t *testing.T) {
 		}
 		libraryPanelService := &libraryPanelServiceMock{}
 		folderService := &foldertest.FakeService{
-			ExpectedFolder: &models.Folder{
-				Id:  5,
-				Uid: "123",
+			ExpectedFolder: &folder.Folder{
+				ID:  5,
+				UID: "123",
 			},
 		}
 		s := &ImportDashboardService{

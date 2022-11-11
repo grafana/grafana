@@ -8,6 +8,7 @@ import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { AsyncSelect, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
+import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
@@ -80,14 +81,6 @@ export function MetricSelect({ datasource, query, onChange, onGetMetrics, labels
     return `label_values({__name__=~".*${queryString}"${
       labelsFilters ? formatLabelFilters(labelsFilters).join() : ''
     }},__name__)`;
-  };
-
-  /**
-   * There aren't any spaces in the metric names, so let's introduce a wildcard into the regex for each space to better facilitate a fuzzy search
-   */
-  const regexifyLabelValuesQueryString = (query: string) => {
-    const queryArray = query.split(' ');
-    return queryArray.map((query) => `${query}.*`).join('');
   };
 
   /**

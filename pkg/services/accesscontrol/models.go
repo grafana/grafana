@@ -165,7 +165,7 @@ func (r RoleDTO) MarshalJSON() ([]byte, error) {
 func fallbackDisplayName(rName string) string {
 	// removing prefix for fixed roles
 	rNameWithoutPrefix := strings.Replace(rName, FixedRolePrefix, "", 1)
-	return strings.TrimSpace(strings.Replace(rNameWithoutPrefix, ":", " ", -1))
+	return strings.TrimSpace(strings.ReplaceAll(rNameWithoutPrefix, ":", " "))
 }
 
 type TeamRole struct {

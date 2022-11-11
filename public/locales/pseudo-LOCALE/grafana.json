@@ -417,6 +417,10 @@
       "cancel-button": "Cäŉčęľ",
       "select-time": "Ŝęľęčŧ ä ŧįmę řäŉģę"
     },
+    "content": {
+      "empty-recent-list": "<0><0>Ĩŧ ľőőĸş ľįĸę yőū ĥävęŉ&äpőş;ŧ ūşęđ ŧĥįş ŧįmę pįčĸęř þęƒőřę. Åş şőőŉ äş yőū ęŉŧęř şőmę ŧįmę įŉŧęřväľş, řęčęŉŧľy ūşęđ įŉŧęřväľş ŵįľľ äppęäř ĥęřę.</0></0><1><0>Ŗęäđ ŧĥę đőčūmęŉŧäŧįőŉ</0><1> ŧő ƒįŉđ őūŧ mőřę äþőūŧ ĥőŵ ŧő ęŉŧęř čūşŧőm ŧįmę řäŉģęş.</1></1>",
+      "filter-placeholder": "Ŝęäřčĥ qūįčĸ řäŉģęş"
+    },
     "footer": {
       "change-settings-button": "Cĥäŉģę ŧįmę şęŧŧįŉģş",
       "fiscal-year-option": "Fįşčäľ yęäř",
@@ -437,6 +441,10 @@
       "default-title": "Ŧįmę řäŉģęş",
       "example-title": "Ēχämpľę ŧįmę řäŉģęş",
       "specify": "Ŝpęčįƒy ŧįmę řäŉģę <1></1>"
+    },
+    "zone": {
+      "select-aria-label": "Ŧįmę žőŉę pįčĸęř",
+      "select-search-input": "Ŧypę ŧő şęäřčĥ (čőūŉŧřy, čįŧy, äþþřęvįäŧįőŉ)"
     }
   },
   "user-orgs": {

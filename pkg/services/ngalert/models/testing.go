@@ -146,6 +146,18 @@ func WithNamespace(namespace *models2.Folder) AlertRuleMutator {
 	}
 }
 
+func WithInterval(interval time.Duration) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.IntervalSeconds = int64(interval.Seconds())
+	}
+}
+
+func WithTitle(title string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Title = title
+	}
+}
+
 func GenerateAlertLabels(count int, prefix string) data.Labels {
 	labels := make(data.Labels, count)
 	for i := 0; i < count; i++ {
