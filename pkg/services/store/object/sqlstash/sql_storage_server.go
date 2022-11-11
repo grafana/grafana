@@ -291,6 +291,8 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 	}
 
 	timestamp := time.Now().UnixMilli()
+	createdAt := r.CreatedAt
+	createdBy := r.CreatedBy
 	updatedAt := r.UpdatedAt
 	updatedBy := r.UpdatedBy
 	if updatedBy == "" {
@@ -329,8 +331,17 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 		var versionInfo *object.ObjectVersionInfo
 		isUpdate := false
 		if r.ClearHistory {
-			// TODO: DELETE everything
-			// TODO: get created+created_by values?
+			// Optionally keep the original creation time information
+			if createdAt < 1000 || createdBy == "" {
+				err = s.fillCreationInfo(ctx, tx, path, &createdAt, &createdBy)
+				if err != nil {
+					return err
+				}
+			}
+			_, err = doDelete(ctx, tx, path)
+			if err != nil {
+				return err
+			}
 			versionInfo = &object.ObjectVersionInfo{}
 		} else {
 			versionInfo, err = s.selectForUpdate(ctx, tx, path)
@@ -451,9 +462,6 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 			return err
 		}
 
-		// Insert the new row
-		createdAt := r.CreatedAt
-		createdBy := r.CreatedBy
 		if createdAt < 1000 {
 			createdAt = updatedAt
 		}
@@ -479,6 +487,28 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 		rsp.Status = object.WriteObjectResponse_ERROR
 	}
 	return rsp, err
+}
+
+func (s *sqlObjectServer) fillCreationInfo(ctx context.Context, tx *session.SessionTx, path string, createdAt *int64, createdBy *string) error {
+	if *createdAt > 1000 {
+		ignore := int64(0)
+		createdAt = &ignore
+	}
+	if *createdBy == "" {
+		ignore := ""
+		createdBy = &ignore
+	}
+
+	rows, err := tx.Query(ctx, "SELECT created_at,created_by FROM object WHERE path=?", path)
+	if err == nil {
+		if rows.Next() {
+			err = rows.Scan(&createdAt, &createdBy)
+		}
+		if err == nil {
+			err = rows.Close()
+		}
+	}
+	return err
 }
 
 func (s *sqlObjectServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, path string) (*object.ObjectVersionInfo, error) {
@@ -528,25 +558,27 @@ func (s *sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequ
 
 	rsp := &object.DeleteObjectResponse{}
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		results, err := tx.Exec(ctx, "DELETE FROM object WHERE path=?", path)
-		if err != nil {
-			return err
-		}
-		rows, err := results.RowsAffected()
-		if err != nil {
-			return err
-		}
-		if rows > 0 {
-			rsp.OK = true
-		}
-
-		// TODO: keep history? would need current version bump, and the "write" would have to get from history
-		_, _ = tx.Exec(ctx, "DELETE FROM object_history WHERE path=?", path)
-		_, _ = tx.Exec(ctx, "DELETE FROM object_labels WHERE path=?", path)
-		_, _ = tx.Exec(ctx, "DELETE FROM object_ref WHERE path=?", path)
-		return nil
+		rsp.OK, err = doDelete(ctx, tx, path)
+		return err
 	})
 	return rsp, err
+}
+
+func doDelete(ctx context.Context, tx *session.SessionTx, path string) (bool, error) {
+	results, err := tx.Exec(ctx, "DELETE FROM object WHERE path=?", path)
+	if err != nil {
+		return false, err
+	}
+	rows, err := results.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	// TODO: keep history? would need current version bump, and the "write" would have to get from history
+	_, _ = tx.Exec(ctx, "DELETE FROM object_history WHERE path=?", path)
+	_, _ = tx.Exec(ctx, "DELETE FROM object_labels WHERE path=?", path)
+	_, _ = tx.Exec(ctx, "DELETE FROM object_ref WHERE path=?", path)
+	return rows > 0, err
 }
 
 func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
