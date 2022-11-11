@@ -75,6 +75,32 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 	if err != nil {
 		return nil, err
 	}
+
+	// If types exist in URL, make sure they match the request
+	params := reqDTO.HTTPRequest.URL.Query()
+	uids, ok := params["uid"]
+	if ok {
+		if len(uids) != len(parsedReq.parsedQueries) {
+			return nil, ErrQueryParamMismatch
+		}
+		for _, t := range uids {
+			if parsedReq.parsedQueries[t] == nil {
+				return nil, ErrQueryParamMismatch
+			}
+		}
+	}
+	types, ok := params["type"]
+	if ok {
+		if len(types) != len(parsedReq.dsTypes) {
+			return nil, ErrQueryParamMismatch
+		}
+		for _, t := range types {
+			if !parsedReq.dsTypes[t] {
+				return nil, ErrQueryParamMismatch
+			}
+		}
+	}
+
 	// If there are expressions, handle them and return
 	if parsedReq.hasExpression {
 		return s.handleExpressions(ctx, user, parsedReq)
@@ -233,6 +259,7 @@ type parsedQuery struct {
 type parsedRequest struct {
 	hasExpression bool
 	parsedQueries map[string][]parsedQuery
+	dsTypes       map[string]bool
 	httpRequest   *http.Request
 }
 
@@ -254,6 +281,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 	req := &parsedRequest{
 		hasExpression: false,
 		parsedQueries: make(map[string][]parsedQuery),
+		dsTypes:       make(map[string]bool),
 	}
 
 	// Parse the queries and store them by datasource
@@ -270,6 +298,8 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 		datasourcesByUid[ds.Uid] = ds
 		if expr.IsDataSource(ds.Uid) {
 			req.hasExpression = true
+		} else {
+			req.dsTypes[ds.Type] = true
 		}
 
 		if _, ok := req.parsedQueries[ds.Uid]; !ok {
