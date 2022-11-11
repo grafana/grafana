@@ -36,6 +36,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       flex: 1 1 auto;
       flex-direction: column;
+      overflow: scroll;
       & + & {
         border-left: 1px dotted ${theme.colors.border.medium};
       }
@@ -142,9 +143,8 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   render() {
     const { theme, exploreId, initialized, eventBus } = this.props;
     const styles = getStyles(theme);
-    const exploreClass = cx(styles.explore);
     return (
-      <div className={exploreClass} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
+      <div className={styles.explore} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
         {initialized && <Explore exploreId={exploreId} eventBus={eventBus} />}
       </div>
     );

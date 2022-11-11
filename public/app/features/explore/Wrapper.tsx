@@ -107,9 +107,16 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
       <div className={styles.exploreWrapper}>
         <SplitPaneWrapper
           splitOrientation="vertical"
+          minSize={200}
           paneSize={rightPaneWidth}
           primary="second"
           splitVisible={hasSplit}
+          paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column', overflowY: 'scroll' }}
+          onDragFinished={(size) => {
+            if (size) {
+              setRightPaneWidth(size);
+            }
+          }}
         >
           <ErrorBoundaryAlert style="page">
             <ExplorePaneContainer exploreId={ExploreId.left} urlQuery={queryParams.left} eventBus={eventBus.current} />

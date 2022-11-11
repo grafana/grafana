@@ -9,9 +9,11 @@ interface Props {
   splitOrientation?: Split;
   paneSize: number;
   splitVisible?: boolean;
+  minSize?: number;
   maxSize?: number;
   primary?: 'first' | 'second';
   onDragFinished?: (size?: number) => void;
+  paneStyle?: React.CSSProperties;
   secondaryPaneStyle?: React.CSSProperties;
 }
 
@@ -48,7 +50,16 @@ export class SplitPaneWrapper extends PureComponent<Props> {
   };
 
   render() {
-    const { paneSize, splitOrientation, maxSize, primary, secondaryPaneStyle, splitVisible = true } = this.props;
+    const {
+      paneSize,
+      splitOrientation,
+      maxSize,
+      minSize,
+      primary,
+      paneStyle,
+      secondaryPaneStyle,
+      splitVisible = true,
+    } = this.props;
 
     // Limit options pane width to 90% of screen.
     const styles = getStyles(config.theme2, splitVisible);
@@ -62,12 +73,14 @@ export class SplitPaneWrapper extends PureComponent<Props> {
     return (
       <SplitPane
         split={splitOrientation}
+        minSize={minSize}
         maxSize={maxSize}
         size={splitVisible ? paneSizePx : 0}
         primary={splitVisible ? primary : 'second'}
         resizerClassName={splitOrientation === 'horizontal' ? styles.resizerH : styles.resizerV}
         onDragStarted={() => this.onDragStarted()}
         onDragFinished={(size) => this.onDragFinished(size)}
+        paneStyle={paneStyle}
         pane2Style={secondaryPaneStyle}
       >
         {this.props.children}
