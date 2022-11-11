@@ -4,12 +4,7 @@ import (
 	"net"
 	"net/http"
 	"sort"
-
-	"github.com/grafana/grafana/pkg/services/user"
 )
-
-// UserHeaderName name of the header used when forwarding the Grafana user login.
-const UserHeaderName = "X-Grafana-User"
 
 // PrepareProxyRequest prepares a request for being proxied.
 // Removes X-Forwarded-Host, X-Forwarded-Port, X-Forwarded-Proto headers.
@@ -65,12 +60,4 @@ func ClearCookieHeader(req *http.Request, keepCookiesNames []string, skipCookies
 // Sets Content-Security-Policy: sandbox
 func SetProxyResponseHeaders(header http.Header) {
 	header.Set("Content-Security-Policy", "sandbox")
-}
-
-// ApplyUserHeader Set the X-Grafana-User header if needed (and remove if not).
-func ApplyUserHeader(sendUserHeader bool, req *http.Request, user *user.SignedInUser) {
-	req.Header.Del(UserHeaderName)
-	if sendUserHeader && !user.IsAnonymous {
-		req.Header.Set(UserHeaderName, user.Login)
-	}
 }
