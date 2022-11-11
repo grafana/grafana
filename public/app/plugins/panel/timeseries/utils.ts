@@ -167,7 +167,6 @@ export function regenerateLinksSupplier(
       }
     }
 
-    console.log(alignedDataFrame, tempFields);
     const tempFrame: DataFrame = {
       fields: [...alignedDataFrame.fields, ...tempFields],
       length: alignedDataFrame.fields.length + tempFields.length,
