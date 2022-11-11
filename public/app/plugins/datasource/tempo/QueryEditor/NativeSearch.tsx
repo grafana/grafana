@@ -168,7 +168,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       });
     },
     [onChange, query]
-  ); // eslint-disable-line
+  );
 
   const templateSrv: TemplateSrv = getTemplateSrv();
 
