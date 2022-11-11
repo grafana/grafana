@@ -139,12 +139,6 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 		if dashboards := root.FindById(NavIDDashboards); dashboards != nil {
 			dashboards.Id = "dashboards/browse"
 		}
-
-		if monitoring := root.FindById(NavIDMonitoring); monitoring != nil {
-			if synthetic := FindById(monitoring.Children, "plugin-page-grafana-synthetic-monitoring-app"); synthetic != nil {
-				synthetic.Text = "Synthetics"
-			}
-		}
 	}
 
 	// Remove top level cfg / administration node if it has no children (needs to be after topnav new info archicture logic above that moves server admin into it)
