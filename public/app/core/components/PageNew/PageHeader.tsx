@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
@@ -21,7 +21,17 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle }: Pr
   const sub = subTitle ?? getNavSubTitle(navItem.id) ?? navItem.subTitle;
 
   const title = getNavTitle(navItem.id) ?? navItem.text;
-  const titleElement = renderTitle ? renderTitle(title) : <h1 className={styles.pageTitle}>{title}</h1>;
+  const titleElement = renderTitle ? (
+    renderTitle(title)
+  ) : (
+    <h1
+      className={cx(styles.pageTitle, {
+        [styles.titleWithoutSub]: !sub,
+      })}
+    >
+      {title}
+    </h1>
+  );
 
   return (
     <div className={styles.pageHeader}>
@@ -76,6 +86,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     pageTitle: css({
       display: 'flex',
       marginBottom: 0,
+    }),
+    titleWithoutSub: css({
+      marginBottom: theme.spacing(3),
     }),
     subTitle: css({
       marginBottom: theme.spacing(2),
