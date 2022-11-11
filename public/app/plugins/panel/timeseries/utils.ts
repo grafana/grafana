@@ -167,9 +167,10 @@ export function regenerateLinksSupplier(
       }
     }
 
+    console.log(alignedDataFrame, tempFields);
     const tempFrame: DataFrame = {
       fields: [...alignedDataFrame.fields, ...tempFields],
-      length: alignedDataFrame.length + tempFields.length,
+      length: alignedDataFrame.fields.length + tempFields.length,
     };
 
     field.getLinks = getLinksSupplier(tempFrame, field, field.state!.scopedVars!, replaceVariables, timeZone);
