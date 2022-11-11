@@ -16,7 +16,7 @@ export const variableOptions = [
   { label: 'Label values', value: QueryType.LabelValues },
   { label: 'Metrics', value: QueryType.MetricNames },
   { label: 'Query result', value: QueryType.VarQueryResult },
-  { label: 'Match[] series', value: QueryType.SeriesQuery },
+  { label: 'Series Query', value: QueryType.SeriesQuery },
 ];
 
 export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions, PromVariableQuery>;
@@ -143,7 +143,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
           onBlur={handleBlur}
           value={exprType}
           options={variableOptions}
-          width={16}
+          width={25}
         />
       </InlineField>
       {exprType === QueryType.LabelValues && (
@@ -155,7 +155,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
               onBlur={handleBlur}
               value={label}
               options={labelOptions}
-              width={16}
+              width={25}
               allowCustomValue
             />
           </InlineField>
@@ -177,7 +177,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
                 value={metric}
                 onChange={onMetricChange}
                 onBlur={handleBlur}
-                width={22}
+                width={25}
               />
             </InlineField>
           )}
@@ -197,7 +197,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
               value={metric}
               onChange={onMetricChange}
               onBlur={handleBlur}
-              width={22}
+              width={25}
             />
           </InlineField>
         </>
@@ -207,7 +207,11 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
           <InlineField
             label="Query Result"
             labelWidth={20}
-            tooltip={<div>Returns a list of Prometheus query result for the query.</div>}
+            tooltip={
+              <div>
+                Returns a list of Prometheus query results for the query. This can include Prometheus functions.
+              </div>
+            }
           >
             <Input
               type="text"
@@ -216,7 +220,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
               value={varQuery}
               onChange={onVarQueryChange}
               onBlur={handleBlur}
-              width={22}
+              width={25}
             />
           </InlineField>
         </>
@@ -240,7 +244,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
               value={seriesQuery}
               onChange={onSeriesQueryChange}
               onBlur={handleBlur}
-              width={22}
+              width={25}
             />
           </InlineField>
         </>
