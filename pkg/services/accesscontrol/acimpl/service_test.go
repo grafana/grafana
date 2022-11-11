@@ -323,7 +323,8 @@ func TestService_RegisterFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Name:        "Tester",
+						Name:        accesscontrol.PluginRolePrefix + "test-app:tester",
+						DisplayName: "Tester",
 						Permissions: []accesscontrol.Permission{{Action: "test-app:test"}},
 					},
 					Grants: []string{"Editor"},
