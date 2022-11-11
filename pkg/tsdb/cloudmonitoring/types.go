@@ -64,10 +64,10 @@ type (
 	// Internal structs. Include computed values
 	// cloudMonitoringTimeSeriesList is used to build time series with a filter
 	cloudMonitoringTimeSeriesList struct {
-		refID   string
-		aliasBy string
-		logger  log.Logger
-		q       *timeSeriesList
+		refID      string
+		aliasBy    string
+		logger     log.Logger
+		parameters *timeSeriesList
 		// TODO: Merge SloQuery into TimeSeriesList
 		sloQ *sloQuery
 		// Processed properties
@@ -75,10 +75,10 @@ type (
 	}
 	// cloudMonitoringTimeSeriesQuery is used to build MQL queries
 	cloudMonitoringTimeSeriesQuery struct {
-		refID   string
-		aliasBy string
-		logger  log.Logger
-		q       *timeSeriesQuery
+		refID      string
+		aliasBy    string
+		logger     log.Logger
+		parameters *timeSeriesQuery
 		// Processed properties
 		timeRange  backend.TimeRange
 		IntervalMS int64

@@ -24,7 +24,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 		assert.Equal(t, 1, len(data.TimeSeries))
 
 		res := &backend.DataResponse{}
-		query := &cloudMonitoringTimeSeriesList{params: url.Values{}, q: &timeSeriesList{}}
+		query := &cloudMonitoringTimeSeriesList{params: url.Values{}, parameters: &timeSeriesList{}}
 		err = query.parseResponse(res, data, "")
 		require.NoError(t, err)
 		frames := res.Frames
@@ -47,7 +47,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 3, len(data.TimeSeries))
 		res := &backend.DataResponse{}
-		query := &cloudMonitoringTimeSeriesList{params: url.Values{}, q: &timeSeriesList{}}
+		query := &cloudMonitoringTimeSeriesList{params: url.Values{}, parameters: &timeSeriesList{}}
 		err = query.parseResponse(res, data, "")
 		require.NoError(t, err)
 
@@ -87,7 +87,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 3, len(data.TimeSeries))
 		res := &backend.DataResponse{}
-		query := &cloudMonitoringTimeSeriesList{params: url.Values{}, q: &timeSeriesList{GroupBys: []string{
+		query := &cloudMonitoringTimeSeriesList{params: url.Values{}, parameters: &timeSeriesList{GroupBys: []string{
 			"metric.label.instance_name", "resource.label.zone",
 		}}}
 		err = query.parseResponse(res, data, "")
@@ -110,7 +110,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 		t.Run("and the alias pattern is for metric type, a metric label and a resource label", func(t *testing.T) {
 			query := &cloudMonitoringTimeSeriesList{
 				params: url.Values{},
-				q: &timeSeriesList{
+				parameters: &timeSeriesList{
 					GroupBys: []string{"metric.label.instance_name", "resource.label.zone"},
 				},
 				aliasBy: "{{metric.type}} - {{metric.label.instance_name}} - {{resource.label.zone}}",
@@ -128,9 +128,9 @@ func TestTimeSeriesFilter(t *testing.T) {
 
 		t.Run("and the alias pattern is for metric name", func(t *testing.T) {
 			query := &cloudMonitoringTimeSeriesList{
-				params:  url.Values{},
-				q:       &timeSeriesList{GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}},
-				aliasBy: "metric {{metric.name}} service {{metric.service}}",
+				params:     url.Values{},
+				parameters: &timeSeriesList{GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}},
+				aliasBy:    "metric {{metric.name}} service {{metric.service}}",
 			}
 			err = query.parseResponse(res, data, "")
 			require.NoError(t, err)
@@ -150,9 +150,9 @@ func TestTimeSeriesFilter(t *testing.T) {
 		assert.Equal(t, 1, len(data.TimeSeries))
 		res := &backend.DataResponse{}
 		query := &cloudMonitoringTimeSeriesList{
-			params:  url.Values{},
-			q:       &timeSeriesList{},
-			aliasBy: "{{bucket}}",
+			params:     url.Values{},
+			parameters: &timeSeriesList{},
+			aliasBy:    "{{bucket}}",
 		}
 		err = query.parseResponse(res, data, "")
 		require.NoError(t, err)
@@ -195,9 +195,9 @@ func TestTimeSeriesFilter(t *testing.T) {
 		assert.Equal(t, 1, len(data.TimeSeries))
 		res := &backend.DataResponse{}
 		query := &cloudMonitoringTimeSeriesList{
-			params:  url.Values{},
-			q:       &timeSeriesList{},
-			aliasBy: "{{bucket}}",
+			params:     url.Values{},
+			parameters: &timeSeriesList{},
+			aliasBy:    "{{bucket}}",
 		}
 		err = query.parseResponse(res, data, "")
 		require.NoError(t, err)
@@ -233,9 +233,9 @@ func TestTimeSeriesFilter(t *testing.T) {
 		assert.Equal(t, 3, len(data.TimeSeries))
 		res := &backend.DataResponse{}
 		query := &cloudMonitoringTimeSeriesList{
-			params:  url.Values{},
-			q:       &timeSeriesList{},
-			aliasBy: "{{bucket}}",
+			params:     url.Values{},
+			parameters: &timeSeriesList{},
+			aliasBy:    "{{bucket}}",
 		}
 		err = query.parseResponse(res, data, "")
 		require.NoError(t, err)
@@ -273,9 +273,9 @@ func TestTimeSeriesFilter(t *testing.T) {
 		t.Run("and systemlabel contains key with array of string", func(t *testing.T) {
 			res := &backend.DataResponse{}
 			query := &cloudMonitoringTimeSeriesList{
-				params:  url.Values{},
-				q:       &timeSeriesList{},
-				aliasBy: "{{metadata.system_labels.test}}",
+				params:     url.Values{},
+				parameters: &timeSeriesList{},
+				aliasBy:    "{{metadata.system_labels.test}}",
 			}
 			err = query.parseResponse(res, data, "")
 			require.NoError(t, err)
@@ -291,9 +291,9 @@ func TestTimeSeriesFilter(t *testing.T) {
 		t.Run("and systemlabel contains key with array of string2", func(t *testing.T) {
 			res := &backend.DataResponse{}
 			query := &cloudMonitoringTimeSeriesList{
-				params:  url.Values{},
-				q:       &timeSeriesList{},
-				aliasBy: "{{metadata.system_labels.test2}}",
+				params:     url.Values{},
+				parameters: &timeSeriesList{},
+				aliasBy:    "{{metadata.system_labels.test2}}",
 			}
 			err = query.parseResponse(res, data, "")
 			require.NoError(t, err)
@@ -313,7 +313,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 			res := &backend.DataResponse{}
 			query := &cloudMonitoringTimeSeriesList{
 				params: url.Values{},
-				q: &timeSeriesList{
+				parameters: &timeSeriesList{
 					ProjectName: "test-proj",
 				},
 				aliasBy: "{{project}} - {{service}} - {{slo}} - {{selector}}",
@@ -340,7 +340,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 			res := &backend.DataResponse{}
 			query := &cloudMonitoringTimeSeriesList{
 				params: url.Values{},
-				q: &timeSeriesList{
+				parameters: &timeSeriesList{
 					ProjectName: "test-proj",
 				},
 				sloQ: &sloQuery{
@@ -363,7 +363,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 1, len(data.TimeSeries))
 			res := &backend.DataResponse{}
-			query := &cloudMonitoringTimeSeriesList{params: url.Values{}, q: &timeSeriesList{}}
+			query := &cloudMonitoringTimeSeriesList{params: url.Values{}, parameters: &timeSeriesList{}}
 			err = query.parseResponse(res, data, "")
 			require.NoError(t, err)
 			frames := res.Frames
@@ -376,7 +376,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 3, len(data.TimeSeries))
 			res := &backend.DataResponse{}
-			query := &cloudMonitoringTimeSeriesList{params: url.Values{}, q: &timeSeriesList{}}
+			query := &cloudMonitoringTimeSeriesList{params: url.Values{}, parameters: &timeSeriesList{}}
 			err = query.parseResponse(res, data, "")
 			require.NoError(t, err)
 			frames := res.Frames
@@ -396,7 +396,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 
 			res := &backend.DataResponse{}
 			query := &cloudMonitoringTimeSeriesQuery{
-				q: &timeSeriesQuery{
+				parameters: &timeSeriesQuery{
 					ProjectName: "test-proj",
 					Query:       "test-query",
 				},
@@ -418,7 +418,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 3, len(data.TimeSeries))
 		res := &backend.DataResponse{}
-		query := &cloudMonitoringTimeSeriesList{params: url.Values{}, q: &timeSeriesList{}}
+		query := &cloudMonitoringTimeSeriesList{params: url.Values{}, parameters: &timeSeriesList{}}
 		err = query.parseResponse(res, data, "")
 		require.NoError(t, err)
 		frames := res.Frames
@@ -436,7 +436,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 		res := &backend.DataResponse{}
 		query := &cloudMonitoringTimeSeriesList{params: url.Values{
 			"aggregation.alignmentPeriod": []string{"+60s"},
-		}, q: &timeSeriesList{}}
+		}, parameters: &timeSeriesList{}}
 		err = query.parseResponse(res, data, "")
 		require.NoError(t, err)
 		frames := res.Frames
@@ -451,7 +451,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 			assert.Equal(t, 1, len(data.TimeSeries))
 
 			res := &backend.DataResponse{}
-			require.NoError(t, (&cloudMonitoringTimeSeriesList{q: &timeSeriesList{GroupBys: []string{"test_group_by"}}}).parseResponse(res, data, "test_query"))
+			require.NoError(t, (&cloudMonitoringTimeSeriesList{parameters: &timeSeriesList{GroupBys: []string{"test_group_by"}}}).parseResponse(res, data, "test_query"))
 
 			require.NotNil(t, res.Frames[0].Meta)
 			assert.Equal(t, sdkdata.FrameMeta{
@@ -474,7 +474,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 			assert.Equal(t, 1, len(data.TimeSeries))
 
 			res := &backend.DataResponse{}
-			require.NoError(t, (&cloudMonitoringTimeSeriesList{q: &timeSeriesList{GroupBys: []string{"test_group_by"}}}).parseResponse(res, data, "test_query"))
+			require.NoError(t, (&cloudMonitoringTimeSeriesList{parameters: &timeSeriesList{GroupBys: []string{"test_group_by"}}}).parseResponse(res, data, "test_query"))
 
 			require.NotNil(t, res.Frames[0].Meta)
 			assert.Equal(t, sdkdata.FrameMeta{
@@ -497,7 +497,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 			assert.Equal(t, 1, len(data.TimeSeries))
 
 			res := &backend.DataResponse{}
-			require.NoError(t, (&cloudMonitoringTimeSeriesList{q: &timeSeriesList{GroupBys: []string{"test_group_by"}}}).parseResponse(res, data, "test_query"))
+			require.NoError(t, (&cloudMonitoringTimeSeriesList{parameters: &timeSeriesList{GroupBys: []string{"test_group_by"}}}).parseResponse(res, data, "test_query"))
 
 			require.NotNil(t, res.Frames[0].Meta)
 			assert.Equal(t, sdkdata.FrameMeta{
@@ -521,7 +521,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 		assert.Equal(t, 1, len(data.TimeSeries))
 
 		res := &backend.DataResponse{}
-		query := &cloudMonitoringTimeSeriesList{params: url.Values{}, sloQ: &sloQuery{SloId: "yes"}, q: &timeSeriesList{}}
+		query := &cloudMonitoringTimeSeriesList{params: url.Values{}, sloQ: &sloQuery{SloId: "yes"}, parameters: &timeSeriesList{}}
 		err = query.parseResponse(res, data, "")
 		require.NoError(t, err)
 		frames := res.Frames

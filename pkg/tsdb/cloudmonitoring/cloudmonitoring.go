@@ -390,7 +390,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 				queryInterface = &cloudMonitoringTimeSeriesQuery{
 					refID:      query.RefID,
 					aliasBy:    q.AliasBy,
-					q:          q.TimeSeriesQuery,
+					parameters: q.TimeSeriesQuery,
 					IntervalMS: query.Interval.Milliseconds(),
 					timeRange:  req.Queries[0].TimeRange,
 				}
@@ -398,7 +398,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 				if q.TimeSeriesList.View == "" {
 					q.TimeSeriesList.View = "FULL"
 				}
-				cmtsf.q = q.TimeSeriesList
+				cmtsf.parameters = q.TimeSeriesList
 				params.Add("filter", buildFilterString(q.TimeSeriesList.MetricType, q.TimeSeriesList.Filters))
 				params.Add("view", q.TimeSeriesList.View)
 				setMetricAggParams(&params, q.TimeSeriesList, durationSeconds, query.Interval.Milliseconds())
@@ -408,7 +408,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			}
 		case sloQueryType:
 			cmtsf.sloQ = q.SloQuery
-			cmtsf.q = q.TimeSeriesList
+			cmtsf.parameters = q.TimeSeriesList
 			params.Add("filter", buildSLOFilterExpression(q.TimeSeriesList.ProjectName, q.SloQuery))
 			setSloAggParams(&params, q.SloQuery, q.TimeSeriesList.AlignmentPeriod, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmtsf
@@ -594,8 +594,8 @@ func formatLegendKeys(metricType string, defaultMetricName string, labels map[st
 			return []byte(val)
 		}
 
-		if metaPartName == "project" && query.q.ProjectName != "" {
-			return []byte(query.q.ProjectName)
+		if metaPartName == "project" && query.parameters.ProjectName != "" {
+			return []byte(query.parameters.ProjectName)
 		}
 
 		if metaPartName == "service" && query.sloQ.ServiceId != "" {

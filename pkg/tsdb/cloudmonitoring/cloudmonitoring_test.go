@@ -76,7 +76,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 		require.Len(t, queries, 1)
 		assert.Equal(t, "A", queries[0].refID)
-		assert.Equal(t, "foo", queries[0].q.Query)
+		assert.Equal(t, "foo", queries[0].parameters.Query)
 		assert.Equal(t, "testalias", queries[0].aliasBy)
 	})
 
@@ -585,7 +585,7 @@ func TestCloudMonitoring(t *testing.T) {
 			assert.Equal(t, "metric.type=\"a/metric/type\"", queries[0].params["filter"][0])
 			assert.Equal(t, "FULL", queries[0].params["view"][0])
 			assert.Equal(t, "testalias", queries[0].aliasBy)
-			assert.Equal(t, []string{"metric.label.group1", "metric.label.group2"}, queries[0].q.GroupBys)
+			assert.Equal(t, []string{"metric.label.group1", "metric.label.group2"}, queries[0].parameters.GroupBys)
 
 			// assign resource type to query parameters to be included in the deep link filter
 			// in the actual workflow this information comes from the response of the Monitoring API
@@ -624,8 +624,8 @@ func TestCloudMonitoring(t *testing.T) {
 			tqueries := getCloudMonitoringQueryFromInterface(t, qes)
 			assert.Equal(t, 1, len(tqueries))
 			assert.Equal(t, "A", tqueries[0].refID)
-			assert.Equal(t, "test-proj", tqueries[0].q.ProjectName)
-			assert.Equal(t, "test-query", tqueries[0].q.Query)
+			assert.Equal(t, "test-proj", tqueries[0].parameters.ProjectName)
+			assert.Equal(t, "test-query", tqueries[0].parameters.Query)
 			assert.Equal(t, "test-alias", tqueries[0].aliasBy)
 		})
 
