@@ -162,11 +162,6 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
       libraryTarget: 'amd',
       publicPath: '/',
     },
-
-    watchOptions: {
-      ignored: ['**/node_modules', '**/dist'],
-    },
-
     performance: { hints: false },
     externals: [
       'lodash',
