@@ -37,7 +37,9 @@ export function GeneralSettingsUnconnected({
   };
 
   const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
-    dashboard[event.currentTarget.name as 'title' | 'description'] = event.currentTarget.value;
+    if (event.currentTarget.name === 'title' || event.currentTarget.name === 'description') {
+      dashboard[event.currentTarget.name] = event.currentTarget.value;
+    }
   };
 
   const onTooltipChange = (graphTooltip: number) => {
