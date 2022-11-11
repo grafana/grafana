@@ -176,7 +176,7 @@
     "cypress": "9.5.1",
     "enzyme": "3.11.0",
     "enzyme-to-json": "3.6.2",
-    "esbuild": "^0.15.11",
+    "esbuild": "0.15.13",
     "esbuild-loader": "^2.20.0",
     "eslint": "8.24.0",
     "eslint-config-prettier": "8.5.0",
