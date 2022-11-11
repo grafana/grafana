@@ -166,7 +166,6 @@ func (c fakeRGTAClient) GetResourcesPages(in *resourcegroupstaggingapi.GetResour
 }
 
 type fakeCheckHealthClient struct {
-	cloudwatchiface.CloudWatchAPI
 	cloudwatchlogsiface.CloudWatchLogsAPI
 
 	listMetricsPages  func(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error

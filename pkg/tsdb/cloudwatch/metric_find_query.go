@@ -323,7 +323,9 @@ func (e *cloudWatchExecutor) handleGetLogGroups(pluginCtx backend.PluginContext,
 				input.LogGroupNamePrefix = aws.String(logGroupPattern)
 			}
 			if accountId != "all" {
-				input.AccountId = aws.String(accountId)
+				// TODO: accept more than one account id in search
+				accountIdentifiers := []string{accountId}
+				input.AccountIdentifiers = aws.StringSlice(accountIdentifiers)
 			}
 		}
 	}
