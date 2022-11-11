@@ -4,6 +4,7 @@ import React, { FC } from 'react';
 import { DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
 import { stylesFactory, useTheme2 } from '../../../themes';
+import { isCompactUrl } from '../../../utils/dataLinks';
 import { IconButton } from '../../IconButton/IconButton';
 import { HorizontalGroup, VerticalGroup } from '../../Layout/Layout';
 
@@ -25,11 +26,16 @@ export const DataLinksListItem: FC<DataLinksListItemProps> = ({ link, onEdit, on
   const hasTitle = title.trim() !== '';
   const hasUrl = url.trim() !== '';
 
+  const isCompactExploreUrl = isCompactUrl(url);
+
   return (
     <div className={styles.wrapper}>
       <VerticalGroup spacing="xs">
         <HorizontalGroup justify="space-between" align="flex-start" width="100%">
-          <div className={cx(styles.title, !hasTitle && styles.notConfigured)}>
+          <div
+            className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}
+            title={url}
+          >
             {hasTitle ? title : 'Data link title not provided'}
           </div>
           <HorizontalGroup>
@@ -37,7 +43,10 @@ export const DataLinksListItem: FC<DataLinksListItemProps> = ({ link, onEdit, on
             <IconButton name="times" onClick={onRemove} />
           </HorizontalGroup>
         </HorizontalGroup>
-        <div className={cx(styles.url, !hasUrl && styles.notConfigured)} title={url}>
+        <div
+          className={cx(styles.url, styles.notConfigured, isCompactExploreUrl && styles.errored)}
+          title={isCompactExploreUrl ? 'Explore data link is deprecated.' : url}
+        >
           {hasUrl ? url : 'Data link url not provided'}
         </div>
       </VerticalGroup>
@@ -53,6 +62,10 @@ const getDataLinkListItemStyles = stylesFactory((theme: GrafanaTheme2) => {
       &:last-child {
         margin-bottom: 0;
       }
+    `,
+    errored: css`
+      color: ${theme.colors.error.text};
+      font-style: italic;
     `,
     notConfigured: css`
       font-style: italic;

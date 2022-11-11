@@ -4,6 +4,7 @@ import React, { ChangeEvent } from 'react';
 import { VariableSuggestion, GrafanaTheme2, DataLink } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/index';
+import { isCompactUrl } from '../../utils/dataLinks';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 import { Switch } from '../Switch/Switch';
@@ -50,7 +51,11 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
           <Input value={value.title} onChange={onTitleChange} placeholder="Show details" />
         </Field>
 
-        <Field label="URL">
+        <Field
+          label="URL"
+          invalid={isCompactUrl(value.url)}
+          error="URL is a compact Explore URL. Please visit URL to be redirected, and paste that URL here."
+        >
           <DataLinkInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />
         </Field>
 
