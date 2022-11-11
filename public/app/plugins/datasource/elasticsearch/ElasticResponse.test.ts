@@ -1,13 +1,4 @@
-import {
-  Column,
-  DataFrame,
-  DataFrameView,
-  Field,
-  FieldCache,
-  FieldType,
-  KeyValue,
-  MutableDataFrame,
-} from '@grafana/data';
+import { DataFrame, DataFrameView, Field, FieldCache, FieldType, KeyValue, MutableDataFrame } from '@grafana/data';
 import flatten from 'app/core/utils/flatten';
 
 import { ElasticResponse } from './ElasticResponse';
@@ -36,7 +27,7 @@ describe('ElasticResponse', () => {
     responses: unknown[];
   };
   let result: {
-    data: MockedResultData[];
+    data: DataFrame[];
   };
 
   describe('refId matching', () => {
@@ -331,7 +322,7 @@ describe('ElasticResponse', () => {
 
   describe('simple query count & avg aggregation', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -386,7 +377,7 @@ describe('ElasticResponse', () => {
 
   describe('single group by query one metric', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -448,7 +439,7 @@ describe('ElasticResponse', () => {
 
   describe('single group by query two metrics', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -513,7 +504,7 @@ describe('ElasticResponse', () => {
 
   describe('with percentiles ', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -563,7 +554,7 @@ describe('ElasticResponse', () => {
 
   describe('with extended_stats', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -716,7 +707,7 @@ describe('ElasticResponse', () => {
 
   describe('single group by with alias pattern', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -788,7 +779,7 @@ describe('ElasticResponse', () => {
 
   describe('histogram response', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -831,7 +822,7 @@ describe('ElasticResponse', () => {
 
   describe('with two filters agg', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -1006,7 +997,7 @@ describe('ElasticResponse', () => {
 
   describe('No group by time with percentiles ', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -1105,7 +1096,7 @@ describe('ElasticResponse', () => {
 
   describe('Raw documents query', () => {
     let result: {
-      data: Array<MockedResultData<{ [key: string]: string | undefined }>>;
+      data: DataFrame[];
     };
     beforeEach(() => {
       targets = [
@@ -1157,7 +1148,7 @@ describe('ElasticResponse', () => {
 
   describe('with bucket_script ', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -1226,7 +1217,7 @@ describe('ElasticResponse', () => {
 
   describe('terms with bucket_script and two scripts', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -1557,15 +1548,4 @@ interface MockedElasticResponse {
 interface MockedQueryData {
   target: ElasticsearchQuery;
   response: MockedElasticResponse;
-}
-
-interface MockedResultData<T = number[]> {
-  refId: string;
-  target: string;
-  datapoints: T[];
-  type: string;
-  rows: number[][];
-  total: number;
-  fields: Field[];
-  columns: Column[];
 }
