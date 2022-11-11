@@ -48,7 +48,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
     if (!query) {
       return;
     }
-    // Migrate the previous variable expr string
+    // Changing from standard to custom variable editor changes the string attr from expr to query
     const variableQuery = query.query ? migrateVariableQueryToEditor(query.query) : query;
 
     setExprType(variableQuery.exprType);
