@@ -345,35 +345,16 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
 
-	f := definitions.AlertRuleFileExport{}
+	e := definitions.AlertRuleFileExport{}
 	for _, group := range groupWithTitles {
 		export, err := definitions.NewAlertRuleGroupExport(c.OrgID, group.FolderTitle, group.AlertRuleGroup)
 		if err != nil {
 			return ErrResp(http.StatusInternalServerError, err, "")
 		}
-		f.Groups = append(f.Groups, export)
+		e.Groups = append(e.Groups, export)
 	}
 
-	format := "json"
-	acceptHeader := c.Req.Header.Get("Accept")
-	if strings.Contains(acceptHeader, "yaml") && !strings.Contains(acceptHeader, "json") {
-		format = "yaml"
-	}
-
-	download := c.QueryBoolWithDefault("download", false)
-	if download {
-		r := response.JSONDownload
-		if format == "yaml" {
-			r = response.YAMLDownload
-		}
-		return r(http.StatusOK, f, fmt.Sprintf("groups_export.%s", format))
-	}
-
-	r := response.JSON
-	if format == "yaml" {
-		r = response.YAML
-	}
-	return r(http.StatusOK, f)
+	return exportResponse(c, e)
 }
 
 // RouteGetAlertRuleGroupExport retrieves the given alert rule group in a format compatible with file provisioning.
@@ -386,31 +367,12 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqCont
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	grp, err := definitions.NewAlertRuleGroupExport(c.OrgID, g.FolderTitle, g.AlertRuleGroup)
+	e, err := definitions.NewAlertRuleGroupExport(c.OrgID, g.FolderTitle, g.AlertRuleGroup)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	format := "json"
-	acceptHeader := c.Req.Header.Get("Accept")
-	if strings.Contains(acceptHeader, "yaml") && !strings.Contains(acceptHeader, "json") {
-		format = "yaml"
-	}
-
-	download := c.QueryBoolWithDefault("download", false)
-	if download {
-		r := response.JSONDownload
-		if format == "yaml" {
-			r = response.YAMLDownload
-		}
-		return r(http.StatusOK, grp, fmt.Sprintf("group_export.%s", format))
-	}
-
-	r := response.JSON
-	if format == "yaml" {
-		r = response.YAML
-	}
-	return r(http.StatusOK, grp)
+	return exportResponse(c, e)
 }
 
 // RouteGetAlertRuleExport retrieves the given alert rule in a format compatible with file provisioning.
@@ -423,31 +385,12 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, 
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	export, err := definitions.NewAlertRuleExport(rule)
+	e, err := definitions.NewAlertRuleExport(rule)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	format := "json"
-	acceptHeader := c.Req.Header.Get("Accept")
-	if strings.Contains(acceptHeader, "yaml") && !strings.Contains(acceptHeader, "json") {
-		format = "yaml"
-	}
-
-	download := c.QueryBoolWithDefault("download", false)
-	if download {
-		r := response.JSONDownload
-		if format == "yaml" {
-			r = response.YAMLDownload
-		}
-		return r(http.StatusOK, export, fmt.Sprintf("rule_export.%s", format))
-	}
-
-	r := response.JSON
-	if format == "yaml" {
-		r = response.YAML
-	}
-	return r(http.StatusOK, export)
+	return exportResponse(c, e)
 }
 
 func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, ag definitions.AlertRuleGroup, folderUID string, group string) response.Response {
@@ -475,4 +418,27 @@ func determineProvenance(ctx *contextmodel.ReqContext) alerting_models.Provenanc
 		return alerting_models.ProvenanceNone
 	}
 	return alerting_models.ProvenanceAPI
+}
+
+func exportResponse(c *models.ReqContext, body any) response.Response {
+	format := "json"
+	acceptHeader := c.Req.Header.Get("Accept")
+	if strings.Contains(acceptHeader, "yaml") && !strings.Contains(acceptHeader, "json") {
+		format = "yaml"
+	}
+
+	download := c.QueryBoolWithDefault("download", false)
+	if download {
+		r := response.JSONDownload
+		if format == "yaml" {
+			r = response.YAMLDownload
+		}
+		return r(http.StatusOK, body, fmt.Sprintf("groups_export.%s", format))
+	}
+
+	r := response.JSON
+	if format == "yaml" {
+		r = response.YAML
+	}
+	return r(http.StatusOK, body)
 }
