@@ -28,7 +28,6 @@ import (
 // 500: internalServerError
 func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
-	// ctx := appcontext.WithUser(c.Req.Context(), c.SignedInUser)
 	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: &uid})
 
 	if err != nil {
@@ -91,7 +90,6 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 	}
 
 	uid := web.Params(c.Req)[":uid"]
-	// ctx := appcontext.WithUser(c.Req.Context(), c.SignedInUser)
 	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: &uid})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
