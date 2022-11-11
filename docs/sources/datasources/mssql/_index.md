@@ -77,6 +77,10 @@ For example, use `1m` if Microsoft SQL Server writes data every minute.
 
 You can also override this setting in a dashboard panel under its data source options.
 
+### Connection timeout
+
+The **Connection timeout** setting defines the maximum number of seconds to wait for a connection to the database before timing out.
+
 ### Database user permissions
 
 Grafana doesn't validate that a query is safe, and could include any SQL statement.
