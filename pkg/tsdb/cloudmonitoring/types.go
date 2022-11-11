@@ -45,7 +45,7 @@ type (
 		MetricType   string `json:"metricType"`
 		Preprocessor string `json:"preprocessor"`
 	}
-	// TODO: sloQuery can be specified as timeSeriesList paramaters
+	// TODO: sloQuery can be specified as timeSeriesList parameters
 	sloQuery struct {
 		SelectorName   string `json:"selectorName"`
 		ServiceId      string `json:"serviceId"`
