@@ -1,4 +1,4 @@
-import { Column, DataFrameView, Field, FieldCache, KeyValue, MutableDataFrame } from '@grafana/data';
+import { Column, DataFrameView, Field, FieldCache, FieldType, KeyValue, MutableDataFrame } from '@grafana/data';
 import flatten from 'app/core/utils/flatten';
 
 import { ElasticResponse } from './ElasticResponse';
@@ -1110,13 +1110,17 @@ describe('ElasticResponse', () => {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return docs', () => {
+    it('should return raw_document formatted data', () => {
       expect(result.data.length).toBe(1);
-      expect(result.data[0].type).toBe('docs');
-      expect(result.data[0].total).toBe(100);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].datapoints[0].sourceProp).toBe('asd');
-      expect(result.data[0].datapoints[0].fieldProp).toBe('field');
+      const frame = result.data[0];
+      const { fields } = frame;
+      expect(fields.length).toBe(1);
+      const field = fields[0];
+      expect(field.type === FieldType.other);
+      const values = field.values.toArray();
+      expect(values.length).toBe(2);
+      expect(values[0].sourceProp).toBe('asd');
+      expect(values[0].fieldProp).toBe('field');
     });
   });
 

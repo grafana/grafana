@@ -491,6 +491,9 @@ export class ElasticResponse {
         if (item.type === 'table') {
           return toDataFrame(item);
         }
+        if (item.type === 'docs') {
+          return toDataFrame(item);
+        }
         return item;
       }),
     };
