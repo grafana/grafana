@@ -167,6 +167,7 @@ export const Services = () => {
                 onRowSelection={handleSelectionChange}
                 showPagination
                 pageSize={25}
+                allRowsSelectionMode="page"
                 emptyMessage="No services Available"
                 emptyMessageClassName={styles.emptyMessage}
                 pendingRequest={isLoading}

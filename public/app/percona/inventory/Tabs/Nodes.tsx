@@ -168,6 +168,7 @@ export const NodesTab = () => {
                 onRowSelection={handleSelectionChange}
                 showPagination
                 pageSize={25}
+                allRowsSelectionMode="page"
                 emptyMessage="No nodes Available"
                 emptyMessageClassName={styles.emptyMessage}
                 pendingRequest={loading}

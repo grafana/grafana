@@ -162,6 +162,7 @@ export const Agents = () => {
                 onRowSelection={handleSelectionChange}
                 showPagination
                 pageSize={25}
+                allRowsSelectionMode="page"
                 emptyMessage="No agents Available"
                 emptyMessageClassName={styles.emptyMessage}
                 pendingRequest={loading}
