@@ -174,7 +174,7 @@ func (s *SocialGithub) FetchOrganizations(client *http.Client, organizationsUrl 
 			return nil, fmt.Errorf("error getting organizations: %s", err)
 		}
 
-		for i, record := range records {
+		for _, record := range records {
 			logins = append(logins, record.Login)
 		}
 
