@@ -11,21 +11,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 import traceGenerator from '../demo/trace-generators';
+import { TraceProcess } from '../types/trace';
 
 import * as processSelectors from './process';
 
 const generatedTrace = traceGenerator.trace({ numberOfSpans: 45 });
 
 it('getProcessServiceName() should return the serviceName of the process', () => {
-  const proc = generatedTrace.processes[Object.keys(generatedTrace.processes)[0]];
-
+  const proc: TraceProcess = generatedTrace.processes[Object.keys(generatedTrace.processes)[0]];
   expect(processSelectors.getProcessServiceName(proc)).toBe(proc.serviceName);
 });
 
 it('getProcessTags() should return the tags on the process', () => {
-  const proc = generatedTrace.processes[Object.keys(generatedTrace.processes)[0]];
-
+  const proc: TraceProcess = generatedTrace.processes[Object.keys(generatedTrace.processes)[0]];
   expect(processSelectors.getProcessTags(proc)).toBe(proc.tags);
 });
