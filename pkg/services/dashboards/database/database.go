@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -74,7 +75,7 @@ func (d *DashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dashbo
 	return isParentFolderChanged, nil
 }
 
-func (d *DashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, title string) (*models.Folder, error) {
+func (d *DashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, title string) (*folder.Folder, error) {
 	if title == "" {
 		return nil, dashboards.ErrFolderTitleEmpty
 	}
@@ -94,10 +95,10 @@ func (d *DashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, titl
 		dashboard.SetUid(dashboard.Uid)
 		return nil
 	})
-	return models.DashboardToFolder(&dashboard), err
+	return folder.FromDashboard(&dashboard), err
 }
 
-func (d *DashboardStore) GetFolderByID(ctx context.Context, orgID int64, id int64) (*models.Folder, error) {
+func (d *DashboardStore) GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error) {
 	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Id: id}
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
@@ -114,10 +115,10 @@ func (d *DashboardStore) GetFolderByID(ctx context.Context, orgID int64, id int6
 	if err != nil {
 		return nil, err
 	}
-	return models.DashboardToFolder(&dashboard), nil
+	return folder.FromDashboard(&dashboard), nil
 }
 
-func (d *DashboardStore) GetFolderByUID(ctx context.Context, orgID int64, uid string) (*models.Folder, error) {
+func (d *DashboardStore) GetFolderByUID(ctx context.Context, orgID int64, uid string) (*folder.Folder, error) {
 	if uid == "" {
 		return nil, dashboards.ErrDashboardIdentifierNotSet
 	}
@@ -138,7 +139,7 @@ func (d *DashboardStore) GetFolderByUID(ctx context.Context, orgID int64, uid st
 	if err != nil {
 		return nil, err
 	}
-	return models.DashboardToFolder(&dashboard), nil
+	return folder.FromDashboard(&dashboard), nil
 }
 
 func (d *DashboardStore) GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*models.DashboardProvisioning, error) {
@@ -1018,17 +1019,20 @@ func (d *DashboardStore) GetDashboardTags(ctx context.Context, query *models.Get
 	})
 }
 
+// CountDashboardsInFolder returns a count of all dashboards associated with the
+// given parent folder ID.
+//
 // This will be updated to take CountDashboardsInFolderQuery as an argument and
-// lookup dashboards using the ParentFolderUID when the NestedFolder
-// implementation is complete.
+// lookup dashboards using the ParentFolderUID when dashboards are associated with a parent folder UID instead of ID.
 func (d *DashboardStore) CountDashboardsInFolder(
 	ctx context.Context, req *dashboards.CountDashboardsInFolderRequest) (int64, error) {
-	var dashboards = make([]*models.Dashboard, 0)
-	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+	var count int64
+	var err error
+	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		session := sess.In("folder_id", req.FolderID).In("org_id", req.OrgID).
 			In("is_folder", d.store.GetDialect().BooleanStr(false))
-		err := session.Find(&dashboards)
+		count, err = session.Count(&models.Dashboard{})
 		return err
 	})
-	return int64(len(dashboards)), err
+	return count, err
 }

@@ -1,7 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
 grabpl_version = 'v3.0.16'
-build_image = 'grafana/build-container:1.6.4'
+build_image = 'grafana/build-container:1.6.5'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15.6'
@@ -731,6 +731,41 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
         ],
     }
 
+def cloud_plugins_e2e_tests_step(suite, edition, cloud, port=3001, video="false", trigger=None):
+    environment = {}
+    when = {}
+    if trigger:
+        when = trigger
+    if cloud == 'azure':
+        environment = {
+            'CYPRESS_CI': 'true',
+            'HOST': 'grafana-server' + enterprise2_suffix(edition),
+            'GITHUB_TOKEN': from_secret('github_token_pr'),
+            'AZURE_SP_APP_ID': from_secret('azure_sp_app_id'),
+            'AZURE_SP_PASSWORD': from_secret('azure_sp_app_pw'),
+            'AZURE_TENANT': from_secret('azure_tenant')
+        }
+        when= dict(when, paths={
+                'include' : [
+                    'pkg/tsdb/azuremonitor/**',
+                    'public/app/plugins/datasource/grafana-azure-monitor-datasource/**'
+                ]
+            })
+    branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
+    step = {
+        'name': 'end-to-end-tests-{}-{}'.format(suite, cloud) + enterprise2_suffix(edition),
+        'image': 'us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest',
+        'depends_on': [
+            'grafana-server',
+        ],
+        'environment': environment,
+        'commands': [
+            'cd /',
+            './cpp-e2e/scripts/ci-run.sh {} {}'.format(cloud, branch)
+        ],
+    }
+    step = dict(step, when=when)
+    return step
 
 def build_docs_website_step():
     return {

@@ -80,4 +80,5 @@ export interface FeatureToggles {
   datasourceLogger?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
+  elasticsearchBackendMigration?: boolean;
 }
