@@ -293,21 +293,3 @@ func updateFolderScenario(t *testing.T, desc string, url string, routePattern st
 		fn(sc)
 	})
 }
-
-type fakeFolderService struct {
-	folder.Service
-
-	GetFoldersResult     []*models.Folder
-	GetFoldersError      error
-	GetFolderByUIDResult *models.Folder
-	GetFolderByUIDError  error
-	GetFolderByIDResult  *models.Folder
-	GetFolderByIDError   error
-	CreateFolderResult   *models.Folder
-	CreateFolderError    error
-	UpdateFolderResult   *models.Folder
-	UpdateFolderError    error
-	DeleteFolderResult   *folder.Folder
-	DeleteFolderError    error
-	DeletedFolderUids    []string
-}
