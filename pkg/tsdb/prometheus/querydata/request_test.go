@@ -415,7 +415,8 @@ func setup(wideFrames bool) (*testContext, error) {
 		JSONData: json.RawMessage(`{"timeInterval": "15s"}`),
 	}
 
-	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusStreamingJSONParser": true, "prometheusWideSeries": wideFrames}}
+	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusBufferedClient": false,
+		"prometheusWideSeries": wideFrames}}
 
 	opts, err := client.CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
 	if err != nil {

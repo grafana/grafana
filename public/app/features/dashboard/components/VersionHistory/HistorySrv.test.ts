@@ -38,19 +38,19 @@ describe('historySrv', () => {
       getMock.mockImplementation(() => Promise.resolve(versionsResponse));
       historySrv = new HistorySrv();
 
-      return historySrv.getHistoryList(dash, historyListOpts).then((versions: any) => {
+      return historySrv.getHistoryList(dash, historyListOpts).then((versions) => {
         expect(versions).toEqual(versionsResponse);
       });
     });
 
     it('should return an empty array when not given an id', () => {
-      return historySrv.getHistoryList(emptyDash, historyListOpts).then((versions: any) => {
+      return historySrv.getHistoryList(emptyDash, historyListOpts).then((versions) => {
         expect(versions).toEqual([]);
       });
     });
 
     it('should return an empty array when not given a dashboard', () => {
-      return historySrv.getHistoryList(null as unknown as DashboardModel, historyListOpts).then((versions: any) => {
+      return historySrv.getHistoryList(null as unknown as DashboardModel, historyListOpts).then((versions) => {
         expect(versions).toEqual([]);
       });
     });
@@ -61,7 +61,7 @@ describe('historySrv', () => {
       const version = 6;
       postMock.mockImplementation(() => Promise.resolve(restoreResponse(version)));
       historySrv = new HistorySrv();
-      return historySrv.restoreDashboard(dash, version).then((response: any) => {
+      return historySrv.restoreDashboard(dash, version).then((response) => {
         expect(response).toEqual(restoreResponse(version));
       });
     });
