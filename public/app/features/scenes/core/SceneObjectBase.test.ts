@@ -1,4 +1,4 @@
-import { SceneVariableSet } from '../variables/SceneVariableSet';
+import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
 
 import { SceneDataNode } from './SceneDataNode';
 import { SceneObjectBase } from './SceneObjectBase';

@@ -94,6 +94,28 @@ describe('rule-editor', () => {
     queryType: '',
   };
 
+  const thresholdExpression = {
+    refId: 'C',
+    datasourceUid: '-100',
+    model: {
+      refId: 'C',
+      type: 'threshold',
+      expression: 'B',
+      datasource: {
+        type: '__expr__',
+        uid: '-100',
+      },
+      conditions: [
+        {
+          evaluator: {
+            params: [0, 'gt'],
+          },
+        },
+      ],
+    },
+    queryType: '',
+  };
+
   describe('rewires query names', () => {
     it('should rewire classic expressions', () => {
       const queries: AlertQuery[] = [dataSource, classicCondition];
@@ -131,6 +153,14 @@ describe('rule-editor', () => {
 
       const queryModel = rewiredQueries[1].model as ExpressionQuery;
       expect(queryModel.expression).toBe('C');
+    });
+
+    it('should rewire threshold expressions', () => {
+      const queries: AlertQuery[] = [dataSource, reduceExpression, thresholdExpression];
+      const rewiredQueries = queriesWithUpdatedReferences(queries, 'B', 'REDUCER');
+
+      const queryModel = rewiredQueries[2].model as ExpressionQuery;
+      expect(queryModel.expression).toBe('REDUCER');
     });
 
     it('should rewire multiple expressions', () => {

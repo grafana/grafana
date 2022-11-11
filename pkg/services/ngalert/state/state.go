@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 )
@@ -80,6 +79,13 @@ func (a *State) GetAlertInstanceKey() (models.AlertInstanceKey, error) {
 		return models.AlertInstanceKey{}, err
 	}
 	return models.AlertInstanceKey{RuleOrgID: a.OrgID, RuleUID: a.AlertRuleUID, LabelsHash: labelsHash}, nil
+}
+
+func (a *State) Resolve(reason string, endsAt time.Time) {
+	a.State = eval.Normal
+	a.StateReason = reason
+	a.EndsAt = endsAt
+	a.Resolved = true
 }
 
 // StateTransition describes the transition from one state to another.
@@ -327,12 +333,12 @@ func shouldTakeImage(state, previousState eval.State, previousImage *models.Imag
 
 // takeImage takes an image for the alert rule. It returns nil if screenshots are disabled or
 // the rule is not associated with a dashboard panel.
-func takeImage(ctx context.Context, s image.ImageService, r *models.AlertRule) (*models.Image, error) {
+func takeImage(ctx context.Context, s ImageCapturer, r *models.AlertRule) (*models.Image, error) {
 	img, err := s.NewImage(ctx, r)
 	if err != nil {
 		if errors.Is(err, screenshot.ErrScreenshotsUnavailable) ||
-			errors.Is(err, image.ErrNoDashboard) ||
-			errors.Is(err, image.ErrNoPanel) {
+			errors.Is(err, models.ErrNoDashboard) ||
+			errors.Is(err, models.ErrNoPanel) {
 			return nil, nil
 		}
 		return nil, err

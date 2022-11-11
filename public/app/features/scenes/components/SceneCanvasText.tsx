@@ -4,6 +4,7 @@ import { Field, Input } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneComponentProps, SceneLayoutChildState } from '../core/types';
+import { sceneTemplateInterpolator } from '../variables/sceneTemplateInterpolator';
 
 export interface SceneCanvasTextState extends SceneLayoutChildState {
   text: string;
@@ -13,8 +14,10 @@ export interface SceneCanvasTextState extends SceneLayoutChildState {
 
 export class SceneCanvasText extends SceneObjectBase<SceneCanvasTextState> {
   public static Editor = Editor;
+
   public static Component = ({ model }: SceneComponentProps<SceneCanvasText>) => {
     const { text, fontSize = 20, align = 'left' } = model.useState();
+    const textInterpolated = sceneTemplateInterpolator(text, model);
 
     const style: CSSProperties = {
       fontSize: fontSize,
@@ -25,7 +28,7 @@ export class SceneCanvasText extends SceneObjectBase<SceneCanvasTextState> {
       justifyContent: align,
     };
 
-    return <div style={style}>{text}</div>;
+    return <div style={style}>{textInterpolated}</div>;
   };
 }
 

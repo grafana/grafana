@@ -1,6 +1,8 @@
 package screenshot
 
 import (
+	"hash/fnv"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -40,4 +42,14 @@ func (s ScreenshotOptions) SetDefaults() ScreenshotOptions {
 		s.Timeout = DefaultTimeout
 	}
 	return s
+}
+
+func (s ScreenshotOptions) Hash() []byte {
+	h := fnv.New64()
+	_, _ = h.Write([]byte(s.DashboardUID))
+	_, _ = h.Write([]byte(strconv.FormatInt(s.PanelID, 10)))
+	_, _ = h.Write([]byte(strconv.FormatInt(int64(s.Width), 10)))
+	_, _ = h.Write([]byte(strconv.FormatInt(int64(s.Height), 10)))
+	_, _ = h.Write([]byte(s.Theme))
+	return h.Sum(nil)
 }
