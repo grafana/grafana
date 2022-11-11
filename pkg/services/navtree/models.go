@@ -11,14 +11,19 @@ const (
 	// are negative to ensure that the default items are placed above
 	// any items with default weight.
 
-	WeightSavedItems = (iota - 20) * 100
+	WeightHome = (iota - 20) * 100
+	WeightSavedItems
 	WeightCreate
 	WeightDashboard
+	WeightQueryLibrary
 	WeightExplore
 	WeightAlerting
 	WeightDataConnections
 	WeightPlugin
 	WeightConfig
+	WeightAlertsAndIncidents
+	WeightMonitoring
+	WeightApps
 	WeightAdmin
 	WeightProfile
 	WeightHelp
@@ -39,12 +44,12 @@ const (
 	NavIDAlerting           = "alerting"
 	NavIDMonitoring         = "monitoring"
 	NavIDReporting          = "reports"
+	NavIDApps               = "apps"
 )
 
 type NavLink struct {
 	Id               string     `json:"id,omitempty"`
 	Text             string     `json:"text"`
-	Description      string     `json:"description,omitempty"`
 	Section          string     `json:"section,omitempty"`
 	SubTitle         string     `json:"subTitle,omitempty"`
 	Icon             string     `json:"icon,omitempty"` // Available icons can be browsed in Storybook: https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview
@@ -57,10 +62,12 @@ type NavLink struct {
 	HideFromTabs     bool       `json:"hideFromTabs,omitempty"`
 	ShowIconInNavbar bool       `json:"showIconInNavbar,omitempty"`
 	RoundIcon        bool       `json:"roundIcon,omitempty"`
+	IsSection        bool       `json:"isSection,omitempty"`
 	Children         []*NavLink `json:"children,omitempty"`
 	HighlightText    string     `json:"highlightText,omitempty"`
 	HighlightID      string     `json:"highlightId,omitempty"`
 	EmptyMessageId   string     `json:"emptyMessageId,omitempty"`
+	PluginID         string     `json:"pluginId,omitempty"` // (Optional) The ID of the plugin that registered nav link (e.g. as a standalone plugin page)
 }
 
 func (node *NavLink) Sort() {
@@ -110,9 +117,8 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 		}
 
 		if serverAdminNode := root.FindById(NavIDAdmin); serverAdminNode != nil {
-			serverAdminNode.Url = "/admin/settings"
-			serverAdminNode.Text = "Server admin"
-			serverAdminNode.SortWeight = 10000
+			serverAdminNode.Url = "/admin/server"
+			serverAdminNode.SortWeight = 0
 
 			if orgAdminNode != nil {
 				orgAdminNode.Children = append(orgAdminNode.Children, serverAdminNode)

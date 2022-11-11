@@ -67,7 +67,6 @@ export const QueryRows = ({ exploreId }: Props) => {
     [onChange, queries]
   );
 
-  // a datasource change on the query row level means the root datasource is mixed
   const onMixedDataSourceChange = async (ds: DataSourceInstanceSettings, query: DataQuery) => {
     const queryDatasource = await getDataSourceSrv().get(query.datasource);
     const targetDS = await getDataSourceSrv().get({ uid: ds.uid });

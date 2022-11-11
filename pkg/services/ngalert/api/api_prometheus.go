@@ -60,11 +60,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 
 			// TODO: or should we make this two fields? Using one field lets the
 			// frontend use the same logic for parsing text on annotations and this.
-			State: state.InstanceStateAndReason{
-				State:  alertState.State,
-				Reason: alertState.StateReason,
-			}.String(),
-
+			State:    state.FormatStateAndReason(alertState.State, alertState.StateReason),
 			ActiveAt: &startsAt,
 			Value:    valString,
 		})
@@ -221,11 +217,7 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *models.Folder, ru
 
 				// TODO: or should we make this two fields? Using one field lets the
 				// frontend use the same logic for parsing text on annotations and this.
-				State: state.InstanceStateAndReason{
-					State:  alertState.State,
-					Reason: alertState.StateReason,
-				}.String(),
-
+				State:    state.FormatStateAndReason(alertState.State, alertState.StateReason),
 				ActiveAt: &activeAt,
 				Value:    valString,
 			}
@@ -284,7 +276,7 @@ func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 			}
 
 			// For any other type of error, it is unexpected abort and return the whole JSON.
-			logger.Debug("failed to parse a query", "err", err)
+			logger.Debug("failed to parse a query", "error", err)
 			queryErr = err
 			break
 		}

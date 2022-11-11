@@ -192,8 +192,8 @@ export function initializeExplore(
  */
 export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const itemState = getState().explore[exploreId]!;
-    if (!itemState.initialized) {
+    const itemState = getState().explore[exploreId];
+    if (!itemState?.initialized) {
       return;
     }
 

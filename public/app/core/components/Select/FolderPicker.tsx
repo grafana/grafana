@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { t } from '@lingui/macro';
 import { debounce } from 'lodash';
 import React, { useState, useEffect, useMemo, useCallback, FormEvent } from 'react';
 import { useAsync } from 'react-use';
@@ -8,6 +7,7 @@ import { AppEvents, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, ActionMeta, AsyncSelect, Input, InputActionMeta } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from 'app/features/search/types';
@@ -68,10 +68,10 @@ export function FolderPicker(props: Props) {
     onClear,
     enableReset,
     initialFolderId,
-    initialTitle,
-    permissionLevel,
-    rootName,
-    showRoot,
+    initialTitle = '',
+    permissionLevel = PermissionLevelString.Edit,
+    rootName = 'General',
+    showRoot = true,
     skipInitialLoad,
     accessControlMetadata,
     customAdd,
@@ -106,7 +106,7 @@ export function FolderPicker(props: Props) {
         initialTitle !== '' &&
         !options.find((option) => option.label === initialTitle)
       ) {
-        Boolean(initialTitle) && options.unshift({ label: initialTitle, value: initialFolderId });
+        options.unshift({ label: initialTitle, value: initialFolderId });
       }
       if (enableCreateNew && Boolean(customAdd)) {
         return [...options, { value: VALUE_FOR_ADD, label: ADD_NEW_FOLER_OPTION, title: query }];
@@ -193,9 +193,8 @@ export function FolderPicker(props: Props) {
   }, [folder]);
 
   const onFolderChange = useCallback(
-    (newFolder: SelectableValue<number>, actionMeta: ActionMeta) => {
-      const value = newFolder.value;
-      if (value === VALUE_FOR_ADD) {
+    (newFolder: SelectableValue<number> | null | undefined, actionMeta: ActionMeta) => {
+      if (newFolder?.value === VALUE_FOR_ADD) {
         setFolder({
           id: VALUE_FOR_ADD,
           title: inputValue,
@@ -326,7 +325,7 @@ export function FolderPicker(props: Props) {
         <AsyncSelect
           inputId={inputId}
           aria-label={selectors.components.FolderPicker.input}
-          loadingMessage={t({ id: 'folder-picker.loading', message: 'Loading folders...' })}
+          loadingMessage={t('folder-picker.loading', 'Loading folders...')}
           defaultOptions
           defaultValue={folder}
           inputValue={inputValue}

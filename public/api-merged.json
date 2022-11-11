@@ -18,10 +18,6 @@
       "url": "https://grafana.com",
       "email": "hello@grafana.com"
     },
-    "license": {
-      "name": "GNU Affero General Public License v3.0",
-      "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
-    },
     "version": "0.0.1"
   },
   "basePath": "/api",
@@ -5259,6 +5255,7 @@
         }
       },
       "post": {
+        "description": "If nested folders are enabled then it additionally expects the parent folder UID.",
         "tags": [
           "folders"
         ],
@@ -5366,6 +5363,7 @@
         }
       },
       "put": {
+        "description": "If nested folders are enabled then it optionally expects a new parent folder UID that moves the folder and\nincludes it into the response.",
         "tags": [
           "folders"
         ],
@@ -5413,7 +5411,7 @@
         }
       },
       "delete": {
-        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.",
+        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.\nIf nested folders are enabled then it also deletes all the subfolders.",
         "tags": [
           "folders"
         ],
@@ -8524,7 +8522,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Create service account",
+        "summary": "Create service account",
         "operationId": "createServiceAccount",
         "parameters": [
           {
@@ -8560,7 +8558,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Search service accounts with paging",
+        "summary": "Search service accounts with paging",
         "operationId": "searchOrgServiceAccountsWithPaging",
         "parameters": [
           {
@@ -8616,7 +8614,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Get single serviceaccount by Id",
+        "summary": "Get single serviceaccount by Id",
         "operationId": "retrieveServiceAccount",
         "parameters": [
           {
@@ -8653,7 +8651,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Delete service account",
+        "summary": "Delete service account",
         "operationId": "deleteServiceAccount",
         "parameters": [
           {
@@ -8687,7 +8685,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Update service account",
+        "summary": "Update service account",
         "operationId": "updateServiceAccount",
         "parameters": [
           {
@@ -8733,7 +8731,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Get service account tokens",
+        "summary": "Get service account tokens",
         "operationId": "listTokens",
         "parameters": [
           {
@@ -8767,7 +8765,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# CreateNewToken adds a token to a service account",
+        "summary": "CreateNewToken adds a token to a service account",
         "operationId": "createToken",
         "parameters": [
           {
@@ -8816,7 +8814,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# DeleteToken deletes service account tokens",
+        "summary": "DeleteToken deletes service account tokens",
         "operationId": "deleteToken",
         "parameters": [
           {
@@ -9908,6 +9906,74 @@
         }
       }
     },
+    "/user/stars/dashboard/uid/{dashboard_uid}": {
+      "post": {
+        "description": "Stars the given Dashboard for the actual user.",
+        "tags": [
+          "signed_in_user"
+        ],
+        "summary": "Star a dashboard.",
+        "operationId": "starDashboardByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dashboard_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Deletes the starring of the given Dashboard for the actual user.",
+        "tags": [
+          "signed_in_user"
+        ],
+        "summary": "Unstar a dashboard.",
+        "operationId": "unstarDashboardByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dashboard_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/user/stars/dashboard/{dashboard_id}": {
       "post": {
         "description": "Stars the given Dashboard for the actual user.",
@@ -9916,6 +9982,7 @@
         ],
         "summary": "Star a dashboard.",
         "operationId": "starDashboard",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -9949,6 +10016,7 @@
         ],
         "summary": "Unstar a dashboard.",
         "operationId": "unstarDashboard",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -10327,27 +10395,6 @@
         "active_viewers": {
           "type": "integer",
           "format": "int64"
-        }
-      }
-    },
-    "AddBuiltInRoleCommand": {
-      "type": "object",
-      "properties": {
-        "builtInRole": {
-          "type": "string",
-          "enum": [
-            "Viewer",
-            " Editor",
-            " Admin",
-            " Grafana Admin"
-          ]
-        },
-        "global": {
-          "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to create organization local assignment. Refer to the Built-in role assignments for more information.",
-          "type": "boolean"
-        },
-        "roleUid": {
-          "type": "string"
         }
       }
     },
@@ -11170,7 +11217,7 @@
           "type": "string"
         },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "labels": {
           "type": "object",
@@ -11354,6 +11401,10 @@
         "replyTo": {
           "type": "string"
         },
+        "scaleFactor": {
+          "type": "integer",
+          "format": "int64"
+        },
         "schedule": {
           "$ref": "#/definitions/ScheduleDTO"
         },
@@ -11417,20 +11468,51 @@
       "type": "object",
       "required": [
         "field",
+        "type",
         "target"
       ],
       "properties": {
         "field": {
           "description": "Field used to attach the correlation link",
-          "type": "string"
+          "type": "string",
+          "example": "message"
         },
         "target": {
-          "$ref": "#/definitions/CorrelationConfigTarget"
+          "description": "Target data query",
+          "type": "object",
+          "additionalProperties": false,
+          "example": {
+            "expr": "job=app"
+          }
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationConfigType"
         }
       }
     },
-    "CorrelationConfigTarget": {
-      "description": "CorrelationConfigTarget is the target data query specific to target data source (Correlation.TargetUID)"
+    "CorrelationConfigType": {
+      "type": "string"
+    },
+    "CorrelationConfigUpdateDTO": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "description": "Field used to attach the correlation link",
+          "type": "string",
+          "example": "message"
+        },
+        "target": {
+          "description": "Target data query",
+          "type": "object",
+          "additionalProperties": false,
+          "example": {
+            "expr": "job=app"
+          }
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationConfigType"
+        }
+      }
     },
     "CreateAlertNotificationCommand": {
       "type": "object",
@@ -11485,7 +11567,7 @@
           "example": "My label"
         },
         "targetUID": {
-          "description": "Target data source UID to which the correlation is created",
+          "description": "Target data source UID to which the correlation is created. required if config.type = query",
           "type": "string",
           "example": "PE1C5CBDA0504A6A3"
         }
@@ -11542,8 +11624,15 @@
       }
     },
     "CreateFolderCommand": {
+      "description": "CreateFolderCommand captures the information required by the folder service\nto create a folder.",
       "type": "object",
       "properties": {
+        "description": {
+          "type": "string"
+        },
+        "parent_uid": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -11629,6 +11718,10 @@
         },
         "replyTo": {
           "type": "string"
+        },
+        "scaleFactor": {
+          "type": "integer",
+          "format": "int64"
         },
         "schedule": {
           "$ref": "#/definitions/ScheduleDTO"
@@ -11975,10 +12068,10 @@
         "hasAcl": {
           "type": "boolean"
         },
-        "isFolder": {
+        "hasPublicDashboard": {
           "type": "boolean"
         },
-        "isHome": {
+        "isFolder": {
           "type": "boolean"
         },
         "isSnapshot": {
@@ -12261,11 +12354,14 @@
       "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
         "Error": {
-          "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+          "description": "Error is a property to be set if the corresponding DataQuery has an error.",
           "type": "string"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
+        },
+        "Status": {
+          "$ref": "#/definitions/Status"
         }
       }
     },
@@ -12476,25 +12572,6 @@
       "type": "string",
       "title": "DataTopic is used to identify which topic the frame should be assigned to."
     },
-    "DateTime": {
-      "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
-      "type": "string",
-      "format": "date-time"
-    },
-    "DayOfMonthRange": {
-      "type": "object",
-      "title": "A DayOfMonthRange is an inclusive range that may have negative Beginning/End values that represent distance from the End of the month Beginning at -1.",
-      "properties": {
-        "Begin": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "End": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "DeleteCorrelationResponseBody": {
       "type": "object",
       "properties": {
@@ -12533,7 +12610,7 @@
       "type": "string"
     },
     "DsPermissionType": {
-      "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
+      "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\n`2` - Edit\nEnum: 0,1,2",
       "type": "integer",
       "format": "int64"
     },
@@ -12551,6 +12628,9 @@
         },
         "auth_password": {
           "$ref": "#/definitions/Secret"
+        },
+        "auth_password_file": {
+          "type": "string"
         },
         "auth_secret": {
           "$ref": "#/definitions/Secret"
@@ -12909,6 +12989,10 @@
           "type": "integer",
           "format": "int64"
         },
+        "parent_uid": {
+          "description": "only used if nested folders are enabled",
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -13219,7 +13303,7 @@
           "type": "string"
         },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "grafana_alert": {
           "$ref": "#/definitions/GettableGrafanaRule"
@@ -13465,6 +13549,9 @@
         "smtp_auth_password": {
           "$ref": "#/definitions/Secret"
         },
+        "smtp_auth_password_file": {
+          "type": "string"
+        },
         "smtp_auth_secret": {
           "$ref": "#/definitions/Secret"
         },
@@ -13519,6 +13606,10 @@
         "bearer_token_file": {
           "description": "The bearer token file for the targets. Deprecated in favour of\nAuthorization.CredentialsFile.",
           "type": "string"
+        },
+        "enable_http2": {
+          "description": "EnableHTTP2 specifies whether the client should configure HTTP2.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
+          "type": "boolean"
         },
         "follow_redirects": {
           "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
@@ -13676,6 +13767,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "folderUid": {
+          "type": "string"
+        },
         "imported": {
           "type": "boolean"
         },
@@ -13710,20 +13804,6 @@
         },
         "uid": {
           "type": "string"
-        }
-      }
-    },
-    "InclusiveRange": {
-      "type": "object",
-      "title": "InclusiveRange is used to hold the Beginning and End values of many time interval components.",
-      "properties": {
-        "Begin": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "End": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -14037,6 +14117,10 @@
           "type": "integer",
           "format": "int64"
         },
+        "schemaVersion": {
+          "type": "integer",
+          "format": "int64"
+        },
         "type": {
           "type": "string"
         },
@@ -14284,17 +14368,29 @@
         }
       }
     },
-    "MonthRange": {
+    "Model": {
+      "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
       "type": "object",
-      "title": "A MonthRange is an inclusive range between [1, 12] where 1 = January.",
+      "title": "Model is the Go representation of a playlist.",
       "properties": {
-        "Begin": {
-          "type": "integer",
-          "format": "int64"
+        "interval": {
+          "description": "Interval sets the time between switching views in a playlist.\nFIXME: Is this based on a standardized format or what options are available? Can datemath be used?",
+          "type": "string"
         },
-        "End": {
-          "type": "integer",
-          "format": "int64"
+        "items": {
+          "description": "The ordered list of items that the playlist will iterate over.\nFIXME! This should not be optional, but changing it makes the godegen awkward",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlaylistItem"
+          }
+        },
+        "name": {
+          "description": "Name of the playlist.",
+          "type": "string"
+        },
+        "uid": {
+          "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
+          "type": "string"
         }
       }
     },
@@ -14468,6 +14564,9 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "proxy_url": {
+          "$ref": "#/definitions/URL"
         },
         "scopes": {
           "type": "array",
@@ -14903,35 +15002,6 @@
         }
       }
     },
-    "PlaylistDTO": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "description": "Unique playlist identifier for internal use, set by Grafana.",
-          "type": "integer",
-          "format": "int64"
-        },
-        "interval": {
-          "description": "Interval sets the time between switching views in a playlist.\nFIXME: Is this based on a standardized format or what options are available? Can datemath be used?",
-          "type": "string"
-        },
-        "items": {
-          "description": "The ordered list of items that the playlist will iterate over.",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PlaylistItem"
-          }
-        },
-        "name": {
-          "description": "Name of the playlist.",
-          "type": "string"
-        },
-        "uid": {
-          "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
-          "type": "string"
-        }
-      }
-    },
     "PlaylistDashboard": {
       "type": "object",
       "properties": {
@@ -14968,30 +15038,15 @@
       "type": "object",
       "title": "PlaylistItem is the Go representation of a playlist.Item.",
       "properties": {
-        "id": {
-          "description": "FIXME: The prefixDropper removes playlist from playlist_id, that doesn't work for us since it'll mean we'll have Id twice.\nID of the playlist item for internal use by Grafana. Deprecated.",
-          "type": "integer",
-          "format": "int64"
-        },
-        "order": {
-          "description": "Order is the position in the list for the item. Deprecated.",
-          "type": "integer",
-          "format": "int64"
-        },
-        "playlistid": {
-          "description": "ID for the playlist containing the item. Deprecated.",
-          "type": "integer",
-          "format": "int64"
-        },
         "title": {
-          "description": "Title is the human-readable identifier for the playlist item.",
+          "description": "Title is an unused property -- it will be removed in the future",
           "type": "string"
         },
         "type": {
           "$ref": "#/definitions/PlaylistItemType"
         },
         "value": {
-          "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future.\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.",
+          "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
           "type": "string"
         }
       }
@@ -15203,7 +15258,7 @@
           "type": "string"
         },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "grafana_alert": {
           "$ref": "#/definitions/PostableGrafanaRule"
@@ -15536,7 +15591,7 @@
       "type": "object",
       "properties": {
         "expire": {
-          "$ref": "#/definitions/duration"
+          "type": "string"
         },
         "html": {
           "type": "boolean"
@@ -15551,7 +15606,7 @@
           "type": "string"
         },
         "retry": {
-          "$ref": "#/definitions/duration"
+          "type": "string"
         },
         "send_resolved": {
           "type": "boolean"
@@ -16081,10 +16136,10 @@
           }
         },
         "group_interval": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "group_wait": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "match": {
           "description": "Deprecated. Remove before v1.0 release.",
@@ -16115,7 +16170,7 @@
           "type": "string"
         },
         "repeat_interval": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "routes": {
           "type": "array",
@@ -16829,12 +16884,8 @@
       "type": "string"
     },
     "Status": {
-      "type": "object",
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        }
-      }
+      "type": "integer",
+      "format": "int64"
     },
     "Success": {
       "$ref": "#/definitions/ResponseDetails"
@@ -16900,11 +16951,18 @@
           "description": "The client key file for the targets.",
           "type": "string"
         },
+        "min_version": {
+          "$ref": "#/definitions/TLSVersion"
+        },
         "server_name": {
           "description": "Used to verify the hostname for the targets.",
           "type": "string"
         }
       }
+    },
+    "TLSVersion": {
+      "type": "integer",
+      "format": "uint16"
     },
     "TagsDTO": {
       "type": "object",
@@ -17248,13 +17306,16 @@
         "days_of_month": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/DayOfMonthRange"
+            "type": "string"
           }
+        },
+        "location": {
+          "type": "string"
         },
         "months": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/MonthRange"
+            "type": "string"
           }
         },
         "times": {
@@ -17266,13 +17327,13 @@
         "weekdays": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/WeekdayRange"
+            "type": "string"
           }
         },
         "years": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/YearRange"
+            "type": "string"
           }
         }
       }
@@ -17462,9 +17523,8 @@
       "type": "string"
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -17474,6 +17534,9 @@
         },
         "Host": {
           "type": "string"
+        },
+        "OmitHost": {
+          "type": "boolean"
         },
         "Opaque": {
           "type": "string"
@@ -17602,6 +17665,9 @@
       "description": "UpdateCorrelationCommand is the command for updating a correlation",
       "type": "object",
       "properties": {
+        "config": {
+          "$ref": "#/definitions/CorrelationConfigUpdateDTO"
+        },
         "description": {
           "description": "Optional description of the correlation",
           "type": "string",
@@ -18278,34 +18344,6 @@
         }
       }
     },
-    "WeekdayRange": {
-      "type": "object",
-      "title": "A WeekdayRange is an inclusive range between [0, 6] where 0 = Sunday.",
-      "properties": {
-        "Begin": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "End": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "YearRange": {
-      "type": "object",
-      "title": "A YearRange is a positive inclusive range.",
-      "properties": {
-        "Begin": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "End": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "alert": {
       "description": "Alert alert",
       "type": "object",
@@ -18324,7 +18362,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -18348,6 +18385,7 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -18451,10 +18489,8 @@
         }
       }
     },
-    "duration": {
-      "$ref": "#/definitions/Duration"
-    },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -18570,6 +18606,37 @@
         "$ref": "#/definitions/gettableSilence"
       }
     },
+    "integration": {
+      "description": "Integration integration",
+      "type": "object",
+      "required": [
+        "name",
+        "sendResolved"
+      ],
+      "properties": {
+        "lastNotifyAttempt": {
+          "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastNotifyAttemptDuration": {
+          "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
+          "type": "string"
+        },
+        "lastNotifyAttemptError": {
+          "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
+          "type": "string"
+        },
+        "name": {
+          "description": "name",
+          "type": "string"
+        },
+        "sendResolved": {
+          "description": "send resolved",
+          "type": "boolean"
+        }
+      }
+    },
     "labelSet": {
       "description": "LabelSet label set",
       "type": "object",
@@ -18633,6 +18700,15 @@
         },
         "name": {
           "description": "name",
+          "type": "string"
+        }
+      }
+    },
+    "postSilencesOKBody": {
+      "type": "object",
+      "properties": {
+        "silenceID": {
+          "description": "silence ID",
           "type": "string"
         }
       }
@@ -18715,9 +18791,22 @@
       "description": "Receiver receiver",
       "type": "object",
       "required": [
+        "active",
+        "integrations",
         "name"
       ],
       "properties": {
+        "active": {
+          "description": "active",
+          "type": "boolean"
+        },
+        "integrations": {
+          "description": "integrations",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/integration"
+          }
+        },
         "name": {
           "description": "name",
           "type": "string"
@@ -19490,7 +19579,7 @@
     "getPlaylistResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/PlaylistDTO"
+        "$ref": "#/definitions/Model"
       }
     },
     "getPreferencesResponse": {
@@ -19892,6 +19981,15 @@
         "$ref": "#/definitions/QueryDataResponse"
       }
     },
+    "receiversResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/receiver"
+        }
+      }
+    },
     "recordingRuleResponse": {
       "description": "(empty)",
       "schema": {
@@ -20003,7 +20101,7 @@
     "updatePlaylistResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/PlaylistDTO"
+        "$ref": "#/definitions/Model"
       }
     },
     "updateServiceAccountResponse": {
@@ -20031,6 +20129,17 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/UserProfileDTO"
+      }
+    },
+    "validateDashboardResponse": {
+      "description": "(empty)",
+      "headers": {
+        "isValid": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
       }
     }
   },

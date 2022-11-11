@@ -524,11 +524,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilter is set to existing folders, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
-			command := getCreatePanelCommand(newFolder.Id, "Text - Library Panel2")
+			command := getCreatePanelCommand(newFolder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
-			folderFilter := strconv.FormatInt(newFolder.Id, 10)
+			folderFilter := strconv.FormatInt(newFolder.ID, 10)
 
 			err := sc.reqContext.Req.ParseForm()
 			require.NoError(t, err)
@@ -548,7 +548,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 						{
 							ID:          2,
 							OrgID:       1,
-							FolderID:    newFolder.Id,
+							FolderID:    newFolder.ID,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
 							Kind:        int64(models.PanelElement),
@@ -564,7 +564,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "NewFolder",
-								FolderUID:           newFolder.Uid,
+								FolderUID:           newFolder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
@@ -591,7 +591,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilter is set to a nonexistent folders, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
-			command := getCreatePanelCommand(newFolder.Id, "Text - Library Panel2")
+			command := getCreatePanelCommand(newFolder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())

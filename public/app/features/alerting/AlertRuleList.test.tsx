@@ -20,14 +20,6 @@ jest.mock('../../core/app_events', () => ({
 
 const defaultProps: Props = {
   ...getRouteComponentProps({}),
-  navModel: {
-    main: {
-      text: 'foo',
-    },
-    node: {
-      text: 'foo',
-    },
-  },
   search: '',
   isLoading: false,
   alertRules: [],

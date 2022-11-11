@@ -14,103 +14,103 @@ import (
 func TestReducer(t *testing.T) {
 	var tests = []struct {
 		name           string
-		reducer        classicReducer
+		reducer        reducer
 		inputSeries    mathexp.Series
 		expectedNumber mathexp.Number
 	}{
 		{
 			name:           "sum",
-			reducer:        classicReducer("sum"),
+			reducer:        reducer("sum"),
 			inputSeries:    valBasedSeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3)),
 			expectedNumber: valBasedNumber(ptr.Float64(6)),
 		},
 		{
 			name:           "min",
-			reducer:        classicReducer("min"),
+			reducer:        reducer("min"),
 			inputSeries:    valBasedSeries(ptr.Float64(3), ptr.Float64(2), ptr.Float64(1)),
 			expectedNumber: valBasedNumber(ptr.Float64(1)),
 		},
 		{
 			name:           "min with NaNs only",
-			reducer:        classicReducer("min"),
+			reducer:        reducer("min"),
 			inputSeries:    valBasedSeries(ptr.Float64(math.NaN()), ptr.Float64(math.NaN()), ptr.Float64(math.NaN())),
 			expectedNumber: valBasedNumber(nil),
 		},
 		{
 			name:           "max",
-			reducer:        classicReducer("max"),
+			reducer:        reducer("max"),
 			inputSeries:    valBasedSeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3)),
 			expectedNumber: valBasedNumber(ptr.Float64(3)),
 		},
 		{
 			name:           "count",
-			reducer:        classicReducer("count"),
+			reducer:        reducer("count"),
 			inputSeries:    valBasedSeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3000)),
 			expectedNumber: valBasedNumber(ptr.Float64(3)),
 		},
 		{
 			name:           "last",
-			reducer:        classicReducer("last"),
+			reducer:        reducer("last"),
 			inputSeries:    valBasedSeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3000)),
 			expectedNumber: valBasedNumber(ptr.Float64(3000)),
 		},
 		{
 			name:           "median with odd amount of numbers",
-			reducer:        classicReducer("median"),
+			reducer:        reducer("median"),
 			inputSeries:    valBasedSeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3000)),
 			expectedNumber: valBasedNumber(ptr.Float64(2)),
 		},
 		{
 			name:           "median with even amount of numbers",
-			reducer:        classicReducer("median"),
+			reducer:        reducer("median"),
 			inputSeries:    valBasedSeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(4), ptr.Float64(3000)),
 			expectedNumber: valBasedNumber(ptr.Float64(3)),
 		},
 		{
 			name:           "median with one value",
-			reducer:        classicReducer("median"),
+			reducer:        reducer("median"),
 			inputSeries:    valBasedSeries(ptr.Float64(1)),
 			expectedNumber: valBasedNumber(ptr.Float64(1)),
 		},
 		{
 			name:           "median should ignore null values",
-			reducer:        classicReducer("median"),
+			reducer:        reducer("median"),
 			inputSeries:    valBasedSeries(nil, nil, nil, ptr.Float64(1), ptr.Float64(2), ptr.Float64(3)),
 			expectedNumber: valBasedNumber(ptr.Float64(2)),
 		},
 		{
 			name:           "avg",
-			reducer:        classicReducer("avg"),
+			reducer:        reducer("avg"),
 			inputSeries:    valBasedSeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3)),
 			expectedNumber: valBasedNumber(ptr.Float64(2)),
 		},
 		{
 			name:           "avg with only nulls",
-			reducer:        classicReducer("avg"),
+			reducer:        reducer("avg"),
 			inputSeries:    valBasedSeries(nil),
 			expectedNumber: valBasedNumber(nil),
 		},
 		{
 			name:           "avg of number values and null values should ignore nulls",
-			reducer:        classicReducer("avg"),
+			reducer:        reducer("avg"),
 			inputSeries:    valBasedSeries(ptr.Float64(3), nil, nil, ptr.Float64(3)),
 			expectedNumber: valBasedNumber(ptr.Float64(3)),
 		},
 		{
 			name:           "count_non_null with mixed null/real values",
-			reducer:        classicReducer("count_non_null"),
+			reducer:        reducer("count_non_null"),
 			inputSeries:    valBasedSeries(nil, nil, ptr.Float64(3), ptr.Float64(4)),
 			expectedNumber: valBasedNumber(ptr.Float64(2)),
 		},
 		{
 			name:           "count_non_null with mixed null/real values",
-			reducer:        classicReducer("count_non_null"),
+			reducer:        reducer("count_non_null"),
 			inputSeries:    valBasedSeries(nil, nil, ptr.Float64(3), ptr.Float64(4)),
 			expectedNumber: valBasedNumber(ptr.Float64(2)),
 		},
 		{
 			name:           "count_non_null with no values",
-			reducer:        classicReducer("count_non_null"),
+			reducer:        reducer("count_non_null"),
 			inputSeries:    valBasedSeries(nil, nil),
 			expectedNumber: valBasedNumber(nil),
 		},
@@ -189,7 +189,7 @@ func TestDiffReducer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			num := classicReducer("diff").Reduce(tt.inputSeries)
+			num := reducer("diff").Reduce(tt.inputSeries)
 			require.Equal(t, tt.expectedNumber, num)
 		})
 	}
@@ -259,7 +259,7 @@ func TestDiffAbsReducer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			num := classicReducer("diff_abs").Reduce(tt.inputSeries)
+			num := reducer("diff_abs").Reduce(tt.inputSeries)
 			require.Equal(t, tt.expectedNumber, num)
 		})
 	}
@@ -329,7 +329,7 @@ func TestPercentDiffReducer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			num := classicReducer("percent_diff").Reduce(tt.inputSeries)
+			num := reducer("percent_diff").Reduce(tt.inputSeries)
 			require.Equal(t, tt.expectedNumber, num)
 		})
 	}
@@ -399,7 +399,7 @@ func TestPercentDiffAbsReducer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			num := classicReducer("percent_diff_abs").Reduce(tt.inputSeries)
+			num := reducer("percent_diff_abs").Reduce(tt.inputSeries)
 			require.Equal(t, tt.expectedNumber, num)
 		})
 	}

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { AppEvents, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { AppEvents, GrafanaTheme2, LoadingState, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import {
@@ -187,11 +187,17 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     );
   }
 
+  pageNav: NavModelItem = {
+    text: 'Import dashboard',
+    subTitle: 'Import dashboard from file or Grafana.com"',
+    breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
+  };
+
   render() {
     const { loadingState } = this.props;
 
     return (
-      <Page navId="dashboards/import">
+      <Page navId="dashboards/browse" pageNav={this.pageNav}>
         <Page.Contents>
           {loadingState === LoadingState.Loading && (
             <VerticalGroup justify="center">

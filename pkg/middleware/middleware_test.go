@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -17,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -32,8 +34,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -338,14 +340,129 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Nil(t, sc.context.UserToken)
 	})
 
+	middlewareScenario(t, "Non-expired auth token in cookie and non-expired OAuth access token", func(
+		t *testing.T, sc *scenarioContext) {
+		const userID int64 = 12
+		sc.contextHandler.GetTime = fakeGetTime()
+
+		sc.withTokenSessionCookie("token")
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
+		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(11 * time.Second)}
+
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
+			return &models.UserToken{
+				UserId:        userID,
+				UnhashedToken: unhashedToken,
+			}, nil
+		}
+
+		sc.fakeReq("GET", "/").exec()
+
+		require.NotNil(t, sc.context)
+		require.NotNil(t, sc.context.UserToken)
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, userID, sc.context.UserID)
+		assert.Equal(t, userID, sc.context.UserToken.UserId)
+		assert.Equal(t, "token", sc.context.UserToken.UnhashedToken)
+		assert.Empty(t, sc.resp.Header().Get("Set-Cookie"))
+	})
+
+	middlewareScenario(t, "Non-expired auth token in cookie and expired OAuth access token and refreshing the token fails", func(
+		t *testing.T, sc *scenarioContext) {
+		const userID int64 = 12
+		sc.contextHandler.GetTime = fakeGetTime()
+
+		sc.withTokenSessionCookie("token")
+		signedInUser := &user.SignedInUser{OrgID: 2, UserID: userID}
+		sc.userService.ExpectedSignedInUser = signedInUser
+		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{
+			UserId:            userID,
+			OAuthExpiry:       fakeGetTime()().Add(-1 * time.Second),
+			OAuthAccessToken:  "access_token",
+			OAuthRefreshToken: "refresh_token"}
+		sc.oauthTokenService.ExpectedErrors = map[string]error{"TryTokenRefresh": errors.New("error")}
+
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
+			return &models.UserToken{
+				UserId:        userID,
+				UnhashedToken: unhashedToken,
+			}, nil
+		}
+
+		sc.fakeReq("GET", "/").exec()
+
+		token := sc.oauthTokenService.GetCurrentOAuthToken(sc.context.Req.Context(), signedInUser)
+		assert.Equal(t, token.AccessToken, "")
+		assert.Equal(t, token.RefreshToken, "")
+		assert.True(t, token.Expiry.IsZero())
+
+		require.NotNil(t, sc.context)
+		require.Nil(t, sc.context.UserToken)
+		assert.False(t, sc.context.IsSignedIn)
+		assert.Equal(t, int64(0), sc.context.UserID)
+		assert.Equal(t, "grafana_session=; Path=/; Max-Age=0; HttpOnly", sc.resp.Header().Get("Set-Cookie"))
+	})
+
+	middlewareScenario(t, "Non-expired auth token in cookie and expired OAuth access token and refreshing the token succeeds", func(
+		t *testing.T, sc *scenarioContext) {
+		const userID int64 = 12
+		sc.contextHandler.GetTime = fakeGetTime()
+
+		sc.withTokenSessionCookie("token")
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
+		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(-5 * time.Second), OAuthRefreshToken: "refreshtoken"}
+
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
+			return &models.UserToken{
+				UserId:        userID,
+				UnhashedToken: unhashedToken,
+			}, nil
+		}
+
+		sc.fakeReq("GET", "/").exec()
+
+		require.NotNil(t, sc.context)
+		require.NotNil(t, sc.context.UserToken)
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, userID, sc.context.UserID)
+		assert.Equal(t, userID, sc.context.UserToken.UserId)
+		assert.Equal(t, "token", sc.context.UserToken.UnhashedToken)
+		assert.Empty(t, sc.resp.Header().Get("Set-Cookie"))
+	})
+
+	middlewareScenario(t, "Non-expired auth token in cookie and OAuth Access Token's Expiry is not set", func(
+		t *testing.T, sc *scenarioContext) {
+		const userID int64 = 12
+		sc.contextHandler.GetTime = fakeGetTime()
+
+		sc.withTokenSessionCookie("token")
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
+		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID}
+
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
+			return &models.UserToken{
+				UserId:        userID,
+				UnhashedToken: unhashedToken,
+			}, nil
+		}
+
+		sc.fakeReq("GET", "/").exec()
+
+		require.NotNil(t, sc.context)
+		require.NotNil(t, sc.context.UserToken)
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, userID, sc.context.UserID)
+		assert.Equal(t, userID, sc.context.UserToken.UserId)
+		assert.Equal(t, "token", sc.context.UserToken.UnhashedToken)
+		assert.Empty(t, sc.resp.Header().Get("Set-Cookie"))
+	})
+
 	middlewareScenario(t, "When anonymous access is enabled", func(t *testing.T, sc *scenarioContext) {
-		sc.mockSQLStore.ExpectedOrg = &models.Org{Id: 1, Name: sc.cfg.AnonymousOrgName}
-		orga, err := sc.mockSQLStore.CreateOrgWithMember(sc.cfg.AnonymousOrgName, 1)
-		require.NoError(t, err)
+		sc.orgService.ExpectedOrg = &org.Org{ID: 1, Name: sc.cfg.AnonymousOrgName}
 		sc.fakeReq("GET", "/").exec()
 
 		assert.Equal(t, int64(0), sc.context.UserID)
-		assert.Equal(t, orga.Id, sc.context.OrgID)
+		assert.Equal(t, int64(1), sc.context.OrgID)
 		assert.Equal(t, org.RoleEditor, sc.context.OrgRole)
 		assert.False(t, sc.context.IsSignedIn)
 	}, func(cfg *setting.Cfg) {
@@ -421,6 +538,11 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.True(t, sc.context.IsSignedIn)
 			assert.Equal(t, userID, sc.context.UserID)
 			assert.Equal(t, orgID, sc.context.OrgID)
+			list := contexthandler.AuthHTTPHeaderListFromContext(sc.context.Req.Context())
+			require.NotNil(t, list)
+			require.Contains(t, list.Items, sc.cfg.AuthProxyHeaderName)
+			require.Contains(t, list.Items, "X-WEBAUTH-GROUPS")
+			require.Contains(t, list.Items, "X-WEBAUTH-ROLE")
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 			cfg.LDAPEnabled = false
@@ -650,11 +772,13 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.m.UseMiddleware(AddCSPHeader(cfg, logger))
 		sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
 
-		sc.mockSQLStore = mockstore.NewSQLStoreMock()
+		sc.mockSQLStore = dbtest.NewFakeDB()
 		sc.loginService = &loginservice.LoginServiceMock{}
 		sc.userService = usertest.NewUserServiceFake()
+		sc.orgService = orgtest.NewOrgServiceFake()
 		sc.apiKeyService = &apikeytest.Service{}
-		ctxHdlr := getContextHandler(t, cfg, sc.mockSQLStore, sc.loginService, sc.apiKeyService, sc.userService)
+		sc.oauthTokenService = &auth.FakeOAuthTokenService{}
+		ctxHdlr := getContextHandler(t, cfg, sc.mockSQLStore, sc.loginService, sc.apiKeyService, sc.userService, sc.orgService, sc.oauthTokenService)
 		sc.sqlStore = ctxHdlr.SQLStore
 		sc.contextHandler = ctxHdlr
 		sc.m.Use(ctxHdlr.Middleware)
@@ -687,7 +811,11 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 	})
 }
 
-func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *mockstore.SQLStoreMock, loginService *loginservice.LoginServiceMock, apiKeyService *apikeytest.Service, userService *usertest.FakeUserService) *contexthandler.ContextHandler {
+func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *dbtest.FakeDB,
+	loginService *loginservice.LoginServiceMock, apiKeyService *apikeytest.Service,
+	userService *usertest.FakeUserService, orgService *orgtest.FakeOrgService,
+	oauthTokenService *auth.FakeOAuthTokenService,
+) *contexthandler.ContextHandler {
 	t.Helper()
 
 	if cfg == nil {
@@ -704,7 +832,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *mockstore.S
 	tracer := tracing.InitializeTracerForTest()
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, userService, mockSQLStore)
 	authenticator := &logintest.AuthenticatorFake{ExpectedUser: &user.User{}}
-	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy, loginService, apiKeyService, authenticator, userService)
+	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy, loginService, apiKeyService, authenticator, userService, orgService, oauthTokenService)
 }
 
 type fakeRenderService struct {

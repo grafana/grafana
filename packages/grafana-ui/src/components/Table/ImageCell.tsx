@@ -15,13 +15,13 @@ export const ImageCell: FC<TableCellProps> = (props) => {
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
-      {!hasLinks && <img src={displayValue.text} className={tableStyles.imageCell} />}
+      {!hasLinks && <img src={displayValue.text} className={tableStyles.imageCell} alt="" />}
       {hasLinks && (
         <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
           {(api) => {
             return (
               <div onClick={api.openMenu} className={cx(tableStyles.imageCellLink, api.targetClassName)}>
-                <img src={displayValue.text} className={tableStyles.imageCell} />
+                <img src={displayValue.text} className={tableStyles.imageCell} alt="" />
               </div>
             );
           }}

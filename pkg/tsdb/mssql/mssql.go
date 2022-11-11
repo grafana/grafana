@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -80,7 +81,7 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 		}
 
 		if cfg.Env == setting.Dev {
-			logger.Debug("getEngine", "connection", cnnstr)
+			logger.Debug("GetEngine", "connection", cnnstr)
 		}
 		config := sqleng.DataPluginConfiguration{
 			DriverName:        "mssql",
@@ -90,9 +91,7 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 			RowLimit:          cfg.DataProxyRowLimit,
 		}
 
-		queryResultTransformer := mssqlQueryResultTransformer{
-			log: logger,
-		}
+		queryResultTransformer := mssqlQueryResultTransformer{}
 
 		return sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 	}
@@ -175,15 +174,13 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 	return connStr, nil
 }
 
-type mssqlQueryResultTransformer struct {
-	log log.Logger
-}
+type mssqlQueryResultTransformer struct{}
 
-func (t *mssqlQueryResultTransformer) TransformQueryError(err error) error {
+func (t *mssqlQueryResultTransformer) TransformQueryError(logger log.Logger, err error) error {
 	// go-mssql overrides source error, so we currently match on string
 	// ref https://github.com/denisenkom/go-mssqldb/blob/045585d74f9069afe2e115b6235eb043c8047043/tds.go#L904
 	if strings.HasPrefix(strings.ToLower(err.Error()), "unable to open tcp connection with host") {
-		t.log.Error("query error", "err", err)
+		logger.Error("Query error", "error", err)
 		return sqleng.ErrConnectionFailed
 	}
 

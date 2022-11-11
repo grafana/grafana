@@ -3,7 +3,7 @@ package playlist
 import (
 	"errors"
 
-	"github.com/grafana/grafana/pkg/coremodel/playlist"
+	"github.com/grafana/grafana/pkg/kinds/playlist"
 )
 
 // Typed errors
@@ -22,20 +22,17 @@ type Playlist struct {
 	OrgId    int64  `json:"-" db:"org_id"`
 }
 
-type PlaylistDTO struct {
-	playlist.Model
-	OrgId int64 `json:"-"`
-}
-
+type PlaylistDTO = playlist.Playlist
 type PlaylistItemDTO = playlist.PlaylistItem
+type PlaylistItemType = playlist.PlaylistItemType
 
 type PlaylistItem struct {
 	Id         int64  `db:"id"`
 	PlaylistId int64  `db:"playlist_id"`
-	Type       string `db:"type"`
-	Value      string `db:"value"`
-	Order      int    `db:"order"`
-	Title      string `db:"title"`
+	Type       string `json:"type" db:"type"`
+	Value      string `json:"value" db:"value"`
+	Order      int    `json:"order" db:"order"`
+	Title      string `json:"title" db:"title"`
 }
 
 type Playlists []*Playlist
@@ -45,18 +42,18 @@ type Playlists []*Playlist
 //
 
 type UpdatePlaylistCommand struct {
-	OrgId    int64             `json:"-"`
-	UID      string            `json:"uid"`
-	Name     string            `json:"name" binding:"Required"`
-	Interval string            `json:"interval"`
-	Items    []PlaylistItemDTO `json:"items"`
+	OrgId    int64          `json:"-"`
+	UID      string         `json:"uid"`
+	Name     string         `json:"name" binding:"Required"`
+	Interval string         `json:"interval"`
+	Items    []PlaylistItem `json:"items"`
 }
 
 type CreatePlaylistCommand struct {
-	Name     string            `json:"name" binding:"Required"`
-	Interval string            `json:"interval"`
-	Items    []PlaylistItemDTO `json:"items"`
-	OrgId    int64             `json:"-"`
+	Name     string         `json:"name" binding:"Required"`
+	Interval string         `json:"interval"`
+	Items    []PlaylistItem `json:"items"`
+	OrgId    int64          `json:"-"`
 }
 
 type DeletePlaylistCommand struct {
@@ -69,6 +66,7 @@ type DeletePlaylistCommand struct {
 //
 
 type GetPlaylistsQuery struct {
+	// NOTE: the frontend never sends this query
 	Name  string
 	Limit int
 	OrgId int64

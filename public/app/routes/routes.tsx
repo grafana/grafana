@@ -9,12 +9,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
-import { getRoutes as getDataConnectionsRoutes } from 'app/features/data-connections/routes';
+import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
+import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
-import { ServiceAccountPage } from 'app/features/serviceaccounts/ServiceAccountPage';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
@@ -38,17 +38,13 @@ export function getAppRoutes(): RouteDescriptor[] {
           path: '/monitoring',
           component: () => <NavLandingPage navId="monitoring" />,
         },
-        {
-          path: '/a/:pluginId',
-          exact: true,
-          component: SafeDynamicImport(
-            () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/components/AppRootPage')
-          ),
-        },
       ]
     : [];
 
   return [
+    // Based on the Grafana configuration standalone plugin pages can even override and extend existing core pages, or they can register new routes under existing ones.
+    // In order to make it possible we need to register them first due to how `<Switch>` is evaluating routes. (This will be unnecessary once/when we upgrade to React Router v6 and start using `<Routes>` instead.)
+    ...getAppPluginRoutes(),
     {
       path: '/',
       pageClass: 'page-dashboard',
@@ -210,14 +206,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     ...topnavRoutes,
     {
-      path: '/a/:pluginId',
-      exact: false,
-      // Someday * and will get a ReactRouter under that path!
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/components/AppRootPage')
-      ),
-    },
-    {
       path: '/org',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "OrgDetailsPage" */ '../features/org/OrgDetailsPage')
@@ -269,7 +257,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/serviceaccounts/:id',
-      component: ServiceAccountPage,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ServiceAccountPage" */ 'app/features/serviceaccounts/ServiceAccountPage')
+      ),
     },
     {
       path: '/org/teams',

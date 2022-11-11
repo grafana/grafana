@@ -289,11 +289,11 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			cnnstr += fmt.Sprintf("&tx_isolation=%s", val)
 		}
 
-		if ss.Cfg.IsFeatureToggleEnabled("mysqlAnsiQuotes") || ss.Cfg.IsFeatureToggleEnabled("newDBLibrary") {
+		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagMysqlAnsiQuotes) || ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
 			cnnstr += "&sql_mode='ANSI_QUOTES'"
 		}
 
-		if ss.Cfg.IsFeatureToggleEnabled("newDBLibrary") {
+		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
 			cnnstr += "&parseTime=true"
 		}
 
@@ -455,6 +455,9 @@ func (ss *SQLStore) readConfig() error {
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
 	ss.dbCfg.MigrationLockAttemptTimeout = sec.Key("locking_attempt_timeout_sec").MustInt()
+
+	ss.dbCfg.QueryRetries = sec.Key("query_retries").MustInt()
+	ss.dbCfg.TransactionRetries = sec.Key("transaction_retries").MustInt(5)
 	return nil
 }
 
@@ -480,6 +483,7 @@ var featuresEnabledDuringTests = []string{
 	featuremgmt.FlagDashboardPreviews,
 	featuremgmt.FlagDashboardComments,
 	featuremgmt.FlagPanelTitleSearch,
+	featuremgmt.FlagObjectStore,
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
@@ -500,6 +504,11 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
 	return store
+}
+
+func InitTestDBWithCfg(t ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
+	store := InitTestDB(t, opts...)
+	return store, store.Cfg
 }
 
 func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
@@ -671,4 +680,8 @@ type DatabaseConfig struct {
 	UrlQueryParams              map[string][]string
 	SkipMigrations              bool
 	MigrationLockAttemptTimeout int
+	// SQLite only
+	QueryRetries int
+	// SQLite only
+	TransactionRetries int
 }

@@ -71,15 +71,9 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 
     dashboard?.removePanel(panel!);
 
-    backendSrv
-      .request({
-        method: 'PUT',
-        url: '/api/user/helpflags/1',
-        showSuccessAlert: false,
-      })
-      .then((res: any) => {
-        contextSrv.user.helpFlags1 = res.helpFlags1;
-      });
+    backendSrv.put('/api/user/helpflags/1', undefined, { showSuccessAlert: false }).then((res: any) => {
+      contextSrv.user.helpFlags1 = res.helpFlags1;
+    });
   };
 
   render() {
@@ -120,53 +114,53 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 }
 
 const getStyles = stylesFactory(() => {
-  const { theme } = config;
+  const theme = config.theme2;
   return {
     container: css`
       display: flex;
       flex-direction: column;
       height: 100%;
-      // background: url(public/img/getting_started_bg_${theme.type}.svg) no-repeat;
+      // background: url(public/img/getting_started_bg_${theme.colors.mode}.svg) no-repeat;
       background-size: cover;
-      padding: ${theme.spacing.xl} ${theme.spacing.md} 0;
+      padding: ${theme.spacing(4)} ${theme.spacing(2)} 0;
     `,
     content: css`
       label: content;
       display: flex;
       justify-content: center;
 
-      @media only screen and (max-width: ${theme.breakpoints.xxl}) {
-        margin-left: ${theme.spacing.lg};
+      ${theme.breakpoints.down('xxl')} {
+        margin-left: ${theme.spacing(3)};
         justify-content: flex-start;
       }
     `,
     header: css`
       label: header;
-      margin-bottom: ${theme.spacing.lg};
+      margin-bottom: ${theme.spacing(3)};
       display: flex;
       flex-direction: column;
 
-      @media only screen and (min-width: ${theme.breakpoints.lg}) {
+      ${theme.breakpoints.down('lg')} {
         flex-direction: row;
       }
     `,
     headerLogo: css`
       height: 58px;
-      padding-right: ${theme.spacing.md};
+      padding-right: ${theme.spacing(2)};
       display: none;
 
-      @media only screen and (min-width: ${theme.breakpoints.md}) {
+      ${theme.breakpoints.up('md')} {
         display: block;
       }
     `,
     heading: css`
       label: heading;
-      margin-right: ${theme.spacing.lg};
-      margin-bottom: ${theme.spacing.lg};
+      margin-right: ${theme.spacing(3)};
+      margin-bottom: ${theme.spacing(3)};
       flex-grow: 1;
       display: flex;
 
-      @media only screen and (min-width: ${theme.breakpoints.md}) {
+      ${theme.breakpoints.up('md')} {
         margin-bottom: 0;
       }
     `,
@@ -179,14 +173,14 @@ const getStyles = stylesFactory(() => {
     previous: css`
       left: 10px;
 
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
+      ${theme.breakpoints.down('md')} {
         left: 0;
       }
     `,
     forward: css`
       right: 10px;
 
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
+      ${theme.breakpoints.down('md')} {
         right: 0;
       }
     `,
@@ -195,8 +189,8 @@ const getStyles = stylesFactory(() => {
       justify-content: flex-end;
       cursor: pointer;
       text-decoration: underline;
-      margin-right: ${theme.spacing.md};
-      margin-bottom: ${theme.spacing.sm};
+      margin-right: ${theme.spacing(2)};
+      margin-bottom: ${theme.spacing(1)};
     `,
     loading: css`
       display: flex;
@@ -205,7 +199,7 @@ const getStyles = stylesFactory(() => {
       height: 100%;
     `,
     loadingText: css`
-      margin-right: ${theme.spacing.sm};
+      margin-right: ${theme.spacing(1)};
     `,
   };
 });
