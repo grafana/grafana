@@ -10,7 +10,7 @@
 /**
  * @module flot.gauge
  */
- (function($) {
+(function($) {
 
 
     /**
@@ -370,7 +370,7 @@
          */
         function calculateAnglesForGauge(gaugeOptionsi, layout, data) {
             let angles = {};
-            var neutral = gaugeOptionsi.gauge.neutralValue
+            var neutral = gaugeOptionsi.gauge.neutralValue;
 
             if (neutral != null) {
                 if (data < neutral) {
@@ -583,6 +583,11 @@
                     drawThresholdValue(gaugeOptionsi, layout, cellLayout, i + "_" + j, threshold.value, a);
                 }
             }
+            
+            var neutral = gaugeOptionsi.gauge.neutralValue;
+            if (neutral != null) {
+                drawThresholdValue(gaugeOptionsi, layout, cellLayout, "Neutral" + i, neutral, calculateAngle(gaugeOptionsi, layout, neutral));
+            }
         }
 
         /**
@@ -636,7 +641,7 @@
          * @param  {Object} textOptions the option of the text
          * @param  {Number} [a] the angle of the value drawn
          */
-         function drawText(x, y, id, text, textOptions, a) {
+        function drawText(x, y, id, text, textOptions, a) {
             var span = $(placeholder).find("#" + id);
             var exists = span.length;
             if (!exists) {
@@ -1007,3 +1012,4 @@
     });
 
 })(jQuery);
+
