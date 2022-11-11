@@ -552,6 +552,10 @@ func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRe
 
 func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
 	user := store.UserFromContext(ctx)
+	if user == nil {
+		return nil, fmt.Errorf("missing user in context")
+	}
+
 	if r.NextPageToken != "" || len(r.Sort) > 0 || len(r.Labels) > 0 {
 		return nil, fmt.Errorf("not yet supported")
 	}
