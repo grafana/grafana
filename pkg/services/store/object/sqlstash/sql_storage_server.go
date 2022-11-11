@@ -280,6 +280,7 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 	return s.AdminWrite(ctx, object.ToAdminWriteObjectRequest(r))
 }
 
+//nolint:gocyclo
 func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteObjectRequest) (*object.WriteObjectResponse, error) {
 	route, err := s.getObjectKey(ctx, r.GRN)
 	if err != nil {
