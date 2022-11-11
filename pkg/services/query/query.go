@@ -76,31 +76,6 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 		return nil, err
 	}
 
-	// If types exist in URL, make sure they match the request
-	params := reqDTO.HTTPRequest.URL.Query()
-	uids, ok := params["uid"]
-	if ok {
-		if len(uids) != len(parsedReq.parsedQueries) {
-			return nil, ErrQueryParamMismatch
-		}
-		for _, t := range uids {
-			if parsedReq.parsedQueries[t] == nil {
-				return nil, ErrQueryParamMismatch
-			}
-		}
-	}
-	types, ok := params["type"]
-	if ok {
-		if len(types) != len(parsedReq.dsTypes) {
-			return nil, ErrQueryParamMismatch
-		}
-		for _, t := range types {
-			if !parsedReq.dsTypes[t] {
-				return nil, ErrQueryParamMismatch
-			}
-		}
-	}
-
 	// If there are expressions, handle them and return
 	if parsedReq.hasExpression {
 		return s.handleExpressions(ctx, user, parsedReq)
@@ -271,6 +246,37 @@ func (pr parsedRequest) getFlattenedQueries() []parsedQuery {
 	return queries
 }
 
+func (pr parsedRequest) validateRequest() error {
+	if pr.httpRequest == nil {
+		return nil
+	}
+
+	params := pr.httpRequest.URL.Query()
+	uids, ok := params["uid"]
+	if ok {
+		if len(uids) != len(pr.parsedQueries) {
+			return ErrQueryParamMismatch
+		}
+		for _, t := range uids {
+			if pr.parsedQueries[t] == nil {
+				return ErrQueryParamMismatch
+			}
+		}
+	}
+	types, ok := params["type"]
+	if ok {
+		if len(types) != len(pr.dsTypes) {
+			return ErrQueryParamMismatch
+		}
+		for _, t := range types {
+			if !pr.dsTypes[t] {
+				return ErrQueryParamMismatch
+			}
+		}
+	}
+	return nil
+}
+
 // parseRequest parses a request into parsed queries grouped by datasource uid
 func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
@@ -334,7 +340,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 		req.httpRequest = reqDTO.HTTPRequest
 	}
 
-	return req, nil
+	return req, req.validateRequest()
 }
 
 func (s *Service) getDataSourceFromQuery(ctx context.Context, user *user.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*datasources.DataSource) (*datasources.DataSource, error) {
