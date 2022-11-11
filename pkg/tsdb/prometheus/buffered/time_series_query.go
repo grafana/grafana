@@ -3,6 +3,7 @@ package buffered
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -64,6 +65,11 @@ type Buffered struct {
 	ID                 int64
 	URL                string
 	TimeInterval       string
+}
+
+type bufferedResponse struct {
+	Response interface{}
+	Warnings apiv1.Warnings
 }
 
 // New creates and object capable of executing and parsing a Prometheus queries. It's "buffered" because there is
@@ -143,7 +149,7 @@ func (b *Buffered) runQuery(ctx context.Context, query *PrometheusQuery) (backen
 	logger := b.log.FromContext(ctx) // read trace-id and other info from the context
 	logger.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
 
-	response := make(map[TimeSeriesQueryType]interface{})
+	response := make(map[TimeSeriesQueryType]bufferedResponse)
 
 	timeRange := apiv1.Range{
 		Step: query.Step,
@@ -153,21 +159,39 @@ func (b *Buffered) runQuery(ctx context.Context, query *PrometheusQuery) (backen
 	}
 
 	if query.RangeQuery {
-		rangeResponse, _, err := b.client.QueryRange(ctx, query.Expr, timeRange)
+		rangeResponse, warnings, err := b.client.QueryRange(ctx, query.Expr, timeRange)
 		if err != nil {
+			var promErr *apiv1.Error
+			if errors.As(err, &promErr) {
+				logger.Error("Range query failed", "query", query.Expr, "error", err, "detail", promErr.Detail)
+				return backend.DataResponse{Error: fmt.Errorf("%w: details: %s", err, promErr.Detail)}, nil
+			}
+
 			logger.Error("Range query failed", "query", query.Expr, "err", err)
 			return backend.DataResponse{Error: err}, nil
 		}
-		response[RangeQueryType] = rangeResponse
+		response[RangeQueryType] = bufferedResponse{
+			Response: rangeResponse,
+			Warnings: warnings,
+		}
 	}
 
 	if query.InstantQuery {
-		instantResponse, _, err := b.client.Query(ctx, query.Expr, query.End)
+		instantResponse, warnings, err := b.client.Query(ctx, query.Expr, query.End)
 		if err != nil {
+			var promErr *apiv1.Error
+			if errors.As(err, &promErr) {
+				logger.Error("Instant query failed", "query", query.Expr, "error", err, "detail", promErr.Detail)
+				return backend.DataResponse{Error: fmt.Errorf("%w: details: %s", err, promErr.Detail)}, nil
+			}
+
 			logger.Error("Instant query failed", "query", query.Expr, "err", err)
 			return backend.DataResponse{Error: err}, nil
 		}
-		response[InstantQueryType] = instantResponse
+		response[InstantQueryType] = bufferedResponse{
+			Response: instantResponse,
+			Warnings: warnings,
+		}
 	}
 
 	// This is a special case
@@ -177,7 +201,10 @@ func (b *Buffered) runQuery(ctx context.Context, query *PrometheusQuery) (backen
 		if err != nil {
 			logger.Error("Exemplar query failed", "query", query.Expr, "err", err)
 		} else {
-			response[ExemplarQueryType] = exemplarResponse
+			response[ExemplarQueryType] = bufferedResponse{
+				Response: exemplarResponse,
+				Warnings: nil,
+			}
 		}
 	}
 
@@ -270,17 +297,17 @@ func (b *Buffered) parseTimeSeriesQuery(req *backend.QueryDataRequest) ([]*Prome
 	return qs, nil
 }
 
-func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *PrometheusQuery) (data.Frames, error) {
+func parseTimeSeriesResponse(value map[TimeSeriesQueryType]bufferedResponse, query *PrometheusQuery) (data.Frames, error) {
 	var (
 		frames     = data.Frames{}
 		nextFrames = data.Frames{}
 	)
 
-	for _, value := range value {
+	for _, val := range value {
 		// Zero out the slice to prevent data corruption.
 		nextFrames = nextFrames[:0]
 
-		switch v := value.(type) {
+		switch v := val.Response.(type) {
 		case model.Matrix:
 			nextFrames = matrixToDataFrames(v, query, nextFrames)
 		case model.Vector:
@@ -293,10 +320,33 @@ func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *P
 			return nil, fmt.Errorf("unexpected result type: %s query: %s", v, query.Expr)
 		}
 
+		if len(val.Warnings) > 0 {
+			for _, frame := range nextFrames {
+				if frame.Meta == nil {
+					frame.Meta = &data.FrameMeta{}
+				}
+				frame.Meta.Notices = readWarnings(val.Warnings)
+			}
+		}
+
 		frames = append(frames, nextFrames...)
 	}
 
 	return frames, nil
+}
+
+func readWarnings(warnings apiv1.Warnings) []data.Notice {
+	notices := []data.Notice{}
+
+	for _, w := range warnings {
+		notice := data.Notice{
+			Severity: data.NoticeSeverityWarning,
+			Text:     w,
+		}
+		notices = append(notices, notice)
+	}
+
+	return notices
 }
 
 func calculatePrometheusInterval(model *QueryModel, timeInterval string, query backend.DataQuery, intervalCalculator intervalv2.Calculator) (time.Duration, error) {

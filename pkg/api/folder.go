@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -66,13 +67,14 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
-	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgID, web.Params(c.Req)[":uid"])
+	uid := web.Params(c.Req)[":uid"]
+	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: &uid})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
-	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, folder))
+	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
 }
 
 // swagger:route GET /folders/id/{folder_id} folders getFolderByID
@@ -92,18 +94,20 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	folder, err := hs.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, id, c.OrgID)
+	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{ID: &id, OrgID: c.OrgID})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
-	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, folder))
+	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
 }
 
 // swagger:route POST /folders folders createFolder
 //
 // Create folder.
+//
+// If nested folders are enabled then it additionally expects the parent folder UID.
 //
 // Responses:
 // 200: folderResponse
@@ -113,22 +117,54 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 // 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
-	cmd := models.CreateFolderCommand{}
+	cmd := folder.CreateFolderCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	folder, err := hs.folderService.CreateFolder(c.Req.Context(), c.SignedInUser, c.OrgID, cmd.Title, cmd.Uid)
+	cmd.OrgID = c.OrgID
+
+	folder, err := hs.folderService.Create(c.Req.Context(), &cmd)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
-	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, folder))
+	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	// TODO set ParentUID if nested folders are enabled
+	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
+}
+
+func (hs *HTTPServer) MoveFolder(c *models.ReqContext) response.Response {
+	if hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		cmd := models.MoveFolderCommand{}
+		if err := web.Bind(c.Req, &cmd); err != nil {
+			return response.Error(http.StatusBadRequest, "bad request data", err)
+		}
+		var theFolder *folder.Folder
+		var err error
+		if cmd.ParentUID != nil {
+			moveCommand := folder.MoveFolderCommand{
+				UID:          web.Params(c.Req)[":uid"],
+				NewParentUID: *cmd.ParentUID,
+				OrgID:        c.OrgID,
+			}
+			theFolder, err = hs.folderService.Move(c.Req.Context(), &moveCommand)
+			if err != nil {
+				return response.Error(http.StatusInternalServerError, "update folder uid failed", err)
+			}
+		}
+		return response.JSON(http.StatusOK, theFolder)
+	}
+	result := map[string]string{}
+	result["message"] = "To use this service, you need to activate nested folder feature."
+	return response.JSON(http.StatusNotFound, result)
 }
 
 // swagger:route PUT /folders/{folder_uid} folders updateFolder
 //
 // Update folder.
+//
+// If nested folders are enabled then it optionally expects a new parent folder UID that moves the folder and
+// includes it into the response.
 //
 // Responses:
 // 200: folderResponse
@@ -143,12 +179,12 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	err := hs.folderService.UpdateFolder(c.Req.Context(), c.SignedInUser, c.OrgID, web.Params(c.Req)[":uid"], &cmd)
+	result, err := hs.folderService.Update(c.Req.Context(), c.SignedInUser, c.OrgID, web.Params(c.Req)[":uid"], &cmd)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
-	g := guardian.New(c.Req.Context(), cmd.Result.Id, c.OrgID, c.SignedInUser)
-	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, cmd.Result))
+	g := guardian.New(c.Req.Context(), result.ID, c.OrgID, c.SignedInUser)
+	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, result))
 }
 
 // swagger:route DELETE /folders/{folder_uid} folders deleteFolder
@@ -156,6 +192,7 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 // Delete folder.
 //
 // Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.
+// If nested folders are enabled then it also deletes all the subfolders.
 //
 // Responses:
 // 200: deleteFolderResponse
@@ -182,7 +219,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	return response.JSON(http.StatusOK, "")
 }
 
-func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {
+func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardGuardian, folder *folder.Folder) dtos.Folder {
 	canEdit, _ := g.CanEdit()
 	canSave, _ := g.CanSave()
 	canAdmin, _ := g.CanAdmin()
@@ -190,29 +227,31 @@ func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuar
 
 	// Finding creator and last updater of the folder
 	updater, creator := anonString, anonString
-	if folder.CreatedBy > 0 {
-		creator = hs.getUserLogin(c.Req.Context(), folder.CreatedBy)
-	}
-	if folder.UpdatedBy > 0 {
-		updater = hs.getUserLogin(c.Req.Context(), folder.UpdatedBy)
-	}
+	/*
+		if folder.CreatedBy > 0 {
+			creator = hs.getUserLogin(c.Req.Context(), folder.CreatedBy)
+		}
+		if folder.UpdatedBy > 0 {
+			updater = hs.getUserLogin(c.Req.Context(), folder.UpdatedBy)
+		}
+	*/
 
 	return dtos.Folder{
-		Id:            folder.Id,
-		Uid:           folder.Uid,
-		Title:         folder.Title,
-		Url:           folder.Url,
-		HasACL:        folder.HasACL,
-		CanSave:       canSave,
-		CanEdit:       canEdit,
-		CanAdmin:      canAdmin,
-		CanDelete:     canDelete,
-		CreatedBy:     creator,
-		Created:       folder.Created,
-		UpdatedBy:     updater,
-		Updated:       folder.Updated,
-		Version:       folder.Version,
-		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.Uid),
+		Id:    folder.ID,
+		Uid:   folder.UID,
+		Title: folder.Title,
+		//Url:           folder.Url,
+		//HasACL:        folder.HasACL,
+		CanSave:   canSave,
+		CanEdit:   canEdit,
+		CanAdmin:  canAdmin,
+		CanDelete: canDelete,
+		CreatedBy: creator,
+		Created:   folder.Created,
+		UpdatedBy: updater,
+		Updated:   folder.Updated,
+		//Version:       folder.Version,
+		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.UID),
 	}
 }
 
@@ -262,7 +301,7 @@ type GetFolderByIDParams struct {
 type CreateFolderParams struct {
 	// in:body
 	// required:true
-	Body models.CreateFolderCommand `json:"body"`
+	Body folder.CreateFolderCommand `json:"body"`
 }
 
 // swagger:parameters deleteFolder

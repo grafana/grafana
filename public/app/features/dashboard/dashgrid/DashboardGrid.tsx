@@ -52,7 +52,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
   }
 
   buildLayout() {
-    const layout = [];
+    const layout: ReactGridLayout.Layout[] = [];
     this.panelMap = {};
 
     for (const panel of this.props.dashboard.panels) {
@@ -66,7 +66,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
         continue;
       }
 
-      const panelPos: any = {
+      const panelPos: ReactGridLayout.Layout = {
         i: panel.key,
         x: panel.gridPos.x,
         y: panel.gridPos.y,
@@ -176,7 +176,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
     return panelElements;
   }
 
-  renderPanel(panel: PanelModel, width: any, height: any) {
+  renderPanel(panel: PanelModel, width: number, height: number) {
     if (panel.type === 'row') {
       return <DashboardRow key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }

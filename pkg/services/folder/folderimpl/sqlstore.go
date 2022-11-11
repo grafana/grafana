@@ -36,6 +36,15 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 	}
 
 	var foldr *folder.Folder
+	/*
+		user, err := appcontext.User(ctx)
+		if err != nil {
+			return nil, err
+		}
+		version := 1
+		updatedBy := user.UserID
+		createdBy := user.UserID
+	*/
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var sqlOrArgs []interface{}
 		if cmd.ParentUID == "" {
@@ -47,7 +56,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 					UID:   &cmd.ParentUID,
 					OrgID: cmd.OrgID,
 				}); err != nil {
-					return err
+					return folder.ErrFolderNotFound.Errorf("parent folder does not exist")
 				}
 			}
 			sql := "INSERT INTO folder(org_id, uid, parent_uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?, ?)"
@@ -110,12 +119,6 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 		if cmd.NewUID != nil {
 			columnsToUpdate = append(columnsToUpdate, "uid = ?")
 			cmd.Folder.UID = *cmd.NewUID
-			args = append(args, cmd.Folder.UID)
-		}
-
-		if cmd.NewParentUID != nil {
-			columnsToUpdate = append(columnsToUpdate, "parent_uid = ?")
-			cmd.Folder.ParentUID = *cmd.NewParentUID
 			args = append(args, cmd.Folder.UID)
 		}
 
