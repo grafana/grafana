@@ -1709,7 +1709,7 @@
             }
           },
           {
-            "type": "boolean",
+            "type": "string",
             "name": "X-Disable-Provenance",
             "in": "header"
           }
@@ -1785,7 +1785,7 @@
             }
           },
           {
-            "type": "boolean",
+            "type": "string",
             "name": "X-Disable-Provenance",
             "in": "header"
           }
@@ -5713,6 +5713,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -5956,7 +5957,6 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -6147,6 +6147,7 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",

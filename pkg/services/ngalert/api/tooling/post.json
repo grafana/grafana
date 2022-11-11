@@ -3266,6 +3266,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3504,7 +3505,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -3692,6 +3692,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -5500,7 +5501,7 @@
      {
       "in": "header",
       "name": "X-Disable-Provenance",
-      "type": "boolean"
+      "type": "string"
      }
     ],
     "responses": {
@@ -5595,7 +5596,7 @@
      {
       "in": "header",
       "name": "X-Disable-Provenance",
-      "type": "boolean"
+      "type": "string"
      }
     ],
     "responses": {

@@ -229,19 +229,6 @@ func TestProvisioningApi(t *testing.T) {
 
 	t.Run("alert rules", func(t *testing.T) {
 		t.Run("are invalid", func(t *testing.T) {
-			t.Run("POST returns 400 on wrong x-disable-provenance value", func(t *testing.T) {
-				sut := createProvisioningSrvSut(t)
-				rc := createTestRequestCtx()
-				rc.Req.Header = map[string][]string{"X-Disable-Provenance": {"treu"}}
-				rule := createInvalidAlertRule()
-
-				response := sut.RoutePostAlertRule(&rc, rule)
-
-				require.Equal(t, 400, response.Status())
-				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "expected true or false on header x-disable-provenance, got treu")
-			})
-
 			t.Run("POST returns 400 on wrong body params", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
@@ -252,22 +239,6 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 400, response.Status())
 				require.NotEmpty(t, response.Body())
 				require.Contains(t, string(response.Body()), "invalid alert rule")
-			})
-
-			t.Run("PUT returns 400 on wrong x-disable-provenance value", func(t *testing.T) {
-				sut := createProvisioningSrvSut(t)
-				rc := createTestRequestCtx()
-				rc.Req.Header = map[string][]string{"X-Disable-Provenance": {"flase"}}
-				uid := "123123"
-				rule := createTestAlertRule("rule", 1)
-				rule.UID = uid
-				insertRule(t, sut, rule)
-				rule = createInvalidAlertRule()
-
-				response := sut.RoutePutAlertRule(&rc, rule, uid)
-				require.Equal(t, 400, response.Status())
-				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "expected true or false on header x-disable-provenance, got flase")
 			})
 
 			t.Run("PUT returns 400 on wrong body params", func(t *testing.T) {
@@ -302,14 +273,14 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, models.ProvenanceNone, created.Provenance)
 			})
 
-			t.Run("PUT sets expected fields with API provenance", func(t *testing.T) {
+			t.Run("PUT sets expected fields with no provenance", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				uid := t.Name()
 				rule := createTestAlertRule("rule", 1)
 				rule.UID = uid
 				insertRuleInOrg(t, sut, rule, 3)
 				rc := createTestRequestCtx()
-				rc.Req.Header = map[string][]string{"X-Disable-Provenance": {"false"}}
+				rc.Req.Header = map[string][]string{"X-Disable-Provenance": {"hello"}}
 				rc.OrgID = 3
 				rule.OrgID = 1 // Set the org back to something wrong, we should still prefer the value from the req context.
 
@@ -318,7 +289,7 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 200, response.Status())
 				created := deserializeRule(t, response.Body())
 				require.Equal(t, int64(3), created.OrgID)
-				require.Equal(t, models.ProvenanceAPI, created.Provenance)
+				require.Equal(t, models.ProvenanceNone, created.Provenance)
 			})
 		})
 

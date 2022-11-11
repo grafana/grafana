@@ -3,9 +3,7 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -17,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const disableProvenanceHeaderName = "x-disable-provenance"
+const disableProvenanceHeaderName = "X-Disable-Provenance"
 
 type ProvisioningSrv struct {
 	log                 log.Logger
@@ -263,10 +261,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definiti
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
-	provenance, err := determineProvenance(c)
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "")
-	}
+	provenance := determineProvenance(c)
 	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), upstreamModel, provenance, c.UserID)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
@@ -292,10 +287,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitio
 	}
 	updated.OrgID = c.OrgID
 	updated.UID = UID
-	provenance, err := determineProvenance(c)
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "")
-	}
+	provenance := determineProvenance(c)
 	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), updated, provenance)
 	if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 		return response.Empty(http.StatusNotFound)
@@ -353,18 +345,9 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag defi
 	return response.JSON(http.StatusOK, ag)
 }
 
-func determineProvenance(ctx *models.ReqContext) (alerting_models.Provenance, error) {
-	disableProvenanceHeader := ctx.Req.Header.Get(disableProvenanceHeaderName)
-	if disableProvenanceHeader == "" {
-		return alerting_models.ProvenanceAPI, nil
+func determineProvenance(ctx *models.ReqContext) alerting_models.Provenance {
+	if _, disabled := ctx.Req.Header[disableProvenanceHeaderName]; disabled {
+		return alerting_models.ProvenanceNone
 	}
-
-	disableProvenance, err := strconv.ParseBool(disableProvenanceHeader)
-	if err != nil {
-		return alerting_models.ProvenanceAPI, fmt.Errorf("expected true or false on header %s, got %s", disableProvenanceHeaderName, disableProvenanceHeader)
-	}
-	if disableProvenance {
-		return alerting_models.ProvenanceNone, nil
-	}
-	return alerting_models.ProvenanceAPI, nil
+	return alerting_models.ProvenanceAPI
 }
