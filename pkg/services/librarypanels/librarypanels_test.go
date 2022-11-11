@@ -857,12 +857,14 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Login: userInDbName,
 		}
 
-		_, err = sqlStore.CreateUser(context.Background(), cmd)
+		ctx := appcontext.WithUser(context.Background(), usr)
+
+		_, err = sqlStore.CreateUser(ctx, cmd)
 		require.NoError(t, err)
 
 		sc := scenarioContext{
 			user:           usr,
-			ctx:            context.Background(),
+			ctx:            ctx,
 			service:        &service,
 			elementService: elementService,
 			sqlStore:       sqlStore,
