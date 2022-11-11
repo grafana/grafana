@@ -1,9 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { FC, PureComponent, useRef, useState } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, stylesFactory } from '@grafana/ui';
-import { config } from 'app/core/config';
+import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, UserDTO } from 'app/types';
 
@@ -73,7 +71,6 @@ export function UserProfile({
 
   const authSource = user.authLabels?.length && user.authLabels[0];
   const lockMessage = authSource ? `Synced via ${authSource}` : '';
-  const styles = getStyles(config.theme);
 
   const editLocked = user.isExternal || !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersWrite, user);
   const passwordChangeLocked =
@@ -163,16 +160,14 @@ export function UserProfile({
   );
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    buttonRow: css`
-      margin-top: 0.8rem;
-      > * {
-        margin-right: 16px;
-      }
-    `,
-  };
-});
+const styles = {
+  buttonRow: css`
+    margin-top: 0.8rem;
+    > * {
+      margin-right: 16px;
+    }
+  `,
+};
 
 interface UserProfileRowProps {
   label: string;
@@ -203,7 +198,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
     value: this.props.value || '',
   };
 
-  setInputElem = (elem: any) => {
+  setInputElem = (elem: HTMLInputElement) => {
     this.inputElem = elem;
   };
 

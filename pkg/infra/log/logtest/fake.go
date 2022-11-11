@@ -1,6 +1,8 @@
 package logtest
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -47,4 +49,20 @@ func (f *Fake) Error(msg string, ctx ...interface{}) {
 	f.ErrorLogs.Calls++
 	f.ErrorLogs.Message = msg
 	f.ErrorLogs.Ctx = ctx
+}
+
+func (f *Fake) DebugCtx(_ context.Context, msg string, args ...interface{}) {
+	f.Debug(msg, args...)
+}
+
+func (f *Fake) InfoCtx(_ context.Context, msg string, args ...interface{}) {
+	f.Info(msg, args...)
+}
+
+func (f *Fake) WarnCtx(_ context.Context, msg string, args ...interface{}) {
+	f.Warn(msg, args...)
+}
+
+func (f *Fake) FromContext(_ context.Context) log.Logger {
+	return f.New()
 }

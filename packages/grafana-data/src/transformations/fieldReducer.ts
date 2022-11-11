@@ -10,6 +10,8 @@ export enum ReducerID {
   min = 'min',
   logmin = 'logmin',
   mean = 'mean',
+  variance = 'variance',
+  stdDev = 'stdDev',
   last = 'last',
   first = 'first',
   count = 'count',
@@ -152,6 +154,20 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   { id: ReducerID.min, name: 'Min', description: 'Minimum Value', standard: true },
   { id: ReducerID.max, name: 'Max', description: 'Maximum Value', standard: true },
   { id: ReducerID.mean, name: 'Mean', description: 'Average Value', standard: true, aliasIds: ['avg'] },
+  {
+    id: ReducerID.variance,
+    name: 'Variance',
+    description: 'Variance of all values in a field',
+    standard: false,
+    reduce: calculateStdDev,
+  },
+  {
+    id: ReducerID.stdDev,
+    name: 'StdDev',
+    description: 'Standard deviation of all values in a field',
+    standard: false,
+    reduce: calculateStdDev,
+  },
   {
     id: ReducerID.sum,
     name: 'Total',
@@ -417,6 +433,33 @@ function calculateLastNotNull(field: Field, ignoreNulls: boolean, nullAsZero: bo
     }
   }
   return { lastNotNull: null };
+}
+
+/** Calculates standard deviation and variance */
+function calculateStdDev(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  // Only support number fields
+  if (!(field.type === FieldType.number || field.type === FieldType.time)) {
+    return { variance: 0, stdDev: 0 };
+  }
+
+  let squareSum = 0;
+  let runningMean = 0;
+  let runningNonNullCount = 0;
+  const data = field.values;
+  for (let i = 0; i < data.length; i++) {
+    const currentValue = data.get(i);
+    if (currentValue != null) {
+      runningNonNullCount++;
+      let _oldMean = runningMean;
+      runningMean += (currentValue - _oldMean) / runningNonNullCount;
+      squareSum += (currentValue - _oldMean) * (currentValue - runningMean);
+    }
+  }
+  if (runningNonNullCount > 0) {
+    const variance = squareSum / runningNonNullCount;
+    return { variance, stdDev: Math.sqrt(variance) };
+  }
+  return { variance: 0, stdDev: 0 };
 }
 
 function calculateChangeCount(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {

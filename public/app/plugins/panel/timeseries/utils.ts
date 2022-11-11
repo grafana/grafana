@@ -104,6 +104,7 @@ export function prepareGraphableFields(
     if (hasTimeField && hasValueField) {
       frames.push({
         ...frame,
+        length: nulledFrame.length,
         fields,
       });
     }
@@ -114,4 +115,11 @@ export function prepareGraphableFields(
   }
 
   return null;
+}
+
+export function getTimezones(timezones: string[] | undefined, defaultTimezone: string): string[] {
+  if (!timezones || !timezones.length) {
+    return [defaultTimezone];
+  }
+  return timezones.map((v) => (v?.length ? v : defaultTimezone));
 }

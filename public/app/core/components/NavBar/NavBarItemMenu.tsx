@@ -6,11 +6,11 @@ import { SpectrumMenuProps } from '@react-types/menu';
 import React, { ReactElement, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2, NavMenuItemType, NavModelItem } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { CustomScrollbar, useTheme2 } from '@grafana/ui';
 
 import { NavBarItemMenuItem } from './NavBarItemMenuItem';
-import { NavBarScrollContainer } from './NavBarScrollContainer';
 import { useNavBarItemMenuContext } from './context';
+import { getNavTitle } from './navBarItem-translations';
 import { getNavModelItemKey } from './utils';
 
 export interface NavBarItemMenuProps extends SpectrumMenuProps<NavModelItem> {
@@ -58,6 +58,15 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
     <NavBarItemMenuItem key={getNavModelItemKey(item.value)} item={item} state={state} onNavigate={onNavigate} />
   ));
 
+  if (itemComponents.length === 0 && section.value.emptyMessageId) {
+    const emptyMessageTranslated = getNavTitle(section.value.emptyMessageId);
+    itemComponents.push(
+      <div key="empty-message" className={styles.emptyMessage}>
+        {emptyMessageTranslated}
+      </div>
+    );
+  }
+
   const subTitleComponent = menuSubTitle && (
     <li key={menuSubTitle} className={styles.subtitle}>
       {menuSubTitle}
@@ -66,15 +75,15 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
 
   const contents = [itemComponents, subTitleComponent];
   const contentComponent = (
-    <NavBarScrollContainer key="scrollContainer">
+    <CustomScrollbar hideHorizontalTrack hideVerticalTrack showScrollIndicators key="scrollContainer">
       {reverseMenuDirection ? contents.reverse() : contents}
-    </NavBarScrollContainer>
+    </CustomScrollbar>
   );
 
   const menu = [headerComponent, contentComponent];
 
   return (
-    <ul className={styles.menu} ref={ref} {...mergeProps(menuProps, contextMenuProps)} tabIndex={menuHasFocus ? 0 : -1}>
+    <ul className={styles.menu} ref={ref} {...mergeProps(menuProps, contextMenuProps)} tabIndex={-1}>
       {reverseMenuDirection ? menu.reverse() : menu}
     </ul>
   );
@@ -104,6 +113,10 @@ function getStyles(theme: GrafanaTheme2, reverseDirection?: boolean) {
       padding: ${theme.spacing(1)} ${theme.spacing(2)} ${theme.spacing(1)};
       text-align: left;
       white-space: nowrap;
+    `,
+    emptyMessage: css`
+      font-style: italic;
+      padding: ${theme.spacing(0.5, 2)};
     `,
   };
 }

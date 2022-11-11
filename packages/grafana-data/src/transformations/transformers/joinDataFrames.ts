@@ -1,8 +1,12 @@
+import intersect from 'fast_array_intersect';
+
 import { getTimeField, sortDataFrame } from '../../dataframe';
 import { DataFrame, Field, FieldMatcher, FieldType, Vector } from '../../types';
 import { ArrayVector } from '../../vector';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
+
+import { JoinMode } from './joinByField';
 
 export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
   const { timeField } = getTimeField(data[0]);
@@ -30,7 +34,7 @@ export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface JoinOptions {
   /**
@@ -52,6 +56,11 @@ export interface JoinOptions {
    * @internal -- used when we need to keep a reference to the original frame/field index
    */
   keepOriginIndices?: boolean;
+
+  /**
+   * @internal -- Optionally specify a join mode (outer or inner)
+   */
+  mode?: JoinMode;
 }
 
 function getJoinMatcher(options: JoinOptions): FieldMatcher {
@@ -77,7 +86,7 @@ export function maybeSortFrame(frame: DataFrame, fieldIdx: number) {
  * This will return a single frame joined by the first matching field.  When a join field is not specified,
  * the default will use the first time field
  */
-export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined {
+export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   if (!options.frames?.length) {
     return;
   }
@@ -211,7 +220,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
     allData.push(a);
   }
 
-  const joined = join(allData, nullModes);
+  const joined = join(allData, nullModes, options.mode);
 
   return {
     // ...options.data[0], // keep name, meta?
@@ -241,10 +250,9 @@ export type TypedArray =
   | Float32Array
   | Float64Array;
 
-export type AlignedData = [
-  xValues: number[] | TypedArray,
-  ...yValues: Array<Array<number | null | undefined> | TypedArray>
-];
+export type AlignedData =
+  | TypedArray[]
+  | [xValues: number[] | TypedArray, ...yValues: Array<Array<number | null | undefined> | TypedArray>];
 
 // nullModes
 const NULL_REMOVE = 0; // nulls are converted to undefined (e.g. for spanGaps: true)
@@ -273,16 +281,23 @@ function nullExpand(yVals: Array<number | null>, nullIdxs: number[], alignedLen:
 }
 
 // nullModes is a tables-matched array indicating how to treat nulls in each series
-export function join(tables: AlignedData[], nullModes?: number[][]) {
-  const xVals = new Set<number>();
+export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMode = JoinMode.outer) {
+  let xVals: Set<number>;
 
-  for (let ti = 0; ti < tables.length; ti++) {
-    let t = tables[ti];
-    let xs = t[0];
-    let len = xs.length;
+  if (mode === JoinMode.inner) {
+    // @ts-ignore
+    xVals = new Set(intersect(tables.map((t) => t[0])));
+  } else {
+    xVals = new Set();
 
-    for (let i = 0; i < len; i++) {
-      xVals.add(xs[i]);
+    for (let ti = 0; ti < tables.length; ti++) {
+      let t = tables[ti];
+      let xs = t[0];
+      let len = xs.length;
+
+      for (let i = 0; i < len; i++) {
+        xVals.add(xs[i]);
+      }
     }
   }
 
@@ -335,34 +350,46 @@ export function join(tables: AlignedData[], nullModes?: number[][]) {
   return data;
 }
 
-// Quick test if the first and last points look to be ascending
+// Test a few samples to see if the values are ascending
 // Only exported for tests
-export function isLikelyAscendingVector(data: Vector): boolean {
-  let first: any = undefined;
+export function isLikelyAscendingVector(data: Vector, samples = 50) {
+  const len = data.length;
 
-  for (let idx = 0; idx < data.length; idx++) {
-    const v = data.get(idx);
-    if (v != null) {
-      if (first != null) {
-        if (first > v) {
-          return false; // descending
-        }
-        break;
-      }
-      first = v;
-    }
+  // empty or single value
+  if (len <= 1) {
+    return true;
   }
 
-  let idx = data.length - 1;
-  while (idx >= 0) {
-    const v = data.get(idx--);
+  // skip leading & trailing nullish
+  let firstIdx = 0;
+  let lastIdx = len - 1;
+
+  while (firstIdx <= lastIdx && data.get(firstIdx) == null) {
+    firstIdx++;
+  }
+
+  while (lastIdx >= firstIdx && data.get(lastIdx) == null) {
+    lastIdx--;
+  }
+
+  // all nullish or one value surrounded by nullish
+  if (lastIdx <= firstIdx) {
+    return true;
+  }
+
+  const stride = Math.max(1, Math.floor((lastIdx - firstIdx + 1) / samples));
+
+  for (let prevVal = data.get(firstIdx), i = firstIdx + stride; i <= lastIdx; i += stride) {
+    const v = data.get(i);
+
     if (v != null) {
-      if (first > v) {
+      if (v <= prevVal) {
         return false;
       }
-      return true;
+
+      prevVal = v;
     }
   }
 
-  return true; // only one non-null point
+  return true;
 }

@@ -27,8 +27,8 @@ func (f *FakeConfigStore) GetImage(ctx context.Context, token string) (*models.I
 	return nil, models.ErrImageNotFound
 }
 
-func (f *FakeConfigStore) GetImages(ctx context.Context, tokens []string) ([]models.Image, error) {
-	return nil, models.ErrImageNotFound
+func (f *FakeConfigStore) GetImages(ctx context.Context, tokens []string) ([]models.Image, []string, error) {
+	return nil, nil, models.ErrImageNotFound
 }
 
 func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfiguration) FakeConfigStore {
@@ -199,6 +199,10 @@ func (fkv *FakeKVStore) Keys(ctx context.Context, orgID int64, namespace string,
 		}
 	}
 	return keys, nil
+}
+
+func (fkv *FakeKVStore) GetAll(ctx context.Context, orgId int64, namespace string) (map[int64]map[string]string, error) {
+	return nil, nil
 }
 
 type fakeState struct {

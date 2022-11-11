@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -126,6 +127,7 @@ func (ns *NotificationService) SendWebhookSync(ctx context.Context, cmd *models.
 		HttpMethod:  cmd.HttpMethod,
 		HttpHeader:  cmd.HttpHeader,
 		ContentType: cmd.ContentType,
+		Validation:  cmd.Validation,
 	})
 }
 
@@ -167,7 +169,7 @@ func (ns *NotificationService) SendEmailCommandHandler(ctx context.Context, cmd 
 }
 
 func (ns *NotificationService) SendResetPasswordEmail(ctx context.Context, cmd *models.SendResetPasswordEmailCommand) error {
-	code, err := createUserEmailCode(ns.Cfg, cmd.User, nil)
+	code, err := createUserEmailCode(ns.Cfg, cmd.User, "")
 	if err != nil {
 		return err
 	}
@@ -181,7 +183,7 @@ func (ns *NotificationService) SendResetPasswordEmail(ctx context.Context, cmd *
 	})
 }
 
-type GetUserByLoginFunc = func(c context.Context, login string) (*models.User, error)
+type GetUserByLoginFunc = func(c context.Context, login string) (*user.User, error)
 
 func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, query *models.ValidateResetPasswordCodeQuery, userByLogin GetUserByLoginFunc) error {
 	login := getLoginForEmailCode(query.Code)

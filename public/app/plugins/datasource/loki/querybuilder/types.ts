@@ -11,10 +11,15 @@ export interface LokiVisualQuery {
 }
 
 export type LokiVisualQueryBinary = VisualQueryBinary<LokiVisualQuery>;
+export enum LokiQueryPatternType {
+  Log = 'log',
+  Metric = 'metric',
+}
 
 export interface LokiQueryPattern {
   name: string;
   operations: QueryBuilderOperation[];
+  type: LokiQueryPatternType;
 }
 
 export enum LokiVisualQueryOperationCategory {
@@ -36,6 +41,7 @@ export enum LokiOperationId {
   LineFormat = 'line_format',
   LabelFormat = 'label_format',
   Rate = 'rate',
+  RateCounter = 'rate_counter',
   CountOverTime = 'count_over_time',
   SumOverTime = 'sum_over_time',
   AvgOverTime = 'avg_over_time',
@@ -60,11 +66,17 @@ export enum LokiOperationId {
   BottomK = 'bottomk',
   LineContains = '__line_contains',
   LineContainsNot = '__line_contains_not',
+  LineContainsCaseInsensitive = '__line_contains_case_insensitive',
+  LineContainsNotCaseInsensitive = '__line_contains_not_case_insensitive',
   LineMatchesRegex = '__line_matches_regex',
   LineMatchesRegexNot = '__line_matches_regex_not',
+  LineFilterIpMatches = '__line_filter_ip_matches',
   LabelFilter = '__label_filter',
   LabelFilterNoErrors = '__label_filter_no_errors',
+  LabelFilterIpMatches = '__label_filter_ip_marches',
   Unwrap = 'unwrap',
+  SumBy = '__sum_by',
+  SumWithout = '__sum_without',
   // Binary ops
   Addition = '__addition',
   Subtraction = '__subtraction',

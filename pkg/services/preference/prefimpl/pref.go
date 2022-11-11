@@ -5,23 +5,33 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
-	store store
-	cfg   *setting.Cfg
+	store    store
+	cfg      *setting.Cfg
+	features *featuremgmt.FeatureManager
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg) pref.Service {
-	return &Service{
-		store: &sqlStore{
-			db: db,
-		},
-		cfg: cfg,
+func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureManager) pref.Service {
+	service := &Service{
+		cfg:      cfg,
+		features: features,
 	}
+	if features.IsEnabled(featuremgmt.FlagNewDBLibrary) {
+		service.store = &sqlxStore{
+			sess: db.GetSqlxSession(),
+		}
+	} else {
+		service.store = &sqlStore{
+			db: db,
+		}
+	}
+	return service
 }
 
 func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreferenceWithDefaultsQuery) (*pref.Preference, error) {
@@ -51,7 +61,17 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 			res.HomeDashboardID = p.HomeDashboardID
 		}
 		if p.JSONData != nil {
-			res.JSONData = p.JSONData
+			if p.JSONData.Locale != "" {
+				res.JSONData.Locale = p.JSONData.Locale
+			}
+
+			if len(p.JSONData.Navbar.SavedItems) > 0 {
+				res.JSONData.Navbar = p.JSONData.Navbar
+			}
+
+			if p.JSONData.QueryHistory.HomeTab != "" {
+				res.JSONData.QueryHistory.HomeTab = p.JSONData.QueryHistory.HomeTab
+			}
 		}
 	}
 
@@ -217,5 +237,13 @@ func (s *Service) GetDefaults() *pref.Preference {
 		JSONData:        &pref.PreferenceJSONData{},
 	}
 
+	if s.features.IsEnabled(featuremgmt.FlagInternationalization) {
+		defaults.JSONData.Locale = s.cfg.DefaultLocale
+	}
+
 	return defaults
+}
+
+func (s *Service) DeleteByUser(ctx context.Context, userID int64) error {
+	return s.store.DeleteByUser(ctx, userID)
 }

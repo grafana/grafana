@@ -7,7 +7,7 @@ export {
   getFieldColorModeForField,
   getFieldColorMode,
   fieldColorModeRegistry,
-  FieldColorMode,
+  type FieldColorMode,
   getFieldSeriesColor,
 } from './fieldColor';
 export { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';

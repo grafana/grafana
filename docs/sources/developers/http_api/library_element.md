@@ -251,6 +251,7 @@ Content-Type: application/json
             "kind": 1,
             "elementId": 25,
             "connectionId": 527,
+            "connectionUid": "dHEquNzGz",
             "created": "2021-09-27T10:00:07+02:00",
             "createdBy": {
                 "id": 1,

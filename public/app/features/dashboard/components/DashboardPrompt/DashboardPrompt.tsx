@@ -1,7 +1,6 @@
 import * as H from 'history';
 import { each, find } from 'lodash';
 import React, { useContext, useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { Prompt } from 'react-router-dom';
 
 import { locationService } from '@grafana/runtime';
@@ -10,6 +9,7 @@ import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
+import { useDispatch } from 'app/types';
 import { DashboardSavedEvent } from 'app/types/events';
 
 import { DashboardModel } from '../../state/DashboardModel';
@@ -165,7 +165,7 @@ export function ignoreChanges(current: DashboardModel, original: object | null) 
 /**
  * Remove stuff that should not count in diff
  */
-function cleanDashboardFromIgnoredChanges(dashData: any) {
+function cleanDashboardFromIgnoredChanges(dashData: unknown) {
   // need to new up the domain model class to get access to expand / collapse row logic
   const model = new DashboardModel(dashData);
 
@@ -181,9 +181,6 @@ function cleanDashboardFromIgnoredChanges(dashData: any) {
   dash.schemaVersion = 0;
   dash.timezone = 0;
 
-  // ignore iteration property
-  delete dash.iteration;
-
   dash.panels = [];
 
   // ignore template variable values
@@ -196,7 +193,7 @@ function cleanDashboardFromIgnoredChanges(dashData: any) {
   return dash;
 }
 
-export function hasChanges(current: DashboardModel, original: any) {
+export function hasChanges(current: DashboardModel, original: unknown) {
   if (current.hasUnsavedChanges()) {
     return true;
   }

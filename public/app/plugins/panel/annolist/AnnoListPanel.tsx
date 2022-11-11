@@ -9,7 +9,7 @@ import {
   AppEvents,
   dateTime,
   DurationUnit,
-  GrafanaTheme,
+  GrafanaTheme2,
   locationUtil,
   PanelProps,
 } from '@grafana/data';
@@ -37,7 +37,7 @@ interface State {
   queryTags: string[];
 }
 export class AnnoListPanel extends PureComponent<Props, State> {
-  style = getStyles(config.theme);
+  style = getStyles(config.theme2);
   subs = new Subscription();
   tagListRef = React.createRef<HTMLUListElement>();
 
@@ -97,7 +97,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     };
 
     if (options.onlyFromThisDashboard) {
-      params.dashboardId = getDashboardSrv().getCurrent()?.id;
+      params.dashboardUID = getDashboardSrv().getCurrent()?.uid;
     }
 
     let timeInfo = '';
@@ -148,13 +148,13 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       params.viewPanel = anno.panelId;
     }
 
-    if (current?.id === anno.dashboardId) {
+    if (current?.uid === anno.dashboardUID) {
       locationService.partial(params);
       return;
     }
 
-    const result = await getBackendSrv().get('/api/search', { dashboardIds: anno.dashboardId });
-    if (result && result.length && result[0].id === anno.dashboardId) {
+    const result = await getBackendSrv().get('/api/search', { dashboardUIDs: anno.dashboardUID });
+    if (result && result.length && result[0].uid === anno.dashboardUID) {
       const dash = result[0];
       const url = new URL(dash.url, window.location.origin);
       url.searchParams.set('from', params.from);
@@ -162,7 +162,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       locationService.push(locationUtil.stripBaseFromUrl(url.toString()));
       return;
     }
-    appEvents.emit(AppEvents.alertWarning, ['Unknown Dashboard: ' + anno.dashboardId]);
+    appEvents.emit(AppEvents.alertWarning, ['Unknown Dashboard: ' + anno.dashboardUID]);
   };
 
   _timeOffset(time: number, offset: string, subtract = false): number {
@@ -290,7 +290,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   noneFound: css`
     display: flex;
     align-items: center;
@@ -300,9 +300,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   filter: css({
     display: 'flex',
-    padding: `0px ${theme.spacing.xs}`,
+    padding: `0px ${theme.spacing(0.5)}`,
     b: {
-      paddingRight: theme.spacing.sm,
+      paddingRight: theme.spacing(1),
     },
   }),
   tagList: css({

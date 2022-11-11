@@ -3,11 +3,13 @@ package guardian
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,8 +22,8 @@ var permissionMap = map[string]models.PermissionType{
 var _ DashboardGuardian = new(AccessControlDashboardGuardian)
 
 func NewAccessControlDashboardGuardian(
-	ctx context.Context, dashboardId int64, user *models.SignedInUser,
-	store sqlstore.Store, ac accesscontrol.AccessControl,
+	ctx context.Context, dashboardId int64, user *user.SignedInUser,
+	store db.DB, ac accesscontrol.AccessControl,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
 	dashboardService dashboards.DashboardService,
@@ -44,8 +46,8 @@ type AccessControlDashboardGuardian struct {
 	log                         log.Logger
 	dashboardID                 int64
 	dashboard                   *models.Dashboard
-	user                        *models.SignedInUser
-	store                       sqlstore.Store
+	user                        *user.SignedInUser
+	store                       db.DB
 	ac                          accesscontrol.AccessControl
 	folderPermissionsService    accesscontrol.FolderPermissionsService
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService
@@ -143,23 +145,23 @@ func (a *AccessControlDashboardGuardian) CanCreate(folderID int64, isFolder bool
 func (a *AccessControlDashboardGuardian) evaluate(evaluator accesscontrol.Evaluator) (bool, error) {
 	ok, err := a.ac.Evaluate(a.ctx, a.user, evaluator)
 	if err != nil {
-		a.log.Debug("Failed to evaluate access control to folder or dashboard", "error", err, "userId", a.user.UserId, "id", a.dashboardID)
+		a.log.Debug("Failed to evaluate access control to folder or dashboard", "error", err, "userId", a.user.UserID, "id", a.dashboardID)
 	}
 
 	if !ok && err == nil {
-		a.log.Debug("Access denied to folder or dashboard", "userId", a.user.UserId, "id", a.dashboardID, "permissions", evaluator.GoString())
+		a.log.Debug("Access denied to folder or dashboard", "userId", a.user.UserID, "id", a.dashboardID, "permissions", evaluator.GoString())
 	}
 
 	return ok, err
 }
 
-func (a *AccessControlDashboardGuardian) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error) {
+func (a *AccessControlDashboardGuardian) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardACL) (bool, error) {
 	// always true for access control
 	return true, nil
 }
 
-// GetAcl translate access control permissions to dashboard acl info
-func (a *AccessControlDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO, error) {
+// GetACL translate access control permissions to dashboard acl info
+func (a *AccessControlDashboardGuardian) GetACL() ([]*models.DashboardACLInfoDTO, error) {
 	if err := a.loadDashboard(); err != nil {
 		return nil, err
 	}
@@ -176,19 +178,19 @@ func (a *AccessControlDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO
 		return nil, err
 	}
 
-	acl := make([]*models.DashboardAclInfoDTO, 0, len(permissions))
+	acl := make([]*models.DashboardACLInfoDTO, 0, len(permissions))
 	for _, p := range permissions {
 		if !p.IsManaged {
 			continue
 		}
 
-		var role *models.RoleType
+		var role *org.RoleType
 		if p.BuiltInRole != "" {
-			tmp := models.RoleType(p.BuiltInRole)
+			tmp := org.RoleType(p.BuiltInRole)
 			role = &tmp
 		}
 
-		acl = append(acl, &models.DashboardAclInfoDTO{
+		acl = append(acl, &models.DashboardACLInfoDTO{
 			OrgId:          a.dashboard.OrgId,
 			DashboardId:    a.dashboard.Id,
 			FolderId:       a.dashboard.FolderId,
@@ -215,17 +217,17 @@ func (a *AccessControlDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO
 	return acl, nil
 }
 
-func (a *AccessControlDashboardGuardian) GetACLWithoutDuplicates() ([]*models.DashboardAclInfoDTO, error) {
-	return a.GetAcl()
+func (a *AccessControlDashboardGuardian) GetACLWithoutDuplicates() ([]*models.DashboardACLInfoDTO, error) {
+	return a.GetACL()
 }
 
-func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.DashboardAcl, error) {
-	var hiddenACL []*models.DashboardAcl
+func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.DashboardACL, error) {
+	var hiddenACL []*models.DashboardACL
 	if a.user.IsGrafanaAdmin {
 		return hiddenACL, nil
 	}
 
-	existingPermissions, err := a.GetAcl()
+	existingPermissions, err := a.GetACL()
 	if err != nil {
 		return hiddenACL, err
 	}
@@ -236,7 +238,7 @@ func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*mode
 		}
 
 		if _, hidden := cfg.HiddenUsers[item.UserLogin]; hidden {
-			hiddenACL = append(hiddenACL, &models.DashboardAcl{
+			hiddenACL = append(hiddenACL, &models.DashboardACL{
 				OrgID:       item.OrgId,
 				DashboardID: item.DashboardId,
 				UserID:      item.UserId,
@@ -254,7 +256,7 @@ func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*mode
 
 func (a *AccessControlDashboardGuardian) loadDashboard() error {
 	if a.dashboard == nil {
-		query := &models.GetDashboardQuery{Id: a.dashboardID, OrgId: a.user.OrgId}
+		query := &models.GetDashboardQuery{Id: a.dashboardID, OrgId: a.user.OrgID}
 		if err := a.dashboardService.GetDashboard(a.ctx, query); err != nil {
 			return err
 		}
@@ -267,7 +269,7 @@ func (a *AccessControlDashboardGuardian) loadParentFolder(folderID int64) (*mode
 	if folderID == 0 {
 		return &models.Dashboard{Uid: accesscontrol.GeneralFolderUID}, nil
 	}
-	folderQuery := &models.GetDashboardQuery{Id: folderID, OrgId: a.user.OrgId}
+	folderQuery := &models.GetDashboardQuery{Id: folderID, OrgId: a.user.OrgID}
 	if err := a.dashboardService.GetDashboard(a.ctx, folderQuery); err != nil {
 		return nil, err
 	}

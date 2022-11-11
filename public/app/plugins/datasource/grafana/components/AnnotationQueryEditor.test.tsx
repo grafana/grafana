@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQueryType } from '../types';
@@ -45,6 +45,17 @@ describe('AnnotationQueryEditor', () => {
       render(<AnnotationQueryEditor query={mockQuery} onChange={mockOnChange} />);
       const tags = screen.getByLabelText(/Tags/);
       expect(tags).toBeInTheDocument();
+    });
+
+    it('add and remove a custom tag', () => {
+      render(<AnnotationQueryEditor query={mockQuery} onChange={mockOnChange} />);
+      const tags = screen.getByLabelText(/Tags/);
+      fireEvent.change(tags, { target: { value: 'customTag' } });
+      fireEvent.submit(tags);
+      const addedTag = screen.getByText('customTag');
+      expect(addedTag).toBeInTheDocument();
+      fireEvent.click(addedTag);
+      expect(addedTag).not.toBeInTheDocument();
     });
   });
 

@@ -2,7 +2,10 @@ package web
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -86,12 +89,25 @@ func TestContext_RemoteAddr(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := &Context{
-				Req:    tt.fields.Req,
-				logger: tt.fields.logger,
+				Req: tt.fields.Req,
 			}
 			if got := ctx.RemoteAddr(); got != tt.want {
 				t.Errorf("RemoteAddr() = %v, want %v", got, tt.want)
 			}
 		})
 	}
+}
+
+func TestContext_noHandler(t *testing.T) {
+	recorder := httptest.NewRecorder()
+
+	method := http.MethodGet
+	c := &Context{
+		Req:  httptest.NewRequest(method, "/", nil),
+		Resp: NewResponseWriter(method, recorder),
+	}
+
+	c.run()
+
+	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
 }

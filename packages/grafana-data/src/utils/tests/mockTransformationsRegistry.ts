@@ -6,6 +6,7 @@ export const mockTransformationsRegistry = (transformers: Array<DataTransformerI
     return transformers.map((t) => {
       return {
         id: t.id,
+        aliasIds: t.aliasIds,
         name: t.name,
         transformation: t,
         description: t.description,

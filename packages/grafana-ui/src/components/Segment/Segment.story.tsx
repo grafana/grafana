@@ -1,12 +1,15 @@
 import { action } from '@storybook/addon-actions';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { Segment, Icon, SegmentSection } from '@grafana/ui';
 
+import { SegmentSyncProps } from './Segment';
+
 const AddButton = (
-  <a className="gf-form-label query-part">
+  <span className="gf-form-label query-part">
     <Icon name="plus-circle" />
-  </a>
+  </span>
 );
 
 const toOption = (value: any) => ({ label: value, value: value });
@@ -41,7 +44,7 @@ export const ArrayOptions = () => {
   );
 };
 
-export default {
+const meta: ComponentMeta<typeof Segment> = {
   title: 'Data Source/Segment/SegmentSync',
   component: Segment,
 };
@@ -147,3 +150,45 @@ export const HtmlAttributes = () => {
     </SegmentFrame>
   );
 };
+
+export const Basic: ComponentStory<React.ComponentType<SegmentSyncProps<string>>> = (
+  args: SegmentSyncProps<string>
+) => {
+  const [value, setValue] = useState(args.value);
+
+  const props: SegmentSyncProps<string> = {
+    ...args,
+    value,
+    onChange: ({ value }) => {
+      setValue(value);
+      action('onChange fired')(value);
+    },
+    onExpandedChange: (expanded) => action('onExpandedChange fired')({ expanded }),
+  };
+
+  return (
+    <SegmentSection label="Segment:">
+      <Segment<string> {...props} />
+    </SegmentSection>
+  );
+};
+
+Basic.parameters = {
+  controls: {
+    exclude: ['onChange', 'onExpandedChange', 'Component', 'className', 'value'],
+  },
+};
+
+Basic.args = {
+  value: undefined,
+  options,
+  inputMinWidth: 0,
+  allowCustomValue: false,
+  placeholder: 'Placeholder text',
+  disabled: false,
+  autofocus: false,
+  allowEmptyValue: false,
+  inputPlaceholder: 'Start typing...',
+};
+
+export default meta;

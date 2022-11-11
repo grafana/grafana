@@ -2,6 +2,7 @@ import { uniqBy } from 'lodash';
 import React, { useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
 
@@ -14,9 +15,20 @@ export interface Props {
   onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
   onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
   onDelete: () => void;
+  invalidLabel?: boolean;
+  invalidValue?: boolean;
 }
 
-export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabelNames, onGetLabelValues }: Props) {
+export function LabelFilterItem({
+  item,
+  defaultOp,
+  onChange,
+  onDelete,
+  onGetLabelNames,
+  onGetLabelValues,
+  invalidLabel,
+  invalidValue,
+}: Props) {
   const [state, setState] = useState<{
     labelNames?: SelectableValue[];
     labelValues?: SelectableValue[];
@@ -24,8 +36,8 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
     isLoadingLabelValues?: boolean;
   }>({});
 
-  const isMultiSelect = () => {
-    return item.op === operators[0].label;
+  const isMultiSelect = (operator = item.op) => {
+    return operators.find((op) => op.label === operator)?.isMultiValue;
   };
 
   const getSelectOptionsFromString = (item?: string): string[] => {
@@ -50,6 +62,8 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
     <div data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
         <Select
+          placeholder="Select label"
+          aria-label={selectors.components.QueryBuilder.labelSelect}
           inputId="prometheus-dimensions-filter-item-key"
           width="auto"
           value={item.label ? toOption(item.label) : null}
@@ -67,23 +81,31 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
                 ...item,
                 op: item.op ?? defaultOp,
                 label: change.label,
-              } as any as QueryBuilderLabelFilter);
+              } as unknown as QueryBuilderLabelFilter);
             }
           }}
+          invalid={invalidLabel}
         />
 
         <Select
+          aria-label={selectors.components.QueryBuilder.matchOperatorSelect}
           value={toOption(item.op ?? defaultOp)}
           options={operators}
           width="auto"
           onChange={(change) => {
             if (change.value != null) {
-              onChange({ ...item, op: change.value } as any as QueryBuilderLabelFilter);
+              onChange({
+                ...item,
+                op: change.value,
+                value: isMultiSelect(change.value) ? item.value : getSelectOptionsFromString(item?.value)[0],
+              } as unknown as QueryBuilderLabelFilter);
             }
           }}
         />
 
         <Select
+          placeholder="Select value"
+          aria-label={selectors.components.QueryBuilder.valueSelect}
           inputId="prometheus-dimensions-filter-item-value"
           width="auto"
           value={
@@ -106,16 +128,21 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
           options={getOptions()}
           onChange={(change) => {
             if (change.value) {
-              onChange({ ...item, value: change.value, op: item.op ?? defaultOp } as any as QueryBuilderLabelFilter);
+              onChange({
+                ...item,
+                value: change.value,
+                op: item.op ?? defaultOp,
+              } as unknown as QueryBuilderLabelFilter);
             } else {
               const changes = change
                 .map((change: any) => {
                   return change.label;
                 })
                 .join('|');
-              onChange({ ...item, value: changes, op: item.op ?? defaultOp } as any as QueryBuilderLabelFilter);
+              onChange({ ...item, value: changes, op: item.op ?? defaultOp } as unknown as QueryBuilderLabelFilter);
             }
           }}
+          invalid={invalidValue}
         />
         <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />
       </InputGroup>
@@ -124,8 +151,8 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
 }
 
 const operators = [
-  { label: '=~', value: '=~' },
-  { label: '=', value: '=' },
-  { label: '!=', value: '!=' },
-  { label: '!~', value: '!~' },
+  { label: '=~', value: '=~', isMultiValue: true },
+  { label: '=', value: '=', isMultiValue: false },
+  { label: '!=', value: '!=', isMultiValue: false },
+  { label: '!~', value: '!~', isMultiValue: true },
 ];

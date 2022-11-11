@@ -15,10 +15,12 @@ import {
 } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
+import { DEFAULT_PER_PAGE_PAGINATION } from '../../../core/constants';
 import { AlertQuery } from '../../../types/unified-alerting-dto';
 
 import { AlertLabels } from './components/AlertLabels';
 import { DetailsField } from './components/DetailsField';
+import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
 import { RuleViewerLayout, RuleViewerLayoutContent } from './components/rule-viewer/RuleViewerLayout';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { RuleDetailsActionButtons } from './components/rules/RuleDetailsActionButtons';
@@ -35,19 +37,20 @@ import { AlertingQueryRunner } from './state/AlertingQueryRunner';
 import { getRulesSourceByName } from './utils/datasource';
 import { alertRuleToQueries } from './utils/query';
 import * as ruleId from './utils/rule-id';
-import { isFederatedRuleGroup } from './utils/rules';
+import { isFederatedRuleGroup, isGrafanaRulerRule } from './utils/rules';
 
 type RuleViewerProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: string }>;
 
 const errorMessage = 'Could not find data source for rule';
 const errorTitle = 'Could not view rule';
-const pageTitle = 'Alerting / View rule';
+const pageTitle = 'View rule';
 
 export function RuleViewer({ match }: RuleViewerProps) {
   const styles = useStyles2(getStyles);
-  const { id, sourceName } = match.params;
+  const { id } = match.params;
   const identifier = ruleId.tryParse(id, true);
-  const { loading, error, result: rule } = useCombinedRule(identifier, sourceName);
+
+  const { loading, error, result: rule } = useCombinedRule(identifier, identifier?.ruleSourceName);
   const runner = useMemo(() => new AlertingQueryRunner(), []);
   const data = useObservable(runner.get());
   const queries2 = useMemo(() => alertRuleToQueries(rule), [rule]);
@@ -86,7 +89,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
     );
   }, []);
 
-  if (!sourceName) {
+  if (!identifier?.ruleSourceName) {
     return (
       <RuleViewerLayout title={pageTitle}>
         <Alert title={errorTitle}>
@@ -96,7 +99,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
     );
   }
 
-  const rulesSource = getRulesSourceByName(sourceName);
+  const rulesSource = getRulesSourceByName(identifier.ruleSourceName);
 
   if (loading) {
     return (
@@ -130,6 +133,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
 
   const annotations = Object.entries(rule.annotations).filter(([_, value]) => !!value.trim());
   const isFederatedRule = isFederatedRuleGroup(rule.group);
+  const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
   return (
     <RuleViewerLayout wrapInContent={false} title={pageTitle}>
@@ -145,6 +149,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
           </VerticalGroup>
         </Alert>
       )}
+      {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.AlertRule} />}
       <RuleViewerLayoutContent>
         <div>
           <h4>
@@ -175,7 +180,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
           </div>
         </div>
         <div>
-          <RuleDetailsMatchingInstances promRule={rule.promRule} />
+          <RuleDetailsMatchingInstances rule={rule} pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }} />
         </div>
       </RuleViewerLayoutContent>
       {!isFederatedRule && data && Object.keys(data).length > 0 && (

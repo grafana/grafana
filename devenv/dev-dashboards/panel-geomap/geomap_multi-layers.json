@@ -440,8 +440,8 @@
   "style": "dark",
   "tags": [
     "gdev",
-    "geomap",
-    "panel-tests"
+    "panel-tests",
+    "geomap"
   ],
   "templating": {
     "list": []

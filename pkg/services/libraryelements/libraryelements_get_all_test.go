@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
 )
 
@@ -523,11 +524,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilter is set to existing folders, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
-			command := getCreatePanelCommand(newFolder.Id, "Text - Library Panel2")
+			command := getCreatePanelCommand(newFolder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
-			folderFilter := strconv.FormatInt(newFolder.Id, 10)
+			folderFilter := strconv.FormatInt(newFolder.ID, 10)
 
 			err := sc.reqContext.Req.ParseForm()
 			require.NoError(t, err)
@@ -547,7 +548,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 						{
 							ID:          2,
 							OrgID:       1,
-							FolderID:    newFolder.Id,
+							FolderID:    newFolder.ID,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
 							Kind:        int64(models.PanelElement),
@@ -563,7 +564,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
 								FolderName:          "NewFolder",
-								FolderUID:           newFolder.Uid,
+								FolderUID:           newFolder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
@@ -590,7 +591,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilter is set to a nonexistent folders, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
-			command := getCreatePanelCommand(newFolder.Id, "Text - Library Panel2")
+			command := getCreatePanelCommand(newFolder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -1239,8 +1240,8 @@ func TestGetAllLibraryElements(t *testing.T) {
 			require.Equal(t, int64(1), result.Result.Elements[0].FolderID)
 			require.Equal(t, "Text - Library Panel", result.Result.Elements[0].Name)
 
-			sc.reqContext.SignedInUser.OrgId = 2
-			sc.reqContext.SignedInUser.OrgRole = models.ROLE_ADMIN
+			sc.reqContext.SignedInUser.OrgID = 2
+			sc.reqContext.SignedInUser.OrgRole = org.RoleAdmin
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 

@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/setting"
@@ -21,12 +21,13 @@ import (
 )
 
 type ServiceAccountsAPI struct {
-	cfg            *setting.Cfg
-	service        serviceaccounts.Service
-	accesscontrol  accesscontrol.AccessControl
-	RouterRegister routing.RouteRegister
-	store          serviceaccounts.Store
-	log            log.Logger
+	cfg               *setting.Cfg
+	service           serviceaccounts.Service
+	accesscontrol     accesscontrol.AccessControl
+	RouterRegister    routing.RouteRegister
+	store             serviceaccounts.Store
+	log               log.Logger
+	permissionService accesscontrol.ServiceAccountPermissionsService
 }
 
 func NewServiceAccountsAPI(
@@ -35,24 +36,20 @@ func NewServiceAccountsAPI(
 	accesscontrol accesscontrol.AccessControl,
 	routerRegister routing.RouteRegister,
 	store serviceaccounts.Store,
+	permissionService accesscontrol.ServiceAccountPermissionsService,
 ) *ServiceAccountsAPI {
 	return &ServiceAccountsAPI{
-		cfg:            cfg,
-		service:        service,
-		accesscontrol:  accesscontrol,
-		RouterRegister: routerRegister,
-		store:          store,
-		log:            log.New("serviceaccounts.api"),
+		cfg:               cfg,
+		service:           service,
+		accesscontrol:     accesscontrol,
+		RouterRegister:    routerRegister,
+		store:             store,
+		log:               log.New("serviceaccounts.api"),
+		permissionService: permissionService,
 	}
 }
 
-func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
-	features featuremgmt.FeatureToggles,
-) {
-	if !features.IsEnabled(featuremgmt.FlagServiceAccounts) {
-		return
-	}
-
+func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 	auth := accesscontrol.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Get("/search", auth(middleware.ReqOrgAdmin,
@@ -79,19 +76,44 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.MigrateApiKeysToServiceAccounts))
 		serviceAccountsRoute.Post("/migrate/:keyId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.ConvertToServiceAccount))
-		serviceAccountsRoute.Post("/revert/:keyId", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionDelete)), routing.Wrap(api.RevertApiKey))
+		serviceAccountsRoute.Post("/:serviceAccountId/revert/:keyId", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.RevertApiKey))
 	})
 }
 
-// POST /api/serviceaccounts
+// swagger:route POST /serviceaccounts service_accounts createServiceAccount
+//
+// # Create service account
+//
+// Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
+// action: `serviceaccounts:write` scope: `serviceaccounts:*`
+//
+// Requires basic authentication and that the authenticated user is a Grafana Admin.
+//
+// Responses:
+// 201: createServiceAccountResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) response.Response {
 	cmd := serviceaccounts.CreateServiceAccountForm{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
-	serviceAccount, err := api.store.CreateServiceAccount(c.Req.Context(), c.OrgId, cmd.Name)
+	if err := api.validateRole(cmd.Role, &c.OrgRole); err != nil {
+		switch {
+		case errors.Is(err, serviceaccounts.ErrServiceAccountInvalidRole):
+			return response.Error(http.StatusBadRequest, err.Error(), err)
+		case errors.Is(err, serviceaccounts.ErrServiceAccountRolePrivilegeDenied):
+			return response.Error(http.StatusForbidden, err.Error(), err)
+		default:
+			return response.Error(http.StatusInternalServerError, "failed to create service account", err)
+		}
+	}
+
+	serviceAccount, err := api.store.CreateServiceAccount(c.Req.Context(), c.OrgID, &cmd)
 	switch {
 	case errors.Is(err, database.ErrServiceAccountAlreadyExists):
 		return response.Error(http.StatusBadRequest, "Failed to create service account", err)
@@ -99,17 +121,38 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 		return response.Error(http.StatusInternalServerError, "Failed to create service account", err)
 	}
 
+	if !api.accesscontrol.IsDisabled() {
+		if c.SignedInUser.IsRealUser() {
+			if _, err := api.permissionService.SetUserPermission(c.Req.Context(), c.OrgID, accesscontrol.User{ID: c.SignedInUser.UserID}, strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
+				return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
+			}
+		}
+	}
+
 	return response.JSON(http.StatusCreated, serviceAccount)
 }
 
-// GET /api/serviceaccounts/:serviceAccountId
+// swagger:route GET /serviceaccounts/{serviceAccountId} service_accounts retrieveServiceAccount
+//
+// # Get single serviceaccount by Id
+//
+// Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
+// action: `serviceaccounts:read` scope: `serviceaccounts:id:1` (single service account)
+//
+// Responses:
+// 200: retrieveServiceAccountResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) response.Response {
 	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
-	serviceAccount, err := api.store.RetrieveServiceAccount(ctx.Req.Context(), ctx.OrgId, scopeID)
+	serviceAccount, err := api.store.RetrieveServiceAccount(ctx.Req.Context(), ctx.OrgID, scopeID)
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
@@ -124,7 +167,10 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) re
 	serviceAccount.AvatarUrl = dtos.GetGravatarUrlWithDefault("", serviceAccount.Name)
 	serviceAccount.AccessControl = metadata[saIDString]
 
-	tokens, err := api.store.ListTokens(ctx.Req.Context(), serviceAccount.OrgId, serviceAccount.Id)
+	tokens, err := api.store.ListTokens(ctx.Req.Context(), &serviceaccounts.GetSATokensQuery{
+		OrgID:            &serviceAccount.OrgId,
+		ServiceAccountID: &serviceAccount.Id,
+	})
 	if err != nil {
 		api.log.Warn("Failed to list tokens for service account", "serviceAccount", serviceAccount.Id)
 	}
@@ -133,7 +179,20 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) re
 	return response.JSON(http.StatusOK, serviceAccount)
 }
 
-// PATCH /api/serviceaccounts/:serviceAccountId
+// swagger:route PATCH /serviceaccounts/{serviceAccountId} service_accounts updateServiceAccount
+//
+// # Update service account
+//
+// Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
+// action: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)
+//
+// Responses:
+// 200: updateServiceAccountResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (api *ServiceAccountsAPI) UpdateServiceAccount(c *models.ReqContext) response.Response {
 	scopeID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
@@ -145,14 +204,18 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *models.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
-	if cmd.Role != nil && !cmd.Role.IsValid() {
-		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
-	}
-	if cmd.Role != nil && !c.OrgRole.Includes(*cmd.Role) {
-		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
+	if err := api.validateRole(cmd.Role, &c.OrgRole); err != nil {
+		switch {
+		case errors.Is(err, serviceaccounts.ErrServiceAccountInvalidRole):
+			return response.Error(http.StatusBadRequest, err.Error(), err)
+		case errors.Is(err, serviceaccounts.ErrServiceAccountRolePrivilegeDenied):
+			return response.Error(http.StatusForbidden, err.Error(), err)
+		default:
+			return response.Error(http.StatusInternalServerError, "failed to update service account", err)
+		}
 	}
 
-	resp, err := api.store.UpdateServiceAccount(c.Req.Context(), c.OrgId, scopeID, &cmd)
+	resp, err := api.store.UpdateServiceAccount(c.Req.Context(), c.OrgID, scopeID, &cmd)
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
@@ -175,21 +238,53 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *models.ReqContext) respon
 	})
 }
 
-// DELETE /api/serviceaccounts/:serviceAccountId
+func (api *ServiceAccountsAPI) validateRole(r *org.RoleType, orgRole *org.RoleType) error {
+	if r != nil && !r.IsValid() {
+		return serviceaccounts.ErrServiceAccountInvalidRole
+	}
+	if r != nil && !orgRole.Includes(*r) {
+		return serviceaccounts.ErrServiceAccountRolePrivilegeDenied
+	}
+	return nil
+}
+
+// swagger:route DELETE /serviceaccounts/{serviceAccountId} service_accounts deleteServiceAccount
+//
+// # Delete service account
+//
+// Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
+// action: `serviceaccounts:delete` scope: `serviceaccounts:id:1` (single service account)
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) response.Response {
 	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service account ID is invalid", err)
 	}
-	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.OrgId, scopeID)
+	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.OrgID, scopeID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
 	}
 	return response.Success("Service account deleted")
 }
 
-// SearchOrgServiceAccountsWithPaging is an HTTP handler to search for org users with paging.
-// GET /api/serviceaccounts/search
+// swagger:route GET /serviceaccounts/search service_accounts searchOrgServiceAccountsWithPaging
+//
+// # Search service accounts with paging
+//
+// Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
+// action: `serviceaccounts:read` scope: `serviceaccounts:*`
+//
+// Responses:
+// 200: searchOrgServiceAccountsWithPagingResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqContext) response.Response {
 	ctx := c.Req.Context()
 	perPage := c.QueryInt("perpage")
@@ -210,7 +305,7 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 	if onlyDisabled {
 		filter = serviceaccounts.FilterOnlyDisabled
 	}
-	serviceAccountSearch, err := api.store.SearchOrgServiceAccounts(ctx, c.OrgId, c.Query("query"), filter, page, perPage, c.SignedInUser)
+	serviceAccountSearch, err := api.store.SearchOrgServiceAccounts(ctx, c.OrgID, c.Query("query"), filter, page, perPage, c.SignedInUser)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get service accounts for current organization", err)
 	}
@@ -224,7 +319,9 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 		saIDs[saIDString] = true
 		metadata := api.getAccessControlMetadata(c, map[string]bool{saIDString: true})
 		sa.AccessControl = metadata[strconv.FormatInt(sa.Id, 10)]
-		tokens, err := api.store.ListTokens(ctx, sa.OrgId, sa.Id)
+		tokens, err := api.store.ListTokens(ctx, &serviceaccounts.GetSATokensQuery{
+			OrgID: &sa.OrgId, ServiceAccountID: &sa.Id,
+		})
 		if err != nil {
 			api.log.Warn("Failed to list tokens for service account", "serviceAccount", sa.Id)
 		}
@@ -236,7 +333,7 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 
 // GET /api/serviceaccounts/migrationstatus
 func (api *ServiceAccountsAPI) GetAPIKeysMigrationStatus(ctx *models.ReqContext) response.Response {
-	upgradeStatus, err := api.store.GetAPIKeysMigrationStatus(ctx.Req.Context(), ctx.OrgId)
+	upgradeStatus, err := api.store.GetAPIKeysMigrationStatus(ctx.Req.Context(), ctx.OrgID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
@@ -245,7 +342,7 @@ func (api *ServiceAccountsAPI) GetAPIKeysMigrationStatus(ctx *models.ReqContext)
 
 // POST /api/serviceaccounts/hideapikeys
 func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *models.ReqContext) response.Response {
-	if err := api.store.HideApiKeysTab(ctx.Req.Context(), ctx.OrgId); err != nil {
+	if err := api.store.HideApiKeysTab(ctx.Req.Context(), ctx.OrgID); err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
 	return response.Success("API keys hidden")
@@ -253,7 +350,7 @@ func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *models.ReqContext) response.R
 
 // POST /api/serviceaccounts/migrate
 func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *models.ReqContext) response.Response {
-	if err := api.store.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgId); err != nil {
+	if err := api.store.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgID); err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
 
@@ -267,7 +364,7 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) r
 		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
 	}
 
-	if err := api.store.MigrateApiKey(ctx.Req.Context(), ctx.OrgId, keyId); err != nil {
+	if err := api.store.MigrateApiKey(ctx.Req.Context(), ctx.OrgID, keyId); err != nil {
 		return response.Error(http.StatusInternalServerError, "Error converting API key", err)
 	}
 
@@ -278,13 +375,17 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) r
 func (api *ServiceAccountsAPI) RevertApiKey(ctx *models.ReqContext) response.Response {
 	keyId, err := strconv.ParseInt(web.Params(ctx.Req)[":keyId"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
+		return response.Error(http.StatusBadRequest, "key ID is invalid", err)
+	}
+	serviceAccountId, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "service account ID is invalid", err)
 	}
 
-	if err := api.store.RevertApiKey(ctx.Req.Context(), keyId); err != nil {
-		return response.Error(http.StatusInternalServerError, "Error reverting to API key", err)
+	if err := api.store.RevertApiKey(ctx.Req.Context(), serviceAccountId, keyId); err != nil {
+		return response.Error(http.StatusInternalServerError, "error reverting to API key", err)
 	}
-	return response.Success("Reverted service account to API key")
+	return response.Success("reverted service account to API key")
 }
 
 func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {
@@ -296,10 +397,88 @@ func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, sa
 		return map[string]accesscontrol.Metadata{}
 	}
 
-	permissions, ok := c.SignedInUser.Permissions[c.OrgId]
+	permissions, ok := c.SignedInUser.Permissions[c.OrgID]
 	if !ok {
 		return map[string]accesscontrol.Metadata{}
 	}
 
 	return accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "serviceaccounts:id:", saIDs)
+}
+
+// swagger:parameters searchOrgServiceAccountsWithPaging
+type SearchOrgServiceAccountsWithPagingParams struct {
+	// in:query
+	// required:false
+	Disabled bool `jsson:"disabled"`
+	// in:query
+	// required:false
+	ExpiredTokens bool `json:"expiredTokens"`
+	// It will return results where the query value is contained in one of the name.
+	// Query values with spaces need to be URL encoded.
+	// in:query
+	// required:false
+	Query string `json:"query"`
+	// The default value is 1000.
+	// in:query
+	// required:false
+	PerPage int `json:"perpage"`
+	// The default value is 1.
+	// in:query
+	// required:false
+	Page int `json:"page"`
+}
+
+// swagger:parameters createServiceAccount
+type CreateServiceAccountParams struct {
+	//in:body
+	Body serviceaccounts.CreateServiceAccountForm
+}
+
+// swagger:parameters retrieveServiceAccount
+type RetrieveServiceAccountParams struct {
+	// in:path
+	ServiceAccountId int64 `json:"serviceAccountId"`
+}
+
+// swagger:parameters updateServiceAccount
+type UpdateServiceAccountParams struct {
+	// in:path
+	ServiceAccountId int64 `json:"serviceAccountId"`
+	// in:body
+	Body serviceaccounts.UpdateServiceAccountForm
+}
+
+// swagger:parameters deleteServiceAccount
+type DeleteServiceAccountParams struct {
+	// in:path
+	ServiceAccountId int64 `json:"serviceAccountId"`
+}
+
+// swagger:response searchOrgServiceAccountsWithPagingResponse
+type SearchOrgServiceAccountsWithPagingResponse struct {
+	// in:body
+	Body *serviceaccounts.SearchServiceAccountsResult
+}
+
+// swagger:response createServiceAccountResponse
+type CreateServiceAccountResponse struct {
+	// in:body
+	Body *serviceaccounts.ServiceAccountDTO
+}
+
+// swagger:response retrieveServiceAccountResponse
+type RetrieveServiceAccountResponse struct {
+	// in:body
+	Body *serviceaccounts.ServiceAccountDTO
+}
+
+// swagger:response updateServiceAccountResponse
+type UpdateServiceAccountResponse struct {
+	// in:body
+	Body struct {
+		Message        string                                    `json:"message"`
+		ID             int64                                     `json:"id"`
+		Name           string                                    `json:"name"`
+		ServiceAccount *serviceaccounts.ServiceAccountProfileDTO `json:"serviceaccount"`
+	}
 }

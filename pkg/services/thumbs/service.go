@@ -5,13 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
 	"github.com/segmentio/encoding/json"
 
+	"github.com/grafana/grafana/pkg/services/datasources/permissions"
+	"github.com/grafana/grafana/pkg/services/searchV2"
+
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/models"
@@ -21,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -50,12 +52,16 @@ type thumbService struct {
 	thumbnailRepo              thumbnailRepo
 	lockService                *serverlock.ServerLockService
 	features                   featuremgmt.FeatureToggles
-	store                      sqlstore.Store
+	store                      db.DB
 	crawlLockServiceActionName string
 	log                        log.Logger
 	canRunCrawler              bool
 	settings                   setting.DashboardPreviewsSettings
 	dashboardService           dashboards.DashboardService
+	dsUidsLookup               getDatasourceUidsForDashboard
+	dsPermissionsService       permissions.DatasourcePermissionsService
+	licensing                  models.Licensing
+	searchService              searchV2.SearchService
 }
 
 type crawlerScheduleOptions struct {
@@ -63,21 +69,22 @@ type crawlerScheduleOptions struct {
 	tickerInterval   time.Duration
 	maxCrawlDuration time.Duration
 	crawlerMode      CrawlerMode
-	thumbnailKind    models.ThumbnailKind
+	thumbnailKind    ThumbnailKind
 	themes           []models.Theme
 	auth             CrawlerAuth
 }
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	lockService *serverlock.ServerLockService, renderService rendering.Service,
-	gl *live.GrafanaLive, store *sqlstore.SQLStore, authSetupService CrawlerAuthSetupService,
-	dashboardService dashboards.DashboardService) Service {
+	gl *live.GrafanaLive, store db.DB, authSetupService CrawlerAuthSetupService,
+	dashboardService dashboards.DashboardService, dashboardThumbsService DashboardThumbService, searchService searchV2.SearchService,
+	dsPermissionsService permissions.DatasourcePermissionsService, licensing models.Licensing) Service {
 	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
 		return &dummyService{}
 	}
 	logger := log.New("previews_service")
 
-	thumbnailRepo := newThumbnailRepo(store)
+	thumbnailRepo := newThumbnailRepo(dashboardThumbsService, searchService)
 
 	canRunCrawler := true
 
@@ -91,23 +98,33 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		logger.Info("Crawler auth setup complete", "crawlerAuthSetupTime", time.Since(authSetupStarted))
 	}
 
+	dsUidsLookup := &dsUidsLookup{
+		searchService: searchService,
+		crawlerAuth:   crawlerAuth,
+		features:      features,
+	}
+
 	t := &thumbService{
+		licensing:                  licensing,
 		renderingService:           renderService,
-		renderer:                   newSimpleCrawler(renderService, gl, thumbnailRepo, cfg, cfg.DashboardPreviews),
+		renderer:                   newSimpleCrawler(renderService, gl, thumbnailRepo, cfg, cfg.DashboardPreviews, dsUidsLookup.getDatasourceUidsForDashboard),
 		thumbnailRepo:              thumbnailRepo,
 		store:                      store,
 		features:                   features,
 		lockService:                lockService,
 		crawlLockServiceActionName: "dashboard-crawler",
+		searchService:              searchService,
 		log:                        logger,
 		canRunCrawler:              canRunCrawler,
+		dsUidsLookup:               dsUidsLookup.getDatasourceUidsForDashboard,
 		settings:                   cfg.DashboardPreviews,
+		dsPermissionsService:       dsPermissionsService,
 		scheduleOptions: crawlerScheduleOptions{
 			tickerInterval:   5 * time.Minute,
 			crawlInterval:    cfg.DashboardPreviews.SchedulerInterval,
 			maxCrawlDuration: cfg.DashboardPreviews.MaxCrawlDuration,
 			crawlerMode:      CrawlerModeThumbs,
-			thumbnailKind:    models.ThumbnailKindDefault,
+			thumbnailKind:    ThumbnailKindDefault,
 			themes:           []models.Theme{models.ThemeDark, models.ThemeLight},
 			auth:             crawlerAuth,
 		},
@@ -140,7 +157,7 @@ func (hs *thumbService) Enabled() bool {
 func (hs *thumbService) parseImageReq(c *models.ReqContext, checkSave bool) *previewRequest {
 	params := web.Params(c.Req)
 
-	kind, err := models.ParseThumbnailKind(params[":kind"])
+	kind, err := ParseThumbnailKind(params[":kind"])
 	if err != nil {
 		c.JSON(400, map[string]string{"error": "invalid size"})
 		return nil
@@ -153,7 +170,7 @@ func (hs *thumbService) parseImageReq(c *models.ReqContext, checkSave bool) *pre
 	}
 
 	req := &previewRequest{
-		OrgID: c.OrgId,
+		OrgID: c.OrgID,
 		UID:   params[":uid"],
 		Theme: theme,
 		Kind:  kind,
@@ -174,7 +191,7 @@ func (hs *thumbService) parseImageReq(c *models.ReqContext, checkSave bool) *pre
 }
 
 type updateThumbnailStateRequest struct {
-	State models.ThumbnailState `json:"state" binding:"Required"`
+	State ThumbnailState `json:"state" binding:"Required"`
 }
 
 func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
@@ -192,11 +209,11 @@ func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
 		return
 	}
 
-	err = hs.thumbnailRepo.updateThumbnailState(c.Req.Context(), body.State, models.DashboardThumbnailMeta{
+	err = hs.thumbnailRepo.updateThumbnailState(c.Req.Context(), body.State, DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		OrgId:        req.OrgID,
 		Theme:        req.Theme,
-		Kind:         models.ThumbnailKindDefault,
+		Kind:         ThumbnailKindDefault,
 	})
 
 	if err != nil {
@@ -215,14 +232,14 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 		return // already returned value
 	}
 
-	res, err := hs.thumbnailRepo.getThumbnail(c.Req.Context(), models.DashboardThumbnailMeta{
+	res, err := hs.thumbnailRepo.getThumbnail(c.Req.Context(), DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		OrgId:        req.OrgID,
 		Theme:        req.Theme,
-		Kind:         models.ThumbnailKindDefault,
+		Kind:         ThumbnailKindDefault,
 	})
 
-	if errors.Is(err, models.ErrDashboardThumbnailNotFound) {
+	if errors.Is(err, dashboards.ErrDashboardThumbnailNotFound) {
 		c.Resp.WriteHeader(404)
 		return
 	}
@@ -230,6 +247,10 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 	if err != nil || res == nil {
 		hs.log.Error("Error when retrieving thumbnail", "dashboardUid", req.UID, "err", err.Error())
 		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
+		return
+	}
+
+	if !hs.hasAccessToPreview(c, res, req) {
 		return
 	}
 
@@ -248,12 +269,56 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 	}
 }
 
+func (hs *thumbService) hasAccessToPreview(c *models.ReqContext, res *DashboardThumbnail, req *previewRequest) bool {
+	if !hs.licensing.FeatureEnabled("accesscontrol.enforcement") {
+		return true
+	}
+
+	if hs.searchService.IsDisabled() {
+		c.JSON(404, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
+		return false
+	}
+
+	if res.DsUIDs == "" {
+		hs.log.Debug("dashboard preview is stale; no datasource uids", "dashboardUid", req.UID)
+		c.JSON(404, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
+		return false
+	}
+
+	var dsUids []string
+	err := json.Unmarshal([]byte(res.DsUIDs), &dsUids)
+
+	if err != nil {
+		hs.log.Error("Error when retrieving datasource uids", "dashboardUid", req.UID, "err", err)
+		c.JSON(404, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
+		return false
+	}
+
+	accessibleDatasources, err := hs.dsPermissionsService.FilterDatasourceUidsBasedOnQueryPermissions(c.Req.Context(), c.SignedInUser, dsUids)
+	if err != nil && !errors.Is(err, permissions.ErrNotImplemented) {
+		hs.log.Error("Error when filtering datasource uids", "dashboardUid", req.UID, "err", err)
+		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
+		return false
+	}
+
+	if !errors.Is(err, permissions.ErrNotImplemented) {
+		canQueryAllDatasources := len(accessibleDatasources) == len(dsUids)
+		if !canQueryAllDatasources {
+			hs.log.Info("Denied access to dashboard preview", "dashboardUid", req.UID, "err", err, "dashboardDatasources", dsUids, "accessibleDatasources", accessibleDatasources)
+			c.JSON(404, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
+			return false
+		}
+	}
+
+	return true
+}
+
 func (hs *thumbService) GetDashboardPreviewsSetupSettings(c *models.ReqContext) dashboardPreviewsSetupConfig {
 	return hs.getDashboardPreviewsSetupSettings(c.Req.Context())
 }
 
 func (hs *thumbService) getDashboardPreviewsSetupSettings(ctx context.Context) dashboardPreviewsSetupConfig {
-	systemRequirements := hs.getSystemRequirements()
+	systemRequirements := hs.getSystemRequirements(ctx)
 	thumbnailsExist, err := hs.thumbnailRepo.doThumbnailsExist(ctx)
 
 	if err != nil {
@@ -269,8 +334,8 @@ func (hs *thumbService) getDashboardPreviewsSetupSettings(ctx context.Context) d
 	}
 }
 
-func (hs *thumbService) getSystemRequirements() dashboardPreviewsSystemRequirements {
-	res, err := hs.renderingService.HasCapability(rendering.ScalingDownImages)
+func (hs *thumbService) getSystemRequirements(ctx context.Context) dashboardPreviewsSystemRequirements {
+	res, err := hs.renderingService.HasCapability(ctx, rendering.ScalingDownImages)
 	if err != nil {
 		hs.log.Error("Error when verifying dashboard previews system requirements thumbnail", "err", err.Error())
 		return dashboardPreviewsSystemRequirements{
@@ -323,19 +388,26 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 	hs.log.Info("File Size: %+v\n", handler.Size)
 	hs.log.Info("MIME Header: %+v\n", handler.Header)
 
-	fileBytes, err := ioutil.ReadAll(file)
+	fileBytes, err := io.ReadAll(file)
 	if err != nil {
 		fmt.Println(err)
 		c.JSON(400, map[string]string{"error": "error reading file"})
 		return
 	}
 
-	_, err = hs.thumbnailRepo.saveFromBytes(c.Req.Context(), fileBytes, getMimeType(handler.Filename), models.DashboardThumbnailMeta{
+	dsUids, err := hs.dsUidsLookup(c.Req.Context(), req.UID, req.OrgID)
+	if err != nil {
+		hs.log.Error("error looking up datasource ids", "err", err, "dashboardUid", req.UID)
+		c.JSON(500, map[string]string{"error": "internal server error"})
+		return
+	}
+
+	_, err = hs.thumbnailRepo.saveFromBytes(c.Req.Context(), fileBytes, getMimeType(handler.Filename), DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		OrgId:        req.OrgID,
 		Theme:        req.Theme,
 		Kind:         req.Kind,
-	}, models.DashboardVersionForManualThumbnailUpload)
+	}, DashboardVersionForManualThumbnailUpload, dsUids)
 
 	if err != nil {
 		c.JSON(400, map[string]string{"error": "error saving thumbnail file"})
@@ -360,9 +432,9 @@ func (hs *thumbService) StartCrawler(c *models.ReqContext) response.Response {
 		cmd.Mode = CrawlerModeThumbs
 	}
 
-	go hs.runOnDemandCrawl(context.Background(), cmd.Theme, cmd.Mode, models.ThumbnailKindDefault, rendering.AuthOpts{
-		OrgID:   c.OrgId,
-		UserID:  c.UserId,
+	go hs.runOnDemandCrawl(context.Background(), cmd.Theme, cmd.Mode, ThumbnailKindDefault, rendering.AuthOpts{
+		OrgID:   c.OrgID,
+		UserID:  c.UserID,
 		OrgRole: c.OrgRole,
 	})
 
@@ -397,7 +469,7 @@ func (hs *thumbService) getStatus(c *models.ReqContext, uid string, checkSave bo
 		return 404
 	}
 
-	guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
 	if checkSave {
 		if canSave, err := guardian.CanSave(); err != nil || !canSave {
 			return 403 // forbidden
@@ -413,7 +485,7 @@ func (hs *thumbService) getStatus(c *models.ReqContext, uid string, checkSave bo
 }
 
 func (hs *thumbService) getDashboardId(c *models.ReqContext, uid string) (int64, error) {
-	query := models.GetDashboardQuery{Uid: uid, OrgId: c.OrgId}
+	query := models.GetDashboardQuery{Uid: uid, OrgId: c.OrgID}
 
 	if err := hs.dashboardService.GetDashboard(c.Req.Context(), &query); err != nil {
 		return 0, err
@@ -422,7 +494,7 @@ func (hs *thumbService) getDashboardId(c *models.ReqContext, uid string) (int64,
 	return query.Result.Id, nil
 }
 
-func (hs *thumbService) runOnDemandCrawl(parentCtx context.Context, theme models.Theme, mode CrawlerMode, kind models.ThumbnailKind, authOpts rendering.AuthOpts) {
+func (hs *thumbService) runOnDemandCrawl(parentCtx context.Context, theme models.Theme, mode CrawlerMode, kind ThumbnailKind, authOpts rendering.AuthOpts) {
 	if !hs.canRunCrawler {
 		return
 	}

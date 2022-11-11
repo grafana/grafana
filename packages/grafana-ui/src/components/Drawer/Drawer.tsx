@@ -67,6 +67,10 @@ export function Drawer({
   }, []);
 
   const content = <div className={drawerStyles.content}>{children}</div>;
+  const style: CSSProperties = {};
+  if (inline) {
+    style.position = 'absolute';
+  }
 
   return (
     <RcDrawer
@@ -78,7 +82,7 @@ export function Drawer({
       placement="right"
       width={currentWidth}
       getContainer={inline ? undefined : 'body'}
-      style={{ position: `${inline && 'absolute'}` } as CSSProperties}
+      style={style}
       className={drawerStyles.drawer}
       aria-label={
         typeof title === 'string'
@@ -159,7 +163,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       .drawer-open .drawer-content-wrapper {
         box-shadow: ${theme.shadows.z3};
       }
+
       z-index: ${theme.zIndex.dropdown};
+
+      ${theme.breakpoints.down('sm')} {
+        .drawer-content-wrapper {
+          width: 100% !important;
+        }
+      }
     `,
     header: css`
       background-color: ${theme.colors.background.canvas};

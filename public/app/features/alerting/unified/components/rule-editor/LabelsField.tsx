@@ -1,104 +1,103 @@
 import { css, cx } from '@emotion/css';
 import React, { FC } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Button, Field, FieldArray, Input, InlineLabel, Label, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, Field, Input, InlineLabel, Label, useStyles2 } from '@grafana/ui';
+
+import { RuleFormValues } from '../../types/rule-form';
 
 interface Props {
   className?: string;
 }
 
 const LabelsField: FC<Props> = ({ className }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const {
     register,
     control,
     watch,
     formState: { errors },
-  } = useFormContext();
+  } = useFormContext<RuleFormValues>();
   const labels = watch('labels');
+
+  const { fields, append, remove } = useFieldArray({ control, name: 'labels' });
+
   return (
     <div className={cx(className, styles.wrapper)}>
       <Label>Custom Labels</Label>
-      <FieldArray control={control} name="labels">
-        {({ fields, append, remove }) => {
-          return (
-            <>
-              <div className={styles.flexRow}>
-                <InlineLabel width={18}>Labels</InlineLabel>
-                <div className={styles.flexColumn}>
-                  {fields.map((field, index) => {
-                    return (
-                      <div key={field.id}>
-                        <div className={cx(styles.flexRow, styles.centerAlignRow)}>
-                          <Field
-                            className={styles.labelInput}
-                            invalid={!!errors.labels?.[index]?.key?.message}
-                            error={errors.labels?.[index]?.key?.message}
-                          >
-                            <Input
-                              {...register(`labels[${index}].key`, {
-                                required: { value: !!labels[index]?.value, message: 'Required.' },
-                              })}
-                              placeholder="key"
-                              data-testid={`label-key-${index}`}
-                              defaultValue={field.key}
-                            />
-                          </Field>
-                          <InlineLabel className={styles.equalSign}>=</InlineLabel>
-                          <Field
-                            className={styles.labelInput}
-                            invalid={!!errors.labels?.[index]?.value?.message}
-                            error={errors.labels?.[index]?.value?.message}
-                          >
-                            <Input
-                              {...register(`labels[${index}].value`, {
-                                required: { value: !!labels[index]?.key, message: 'Required.' },
-                              })}
-                              placeholder="value"
-                              data-testid={`label-value-${index}`}
-                              defaultValue={field.value}
-                            />
-                          </Field>
-                          <Button
-                            className={styles.deleteLabelButton}
-                            aria-label="delete label"
-                            icon="trash-alt"
-                            variant="secondary"
-                            onClick={() => {
-                              remove(index);
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <Button
-                    className={styles.addLabelButton}
-                    icon="plus-circle"
-                    type="button"
-                    variant="secondary"
-                    onClick={() => {
-                      append({});
-                    }}
-                  >
-                    Add label
-                  </Button>
+      <>
+        <div className={styles.flexRow}>
+          <InlineLabel width={18}>Labels</InlineLabel>
+          <div className={styles.flexColumn}>
+            {fields.map((field, index) => {
+              return (
+                <div key={field.id}>
+                  <div className={cx(styles.flexRow, styles.centerAlignRow)}>
+                    <Field
+                      className={styles.labelInput}
+                      invalid={!!errors.labels?.[index]?.key?.message}
+                      error={errors.labels?.[index]?.key?.message}
+                    >
+                      <Input
+                        {...register(`labels.${index}.key`, {
+                          required: { value: !!labels[index]?.value, message: 'Required.' },
+                        })}
+                        placeholder="key"
+                        data-testid={`label-key-${index}`}
+                        defaultValue={field.key}
+                      />
+                    </Field>
+                    <InlineLabel className={styles.equalSign}>=</InlineLabel>
+                    <Field
+                      className={styles.labelInput}
+                      invalid={!!errors.labels?.[index]?.value?.message}
+                      error={errors.labels?.[index]?.value?.message}
+                    >
+                      <Input
+                        {...register(`labels.${index}.value`, {
+                          required: { value: !!labels[index]?.key, message: 'Required.' },
+                        })}
+                        placeholder="value"
+                        data-testid={`label-value-${index}`}
+                        defaultValue={field.value}
+                      />
+                    </Field>
+                    <Button
+                      className={styles.deleteLabelButton}
+                      aria-label="delete label"
+                      icon="trash-alt"
+                      variant="secondary"
+                      onClick={() => {
+                        remove(index);
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
-            </>
-          );
-        }}
-      </FieldArray>
+              );
+            })}
+            <Button
+              className={styles.addLabelButton}
+              icon="plus-circle"
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                append({});
+              }}
+            >
+              Add label
+            </Button>
+          </div>
+        </div>
+      </>
     </div>
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
-      margin-bottom: ${theme.spacing.xl};
+      margin-bottom: ${theme.spacing(4)};
     `,
     flexColumn: css`
       display: flex;
@@ -110,11 +109,11 @@ const getStyles = (theme: GrafanaTheme) => {
       justify-content: flex-start;
 
       & + button {
-        margin-left: ${theme.spacing.xs};
+        margin-left: ${theme.spacing(0.5)};
       }
     `,
     deleteLabelButton: css`
-      margin-left: ${theme.spacing.xs};
+      margin-left: ${theme.spacing(0.5)};
       align-self: flex-start;
     `,
     addLabelButton: css`
@@ -128,13 +127,13 @@ const getStyles = (theme: GrafanaTheme) => {
       align-self: flex-start;
       width: 28px;
       justify-content: center;
-      margin-left: ${theme.spacing.xs};
+      margin-left: ${theme.spacing(0.5)};
     `,
     labelInput: css`
       width: 175px;
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing(1)};
       & + & {
-        margin-left: ${theme.spacing.sm};
+        margin-left: ${theme.spacing(1)};
       }
     `,
   };

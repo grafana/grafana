@@ -35,8 +35,18 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
       );
     }
 
-    const canEditGrafanaRules = contextSrv.hasAccess(rulePermission.update, folder?.canSave ?? false);
-    const canRemoveGrafanaRules = contextSrv.hasAccess(rulePermission.delete, folder?.canSave ?? false);
+    if (!folder) {
+      // Loading or invalid folder UID
+      return {
+        isEditable: false,
+        isRemovable: false,
+        loading,
+      };
+    }
+    const rbacDisabledFallback = folder.canSave;
+
+    const canEditGrafanaRules = contextSrv.hasAccessInMetadata(rulePermission.update, folder, rbacDisabledFallback);
+    const canRemoveGrafanaRules = contextSrv.hasAccessInMetadata(rulePermission.delete, folder, rbacDisabledFallback);
 
     return {
       isEditable: canEditGrafanaRules,

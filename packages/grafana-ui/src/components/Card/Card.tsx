@@ -17,7 +17,7 @@ export interface Props extends Omit<CardContainerProps, 'disableEvents' | 'disab
   /** Link to redirect to on card click. If provided, the Card inner content will be rendered inside `a` */
   href?: string;
   /** On click handler for the Card */
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   /** @deprecated Use `Card.Heading` instead */
   heading?: ReactNode;
   /** @deprecated Use `Card.Description` instead */
@@ -37,7 +37,7 @@ export interface CardInterface extends FC<Props> {
 
 const CardContext = React.createContext<{
   href?: string;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   disabled?: boolean;
   isSelected?: boolean;
 } | null>(null);
@@ -93,11 +93,11 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
   return (
     <h2 className={cx(styles.heading, className)}>
       {href ? (
-        <a href={href} className={styles.linkHack} aria-label={ariaLabel}>
+        <a href={href} className={styles.linkHack} aria-label={ariaLabel} onClick={onClick}>
           {children}
         </a>
       ) : onClick ? (
-        <button onClick={onClick} className={styles.linkHack} aria-label={ariaLabel}>
+        <button onClick={onClick} className={styles.linkHack} aria-label={ariaLabel} type="button">
           {children}
         </button>
       ) : (

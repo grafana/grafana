@@ -2,11 +2,14 @@ package sqlstore
 
 import (
 	"context"
+	"errors"
 	"reflect"
+	"time"
 
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/mattn/go-sqlite3"
 )
 
 var sessionLogger = log.New("sqlstore.session")
@@ -23,18 +26,8 @@ func (sess *DBSession) publishAfterCommit(msg interface{}) {
 	sess.events = append(sess.events, msg)
 }
 
-// NewSession returns a new DBSession
-func (ss *SQLStore) NewSession(ctx context.Context) *DBSession {
-	sess := &DBSession{Session: ss.engine.NewSession()}
-	sess.Session = sess.Session.Context(ctx)
-	return sess
-}
-
-func (ss *SQLStore) newSession(ctx context.Context) *DBSession {
-	sess := &DBSession{Session: ss.engine.NewSession()}
-	sess.Session = sess.Session.Context(ctx)
-
-	return sess
+func (sess *DBSession) PublishAfterCommit(msg interface{}) {
+	sess.events = append(sess.events, msg)
 }
 
 func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTran bool) (*DBSession, bool, error) {
@@ -43,7 +36,8 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 	sess, ok := value.(*DBSession)
 
 	if ok {
-		sessionLogger.Debug("reusing existing session", "transaction", sess.transactionOpen)
+		ctxLogger := sessionLogger.FromContext(ctx)
+		ctxLogger.Debug("reusing existing session", "transaction", sess.transactionOpen)
 		sess.Session = sess.Session.Context(ctx)
 		return sess, false, nil
 	}
@@ -57,15 +51,44 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 	}
 
 	newSess.Session = newSess.Session.Context(ctx)
+
 	return newSess, true, nil
 }
 
-// WithDbSession calls the callback with a session.
+// WithDbSession calls the callback with the session in the context (if exists).
+// Otherwise it creates a new one that is closed upon completion.
+// A session is stored in the context if sqlstore.InTransaction() has been been previously called with the same context (and it's not committed/rolledback yet).
+// In case of sqlite3.ErrLocked or sqlite3.ErrBusy failure it will be retried at most five times before giving up.
 func (ss *SQLStore) WithDbSession(ctx context.Context, callback DBTransactionFunc) error {
-	return withDbSession(ctx, ss.engine, callback)
+	return ss.withDbSession(ctx, ss.engine, callback)
 }
 
-func withDbSession(ctx context.Context, engine *xorm.Engine, callback DBTransactionFunc) error {
+// WithNewDbSession calls the callback with a new session that is closed upon completion.
+// In case of sqlite3.ErrLocked or sqlite3.ErrBusy failure it will be retried at most five times before giving up.
+func (ss *SQLStore) WithNewDbSession(ctx context.Context, callback DBTransactionFunc) error {
+	sess := &DBSession{Session: ss.engine.NewSession(), transactionOpen: false}
+	defer sess.Close()
+	return ss.withRetry(ctx, callback, 0)(sess)
+}
+
+func (ss *SQLStore) withRetry(ctx context.Context, callback DBTransactionFunc, retry int) DBTransactionFunc {
+	return func(sess *DBSession) error {
+		err := callback(sess)
+
+		ctxLogger := tsclogger.FromContext(ctx)
+
+		var sqlError sqlite3.Error
+		if errors.As(err, &sqlError) && retry < ss.dbCfg.QueryRetries && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
+			time.Sleep(time.Millisecond * time.Duration(10))
+			ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry, "code", sqlError.Code)
+			return ss.withRetry(ctx, callback, retry+1)(sess)
+		}
+
+		return err
+	}
+}
+
+func (ss *SQLStore) withDbSession(ctx context.Context, engine *xorm.Engine, callback DBTransactionFunc) error {
 	sess, isNew, err := startSessionOrUseExisting(ctx, engine, false)
 	if err != nil {
 		return err
@@ -73,7 +96,7 @@ func withDbSession(ctx context.Context, engine *xorm.Engine, callback DBTransact
 	if isNew {
 		defer sess.Close()
 	}
-	return callback(sess)
+	return ss.withRetry(ctx, callback, 0)(sess)
 }
 
 func (sess *DBSession) InsertId(bean interface{}) (int64, error) {

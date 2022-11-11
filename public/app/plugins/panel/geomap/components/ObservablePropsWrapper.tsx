@@ -11,7 +11,7 @@ interface State<T> {
   subProps: T;
 }
 
-export class ObservablePropsWrapper<T> extends Component<Props<T>, State<T>> {
+export class ObservablePropsWrapper<T extends {}> extends Component<Props<T>, State<T>> {
   sub?: Unsubscribable;
 
   constructor(props: Props<T>) {
@@ -24,15 +24,10 @@ export class ObservablePropsWrapper<T> extends Component<Props<T>, State<T>> {
   componentDidMount() {
     this.sub = this.props.watch.subscribe({
       next: (subProps: T) => {
-        //console.log('ObservablePropsWrapper:NEXT', subProps);
         this.setState({ subProps });
       },
-      complete: () => {
-        //console.log('ObservablePropsWrapper:complete');
-      },
-      error: (err) => {
-        //console.log('ObservablePropsWrapper:error', err);
-      },
+      complete: () => {},
+      error: (err) => {},
     });
   }
 

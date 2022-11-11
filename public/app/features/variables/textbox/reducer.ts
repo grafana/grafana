@@ -18,7 +18,11 @@ export const textBoxVariableSlice = createSlice({
   initialState: initialVariablesState,
   reducers: {
     createTextBoxOptions: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const instanceState = getInstanceState<TextBoxVariableModel>(state, action.payload.id);
+      const instanceState = getInstanceState(state, action.payload.id);
+      if (instanceState.type !== 'textbox') {
+        return;
+      }
+
       const option = { text: instanceState.query.trim(), value: instanceState.query.trim(), selected: false };
       instanceState.options = [option];
       instanceState.current = option;

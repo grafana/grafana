@@ -13,7 +13,7 @@ import (
 // hashUIDs returns a fnv64 hash of the UIDs for all alert rules.
 // The order of the alert rules does not matter as hashUIDs sorts
 // the UIDs in increasing order.
-func hashUIDs(alertRules []*models.SchedulableAlertRule) uint64 {
+func hashUIDs(alertRules []*models.AlertRule) uint64 {
 	h := fnv.New64()
 	for _, uid := range sortedUIDs(alertRules) {
 		// We can ignore err as fnv64 does not return an error
@@ -24,7 +24,7 @@ func hashUIDs(alertRules []*models.SchedulableAlertRule) uint64 {
 }
 
 // sortedUIDs returns a slice of sorted UIDs.
-func sortedUIDs(alertRules []*models.SchedulableAlertRule) []string {
+func sortedUIDs(alertRules []*models.AlertRule) []string {
 	uids := make([]string, 0, len(alertRules))
 	for _, alertRule := range alertRules {
 		uids = append(uids, alertRule.UID)
@@ -36,19 +36,31 @@ func sortedUIDs(alertRules []*models.SchedulableAlertRule) []string {
 // updateSchedulableAlertRules updates the alert rules for the scheduler.
 // It returns an error if the database is unavailable or the query returned
 // an error.
-func (sch *schedule) updateSchedulableAlertRules(ctx context.Context, disabledOrgs []int64) error {
+func (sch *schedule) updateSchedulableAlertRules(ctx context.Context) error {
 	start := time.Now()
 	defer func() {
 		sch.metrics.UpdateSchedulableAlertRulesDuration.Observe(
 			time.Since(start).Seconds())
 	}()
 
+	if !sch.schedulableAlertRules.isEmpty() {
+		keys, err := sch.ruleStore.GetAlertRulesKeysForScheduling(ctx)
+		if err != nil {
+			return err
+		}
+		if !sch.schedulableAlertRules.needsUpdate(keys) {
+			sch.log.Debug("No changes detected. Skip updating")
+			return nil
+		}
+	}
+
 	q := models.GetAlertRulesForSchedulingQuery{
-		ExcludeOrgIDs: disabledOrgs,
+		PopulateFolders: !sch.disableGrafanaFolder,
 	}
 	if err := sch.ruleStore.GetAlertRulesForScheduling(ctx, &q); err != nil {
 		return fmt.Errorf("failed to get alert rules: %w", err)
 	}
-	sch.schedulableAlertRules.set(q.Result)
+	sch.log.Debug("Alert rules fetched", "rulesCount", len(q.ResultRules), "foldersCount", len(q.ResultFoldersTitles))
+	sch.schedulableAlertRules.set(q.ResultRules, q.ResultFoldersTitles)
 	return nil
 }

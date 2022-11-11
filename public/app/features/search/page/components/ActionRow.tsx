@@ -7,8 +7,7 @@ import { HorizontalGroup, RadioButtonGroup, useStyles2, Checkbox, Button } from 
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 
-import { SEARCH_SELECTED_LAYOUT } from '../../constants';
-import { DashboardQuery, SearchLayout } from '../../types';
+import { SearchLayout, SearchState } from '../../types';
 
 export const layoutOptions = [
   { value: SearchLayout.Folders, icon: 'folder', ariaLabel: 'View by folders' },
@@ -26,20 +25,21 @@ interface Props {
   onTagFilterChange: (tags: string[]) => void;
   getTagOptions: () => Promise<TermCount[]>;
   getSortOptions: () => Promise<SelectableValue[]>;
+  sortPlaceholder?: string;
   onDatasourceChange: (ds?: string) => void;
   includePanels: boolean;
-  setIncludePanels: (v: boolean) => void;
-  query: DashboardQuery;
+  onSetIncludePanels: (v: boolean) => void;
+  state: SearchState;
   showStarredFilter?: boolean;
   hideLayout?: boolean;
 }
 
-export function getValidQueryLayout(q: DashboardQuery): SearchLayout {
+export function getValidQueryLayout(q: SearchState): SearchLayout {
   const layout = q.layout ?? SearchLayout.Folders;
 
   // Folders is not valid when a query exists
   if (layout === SearchLayout.Folders) {
-    if (q.query || q.sort) {
+    if (q.query || q.sort || q.starred) {
       return SearchLayout.List;
     }
   }
@@ -57,56 +57,63 @@ export const ActionRow: FC<Props> = ({
   onTagFilterChange,
   getTagOptions,
   getSortOptions,
+  sortPlaceholder,
   onDatasourceChange,
-  query,
+  onSetIncludePanels,
+  state,
   showStarredFilter,
   hideLayout,
-  includePanels,
-  setIncludePanels,
 }) => {
   const styles = useStyles2(getStyles);
-  const layout = getValidQueryLayout(query);
+  const layout = getValidQueryLayout(state);
 
   // Disabled folder layout option when query is present
-  const disabledOptions = query.query ? [SearchLayout.Folders] : [];
-
-  const updateLayoutPreference = (layout: SearchLayout) => {
-    localStorage.setItem(SEARCH_SELECTED_LAYOUT, layout);
-    onLayoutChange(layout);
-  };
+  const disabledOptions = state.query ? [SearchLayout.Folders] : [];
 
   return (
     <div className={styles.actionRow}>
+      <HorizontalGroup spacing="md" width="auto">
+        <TagFilter isClearable={false} tags={state.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
+        {config.featureToggles.panelTitleSearch && (
+          <Checkbox
+            data-testid="include-panels"
+            disabled={layout === SearchLayout.Folders}
+            value={state.includePanels}
+            onChange={() => onSetIncludePanels(!state.includePanels)}
+            label="Include panels"
+          />
+        )}
+
+        {showStarredFilter && (
+          <div className={styles.checkboxWrapper}>
+            <Checkbox label="Starred" onChange={onStarredFilterChange} value={state.starred} />
+          </div>
+        )}
+        {state.datasource && (
+          <Button icon="times" variant="secondary" onClick={() => onDatasourceChange(undefined)}>
+            Datasource: {state.datasource}
+          </Button>
+        )}
+      </HorizontalGroup>
       <div className={styles.rowContainer}>
         <HorizontalGroup spacing="md" width="auto">
           {!hideLayout && (
             <RadioButtonGroup
               options={layoutOptions}
               disabledOptions={disabledOptions}
-              onChange={updateLayoutPreference}
+              onChange={onLayoutChange}
               value={layout}
             />
           )}
-          <SortPicker onChange={onSortChange} value={query.sort?.value} getSortOptions={getSortOptions} isClearable />
+          <SortPicker
+            onChange={onSortChange}
+            value={state.sort?.value}
+            getSortOptions={getSortOptions}
+            placeholder={sortPlaceholder}
+            isClearable
+          />
         </HorizontalGroup>
       </div>
-      <HorizontalGroup spacing="md" width="auto">
-        {showStarredFilter && (
-          <div className={styles.checkboxWrapper}>
-            <Checkbox label="Filter by starred" onChange={onStarredFilterChange} value={query.starred} />
-          </div>
-        )}
-        {query.datasource && (
-          <Button icon="times" variant="secondary" onClick={() => onDatasourceChange(undefined)}>
-            Datasource: {query.datasource}
-          </Button>
-        )}
-        {layout !== SearchLayout.Folders && config.featureToggles.panelTitleSearch && (
-          <Checkbox value={includePanels} onChange={() => setIncludePanels(!includePanels)} label="Include panels" />
-        )}
-
-        <TagFilter isClearable tags={query.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
-      </HorizontalGroup>
     </div>
   );
 };

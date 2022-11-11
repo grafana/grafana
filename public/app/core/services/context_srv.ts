@@ -60,9 +60,9 @@ export class ContextSrv {
   pinned: any;
   version: any;
   user: User;
-  isSignedIn: any;
-  isGrafanaAdmin: any;
-  isEditor: any;
+  isSignedIn: boolean;
+  isGrafanaAdmin: boolean;
+  isEditor: boolean;
   sidemenuSmallBreakpoint = false;
   hasEditPermissionInFolders: boolean;
   minRefreshInterval: string;
@@ -83,7 +83,7 @@ export class ContextSrv {
   async fetchUserPermissions() {
     try {
       if (this.accessControlEnabled()) {
-        this.user.permissions = await getBackendSrv().get('/api/access-control/user/permissions', {
+        this.user.permissions = await getBackendSrv().get('/api/access-control/user/actions', {
           reloadcache: true,
         });
       }
@@ -110,10 +110,6 @@ export class ContextSrv {
 
   accessControlEnabled(): boolean {
     return config.rbacEnabled;
-  }
-
-  accessControlBuiltInRoleAssignmentEnabled(): boolean {
-    return config.rbacBuiltInRoleAssignmentEnabled;
   }
 
   licensedAccessControlEnabled(): boolean {
@@ -161,20 +157,20 @@ export class ContextSrv {
 
   hasAccessToExplore() {
     if (this.accessControlEnabled()) {
-      return this.hasPermission(AccessControlAction.DataSourcesExplore);
+      return this.hasPermission(AccessControlAction.DataSourcesExplore) && config.exploreEnabled;
     }
     return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
   }
 
-  hasAccess(action: string, fallBack: boolean) {
+  hasAccess(action: string, fallBack: boolean): boolean {
     if (!this.accessControlEnabled()) {
       return fallBack;
     }
     return this.hasPermission(action);
   }
 
-  hasAccessInMetadata(action: string, object: WithAccessControlMetadata, fallBack: boolean) {
-    if (!config.rbacEnabled) {
+  hasAccessInMetadata(action: string, object: WithAccessControlMetadata, fallBack: boolean): boolean {
+    if (!this.accessControlEnabled()) {
       return fallBack;
     }
     return this.hasPermissionInMetadata(action, object);

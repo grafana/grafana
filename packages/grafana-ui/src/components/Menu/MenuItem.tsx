@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactElement, useCallback, useMemo, useState, useRef, useImperativeHandle } from 'react';
+import React, { ReactElement, useCallback, useState, useRef, useImperativeHandle, CSSProperties } from 'react';
 
 import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 
@@ -30,16 +30,18 @@ export interface MenuItemProps<T = any> {
   /** Url of the menu item */
   url?: string;
   /** Handler for the click behaviour */
-  onClick?: (event?: React.SyntheticEvent<HTMLElement>, payload?: T) => void;
+  onClick?: (event?: React.MouseEvent<HTMLElement>, payload?: T) => void;
   /** Custom MenuItem styles*/
   className?: string;
   /** Active */
   active?: boolean;
-
+  /** Show in destructive style (error color) */
+  destructive?: boolean;
   tabIndex?: number;
-
   /** List of menu items for the subMenu */
   childItems?: Array<ReactElement<MenuItemProps>>;
+  /** Custom style for SubMenu */
+  customSubMenuContainerStyles?: CSSProperties;
 }
 
 /** @internal */
@@ -55,9 +57,11 @@ export const MenuItem = React.memo(
       onClick,
       className,
       active,
+      destructive,
       childItems,
       role = 'menuitem',
       tabIndex = -1,
+      customSubMenuContainerStyles,
     } = props;
     const styles = useStyles2(getStyles);
     const [isActive, setIsActive] = useState(active);
@@ -71,12 +75,14 @@ export const MenuItem = React.memo(
       setIsSubMenuOpen(false);
       setIsActive(false);
     }, []);
-    const hasSubMenu = useMemo(() => childItems && childItems.length > 0, [childItems]);
-    const Wrapper = hasSubMenu ? 'div' : url === undefined ? 'button' : 'a';
+
+    const hasSubMenu = childItems && childItems.length > 0;
+    const ItemElement = hasSubMenu ? 'div' : url === undefined ? 'button' : 'a';
     const itemStyle = cx(
       {
         [styles.item]: true,
-        [styles.activeItem]: isActive,
+        [styles.active]: isActive,
+        [styles.destructive]: destructive,
       },
       className
     );
@@ -107,22 +113,12 @@ export const MenuItem = React.memo(
     };
 
     return (
-      <Wrapper
+      <ItemElement
         target={target}
         className={itemStyle}
         rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         href={url}
-        onClick={
-          onClick
-            ? (event) => {
-                if (!(event.ctrlKey || event.metaKey || event.shiftKey) && onClick) {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onClick(event);
-                }
-              }
-            : undefined
-        }
+        onClick={onClick}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onKeyDown={handleKeys}
@@ -133,8 +129,11 @@ export const MenuItem = React.memo(
         aria-checked={ariaChecked}
         tabIndex={tabIndex}
       >
-        {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
-        {label}
+        <>
+          {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
+          {label}
+        </>
+
         {hasSubMenu && (
           <SubMenu
             items={childItems}
@@ -142,15 +141,16 @@ export const MenuItem = React.memo(
             openedWithArrow={openedWithArrow}
             setOpenedWithArrow={setOpenedWithArrow}
             close={closeSubMenu}
+            customStyle={customSubMenuContainerStyles}
           />
         )}
-      </Wrapper>
+      </ItemElement>
     );
   })
 );
+
 MenuItem.displayName = 'MenuItem';
 
-/** @internal */
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     item: css`
@@ -159,7 +159,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       white-space: nowrap;
       color: ${theme.colors.text.primary};
       display: flex;
-      padding: 5px 12px 5px 10px;
+      align-items: center;
+      padding: ${theme.spacing(0.5, 2)};
+      min-height: ${theme.spacing(4)};
       margin: 0;
       border: none;
       width: 100%;
@@ -177,12 +179,31 @@ const getStyles = (theme: GrafanaTheme2) => {
         ${getFocusStyles(theme)}
       }
     `,
-    activeItem: css`
-      background: ${theme.colors.action.selected};
+    active: css`
+      background: ${theme.colors.action.hover};
+    `,
+    destructive: css`
+      color: ${theme.colors.error.text};
+
+      svg {
+        color: ${theme.colors.error.text};
+      }
+
+      &:hover,
+      &:focus,
+      &:focus-visible {
+        background: ${theme.colors.error.main};
+        color: ${theme.colors.error.contrastText};
+
+        svg {
+          color: ${theme.colors.error.contrastText};
+        }
+      }
     `,
     icon: css`
       opacity: 0.7;
       margin-right: 10px;
+      margin-left: -4px;
       color: ${theme.colors.text.secondary};
     `,
   };

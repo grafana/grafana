@@ -3,17 +3,17 @@ import { action } from '@storybook/addon-actions';
 import { Meta, Story } from '@storybook/react';
 import React, { useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, toIconName } from '@grafana/data';
 import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
 
-import { getAvailableIcons, IconName } from '../../types';
+import { getAvailableIcons } from '../../types';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Select.mdx';
-import { generateOptions } from './mockOptions';
+import { generateOptions, generateThousandsOfOptions } from './mockOptions';
 import { SelectCommonProps } from './types';
 
-export default {
+const meta: Meta = {
   title: 'Forms/Select',
   component: Select,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
@@ -69,7 +69,7 @@ export default {
       },
     },
   },
-} as Meta;
+};
 
 const loadAsyncOptions = () => {
   return new Promise<Array<SelectableValue<string>>>((resolve) => {
@@ -80,7 +80,7 @@ const loadAsyncOptions = () => {
 };
 
 const getPrefix = (prefix: string) => {
-  const prefixEl = <Icon name={prefix as IconName} />;
+  const prefixEl = <Icon name={toIconName(prefix) ?? 'question-circle'} />;
   return prefixEl;
 };
 
@@ -95,6 +95,24 @@ export const Basic: Story<StoryProps> = (args) => {
     <>
       <Select
         options={generateOptions()}
+        value={value}
+        onChange={(v) => {
+          setValue(v);
+          action('onChange')(v);
+        }}
+        {...args}
+      />
+    </>
+  );
+};
+export const BasicVirtualizedList: Story<StoryProps> = (args) => {
+  const [value, setValue] = useState<SelectableValue<string>>();
+
+  return (
+    <>
+      <Select
+        options={generateThousandsOfOptions()}
+        virtualized
         value={value}
         onChange={(v) => {
           setValue(v);
@@ -340,3 +358,5 @@ export const CustomValueCreation: Story = (args) => {
 CustomValueCreation.args = {
   allowCustomValue: true,
 };
+
+export default meta;

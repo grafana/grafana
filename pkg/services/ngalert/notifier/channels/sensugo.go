@@ -72,7 +72,7 @@ func NewSensuGoConfig(config *NotificationChannelConfig, decryptFunc GetDecrypte
 		Namespace:                 config.Settings.Get("namespace").MustString(),
 		Handler:                   config.Settings.Get("handler").MustString(),
 		APIKey:                    apikey,
-		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		Message:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
 	}, nil
 }
 
@@ -139,20 +139,17 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 
 	labels := make(map[string]string)
 
-	var imageURL string
 	_ = withStoredImages(ctx, sn.log, sn.images,
-		func(index int, image *ngmodels.Image) error {
+		func(_ int, image ngmodels.Image) error {
 			// If there is an image for this alert and the image has been uploaded
 			// to a public URL then add it to the request. We cannot add more than
 			// one image per request.
-			if image != nil && image.URL != "" && imageURL == "" {
-				imageURL = image.URL
+			if image.URL != "" {
+				labels["imageURL"] = image.URL
+				return ErrImagesDone
 			}
 			return nil
 		}, as...)
-	if imageURL != "" {
-		labels["imageURL"] = imageURL
-	}
 
 	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
 	labels["ruleURL"] = ruleURL
@@ -179,7 +176,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	if tmplErr != nil {
-		sn.log.Warn("failed to template sensugo message", "err", tmplErr.Error())
+		sn.log.Warn("failed to template sensugo message", "error", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsgType)
@@ -197,7 +194,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		},
 	}
 	if err := sn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		sn.log.Error("failed to send Sensu Go event", "err", err, "sensugo", sn.Name)
+		sn.log.Error("failed to send Sensu Go event", "error", err, "sensugo", sn.Name)
 		return false, err
 	}
 

@@ -3,7 +3,9 @@ import { e2e } from '@grafana/e2e';
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
 
 function fillInCustomVariable(name: string, label: string, value: string) {
-  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().type('Custom{enter}');
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().within(() => {
+    e2e().get('input').type('Custom{enter}');
+  });
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type(name).blur();
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2().type(label).blur();
   e2e.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput().type(value).blur();
@@ -42,9 +44,11 @@ describe('Variables - Custom', () => {
 
     // Create a new "Custom" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().type('Custom{enter}');
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().within(() => {
+      e2e().get('input').type('Custom{enter}');
+    });
 
-    // Set it's name, label, and content
+    // Set its name, label, and content
     fillInCustomVariable('VariableUnderTest', 'Variable under test', 'One : 1,Two : 2, Three : 3');
     assertPreviewValues(['One', 'Two', 'Three']);
 

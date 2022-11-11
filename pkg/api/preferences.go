@@ -23,19 +23,23 @@ func (hs *HTTPServer) SetHomeDashboard(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.UserID = c.UserId
-	cmd.OrgID = c.OrgId
+	cmd.UserID = c.UserID
+	cmd.OrgID = c.OrgID
 
 	// the default value of HomeDashboardID is taken from input, when HomeDashboardID is set also,
 	// UID is used in preference to identify dashboard
 	dashboardID := cmd.HomeDashboardID
 	if cmd.HomeDashboardUID != nil {
 		query := models.GetDashboardQuery{Uid: *cmd.HomeDashboardUID}
-		err := hs.dashboardService.GetDashboard(c.Req.Context(), &query)
-		if err != nil {
-			return response.Error(404, "Dashboard not found", err)
+		if query.Uid == "" {
+			dashboardID = 0 // clear the value
+		} else {
+			err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+			if err != nil {
+				return response.Error(404, "Dashboard not found", err)
+			}
+			dashboardID = query.Result.Id
 		}
-		dashboardID = query.Result.Id
 	}
 
 	cmd.HomeDashboardID = dashboardID
@@ -47,9 +51,16 @@ func (hs *HTTPServer) SetHomeDashboard(c *models.ReqContext) response.Response {
 	return response.Success("Home dashboard set")
 }
 
-// GET /api/user/preferences
+// swagger:route GET /user/preferences user_preferences getUserPreferences
+//
+// Get user preferences.
+//
+// Responses:
+// 200: getPreferencesResponse
+// 401: unauthorisedError
+// 500: internalServerError
 func (hs *HTTPServer) GetUserPreferences(c *models.ReqContext) response.Response {
-	return hs.getPreferencesFor(c.Req.Context(), c.OrgId, c.UserId, 0)
+	return hs.getPreferencesFor(c.Req.Context(), c.OrgID, c.UserID, 0)
 }
 
 func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, teamID int64) response.Response {
@@ -65,7 +76,7 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 	// when homedashboardID is 0, that means it is the default home dashboard, no UID would be returned in the response
 	if preference.HomeDashboardID != 0 {
 		query := models.GetDashboardQuery{Id: preference.HomeDashboardID, OrgId: orgID}
-		err = hs.dashboardService.GetDashboard(ctx, &query)
+		err = hs.DashboardService.GetDashboard(ctx, &query)
 		if err == nil {
 			dashboardUID = query.Result.Uid
 		}
@@ -88,13 +99,23 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 	return response.JSON(http.StatusOK, &dto)
 }
 
-// PUT /api/user/preferences
+// swagger:route PUT /user/preferences user_preferences updateUserPreferences
+//
+// Update user preferences.
+//
+// Omitting a key (`theme`, `homeDashboardId`, `timezone`) will cause the current value to be replaced with the system default value.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 500: internalServerError
 func (hs *HTTPServer) UpdateUserPreferences(c *models.ReqContext) response.Response {
 	dtoCmd := dtos.UpdatePrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return hs.updatePreferencesFor(c.Req.Context(), c.OrgId, c.UserId, 0, &dtoCmd)
+	return hs.updatePreferencesFor(c.Req.Context(), c.OrgID, c.UserID, 0, &dtoCmd)
 }
 
 func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsCmd) response.Response {
@@ -105,11 +126,16 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 	dashboardID := dtoCmd.HomeDashboardID
 	if dtoCmd.HomeDashboardUID != nil {
 		query := models.GetDashboardQuery{Uid: *dtoCmd.HomeDashboardUID, OrgId: orgID}
-		err := hs.dashboardService.GetDashboard(ctx, &query)
-		if err != nil {
-			return response.Error(404, "Dashboard not found", err)
+		if query.Uid == "" {
+			// clear the value
+			dashboardID = 0
+		} else {
+			err := hs.DashboardService.GetDashboard(ctx, &query)
+			if err != nil {
+				return response.Error(404, "Dashboard not found", err)
+			}
+			dashboardID = query.Result.Id
 		}
-		dashboardID = query.Result.Id
 	}
 	dtoCmd.HomeDashboardID = dashboardID
 
@@ -133,13 +159,21 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 	return response.Success("Preferences updated")
 }
 
-// PATCH /api/user/preferences
+// swagger:route PATCH /user/preferences user_preferences patchUserPreferences
+//
+// Patch user preferences.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 500: internalServerError
 func (hs *HTTPServer) PatchUserPreferences(c *models.ReqContext) response.Response {
 	dtoCmd := dtos.PatchPrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return hs.patchPreferencesFor(c.Req.Context(), c.OrgId, c.UserId, 0, &dtoCmd)
+	return hs.patchPreferencesFor(c.Req.Context(), c.OrgID, c.UserID, 0, &dtoCmd)
 }
 
 func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, teamId int64, dtoCmd *dtos.PatchPrefsCmd) response.Response {
@@ -151,11 +185,17 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 	dashboardID := dtoCmd.HomeDashboardID
 	if dtoCmd.HomeDashboardUID != nil {
 		query := models.GetDashboardQuery{Uid: *dtoCmd.HomeDashboardUID, OrgId: orgID}
-		err := hs.dashboardService.GetDashboard(ctx, &query)
-		if err != nil {
-			return response.Error(404, "Dashboard not found", err)
+		if query.Uid == "" {
+			// clear the value
+			defaultDash := int64(0)
+			dashboardID = &defaultDash
+		} else {
+			err := hs.DashboardService.GetDashboard(ctx, &query)
+			if err != nil {
+				return response.Error(404, "Dashboard not found", err)
+			}
+			dashboardID = &query.Result.Id
 		}
-		dashboardID = &query.Result.Id
 	}
 	dtoCmd.HomeDashboardID = dashboardID
 
@@ -179,26 +219,86 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 	return response.Success("Preferences updated")
 }
 
-// GET /api/org/preferences
+// swagger:route GET /org/preferences org_preferences getOrgPreferences
+//
+// Get Current Org Prefs.
+//
+// Responses:
+// 200: getPreferencesResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) GetOrgPreferences(c *models.ReqContext) response.Response {
-	return hs.getPreferencesFor(c.Req.Context(), c.OrgId, 0, 0)
+	return hs.getPreferencesFor(c.Req.Context(), c.OrgID, 0, 0)
 }
 
-// PUT /api/org/preferences
+// swagger:route PUT /org/preferences org_preferences updateOrgPreferences
+//
+// Update Current Org Prefs.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) UpdateOrgPreferences(c *models.ReqContext) response.Response {
 	dtoCmd := dtos.UpdatePrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	return hs.updatePreferencesFor(c.Req.Context(), c.OrgId, 0, 0, &dtoCmd)
+	return hs.updatePreferencesFor(c.Req.Context(), c.OrgID, 0, 0, &dtoCmd)
 }
 
-// PATCH /api/org/preferences
+// swagger:route PATCH /org/preferences org_preferences patchOrgPreferences
+//
+// Patch Current Org Prefs.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) PatchOrgPreferences(c *models.ReqContext) response.Response {
 	dtoCmd := dtos.PatchPrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return hs.patchPreferencesFor(c.Req.Context(), c.OrgId, 0, 0, &dtoCmd)
+	return hs.patchPreferencesFor(c.Req.Context(), c.OrgID, 0, 0, &dtoCmd)
+}
+
+// swagger:parameters  updateUserPreferences
+type UpdateUserPreferencesParams struct {
+	// in:body
+	// required:true
+	Body dtos.UpdatePrefsCmd `json:"body"`
+}
+
+// swagger:parameters updateOrgPreferences
+type UpdateOrgPreferencesParams struct {
+	// in:body
+	// required:true
+	Body dtos.UpdatePrefsCmd `json:"body"`
+}
+
+// swagger:response getPreferencesResponse
+type GetPreferencesResponse struct {
+	// in:body
+	Body dtos.Prefs `json:"body"`
+}
+
+// swagger:parameters patchUserPreferences
+type PatchUserPreferencesParams struct {
+	// in:body
+	// required:true
+	Body dtos.PatchPrefsCmd `json:"body"`
+}
+
+// swagger:parameters patchOrgPreferences
+type PatchOrgPreferencesParams struct {
+	// in:body
+	// required:true
+	Body dtos.PatchPrefsCmd `json:"body"`
 }

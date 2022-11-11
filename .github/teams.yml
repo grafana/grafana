@@ -1,0 +1,11 @@
+# The first keys are labels used on issues. All fields are optional.
+# Example
+test:
+  # channel-label is used to send a message to a specific channel
+  # when the label "test" is added to an issue.
+  channel-label: CXXXXXXXXXX
+
+# Alerting team
+area/alerting:
+  github-board: 52
+  channel-label: C02B9MXQE0J

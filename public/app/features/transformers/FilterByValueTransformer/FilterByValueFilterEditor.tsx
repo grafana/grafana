@@ -18,7 +18,7 @@ export interface DataFrameFieldsInfo {
   fieldByDisplayName: Record<string, Field>;
 }
 
-export const FilterByValueFilterEditor: React.FC<Props> = (props) => {
+export const FilterByValueFilterEditor = (props: Props) => {
   const { onDelete, onChange, filter, fieldsInfo } = props;
   const { fieldsAsOptions, fieldByDisplayName } = fieldsInfo;
   const fieldName = getFieldName(filter, fieldsAsOptions) ?? '';
@@ -58,7 +58,7 @@ export const FilterByValueFilterEditor: React.FC<Props> = (props) => {
   );
 
   const onChangeMatcherOptions = useCallback(
-    (options) => {
+    (options: unknown) => {
       onChange({
         ...filter,
         config: {

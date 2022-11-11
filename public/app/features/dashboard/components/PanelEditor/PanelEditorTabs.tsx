@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { IconName, Tab, TabContent, TabsBar, useForceUpdate, useStyles2 } from '@grafana/ui';
+import { Tab, TabContent, TabsBar, toIconName, useForceUpdate, useStyles2 } from '@grafana/ui';
 import AlertTabIndex from 'app/features/alerting/AlertTabIndex';
 import { PanelAlertTab } from 'app/features/alerting/unified/PanelAlertTab';
 import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
@@ -52,7 +52,7 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
               label={tab.text}
               active={tab.active}
               onChangeTab={() => onChangeTab(tab)}
-              icon={tab.icon as IconName}
+              icon={toIconName(tab.icon)}
               counter={getCounter(panel, tab)}
             />
           );
@@ -102,7 +102,7 @@ function renderAlertTab(
         label={tab.text}
         active={tab.active}
         onChangeTab={() => onChangeTab(tab)}
-        icon={tab.icon as IconName}
+        icon={toIconName(tab.icon)}
         panel={panel}
         dashboard={dashboard}
       />
@@ -116,7 +116,7 @@ function renderAlertTab(
         label={tab.text}
         active={tab.active}
         onChangeTab={() => onChangeTab(tab)}
-        icon={tab.icon as IconName}
+        icon={toIconName(tab.icon)}
         counter={getCounter(panel, tab)}
       />
     );

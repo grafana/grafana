@@ -1,53 +1,20 @@
 import { AzureMetricDimension, AzureMonitorQuery } from '../../types';
 
-export function setResource(query: AzureMonitorQuery, resourceURI: string | undefined): AzureMonitorQuery {
-  return {
-    ...query,
-    azureMonitor: {
-      ...query.azureMonitor,
-      resourceUri: resourceURI,
-      metricNamespace: undefined,
-      metricName: undefined,
-      aggregation: undefined,
-      metricDefinition: undefined,
-      timeGrain: '',
-      dimensionFilters: [],
-    },
-  };
-}
-
-export function setMetricNamespace(query: AzureMonitorQuery, metricNamespace: string | undefined): AzureMonitorQuery {
-  if (query.azureMonitor?.metricNamespace === metricNamespace) {
+export function setCustomNamespace(query: AzureMonitorQuery, selection: string | undefined): AzureMonitorQuery {
+  if (query.azureMonitor?.customNamespace === selection) {
     return query;
   }
-
-  let resourceUri = query.azureMonitor?.resourceUri;
-
-  // Storage Account URIs need to be handled differently due to the additional storage services (blob/queue/table/file).
-  // When one of these namespaces is selected it does not form a part of the URI for the storage account and so must be appended.
-  // The 'default' path must also be appended. Without these two paths any API call will fail.
-  if (resourceUri && metricNamespace?.includes('Microsoft.Storage/storageAccounts')) {
-    const splitUri = resourceUri.split('/');
-    const accountNameIndex = splitUri.findIndex((item) => item === 'storageAccounts') + 1;
-    const baseUri = splitUri.slice(0, accountNameIndex + 1).join('/');
-    if (metricNamespace === 'Microsoft.Storage/storageAccounts') {
-      resourceUri = baseUri;
-    } else {
-      const subNamespace = metricNamespace.split('/')[2];
-      resourceUri = `${baseUri}/${subNamespace}/default`;
-    }
-  }
+  const customNamespace = selection?.toLowerCase().startsWith('microsoft.storage/storageaccounts/') ? '' : selection;
 
   return {
     ...query,
     azureMonitor: {
       ...query.azureMonitor,
-      metricNamespace: metricNamespace,
+      customNamespace,
       metricName: undefined,
       aggregation: undefined,
       timeGrain: '',
       dimensionFilters: [],
-      resourceUri,
     },
   };
 }

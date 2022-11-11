@@ -1,9 +1,9 @@
 import { lastValueFrom } from 'rxjs';
 
+import { DataQuery } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { RichHistoryQuery } from 'app/types/explore';
 
-import { DataQuery } from '../../../../packages/grafana-data';
 import { PreferencesService } from '../services/PreferencesService';
 import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from '../utils/richHistoryTypes';
 
@@ -73,7 +73,7 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
     const params = buildQueryParams(filters);
 
     const queryHistory = await lastValueFrom(
-      getBackendSrv().fetch({
+      getBackendSrv().fetch<RichHistoryRemoteStorageResultsPayloadDTO>({
         method: 'GET',
         url: `/api/query-history?${params}`,
         // to ensure any previous requests are cancelled
@@ -81,7 +81,7 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
       })
     );
 
-    const data = queryHistory.data as RichHistoryRemoteStorageResultsPayloadDTO;
+    const data = queryHistory.data;
     const richHistory = (data.result.queryHistory || []).map(fromDTO);
     const total = data.result.totalCount || 0;
 
@@ -127,11 +127,12 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
    * @internal Used only for migration purposes. Will be removed in future.
    */
   async migrate(richHistory: RichHistoryQuery[]) {
+    const data: RichHistoryRemoteStorageMigrationPayloadDTO = { queries: richHistory.map(toDTO) };
     await lastValueFrom(
       getBackendSrv().fetch({
         url: '/api/query-history/migrate',
         method: 'POST',
-        data: { queries: richHistory.map(toDTO) } as RichHistoryRemoteStorageMigrationPayloadDTO,
+        data,
         showSuccessAlert: false,
       })
     );

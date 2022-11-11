@@ -8,6 +8,7 @@ aliases:
   - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/view-user-account-details/
   - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/add-user/
   - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/force-user-logout/
+  - /docs/grafana/latest/administration/user-management/server-user-management/
 title: Server user management
 weight: 100
 ---
@@ -69,7 +70,7 @@ This indicates whether the user account has the Grafana administrator flag appli
 
 ![Server Admin Permissions section](/static/img/docs/manage-users/server-admin-permissions-7-3.png)
 
-#### Organisations
+#### Organizations
 
 This section lists the organizations the user belongs to and their assigned role.
 

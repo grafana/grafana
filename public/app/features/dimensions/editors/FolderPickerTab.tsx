@@ -100,7 +100,7 @@ export const FolderPickerTab = (props: Props) => {
   return (
     <>
       <Field>
-        <Select options={folders} onChange={setCurrentFolder} value={currentFolder} />
+        <Select options={folders} onChange={setCurrentFolder} value={currentFolder} menuShouldPortal={false} />
       </Field>
       <Field>
         <FilterInput

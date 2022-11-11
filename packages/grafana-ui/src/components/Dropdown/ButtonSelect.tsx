@@ -8,10 +8,11 @@ import React, { HTMLAttributes } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { ToolbarButtonVariant, ToolbarButton, ButtonGroup } from '../Button';
+import { ButtonGroup } from '../Button';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
+import { ToolbarButton, ToolbarButtonVariant } from '../ToolbarButton';
 import { PopoverContent } from '../Tooltip';
 
 export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 // Roles definition
@@ -15,7 +15,6 @@ var (
 		DisplayName: "LDAP reader",
 		Description: "Read LDAP configuration and status.",
 		Group:       "LDAP",
-		Version:     3,
 		Permissions: []Permission{
 			{
 				Action: ActionLDAPUsersRead,
@@ -31,7 +30,6 @@ var (
 		DisplayName: "LDAP writer",
 		Description: "Read and update LDAP configuration and read LDAP status.",
 		Group:       "LDAP",
-		Version:     4,
 		Permissions: ConcatPermissions(ldapReaderRole.Permissions, []Permission{
 			{
 				Action: ActionLDAPUsersSync,
@@ -47,7 +45,6 @@ var (
 		DisplayName: "Organization user writer",
 		Description: "Within a single organization, add a user, invite a user, read information about a user and their role, remove a user from that organization, or change the role of a user.",
 		Group:       "User administration (organizational)",
-		Version:     4,
 		Permissions: ConcatPermissions(orgUsersReaderRole.Permissions, []Permission{
 			{
 				Action: ActionOrgUsersAdd,
@@ -69,7 +66,6 @@ var (
 		DisplayName: "Organization user reader",
 		Description: "Read users within a single organization.",
 		Group:       "User administration (organizational)",
-		Version:     3,
 		Permissions: []Permission{
 			{
 				Action: ActionOrgUsersRead,
@@ -83,7 +79,6 @@ var (
 		DisplayName: "Setting reader",
 		Description: "Read Grafana instance settings.",
 		Group:       "Settings",
-		Version:     4,
 		Permissions: []Permission{
 			{
 				Action: ActionSettingsRead,
@@ -97,7 +92,6 @@ var (
 		DisplayName: "Statistics reader",
 		Description: "Read Grafana instance statistics.",
 		Group:       "Statistics",
-		Version:     3,
 		Permissions: []Permission{
 			{
 				Action: ActionServerStatsRead,
@@ -110,7 +104,6 @@ var (
 		DisplayName: "User reader",
 		Description: "Read all users and their information, such as team memberships, authentication tokens, and quotas.",
 		Group:       "User administration (global)",
-		Version:     6,
 		Permissions: []Permission{
 			{
 				Action: ActionUsersRead,
@@ -132,7 +125,6 @@ var (
 		DisplayName: "User writer",
 		Description: "Read and update all attributes and settings for all users in Grafana: update user information, read user information, create or enable or disable a user, make a user a Grafana administrator, sign out a user, update a user’s authentication token, or update quotas for all users.",
 		Group:       "User administration (global)",
-		Version:     5,
 		Permissions: ConcatPermissions(usersReaderRole.Permissions, []Permission{
 			{
 				Action: ActionUsersPasswordUpdate,
@@ -178,7 +170,7 @@ var (
 )
 
 // Declare OSS roles to the accesscontrol service
-func DeclareFixedRoles(ac AccessControl) error {
+func DeclareFixedRoles(service Service) error {
 	ldapReader := RoleRegistration{
 		Role:   ldapReaderRole,
 		Grants: []string{RoleGrafanaAdmin},
@@ -189,11 +181,11 @@ func DeclareFixedRoles(ac AccessControl) error {
 	}
 	orgUsersReader := RoleRegistration{
 		Role:   orgUsersReaderRole,
-		Grants: []string{RoleGrafanaAdmin, string(models.ROLE_ADMIN)},
+		Grants: []string{RoleGrafanaAdmin, string(org.RoleAdmin)},
 	}
 	orgUsersWriter := RoleRegistration{
 		Role:   orgUsersWriterRole,
-		Grants: []string{RoleGrafanaAdmin, string(models.ROLE_ADMIN)},
+		Grants: []string{RoleGrafanaAdmin, string(org.RoleAdmin)},
 	}
 	settingsReader := RoleRegistration{
 		Role:   SettingsReaderRole,
@@ -212,7 +204,7 @@ func DeclareFixedRoles(ac AccessControl) error {
 		Grants: []string{RoleGrafanaAdmin},
 	}
 
-	return ac.DeclareFixedRoles(ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
+	return service.DeclareFixedRoles(ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
 		settingsReader, statsReader, usersReader, usersWriter)
 }
 
@@ -240,7 +232,7 @@ func ValidateFixedRole(role RoleDTO) error {
 // ValidateBuiltInRoles errors when a built-in role does not match expected pattern
 func ValidateBuiltInRoles(builtInRoles []string) error {
 	for _, br := range builtInRoles {
-		if !models.RoleType(br).IsValid() && br != RoleGrafanaAdmin {
+		if !org.RoleType(br).IsValid() && br != RoleGrafanaAdmin {
 			return fmt.Errorf("'%s' %w", br, ErrInvalidBuiltinRole)
 		}
 	}
@@ -270,34 +262,34 @@ func (m *RegistrationList) Range(f func(registration RoleRegistration) bool) {
 
 func BuildBasicRoleDefinitions() map[string]*RoleDTO {
 	return map[string]*RoleDTO{
-		string(models.ROLE_ADMIN): {
+		string(org.RoleAdmin): {
 			Name:        BasicRolePrefix + "admin",
 			UID:         BasicRoleUIDPrefix + "admin",
 			OrgID:       GlobalOrgID,
 			Version:     1,
-			DisplayName: string(models.ROLE_ADMIN),
+			DisplayName: string(org.RoleAdmin),
 			Description: "Admin role",
 			Group:       "Basic",
 			Permissions: []Permission{},
 			Hidden:      true,
 		},
-		string(models.ROLE_EDITOR): {
+		string(org.RoleEditor): {
 			Name:        BasicRolePrefix + "editor",
 			UID:         BasicRoleUIDPrefix + "editor",
 			OrgID:       GlobalOrgID,
 			Version:     1,
-			DisplayName: string(models.ROLE_EDITOR),
+			DisplayName: string(org.RoleEditor),
 			Description: "Editor role",
 			Group:       "Basic",
 			Permissions: []Permission{},
 			Hidden:      true,
 		},
-		string(models.ROLE_VIEWER): {
+		string(org.RoleViewer): {
 			Name:        BasicRolePrefix + "viewer",
 			UID:         BasicRoleUIDPrefix + "viewer",
 			OrgID:       GlobalOrgID,
 			Version:     1,
-			DisplayName: string(models.ROLE_VIEWER),
+			DisplayName: string(org.RoleViewer),
 			Description: "Viewer role",
 			Group:       "Basic",
 			Permissions: []Permission{},

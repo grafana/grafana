@@ -17,10 +17,14 @@ packages/grafana-toolkit/
 packages/grafana-ui/
 packages/jaeger-ui-components/
 packaging/
-pkg/coremodel/
-pkg/framework/coremodel/
+kinds/
+pkg/kinds/
+pkg/kindsys/
+pkg/registry/corekind/
 grafana-mixin/
-cue/
+public/app/plugins/datasource/tempo
+public/img/icons/solid/
+public/img/icons/unicons/
 ```
 
 The following directories and their subdirectories are licensed under their original upstream licenses:

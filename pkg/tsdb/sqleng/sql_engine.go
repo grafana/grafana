@@ -16,10 +16,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"xorm.io/core"
 	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
@@ -36,13 +37,14 @@ type SQLMacroEngine interface {
 // SqlQueryResultTransformer transforms a query result row to RowValues with proper types.
 type SqlQueryResultTransformer interface {
 	// TransformQueryError transforms a query error.
-	TransformQueryError(err error) error
+	TransformQueryError(logger log.Logger, err error) error
 	GetConverterList() []sqlutil.StringConverter
 }
 
 var sqlIntervalCalculator = intervalv2.NewCalculator()
 
 // NewXormEngine is an xorm.Engine factory, that can be stubbed by tests.
+//
 //nolint:gocritic
 var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engine, error) {
 	return xorm.NewEngine(driverName, connectionString)
@@ -104,18 +106,18 @@ type QueryJson struct {
 	Format       string  `json:"format"`
 }
 
-func (e *DataSourceHandler) transformQueryError(err error) error {
+func (e *DataSourceHandler) transformQueryError(logger log.Logger, err error) error {
 	// OpError is the error type usually returned by functions in the net
 	// package. It describes the operation, network type, and address of
 	// an error. We log this error rather than return it to the client
 	// for security purposes.
 	var opErr *net.OpError
 	if errors.As(err, &opErr) {
-		e.log.Error("query error", "err", err)
+		logger.Error("Query error", "err", err)
 		return ErrConnectionFailed
 	}
 
-	return e.queryResultTransformer.TransformQueryError(err)
+	return e.queryResultTransformer.TransformQueryError(logger, err)
 }
 
 func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
@@ -212,9 +214,11 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		refID:        query.RefID,
 	}
 
+	logger := e.log.FromContext(queryContext)
+
 	defer func() {
 		if r := recover(); r != nil {
-			e.log.Error("executeQuery panic", "error", r, "stack", log.Stack(1))
+			logger.Error("ExecuteQuery panic", "error", r, "stack", log.Stack(1))
 			if theErr, ok := r.(error); ok {
 				queryResult.dataResponse.Error = theErr
 			} else if theErrString, ok := r.(string); ok {
@@ -245,14 +249,14 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	// global substitutions
 	interpolatedQuery, err := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
 	if err != nil {
-		errAppendDebug("interpolation failed", e.transformQueryError(err), interpolatedQuery)
+		errAppendDebug("interpolation failed", e.transformQueryError(logger, err), interpolatedQuery)
 		return
 	}
 
 	// data source specific substitutions
 	interpolatedQuery, err = e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
 	if err != nil {
-		errAppendDebug("interpolation failed", e.transformQueryError(err), interpolatedQuery)
+		errAppendDebug("interpolation failed", e.transformQueryError(logger, err), interpolatedQuery)
 		return
 	}
 
@@ -262,12 +266,12 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	rows, err := db.QueryContext(queryContext, interpolatedQuery)
 	if err != nil {
-		errAppendDebug("db query error", e.transformQueryError(err), interpolatedQuery)
+		errAppendDebug("db query error", e.transformQueryError(logger, err), interpolatedQuery)
 		return
 	}
 	defer func() {
 		if err := rows.Close(); err != nil {
-			e.log.Warn("Failed to close rows", "err", err)
+			logger.Warn("Failed to close rows", "err", err)
 		}
 	}()
 
@@ -358,7 +362,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 			var err error
 			frame, err = resample(frame, *qm)
 			if err != nil {
-				e.log.Error("Failed to resample dataframe", "err", err)
+				logger.Error("Failed to resample dataframe", "err", err)
 				frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
 			}
 		}
@@ -887,7 +891,8 @@ func convertSQLTimeColumnToEpochMS(frame *data.Frame, timeIndex int) error {
 }
 
 // convertSQLValueColumnToFloat converts timeseries value column to float.
-//nolint: gocyclo
+//
+//nolint:gocyclo
 func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, error) {
 	if Index < 0 || Index >= len(frame.Fields) {
 		return frame, fmt.Errorf("metricIndex %d is out of range", Index)

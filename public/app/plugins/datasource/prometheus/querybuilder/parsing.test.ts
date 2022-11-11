@@ -53,8 +53,19 @@ describe('buildVisualQueryFromString', () => {
       buildVisualQueryFromString(
         'avg(rate(access_evaluation_duration_count{instance="host.docker.internal:3000"}[$__rate_interval]))'
       )
-    ).toEqual(
-      noErrors({
+    ).toEqual({
+      // after upgrading @prometheus-io/lezer-promql, strings containing global grafana variables such as $__rate_interval (https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/)
+      // started returning error nodes upon parse, but the resultant tree was otherwise the same.
+      // My assumption is that the newer version of lezer is more verbose in returning error nodes, and there should be no functional change to the parsed trees.
+      errors: [
+        {
+          from: 107,
+          parentType: 'MatrixSelector',
+          text: '',
+          to: 107,
+        },
+      ],
+      query: {
         metric: 'access_evaluation_duration_count',
         labels: [
           {
@@ -73,8 +84,8 @@ describe('buildVisualQueryFromString', () => {
             params: [],
           },
         ],
-      })
-    );
+      },
+    });
   });
 
   it('parses query with aggregation by labels', () => {
@@ -160,8 +171,16 @@ describe('buildVisualQueryFromString', () => {
   it('parses function with argument', () => {
     expect(
       buildVisualQueryFromString('histogram_quantile(0.99, rate(counters_logins{app="backend"}[$__rate_interval]))')
-    ).toEqual(
-      noErrors({
+    ).toEqual({
+      errors: [
+        {
+          from: 88,
+          parentType: 'MatrixSelector',
+          text: '',
+          to: 88,
+        },
+      ],
+      query: {
         metric: 'counters_logins',
         labels: [{ label: 'app', op: '=', value: 'backend' }],
         operations: [
@@ -174,8 +193,8 @@ describe('buildVisualQueryFromString', () => {
             params: [0.99],
           },
         ],
-      })
-    );
+      },
+    });
   });
 
   it('parses function with multiple arguments', () => {
@@ -183,8 +202,16 @@ describe('buildVisualQueryFromString', () => {
       buildVisualQueryFromString(
         'label_replace(avg_over_time(http_requests_total{instance="foo"}[$__interval]), "instance", "$1", "", "(.*)")'
       )
-    ).toEqual(
-      noErrors({
+    ).toEqual({
+      errors: [
+        {
+          from: 86,
+          parentType: 'MatrixSelector',
+          text: '',
+          to: 86,
+        },
+      ],
+      query: {
         metric: 'http_requests_total',
         labels: [{ label: 'instance', op: '=', value: 'foo' }],
         operations: [
@@ -197,13 +224,21 @@ describe('buildVisualQueryFromString', () => {
             params: ['instance', '$1', '', '(.*)'],
           },
         ],
-      })
-    );
+      },
+    });
   });
 
   it('parses binary operation with scalar', () => {
-    expect(buildVisualQueryFromString('avg_over_time(http_requests_total{instance="foo"}[$__interval]) / 2')).toEqual(
-      noErrors({
+    expect(buildVisualQueryFromString('avg_over_time(http_requests_total{instance="foo"}[$__interval]) / 2')).toEqual({
+      errors: [
+        {
+          from: 72,
+          parentType: 'MatrixSelector',
+          text: '',
+          to: 72,
+        },
+      ],
+      query: {
         metric: 'http_requests_total',
         labels: [{ label: 'instance', op: '=', value: 'foo' }],
         operations: [
@@ -216,15 +251,23 @@ describe('buildVisualQueryFromString', () => {
             params: [2],
           },
         ],
-      })
-    );
+      },
+    });
   });
 
   it('parses binary operation with 2 queries', () => {
     expect(
       buildVisualQueryFromString('avg_over_time(http_requests_total{instance="foo"}[$__interval]) / sum(logins_count)')
-    ).toEqual(
-      noErrors({
+    ).toEqual({
+      errors: [
+        {
+          from: 72,
+          parentType: 'MatrixSelector',
+          text: '',
+          to: 72,
+        },
+      ],
+      query: {
         metric: 'http_requests_total',
         labels: [{ label: 'instance', op: '=', value: 'foo' }],
         operations: [{ id: 'avg_over_time', params: ['$__interval'] }],
@@ -238,8 +281,8 @@ describe('buildVisualQueryFromString', () => {
             },
           },
         ],
-      })
-    );
+      },
+    });
   });
 
   it('parses template variables in strings', () => {

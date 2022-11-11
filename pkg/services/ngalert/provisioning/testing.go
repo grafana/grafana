@@ -160,6 +160,15 @@ func (m *MockAMConfigStore_Expecter) SaveSucceeds() *MockAMConfigStore_Expecter 
 	return m
 }
 
+func (m *MockAMConfigStore_Expecter) SaveSucceedsIntercept(intercepted *models.SaveAlertmanagerConfigurationCmd) *MockAMConfigStore_Expecter {
+	m.UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
+		Return(nil).
+		Run(func(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) {
+			*intercepted = *cmd
+		})
+	return m
+}
+
 func (m *MockProvisioningStore_Expecter) GetReturns(p models.Provenance) *MockProvisioningStore_Expecter {
 	m.GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(p, nil)
 	return m
@@ -168,5 +177,15 @@ func (m *MockProvisioningStore_Expecter) GetReturns(p models.Provenance) *MockPr
 func (m *MockProvisioningStore_Expecter) SaveSucceeds() *MockProvisioningStore_Expecter {
 	m.SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	m.DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	return m
+}
+
+func (m *MockQuotaChecker_Expecter) LimitOK() *MockQuotaChecker_Expecter {
+	m.CheckQuotaReached(mock.Anything, mock.Anything, mock.Anything).Return(false, nil)
+	return m
+}
+
+func (m *MockQuotaChecker_Expecter) LimitExceeded() *MockQuotaChecker_Expecter {
+	m.CheckQuotaReached(mock.Anything, mock.Anything, mock.Anything).Return(true, nil)
 	return m
 }

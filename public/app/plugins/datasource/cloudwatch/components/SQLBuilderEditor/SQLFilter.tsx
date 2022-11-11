@@ -102,15 +102,15 @@ const FilterItem: React.FC<FilterItemProps> = (props) => {
   const namespace = getNamespaceFromExpression(sql.from);
   const metricName = getMetricNameFromExpression(sql.select);
 
-  const dimensionKeys = useDimensionKeys(datasource, query.region, namespace, metricName);
+  const dimensionKeys = useDimensionKeys(datasource, { region: query.region, namespace, metricName });
 
   const loadDimensionValues = async () => {
-    if (!filter.property?.name) {
+    if (!filter.property?.name || !namespace) {
       return [];
     }
 
-    return datasource
-      .getDimensionValues(query.region, namespace, metricName, filter.property.name, {})
+    return datasource.api
+      .getDimensionValues({ region: query.region, namespace, metricName, dimensionKey: filter.property.name })
       .then((result: Array<SelectableValue<string>>) => {
         return appendTemplateVariables(datasource, result);
       });

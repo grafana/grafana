@@ -8,6 +8,7 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelData,
+  DataTopic,
 } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { QueryRunnerOptions } from 'app/features/query/state/PanelQueryRunner';
@@ -31,7 +32,7 @@ export function isSharedDashboardQuery(datasource: string | DataSourceRef | Data
   return datasource.uid === SHARED_DASHBOARD_QUERY;
 }
 
-export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelData> {
+export function runSharedRequest(options: QueryRunnerOptions, query: DashboardQuery): Observable<PanelData> {
   return new Observable<PanelData>((subscriber) => {
     const dashboard = getDashboardSrv().getCurrent();
     const listenToPanelId = getPanelIdFromQuery(options.queries);
@@ -49,11 +50,24 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
     }
 
     const listenToRunner = listenToPanel.getQueryRunner();
-    const subscription = listenToRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
-      next: (data: PanelData) => {
-        subscriber.next(data);
-      },
-    });
+    const subscription = listenToRunner
+      .getData({
+        withTransforms: Boolean(query?.withTransforms),
+        withFieldConfig: false,
+      })
+      .subscribe({
+        next: (data: PanelData) => {
+          // Use annotation data for series
+          if (query?.topic === DataTopic.Annotations) {
+            data = {
+              ...data,
+              series: data.annotations ?? [],
+              annotations: undefined, // remove annotations
+            };
+          }
+          subscriber.next(data);
+        },
+      });
 
     // If we are in fullscreen the other panel will not execute any queries
     // So we have to trigger it from here

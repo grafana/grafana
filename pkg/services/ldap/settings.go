@@ -2,15 +2,17 @@ package ldap
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"sync"
 
 	"github.com/BurntSushi/toml"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+const defaultTimeout = 10
 
 // Config holds list of connections to LDAP
 type Config struct {
@@ -29,6 +31,7 @@ type ServerConfig struct {
 	ClientKey     string       `toml:"client_key"`
 	BindDN        string       `toml:"bind_dn"`
 	BindPassword  string       `toml:"bind_password"`
+	Timeout       int          `toml:"timeout"`
 	Attr          AttributeMap `toml:"attributes"`
 
 	SearchFilter  string   `toml:"search_filter"`
@@ -59,7 +62,7 @@ type GroupToOrgRole struct {
 	// This pointer specifies if setting was set (for backwards compatibility)
 	IsGrafanaAdmin *bool `toml:"grafana_admin"`
 
-	OrgRole models.RoleType `toml:"org_role"`
+	OrgRole org.RoleType `toml:"org_role"`
 }
 
 // logger for all LDAP stuff
@@ -71,6 +74,10 @@ var loadingMutex = &sync.Mutex{}
 // IsEnabled checks if ldap is enabled
 func IsEnabled() bool {
 	return setting.LDAPEnabled
+}
+
+func SkipOrgRoleSync() bool {
+	return setting.LDAPSkipOrgRoleSync
 }
 
 // ReloadConfig reads the config from the disk and caches it.
@@ -120,7 +127,7 @@ func readConfig(configFile string) (*Config, error) {
 
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `filename` comes from grafana configuration file
-	fileBytes, err := ioutil.ReadFile(configFile)
+	fileBytes, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "Failed to load LDAP config file", err)
 	}
@@ -140,8 +147,8 @@ func readConfig(configFile string) (*Config, error) {
 		return nil, fmt.Errorf("LDAP enabled but no LDAP servers defined in config file")
 	}
 
-	// set default org id
 	for _, server := range result.Servers {
+		// set default org id
 		err = assertNotEmptyCfg(server.SearchFilter, "search_filter")
 		if err != nil {
 			return nil, fmt.Errorf("%v: %w", "Failed to validate SearchFilter section", err)
@@ -159,6 +166,11 @@ func readConfig(configFile string) (*Config, error) {
 			if groupMap.OrgId == 0 {
 				groupMap.OrgId = 1
 			}
+		}
+
+		// set default timeout if unspecified
+		if server.Timeout == 0 {
+			server.Timeout = defaultTimeout
 		}
 	}
 

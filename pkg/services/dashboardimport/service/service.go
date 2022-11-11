@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -11,21 +12,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardimport/api"
 	"github.com/grafana/grafana/pkg/services/dashboardimport/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 )
 
 func ProvideService(routeRegister routing.RouteRegister,
-	quotaService *quota.QuotaService,
+	quotaService quota.Service,
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store,
 	libraryPanelService librarypanels.Service, dashboardService dashboards.DashboardService,
-	ac accesscontrol.AccessControl,
+	ac accesscontrol.AccessControl, folderService folder.Service,
 ) *ImportDashboardService {
 	s := &ImportDashboardService{
 		pluginDashboardService: pluginDashboardService,
 		dashboardService:       dashboardService,
 		libraryPanelService:    libraryPanelService,
+		folderService:          folderService,
 	}
 
 	dashboardImportAPI := api.New(s, quotaService, pluginStore, ac)
@@ -38,6 +41,7 @@ type ImportDashboardService struct {
 	pluginDashboardService plugindashboards.Service
 	dashboardService       dashboards.DashboardService
 	libraryPanelService    librarypanels.Service
+	folderService          folder.Service
 }
 
 func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
@@ -62,10 +66,42 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		return nil, err
 	}
 
+	// Maintain backwards compatibility by transforming array of library elements to map
+	libraryElements := generatedDash.Get("__elements")
+	libElementsArr, err := libraryElements.Array()
+	if err == nil {
+		elementMap := map[string]interface{}{}
+		for _, el := range libElementsArr {
+			libElement := simplejson.NewFromAny(el)
+			elementMap[libElement.Get("uid").MustString()] = el
+		}
+		libraryElements = simplejson.NewFromAny(elementMap)
+	}
+
+	// No need to keep these in the stored dashboard JSON
+	generatedDash.Del("__elements")
+	generatedDash.Del("__inputs")
+	generatedDash.Del("__requires")
+
+	// here we need to get FolderId from FolderUID if it present in the request, if both exist, FolderUID would overwrite FolderID
+	if req.FolderUid != "" {
+		folder, err := s.folderService.GetFolderByUID(ctx, req.User, req.User.OrgID, req.FolderUid)
+		if err != nil {
+			return nil, err
+		}
+		req.FolderId = folder.Id
+	} else {
+		folder, err := s.folderService.GetFolderByID(ctx, req.User, req.FolderId, req.User.OrgID)
+		if err != nil {
+			return nil, err
+		}
+		req.FolderUid = folder.Uid
+	}
+
 	saveCmd := models.SaveDashboardCommand{
 		Dashboard: generatedDash,
-		OrgId:     req.User.OrgId,
-		UserId:    req.User.UserId,
+		OrgId:     req.User.OrgID,
+		UserId:    req.User.UserID,
 		Overwrite: req.Overwrite,
 		PluginId:  req.PluginId,
 		FolderId:  req.FolderId,
@@ -83,7 +119,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		return nil, err
 	}
 
-	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, savedDashboard, req.FolderId)
+	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, libraryElements, generatedDash.Get("panels").MustArray(), req.FolderId)
 	if err != nil {
 		return nil, err
 	}
@@ -100,6 +136,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		Path:             req.Path,
 		Revision:         savedDashboard.Data.Get("revision").MustInt64(1),
 		FolderId:         savedDashboard.FolderId,
+		FolderUID:        req.FolderUid,
 		ImportedUri:      "db/" + savedDashboard.Slug,
 		ImportedUrl:      savedDashboard.GetUrl(),
 		ImportedRevision: savedDashboard.Data.Get("revision").MustInt64(1),

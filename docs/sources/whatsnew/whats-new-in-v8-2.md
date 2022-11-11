@@ -15,7 +15,7 @@ title: What's new in Grafana v8.2
 weight: -33
 ---
 
-# What’s new in Grafana v8.2
+# What's new in Grafana v8.2
 
 Grafana 8.2 continues to build on the foundation of Grafana 8.0 & 8.1. Grafana 8.2 also marks the start of our work to bring Grafana closer to all users with a focus on increasing Grafana’s accessibility, part of its continuing mission to democratize metrics _for everyone_.
 

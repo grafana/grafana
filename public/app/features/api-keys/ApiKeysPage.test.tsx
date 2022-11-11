@@ -2,7 +2,6 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 
-import { NavModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { ApiKey, OrgRole } from 'app/types';
 
@@ -33,14 +32,6 @@ const setup = (propOverrides: Partial<Props>) => {
   const getApiKeysMigrationStatusMock = jest.fn();
   const hideApiKeysMock = jest.fn();
   const props: Props = {
-    navModel: {
-      main: {
-        text: 'Configuration',
-      },
-      node: {
-        text: 'Api Keys',
-      },
-    } as NavModel,
     apiKeys: [] as ApiKey[],
     searchQuery: '',
     hasFetched: false,
@@ -172,7 +163,7 @@ describe('ApiKeysPage', () => {
 
   describe('when a user adds an API key from CTA', () => {
     it('then it should call addApiKey with correct parameters', async () => {
-      const apiKeys: any[] = [];
+      const apiKeys: ApiKey[] = [];
       const { addApiKeyMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
 
       addApiKeyMock.mockClear();

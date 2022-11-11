@@ -11,8 +11,9 @@ import {
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
+import { config } from '@grafana/runtime/src/config';
 import { GraphDrawStyle, StackingMode } from '@grafana/schema';
-import TableModel from 'app/core/table_model';
+import TableModel from 'app/core/TableModel';
 import { ExplorePanelData } from 'app/types';
 
 import {
@@ -23,7 +24,7 @@ import {
 } from './decorators';
 
 jest.mock('@grafana/data', () => ({
-  ...(jest.requireActual('@grafana/data') as any),
+  ...jest.requireActual('@grafana/data'),
   dateTimeFormat: () => 'format() jest mocked',
   dateTimeFormatTimeAgo: (ts: any) => 'fromNow() jest mocked',
 }));
@@ -67,7 +68,19 @@ const getTestContext = () => {
     meta: { preferredVisualisationType: 'logs' },
   });
 
-  return { emptyTable, timeSeries, logs, table };
+  const flameGraph = toDataFrame({
+    name: 'flameGraph-res',
+    refId: 'A',
+    fields: [
+      { name: 'level', type: FieldType.number, values: [4, 5, 6] },
+      { name: 'value', type: FieldType.number, values: [100, 100, 100] },
+      { name: 'self', type: FieldType.number, values: [10, 10, 10] },
+      { name: 'label', type: FieldType.string, values: ['this is a message', 'second message', 'third'] },
+    ],
+    meta: { preferredVisualisationType: 'flamegraph' },
+  });
+
+  return { emptyTable, timeSeries, logs, table, flameGraph };
 };
 
 const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelData => {
@@ -83,20 +96,23 @@ const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelDa
     tableResult: undefined as unknown as null,
     traceFrames: [],
     nodeGraphFrames: [],
+    flameGraphFrames: [],
   };
 
   return { ...defaults, ...args };
 };
 
-describe('decorateWithGraphLogsTraceAndTable', () => {
+describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
   it('should correctly classify the dataFrames', () => {
-    const { table, logs, timeSeries, emptyTable } = getTestContext();
-    const series = [table, logs, timeSeries, emptyTable];
+    const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
+    const series = [table, logs, timeSeries, emptyTable, flameGraph];
     const panelData: PanelData = {
       series,
       state: LoadingState.Done,
       timeRange: {} as unknown as TimeRange,
     };
+    // Needed so flamegraph does not fallback to table, will be removed when feature flag no longer necessary
+    config.featureToggles.flameGraph = true;
 
     expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
       series,
@@ -107,6 +123,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       logsFrames: [logs],
       traceFrames: [],
       nodeGraphFrames: [],
+      flameGraphFrames: [flameGraph],
       graphResult: null,
       tableResult: null,
       logsResult: null,
@@ -130,6 +147,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       logsFrames: [],
       traceFrames: [],
       nodeGraphFrames: [],
+      flameGraphFrames: [],
       graphResult: null,
       tableResult: null,
       logsResult: null,
@@ -156,6 +174,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       logsFrames: [logs],
       traceFrames: [],
       nodeGraphFrames: [],
+      flameGraphFrames: [],
       graphResult: null,
       tableResult: null,
       logsResult: null,

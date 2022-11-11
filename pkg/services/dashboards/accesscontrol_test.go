@@ -64,12 +64,12 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 		_, resolver := NewFolderNameScopeResolver(dashboardStore)
 
 		orgId := rand.Int63()
-		dashboardStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(nil, models.ErrDashboardNotFound).Once()
+		dashboardStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(nil, ErrDashboardNotFound).Once()
 
 		scope := "folders:name:" + util.GenerateShortUID()
 
 		resolvedScopes, err := resolver.Resolve(context.Background(), orgId, scope)
-		require.ErrorIs(t, err, models.ErrDashboardNotFound)
+		require.ErrorIs(t, err, ErrDashboardNotFound)
 		require.Nil(t, resolvedScopes)
 	})
 }
@@ -136,11 +136,11 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 		_, resolver := NewFolderIDScopeResolver(dashboardStore)
 
 		orgId := rand.Int63()
-		dashboardStore.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(nil, models.ErrDashboardNotFound).Once()
+		dashboardStore.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(nil, ErrDashboardNotFound).Once()
 
 		scope := "folders:id:10"
 		resolvedScopes, err := resolver.Resolve(context.Background(), orgId, scope)
-		require.ErrorIs(t, err, models.ErrDashboardNotFound)
+		require.ErrorIs(t, err, ErrDashboardNotFound)
 		require.Nil(t, resolvedScopes)
 	})
 }

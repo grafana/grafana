@@ -375,4 +375,8 @@ export class PanelPlugin<
   getSuggestionsSupplier(): VisualizationSuggestionsSupplier | undefined {
     return this.suggestionsSupplier;
   }
+
+  hasPluginId(pluginId: string) {
+    return this.meta.id === pluginId;
+  }
 }

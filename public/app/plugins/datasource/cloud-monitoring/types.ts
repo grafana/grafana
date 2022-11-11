@@ -57,6 +57,7 @@ export interface Aggregation {
 export enum QueryType {
   METRICS = 'metrics',
   SLO = 'slo',
+  ANNOTATION = 'annotation',
 }
 
 export enum EditorMode {
@@ -143,6 +144,7 @@ export interface SLOQuery extends BaseQuery {
   sloId: string;
   sloName: string;
   goal?: number;
+  lookbackPeriod?: string;
 }
 
 export interface CloudMonitoringQuery extends DataQuery {
@@ -151,7 +153,6 @@ export interface CloudMonitoringQuery extends DataQuery {
   metricQuery: MetricQuery | AnnotationMetricQuery;
   sloQuery?: SLOQuery;
   intervalMs: number;
-  type: string;
 }
 
 export interface CloudMonitoringOptions extends DataSourceJsonData {

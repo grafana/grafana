@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 
 import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
@@ -22,14 +22,33 @@ export interface TooltipProps {
 }
 
 export const Tooltip = React.memo(({ children, theme, interactive, show, placement, content }: TooltipProps) => {
+  const [controlledVisible, setControlledVisible] = React.useState(show);
+
+  useEffect(() => {
+    if (controlledVisible !== false) {
+      const handleKeyDown = (enterKey: KeyboardEvent) => {
+        if (enterKey.key === 'Escape') {
+          setControlledVisible(false);
+        }
+      };
+      document.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+      };
+    } else {
+      return;
+    }
+  }, [controlledVisible]);
+
   const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update } = usePopperTooltip({
-    visible: show,
+    visible: controlledVisible,
     placement: placement,
     interactive: interactive,
     delayHide: interactive ? 100 : 0,
     delayShow: 150,
     offset: [0, 8],
     trigger: ['hover', 'focus'],
+    onVisibleChange: setControlledVisible,
   });
 
   const styles = useStyles2(getStyles);
@@ -47,8 +66,9 @@ export const Tooltip = React.memo(({ children, theme, interactive, show, placeme
             {typeof content === 'string' && content}
             {React.isValidElement(content) && React.cloneElement(content)}
             {typeof content === 'function' &&
+              update &&
               content({
-                updatePopperPosition: update as any,
+                updatePopperPosition: update,
               })}
           </div>
         </Portal>
@@ -177,13 +197,13 @@ function getStyles(theme: GrafanaTheme2) {
       code {
         border: none;
         display: inline;
-        background: ${colorManipulator.darken(tooltipBg, 0.3)};
+        background: ${colorManipulator.darken(tooltipBg, 0.1)};
         color: ${tooltipText};
       }
 
-      strong,
-      em {
-        color: ${colorManipulator.emphasize(tooltipBg)};
+      pre {
+        background: ${colorManipulator.darken(tooltipBg, 0.1)};
+        color: ${tooltipText};
       }
 
       a {

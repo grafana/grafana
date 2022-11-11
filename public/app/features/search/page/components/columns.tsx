@@ -1,21 +1,28 @@
 import { cx } from '@emotion/css';
-import { isNumber } from 'lodash';
 import React from 'react';
-import SVG from 'react-inlinesvg';
 
-import { Field, getFieldDisplayName } from '@grafana/data';
+import {
+  DisplayProcessor,
+  Field,
+  FieldType,
+  formattedValueToString,
+  getDisplayProcessor,
+  getFieldDisplayName,
+} from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconButton, IconName, TagList } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 import { PluginIconName } from 'app/features/plugins/admin/types';
+import { ShowModalReactEvent } from 'app/types/events';
 
 import { QueryResponse, SearchResultMeta } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
+import { ExplainScorePopup } from './ExplainScorePopup';
 import { TableColumn } from './SearchResultsTable';
 
-const TYPE_COLUMN_WIDTH = 250;
+const TYPE_COLUMN_WIDTH = 175;
 const DATASOURCE_COLUMN_WIDTH = 200;
-const SORT_FIELD_WIDTH = 175;
 
 export const generateColumns = (
   response: QueryResponse,
@@ -25,15 +32,25 @@ export const generateColumns = (
   clearSelection: () => void,
   styles: { [key: string]: string },
   onTagSelected: (tag: string) => void,
-  onDatasourceChange?: (datasource?: string) => void
+  onDatasourceChange?: (datasource?: string) => void,
+  showingEverything?: boolean
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
   const access = response.view.fields;
   const uidField = access.uid;
   const kindField = access.kind;
+  let sortFieldWith = 0;
   const sortField = (access as any)[response.view.dataFrame.meta?.custom?.sortBy] as Field;
   if (sortField) {
-    availableWidth -= SORT_FIELD_WIDTH; // pre-allocate the space for the last column
+    sortFieldWith = 175;
+    if (sortField.type === FieldType.time) {
+      sortFieldWith += 25;
+    }
+    availableWidth -= sortFieldWith; // pre-allocate the space for the last column
+  }
+
+  if (access.explain && access.score) {
+    availableWidth -= 100; // pre-allocate the space for the last column
   }
 
   let width = 50;
@@ -103,11 +120,12 @@ export const generateColumns = (
       let classNames = cx(styles.nameCellStyle);
       let name = access.name.values.get(p.row.index);
       if (!name?.length) {
-        name = 'Missing title'; // normal for panels
+        const loading = p.row.index >= response.view.dataFrame.length;
+        name = loading ? 'Loading...' : 'Missing title'; // normal for panels
         classNames += ' ' + styles.missingTitleText;
       }
       return (
-        <a {...p.cellProps} href={p.userProps.href} className={classNames} title={name}>
+        <a {...p.cellProps} href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
           {name}
         </a>
       );
@@ -125,9 +143,26 @@ export const generateColumns = (
   columns.push(makeTypeColumn(access.kind, access.panel_type, width, styles));
   availableWidth -= width;
 
+  // Show datasources if we have any
+  if (access.ds_uid && onDatasourceChange) {
+    width = Math.min(availableWidth / 2.5, DATASOURCE_COLUMN_WIDTH);
+    columns.push(
+      makeDataSourceColumn(
+        access.ds_uid,
+        width,
+        styles.typeIcon,
+        styles.datasourceItem,
+        styles.invalidDatasourceItem,
+        onDatasourceChange
+      )
+    );
+    availableWidth -= width;
+  }
+
+  const showTags = !showingEverything || hasValue(response.view.fields.tags);
   const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
   if (meta?.locationInfo && availableWidth > 0) {
-    width = Math.max(availableWidth / 1.75, 300);
+    width = showTags ? Math.max(availableWidth / 1.75, 300) : availableWidth;
     availableWidth -= width;
     columns.push({
       Cell: (p) => {
@@ -154,45 +189,61 @@ export const generateColumns = (
     });
   }
 
-  // Show datasources if we have any
-  if (access.ds_uid && onDatasourceChange) {
-    width = DATASOURCE_COLUMN_WIDTH;
-    columns.push(
-      makeDataSourceColumn(
-        access.ds_uid,
-        width,
-        styles.typeIcon,
-        styles.datasourceItem,
-        styles.invalidDatasourceItem,
-        onDatasourceChange
-      )
-    );
-    availableWidth -= width;
-  }
-
-  if (availableWidth > 0) {
+  if (availableWidth > 0 && showTags) {
     columns.push(makeTagsColumn(access.tags, availableWidth, styles.tagList, onTagSelected));
   }
 
-  if (sortField) {
+  if (sortField && sortFieldWith) {
+    const disp = sortField.display ?? getDisplayProcessor({ field: sortField, theme: config.theme2 });
+
     columns.push({
       Header: () => <div className={styles.sortedHeader}>{getFieldDisplayName(sortField)}</div>,
       Cell: (p) => {
-        let value = sortField.values.get(p.row.index);
-        try {
-          if (isNumber(value)) {
-            value = Number(value).toLocaleString();
-          }
-        } catch {}
         return (
           <div {...p.cellProps} className={styles.sortedItems}>
-            {`${value}`}
+            {getDisplayValue({
+              sortField,
+              getDisplay: disp,
+              index: p.row.index,
+              kind: access.kind,
+            })}
           </div>
         );
       },
       id: `column-sort-field`,
       field: sortField,
-      width: SORT_FIELD_WIDTH,
+      width: sortFieldWith,
+    });
+  }
+
+  if (access.explain && access.score) {
+    const vals = access.score.values;
+    const showExplainPopup = (row: number) => {
+      appEvents.publish(
+        new ShowModalReactEvent({
+          component: ExplainScorePopup,
+          props: {
+            name: access.name.values.get(row),
+            explain: access.explain.values.get(row),
+            frame: response.view.dataFrame,
+            row: row,
+          },
+        })
+      );
+    };
+
+    columns.push({
+      Header: () => <div className={styles.sortedHeader}>Score</div>,
+      Cell: (p) => {
+        return (
+          <div {...p.cellProps} className={styles.explainItem} onClick={() => showExplainPopup(p.row.index)}>
+            {vals.get(p.row.index)}
+          </div>
+        );
+      },
+      id: `column-score-field`,
+      field: access.score,
+      width: 100,
     });
   }
 
@@ -207,6 +258,15 @@ function getIconForKind(v: string): IconName {
     return 'folder';
   }
   return 'question-circle';
+}
+
+function hasValue(f: Field): boolean {
+  for (let i = 0; i < f.values.length; i++) {
+    if (f.values.get(i) != null) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function makeDataSourceColumn(
@@ -242,7 +302,7 @@ function makeDataSourceColumn(
                     onDatasourceChange(settings.uid);
                   }}
                 >
-                  <img src={icon} width={14} height={14} title={settings.type} className={iconClass} />
+                  <img src={icon} alt="" width={14} height={14} title={settings.type} className={iconClass} />
                   {settings.name}
                 </span>
               );
@@ -273,7 +333,7 @@ function makeTypeColumn(
     Cell: (p) => {
       const i = p.row.index;
       const kind = kindField?.values.get(i) ?? 'dashboard';
-      let icon = 'public/img/icons/unicons/apps.svg';
+      let icon: IconName = 'apps';
       let txt = 'Dashboard';
       if (kind) {
         txt = kind;
@@ -283,12 +343,12 @@ function makeTypeColumn(
             break;
 
           case 'folder':
-            icon = 'public/img/icons/unicons/folder.svg';
+            icon = 'folder';
             txt = 'Folder';
             break;
 
           case 'panel':
-            icon = `public/img/icons/unicons/${PluginIconName.panel}.svg`;
+            icon = `${PluginIconName.panel}`;
             const type = typeField.values.get(i);
             if (type) {
               txt = type;
@@ -299,13 +359,13 @@ function makeTypeColumn(
                 switch (type) {
                   case 'row':
                     txt = 'Row';
-                    icon = `public/img/icons/unicons/bars.svg`;
+                    icon = `bars`;
                     break;
                   case 'singlestat': // auto-migration
                     txt = 'Singlestat';
                     break;
                   default:
-                    icon = `public/img/icons/unicons/question.svg`; // plugin not found
+                    icon = `question-circle`; // plugin not found
                 }
               }
             }
@@ -314,7 +374,7 @@ function makeTypeColumn(
       }
       return (
         <div {...p.cellProps} className={styles.typeText}>
-          <SVG src={icon} width={14} height={14} title={txt} className={styles.typeIcon} />
+          <Icon name={icon} size="sm" title={txt} className={styles.typeIcon} />
           {txt}
         </div>
       );
@@ -343,4 +403,22 @@ function makeTagsColumn(
     Header: 'Tags',
     width,
   };
+}
+
+function getDisplayValue({
+  kind,
+  sortField,
+  index,
+  getDisplay,
+}: {
+  kind: Field;
+  sortField: Field;
+  index: number;
+  getDisplay: DisplayProcessor;
+}) {
+  const value = sortField.values.get(index);
+  if (['folder', 'panel'].includes(kind.values.get(index)) && value === 0) {
+    return '-';
+  }
+  return formattedValueToString(getDisplay(value));
 }

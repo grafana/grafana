@@ -2,6 +2,7 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
 
 import { DataSourceApi, HistoryItem } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
 import { ExploreItemState, ThunkResult } from 'app/types';
@@ -41,9 +42,14 @@ export function changeDatasource(
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     const orgId = getState().user.orgId;
-    const { history, instance } = await loadAndInitDatasource(orgId, datasourceUid);
+    const { history, instance } = await loadAndInitDatasource(orgId, { uid: datasourceUid });
     const currentDataSourceInstance = getState().explore[exploreId]!.datasourceInstance;
 
+    reportInteraction('explore_change_ds', {
+      from: (currentDataSourceInstance?.meta?.mixed ? 'mixed' : currentDataSourceInstance?.type) || 'unknown',
+      to: instance.meta.mixed ? 'mixed' : instance.type,
+      exploreId,
+    });
     dispatch(
       updateDatasourceInstanceAction({
         exploreId,

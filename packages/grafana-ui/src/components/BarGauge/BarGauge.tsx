@@ -430,7 +430,9 @@ export function getCellColor(
 }
 
 export function getValuePercent(value: number, minValue: number, maxValue: number): number {
-  return Math.min((value - minValue) / (maxValue - minValue), 1);
+  // Need special logic for when minValue === maxValue === value to prevent returning NaN
+  const valueRatio = Math.min((value - minValue) / (maxValue - minValue), 1);
+  return isNaN(valueRatio) ? 0 : valueRatio;
 }
 
 /**

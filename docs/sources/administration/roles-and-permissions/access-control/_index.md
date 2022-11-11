@@ -4,6 +4,7 @@ aliases:
   - /docs/grafana/latest/enterprise/access-control/
   - /docs/grafana/latest/enterprise/access-control/about-rbac/
   - /docs/grafana/latest/enterprise/access-control/roles/
+  - /docs/grafana/latest/administration/roles-and-permissions/access-control/
 description: Role-based access control (RBAC) provides a standardized way of granting,
   changing, and revoking access so that users can view and modify Grafana resources,
   such as users and reports.
@@ -13,6 +14,8 @@ weight: 120
 ---
 
 # Role-based access control (RBAC)
+
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 RBAC provides a standardized way of granting, changing, and revoking access when it comes to viewing and modifying Grafana resources, such as dashboards, reports, and administrative settings.
 
@@ -75,19 +78,19 @@ Grafana Enterprise includes the ability for you to assign discrete fixed roles t
 Assign fixed roles when the basic roles do not meet your permission requirements. For example, you might want a user with the basic viewer role to also edit dashboards. Or, you might want anyone with the editor role to also add and manage users. Fixed roles provide users more granular access to create, view, and update the following Grafana resources:
 
 - [Alerting]({{< relref "../../../alerting/" >}})
-- [Annotations]({{< relref "../../../dashboards/annotations/" >}})
+- [Annotations]({{< relref "../../../dashboards/build-dashboards/annotate-visualizations" >}})
 - [API keys]({{< relref "../../api-keys/" >}})
 - [Dashboards and folders]({{< relref "../../../dashboards/" >}})
 - [Data sources]({{< relref "../../../datasources/" >}})
 - [Explore]({{< relref "../../../explore/" >}})
-- [Folders]({{< relref "../../../dashboards/dashboard-folders/" >}})
+- [Folders]({{< relref "../../../dashboards/manage-dashboards/#create-a-dashboard-folder" >}})
 - [LDAP]({{< relref "../../../setup-grafana/configure-security/configure-authentication/ldap/" >}})
 - [Licenses]({{< relref "../../stats-and-license/" >}})
 - [Organizations]({{< relref "../../organization-management/" >}})
 - [Provisioning]({{< relref "../../provisioning/" >}})
-- [Reports]({{< relref "../../../enterprise/reporting/" >}})
+- [Reports]({{< relref "../../../dashboards/create-reports/" >}})
 - [Roles]({{< relref "../../" >}})
-- [Settings]({{< relref "../../../enterprise/settings-updates/" >}})
+- [Settings]({{< relref "../../../setup-grafana/configure-grafana/settings-updates-at-runtime" >}})
 - [Service accounts]({{< relref "../../service-accounts/" >}})
 - [Teams]({{< relref "../../team-management/" >}})
 - [Users]({{< relref "../../user-management/" >}})

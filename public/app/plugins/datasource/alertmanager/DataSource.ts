@@ -1,7 +1,11 @@
 import { lastValueFrom, Observable, of } from 'rxjs';
 
 import { DataQuery, DataQueryResponse, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, getBackendSrv, isFetchError } from '@grafana/runtime';
+
+import { discoverAlertmanagerFeaturesByUrl } from '../../../features/alerting/unified/api/buildInfo';
+import { messageFromError } from '../../../features/alerting/unified/utils/redux';
+import { AlertmanagerApiFeatures } from '../../../types/unified-alerting-dto';
 
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';
 
@@ -43,6 +47,11 @@ export class AlertManagerDatasource extends DataSourceApi<AlertManagerQuery, Ale
 
   async testDatasource() {
     let alertmanagerResponse;
+    const amUrl = this.instanceSettings.url;
+
+    const amFeatures: AlertmanagerApiFeatures = amUrl
+      ? await discoverAlertmanagerFeaturesByUrl(amUrl)
+      : { lazyConfigInit: false };
 
     if (this.instanceSettings.jsonData.implementation === AlertManagerImplementation.prometheus) {
       try {
@@ -51,7 +60,7 @@ export class AlertManagerDatasource extends DataSourceApi<AlertManagerQuery, Ale
           return {
             status: 'error',
             message:
-              'It looks like you have chosen Prometheus implementation, but detected a Cortex endpoint. Please update implementation selection and try again.',
+              'It looks like you have chosen Prometheus implementation, but detected a Mimir or Cortex endpoint. Please update implementation selection and try again.',
           };
         }
       } catch (e) {}
@@ -65,13 +74,25 @@ export class AlertManagerDatasource extends DataSourceApi<AlertManagerQuery, Ale
           return {
             status: 'error',
             message:
-              'It looks like you have chosen Cortex implementation, but detected a Prometheus endpoint. Please update implementation selection and try again.',
+              'It looks like you have chosen a Mimir or Cortex implementation, but detected a Prometheus endpoint. Please update implementation selection and try again.',
           };
         }
       } catch (e) {}
       try {
         alertmanagerResponse = await this._request('/alertmanager/api/v2/status');
-      } catch (e) {}
+      } catch (e) {
+        if (
+          isFetchError(e) &&
+          amFeatures.lazyConfigInit &&
+          messageFromError(e)?.includes('the Alertmanager is not configured')
+        ) {
+          return {
+            status: 'success',
+            message: 'Health check passed.',
+            details: { message: 'Mimir Alertmanager without the fallback configuration has been discovered.' },
+          };
+        }
+      }
     }
 
     return alertmanagerResponse?.status === 200

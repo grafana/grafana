@@ -65,7 +65,6 @@ export interface ServiceAccountsState {
   serviceAccounts: ServiceAccountDTO[];
   isLoading: boolean;
   roleOptions: Role[];
-  builtInRoles: Record<string, Role[]>;
   apiKeysMigrated: boolean;
   showApiKeysMigrationInfo: boolean;
 

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import RCCascader from 'rc-cascader';
-import React from 'react';
+import React, { PureComponent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
@@ -71,7 +71,7 @@ const disableDivFocus = css(`
 
 const DEFAULT_SEPARATOR = '/';
 
-export class Cascader extends React.PureComponent<CascaderProps, CascaderState> {
+export class Cascader extends PureComponent<CascaderProps, CascaderState> {
   constructor(props: CascaderProps) {
     super(props);
     const searchableOptions = this.getSearchableOptions(props.options);

@@ -8,15 +8,16 @@ import {
   ThresholdsMode,
   GAUGE_DEFAULT_MAXIMUM,
   GAUGE_DEFAULT_MINIMUM,
+  GrafanaTheme,
+  GrafanaTheme2,
 } from '@grafana/data';
 import { VizTextDisplayOptions } from '@grafana/schema';
 
-import { Themeable } from '../../types';
 import { calculateFontSize } from '../../utils/measureText';
 
 import { calculateGaugeAutoProps, DEFAULT_THRESHOLDS, getFormattedThresholds } from './utils';
 
-export interface Props extends Themeable {
+export interface Props {
   height: number;
   field: FieldConfig;
   showThresholdMarkers: boolean;
@@ -26,10 +27,11 @@ export interface Props extends Themeable {
   text?: VizTextDisplayOptions;
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
+  theme: GrafanaTheme | GrafanaTheme2;
 }
 
 export class Gauge extends PureComponent<Props> {
-  canvasElement: any;
+  canvasElement: HTMLDivElement | null = null;
 
   static defaultProps: Partial<Props> = {
     showThresholdMarkers: true,
@@ -54,7 +56,7 @@ export class Gauge extends PureComponent<Props> {
 
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
     const dimension = Math.min(width, autoProps.gaugeHeight);
-    const backgroundColor = theme.colors.bg2;
+    const backgroundColor = 'v1' in theme ? theme.colors.background.secondary : theme.colors.bg2;
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 5.5, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
@@ -90,7 +92,7 @@ export class Gauge extends PureComponent<Props> {
       max = +max.toFixed(decimals);
     }
 
-    const options: any = {
+    const options = {
       series: {
         gauges: {
           gauge: {
@@ -120,7 +122,7 @@ export class Gauge extends PureComponent<Props> {
             formatter: () => {
               return text;
             },
-            font: { size: fontSize, family: theme.typography.fontFamily.sansSerif },
+            font: { size: fontSize, family: theme.typography.fontFamily },
           },
           show: true,
         },
@@ -133,7 +135,9 @@ export class Gauge extends PureComponent<Props> {
     };
 
     try {
-      $.plot(this.canvasElement, [plotSeries], options);
+      if (this.canvasElement) {
+        $.plot(this.canvasElement, [plotSeries], options);
+      }
     } catch (err) {
       console.error('Gauge rendering error', err, options, value);
     }

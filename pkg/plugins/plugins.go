@@ -7,10 +7,10 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 type Plugin struct {
@@ -81,6 +81,14 @@ func (p PluginDTO) IsCorePlugin() bool {
 	return p.Class == Core
 }
 
+func (p PluginDTO) IsExternalPlugin() bool {
+	return p.Class == External
+}
+
+func (p PluginDTO) IsSecretsManager() bool {
+	return p.JSONData.Type == SecretsManager
+}
+
 func (p PluginDTO) IncludedInSignature(file string) bool {
 	// permit Core plugin files
 	if p.IsCorePlugin() {
@@ -113,6 +121,9 @@ type JSONData struct {
 	Preload      bool         `json:"preload"`
 	Backend      bool         `json:"backend"`
 	Routes       []*Route     `json:"routes"`
+
+	// AccessControl settings
+	Roles []RoleRegistration `json:"roles,omitempty"`
 
 	// Panel settings
 	SkipDataQuery bool `json:"skipDataQuery"`
@@ -154,7 +165,7 @@ func (d JSONData) DashboardIncludes() []*Includes {
 type Route struct {
 	Path         string          `json:"path"`
 	Method       string          `json:"method"`
-	ReqRole      models.RoleType `json:"reqRole"`
+	ReqRole      org.RoleType    `json:"reqRole"`
 	URL          string          `json:"url"`
 	URLParams    []URLParam      `json:"urlParams"`
 	Headers      []Header        `json:"headers"`
@@ -202,7 +213,6 @@ func (p *Plugin) Start(ctx context.Context) error {
 	if p.client == nil {
 		return fmt.Errorf("could not start plugin %s as no plugin client exists", p.ID)
 	}
-
 	return p.client.Start(ctx)
 }
 

@@ -7,12 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	loginservice "github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -42,7 +44,7 @@ func fakeSetIndexViewData(t *testing.T) {
 		data := &dtos.IndexViewData{
 			User:     &dtos.CurrentUser{},
 			Settings: map[string]interface{}{},
-			NavTree:  []*dtos.NavLink{},
+			NavTree:  &navtree.NavTreeRoot{},
 		}
 		return data, nil
 	}
@@ -59,7 +61,7 @@ func fakeViewIndex(t *testing.T) {
 }
 
 func getBody(resp *httptest.ResponseRecorder) (string, error) {
-	responseData, err := ioutil.ReadAll(resp.Body)
+	responseData, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -152,8 +154,8 @@ func TestLoginViewRedirect(t *testing.T) {
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		c.IsSignedIn = true
-		c.SignedInUser = &models.SignedInUser{
-			UserId: 10,
+		c.SignedInUser = &user.SignedInUser{
+			UserID: 10,
 		}
 		hs.LoginView(c)
 		return response.Empty(http.StatusOK)
@@ -331,8 +333,8 @@ func TestLoginPostRedirect(t *testing.T) {
 		return hs.LoginPost(c)
 	})
 
-	user := &models.User{
-		Id:    42,
+	user := &user.User{
+		ID:    42,
 		Email: "",
 	}
 
@@ -569,8 +571,8 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		c.IsSignedIn = true
-		c.SignedInUser = &models.SignedInUser{
-			UserId: 10,
+		c.SignedInUser = &user.SignedInUser{
+			UserID: 10,
 		}
 		hs.LoginView(c)
 		return response.Empty(http.StatusOK)
@@ -614,14 +616,14 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 	testHook := loginHookTest{}
 	hookService.AddLoginHook(testHook.LoginHook)
 
-	testUser := &models.User{
-		Id:    42,
+	testUser := &user.User{
+		ID:    42,
 		Email: "",
 	}
 
 	testCases := []struct {
 		desc       string
-		authUser   *models.User
+		authUser   *user.User
 		authModule string
 		authErr    error
 		info       models.LoginInfo
@@ -657,9 +659,9 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 		{
 			desc:       "valid LDAP user",
 			authUser:   testUser,
-			authModule: "ldap",
+			authModule: loginservice.LDAPAuthModule,
 			info: models.LoginInfo{
-				AuthModule: "ldap",
+				AuthModule: loginservice.LDAPAuthModule,
 				User:       testUser,
 				HTTPStatus: 200,
 			},
@@ -680,7 +682,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 
 			if c.info.User != nil {
 				require.NotEmpty(t, info.User)
-				assert.Equal(t, c.info.User.Id, info.User.Id)
+				assert.Equal(t, c.info.User.ID, info.User.ID)
 			}
 		})
 	}
@@ -716,7 +718,7 @@ func (m *mockSocialService) GetConnector(string) (social.SocialConnector, error)
 }
 
 type fakeAuthenticator struct {
-	ExpectedUser       *models.User
+	ExpectedUser       *user.User
 	ExpectedAuthModule string
 	ExpectedError      error
 }

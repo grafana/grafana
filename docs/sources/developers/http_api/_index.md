@@ -22,9 +22,11 @@ dashboards, creating users, and updating data sources.
 ## HTTP APIs
 
 - [Admin API]({{< relref "admin/" >}})
+- [Alerting API (unstable)](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json)
 - [Alerting Provisioning API]({{< relref "alerting_provisioning/" >}})
 - [Annotations API]({{< relref "annotations/" >}})
 - [Authentication API]({{< relref "auth/" >}})
+- [Correlations API]({{< relref "correlations/" >}})
 - [Dashboard API]({{< relref "dashboard/" >}})
 - [Dashboard Permissions API]({{< relref "dashboard_permissions/" >}})
 - [Dashboard Versions API]({{< relref "dashboard_versions/" >}})

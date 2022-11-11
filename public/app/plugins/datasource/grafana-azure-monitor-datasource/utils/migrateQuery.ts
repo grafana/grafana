@@ -1,9 +1,9 @@
-import UrlBuilder from '../azure_monitor/url_builder';
 import { setKustoQuery } from '../components/LogsQueryEditor/setQueryValue';
 import {
   appendDimensionFilter,
   setTimeGrain as setMetricsTimeGrain,
 } from '../components/MetricsQueryEditor/setQueryValue';
+import { parseResourceDetails } from '../components/ResourcePicker/utils';
 import TimegrainConverter from '../time_grain_converter';
 import { AzureMetricDimension, AzureMonitorQuery, AzureQueryType } from '../types';
 
@@ -12,17 +12,21 @@ const OLD_DEFAULT_DROPDOWN_VALUE = 'select';
 export default function migrateQuery(query: AzureMonitorQuery): AzureMonitorQuery {
   let workingQuery = query;
 
-  // The old angular controller also had a `migrateApplicationInsightsKeys` migraiton that
-  // migrated old properties to other properties that still do not appear to be used anymore, so
-  // we decided to not include that migration anymore
-  // See https://github.com/grafana/grafana/blob/a6a09add/public/app/plugins/datasource/grafana-azure-monitor-datasource/query_ctrl.ts#L269-L288
+  if (!workingQuery.queryType) {
+    workingQuery = {
+      ...workingQuery,
+      queryType: AzureQueryType.AzureMonitor,
+    };
+  }
 
-  workingQuery = migrateTimeGrains(workingQuery);
   workingQuery = migrateLogAnalyticsToFromTimes(workingQuery);
-  workingQuery = migrateToDefaultNamespace(workingQuery);
-  workingQuery = migrateDimensionToDimensionFilter(workingQuery);
-  workingQuery = migrateResourceUri(workingQuery);
-  workingQuery = migrateDimensionFilterToArray(workingQuery);
+  if (workingQuery.queryType === AzureQueryType.AzureMonitor && workingQuery.azureMonitor) {
+    workingQuery = migrateTimeGrains(workingQuery);
+    workingQuery = migrateToDefaultNamespace(workingQuery);
+    workingQuery = migrateDimensionToDimensionFilter(workingQuery);
+    workingQuery = migrateDimensionFilterToArray(workingQuery);
+    workingQuery = migrateDimensionToResourceObj(workingQuery);
+  }
 
   return workingQuery;
 }
@@ -73,6 +77,7 @@ function migrateToDefaultNamespace(query: AzureMonitorQuery): AzureMonitorQuery 
       azureMonitor: {
         ...query.azureMonitor,
         metricNamespace: query.azureMonitor.metricDefinition,
+        metricDefinition: undefined,
       },
     };
   }
@@ -91,33 +96,6 @@ function migrateDimensionToDimensionFilter(query: AzureMonitorQuery): AzureMonit
   }
 
   return workingQuery;
-}
-
-// Azure Monitor metric queries prior to Grafana version 9 did not include a `resourceUri`.
-// The resourceUri was previously constructed with the subscription id, resource group,
-// metric definition (a.k.a. resource type), and the resource name.
-function migrateResourceUri(query: AzureMonitorQuery): AzureMonitorQuery {
-  const azureMonitorQuery = query.azureMonitor;
-
-  if (!azureMonitorQuery || azureMonitorQuery.resourceUri) {
-    return query;
-  }
-
-  const { subscription } = query;
-  const { resourceGroup, metricDefinition, resourceName } = azureMonitorQuery;
-  if (!(subscription && resourceGroup && metricDefinition && resourceName)) {
-    return query;
-  }
-
-  const resourceUri = UrlBuilder.buildResourceUri(subscription, resourceGroup, metricDefinition, resourceName);
-
-  return {
-    ...query,
-    azureMonitor: {
-      ...azureMonitorQuery,
-      resourceUri,
-    },
-  };
 }
 
 function migrateDimensionFilterToArray(query: AzureMonitorQuery): AzureMonitorQuery {
@@ -157,23 +135,22 @@ function migrateDimensionFilterToArray(query: AzureMonitorQuery): AzureMonitorQu
   return query;
 }
 
-// datasource.ts also contains some migrations, which have been moved to here. Unsure whether
-// they should also do all the other migrations...
-export function datasourceMigrations(query: AzureMonitorQuery): AzureMonitorQuery {
-  let workingQuery = query;
-
-  if (!workingQuery.queryType) {
-    workingQuery = {
-      ...workingQuery,
-      queryType: AzureQueryType.AzureMonitor,
+function migrateDimensionToResourceObj(query: AzureMonitorQuery): AzureMonitorQuery {
+  if (query.azureMonitor?.resourceUri && !query.azureMonitor.resourceUri.startsWith('$')) {
+    const details = parseResourceDetails(query.azureMonitor.resourceUri);
+    const isWellFormedUri = details?.subscription && details?.resourceGroup && details?.resourceName;
+    return {
+      ...query,
+      subscription: details?.subscription,
+      azureMonitor: {
+        ...query.azureMonitor,
+        resourceGroup: details?.resourceGroup,
+        metricNamespace: details?.metricNamespace,
+        resourceName: details?.resourceName,
+        resourceUri: isWellFormedUri ? undefined : query.azureMonitor.resourceUri,
+      },
     };
   }
 
-  if (workingQuery.queryType === AzureQueryType.AzureMonitor && workingQuery.azureMonitor) {
-    workingQuery = migrateDimensionToDimensionFilter(workingQuery);
-    workingQuery = migrateResourceUri(workingQuery);
-    workingQuery = migrateDimensionFilterToArray(workingQuery);
-  }
-
-  return workingQuery;
+  return query;
 }

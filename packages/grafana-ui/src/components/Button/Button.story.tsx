@@ -1,4 +1,4 @@
-import { Story, Meta } from '@storybook/react';
+import { ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { ComponentSize } from '../../types/size';
@@ -9,6 +9,8 @@ import { allButtonVariants, allButtonFills, Button, ButtonProps } from './Button
 import mdx from './Button.mdx';
 import { ButtonGroup } from './ButtonGroup';
 
+const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
+
 export default {
   title: 'Buttons/Button',
   component: Button,
@@ -17,10 +19,29 @@ export default {
       page: mdx,
     },
   },
-} as Meta;
+  argTypes: {
+    size: {
+      options: sizes,
+    },
+    tooltip: {
+      table: {
+        disable: true,
+      },
+    },
+    tooltipPlacement: {
+      table: {
+        disable: true,
+      },
+    },
+    className: {
+      table: {
+        disable: true,
+      },
+    },
+  },
+};
 
-export const Variants: Story<ButtonProps> = () => {
-  const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
+export const Examples: ComponentStory<typeof Button> = () => {
   return (
     <VerticalGroup>
       {allButtonFills.map((buttonFill) => (
@@ -86,4 +107,14 @@ export const Variants: Story<ButtonProps> = () => {
       </Card>
     </VerticalGroup>
   );
+};
+
+export const Basic: ComponentStory<typeof Button> = (args: ButtonProps) => <Button {...args} />;
+
+Basic.args = {
+  children: 'Example button',
+  size: 'md',
+  variant: 'primary',
+  fill: 'solid',
+  type: 'button',
 };

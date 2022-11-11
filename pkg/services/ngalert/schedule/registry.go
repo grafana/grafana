@@ -2,12 +2,16 @@ package schedule
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+var errRuleDeleted = errors.New("rule deleted")
 
 type alertRuleInfoRegistry struct {
 	mu            sync.Mutex
@@ -72,16 +76,18 @@ func (r *alertRuleInfoRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	return definitionsIDs
 }
 
+type ruleVersion int64
+
 type alertRuleInfo struct {
 	evalCh   chan *evaluation
-	updateCh chan struct{}
+	updateCh chan ruleVersion
 	ctx      context.Context
-	stop     context.CancelFunc
+	stop     func(reason error)
 }
 
 func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
-	ctx, cancel := context.WithCancel(parent)
-	return &alertRuleInfo{evalCh: make(chan *evaluation), updateCh: make(chan struct{}), ctx: ctx, stop: cancel}
+	ctx, stop := util.WithCancelCause(parent)
+	return &alertRuleInfo{evalCh: make(chan *evaluation), updateCh: make(chan ruleVersion), ctx: ctx, stop: stop}
 }
 
 // eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped.
@@ -89,8 +95,9 @@ func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
 // Returns a tuple where first element is
 //   - true when message was sent
 //   - false when the send operation is stopped
+//
 // the second element contains a dropped message that was sent by a concurrent sender.
-func (a *alertRuleInfo) eval(t time.Time, version int64) (bool, *evaluation) {
+func (a *alertRuleInfo) eval(eval *evaluation) (bool, *evaluation) {
 	// read the channel in unblocking manner to make sure that there is no concurrent send operation.
 	var droppedMsg *evaluation
 	select {
@@ -99,20 +106,30 @@ func (a *alertRuleInfo) eval(t time.Time, version int64) (bool, *evaluation) {
 	}
 
 	select {
-	case a.evalCh <- &evaluation{
-		scheduledAt: t,
-		version:     version,
-	}:
+	case a.evalCh <- eval:
 		return true, droppedMsg
 	case <-a.ctx.Done():
 		return false, droppedMsg
 	}
 }
 
-// update signals the rule evaluation routine to update the internal state. Does nothing if the loop is stopped
-func (a *alertRuleInfo) update() bool {
+// update sends an instruction to the rule evaluation routine to update the scheduled rule to the specified version. The specified version must be later than the current version, otherwise no update will happen.
+func (a *alertRuleInfo) update(lastVersion ruleVersion) bool {
+	// check if the channel is not empty.
+	msg := lastVersion
 	select {
-	case a.updateCh <- struct{}{}:
+	case v := <-a.updateCh:
+		// if it has a version pick the greatest one.
+		if v > msg {
+			msg = v
+		}
+	case <-a.ctx.Done():
+		return false
+	default:
+	}
+
+	select {
+	case a.updateCh <- msg:
 		return true
 	case <-a.ctx.Done():
 		return false
@@ -121,52 +138,56 @@ func (a *alertRuleInfo) update() bool {
 
 type evaluation struct {
 	scheduledAt time.Time
-	version     int64
+	rule        *models.AlertRule
+	folderTitle string
 }
 
-type schedulableAlertRulesRegistry struct {
-	rules map[models.AlertRuleKey]*models.SchedulableAlertRule
-	mu    sync.Mutex
+type alertRulesRegistry struct {
+	rules        map[models.AlertRuleKey]*models.AlertRule
+	folderTitles map[string]string
+	mu           sync.Mutex
 }
 
 // all returns all rules in the registry.
-func (r *schedulableAlertRulesRegistry) all() []*models.SchedulableAlertRule {
+func (r *alertRulesRegistry) all() ([]*models.AlertRule, map[string]string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	result := make([]*models.SchedulableAlertRule, 0, len(r.rules))
+	result := make([]*models.AlertRule, 0, len(r.rules))
 	for _, rule := range r.rules {
 		result = append(result, rule)
 	}
-	return result
+	return result, r.folderTitles
 }
 
-func (r *schedulableAlertRulesRegistry) get(k models.AlertRuleKey) *models.SchedulableAlertRule {
+func (r *alertRulesRegistry) get(k models.AlertRuleKey) *models.AlertRule {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	return r.rules[k]
 }
 
 // set replaces all rules in the registry.
-func (r *schedulableAlertRulesRegistry) set(rules []*models.SchedulableAlertRule) {
+func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[string]string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.rules = make(map[models.AlertRuleKey]*models.SchedulableAlertRule)
+	r.rules = make(map[models.AlertRuleKey]*models.AlertRule)
 	for _, rule := range rules {
 		r.rules[rule.GetKey()] = rule
 	}
+	// return the map as is without copying because it is not mutated
+	r.folderTitles = folders
 }
 
 // update inserts or replaces a rule in the registry.
-func (r *schedulableAlertRulesRegistry) update(rule *models.SchedulableAlertRule) {
+func (r *alertRulesRegistry) update(rule *models.AlertRule) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.rules[rule.GetKey()] = rule
 }
 
-// del removes pair that has specific key from schedulableAlertRulesRegistry.
+// del removes pair that has specific key from alertRulesRegistry.
 // Returns 2-tuple where the first element is value of the removed pair
 // and the second element indicates whether element with the specified key existed.
-func (r *schedulableAlertRulesRegistry) del(k models.AlertRuleKey) (*models.SchedulableAlertRule, bool) {
+func (r *alertRulesRegistry) del(k models.AlertRuleKey) (*models.AlertRule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	rule, ok := r.rules[k]
@@ -174,4 +195,23 @@ func (r *schedulableAlertRulesRegistry) del(k models.AlertRuleKey) (*models.Sche
 		delete(r.rules, k)
 	}
 	return rule, ok
+}
+
+func (r *alertRulesRegistry) isEmpty() bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return len(r.rules) == 0
+}
+
+func (r *alertRulesRegistry) needsUpdate(keys []models.AlertRuleKeyWithVersion) bool {
+	if len(r.rules) != len(keys) {
+		return true
+	}
+	for _, key := range keys {
+		rule, ok := r.rules[key.AlertRuleKey]
+		if !ok || rule.Version != key.Version {
+			return true
+		}
+	}
+	return false
 }

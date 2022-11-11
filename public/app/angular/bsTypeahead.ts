@@ -11,7 +11,7 @@ coreModule.directive('bsTypeahead', [
       restrict: 'A',
       require: '?ngModel',
       link: function postLink(scope: any, element: any, attrs: any, controller: any) {
-        var getter = $parse(attrs.bsTypeahead),
+        let getter = $parse(attrs.bsTypeahead),
           value = getter(scope);
         scope.$watch(attrs.bsTypeahead, function (newValue: any, oldValue: any) {
           if (newValue !== oldValue) {
@@ -35,9 +35,9 @@ coreModule.directive('bsTypeahead', [
             return value;
           },
         });
-        var typeahead = element.data('typeahead');
+        const typeahead = element.data('typeahead');
         typeahead.lookup = function () {
-          var items;
+          let items;
           this.query = this.$element.val() || '';
           if (this.query.length < this.options.minLength) {
             return this.shown ? this.hide() : this;

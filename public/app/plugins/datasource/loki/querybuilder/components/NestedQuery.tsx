@@ -15,78 +15,82 @@ export interface Props {
   nestedQuery: LokiVisualQueryBinary;
   datasource: LokiDatasource;
   index: number;
+  showExplain: boolean;
   onChange: (index: number, update: LokiVisualQueryBinary) => void;
   onRemove: (index: number) => void;
   onRunQuery: () => void;
 }
 
-export const NestedQuery = React.memo<Props>(({ nestedQuery, index, datasource, onChange, onRemove, onRunQuery }) => {
-  const styles = useStyles2(getStyles);
+export const NestedQuery = React.memo<Props>(
+  ({ nestedQuery, index, datasource, onChange, onRemove, onRunQuery, showExplain }) => {
+    const styles = useStyles2(getStyles);
 
-  return (
-    <div className={styles.card}>
-      <div className={styles.header}>
-        <div className={styles.name}>Operator</div>
-        <Select
-          width="auto"
-          options={operators}
-          value={toOption(nestedQuery.operator)}
-          onChange={(value) => {
-            onChange(index, {
-              ...nestedQuery,
-              operator: value.value!,
-            });
-          }}
-        />
-        <div className={styles.name}>Vector matches</div>
-        <div className={styles.vectorMatchWrapper}>
-          <Select<LokiVisualQueryBinary['vectorMatchesType']>
+    return (
+      <div className={styles.card}>
+        <div className={styles.header}>
+          <div className={styles.name}>Operator</div>
+          <Select
+            aria-label="Select operator"
             width="auto"
-            value={nestedQuery.vectorMatchesType || 'on'}
-            allowCustomValue
-            options={[
-              { value: 'on', label: 'on' },
-              { value: 'ignoring', label: 'ignoring' },
-            ]}
-            onChange={(val) => {
+            options={operators}
+            value={toOption(nestedQuery.operator)}
+            onChange={(value) => {
               onChange(index, {
                 ...nestedQuery,
-                vectorMatchesType: val.value,
+                operator: value.value!,
               });
             }}
           />
-          <AutoSizeInput
-            className={styles.vectorMatchInput}
-            minWidth={20}
-            defaultValue={nestedQuery.vectorMatches}
-            onCommitChange={(evt) => {
-              onChange(index, {
-                ...nestedQuery,
-                vectorMatches: evt.currentTarget.value,
-                vectorMatchesType: nestedQuery.vectorMatchesType || 'on',
-              });
-            }}
-          />
+          <div className={styles.name}>Vector matches</div>
+          <div className={styles.vectorMatchWrapper}>
+            <Select<LokiVisualQueryBinary['vectorMatchesType']>
+              width="auto"
+              value={nestedQuery.vectorMatchesType || 'on'}
+              allowCustomValue
+              options={[
+                { value: 'on', label: 'on' },
+                { value: 'ignoring', label: 'ignoring' },
+              ]}
+              onChange={(val) => {
+                onChange(index, {
+                  ...nestedQuery,
+                  vectorMatchesType: val.value,
+                });
+              }}
+            />
+            <AutoSizeInput
+              className={styles.vectorMatchInput}
+              minWidth={20}
+              defaultValue={nestedQuery.vectorMatches}
+              onCommitChange={(evt) => {
+                onChange(index, {
+                  ...nestedQuery,
+                  vectorMatches: evt.currentTarget.value,
+                  vectorMatchesType: nestedQuery.vectorMatchesType || 'on',
+                });
+              }}
+            />
+          </div>
+          <FlexItem grow={1} />
+          <IconButton ariaLabel="Remove nested query" name="times" size="sm" onClick={() => onRemove(index)} />
         </div>
-        <FlexItem grow={1} />
-        <IconButton name="times" size="sm" onClick={() => onRemove(index)} />
+        <div className={styles.body}>
+          <EditorRows>
+            <LokiQueryBuilder
+              showExplain={showExplain}
+              query={nestedQuery.query}
+              datasource={datasource}
+              onRunQuery={onRunQuery}
+              onChange={(update) => {
+                onChange(index, { ...nestedQuery, query: update });
+              }}
+            />
+          </EditorRows>
+        </div>
       </div>
-      <div className={styles.body}>
-        <EditorRows>
-          <LokiQueryBuilder
-            query={nestedQuery.query}
-            datasource={datasource}
-            nested={true}
-            onRunQuery={onRunQuery}
-            onChange={(update) => {
-              onChange(index, { ...nestedQuery, query: update });
-            }}
-          />
-        </EditorRows>
-      </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 const operators = binaryScalarDefs.map((def) => ({ label: def.sign, value: def.sign }));
 

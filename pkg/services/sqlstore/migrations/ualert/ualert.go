@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
@@ -37,6 +38,7 @@ var migTitle = "move dashboard alerts to unified alerting"
 var rmMigTitle = "remove unified alerting data"
 
 const clearMigrationEntryTitle = "clear migration entry %q"
+const codeMigration = "code migration"
 
 type MigrationError struct {
 	AlertId int64
@@ -227,10 +229,10 @@ type migration struct {
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
-	return "code migration"
+	return codeMigration
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	m.sess = sess
 	m.mg = mg
@@ -255,9 +257,11 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 	// cache for folders created for dashboards that have custom permissions
 	folderCache := make(map[string]*dashboard)
+	// cache for the general folders
+	generalFolderCache := make(map[int64]*dashboard)
 
-	// Store of newly created rules to later create routes
-	rulesPerOrg := make(map[int64]map[string]dashAlert)
+	// Per org map of newly created rules to which notification channels it should send to.
+	rulesPerOrg := make(map[int64]map[*alertRule][]uidOrID)
 
 	for _, da := range dashAlerts {
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
@@ -290,7 +294,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 		var folder *dashboard
 		switch {
-		case dash.HasAcl:
+		case dash.HasACL:
 			folderName := getAlertFolderNameFromDashboard(&dash)
 			f, ok := folderCache[folderName]
 			if !ok {
@@ -313,7 +317,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 				err = folderHelper.setACL(f.OrgId, f.Id, permissions)
 				if err != nil {
 					return MigrationError{
-						Err:     fmt.Errorf("failed to set folder %d under organisation %d permissions: %w", folder.Id, folder.OrgId, err),
+						Err:     fmt.Errorf("failed to set folder %d under organisation %d permissions: %w", f.Id, f.OrgId, err),
 						AlertId: da.Id,
 					}
 				}
@@ -331,7 +335,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			}
 			folder = &f
 		default:
-			f, ok := folderCache[GENERAL_FOLDER]
+			f, ok := generalFolderCache[dash.OrgId]
 			if !ok {
 				// get or create general folder
 				f, err = folderHelper.getOrCreateGeneralFolder(dash.OrgId)
@@ -341,7 +345,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 						AlertId: da.Id,
 					}
 				}
-				folderCache[GENERAL_FOLDER] = f
+				generalFolderCache[dash.OrgId] = f
 			}
 			// No need to assign default permissions to general folder
 			// because they are included to the query result if it's a folder with no permissions
@@ -361,40 +365,15 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 
 		if _, ok := rulesPerOrg[rule.OrgID]; !ok {
-			rulesPerOrg[rule.OrgID] = make(map[string]dashAlert)
+			rulesPerOrg[rule.OrgID] = make(map[*alertRule][]uidOrID)
 		}
-		if _, ok := rulesPerOrg[rule.OrgID][rule.UID]; !ok {
-			rulesPerOrg[rule.OrgID][rule.UID] = da
+		if _, ok := rulesPerOrg[rule.OrgID][rule]; !ok {
+			rulesPerOrg[rule.OrgID][rule] = extractChannelIDs(da)
 		} else {
 			return MigrationError{
 				Err:     fmt.Errorf("duplicate generated rule UID"),
 				AlertId: da.Id,
 			}
-		}
-
-		if strings.HasPrefix(mg.Dialect.DriverName(), migrator.Postgres) {
-			err = mg.InTransaction(func(sess *xorm.Session) error {
-				_, err = sess.Insert(rule)
-				return err
-			})
-		} else {
-			_, err = m.sess.Insert(rule)
-		}
-		if err != nil {
-			// TODO better error handling, if constraint
-			rule.Title += fmt.Sprintf(" %v", rule.UID)
-			rule.RuleGroup += fmt.Sprintf(" %v", rule.UID)
-
-			_, err = m.sess.Insert(rule)
-			if err != nil {
-				return err
-			}
-		}
-
-		// create entry in alert_rule_version
-		_, err = m.sess.Insert(rule.makeVersion())
-		if err != nil {
-			return err
 		}
 	}
 
@@ -408,12 +387,51 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	if err != nil {
 		return err
 	}
+
+	err = m.insertRules(mg, rulesPerOrg)
+	if err != nil {
+		return err
+	}
+
 	for orgID, amConfig := range amConfigPerOrg {
 		if err := m.writeAlertmanagerConfig(orgID, amConfig); err != nil {
 			return err
 		}
 	}
 
+	return nil
+}
+
+func (m *migration) insertRules(mg *migrator.Migrator, rulesPerOrg map[int64]map[*alertRule][]uidOrID) error {
+	for _, rules := range rulesPerOrg {
+		for rule := range rules {
+			var err error
+			if strings.HasPrefix(mg.Dialect.DriverName(), migrator.Postgres) {
+				err = mg.InTransaction(func(sess *xorm.Session) error {
+					_, err := sess.Insert(rule)
+					return err
+				})
+			} else {
+				_, err = m.sess.Insert(rule)
+			}
+			if err != nil {
+				// TODO better error handling, if constraint
+				rule.Title += fmt.Sprintf(" %v", rule.UID)
+				rule.RuleGroup += fmt.Sprintf(" %v", rule.UID)
+
+				_, err = m.sess.Insert(rule)
+				if err != nil {
+					return err
+				}
+			}
+
+			// create entry in alert_rule_version
+			_, err = m.sess.Insert(rule.makeVersion())
+			if err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -511,7 +529,7 @@ type rmMigration struct {
 }
 
 func (m *rmMigration) SQL(dialect migrator.Dialect) string {
-	return "code migration"
+	return codeMigration
 }
 
 func (m *rmMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
@@ -710,7 +728,7 @@ func (u *upgradeNgAlerting) updateAlertmanagerFiles(orgId int64, migrator *migra
 }
 
 func (u *upgradeNgAlerting) SQL(migrator.Dialect) string {
-	return "code migration"
+	return codeMigration
 }
 
 // getAlertFolderNameFromDashboard generates a folder name for alerts that belong to a dashboard. Formats the string according to DASHBOARD_FOLDER format.
@@ -776,5 +794,85 @@ func (c createDefaultFoldersForAlertingMigration) Exec(sess *xorm.Session, migra
 }
 
 func (c createDefaultFoldersForAlertingMigration) SQL(migrator.Dialect) string {
-	return "code migration"
+	return codeMigration
+}
+
+// UpdateRuleGroupIndexMigration updates a new field rule_group_index for alert rules that belong to a group with more than 1 alert.
+func UpdateRuleGroupIndexMigration(mg *migrator.Migrator) {
+	if !mg.Cfg.UnifiedAlerting.IsEnabled() {
+		return
+	}
+	mg.AddMigration("update group index for alert rules", &updateRulesOrderInGroup{})
+}
+
+type updateRulesOrderInGroup struct {
+	migrator.MigrationBase
+}
+
+func (c updateRulesOrderInGroup) SQL(migrator.Dialect) string {
+	return codeMigration
+}
+
+func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+	var rows []*alertRule
+	if err := sess.Table(alertRule{}).Asc("id").Find(&rows); err != nil {
+		return fmt.Errorf("failed to read the list of alert rules: %w", err)
+	}
+
+	if len(rows) == 0 {
+		migrator.Logger.Debug("No rules to migrate.")
+		return nil
+	}
+
+	groups := map[ngmodels.AlertRuleGroupKey][]*alertRule{}
+
+	for _, row := range rows {
+		groupKey := ngmodels.AlertRuleGroupKey{
+			OrgID:        row.OrgID,
+			NamespaceUID: row.NamespaceUID,
+			RuleGroup:    row.RuleGroup,
+		}
+		groups[groupKey] = append(groups[groupKey], row)
+	}
+
+	toUpdate := make([]*alertRule, 0, len(rows))
+
+	for _, rules := range groups {
+		for i, rule := range rules {
+			if rule.RuleGroupIndex == i+1 {
+				continue
+			}
+			rule.RuleGroupIndex = i + 1
+			toUpdate = append(toUpdate, rule)
+		}
+	}
+
+	if len(toUpdate) == 0 {
+		migrator.Logger.Debug("No rules to upgrade group index")
+		return nil
+	}
+
+	updated := time.Now()
+	versions := make([]interface{}, 0, len(toUpdate))
+
+	for _, rule := range toUpdate {
+		rule.Updated = updated
+		version := rule.makeVersion()
+		version.Version = rule.Version + 1
+		version.ParentVersion = rule.Version
+		rule.Version++
+		_, err := sess.ID(rule.ID).Cols("version", "updated", "rule_group_idx").Update(rule)
+		if err != nil {
+			migrator.Logger.Error("failed to update alert rule", "uid", rule.UID, "err", err)
+			return fmt.Errorf("unable to update alert rules with group index: %w", err)
+		}
+		migrator.Logger.Debug("updated group index for alert rule", "rule_uid", rule.UID)
+		versions = append(versions, version)
+	}
+	_, err := sess.Insert(versions...)
+	if err != nil {
+		migrator.Logger.Error("failed to insert changes to alert_rule_version", "err", err)
+		return fmt.Errorf("unable to update alert rules with group index: %w", err)
+	}
+	return nil
 }

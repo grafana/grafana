@@ -50,6 +50,7 @@ export const Pages = {
        */
       nav: 'Dashboard navigation',
       navV2: 'data-testid Dashboard navigation',
+      publicDashboardTag: 'data-testid public dashboard tag',
     },
     SubMenu: {
       submenu: 'Dashboard submenu',
@@ -71,7 +72,7 @@ export const Pages = {
          * @deprecated use components.TimeZonePicker.containerV2 from Grafana 8.3 instead
          */
         timezone: 'Time zone picker select container',
-        title: 'Dashboard settings page title',
+        title: 'Tab General',
       },
       Annotations: {
         List: {
@@ -123,6 +124,7 @@ export const Pages = {
             selectionOptionsCustomAllInputV2: 'data-testid Variable editor Form IncludeAll field',
             previewOfValuesOption: 'Variable editor Preview of Values option',
             submitButton: 'Variable editor Submit button',
+            applyButton: 'data-testid Variable editor Apply button',
           },
           QueryVariable: {
             queryOptionsDataSourceSelect: Components.DataSourcePicker.container,
@@ -177,6 +179,22 @@ export const Pages = {
   SharePanelModal: {
     linkToRenderedImage: 'Link to rendered image',
   },
+  ShareDashboardModal: {
+    shareButton: 'Share dashboard or panel',
+    PublicDashboard: {
+      Tab: 'Tab Public dashboard',
+      WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
+      LimitedDSCheckbox: 'data-testid public dashboard limited datasources checkbox',
+      CostIncreaseCheckbox: 'data-testid public dashboard cost may increase checkbox',
+      EnableSwitch: 'data-testid public dashboard on off switch',
+      EnableAnnotationsSwitch: 'data-testid public dashboard on off switch for annotations',
+      SaveConfigButton: 'data-testid public dashboard save config button',
+      DeleteButton: 'data-testid public dashboard delete button',
+      CopyUrlInput: 'data-testid public dashboard copy url input',
+      CopyUrlButton: 'data-testid public dashboard copy url button',
+      TemplateVariablesWarningAlert: 'data-testid public dashboard disabled template variables alert',
+    },
+  },
   Explore: {
     url: '/explore',
     General: {
@@ -203,11 +221,19 @@ export const Pages = {
   PlaylistForm: {
     name: 'Playlist name',
     interval: 'Playlist interval',
-    itemRow: 'Playlist item row',
-    itemIdType: 'Playlist item dashboard by ID type',
-    itemTagType: 'Playlist item dashboard by Tag type',
-    itemMoveUp: 'Move playlist item order up',
-    itemMoveDown: 'Move playlist item order down',
     itemDelete: 'Delete playlist item',
+  },
+  Search: {
+    url: '/?search=openn',
+    FolderView: {
+      url: '/?search=open&layout=folders',
+    },
+  },
+  PublicDashboards: {
+    ListItem: {
+      linkButton: 'public-dashboard-link-button',
+      configButton: 'public-dashboard-configuration-button',
+      trashcanButton: 'public-dashboard-remove-button',
+    },
   },
 };

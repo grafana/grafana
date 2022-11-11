@@ -1,4 +1,5 @@
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
@@ -40,7 +41,9 @@ export function getRulesDataSource(rulesSourceName: string) {
 
 export function getAlertManagerDataSources() {
   return getAllDataSources()
-    .filter((ds) => ds.type === DataSourceType.Alertmanager)
+    .filter(
+      (ds): ds is DataSourceInstanceSettings<AlertManagerDataSourceJsonData> => ds.type === DataSourceType.Alertmanager
+    )
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -123,6 +126,10 @@ export function getRulesSourceName(rulesSource: RulesSource): string {
   return isCloudRulesSource(rulesSource) ? rulesSource.name : rulesSource;
 }
 
+export function getRulesSourceUid(rulesSource: RulesSource): string {
+  return isCloudRulesSource(rulesSource) ? rulesSource.uid : GRAFANA_RULES_SOURCE_NAME;
+}
+
 export function isCloudRulesSource(rulesSource: RulesSource | string): rulesSource is DataSourceInstanceSettings {
   return rulesSource !== GRAFANA_RULES_SOURCE_NAME;
 }
@@ -172,4 +179,15 @@ export function getDatasourceAPIUid(dataSourceName: string) {
     throw new Error(`Datasource "${dataSourceName}" not found`);
   }
   return ds.uid;
+}
+
+export function getFirstCompatibleDataSource(): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
+  return getDataSourceSrv().getList({ alerting: true })[0];
+}
+
+export function getDefaultOrFirstCompatibleDataSource(): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
+  const defaultDataSource = getDataSourceSrv().getInstanceSettings('default');
+  const defaultIsCompatible = defaultDataSource?.meta.alerting ?? false;
+
+  return defaultIsCompatible ? defaultDataSource : getFirstCompatibleDataSource();
 }

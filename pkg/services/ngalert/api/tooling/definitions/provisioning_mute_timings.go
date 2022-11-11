@@ -69,8 +69,8 @@ type MuteTimingPayload struct {
 
 // swagger:model
 type MuteTimeInterval struct {
-	config.MuteTimeInterval
-	Provenance models.Provenance `json:"provenance,omitempty"`
+	config.MuteTimeInterval `json:",inline" yaml:",inline"`
+	Provenance              models.Provenance `json:"provenance,omitempty"`
 }
 
 func (mt *MuteTimeInterval) ResourceType() string {

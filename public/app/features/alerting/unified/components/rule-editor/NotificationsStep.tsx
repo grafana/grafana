@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, Link, useStyles2, useTheme2 } from '@grafana/ui';
@@ -7,7 +7,7 @@ import { Card, Link, useStyles2, useTheme2 } from '@grafana/ui';
 import LabelsField from './LabelsField';
 import { RuleEditorSection } from './RuleEditorSection';
 
-export const NotificationsStep: FC = () => {
+export const NotificationsStep = () => {
   const [hideFlowChart, setHideFlowChart] = useState(false);
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -27,7 +27,7 @@ export const NotificationsStep: FC = () => {
         {!hideFlowChart && (
           <img
             className={styles.flowChart}
-            src={`/public/img/alerting/notification_policy_${theme.name.toLowerCase()}.svg`}
+            src={`public/img/alerting/notification_policy_${theme.name.toLowerCase()}.svg`}
             alt="notification policy flow chart"
           />
         )}

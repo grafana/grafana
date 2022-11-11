@@ -190,24 +190,35 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		return nil, fmt.Errorf("error getting user info: %s", err)
 	}
 
-	err = json.Unmarshal(response.Body, &data)
-	if err != nil {
-		return nil, fmt.Errorf("Error getting user info: %s", err)
+	if err = json.Unmarshal(response.Body, &data); err != nil {
+		return nil, fmt.Errorf("error unmarshalling user info: %s", err)
 	}
 
 	teamMemberships, err := s.FetchTeamMemberships(client)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting user teams: %s", err)
+		return nil, fmt.Errorf("error getting user teams: %s", err)
 	}
 
 	teams := convertToGroupList(teamMemberships)
 
+	role, grafanaAdmin := s.extractRoleAndAdmin(response.Body, teams, true)
+	if s.roleAttributeStrict && !role.IsValid() {
+		return nil, &InvalidBasicRoleError{idP: "Github", assignedRole: string(role)}
+	}
+
+	var isGrafanaAdmin *bool = nil
+	if s.allowAssignGrafanaAdmin {
+		isGrafanaAdmin = &grafanaAdmin
+	}
+
 	userInfo := &BasicUserInfo{
-		Name:   data.Login,
-		Login:  data.Login,
-		Id:     fmt.Sprintf("%d", data.Id),
-		Email:  data.Email,
-		Groups: teams,
+		Name:           data.Login,
+		Login:          data.Login,
+		Id:             fmt.Sprintf("%d", data.Id),
+		Email:          data.Email,
+		Role:           role,
+		Groups:         teams,
+		IsGrafanaAdmin: isGrafanaAdmin,
 	}
 	if data.Name != "" {
 		userInfo.Name = data.Name

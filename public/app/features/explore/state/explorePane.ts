@@ -11,9 +11,9 @@ import {
   DataSourceApi,
   ExplorePanelsState,
   PreferredVisualisationType,
+  DataSourceRef,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { keybindingSrv } from 'app/core/services/keybindingSrv';
 import {
   DEFAULT_RANGE,
   getQueryKeys,
@@ -135,10 +135,14 @@ export function changeGraphStyle(exploreId: ExploreId, graphStyle: ExploreGraphS
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
+ *
+ * The `datasource` param will be passed to the datasource service `get` function
+ * and can be either a string that is the name or uid, or a datasourceRef
+ * This is to maximize compatability with how datasources are accessed from the URL param.
  */
 export function initializeExplore(
   exploreId: ExploreId,
-  datasourceNameOrUid: string,
+  datasource: DataSourceRef | string,
   queries: DataQuery[],
   range: TimeRange,
   containerWidth: number,
@@ -152,7 +156,7 @@ export function initializeExplore(
 
     if (exploreDatasources.length >= 1) {
       const orgId = getState().user.orgId;
-      const loadResult = await loadAndInitDatasource(orgId, datasourceNameOrUid);
+      const loadResult = await loadAndInitDatasource(orgId, datasource);
       instance = loadResult.instance;
       history = loadResult.history;
     }
@@ -173,8 +177,6 @@ export function initializeExplore(
     }
     dispatch(updateTime({ exploreId }));
 
-    keybindingSrv.setupTimeRangeBindings(false);
-
     if (instance) {
       // We do not want to add the url to browser history on init because when the pane is initialised it's because
       // we already have something in the url. Adding basically the same state as additional history item prevents
@@ -190,8 +192,8 @@ export function initializeExplore(
  */
 export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const itemState = getState().explore[exploreId]!;
-    if (!itemState.initialized) {
+    const itemState = getState().explore[exploreId];
+    if (!itemState?.initialized) {
       return;
     }
 
@@ -201,6 +203,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
 
     const { containerWidth, eventBridge } = itemState;
 
+    // datasource will either be name or UID here
     const { datasource, queries, range: urlRange, panelsState } = newUrlState;
     const refreshQueries: DataQuery[] = [];
 
@@ -216,7 +219,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
     // commit changes based on the diff of new url vs old url
 
     if (update.datasource) {
-      const initialQueries = ensureQueries(queries);
+      const initialQueries = await ensureQueries(queries);
       await dispatch(
         initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, panelsState)
       );
@@ -298,7 +301,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       range,
       queries,
       initialized: true,
-      queryKeys: getQueryKeys(queries, datasourceInstance),
+      queryKeys: getQueryKeys(queries),
       datasourceInstance,
       history,
       datasourceMissing: !datasourceInstance,

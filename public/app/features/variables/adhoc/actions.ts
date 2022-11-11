@@ -1,12 +1,11 @@
 import { cloneDeep } from 'lodash';
 
-import { DataSourceRef, getDataSourceRef } from '@grafana/data';
+import { DataSourceRef } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/types';
 import { StoreState, ThunkResult } from 'app/types';
 
 import { changeVariableEditorExtended } from '../editor/reducer';
-import { getAdhocVariableEditorState } from '../editor/selectors';
 import { isAdHoc } from '../guard';
 import { variableUpdated } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
@@ -101,8 +100,6 @@ export const changeVariableDatasource = (
   datasource?: DataSourceRef
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const { editor } = getVariablesState(identifier.rootStateKey, getState());
-    const extended = getAdhocVariableEditorState(editor);
     const variable = getVariable(identifier, getState());
     dispatch(
       toKeyedAction(
@@ -123,41 +120,11 @@ export const changeVariableDatasource = (
         identifier.rootStateKey,
         changeVariableEditorExtended({
           infoText: message,
-          dataSources: extended?.dataSources ?? [],
         })
       )
     );
   };
 };
-
-export const initAdHocVariableEditor =
-  (key: string): ThunkResult<void> =>
-  (dispatch) => {
-    const dataSources = getDatasourceSrv().getList({ metrics: true, variables: true });
-    const selectable = dataSources.reduce(
-      (all: Array<{ text: string; value: DataSourceRef | null }>, ds) => {
-        if (ds.meta.mixed) {
-          return all;
-        }
-
-        const text = ds.isDefault ? `${ds.name} (default)` : ds.name;
-        const value = getDataSourceRef(ds);
-        all.push({ text, value });
-
-        return all;
-      },
-      [{ text: '', value: {} }]
-    );
-
-    dispatch(
-      toKeyedAction(
-        key,
-        changeVariableEditorExtended({
-          dataSources: selectable,
-        })
-      )
-    );
-  };
 
 const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
   return (dispatch, getState) => {

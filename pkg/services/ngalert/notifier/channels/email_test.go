@@ -10,11 +10,8 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestEmailNotifier(t *testing.T) {
@@ -107,7 +104,7 @@ func TestEmailNotifier(t *testing.T) {
 }
 
 func TestEmailNotifierIntegration(t *testing.T) {
-	ns := createCoreEmailService(t)
+	ns := CreateNotificationService(t)
 
 	emailTmpl := templateForTests(t)
 	externalURL, err := url.Parse("http://localhost/base")
@@ -264,29 +261,6 @@ func TestEmailNotifierIntegration(t *testing.T) {
 			}
 		})
 	}
-}
-
-func createCoreEmailService(t *testing.T) *notifications.NotificationService {
-	t.Helper()
-
-	tracer := tracing.InitializeTracerForTest()
-	bus := bus.ProvideBus(tracer)
-
-	cfg := setting.NewCfg()
-	cfg.StaticRootPath = "../../../../../public/"
-	cfg.BuildVersion = "4.0.0"
-	cfg.Smtp.Enabled = true
-	cfg.Smtp.TemplatesPatterns = []string{"emails/*.html", "emails/*.txt"}
-	cfg.Smtp.FromAddress = "from@address.com"
-	cfg.Smtp.FromName = "Grafana Admin"
-	cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
-	cfg.Smtp.Host = "localhost:1234"
-	mailer := notifications.NewFakeMailer()
-
-	ns, err := notifications.ProvideService(bus, cfg, mailer, nil)
-	require.NoError(t, err)
-
-	return ns
 }
 
 func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns notifications.EmailSender) *EmailNotifier {

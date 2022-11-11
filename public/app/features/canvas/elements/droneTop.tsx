@@ -6,7 +6,7 @@ import { useStyles2 } from '@grafana/ui';
 import { DimensionContext, ScalarDimensionConfig } from 'app/features/dimensions';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
-import { CanvasElementItem, CanvasElementProps } from '../element';
+import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
 
 interface DroneTopData {
   bRightRotorRPM?: number;
@@ -45,7 +45,7 @@ const DroneTopDisplay: FC<CanvasElementProps<DroneTopConfig, DroneTopData>> = (p
       xmlnsXlink="http://www.w3.org/1999/xlink"
       viewBox="-43 -43 640 640"
       xmlSpace="preserve"
-      style={{ transform: droneTopTransformStyle }}
+      style={{ transform: droneTopTransformStyle, fill: defaultBgColor }}
     >
       <path
         fillRule="evenodd"
@@ -95,6 +95,11 @@ export const droneTopItem: CanvasElementItem<any, any> = {
 
   getNewOptions: (options) => ({
     ...options,
+    background: {
+      color: {
+        fixed: 'transparent',
+      },
+    },
   }),
 
   // Called when data changes

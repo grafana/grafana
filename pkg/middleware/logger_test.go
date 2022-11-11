@@ -51,7 +51,7 @@ func Test_sanitizeURL(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, sanitizeURL(tt.args.ctx, tt.args.s), "sanitizeURL(%v, %v)", tt.args.ctx, tt.args.s)
+			assert.Equalf(t, tt.want, SanitizeURL(tt.args.ctx, tt.args.s), "sanitizeURL(%v, %v)", tt.args.ctx, tt.args.s)
 		})
 	}
 }

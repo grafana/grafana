@@ -17,7 +17,7 @@ export interface DataSourceWithLogsVolumeSupport<TQuery extends DataQuery> {
  * @internal
  */
 export const hasLogsVolumeSupport = <TQuery extends DataQuery>(
-  datasource: any
+  datasource: unknown
 ): datasource is DataSourceWithLogsVolumeSupport<TQuery> => {
   return (datasource as DataSourceWithLogsVolumeSupport<TQuery>).getLogsVolumeDataProvider !== undefined;
 };

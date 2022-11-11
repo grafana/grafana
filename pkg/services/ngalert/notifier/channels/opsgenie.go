@@ -205,7 +205,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 			"%s\n%s\n\n%s",
 			tmpl(DefaultMessageTitleEmbed),
 			ruleURL,
-			tmpl(`{{ template "default.message" . }}`),
+			tmpl(DefaultMessageEmbed),
 		)
 	}
 
@@ -225,7 +225,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 
 	// Check for templating errors
 	if tmplErr != nil {
-		on.log.Warn("failed to template Opsgenie message", "err", tmplErr.Error())
+		on.log.Warn("failed to template Opsgenie message", "error", tmplErr.Error())
 		tmplErr = nil
 	}
 
@@ -242,8 +242,8 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 
 		images := []string{}
 		_ = withStoredImages(ctx, on.log, on.images,
-			func(index int, image *ngmodels.Image) error {
-				if image == nil || len(image.URL) == 0 {
+			func(_ int, image ngmodels.Image) error {
+				if len(image.URL) == 0 {
 					return nil
 				}
 				images = append(images, image.URL)
@@ -272,7 +272,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	bodyJSON.Set("details", details)
 	apiURL = tmpl(on.APIUrl)
 	if tmplErr != nil {
-		on.log.Warn("failed to template Opsgenie URL", "err", tmplErr.Error(), "fallback", on.APIUrl)
+		on.log.Warn("failed to template Opsgenie URL", "error", tmplErr.Error(), "fallback", on.APIUrl)
 		apiURL = on.APIUrl
 	}
 

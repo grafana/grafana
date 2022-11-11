@@ -1,65 +1,138 @@
-import { catchError, Observable, of, switchMap } from 'rxjs';
+import { catchError, from, Observable, of, switchMap } from 'rxjs';
 
-import { DataQuery, DataQueryRequest, DataQueryResponse, DataSourceApi, PluginMeta } from '@grafana/data';
+import {
+  AnnotationQuery,
+  DataQuery,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceApi,
+  DataSourceJsonData,
+  DataSourcePluginMeta,
+  DataSourceRef,
+  toDataFrame,
+} from '@grafana/data';
 import { BackendDataSourceResponse, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 
-export class PublicDashboardDataSource extends DataSourceApi<any> {
-  constructor() {
+import { GrafanaQueryType } from '../../../plugins/datasource/grafana/types';
+import { MIXED_DATASOURCE_NAME } from '../../../plugins/datasource/mixed/MixedDataSource';
+import { GRAFANA_DATASOURCE_NAME } from '../../alerting/unified/utils/datasource';
+
+export const PUBLIC_DATASOURCE = '-- Public --';
+export const DEFAULT_INTERVAL = '1min';
+
+export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSourceJsonData, {}> {
+  constructor(datasource: DataSourceRef | string | DataSourceApi | null) {
+    let meta = {} as DataSourcePluginMeta;
+    if (PublicDashboardDataSource.isMixedDatasource(datasource)) {
+      meta.mixed = true;
+    }
+
     super({
       name: 'public-ds',
-      id: 1,
+      id: 0,
       type: 'public-ds',
-      meta: {} as PluginMeta,
-      uid: '1',
+      meta,
+      uid: PublicDashboardDataSource.resolveUid(datasource),
       jsonData: {},
       access: 'proxy',
+      readOnly: true,
     });
+
+    this.interval = PublicDashboardDataSource.resolveInterval(datasource);
+
+    this.annotations = {
+      prepareQuery(anno: AnnotationQuery): DataQuery | undefined {
+        return { ...anno, queryType: GrafanaQueryType.Annotations, refId: 'anno' };
+      },
+    };
+  }
+
+  /**
+   * Get the datasource uid based on the many types a datasource can be.
+   */
+  private static resolveUid(datasource: DataSourceRef | string | DataSourceApi | null): string {
+    if (typeof datasource === 'string') {
+      return datasource;
+    }
+
+    return datasource?.uid ?? PUBLIC_DATASOURCE;
+  }
+
+  private static isMixedDatasource(datasource: DataSourceRef | string | DataSourceApi | null): boolean {
+    if (typeof datasource === 'string' || datasource == null) {
+      return false;
+    }
+
+    return datasource?.uid === MIXED_DATASOURCE_NAME;
+  }
+
+  private static resolveInterval(datasource: DataSourceRef | string | DataSourceApi | null): string {
+    if (typeof datasource === 'string' || datasource == null) {
+      return DEFAULT_INTERVAL;
+    }
+
+    const interval = 'interval' in datasource ? datasource.interval : undefined;
+
+    return interval ?? DEFAULT_INTERVAL;
   }
 
   /**
    * Ideally final -- any other implementation may not work as expected
    */
-  query(request: DataQueryRequest<any>): Observable<DataQueryResponse> {
-    const { intervalMs, maxDataPoints, range, requestId, publicDashboardUid, panelId } = request;
-    let targets = request.targets;
-
-    const queries = targets.map((q) => {
-      return {
-        ...q,
-        publicDashboardUid,
-        intervalMs,
-        maxDataPoints,
-      };
-    });
+  query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
+    const { intervalMs, maxDataPoints, requestId, publicDashboardAccessToken, panelId } = request;
+    let queries: DataQuery[];
 
     // Return early if no queries exist
-    if (!queries.length) {
+    if (!request.targets.length) {
       return of({ data: [] });
     }
 
-    const body: any = { queries, publicDashboardUid, panelId };
-
-    if (range) {
-      body.range = range;
-      body.from = range.from.valueOf().toString();
-      body.to = range.to.valueOf().toString();
+    // Its an annotations query
+    // Currently, annotations requests come in one at a time, so there will only be one target
+    const target = request.targets[0];
+    if (target.queryType === GrafanaQueryType.Annotations) {
+      if (target?.datasource?.uid === GRAFANA_DATASOURCE_NAME) {
+        return from(this.getAnnotations(request));
+      }
+      return of({ data: [] });
     }
 
-    return getBackendSrv()
-      .fetch<BackendDataSourceResponse>({
-        url: `/api/public/dashboards/${publicDashboardUid}/panels/${panelId}/query`,
-        method: 'POST',
-        data: body,
-        requestId,
-      })
-      .pipe(
-        switchMap((raw) => {
-          return of(toDataQueryResponse(raw, queries as DataQuery[]));
-        }),
-        catchError((err) => {
-          return of(toDataQueryResponse(err));
+    // Its a datasource query
+    else {
+      const body: any = { intervalMs, maxDataPoints };
+
+      return getBackendSrv()
+        .fetch<BackendDataSourceResponse>({
+          url: `/api/public/dashboards/${publicDashboardAccessToken}/panels/${panelId}/query`,
+          method: 'POST',
+          data: body,
+          requestId,
         })
-      );
+        .pipe(
+          switchMap((raw) => {
+            return of(toDataQueryResponse(raw, queries));
+          }),
+          catchError((err) => {
+            return of(toDataQueryResponse(err));
+          })
+        );
+    }
+  }
+
+  async getAnnotations(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> {
+    const {
+      publicDashboardAccessToken: accessToken,
+      range: { to, from },
+    } = request;
+
+    const params = {
+      from: from.valueOf(),
+      to: to.valueOf(),
+    };
+    const annotations = await getBackendSrv().get(`/api/public/dashboards/${accessToken}/annotations`, params);
+
+    return { data: [toDataFrame(annotations)] };
   }
 
   testDatasource(): Promise<any> {

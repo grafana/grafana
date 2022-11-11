@@ -5,47 +5,52 @@ import (
 	"encoding/base64"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var GetTime = time.Now
 
 type AuthInfoStore struct {
-	sqlStore       sqlstore.Store
+	sqlStore       db.DB
 	secretsService secrets.Service
 	logger         log.Logger
+	userService    user.Service
 }
 
-func ProvideAuthInfoStore(sqlStore sqlstore.Store, secretsService secrets.Service) *AuthInfoStore {
+func ProvideAuthInfoStore(sqlStore db.DB, secretsService secrets.Service, userService user.Service) login.Store {
 	store := &AuthInfoStore{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
 		logger:         log.New("login.authinfo.store"),
+		userService:    userService,
 	}
+	InitMetrics()
 	return store
 }
 
 func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
-	userQuery := models.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
-	err := s.sqlStore.GetUserByLogin(ctx, &userQuery)
+	userQuery := user.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
+	usr, err := s.userService.GetByLogin(ctx, &userQuery)
 	if err != nil {
 		return err
 	}
 
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: userQuery.Result.Id}
+	authInfoQuery := &models.GetAuthInfoQuery{UserId: usr.ID}
 	if err := s.GetAuthInfo(ctx, authInfoQuery); err != nil {
 		return err
 	}
 
 	query.Result = &models.ExternalUserInfo{
-		UserId:     userQuery.Result.Id,
-		Login:      userQuery.Result.Login,
-		Email:      userQuery.Result.Email,
-		Name:       userQuery.Result.Name,
-		IsDisabled: userQuery.Result.IsDisabled,
+		UserId:     usr.ID,
+		Login:      usr.Login,
+		Email:      usr.Email,
+		Name:       usr.Name,
+		IsDisabled: usr.IsDisabled,
 		AuthModule: authInfoQuery.Result.AuthModule,
 		AuthId:     authInfoQuery.Result.AuthId,
 	}
@@ -54,7 +59,7 @@ func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *m
 
 func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
 	if query.UserId == 0 && query.AuthId == "" {
-		return models.ErrUserNotFound
+		return user.ErrUserNotFound
 	}
 
 	userAuth := &models.UserAuth{
@@ -66,7 +71,7 @@ func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *models.GetAuthIn
 	var has bool
 	var err error
 
-	err = s.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		has, err = sess.Desc("created").Get(userAuth)
 		return err
 	})
@@ -75,7 +80,7 @@ func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *models.GetAuthIn
 	}
 
 	if !has {
-		return models.ErrUserNotFound
+		return user.ErrUserNotFound
 	}
 
 	secretAccessToken, err := s.decodeAndDecrypt(userAuth.OAuthAccessToken)
@@ -140,7 +145,7 @@ func (s *AuthInfoStore) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfo
 		authUser.OAuthExpiry = cmd.OAuthToken.Expiry
 	}
 
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Insert(authUser)
 		return err
 	})
@@ -156,7 +161,7 @@ func (s *AuthInfoStore) UpdateAuthInfoDate(ctx context.Context, authInfo *models
 		UserId:     authInfo.UserId,
 		AuthModule: authInfo.AuthModule,
 	}
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Cols("created").Update(authInfo, cond)
 		return err
 	})
@@ -199,50 +204,48 @@ func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAu
 		authUser.OAuthExpiry = cmd.OAuthToken.Expiry
 	}
 
-	cond := &models.UserAuth{
-		UserId:     cmd.UserId,
-		AuthModule: cmd.AuthModule,
-	}
-
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		upd, err := sess.Update(authUser, cond)
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		upd, err := sess.MustCols("o_auth_expiry").Where("user_id = ? AND auth_module = ?", cmd.UserId, cmd.AuthModule).Update(authUser)
 		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_module", cmd.AuthModule, "rows", upd)
 		return err
 	})
 }
 
 func (s *AuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *models.DeleteAuthInfoCommand) error {
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Delete(cmd.UserAuth)
 		return err
 	})
 }
 
-func (s *AuthInfoStore) GetUserById(ctx context.Context, id int64) (*models.User, error) {
-	query := models.GetUserByIdQuery{Id: id}
-	if err := s.sqlStore.GetUserById(ctx, &query); err != nil {
+func (s *AuthInfoStore) GetUserById(ctx context.Context, id int64) (*user.User, error) {
+	query := user.GetUserByIDQuery{ID: id}
+	user, err := s.userService.GetByID(ctx, &query)
+	if err != nil {
 		return nil, err
 	}
 
-	return query.Result, nil
+	return user, nil
 }
 
-func (s *AuthInfoStore) GetUserByLogin(ctx context.Context, login string) (*models.User, error) {
-	query := models.GetUserByLoginQuery{LoginOrEmail: login}
-	if err := s.sqlStore.GetUserByLogin(ctx, &query); err != nil {
+func (s *AuthInfoStore) GetUserByLogin(ctx context.Context, login string) (*user.User, error) {
+	query := user.GetUserByLoginQuery{LoginOrEmail: login}
+	usr, err := s.userService.GetByLogin(ctx, &query)
+	if err != nil {
 		return nil, err
 	}
 
-	return query.Result, nil
+	return usr, nil
 }
 
-func (s *AuthInfoStore) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
-	query := models.GetUserByEmailQuery{Email: email}
-	if err := s.sqlStore.GetUserByEmail(ctx, &query); err != nil {
+func (s *AuthInfoStore) GetUserByEmail(ctx context.Context, email string) (*user.User, error) {
+	query := user.GetUserByEmailQuery{Email: email}
+	usr, err := s.userService.GetByEmail(ctx, &query)
+	if err != nil {
 		return nil, err
 	}
 
-	return query.Result, nil
+	return usr, nil
 }
 
 // decodeAndDecrypt will decode the string with the standard base64 decoder and then decrypt it

@@ -56,6 +56,7 @@ export const TagFilter: FC<Props> = ({
   const [options, setOptions] = useState<TagSelectOption[]>(currentlySelectedTags);
   const [isLoading, setIsLoading] = useState(false);
   const [previousTags, setPreviousTags] = useState(tags);
+  const [customTags, setCustomTags] = useState<TagSelectOption[]>(currentlySelectedTags);
 
   // Necessary to force re-render to keep tag options up to date / relevant
   const selectKey = useMemo(() => tags.join(), [tags]);
@@ -82,9 +83,14 @@ export const TagFilter: FC<Props> = ({
   const onFocus = useCallback(async () => {
     setIsLoading(true);
     const results = await onLoadOptions();
+
+    if (allowCustomValue) {
+      customTags.forEach((customTag) => results.push(customTag));
+    }
+
     setOptions(results);
     setIsLoading(false);
-  }, [onLoadOptions]);
+  }, [allowCustomValue, customTags, onLoadOptions]);
 
   useEffect(() => {
     // Load options when tag is selected externally
@@ -102,11 +108,16 @@ export const TagFilter: FC<Props> = ({
   }, [onFocus, previousTags, tags]);
 
   const onTagChange = (newTags: any[]) => {
-    // On remove with 1 item returns null, so we need to make sure it's an empty array in that case
-    // https://github.com/JedWatson/react-select/issues/3632
     newTags.forEach((tag) => (tag.count = 0));
 
+    // On remove with 1 item returns null, so we need to make sure it's an empty array in that case
+    // https://github.com/JedWatson/react-select/issues/3632
     onChange((newTags || []).map((tag) => tag.value));
+
+    // If custom values are allowed, set custom tags to prevent overwriting from query update
+    if (allowCustomValue) {
+      setCustomTags(newTags.filter((tag) => !tags.includes(tag)));
+    }
   };
 
   const selectOptions = {
@@ -150,9 +161,9 @@ export const TagFilter: FC<Props> = ({
   return (
     <div className={styles.tagFilter}>
       {isClearable && tags.length > 0 && (
-        <span className={styles.clear} onClick={() => onTagChange([])}>
+        <button className={styles.clear} onClick={() => onTagChange([])}>
           Clear tags
-        </span>
+        </button>
       )}
       <MultiSelect {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
     </div>
@@ -173,10 +184,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
   `,
   clear: css`
+    background: none;
+    border: none;
     text-decoration: underline;
     font-size: 12px;
+    padding: none;
     position: absolute;
-    top: -22px;
+    top: -17px;
     right: 0;
     cursor: pointer;
     color: ${theme.colors.text.secondary};

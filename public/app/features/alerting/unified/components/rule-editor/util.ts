@@ -1,5 +1,7 @@
 import { ValidateResult } from 'react-hook-form';
 
+import { DataFrame } from '@grafana/data';
+import { isTimeSeries } from '@grafana/data/src/dataframe/utils';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -21,6 +23,7 @@ export function queriesWithUpdatedReferences(
     const isReduceExpression = query.model.type === 'reduce';
     const isResampleExpression = query.model.type === 'resample';
     const isClassicExpression = query.model.type === 'classic_conditions';
+    const isThresholdExpression = query.model.type === 'threshold';
 
     if (isMathExpression) {
       return {
@@ -32,7 +35,7 @@ export function queriesWithUpdatedReferences(
       };
     }
 
-    if (isResampleExpression || isReduceExpression) {
+    if (isResampleExpression || isReduceExpression || isThresholdExpression) {
       const isReferencing = query.model.expression === previousRefId;
 
       return {
@@ -67,6 +70,10 @@ export function updateMathExpressionRefs(expression: string, previousRefId: stri
   return expression.replace(oldExpression, newExpression);
 }
 
+export function refIdExists(queries: AlertQuery[], refId: string | null): boolean {
+  return queries.find((query) => query.refId === refId) !== undefined;
+}
+
 // some gateways (like Istio) will decode "/" and "\" characters – this will cause 404 errors for any API call
 // that includes these values in the URL (ie. /my/path%2fto/resource -> /my/path/to/resource)
 //
@@ -78,4 +85,26 @@ export function checkForPathSeparator(value: string): ValidateResult {
   }
 
   return true;
+}
+
+export function errorFromSeries(series: DataFrame[]): Error | undefined {
+  if (series.length === 0) {
+    return;
+  }
+
+  const isTimeSeriesResults = isTimeSeries(series);
+
+  let error;
+  if (isTimeSeriesResults) {
+    error = new Error('You cannot use time series data as an alert condition, consider adding a reduce expression.');
+  }
+
+  return error;
+}
+
+export function warningFromSeries(series: DataFrame[]): Error | undefined {
+  const notices = series[0]?.meta?.notices ?? [];
+  const warning = notices.find((notice) => notice.severity === 'warning')?.text;
+
+  return warning ? new Error(warning) : undefined;
 }

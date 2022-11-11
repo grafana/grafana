@@ -1,23 +1,19 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { NavModelItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Button, Input, Form, Field } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState } from 'app/types';
+import { Page } from 'app/core/components/Page/Page';
 
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
 import { createNewFolder } from '../state/actions';
-
-const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'manage-dashboards'),
-});
 
 const mapDispatchToProps = {
   createNewFolder,
 };
 
-const connector = connect(mapStateToProps, mapDispatchToProps);
+const connector = connect(null, mapDispatchToProps);
 
 interface OwnProps {}
 
@@ -45,11 +41,17 @@ export class NewDashboardsFolder extends PureComponent<Props> {
       });
   };
 
+  pageNav: NavModelItem = {
+    text: 'Create a new folder',
+    subTitle: 'Folders provide a way to group dashboards and alert rules.',
+    breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
+  };
+
   render() {
     return (
-      <Page navModel={this.props.navModel}>
+      <Page navId="dashboards/browse" pageNav={this.pageNav}>
         <Page.Contents>
-          <h3>New dashboard folder</h3>
+          {!config.featureToggles.topnav && <h3>New dashboard folder</h3>}
           <Form defaultValues={initialFormModel} onSubmit={this.onSubmit}>
             {({ register, errors }) => (
               <>

@@ -18,11 +18,12 @@ import * as React from 'react';
 import IoAlert from 'react-icons/lib/io/alert';
 import IoArrowRightA from 'react-icons/lib/io/arrow-right-a';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
-import { SpanLinkFunc, TNil } from '../types';
+import { DURATION, NONE, TAG } from '../settings/SpanBarSettings';
+import { SpanBarOptions, SpanLinkFunc, TNil } from '../types';
 import { SpanLinks } from '../types/links';
 import { TraceSpan } from '../types/trace';
 
@@ -239,6 +240,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       &:hover > small {
         color: ${autoColor(theme, '#000')};
       }
+      text-align: left;
+      background: transparent;
+      border: none;
     `,
     nameDetailExpanded: css`
       label: nameDetailExpanded;
@@ -290,6 +294,7 @@ type SpanBarRowProps = {
   className?: string;
   theme: GrafanaTheme2;
   color: string;
+  spanBarOptions: SpanBarOptions | undefined;
   columnDivision: number;
   isChildrenExpanded: boolean;
   isDetailExpanded: boolean;
@@ -352,6 +357,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
     const {
       className,
       color,
+      spanBarOptions,
       columnDivision,
       isChildrenExpanded,
       isDetailExpanded,
@@ -379,6 +385,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       process: { serviceName },
     } = span;
     const label = formatDuration(duration);
+
     const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
     const viewStart = viewBounds.start;
     const viewEnd = viewBounds.end;
@@ -433,7 +440,8 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               addHoverIndentGuideId={addHoverIndentGuideId}
               removeHoverIndentGuideId={removeHoverIndentGuideId}
             />
-            <a
+            <button
+              type="button"
               className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
               aria-checked={isDetailExpanded}
               title={labelDetail}
@@ -473,8 +481,8 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                 )}
               </span>
               <small className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</small>
-              <small className={styles.endpointName}> | {label}</small>
-            </a>
+              <small className={styles.endpointName}> {this.getSpanBarLabel(span, spanBarOptions, label)}</small>
+            </button>
             {createSpanLink &&
               (() => {
                 const links = createSpanLink(span);
@@ -542,6 +550,35 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       </TimelineRow>
     );
   }
+
+  getSpanBarLabel = (span: TraceSpan, spanBarOptions: SpanBarOptions | undefined, duration: string) => {
+    const type = spanBarOptions?.type ?? '';
+
+    if (type === NONE) {
+      return '';
+    } else if (type === '' || type === DURATION) {
+      return `(${duration})`;
+    } else if (type === TAG) {
+      const tagKey = spanBarOptions?.tag?.trim() ?? '';
+      if (tagKey !== '' && span.tags) {
+        const tag = span.tags?.find((tag: TraceKeyValuePair) => {
+          return tag.key === tagKey;
+        });
+        const process = span.process?.tags?.find((process: TraceKeyValuePair) => {
+          return process.key === tagKey;
+        });
+
+        if (tag) {
+          return `(${tag.value})`;
+        }
+        if (process) {
+          return `(${process.value})`;
+        }
+      }
+    }
+
+    return '';
+  };
 }
 
 export default withTheme2(UnthemedSpanBarRow);

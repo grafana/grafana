@@ -1,7 +1,8 @@
-import { PluggableMap } from 'ol';
+import { Map as OpenLayersMap } from 'ol';
 import BaseLayer from 'ol/layer/Base';
 import { ReactNode } from 'react';
 
+import { EventBus } from '../events';
 import { GrafanaTheme2 } from '../themes';
 import { MatcherConfig, PanelData } from '../types';
 import { PanelOptionsEditorBuilder } from '../utils';
@@ -79,6 +80,11 @@ export interface MapLayerHandler<TConfig = any> {
    * The update function should only be implemented if the layer type makes use of query data
    */
   update?: (data: PanelData) => void;
+
+  /** Optional callback to cleaup before getting removed */
+  dispose?: () => void;
+
+  /** return react node for the legend */
   legend?: ReactNode;
 
   /**
@@ -112,5 +118,10 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: PluggableMap, options: MapLayerOptions<TConfig>, theme: GrafanaTheme2) => Promise<MapLayerHandler>;
+  create: (
+    map: OpenLayersMap,
+    options: MapLayerOptions<TConfig>,
+    eventBus: EventBus,
+    theme: GrafanaTheme2
+  ) => Promise<MapLayerHandler>;
 }

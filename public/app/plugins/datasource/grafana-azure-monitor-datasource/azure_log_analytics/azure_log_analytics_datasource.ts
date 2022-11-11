@@ -320,65 +320,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     });
   }
 
-  async testDatasource(): Promise<DatasourceValidationResult> {
-    const validationError = this.validateDatasource();
-    if (validationError) {
-      return validationError;
-    }
-
-    let resourceOrWorkspace: string;
-    try {
-      const result = await this.getFirstWorkspace();
-      if (!result) {
-        return {
-          status: 'error',
-          message: 'Workspace not found.',
-        };
-      }
-      resourceOrWorkspace = result;
-    } catch (e) {
-      let message = 'Azure Log Analytics requires access to Azure Monitor but had the following error: ';
-      return {
-        status: 'error',
-        message: this.getErrorMessage(message, e),
-      };
-    }
-
-    try {
-      const path = isGUIDish(resourceOrWorkspace)
-        ? `${this.resourcePath}/v1/workspaces/${resourceOrWorkspace}/metadata`
-        : `${this.resourcePath}/v1${resourceOrWorkspace}/metadata`;
-
-      return await this.getResource(path).then<DatasourceValidationResult>((response: any) => {
-        return {
-          status: 'success',
-          message: 'Successfully queried the Azure Log Analytics service.',
-          title: 'Success',
-        };
-      });
-    } catch (e) {
-      let message = 'Azure Log Analytics: ';
-      return {
-        status: 'error',
-        message: this.getErrorMessage(message, e),
-      };
-    }
-  }
-
-  private getErrorMessage(message: string, error: any) {
-    message += error.statusText ? error.statusText + ': ' : '';
-    if (error.data && error.data.error && error.data.error.code) {
-      message += error.data.error.code + '. ' + error.data.error.message;
-    } else if (error.data && error.data.error) {
-      message += error.data.error;
-    } else if (error.data) {
-      message += error.data;
-    } else {
-      message += 'Cannot connect to Azure Log Analytics REST API.';
-    }
-    return message;
-  }
-
   private validateDatasource(): DatasourceValidationResult | undefined {
     const authType = getAuthType(this.instanceSettings);
 

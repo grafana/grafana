@@ -1,7 +1,15 @@
 import { Action, Priority } from 'kbar';
+import { flatMapDeep } from 'lodash';
 
 import { NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+
+import { alertingCommandPaletteStaticActions } from './alerting.static.actions';
+
+export interface NavBarActions {
+  url: string;
+  actions: Action[];
+}
 
 export default (navBarTree: NavModelItem[]) => {
   const globalActions: Action[] = [
@@ -52,7 +60,7 @@ export default (navBarTree: NavModelItem[]) => {
 
   // this maps actions to navbar by URL items for showing/hiding
   // actions is an array for multiple child actions that would be under one navbar item
-  const navBarActionMap = [
+  const navBarActionMap: NavBarActions[] = [
     {
       url: '/dashboard/new',
       actions: [
@@ -99,19 +107,7 @@ export default (navBarTree: NavModelItem[]) => {
         },
       ],
     },
-    {
-      url: '/alerting',
-      actions: [
-        {
-          id: 'go/alerting',
-          name: 'Go to alerting',
-          keywords: 'navigate notification',
-          perform: () => locationService.push('/alerting'),
-          section: 'Navigation',
-          priority: Priority.NORMAL,
-        },
-      ],
-    },
+    ...alertingCommandPaletteStaticActions,
     {
       url: '/profile',
       actions: [
@@ -141,9 +137,12 @@ export default (navBarTree: NavModelItem[]) => {
   ];
 
   const navBarActions: Action[] = [];
+  const navBarFlatUrls = flatMapDeep(navBarTree, (nbt) => nbt.children)
+    .map((nbf) => nbf?.url)
+    .filter((url) => url !== undefined);
 
   navBarActionMap.forEach((navBarAction) => {
-    const navBarItem = navBarTree.find((navBarItem) => navBarItem.url === navBarAction.url);
+    const navBarItem = navBarFlatUrls.find((url) => navBarAction.url === url);
     if (navBarItem) {
       navBarActions.push(...navBarAction.actions);
     }

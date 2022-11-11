@@ -1,26 +1,54 @@
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
-import { InlineLabel } from './InlineLabel';
+import { InlineLabel, Props } from './InlineLabel';
 import mdx from './InlineLabel.mdx';
 
-export default {
+const meta: ComponentMeta<typeof InlineLabel> = {
   title: 'Forms/InlineLabel',
   component: InlineLabel,
   parameters: {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['as'],
+    },
+  },
+  argTypes: {
+    children: {
+      control: 'text',
+    },
+    tooltip: {
+      control: 'text',
+    },
+    width: {
+      control: 'text',
+    },
   },
 };
 
-export const basic = () => {
-  return <InlineLabel width="auto">Simple label</InlineLabel>;
+export const Basic = (args: Props) => <InlineLabel {...args} />;
+
+Basic.args = {
+  children: 'Simple text',
+  width: 'auto',
+  tooltip: undefined,
+  transparent: false,
+  interactive: false,
 };
 
-export const withTooltip = () => {
-  return (
-    <InlineLabel width="auto" tooltip="Tooltip content">
-      Simple label
-    </InlineLabel>
-  );
+Basic.parameters = {
+  controls: {
+    exclude: ['as', 'tooltip', 'interactive'],
+  },
 };
+
+export const WithTooltip = (args: Props) => <InlineLabel {...args} />;
+
+WithTooltip.args = {
+  ...Basic.args,
+  tooltip: 'Info text',
+};
+
+export default meta;

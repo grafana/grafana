@@ -7,26 +7,28 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // RequestHandler is a data request handler interface.
 // Deprecated: use backend.QueryDataHandler instead.
 type RequestHandler interface {
 	// HandleRequest handles a data request.
-	HandleRequest(context.Context, *models.DataSource, DataQuery) (DataResponse, error)
+	HandleRequest(context.Context, *datasources.DataSource, DataQuery) (DataResponse, error)
 }
 
 // DataSubQuery represents a data sub-query.  New work should use the plugin SDK.
 type DataSubQuery struct {
-	RefID         string             `json:"refId"`
-	Model         *simplejson.Json   `json:"model,omitempty"`
-	DataSource    *models.DataSource `json:"datasource"`
-	MaxDataPoints int64              `json:"maxDataPoints"`
-	IntervalMS    int64              `json:"intervalMs"`
-	QueryType     string             `json:"queryType"`
+	RefID         string                  `json:"refId"`
+	Model         *simplejson.Json        `json:"model,omitempty"`
+	DataSource    *datasources.DataSource `json:"datasource"`
+	MaxDataPoints int64                   `json:"maxDataPoints"`
+	IntervalMS    int64                   `json:"intervalMs"`
+	QueryType     string                  `json:"queryType"`
 }
 
 // DataQuery contains all information about a data query request.  New work should use the plugin SDK.
@@ -35,7 +37,7 @@ type DataQuery struct {
 	Queries   []DataSubQuery
 	Headers   map[string]string
 	Debug     bool
-	User      *models.SignedInUser
+	User      *user.SignedInUser
 }
 
 type DataTable struct {

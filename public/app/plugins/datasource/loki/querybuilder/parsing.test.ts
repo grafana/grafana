@@ -1,5 +1,5 @@
 import { buildVisualQueryFromString } from './parsing';
-import { LokiVisualQuery } from './types';
+import { LokiOperationId, LokiVisualQuery } from './types';
 
 describe('buildVisualQueryFromString', () => {
   it('creates no errors for empty query', () => {
@@ -56,7 +56,7 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: '__line_contains', params: ['line'] }],
+        operations: [{ id: LokiOperationId.LineContains, params: ['line'] }],
       })
     );
   });
@@ -71,21 +71,28 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: '__line_contains', params: ['\\line'] }],
+        operations: [{ id: LokiOperationId.LineContains, params: ['\\line'] }],
       })
     );
   });
 
   it('returns error for query with ip matching line filter', () => {
-    const context = buildVisualQueryFromString('{app="frontend"} |= ip("192.168.4.5/16")');
-    expect(context.errors).toEqual([
-      {
-        text: 'Matching ip addresses not supported in query builder: |= ip("192.168.4.5/16")',
-        from: 17,
-        to: 40,
-        parentType: 'LineFilters',
-      },
-    ]);
+    const context = buildVisualQueryFromString('{app="frontend"} |= ip("192.168.4.5/16") | logfmt');
+    expect(context).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: LokiOperationId.LineFilterIpMatches, params: ['|=', '192.168.4.5/16'] },
+          { id: LokiOperationId.Logfmt, params: [] },
+        ],
+      })
+    );
   });
 
   it('parses query with matcher label filter', () => {
@@ -98,7 +105,7 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: '__label_filter', params: ['bar', '=', 'baz'] }],
+        operations: [{ id: LokiOperationId.LabelFilter, params: ['bar', '=', 'baz'] }],
       })
     );
   });
@@ -113,7 +120,7 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: '__label_filter', params: ['bar', '>=', '8'] }],
+        operations: [{ id: LokiOperationId.LabelFilter, params: ['bar', '>=', '8'] }],
       })
     );
   });
@@ -128,7 +135,7 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: '__label_filter_no_errors', params: [] }],
+        operations: [{ id: LokiOperationId.LabelFilterNoErrors, params: [] }],
       })
     );
   });
@@ -143,7 +150,7 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: '__label_filter', params: ['bar', '<', '8mb'] }],
+        operations: [{ id: LokiOperationId.LabelFilter, params: ['bar', '<', '8mb'] }],
       })
     );
   });
@@ -162,14 +169,21 @@ describe('buildVisualQueryFromString', () => {
 
   it('returns error for query with ip label filter', () => {
     const context = buildVisualQueryFromString('{app="frontend"} | logfmt | address=ip("192.168.4.5/16")');
-    expect(context.errors).toEqual([
-      {
-        text: 'IpLabelFilter not supported in query builder: address=ip("192.168.4.5/16")',
-        from: 28,
-        to: 56,
-        parentType: 'PipelineStage',
-      },
-    ]);
+    expect(context).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.LabelFilterIpMatches, params: ['address', '=', '192.168.4.5/16'] },
+        ],
+      })
+    );
   });
 
   it('parses query with with parser', () => {
@@ -182,21 +196,25 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: 'json', params: [] }],
+        operations: [{ id: LokiOperationId.Json, params: [] }],
       })
     );
   });
 
-  it('returns error for query with JSON expression parser', () => {
+  it('parses query with JSON parser with expression', () => {
     const context = buildVisualQueryFromString('{app="frontend"} | json label="value" ');
-    expect(context.errors).toEqual([
-      {
-        text: 'JsonExpressionParser not supported in visual query builder: json label="value"',
-        from: 19,
-        to: 37,
-        parentType: 'PipelineStage',
-      },
-    ]);
+    expect(context.query).toEqual({
+      labels: [{ label: 'app', op: '=', value: 'frontend' }],
+      operations: [{ id: LokiOperationId.Json, params: ['label="value"'] }],
+    });
+  });
+
+  it('parses query with JSON parser with multiple expressions', () => {
+    const context = buildVisualQueryFromString('{app="frontend"} | json label="value", bar="baz", foo="bar" ');
+    expect(context.query).toEqual({
+      labels: [{ label: 'app', op: '=', value: 'frontend' }],
+      operations: [{ id: LokiOperationId.Json, params: ['label="value"', 'bar="baz"', 'foo="bar"'] }],
+    });
   });
 
   it('parses query with with simple unwrap', () => {
@@ -212,9 +230,9 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: 'logfmt', params: [] },
-          { id: 'unwrap', params: ['bytes_processed'] },
-          { id: 'sum_over_time', params: ['1m'] },
+          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.Unwrap, params: ['bytes_processed', ''] },
+          { id: LokiOperationId.SumOverTime, params: ['1m'] },
         ],
       })
     );
@@ -233,10 +251,10 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: 'logfmt', params: [] },
-          { id: 'unwrap', params: ['duration'] },
-          { id: '__label_filter_no_errors', params: [] },
-          { id: 'sum_over_time', params: ['1m'] },
+          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.Unwrap, params: ['duration', ''] },
+          { id: LokiOperationId.LabelFilterNoErrors, params: [] },
+          { id: LokiOperationId.SumOverTime, params: ['1m'] },
         ],
       })
     );
@@ -255,27 +273,35 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: 'logfmt', params: [] },
-          { id: 'unwrap', params: ['duration'] },
-          { id: '__label_filter', params: ['label', '=', 'value'] },
-          { id: 'sum_over_time', params: ['1m'] },
+          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.Unwrap, params: ['duration', ''] },
+          { id: LokiOperationId.LabelFilter, params: ['label', '=', 'value'] },
+          { id: LokiOperationId.SumOverTime, params: ['1m'] },
         ],
       })
     );
   });
 
-  it('returns error for query with unwrap and conversion operation', () => {
+  it('parses query with unwrap and conversion function', () => {
     const context = buildVisualQueryFromString(
       'sum_over_time({app="frontend"} | logfmt | unwrap duration(label) [5m])'
     );
-    expect(context.errors).toEqual([
-      {
-        text: 'Unwrap with conversion operator not supported in query builder: | unwrap duration(label)',
-        from: 40,
-        to: 64,
-        parentType: 'LogRangeExpr',
-      },
-    ]);
+    expect(context).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.Unwrap, params: ['label', 'duration'] },
+          { id: LokiOperationId.SumOverTime, params: ['5m'] },
+        ],
+      })
+    );
   });
 
   it('parses metrics query with function', () => {
@@ -289,8 +315,8 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: 'json', params: [] },
-          { id: 'rate', params: ['5m'] },
+          { id: LokiOperationId.Json, params: [] },
+          { id: LokiOperationId.Rate, params: ['5m'] },
         ],
       })
     );
@@ -307,9 +333,9 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: 'json', params: [] },
-          { id: 'rate', params: ['5m'] },
-          { id: 'sum', params: [] },
+          { id: LokiOperationId.Json, params: [] },
+          { id: LokiOperationId.Rate, params: ['5m'] },
+          { id: LokiOperationId.Sum, params: [] },
         ],
       })
     );
@@ -326,9 +352,9 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: 'json', params: [] },
-          { id: 'rate', params: ['5m'] },
-          { id: '__sum_by', params: ['job', 'name'] },
+          { id: LokiOperationId.Json, params: [] },
+          { id: LokiOperationId.Rate, params: ['5m'] },
+          { id: LokiOperationId.SumBy, params: ['job', 'name'] },
         ],
       })
     );
@@ -345,9 +371,9 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: 'json', params: [] },
-          { id: 'rate', params: ['5m'] },
-          { id: '__sum_without', params: ['job', 'name'] },
+          { id: LokiOperationId.Json, params: [] },
+          { id: LokiOperationId.Rate, params: ['5m'] },
+          { id: LokiOperationId.SumWithout, params: ['job', 'name'] },
         ],
       })
     );
@@ -364,11 +390,11 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: '__line_matches_regex', params: ['abc'] },
-          { id: 'json', params: [] },
-          { id: '__label_filter', params: ['bar', '=', 'baz'] },
-          { id: 'rate', params: ['5m'] },
-          { id: 'sum', params: [] },
+          { id: LokiOperationId.LineMatchesRegex, params: ['abc'] },
+          { id: LokiOperationId.Json, params: [] },
+          { id: LokiOperationId.LabelFilter, params: ['bar', '=', 'baz'] },
+          { id: LokiOperationId.Rate, params: ['5m'] },
+          { id: LokiOperationId.Sum, params: [] },
         ],
       })
     );
@@ -387,11 +413,11 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: 'logfmt', params: [] },
-          { id: '__label_filter_no_errors', params: [] },
-          { id: 'count_over_time', params: ['5m'] },
-          { id: 'sum', params: [] },
-          { id: 'topk', params: [10] },
+          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.LabelFilterNoErrors, params: [] },
+          { id: LokiOperationId.CountOverTime, params: ['5m'] },
+          { id: LokiOperationId.Sum, params: [] },
+          { id: LokiOperationId.TopK, params: [10] },
         ],
       })
     );
@@ -416,7 +442,7 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: 'rate', params: ['$__interval'] }],
+        operations: [{ id: LokiOperationId.Rate, params: ['$__interval'] }],
       })
     );
   });
@@ -431,7 +457,7 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: 'quantile_over_time', params: ['0.99', '1m'] }],
+        operations: [{ id: LokiOperationId.QuantileOverTime, params: ['1m', '0.99'] }],
       })
     );
   });
@@ -446,13 +472,13 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: 'line_format', params: ['abc'] }],
+        operations: [{ id: LokiOperationId.LineFormat, params: ['abc'] }],
       })
     );
   });
 
   it('parses query with label format', () => {
-    expect(buildVisualQueryFromString('{app="frontend"} | label_format newLabel=oldLabel')).toEqual(
+    expect(buildVisualQueryFromString('{app="frontend"} | label_format renameTo=original')).toEqual(
       noErrors({
         labels: [
           {
@@ -461,13 +487,13 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: 'label_format', params: ['newLabel', 'oldLabel'] }],
+        operations: [{ id: LokiOperationId.LabelFormat, params: ['original', 'renameTo'] }],
       })
     );
   });
 
   it('parses query with multiple label format', () => {
-    expect(buildVisualQueryFromString('{app="frontend"} | label_format newLabel=oldLabel, bar="baz"')).toEqual(
+    expect(buildVisualQueryFromString('{app="frontend"} | label_format renameTo=original, bar=baz')).toEqual(
       noErrors({
         labels: [
           {
@@ -477,8 +503,8 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: 'label_format', params: ['newLabel', 'oldLabel'] },
-          { id: 'label_format', params: ['bar', 'baz'] },
+          { id: LokiOperationId.LabelFormat, params: ['original', 'renameTo'] },
+          { id: LokiOperationId.LabelFormat, params: ['baz', 'bar'] },
         ],
       })
     );
@@ -488,13 +514,13 @@ describe('buildVisualQueryFromString', () => {
     expect(buildVisualQueryFromString('rate({project="bar"}[5m]) / rate({project="foo"}[5m])')).toEqual(
       noErrors({
         labels: [{ op: '=', value: 'bar', label: 'project' }],
-        operations: [{ id: 'rate', params: ['5m'] }],
+        operations: [{ id: LokiOperationId.Rate, params: ['5m'] }],
         binaryQueries: [
           {
             operator: '/',
             query: {
               labels: [{ op: '=', value: 'foo', label: 'project' }],
-              operations: [{ id: 'rate', params: ['5m'] }],
+              operations: [{ id: LokiOperationId.Rate, params: ['5m'] }],
             },
           },
         ],
@@ -507,8 +533,8 @@ describe('buildVisualQueryFromString', () => {
       noErrors({
         labels: [{ op: '=', value: 'bar', label: 'project' }],
         operations: [
-          { id: 'rate', params: ['5m'] },
-          { id: '__divide_by', params: [2] },
+          { id: LokiOperationId.Rate, params: ['5m'] },
+          { id: LokiOperationId.DivideBy, params: [2] },
         ],
       })
     );
@@ -521,21 +547,21 @@ describe('buildVisualQueryFromString', () => {
       noErrors({
         labels: [{ op: '=', value: 'bar', label: 'project' }],
         operations: [
-          { id: 'rate', params: ['5m'] },
-          { id: '__multiply_by', params: [2] },
+          { id: LokiOperationId.Rate, params: ['5m'] },
+          { id: LokiOperationId.MultiplyBy, params: [2] },
         ],
         binaryQueries: [
           {
             operator: '/',
             query: {
               labels: [{ op: '=', value: 'foo', label: 'project' }],
-              operations: [{ id: 'rate', params: ['5m'] }],
+              operations: [{ id: LokiOperationId.Rate, params: ['5m'] }],
               binaryQueries: [
                 {
                   operator: '+',
                   query: {
                     labels: [{ op: '=', value: 'test', label: 'app' }],
-                    operations: [{ id: 'rate', params: ['1m'] }],
+                    operations: [{ id: LokiOperationId.Rate, params: ['1m'] }],
                   },
                 },
               ],

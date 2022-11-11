@@ -83,11 +83,24 @@ Object {
       ],
     },
   },
+  "focus": Object {
+    "alpha": 1,
+  },
   "hooks": Object {},
+  "legend": Object {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
+  "ms": 1,
+  "padding": Array [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
   "scales": Object {
     "__fixed/na-na/na-na/auto/linear/na": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -116,6 +129,7 @@ Object {
       ],
       "facets": undefined,
       "fill": [Function],
+      "gaps": [Function],
       "paths": [Function],
       "points": Object {
         "fill": "#ff0000",
@@ -139,6 +153,7 @@ Object {
       ],
       "facets": undefined,
       "fill": [Function],
+      "gaps": [Function],
       "paths": [Function],
       "points": Object {
         "fill": "#ff0000",
@@ -162,6 +177,7 @@ Object {
       ],
       "facets": undefined,
       "fill": [Function],
+      "gaps": [Function],
       "paths": [Function],
       "points": Object {
         "fill": "#ff0000",
@@ -185,6 +201,7 @@ Object {
       ],
       "facets": undefined,
       "fill": [Function],
+      "gaps": [Function],
       "paths": [Function],
       "points": Object {
         "fill": "#ff0000",
@@ -208,6 +225,7 @@ Object {
       ],
       "facets": undefined,
       "fill": [Function],
+      "gaps": [Function],
       "paths": [Function],
       "points": Object {
         "fill": "#ff0000",

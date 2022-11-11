@@ -68,8 +68,6 @@ The Share shortened link capability allows you to create smaller and simpler URL
 
 ## Available feature toggles
 
-### explore2Dashboard
+### exploreMixedDatasource
 
-> **Note:** Available in Grafana 8.5.0 and later versions.
-
-Enabled by default, allows users to create panels in dashboards from within Explore.
+Disabled by default, allows users in Explore to have different datasources for different queries. If compatible, results will be combined.

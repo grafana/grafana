@@ -2,30 +2,28 @@ package querydata
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"net/http"
 	"regexp"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
 	"github.com/grafana/grafana/pkg/util/maputil"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 const legendFormatAuto = "__auto"
 
 var legendFormatRegexp = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
-
-type clientGetter func(map[string]string) (*client.Client, error)
 
 type ExemplarEvent struct {
 	Time   time.Time
@@ -33,10 +31,12 @@ type ExemplarEvent struct {
 	Labels map[string]string
 }
 
+// QueryData handles querying but different from buffered package uses a custom client instead of default Go Prom
+// client.
 type QueryData struct {
 	intervalCalculator intervalv2.Calculator
 	tracer             tracing.Tracer
-	getClient          clientGetter
+	client             *client.Client
 	log                log.Logger
 	ID                 int64
 	URL                string
@@ -45,34 +45,30 @@ type QueryData struct {
 }
 
 func New(
-	httpClientProvider httpclient.Provider,
-	cfg *setting.Cfg,
+	httpClient *http.Client,
 	features featuremgmt.FeatureToggles,
 	tracer tracing.Tracer,
 	settings backend.DataSourceInstanceSettings,
 	plog log.Logger,
 ) (*QueryData, error) {
-	var jsonData map[string]interface{}
-	if err := json.Unmarshal(settings.JSONData, &jsonData); err != nil {
-		return nil, fmt.Errorf("error reading settings: %w", err)
+	jsonData, err := utils.GetJsonData(settings)
+	if err != nil {
+		return nil, err
 	}
+	httpMethod, _ := maputil.GetStringOptional(jsonData, "httpMethod")
 
 	timeInterval, err := maputil.GetStringOptional(jsonData, "timeInterval")
 	if err != nil {
 		return nil, err
 	}
 
-	p := client.NewProvider(settings, jsonData, httpClientProvider, cfg, features, plog)
-	pc, err := client.NewProviderCache(p)
-	if err != nil {
-		return nil, err
-	}
+	promClient := client.NewClient(httpClient, httpMethod, settings.URL)
 
 	return &QueryData{
 		intervalCalculator: intervalv2.NewCalculator(),
 		tracer:             tracer,
 		log:                plog,
-		getClient:          pc.GetClient,
+		client:             promClient,
 		TimeInterval:       timeInterval,
 		ID:                 settings.ID,
 		URL:                settings.URL,
@@ -86,22 +82,17 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 		Responses: backend.Responses{},
 	}
 
-	client, err := s.getClient(req.Headers)
-	if err != nil {
-		return &result, err
-	}
-
 	for _, q := range req.Queries {
 		query, err := models.Parse(q, s.TimeInterval, s.intervalCalculator, fromAlert)
 		if err != nil {
 			return &result, err
 		}
-		r, err := s.fetch(ctx, client, query)
+		r, err := s.fetch(ctx, s.client, query, req.Headers)
 		if err != nil {
 			return &result, err
 		}
 		if r == nil {
-			s.log.Debug("Received nilresponse from runQuery", "query", query.Expr)
+			s.log.FromContext(ctx).Debug("Received nilresponse from runQuery", "query", query.Expr)
 			continue
 		}
 		result.Responses[q.RefID] = *r
@@ -110,39 +101,48 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	return &result, nil
 }
 
-func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.Query) (*backend.DataResponse, error) {
-	s.log.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr)
+func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.Query, headers map[string]string) (*backend.DataResponse, error) {
+	traceCtx, end := s.trace(ctx, q)
+	defer end()
 
-	traceCtx, span := s.trace(ctx, q)
-	defer span.End()
+	logger := s.log.FromContext(traceCtx)
+	logger.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr)
 
 	response := &backend.DataResponse{
 		Frames: data.Frames{},
 		Error:  nil,
 	}
 
-	if q.RangeQuery {
-		res, err := s.rangeQuery(traceCtx, client, q)
+	if q.InstantQuery {
+		res, err := s.instantQuery(traceCtx, client, q, headers)
 		if err != nil {
 			return nil, err
 		}
+		response.Error = res.Error
 		response.Frames = res.Frames
 	}
 
-	if q.InstantQuery {
-		res, err := s.instantQuery(traceCtx, client, q)
+	if q.RangeQuery {
+		res, err := s.rangeQuery(traceCtx, client, q, headers)
 		if err != nil {
 			return nil, err
+		}
+		if res.Error != nil {
+			if response.Error == nil {
+				response.Error = res.Error
+			} else {
+				response.Error = fmt.Errorf("%v %w", response.Error, res.Error) // lovely
+			}
 		}
 		response.Frames = append(response.Frames, res.Frames...)
 	}
 
 	if q.ExemplarQuery {
-		res, err := s.exemplarQuery(traceCtx, client, q)
+		res, err := s.exemplarQuery(traceCtx, client, q, headers)
 		if err != nil {
 			// If exemplar query returns error, we want to only log it and
 			// continue with other results processing
-			s.log.Error("Exemplar query failed", "query", q.Expr, "err", err)
+			logger.Error("Exemplar query failed", "query", q.Expr, "err", err)
 		}
 		if res != nil {
 			response.Frames = append(response.Frames, res.Frames...)
@@ -152,34 +152,42 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 	return response, nil
 }
 
-func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query) (*backend.DataResponse, error) {
-	res, err := c.QueryRange(ctx, q)
+func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (*backend.DataResponse, error) {
+	res, err := c.QueryRange(ctx, q, sdkHeaderToHttpHeader(headers))
 	if err != nil {
 		return nil, err
 	}
 	return s.parseResponse(ctx, q, res)
 }
 
-func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query) (*backend.DataResponse, error) {
-	res, err := c.QueryInstant(ctx, q)
+func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (*backend.DataResponse, error) {
+	res, err := c.QueryInstant(ctx, q, sdkHeaderToHttpHeader(headers))
 	if err != nil {
 		return nil, err
 	}
 	return s.parseResponse(ctx, q, res)
 }
 
-func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query) (*backend.DataResponse, error) {
-	res, err := c.QueryExemplars(ctx, q)
+func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (*backend.DataResponse, error) {
+	res, err := c.QueryExemplars(ctx, q, sdkHeaderToHttpHeader(headers))
 	if err != nil {
 		return nil, err
 	}
 	return s.parseResponse(ctx, q, res)
 }
 
-func (s *QueryData) trace(ctx context.Context, q *models.Query) (context.Context, tracing.Span) {
-	traceCtx, span := s.tracer.Start(ctx, "datasource.prometheus")
-	span.SetAttributes("expr", q.Expr, attribute.Key("expr").String(q.Expr))
-	span.SetAttributes("start_unixnano", q.Start, attribute.Key("start_unixnano").Int64(q.Start.UnixNano()))
-	span.SetAttributes("stop_unixnano", q.End, attribute.Key("stop_unixnano").Int64(q.End.UnixNano()))
-	return traceCtx, span
+func (s *QueryData) trace(ctx context.Context, q *models.Query) (context.Context, func()) {
+	return utils.StartTrace(ctx, s.tracer, "datasource.prometheus", []utils.Attribute{
+		{Key: "expr", Value: q.Expr, Kv: attribute.Key("expr").String(q.Expr)},
+		{Key: "start_unixnano", Value: q.Start, Kv: attribute.Key("start_unixnano").Int64(q.Start.UnixNano())},
+		{Key: "stop_unixnano", Value: q.End, Kv: attribute.Key("stop_unixnano").Int64(q.End.UnixNano())},
+	})
+}
+
+func sdkHeaderToHttpHeader(headers map[string]string) http.Header {
+	httpHeader := make(http.Header)
+	for key, val := range headers {
+		httpHeader[key] = []string{val}
+	}
+	return httpHeader
 }

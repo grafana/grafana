@@ -1,10 +1,11 @@
-import Map from 'ol/Map';
+import { Map as OpenLayersMap } from 'ol';
 
 import {
   MapLayerRegistryItem,
   Registry,
   MapLayerOptions,
   GrafanaTheme2,
+  EventBus,
   SelectableValue,
   PluginState,
 } from '@grafana/data';
@@ -26,18 +27,18 @@ export const defaultBaseLayer: MapLayerRegistryItem = {
   name: 'Default base layer',
   isBaseMap: true,
 
-  create: (map: Map, options: MapLayerOptions, theme: GrafanaTheme2) => {
+  create: (map: OpenLayersMap, options: MapLayerOptions, eventBus: EventBus, theme: GrafanaTheme2) => {
     const serverLayerType = config?.geomapDefaultBaseLayerConfig?.type;
     if (serverLayerType) {
       const layer = geomapLayerRegistry.getIfExists(serverLayerType);
       if (!layer) {
         throw new Error('Invalid basemap configuration on server');
       }
-      return layer.create(map, config.geomapDefaultBaseLayerConfig!, theme);
+      return layer.create(map, config.geomapDefaultBaseLayerConfig!, eventBus, theme);
     }
 
     // For now use carto as our default basemap
-    return carto.create(map, options, theme);
+    return carto.create(map, options, eventBus, theme);
   },
 };
 
@@ -57,15 +58,25 @@ interface RegistrySelectInfo {
 
 function getLayersSelection(items: Array<MapLayerRegistryItem<any>>, current?: string): RegistrySelectInfo {
   const res: RegistrySelectInfo = { options: [], current: [] };
+  const alpha: Array<SelectableValue<string>> = [];
   for (const layer of items) {
-    if (layer.state === PluginState.alpha && !hasAlphaPanels) {
-      continue;
+    const opt: SelectableValue<string> = { label: layer.name, value: layer.id, description: layer.description };
+    if (layer.state === PluginState.alpha) {
+      if (!hasAlphaPanels) {
+        continue;
+      }
+      opt.label = `${layer.name} (Alpha)`;
+      opt.icon = 'bolt';
+      alpha.push(opt);
+    } else {
+      res.options.push(opt);
     }
-    const opt = { label: layer.name, value: layer.id, description: layer.description };
-    res.options.push(opt);
     if (layer.id === current) {
       res.current.push(opt);
     }
+  }
+  for (const p of alpha) {
+    res.options.push(p);
   }
   return res;
 }

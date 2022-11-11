@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React, { useCallback } from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Card, Checkbox, CollapsableSection, Icon, IconName, Spinner, stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Card, Checkbox, CollapsableSection, Icon, IconName, Spinner, useStyles2 } from '@grafana/ui';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
@@ -25,23 +26,29 @@ export interface DashboardSection {
 interface SectionHeaderProps {
   selection?: SelectionChecker;
   selectionToggle?: SelectionToggle;
+  onClickItem?: (e: React.MouseEvent<HTMLElement>) => void;
   onTagSelected: (tag: string) => void;
   section: DashboardSection;
   renderStandaloneBody?: boolean; // render the body on its own
   tags?: string[];
 }
 
-export const FolderSection: FC<SectionHeaderProps> = ({
+export const FolderSection = ({
   section,
   selectionToggle,
+  onClickItem,
   onTagSelected,
   selection,
   renderStandaloneBody,
   tags,
-}) => {
+}: SectionHeaderProps) => {
   const editable = selectionToggle != null;
-  const theme = useTheme();
-  const styles = getSectionHeaderStyles(theme, section.selected, editable);
+  const styles = useStyles2(
+    useCallback(
+      (theme: GrafanaTheme2) => getSectionHeaderStyles(theme, section.selected, editable),
+      [section.selected, editable]
+    )
+  );
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(getSectionStorageKey(section.title), false);
 
   const results = useAsync(async () => {
@@ -55,6 +62,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
       kind: ['dashboard'],
       location: section.uid,
       sort: 'name_sort',
+      limit: 1000, // this component does not have infinate scroll, so we need to load everything upfront
     };
     if (section.itemsUIDs) {
       query = {
@@ -78,7 +86,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
       folderTitle,
     }));
     return v;
-  }, [sectionExpanded, section, tags]);
+  }, [sectionExpanded, tags]);
 
   const onSectionExpand = () => {
     setSectionExpanded(!sectionExpanded);
@@ -99,12 +107,6 @@ export const FolderSection: FC<SectionHeaderProps> = ({
     }
   };
 
-  const onToggleChecked = (item: DashboardSectionItem) => {
-    if (selectionToggle) {
-      selectionToggle('dashboard', item.uid!);
-    }
-  };
-
   const id = useUniqueId();
   const labelId = `section-header-label-${id}`;
 
@@ -116,7 +118,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
   const renderResults = () => {
     if (!results.value) {
       return null;
-    } else if (results.value.length === 0) {
+    } else if (results.value.length === 0 && !results.loading) {
       return (
         <Card>
           <Card.Heading>No results found</Card.Heading>
@@ -137,8 +139,13 @@ export const FolderSection: FC<SectionHeaderProps> = ({
           key={v.uid}
           item={v}
           onTagSelected={onTagSelected}
-          onToggleChecked={onToggleChecked as any}
+          onToggleChecked={(item) => {
+            if (selectionToggle) {
+              selectionToggle('dashboard', item.uid!);
+            }
+          }}
           editable={Boolean(selection != null)}
+          onClickItem={onClickItem}
         />
       );
     });
@@ -155,6 +162,8 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
   return (
     <CollapsableSection
+      headerDataTestId={selectors.components.Search.folderHeader(section.title)}
+      contentDataTestId={selectors.components.Search.folderContent(section.title)}
       isOpen={sectionExpanded ?? false}
       onToggle={onSectionExpand}
       className={styles.wrapper}
@@ -189,8 +198,8 @@ export const FolderSection: FC<SectionHeaderProps> = ({
   );
 };
 
-const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = false, editable: boolean) => {
-  const { sm } = theme.spacing;
+const getSectionHeaderStyles = (theme: GrafanaTheme2, selected = false, editable: boolean) => {
+  const sm = theme.spacing(1);
   return {
     wrapper: cx(
       css`
@@ -198,7 +207,7 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
         font-size: ${theme.typography.size.base};
         padding: 12px;
         border-bottom: none;
-        color: ${theme.colors.textWeak};
+        color: ${theme.colors.text.secondary};
         z-index: 1;
 
         &:hover,
@@ -235,7 +244,7 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
     `,
     link: css`
       padding: 2px 10px 0;
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
       opacity: 0;
       transition: opacity 150ms ease-in-out;
     `,
@@ -252,4 +261,4 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
       padding-bottom: 1rem;
     `,
   };
-});
+};

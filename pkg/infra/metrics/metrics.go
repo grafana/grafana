@@ -4,6 +4,7 @@ import (
 	"runtime"
 
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
+	pubdash "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -101,6 +102,12 @@ var (
 
 	// MAccessEvaluationCount is a metric gauge for total number of evaluation requests
 	MAccessEvaluationCount prometheus.Counter
+
+	// MPublicDashboardRequestCount is a metric counter for public dashboards requests
+	MPublicDashboardRequestCount prometheus.Counter
+
+	// MPublicDashboardDatasourceQuerySuccess is a metric counter for successful queries labelled by datasource
+	MPublicDashboardDatasourceQuerySuccess *prometheus.CounterVec
 )
 
 // Timers
@@ -174,9 +181,6 @@ var (
 	// StatsTotalDashboardVersions is a metric of total number of dashboard versions stored in Grafana.
 	StatsTotalDashboardVersions prometheus.Gauge
 
-	// grafanaBuildVersion is a metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built
-	grafanaBuildVersion *prometheus.GaugeVec
-
 	grafanaPluginBuildInfoDesc *prometheus.GaugeVec
 
 	// StatsTotalLibraryPanels is a metric of total number of library panels stored in Grafana.
@@ -187,6 +191,9 @@ var (
 
 	// StatsTotalDataKeys is a metric of total number of data keys stored in Grafana.
 	StatsTotalDataKeys *prometheus.GaugeVec
+
+	// MStatTotalPublicDashboards is a metric total amount of public dashboards
+	MStatTotalPublicDashboards prometheus.Gauge
 )
 
 func init() {
@@ -407,6 +414,18 @@ func init() {
 		Namespace: ExporterName,
 	})
 
+	MPublicDashboardRequestCount = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
+		Name:      "public_dashboard_request_count",
+		Help:      "counter for public dashboards requests",
+		Namespace: ExporterName,
+	})
+
+	MPublicDashboardDatasourceQuerySuccess = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
+		Name:      "public_dashboard_datasource_query_success",
+		Help:      "counter for queries to public dashboard datasources labelled by datasource type and success status success/failed",
+		Namespace: ExporterName,
+	}, []string{"datasource", "status"}, map[string][]string{"status": pubdash.QueryResultStatuses})
+
 	MStatTotalDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard",
 		Help:      "total amount of dashboards",
@@ -485,12 +504,6 @@ func init() {
 		Namespace: ExporterName,
 	}, []string{"plugin_id"})
 
-	grafanaBuildVersion = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name:      "build_info",
-		Help:      "A metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built",
-		Namespace: ExporterName,
-	}, []string{"version", "revision", "branch", "goversion", "edition"})
-
 	grafanaPluginBuildInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "plugin_build_info",
 		Help:      "A metric with a constant '1' value labeled by pluginId, pluginType and version from which Grafana plugin was built",
@@ -550,16 +563,37 @@ func init() {
 		Help:      "total amount of data keys in the database",
 		Namespace: ExporterName,
 	}, []string{"active"})
+
+	MStatTotalPublicDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_public_dashboard",
+		Help:      "total amount of public dashboards",
+		Namespace: ExporterName,
+	})
 }
 
 // SetBuildInformation sets the build information for this binary
-func SetBuildInformation(version, revision, branch string) {
+func SetBuildInformation(version, revision, branch string, buildTimestamp int64) {
 	edition := "oss"
 	if setting.IsEnterprise {
 		edition = "enterprise"
 	}
 
+	grafanaBuildVersion := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "build_info",
+		Help:      "A metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built",
+		Namespace: ExporterName,
+	}, []string{"version", "revision", "branch", "goversion", "edition"})
+
+	grafanaBuildTimestamp := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "build_timestamp",
+		Help:      "A metric exposing when the binary was built in epoch",
+		Namespace: ExporterName,
+	}, []string{"version", "revision", "branch", "goversion", "edition"})
+
+	prometheus.MustRegister(grafanaBuildVersion, grafanaBuildTimestamp)
+
 	grafanaBuildVersion.WithLabelValues(version, revision, branch, runtime.Version(), edition).Set(1)
+	grafanaBuildTimestamp.WithLabelValues(version, revision, branch, runtime.Version(), edition).Set(float64(buildTimestamp))
 }
 
 // SetEnvironmentInformation exposes environment values provided by the operators as an `_info` metric.
@@ -636,7 +670,6 @@ func initMetricVars() {
 		StatsTotalActiveEditors,
 		StatsTotalActiveAdmins,
 		StatsTotalDataSources,
-		grafanaBuildVersion,
 		grafanaPluginBuildInfoDesc,
 		StatsTotalDashboardVersions,
 		StatsTotalAnnotations,
@@ -644,5 +677,8 @@ func initMetricVars() {
 		StatsTotalLibraryPanels,
 		StatsTotalLibraryVariables,
 		StatsTotalDataKeys,
+		MStatTotalPublicDashboards,
+		MPublicDashboardRequestCount,
+		MPublicDashboardDatasourceQuerySuccess,
 	)
 }

@@ -24,10 +24,6 @@ func ProvideService(enc encryption.Internal, settings setting.Provider, features
 }
 
 func (s Service) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
-	if s.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
-		return nil, nil
-	}
-
 	return map[secrets.ProviderID]secrets.Provider{
 		kmsproviders.Default: grafana.New(s.settings, s.enc),
 	}, nil

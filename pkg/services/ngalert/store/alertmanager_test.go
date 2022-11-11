@@ -6,32 +6,25 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func TestIntegrationAlertManagerHash(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
+		Logger:   log.NewNopLogger(),
 	}
-	setupConfig := func(t *testing.T, config string) (string, string) {
-		config, configMD5 := config, fmt.Sprintf("%x", md5.Sum([]byte(config)))
-		err := store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
-			AlertmanagerConfiguration: config,
-			ConfigurationVersion:      "v1",
-			Default:                   false,
-			OrgID:                     1,
-		})
-		require.NoError(t, err)
-		return config, configMD5
-	}
+
 	t.Run("After saving the DB should return the right hash", func(t *testing.T) {
-		_, configMD5 := setupConfig(t, "my-config")
+		_, configMD5 := setupConfig(t, "my-config", store)
 		req := &models.GetLatestAlertmanagerConfigurationQuery{
 			OrgID: 1,
 		}
@@ -41,7 +34,7 @@ func TestIntegrationAlertManagerHash(t *testing.T) {
 	})
 
 	t.Run("When passing the right hash the config should be updated", func(t *testing.T) {
-		_, configMD5 := setupConfig(t, "my-config")
+		_, configMD5 := setupConfig(t, "my-config", store)
 		req := &models.GetLatestAlertmanagerConfigurationQuery{
 			OrgID: 1,
 		}
@@ -64,7 +57,7 @@ func TestIntegrationAlertManagerHash(t *testing.T) {
 	})
 
 	t.Run("When passing the wrong hash the update should error", func(t *testing.T) {
-		config, configMD5 := setupConfig(t, "my-config")
+		config, configMD5 := setupConfig(t, "my-config", store)
 		req := &models.GetLatestAlertmanagerConfigurationQuery{
 			OrgID: 1,
 		}
@@ -81,4 +74,116 @@ func TestIntegrationAlertManagerHash(t *testing.T) {
 		require.Error(t, err)
 		require.EqualError(t, ErrVersionLockedObjectNotFound, err.Error())
 	})
+}
+
+func TestIntegrationAlertManagerConfigCleanup(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	sqlStore := db.InitTestDB(t)
+	store := &DBstore{
+		SQLStore: sqlStore,
+		Logger:   log.NewNopLogger(),
+	}
+	t.Run("when calling the cleanup with less records than the limit all recrods should stay", func(t *testing.T) {
+		var orgID int64 = 3
+		oldestConfig, _ := setupConfig(t, "oldest-record", store)
+		err := store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+			AlertmanagerConfiguration: oldestConfig,
+			ConfigurationVersion:      "v1",
+			Default:                   false,
+			OrgID:                     orgID,
+		})
+		require.NoError(t, err)
+
+		olderConfig, _ := setupConfig(t, "older-record", store)
+		err = store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+			AlertmanagerConfiguration: olderConfig,
+			ConfigurationVersion:      "v1",
+			Default:                   false,
+			OrgID:                     orgID,
+		})
+		require.NoError(t, err)
+
+		config, _ := setupConfig(t, "newest-record", store)
+		err = store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+			AlertmanagerConfiguration: config,
+			ConfigurationVersion:      "v1",
+			Default:                   false,
+			OrgID:                     orgID,
+		})
+		require.NoError(t, err)
+
+		rowsAffacted, err := store.deleteOldConfigurations(context.Background(), orgID, 100)
+		require.Equal(t, int64(0), rowsAffacted)
+		require.NoError(t, err)
+
+		req := &models.GetLatestAlertmanagerConfigurationQuery{
+			OrgID: orgID,
+		}
+		err = store.GetLatestAlertmanagerConfiguration(context.Background(), req)
+		require.NoError(t, err)
+		require.Equal(t, "newest-record", req.Result.AlertmanagerConfiguration)
+	})
+	t.Run("when calling the cleanup only the oldest records surpassing the limit should be deleted", func(t *testing.T) {
+		var orgID int64 = 2
+		oldestConfig, _ := setupConfig(t, "oldest-record", store)
+		err := store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+			AlertmanagerConfiguration: oldestConfig,
+			ConfigurationVersion:      "v1",
+			Default:                   false,
+			OrgID:                     orgID,
+		})
+		require.NoError(t, err)
+
+		olderConfig, _ := setupConfig(t, "older-record", store)
+		err = store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+			AlertmanagerConfiguration: olderConfig,
+			ConfigurationVersion:      "v1",
+			Default:                   false,
+			OrgID:                     orgID,
+		})
+		require.NoError(t, err)
+
+		config, _ := setupConfig(t, "newest-record", store)
+		err = store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+			AlertmanagerConfiguration: config,
+			ConfigurationVersion:      "v1",
+			Default:                   false,
+			OrgID:                     orgID,
+		})
+		require.NoError(t, err)
+
+		rowsAffacted, err := store.deleteOldConfigurations(context.Background(), orgID, 1)
+		require.Equal(t, int64(2), rowsAffacted)
+		require.NoError(t, err)
+
+		req := &models.GetLatestAlertmanagerConfigurationQuery{
+			OrgID: orgID,
+		}
+		err = store.GetLatestAlertmanagerConfiguration(context.Background(), req)
+		require.NoError(t, err)
+		require.Equal(t, "newest-record", req.Result.AlertmanagerConfiguration)
+	})
+	t.Run("limit set to 0 should fail", func(t *testing.T) {
+		_, err := store.deleteOldConfigurations(context.Background(), 1, 0)
+		require.Error(t, err)
+	})
+	t.Run("limit set to negative should fail", func(t *testing.T) {
+		_, err := store.deleteOldConfigurations(context.Background(), 1, -1)
+		require.Error(t, err)
+	})
+}
+
+func setupConfig(t *testing.T, config string, store *DBstore) (string, string) {
+	t.Helper()
+	config, configMD5 := config, fmt.Sprintf("%x", md5.Sum([]byte(config)))
+	err := store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: config,
+		ConfigurationVersion:      "v1",
+		Default:                   false,
+		OrgID:                     1,
+	})
+	require.NoError(t, err)
+	return config, configMD5
 }

@@ -13,14 +13,12 @@ import {
   useKBar,
 } from 'kbar';
 import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction, locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import { StoreState } from 'app/types';
-
-import { keybindingSrv } from '../../core/services/keybindingSrv';
+import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useSelector } from 'app/types';
 
 import { ResultItem } from './ResultItem';
 import getDashboardNavActions from './actions/dashboard.nav.actions';
@@ -33,41 +31,45 @@ import getGlobalActions from './actions/global.static.actions';
 
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
+  const { keybindings } = useGrafana();
   const [actions, setActions] = useState<Action[]>([]);
+  const [staticActions, setStaticActions] = useState<Action[]>([]);
   const { query, showing } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
   }));
   const isNotLogin = locationService.getLocation().pathname !== '/login';
 
-  const { navBarTree } = useSelector((state: StoreState) => {
+  const { navBarTree } = useSelector((state) => {
     return {
       navBarTree: state.navBarTree,
     };
   });
 
   useEffect(() => {
-    (async () => {
-      if (isNotLogin) {
-        const staticActions = getGlobalActions(navBarTree);
-        const dashAct = await getDashboardNavActions('go/dashboard');
-        setActions([...staticActions, ...dashAct]);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isNotLogin]);
+    if (isNotLogin) {
+      const staticActionsResp = getGlobalActions(navBarTree);
+      setStaticActions(staticActionsResp);
+      setActions([...staticActionsResp]);
+    }
+  }, [isNotLogin, navBarTree]);
 
   useEffect(() => {
     if (showing) {
-      reportInteraction('commandPalette_opened');
+      reportInteraction('command_palette_opened');
 
-      keybindingSrv.bindGlobal('esc', () => {
+      // Do dashboard search on demand
+      getDashboardNavActions('go/dashboard').then((dashAct) => {
+        setActions([...staticActions, ...dashAct]);
+      });
+
+      keybindings.bindGlobal('esc', () => {
         query.setVisualState(VisualState.animatingOut);
       });
     }
 
     return () => {
-      keybindingSrv.bindGlobal('esc', () => {
-        keybindingSrv.globalEsc();
+      keybindings.bindGlobal('esc', () => {
+        keybindings.globalEsc();
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

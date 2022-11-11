@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { config } from '@grafana/runtime';
 import * as ui from '@grafana/ui';
 
 import createMockDatasource from '../../__mocks__/datasource';
@@ -30,7 +29,7 @@ describe('Azure Monitor QueryEditor', () => {
 
     render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
     await waitFor(() =>
-      expect(screen.getByTestId('azure-monitor-metrics-query-editor-with-resource-picker')).toBeInTheDocument()
+      expect(screen.getByTestId('azure-monitor-metrics-query-editor-with-experimental-ui')).toBeInTheDocument()
     );
   });
 
@@ -42,7 +41,9 @@ describe('Azure Monitor QueryEditor', () => {
     };
 
     render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
-    await waitFor(() => expect(screen.queryByTestId('azure-monitor-logs-query-editor')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByTestId('azure-monitor-logs-query-editor-with-experimental-ui')).toBeInTheDocument()
+    );
   });
 
   it('changes the query type when selected', async () => {
@@ -52,7 +53,7 @@ describe('Azure Monitor QueryEditor', () => {
     render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={onChange} onRunQuery={() => {}} />);
     await waitFor(() => expect(screen.getByTestId('azure-monitor-query-editor')).toBeInTheDocument());
 
-    const metrics = await screen.findByLabelText('Service');
+    const metrics = await screen.findByLabelText(/Service/);
     await selectOptionInTest(metrics, 'Logs');
 
     expect(onChange).toHaveBeenCalledWith({
@@ -68,16 +69,12 @@ describe('Azure Monitor QueryEditor', () => {
       <QueryEditor query={createMockQuery()} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />
     );
     await waitFor(() =>
-      expect(screen.getByTestId('azure-monitor-metrics-query-editor-with-resource-picker')).toBeInTheDocument()
+      expect(screen.getByTestId('azure-monitor-metrics-query-editor-with-experimental-ui')).toBeInTheDocument()
     );
     expect(screen.getByText('An error occurred while requesting metadata from Azure Monitor')).toBeInTheDocument();
   });
 
   it('should render the experimental QueryHeader when feature toggle is enabled', async () => {
-    const originalConfigValue = config.featureToggles.azureMonitorExperimentalUI;
-
-    config.featureToggles.azureMonitorExperimentalUI = true;
-
     const mockDatasource = createMockDatasource();
     const mockQuery = {
       ...createMockQuery(),
@@ -86,20 +83,8 @@ describe('Azure Monitor QueryEditor', () => {
 
     render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
 
-    await waitFor(() => expect(screen.getByTestId('azure-monitor-experimental-header')).toBeInTheDocument());
-
-    config.featureToggles.azureMonitorExperimentalUI = originalConfigValue;
-  });
-
-  it('should not render the experimental QueryHeader when feature toggle is disabled', async () => {
-    const mockDatasource = createMockDatasource();
-    const mockQuery = {
-      ...createMockQuery(),
-      queryType: AzureQueryType.AzureMonitor,
-    };
-
-    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
-
-    await waitFor(() => expect(screen.queryByTestId('azure-monitor-experimental-header')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('data-testid azure-monitor-experimental-header')).toBeInTheDocument()
+    );
   });
 });

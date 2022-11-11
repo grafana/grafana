@@ -12,60 +12,64 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-
-import CopyIcon from '../../common/CopyIcon';
-import { ubInlineBlock } from '../../uberUtilityStyles';
 
 import KeyValuesTable, { LinkValue } from './KeyValuesTable';
 
-describe('LinkValue', () => {
-  const title = 'titleValue';
-  const href = 'hrefValue';
-  const childrenText = 'childrenTextValue';
-  const wrapper = shallow(
-    <LinkValue href={href} title={title}>
-      {childrenText}
-    </LinkValue>
-  );
+const data = [
+  { key: 'span.kind', value: 'client' },
+  { key: 'omg', value: 'mos-def' },
+  { key: 'numericString', value: '12345678901234567890' },
+  { key: 'jsonkey', value: JSON.stringify({ hello: 'world' }) },
+];
 
+const setup = (propOverrides) => {
+  const props = {
+    data: data,
+    ...propOverrides,
+  };
+  return render(<KeyValuesTable {...props} />);
+};
+
+describe('LinkValue', () => {
   it('renders as expected', () => {
-    expect(wrapper.find('a').prop('href')).toBe(href);
-    expect(wrapper.find('a').prop('title')).toBe(title);
-    expect(wrapper.find('a').text()).toMatch(/childrenText/);
+    const title = 'titleValue';
+    const href = 'hrefValue';
+    const childrenText = 'childrenTextValue';
+    render(
+      <LinkValue href={href} title={title}>
+        {childrenText}
+      </LinkValue>
+    );
+    expect(screen.getByRole('link', { name: 'titleValue' })).toBeInTheDocument();
+    expect(screen.getByText(/^childrenTextValue$/)).toBeInTheDocument();
   });
 });
 
-describe('<KeyValuesTable>', () => {
-  let wrapper;
-
-  const data = [
-    { key: 'span.kind', value: 'client' },
-    { key: 'omg', value: 'mos-def' },
-    { key: 'numericString', value: '12345678901234567890' },
-    { key: 'jsonkey', value: JSON.stringify({ hello: 'world' }) },
-  ];
-
-  beforeEach(() => {
-    wrapper = shallow(<KeyValuesTable data={data} />);
-  });
-
+describe('KeyValuesTable tests', () => {
   it('renders without exploding', () => {
-    expect(wrapper).toBeDefined();
-    expect(wrapper.find('[data-test-id="KeyValueTable"]').length).toBe(1);
+    expect(() => setup()).not.toThrow();
   });
 
+  it('renders a table', () => {
+    setup();
+
+    expect(screen.getByTestId('KeyValueTable')).toBeInTheDocument();
+    expect(screen.getByRole('table')).toBeInTheDocument();
+  });
   it('renders a table row for each data element', () => {
-    const trs = wrapper.find('tr');
-    expect(trs.length).toBe(data.length);
-    trs.forEach((tr, i) => {
-      expect(tr.find('[data-test-id="KeyValueTable--keyColumn"]').text()).toMatch(data[i].key);
-    });
+    setup();
+
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getAllByRole('cell')).toHaveLength(12);
+    expect(screen.getAllByTestId('KeyValueTable--keyColumn')).toHaveLength(4);
+    expect(screen.getByRole('row', { name: 'span.kind "client"' })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: 'jsonkey { "hello": "world" }' })).toBeInTheDocument();
   });
 
   it('renders a single link correctly', () => {
-    wrapper.setProps({
+    setup({
       linksGetter: (array, i) =>
         array[i].key === 'span.kind'
           ? [
@@ -77,29 +81,12 @@ describe('<KeyValuesTable>', () => {
           : [],
     });
 
-    const anchor = wrapper.find(LinkValue);
-    expect(anchor).toHaveLength(1);
-    expect(anchor.prop('href')).toBe('http://example.com/?kind=client');
-    expect(anchor.prop('title')).toBe('More info about client');
-    expect(anchor.closest('tr').find('td').first().text()).toBe('span.kind');
+    expect(screen.getByRole('row', { name: 'span.kind More info about client' })).toBeInTheDocument();
   });
 
-  it('renders a <CopyIcon /> with correct copyText for each data element', () => {
-    const copyIcons = wrapper.find(CopyIcon);
-    expect(copyIcons.length).toBe(data.length);
-    copyIcons.forEach((copyIcon, i) => {
-      expect(copyIcon.prop('copyText')).toBe(JSON.stringify(data[i], null, 2));
-      expect(copyIcon.prop('tooltipTitle')).toBe('Copy JSON');
-    });
-  });
+  it('renders a <CopyIcon /> for each data element', () => {
+    setup();
 
-  it('renders a span value containing numeric string correctly', () => {
-    const el = wrapper.find(`.${ubInlineBlock}`);
-    expect(el.length).toBe(data.length);
-    el.forEach((valueDiv, i) => {
-      if (data[i].key !== 'jsonkey') {
-        expect(valueDiv.html()).toMatch(`"${data[i].value}"`);
-      }
-    });
+    expect(screen.getAllByRole('button')).toHaveLength(4);
   });
 });

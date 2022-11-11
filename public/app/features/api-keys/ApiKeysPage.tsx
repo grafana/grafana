@@ -3,13 +3,13 @@ import { connect, ConnectedProps } from 'react-redux';
 
 // Utils
 import { rangeUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { InlineField, InlineSwitch, VerticalGroup } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { getNavModel } from 'app/core/selectors/navModel';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { AccessControlAction, ApiKey, NewApiKey, StoreState } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
@@ -38,7 +38,6 @@ function mapStateToProps(state: StoreState) {
   const canCreate = contextSrv.hasAccess(AccessControlAction.ActionAPIKeysCreate, true);
 
   return {
-    navModel: getNavModel(state.navIndex, 'apikeys'),
     apiKeys: getApiKeys(state.apiKeys),
     searchQuery: state.apiKeys.searchQuery,
     apiKeysCount: getApiKeysCount(state.apiKeys),
@@ -50,6 +49,10 @@ function mapStateToProps(state: StoreState) {
     apiKeysMigrated: state.apiKeys.apiKeysMigrated,
   };
 }
+
+const defaultPageProps = {
+  navId: 'apikeys',
+};
 
 const mapDispatchToProps = {
   loadApiKeys,
@@ -142,14 +145,19 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
   };
 
   onHideApiKeys = async () => {
-    await this.props.hideApiKeys();
-    window.location.reload();
+    try {
+      await this.props.hideApiKeys();
+      let serviceAccountsUrl = '/org/serviceaccounts';
+      locationService.push(serviceAccountsUrl);
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   render() {
     const {
       hasFetched,
-      navModel,
       apiKeysCount,
       apiKeys,
       searchQuery,
@@ -162,14 +170,14 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
 
     if (!hasFetched) {
       return (
-        <Page navModel={navModel}>
+        <Page {...defaultPageProps}>
           <Page.Contents isLoading={true}>{}</Page.Contents>
         </Page>
       );
     }
 
     return (
-      <Page navModel={navModel}>
+      <Page {...defaultPageProps}>
         <Page.Contents isLoading={false}>
           <ApiKeysController>
             {({ isAdding, toggleIsAdding }) => {
@@ -177,13 +185,8 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
               const showTable = apiKeysCount > 0;
               return (
                 <>
-                  {/* TODO: remove feature flag check before GA */}
-                  {config.featureToggles.serviceAccounts && !apiKeysMigrated && (
-                    <MigrateToServiceAccountsCard onMigrate={this.onMigrateAll} />
-                  )}
-                  {config.featureToggles.serviceAccounts && apiKeysMigrated && (
-                    <APIKeysMigratedCard onHideApiKeys={this.onHideApiKeys} />
-                  )}
+                  {!apiKeysMigrated && <MigrateToServiceAccountsCard onMigrate={this.onMigrateAll} />}
+                  {apiKeysMigrated && <APIKeysMigratedCard onHideApiKeys={this.onHideApiKeys} />}
                   {showCTA ? (
                     <EmptyListCTA
                       title="You haven't added any API keys yet."

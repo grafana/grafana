@@ -100,6 +100,8 @@ describe('prepare timeseries graph', () => {
         3,
       ]
     `);
+
+    expect(frames![0].length).toEqual(6);
   });
 
   it('will insert and convert nulls to a configure "no value" value', () => {
@@ -122,5 +124,6 @@ describe('prepare timeseries graph', () => {
         3,
       ]
     `);
+    expect(frames![0].length).toEqual(6);
   });
 });

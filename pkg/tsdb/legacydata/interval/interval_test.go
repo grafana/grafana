@@ -4,11 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 func TestIntervalCalculator_Calculate(t *testing.T) {
@@ -98,7 +99,7 @@ func TestGetIntervalFrom(t *testing.T) {
 	require.NoError(t, err)
 	testCases := []struct {
 		name            string
-		dsInfo          *models.DataSource
+		dsInfo          *datasources.DataSource
 		queryModel      string
 		defaultInterval time.Duration
 		expected        time.Duration
@@ -108,7 +109,7 @@ func TestGetIntervalFrom(t *testing.T) {
 		{"2m", nil, `{"interval": "2m"}`, time.Second * 15, time.Minute * 2},
 		{"intervalMs", nil, `{"intervalMs": 45000}`, time.Second * 15, time.Second * 45},
 		{"intervalMs sub-seconds", nil, `{"intervalMs": 45200}`, time.Second * 15, time.Millisecond * 45200},
-		{"dsInfo timeInterval", &models.DataSource{
+		{"dsInfo timeInterval", &datasources.DataSource{
 			JsonData: dsJSON,
 		}, `{}`, time.Second * 15, time.Second * 60},
 		{"defaultInterval when interval empty", nil, `{"interval": ""}`, time.Second * 15, time.Second * 15},

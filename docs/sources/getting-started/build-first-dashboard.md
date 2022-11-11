@@ -23,9 +23,15 @@ Grafana can be installed on many different operating systems. For a list of the 
 
 To sign in to Grafana for the first time:
 
-1. Open your web browser and go to http://localhost:3000/. The default HTTP port that Grafana listens to is `3000` unless you have configured a different port.
-1. On the signin page, enter `admin` for username and password.
-1. Click **Sign in**. If successful, you will see a prompt to change the password.
+1. Open your web browser and go to http://localhost:3000/.
+
+   The default HTTP port that Grafana listens to is `3000` unless you have configured a different port.
+
+1. On the sign-in page, enter `admin` for the username and password.
+1. Click **Sign in**.
+
+   If successful, you will see a prompt to change the password.
+
 1. Click **OK** on the prompt and change your password.
 
 > **Note:** We strongly recommend that you change the default administrator password.
@@ -37,7 +43,10 @@ To create your first dashboard:
 1. Click the **New dashboard** item under the **Dashboards** icon in the side menu.
 1. On the dashboard, click **Add an empty panel**.
 1. In the New dashboard/Edit panel view, go to the **Query** tab.
-1. Configure your [query]({{< relref "../panels/query-a-data-source/add-a-query/" >}}) by selecting `-- Grafana --` from the data source selector. This generates the Random Walk dashboard.
+1. Configure your [query]({{< relref "../panels-visualizations/query-transform-data/#add-a-query" >}}) by selecting `-- Grafana --` from the data source selector.
+
+   This generates the Random Walk dashboard.
+
 1. Click the **Save** icon in the top right corner of your screen to save the dashboard.
 1. Add a descriptive name, and then click **Save**.
 
@@ -45,11 +54,11 @@ Congratulations, you have created your first dashboard and it is displaying resu
 
 #### Next steps
 
-Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore/" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources/" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../datasources/add-a-data-source/" >}}). The following topics will be of interest to you:
+Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore/" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources/" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../administration/data-source-management#add-a-data-source" >}}). The following topics will be of interest to you:
 
-- [Panels]({{< relref "../panels/" >}})
+- [Panels and visualizations]({{< relref "../panels-visualizations/" >}})
 - [Dashboards]({{< relref "../dashboards/" >}})
-- [Keyboard shortcuts]({{< relref "../dashboards/shortcuts/" >}})
+- [Keyboard shortcuts]({{< relref "../dashboards/use-dashboards/#keyboard-shortcuts" >}})
 - [Plugins](https://grafana.com/grafana/plugins?orderBy=weight&direction=asc)
 
 ##### Admins
@@ -58,6 +67,6 @@ The following topics are of interest to Grafana server admin users:
 
 - [Grafana configuration]({{< relref "../setup-grafana/configure-grafana/" >}})
 - [Authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}})
-- [User permissions and roles]({{< relref "../administration/manage-users-and-permissions/about-users-and-permissions/" >}})
+- [User permissions and roles]({{< relref "../administration/roles-and-permissions/" >}})
 - [Provisioning]({{< relref "../administration/provisioning/" >}})
-- [Grafana CLI]({{< relref "../administration/cli/" >}})
+- [Grafana CLI]({{< relref "../cli/" >}})

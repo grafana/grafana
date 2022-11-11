@@ -12,7 +12,7 @@ export function EdgeArrowMarker() {
         viewBox="0 0 10 10"
         refX="8"
         refY="5"
-        markerUnits="strokeWidth"
+        markerUnits="userSpaceOnUse"
         markerWidth="10"
         markerHeight="10"
         orient="auto"

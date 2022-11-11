@@ -43,7 +43,7 @@ export type QueryBuilderAddOperationHandler<T> = (
   modeller: VisualQueryModeller
 ) => T;
 
-export type QueryBuilderExplainOperationHandler = (op: QueryBuilderOperation, def: QueryBuilderOperationDef) => string;
+export type QueryBuilderExplainOperationHandler = (op: QueryBuilderOperation, def?: QueryBuilderOperationDef) => string;
 
 export type QueryBuilderOnParamChangedHandler = (
   index: number,
@@ -99,7 +99,6 @@ export interface QueryBuilderOperationParamEditorProps {
 export enum QueryEditorMode {
   Code = 'code',
   Builder = 'builder',
-  Explain = 'explain',
 }
 
 export interface VisualQueryModeller {

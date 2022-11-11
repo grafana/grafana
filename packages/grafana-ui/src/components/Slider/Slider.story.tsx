@@ -1,74 +1,51 @@
-import { Story, Meta } from '@storybook/react';
+import { ComponentStory, ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { Slider } from '@grafana/ui';
 
-import { Orientation } from '../../types/orientation';
-
-import { SliderProps } from './types';
-
-export default {
+const meta: ComponentMeta<typeof Slider> = {
   title: 'Forms/Slider',
   component: Slider,
   parameters: {
     controls: {
-      exclude: ['step', 'formatTooltipResult', 'onChange', 'onAfterChange', 'value', 'tooltipAlwaysVisible'],
+      exclude: ['formatTooltipResult', 'onChange', 'onAfterChange', 'value', 'tooltipAlwaysVisible'],
     },
     knobs: {
       disabled: true,
     },
   },
   argTypes: {
-    isStep: { name: 'Step' },
     orientation: { control: { type: 'select', options: ['horizontal', 'vertical'] } },
+    step: { control: { type: 'number', min: 1 } },
   },
-} as Meta;
-
-const commonArgs = {
-  min: 0,
-  max: 100,
-  value: 10,
-  isStep: false,
-  orientation: 'horizontal' as Orientation,
-  reverse: false,
-  included: true,
+  args: {
+    min: 0,
+    max: 100,
+    value: 10,
+    orientation: 'horizontal',
+    reverse: false,
+    included: true,
+    step: undefined,
+  },
 };
 
-interface StoryProps extends Partial<SliderProps> {
-  isStep: boolean;
-}
-
-export const Basic: Story<StoryProps> = (args) => {
+export const Basic: ComponentStory<typeof Slider> = (args) => {
   return (
     <div style={{ width: '300px', height: '300px' }}>
-      <Slider
-        step={args.isStep ? 10 : undefined}
-        value={args.value}
-        min={args.min as number}
-        max={args.max as number}
-        {...args}
-      />
+      <Slider {...args} />
     </div>
   );
 };
-Basic.args = {
-  ...commonArgs,
-};
 
-export const WithMarks: Story<StoryProps> = (args) => {
+export const WithMarks: ComponentStory<typeof Slider> = (args) => {
   return (
     <div style={{ width: '300px', height: '300px' }}>
-      <Slider
-        step={args.isStep ? 10 : undefined}
-        value={args.value}
-        min={args.min as number}
-        max={args.max as number}
-        {...args}
-      />
+      <Slider {...args} />
     </div>
   );
 };
 WithMarks.args = {
-  ...commonArgs,
   marks: { 0: '0', 25: '25', 50: '50', 75: '75', 100: '100' },
 };
+
+export default meta;
