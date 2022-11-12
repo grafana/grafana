@@ -150,6 +150,13 @@ func LoadGrafanaInstance(relpath string, pkg string, overlay fs.FS) (*build.Inst
 	// - has no cue.mod
 	// - gets prefixed with the appropriate path within grafana/grafana
 	// - and merged with all the other .cue files from grafana/grafana
+	// notes about how this crap needs to work
+	//
+	// Need a prefixing instance loader that:
+	//  - can take multiple fs.FS, each one representing a CUE module (nesting?)
+	//  - reconcile at most one of the provided fs with cwd
+	//    - behavior must differ depending on whether cwd is in a cue module
+	//    - behavior should(?) be controllable depending on
 	relpath = filepath.ToSlash(relpath)
 
 	var f fs.FS = grafana.CueSchemaFS
@@ -186,18 +193,4 @@ func BuildGrafanaInstance(ctx *cue.Context, relpath string, pkg string, overlay 
 		return v, fmt.Errorf("%s not a valid CUE instance: %w", relpath, v.Err())
 	}
 	return v, nil
-}
-
-// TODO docs
-// NOTE this function will be removed in favor of a more generic loader
-func loadInstanceWithGrafana(ifs fs.FS, prefix string) (*build.Instance, error) {
-	// notes about how this crap needs to work
-	//
-	// Need a prefixing instance loader that:
-	//  - can take multiple fs.FS, each one representing a CUE module (nesting?)
-	//  - reconcile at most one of the provided fs with cwd
-	//    - behavior must differ depending on whether cwd is in a cue module
-	//    - behavior should(?) be controllable depending on
-
-	panic("TODO")
 }
