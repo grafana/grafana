@@ -71,7 +71,8 @@ export enum HealthStatus {
   Error = 'ERROR',
 }
 
-export enum PluginRequestHeaders {
+// Internal for now
+enum PluginRequestHeaders {
   PluginID = 'X-plugin-id', // can be used for routing
   DatasourceUID = 'X-datasource-uid', // can be used for routing/ load balancing
   DashboardUID = 'X-dashboard-uid', // mainly useful for debuging slow queries
@@ -224,9 +225,10 @@ class DataSourceWithBackend<
       );
   }
 
+  /** Get request headers with plugin ID+UID set */
   protected getRequestHeaders(): Record<string, string> {
     const headers: Record<string, string> = {};
-    headers[PluginRequestHeaders.PanelID] = this.type;
+    headers[PluginRequestHeaders.PluginID] = this.type;
     headers[PluginRequestHeaders.DatasourceUID] = this.uid;
     return headers;
   }
