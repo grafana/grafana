@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardversion/dashvertest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -642,8 +643,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).
 				Return(&models.Dashboard{Id: dashID, Uid: "uid", Title: "Dash", Slug: "dash", Version: 2}, nil)
 
-			mockFolder := &fakeFolderService{
-				GetFolderByUIDResult: &models.Folder{Id: 1, Uid: "folderUID", Title: "Folder"},
+			mockFolder := &foldertest.FakeService{
+				ExpectedFolder: &folder.Folder{ID: 1, UID: "folderUID", Title: "Folder"},
 			}
 
 			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", cmd, dashboardService, mockFolder, func(sc *scenarioContext) {
@@ -673,8 +674,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			dashboardService := dashboards.NewFakeDashboardService(t)
 
-			mockFolder := &fakeFolderService{
-				GetFolderByUIDError: errors.New("Error while searching Folder ID"),
+			mockFolder := &foldertest.FakeService{
+				ExpectedError: errors.New("Error while searching Folder ID"),
 			}
 
 			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", cmd, dashboardService, mockFolder, func(sc *scenarioContext) {
