@@ -68,7 +68,7 @@ func ProvideService(
 		accessControl:    ac,
 		bus:              bus,
 	}
-	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagNestedFolders) {
+	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		svr.DBMigration(db)
 	}
 	return svr
