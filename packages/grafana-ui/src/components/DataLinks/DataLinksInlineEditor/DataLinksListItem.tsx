@@ -32,10 +32,7 @@ export const DataLinksListItem: FC<DataLinksListItemProps> = ({ link, onEdit, on
     <div className={styles.wrapper}>
       <VerticalGroup spacing="xs">
         <HorizontalGroup justify="space-between" align="flex-start" width="100%">
-          <div
-            className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}
-            title={url}
-          >
+          <div className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}>
             {hasTitle ? title : 'Data link title not provided'}
           </div>
           <HorizontalGroup>
