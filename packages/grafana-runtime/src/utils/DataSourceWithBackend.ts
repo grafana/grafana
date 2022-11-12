@@ -259,23 +259,43 @@ class DataSourceWithBackend<
   /**
    * Make a GET request to the datasource resource path
    */
-  async getResource(
+  async getResource<T = any>(
     path: string,
     params?: BackendSrvRequest['params'],
     options?: Partial<BackendSrvRequest>
-  ): Promise<any> {
-    return getBackendSrv().get(`/api/datasources/${this.id}/resources/${path}`, params, options?.requestId, options);
+  ): Promise<T> {
+    const headers = this.getRequestHeaders();
+    const result = await lastValueFrom(
+      getBackendSrv().fetch<T>({
+        ...options,
+        method: 'GET',
+        headers: options?.headers ? { ...options.headers, ...headers } : headers,
+        params: params ?? options?.params,
+        url: `/api/datasources/${this.id}/resources/${path}`,
+      })
+    );
+    return result.data;
   }
 
   /**
    * Send a POST request to the datasource resource path
    */
-  async postResource(
+  async postResource<T = any>(
     path: string,
     data?: BackendSrvRequest['data'],
     options?: Partial<BackendSrvRequest>
-  ): Promise<any> {
-    return getBackendSrv().post(`/api/datasources/${this.id}/resources/${path}`, { ...data }, options);
+  ): Promise<T> {
+    const headers = this.getRequestHeaders();
+    const result = await lastValueFrom(
+      getBackendSrv().fetch<T>({
+        ...options,
+        method: 'GET',
+        headers: options?.headers ? { ...options.headers, ...headers } : headers,
+        data: data ?? { ...data },
+        url: `/api/datasources/${this.id}/resources/${path}`,
+      })
+    );
+    return result.data;
   }
 
   /**
@@ -287,6 +307,7 @@ class DataSourceWithBackend<
         method: 'GET',
         url: `/api/datasources/${this.id}/health`,
         showErrorAlert: false,
+        headers: this.getRequestHeaders(),
       })
     )
       .then((v: FetchResponse) => v.data as HealthCheckResult)

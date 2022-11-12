@@ -263,6 +263,7 @@ func (pr parsedRequest) validateRequest() error {
 			}
 		}
 	}
+	// TODO! verify that multiple headers sent on one line are split
 	vals = pr.httpRequest.Header.Values("X-plugin-id")
 	count = len(vals)
 	if count > 0 { // header exists
