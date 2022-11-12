@@ -66,11 +66,10 @@ func (gen *genTSVeneerIndex) Generate(decls []*DeclForGen) (*codejen.File, error
 
 func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *ast.File) ([]ast.Decl, error) {
 	lin := decl.Lineage()
-	sch := thema.SchemaP(lin, thema.LatestVersion(lin))
 	comm := decl.Meta.Common()
 
 	// Check the root, then walk the tree
-	rootv := sch.UnwrapCUE()
+	rootv := lin.Latest().Underlying()
 
 	var raw, custom, rawD, customD ast.Idents
 
