@@ -244,7 +244,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		if err != nil {
 			return nil, err
 		}
-		saveDashboardCmd.FolderId = parentFolder.Id
+		saveDashboardCmd.FolderId = parentFolder.ID
 		saveDashboardCmd.FolderUid = cmd.ParentUID
 	}
 
