@@ -771,7 +771,7 @@ export class PrometheusDatasource
     return await lastValueFrom(
       getBackendSrv()
         .fetch<BackendDataSourceResponse>({
-          url: `/api/ds/query`,
+          url: '/api/ds/query',
           method: 'POST',
           headers: this.getRequestHeaders(),
           data: {
