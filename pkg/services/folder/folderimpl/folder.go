@@ -56,7 +56,7 @@ func ProvideService(
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore))
 	store := ProvideStore(db, cfg, features)
-	svr := &Service{
+	svc := &Service{
 		cfg:              cfg,
 		log:              log.New("folder-service"),
 		dashboardService: dashboardService,
@@ -69,15 +69,16 @@ func ProvideService(
 		bus:              bus,
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		svr.DBMigration(db)
+		if err := svc.DBMigration(db); err != nil {
+			svc.log.Error("DB migration on folder service start failed.")
+		}
 	}
-	return svr
+	return svc
 }
 
-func (s *Service) DBMigration(db db.DB) {
+func (s *Service) DBMigration(db db.DB) error {
 	ctx := context.Background()
-	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		var err error
+	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) (err error) {
 		if db.GetDialect().DriverName() == migrator.SQLite {
 			_, err = sess.Exec("INSERT OR REPLACE INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1")
 		} else if db.GetDialect().DriverName() == migrator.Postgres {
@@ -87,9 +88,7 @@ func (s *Service) DBMigration(db db.DB) {
 		}
 		return err
 	})
-	if err != nil {
-		s.log.Error("DB migration on folder service start failed.")
-	}
+	return err
 }
 
 func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
