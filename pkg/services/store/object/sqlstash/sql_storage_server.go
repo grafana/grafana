@@ -23,6 +23,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// Make sure we implement both store + admin
+var _ object.ObjectStoreServer = &sqlObjectServer{}
+var _ object.ObjectStoreAdminServer = &sqlObjectServer{}
+
 func ProvideSQLObjectServer(db db.DB, cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry, resolver resolver.ObjectReferenceResolver) object.ObjectStoreServer {
 	objectServer := &sqlObjectServer{
 		sess:     db.GetSqlxSession(),
@@ -49,7 +53,7 @@ func getReadSelect(r *object.ReadObjectRequest) string {
 		"size", "etag", "errors", // errors are always returned
 		"created_at", "created_by",
 		"updated_at", "updated_by",
-		"sync_src", "sync_time"}
+		"origin", "origin_ts"}
 
 	if r.WithBody {
 		fields = append(fields, `body`)
@@ -62,8 +66,8 @@ func getReadSelect(r *object.ReadObjectRequest) string {
 
 func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql.Rows, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
 	path := "" // string (extract UID?)
-	var syncSrc sql.NullString
-	var syncTime sql.NullTime
+	var origin sql.NullString
+	originTime := int64(0)
 	raw := &object.RawObject{
 		GRN: &object.GRN{},
 	}
@@ -74,7 +78,7 @@ func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql
 		&raw.Size, &raw.ETag, &summaryjson.errors,
 		&raw.CreatedAt, &raw.CreatedBy,
 		&raw.UpdatedAt, &raw.UpdatedBy,
-		&syncSrc, &syncTime,
+		&origin, &originTime,
 	}
 	if r.WithBody {
 		args = append(args, &raw.Body)
@@ -88,10 +92,10 @@ func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql
 		return nil, err
 	}
 
-	if syncSrc.Valid || syncTime.Valid {
-		raw.Sync = &object.RawObjectSyncInfo{
-			Source: syncSrc.String,
-			Time:   syncTime.Time.UnixMilli(),
+	if origin.Valid {
+		raw.Origin = &object.ObjectOriginInfo{
+			Source: origin.String,
+			Time:   originTime,
 		}
 	}
 
@@ -273,6 +277,11 @@ func (s *sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObje
 }
 
 func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
+	return s.AdminWrite(ctx, object.ToAdminWriteObjectRequest(r))
+}
+
+//nolint:gocyclo
+func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteObjectRequest) (*object.WriteObjectResponse, error) {
 	route, err := s.getObjectKey(ctx, r.GRN)
 	if err != nil {
 		return nil, err
@@ -282,9 +291,20 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 		return nil, fmt.Errorf("invalid grn")
 	}
 
-	modifier := store.UserFromContext(ctx)
-	if modifier == nil {
-		return nil, fmt.Errorf("can not find user in context")
+	timestamp := time.Now().UnixMilli()
+	createdAt := r.CreatedAt
+	createdBy := r.CreatedBy
+	updatedAt := r.UpdatedAt
+	updatedBy := r.UpdatedBy
+	if updatedBy == "" {
+		modifier := store.UserFromContext(ctx)
+		if modifier == nil {
+			return nil, fmt.Errorf("can not find user in context")
+		}
+		updatedBy = store.GetUserIDString(modifier)
+	}
+	if updatedAt < 1000 {
+		updatedAt = timestamp
 	}
 
 	summary, body, err := s.prepare(ctx, r)
@@ -309,10 +329,26 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 	}
 
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
+		var versionInfo *object.ObjectVersionInfo
 		isUpdate := false
-		versionInfo, err := s.selectForUpdate(ctx, tx, path)
-		if err != nil {
-			return err
+		if r.ClearHistory {
+			// Optionally keep the original creation time information
+			if createdAt < 1000 || createdBy == "" {
+				err = s.fillCreationInfo(ctx, tx, path, &createdAt, &createdBy)
+				if err != nil {
+					return err
+				}
+			}
+			_, err = doDelete(ctx, tx, path)
+			if err != nil {
+				return err
+			}
+			versionInfo = &object.ObjectVersionInfo{}
+		} else {
+			versionInfo, err = s.selectForUpdate(ctx, tx, path)
+			if err != nil {
+				return err
+			}
 		}
 
 		// Same object
@@ -330,18 +366,21 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 		}
 
 		// Set the comment on this write
-		timestamp := time.Now().UnixMilli()
 		versionInfo.Comment = r.Comment
-		if versionInfo.Version == "" {
-			versionInfo.Version = "1"
-		} else {
-			// Increment the version
-			i, _ := strconv.ParseInt(versionInfo.Version, 0, 64)
-			if i < 1 {
-				i = timestamp
+		if r.Version == "" {
+			if versionInfo.Version == "" {
+				versionInfo.Version = "1"
+			} else {
+				// Increment the version
+				i, _ := strconv.ParseInt(versionInfo.Version, 0, 64)
+				if i < 1 {
+					i = timestamp
+				}
+				versionInfo.Version = fmt.Sprintf("%d", i+1)
+				isUpdate = true
 			}
-			versionInfo.Version = fmt.Sprintf("%d", i+1)
-			isUpdate = true
+		} else {
+			versionInfo.Version = r.Version
 		}
 
 		if isUpdate {
@@ -357,8 +396,8 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 		// 1. Add the `object_history` values
 		versionInfo.Size = int64(len(body))
 		versionInfo.ETag = etag
-		versionInfo.UpdatedAt = timestamp
-		versionInfo.UpdatedBy = store.GetUserIDString(modifier)
+		versionInfo.UpdatedAt = updatedAt
+		versionInfo.UpdatedBy = updatedBy
 		_, err = tx.Exec(ctx, `INSERT INTO object_history (`+
 			"path, version, message, "+
 			"size, body, etag, "+
@@ -366,7 +405,7 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 			"VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 			path, versionInfo.Version, versionInfo.Comment,
 			versionInfo.Size, body, versionInfo.ETag,
-			timestamp, versionInfo.UpdatedBy,
+			updatedAt, versionInfo.UpdatedBy,
 		)
 		if err != nil {
 			return err
@@ -411,27 +450,35 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 				"body=?, size=?, etag=?, version=?, "+
 				"updated_at=?, updated_by=?,"+
 				"name=?, description=?,"+
-				"labels=?, fields=?, errors=? "+
+				"labels=?, fields=?, errors=?, "+
+				"origin=?, origin_ts=? "+
 				"WHERE path=?",
 				body, versionInfo.Size, etag, versionInfo.Version,
-				timestamp, versionInfo.UpdatedBy,
+				updatedAt, versionInfo.UpdatedBy,
 				summary.model.Name, summary.model.Description,
 				summary.labels, summary.fields, summary.errors,
+				r.Origin, timestamp,
 				path,
 			)
 			return err
 		}
 
-		// Insert the new row
+		if createdAt < 1000 {
+			createdAt = updatedAt
+		}
+		if createdBy == "" {
+			createdBy = updatedBy
+		}
+
 		_, err = tx.Exec(ctx, "INSERT INTO object ("+
-			"path, parent_folder_path, kind, size, body, etag, version,"+
-			"updated_at, updated_by, created_at, created_by,"+
-			"name, description,"+
+			"path, parent_folder_path, kind, size, body, etag, version, "+
+			"updated_at, updated_by, created_at, created_by, "+
+			"name, description, origin, origin_ts, "+
 			"labels, fields, errors) "+
-			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 			path, getParentFolderPath(grn.Kind, path), grn.Kind, versionInfo.Size, body, etag, versionInfo.Version,
-			timestamp, versionInfo.UpdatedBy, timestamp, versionInfo.UpdatedBy, // created + updated are the same
-			summary.model.Name, summary.model.Description,
+			updatedAt, createdBy, createdAt, createdBy, // created + updated are the same
+			summary.model.Name, summary.model.Description, r.Origin, timestamp,
 			summary.labels, summary.fields, summary.errors,
 		)
 		return err
@@ -441,6 +488,28 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 		rsp.Status = object.WriteObjectResponse_ERROR
 	}
 	return rsp, err
+}
+
+func (s *sqlObjectServer) fillCreationInfo(ctx context.Context, tx *session.SessionTx, path string, createdAt *int64, createdBy *string) error {
+	if *createdAt > 1000 {
+		ignore := int64(0)
+		createdAt = &ignore
+	}
+	if *createdBy == "" {
+		ignore := ""
+		createdBy = &ignore
+	}
+
+	rows, err := tx.Query(ctx, "SELECT created_at,created_by FROM object WHERE path=?", path)
+	if err == nil {
+		if rows.Next() {
+			err = rows.Scan(&createdAt, &createdBy)
+		}
+		if err == nil {
+			err = rows.Close()
+		}
+	}
+	return err
 }
 
 func (s *sqlObjectServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, path string) (*object.ObjectVersionInfo, error) {
@@ -462,7 +531,7 @@ func (s *sqlObjectServer) selectForUpdate(ctx context.Context, tx *session.Sessi
 	return current, err
 }
 
-func (s *sqlObjectServer) prepare(ctx context.Context, r *object.WriteObjectRequest) (*summarySupport, []byte, error) {
+func (s *sqlObjectServer) prepare(ctx context.Context, r *object.AdminWriteObjectRequest) (*summarySupport, []byte, error) {
 	grn := r.GRN
 	builder := s.kinds.GetSummaryBuilder(grn.Kind)
 	if builder == nil {
@@ -490,25 +559,27 @@ func (s *sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequ
 
 	rsp := &object.DeleteObjectResponse{}
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		results, err := tx.Exec(ctx, "DELETE FROM object WHERE path=?", path)
-		if err != nil {
-			return err
-		}
-		rows, err := results.RowsAffected()
-		if err != nil {
-			return err
-		}
-		if rows > 0 {
-			rsp.OK = true
-		}
-
-		// TODO: keep history? would need current version bump, and the "write" would have to get from history
-		_, _ = tx.Exec(ctx, "DELETE FROM object_history WHERE path=?", path)
-		_, _ = tx.Exec(ctx, "DELETE FROM object_labels WHERE path=?", path)
-		_, _ = tx.Exec(ctx, "DELETE FROM object_ref WHERE path=?", path)
-		return nil
+		rsp.OK, err = doDelete(ctx, tx, path)
+		return err
 	})
 	return rsp, err
+}
+
+func doDelete(ctx context.Context, tx *session.SessionTx, path string) (bool, error) {
+	results, err := tx.Exec(ctx, "DELETE FROM object WHERE path=?", path)
+	if err != nil {
+		return false, err
+	}
+	rows, err := results.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	// TODO: keep history? would need current version bump, and the "write" would have to get from history
+	_, _ = tx.Exec(ctx, "DELETE FROM object_history WHERE path=?", path)
+	_, _ = tx.Exec(ctx, "DELETE FROM object_labels WHERE path=?", path)
+	_, _ = tx.Exec(ctx, "DELETE FROM object_ref WHERE path=?", path)
+	return rows > 0, err
 }
 
 func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
