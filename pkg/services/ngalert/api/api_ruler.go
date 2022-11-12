@@ -37,6 +37,7 @@ type RulerSrv struct {
 	log             log.Logger
 	cfg             *setting.UnifiedAlertingSettings
 	ac              accesscontrol.AccessControl
+	logzioRuleStore store.LogzioRuleStore
 }
 
 var (
@@ -565,3 +566,90 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int6
 
 // alertRuleFieldsToIgnoreInDiff contains fields that the AlertRule.Diff should ignore
 var alertRuleFieldsToIgnoreInDiff = []string{"ID", "Version", "Updated"}
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-34631 - Refactor query to retrieve visible namespaces for unified alerting rules
+func (srv RulerSrv) LogzioRouteGetRulesConfig(c *models.ReqContext) response.Response {
+	result := apimodels.NamespaceConfigResponse{}
+
+	dashboardUID := c.Query("dashboard_uid")
+	panelID, err := getPanelIDFromRequest(c.Req)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "invalid panel_id")
+	}
+	if dashboardUID == "" && panelID != 0 {
+		return ErrResp(http.StatusBadRequest, errors.New("panel_id must be set with dashboard_uid"), "")
+	}
+
+	q := ngmodels.ListAlertRulesQuery{
+		OrgID:        c.SignedInUser.OrgId,
+		DashboardUID: dashboardUID,
+		PanelID:      panelID,
+	}
+
+	if err := srv.store.ListAlertRules(c.Req.Context(), &q); err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
+	}
+
+	namespaceUIDsMap := make(map[string]interface{}, 0)
+	for _, rule := range q.Result {
+		namespaceUIDsMap[rule.NamespaceUID] = struct{}{}
+	}
+
+	if len(namespaceUIDsMap) == 0 {
+		return response.JSON(http.StatusOK, result)
+	}
+
+	namespaceUIDs := make([]string, 0, len(namespaceUIDsMap))
+	namespaceMap, err := srv.logzioRuleStore.GetVisibleUserNamespaces(c.Req.Context(), namespaceUIDs, c.OrgId, c.SignedInUser)
+
+	for uid := range namespaceUIDsMap {
+		namespaceUIDs = append(namespaceUIDs, uid)
+	}
+
+	configs := make(map[string]map[string]apimodels.GettableRuleGroupConfig)
+
+	for _, r := range q.Result {
+		folder, ok := namespaceMap[r.NamespaceUID]
+		if !ok {
+			srv.log.Error("namespace not visible to the user", "user", c.SignedInUser.UserId, "namespace", r.NamespaceUID, "rule", r.UID)
+			continue
+		}
+		namespace := folder.Title
+		_, ok = configs[namespace]
+		if !ok {
+			ruleGroupInterval := model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
+			configs[namespace] = make(map[string]apimodels.GettableRuleGroupConfig)
+			configs[namespace][r.RuleGroup] = apimodels.GettableRuleGroupConfig{
+				Name:     r.RuleGroup,
+				Interval: ruleGroupInterval,
+				Rules: []apimodels.GettableExtendedRuleNode{
+					toGettableExtendedRuleNode(*r, folder.Id),
+				},
+			}
+		} else {
+			ruleGroupConfig, ok := configs[namespace][r.RuleGroup]
+			if !ok {
+				ruleGroupInterval := model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
+				configs[namespace][r.RuleGroup] = apimodels.GettableRuleGroupConfig{
+					Name:     r.RuleGroup,
+					Interval: ruleGroupInterval,
+					Rules: []apimodels.GettableExtendedRuleNode{
+						toGettableExtendedRuleNode(*r, folder.Id),
+					},
+				}
+			} else {
+				ruleGroupConfig.Rules = append(ruleGroupConfig.Rules, toGettableExtendedRuleNode(*r, folder.Id))
+				configs[namespace][r.RuleGroup] = ruleGroupConfig
+			}
+		}
+	}
+
+	for namespace, m := range configs {
+		for _, ruleGroupConfig := range m {
+			result[namespace] = append(result[namespace], ruleGroupConfig)
+		}
+	}
+	return response.JSON(http.StatusOK, result)
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end

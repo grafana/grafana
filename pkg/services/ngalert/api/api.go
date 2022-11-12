@@ -93,6 +93,12 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		DataProxy: api.DataProxy,
 	}
 
+	// LOGZ.IO GRAFANA CHANGE :: DEV-34631 - Refactor query to retrieve visible namespaces for unified alerting rules
+	logzioRuleStore := store.LogzioRuleStore{
+		SQLStore: api.SQLStore,
+	}
+	// LOGZ.IO GRAFANA CHANGE :: end
+
 	// Register endpoints for proxying to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
@@ -103,7 +109,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, ac: api.AccessControl},
+		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, ac: api.AccessControl, logzioRuleStore: logzioRuleStore}, // LOGZ.IO GRAFANA CHANGE :: DEV-34631 - Refactor query to retrieve visible namespaces for unified alerting rules
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
@@ -118,6 +124,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			log:             logger,
 			cfg:             &api.Cfg.UnifiedAlerting,
 			ac:              api.AccessControl,
+			logzioRuleStore: logzioRuleStore, // LOGZ.IO GRAFANA CHANGE :: DEV-34631 - Refactor query to retrieve visible namespaces for unified alerting rules
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewForkedTestingApi(

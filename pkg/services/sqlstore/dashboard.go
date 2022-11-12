@@ -401,3 +401,34 @@ func (ss *SQLStore) HasAdminPermissionInFolders(ctx context.Context, query *mode
 		return nil
 	})
 }
+
+// LOGZ.IO GRAFANA CHANGE :: Refactor query to retrieve visible namespaces for unified alerting rules
+func (ss *SQLStore) GetFoldersByUIDs(ctx context.Context, query *models.GetFoldersByUIDsQuery) error {
+	params := make([]interface{}, 0)
+
+	sql := `SELECT id, uid, title FROM dashboard WHERE org_id = ?`
+	params = append(params, query.OrgID)
+
+	if len(query.DashboardUIDs) > 0 {
+		sql += ` AND uid IN (?` + strings.Repeat(",?", len(query.DashboardUIDs)-1) + `)`
+		for _, uid := range query.DashboardUIDs {
+			params = append(params, uid)
+		}
+	}
+
+	sql += ` AND is_folder = ?`
+	params = append(params, dialect.BooleanStr(true))
+
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		dashUIDsAndTitles := make([]*models.FolderRef, 0)
+		if err := sess.SQL(sql, params...).Find(&dashUIDsAndTitles); err != nil {
+			return err
+		}
+
+		query.Result = dashUIDsAndTitles
+
+		return nil
+	})
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end

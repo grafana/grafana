@@ -24,10 +24,11 @@ import (
 )
 
 type PrometheusSrv struct {
-	log     log.Logger
-	manager state.AlertInstanceManager
-	store   store.RuleStore
-	ac      accesscontrol.AccessControl
+	log             log.Logger
+	manager         state.AlertInstanceManager
+	store           store.RuleStore
+	ac              accesscontrol.AccessControl
+	logzioRuleStore store.LogzioRuleStore // LOGZ.IO GRAFANA CHANGE :: DEV-34631 - Refactor query to retrieve visible namespaces for unified alerting rules
 }
 
 const queryIncludeInternalLabels = "includeInternalLabels"
@@ -289,3 +290,151 @@ func encodedQueriesOrError(rules []ngmodels.AlertQuery) string {
 
 	return err.Error()
 }
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-34631 - Refactor query to retrieve visible namespaces for unified alerting rules
+func (srv PrometheusSrv) LogzioRouteGetRuleStatuses(c *models.ReqContext) response.Response {
+	dashboardUID := c.Query("dashboard_uid")
+	panelID, err := getPanelIDFromRequest(c.Req)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "invalid panel_id")
+	}
+	if dashboardUID == "" && panelID != 0 {
+		return ErrResp(http.StatusBadRequest, errors.New("panel_id must be set with dashboard_uid"), "")
+	}
+
+	ruleResponse := apimodels.RuleResponse{
+		DiscoveryBase: apimodels.DiscoveryBase{
+			Status: "success",
+		},
+		Data: apimodels.RuleDiscovery{
+			RuleGroups: []*apimodels.RuleGroup{},
+		},
+	}
+
+	var labelOptions []ngmodels.LabelOption
+	if !c.QueryBoolWithDefault(queryIncludeInternalLabels, false) {
+		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
+	}
+
+	alertRuleQuery := ngmodels.ListAlertRulesQuery{
+		OrgID:        c.SignedInUser.OrgId,
+		DashboardUID: dashboardUID,
+		PanelID:      panelID,
+	}
+
+	if err := srv.store.ListAlertRules(c.Req.Context(), &alertRuleQuery); err != nil {
+		ruleResponse.DiscoveryBase.Status = "error"
+		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
+		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
+		return response.JSON(http.StatusInternalServerError, ruleResponse)
+	}
+
+	namespaceUIDsMap := make(map[string]interface{}, 0)
+	for _, rule := range alertRuleQuery.Result {
+		namespaceUIDsMap[rule.NamespaceUID] = struct{}{}
+	}
+
+	if len(namespaceUIDsMap) == 0 {
+		return response.JSON(http.StatusOK, ruleResponse)
+	}
+
+	namespaceUIDs := make([]string, 0, len(namespaceUIDsMap))
+	for uid := range namespaceUIDsMap {
+		namespaceUIDs = append(namespaceUIDs, uid)
+	}
+
+	namespaceMap, err := srv.logzioRuleStore.GetVisibleUserNamespaces(c.Req.Context(), namespaceUIDs, c.OrgId, c.SignedInUser)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
+	}
+
+	groupMap := make(map[string]*apimodels.RuleGroup)
+
+	for _, rule := range alertRuleQuery.Result {
+
+		groupKey := rule.RuleGroup + "-" + rule.NamespaceUID
+		newGroup, ok := groupMap[groupKey]
+		if !ok {
+			folder := namespaceMap[rule.NamespaceUID]
+			if folder == nil {
+				srv.log.Warn("query returned rules that belong to folder the user does not have access to. The rule will not be added to the response", "folder_uid", rule.NamespaceUID, "rule_uid", rule.UID)
+				continue
+			}
+			newGroup = &apimodels.RuleGroup{
+				Name: rule.RuleGroup,
+				File: folder.Title, // file is what Prometheus uses for provisioning, we replace it with namespace.
+			}
+			groupMap[groupKey] = newGroup
+			ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, newGroup)
+		}
+
+		alertingRule := apimodels.AlertingRule{
+			State:       "inactive",
+			Name:        rule.Title,
+			Query:       ruleToQuery(srv.log, rule),
+			Duration:    rule.For.Seconds(),
+			Annotations: rule.Annotations,
+		}
+
+		newRule := apimodels.Rule{
+			Name:           rule.Title,
+			Labels:         rule.GetLabels(labelOptions...),
+			Health:         "ok",
+			Type:           apiv1.RuleTypeAlerting,
+			LastEvaluation: time.Time{},
+		}
+
+		for _, alertState := range srv.manager.GetStatesForRuleUID(c.OrgId, rule.UID) {
+			activeAt := alertState.StartsAt
+			valString := ""
+			if alertState.State == eval.Alerting || alertState.State == eval.Pending {
+				valString = formatValues(alertState)
+			}
+
+			alert := &apimodels.Alert{
+				Labels:      alertState.GetLabels(labelOptions...),
+				Annotations: alertState.Annotations,
+				State:       alertState.State.String(),
+				ActiveAt:    &activeAt,
+				Value:       valString,
+			}
+
+			if alertState.LastEvaluationTime.After(newRule.LastEvaluation) {
+				newRule.LastEvaluation = alertState.LastEvaluationTime
+			}
+
+			newRule.EvaluationTime = alertState.EvaluationDuration.Seconds()
+
+			switch alertState.State {
+			case eval.Normal:
+			case eval.Pending:
+				if alertingRule.State == "inactive" {
+					alertingRule.State = "pending"
+				}
+			case eval.Alerting:
+				alertingRule.State = "firing"
+			case eval.Error:
+				newRule.Health = "error"
+			case eval.NoData:
+				newRule.Health = "nodata"
+			}
+
+			if alertState.Error != nil {
+				newRule.LastError = alertState.Error.Error()
+				newRule.Health = "error"
+			}
+
+			alertingRule.Alerts = append(alertingRule.Alerts, alert)
+		}
+
+		alertingRule.Rule = newRule
+		newGroup.Rules = append(newGroup.Rules, alertingRule)
+		newGroup.Interval = float64(rule.IntervalSeconds)
+		newGroup.EvaluationTime = newRule.EvaluationTime
+		newGroup.LastEvaluation = newRule.LastEvaluation
+	}
+
+	return response.JSON(http.StatusOK, ruleResponse)
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end

@@ -57,5 +57,5 @@ func (f *ForkedPrometheusApi) forkRouteGetGrafanaAlertStatuses(ctx *models.ReqCo
 }
 
 func (f *ForkedPrometheusApi) forkRouteGetGrafanaRuleStatuses(ctx *models.ReqContext) response.Response {
-	return f.GrafanaSvc.RouteGetRuleStatuses(ctx)
+	return f.GrafanaSvc.LogzioRouteGetRuleStatuses(ctx) // LOGZ.IO GRAFANA CHANGE :: DEV-34631 - Refactor query to retrieve visible namespaces for unified alerting rules
 }

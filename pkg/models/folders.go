@@ -113,3 +113,19 @@ type HasAdminPermissionInFoldersQuery struct {
 	SignedInUser *SignedInUser
 	Result       bool
 }
+
+// LOGZ.IO GRAFANA CHANGE :: Refactor query to retrieve visible namespaces for unified alerting rules
+type GetFoldersByUIDsQuery struct {
+	DashboardUIDs []string
+	OrgID         int64
+
+	Result []*FolderRef
+}
+
+type FolderRef struct {
+	Id    int64
+	Uid   string
+	Title string
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
