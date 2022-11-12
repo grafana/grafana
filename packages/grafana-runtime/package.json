@@ -68,7 +68,7 @@
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "rimraf": "3.0.2",
-    "rollup": "2.79.1",
+    "rollup": "3.3.0",
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "^5.0.0",
