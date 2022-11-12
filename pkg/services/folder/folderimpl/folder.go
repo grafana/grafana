@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -54,7 +56,7 @@ func ProvideService(
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore))
 	store := ProvideStore(db, cfg, features)
-	return &Service{
+	svr := &Service{
 		cfg:              cfg,
 		log:              log.New("folder-service"),
 		dashboardService: dashboardService,
@@ -65,6 +67,28 @@ func ProvideService(
 		permissions:      folderPermissionsService,
 		accessControl:    ac,
 		bus:              bus,
+	}
+	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		svr.DBMigration(db)
+	}
+	return svr
+}
+
+func (s *Service) DBMigration(db db.DB) {
+	ctx := context.Background()
+	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var err error
+		if db.GetDialect().DriverName() == migrator.SQLite {
+			_, err = sess.Exec("INSERT OR REPLACE INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1")
+		} else if db.GetDialect().DriverName() == migrator.Postgres {
+			_, err = sess.Exec("INSERT INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true ON CONFLICT DO NOTHING")
+		} else {
+			_, err = sess.Exec("INSERT IGNORE INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1")
+		}
+		return err
+	})
+	if err != nil {
+		s.log.Error("DB migration on folder service start failed.")
 	}
 }
 
