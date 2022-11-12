@@ -121,7 +121,7 @@ function getSettingsPages(dashboard: DashboardModel) {
     });
   }
 
-  const isFromStorage = config.featureToggles.dashboardsFromStorage && dashboard.uid?.indexOf('/') > 0;
+  const isFromStorage = config.featureToggles.dashboardsFromStorage && dashboard.meta.object;
 
   if (isFromStorage) {
     pages.push({
