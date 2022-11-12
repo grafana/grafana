@@ -80,13 +80,15 @@ describe('DataSourceWithBackend', () => {
           ],
         },
         "headers": Object {
-          "X-Dashboard-UID": "dashA",
-          "X-Panel-Id": 123,
+          "X-dashboard-uid": "dashA",
+          "X-datasource-uid": "abc, <mockuid>",
+          "X-panel-id": "123",
+          "X-plugin-id": "dummy, sample",
         },
         "hideFromInspector": false,
         "method": "POST",
         "requestId": undefined,
-        "url": "/api/ds/query?type=dummy&type=sample&uid=abc&uid=<mockuid>",
+        "url": "/api/ds/query",
       }
     `);
   });
@@ -131,13 +133,15 @@ describe('DataSourceWithBackend', () => {
           ],
         },
         "headers": Object {
-          "X-Dashboard-UID": "dashA",
-          "X-Panel-Id": 123,
+          "X-dashboard-uid": "dashA",
+          "X-datasource-uid": "abc, <mockuid>",
+          "X-panel-id": "123",
+          "X-plugin-id": "dummy, sample",
         },
         "hideFromInspector": true,
         "method": "POST",
         "requestId": undefined,
-        "url": "/api/ds/query?type=dummy&type=sample&uid=abc&uid=<mockuid>",
+        "url": "/api/ds/query",
       }
     `);
   });
