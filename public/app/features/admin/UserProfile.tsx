@@ -295,7 +295,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
 
 interface LockedRowProps {
   label: string;
-  value?: any;
+  value?: string;
   lockMessage?: string;
 }
 
