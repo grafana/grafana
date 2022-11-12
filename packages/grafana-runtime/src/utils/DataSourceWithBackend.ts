@@ -71,6 +71,13 @@ export enum HealthStatus {
   Error = 'ERROR',
 }
 
+export enum PluginRequestHeaders {
+  PluginID = 'X-plugin-id', // can be used for routing
+  DatasourceUID = 'X-datasource-uid', // can be used for routing/ load balancing
+  DashboardUID = 'X-dashboard-uid', // mainly useful for debuging slow queries
+  PanelID = 'X-panel-id', // mainly useful for debuging slow queries
+}
+
 /**
  * Describes the details in the payload returned when checking the health of a data source
  * plugin.
@@ -120,7 +127,7 @@ class DataSourceWithBackend<
     }
 
     let hasExpr = false;
-    const dsTypes = new Set<string>();
+    const pluginIDs = new Set<string>();
     const dsUIDs = new Set<string>();
     const queries = targets.map((q) => {
       let datasource = this.getRef();
@@ -145,7 +152,7 @@ class DataSourceWithBackend<
         datasourceId = ds.id;
       }
       if (datasource.type?.length) {
-        dsTypes.add(datasource.type);
+        pluginIDs.add(datasource.type);
       }
       if (datasource.uid?.length) {
         dsUIDs.add(datasource.uid);
@@ -179,26 +186,19 @@ class DataSourceWithBackend<
       });
     }
 
-    let pfix = '?';
     let url = '/api/ds/query';
-    for (let v of dsTypes) {
-      url += pfix + 'type=' + v;
-      pfix = '&';
-    }
-    for (let v of dsUIDs) {
-      url += pfix + 'uid=' + v;
-      pfix = '&';
-    }
     if (hasExpr) {
-      url += pfix + 'expression=true';
+      url += '?expression=true';
     }
 
-    const headers: Record<string, string | number> = {};
+    const headers: Record<string, string> = {};
+    headers[PluginRequestHeaders.PluginID] = Array.from(pluginIDs).join(', ');
+    headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
     if (request.dashboardUID) {
-      headers['X-Dashboard-UID'] = request.dashboardUID;
+      headers[PluginRequestHeaders.DashboardUID] = request.dashboardUID;
     }
     if (request.panelId) {
-      headers['X-Panel-Id'] = request.panelId;
+      headers[PluginRequestHeaders.PanelID] = `${request.panelId}`;
     }
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
@@ -222,6 +222,13 @@ class DataSourceWithBackend<
           return of(toDataQueryResponse(err));
         })
       );
+  }
+
+  protected getRequestHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {};
+    headers[PluginRequestHeaders.PanelID] = this.type;
+    headers[PluginRequestHeaders.DatasourceUID] = this.uid;
+    return headers;
   }
 
   /**

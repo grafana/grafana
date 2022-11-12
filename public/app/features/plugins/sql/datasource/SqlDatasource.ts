@@ -146,8 +146,9 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return lastValueFrom(
       getBackendSrv()
         .fetch<BackendDataSourceResponse>({
-          url: `/api/ds/query?type=${this.type}&uid=${this.uid}`,
+          url: `/api/ds/query`,
           method: 'POST',
+          headers: this.getRequestHeaders(),
           data: {
             from: options?.range?.from.valueOf().toString() || range.from.valueOf().toString(),
             to: options?.range?.to.valueOf().toString() || range.to.valueOf().toString(),
@@ -169,8 +170,9 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return lastValueFrom(
       getBackendSrv()
         .fetch<BackendDataSourceResponse>({
-          url: `/api/ds/query?type=${this.type}&uid=${this.uid}`,
+          url: `/api/ds/query`,
           method: 'POST',
+          headers: this.getRequestHeaders(),
           data: {
             from: '5m',
             to: 'now',

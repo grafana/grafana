@@ -251,24 +251,25 @@ func (pr parsedRequest) validateRequest() error {
 		return nil
 	}
 
-	params := pr.httpRequest.URL.Query()
-	uids, ok := params["uid"]
-	if ok {
-		if len(uids) != len(pr.parsedQueries) {
+	vals := pr.httpRequest.Header.Values("X-datasource-uid")
+	count := len(vals)
+	if count > 0 { // header exists
+		if count != len(pr.parsedQueries) {
 			return ErrQueryParamMismatch
 		}
-		for _, t := range uids {
+		for _, t := range vals {
 			if pr.parsedQueries[t] == nil {
 				return ErrQueryParamMismatch
 			}
 		}
 	}
-	types, ok := params["type"]
-	if ok {
-		if len(types) != len(pr.dsTypes) {
+	vals = pr.httpRequest.Header.Values("X-plugin-id")
+	count = len(vals)
+	if count > 0 { // header exists
+		if count != len(pr.dsTypes) {
 			return ErrQueryParamMismatch
 		}
-		for _, t := range types {
+		for _, t := range vals {
 			if !pr.dsTypes[t] {
 				return ErrQueryParamMismatch
 			}
