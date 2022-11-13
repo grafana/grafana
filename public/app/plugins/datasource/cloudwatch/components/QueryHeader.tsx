@@ -7,6 +7,7 @@ import { config } from '@grafana/runtime';
 import { Badge } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../datasource';
+import { isCloudWatchMetricsQuery } from '../guards';
 import { useIsMonitoringAccount, useRegions } from '../hooks';
 import { CloudWatchQuery, CloudWatchQueryMode } from '../types';
 
@@ -18,7 +19,6 @@ interface QueryHeaderProps {
   onChange: (query: CloudWatchQuery) => void;
   onRunQuery: () => void;
   sqlCodeEditorIsDirty: boolean;
-  onRegionChange?: (region: string) => Promise<void>;
 }
 
 const apiModes: Array<SelectableValue<CloudWatchQueryMode>> = [
@@ -41,12 +41,13 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, 
       } as CloudWatchQuery);
     }
   };
-  const onRegion = async ({ value }: SelectableValue<string>) => {
-    value &&
-      onChange({
-        ...query,
-        region: value,
-      });
+  const onRegionChange = async (region: string) => {
+    if (config.featureToggles.cloudWatchCrossAccountQuerying && isCloudWatchMetricsQuery(query)) {
+      const isMonitoringAccount = await datasource.api.isMonitoringAccount(region);
+      onChange({ ...query, region, accountId: isMonitoringAccount ? query.accountId : undefined });
+    } else {
+      onChange({ ...query, region });
+    }
   };
 
   const shouldDisplayMonitoringBadge =
@@ -59,7 +60,7 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, 
         value={region}
         placeholder="Select region"
         allowCustomValue
-        onChange={({ value: region }) => region && onRegion({ value: region })}
+        onChange={({ value: region }) => region && onRegionChange(region)}
         options={regions}
         isLoading={regionIsLoading}
       />

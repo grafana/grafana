@@ -110,7 +110,9 @@ export const useIsMonitoringAccount = (api: CloudWatchAPI, region: string) => {
     region = api.templateSrv.replace(region, {});
   }
   useEffect(() => {
-    api.isMonitoringAccount(region).then(setIsMonitoringAccount);
+    if (config.featureToggles.cloudWatchCrossAccountQuerying) {
+      api.isMonitoringAccount(region).then((result) => setIsMonitoringAccount(result));
+    }
   }, [region, api]);
 
   return isMonitoringAccount;

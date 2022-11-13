@@ -7,12 +7,11 @@ import { Select } from '@grafana/ui';
 
 import { Dimensions } from '..';
 import { CloudWatchDatasource } from '../../datasource';
-import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
+import { useAccountOptions, useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
 import { standardStatistics } from '../../standardStatistics';
 import { MetricStat } from '../../types';
 import { appendTemplateVariables, toOption } from '../../utils/utils';
-
-import { MetricStatAccountSelect } from './MetricStatAccountSelect';
+import { Account } from '../Account';
 
 export type Props = {
   refId: string;
@@ -34,6 +33,7 @@ export function MetricStatEditor({
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, metricStat);
   const dimensionKeys = useDimensionKeys(datasource, { ...metricStat, dimensionFilters: metricStat.dimensions });
+  const accountState = useAccountOptions(datasource.api, metricStat.region);
 
   const onMetricStatChange = (metricStat: MetricStat) => {
     onChange(metricStat);
@@ -62,12 +62,14 @@ export function MetricStatEditor({
     <EditorRows>
       <EditorRow>
         {!disableExpressions && config.featureToggles.cloudWatchCrossAccountQuerying && (
-          <MetricStatAccountSelect
-            api={datasource.api}
-            metricStat={metricStat}
-            onChange={onChange}
-            onRunQuery={onRunQuery}
-          />
+          <Account
+            accountId={metricStat.accountId}
+            onChange={(accountId?: string) => {
+              onChange({ ...metricStat, accountId });
+              onRunQuery();
+            }}
+            accountOptions={accountState?.value || []}
+          ></Account>
         )}
         <EditorFieldGroup>
           <EditorField label="Namespace" width={26}>

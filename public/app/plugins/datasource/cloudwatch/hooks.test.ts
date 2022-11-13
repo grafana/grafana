@@ -20,8 +20,12 @@ const WAIT_OPTIONS = {
 const originalFeatureToggleValue = config.featureToggles.cloudWatchCrossAccountQuerying;
 
 describe('hooks', () => {
+  afterEach(() => {
+    config.featureToggles.cloudWatchCrossAccountQuerying = originalFeatureToggleValue;
+  });
   describe('useIsMonitoringAccount', () => {
     it('should interpolate variables before calling api', async () => {
+      config.featureToggles.cloudWatchCrossAccountQuerying = true;
       const { api } = setupMockedAPI({
         variables: [regionVariable],
       });
@@ -94,9 +98,6 @@ describe('hooks', () => {
   });
 
   describe('useAccountOptions', () => {
-    afterEach(() => {
-      config.featureToggles.cloudWatchCrossAccountQuerying = originalFeatureToggleValue;
-    });
     it('does not call the api if the feature toggle is off', async () => {
       config.featureToggles.cloudWatchCrossAccountQuerying = false;
       const { api } = setupMockedAPI({
