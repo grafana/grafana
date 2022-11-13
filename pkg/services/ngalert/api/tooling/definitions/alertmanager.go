@@ -469,8 +469,9 @@ type AlertEvaluationRequest struct {
 }
 
 type AlertProcessRequest struct {
-	AlertRule         ApiAlertRule    `json:"alertRule"`
-	EvaluationResults []ApiEvalResult `json:"evaluationResults"`
+	ShouldManageAnnotationsAndInstances *bool           `json:"shouldManageAnnotationsAndInstances"`
+	AlertRule                           ApiAlertRule    `json:"alertRule"`
+	EvaluationResults                   []ApiEvalResult `json:"evaluationResults"`
 }
 
 type ApiAlertRule struct {

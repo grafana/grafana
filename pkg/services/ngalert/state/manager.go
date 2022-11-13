@@ -28,6 +28,9 @@ const ClearOldAlertFrequency = time.Duration(40) * time.Minute
 
 // LOGZ.IO GRAFANA CHANGE :: end
 
+// LOGZ.IO GRAFANA CHANGE :: Manage annotations and instances only on one peer of HA cluster
+const ShouldManageAnnotationsAndInstancesContextKey = "logzio_should_manage_ualert_annotations_instances"
+
 // AlertInstanceManager defines the interface for querying the current alert instances.
 type AlertInstanceManager interface {
 	GetAll(orgID int64) []*State
@@ -203,7 +206,12 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	st.set(currentState)
 	if oldState != currentState.State {
-		go st.annotateState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, currentState.State, oldState)
+		// LOGZ.IO GRAFANA CHANGE :: Manage annotations and instances only on one peer of HA cluster
+		shouldManageAnnotations := ctx.Value(ShouldManageAnnotationsAndInstancesContextKey).(bool)
+		if shouldManageAnnotations {
+			go st.annotateState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, currentState.State, oldState)
+		}
+		// LOGZ.IO GRAFANA CHANGE :: end
 	}
 	return currentState
 }
@@ -361,6 +369,9 @@ func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
 	toDelete := make([]ngModels.AlertInstanceKey, 0)
 
+	// LOGZ.IO GRAFANA CHANGE :: Manage annotations and instances only on one peer of HA cluster
+	shouldManageAnnotationsAndInstances := ctx.Value(ShouldManageAnnotationsAndInstancesContextKey).(bool)
+
 	for _, s := range allStates {
 		_, ok := states[s.CacheId]
 		if !ok && isItStale(s.LastEvaluationTime, alertRule.IntervalSeconds) {
@@ -375,15 +386,23 @@ func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.
 			toDelete = append(toDelete, ngModels.AlertInstanceKey{RuleOrgID: s.OrgID, RuleUID: s.AlertRuleUID, LabelsHash: labelsHash})
 
 			if s.State == eval.Alerting {
-				st.annotateState(ctx, alertRule, s.Labels, time.Now(), eval.Normal, s.State)
+				// LOGZ.IO GRAFANA CHANGE :: Manage annotations and instances only on one peer of HA cluster
+				if shouldManageAnnotationsAndInstances {
+					st.annotateState(ctx, alertRule, s.Labels, time.Now(), eval.Normal, s.State)
+				}
+				// LOGZ.IO GRAFANA CHANGE :: end
 			}
 		}
 	}
 
-	if err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...); err != nil {
-		st.log.Error("unable to delete stale instances from database", "err", err.Error(),
-			"orgID", alertRule.OrgID, "alertRuleUID", alertRule.UID, "count", len(toDelete))
+	// LOGZ.IO GRAFANA CHANGE :: Manage annotations and instances only on one peer of HA cluster
+	if shouldManageAnnotationsAndInstances {
+		if err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...); err != nil {
+			st.log.Error("unable to delete stale instances from database", "err", err.Error(),
+				"orgID", alertRule.OrgID, "alertRuleUID", alertRule.UID, "count", len(toDelete))
+		}
 	}
+	// LOGZ.IO GRAFANA CHANGE :: end
 }
 
 func isItStale(lastEval time.Time, intervalSeconds int64) bool {
