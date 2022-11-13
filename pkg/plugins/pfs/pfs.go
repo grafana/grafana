@@ -22,6 +22,8 @@ import (
 
 // PermittedCUEImports returns the list of packages that may be imported in a
 // plugin models.cue file.
+//
+// TODO probably move this into kindsys
 func PermittedCUEImports() []string {
 	return []string{
 		"github.com/grafana/thema",
@@ -71,40 +73,6 @@ func init() {
 }
 
 var muxonce sync.Once
-
-// This used to be in init(), but that creates a risk for codegen.
-//
-// thema.BindType ensures that Go type and Thema schema are aligned. If we were
-// to call it during init(), then the code generator that fixes misalignments
-// between those two could trigger it if it depends on this package. That would
-// mean that schema changes to plugindef get caught in a loop where the codegen
-// process can't heal itself.
-//
-// In theory, that dependency shouldn't exist - this package should only be
-// imported for plugin codegen, which should all happen after coremodel codegen.
-// But in practice, it might exist. And it's really brittle and confusing to
-// fix if that does happen.
-//
-// Better to be resilient to the possibility instead. So, this is a standalone function,
-// called as needed to get our muxer, and internally relies on a sync.Once to avoid
-// repeated processing of thema.BindType.
-// TODO mux loading is easily generalizable in pkg/f/coremodel, shouldn't need one-off
-func loadMux() (thema.TypedSchema[*plugindef.PluginDef], vmux.ValueMux[*plugindef.PluginDef]) {
-	// muxonce.Do(func() {
-	// 	var err error
-	// 	t := new(plugindef.PluginDef)
-	// 	pm, err := plugindef.New(cuectx.GrafanaThemaRuntime())
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	tsch, err = thema.BindType[*plugindef.PluginDef](pm.TypedSchema(), t)
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	plugmux = vmux.NewValueMux(tsch, vmux.NewJSONEndec("plugin.json"))
-	// })
-	return tsch, plugmux
-}
 
 // Tree represents the contents of a plugin filesystem tree.
 type Tree struct {
@@ -179,12 +147,21 @@ func (pi PluginInfo) Meta() plugindef.PluginDef {
 //
 // It does not descend into subdirectories to search for additional plugin.json
 // files.
+//
+// Calling this with a nil thema.Runtime will take advantage of memoization.
+// Prefer this approach unless a different thema.Runtime is specifically
+// required.
+//
 // TODO no descent is ok for core plugins, but won't cut it in general
 func ParsePluginFS(f fs.FS, rt *thema.Runtime) (*Tree, error) {
 	if f == nil {
 		return nil, ErrEmptyFS
 	}
-	_, mux := loadMux()
+	lin, err := plugindef.Lineage(rt)
+	if err != nil {
+		panic(fmt.Sprintf("plugindef lineage is invalid or broken, needs dev attention: %s", err))
+	}
+	mux := vmux.NewValueMux(lin.TypedSchema(), vmux.NewJSONEndec("plugin.json"))
 	ctx := rt.Context()
 
 	b, err := fs.ReadFile(f, "plugin.json")
@@ -205,11 +182,9 @@ func ParsePluginFS(f fs.FS, rt *thema.Runtime) (*Tree, error) {
 
 	// Pass the raw bytes into the muxer, get the populated PluginDef type out that we want.
 	// TODO stop ignoring second return. (for now, lacunas are a WIP and can't occur until there's >1 schema in the plugindef lineage)
-	// metaany, _, err := mux(b)
 	pmeta, _, err := mux(b)
 	if err != nil {
 		// TODO more nuanced error handling by class of Thema failure
-		// return nil, fmt.Errorf("plugin.json was invalid: %w", err)
 		return nil, ewrap(err, ErrInvalidRootFile)
 	}
 	r.meta = *pmeta

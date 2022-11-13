@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/thema"
 )
 
-// Lineage returns a [thema.ConvergentLineage] for the 'plugindef' Thema lineage.
+// doLineage returns a [thema.ConvergentLineage] for the 'plugindef' Thema lineage.
 //
 // The lineage is the canonical specification of plugindef. It contains all
 // schema versions that have ever existed for plugindef, and the lenses that
@@ -29,7 +29,7 @@ import (
 // [thema.AssignableTo] the 0.0 schema.
 //
 // [Thema's general invariants]: https://github.com/grafana/thema/blob/main/docs/invariants.md
-func Lineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.ConvergentLineage[*PluginDef], error) {
+func doLineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.ConvergentLineage[*PluginDef], error) {
 	lin, err := baseLineage(rt, opts...)
 	if err != nil {
 		return nil, err
@@ -81,5 +81,5 @@ func baseLineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, er
 }
 
 // type guards
-var _ thema.ConvergentLineageFactory[*PluginDef] = Lineage
+var _ thema.ConvergentLineageFactory[*PluginDef] = doLineage
 var _ thema.LineageFactory = baseLineage

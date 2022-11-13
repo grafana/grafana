@@ -66,7 +66,9 @@ func (j *jennybindgo) JennyName() string {
 
 func (j *jennybindgo) Generate(lin thema.Lineage) (*codejen.File, error) {
 	b, err := gocode.GenerateLineageBinding(lin, &gocode.BindingConfig{
-		Assignee: ast.NewIdent("*PluginDef"),
+		TitleName:      "PluginDef",
+		Assignee:       ast.NewIdent("*PluginDef"),
+		PrivateFactory: true,
 	})
 	if err != nil {
 		return nil, err
