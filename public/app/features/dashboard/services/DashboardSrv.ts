@@ -90,7 +90,7 @@ export class DashboardSrv {
     );
   }
 
-  starDashboard(dashboardId: string, isStarred: any) {
+  starDashboard(dashboardId: string, isStarred: boolean) {
     const backendSrv = getBackendSrv();
     let promise;
 
