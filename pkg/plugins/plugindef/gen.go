@@ -4,36 +4,52 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"go/ast"
 	"os"
+	"path/filepath"
+	"strings"
 
+	"cuelang.org/go/cue/cuecontext"
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/gocode"
+	"github.com/grafana/thema/encoding/jsonschema"
 	"golang.org/x/tools/go/ast/astutil"
 )
+
+var dirPlugindef = filepath.Join("pkg", "plugins", "plugindef")
 
 // main generator for plugindef. plugindef isn't a kind, so it has its own
 // one-off main generator.
 func main() {
-	v := elsedie(cuectx.BuildGrafanaInstance(nil, "pkg/plugins/plugindef", "", nil))("could not load plugindef cue package")
+	v := elsedie(cuectx.BuildGrafanaInstance(nil, dirPlugindef, "", nil))("could not load plugindef cue package")
 
 	lin := elsedie(thema.BindLineage(v, cuectx.GrafanaThemaRuntime()))("plugindef lineage is invalid")
 
 	jl := &codejen.JennyList[thema.Lineage]{}
-	jl.AppendOneToOne(&jennytypego{}, &jennybindgo{})
-	jl.AddPostprocessors(codegen.SlashHeaderMapper("pkg/plugins/plugindef/gen.go"))
+	jl.AppendOneToOne(&jennytypego{}, &jennybindgo{}, &jennyjschema{})
+	jl.AddPostprocessors(codegen.SlashHeaderMapper(filepath.Join(dirPlugindef, "gen.go")))
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "could not get working directory: %s", err)
+		os.Exit(1)
+	}
+	grootp := strings.Split(cwd, string(os.PathSeparator))
+	groot := filepath.Join(string(os.PathSeparator), filepath.Join(grootp[:len(grootp)-3]...))
 
 	jfs := elsedie(jl.GenerateFS([]thema.Lineage{lin}))("plugindef jenny pipeline failed")
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
-		if err := jfs.Verify(context.Background(), ""); err != nil {
+		if err := jfs.Verify(context.Background(), groot); err != nil {
 			die(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
 		}
-	} else if err := jfs.Write(context.Background(), ""); err != nil {
+	} else if err := jfs.Write(context.Background(), groot); err != nil {
 		die(fmt.Errorf("error while writing generated code to disk:\n%s", err))
 	}
 }
@@ -73,7 +89,26 @@ func (j *jennybindgo) Generate(lin thema.Lineage) (*codejen.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	return codejen.NewFile("plugindef_bindings_gen.go", b, j), nil
+	return codejen.NewFile(filepath.Join(dirPlugindef, "plugindef_bindings_gen.go"), b, j), nil
+}
+
+// one-off jenny for plugindef json schema generator
+type jennyjschema struct{}
+
+func (j *jennyjschema) JennyName() string {
+	return "PluginJSONSchema"
+}
+
+func (j *jennyjschema) Generate(lin thema.Lineage) (*codejen.File, error) {
+	f, err := jsonschema.GenerateSchema(lin.Latest())
+	if err != nil {
+		return nil, err
+	}
+
+	b, _ := cuecontext.New().BuildFile(f).MarshalJSON()
+	nb := new(bytes.Buffer)
+	die(json.Indent(nb, b, "", "  "))
+	return codejen.NewFile(filepath.FromSlash("docs/sources/developers/plugins/plugin.schema.json"), nb.Bytes(), j), nil
 }
 
 func elsedie[T any](t T, err error) func(msg string) T {
@@ -90,6 +125,8 @@ func elsedie[T any](t T, err error) func(msg string) T {
 }
 
 func die(err error) {
-	fmt.Fprint(os.Stderr, err, "\n")
-	os.Exit(1)
+	if err != nil {
+		fmt.Fprint(os.Stderr, err, "\n")
+		os.Exit(1)
+	}
 }
