@@ -10,53 +10,26 @@
 // Raw generated types from Dashboard kind.
 export type {
   AnnotationTarget,
-  AnnotationTarget,
-  AnnotationQuery,
   AnnotationQuery,
   VariableModel,
-  VariableModel,
-  DashboardLink,
   DashboardLink,
   DashboardLinkType,
-  DashboardLinkType,
   VariableType,
-  VariableType,
-  FieldColorModeId,
-  FieldColorSeriesByMode,
   FieldColorSeriesByMode,
   FieldColor,
-  FieldColor,
-  GridPos,
   GridPos,
   Threshold,
-  Threshold,
-  ThresholdsMode,
-  ThresholdsConfig,
   ThresholdsConfig,
   ValueMapping,
-  ValueMapping,
-  MappingType,
-  ValueMap,
   ValueMap,
   RangeMap,
-  RangeMap,
-  RegexMap,
   RegexMap,
   SpecialValueMap,
-  SpecialValueMap,
-  SpecialValueMatch,
-  ValueMappingResult,
   ValueMappingResult,
   Transformation,
-  Transformation,
-  DashboardCursorSync,
-  MatcherConfig,
   MatcherConfig,
   RowPanel,
-  RowPanel,
   GraphPanel,
-  GraphPanel,
-  HeatmapPanel,
   HeatmapPanel
 } from './raw/dashboard/x/dashboard_types.gen';
 
@@ -112,8 +85,6 @@ export {
 // Raw generated types from Playlist kind.
 export type {
   Playlist,
-  Playlist,
-  PlaylistItem,
   PlaylistItem
 } from './raw/playlist/x/playlist_types.gen';
 

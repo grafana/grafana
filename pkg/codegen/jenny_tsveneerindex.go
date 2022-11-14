@@ -80,7 +80,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *
 		sels := p.Selectors()
 		switch len(sels) {
 		case 0:
-			name = strings.Title(lin.Name())
+			name = comm.Name
 			fallthrough
 		case 1:
 			// Only deal with subpaths that are definitions, for now
@@ -129,7 +129,6 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *
 					raw = append(raw, *pair.T)
 				}
 
-				raw = append(raw, *pair.T)
 				if pair.D != nil {
 					rawD = append(rawD, *pair.D)
 				}
