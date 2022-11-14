@@ -171,7 +171,7 @@ func (s *Service) handleQueryData(ctx context.Context, user *user.SignedInUser, 
 	middlewares := []httpclient.Middleware{}
 	if parsedReq.httpRequest != nil {
 		middlewares = append(middlewares,
-			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies()),
+			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies(), []string{s.cfg.LoginCookieName}),
 		)
 	}
 
@@ -188,7 +188,7 @@ func (s *Service) handleQueryData(ctx context.Context, user *user.SignedInUser, 
 	}
 
 	if parsedReq.httpRequest != nil {
-		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies())
+		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies(), []string{s.cfg.LoginCookieName})
 		if cookieStr := parsedReq.httpRequest.Header.Get("Cookie"); cookieStr != "" {
 			req.Headers["Cookie"] = cookieStr
 		}

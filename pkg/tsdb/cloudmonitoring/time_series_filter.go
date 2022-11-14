@@ -211,7 +211,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 	}
 	if len(response.TimeSeries) > 0 {
 		dl := timeSeriesFilter.buildDeepLink()
-		frames = addConfigData(frames, dl, response.Unit)
+		frames = addConfigData(frames, dl, response.Unit, timeSeriesFilter.Params.Get("aggregation.alignmentPeriod"))
 	}
 
 	queryRes.Frames = frames

@@ -65,6 +65,10 @@ export class FrontendSearcher implements GrafanaSearcher {
   async tags(query: SearchQuery): Promise<TermCount[]> {
     return this.parent.tags(query);
   }
+
+  getFolderViewSort(): string {
+    return this.parent.getFolderViewSort();
+  }
 }
 
 class FullResultCache {

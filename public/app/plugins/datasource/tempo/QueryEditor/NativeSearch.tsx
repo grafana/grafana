@@ -125,17 +125,20 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     fetchTags();
   }, [languageProvider]);
 
-  const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    return await languageProvider.provideCompletionItems(typeahead);
-  };
+  const onTypeahead = useCallback(
+    async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
+      return await languageProvider.provideCompletionItems(typeahead);
+    },
+    [languageProvider]
+  );
 
-  const cleanText = (text: string) => {
+  const cleanText = useCallback((text: string) => {
     const splittedText = text.split(/\s+(?=([^"]*"[^"]*")*[^"]*$)/g);
     if (splittedText.length > 1) {
       return splittedText[splittedText.length - 1];
     }
     return text;
-  };
+  }, []);
 
   const onKeyDown = (keyEvent: React.KeyboardEvent) => {
     if (keyEvent.key === 'Enter' && (keyEvent.shiftKey || keyEvent.ctrlKey)) {
@@ -156,6 +159,16 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       });
     }
   };
+
+  const handleOnChange = useCallback(
+    (value) => {
+      onChange({
+        ...query,
+        search: value,
+      });
+    },
+    [onChange, query]
+  );
 
   const templateSrv: TemplateSrv = getTemplateSrv();
 
@@ -211,14 +224,9 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               query={query.search}
               onTypeahead={onTypeahead}
               onBlur={onBlur}
-              onChange={(value) => {
-                onChange({
-                  ...query,
-                  search: value,
-                });
-              }}
-              placeholder="http.status_code=200 error=true"
+              onChange={handleOnChange}
               cleanText={cleanText}
+              placeholder="http.status_code=200 error=true"
               onRunQuery={onRunQuery}
               syntaxLoaded={hasSyntaxLoaded}
               portalOrigin="tempo"

@@ -1061,6 +1061,11 @@ describe('auto stacking groups', () => {
           values: [0, 0, 0],
           config: { custom: { stacking: { mode: StackingMode.Normal } } },
         },
+        {
+          name: 'd',
+          values: [null, -0, null],
+          config: { custom: { stacking: { mode: StackingMode.Normal } } },
+        },
       ],
     });
 
@@ -1070,6 +1075,7 @@ describe('auto stacking groups', () => {
           "dir": -1,
           "series": Array [
             1,
+            4,
           ],
         },
         Object {
@@ -1102,6 +1108,11 @@ describe('auto stacking groups', () => {
           values: [0, 0, 0],
           config: { custom: { stacking: { mode: StackingMode.Normal } } },
         },
+        {
+          name: 'd',
+          values: [-0, null, 3],
+          config: { custom: { stacking: { mode: StackingMode.Normal }, transform: GraphTransform.NegativeY } },
+        },
       ],
     });
 
@@ -1113,6 +1124,7 @@ describe('auto stacking groups', () => {
             1,
             2,
             3,
+            4,
           ],
         },
       ]

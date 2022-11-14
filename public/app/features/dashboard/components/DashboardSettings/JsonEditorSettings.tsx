@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Button, CodeEditor, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/PageNew/Page';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 

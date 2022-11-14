@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue } from '@grafana/data';
-import { EditorRow } from '@grafana/ui';
+import { EditorRow } from '@grafana/experimental';
 import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
 import { OperationExplainedBox } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationExplainedBox';
 import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
@@ -56,7 +56,14 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
 
     const expr = lokiQueryModeller.renderLabels(labelsToConsider);
     const series = await datasource.languageProvider.fetchSeriesLabels(expr);
-    return Object.keys(series).sort();
+    const labelsNamesToConsider = labelsToConsider.map((l) => l.label);
+
+    const labelNames = Object.keys(series)
+      // Filter out label names that are already selected
+      .filter((name) => !labelsNamesToConsider.includes(name))
+      .sort();
+
+    return labelNames;
   };
 
   const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {

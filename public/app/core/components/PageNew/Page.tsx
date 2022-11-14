@@ -20,9 +20,12 @@ export const Page: PageType = ({
   navId,
   navModel: oldNavProp,
   pageNav,
+  renderTitle,
+  actions,
   subTitle,
   children,
   className,
+  info,
   layout = PageLayoutType.Standard,
   toolbar,
   scrollTop,
@@ -54,7 +57,15 @@ export const Page: PageType = ({
           <div className={styles.pageContent}>
             <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
               <div className={styles.pageInner}>
-                {pageHeaderNav && <PageHeader navItem={pageHeaderNav} subTitle={subTitle} />}
+                {pageHeaderNav && (
+                  <PageHeader
+                    actions={actions}
+                    navItem={pageHeaderNav}
+                    renderTitle={renderTitle}
+                    info={info}
+                    subTitle={subTitle}
+                  />
+                )}
                 {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
                 {children}
               </div>
@@ -81,12 +92,12 @@ export const Page: PageType = ({
   );
 };
 
-const OldNavOnly = () => null;
-OldNavOnly.displayName = 'OldNavOnly';
-
 Page.Header = PageHeader;
 Page.Contents = PageContents;
-Page.OldNavOnly = OldNavOnly;
+
+Page.OldNavOnly = function OldNavOnly() {
+  return null;
+};
 
 const getStyles = (theme: GrafanaTheme2) => {
   const shadow = theme.isDark

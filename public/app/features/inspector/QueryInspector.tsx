@@ -4,8 +4,9 @@ import { Subscription } from 'rxjs';
 
 import { DataFrame } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Stack } from '@grafana/experimental';
 import { config, RefreshEvent } from '@grafana/runtime';
-import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder, Stack } from '@grafana/ui';
+import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
 import { PanelModel } from 'app/features/dashboard/state';

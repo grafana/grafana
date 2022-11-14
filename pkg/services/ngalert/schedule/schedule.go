@@ -330,10 +330,11 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		start := sch.clock.Now()
 
 		schedulerUser := &user.SignedInUser{
-			UserID:  -1,
-			Login:   "grafana_scheduler",
-			OrgID:   e.rule.OrgID,
-			OrgRole: org.RoleAdmin,
+			UserID:           -1,
+			IsServiceAccount: true,
+			Login:            "grafana_scheduler",
+			OrgID:            e.rule.OrgID,
+			OrgRole:          org.RoleAdmin,
 			Permissions: map[int64]map[string][]string{
 				e.rule.OrgID: {
 					datasources.ActionQuery: []string{

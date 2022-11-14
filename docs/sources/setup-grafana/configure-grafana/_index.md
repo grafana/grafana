@@ -71,6 +71,9 @@ client_secret = 0ldS3cretKey
 
 [plugin.grafana-image-renderer]
 rendering_ignore_https_errors = true
+
+[feature_toggles]
+enable = newNavigation
 ```
 
 You can override them on Linux machines with:
@@ -80,6 +83,7 @@ export GF_DEFAULT_INSTANCE_NAME=my-instance
 export GF_SECURITY_ADMIN_USER=owner
 export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
+export GF_FEATURE_TOGGLES_ENABLE=newNavigation
 ```
 
 ## Variable expansion
@@ -124,7 +128,7 @@ password = $__file{/etc/secrets/gf_sql_password}
 
 The `vault` provider allows you to manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault).
 
-> Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../configure-security/configure-database-encryption/integrate-with-hashicorp-vault/" >}}) in [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+> Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../configure-security/configure-database-encryption/integrate-with-hashicorp-vault/" >}}) in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
 
 <hr />
 
@@ -369,7 +373,7 @@ Defaults to `private`.
 
 ## [remote_cache]
 
-Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../../enterprise/query-caching/" >}}).
+Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../../administration/data-source-management/#query-caching" >}}).
 
 ### type
 
@@ -533,6 +537,10 @@ Default is `admin`.
 ### admin_password
 
 The password of the default Grafana Admin. Set once on first-run. Default is `admin`.
+
+# admin_email
+
+The email of the default Grafana Admin, created on startup. Default is `admin@localhost`.
 
 ### secret_key
 
@@ -1951,7 +1959,7 @@ Change the listening port of the gRPC server. Default port is `0` and will autom
 
 ## [enterprise]
 
-For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
 
 <hr>
 

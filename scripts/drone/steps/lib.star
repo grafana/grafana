@@ -1,14 +1,14 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.12'
-build_image = 'grafana/build-container:1.6.3'
+grabpl_version = 'v3.0.15'
+build_image = 'grafana/build-container:1.6.4'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15.6'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
-go_image = 'golang:1.19.2'
+go_image = 'golang:1.19.3'
 
 disable_tests = False
 trigger_oss = {
@@ -111,8 +111,10 @@ def init_enterprise_step(ver_mode):
         }
         token = "--github-token $${GITHUB_TOKEN}"
     elif ver_mode == 'release-branch':
-        environment = {}
-        token = ""
+        environment = {
+            'GITHUB_TOKEN': from_secret(github_token),
+        }
+        token = "--github-token $${GITHUB_TOKEN}"
     else:
         environment = {}
         token = ""
@@ -1038,15 +1040,16 @@ def publish_grafanacom_step(edition, ver_mode):
         ],
         'environment': {
             'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
+            'GCP_KEY': from_secret('gcp_key'),
         },
         'commands': [
             cmd,
         ],
     }
 
-def publish_linux_packages_step(edition):
+def publish_linux_packages_step(edition, package_manager='deb'):
     return {
-        'name': 'publish-linux-packages',
+        'name': 'publish-linux-packages-{}'.format(package_manager),
         # See https://github.com/grafana/deployment_tools/blob/master/docker/package-publish/README.md for docs on that image
         'image': 'us.gcr.io/kubernetes-dev/package-publish:latest',
         'depends_on': [
@@ -1057,13 +1060,13 @@ def publish_linux_packages_step(edition):
         'settings': {
             'access_key_id': from_secret('packages_access_key_id'),
             'secret_access_key': from_secret('packages_secret_access_key'),
-            'service_account_json': from_secret('packages_service_account_json'),
+            'service_account_json': from_secret('packages_service_account'),
             'target_bucket': 'grafana-packages',
-            'deb_distribution': 'stable',
+            'deb_distribution': 'auto',
             'gpg_passphrase': from_secret('packages_gpg_passphrase'),
             'gpg_public_key': from_secret('packages_gpg_public_key'),
             'gpg_private_key': from_secret('packages_gpg_private_key'),
-            'package_path': 'gs://grafana-prerelease/artifacts/downloads/*${{DRONE_TAG}}/{}/**.deb'.format(edition)
+            'package_path': 'gs://grafana-prerelease/artifacts/downloads/*${{DRONE_TAG}}/{}/**.{}'.format(edition, package_manager)
         }
     }
 

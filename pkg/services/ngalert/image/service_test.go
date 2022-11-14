@@ -23,16 +23,20 @@ func TestScreenshotImageService(t *testing.T) {
 	defer ctrl.Finish()
 
 	var (
+		cache       = NewMockCacheService(ctrl)
 		images      = store.NewFakeImageStore(t)
 		limiter     = screenshot.NoOpRateLimiter{}
 		screenshots = screenshot.NewMockScreenshotService(ctrl)
 		uploads     = imguploader.NewMockImageUploader(ctrl)
 	)
 
-	s := NewScreenshotImageService(&limiter, log.NewNopLogger(), screenshots, images,
+	s := NewScreenshotImageService(cache, &limiter, log.NewNopLogger(), screenshots, images,
 		NewUploadingService(uploads, prometheus.NewRegistry()))
 
 	ctx := context.Background()
+
+	// assert that the cache is checked for an existing image
+	cache.EXPECT().Get(gomock.Any(), "M2DGZaRLXtg=").Return(models.Image{}, false)
 
 	// assert that a screenshot is taken
 	screenshots.EXPECT().Take(gomock.Any(), screenshot.ScreenshotOptions{
@@ -43,11 +47,11 @@ func TestScreenshotImageService(t *testing.T) {
 		Path: "foo.png",
 	}, nil)
 
-	// the screenshot is made into an image and uploaded
+	// assert that the screenshot is made into an image and uploaded
 	uploads.EXPECT().Upload(gomock.Any(), "foo.png").
 		Return("https://example.com/foo.png", nil)
 
-	// and then saved into the database
+	// assert that the image is saved into the database
 	expected := models.Image{
 		ID:    1,
 		Token: "foo",
@@ -55,11 +59,19 @@ func TestScreenshotImageService(t *testing.T) {
 		URL:   "https://example.com/foo.png",
 	}
 
+	// assert that the image is saved into the cache
+	cache.EXPECT().Set(gomock.Any(), "M2DGZaRLXtg=", expected).Return(nil)
+
 	image, err := s.NewImage(ctx, &models.AlertRule{
+		OrgID:        1,
+		UID:          "foo",
 		DashboardUID: pointer.String("foo"),
 		PanelID:      pointer.Int64(1)})
 	require.NoError(t, err)
 	assert.Equal(t, expected, *image)
+
+	// assert that the cache is checked for an existing image
+	cache.EXPECT().Get(gomock.Any(), "rTOWVcbRidk=").Return(models.Image{}, false)
 
 	// assert that a screenshot is taken
 	screenshots.EXPECT().Take(gomock.Any(), screenshot.ScreenshotOptions{
@@ -81,8 +93,26 @@ func TestScreenshotImageService(t *testing.T) {
 		Path:  "bar.png",
 	}
 
+	// assert that the image is saved into the cache, but without a URL
+	cache.EXPECT().Set(gomock.Any(), "rTOWVcbRidk=", expected).Return(nil)
+
 	image, err = s.NewImage(ctx, &models.AlertRule{
+		OrgID:        1,
+		UID:          "bar",
 		DashboardUID: pointer.String("bar"),
+		PanelID:      pointer.Int64(1)})
+	require.NoError(t, err)
+	assert.Equal(t, expected, *image)
+
+	expected = models.Image{Path: "baz.png", URL: "https://example.com/baz.png"}
+
+	// assert that the cache is checked for an existing image and it is returned
+	cache.EXPECT().Get(gomock.Any(), "8hJuVe20rVE=").Return(expected, true)
+
+	image, err = s.NewImage(ctx, &models.AlertRule{
+		OrgID:        1,
+		UID:          "baz",
+		DashboardUID: pointer.String("baz"),
 		PanelID:      pointer.Int64(1)})
 	require.NoError(t, err)
 	assert.Equal(t, expected, *image)

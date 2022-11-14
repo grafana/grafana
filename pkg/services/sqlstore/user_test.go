@@ -166,6 +166,45 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 	})
 
+	t.Run("Get User by login - user_2 uses user_1.email as login", func(t *testing.T) {
+		ss = InitTestDB(t)
+
+		// create user_1
+		cmd := user.CreateUserCommand{
+			Email:      "user_1@mail.com",
+			Name:       "user_1",
+			Login:      "user_1",
+			Password:   "user_1_password",
+			IsDisabled: true,
+		}
+		user_1, err := ss.CreateUser(context.Background(), cmd)
+		require.Nil(t, err)
+
+		// create user_2
+		cmd = user.CreateUserCommand{
+			Email:      "user_2@mail.com",
+			Name:       "user_2",
+			Login:      "user_1@mail.com",
+			Password:   "user_2_password",
+			IsDisabled: true,
+		}
+		user_2, err := ss.CreateUser(context.Background(), cmd)
+		require.Nil(t, err)
+
+		// query user database for user_1 email
+		query := models.GetUserByLoginQuery{LoginOrEmail: "user_1@mail.com"}
+		err = ss.GetUserByLogin(context.Background(), &query)
+		require.Nil(t, err)
+
+		// expect user_1 as result
+		require.Equal(t, user_1.Email, query.Result.Email)
+		require.Equal(t, user_1.Login, query.Result.Login)
+		require.Equal(t, user_1.Name, query.Result.Name)
+		require.NotEqual(t, user_2.Email, query.Result.Email)
+		require.NotEqual(t, user_2.Login, query.Result.Login)
+		require.NotEqual(t, user_2.Name, query.Result.Name)
+	})
+
 	t.Run("Testing DB - creates and loads disabled user", func(t *testing.T) {
 		ss = InitTestDB(t)
 		cmd := user.CreateUserCommand{

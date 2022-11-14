@@ -65,6 +65,10 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
     logs: css`
       height: 220px;
       padding: 10px;
+
+      .scrollbar-view {
+        overscroll-behavior: contain;
+      }
     `,
     afterContext,
     beforeContext,

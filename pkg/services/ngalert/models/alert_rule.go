@@ -86,6 +86,7 @@ const (
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
 	DashboardUIDAnnotation = "__dashboardUid__"
 	PanelIDAnnotation      = "__panelId__"
+	OrgIDAnnotation        = "__orgId__"
 
 	// This isn't a hard-coded secret token, hence the nolint.
 	//nolint:gosec
@@ -152,6 +153,22 @@ type AlertRule struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
+}
+
+// GetDashboardUID returns the DashboardUID or "".
+func (alertRule *AlertRule) GetDashboardUID() string {
+	if alertRule.DashboardUID != nil {
+		return *alertRule.DashboardUID
+	}
+	return ""
+}
+
+// GetPanelID returns the Panel ID or -1.
+func (alertRule *AlertRule) GetPanelID() int64 {
+	if alertRule.PanelID != nil {
+		return *alertRule.PanelID
+	}
+	return -1
 }
 
 type LabelOption func(map[string]string)

@@ -108,14 +108,6 @@ import (
 //       400: ValidationError
 //       404: NotFound
 
-// swagger:route POST /api/alertmanager/grafana/api/v2/alerts alertmanager RoutePostGrafanaAMAlerts
-//
-// create alertmanager alerts
-//
-//     Responses:
-//       200: Ack
-//       400: ValidationError
-
 // swagger:route POST /api/alertmanager/{DatasourceUID}/api/v2/alerts alertmanager RoutePostAMAlerts
 //
 // create alertmanager alerts
@@ -144,26 +136,12 @@ import (
 
 // swagger:route GET /api/alertmanager/grafana/config/api/v1/receivers alertmanager RouteGetGrafanaReceivers
 //
-// Get a list of all receivers.
+// Get a list of all receivers
 //
 //     Responses:
-//       200: receivers
+//       200: receiversResponse
 
 // swagger:route POST /api/alertmanager/grafana/config/api/v1/receivers/test alertmanager RoutePostTestGrafanaReceivers
-//
-// Test Grafana managed receivers without saving them.
-//
-//     Responses:
-//
-//       200: Ack
-//       207: MultiStatus
-//       400: ValidationError
-//       403: PermissionDenied
-//       404: NotFound
-//       408: Failure
-//       409: AlertManagerNotReady
-
-// swagger:route POST /api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test alertmanager RoutePostTestReceivers
 //
 // Test Grafana managed receivers without saving them.
 //
@@ -199,7 +177,7 @@ import (
 // create silence
 //
 //     Responses:
-//       201: gettableSilence
+//       201: postSilencesOKBody
 //       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{DatasourceUID}/api/v2/silences alertmanager RouteCreateSilence
@@ -207,7 +185,7 @@ import (
 // create silence
 //
 //     Responses:
-//       201: gettableSilence
+//       201: postSilencesOKBody
 //       400: ValidationError
 //       404: NotFound
 
@@ -254,7 +232,7 @@ type AlertManagerNotReady struct{}
 // swagger:model
 type MultiStatus struct{}
 
-// swagger:parameters RoutePostTestReceivers RoutePostTestGrafanaReceivers
+// swagger:parameters RoutePostTestGrafanaReceivers
 type TestReceiversConfigParams struct {
 	// in:body
 	Body TestReceiversConfigBodyParams
@@ -389,6 +367,12 @@ func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
 // swagger:model postableSilence
 type PostableSilence = amv2.PostableSilence
 
+// swagger:model postSilencesOKBody
+type PostSilencesOKBody struct { // vendored from "github.com/prometheus/alertmanager/api/v2/restapi/operations/silence/PostSilencesOKBody" because import brings too many other things
+	// silence ID
+	SilenceID string `json:"silenceID,omitempty"`
+}
+
 // swagger:model gettableSilences
 type GettableSilences = amv2.GettableSilences
 
@@ -410,8 +394,11 @@ type AlertGroup = amv2.AlertGroup
 // swagger:model receiver
 type Receiver = amv2.Receiver
 
-// swagger:model receivers
-type Receivers = []amv2.Receiver
+// swagger:response receiversResponse
+type ReceiversResponse struct {
+	// in:body
+	Body []amv2.Receiver
+}
 
 // swagger:model integration
 type Integration = amv2.Integration
@@ -448,7 +435,7 @@ type AlertsParams struct {
 	Receivers string `json:"receiver"`
 }
 
-// swagger:parameters RoutePostAMAlerts RoutePostGrafanaAMAlerts
+// swagger:parameters RoutePostAMAlerts
 type PostableAlerts struct {
 	// in:body
 	PostableAlerts []amv2.PostableAlert `yaml:"" json:""`
@@ -461,7 +448,7 @@ type BodyAlertingConfig struct {
 }
 
 // alertmanager routes
-// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig RoutePostTestReceivers
+// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig
 // testing routes
 // swagger:parameters RouteTestRuleConfig
 // prom routes

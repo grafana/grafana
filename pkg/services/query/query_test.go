@@ -26,6 +26,7 @@ import (
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestQueryDataMultipleSources(t *testing.T) {
@@ -197,7 +198,7 @@ func setup(t *testing.T) *testContext {
 		dataSourceCache:        dc,
 		oauthTokenService:      tc,
 		pluginRequestValidator: rv,
-		queryService:           query.ProvideService(nil, dc, exprService, rv, ds, pc, tc),
+		queryService:           query.ProvideService(setting.NewCfg(), dc, exprService, rv, ds, pc, tc),
 	}
 }
 

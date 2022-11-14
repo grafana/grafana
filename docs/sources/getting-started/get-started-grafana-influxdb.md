@@ -11,8 +11,6 @@ weight: 400
 
 {{< docs/shared "influxdb/intro.md" >}}
 
-> **Note:** You can also configure a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance to display system metrics without having to host Grafana yourself. Grafana offers a [free account with Grafana Cloud](https://grafana.com/signup/cloud/connect-account?pg=gsdocs) to help you get started.
-
 {{< docs/shared "getting-started/first-step.md" >}}
 
 #### Get InfluxDB
@@ -75,8 +73,8 @@ Grafana displays a list of possible series. Click one to select it, and Grafana 
 
 Create a simple Flux query.
 
-1. [Add a panel](../panels/add-a-panel.md).
-1. In the query editor, select your InfluxDB-Flux data source. For more information, refer to [Queries](../panels/queries.md).
+1. [Add a panel]({{< relref "../dashboards/build-dashboards/add-organize-panels/" >}}).
+1. In the query editor, select your InfluxDB-Flux data source. For more information, refer to [Queries]({{< relref "../panels-visualizations/query-transform-data/" >}}).
 1. Select the **Table** visualization.
 1. In the query editor text field, enter `buckets()` and then click outside of the query editor.
 
@@ -96,7 +94,7 @@ You can also create Flux queries in the InfluxDB Explore view.
 
    ![InfluxDB Explore Script Editor](/static/img/docs/influxdb/explore-query-text-7-5.png)
 
-1. In Grafana, [add a panel](../panels/add-a-panel.md) and then paste your Flux code into the query editor.
+1. In Grafana, [add a panel]({{< relref "../dashboards/build-dashboards/add-organize-panels/" >}}) and then paste your Flux code into the query editor.
 1. Click **Apply**. Your new panel should be visible with data from your Flux query.
 
 #### Check InfluxDB metrics in Grafana Explore
