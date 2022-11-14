@@ -348,15 +348,15 @@ type DashboardCursorSync int
 // TODO docs
 type DashboardLink struct {
 	AsDropdown  bool              `json:"asDropdown"`
-	Icon        *string           `json:"icon,omitempty"`
+	Icon        string            `json:"icon"`
 	IncludeVars bool              `json:"includeVars"`
 	KeepTime    bool              `json:"keepTime"`
 	Tags        []string          `json:"tags"`
 	TargetBlank bool              `json:"targetBlank"`
 	Title       string            `json:"title"`
-	Tooltip     *string           `json:"tooltip,omitempty"`
+	Tooltip     string            `json:"tooltip"`
 	Type        DashboardLinkType `json:"type"`
-	Url         *string           `json:"url,omitempty"`
+	Url         string            `json:"url"`
 }
 
 // DashboardLinkType defines model for DashboardLink.Type.

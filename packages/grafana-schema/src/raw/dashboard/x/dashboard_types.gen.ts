@@ -85,15 +85,15 @@ export interface VariableModel {
  */
 export interface DashboardLink {
   asDropdown: boolean;
-  icon?: string;
+  icon: string;
   includeVars: boolean;
   keepTime: boolean;
   tags: Array<string>;
   targetBlank: boolean;
   title: string;
-  tooltip?: string;
+  tooltip: string;
   type: DashboardLinkType;
-  url?: string;
+  url: string;
 }
 
 export const defaultDashboardLink: Partial<DashboardLink> = {

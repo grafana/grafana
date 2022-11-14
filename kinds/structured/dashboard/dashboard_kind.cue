@@ -133,9 +133,9 @@ lineage: seqs: [
 				#DashboardLink: {
 					title:    string             @grafanamaturity(NeedsExpertReview)
 					type:     #DashboardLinkType @grafanamaturity(NeedsExpertReview)
-					icon?:    string             @grafanamaturity(NeedsExpertReview)
-					tooltip?: string             @grafanamaturity(NeedsExpertReview)
-					url?:     string             @grafanamaturity(NeedsExpertReview)
+					icon:    string             @grafanamaturity(NeedsExpertReview)
+					tooltip: string             @grafanamaturity(NeedsExpertReview)
+					url:     string             @grafanamaturity(NeedsExpertReview)
 					tags: [...string] @grafanamaturity(NeedsExpertReview)
 					asDropdown:  bool | *false @grafanamaturity(NeedsExpertReview)
 					targetBlank: bool | *false @grafanamaturity(NeedsExpertReview)
