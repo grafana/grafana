@@ -359,7 +359,7 @@ var (
 		},
 		{
 			Name:        "accessTokenExpirationCheck",
-			Description: "Enable OAuth acccess_token expiration check and token refresh using the refresh_token",
+			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
 			State:       FeatureStateStable,
 		},
 		{
