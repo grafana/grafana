@@ -36,3 +36,16 @@ export const convertCheckIntervalsToHours = (sttCheckIntervals: SttCheckInterval
     frequentInterval: `${convertSecondsStringToHour(rawFrequentInterval)}`,
   };
 };
+
+const getPublicAddress = (): string | undefined => {
+  return window.location.host || undefined;
+};
+
+export const dBaaSToggleOnChange = (
+  event: React.ChangeEvent<HTMLInputElement>,
+  input: any,
+  mutators: Record<string, (...args: Array<string | undefined>) => any>
+) => {
+  input.onChange(event.target.checked);
+  mutators.setPublicAddress(getPublicAddress());
+};

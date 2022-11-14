@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, ChangeEvent } from 'react';
 
 import { Switch, useStyles2 } from '@grafana/ui';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
@@ -16,6 +16,7 @@ export const SwitchRow: FC<SwitchRowProps> = ({
   className,
   dataTestId,
   input,
+  onChange,
 }) => {
   const settingsStyles = useStyles2(getSettingsStyles);
   const styles = useStyles2(getStyles);
@@ -29,7 +30,13 @@ export const SwitchRow: FC<SwitchRowProps> = ({
         </div>
       </div>
       <div className={className}>
-        <Switch {...input} checked={undefined} value={input.checked} disabled={disabled} />
+        <Switch
+          {...input}
+          checked={undefined}
+          value={input.checked}
+          disabled={disabled}
+          {...(onChange ? { onChange: (event: ChangeEvent) => onChange(event, input) } : {})}
+        />
       </div>
     </div>
   );
