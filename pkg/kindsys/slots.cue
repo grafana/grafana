@@ -1,4 +1,4 @@
-package coremodel
+package kindsys
 
 // The slots named and specified in this file are meta-schemas that act as a
 // shared contract between Grafana plugins (producers) and coremodel types

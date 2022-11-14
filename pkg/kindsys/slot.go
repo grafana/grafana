@@ -64,6 +64,8 @@ func (s Slot) IsGroup() bool {
 
 // AllSlots returns a map of all [Slot]s defined in the Grafana kindsys
 // framework.
+//
+// TODO cache this for core context
 func AllSlots(ctx *cue.Context) map[string]*Slot {
 	fw := CUEFramework(ctx)
 	slots := make(map[string]*Slot)

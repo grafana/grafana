@@ -204,7 +204,7 @@ func ParsePluginFS(f fs.FS, rt *thema.Runtime) (*Tree, error) {
 
 		// Note that this actually will load any .cue files in the fs.FS root dir in the plugindef.PkgName.
 		// That's...maybe good? But not what it says on the tin
-		bi, err := load.InstancesWithThema(mfs, "", load.Package(plugindef.PkgName))
+		bi, err := load.InstanceWithThema(mfs, "", load.Package(plugindef.PkgName))
 		if err != nil {
 			return nil, fmt.Errorf("loading models.cue failed: %w", err)
 		}
