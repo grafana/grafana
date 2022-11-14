@@ -123,10 +123,6 @@ const (
 	// New UI for Azure Monitor Metrics Query
 	FlagAzureMonitorResourcePickerForMetrics = "azureMonitorResourcePickerForMetrics"
 
-	// FlagExplore2Dashboard
-	// Experimental Explore to Dashboard workflow
-	FlagExplore2Dashboard = "explore2Dashboard"
-
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
@@ -155,13 +151,9 @@ const (
 	// Enable trace to metrics links
 	FlagTraceToMetrics = "traceToMetrics"
 
-	// FlagPrometheusStreamingJSONParser
-	// Enable streaming JSON parser for Prometheus datasource
-	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
-
-	// FlagPrometheusStreamingJSONParserTest
-	// Run both old and streaming requests and log differences
-	FlagPrometheusStreamingJSONParserTest = "prometheusStreamingJSONParserTest"
+	// FlagPrometheusBufferedClient
+	// Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new)
+	FlagPrometheusBufferedClient = "prometheusBufferedClient"
 
 	// FlagNewDBLibrary
 	// Use jmoiron/sqlx rather than xorm for a few backend services
@@ -270,4 +262,8 @@ const (
 	// FlagNestedFolders
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
+
+	// FlagElasticsearchBackendMigration
+	// Use Elasticsearch as backend data source
+	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
 )
