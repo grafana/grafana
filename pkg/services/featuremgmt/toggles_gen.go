@@ -264,7 +264,7 @@ const (
 	FlagNestedFolders = "nestedFolders"
 
 	// FlagAccessTokenExpirationCheck
-	// Enable OAuth acccess_token expiration check and token refresh using the refresh_token
+	// Enable OAuth access_token expiration check and token refresh using the refresh_token
 	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
 
 	// FlagElasticsearchBackendMigration
