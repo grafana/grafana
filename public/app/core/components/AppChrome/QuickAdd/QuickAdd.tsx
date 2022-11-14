@@ -10,11 +10,7 @@ import { NavToolbarSeparator } from '../NavToolbarSeparator';
 
 import { findCreateActions } from './utils';
 
-export interface Props {
-  folderId?: number;
-  canCreateFolders?: boolean;
-  canCreateDashboards?: boolean;
-}
+export interface Props {}
 
 export const QuickAdd = ({}: Props) => {
   const styles = useStyles2(getStyles);
