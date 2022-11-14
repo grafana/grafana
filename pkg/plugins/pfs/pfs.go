@@ -161,7 +161,7 @@ func ParsePluginFS(f fs.FS, rt *thema.Runtime) (*Tree, error) {
 	if err != nil {
 		panic(fmt.Sprintf("plugindef lineage is invalid or broken, needs dev attention: %s", err))
 	}
-	mux := vmux.NewValueMux(lin.TypedSchema(), vmux.NewJSONEndec("plugin.json"))
+	mux := vmux.NewValueMux(lin.TypedSchema(), vmux.NewJSONCodec("plugin.json"))
 	ctx := rt.Context()
 
 	b, err := fs.ReadFile(f, "plugin.json")

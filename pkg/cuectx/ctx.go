@@ -50,7 +50,7 @@ func GrafanaThemaRuntime() *thema.Runtime {
 // call it repeatedly. Most use cases should probably prefer making
 // their own Thema/CUE decoders.
 func JSONtoCUE(path string, b []byte) (cue.Value, error) {
-	return vmux.NewJSONEndec(path).Decode(ctx, b)
+	return vmux.NewJSONCodec(path).Decode(ctx, b)
 }
 
 // LoadGrafanaInstancesWithThema loads CUE files containing a lineage
