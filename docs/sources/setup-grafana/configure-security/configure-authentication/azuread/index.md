@@ -175,11 +175,11 @@ GF_AUTH_AZUREAD_CLIENT_SECRET
 
 > **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
 
-Grafana verifies that the User's access token is not expired in case the User is logged in using an OAuth provider and it tries to obtain a new access token by using the provided refresh token (if any) if the access token is expired.
+When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
 
-A refresh token is a special token that is used to get new access tokens without having to ask the user to log in again. Without a refresh token the User gets logged out from the system after the access token is expired.
+Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
 
-1. Extend the `scopes` in `[auth.azuread]` with `offline_access`
+To enable a refresh token for AzureAD, extend the `scopes` in `[auth.azuread]` with `offline_access`.
 
 ### Configure allowed groups
 

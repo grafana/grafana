@@ -174,7 +174,7 @@ team_ids =
 allowed_organizations =
 ```
 
-A refresh token is included in the response by default for the **Authorization Code Grant**.
+By default, a refresh token is included in the response for the **Authorization Code Grant**.
 
 ## Set up OAuth2 with Centrify
 
@@ -207,7 +207,7 @@ A refresh token is included in the response by default for the **Authorization C
    api_url = https://<your domain>.my.centrify.com/OAuth2/UserInfo/<Application ID>
    ```
 
-A refresh token is included in the response by default for the **Authorization Code Grant**.
+By default, a refresh token is included in the response for the **Authorization Code Grant**.
 
 ## Set up OAuth2 with OneLogin
 

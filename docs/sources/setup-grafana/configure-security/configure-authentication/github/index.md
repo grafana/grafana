@@ -70,7 +70,7 @@ You can also use [variable expansion]({{< relref "../../../configure-grafana/#va
 
 > **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
 
-GitHub OAuth applications do not support refresh tokens, because the provided access tokens do not specify an expiry date.
+GitHub OAuth applications do not support refresh tokens because the provided access tokens do not expire.
 
 ### team_ids
 
