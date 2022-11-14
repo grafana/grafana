@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { CSSProperties, ReactNode } from 'react';
 
-import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { GrafanaTheme2, LoadingState, isIconName } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
@@ -11,7 +11,7 @@ import { PopoverContent } from '../Tooltip';
 /**
  * @internal
  */
-interface PanelChromeInfoState {
+export interface PanelChromeInfoState {
   icon: IconName;
   tooltip?: PopoverContent;
   onClick?: () => void;
@@ -57,15 +57,15 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   titleItems = [],
   menu,
   dragClass,
-  hoverHeader,
+  hoverHeader = false,
   loadingState,
-  states,
+  states = [],
   leftItems = [],
 }) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
-  const headerHeight = getHeaderHeight(theme, title, leftItems);
+  const headerHeight = !hoverHeader ? getHeaderHeight(theme, title, leftItems) : 0;
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
 
   const headerStyles: CSSProperties = {
@@ -89,18 +89,20 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
 
           {titleItems.length > 0 && (
             <div className={styles.items} data-testid="title-items-container">
-              {titleItems.map((item, i) => (
-                <div key={`${item.icon}-${i}`} className={styles.item} style={itemStyles}>
-                  <IconButton tooltip={item.tooltip} name={item.icon} size="sm" onClick={item.onClick} />
-                </div>
-              ))}
+              {titleItems
+                .filter((item) => isIconName(item.icon))
+                .map((item, i) => (
+                  <div key={`${item.icon}-${i}`} className={styles.item} style={itemStyles}>
+                    <IconButton tooltip={item.tooltip} name={item.icon} size="sm" onClick={item.onClick} />
+                  </div>
+                ))}
             </div>
           )}
 
           {menu && (
-            <div className={styles.item} style={itemStyles}>
+            <div className={cx(styles.item, styles.menuItem, 'menu-icon')} style={itemStyles}>
               <IconButton
-                tooltip={`Menu for ${title && `${title} `}panel`}
+                tooltip={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
                 name="ellipsis-v"
                 size="sm"
                 onClick={handleMenuOpen}
@@ -167,6 +169,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       flex: '0 0 0',
+
+      '&:focus-visible, &:hover': {
+        // only show menu icon on hover or focused panel
+        '.menu-icon': {
+          visibility: 'visible',
+        },
+      },
+
+      '&:focus-visible': {
+        outline: `1px solid ${theme.colors.action.focus}`,
+      },
     }),
     content: css({
       label: 'panel-content',
@@ -195,6 +208,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       justifyContent: 'space-around',
       alignItems: 'center',
+    }),
+    menuItem: css({
+      visibility: 'hidden',
     }),
     rightAligned: css({
       marginLeft: 'auto',

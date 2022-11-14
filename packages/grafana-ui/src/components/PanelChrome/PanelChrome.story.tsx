@@ -10,6 +10,8 @@ import { PanelChrome, useTheme2, PanelChromeProps } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
+import { PanelChromeInfoState } from './PanelChrome';
+
 const meta: ComponentMeta<typeof PanelChrome> = {
   title: 'Visualizations/PanelChrome',
   component: PanelChrome,
@@ -166,7 +168,7 @@ const ErrorIcon = [
 
 const leftItems = { LoadingIcon, ErrorIcon, Default };
 
-const titleItems = [
+const titleItems: PanelChromeInfoState[] = [
   {
     icon: 'info-circle',
     tooltip:
@@ -208,6 +210,8 @@ Basic.args = {
   width: 400,
   height: 200,
   title: 'Very long title that should get ellipsis when there is no more space',
+  titleItems,
+  menu: <div> Menu </div>,
 };
 
 export default meta;
