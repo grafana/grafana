@@ -4,7 +4,7 @@ import ReactGridLayout from 'react-grid-layout';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PANEL_SPAN, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
@@ -311,7 +311,6 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
 }
 
 function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>) {
-  const theme = useTheme2();
   const { children } = model.useState();
   validateChildrenSize(children);
 
