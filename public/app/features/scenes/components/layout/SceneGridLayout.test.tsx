@@ -95,7 +95,6 @@ describe('SceneGridLayout', () => {
           new TestObject({ key: 'c', size: { x: 0, y: 1, width: 1, height: 1 } }),
         ],
       });
-
       layout.onDragStop(
         [
           { i: 'b', x: 0, y: 0, w: 1, h: 1 },
@@ -114,14 +113,11 @@ describe('SceneGridLayout', () => {
             h: 1,
           },
         ],
-        // @ts-ignore
+        // @ts-expect-error
         {},
         { i: 'b', x: 0, y: 0, w: 1, h: 1 },
-        // @ts-ignore
         {},
-        // @ts-ignore
         {},
-        // @ts-ignore
         {}
       );
 

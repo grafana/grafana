@@ -322,15 +322,6 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
           return null;
         }
 
-        // Dev only, to be removed
-        const background = generateGridBackground({
-          cellSize: { width: (width - 23 * GRID_CELL_VMARGIN) / 24, height: GRID_CELL_HEIGHT },
-          margin: [GRID_CELL_VMARGIN, GRID_CELL_VMARGIN],
-          cols: 24,
-          gridWidth: width,
-          theme,
-        });
-
         const layout = model.buildGridLayout(width);
 
         return (
@@ -339,7 +330,7 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
            * in an element that has the calculated size given by the AutoSizer. The AutoSizer
            * has a width of 0 and will let its content overflow its div.
            */
-          <div style={{ width: `${width}px`, height: '100%', background }}>
+          <div style={{ width: `${width}px`, height: '100%' }}>
             <ReactGridLayout
               width={width}
               /*
@@ -486,40 +477,6 @@ function validateChildrenSize(children: SceneLayoutChild[]) {
   ) {
     throw new Error('All children must have a size specified');
   }
-}
-
-// Source: https://github.com/metabase/metabase/blob/master/frontend/src/metabase/dashboard/components/grid/utils.js#L28
-// © 2022 Metabase, Inc.
-export function generateGridBackground({
-  cellSize,
-  margin,
-  cols,
-  gridWidth,
-  theme,
-}: {
-  cellSize: { width: number; height: number };
-  margin: [number, number];
-  cols: number;
-  gridWidth: number;
-  theme: GrafanaTheme2;
-}) {
-  const XMLNS = 'http://www.w3.org/2000/svg';
-  const [horizontalMargin, verticalMargin] = margin;
-  const rowHeight = cellSize.height + verticalMargin;
-  const cellStrokeColor = theme.colors.border.weak;
-
-  const y = 0;
-  const w = cellSize.width;
-  const h = cellSize.height;
-
-  const rectangles = new Array(cols).fill(undefined).map((_, i) => {
-    const x = i * (cellSize.width + horizontalMargin);
-    return `<rect stroke='${cellStrokeColor}' stroke-width='1' fill='none' x='${x}' y='${y}' width='${w}' height='${h}'/>`;
-  });
-
-  const svg = [`<svg xmlns='${XMLNS}' width='${gridWidth}' height='${rowHeight}'>`, ...rectangles, `</svg>`].join('');
-
-  return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
 }
 
 function isItemSizeEqual(a: SceneObjectSize, b: SceneObjectSize) {
