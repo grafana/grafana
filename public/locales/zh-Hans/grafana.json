@@ -59,12 +59,6 @@
       "rows": "总行数",
       "table-title": "统计信息"
     },
-    "refresh-picker": {
-      "off-arialabel": "关闭自动刷新",
-      "off-description": "自动刷新已关闭。选择刷新时间间隔",
-      "off-label": "关",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "添加面板",
       "comments-show": "显示仪表板备注",
@@ -313,6 +307,23 @@
       "more": "更多...",
       "share": "分享",
       "view": "查看"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "自动刷新已关闭。选择刷新时间间隔",
+      "duration-selected": ""
+    },
+    "live-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "off-option": {
+      "aria-label": "关闭自动刷新",
+      "label": "关"
+    },
+    "select-button": {
+      "auto-refresh": ""
     }
   },
   "share-modal": {
