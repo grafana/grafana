@@ -28,6 +28,7 @@ export interface NavLinkDTO {
   emptyMessageId?: string;
   // The ID of the plugin that registered the page (in case it was registered by a plugin, otherwise left empty)
   pluginId?: string;
+  isCreateAction?: boolean;
 }
 
 export interface NavModelItem extends NavLinkDTO {

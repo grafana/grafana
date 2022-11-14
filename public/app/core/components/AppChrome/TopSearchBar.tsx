@@ -6,7 +6,6 @@ import { Dropdown, Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
-import { NavToolbarSeparator } from './NavToolbarSeparator';
 import { NewsContainer } from './News/NewsContainer';
 import { OrganizationSwitcher } from './Organization/OrganizationSwitcher';
 import { QuickAdd } from './QuickAdd/QuickAdd';
@@ -36,7 +35,6 @@ export function TopSearchBar() {
       </TopSearchBarSection>
       <TopSearchBarSection align="right">
         <QuickAdd />
-        <NavToolbarSeparator className={styles.separator} />
         {helpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={helpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
@@ -70,7 +68,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
 
     [theme.breakpoints.up('sm')]: {
-      gridTemplateColumns: '1fr 1.5fr 1fr',
+      gridTemplateColumns: '1fr 1fr 1fr',
       display: 'grid',
 
       justifyContent: 'flex-start',
@@ -88,12 +86,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   newsButton: css({
-    [theme.breakpoints.down('sm')]: {
-      display: 'none',
-    },
-  }),
-  separator: css({
-    margin: theme.spacing(0, 0.5),
     [theme.breakpoints.down('sm')]: {
       display: 'none',
     },
