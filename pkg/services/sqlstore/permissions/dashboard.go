@@ -23,6 +23,15 @@ func (d DashboardPermissionFilter) Where() (string, []interface{}) {
 		return "", nil
 	}
 
+	// LOGZ.IO GRAFANA CHANGE :: DEV-34631 refactor slow query filter
+	/*
+		In logzio setup we always allow to view any folder/dashboard so no need to apply any extra filter
+	*/
+	if d.PermissionLevel == models.PERMISSION_VIEW {
+		return "", nil
+	}
+	// LOGZ.IO GRAFANA CHANGE :: end
+
 	okRoles := []interface{}{d.OrgRole}
 	if d.OrgRole == models.ROLE_EDITOR {
 		okRoles = append(okRoles, models.ROLE_VIEWER)
