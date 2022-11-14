@@ -48,7 +48,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	kvStore := kvstore.ProvideService(store)
 	orgService := orgimpl.ProvideService(store, setting.NewCfg())
 	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, orgService)
-	svcmock := tests.ServiceAccountMock{}
+	svcmock := tests.ServiceAccountMock{Store: saStore}
 
 	autoAssignOrg := store.Cfg.AutoAssignOrg
 	store.Cfg.AutoAssignOrg = true
@@ -281,15 +281,15 @@ func serviceAccountRequestScenario(t *testing.T, httpMethod string, endpoint str
 func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	routerRegister routing.RouteRegister,
 	acmock *accesscontrolmock.Mock,
-	sqlStore db.DB, saStore serviceaccounts.Store) (*web.Mux, *ServiceAccountsAPI) {
+	sqlStore db.DB, saService serviceaccounts.Service) (*web.Mux, *ServiceAccountsAPI) {
 	cfg := setting.NewCfg()
 	teamSvc := teamimpl.ProvideService(sqlStore, cfg)
 	userSvc := userimpl.ProvideService(sqlStore, nil, cfg, teamimpl.ProvideService(sqlStore, cfg), nil)
 	saPermissionService, err := ossaccesscontrol.ProvideServiceAccountPermissions(
-		cfg, routing.NewRouteRegister(), sqlStore, acmock, &licensing.OSSLicensingService{}, saStore, acmock, teamSvc, userSvc)
+		cfg, routing.NewRouteRegister(), sqlStore, acmock, &licensing.OSSLicensingService{}, saService, acmock, teamSvc, userSvc)
 	require.NoError(t, err)
 
-	a := NewServiceAccountsAPI(cfg, svc, acmock, routerRegister, saStore, saPermissionService)
+	a := NewServiceAccountsAPI(cfg, svc, acmock, routerRegister, saPermissionService)
 	a.RegisterAPIEndpoints()
 
 	a.cfg.ApiKeyMaxSecondsToLive = -1 // disable api key expiration
@@ -534,7 +534,7 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 				assert.Equal(t, tc.user.Login, serviceAccountData["login"].(string))
 
 				// Ensure the user was updated in DB
-				sa, err := saAPI.store.RetrieveServiceAccount(context.Background(), 1, int64(scopeID))
+				sa, err := saAPI.service.RetrieveServiceAccount(context.Background(), 1, int64(scopeID))
 				require.NoError(t, err)
 				require.Equal(t, *tc.body.Name, sa.Name)
 				require.Equal(t, string(*tc.body.Role), sa.Role)

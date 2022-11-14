@@ -11,11 +11,20 @@ import (
 )
 
 func Test_UsageStats(t *testing.T) {
-	storeMock := &tests.ServiceAccountsStoreMock{Calls: tests.Calls{}, Stats: &serviceaccounts.Stats{
+	storeMock := &tests.ServiceAccountMock{Calls: tests.Calls{}, Stats: &serviceaccounts.Stats{
 		ServiceAccounts: 1,
 		Tokens:          1,
 	}}
-	svc := ServiceAccountsService{store: storeMock, secretScanEnabled: true}
+	/*
+		how to create this test
+
+		make a mock of the ServiceAccountService?
+		make a real ServiceAccountService?
+		We really only want to be able to see that the usageStats act as expected
+
+		So maybe we should only mock the ServiceAccountService and add method getUsageMetrics (which should return a map[]string) to it?
+	*/
+	svc := ServiceAccountsService{secretScanEnabled: true}
 	err := svc.DeleteServiceAccount(context.Background(), 1, 1)
 	require.NoError(t, err)
 	assert.Len(t, storeMock.Calls.DeleteServiceAccount, 1)

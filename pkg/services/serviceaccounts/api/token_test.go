@@ -35,7 +35,7 @@ const (
 	serviceaccountIDTokensDetailPath = "/api/serviceaccounts/%v/tokens/%v" // #nosec G101
 )
 
-func createTokenforSA(t *testing.T, store serviceaccounts.Store, keyName string, orgID int64, saID int64, secondsToLive int64) *apikey.APIKey {
+func createTokenforSA(t *testing.T, service serviceaccounts.Service, keyName string, orgID int64, saID int64, secondsToLive int64) *apikey.APIKey {
 	key, err := apikeygen.New(orgID, keyName)
 	require.NoError(t, err)
 
@@ -47,7 +47,7 @@ func createTokenforSA(t *testing.T, store serviceaccounts.Store, keyName string,
 		Result:        &apikey.APIKey{},
 	}
 
-	err = store.AddServiceAccountToken(context.Background(), saID, &cmd)
+	err = service.AddServiceAccountToken(context.Background(), saID, &cmd)
 	require.NoError(t, err)
 	return cmd.Result
 }
@@ -259,7 +259,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 }
 
 type saStoreMockTokens struct {
-	serviceaccounts.Store
+	serviceaccounts.Service
 	saAPIKeys []apikey.APIKey
 }
 

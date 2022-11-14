@@ -16,14 +16,13 @@ type CrawlerAuthSetupService interface {
 	Setup(ctx context.Context) (CrawlerAuth, error)
 }
 
-func ProvideCrawlerAuthSetupService(serviceAccounts serviceaccounts.Service, serviceAccountsStore serviceaccounts.Store,
+func ProvideCrawlerAuthSetupService(serviceAccounts serviceaccounts.Service,
 	sqlStore db.DB, orgService org.Service) *OSSCrawlerAuthSetupService {
 	return &OSSCrawlerAuthSetupService{
 		serviceAccountNamePrefix: "dashboard-previews-crawler-org-",
 		serviceAccounts:          serviceAccounts,
 		log:                      log.New("oss_crawler_account_setup_service"),
 		sqlStore:                 sqlStore,
-		serviceAccountsStore:     serviceAccountsStore,
 		orgService:               orgService,
 	}
 }
@@ -32,7 +31,6 @@ type OSSCrawlerAuthSetupService struct {
 	log                      log.Logger
 	serviceAccountNamePrefix string
 	serviceAccounts          serviceaccounts.Service
-	serviceAccountsStore     serviceaccounts.Store
 	sqlStore                 db.DB
 	orgService               org.Service
 }
@@ -117,7 +115,7 @@ func (o *OSSCrawlerAuthSetupService) Setup(ctx context.Context) (CrawlerAuth, er
 			}
 
 			// update org_role to make sure everything works properly if someone has changed the role since SA's original creation
-			dto, err := o.serviceAccountsStore.UpdateServiceAccount(ctx, orgId, id, &serviceaccounts.UpdateServiceAccountForm{
+			dto, err := o.serviceAccounts.UpdateServiceAccount(ctx, orgId, id, &serviceaccounts.UpdateServiceAccountForm{
 				Name: &serviceAccountNameOrg,
 				Role: &orgRole,
 			})

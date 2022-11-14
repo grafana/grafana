@@ -283,7 +283,7 @@ type ServiceAccountPermissionsService struct {
 
 func ProvideServiceAccountPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
-	license models.Licensing, serviceAccountStore serviceaccounts.Store, service accesscontrol.Service,
+	license models.Licensing, serviceAccountService serviceaccounts.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*ServiceAccountPermissionsService, error) {
 	options := resourcepermissions.Options{
@@ -294,7 +294,7 @@ func ProvideServiceAccountPermissions(
 			if err != nil {
 				return err
 			}
-			_, err = serviceAccountStore.RetrieveServiceAccount(ctx, orgID, id)
+			_, err = serviceAccountService.RetrieveServiceAccount(ctx, orgID, id)
 			return err
 		},
 		Assignments: resourcepermissions.Assignments{

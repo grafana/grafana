@@ -1,7 +1,9 @@
 package api
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -12,9 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -22,20 +26,38 @@ import (
 
 type ServiceAccountsAPI struct {
 	cfg               *setting.Cfg
-	service           serviceaccounts.Service
+	service           service
 	accesscontrol     accesscontrol.AccessControl
 	RouterRegister    routing.RouteRegister
-	store             serviceaccounts.Store
 	log               log.Logger
 	permissionService accesscontrol.ServiceAccountPermissionsService
 }
 
+// Service implements the API exposed methods for service accounts.
+type service interface {
+	CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error)
+	RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error)
+	UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64,
+		saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error)
+	SearchOrgServiceAccounts(ctx context.Context, orgID int64, query string, filter serviceaccounts.ServiceAccountFilter, page int, limit int,
+		signedInUser *user.SignedInUser) (*serviceaccounts.SearchServiceAccountsResult, error)
+	ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error)
+	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
+	GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (*serviceaccounts.APIKeysMigrationStatus, error)
+	HideApiKeysTab(ctx context.Context, orgID int64) error
+	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error
+	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
+	RevertApiKey(ctx context.Context, saId int64, keyId int64) error
+	// Service account tokens
+	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error
+	DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error
+}
+
 func NewServiceAccountsAPI(
 	cfg *setting.Cfg,
-	service serviceaccounts.Service,
+	service service,
 	accesscontrol accesscontrol.AccessControl,
 	routerRegister routing.RouteRegister,
-	store serviceaccounts.Store,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
 ) *ServiceAccountsAPI {
 	return &ServiceAccountsAPI{
@@ -43,7 +65,6 @@ func NewServiceAccountsAPI(
 		service:           service,
 		accesscontrol:     accesscontrol,
 		RouterRegister:    routerRegister,
-		store:             store,
 		log:               log.New("serviceaccounts.api"),
 		permissionService: permissionService,
 	}
@@ -113,7 +134,8 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 		}
 	}
 
-	serviceAccount, err := api.store.CreateServiceAccount(c.Req.Context(), c.OrgID, &cmd)
+	serviceAccount, err := api.service.CreateServiceAccount(c.Req.Context(), c.OrgID, &cmd)
+	fmt.Printf("serviceAccount: %v", serviceAccount)
 	switch {
 	case errors.Is(err, database.ErrServiceAccountAlreadyExists):
 		return response.Error(http.StatusBadRequest, "Failed to create service account", err)
@@ -152,7 +174,7 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) re
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
-	serviceAccount, err := api.store.RetrieveServiceAccount(ctx.Req.Context(), ctx.OrgID, scopeID)
+	serviceAccount, err := api.service.RetrieveServiceAccount(ctx.Req.Context(), ctx.OrgID, scopeID)
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
@@ -167,7 +189,7 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) re
 	serviceAccount.AvatarUrl = dtos.GetGravatarUrlWithDefault("", serviceAccount.Name)
 	serviceAccount.AccessControl = metadata[saIDString]
 
-	tokens, err := api.store.ListTokens(ctx.Req.Context(), &serviceaccounts.GetSATokensQuery{
+	tokens, err := api.service.ListTokens(ctx.Req.Context(), &serviceaccounts.GetSATokensQuery{
 		OrgID:            &serviceAccount.OrgId,
 		ServiceAccountID: &serviceAccount.Id,
 	})
@@ -215,7 +237,7 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *models.ReqContext) respon
 		}
 	}
 
-	resp, err := api.store.UpdateServiceAccount(c.Req.Context(), c.OrgID, scopeID, &cmd)
+	resp, err := api.service.UpdateServiceAccount(c.Req.Context(), c.OrgID, scopeID, &cmd)
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
@@ -305,7 +327,7 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 	if onlyDisabled {
 		filter = serviceaccounts.FilterOnlyDisabled
 	}
-	serviceAccountSearch, err := api.store.SearchOrgServiceAccounts(ctx, c.OrgID, c.Query("query"), filter, page, perPage, c.SignedInUser)
+	serviceAccountSearch, err := api.service.SearchOrgServiceAccounts(ctx, c.OrgID, c.Query("query"), filter, page, perPage, c.SignedInUser)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get service accounts for current organization", err)
 	}
@@ -319,7 +341,7 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 		saIDs[saIDString] = true
 		metadata := api.getAccessControlMetadata(c, map[string]bool{saIDString: true})
 		sa.AccessControl = metadata[strconv.FormatInt(sa.Id, 10)]
-		tokens, err := api.store.ListTokens(ctx, &serviceaccounts.GetSATokensQuery{
+		tokens, err := api.service.ListTokens(ctx, &serviceaccounts.GetSATokensQuery{
 			OrgID: &sa.OrgId, ServiceAccountID: &sa.Id,
 		})
 		if err != nil {
@@ -333,7 +355,7 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 
 // GET /api/serviceaccounts/migrationstatus
 func (api *ServiceAccountsAPI) GetAPIKeysMigrationStatus(ctx *models.ReqContext) response.Response {
-	upgradeStatus, err := api.store.GetAPIKeysMigrationStatus(ctx.Req.Context(), ctx.OrgID)
+	upgradeStatus, err := api.service.GetAPIKeysMigrationStatus(ctx.Req.Context(), ctx.OrgID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
@@ -342,7 +364,7 @@ func (api *ServiceAccountsAPI) GetAPIKeysMigrationStatus(ctx *models.ReqContext)
 
 // POST /api/serviceaccounts/hideapikeys
 func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *models.ReqContext) response.Response {
-	if err := api.store.HideApiKeysTab(ctx.Req.Context(), ctx.OrgID); err != nil {
+	if err := api.service.HideApiKeysTab(ctx.Req.Context(), ctx.OrgID); err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
 	return response.Success("API keys hidden")
@@ -350,7 +372,7 @@ func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *models.ReqContext) response.R
 
 // POST /api/serviceaccounts/migrate
 func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *models.ReqContext) response.Response {
-	if err := api.store.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgID); err != nil {
+	if err := api.service.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgID); err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
 
@@ -364,7 +386,7 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) r
 		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
 	}
 
-	if err := api.store.MigrateApiKey(ctx.Req.Context(), ctx.OrgID, keyId); err != nil {
+	if err := api.service.MigrateApiKey(ctx.Req.Context(), ctx.OrgID, keyId); err != nil {
 		return response.Error(http.StatusInternalServerError, "Error converting API key", err)
 	}
 
@@ -382,7 +404,7 @@ func (api *ServiceAccountsAPI) RevertApiKey(ctx *models.ReqContext) response.Res
 		return response.Error(http.StatusBadRequest, "service account ID is invalid", err)
 	}
 
-	if err := api.store.RevertApiKey(ctx.Req.Context(), serviceAccountId, keyId); err != nil {
+	if err := api.service.RevertApiKey(ctx.Req.Context(), serviceAccountId, keyId); err != nil {
 		return response.Error(http.StatusInternalServerError, "error reverting to API key", err)
 	}
 	return response.Success("reverted service account to API key")
