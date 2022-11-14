@@ -145,6 +145,12 @@ Some operations make sense only in specific order, if adding an operation would 
 
 In same cases the query editor can detect which operations would be most appropriate for a selected metric. In such cases it will show a hint next to the `+ Operations` button. Click on the hint to add the operations to your query.
 
+### Explain
+
+![Explain mode](/static/img/docs/prometheus/explain-9-1.gif 'Explain mode')
+
+Explain mode helps with understanding the query. It shows a step by step explanation of all query parts and the operations.
+
 #### Raw query
 
 ![Raw query](/static/img/docs/prometheus/raw-query-8-5.gif 'Raw query')
@@ -154,12 +160,6 @@ This section is shown only if the `Raw query` switch from the query editor top t
 #### Options
 
 Same set of option is available as in the `Code` mode. See the [Code mode options]({{< relref "#options" >}}) for details.
-
-### Explain mode
-
-![Explain mode](/static/img/docs/prometheus/explain-8-5.png 'Explain mode')
-
-Explain mode helps with understanding the query. It shows a step by step explanation of all query parts and the operations.
 
 ## Templating
 
