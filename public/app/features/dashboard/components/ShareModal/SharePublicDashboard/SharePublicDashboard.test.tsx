@@ -62,7 +62,7 @@ beforeAll(() => {
         ],
       },
     ],
-  } as any;
+  } as BootData;
 
   server.listen({ onUnhandledRequest: 'bypass' });
 });
