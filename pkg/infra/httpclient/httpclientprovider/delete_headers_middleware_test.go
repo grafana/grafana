@@ -59,6 +59,8 @@ func TestDeleteHeadersMiddleware(t *testing.T) {
 		require.ElementsMatch(t, []string{"final"}, ctx.callChain)
 
 		require.Equal(t, "a", req.Header.Get("X-Header-A"))
+		require.Empty(t, req.Header.Get("X-Header-B"))
+		require.Empty(t, req.Header.Get("X-Header-C"))
 		require.Equal(t, "d", req.Header.Get("X-Header-D"))
 	})
 }
