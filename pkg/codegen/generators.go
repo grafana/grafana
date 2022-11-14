@@ -3,6 +3,7 @@ package codegen
 import (
 	"bytes"
 	"fmt"
+	"path/filepath"
 
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/kindsys"
@@ -39,10 +40,14 @@ func (decl *DeclForGen) Lineage() thema.Lineage {
 	return decl.lin
 }
 
+// SlashHeaderMapper produces a FileMapper that injects a comment header onto
+// a [codejen.File] indicating the main generator that produced it (via the provided
+// maingen, which should be a path) and the jenny or jennies that constructed the
+// file.
 func SlashHeaderMapper(maingen string) codejen.FileMapper {
 	return func(f codejen.File) (codejen.File, error) {
 		b := new(bytes.Buffer)
-		fmt.Fprintf(b, headerTmpl, maingen, f.FromString())
+		fmt.Fprintf(b, headerTmpl, filepath.ToSlash(maingen), f.FromString())
 		fmt.Fprint(b, string(f.Data))
 		f.Data = b.Bytes()
 		return f, nil
