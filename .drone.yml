@@ -2132,9 +2132,8 @@ steps:
   image: grafana/build-container:1.6.5
   name: build-storybook
   when:
-    paths:
-      include:
-      - packages/grafana-ui/**
+    event:
+    - tag
 - commands:
   - ./bin/grabpl upload-cdn --edition oss
   depends_on:
@@ -2177,9 +2176,8 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.3
   name: store-storybook
   when:
-    paths:
-      include:
-      - packages/grafana-ui/**
+    event:
+    - tag
 - commands:
   - ./bin/grabpl artifacts npm store --tag ${DRONE_TAG}
   depends_on:
@@ -5514,6 +5512,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 1d42ccac383b4cacb1a626ffdc71847208cca3b464a5ba80e012703b47d2b347
+hmac: 4f5e09af0ec5a9d59c5e31333bf180dd52cba1ad2780d96a62d20583113ccb16
 
 ...
