@@ -126,7 +126,10 @@ When a user logs in using an OAuth provider, Grafana verifies that the access to
 
 Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
 
-Generic OAuth supports obtaining access tokens by using the refresh token, but the `[auth.generic_oauth]` section should be extended with additional scopes and it should be enabled on the provider side as well.
+To configure Generic OAuth to use a refresh token, perform one or both of the following tasks, if required:
+
+- Extend the `[auth.generic_oauth]` section with additional scopes
+- Enable the refresh token on the provider
 
 ## Set up OAuth2 with Auth0
 
