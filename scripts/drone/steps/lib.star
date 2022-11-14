@@ -822,7 +822,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
     else:
         mode = ''
 
-    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {} --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7'.format(
+    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {}'.format(
         mode, docker_repo)
 
     if ver_mode == 'release':
