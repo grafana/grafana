@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 // DashboardService is a service for operating on dashboards.
@@ -89,9 +90,9 @@ type Store interface {
 //go:generate mockery --name FolderStore --structname FakeFolderStore --inpackage --filename folder_store_mock.go
 type FolderStore interface {
 	// GetFolderByTitle retrieves a folder by its title
-	GetFolderByTitle(ctx context.Context, orgID int64, title string) (*models.Folder, error)
+	GetFolderByTitle(ctx context.Context, orgID int64, title string) (*folder.Folder, error)
 	// GetFolderByUID retrieves a folder by its UID
-	GetFolderByUID(ctx context.Context, orgID int64, uid string) (*models.Folder, error)
+	GetFolderByUID(ctx context.Context, orgID int64, uid string) (*folder.Folder, error)
 	// GetFolderByID retrieves a folder by its ID
-	GetFolderByID(ctx context.Context, orgID int64, id int64) (*models.Folder, error)
+	GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error)
 }

@@ -9,7 +9,7 @@ local dashboard = grafana.dashboard;
 {
   folders: [grafana.folder.new('dev-dashboards', 'dev-dashboards')],
   dashboards: [{{range .Dashboards}}
-    dashboard.new('{{.Name}}', import '{{.Path}}') +
+    dashboard.new('{{.Name}}', import '../dev-dashboards/{{.Path}}') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
