@@ -169,7 +169,7 @@ GF_AUTH_AZUREAD_CLIENT_SECRET
 
 **Note:** Verify that the Grafana [root_url]({{< relref "../../../configure-grafana/#root-url" >}}) is set in your Azure Application Redirect URLs.
 
-### Access token expiration check and configure refresh token
+### Configure refresh token
 
 > Available in Grafana v9.3 and later versions.
 

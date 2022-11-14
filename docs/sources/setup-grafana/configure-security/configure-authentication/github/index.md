@@ -64,7 +64,7 @@ automatically signed up.
 
 You can also use [variable expansion]({{< relref "../../../configure-grafana/#variable-expansion" >}}) to reference environment variables and local files in your GitHub auth configuration.
 
-### Access token expiration check and configure refresh token
+### GitHub refresh token
 
 > Available in Grafana v9.3 and later versions.
 
