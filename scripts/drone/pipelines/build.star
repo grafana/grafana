@@ -30,11 +30,13 @@ load(
     'upload_packages_step',
     'upload_cdn_step',
     'verify_gen_cue_step',
+    'verify_gen_jsonnet_step',
     'test_a11y_frontend_step',
     'trigger_oss',
     'betterer_frontend_step',
     'trigger_test_release',
     'compile_build_cmd',
+    'cloud_plugins_e2e_tests_step',
 )
 
 load(
@@ -49,6 +51,7 @@ def build_e2e(trigger, ver_mode, edition):
         download_grabpl_step(),
         compile_build_cmd(),
         verify_gen_cue_step(edition="oss"),
+        verify_gen_jsonnet_step(edition="oss"),
         wire_install_step(),
         yarn_install_step(),
     ]
@@ -73,6 +76,7 @@ def build_e2e(trigger, ver_mode, edition):
         e2e_tests_step('smoke-tests-suite', edition=edition),
         e2e_tests_step('panels-suite', edition=edition),
         e2e_tests_step('various-suite', edition=edition),
+        cloud_plugins_e2e_tests_step('cloud-plugins-suite', edition=edition, cloud='azure', trigger=trigger_oss),
         e2e_tests_artifacts(edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         copy_packages_for_docker_step(),

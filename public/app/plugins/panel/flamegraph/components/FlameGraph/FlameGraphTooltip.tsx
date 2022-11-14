@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { LegacyRef } from 'react';
 
 import { createTheme, Field, getDisplayProcessor } from '@grafana/data';
-import { useStyles, Tooltip } from '@grafana/ui';
+import { useStyles2, Tooltip } from '@grafana/ui';
 
 import { TooltipData, SampleUnit } from '../types';
 
@@ -13,7 +13,7 @@ type Props = {
 };
 
 const FlameGraphTooltip = ({ tooltipRef, tooltipData, showTooltip }: Props) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div ref={tooltipRef} className={styles.tooltip}>

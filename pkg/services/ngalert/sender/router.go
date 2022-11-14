@@ -2,9 +2,11 @@ package sender
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"net/url"
+	"sort"
 	"sync"
 	"time"
 
@@ -103,45 +105,31 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		externalAlertmanagers, err := d.alertmanagersFromDatasources(cfg.OrgID)
+		alertmanagers, err := d.alertmanagersFromDatasources(cfg.OrgID)
 		if err != nil {
-			d.logger.Error("Failed to get alertmanagers from datasources",
-				"org", cfg.OrgID,
-				"error", err)
+			d.logger.Error("Failed to get alertmanagers from datasources", "org", cfg.OrgID, "error", err)
 			continue
 		}
-		cfg.Alertmanagers = append(cfg.Alertmanagers, externalAlertmanagers...)
 
 		// We have no running sender and no Alertmanager(s) configured, no-op.
-		if !ok && len(cfg.Alertmanagers) == 0 {
+		if !ok && len(alertmanagers) == 0 {
 			d.logger.Debug("No external alertmanagers configured", "org", cfg.OrgID)
 			continue
 		}
 
 		// We have a running sender but no Alertmanager(s) configured, shut it down.
-		if ok && len(cfg.Alertmanagers) == 0 {
+		if ok && len(alertmanagers) == 0 {
 			d.logger.Info("No external alertmanager(s) configured, sender will be stopped", "org", cfg.OrgID)
 			delete(orgsFound, cfg.OrgID)
 			continue
 		}
 
 		// Avoid logging sensitive data
-		var redactedAMs []string
-		for _, am := range cfg.Alertmanagers {
-			parsedAM, err := url.Parse(am)
-			if err != nil {
-				d.logger.Error("Failed to parse alertmanager string",
-					"org", cfg.OrgID,
-					"error", err)
-				continue
-			}
-			redactedAMs = append(redactedAMs, parsedAM.Redacted())
-		}
-
+		redactedAMs := buildRedactedAMs(d.logger, alertmanagers, cfg.OrgID)
 		d.logger.Debug("Alertmanagers found in the configuration", "alertmanagers", redactedAMs)
 
 		// We have a running sender, check if we need to apply a new config.
-		amHash := cfg.AsSHA256()
+		amHash := asSHA256(alertmanagers)
 		if ok {
 			if d.externalAlertmanagersCfgHash[cfg.OrgID] == amHash {
 				d.logger.Debug("Sender configuration is the same as the one running, no-op", "org", cfg.OrgID, "alertmanagers", redactedAMs)
@@ -149,7 +137,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 			}
 
 			d.logger.Info("Applying new configuration to sender", "org", cfg.OrgID, "alertmanagers", redactedAMs, "cfg", cfg.ID)
-			err := existing.ApplyConfig(cfg)
+			err := existing.ApplyConfig(cfg.OrgID, cfg.ID, alertmanagers)
 			if err != nil {
 				d.logger.Error("Failed to apply configuration", "error", err, "org", cfg.OrgID)
 				continue
@@ -164,7 +152,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 		d.externalAlertmanagers[cfg.OrgID] = s
 		s.Run()
 
-		err = s.ApplyConfig(cfg)
+		err = s.ApplyConfig(cfg.OrgID, cfg.ID, alertmanagers)
 		if err != nil {
 			d.logger.Error("Failed to apply configuration", "error", err, "org", cfg.OrgID)
 			continue
@@ -184,7 +172,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 	}
 	d.adminConfigMtx.Unlock()
 
-	// We can now stop these externalAlertmanagers w/o having to hold a lock.
+	// We can now stop these external Alertmanagers w/o having to hold a lock.
 	for orgID, s := range sendersToStop {
 		d.logger.Info("Stopping sender", "org", orgID)
 		s.Stop()
@@ -194,6 +182,26 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 	d.logger.Debug("Finish of admin configuration sync")
 
 	return nil
+}
+
+func buildRedactedAMs(l log.Logger, alertmanagers []string, ordId int64) []string {
+	var redactedAMs []string
+	for _, am := range alertmanagers {
+		parsedAM, err := url.Parse(am)
+		if err != nil {
+			l.Error("Failed to parse alertmanager string", "org", ordId, "error", err)
+			continue
+		}
+		redactedAMs = append(redactedAMs, parsedAM.Redacted())
+	}
+	return redactedAMs
+}
+
+func asSHA256(strings []string) string {
+	h := sha256.New()
+	sort.Strings(strings)
+	_, _ = h.Write([]byte(fmt.Sprintf("%v", strings)))
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, error) {

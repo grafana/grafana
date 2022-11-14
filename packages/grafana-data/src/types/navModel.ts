@@ -26,6 +26,8 @@ export interface NavLinkDTO {
   children?: NavLinkDTO[];
   highlightText?: string;
   emptyMessageId?: string;
+  // The ID of the plugin that registered the page (in case it was registered by a plugin, otherwise left empty)
+  pluginId?: string;
 }
 
 export interface NavModelItem extends NavLinkDTO {
@@ -40,8 +42,6 @@ export interface NavModelItem extends NavLinkDTO {
   highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
   hideFromBreadcrumbs?: boolean;
-  /** To render custom things between title and child tabs */
-  headerExtra?: ComponentType;
 }
 
 export enum NavSection {

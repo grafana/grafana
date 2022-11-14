@@ -2,10 +2,10 @@ import { css, cx } from '@emotion/css';
 import { debounce } from 'lodash';
 import React, { FormEvent, useState } from 'react';
 
-import { DataSourceInstanceSettings, GrafanaTheme, SelectableValue } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { DataSourcePicker, logInfo } from '@grafana/runtime';
-import { Button, Field, Icon, Input, Label, RadioButtonGroup, Tooltip, useStyles } from '@grafana/ui';
+import { Button, Field, Icon, Input, Label, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -15,14 +15,14 @@ import { alertStateToReadable } from '../../utils/rules';
 
 const ViewOptions: SelectableValue[] = [
   {
-    icon: 'list-ul',
-    label: 'List',
-    value: 'list',
-  },
-  {
     icon: 'folder',
     label: 'Grouped',
     value: 'grouped',
+  },
+  {
+    icon: 'list-ul',
+    label: 'List',
+    value: 'list',
   },
   {
     icon: 'heart-rate',
@@ -51,7 +51,7 @@ const RulesFilter = () => {
 
   const { dataSource, alertState, queryString, ruleType } = getFiltersFromUrlParams(queryParams);
 
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const stateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
     label: alertStateToReadable(value),
     value,
@@ -178,13 +178,13 @@ const RulesFilter = () => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       display: flex;
       flex-direction: column;
-      padding-bottom: ${theme.spacing.sm};
-      margin-bottom: ${theme.spacing.sm};
+      padding-bottom: ${theme.spacing(1)};
+      margin-bottom: ${theme.spacing(1)};
     `,
     inputWidth: css`
       width: 340px;
@@ -201,10 +201,10 @@ const getStyles = (theme: GrafanaTheme) => {
       justify-content: space-between;
     `,
     rowChild: css`
-      margin: 0 ${theme.spacing.sm} 0 0;
+      margin: ${theme.spacing(0, 1, 0, 0)};
     `,
     clearButton: css`
-      margin-top: ${theme.spacing.sm};
+      margin-top: ${theme.spacing(1)};
     `,
   };
 };
