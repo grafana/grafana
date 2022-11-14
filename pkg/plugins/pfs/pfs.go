@@ -5,7 +5,6 @@ import (
 	"io/fs"
 	"sort"
 	"strings"
-	"sync"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/ast"
@@ -49,10 +48,6 @@ type slotandname struct {
 
 var allslots []slotandname
 
-// TODO re-enable after go1.18
-var tsch thema.TypedSchema[*plugindef.PluginDef]
-var plugmux vmux.ValueMux[*plugindef.PluginDef]
-
 func init() {
 	var all []string
 	for _, im := range PermittedCUEImports() {
@@ -71,8 +66,6 @@ func init() {
 		return allslots[i].name < allslots[j].name
 	})
 }
-
-var muxonce sync.Once
 
 // Tree represents the contents of a plugin filesystem tree.
 type Tree struct {
