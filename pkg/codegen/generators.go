@@ -46,10 +46,16 @@ func (decl *DeclForGen) Lineage() thema.Lineage {
 // file.
 func SlashHeaderMapper(maingen string) codejen.FileMapper {
 	return func(f codejen.File) (codejen.File, error) {
-		b := new(bytes.Buffer)
-		fmt.Fprintf(b, headerTmpl, filepath.ToSlash(maingen), f.FromString())
-		fmt.Fprint(b, string(f.Data))
-		f.Data = b.Bytes()
+		// Never inject on certain filetypes, it's never valid
+		switch filepath.Ext(f.RelativePath) {
+		case ".json", ".yml", ".yaml":
+			return f, nil
+		default:
+			b := new(bytes.Buffer)
+			fmt.Fprintf(b, headerTmpl, filepath.ToSlash(maingen), f.FromString())
+			fmt.Fprint(b, string(f.Data))
+			f.Data = b.Bytes()
+		}
 		return f, nil
 	}
 }

@@ -70,7 +70,7 @@ func (j *jennytypego) Generate(lin thema.Lineage) (*codejen.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	return codejen.NewFile("plugindef_types_gen.go", b, j), nil
+	return codejen.NewFile(filepath.Join(dirPlugindef, "plugindef_types_gen.go"), b, j), nil
 }
 
 // one-off jenny for plugindef go bindings
