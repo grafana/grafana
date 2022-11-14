@@ -447,6 +447,14 @@
       "range-error": "\"From\" can't be after \"To\"",
       "to-input": "To"
     },
+    "range-picker": {
+      "backwards-time-aria-label": "Move time range backwards",
+      "current-time-selected": "Time range selected: {{currentTimeRange}}",
+      "forwards-time-aria-label": "Move time range forwards",
+      "to": "to",
+      "zoom-out-button": "Zoom out time range",
+      "zoom-out-tooltip": "Time range zoom out <1></1> CTRL+Z"
+    },
     "time-range": {
       "aria-role": "Time range selection",
       "default-title": "Time ranges",

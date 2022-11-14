@@ -119,7 +119,8 @@ A template variable of the type `Constant` will automatically be hidden in the d
    - Paste a [Grafana.com](https://grafana.com) dashboard URL
    - Paste dashboard JSON text directly into the text area
 
-{{< figure src="/static/img/docs/v70/import_step2_grafana.com.png"  max-width="700px" >}}
+<!--{{< figure src="/static/img/docs/v70/import_step2_grafana.com.png"  max-width="700px" >}}
+-->
 
 The import process enables you to change the name of the dashboard, pick the data source you want the dashboard to use, and specify any metric prefixes (if the dashboard uses any).
 

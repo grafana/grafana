@@ -447,6 +447,14 @@
       "range-error": "\"Fřőm\" čäŉ'ŧ þę äƒŧęř \"Ŧő\"",
       "to-input": "Ŧő"
     },
+    "range-picker": {
+      "backwards-time-aria-label": "Mővę ŧįmę řäŉģę þäčĸŵäřđş",
+      "current-time-selected": "Ŧįmę řäŉģę şęľęčŧęđ: {{čūřřęŉŧŦįmęŖäŉģę}}",
+      "forwards-time-aria-label": "Mővę ŧįmę řäŉģę ƒőřŵäřđş",
+      "to": "ŧő",
+      "zoom-out-button": "Żőőm őūŧ ŧįmę řäŉģę",
+      "zoom-out-tooltip": "Ŧįmę řäŉģę žőőm őūŧ <1></1> CŦŖĿ+Ż"
+    },
     "time-range": {
       "aria-role": "Ŧįmę řäŉģę şęľęčŧįőŉ",
       "default-title": "Ŧįmę řäŉģęş",
