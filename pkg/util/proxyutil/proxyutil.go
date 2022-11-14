@@ -70,7 +70,7 @@ func SetProxyResponseHeaders(header http.Header) {
 // ApplyUserHeader Set the X-Grafana-User header if needed (and remove if not).
 func ApplyUserHeader(sendUserHeader bool, req *http.Request, user *user.SignedInUser) {
 	req.Header.Del(UserHeaderName)
-	if sendUserHeader && !user.IsAnonymous {
+	if sendUserHeader && user != nil && !user.IsAnonymous {
 		req.Header.Set(UserHeaderName, user.Login)
 	}
 }

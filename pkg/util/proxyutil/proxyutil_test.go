@@ -89,6 +89,15 @@ func TestApplyUserHeader(t *testing.T) {
 		require.NotContains(t, req.Header, "X-Grafana-User")
 	})
 
+	t.Run("Should not apply user header when user is nil, should remove the existing", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.Header.Set("X-Grafana-User", "admin")
+
+		ApplyUserHeader(false, req, nil)
+		require.NotContains(t, req.Header, "X-Grafana-User")
+	})
+
 	t.Run("Should not apply user header for anonomous user", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/", nil)
 		require.NoError(t, err)
