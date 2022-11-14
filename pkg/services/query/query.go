@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -26,6 +27,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"golang.org/x/sync/errgroup"
+)
+
+const (
+	HeaderPluginID      = "X-Plugin-Id"      // can be used for routing
+	HeaderDatasourceUID = "X-Datasource-Uid" // can be used for routing/ load balancing
+	HeaderDashboardUID  = "X-Dashboard-Uid"  // mainly useful for debuging slow queries
+	HeaderPanelID       = "X-Panel-Id"       // mainly useful for debuging slow queries
 )
 
 func ProvideService(
@@ -251,7 +259,7 @@ func (pr parsedRequest) validateRequest() error {
 		return nil
 	}
 
-	vals := pr.httpRequest.Header.Values("X-datasource-uid")
+	vals := splitHeaders(pr.httpRequest.Header.Values(HeaderDatasourceUID))
 	count := len(vals)
 	if count > 0 { // header exists
 		if count != len(pr.parsedQueries) {
@@ -263,8 +271,8 @@ func (pr parsedRequest) validateRequest() error {
 			}
 		}
 	}
-	// TODO! verify that multiple headers sent on one line are split
-	vals = pr.httpRequest.Header.Values("X-plugin-id")
+
+	vals = splitHeaders(pr.httpRequest.Header.Values(HeaderPluginID))
 	count = len(vals)
 	if count > 0 { // header exists
 		if count != len(pr.dsTypes) {
@@ -277,6 +285,20 @@ func (pr parsedRequest) validateRequest() error {
 		}
 	}
 	return nil
+}
+
+func splitHeaders(headers []string) []string {
+	out := []string{}
+	for _, v := range headers {
+		if strings.Contains(v, ",") {
+			for _, sub := range strings.Split(v, ",") {
+				out = append(out, strings.TrimSpace(sub))
+			}
+		} else {
+			out = append(out, v)
+		}
+	}
+	return out
 }
 
 // parseRequest parses a request into parsed queries grouped by datasource uid

@@ -73,10 +73,10 @@ export enum HealthStatus {
 
 // Internal for now
 enum PluginRequestHeaders {
-  PluginID = 'X-plugin-id', // can be used for routing
-  DatasourceUID = 'X-datasource-uid', // can be used for routing/ load balancing
-  DashboardUID = 'X-dashboard-uid', // mainly useful for debuging slow queries
-  PanelID = 'X-panel-id', // mainly useful for debuging slow queries
+  PluginID = 'X-Plugin-Id', // can be used for routing
+  DatasourceUID = 'X-Datasource-Uid', // can be used for routing/ load balancing
+  DashboardUID = 'X-Dashboard-Uid', // mainly useful for debuging slow queries
+  PanelID = 'X-Panel-Id', // mainly useful for debuging slow queries
 }
 
 /**
