@@ -438,6 +438,7 @@
     },
     "range-picker": {
       "backwards-time-aria-label": "Mővę ŧįmę řäŉģę þäčĸŵäřđş",
+      "current-time-selected": "Ŧįmę řäŉģę şęľęčŧęđ: {{čūřřęŉŧŦįmęŖäŉģę}}",
       "forwards-time-aria-label": "Mővę ŧįmę řäŉģę ƒőřŵäřđş",
       "to": "ŧő",
       "zoom-out-button": "Żőőm őūŧ ŧįmę řäŉģę",
@@ -452,11 +453,6 @@
     "zone": {
       "select-aria-label": "Ŧįmę žőŉę pįčĸęř",
       "select-search-input": "Ŧypę ŧő şęäřčĥ (čőūŉŧřy, čįŧy, äþþřęvįäŧįőŉ)"
-    }
-  },
-  "time-range": {
-    "range-picker": {
-      "current-time-selected": "Ŧįmę řäŉģę pįčĸęř ŵįŧĥ čūřřęŉŧ ŧįmę řäŉģę {{čūřřęŉŧŦįmęŖäŉģę}} şęľęčŧęđ"
     }
   },
   "user-orgs": {

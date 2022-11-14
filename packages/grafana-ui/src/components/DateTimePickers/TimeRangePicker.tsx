@@ -109,11 +109,9 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
       <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom" interactive>
         <ToolbarButton
           data-testid={selectors.components.TimePicker.openButton}
-          aria-label={t(
-            'time-range.range-picker.current-time-selected',
-            'Time range picker with current time range {{currentTimeRange}} selected',
-            { currentTimeRange }
-          )}
+          aria-label={t('time-picker.range-picker.current-time-selected', 'Time range selected: {{currentTimeRange}}', {
+            currentTimeRange,
+          })}
           aria-controls="TimePickerContent"
           onClick={onOpen}
           icon="clock-nine"
