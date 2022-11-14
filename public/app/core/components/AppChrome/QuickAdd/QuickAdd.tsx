@@ -48,7 +48,7 @@ export const QuickAdd = ({}: Props) => {
         {isSmallScreen ? (
           <ToolbarButton iconOnly icon="plus-circle" aria-label="New" />
         ) : (
-          <Button variant="secondary" size="sm" icon="plus">
+          <Button variant="primary" size="sm" icon="plus">
             <div className={styles.buttonContent}>
               <span className={styles.buttonText}>New</span>
               <Icon name="angle-down" />
