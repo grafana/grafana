@@ -20,6 +20,7 @@ import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/j
 import {
   AxisPlacement,
   GraphTransform,
+  GraphTresholdsStyleMode,
   ScaleDirection,
   ScaleDistribution,
   ScaleOrientation,
@@ -190,6 +191,23 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
     if (softMax == null && field.config.max == null) {
       softMax = 0;
+    }
+
+    // Render thresholds in graph
+    if (customConfig.thresholdsStyle && field.config.thresholds) {
+      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphTresholdsStyleMode.Off;
+      if (thresholdDisplay !== GraphTresholdsStyleMode.Off) {
+        builder.addThresholds({
+          config: customConfig.thresholdsStyle,
+          thresholds: field.config.thresholds,
+          scaleKey,
+          theme,
+          hardMin: field.config.min,
+          hardMax: field.config.max,
+          softMin: customConfig.axisSoftMin,
+          softMax: customConfig.axisSoftMax,
+        });
+      }
     }
 
     builder.addSeries({
