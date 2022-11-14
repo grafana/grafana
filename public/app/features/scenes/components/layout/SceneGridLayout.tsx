@@ -73,7 +73,6 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       }
       // update insert post and y max
       yMax = Math.max(yMax, Number(newSize.y!) + Number(newSize.height!));
-      console.log('setting y for panel', panel.state.key, newSize.y);
     }
 
     const pushDownAmount = yMax - rowY - 1;
@@ -104,8 +103,6 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       this._skipOnLayoutChange = false;
       return;
     }
-
-    console.log('updating Layout', layout);
 
     for (const item of layout) {
       const child = this.getSceneLayoutChild(item.i);
@@ -163,7 +160,6 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   };
 
   private pushChildDown(child: SceneLayoutChild, amount: number) {
-    console.log('pushing down y for panel', child.state.key, child.state.size?.y! + amount);
     child.setState({
       size: {
         ...child.state.size,
@@ -197,7 +193,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   /**
    * This likely needs a slighltly different approach. Where we clone or deactivate or and re-activate the moved child
    */
-  private moveChildTo(child: SceneLayoutChild, target: SceneGridLayout | SceneGridRow) {
+  public moveChildTo(child: SceneLayoutChild, target: SceneGridLayout | SceneGridRow) {
     const currentParent = child.parent!;
     let rootChildren = this.state.children;
     const newChild = child.clone({ key: child.state.key });
@@ -309,6 +305,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     }
 
     this._skipOnLayoutChange = false;
+
     return cells;
   }
 }
@@ -317,7 +314,6 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
   const theme = useTheme2();
   const { children } = model.useState();
   validateChildrenSize(children);
-  console.log('render grid');
 
   return (
     <AutoSizer disableHeight>
