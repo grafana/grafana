@@ -16,6 +16,7 @@ import {
   LoadingState,
   PanelData,
   PanelEvents,
+  DataSourcePluginContextProvider,
   QueryResultMetaNotice,
   TimeRange,
   toLegacyResponseData,
@@ -251,19 +252,21 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
       if (QueryEditor) {
         return (
-          <QueryEditor
-            key={datasource?.name}
-            query={query}
-            datasource={datasource}
-            onChange={onChange}
-            onRunQuery={onRunQuery}
-            onAddQuery={onAddQuery}
-            data={data}
-            range={getTimeSrv().timeRange()}
-            queries={queries}
-            app={app}
-            history={history}
-          />
+          <DataSourcePluginContextProvider instanceSettings={this.props.dataSource}>
+            <QueryEditor
+              key={datasource?.name}
+              query={query}
+              datasource={datasource}
+              onChange={onChange}
+              onRunQuery={onRunQuery}
+              onAddQuery={onAddQuery}
+              data={data}
+              range={getTimeSrv().timeRange()}
+              queries={queries}
+              app={app}
+              history={history}
+            />
+          </DataSourcePluginContextProvider>
         );
       }
     }

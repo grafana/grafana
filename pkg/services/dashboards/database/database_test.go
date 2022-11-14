@@ -257,7 +257,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 				AccessToken:  "an-access-token",
 			},
 		}
-		err := publicDashboardStore.Save(context.Background(), cmd)
+		_, err := publicDashboardStore.Create(context.Background(), cmd)
 		require.NoError(t, err)
 		pubdashConfig, _ := publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
 		require.NotNil(t, pubdashConfig)
@@ -292,7 +292,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 				AccessToken:  "an-access-token",
 			},
 		}
-		err := publicDashboardStore.Save(context.Background(), cmd)
+		_, err := publicDashboardStore.Create(context.Background(), cmd)
 		require.NoError(t, err)
 		pubdashConfig, _ := publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
 		require.NotNil(t, pubdashConfig)

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -60,11 +61,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 
 			// TODO: or should we make this two fields? Using one field lets the
 			// frontend use the same logic for parsing text on annotations and this.
-			State: state.InstanceStateAndReason{
-				State:  alertState.State,
-				Reason: alertState.StateReason,
-			}.String(),
-
+			State:    state.FormatStateAndReason(alertState.State, alertState.StateReason),
 			ActiveAt: &startsAt,
 			Value:    valString,
 		})
@@ -185,7 +182,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 	return response.JSON(http.StatusOK, ruleResponse)
 }
 
-func (srv PrometheusSrv) toRuleGroup(groupName string, folder *models.Folder, rules []*ngmodels.AlertRule, labelOptions []ngmodels.LabelOption) *apimodels.RuleGroup {
+func (srv PrometheusSrv) toRuleGroup(groupName string, folder *folder.Folder, rules []*ngmodels.AlertRule, labelOptions []ngmodels.LabelOption) *apimodels.RuleGroup {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupName,
 		File: folder.Title, // file is what Prometheus uses for provisioning, we replace it with namespace.
@@ -221,11 +218,7 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *models.Folder, ru
 
 				// TODO: or should we make this two fields? Using one field lets the
 				// frontend use the same logic for parsing text on annotations and this.
-				State: state.InstanceStateAndReason{
-					State:  alertState.State,
-					Reason: alertState.StateReason,
-				}.String(),
-
+				State:    state.FormatStateAndReason(alertState.State, alertState.StateReason),
 				ActiveAt: &activeAt,
 				Value:    valString,
 			}

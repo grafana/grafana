@@ -102,10 +102,10 @@ RUN rm dockerize-linux-amd64-v${DOCKERIZE_VERSION}.tar.gz
 # Use old Debian (LTS into 2024) in order to ensure binary compatibility with older glibc's.
 FROM debian:buster-20220822
 
-ENV GOVERSION=1.19.2 \
+ENV GOVERSION=1.19.3 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=16.14.0-1nodesource1 \
+    NODEVERSION=18.12.0-1nodesource1 \
     YARNVERSION=1.22.19-1
 
 # Use ARG so as not to persist environment variable in image
@@ -141,7 +141,7 @@ RUN apt-get update && \
     gem install --conservative -N fpm && \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil && \
     curl -fsS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -  && \
-    curl -O https://deb.nodesource.com/node_16.x/pool/main/n/nodejs/nodejs_${NODEVERSION}_amd64.deb &&\
+    curl -O https://deb.nodesource.com/node_18.x/pool/main/n/nodejs/nodejs_${NODEVERSION}_amd64.deb &&\
     dpkg -i nodejs_${NODEVERSION}_amd64.deb &&\
     rm nodejs_${NODEVERSION}_amd64.deb &&\
     curl -fsS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \

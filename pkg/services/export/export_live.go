@@ -3,7 +3,6 @@ package export
 import (
 	"fmt"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -26,7 +25,7 @@ func exportLive(helper *commitHelper, job *gitExportJob) error {
 
 		err := sess.Find(&rows)
 		if err != nil {
-			if strings.HasPrefix(err.Error(), "no such table") {
+			if isTableNotExistsError(err) {
 				return nil
 			}
 			return err

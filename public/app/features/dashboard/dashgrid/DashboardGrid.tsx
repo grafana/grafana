@@ -1,13 +1,11 @@
 import classNames from 'classnames';
 import React, { PureComponent, CSSProperties } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
-import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Subscription } from 'rxjs';
 
 import { config } from '@grafana/runtime';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
-import { cleanAndRemoveMany } from 'app/features/panel/state/actions';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
 
 import { AddPanelWidget } from '../components/AddPanelWidget';
@@ -17,7 +15,7 @@ import { GridPos } from '../state/PanelModel';
 
 import { DashboardPanel } from './DashboardPanel';
 
-export interface OwnProps {
+export interface Props {
   dashboard: DashboardModel;
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
@@ -27,15 +25,7 @@ export interface State {
   isLayoutInitialized: boolean;
 }
 
-const mapDispatchToProps = {
-  cleanAndRemoveMany,
-};
-
-const connector = connect(null, mapDispatchToProps);
-
-export type Props = OwnProps & ConnectedProps<typeof connector>;
-
-export class DashboardGridUnconnected extends PureComponent<Props, State> {
+export class DashboardGrid extends PureComponent<Props, State> {
   private panelMap: { [key: string]: PanelModel } = {};
   private eventSubs = new Subscription();
   private windowHeight = 1200;
@@ -59,11 +49,10 @@ export class DashboardGridUnconnected extends PureComponent<Props, State> {
 
   componentWillUnmount() {
     this.eventSubs.unsubscribe();
-    this.props.cleanAndRemoveMany(Object.keys(this.panelMap));
   }
 
   buildLayout() {
-    const layout = [];
+    const layout: ReactGridLayout.Layout[] = [];
     this.panelMap = {};
 
     for (const panel of this.props.dashboard.panels) {
@@ -77,7 +66,7 @@ export class DashboardGridUnconnected extends PureComponent<Props, State> {
         continue;
       }
 
-      const panelPos: any = {
+      const panelPos: ReactGridLayout.Layout = {
         i: panel.key,
         x: panel.gridPos.x,
         y: panel.gridPos.y,
@@ -187,7 +176,7 @@ export class DashboardGridUnconnected extends PureComponent<Props, State> {
     return panelElements;
   }
 
-  renderPanel(panel: PanelModel, width: any, height: any) {
+  renderPanel(panel: PanelModel, width: number, height: number) {
     if (panel.type === 'row') {
       return <DashboardRow key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }
@@ -323,5 +312,3 @@ function translateGridHeightToScreenHeight(gridHeight: number): number {
 }
 
 GrafanaGridItem.displayName = 'GridItemWithDimensions';
-
-export const DashboardGrid = connector(DashboardGridUnconnected);
