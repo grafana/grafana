@@ -21,6 +21,19 @@ export function getFlexLayoutTest(): Scene {
           pluginId: 'timeseries',
           title: 'Dynamic height and width',
           size: { minWidth: '70%' },
+          $data: new SceneQueryRunner({
+            maxDataPointsFromWidth: true,
+            queries: [
+              {
+                refId: 'A',
+                datasource: {
+                  uid: 'gdev-testdata',
+                  type: 'testdata',
+                },
+                scenarioId: 'random_walk',
+              },
+            ],
+          }),
         }),
         new SceneFlexLayout({
           // size: { width: 450 },

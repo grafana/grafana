@@ -1,5 +1,5 @@
-import React from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import React, { RefCallback } from 'react';
+import { useMeasure } from 'react-use';
 
 import {
   AbsoluteTimeRange,
@@ -18,6 +18,7 @@ import { importPanelPlugin, syncGetPanelPlugin } from 'app/features/plugins/impo
 import { getPanelOptionsWithDefaults } from '../../dashboard/state/getPanelOptionsWithDefaults';
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneComponentProps, SceneLayoutChildState } from '../core/types';
+import { SceneQueryRunner } from '../querying/SceneQueryRunner';
 
 export interface VizPanelState extends SceneLayoutChildState {
   title: string;
@@ -116,7 +117,8 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
 }
 
 function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
-  const { title, options, fieldConfig, pluginId, pluginLoadError } = model.useState();
+  const { title, options, fieldConfig, pluginId, pluginLoadError, $data } = model.useState();
+  const [ref, { width, height }] = useMeasure();
   const { data } = model.getData().useState();
   const plugin = model.getPlugin();
 
@@ -137,22 +139,20 @@ function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
     return <div>Panel plugin has no panel component</div>;
   }
 
-  if (!dataWithOverrides) {
-    return <div>No panel data</div>;
-  }
-
   const PanelComponent = plugin.panel;
 
-  return (
-    <AutoSizer>
-      {({ width, height }) => {
-        if (width < 3 || height < 3) {
-          return null;
-        }
+  // Query runner needs to with for auto maxDataPoints
+  if ($data instanceof SceneQueryRunner) {
+    $data.setContainerWidth(width);
+  }
 
-        return (
-          <PanelChrome title={title} width={width} height={height}>
-            {(innerWidth, innerHeight) => (
+  return (
+    <div ref={ref as RefCallback<HTMLDivElement>} style={{ width: '100%', height: '100%' }}>
+      <PanelChrome title={title} width={width} height={height}>
+        {(innerWidth, innerHeight) => (
+          <>
+            {!dataWithOverrides && <div>No data...</div>}
+            {dataWithOverrides && (
               <ErrorBoundaryAlert dependencies={[plugin, data]}>
                 <PluginContextProvider meta={plugin.meta}>
                   <PanelComponent
@@ -176,10 +176,10 @@ function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
                 </PluginContextProvider>
               </ErrorBoundaryAlert>
             )}
-          </PanelChrome>
-        );
-      }}
-    </AutoSizer>
+          </>
+        )}
+      </PanelChrome>
+    </div>
   );
 }
 
