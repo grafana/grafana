@@ -94,7 +94,7 @@ func TestApplyUserHeader(t *testing.T) {
 		require.NoError(t, err)
 
 		ApplyUserHeader(true, req, &user.SignedInUser{IsAnonymous: true})
-		require.NotContains(t, req.Header, "Cookie")
+		require.NotContains(t, req.Header, "X-Grafana-User")
 	})
 
 	t.Run("Should apply user header for non-anonomous user", func(t *testing.T) {
