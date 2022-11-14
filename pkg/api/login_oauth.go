@@ -97,7 +97,8 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 
 	code := ctx.Query("code")
 	if code == "" {
-		opts := []oauth2.AuthCodeOption{oauth2.AccessTypeOnline}
+		// FIXME: access_type is a Google OAuth2 specific thing, consider refactoring this and moving to google_oauth.go
+		opts := []oauth2.AuthCodeOption{oauth2.AccessTypeOffline}
 
 		if provider.UsePKCE {
 			ascii, pkce, err := genPKCECode()
