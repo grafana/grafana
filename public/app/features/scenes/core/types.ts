@@ -51,7 +51,7 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** SceneObject parent */
   readonly parent?: SceneObject;
 
-  /** A way to provide what variables this scene object depend on */
+  /** This abtractions declares what variables the scene object depends on and how to handle when they change value. **/
   readonly variableDependency?: SceneVariableDependencyConfigLike;
 
   /** Subscribe to state changes */
