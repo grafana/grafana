@@ -242,7 +242,7 @@ var wireBasicSet = wire.NewSet(
 	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*social.SocialService)),
 	auth.ProvideActiveAuthTokenService,
-	wire.Bind(new(models.ActiveTokenService), new(*auth.ActiveAuthTokenService)),
+	wire.Bind(new(auth.ActiveTokenService), new(*auth.ActiveAuthTokenService)),
 	tempo.ProvideService,
 	loki.ProvideService,
 	graphite.ProvideService,

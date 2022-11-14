@@ -15,16 +15,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 func TestHandleRequest(t *testing.T) {
-	cfg := &setting.Cfg{}
-
 	t.Run("Should invoke plugin manager QueryData when handling request for query", func(t *testing.T) {
 		client := &fakePluginsClient{}
 		var actualReq *backend.QueryDataRequest
@@ -36,7 +34,10 @@ func TestHandleRequest(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		datasourcePermissions := acmock.NewMockedPermissionsService()
-		dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), datasourcePermissions)
+		quotaService := quotatest.New(false, nil)
+		dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, sqlStore.Cfg, featuremgmt.WithFeatures(), acmock.New(), datasourcePermissions, quotaService)
+		require.NoError(t, err)
+
 		s := ProvideService(client, nil, dsService)
 
 		ds := &datasources.DataSource{Id: 12, Type: "unregisteredType", JsonData: simplejson.New()}
