@@ -52,8 +52,7 @@ export interface FeatureToggles {
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
-  prometheusStreamingJSONParser?: boolean;
-  prometheusStreamingJSONParserTest?: boolean;
+  prometheusBufferedClient?: boolean;
   newDBLibrary?: boolean;
   validateDashboardsOnSave?: boolean;
   autoMigrateGraphPanels?: boolean;
@@ -81,4 +80,5 @@ export interface FeatureToggles {
   datasourceLogger?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
+  elasticsearchBackendMigration?: boolean;
 }

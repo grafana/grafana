@@ -151,13 +151,9 @@ const (
 	// Enable trace to metrics links
 	FlagTraceToMetrics = "traceToMetrics"
 
-	// FlagPrometheusStreamingJSONParser
-	// Enable streaming JSON parser for Prometheus datasource
-	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
-
-	// FlagPrometheusStreamingJSONParserTest
-	// Run both old and streaming requests and log differences
-	FlagPrometheusStreamingJSONParserTest = "prometheusStreamingJSONParserTest"
+	// FlagPrometheusBufferedClient
+	// Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new)
+	FlagPrometheusBufferedClient = "prometheusBufferedClient"
 
 	// FlagNewDBLibrary
 	// Use jmoiron/sqlx rather than xorm for a few backend services
@@ -266,4 +262,8 @@ const (
 	// FlagNestedFolders
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
+
+	// FlagElasticsearchBackendMigration
+	// Use Elasticsearch as backend data source
+	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
 )
