@@ -72,7 +72,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   separator: css({
-    margin: theme.spacing(0, 0.5),
+    marginLeft: theme.spacing(1),
     [theme.breakpoints.down('md')]: {
       display: 'none',
     },
