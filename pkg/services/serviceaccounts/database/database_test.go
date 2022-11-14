@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -112,9 +113,12 @@ func TestStore_DeleteServiceAccount(t *testing.T) {
 func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreImpl) {
 	t.Helper()
 	db := db.InitTestDB(t)
-	apiKeyService := apikeyimpl.ProvideService(db, db.Cfg)
+	quotaService := quotatest.New(false, nil)
+	apiKeyService, err := apikeyimpl.ProvideService(db, db.Cfg, quotaService)
+	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(db)
-	orgService := orgimpl.ProvideService(db, setting.NewCfg())
+	orgService, err := orgimpl.ProvideService(db, setting.NewCfg(), quotaService)
+	require.NoError(t, err)
 	return db, ProvideServiceAccountsStore(db, apiKeyService, kvStore, orgService)
 }
 
