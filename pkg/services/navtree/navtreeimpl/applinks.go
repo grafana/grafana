@@ -88,10 +88,9 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 
 		if include.Type == "page" {
 			link := &navtree.NavLink{
-				Text:           include.Name,
-				Icon:           include.Icon,
-				PluginID:       plugin.ID,
-				IsCreateAction: include.IsCreateAction,
+				Text:     include.Name,
+				Icon:     include.Icon,
+				PluginID: plugin.ID,
 			}
 
 			if len(include.Path) > 0 {
