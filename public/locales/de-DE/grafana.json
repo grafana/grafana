@@ -59,12 +59,6 @@
       "rows": "Gesamtanzahl an Zeilen",
       "table-title": "Statistiken"
     },
-    "refresh-picker": {
-      "off-arialabel": "Automatische Aktualisierung deaktivieren",
-      "off-description": "Automatische Aktualisierung deaktiviert. Zeitintervall für Aktualisierungen auswählen",
-      "off-label": "Aus",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "Panel hinzufügen",
       "comments-show": "Dashboard-Kommentare anzeigen",
@@ -313,6 +307,23 @@
       "more": "Mehr …",
       "share": "Teilen",
       "view": "Anzeigen"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "Automatische Aktualisierung deaktiviert. Zeitintervall für Aktualisierungen auswählen",
+      "duration-selected": ""
+    },
+    "live-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "off-option": {
+      "aria-label": "Automatische Aktualisierung deaktivieren",
+      "label": "Aus"
+    },
+    "select-button": {
+      "auto-refresh": ""
     }
   },
   "share-modal": {
