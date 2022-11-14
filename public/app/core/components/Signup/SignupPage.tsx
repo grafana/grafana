@@ -5,6 +5,8 @@ import { getBackendSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { AppEvents } from '@grafana/data';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { w3cStandardEmailValidator } from 'app/features/admin/utils';
+
 import { InnerBox, LoginLayout } from '../Login/LoginLayout';
 import { PasswordField } from '../PasswordField/PasswordField';
 
@@ -72,7 +74,7 @@ export const SignupPage: FC<Props> = (props) => {
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
-                      value: /^\S+@\S+$/,
+                      value: w3cStandardEmailValidator,
                       message: 'Email is invalid',
                     },
                   })}
