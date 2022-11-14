@@ -4,13 +4,17 @@ import (
 	"github.com/google/wire"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
+	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/setting"
@@ -34,6 +38,20 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
+	registry.ProvideService,
+	wire.Bind(new(registry.Service), new(*registry.InMemory)),
+	repo.ProvideService,
+	wire.Bind(new(repo.Service), new(*repo.Manager)),
+	plugincontext.ProvideService,
+)
+
+// WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
+// extended.
+var WireExtensionSet = wire.NewSet(
+	provider.ProvideService,
+	wire.Bind(new(plugins.BackendFactoryProvider), new(*provider.Service)),
+	signature.ProvideOSSAuthorizer,
+	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
 )
 
 func ProvideClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
