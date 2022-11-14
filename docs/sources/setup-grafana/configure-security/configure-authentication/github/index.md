@@ -151,7 +151,7 @@ if you have a team called 'example-group' you can use the following snippet to
 ensure those members inherit the role 'Editor'.
 
 ```bash
-role_attribute_path = contains(groups[*], '@github/example-group') && 'Editor' || 'Viewer'
+role_attribute_path = contains(groups[*], '@my-github-organization/my-github-team') && 'Editor' || 'Viewer'
 ```
 
 Note: If a match is found in other fields, teams will be ignored.
