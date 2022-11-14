@@ -314,6 +314,18 @@
       "choose-interval": "",
       "duration-selected": ""
     },
+    "default-intervals": {
+      "10s": "",
+      "15m": "",
+      "1d": "",
+      "1h": "",
+      "1m": "",
+      "2h": "",
+      "30m": "",
+      "30s": "",
+      "5m": "",
+      "5s": ""
+    },
     "live-option": {
       "aria-label": "",
       "label": ""
